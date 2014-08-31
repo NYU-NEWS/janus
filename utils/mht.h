@@ -1,4 +1,6 @@
 
+#pragma once
+
 #include <apr_hash.h>
 
 typedef struct {

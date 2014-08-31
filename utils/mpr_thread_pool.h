@@ -1,5 +1,7 @@
+#pragma once
 
 #include <apr_queue.h>
+#include <apr_thread_proc.h>
 #include <apr_thread_mutex.h>
 #include <apr_atomic.h>
 
@@ -15,7 +17,7 @@ typedef struct {
     apr_uint32_t is_exit;
 } mpr_thread_pool_t;
 
-void* APR_THREAD_FUNC mpr_thread_pool_run(apr_thread_t *t, void* arg) {
+static void* APR_THREAD_FUNC mpr_thread_pool_run(apr_thread_t *t, void* arg) {
     mpr_thread_pool_t *tp = (mpr_thread_pool_t*) arg;
     while (apr_atomic_read32(&tp->is_exit) == 0) {
         void *param;
@@ -39,7 +41,7 @@ void* APR_THREAD_FUNC mpr_thread_pool_run(apr_thread_t *t, void* arg) {
     return NULL;
 }
 
-void mpr_thread_pool_create(mpr_thread_pool_t **tp, apr_thread_start_t func) {
+static void mpr_thread_pool_create(mpr_thread_pool_t **tp, apr_thread_start_t func) {
     *tp = (mpr_thread_pool_t*) malloc(sizeof(mpr_thread_pool_t));
     apr_pool_create(&(*tp)->mp, NULL);
     apr_queue_create(&(*tp)->qu, SZ_QUEUE, (*tp)->mp);
@@ -52,7 +54,7 @@ void mpr_thread_pool_create(mpr_thread_pool_t **tp, apr_thread_start_t func) {
     }
 }
 
-void mpr_thread_pool_destroy(mpr_thread_pool_t *tp) {
+static void mpr_thread_pool_destroy(mpr_thread_pool_t *tp) {
     apr_atomic_set32(&tp->is_exit, 1);
     apr_queue_term(tp->qu);
     for (int i = 0; i < SZ_THREADPOOL; i++) {
@@ -68,7 +70,7 @@ void mpr_thread_pool_destroy(mpr_thread_pool_t *tp) {
 
 
 
-void mpr_thread_pool_push(mpr_thread_pool_t *tp, void *params) {
+static void mpr_thread_pool_push(mpr_thread_pool_t *tp, void *params) {
     while (1) {
         apr_status_t status = apr_queue_push(tp->qu, params);
         if (status == APR_SUCCESS) {
@@ -85,6 +87,6 @@ void mpr_thread_pool_push(mpr_thread_pool_t *tp, void *params) {
     
 }
 
-int mpr_thread_pool_task_count(mpr_thread_pool_t *tp) {
+static int mpr_thread_pool_task_count(mpr_thread_pool_t *tp) {
     return apr_queue_size(tp->qu);
 }

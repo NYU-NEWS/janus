@@ -11,6 +11,7 @@
 #ifndef QUEUE_H
 #define	QUEUE_H
 
+#include <apr_queue.h>
 #include <apr_thread_mutex.h>
 
 typedef struct {
