@@ -52,6 +52,65 @@ private:
     volatile bool locked_ __attribute__((aligned (64)));
 };
 
+class SpinCondVar: public NoCopy {
+public:
+
+    // TODO make this volatile and atomic
+    int flag_ = 0;
+
+    SpinCondVar() {
+
+    }
+
+    ~SpinCondVar() {
+
+    }
+
+    void wait(SpinLock& sl) {
+        flag_ = 0;
+        sl.unlock(); 
+
+        while(!flag_) {
+            Time::sleep(10);
+            // on what break;
+        }
+        sl.lock();
+    }
+
+    void timed_wait(SpinLock& sl, double sec) {
+        flag_ = 0;
+        sl.unlock(); 
+        
+        Timer t;
+        t.start();
+        while(!flag_) {
+            Time::sleep(10);
+            // on what break;
+            if (t.elapsed() > sec) {
+                break;
+            }
+        }
+        sl.lock();
+    }
+
+    void signal() {
+        flag_ = 1; 
+    }
+
+    void bcast() {
+        flag_ = 1;
+    }
+};
+
+//#define ALL_SPIN_LOCK
+
+#ifdef ALL_SPIN_LOCK
+
+#define Mutex SpinLock
+#define CondVar SpinCondVar
+
+#else
+
 class Mutex: public Lockable {
 public:
     Mutex() {
@@ -84,17 +143,6 @@ private:
 // * when n_thread > n_core, use mutex
 // * on virtual machines, use mutex
 
-
-class ScopedLock: public NoCopy {
-public:
-    explicit ScopedLock(Lockable* lock): m_(lock) { m_->lock(); }
-    explicit ScopedLock(Lockable& lock): m_(&lock) { m_->lock(); }
-    ~ScopedLock() { m_->unlock(); }
-private:
-    Lockable* m_;
-};
-
-
 class CondVar: public NoCopy {
 public:
     CondVar() {
@@ -121,34 +169,15 @@ private:
     pthread_cond_t cv_;
 };
 
-class SpinCondVar: public NoCopy {
+#endif // ALL_SPIN_LOCK
+
+class ScopedLock: public NoCopy {
 public:
-
-    // TODO make this volatile and atomic
-    int flag_ = 0;
-
-    SpinCondVar() {
-
-    }
-
-    ~SpinCondVar() {
-
-    }
-
-    void wait(SpinLock& sl) {
-        flag_ = 0;
-        sl.unlock(); 
-
-        while(!flag_) {
-            Time::sleep(10);
-            // on what break;
-        }
-        sl.lock();
-    }
-
-    void signal() {
-        flag_ = 1; 
-    }
+    explicit ScopedLock(Lockable* lock): m_(lock) { m_->lock(); }
+    explicit ScopedLock(Lockable& lock): m_(&lock) { m_->lock(); }
+    ~ScopedLock() { m_->unlock(); }
+private:
+    Lockable* m_;
 };
 
 

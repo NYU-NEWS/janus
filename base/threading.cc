@@ -27,6 +27,8 @@ void SpinLock::lock() {
     }
 }
 
+#ifndef ALL_SPIN_LOCK
+
 int CondVar::timed_wait(Mutex& m, double sec) {
     int full_sec = (int) sec;
     int nsec = int((sec - full_sec) * 1000 * 1000 * 1000);
@@ -41,6 +43,8 @@ int CondVar::timed_wait(Mutex& m, double sec) {
     }
     return pthread_cond_timedwait(&cv_, &m.m_, &abstime);
 }
+
+#endif // ifndef ALL_SPIN_LOCK
 
 struct start_thread_pool_args {
     ThreadPool* thrpool;
