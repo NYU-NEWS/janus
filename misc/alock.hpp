@@ -504,7 +504,7 @@ public:
         uint64_t time_;
         status_t status_;
 
-        std::mutex mtx_;
+//        std::mutex mtx_;
 
         ALockReq(uint64_t id,
                 type_t type) :

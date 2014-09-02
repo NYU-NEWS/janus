@@ -6,6 +6,7 @@
 #include <condition_variable>
 
 #include "base/misc.hpp"
+#include "base/threading.hpp"
 #include "marshal.hpp"
 
 namespace rrr {
@@ -15,8 +16,7 @@ private:
     int fd_;
     //    string path_ = "deptran_recorder";
 
-    std::mutex mtx_;
-
+    Mutex mtx_;
 
 //    io_context_t ctx_;
 //    std::map<uint8_t*, std::function<void(void)>> callbacks_;
@@ -27,8 +27,8 @@ public:
     std::list<io_req_t*> *flush_reqs_;
     std::list<io_req_t*> *callback_reqs_;
 
-    std::mutex mtx_cd_flush_;
-    std::condition_variable cd_flush_;
+    Mutex mtx_cd_flush_;
+    CondVar cd_flush_;
     std::thread *th_flush_;
 
     AvgStat stat_cnt_;
@@ -56,7 +56,8 @@ public:
     void run() {
 	invoke_cb();
         //	flush_buf();
-        cd_flush_.notify_one();        
+//        cd_flush_.notify_one();        
+        cd_flush_.signal();
     }
 
     ~Recorder();

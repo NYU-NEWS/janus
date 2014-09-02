@@ -115,16 +115,16 @@ public:
     static const uint64_t RRR_USEC_PER_SEC = 1000000;
 
     static uint64_t now() {
-	struct timeval tv;
-	gettimeofday(&tv, NULL);
-	return tv.tv_sec * RRR_USEC_PER_SEC + tv.tv_usec;
+	    struct timeval tv;
+	    gettimeofday(&tv, NULL);
+	    return tv.tv_sec * RRR_USEC_PER_SEC + tv.tv_usec;
     }
 
     static void sleep(uint64_t t) {
-	struct timeval tv;
-	tv.tv_usec = t % RRR_USEC_PER_SEC;
-	tv.tv_sec = t / RRR_USEC_PER_SEC;
-	select(0, NULL, NULL, NULL, &tv);
+        struct timeval tv;
+        tv.tv_usec = t % RRR_USEC_PER_SEC;
+        tv.tv_sec = t / RRR_USEC_PER_SEC;
+        select(0, NULL, NULL, NULL, &tv);
     }
 
 };

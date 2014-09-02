@@ -47,11 +47,11 @@ Recorder::Recorder(const char *path) {
 
 void Recorder::flush_loop() {
     while (true) {
-	std::unique_lock<std::mutex> lock(mtx_cd_flush_);
-	auto now = std::chrono::system_clock::now();
-	cd_flush_.wait_until(lock, 
-			     now + std::chrono::milliseconds(50));
-	flush_buf();
+        mtx_cd_flush_.lock();
+
+        auto now = std::chrono::system_clock::now();
+        cd_flush_.wait(mtx_cd_flush_);
+        flush_buf();
     }
 }
 
@@ -64,12 +64,12 @@ void Recorder::submit(const std::string &buf,
 		      const std::function<void(void)> &cb) {
     
     io_req_t *req = new io_req_t(buf, cb);
-    std::lock_guard<std::mutex> guard(mtx_);
+    ScopedLock(this->mtx_);
     flush_reqs_->push_back(req);
 
-    if (cb) {
-        cd_flush_.notify_one();
-    }
+//    if (cb) {
+//        cd_flush_.notify_one();
+//    }
 }
 
 void Recorder::submit(Marshal &m,
@@ -81,7 +81,7 @@ void Recorder::submit(Marshal &m,
     s.resize(m.content_size());
     m.write((void*)s.data(), m.content_size());
 
-    std::lock_guard<std::mutex> guard(mtx_);
+    ScopedLock(this->mtx_);
     flush_reqs_->push_back(req);
 }
 

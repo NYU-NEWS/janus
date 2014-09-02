@@ -28,8 +28,11 @@ namespace rrr {
 
 class Lockable: public NoCopy {
 public:
+    enum type {MUTEX, SPINLOCK, EMPTY};
+
     virtual void lock() = 0;
     virtual void unlock() = 0;
+//    virtual Lockable::type whatami() = 0;
 };
 
 class SpinLock: public Lockable {
@@ -39,6 +42,12 @@ public:
     void unlock() {
         __sync_lock_release(&locked_);
     }
+
+//    Locable::type whatami() {
+//        return SPINLOCK;
+//    }
+
+
 private:
     volatile bool locked_ __attribute__((aligned (64)));
 };
@@ -61,6 +70,11 @@ public:
     void unlock() {
         Pthread_mutex_unlock(&m_);
     }
+
+//    Locable::type whatami() {
+//        return MUTEX;
+//    }
+
 private:
     friend class CondVar;
     pthread_mutex_t m_;
@@ -80,10 +94,12 @@ private:
     Lockable* m_;
 };
 
+
 class CondVar: public NoCopy {
 public:
     CondVar() {
         Pthread_cond_init(&cv_, nullptr);
+
     }
     ~CondVar() {
         Pthread_cond_destroy(&cv_);
@@ -100,8 +116,39 @@ public:
     }
 
     int timed_wait(Mutex& m, double sec);
+
 private:
     pthread_cond_t cv_;
+};
+
+class SpinCondVar: public NoCopy {
+public:
+
+    // TODO make this volatile and atomic
+    int flag_ = 0;
+
+    SpinCondVar() {
+
+    }
+
+    ~SpinCondVar() {
+
+    }
+
+    void wait(SpinLock& sl) {
+        flag_ = 0;
+        sl.unlock(); 
+
+        while(!flag_) {
+            Time::sleep(10);
+            // on what break;
+        }
+        sl.lock();
+    }
+
+    void signal() {
+        flag_ = 1; 
+    }
 };
 
 
