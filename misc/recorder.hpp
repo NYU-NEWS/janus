@@ -17,11 +17,15 @@ private:
     //    string path_ = "deptran_recorder";
 
     Mutex mtx_;
+    Timer timer_;  
 
 //    io_context_t ctx_;
 //    std::map<uint8_t*, std::function<void(void)>> callbacks_;
 
 public:
+
+    uint64_t batch_time_ = 10 * 1000; // 10ms
+
     typedef std::pair<std::string, std::function<void(void)> > io_req_t;
 
     std::list<io_req_t*> *flush_reqs_;
@@ -54,12 +58,21 @@ public:
     void flush_loop();
 
     void run() {
-	invoke_cb();
-        //	flush_buf();
-//        cd_flush_.notify_one();        
-        cd_flush_.signal();
+        // callback for successful flushed requests. 
+        invoke_cb();
+
+        // if (timer_.elapsed() * 1000000 > batch_time_) {
+        if (true) {
+            // trigger the flush thread to do the dirty work.
+            cd_flush_.signal();
+            timer_.reset();
+        }
     }
 
+    void set_batch(uint64_t time) {
+        batch_time_ = time; 
+    }
+    
     ~Recorder();
 };
 

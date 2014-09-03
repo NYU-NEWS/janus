@@ -39,6 +39,8 @@ Recorder::Recorder(const char *path) {
 
     th_flush_ = new std::thread(&Recorder::flush_loop, this);
 
+//    timer_.start();
+
 //    th_flush_ = new std::thread([this] () {
 //	    this->flush_loop();
 //	});
@@ -132,20 +134,20 @@ void Recorder::invoke_cb() {
     int sz = callback_reqs_->size();
     auto reqs = callback_reqs_;
     if (sz > 0) {
-	callback_reqs_ = new std::list<io_req_t*>;
+        callback_reqs_ = new std::list<io_req_t*>;
     }
     mtx_.unlock();
 
     if (sz == 0) {
-	return;
+        return;
     }
 
     for (auto &p: *reqs) {
-	auto &cb = p->second;
+        auto &cb = p->second;
         if (cb) {
             cb();
         }
-	delete p;
+        delete p;
     }
     delete reqs;
 }
