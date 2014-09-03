@@ -61,11 +61,11 @@ public:
         // callback for successful flushed requests. 
         invoke_cb();
 
-        // if (timer_.elapsed() * 1000000 > batch_time_) {
-        if (true) {
+        if (timer_.elapsed() * 1000000 > batch_time_) {
+        //if (true) {
             // trigger the flush thread to do the dirty work.
             cd_flush_.signal();
-            timer_.reset();
+            timer_.start();
         }
     }
 

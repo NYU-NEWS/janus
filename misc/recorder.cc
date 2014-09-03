@@ -39,7 +39,7 @@ Recorder::Recorder(const char *path) {
 
     th_flush_ = new std::thread(&Recorder::flush_loop, this);
 
-//    timer_.start();
+    timer_.start();
 
 //    th_flush_ = new std::thread([this] () {
 //	    this->flush_loop();
