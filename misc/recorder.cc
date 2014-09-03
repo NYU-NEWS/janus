@@ -23,7 +23,7 @@ Recorder::Recorder(const char *path) {
 
     fd_ = open(path, O_RDWR | O_CREAT, 0644);
     if (errno == EINVAL) {
-	Log::error("Open record file failed, are" 
+	Log::error("Open record file failed, are"
 		   " yo2u trying to write into a tmpfs?");
 	fd_ = open(path, O_RDWR | O_CREAT, 0644);
     }
@@ -52,6 +52,7 @@ void Recorder::flush_loop() {
         auto now = std::chrono::system_clock::now();
         cd_flush_.wait(mtx_cd_flush_);
         flush_buf();
+        mtx_cd_flush_.unlock();
     }
 }
 
@@ -60,9 +61,9 @@ void Recorder::flush_loop() {
 //    submit(buf, empty_func);
 //}
 
-void Recorder::submit(const std::string &buf, 
+void Recorder::submit(const std::string &buf,
 		      const std::function<void(void)> &cb) {
-    
+
     io_req_t *req = new io_req_t(buf, cb);
     ScopedLock(this->mtx_);
     flush_reqs_->push_back(req);
@@ -103,7 +104,7 @@ void Recorder::flush_buf() {
     if (sz == 0) {
 	return;
     }
-    
+
     for (auto &p: *reqs) {
 	std::string &s = p->first;
 	int ret = write(fd_, s.data(), s.size());
@@ -138,7 +139,7 @@ void Recorder::invoke_cb() {
     if (sz == 0) {
 	return;
     }
-    
+
     for (auto &p: *reqs) {
 	auto &cb = p->second;
         if (cb) {
