@@ -1,0 +1,14 @@
+<benchmark mode="none" name="rw_benchmark" scale_factor="1" concurrent_txn="500" batch_start="false">
+    <hosts number="1">
+        <site id="0" threads="1">beaker-21:7333</site>
+    </hosts>
+    <clients number="1">
+        <client id="0" threads="1">beaker-23</client>
+    </clients>
+    <table name="customer" all_site="true" shard_method="int_modulus" records="100000" type="sorted">
+        <schema>
+            <column name="customer_id" type="i32" primary="true"/>
+            <column name="balance" type="i32"/>
+        </schema>
+    </table>
+</benchmark>

@@ -1,0 +1,51 @@
+<benchmark mode="occ" name="rw_benchmark" scale_factor="2" concurrent_txn="1" batch_start="false">
+    <hosts number="32">
+        <site id="00" threads="1">beaker-20:28000</site>
+        <site id="01" threads="1">beaker-20:28001</site>
+        <site id="02" threads="1">beaker-20:28002</site>
+        <site id="03" threads="1">beaker-20:28003</site>
+        <site id="04" threads="1">beaker-20:28004</site>
+        <site id="05" threads="1">beaker-20:28005</site>
+        <site id="06" threads="1">beaker-20:28006</site>
+        <site id="07" threads="1">beaker-20:28007</site>
+        <site id="08" threads="1">beaker-21:28000</site>
+        <site id="09" threads="1">beaker-21:28001</site>
+        <site id="10" threads="1">beaker-21:28002</site>
+        <site id="11" threads="1">beaker-21:28003</site>
+        <site id="12" threads="1">beaker-21:28004</site>
+        <site id="13" threads="1">beaker-21:28005</site>
+        <site id="14" threads="1">beaker-21:28006</site>
+        <site id="15" threads="1">beaker-21:28007</site>
+        <site id="16" threads="1">beaker-23:28000</site>
+        <site id="17" threads="1">beaker-23:28001</site>
+        <site id="18" threads="1">beaker-23:28002</site>
+        <site id="19" threads="1">beaker-23:28003</site>
+        <site id="20" threads="1">beaker-23:28004</site>
+        <site id="21" threads="1">beaker-23:28005</site>
+        <site id="22" threads="1">beaker-23:28006</site>
+        <site id="23" threads="1">beaker-23:28007</site>
+        <site id="24" threads="1">beaker-24:28000</site>
+        <site id="25" threads="1">beaker-24:28001</site>
+        <site id="26" threads="1">beaker-24:28002</site>
+        <site id="27" threads="1">beaker-24:28003</site>
+        <site id="28" threads="1">beaker-24:28004</site>
+        <site id="29" threads="1">beaker-24:28005</site>
+        <site id="30" threads="1">beaker-24:28006</site>
+        <site id="31" threads="1">beaker-24:28007</site>
+    </hosts>
+    <clients number="7">
+        <client id="0" threads="32">beaker-14</client>
+        <client id="1" threads="32">beaker-15</client>
+        <client id="2" threads="32">beaker-16</client>
+        <client id="3" threads="32">beaker-17</client>
+        <client id="4" threads="32">beaker-18</client>
+        <client id="5" threads="32">beaker-19</client>
+        <client id="6" threads="64">beaker-25</client>
+    </clients>
+    <table name="customer" all_site="true" shard_method="int_modulus" records="100000">
+        <schema>
+            <column name="customer_id" type="i32" primary="true"/>
+            <column name="balance" type="i32"/>
+        </schema>
+    </table>
+</benchmark>

@@ -1,0 +1,34 @@
+<benchmark mode="DEPTRAN" name="tpca" scale_factor="1" concurrent_txn="1" batch_start="true">
+    <hosts number="6">
+        <site id="0" threads="1">beaker-21:18000</site>
+        <site id="1" threads="1">beaker-21:18001</site>
+        <site id="2" threads="1">beaker-21:18002</site>
+        <site id="3" threads="1">beaker-21:18003</site>
+        <site id="4" threads="1">beaker-21:18004</site>
+        <site id="5" threads="1">beaker-21:18005</site>
+    </hosts>
+    <clients number="2">
+        <client id="0" threads="16">beaker-20</client>
+        <client id="1" threads="16">beaker-24</client>
+    </clients>
+    <table name="branch" all_site="true" shard_method="int_modulus" records="10000">
+        <schema>
+            <column name="branch_id" type="i32" primary="true"/>
+            <column name="balance" type="i64"/>
+        </schema>
+    </table>
+    <table name="teller" all_site="true" shard_method="int_modulus" records="10000">
+        <schema>
+            <column name="teller_id" type="i32" primary="true"/>
+            <column name="branch_id" type="i32" foreign="branch.branch_id"/>
+            <column name="balance" type="i64"/>
+        </schema>
+    </table>
+    <table name="customer" all_site="true" shard_method="int_modulus" records="10000">
+        <schema>
+            <column name="customer_id" type="i32" primary="true"/>
+            <column name="branch_id" type="i32" foreign="branch.branch_id"/>
+            <column name="balance" type="i64"/>
+        </schema>
+    </table>
+</benchmark>

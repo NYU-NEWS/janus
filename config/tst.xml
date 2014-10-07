@@ -1,0 +1,35 @@
+<benchmark mode="2PL" name="tpca" scale_factor="3" concurrent_txn="100" max_retry="2" batch_start="true" txn_weight="0:99.00:60:10.3:13.5">
+    <hosts number="3">
+        <site id="0" threads="1">localhost:3333</site>
+        <site id="1" threads="1">localhost:3334</site>
+        <site id="2" threads="1">localhost:3335</site>
+    </hosts>
+    <clients number="11">
+        <client id="0-9" threads="3">localhost</client>
+        <client id="10" threads="30">localhost</client>
+    </clients>
+    <table name="branch" all_site="false" shard_method="int_modulus" records="1" type="sorted">
+        <site>
+            <site_id>1</site_id>
+            <site_id>2</site_id>
+        </site>
+        <schema>
+            <column name="branch_id" type="i32" primary="true"/>
+            <column name="balance" type="i64"/>
+        </schema>
+    </table>
+    <table name="teller" all_site="true" shard_method="int_modulus" records="10" type="unsorted">
+        <schema>
+            <column name="teller_id" type="i32" primary="true"/>
+            <column name="branch_id" type="i32" foreign="branch.branch_id"/>
+            <column name="balance" type="i64"/>
+        </schema>
+    </table>
+    <table name="customer" all_site="true" shard_method="int_modulus" records="100000" type="snapshot">
+        <schema>
+            <column name="customer_id" type="i32" primary="true"/>
+            <column name="branch_id" type="i32" foreign="branch.branch_id"/>
+            <column name="balance" type="i64"/>
+        </schema>
+    </table>
+</benchmark>

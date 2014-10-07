@@ -1,0 +1,8 @@
+<benchmark mode="__MODE__" name="rw_benchmark" scale_factor="__SCALE_FACTOR__" concurrent_txn="1" batch_start="true" txn_weight="0:1">
+    <table name="customer" all_site="true" shard_method="int_modulus" records="100000">
+        <schema>
+            <column name="customer_id" type="i32" primary="true"/>
+            <column name="balance" type="i64"/>
+        </schema>
+    </table>
+</benchmark>

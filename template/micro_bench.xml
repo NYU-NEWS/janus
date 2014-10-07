@@ -1,0 +1,29 @@
+<benchmark mode="__MODE__" name="tpca" scale_factor="1" concurrent_txn="1" max_retry="0" batch_start="false">
+    <table name="branch" all_site="false" shard_method="int_modulus" records="100000" type="sorted">
+        <site>
+            <site_id>0</site_id>
+        </site>
+        <schema>
+            <column name="branch_id" type="i32" primary="true"/>
+            <column name="balance" type="i64"/>
+        </schema>
+    </table>
+    <table name="teller" all_site="false" shard_method="int_modulus" records="100000" type="sorted">
+        <site>
+            <site_id>1</site_id>
+        </site>
+        <schema>
+            <column name="teller_id" type="i32" primary="true"/>
+            <column name="balance" type="i64"/>
+        </schema>
+    </table>
+    <table name="customer" all_site="false" shard_method="int_modulus" records="100000" type="sorted">
+        <site>
+            <site_id>2</site_id>
+        </site>
+        <schema>
+            <column name="customer_id" type="i32" primary="true"/>
+            <column name="balance" type="i64"/>
+        </schema>
+    </table>
+</benchmark>

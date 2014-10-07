@@ -1,0 +1,160 @@
+namespace rcc;
+
+struct RequestHeader  {
+    i32 t_type;     // transaction type
+    i32 p_type;     // piece type
+    i32 cid;        // coordinator id
+    i64 tid;        // transaction id
+    i64 pid;        // piece id;
+}
+
+struct BatchRequestHeader {
+    i32 t_type;
+    i32 cid;
+    i64 tid;
+    i32 num_piece;
+    i32 expected_output_size;
+}
+
+struct BatchChopStartResponse {
+    vector<i8> is_defers;
+    vector<vector<Value>> outputs;
+    GraphMarshaler gra_m;
+}
+
+struct ChopStartResponse {
+    i8 is_defered;
+    vector<Value> output;
+    GraphMarshaler gra_m;
+}
+
+struct ChopFinishRequest {
+    i64 txn_id;
+    Graph<TxnInfo> gra;
+}
+
+struct ChopFinishResponse {
+    i32 res;
+    vector<pair<RequestHeader, vector<Value>>> outputs;
+}
+
+struct CollectFinishResponse {
+    GraphMarshaler gra_m;
+} 
+
+abstract service Rococo {
+
+    // below is for 2PL and OCC
+
+    defer start_pie (RequestHeader header, 
+                     vector<Value> input, 
+                     i32 output_size | 
+                     i32 res, 
+                     vector<Value> output); 
+
+    defer prepare_txn (i64 tid, 
+                       vector<i32> sids | 
+                       i32 res);
+
+    defer commit_txn (i64 tid | i32 res);
+
+    defer abort_txn (i64 tid | i32 res);
+
+    // input: contains many pieces, each piece consist of
+    // | <i32 p_type> <i64 pid> <i32 input_size> <i32 max_output_size> 
+    // <input_0> <input_1> ... |
+    // output: contains many pieces, each piece consist of
+    // | <i32 res> <i32 output_size> <output_0> <output_1> ... |
+
+    fast batch_start_pie (BatchRequestHeader batch_header, 
+                         vector<Value> input | 
+                         i32 res, 
+                         vector<Value> output);
+
+    defer naive_batch_start_pie (vector<RequestHeader> header, 
+                                 vector<vector<Value>> input, 
+                                 vector<i32> output_size | 
+                                 vector<i32> res, 
+                                 vector<vector<Value>> output);
+
+    // Below is for rococo only
+
+    defer rcc_start_pie(RequestHeader header, 
+                        vector<Value> input | 
+                        ChopStartResponse res);  
+
+    defer rcc_finish_txn(ChopFinishRequest req | 
+                         ChopFinishResponse res);
+
+    defer rcc_ask_txn(i64 txn_id | 
+                      CollectFinishResponse res);
+
+    defer rcc_ro_start_pie(RequestHeader header, 
+                           vector<Value> input | 
+                           vector<Value> output);
+
+    defer rcc_batch_start_pie(vector<RequestHeader> headers, 
+                              vector<vector<Value>> inputs | 
+                              BatchChopStartResponse res);  
+
+    // below is for what?                              
+
+    defer rpc_null( | );
+}
+
+
+
+// Below is for statistics
+
+struct ValueTimesPair {
+    i64 value;
+    i64 times;
+}
+
+struct TxnInfoRes {
+    i32 start_txn;  // total number of started txns
+    i32 total_txn;  // total number of finished txns
+    i32 total_try;  // total number of tries finished
+    i32 commit_txn; // number of commit transactions
+    vector<double> this_latency; // latencies started && finish in this period
+    vector<double> last_latency; // latencies started in last period, finish in this period
+    vector<double> attempt_latency; // interval latencies for each attempts
+    vector<double> interval_latency; // latencies finish in this period
+    vector<i32> num_try;
+}
+
+struct ServerResponse {
+    map<string, ValueTimesPair> statistics;
+    double cpu_util;
+    i64 r_cnt_sum;
+    i64 r_cnt_num;
+    i64 r_sz_sum;
+    i64 r_sz_num;
+}
+
+struct ClientResponse  {
+    map<i32, TxnInfoRes> txn_info; // statistics for each txn
+    i64 run_sec;    // running time in seconds
+    i64 run_nsec;   // running time in nano seconds
+    i64 period_sec;    // running time in seconds
+    i64 period_nsec;   // running time in nano seconds
+    i32 is_finish;  // if client finishs
+    i64 n_asking;   // asking finish request count
+}
+
+abstract service ServerControl {
+    server_shutdown ( | );
+    server_ready ( | i32 res);
+    server_heart_beat_with_data ( | ServerResponse res);
+    server_heart_beat ( | );
+}
+
+abstract service ClientControl {
+    client_get_txn_names( | map<i32, string> txn_names);
+    client_shutdown ( | );
+    client_force_stop ( | );
+    client_response ( | ClientResponse res);
+    client_ready ( | i32 res);
+    defer client_ready_block ( | i32 res);
+    client_start ( | );
+}

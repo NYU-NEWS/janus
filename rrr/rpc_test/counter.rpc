@@ -1,0 +1,5 @@
+abstract service Counter {
+    fast add ( | );
+    fast add_long (i32 a, i32 b, i32 c, i64 d, i64 e, vector<i64> input | i32 out, vector<i64> output);
+    fast add_short (i64 a | i32 out);
+}

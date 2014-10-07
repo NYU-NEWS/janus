@@ -1,0 +1,55 @@
+// #include <math.h>
+
+// optional %%: marks header section, code above will be copied into begin of generated C++ header
+%%
+
+namespace benchmark
+
+struct point3 {
+    double x;
+    double y;
+    double z;
+};
+
+service Benchmark {
+    fast fast_prime(i32 n | i8 flag);
+    fast fast_dot_prod(point3 p1, point3 p2 | double v);
+    fast fast_add(v32 a, v32 b | v32 a_add_b);
+    fast fast_nop(string);
+    prime(i32 n | i8 flag);
+    dot_prod(point3 p1, point3 p2 | double v);
+    add(v32 a, v32 b | v32 a_add_b);
+    nop(string);
+    sleep(double sec);
+};
+
+%%
+// optional %%: marks footer section, code below will be copied into end of generated C++ header
+
+namespace benchmark {
+
+inline void BenchmarkService::fast_dot_prod(const point3& p1, const point3& p2, double* v) {
+    *v = p1.x * p2.x + p1.y * p2.y + p1.z * p2.z;
+}
+
+inline void BenchmarkService::fast_add(const rrr::v32& a, const rrr::v32& b, rrr::v32* a_add_b) {
+    a_add_b->set(a.get() + b.get());
+}
+
+inline void BenchmarkService::prime(const rrr::i32& n, rrr::i8* flag) {
+    return fast_prime(n, flag);
+}
+
+inline void BenchmarkService::dot_prod(const point3& p1, const point3& p2, double *v) {
+    *v = p1.x * p2.x + p1.y * p2.y + p1.z * p2.z;
+}
+
+inline void BenchmarkService::add(const rrr::v32& a, const rrr::v32& b, rrr::v32* a_add_b) {
+    a_add_b->set(a.get() + b.get());
+}
+
+inline void BenchmarkService::fast_nop(const std::string& str) {
+    nop(str);
+}
+
+} // namespace benchmark
