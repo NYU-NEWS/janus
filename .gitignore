@@ -9,7 +9,6 @@
 *.sublime*
 *.swp
 /log
-/deptran/rcc_service.h
 /deptran/rcc_service.py
 /deptran/rcc_rpc.h
 /deptran/rcc_rpc.py
