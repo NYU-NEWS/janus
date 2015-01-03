@@ -1,5 +1,5 @@
-#ifndef CONSTANTS_H_
-#define CONSTANTS_H_
+#ifndef CONSTANTS_HPP_
+#define CONSTANTS_HPP_
 
 namespace rcc {
 
@@ -10,10 +10,17 @@ namespace rcc {
 
 /** transaction type */
 #define TXN_UNKNOWN (0x00)
-#define TXN_START   (0x01)
-#define TXN_FINISH  (0x02)
-#define TXN_COMMIT  (0x04)
+//#define TXN_START   (0x01)
+//#define TXN_FINISH  (0x02)
+//#define TXN_COMMIT  (0x04)
 #define TXN_ABORT   (0x08)
+
+#define TXN_UKN (0x00)  // unknown
+#define TXN_STD (0x01)  // started
+#define TXN_CMT (0x02)  // committing
+#define TXN_DCD (0x04)  // decided
+#define TXN_FNS (0x08)  // finished
+#define TXN_ABT (0x10)  // aborted
 
 #define SUCCESS     (0)
 #define CONTENTION  (-1)
@@ -70,4 +77,4 @@ namespace rcc {
 
 }
 
-#endif // CONSTANTS_H_
+#endif // CONSTANTS_HPP_

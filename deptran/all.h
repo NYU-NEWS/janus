@@ -75,7 +75,7 @@ static dummy_class dummy___;
 #define level_s
 
 // User include files
-#include "constants.h"
+#include "constants.hpp"
 #include "config.h"
 #include "pie_info.h"
 #include "txn_info.h"

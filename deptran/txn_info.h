@@ -8,7 +8,7 @@ class ChopFinishResponse;
 
 class TxnInfo {
 private:
-    int8_t status_ = TXN_UNKNOWN;
+    int8_t status_ = TXN_UKN;
 
 public:
     uint64_t txn_id_;
@@ -31,11 +31,11 @@ public:
     }
 
     inline bool is_commit() const {
-        return (status_ & TXN_COMMIT);
+        return (status_ & TXN_DCD);
     }
 
     inline bool is_finish() const {
-        return (status_ & TXN_FINISH);
+        return (status_ & TXN_CMT);
     }
 
     bool is_involved() {

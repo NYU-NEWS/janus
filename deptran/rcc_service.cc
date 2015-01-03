@@ -472,11 +472,9 @@ void RococoServiceImpl::rcc_finish_txn(
     verify(v != NULL);
     v->data_.res = res;
 
-    v->data_.union_status(TXN_FINISH);
+    v->data_.union_status(TXN_CMT);
 
     rcc_finish_to_commit(v, defer);
-
-
 }
 
 void RococoServiceImpl::rcc_finish_to_commit(
@@ -497,7 +495,7 @@ void RococoServiceImpl::rcc_finish_to_commit(
     std::function<void(void)> scc_anc_commit_cb = [&txn_gra, v, defer, this] () {
         uint64_t txn_id = v->data_.id();
         Log::debug("all scc ancestors have committed for txn id: %llx", txn_id);
-        // after all scc ancestors become COMMIT
+        // after all scc ancestors become DECIDED
         // sort, and commit.
         TxnInfo &tinfo = v->data_;
         if (tinfo.is_commit()) {
@@ -510,7 +508,7 @@ void RococoServiceImpl::rcc_finish_to_commit(
             //}
             this->stat_sz_scc_.sample(sscc.size());
             for(auto& vv: sscc) {
-                bool commit_by_other = vv->data_.get_status() & TXN_COMMIT;
+                bool commit_by_other = vv->data_.get_status() & TXN_DCD;
 
                 if (!commit_by_other) {
                     // apply changes.
@@ -525,7 +523,7 @@ void RococoServiceImpl::rcc_finish_to_commit(
                     //
                     verify(vv->data_.committed_ == false);
                     vv->data_.committed_ = true;
-                    vv->data_.union_status(TXN_COMMIT, false);
+                    vv->data_.union_status(TXN_DCD, false);
                 }
             }
 
@@ -553,15 +551,12 @@ void RococoServiceImpl::rcc_finish_to_commit(
     //    }
     //};
 
-
-
-
     std::function<void(void)> anc_finish_cb = 
         [this, &txn_gra, v, scc_anc_commit_cb] () {
         
         Log::debug("all ancestors have finished for txn id: %llx", v->data_.id());
-        // after all ancestors become FINISH
-        // wait for all ancestors of scc become COMMIT
+        // after all ancestors become COMMITTING
+        // wait for all ancestors of scc become DECIDED
         std::set<Vertex<TxnInfo>* > scc_anc;
         this->dep_s->find_txn_scc_nearest_anc(v, scc_anc);
 
@@ -570,7 +565,7 @@ void RococoServiceImpl::rcc_finish_to_commit(
         for (auto &sav: scc_anc) {
             //Log::debug("\t ancestor id: %llx", sav->data_.id());
             // what if the ancestor is not related and not committed or not finished?
-            sav->data_.register_event(TXN_COMMIT, wait_commit_ball);
+            sav->data_.register_event(TXN_DCD, wait_commit_ball);
             rcc_ask_finish(sav);
         }
         wait_commit_ball->trigger();
@@ -583,7 +578,7 @@ void RococoServiceImpl::rcc_finish_to_commit(
     DragonBall *wait_finish_ball = new DragonBall(anc.size() + 1, anc_finish_cb);
     for (auto &av: anc) {
         Log::debug("\t ancestor id: %llx", av->data_.id());
-        av->data_.register_event(TXN_FINISH, wait_finish_ball);
+        av->data_.register_event(TXN_CMT, wait_finish_ball);
         rcc_ask_finish(av);
     }
     wait_finish_ball->trigger();
@@ -682,9 +677,9 @@ void RococoServiceImpl::rcc_ask_txn(
 
     DragonBall *ball = new DragonBall(2, callback);
 
-    //register an event, triggered when the status >= FINISH;
+    //register an event, triggered when the status >= COMMITTING;
     verify (v->data_.is_involved());
-    v->data_.register_event(TXN_FINISH, ball);
+    v->data_.register_event(TXN_CMT, ball);
     ball->trigger();
 }
 
@@ -717,7 +712,7 @@ void RococoServiceImpl::rcc_ro_start_pie(
     DragonBall *ball = new DragonBall(conflict_txns.size() + 1, cb);
 
     for (auto tinfo: conflict_txns) {
-        tinfo->register_event(TXN_COMMIT, ball);
+        tinfo->register_event(TXN_DCD, ball);
     }
     ball->trigger();
 
