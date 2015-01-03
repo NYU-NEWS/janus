@@ -1,5 +1,6 @@
 #pragma once
 
+#include <algorithm>
 #include "all.h"
 
 namespace rcc {
@@ -326,32 +327,44 @@ public:
         return ret;
     }
 
-    // flag, 0 for up, 1 for down
-    // XXX optimize this sort, using iterator.
-    void sort_vv(std::vector<Vertex<T>*> &vv, int flag) {
-        verify(vv.size() > 0);
-        for (int i = 0; i < vv.size() - 1; i++ ) {
-            for (int j = i; j < vv.size() - 1; j++) {
-                if (flag == 0) {
-                    if (vv[j]->data_.id() > vv[j+1]->data_.id()) {
-                        auto tmp = vv[j];
-                        vv[j] = vv[j+1];
-                        vv[j+1] = tmp;
-                    }
-                } else if (flag == 1) {
-                    if (vv[j]->data_.id() < vv[j+1]->data_.id()) {
-                        auto tmp = vv[j];
-                        vv[j] = vv[j+1];
-                        vv[j+1] = tmp;
-                    }
-                } else {
-                    verify(0);
-                }
+
+    void qsort_vv(std::vector<Vertex<T>*> &vv, int p, int r) {
+        if (p >= r)  {
+            return;
+        }
+
+        int i = p - 1;  
+        auto x = vv[r]; 
+        for (int j = p; j < r; j++) {
+            if (vv[j]->data_.id() < x->data_.id()) {
+                i++;
+                auto tmp = vv[j];
+                vv[j] = vv[i];
+                vv[i] = tmp;
             }
+        }
+
+        int q = i + 1;
+        auto tmp = vv[r];
+        vv[r] = vv[q];
+        vv[q] = tmp;
+        
+        qsort_vv(vv, p, q - 1);
+        qsort_vv(vv, q + 1, r);
+    }
+
+
+    void sort_vv(std::vector<Vertex<T>*> &vv, int flag) {
+        qsort_vv(vv, 0, vv.size() - 1);
+        if (flag) {
+            std::reverse(vv.begin(), vv.end());
         }
     }
 
-    std::vector<Vertex<T>*> sorted_scc(Vertex<T>* vertex, std::vector<Vertex<T>*> *ret_sorted_scc) {
+    std::vector<Vertex<T>*> sorted_scc(
+            Vertex<T>* vertex, 
+            std::vector<Vertex<T>*> *ret_sorted_scc) {
+
         std::map<Vertex<T>*, int> indexes;
         std::map<Vertex<T>*, int> lowlinks;
         int index = 0;
