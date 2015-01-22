@@ -31,6 +31,7 @@ void TpccPiece::reg_new_order() {
 
             verify(row_map == NULL);
             verify(input_size == 2);
+
             i32 output_index = 0;
             mdb::Txn *txn = TxnRunner::get_txn(header);
             Value buf;

@@ -325,8 +325,11 @@ public:
 //                                rrr::i32 input_size,
 //                                std::unordered_map<cell_locator_t, int, cell_locator_t_hash> *opset)> LockSetOracle;
 
-    static inline void reg(base::i32 t_type, base::i32 p_type,
-			   defer_t defer, const TxnHandler& txn_handler) {
+    static inline void reg(
+            base::i32 t_type, 
+            base::i32 p_type,
+            defer_t defer, 
+            const TxnHandler& txn_handler) {
         auto func_key = std::make_pair(t_type, p_type);
         auto it = all_.find(func_key);
         verify(it == all_.end());
