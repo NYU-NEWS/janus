@@ -26,7 +26,10 @@ int Config::create_config(int argc, char *argv[]) {
     unsigned int sid = 0, cid = 0;
     char *end_ptr = NULL;
 
-    char *ctrl_hostname = NULL, *ctrl_key = NULL, *ctrl_init = NULL/*, *ctrl_run = NULL*/;
+    char *hostspath = NULL;
+    char *ctrl_hostname = NULL;
+    char *ctrl_key = NULL;
+    char *ctrl_init = NULL/*, *ctrl_run = NULL*/;
     char *logging_path = NULL;
     unsigned int ctrl_port = 0;
     unsigned int ctrl_timeout = 0;
@@ -62,6 +65,10 @@ int Config::create_config(int argc, char *argv[]) {
             case 'h': // ctrl_hostname
                 ctrl_hostname = (char *)malloc((strlen(optarg) + 1) * sizeof(char));
                 strcpy(ctrl_hostname, optarg);
+                break;
+            case 'H': // ctrl_host
+                hostspath = (char *)malloc((strlen(optarg) + 1) * sizeof(char));
+                strcpy(hostspath, optarg);
                 break;
             case 'i': // ctrl_init
                 ctrl_init = (char *)malloc((strlen(optarg) + 1) * sizeof(char));
@@ -140,10 +147,12 @@ int Config::create_config(int argc, char *argv[]) {
     }
     if (server_or_client != 0 && server_or_client != 1)
         return -5;
-    config_s = new Config(cid, sid, filename, ctrl_hostname, ctrl_port, 
-                          ctrl_timeout, ctrl_key, ctrl_init/*, ctrl_run*/, 
-                          duration, heart_beat, single_server, 
-                          server_or_client, logging_path);
+    config_s = new Config(
+            cid, sid, filename, ctrl_hostname, 
+            ctrl_port, ctrl_timeout, 
+            ctrl_key, ctrl_init/*, ctrl_run*/, 
+            duration, heart_beat, single_server, 
+            server_or_client, logging_path, hostspath);
     return 0;
 }
 
@@ -159,18 +168,23 @@ Config::Config() {
     init_sharding(filename);
 }
 
-Config::Config(unsigned int cid, unsigned int sid, char *filename, 
+Config::Config(unsigned int cid, unsigned int sid, 
+               char *filename, 
                char *ctrl_hostname, unsigned int ctrl_port, 
                unsigned int ctrl_timeout, char *ctrl_key, 
                char *ctrl_init/*, char *ctrl_run*/, unsigned int duration, 
                bool heart_beat, single_server_t single_server, 
-               int server_or_client, char *logging_path) : 
+               int server_or_client, char *logging_path, char *hostspath) : 
     cid_(cid), sid_(sid), ctrl_hostname_(ctrl_hostname), 
     ctrl_port_(ctrl_port), ctrl_timeout_(ctrl_timeout), 
     ctrl_key_(ctrl_key), ctrl_init_(ctrl_init)/*, ctrl_run_(ctrl_run)*/, 
     duration_(duration), heart_beat_(heart_beat), 
     single_server_(single_server), server_or_client_(server_or_client), 
     logging_path_(logging_path), retry_wait_(false) {
+
+    if (hostspath != NULL) {
+        init_hostsmap(hostspath);  
+    }
 
     if (filename == NULL) {
         char filename_bk[] = "properties.xml";
@@ -182,11 +196,31 @@ Config::Config(unsigned int cid, unsigned int sid, char *filename,
     }
 }
 
+void Config::init_hostsmap(const char *hostspath) {
+    std::string name, addr;
+    std::ifstream in(hostspath);
+    while (std::cin) {
+        in >> addr;
+        in >> name; 
+        hostsmap_[name] = addr;
+    }
+}
+
+std::string Config::host_name2addr(std::string& name) {
+    auto it = hostsmap_.find(name);
+    if (it != hostsmap_.end()) {
+        return it->second; 
+    } else {
+        return name;
+    }
+}
+
 void Config::init_sharding(const char *filename) {
     std::string filename_str(filename);
     boost::property_tree::ptree pt;
-    boost::property_tree::xml_parser::read_xml(filename_str, pt, 
-                                               boost::property_tree::xml_parser::no_concat_text);
+    boost::property_tree::xml_parser::read_xml(
+            filename_str, pt, 
+            boost::property_tree::xml_parser::no_concat_text);
 
     Sharding::sharding_s = new Sharding();
 
@@ -281,17 +315,20 @@ void Config::init_sharding(const char *filename) {
     unsigned int site_found = 0;
     memset(site_, 0, sizeof(char *) * num_site_);
     memset(site_threads_, 0, sizeof(unsigned int) * num_site_);
-    BOOST_FOREACH(boost::property_tree::ptree::value_type const &value, pt.get_child("benchmark.hosts")) {
+    BOOST_FOREACH(boost::property_tree::ptree::value_type const &value, 
+            pt.get_child("benchmark.hosts")) {
         if (value.first == "site") {
             int sid = value.second.get<int>("<xmlattr>.id");
             verify(sid < num_site_ && sid >= 0);
             verify(site_[sid] == NULL);
 
             // set site addr
-            std::string addr_buf = value.second.get<std::string>("<xmltext>");
-            site_[sid] = (char *)malloc((addr_buf.size() + 1) * sizeof(char));
+            std::string site_name = value.second.get<std::string>("<xmltext>");
+            std::string site_addr = host_name2addr(site_name); 
+
+            site_[sid] = (char *)malloc((site_addr.size() + 1) * sizeof(char));
             verify(site_[sid] != NULL);
-            strcpy(site_[sid], addr_buf.c_str());
+            strcpy(site_[sid], site_addr.c_str());
 
             // set site threads
             int threads = value.second.get<int>("<xmlattr>.threads");
@@ -309,8 +346,9 @@ void Config::init_sharding(const char *filename) {
     for (unsigned int client_index = 0; client_index < num_clients; client_index++)
         clients[client_index] = false;
     start_coordinator_id_ = 0;
-    bool find_client_info = false;
-    BOOST_FOREACH(boost::property_tree::ptree::value_type const &value, pt.get_child("benchmark.clients")) {
+    bool client_found = false;
+    BOOST_FOREACH(boost::property_tree::ptree::value_type const &value, 
+            pt.get_child("benchmark.clients")) {
         if (value.first == "client") {
             num_coordinator_threads_ = value.second.get<unsigned int>("<xmlattr>.threads");
             std::string client_ids = value.second.get<std::string>("<xmlattr>.id");
@@ -323,7 +361,7 @@ void Config::init_sharding(const char *filename) {
                 verify(!clients[find_cid]);
                 clients[find_cid] = true;
                 if (cid_ == find_cid) {
-                    find_client_info = true;
+                    client_found = true;
                     break;
                 }
                 else {
@@ -347,7 +385,7 @@ void Config::init_sharding(const char *filename) {
 
                 if (cid_ <= end_cid && cid_ >= start_cid) {
                     start_coordinator_id_ += (cid_ - start_cid) * num_coordinator_threads_;
-                    find_client_info = true;
+                    client_found = true;
                     break;
                 }
                 else
@@ -357,11 +395,12 @@ void Config::init_sharding(const char *filename) {
     }
 
     free(clients);
-    verify(find_client_info);
+    verify(client_found);
 
     int *site_buf = (int *)malloc(sizeof(int) * num_site_);
     verify(site_buf != NULL);
-    BOOST_FOREACH(boost::property_tree::ptree::value_type const &value, pt.get_child("benchmark")) {
+    BOOST_FOREACH(boost::property_tree::ptree::value_type const &value, 
+            pt.get_child("benchmark")) {
         if (value.first == "table") {
             std::string tb_name = value.second.get<std::string>("<xmlattr>.name");
             if (Sharding::sharding_s->tb_info_.find(tb_name) != Sharding::sharding_s->tb_info_.end())

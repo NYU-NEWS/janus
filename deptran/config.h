@@ -18,6 +18,9 @@ private:
     static Config *config_s;
 
     void init_sharding(const char *filename);
+    void init_hostsmap(const char* hostspath);
+
+    std::string host_name2addr(std::string& name);
 
     unsigned int cid_;
     unsigned int sid_;
@@ -47,15 +50,28 @@ private:
     char *logging_path_;
     bool retry_wait_;
 
+public:
+    std::map<string, string> hostsmap_;
+
 protected:
     Config();
 
-    Config(unsigned int cid, unsigned int sid, char *filename, 
-	   char *ctrl_hostname, unsigned int ctrl_port, 
-	   unsigned int ctrl_timeout, char *ctrl_key, char *ctrl_init
-	   /*, char *ctrl_run*/, unsigned int duration, bool heart_beat, 
-	   single_server_t single_server, int server_or_client, 
-	   char *logging_path);
+    Config(unsigned int cid, 
+            unsigned int sid, 
+            char *filename, 
+            char *ctrl_hostname, 
+            unsigned int ctrl_port, 
+            unsigned int ctrl_timeout, 
+            char *ctrl_key, 
+            char *ctrl_init
+	   /*, char *ctrl_run*/, 
+            unsigned int duration, 
+            bool heart_beat, 
+            single_server_t single_server, 
+            int server_or_client, 
+            char *logging_path,
+            char *hostspath
+            );
 
 public:
     static int create_config(int argc, char *argv[]);
