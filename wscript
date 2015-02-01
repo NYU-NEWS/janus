@@ -130,7 +130,9 @@ def build(bld):
                 includes=". rrr deptran test", 
                 use="rrr PTHREAD RT APR APR-UTIL")
 
-    bld.stlib(source=bld.path.ant_glob("deptran/*.cc deptran/util/*.cc "
+    bld.stlib(source=bld.path.ant_glob("deptran/*.cc "
+                                       "deptran/*.cpp "
+                                       "deptran/util/*.cc "
                                        "deptran/tpca/*.cc deptran/tpcc/*.cc "
                                        "deptran/tpcc_real_dist/*.cc "
                                        "deptran/tpcc_dist/*.cc "

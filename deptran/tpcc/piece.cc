@@ -17,7 +17,7 @@ char TPCC_TB_ORDER_C_ID_SECONDARY[] = "order_secondary";
 void TpccPiece::reg_new_order() {
     TxnRegistry::reg(TPCC_NEW_ORDER,
             TPCC_NEW_ORDER_0, // Ri & W district
-            TxnRegistry::DF_NO,
+            DF_NO,
             [] (const RequestHeader &header, 
                 const Value *input,
                 i32 input_size, 
@@ -118,7 +118,7 @@ void TpccPiece::reg_new_order() {
     TxnRegistry::reg(
             TPCC_NEW_ORDER,
             TPCC_NEW_ORDER_1, // R warehouse
-            TxnRegistry::DF_NO,
+            DF_NO,
             [] (const RequestHeader &header, 
                 const Value *input, 
                 i32 input_size, 
@@ -191,7 +191,7 @@ void TpccPiece::reg_new_order() {
     TxnRegistry::reg(
             TPCC_NEW_ORDER,
             TPCC_NEW_ORDER_2, // R customer
-            TxnRegistry::DF_NO, //XXX either i or d is ok
+            DF_NO, //XXX either i or d is ok
             [] (const RequestHeader &header, 
                 const Value *input, 
                 i32 input_size, 
@@ -294,7 +294,7 @@ void TpccPiece::reg_new_order() {
     TxnRegistry::reg(
             TPCC_NEW_ORDER,
             TPCC_NEW_ORDER_3, // W order
-            TxnRegistry::DF_REAL,
+            DF_REAL,
             [] (const RequestHeader &header, 
                 const Value *input, 
                 i32 input_size, 
@@ -470,7 +470,7 @@ void TpccPiece::reg_new_order() {
     TxnRegistry::reg(
             TPCC_NEW_ORDER,
             TPCC_NEW_ORDER_4, // W new_order
-            TxnRegistry::DF_REAL,
+            DF_REAL,
             [] (const RequestHeader &header, 
                 const Value *input, 
                 i32 input_size, 
@@ -598,7 +598,7 @@ void TpccPiece::reg_new_order() {
     TxnRegistry::reg(
             TPCC_NEW_ORDER,
             TPCC_NEW_ORDER_5, // Ri item
-            TxnRegistry::DF_NO,
+            DF_NO,
             [] (const RequestHeader &header, 
                 const Value *input, 
                 i32 input_size, 
@@ -696,7 +696,7 @@ void TpccPiece::reg_new_order() {
     TxnRegistry::reg(
             TPCC_NEW_ORDER,
             TPCC_NEW_ORDER_6, // Ri stock
-            TxnRegistry::DF_NO,
+            DF_NO,
             [] (const RequestHeader &header, const Value *input, i32 input_size, i32 *res, Value *output, i32 *output_size, row_map_t *row_map, Vertex<PieInfo> *pv, Vertex<TxnInfo> *tv, std::vector<TxnInfo *> *conflict_txns) {
                 verify(row_map == NULL);
                 verify(input_size == 3);
@@ -780,7 +780,7 @@ void TpccPiece::reg_new_order() {
     TxnRegistry::reg(
             TPCC_NEW_ORDER,
             TPCC_NEW_ORDER_7, // W stock
-            TxnRegistry::DF_REAL,
+            DF_REAL,
             [] (const RequestHeader &header, const Value *input, i32 input_size, i32 *res, Value *output, i32 *output_size, row_map_t *row_map, Vertex<PieInfo> *pv, Vertex<TxnInfo> *tv, std::vector<TxnInfo *> *conflict_txns) {
                 verify(input_size == 4);
                 Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_7);
@@ -929,7 +929,7 @@ void TpccPiece::reg_new_order() {
     TxnRegistry::reg(
             TPCC_NEW_ORDER,
             TPCC_NEW_ORDER_8, // W order_line
-            TxnRegistry::DF_REAL,
+            DF_REAL,
             [] (const RequestHeader &header, const Value *input, i32 input_size, i32 *res, Value *output, i32 *output_size, row_map_t *row_map, Vertex<PieInfo> *pv, Vertex<TxnInfo> *tv, std::vector<TxnInfo *> *conflict_txns) {
                 verify(input_size == 10);
                 Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_8);
@@ -1069,7 +1069,7 @@ void TpccPiece::reg_payment() {
     TxnRegistry::reg(
             TPCC_PAYMENT,      // txn
             TPCC_PAYMENT_0,    // piece 0, Ri & W warehouse
-            TxnRegistry::DF_NO, // immediately read
+            DF_NO, // immediately read
             [] (const RequestHeader &header, const Value *input, i32 input_size, i32 *res, Value *output, i32 *output_size, row_map_t *row_map, Vertex<PieInfo> *pv, Vertex<TxnInfo> *tv, std::vector<TxnInfo *> *conflict_txns) {
                 verify(row_map == NULL);
                 verify(input_size == 2);
@@ -1185,7 +1185,7 @@ void TpccPiece::reg_payment() {
     TxnRegistry::reg(
             TPCC_PAYMENT,      // txn
             TPCC_PAYMENT_1,    // piece 1, Ri district
-            TxnRegistry::DF_NO, // immediately read
+            DF_NO, // immediately read
             [] (const RequestHeader &header, const Value *input, i32 input_size, i32 *res, Value *output, i32 *output_size, row_map_t *row_map, Vertex<PieInfo> *pv, Vertex<TxnInfo> *tv, std::vector<TxnInfo *> *conflict_txns) {
                 verify(row_map == NULL);
                 verify(input_size == 2);
@@ -1295,7 +1295,7 @@ void TpccPiece::reg_payment() {
     TxnRegistry::reg(
             TPCC_PAYMENT,      // txn
             TPCC_PAYMENT_2,    // piece 1, Ri & W district
-            TxnRegistry::DF_REAL,
+            DF_REAL,
             [] (const RequestHeader &header, const Value *input, i32 input_size, i32 *res, Value *output, i32 *output_size, row_map_t *row_map, Vertex<PieInfo> *pv, Vertex<TxnInfo> *tv, std::vector<TxnInfo *> *conflict_txns) {
                 verify(input_size == 3);
                 Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_2);
@@ -1389,7 +1389,7 @@ void TpccPiece::reg_payment() {
     TxnRegistry::reg(
             TPCC_PAYMENT,      // txn
             TPCC_PAYMENT_3,    // piece 2, R customer secondary index, c_last -> c_id
-            TxnRegistry::DF_NO,
+            DF_NO,
             [] (const RequestHeader &header, const Value *input, i32 input_size, i32 *res, Value *output, i32 *output_size, row_map_t *row_map, Vertex<PieInfo> *pv, Vertex<TxnInfo> *tv, std::vector<TxnInfo *> *conflict_txns) {
                 verify(row_map == NULL);
                 verify(input_size == 3);
@@ -1456,7 +1456,7 @@ void TpccPiece::reg_payment() {
     TxnRegistry::reg(
             TPCC_PAYMENT,      // txn
             TPCC_PAYMENT_4,    // piece 4, R & W customer
-            TxnRegistry::DF_REAL,
+            DF_REAL,
             [] (const RequestHeader &header, const Value *input, i32 input_size, i32 *res, Value *output, i32 *output_size, row_map_t *row_map, Vertex<PieInfo> *pv, Vertex<TxnInfo> *tv, std::vector<TxnInfo *> *conflict_txns) {
                 verify(input_size == 6);
                 Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_4);
@@ -1683,7 +1683,7 @@ void TpccPiece::reg_payment() {
     TxnRegistry::reg(
             TPCC_PAYMENT,      // txn
             TPCC_PAYMENT_5,    // piece 4, W histroy
-            TxnRegistry::DF_REAL,
+            DF_REAL,
             [] (const RequestHeader &header, const Value *input, i32 input_size, i32 *res, Value *output, i32 *output_size, row_map_t *row_map, Vertex<PieInfo> *pv, Vertex<TxnInfo> *tv, std::vector<TxnInfo *> *conflict_txns) {
                 verify(input_size == 9);
                 Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_5);
@@ -1767,7 +1767,7 @@ void TpccPiece::reg_order_status() {
     TxnRegistry::reg(
             TPCC_ORDER_STATUS, // RO
             TPCC_ORDER_STATUS_0, // piece 0, R customer secondary index, c_last -> c_id
-            TxnRegistry::DF_NO,
+            DF_NO,
             [] (const RequestHeader &header, const Value *input, i32 input_size, i32 *res, Value *output, i32 *output_size, row_map_t *row_map, Vertex<PieInfo> *pv, Vertex<TxnInfo> *tv, std::vector<TxnInfo *> *conflict_txns) {
                 verify(row_map == NULL);
                 verify(input_size == 3);
@@ -1834,7 +1834,7 @@ void TpccPiece::reg_order_status() {
     TxnRegistry::reg(
             TPCC_ORDER_STATUS, // RO
             TPCC_ORDER_STATUS_1, // Ri customer
-            TxnRegistry::DF_NO,
+            DF_NO,
             [] (const RequestHeader &header, const Value *input, i32 input_size, i32 *res, Value *output, i32 *output_size, row_map_t *row_map, Vertex<PieInfo> *pv, Vertex<TxnInfo> *tv, std::vector<TxnInfo *> *conflict_txns) {
                 verify(row_map == NULL);
                 Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_1);
@@ -1935,7 +1935,7 @@ void TpccPiece::reg_order_status() {
     TxnRegistry::reg(
             TPCC_ORDER_STATUS, // RO
             TPCC_ORDER_STATUS_2, // Ri order
-            TxnRegistry::DF_NO,
+            DF_NO,
             [] (const RequestHeader &header, const Value *input, i32 input_size, i32 *res, Value *output, i32 *output_size, row_map_t *row_map, Vertex<PieInfo> *pv, Vertex<TxnInfo> *tv, std::vector<TxnInfo *> *conflict_txns) {
                 verify(row_map == NULL);
                 Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_2);
@@ -2095,7 +2095,7 @@ void TpccPiece::reg_order_status() {
     TxnRegistry::reg(
             TPCC_ORDER_STATUS, // RO
             TPCC_ORDER_STATUS_3, // R order_line
-            TxnRegistry::DF_NO,
+            DF_NO,
             [] (const RequestHeader &header, const Value *input, i32 input_size, i32 *res, Value *output, i32 *output_size, row_map_t *row_map, Vertex<PieInfo> *pv, Vertex<TxnInfo> *tv, std::vector<TxnInfo *> *conflict_txns) {
                 verify(row_map == NULL);
                 Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_3);
@@ -2273,7 +2273,7 @@ void TpccPiece::reg_delivery() {
     TxnRegistry::reg(
             TPCC_DELIVERY,
             TPCC_DELIVERY_0, // Ri & W new_order
-            TxnRegistry::DF_FAKE,
+            DF_FAKE,
             // this is a little bit tricky, the first half will do most of the job,
             // removing the row from the table, but it won't actually release the
             // resource. And the bottom half is in charge of release the resource,
@@ -2439,7 +2439,7 @@ void TpccPiece::reg_delivery() {
     TxnRegistry::reg(
             TPCC_DELIVERY,
             TPCC_DELIVERY_1, // Ri & W order
-            TxnRegistry::DF_NO,
+            DF_NO,
             [] (const RequestHeader &header, 
                 const Value *input, 
                 i32 input_size, 
@@ -2534,7 +2534,7 @@ void TpccPiece::reg_delivery() {
     TxnRegistry::reg(
             TPCC_DELIVERY,
             TPCC_DELIVERY_2, // Ri & W order_line
-            TxnRegistry::DF_NO,
+            DF_NO,
             [] (const RequestHeader &header, 
                 const Value *input, 
                 i32 input_size, 
@@ -2686,7 +2686,7 @@ void TpccPiece::reg_delivery() {
     TxnRegistry::reg(
             TPCC_DELIVERY,
             TPCC_DELIVERY_3, // W customer
-            TxnRegistry::DF_REAL,
+            DF_REAL,
             [] (const RequestHeader &header, const Value *input, i32 input_size, i32 *res, Value *output, i32 *output_size, row_map_t *row_map, Vertex<PieInfo> *pv, Vertex<TxnInfo> *tv, std::vector<TxnInfo *> *conflict_txns) {
                 Log::debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_3);
                 verify(input_size == 4);
@@ -2800,7 +2800,7 @@ void TpccPiece::reg_stock_level() {
     TxnRegistry::reg(
             TPCC_STOCK_LEVEL,
             TPCC_STOCK_LEVEL_0, // Ri district
-            TxnRegistry::DF_NO,
+            DF_NO,
             [] (const RequestHeader &header, 
                 const Value *input, 
                 i32 input_size, 
@@ -2876,7 +2876,7 @@ void TpccPiece::reg_stock_level() {
 
     TxnRegistry::reg(TPCC_STOCK_LEVEL,
             TPCC_STOCK_LEVEL_1, // Ri order_line
-            TxnRegistry::DF_NO,
+            DF_NO,
             [] (const RequestHeader &header, const Value *input,
             i32 input_size, i32 *res, Value *output,
             i32 *output_size, row_map_t *row_map,
@@ -2981,7 +2981,7 @@ void TpccPiece::reg_stock_level() {
     TxnRegistry::reg(
             TPCC_STOCK_LEVEL,
             TPCC_STOCK_LEVEL_2, // R stock
-            TxnRegistry::DF_NO,
+            DF_NO,
             [] (const RequestHeader &header, 
                 const Value *input, 
                 i32 input_size, 

@@ -5,7 +5,7 @@ using namespace rrr;
 using namespace rcc;
 
 TEST(dtxn, txn_registry) {
-    TxnRegistry::reg(1, 1, TxnRegistry::DF_NO, [] (const RequestHeader& header,
+    TxnRegistry::reg(1, 1, DF_NO, [] (const RequestHeader& header,
                                const Value *input,
                                rrr::i32 input_size,
                                rrr::i32 *res,

@@ -10,7 +10,7 @@ void RWPiece::reg_all() {
 }
 
 void RWPiece::reg_pieces() {
-    TxnRegistry::reg(RW_BENCHMARK_R_TXN, RW_BENCHMARK_R_TXN_0, TxnRegistry::DF_NO,
+    TxnRegistry::reg(RW_BENCHMARK_R_TXN, RW_BENCHMARK_R_TXN_0, DF_NO,
             [] (const RequestHeader& header,
                 const Value *input,
                 rrr::i32 input_size,
@@ -37,7 +37,7 @@ void RWPiece::reg_pieces() {
         return;
     });
 
-    TxnRegistry::reg(RW_BENCHMARK_W_TXN, RW_BENCHMARK_W_TXN_0, TxnRegistry::DF_REAL,
+    TxnRegistry::reg(RW_BENCHMARK_W_TXN, RW_BENCHMARK_W_TXN_0, DF_REAL,
             [] (const RequestHeader& header,
                 const Value *input,
                 rrr::i32 input_size,

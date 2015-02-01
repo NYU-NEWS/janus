@@ -12,7 +12,7 @@ void TpcaPiece::reg_all() {
 }
 
 void TpcaPiece::reg_pieces() {
-    TxnRegistry::reg(TPCA_PAYMENT, TPCA_PAYMENT_1, TxnRegistry::DF_REAL,
+    TxnRegistry::reg(TPCA_PAYMENT, TPCA_PAYMENT_1, DF_REAL,
             [] (const RequestHeader& header,
                 const Value *input,
                 rrr::i32 input_size,
@@ -128,7 +128,7 @@ void TpcaPiece::reg_pieces() {
         }
     });
 
-    TxnRegistry::reg(TPCA_PAYMENT, TPCA_PAYMENT_2, TxnRegistry::DF_REAL,
+    TxnRegistry::reg(TPCA_PAYMENT, TPCA_PAYMENT_2, DF_REAL,
             [] (const RequestHeader& header,
                 const Value *input,
                 rrr::i32 input_size,
@@ -245,7 +245,7 @@ void TpcaPiece::reg_pieces() {
         }
     });
 
-    TxnRegistry::reg(TPCA_PAYMENT, TPCA_PAYMENT_3, TxnRegistry::DF_REAL,
+    TxnRegistry::reg(TPCA_PAYMENT, TPCA_PAYMENT_3, DF_REAL,
             [] (const RequestHeader& header,
                 const Value *input,
                 rrr::i32 input_size,

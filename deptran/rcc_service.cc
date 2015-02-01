@@ -343,7 +343,7 @@ void RococoServiceImpl::rcc_batch_start_pie_job(
         // execute the IR actions.
         bool &is_defered_buf = pi.defer_;
         //cell_entry_map_t rw_entry;
-        TxnRegistry::exe_deptran_start(header, input, is_defered_buf, output, pv, tv);
+        RCC::exe_deptran_start(header, input, is_defered_buf, output, pv, tv);
         res->is_defers[i] = is_defered_buf ? 1 : 0;
 
         //dep_s->start_pie(pi, opset, rw_entry);
@@ -417,11 +417,10 @@ void RococoServiceImpl::rcc_start_pie_job(
     // execute the IR actions.
     bool &is_defered_buf = pi.defer_;
     //cell_entry_map_t rw_entry;
-    TxnRegistry::exe_deptran_start(header, 
-                                   input, 
-                                   is_defered_buf, 
-                                   res->output, pv, 
-                                   tv/*&rw_entry*/);
+    RCC::exe_deptran_start(header, 
+            input, is_defered_buf, 
+            res->output, pv, 
+            tv/*&rw_entry*/);
     res->is_defered = is_defered_buf ? 1 : 0;
 
     //dep_s->start_pie(pi, opset, rw_entry);
@@ -515,7 +514,7 @@ void RococoServiceImpl::rcc_finish_to_commit(
 
                     // this res may not be mine !!!!
                     if (vv->data_.res != nullptr) {
-                        TxnRegistry::exe_deptran_finish(vv->data_.id(), vv->data_.res->outputs);
+                        RCC::exe_deptran_finish(vv->data_.id(), vv->data_.res->outputs);
                     }
 
                     Log::debug("txn commit. tid:%llx", vv->data_.id());
@@ -696,7 +695,7 @@ void RococoServiceImpl::rcc_ro_start_pie(
 
     //cell_entry_map_t rw_entry;
     std::vector<TxnInfo*> conflict_txns;
-    TxnRegistry::exe_deptran_start_ro(header, input, *output, &conflict_txns);
+    RCC::exe_deptran_start_ro(header, input, *output, &conflict_txns);
 
     // get conflicting transactions
     //dep_s->conflict_txn(opset, conflict_txns, rw_entry);

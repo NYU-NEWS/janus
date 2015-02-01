@@ -85,6 +85,7 @@ static dummy_class dummy___;
 #include "rcc_rpc.h"
 #include "dtxn.h"
 #include "txn_reg.hpp"
+#include "rcc.hpp"
 #include "dep_graph.hpp"
 #include "marshal-value.h"
 #include "rcc_service.h"
