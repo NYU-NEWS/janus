@@ -4,7 +4,7 @@
 #include <vector>
 #include <string>
 
-namespace rcc {
+namespace rococo {
 
 class Config {
 public:

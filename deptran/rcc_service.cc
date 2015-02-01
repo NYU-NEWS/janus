@@ -1,8 +1,7 @@
 #include "all.h"
 
-namespace rcc {
+namespace rococo {
 
-DepGraph *RococoServiceImpl::dep_s = NULL;
 
 RococoServiceImpl::RococoServiceImpl(ServerControlServiceImpl *scsi) : 
     scsi_(scsi) {
@@ -12,7 +11,8 @@ RococoServiceImpl::RococoServiceImpl(ServerControlServiceImpl *scsi) :
     piece_count_prepare_fail_ = 0;
     piece_count_prepare_success_ = 0;
 #endif
-    dep_s = new DepGraph();
+    verify(RCC::dep_s == NULL);
+    RCC::dep_s = new DepGraph();
 
     if (Config::get_config()->do_logging()) {
         auto path = Config::get_config()->log_path();
@@ -315,7 +315,7 @@ void RococoServiceImpl::rcc_batch_start_pie_job(
     // TODO
     verify(TxnRunner::get_running_mode() == MODE_RCC);
 
-    Vertex<TxnInfo> *tv = dep_s->start_pie_txn(headers[0].tid);
+    Vertex<TxnInfo> *tv = RCC::dep_s->start_pie_txn(headers[0].tid);
 
     for (int i = 0; i < headers.size(); i++) {
         auto &header = headers[i];
@@ -338,7 +338,7 @@ void RococoServiceImpl::rcc_batch_start_pie_job(
         //lock_oracle(header, input.data(), input.size(), &opset);
 
         Vertex<PieInfo> *pv;
-        dep_s->start_pie(pi, &pv, NULL);
+        RCC::dep_s->start_pie(pi, &pv, NULL);
 
         // execute the IR actions.
         bool &is_defered_buf = pi.defer_;
@@ -351,7 +351,7 @@ void RococoServiceImpl::rcc_batch_start_pie_job(
     //  return the resutls.
     // only return a part of the graph.
     auto &tid = headers[0].tid;
-    dep_s->sub_txn_graph(tid, res->gra_m);
+    RCC::dep_s->sub_txn_graph(tid, res->gra_m);
 
     //static int64_t sample = 0;
     //if (sample++ % 100 == 0) {
@@ -412,7 +412,7 @@ void RococoServiceImpl::rcc_start_pie_job(
 
     Vertex<PieInfo> *pv = NULL;
     Vertex<TxnInfo> *tv = NULL;
-    dep_s->start_pie(pi, &pv, &tv);
+    RCC::dep_s->start_pie(pi, &pv, &tv);
 
     // execute the IR actions.
     bool &is_defered_buf = pi.defer_;
@@ -427,7 +427,7 @@ void RococoServiceImpl::rcc_start_pie_job(
 
     //  return the 2resutls.
     // only return a part of the graph.
-    auto sz_sub_gra = dep_s->sub_txn_graph(header.tid, res->gra_m);
+    auto sz_sub_gra = RCC::dep_s->sub_txn_graph(header.tid, res->gra_m);
 
     stat_sz_gra_start_.sample(sz_sub_gra);
 
@@ -463,9 +463,9 @@ void RococoServiceImpl::rcc_finish_txn(
     }
 
     // union the graph into dep graph
-    dep_s->txn_gra_.union_graph(req.gra, true);
+    RCC::dep_s->txn_gra_.union_graph(req.gra, true);
 
-    Graph<TxnInfo> &txn_gra_ = dep_s->txn_gra_;
+    Graph<TxnInfo> &txn_gra_ = RCC::dep_s->txn_gra_;
     Vertex<TxnInfo> *v = txn_gra_.find(req.txn_id);
 
     verify(v != NULL);
@@ -488,7 +488,7 @@ void RococoServiceImpl::rcc_finish_to_commit(
         tinfo.during_commit = true;
     }
 
-    Graph<TxnInfo> &txn_gra = dep_s->txn_gra_;
+    Graph<TxnInfo> &txn_gra = RCC::dep_s->txn_gra_;
     // a commit function.
 
     std::function<void(void)> scc_anc_commit_cb = [&txn_gra, v, defer, this] () {
@@ -557,7 +557,7 @@ void RococoServiceImpl::rcc_finish_to_commit(
         // after all ancestors become COMMITTING
         // wait for all ancestors of scc become DECIDED
         std::set<Vertex<TxnInfo>* > scc_anc;
-        this->dep_s->find_txn_scc_nearest_anc(v, scc_anc);
+        RCC::dep_s->find_txn_scc_nearest_anc(v, scc_anc);
 
         DragonBall *wait_commit_ball = new DragonBall(scc_anc.size() + 1, 
                                                       scc_anc_commit_cb);
@@ -571,7 +571,7 @@ void RococoServiceImpl::rcc_finish_to_commit(
     };
 
     std::unordered_set<Vertex<TxnInfo>*> anc;
-    dep_s->find_txn_anc_opt(v, anc);
+    RCC::dep_s->find_txn_anc_opt(v, anc);
 
 
     DragonBall *wait_finish_ball = new DragonBall(anc.size() + 1, anc_finish_cb);
@@ -584,7 +584,7 @@ void RococoServiceImpl::rcc_finish_to_commit(
 }
 
 void RococoServiceImpl::rcc_ask_finish(Vertex<TxnInfo>* av) {
-    Graph<TxnInfo> &txn_gra = this->dep_s->txn_gra_;
+    Graph<TxnInfo> &txn_gra = RCC::dep_s->txn_gra_;
     TxnInfo &tinfo = av->data_;
     if (!tinfo.is_involved()) {
 
@@ -602,7 +602,7 @@ void RococoServiceImpl::rcc_ask_finish(Vertex<TxnInfo>* av) {
                 scsi_->do_statistics(S_RES_KEY_N_ASK, 1);
             }
             int32_t sid = tinfo.random_server();
-            RococoProxy* proxy = dep_s->get_server_proxy(sid);
+            RococoProxy* proxy = RCC::dep_s->get_server_proxy(sid);
 
             rrr::FutureAttr fuattr;
             fuattr.callback = [this, av, &txn_gra] (Future *fu) {
@@ -657,13 +657,13 @@ void RococoServiceImpl::rcc_ask_txn(
     std::lock_guard<std::mutex> guard(mtx_);
 
     verify(TxnRunner::get_running_mode() == MODE_RCC);
-    Vertex<TxnInfo> *v = dep_s->txn_gra_.find(tid);
+    Vertex<TxnInfo> *v = RCC::dep_s->txn_gra_.find(tid);
 
     std::function<void(void)> callback = [this, res, defer, tid] () {
 
         // not the entire graph!!!!!
         // should only return a part of the graph.
-        this->dep_s->sub_txn_graph(tid, res->gra_m);
+        RCC::dep_s->sub_txn_graph(tid, res->gra_m);
 //       Log::debug("return a sub graph for other server's unrelated txn: %llx, graph size: %d", tid, (int) res->gra_m.gra->size());
 
         //Graph<TxnInfo> &txn_gra = this->dep_s->txn_gra_;

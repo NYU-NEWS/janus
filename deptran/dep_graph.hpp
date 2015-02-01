@@ -5,7 +5,7 @@
 /**
  * This is NOT thread safe!!!
  */
-namespace rcc {
+namespace rococo {
 
 class DepGraph {
 public:

@@ -8,7 +8,7 @@
 #include <boost/property_tree/ptree.hpp>
 #include <boost/property_tree/xml_parser.hpp>
 
-namespace rcc {
+namespace rococo {
 
 Config *Config::config_s = NULL;
 

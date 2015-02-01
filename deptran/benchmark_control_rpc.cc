@@ -1,6 +1,6 @@
 #include "all.h"
 
-namespace rcc {
+namespace rococo {
 
 ServerControlServiceImpl *ServerControlServiceImpl::scsi_s = NULL;
 

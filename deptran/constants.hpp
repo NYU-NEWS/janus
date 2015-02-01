@@ -1,7 +1,7 @@
 #ifndef CONSTANTS_HPP_
 #define CONSTANTS_HPP_
 
-namespace rcc {
+namespace rococo {
 
 /** read and write type */
 #define WRITE   (0x01)

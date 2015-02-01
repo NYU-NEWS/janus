@@ -2,7 +2,7 @@
 #include "all.h"
 
 
-namespace rcc {
+namespace rococo {
 
 
 void GraphMarshaler::marshal_help_1(rrr::Marshal &m, const std::unordered_set<Vertex<TxnInfo>*> &ret_set, Vertex<TxnInfo> *old_sv) const {

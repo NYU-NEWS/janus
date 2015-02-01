@@ -2,7 +2,7 @@
 #include "deptran/all.h"
 
 using namespace base;
-using namespace deptran;
+using namespace rococo;
 
 static char *create_argv(int &argc, char ** &argv) {
     char *argv_buf = (char *)malloc(500);

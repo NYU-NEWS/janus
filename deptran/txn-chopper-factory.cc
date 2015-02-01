@@ -1,6 +1,6 @@
 #include "all.h"
 
-namespace rcc {
+namespace rococo {
 
 TxnChopper* TxnChopperFactory::gen_chopper(TxnRequest& req, int benchmark) {
     TxnChopper* ch = NULL;

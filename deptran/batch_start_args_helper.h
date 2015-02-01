@@ -4,7 +4,7 @@
 #include "memdb/value.h"
 #include <vector>
 
-namespace rcc {
+namespace rococo {
 
 class BatchStartArgsHelper {
 private:

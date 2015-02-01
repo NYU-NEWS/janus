@@ -3,7 +3,7 @@
 #include <algorithm>
 #include "all.h"
 
-namespace rcc {
+namespace rococo {
 
 
 //template <typename T> class EdgeMap {

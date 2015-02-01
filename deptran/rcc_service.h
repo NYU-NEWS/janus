@@ -5,7 +5,7 @@
 
 #define DepTranServiceImpl RococoServiceImpl
 
-namespace rcc {
+namespace rococo {
 
 class ServerControlServiceImpl;
 
@@ -98,7 +98,6 @@ public:
 
 public:
 
-    static DepGraph *dep_s;
 
     RococoServiceImpl(ServerControlServiceImpl *scsi = NULL);
 

@@ -1,10 +1,8 @@
-#ifndef DTXN_H_
-#define DTXN_H_
-
+#pragma once
+#include "dep_graph.hpp"
 #include "all.h"
 
-namespace rcc {
-
+namespace rococo {
 
 struct entry_t {
     Vertex<TxnInfo> *last_ = NULL;
@@ -451,6 +449,7 @@ public:
 
     static map<i64, std::vector<DeferredRequest>> deferred_reqs_;
 
+    static DepGraph *dep_s;
 };
 
 // in charge of locks and staging area
@@ -528,5 +527,3 @@ private:
 
 
 } // namespace deptran
-
-#endif

@@ -1,6 +1,6 @@
 #include "all.h"
 
-namespace rcc {
+namespace rococo {
 
 //BatchStartArgsHelper::BatchStartArgsHelper(std::vector<Value> *arg) : arg_(arg) {
 //}

@@ -4,7 +4,7 @@
 #include "memdb/row.h"
 #include <vector>
 
-namespace rcc {
+namespace rococo {
 
 struct entry_t;
 

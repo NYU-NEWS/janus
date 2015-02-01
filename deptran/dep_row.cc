@@ -1,6 +1,6 @@
 #include "all.h"
 
-namespace rcc {
+namespace rococo {
 
 void DepRow::init_dep(int n_columns) {
     dep_entry_ = new entry_t[n_columns];

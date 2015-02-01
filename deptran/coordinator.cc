@@ -12,7 +12,7 @@
  *
  */
 
-namespace rcc {
+namespace rococo {
 
 Coordinator::Coordinator(
         uint32_t coo_id,

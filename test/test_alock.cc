@@ -3,7 +3,7 @@
 #include "rrr.hpp"
 #include "deptran/all.h"
 
-using namespace rcc;
+using namespace rococo;
 
 TEST(alock, timeout_one) {
     TimeoutALock al;

@@ -3,7 +3,7 @@
 
 #include "all.h"
 
-namespace rcc {
+namespace rococo {
 
 
 //TEST(sm, simple) {

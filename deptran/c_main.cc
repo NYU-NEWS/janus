@@ -1,6 +1,6 @@
 #include "all.h"
 
-using namespace rcc;
+using namespace rococo;
 
 typedef struct {
     unsigned int coo_id;

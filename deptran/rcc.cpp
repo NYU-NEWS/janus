@@ -1,8 +1,11 @@
 #include "all.h"
 
-namespace rcc {
+namespace rococo {
 
-map<i64, std::vector<RCC::DeferredRequest>> RCC::deferred_reqs_;
+std::map<i64, std::vector<RCC::DeferredRequest>> RCC::deferred_reqs_;
+
+DepGraph *RCC::dep_s = NULL;
+
 
 void RCC::exe_deptran_finish(i64 tid,
         std::vector<std::pair<RequestHeader, std::vector<mdb::Value> > >

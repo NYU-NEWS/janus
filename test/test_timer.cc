@@ -3,7 +3,7 @@
 #include "deptran/all.h"
 #include "time.h"
 
-using namespace rcc;
+using namespace rococo;
 using namespace rrr;
 
 TEST(Time, perf) {

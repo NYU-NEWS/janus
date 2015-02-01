@@ -3,7 +3,7 @@
 
 #include <string>
 
-namespace rcc {
+namespace rococo {
 
 class Piece {
 public:

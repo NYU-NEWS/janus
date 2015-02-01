@@ -10,7 +10,7 @@
 #include <mach/mach.h>
 #endif
 
-namespace rcc {
+namespace rococo {
 
 extern const char S_RES_KEY_N_SCC[];
 extern const char S_RES_KEY_N_ASK[];

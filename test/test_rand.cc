@@ -5,7 +5,7 @@
 #include "base/all.hpp"
 #include "deptran/all.h"
 
-using namespace rcc;
+using namespace rococo;
 
 #define N_RAND_THREAD (100)
 #define N_RAND_RAND (100000000)

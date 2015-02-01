@@ -6,7 +6,7 @@
 
 rrr::PollMgr *poll_mgr_g = nullptr;
 
-namespace rcc {
+namespace rococo {
 
 static pthread_t th_id_s = 0;
 

@@ -3,7 +3,7 @@
 #include <google/profiler.h>
 #endif
 
-using namespace rcc;
+using namespace rococo;
 
 extern rrr::PollMgr *poll_mgr_g;
 

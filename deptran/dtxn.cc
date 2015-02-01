@@ -1,6 +1,6 @@
 #include "all.h"
 
-namespace rcc {
+namespace rococo {
 
 void entry_t::touch(Vertex<TxnInfo> *tv, bool immediate ) {
     int8_t edge_type = immediate ? EDGE_I : EDGE_D;

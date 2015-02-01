@@ -2,7 +2,7 @@
 #include "deptran/all.h"
 
 using namespace rrr;
-using namespace rcc;
+using namespace rococo;
 
 TEST(dtxn, txn_registry) {
     TxnRegistry::reg(1, 1, DF_NO, [] (const RequestHeader& header,

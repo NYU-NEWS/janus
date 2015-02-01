@@ -1,7 +1,7 @@
 
 #include "all.h"
 
-namespace rcc {
+namespace rococo {
 
 TxnChopper::TxnChopper() {
     clock_gettime(&start_time_);

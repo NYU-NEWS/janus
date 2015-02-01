@@ -6,7 +6,7 @@
 
 #define N (10)
 
-using namespace rcc;
+using namespace rococo;
 
 
 TEST(tpca, choping) {

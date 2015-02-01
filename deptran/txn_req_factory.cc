@@ -1,6 +1,6 @@
 #include "all.h"
 
-namespace rcc {
+namespace rococo {
 
 TxnRequestFactory *TxnRequestFactory::txn_req_factory_s = NULL;
 
