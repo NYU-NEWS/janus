@@ -6,8 +6,8 @@ std::map<i64, std::vector<RCC::DeferredRequest>> RCC::deferred_reqs_;
 
 DepGraph *RCC::dep_s = NULL;
 
-
-void RCC::exe_deptran_finish(i64 tid,
+void RCC::finish(
+        i64 tid,
         std::vector<std::pair<RequestHeader, std::vector<mdb::Value> > >
         &outputs) {
     auto dt_it = deferred_reqs_.find(tid);
@@ -45,7 +45,7 @@ void RCC::exe_deptran_finish(i64 tid,
     }
 }
 
-void RCC::exe_deptran_start(
+void RCC::start(
         const RequestHeader &header,
         const std::vector<mdb::Value> &input,
         bool &is_defered,
@@ -115,7 +115,7 @@ void RCC::exe_deptran_start(
 }
 
 
-void RCC::exe_deptran_start_ro(
+void RCC::start_ro(
         const RequestHeader &header,
         const std::vector<mdb::Value> &input,
         std::vector<mdb::Value> &output,

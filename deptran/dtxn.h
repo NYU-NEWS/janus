@@ -419,26 +419,26 @@ private:
 
 class RCC {
 public:
-    static void exe_deptran_start(
-        const RequestHeader &header,
-        const std::vector<mdb::Value> &input,
-        bool &is_defered,
-        std::vector<mdb::Value> &output,
-        Vertex <PieInfo> *pv,
-        Vertex <TxnInfo> *tv
-        //cell_entry_map_t *rw_entry
+    static void start(
+            const RequestHeader &header,
+            const std::vector<mdb::Value> &input,
+            bool &is_defered,
+            std::vector<mdb::Value> &output,
+            Vertex<PieInfo> *pv,
+            Vertex<TxnInfo> *tv
+            //cell_entry_map_t *rw_entry
     );
 
-    static void exe_deptran_start_ro(
-        const RequestHeader &header,
-        const std::vector<mdb::Value> &input,
-        std::vector<mdb::Value> &output,
-        std::vector<TxnInfo *> *conflict_txns
+    static void start_ro(
+            const RequestHeader &header,
+            const std::vector<mdb::Value> &input,
+            std::vector<mdb::Value> &output,
+            std::vector<TxnInfo *> *conflict_txns
     );
 
-    static void exe_deptran_finish(
-        i64 tid,
-        std::vector<std::pair<RequestHeader, std::vector<mdb::Value> > > &outputs);
+    static void finish(
+            i64 tid,
+            std::vector<std::pair<RequestHeader, std::vector<mdb::Value> > > &outputs);
 
     typedef struct {
         RequestHeader header;
@@ -452,37 +452,13 @@ public:
     static DepGraph *dep_s;
 };
 
-// in charge of locks and staging area
-class TxnRunner {
+class TPL {
 public:
-
-    static void get_prepare_log(i64 txn_id,
-            const std::vector<i32> &sids,
-            std::string *str);
-
     static int do_prepare(i64 txn_id);
+
     static int do_commit(i64 txn_id);
+
     static int do_abort(i64 txn_id/*, rrr::DeferredReply* defer*/);
-    static void init(int mode);
-    // finalize, free up resource
-    static void fini();
-    static inline int get_running_mode() { return running_mode_s; }
-
-    static void reg_table(const string& name,
-            mdb::Table *tbl
-            );
-
-    static mdb::Txn *get_txn(const RequestHeader &req);
-
-//    static txn_entry_t *get_txn_entry(const RequestHeader &req);
-//
-//    static PieceStatus *get_piece_status(const RequestHeader &req, bool insert = false);
-//
-    static inline
-        mdb::Table
-        *get_table(const string& name) {
-        return txn_mgr_s->get_table(name);
-    }
 
     static std::function<void(void)> get_2pl_proceed_callback(
             const RequestHeader &header,
@@ -496,16 +472,16 @@ public:
             mdb::Txn2PL::PieceStatus *ps);
 
     static std::function<void(void)> get_2pl_succ_callback(
-        const RequestHeader &header,
-        const mdb::Value *input,
-        rrr::i32 input_size,
-        rrr::i32 *res,
-        mdb::Txn2PL::PieceStatus *ps,
-        std::function<void(
-            const RequestHeader &,
-            const Value *,
-            rrr::i32,
-            rrr::i32 *)> func);
+            const RequestHeader &header,
+            const mdb::Value *input,
+            rrr::i32 input_size,
+            rrr::i32 *res,
+            mdb::Txn2PL::PieceStatus *ps,
+            std::function<void(
+                    const RequestHeader &,
+                    const Value *,
+                    rrr::i32,
+                    rrr::i32 *)> func);
 
     static std::function<void(void)> get_2pl_succ_callback(
             const RequestHeader &req,
@@ -513,6 +489,42 @@ public:
             rrr::i32 input_size,
             rrr::i32 *res,
             mdb::Txn2PL::PieceStatus *ps);
+};
+
+// TODO: seems that this class is both in charge of of the Txn playground and the 2PL/OCC controller.
+// in charge of locks and staging area
+class TxnRunner {
+public:
+
+    static void get_prepare_log(i64 txn_id,
+            const std::vector<i32> &sids,
+            std::string *str);
+
+    static void init(int mode);
+    // finalize, free up resource
+    static void fini();
+    static inline int get_running_mode() { return running_mode_s; }
+
+    static void reg_table(const string& name,
+            mdb::Table *tbl
+            );
+
+    static mdb::Txn *get_txn(const i64 tid);
+
+    static mdb::Txn *get_txn(const RequestHeader &req);
+
+    static mdb::Txn *del_txn(const i64 tid);
+
+//    static txn_entry_t *get_txn_entry(const RequestHeader &req);
+//
+//    static PieceStatus *get_piece_status(const RequestHeader &req, bool insert = false);
+//
+    static inline
+        mdb::Table
+        *get_table(const string& name) {
+        return txn_mgr_s->get_table(name);
+    }
+
 
 private:
     // prevent instance creation
@@ -521,9 +533,9 @@ private:
     static int running_mode_s;
 
     static map<i64, mdb::Txn *> txn_map_s;
-    //static pthread_mutex_t txn_map_mutex_s;
     static mdb::TxnMgr *txn_mgr_s;
+
 };
 
 
-} // namespace deptran
+} // namespace rococo

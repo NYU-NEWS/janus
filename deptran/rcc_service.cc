@@ -166,7 +166,7 @@ void RococoServiceImpl::prepare_txn_job(
     if (log_s)
         TxnRunner::get_prepare_log(tid, sids, log_s);
 
-    *res = TxnRunner::do_prepare(tid);
+    *res = TPL::do_prepare(tid);
 
 #ifdef PIECE_COUNT
     std::map<piece_count_key_t, uint64_t>::iterator pc_it;
@@ -194,7 +194,7 @@ void RococoServiceImpl::commit_txn(
         rrr::DeferredReply* defer) {
 
     std::lock_guard<std::mutex> guard(mtx_);
-    *res = TxnRunner::do_commit(tid);
+    *res = TPL::do_commit(tid);
     if (Config::get_config()->do_logging()) {
         const char commit_tag = 'c';
         std::string log_s;
@@ -221,7 +221,7 @@ void RococoServiceImpl::abort_txn(
     //else {
     //    TxnRunner::do_abort(tid, defer);
     //}
-    *res = TxnRunner::do_abort(tid);
+    *res = TPL::do_abort(tid);
     if (Config::get_config()->do_logging()) {
         const char abort_tag = 'a';
         std::string log_s;
@@ -343,7 +343,7 @@ void RococoServiceImpl::rcc_batch_start_pie_job(
         // execute the IR actions.
         bool &is_defered_buf = pi.defer_;
         //cell_entry_map_t rw_entry;
-        RCC::exe_deptran_start(header, input, is_defered_buf, output, pv, tv);
+        RCC::start(header, input, is_defered_buf, output, pv, tv);
         res->is_defers[i] = is_defered_buf ? 1 : 0;
 
         //dep_s->start_pie(pi, opset, rw_entry);
@@ -417,9 +417,9 @@ void RococoServiceImpl::rcc_start_pie_job(
     // execute the IR actions.
     bool &is_defered_buf = pi.defer_;
     //cell_entry_map_t rw_entry;
-    RCC::exe_deptran_start(header, 
-            input, is_defered_buf, 
-            res->output, pv, 
+    RCC::start(header,
+            input, is_defered_buf,
+            res->output, pv,
             tv/*&rw_entry*/);
     res->is_defered = is_defered_buf ? 1 : 0;
 
@@ -514,7 +514,7 @@ void RococoServiceImpl::rcc_finish_to_commit(
 
                     // this res may not be mine !!!!
                     if (vv->data_.res != nullptr) {
-                        RCC::exe_deptran_finish(vv->data_.id(), vv->data_.res->outputs);
+                        RCC::finish(vv->data_.id(), vv->data_.res->outputs);
                     }
 
                     Log::debug("txn commit. tid:%llx", vv->data_.id());
@@ -695,7 +695,7 @@ void RococoServiceImpl::rcc_ro_start_pie(
 
     //cell_entry_map_t rw_entry;
     std::vector<TxnInfo*> conflict_txns;
-    RCC::exe_deptran_start_ro(header, input, *output, &conflict_txns);
+    RCC::start_ro(header, input, *output, &conflict_txns);
 
     // get conflicting transactions
     //dep_s->conflict_txn(opset, conflict_txns, rw_entry);

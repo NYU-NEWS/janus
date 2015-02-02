@@ -165,168 +165,6 @@ void TxnRunner::reg_table(const std::string &name,
 //    }
 //}
 //
-std::function<void(void)> TxnRunner::get_2pl_proceed_callback(
-        const RequestHeader &header,
-        const mdb::Value *input,
-        rrr::i32 input_size,
-        rrr::i32 *res) {
-    return [header, input, input_size, res] () {
-        Log::debug("tid: %ld, pid: %ld, p_type: %d, no lock",
-                header.tid, header.pid, header.p_type);
-        mdb::Txn2PL::PieceStatus *ps = ((mdb::Txn2PL *)TxnRunner::get_txn(header))
-            ->get_piece_status(header.pid);
-        verify(ps != NULL); //FIXME
-
-        if (ps->is_rejected()) {
-            *res = REJECT;
-
-            ps->remove_output();
-
-            Log::debug("rejected");
-        }
-        else {
-            std::vector<mdb::Value> *output_vec;
-            mdb::Value *output;
-            rrr::i32 *output_size;
-
-            ps->get_output(&output_vec, &output, &output_size);
-
-            if (output_vec != NULL) {
-                rrr::i32 output_vec_size = output_vec->size();
-                TxnRegistry::get(header).txn_handler(header, input,
-                        input_size, res, output_vec->data(),
-                        &output_vec_size, NULL, NULL, NULL, NULL);
-                output_vec->resize(output_vec_size);
-            }
-            else {
-                TxnRegistry::get(header).txn_handler(header, input,
-                        input_size, res, output, output_size, NULL, NULL,
-                        NULL, NULL);
-            }
-        }
-
-        ps->trigger_reply_dragonball();
-        ps->set_finish();
-    };
-}
-
-std::function<void(void)> TxnRunner::get_2pl_fail_callback(
-        const RequestHeader &header,
-        rrr::i32 *res,
-        mdb::Txn2PL::PieceStatus *ps) {
-    return [header, res, ps] () {
-        Log::debug("tid: %ld, pid: %ld, p_type: %d, lock timeout call back",
-                header.tid, header.pid, header.p_type);
-        //PieceStatus *ps = TxnRunner::get_piece_status(header);
-        Log::debug("fail callback: PS: %p", ps);
-        verify(ps != NULL); //FIXME
-        ps->start_no_callback();
-
-        if (ps->can_proceed()) {
-            *res = REJECT;
-
-            ps->remove_output();
-
-            ps->trigger_reply_dragonball();
-            ps->set_finish();
-        }
-    };
-}
-
-std::function<void(void)> TxnRunner::get_2pl_succ_callback(
-        const RequestHeader &header,
-        const mdb::Value *input,
-        rrr::i32 input_size,
-        rrr::i32 *res,
-        mdb::Txn2PL::PieceStatus *ps,
-        std::function<void(
-            const RequestHeader &,
-            const Value *,
-            rrr::i32,
-            rrr::i32 *)> func) {
-    return [header, input, input_size, res, func, ps] () {
-        Log::debug("tid: %ld, pid: %ld, p_type: %d, lock acquired call back",
-                header.tid, header.pid, header.p_type);
-        //PieceStatus *ps = TxnRunner::get_piece_status(header);
-        verify(ps != NULL); //FIXME
-        Log::debug("succ 2 callback: PS: %p", ps);
-        ps->start_yes_callback();
-        Log::debug("tid: %ld, pid: %ld, p_type: %d, get lock",
-                header.tid, header.pid, header.p_type);
-
-        if (ps->can_proceed()) {
-            Log::debug("proceed");
-            if (ps->is_rejected()) {
-                *res = REJECT;
-
-                ps->remove_output();
-
-                Log::debug("rejected");
-
-                ps->trigger_reply_dragonball();
-                ps->set_finish();
-            }
-            else {
-                Log::debug("before func");
-                func(header, input, input_size, res);
-                Log::debug("end func");
-            }
-        }
-    };
-}
-
-std::function<void(void)> TxnRunner::get_2pl_succ_callback(
-        const RequestHeader &header,
-        const mdb::Value *input,
-        rrr::i32 input_size,
-        rrr::i32 *res,
-        mdb::Txn2PL::PieceStatus *ps) {
-    return [header, input, input_size, res, ps] () {
-        Log::debug("tid: %ld, pid: %ld, p_type: %d, lock acquired call back",
-                header.tid, header.pid, header.p_type);
-        Log::debug("succ 1 callback: PS: %p", ps);
-        verify(ps != NULL); //FIXME
-        ps->start_yes_callback();
-        Log::debug("tid: %ld, pid: %ld, p_type: %d, get lock",
-                header.tid, header.pid, header.p_type);
-
-        if (ps->can_proceed()) {
-            Log::debug("proceed");
-            if (ps->is_rejected()) {
-                *res = REJECT;
-
-                ps->remove_output();
-
-                Log::debug("rejected");
-            }
-            else {
-                std::vector<mdb::Value> *output_vec;
-                mdb::Value *output;
-                rrr::i32 *output_size;
-
-                ps->get_output(&output_vec, &output, &output_size);
-
-                if (output_vec != NULL) {
-                    rrr::i32 output_vec_size = output_vec->size();
-                    TxnRegistry::get(header).txn_handler(header, input,
-                            input_size, res, output_vec->data(),
-                            &output_vec_size, NULL, NULL, NULL, NULL);
-                    output_vec->resize(output_vec_size);
-                }
-                else {
-                    TxnRegistry::get(header).txn_handler(header, input,
-                            input_size, res, output, output_size, NULL, NULL,
-                            NULL, NULL);
-                }
-            }
-
-            ps->trigger_reply_dragonball();
-            ps->set_finish();
-        }
-
-    };
-}
-
 //txn_entry_t *TxnRunner::get_txn_entry(const RequestHeader &header) {
 //    if (running_mode_s == MODE_NONE
 //     || running_mode_s == MODE_DEPTRAN) {
@@ -410,9 +248,41 @@ std::function<void(void)> TxnRunner::get_2pl_succ_callback(
 //    }
 //}
 
+mdb::Txn *TxnRunner::del_txn(const i64 tid) {
+    mdb::Txn *txn = NULL;
+    std::map<i64, mdb::Txn *>::iterator it = txn_map_s.find(tid);
+    if (it == txn_map_s.end()) {
+        verify(0);
+    }
+    else {
+        txn = it->second;
+    }
+    txn_map_s.erase(it);
+    return txn;
+}
+
+mdb::Txn *TxnRunner::get_txn(const i64 tid) {
+    mdb::Txn *txn = NULL;
+    std::map<i64, mdb::Txn *>::iterator it = txn_map_s.find(tid);
+    if (it == txn_map_s.end()) {
+        txn = txn_mgr_s->start(tid);
+        //XXX using occ lazy mode: increment version at commit time
+        if (running_mode_s == MODE_OCC) {
+            ((mdb::TxnOCC *)txn)->set_policy(mdb::OCC_LAZY);
+        }
+        std::pair<std::map<i64, mdb::Txn *>::iterator, bool> ret
+                = txn_map_s.insert(std::pair<i64, mdb::Txn *>(tid, txn));
+        verify(ret.second);
+    }
+    else {
+        txn = it->second;
+    }
+    return txn;
+}
+
 mdb::Txn *TxnRunner::get_txn(const RequestHeader &header) {
     if (running_mode_s == MODE_NONE
-     || running_mode_s == MODE_DEPTRAN) {
+     || running_mode_s == MODE_RCC) {
         if (txn_map_s.empty()) {
             mdb::Txn *txn = txn_mgr_s->start(0);
             txn_map_s[0] = txn;
@@ -422,42 +292,11 @@ mdb::Txn *TxnRunner::get_txn(const RequestHeader &header) {
     }
     else {
         mdb::Txn *txn = NULL;
-        std::map<i64, mdb::Txn *>::iterator it = txn_map_s.find(header.tid);
-        if (it == txn_map_s.end()) {
-            txn = txn_mgr_s->start(header.tid);
-            //XXX using occ lazy mode: increment version at commit time
-            if (running_mode_s == MODE_OCC) {
-                ((mdb::TxnOCC *)txn)->set_policy(mdb::OCC_LAZY);
-            }
-            std::pair<std::map<i64, mdb::Txn *>::iterator, bool> ret
-                = txn_map_s.insert(std::pair<i64, mdb::Txn *>(header.tid, txn));
-            verify(ret.second);
-        }
-        else {
-            txn = it->second;
-        }
+        txn = TxnRunner::get_txn(header.tid);
         return txn;
     }
 }
 
-int TxnRunner::do_prepare(i64 txn_id) {
-    map<i64, mdb::Txn *>::iterator it = txn_map_s.find(txn_id);
-    verify(it != txn_map_s.end() && it->second != NULL);
-    switch (running_mode_s) {
-        case MODE_OCC:
-            if (((mdb::TxnOCC *)it->second)->commit_prepare())
-                return SUCCESS;
-            else
-                return REJECT;
-        case MODE_2PL: //XXX do logging
-            if (((mdb::Txn2PL *)it->second)->commit_prepare())
-                return SUCCESS;
-            else
-                return REJECT;
-        default:
-            verify(0);
-    }
-}
 
 void TxnRunner::get_prepare_log(i64 txn_id,
         const std::vector<i32> &sids,
@@ -500,54 +339,6 @@ void TxnRunner::get_prepare_log(i64 txn_id,
     }
 }
 
-int TxnRunner::do_commit(i64 txn_id) {
-    map<i64, mdb::Txn *>::iterator it = txn_map_s.find(txn_id);
-    verify(it != txn_map_s.end() && it->second != NULL);
-    switch (running_mode_s) {
-        case MODE_OCC:
-            ((mdb::TxnOCC *)it->second)->commit_confirm();
-            break;
-        //case MODE_DEPTRAN:
-        case MODE_2PL:
-            it->second->commit();
-            break;
-        default:
-            verify(0);
-    }
-    delete it->second;
-    txn_map_s.erase(it);
-    return SUCCESS;
-}
-
-//int TxnRunner::do_abort(i64 txn_id, rrr::DeferredReply* defer) {
-//    //map<i64, txn_entry_t *>::iterator it = txn_map_s.find(txn_id);
-//    //verify(it != txn_map_s.end() && it->second != NULL);
-//    if (running_mode_s == MODE_2PL) {
-//        //pthread_mutex_lock(&txn_map_mutex_s);
-//        txn_entry_t *txn_entry = NULL;
-//        map<i64, txn_entry_t *>::iterator it = txn_map_s.find(txn_id);
-//        txn_entry = it->second;
-//        //pthread_mutex_unlock(&txn_map_mutex_s);
-//        txn_entry->abort_2pl(txn_id, &txn_map_s, /*&txn_map_mutex_s, */defer);
-//    }
-//    else {
-//        map<i64, txn_entry_t *>::iterator it = txn_map_s.find(txn_id);
-//        it->second->txn->abort();
-//        delete it->second;
-//        txn_map_s.erase(it);
-//    }
-//    return SUCCESS;
-//}
-//
-//
-int TxnRunner::do_abort(i64 txn_id) {
-    map<i64, mdb::Txn *>::iterator it = txn_map_s.find(txn_id);
-    verify(it != txn_map_s.end() && it->second != NULL);
-    it->second->abort();
-    delete it->second;
-    txn_map_s.erase(it);
-    return SUCCESS;
-}
 
 void TxnRunner::init(int mode) {
     running_mode_s = mode;
