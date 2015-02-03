@@ -45,6 +45,90 @@ void RCC::finish(
     }
 }
 
+void RCC::start_pie(
+        const RequestHeader &header,
+        const std::vector<mdb::Value> &input,
+        bool *deferred,
+        std::vector<mdb::Value> *output
+        ) {
+    PieInfo pi;
+    pi.pie_id_ = header.pid;
+    pi.txn_id_ = header.tid;
+    pi.type_ = header.p_type;
+
+    //std::unordered_map<cell_locator_t, int,
+    //                   cell_locator_t_hash> opset; //OP_W, OP_DR, OP_IR
+    // get the read and write sets;
+    //lock_oracle(header, input.data(), input.size(), &opset);
+
+    Vertex<PieInfo> *pv = NULL;
+    Vertex<TxnInfo> *tv = NULL;
+    RCC::dep_s->start_pie(pi, &pv, &tv);
+
+    // execute the IR actions.
+    *deferred = pi.defer_;
+    verify(pv && tv);
+
+    auto txn_handler_pair = TxnRegistry::get(header.t_type, header.p_type);
+
+    switch (txn_handler_pair.defer) {
+        case DF_NO:
+        { // immediate
+            int output_size = 300;
+            output->resize(output_size);
+            int res;
+            txn_handler_pair.txn_handler(header, input.data(),
+                    input.size(), &res, output->data(),
+                    &output_size, NULL, pv,
+                    tv/*rw_entry*/, NULL);
+            output->resize(output_size);
+            *deferred = false;
+            break;
+        }
+        case DF_REAL:
+        { // defer
+            DeferredRequest dr;
+            dr.header = header;
+            dr.inputs = input;
+            std::vector<DeferredRequest> &drs = deferred_reqs_[header.tid];
+            if (drs.size() == 0) {
+                drs.reserve(100); //XXX
+            }
+            drs.push_back(dr);
+            txn_handler_pair.txn_handler(header, drs.back().inputs.data(),
+                    drs.back().inputs.size(), NULL, NULL,
+                    NULL, &drs.back().row_map, pv,
+                    tv/*rw_entry*/, NULL);
+            *deferred = true;
+            break;
+        }
+        case DF_FAKE: //TODO
+        {
+            DeferredRequest dr;
+            dr.header = header;
+            dr.inputs = input;
+            std::vector<DeferredRequest> &drs = deferred_reqs_[header.tid];
+            if (drs.size() == 0) {
+                drs.reserve(100); //XXX
+            }
+            drs.push_back(dr);
+            int output_size = 300; //XXX
+            output->resize(output_size);
+            int res;
+            txn_handler_pair.txn_handler(header, drs.back().inputs.data(),
+                    drs.back().inputs.size(), &res,
+                    output->data(), &output_size,
+                    &drs.back().row_map, pv,
+                    tv/*rw_entry*/, NULL);
+            output->resize(output_size);
+            *deferred = false;
+            break;
+        }
+        default:
+            verify(0);
+    }
+}
+
 void RCC::start(
         const RequestHeader &header,
         const std::vector<mdb::Value> &input,

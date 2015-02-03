@@ -419,6 +419,14 @@ private:
 
 class RCC {
 public:
+
+    static void start_pie(
+            const RequestHeader &header,
+            const std::vector<mdb::Value> &input,
+            bool *deferred,
+            std::vector<mdb::Value> *output
+    );
+
     static void start(
             const RequestHeader &header,
             const std::vector<mdb::Value> &input,

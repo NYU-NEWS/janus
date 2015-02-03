@@ -274,91 +274,47 @@ void RococoServiceImpl::batch_start_pie(
 void RococoServiceImpl::rcc_batch_start_pie(
         const std::vector<RequestHeader> &headers,
         const std::vector<std::vector<Value>> &inputs,
-        BatchChopStartResponse* results,
+        BatchChopStartResponse* res,
         rrr::DeferredReply* defer) {
 
     verify(TxnRunner::get_running_mode() == MODE_RCC);
 
+    res->is_defers.resize(headers.size());
+    res->outputs.resize(headers.size());
+
+    auto job = [&headers, &inputs, res, defer, this] () {
+        std::lock_guard<std::mutex> guard(mtx_);
+
+        Log::debug("batch req, headers size:%u", headers.size());
+        auto &tid = headers[0].tid;
+//    Vertex<TxnInfo> *tv = RCC::dep_s->start_pie_txn(tid);
+
+        for (int i = 0; i < headers.size(); i++) {
+            auto &header = headers[i];
+            auto &input = inputs[i];
+            auto &output = res->outputs[i];
+
+            //    Log::debug("receive start request. txn_id: %llx, pie_id: %llx", header.tid, header.pid);
+
+            bool deferred;
+            RCC::start_pie(header, input, &deferred, &res->output);
+            res->is_defers[i] = deferred ? 1 : 0;
+
+        }
+        RCC::dep_s->sub_txn_graph(tid, res->gra_m);
+        defer->reply();
+
+    };
     static bool do_record = Config::get_config()->do_logging();
 
     if (do_record) {
-        auto job = [&headers, &inputs, results, defer, this] () {
-            this->rcc_batch_start_pie_job(headers, inputs, results, defer);
-        };
-
         rrr::Marshal m;
         m << headers << inputs;
 
         recorder_->submit(m, job);
     } else {
-        rcc_batch_start_pie_job(headers, inputs, results, defer);
-        //for (int i = 0; i < headers.size(); i++) {
-        //    Log::debug("g size: %u", (*results)[i].gra_m.gra->size());
-        //}
-        //defer->reply();
+        job();
     }
-}
-
-void RococoServiceImpl::rcc_batch_start_pie_job(
-        const std::vector<RequestHeader> &headers,
-        const std::vector<std::vector<Value>> &inputs,
-        BatchChopStartResponse* res,
-        rrr::DeferredReply* defer) {
-
-    std::lock_guard<std::mutex> guard(mtx_);
-
-    res->is_defers.resize(headers.size());
-    res->outputs.resize(headers.size());
-
-    Log::debug("batch req, headers size:%u", headers.size());
-
-    // TODO
-    verify(TxnRunner::get_running_mode() == MODE_RCC);
-
-    Vertex<TxnInfo> *tv = RCC::dep_s->start_pie_txn(headers[0].tid);
-
-    for (int i = 0; i < headers.size(); i++) {
-        auto &header = headers[i];
-        auto &input = inputs[i];
-        auto &output = res->outputs[i];
-
-        //    Log::debug("receive start request. txn_id: %llx, pie_id: %llx", header.tid, header.pid);
-
-        // XXX generate the IR, DR, W op sets;
-        //auto lock_oracle = TxnRegistry::get_lock_oracle(header);
-
-        // add the piece into the dep graph
-        PieInfo pi;
-        pi.pie_id_ = header.pid;
-        pi.txn_id_ = header.tid;
-        pi.type_ = header.p_type;
-
-        //std::unordered_map<cell_locator_t, int, cell_locator_t_hash> opset; //OP_W, OP_DR, OP_IR
-        // get the read and write sets;
-        //lock_oracle(header, input.data(), input.size(), &opset);
-
-        Vertex<PieInfo> *pv;
-        RCC::dep_s->start_pie(pi, &pv, NULL);
-
-        // execute the IR actions.
-        bool &is_defered_buf = pi.defer_;
-        //cell_entry_map_t rw_entry;
-        RCC::start(header, input, is_defered_buf, output, pv, tv);
-        res->is_defers[i] = is_defered_buf ? 1 : 0;
-
-        //dep_s->start_pie(pi, opset, rw_entry);
-    }
-    //  return the resutls.
-    // only return a part of the graph.
-    auto &tid = headers[0].tid;
-    RCC::dep_s->sub_txn_graph(tid, res->gra_m);
-
-    //static int64_t sample = 0;
-    //if (sample++ % 100 == 0) {
-    //    int sz = res->gra_m.ret_set.size();
-    //      scsi_->do_statistics(S_RES_KEY_GRAPH_SIZE, sz);
-    //}
-    defer->reply();
 }
 
 void RococoServiceImpl::rcc_start_pie(
@@ -366,81 +322,32 @@ void RococoServiceImpl::rcc_start_pie(
         const std::vector<Value> &input,
         ChopStartResponse* res,
         rrr::DeferredReply* defer) {
+//    Log::debug("receive start request. txn_id: %llx, pie_id: %llx", header.tid, header.pid);
     verify(TxnRunner::get_running_mode() == MODE_RCC);
 
     static bool do_record = Config::get_config()->do_logging();
 
-    if (do_record) {
+    auto job = [&header, &input, res, defer, this] () {
+        std::lock_guard<std::mutex> guard(this->mtx_);
+        bool deferred;
+        RCC::start_pie(header, input, &deferred, &res->output);
 
-        auto job = [&header, &input, res, defer, this] () {
-            this->rcc_start_pie_job(header, input, res, defer);
-        };
-        
+        res->is_defered = deferred ? 1 : 0;
+        auto sz_sub_gra = RCC::dep_s->sub_txn_graph(header.tid, res->gra_m);
+        stat_sz_gra_start_.sample(sz_sub_gra);
+
+        if (defer) defer->reply();
+//    Log::debug("reply to start request. txn_id: %llx, pie_id: %llx, graph size: %d", header.tid, header.pid, (int)res->gra.size());
+    };
+
+    if (do_record) {
         Marshal m;
         m << header;
         m << input;
         recorder_->submit(m, job);
     } else {
-        rcc_start_pie_job(header, input, res, defer);
+        job();
     }
-}
-
-void RococoServiceImpl::rcc_start_pie_job(
-        const RequestHeader &header,
-        const std::vector<Value> &input,
-        ChopStartResponse* res,
-        rrr::DeferredReply* defer) {
-    std::lock_guard<std::mutex> guard(mtx_);
-
-    verify(TxnRunner::get_running_mode() == MODE_RCC);
-
-//    Log::debug("receive start request. txn_id: %llx, pie_id: %llx", header.tid, header.pid);
-
-    // XXX generate the IR, DR, W op sets;
-    //auto lock_oracle = TxnRegistry::get_lock_oracle(header);
-
-    // add the piece into the deptran graph
-    PieInfo pi;
-    pi.pie_id_ = header.pid;
-    pi.txn_id_ = header.tid;
-    pi.type_ = header.p_type;
-
-    //std::unordered_map<cell_locator_t, int, 
-    //                   cell_locator_t_hash> opset; //OP_W, OP_DR, OP_IR
-    // get the read and write sets;
-    //lock_oracle(header, input.data(), input.size(), &opset);
-
-    Vertex<PieInfo> *pv = NULL;
-    Vertex<TxnInfo> *tv = NULL;
-    RCC::dep_s->start_pie(pi, &pv, &tv);
-
-    // execute the IR actions.
-    bool &is_defered_buf = pi.defer_;
-    //cell_entry_map_t rw_entry;
-    RCC::start(header,
-            input, is_defered_buf,
-            res->output, pv,
-            tv/*&rw_entry*/);
-    res->is_defered = is_defered_buf ? 1 : 0;
-
-    //dep_s->start_pie(pi, opset, rw_entry);
-
-    //  return the 2resutls.
-    // only return a part of the graph.
-    auto sz_sub_gra = RCC::dep_s->sub_txn_graph(header.tid, res->gra_m);
-
-    stat_sz_gra_start_.sample(sz_sub_gra);
-
-    //static int64_t sample = 0;
-    //if (sample++ % 100 == 0) {
-    //    int sz = res->gra_m.ret_set.size();
-    //    scsi_->do_statistics(S_RES_KEY_GRAPH_SIZE, sz);
-    //}
-
-    if (defer)
-        defer->reply();
-
-//    Log::debug("reply to start request. txn_id: %llx, pie_id: %llx, graph size: %d", header.tid, header.pid, (int)res->gra.size());
 }
 
 void RococoServiceImpl::rcc_finish_txn(

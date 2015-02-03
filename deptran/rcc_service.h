@@ -107,19 +107,7 @@ public:
             BatchChopStartResponse *res,
             rrr::DeferredReply* defer);
 
-    void rcc_batch_start_pie_job(
-            const std::vector<RequestHeader> &headers,
-            const std::vector<std::vector<Value>> &inputs,
-            BatchChopStartResponse *res,
-            rrr::DeferredReply* defer);
-
     void rcc_start_pie(
-            const RequestHeader& header,
-            const std::vector<Value> &input,
-            ChopStartResponse* res,
-            rrr::DeferredReply* defer);
-
-    void rcc_start_pie_job(
             const RequestHeader& header,
             const std::vector<Value> &input,
             ChopStartResponse* res,
