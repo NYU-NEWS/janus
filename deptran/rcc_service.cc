@@ -297,7 +297,7 @@ void RococoServiceImpl::rcc_batch_start_pie(
             //    Log::debug("receive start request. txn_id: %llx, pie_id: %llx", header.tid, header.pid);
 
             bool deferred;
-            RCC::start_pie(header, input, &deferred, &res->output);
+            RCC::start_pie(header, input, &deferred, &output);
             res->is_defers[i] = deferred ? 1 : 0;
 
         }
