@@ -52,12 +52,21 @@ def configure(conf):
     _enable_conflict_count(conf)
     #_enable_logging(conf)
 
+
+    conf.env.append_value("CXXFLAGS", "-Wno-sign-compare")
+
     conf.check_cfg(package='apr-1', uselib_store='APR', args=pargs)
     conf.check_cfg(package='apr-util-1', uselib_store='APR-UTIL', args=pargs)
+#    conf.check_cxx(lib='boost')
+
+    conf.env.append_value("CXXFLAGS", "-Wno-sign-compare")
+    conf.env.append_value('INCLUDES', ['/usr/local/include'])
 
     conf.env.append_value("CXXFLAGS", "-Wno-sign-compare")
     conf.env.LIB_PTHREAD = 'pthread'
-    conf.env.LIB_RT = 'rt'
+
+    if sys.platform != 'darwin':
+        conf.env.LIB_RT = 'rt'
 
 
 def build(bld):
@@ -120,15 +129,15 @@ def build(bld):
                 includes=". rrr deptran", 
                 use="rrr memdb deptran PTHREAD RT")
 
-    bld.program(source="test/rpcbench.cc test/benchmark_service.cc", 
-                target="rpcbench", 
-                includes=". rrr deptran test", 
-                use="rrr PTHREAD")
-
-    bld.program(source="test/rpc_microbench.cc test/benchmark_service.cc", 
-                target="rpc_microbench", 
-                includes=". rrr deptran test", 
-                use="rrr PTHREAD RT APR APR-UTIL")
+#    bld.program(source="test/rpcbench.cc test/benchmark_service.cc", 
+#                target="rpcbench", 
+#                includes=". rrr deptran test", 
+#                use="rrr PTHREAD")
+#
+#    bld.program(source="test/rpc_microbench.cc test/benchmark_service.cc", 
+#                target="rpc_microbench", 
+#                includes=". rrr deptran test", 
+#                use="rrr PTHREAD RT APR APR-UTIL")
 
     bld.stlib(source=bld.path.ant_glob("deptran/*.cc "
                                        "deptran/*.cpp "

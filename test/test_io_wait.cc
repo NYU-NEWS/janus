@@ -25,7 +25,9 @@ TEST(io_wait, simple) {
                 }
                 int ret = write(fd, buf, 100);
                 verify(ret == 100);
+#ifndef __APPLE__
                 fdatasync(fd);
+#endif
                 i++;
                 sleep(0);
             }

@@ -1,4 +1,4 @@
-namespace rcc;
+namespace rococo;
 
 struct RequestHeader  {
     i32 t_type;     // transaction type
