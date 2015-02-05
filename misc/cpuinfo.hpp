@@ -1,8 +1,13 @@
+#pragma once
+
 #include "stdlib.h"
 #include "stdio.h"
 #include "string.h"
 #include "sys/times.h"
+
+#ifndef __APPLE__
 #include "sys/vtimes.h"
+#endif
 
 namespace rrr {
 
