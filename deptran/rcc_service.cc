@@ -48,6 +48,42 @@ void RococoServiceImpl::do_start_pie(
     }
 }
 
+void RococoServiceImpl::batch_start_pie(
+        const BatchRequestHeader& batch_header,
+        const std::vector<Value>& input,
+        rrr::i32* res,
+        std::vector<Value>* output) {
+
+    verify(0);
+    RequestHeader header;
+    header.t_type = batch_header.t_type;
+    header.cid = batch_header.cid;
+    header.tid = batch_header.tid;
+    BatchStartArgsHelper bsah_input, bsah_output;
+    int ret;
+    ret = bsah_input.init_input(&input, batch_header.num_piece);
+    verify(ret == 0);
+    ret = bsah_output.init_output(output, batch_header.num_piece,
+            batch_header.expected_output_size);
+    verify(ret == 0);
+    Value const* piece_input;
+    i32 input_size;
+    i32 output_size;
+    *res = SUCCESS;
+    while (0 == bsah_input.get_next_input(&header.p_type, &header.pid,
+            &piece_input, &input_size,
+            &output_size)) {
+        i32 res_buf;
+        do_start_pie(header, piece_input, input_size, &res_buf,
+                bsah_output.get_output_ptr(), &output_size);
+        ret = bsah_output.put_next_output(res_buf, output_size);
+        verify(ret == 0);
+        if (res_buf != SUCCESS)
+            *res = REJECT;
+    }
+
+    bsah_output.done_output();
+}
 
 void RococoServiceImpl::naive_batch_start_pie(
         const std::vector<RequestHeader> &headers,
@@ -234,42 +270,6 @@ void RococoServiceImpl::abort_txn(
     Log::debug("abort finish");
 }
 
-void RococoServiceImpl::batch_start_pie(
-        const BatchRequestHeader& batch_header, 
-        const std::vector<Value>& input, 
-        rrr::i32* res, 
-        std::vector<Value>* output) {
-
-    verify(0);
-    RequestHeader header;
-    header.t_type = batch_header.t_type;
-    header.cid = batch_header.cid;
-    header.tid = batch_header.tid;
-    BatchStartArgsHelper bsah_input, bsah_output;
-    int ret;
-    ret = bsah_input.init_input(&input, batch_header.num_piece);
-    verify(ret == 0);
-    ret = bsah_output.init_output(output, batch_header.num_piece, 
-				  batch_header.expected_output_size);
-    verify(ret == 0);
-    Value const* piece_input;
-    i32 input_size;
-    i32 output_size;
-    *res = SUCCESS;
-    while (0 == bsah_input.get_next_input(&header.p_type, &header.pid, 
-					  &piece_input, &input_size, 
-					  &output_size)) {
-        i32 res_buf;
-        do_start_pie(header, piece_input, input_size, &res_buf, 
-		     bsah_output.get_output_ptr(), &output_size);
-        ret = bsah_output.put_next_output(res_buf, output_size);
-        verify(ret == 0);
-        if (res_buf != SUCCESS)
-            *res = REJECT;
-    }
-
-    bsah_output.done_output();
-}
 
 void RococoServiceImpl::rcc_batch_start_pie(
         const std::vector<RequestHeader> &headers,
