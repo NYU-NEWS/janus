@@ -22,7 +22,7 @@ protected:
 
 public:
     Table(const Schema* schema): schema_(schema) {
-        // prevent furthur changes
+        // prevent further changes
         const_cast<Schema*>(schema_)->freeze();
     }
     virtual ~Table() {}

@@ -227,6 +227,7 @@ public:
 };
 
 
+
 class CoarseLockedRow: public Row {
     RWLock lock_;
 
@@ -538,6 +539,50 @@ public:
         raw_row->init_ver(schema->columns_count());
         return (VersionedRow * ) Row::create(raw_row, schema, values_ptr);
     }
+};
+
+class MultiVersionedRow: public Row {
+public:
+
+    virtual symbol_t rtti() const {
+        return symbol_t::ROW_MULTIVER;
+    }
+
+    virtual Row* copy() const {
+        MultiVersionedRow* row = new MultiVersionedRow();
+        copy_into(row);
+        return row;
+    }
+
+    // TODO: add version in updates
+    // TODO: and garbage collection?
+    // TODO: do some tests to see how slow it is
+
+private:
+    static version_t ver_s = 0;
+
+public:
+    static version_t next_version() {
+        return MultiVersionedRow::ver_s ++;
+    }
+
+    template <class Container>
+    static MultiVersionedRow* create(const Schema* schema, const Container& values) {
+        verify(values.size() == schema->columns_count());
+        std::vector<const Value*> values_ptr(values.size(), nullptr);
+        size_t fill_counter = 0;
+        for (auto it = values.begin(); it != values.end(); ++it) {
+            fill_values_ptr(schema, values_ptr, *it, fill_counter);
+            fill_counter++;
+        }
+        MultiVersionedRow* raw_row = new MultiVersionedRow();
+//        raw_row->init_ver(schema->columns_count());
+        return (MultiVersionedRow * ) Row::create(raw_row, schema, values_ptr);
+    }
+
+private:
+    std::map<column_id_t, version_t> vers_;
+    std::map<column_id_t, std::list<Value> > old_values_;
 };
 
 } // namespace mdb
