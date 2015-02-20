@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <vector>
 #include <string>
+#include <ctime>
 
 #include "utils.h"
 #include "schema.h"
@@ -16,6 +17,11 @@ namespace mdb {
 // forward declartion
 class Schema;
 class Table;
+
+// RO-6: do GC for every GC_THRESHOLD old values
+const int GC_THRESHOLD = 100;
+// RO-6: GC time = 5000 ms;
+const int SAFE_TIME = 5000;
 
 class Row: public RefCounted {
     // fixed size part
@@ -115,37 +121,38 @@ public:
         return get_blob(schema_->get_column_id(col_name));
     }
 
-    void update(int column_id, i32 v) {
+    virtual void update(int column_id, i32 v) {
         const Schema::column_info* info = schema_->get_column_info(column_id);
         verify(info->type == Value::I32);
         update_fixed(info, &v, sizeof(v));
     }
-    void update(int column_id, i64 v) {
+
+    virtual void update(int column_id, i64 v) {
         const Schema::column_info* info = schema_->get_column_info(column_id);
         verify(info->type == Value::I64);
         update_fixed(info, &v, sizeof(v));
     }
-    void update(int column_id, double v) {
+    virtual void update(int column_id, double v) {
         const Schema::column_info* info = schema_->get_column_info(column_id);
         verify(info->type == Value::DOUBLE);
         update_fixed(info, &v, sizeof(v));
     }
-    void update(int column_id, const std::string& str);
-    void update(int column_id, const Value& v);
+    virtual void update(int column_id, const std::string& str);
+    virtual void update(int column_id, const Value& v);
 
-    void update(const std::string& col_name, i32 v) {
+    virtual void update(const std::string& col_name, i32 v) {
         this->update(schema_->get_column_id(col_name), v);
     }
-    void update(const std::string& col_name, i64 v) {
+    virtual void update(const std::string& col_name, i64 v) {
         this->update(schema_->get_column_id(col_name), v);
     }
-    void update(const std::string& col_name, double v) {
+    virtual void update(const std::string& col_name, double v) {
         this->update(schema_->get_column_id(col_name), v);
     }
-    void update(const std::string& col_name, const std::string& v) {
+    virtual void update(const std::string& col_name, const std::string& v) {
         this->update(schema_->get_column_id(col_name), v);
     }
-    void update(const std::string& col_name, const Value& v) {
+    virtual void update(const std::string& col_name, const Value& v) {
         this->update(schema_->get_column_id(col_name), v);
     }
 
@@ -541,6 +548,17 @@ public:
     }
 };
 
+/*
+ * RO-6: This class defines a row which keeps old versions of each column.
+ * Old versions are stored in a map of maps <column_id, map<timestamp, value> >.
+ * column_id is used to point to specific columns; then for each column, it stores
+ * old values and each old value is associated a timestamp to uniquely identify each version.
+ *
+ * We use a global counter ver_s as timestamp.
+ *
+ * Then, O(1) for querying a specific old version; O(k/GC_THRESHOLD) for garbage collection - k is constant as number
+ * of versions on average are kept within 5 secs.
+ */
 class MultiVersionedRow: public Row {
 public:
 
@@ -554,16 +572,55 @@ public:
         return row;
     }
 
-    // TODO: add version in updates
-    // TODO: and garbage collection?
+    // add version in updates
+    /*
+     * Update the list of old versions for each row update
+     * Overrides Row::update(~)
+     * For update, simply push to the back of the map;
+     */
+    template<typename Type>
+    void update(int column_id, Type v) {
+        // first get current value before update, and put current value in old_values_
+        Value currentValue = Row::get_column(column_id);
+
+        // push this new value to the old versions map
+        std::pair <i64, Value> valueEntry = std::make_pair(next_version(), currentValue);
+        // insert this old version to old_values_
+        std::map<i64, Value>::iterator newElementItr = (old_values_[column_id].insert(valueEntry)).first;
+
+        if (old_values_[column_id].size() % GC_THRESHOLD == 0) {
+            // do Garbage Collection
+            garbageCollection(column_id, newElementItr);
+        }
+        // then update column as normal
+        Row::update(column_id, v);
+    }
+
+    /*
+     * For update by column name
+     */
+    template<typename Type>
+    void update(const std::string& col_name, Type v) {
+        this->update(schema_->get_column_id(col_name), v);
+    }
+
+    // garbage collection
+    void garbageCollection(int column_id, std::map<i64, Value>::iterator itr);
+
+    // retrieve current version number
+    version_t getCurrentVersion(int column_id);
+
+    // get a value specified by a version number
+    Value get_column_by_time(int column_id, i64 version_num);
+
     // TODO: do some tests to see how slow it is
 
 private:
-    static version_t ver_s = 0;
+    static version_t ver_s;
 
 public:
     static version_t next_version() {
-        return MultiVersionedRow::ver_s ++;
+        return ++MultiVersionedRow::ver_s;
     }
 
     template <class Container>
@@ -576,13 +633,14 @@ public:
             fill_counter++;
         }
         MultiVersionedRow* raw_row = new MultiVersionedRow();
-//        raw_row->init_ver(schema->columns_count());
         return (MultiVersionedRow * ) Row::create(raw_row, schema, values_ptr);
     }
 
 private:
-    std::map<column_id_t, version_t> vers_;
-    std::map<column_id_t, std::list<Value> > old_values_;
+    // data structure to keep all old versions for a row
+    std::map<column_id_t, std::map<i64, Value> > old_values_;
+    // data structure to keep real time for each 100 versions. used for GC
+    std::map<column_id_t, std::map<i64, std::map<i64, Value>::iterator> >time_segment;
 };
 
 } // namespace mdb

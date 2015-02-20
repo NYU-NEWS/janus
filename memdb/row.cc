@@ -380,6 +380,60 @@ void FineLockedRow::unlock_column_by(column_id_t column_id, uint64_t lock_req_id
     verify(0);
     //lock_[column_id]->abort(lock_req_id);
 }
+
+// RO-6: initialize static variable
+version_t MultiVersionedRow::ver_s = 0;
+
+/*
+ * RO-6: Do garbage collection. First we record current system time and put it into time_segment
+ * since we only call this function when processing x100th value.
+ * Then, check which values are deprecated, remove them from old_values_, and also update
+ * time_segment
+ *
+ * @param COLUMN_ID: the column we are updating and doing GC on
+ * @oaram ITR: the iterator pointing to the latest (just updated) value entry <timestamp, Value> of
+ * old_values_. We put this ITR into time_segment
+ */
+void MultiVersionedRow::garbageCollection(int column_id, std::map<i64, Value>::iterator itr) {
+    // current system time in milliseconds
+    i64 currentTime = static_cast<i64>(time(NULL) * 1000);
+    i64 cutTime = currentTime - SAFE_TIME;
+    // put itr (along with current time) into time_segment
+    time_segment[column_id].insert(std::pair<i64, std::map<i64, Value>::iterator>(currentTime, itr));
+    for (auto it = time_segment[column_id].begin(); it != time_segment[column_id].end(); ++it) {
+        if (it->first > cutTime) {
+            // we remove all elements up to this entry for both old_values_ and time_segment
+            std::map<i64, Value>::iterator recorded_itr = (--it)->second;
+            time_segment[column_id].erase(time_segment[column_id].begin(), ++it);
+            old_values_[column_id].erase(old_values_[column_id].begin(), ++recorded_itr);
+            break;
+        }
+    }
+}
+
+/*
+ * RO-6: get most recent version number for this column.
+ * Used when a write needs to record version number for a later read to query at
+ */
+version_t MultiVersionedRow::getCurrentVersion(int column_id) {
+    std::map<i64, Value>::iterator itr = old_values_[column_id].end();
+    return (--itr)->first;
+}
+
+/*
+ * RO-6: get a value associated with a specific version number
+ * @param COLUMN_ID: specify a column
+ * @param VERSION_NUM: specify a version number (timestamp) to query with
+ *
+ * @return: an old value
+ */
+Value MultiVersionedRow::get_column_by_time(int column_id, i64 version_num) {
+    Value v;
+    v = old_values_[column_id][version_num];
+    return v;
+}
+
 // **** deprecated **** //
 
 } // namespace mdb
+
