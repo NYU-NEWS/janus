@@ -24,6 +24,8 @@ static void benchmark_kv(TxnMgr* mgr, symbol_t table_type, symbol_t row_type) {
         table = new SortedTable(schema);
     } else if (table_type == TBL_SNAPSHOT) {
         table = new SnapshotTable(schema);
+    } else {
+        verify(0);
     }
 
     int n_populate = 100 * 1000;
@@ -40,6 +42,8 @@ static void benchmark_kv(TxnMgr* mgr, symbol_t table_type, symbol_t row_type) {
             row = FineLockedRow::create(schema, row_data);
         } else if (row_type == ROW_VERSIONED) {
             row = VersionedRow::create(schema, row_data);
+        } else {
+            row = MultiVersionedRow::create(schema, row_data);
         }
         table->insert(row);
     }
