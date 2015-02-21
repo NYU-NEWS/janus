@@ -572,40 +572,55 @@ public:
         return row;
     }
 
-    // add version in updates
     /*
      * Update the list of old versions for each row update
      * Overrides Row::update(~)
      * For update, simply push to the back of the map;
+     *
+     * We create similar functions for different augment types
      */
-    template<typename Type>
-    void update(int column_id, Type v) {
-        // first get current value before update, and put current value in old_values_
-        Value currentValue = Row::get_column(column_id);
+    void update(int column_id, i64 v) {
+        update_internal(column_id, v);
+    }
 
-        // push this new value to the old versions map
-        std::pair <i64, Value> valueEntry = std::make_pair(next_version(), currentValue);
-        // insert this old version to old_values_
-        std::map<i64, Value>::iterator newElementItr = (old_values_[column_id].insert(valueEntry)).first;
+    void update(int column_id, i32 v) {
+        update_internal(column_id, v);
+    }
 
-        if (old_values_[column_id].size() % GC_THRESHOLD == 0) {
-            // do Garbage Collection
-            garbageCollection(column_id, newElementItr);
-        }
-        // then update column as normal
-        Row::update(column_id, v);
+    void update(int column_id, double v) {
+        update_internal(column_id, v);
+    }
+
+    void update(int column_id, const std::string& str) {
+        update_internal(column_id, str);
+    }
+
+    void update(int column_id, const Value& v) {
+        update_internal(column_id, v);
     }
 
     /*
      * For update by column name
      */
-    template<typename Type>
-    void update(const std::string& col_name, Type v) {
+    void update(const std::string& col_name, i64 v) {
         this->update(schema_->get_column_id(col_name), v);
     }
 
-    // garbage collection
-    void garbageCollection(int column_id, std::map<i64, Value>::iterator itr);
+    void update(const std::string& col_name, i32 v) {
+        this->update(schema_->get_column_id(col_name), v);
+    }
+
+    void update(const std::string& col_name, double v) {
+        this->update(schema_->get_column_id(col_name), v);
+    }
+
+    void update(const std::string& col_name, const std::string& str) {
+        this->update(schema_->get_column_id(col_name), str);
+    }
+
+    void update(const std::string& col_name, const Value& v) {
+        this->update(schema_->get_column_id(col_name), v);
+    }
 
     // retrieve current version number
     version_t getCurrentVersion(int column_id);
@@ -617,6 +632,26 @@ public:
 
 private:
     static version_t ver_s;
+
+    // garbage collection
+    void garbageCollection(int column_id, std::map<i64, Value>::iterator itr);
+
+    // Internal update logic, a template function to accomodate all types
+    template<typename Type>
+    void update_internal(int column_id, Type v) {
+        // first get current value before update, and put current value in old_values_
+        Value currentValue = Row::get_column(column_id);
+        // push this new value to the old versions map
+        std::pair <i64, Value> valueEntry = std::make_pair(next_version(), currentValue);
+        // insert this old version to old_values_
+        std::map<i64, Value>::iterator newElementItr = (old_values_[column_id].insert(valueEntry)).first;
+        if (old_values_[column_id].size() % GC_THRESHOLD == 0) {
+            // do Garbage Collection
+            garbageCollection(column_id, newElementItr);
+        }
+        // then update column as normal
+        Row::update(column_id, v);
+    }
 
 public:
     static version_t next_version() {
@@ -635,7 +670,22 @@ public:
         MultiVersionedRow* raw_row = new MultiVersionedRow();
         return (MultiVersionedRow * ) Row::create(raw_row, schema, values_ptr);
     }
+    /*
+     * These functions are for testing purpoes. Uncomment them to use
+     *
+    int getTotalVerionNums(int column_id) {
+        return old_values_[column_id].size();
+    }
 
+    i64 getVersionHead(int column_id) {
+        return old_values_[column_id].begin()->second.get_i64();
+    }
+
+    i64 getVersionTail(int column_id) {
+        return (--old_values_[column_id].end())->second.get_i64();
+    }
+     *
+     */
 private:
     // data structure to keep all old versions for a row
     std::map<column_id_t, std::map<i64, Value> > old_values_;

@@ -15,7 +15,7 @@ using namespace base;
 static void benchmark_kv(TxnMgr* mgr, symbol_t table_type, symbol_t row_type) {
     Schema* schema = new Schema;
     schema->add_key_column("key", Value::I32);
-    schema->add_column("value", Value::STR);
+    schema->add_column("value", Value::I64);
 
     Table* table = nullptr;
     if (table_type == TBL_UNSORTED) {
@@ -31,8 +31,9 @@ static void benchmark_kv(TxnMgr* mgr, symbol_t table_type, symbol_t row_type) {
     int n_populate = 100 * 1000;
     Timer timer;
     timer.start();
+    const i64 x = 3;
     for (i32 i = 0; i < n_populate; i++) {
-        array<Value, 2> row_data = { { Value(i), Value("dummy") } };
+        array<Value, 2> row_data = { { Value(i), Value(x) } };
         Row* row = nullptr;
         if (row_type == ROW_BASIC) {
             row = Row::create(schema, row_data);
@@ -56,6 +57,7 @@ static void benchmark_kv(TxnMgr* mgr, symbol_t table_type, symbol_t row_type) {
     int n_batches = 0;
     timer.start();
     Rand rnd;
+    i64 tracker = 0;
     for (;;) {
         for (int i = 0; i < batch_size; i++) {
             txn_id_t txnid = txn_counter.next();
@@ -63,14 +65,14 @@ static void benchmark_kv(TxnMgr* mgr, symbol_t table_type, symbol_t row_type) {
             ResultSet rs = txn->query(table, Value(i32(rnd.next(0, n_populate))));
             while (rs) {
                 Row* row = rs.next();
-                //row->update(1, Value("dummy 2"));
-                txn->write_column(row, 1, Value("dummy 2"));
+                txn->write_column(row, 1, Value(tracker));
             }
             txn->commit_or_abort();
             delete txn;
+            ++tracker;
         }
         n_batches++;
-        if (timer.elapsed() > 2.0) {
+        if (timer.elapsed() > 16.0) {
             break;
         }
     }

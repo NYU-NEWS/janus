@@ -350,7 +350,7 @@ void RococoServiceImpl::rcc_start_pie(
     }
 }
 
-void RococoServiceImpl::rcc_finish_txn(
+void RococoServiceImpl::rcc_finish_txn( // equivalent to commit phrase
         const ChopFinishRequest& req,
         ChopFinishResponse* res,
         rrr::DeferredReply* defer) {

@@ -403,6 +403,9 @@ void MultiVersionedRow::garbageCollection(int column_id, std::map<i64, Value>::i
     for (auto it = time_segment[column_id].begin(); it != time_segment[column_id].end(); ++it) {
         if (it->first > cutTime) {
             // we remove all elements up to this entry for both old_values_ and time_segment
+            if (it == time_segment[column_id].begin()) {
+                break;
+            }
             std::map<i64, Value>::iterator recorded_itr = (--it)->second;
             time_segment[column_id].erase(time_segment[column_id].begin(), ++it);
             old_values_[column_id].erase(old_values_[column_id].begin(), ++recorded_itr);

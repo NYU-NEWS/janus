@@ -6,7 +6,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 find_package(Threads)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(APR REQUIRED apr-1)
-pkg_check_modules(PYTHON2 REQUIRED python2)
+#pkg_check_modules(PYTHON2 REQUIRED python2)
 
 link_directories(
     ${PYTHON2_LIBRARY_DIRS}
