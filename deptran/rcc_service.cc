@@ -278,7 +278,7 @@ void RococoServiceImpl::rcc_batch_start_pie(
         rrr::DeferredReply* defer) {
 
     verify(TxnRunner::get_running_mode() & (MODE_RCC | MODE_ROT));
-    auto txn = (RCCDTxn*) txn_mgr_.get_or_create(header.tid);
+    auto txn = (RCCDTxn*) txn_mgr_.get_or_create(headers[0].tid);
 
     res->is_defers.resize(headers.size());
     res->outputs.resize(headers.size());
@@ -332,7 +332,7 @@ void RococoServiceImpl::rcc_start_pie(
     auto job = [&header, &input, res, defer, this] () {
         std::lock_guard<std::mutex> guard(this->mtx_);
         bool deferred;
-        txn->start_pie(header, input, &deferred, &res->output);
+        txn->start(header, input, &deferred, &res->output);
 
         res->is_defered = deferred ? 1 : 0;
         auto sz_sub_gra = RCCDTxn::dep_s->sub_txn_graph(header.tid, res->gra_m);

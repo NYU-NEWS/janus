@@ -331,21 +331,11 @@ public:
 class RCCDTxn : DTxn {
 public:
 
-    void start_pie(
+    void start(
             const RequestHeader &header,
             const std::vector<mdb::Value> &input,
             bool *deferred,
             std::vector<mdb::Value> *output
-    );
-
-    void start(
-            const RequestHeader &header,
-            const std::vector<mdb::Value> &input,
-            bool &is_defered,
-            std::vector<mdb::Value> &output,
-            Vertex<PieInfo> *pv,
-            Vertex<TxnInfo> *tv
-            //cell_entry_map_t *rw_entry
     );
 
     void start_ro(
