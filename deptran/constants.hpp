@@ -30,8 +30,9 @@ namespace rococo {
 #define MODE_NONE   (0)
 #define MODE_2PL    (1)
 #define MODE_OCC    (2)
-#define MODE_RCC    (3)
-#define MODE_RPC_NULL   (4)
+#define MODE_RCC    (4)
+#define MODE_ROT    (8)
+#define MODE_RPC_NULL   (64)
 
     // deprecated.
 #define MODE_DEPTRAN (3)

@@ -22,6 +22,7 @@ public:
     std::mutex mtx_;
     Recorder *recorder_ = NULL;
     ServerControlServiceImpl *scsi_; // for statistics;
+    DTxnMgr txn_mgr_;
 
     void do_start_pie(const RequestHeader &header,
             const Value *input,
@@ -113,17 +114,10 @@ public:
             ChopStartResponse* res,
             rrr::DeferredReply* defer);
 
-    void rcc_finish_to_commit(
-            Vertex<TxnInfo> *v,
-            rrr::DeferredReply*);
-
     void rcc_finish_txn(
             const ChopFinishRequest& req,
             ChopFinishResponse* res,
             rrr::DeferredReply*) ;
-
-    // this is a helper function.
-    void rcc_ask_finish(Vertex<TxnInfo>* av);
 
     void rcc_ask_txn(
             const rrr::i64& tid,

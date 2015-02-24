@@ -316,17 +316,29 @@ private:
 
 };
 
-class RCC {
+class DTxn {
+public:
+    int64_t tid_;
+    DTxnMgr *mgr_;
+
+    DTxn() = delete;
+
+    DTxn(i64 tid, DTxnMgr* mgr) : tid_(tid), mgr_(mgr) {
+
+    }
+};
+
+class RCCDTxn : DTxn {
 public:
 
-    static void start_pie(
+    void start_pie(
             const RequestHeader &header,
             const std::vector<mdb::Value> &input,
             bool *deferred,
             std::vector<mdb::Value> *output
     );
 
-    static void start(
+    void start(
             const RequestHeader &header,
             const std::vector<mdb::Value> &input,
             bool &is_defered,
@@ -336,16 +348,31 @@ public:
             //cell_entry_map_t *rw_entry
     );
 
-    static void start_ro(
+    void start_ro(
             const RequestHeader &header,
             const std::vector<mdb::Value> &input,
             std::vector<mdb::Value> &output,
             std::vector<TxnInfo *> *conflict_txns
     );
 
-    static void finish(
-            i64 tid,
-            std::vector<std::pair<RequestHeader, std::vector<mdb::Value> > > &outputs);
+    void commit(
+            const ChopFinishRequest &req,
+            ChopFinishResponse* res,
+            rrr::DeferredReply* defer
+    );
+
+    void to_decide(
+            Vertex<TxnInfo> *v,
+            rrr::DeferredReply* defer
+    );
+
+    void exe_deferred(
+            std::vector<std::pair<RequestHeader, std::vector<mdb::Value> > > &outputs
+    );
+
+    void send_ask_req(
+            Vertex<TxnInfo>* av
+    );
 
     typedef struct {
         RequestHeader header;
@@ -354,9 +381,13 @@ public:
     } DeferredRequest;
 
 
-    static map<i64, std::vector<DeferredRequest>> deferred_reqs_;
+    std::vector<DeferredRequest> dreqs_;
 
     static DepGraph *dep_s;
+};
+
+class RO6DTxn : public RCCDTxn {
+
 };
 
 class TPL {
@@ -365,18 +396,20 @@ public:
 
     static int do_commit(i64 txn_id);
 
-    static int do_abort(i64 txn_id/*, rrr::DeferredReply* defer*/);
+    static int do_abort(i64 txn_id);
 
     static std::function<void(void)> get_2pl_proceed_callback(
             const RequestHeader &header,
             const mdb::Value *input,
             rrr::i32 input_size,
-            rrr::i32 *res);
+            rrr::i32 *res
+    );
 
     static std::function<void(void)> get_2pl_fail_callback(
             const RequestHeader &header,
             rrr::i32 *res,
-            mdb::Txn2PL::PieceStatus *ps);
+            mdb::Txn2PL::PieceStatus *ps
+    );
 
     static std::function<void(void)> get_2pl_succ_callback(
             const RequestHeader &header,
@@ -388,14 +421,20 @@ public:
                     const RequestHeader &,
                     const Value *,
                     rrr::i32,
-                    rrr::i32 *)> func);
+                    rrr::i32 *)> func
+    );
 
     static std::function<void(void)> get_2pl_succ_callback(
             const RequestHeader &req,
             const mdb::Value *input,
             rrr::i32 input_size,
             rrr::i32 *res,
-            mdb::Txn2PL::PieceStatus *ps);
+            mdb::Txn2PL::PieceStatus *ps
+    );
+};
+
+class OCC : public TPL {
+
 };
 
 // TODO: seems that this class is both in charge of of the Txn playground and the 2PL/OCC controller.
@@ -440,5 +479,51 @@ private:
 
 };
 
+
+
+class DTxnMgr {
+public:
+    std::map<i64, DTxn*> dtxns_;
+
+    DTxn* create(i64 tid) {
+        DTxn* ret = nullptr;
+        switch (TxnRunner::get_running_mode()) {
+            case MODE_RCC:
+                ret = new RCCDTxn(tid);
+                break;
+            case MODE_ROT:
+                ret = new ROTDTxn(tid);
+                break;
+            default:
+                verify(0);
+        }
+        verify(dtxns_[tid] == nullptr);
+        dtxns_[tid] = ret;
+        return ret;
+    }
+
+    DTxn* destroy(i64 tid) {
+        auto it = dtxns_.find(tid);
+        verify(it != dtxns_.end());
+        delete it->second;
+        dtxns_.erase(it);
+    }
+
+    DTxn* get(i64 tid) {
+        auto it = dtxns_.find(tid);
+        verify(it != dtxns_.end());
+        return it->second;
+    }
+
+    DTxn* get_or_create(i64 tid) {
+        auto it = dtxns_.find(tid);
+        if (it == dtxns_.end()) {
+            return create(tid);
+        } else {
+            return it->second;
+        }
+    }
+
+};
 
 } // namespace rococo
