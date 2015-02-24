@@ -1,3 +1,8 @@
+#include <AVFoundation/AVFoundation.h>
+#include <AddressBook/AddressBook.h>
+#include <SceneKit/SceneKit.h>
+#include <SpriteKit/SpriteKit.h>
+#include <CoreData/CoreData.h>
 #include "value.h"
 #include "row.h"
 #include "schema.h"
@@ -397,7 +402,7 @@ version_t MultiVersionedRow::ver_s = 0;
 void MultiVersionedRow::garbageCollection(int column_id, std::map<i64, Value>::iterator itr) {
     // current system time in milliseconds
     i64 currentTime = static_cast<i64>(time(NULL) * 1000);
-    i64 cutTime = currentTime - SAFE_TIME;
+    i64 cutTime = currentTime - VERSION_SAFE_TIME;
     // put itr (along with current time) into time_segment
     time_segment[column_id].insert(std::pair<i64, std::map<i64, Value>::iterator>(currentTime, itr));
     for (auto it = time_segment[column_id].begin(); it != time_segment[column_id].end(); ++it) {
@@ -430,10 +435,99 @@ version_t MultiVersionedRow::getCurrentVersion(int column_id) {
  *
  * @return: an old value
  */
-Value MultiVersionedRow::get_column_by_time(int column_id, i64 version_num) {
+Value MultiVersionedRow::get_column_by_version(int column_id, i64 version_num) const {
     Value v;
     v = old_values_[column_id][version_num];
     return v;
+}
+
+/*
+ * RO-6: check ReadTxnIdTracker to get specific version number for reads to query with;
+ * We also update it when we have writes coming with a vector of rtxn_ids (those ids were got via
+ * that write's dep_check and will be put into Tracker for later possible reads)
+ *
+ * Write will update the stored version number for each rtxn_id
+ * Read will simply fetch needed information
+ */
+version_t ReadTxnIdTracker::checkIfTxnIdBeenRecorded(int column_id, i64 txnId, bool forWrites, version_t chosenVersion) {
+    version_t txnTimeToReturn = 0;
+    //recordTime is real time for garbage collection
+    i64 recordTime = static_cast<i64>(time(NULL) * 1000);
+    version_t txnTime = !forWrites ? 0 : chosenVersion;  // a place holder, txnTime should be filled in by writes
+                                                      // after done dep_check
+    //prepare time entry for this transaction. A time entry has transaction's effective time and record time
+    TxnTimes timesEntry = std::make_pair(txnTime, recordTime);
+    //ReadTxnEntry txnIdList = keyToReadTxnIds.get(locatorKey);
+    ReadTxnEntry* rtxn_entry = &keyToReadTxnIds[column_id];
+    if (rtxn_entry->size() == 0) {
+        //the locator_key is even not touched by other read txns yet
+        ReadTxnEntry read_txn_entry;
+        read_txn_entry[txnId] = timesEntry;
+        *rtxn_entry = read_txn_entry;
+        keyToLastAccessedTime[column_id] = recordTime;
+    }
+    else {
+        i64 safetyTime = recordTime - VERSION_SAFE_TIME;
+        // this key has not been checked by dep_check for a while, we need to explicitly do garbage collection
+        if (keyToLastAccessedTime[column_id] < safetyTime) {
+            for (std::pair<i64, TxnTimes> txn_entry : *rtxn_entry) {
+                if (txn_entry.second.second < safetyTime) {
+                    rtxn_entry->erase(txn_entry.first);
+                }
+            }
+            keyToLastAccessedTime[column_id] = recordTime;
+        }
+        //ReadTxnEntry read_txn_entry = keyToReadTxnIds[column_id];
+
+        //ArrayList<Long> findTxnId = txnIdList.get(txnId);
+        if (rtxn_entry->find(txnId) == rtxn_entry->end()) {
+            // locator_key exists but this txnId is not in the record
+            (*rtxn_entry)[txnId] = timesEntry;
+        } else {
+            // if we did find this txnId recorded before, then we return its effective time
+            // if forWrites, to see if we need to update the txnTime, we keep the min of all txnTimes of this txnId
+            txnTimeToReturn = (*rtxn_entry)[txnId].first;
+            if (forWrites) {
+                if (txnTimeToReturn > txnTime ) {
+                    (*rtxn_entry)[txnId].first = txnTime; //update txnTime
+                }
+            }
+        }
+    }
+    // if txnTimeToReturn not equal to 0, then it also means we found this txnId in our record
+    return txnTimeToReturn;
+}
+
+/*
+ * This will be called by a dep_checkee, the server that a write check dependencies against.
+ * It will check Tracker to see if there were read transactions recorded. If so, get those Ids and
+ * return them to coordinator, and then coordinator will pass them to the dep_checker server.
+ */
+std::vector<i64> ReadTxnIdTracker::getReadTxnIds(int column_id) {
+    std::vector<i64> returnedIdList;
+    if (keyToReadTxnIds.find(column_id) == keyToReadTxnIds.end())
+        return returnedIdList;
+    i64 currentTime = static_cast<i64>(time(NULL) * 1000);
+    i64 safeTime = currentTime - VERSION_SAFE_TIME;
+    ReadTxnEntry* rtxn_entry = &keyToReadTxnIds[column_id];
+    for (std::pair<i64, TxnTimes> entry : *rtxn_entry) {
+        if (entry.second.second >= safeTime) {
+            returnedIdList.push_back(entry.first);
+        } else {
+            rtxn_entry->erase(entry.first);
+        }
+    }
+    keyToLastAccessedTime[column_id] = currentTime;
+    return returnedIdList;
+}
+
+Value MultiVersionedRow::get_column(int column_id, i64 txnId) const {
+    version_t version_number = rtxn_tracker.checkIfTxnIdBeenRecorded(column_id, txnId, false, 0);
+    if (version_number != 0) {
+        return get_column_by_version(column_id, version_number);
+    } else {
+        return Row::get_column(column_id);
+    }
 }
 
 // **** deprecated **** //
