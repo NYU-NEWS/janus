@@ -316,6 +316,52 @@ private:
 
 };
 
+
+// TODO: seems that this class is both in charge of of the Txn playground and the 2PL/OCC controller.
+// in charge of locks and staging area
+class TxnRunner {
+public:
+
+    static void get_prepare_log(i64 txn_id,
+            const std::vector<i32> &sids,
+            std::string *str);
+
+    static void init(int mode);
+    // finalize, free up resource
+    static void fini();
+    static inline int get_running_mode() { return running_mode_s; }
+
+    static void reg_table(const string& name,
+            mdb::Table *tbl
+    );
+
+    static mdb::Txn *get_txn(const i64 tid);
+
+    static mdb::Txn *get_txn(const RequestHeader &req);
+
+    static mdb::Txn *del_txn(const i64 tid);
+
+    static inline
+    mdb::Table
+    *get_table(const string& name) {
+        return txn_mgr_s->get_table(name);
+    }
+
+
+private:
+    // prevent instance creation
+    TxnRunner() {}
+
+    static int running_mode_s;
+
+    static map<i64, mdb::Txn *> txn_map_s;
+    static mdb::TxnMgr *txn_mgr_s;
+
+};
+
+
+class DTxnMgr;
+
 class DTxn {
 public:
     int64_t tid_;
@@ -328,8 +374,14 @@ public:
     }
 };
 
-class RCCDTxn : DTxn {
+
+
+class RCCDTxn : public DTxn {
 public:
+
+    RCCDTxn(i64 tid, DTxnMgr* mgr) : DTxn(tid, mgr) {
+
+    }
 
     void start(
             const RequestHeader &header,
@@ -377,7 +429,10 @@ public:
 };
 
 class RO6DTxn : public RCCDTxn {
+public:
+    RO6DTxn(i64 tid, DTxnMgr* mgr): RCCDTxn(tid, mgr) {
 
+    }
 };
 
 class TPL {
@@ -427,50 +482,6 @@ class OCC : public TPL {
 
 };
 
-// TODO: seems that this class is both in charge of of the Txn playground and the 2PL/OCC controller.
-// in charge of locks and staging area
-class TxnRunner {
-public:
-
-    static void get_prepare_log(i64 txn_id,
-            const std::vector<i32> &sids,
-            std::string *str);
-
-    static void init(int mode);
-    // finalize, free up resource
-    static void fini();
-    static inline int get_running_mode() { return running_mode_s; }
-
-    static void reg_table(const string& name,
-            mdb::Table *tbl
-            );
-
-    static mdb::Txn *get_txn(const i64 tid);
-
-    static mdb::Txn *get_txn(const RequestHeader &req);
-
-    static mdb::Txn *del_txn(const i64 tid);
-
-    static inline
-        mdb::Table
-        *get_table(const string& name) {
-        return txn_mgr_s->get_table(name);
-    }
-
-
-private:
-    // prevent instance creation
-    TxnRunner() {}
-
-    static int running_mode_s;
-
-    static map<i64, mdb::Txn *> txn_map_s;
-    static mdb::TxnMgr *txn_mgr_s;
-
-};
-
-
-
 class DTxnMgr {
 public:
     std::map<i64, DTxn*> dtxns_;
@@ -479,10 +490,10 @@ public:
         DTxn* ret = nullptr;
         switch (TxnRunner::get_running_mode()) {
             case MODE_RCC:
-                ret = new RCCDTxn(tid);
+                ret = new RCCDTxn(tid, this);
                 break;
             case MODE_ROT:
-                ret = new ROTDTxn(tid);
+                ret = new RO6DTxn(tid, this);
                 break;
             default:
                 verify(0);
@@ -492,7 +503,7 @@ public:
         return ret;
     }
 
-    DTxn* destroy(i64 tid) {
+    void destroy(i64 tid) {
         auto it = dtxns_.find(tid);
         verify(it != dtxns_.end());
         delete it->second;
@@ -515,5 +526,6 @@ public:
     }
 
 };
+
 
 } // namespace rococo

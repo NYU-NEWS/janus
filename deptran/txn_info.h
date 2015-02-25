@@ -4,7 +4,7 @@
 
 namespace rococo {
 
-class ChopFinishResponse; 
+struct ChopFinishResponse;
 
 class TxnInfo {
 private:

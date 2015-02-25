@@ -283,7 +283,7 @@ void RococoServiceImpl::rcc_batch_start_pie(
     res->is_defers.resize(headers.size());
     res->outputs.resize(headers.size());
 
-    auto job = [&headers, &inputs, res, defer, this] () {
+    auto job = [&headers, &inputs, res, defer, this, txn] () {
         std::lock_guard<std::mutex> guard(mtx_);
 
         Log::debug("batch req, headers size:%u", headers.size());
@@ -298,7 +298,7 @@ void RococoServiceImpl::rcc_batch_start_pie(
             //    Log::debug("receive start request. txn_id: %llx, pie_id: %llx", header.tid, header.pid);
 
             bool deferred;
-            txn->start_pie(header, input, &deferred, &output);
+            txn->start(header, input, &deferred, &output);
             res->is_defers[i] = deferred ? 1 : 0;
 
         }
@@ -329,7 +329,7 @@ void RococoServiceImpl::rcc_start_pie(
 
     static bool do_record = Config::get_config()->do_logging();
 
-    auto job = [&header, &input, res, defer, this] () {
+    auto job = [&header, &input, res, defer, this, txn] () {
         std::lock_guard<std::mutex> guard(this->mtx_);
         bool deferred;
         txn->start(header, input, &deferred, &res->output);
