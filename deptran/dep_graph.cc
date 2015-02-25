@@ -71,13 +71,7 @@ void DepGraph::start_pie(PieInfo &pi,
                          /*, std::unordered_map<cell_locator_t, 
                            int, cell_locator_t_hash> &opset,
                            cell_entry_map_t &entry_map*/) {
-    //Vertex<PieInfo> *pv;
-    //Vertex<TxnInfo> *tv;
-    //foi_pie_txn(pi, &pv, &tv);
-
     verify(tv != NULL);
-
-
     if (pv) {
         foi_pie(pi, pv);
     }

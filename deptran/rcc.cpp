@@ -4,46 +4,12 @@ namespace rococo {
 
 DepGraph *RCCDTxn::dep_s = NULL;
 
-void RCCDTxn::exe_deferred(
-        std::vector<std::pair<RequestHeader, std::vector<mdb::Value> > >
-        &outputs) {
-    if (dreqs_.size() == 0) {
-        // this tid does not need deferred execution.
-        //verify(0);
-    } else {
-        // delayed execution
-        outputs.clear(); // FIXME does this help? seems it does, why?
-        for (auto &req: dreqs_) {
-            auto &header = req.header;
-            auto &input = req.inputs;
-            auto txn_handler_pair = TxnRegistry::get(header.t_type, header.p_type);
-            verify(header.tid == tid_);
-
-            std::vector<Value> output;
-            int output_size = 300;
-            output.resize(output_size);
-            int res;
-            txn_handler_pair.txn_handler(header, input.data(), input.size(),
-                    &res, output.data(), &output_size,
-                    &req.row_map, NULL, NULL, NULL);
-            if (header.p_type == TPCC_PAYMENT_4
-                    && header.t_type == TPCC_PAYMENT)
-                verify(output_size == 15);
-            output.resize(output_size);
-
-            // FIXME. what the fuck happens here?
-            auto pp = std::make_pair(header, output);
-            outputs.push_back(pp);
-        }
-    }
-}
 
 void RCCDTxn::start(
         const RequestHeader &header,
         const std::vector<mdb::Value> &input,
         bool *deferred,
-        std::vector<mdb::Value> *output
-        ) {
+        std::vector<mdb::Value> *output) {
     PieInfo pi;
     pi.pie_id_ = header.pid;
     pi.txn_id_ = header.tid;
@@ -51,7 +17,7 @@ void RCCDTxn::start(
 
     //std::unordered_map<cell_locator_t, int,
     //                   cell_locator_t_hash> opset; //OP_W, OP_DR, OP_IR
-    // get the read and write sets;
+    // get the read and write sets;)
     //lock_oracle(header, input.data(), input.size(), &opset);
 
     Vertex<PieInfo> *pv = NULL;
@@ -70,10 +36,12 @@ void RCCDTxn::start(
             int output_size = 300;
             output->resize(output_size);
             int res;
-            txn_handler_pair.txn_handler(header, input.data(),
+            txn_handler_pair.txn_handler(
+                    header, input.data(),
                     input.size(), &res, output->data(),
                     &output_size, NULL, pv,
-                    tv/*rw_entry*/, NULL);
+                    tv/*rw_entry*/, NULL
+            );
             output->resize(output_size);
             *deferred = false;
             break;
@@ -83,15 +51,17 @@ void RCCDTxn::start(
             DeferredRequest dr;
             dr.header = header;
             dr.inputs = input;
-            std::vector<DeferredRequest> &drs = deferred_reqs_[header.tid];
+            std::vector<DeferredRequest> &drs = dreqs_;
             if (drs.size() == 0) {
                 drs.reserve(100); //XXX
             }
             drs.push_back(dr);
-            txn_handler_pair.txn_handler(header, drs.back().inputs.data(),
+            txn_handler_pair.txn_handler(
+                    header, drs.back().inputs.data(),
                     drs.back().inputs.size(), NULL, NULL,
                     NULL, &drs.back().row_map, pv,
-                    tv/*rw_entry*/, NULL);
+                    tv/*rw_entry*/, NULL
+            );
             *deferred = true;
             break;
         }
@@ -100,7 +70,7 @@ void RCCDTxn::start(
             DeferredRequest dr;
             dr.header = header;
             dr.inputs = input;
-            std::vector<DeferredRequest> &drs = deferred_reqs_[header.tid];
+            std::vector<DeferredRequest> &drs = dreqs_;
             if (drs.size() == 0) {
                 drs.reserve(100); //XXX
             }
@@ -108,11 +78,13 @@ void RCCDTxn::start(
             int output_size = 300; //XXX
             output->resize(output_size);
             int res;
-            txn_handler_pair.txn_handler(header, drs.back().inputs.data(),
+            txn_handler_pair.txn_handler(
+                    header, drs.back().inputs.data(),
                     drs.back().inputs.size(), &res,
                     output->data(), &output_size,
                     &drs.back().row_map, pv,
-                    tv/*rw_entry*/, NULL);
+                    tv/*rw_entry*/, NULL
+            );
             output->resize(output_size);
             *deferred = false;
             break;
@@ -318,5 +290,40 @@ void RCCDTxn::send_ask_req(Vertex<TxnInfo>* av) {
 
 }
 
+
+
+void RCCDTxn::exe_deferred(
+        std::vector<std::pair<RequestHeader, std::vector<mdb::Value> > >
+        &outputs) {
+    if (dreqs_.size() == 0) {
+        // this tid does not need deferred execution.
+        //verify(0);
+    } else {
+        // delayed execution
+        outputs.clear(); // FIXME does this help? seems it does, why?
+        for (auto &req: dreqs_) {
+            auto &header = req.header;
+            auto &input = req.inputs;
+            auto txn_handler_pair = TxnRegistry::get(header.t_type, header.p_type);
+            verify(header.tid == tid_);
+
+            std::vector<Value> output;
+            int output_size = 300;
+            output.resize(output_size);
+            int res;
+            txn_handler_pair.txn_handler(header, input.data(), input.size(),
+                    &res, output.data(), &output_size,
+                    &req.row_map, NULL, NULL, NULL);
+            if (header.p_type == TPCC_PAYMENT_4
+                    && header.t_type == TPCC_PAYMENT)
+                verify(output_size == 15);
+            output.resize(output_size);
+
+            // FIXME. what the fuck happens here?
+            auto pp = std::make_pair(header, output);
+            outputs.push_back(pp);
+        }
+    }
+}
 
 } // namespace rcc

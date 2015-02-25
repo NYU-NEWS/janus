@@ -372,10 +372,7 @@ void RococoServiceImpl::rcc_finish_txn( // equivalent to commit phrase
     }
 
     auto txn = (RCCDTxn*) txn_mgr_.get(req.txn_id);
-
-    txn->commit(req, defer);
-
-
+    txn->commit(req, res, defer);
 }
 
 void RococoServiceImpl::rcc_ask_txn(
