@@ -1,8 +1,3 @@
-#include <AVFoundation/AVFoundation.h>
-#include <AddressBook/AddressBook.h>
-#include <SceneKit/SceneKit.h>
-#include <SpriteKit/SpriteKit.h>
-#include <CoreData/CoreData.h>
 #include "value.h"
 #include "row.h"
 #include "schema.h"
@@ -436,11 +431,10 @@ version_t MultiVersionedRow::getCurrentVersion(int column_id) {
  * @return: an old value
  */
 Value MultiVersionedRow::get_column_by_version(int column_id, i64 version_num) const {
-    Value v;
-    v = old_values_[column_id][version_num];
-    return v;
+    //return old_values_[column_id][version_num];
+    Value v;    // stub
+    return v;   // need to modify this later
 }
-
 /*
  * RO-6: check ReadTxnIdTracker to get specific version number for reads to query with;
  * We also update it when we have writes coming with a vector of rtxn_ids (those ids were got via
@@ -449,6 +443,8 @@ Value MultiVersionedRow::get_column_by_version(int column_id, i64 version_num) c
  * Write will update the stored version number for each rtxn_id
  * Read will simply fetch needed information
  */
+
+/*
 version_t ReadTxnIdTracker::checkIfTxnIdBeenRecorded(int column_id, i64 txnId, bool forWrites, version_t chosenVersion) {
     version_t txnTimeToReturn = 0;
     //recordTime is real time for garbage collection
@@ -497,12 +493,13 @@ version_t ReadTxnIdTracker::checkIfTxnIdBeenRecorded(int column_id, i64 txnId, b
     // if txnTimeToReturn not equal to 0, then it also means we found this txnId in our record
     return txnTimeToReturn;
 }
-
+*/
 /*
  * This will be called by a dep_checkee, the server that a write check dependencies against.
  * It will check Tracker to see if there were read transactions recorded. If so, get those Ids and
  * return them to coordinator, and then coordinator will pass them to the dep_checker server.
  */
+/*
 std::vector<i64> ReadTxnIdTracker::getReadTxnIds(int column_id) {
     std::vector<i64> returnedIdList;
     if (keyToReadTxnIds.find(column_id) == keyToReadTxnIds.end())
@@ -520,7 +517,10 @@ std::vector<i64> ReadTxnIdTracker::getReadTxnIds(int column_id) {
     keyToLastAccessedTime[column_id] = currentTime;
     return returnedIdList;
 }
-
+*/
+/*
+ * Comment this out here, but we need this functionality when move all implementation to upper level
+ * -> RO6DTxn
 Value MultiVersionedRow::get_column(int column_id, i64 txnId) const {
     version_t version_number = rtxn_tracker.checkIfTxnIdBeenRecorded(column_id, txnId, false, 0);
     if (version_number != 0) {
@@ -529,7 +529,7 @@ Value MultiVersionedRow::get_column(int column_id, i64 txnId) const {
         return Row::get_column(column_id);
     }
 }
-
+*/
 // **** deprecated **** //
 
 } // namespace mdb
