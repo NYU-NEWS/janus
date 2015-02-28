@@ -31,16 +31,16 @@ void RococoServiceImpl::do_start_pie(
         i32 *output_size) {
 
     *res = SUCCESS;
-    if (TxnRunner::get_running_mode() == MODE_2PL) {
-        TxnRegistry::execute(header, input, input_size,
+    if (txn_mgr_->get_mode() == MODE_2PL) {
+        txn_mgr_->execute(header, input, input_size,
 			     res, output, output_size);
     }
-    else if (TxnRunner::get_running_mode() == MODE_NONE) {
-        TxnRegistry::execute(header, input, input_size,
+    else if (txn_mgr_->get_mode() == MODE_NONE) {
+        txn_mgr_->execute(header, input, input_size,
 			     res, output, output_size);
     }
-    else if (TxnRunner::get_running_mode() == MODE_OCC) {
-        TxnRegistry::execute(header, input, input_size,
+    else if (txn_mgr_->get_mode() == MODE_OCC) {
+        txn_mgr_->execute(header, input, input_size,
 			     res, output, output_size);
     }
     else {
@@ -93,9 +93,11 @@ void RococoServiceImpl::naive_batch_start_pie(
         std::vector<vector<Value>> *outputs,
         rrr::DeferredReply *defer) {
     std::lock_guard<std::mutex> guard(mtx_);
-
+    
+    
+    
     DragonBall *defer_reply_db = NULL;
-    if (TxnRunner::get_running_mode() == MODE_2PL) {
+    if (txn_mgr_->get_mode() == MODE_2PL) {
         defer_reply_db = new DragonBall(headers.size(), [/*&headers, */defer/*, results*/]() {
                 //for (int i = 0; i < results->size(); i++) {
                 //    Log::debug("tid: %ld, pid: %ld, results[%d]: %d", headers[i].tid, headers[i].pid, i, (*results)[i]);
@@ -110,11 +112,11 @@ void RococoServiceImpl::naive_batch_start_pie(
     for (int i = 0; i < num_pieces; i++) {
         (*outputs)[i].resize(output_sizes[i]);
         if (defer_reply_db) {
-            TxnRegistry::pre_execute_2pl(headers[i], inputs[i],
+            txn_mgr_->pre_execute_2pl(headers[i], inputs[i],
                      &((*results)[i]), &((*outputs)[i]), defer_reply_db);
         }
         else
-            TxnRegistry::execute(headers[i], inputs[i],
+            txn_mgr_->execute(headers[i], inputs[i],
                      &(*results)[i], &(*outputs)[i]);
     }
     if (!defer_reply_db)
@@ -147,18 +149,18 @@ void RococoServiceImpl::start_pie(
     output->resize(output_size);
     // find stored procedure, and run it
     *res = SUCCESS;
-    if (TxnRunner::get_running_mode() == MODE_2PL) {
+    if (txn_mgr_->get_mode() == MODE_2PL) {
         DragonBall *defer_reply_db = new DragonBall(1, [defer]() {
                 defer->reply();
                 });
-        TxnRegistry::pre_execute_2pl(header, input, res, output, defer_reply_db);
+        txn_mgr_->pre_execute_2pl(header, input, res, output, defer_reply_db);
     }
-    else if (TxnRunner::get_running_mode() == MODE_NONE) {
-        TxnRegistry::execute(header, input, res, output);
+    else if (txn_mgr_->get_mode() == MODE_NONE) {
+        txn_mgr_->execute(header, input, res, output);
         defer->reply();
     }
-    else if (TxnRunner::get_running_mode() == MODE_OCC) {
-        TxnRegistry::execute(header, input, res, output);
+    else if (txn_mgr_->get_mode() == MODE_OCC) {
+        txn_mgr_->execute(header, input, res, output);
         defer->reply();
     }
     else
@@ -200,7 +202,7 @@ void RococoServiceImpl::prepare_txn_job(
 
     std::lock_guard<std::mutex> guard(mtx_);
     if (log_s)
-        TxnRunner::get_prepare_log(tid, sids, log_s);
+        txn_mgr_->get_prepare_log(tid, sids, log_s);
 
     *res = TPL::do_prepare(tid);
 
@@ -250,7 +252,7 @@ void RococoServiceImpl::abort_txn(
     std::lock_guard<std::mutex> guard(mtx_);
 
     Log::debug("get abort_txn: tid: %ld", tid);
-    //if (TxnRunner::get_running_mode() != MODE_2PL) {
+    //if (txn_mgr_->get_mode() != MODE_2PL) {
     //    *res = TxnRunner::do_abort(tid, defer);
     //    defer->reply();
     //}
@@ -277,8 +279,8 @@ void RococoServiceImpl::rcc_batch_start_pie(
         BatchChopStartResponse* res,
         rrr::DeferredReply* defer) {
 
-    verify(TxnRunner::get_running_mode() & (MODE_RCC | MODE_ROT));
-    auto txn = (RCCDTxn*) txn_mgr_.get_or_create(headers[0].tid);
+    verify(txn_mgr_->get_mode() & (MODE_RCC | MODE_ROT));
+    auto txn = (RCCDTxn*) txn_mgr_->get_or_create(headers[0].tid);
 
     res->is_defers.resize(headers.size());
     res->outputs.resize(headers.size());
@@ -324,8 +326,8 @@ void RococoServiceImpl::rcc_start_pie(
         ChopStartResponse* res,
         rrr::DeferredReply* defer) {
 //    Log::debug("receive start request. txn_id: %llx, pie_id: %llx", header.tid, header.pid);
-    verify(TxnRunner::get_running_mode() & (MODE_RCC | MODE_ROT));
-    auto txn = (RCCDTxn*) txn_mgr_.get_or_create(header.tid);
+    verify(txn_mgr_->get_mode() & (MODE_RCC | MODE_ROT));
+    auto txn = (RCCDTxn*) txn_mgr_->get_or_create(header.tid);
 
     static bool do_record = Config::get_config()->do_logging();
 
@@ -360,7 +362,7 @@ void RococoServiceImpl::rcc_finish_txn( // equivalent to commit phrase
 
     //Log::debug("receive finish request. txn_id: %llx, graph size: %d", req.txn_id, req.gra.size());
 
-    verify(TxnRunner::get_running_mode() & (MODE_RCC | MODE_ROT));
+    verify(txn_mgr_->get_mode() & (MODE_RCC | MODE_ROT));
     verify(req.gra.size() > 0);
     stat_sz_gra_commit_.sample(req.gra.size());
 
@@ -371,7 +373,7 @@ void RococoServiceImpl::rcc_finish_txn( // equivalent to commit phrase
         recorder_->submit(m);
     }
 
-    auto txn = (RCCDTxn*) txn_mgr_.get(req.txn_id);
+    auto txn = (RCCDTxn*) txn_mgr_->get(req.txn_id);
     txn->commit(req, res, defer);
 }
 
@@ -382,7 +384,7 @@ void RococoServiceImpl::rcc_ask_txn(
 
     std::lock_guard<std::mutex> guard(mtx_);
 
-    verify(TxnRunner::get_running_mode() == MODE_RCC);
+    verify(txn_mgr_->get_mode() == MODE_RCC);
     Vertex<TxnInfo> *v = RCCDTxn::dep_s->txn_gra_.find(tid);
 
     std::function<void(void)> callback = [this, res, defer, tid] () {
@@ -415,7 +417,7 @@ void RococoServiceImpl::rcc_ro_start_pie(
         rrr::DeferredReply *defer) {
     std::lock_guard<std::mutex> guard(mtx_);
 
-    auto txn = (RCCDTxn*) txn_mgr_.get_or_create(header.tid);
+    auto txn = (RCCDTxn*) txn_mgr_->get_or_create(header.tid);
 
     // do read only transaction
     //auto lock_oracle = TxnRegistry::get_lock_oracle(header);

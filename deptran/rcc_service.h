@@ -22,7 +22,7 @@ public:
     std::mutex mtx_;
     Recorder *recorder_ = NULL;
     ServerControlServiceImpl *scsi_; // for statistics;
-    DTxnMgr txn_mgr_;
+    DTxnMgr *txn_mgr_;
 
     void do_start_pie(const RequestHeader &header,
             const Value *input,

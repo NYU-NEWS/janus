@@ -6,7 +6,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 find_package(Threads)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(APR REQUIRED apr-1)
-#pkg_check_modules(PYTHON2 REQUIRED python2)
+
+IF(APPLE)
+ELSE()
+pkg_check_modules(PYTHON2 REQUIRED python2)
+ENDIF()
 
 link_directories(
     ${PYTHON2_LIBRARY_DIRS}
@@ -138,7 +142,10 @@ add_library(ROCOCO
     deptran/dep_row.cc
     deptran/dep_row.h
     deptran/dtxn.cc
-    deptran/dtxn.h
+    deptran/dtxn.hpp
+    deptran/tpl.cpp
+    deptran/rcc.cpp
+    deptran/rcc.hpp
     deptran/graph.cc
     deptran/graph.hpp
     deptran/inactive_client.h

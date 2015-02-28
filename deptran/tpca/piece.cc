@@ -22,7 +22,7 @@ void TpcaPiece::reg_pieces() {
                 row_map_t *row_map,
                 Vertex<PieInfo> *pv, Vertex<TxnInfo> *tv, std::vector<TxnInfo *> *conflict_txns) {
         Log::debug("output: %p, output_size: %p", output, output_size);
-        mdb::Txn *txn = TxnRunner::get_txn(header);
+        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
         Value buf;
         verify(input_size == 1);
         i32 output_index = 0;
@@ -36,7 +36,7 @@ void TpcaPiece::reg_pieces() {
             r = txn->query(txn->get_table(TPCA_CUSTOMER), mb).next();
         }
 
-        if (TxnRunner::get_running_mode() == MODE_2PL && output_size == NULL) {
+        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL && output_size == NULL) {
             mdb::Txn2PL::PieceStatus *ps
                 = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
             std::function<void(void)> succ = TPL::get_2pl_succ_callback(
@@ -138,7 +138,7 @@ void TpcaPiece::reg_pieces() {
                 row_map_t *row_map,
                 Vertex<PieInfo> *pv, Vertex<TxnInfo> *tv, std::vector<TxnInfo *> *conflict_txns) {
         Log::debug("output: %p, output_size: %p", output, output_size);
-        mdb::Txn *txn = TxnRunner::get_txn(header);
+        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
         Value buf;
         verify(input_size == 1);
         i32 output_index = 0;
@@ -152,7 +152,7 @@ void TpcaPiece::reg_pieces() {
             r = txn->query(txn->get_table(TPCA_TELLER), mb).next();
         }
 
-        if (TxnRunner::get_running_mode() == MODE_2PL && output_size == NULL) {
+        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL && output_size == NULL) {
             mdb::Txn2PL::PieceStatus *ps
                 = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
             std::function<void(void)> succ = TPL::get_2pl_succ_callback(
@@ -255,7 +255,7 @@ void TpcaPiece::reg_pieces() {
                 row_map_t *row_map,
                 Vertex<PieInfo> *pv, Vertex<TxnInfo> *tv, std::vector<TxnInfo *> *conflict_txns) {
         Log::debug("output: %p, output_size: %p", output, output_size);
-        mdb::Txn *txn = TxnRunner::get_txn(header);
+        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
         Value buf;
         verify(input_size == 1);
         i32 output_index = 0;
@@ -269,7 +269,7 @@ void TpcaPiece::reg_pieces() {
             r = txn->query(txn->get_table(TPCA_BRANCH), mb).next();
         }
 
-        if (TxnRunner::get_running_mode() == MODE_2PL && output_size == NULL) {
+        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL && output_size == NULL) {
             mdb::Txn2PL::PieceStatus *ps
                 = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
             std::function<void(void)> succ = TPL::get_2pl_succ_callback(

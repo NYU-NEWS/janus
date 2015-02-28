@@ -83,7 +83,7 @@ static dummy_class dummy___;
 #include "txn_info.h"
 #include "graph.hpp"
 #include "rcc_rpc.h"
-#include "dtxn.h"
+#include "dtxn.hpp"
 #include "txn_reg.hpp"
 #include "rcc.hpp"
 #include "dep_graph.hpp"

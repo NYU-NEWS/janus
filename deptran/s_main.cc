@@ -20,10 +20,6 @@ static int pop_table(uint32_t sid) {
     if (0 >= (ret = Sharding::get_table_names(sid, table_names)))
         return ret;
 
-    int running_mode = Config::get_config()->get_mode();
-    // set running mode
-    TxnRunner::init(running_mode);
-
     std::vector<std::string>::iterator table_it = table_names.begin();
 
     for (; table_it != table_names.end(); table_it++) {
@@ -44,7 +40,7 @@ static int pop_table(uint32_t sid) {
             default:
                 verify(0);
         }
-        TxnRunner::reg_table(*table_it, tb);
+        DTxnMgr::get_sole_mgr()->reg_table(*table_it, tb);
     }
     Sharding::populate_table(table_names, sid);
     return ret;
@@ -88,6 +84,10 @@ int main(int argc, char *argv[]) {
     if (hb) {
         run_scsi();
     }
+
+    // set running mode and initialize transaction manager.
+    int running_mode = Config::get_config()->get_mode();
+    DTxnMgr *mgr = new DTxnMgr(running_mode);
 
     // populate table
     ret = pop_table(sid);
@@ -192,7 +192,7 @@ int main(int argc, char *argv[]) {
     delete rococo_service;
     thread_pool->release();
     poll_mgr_g->release();
-    TxnRunner::fini();
+    delete DTxnMgr::get_sole_mgr();
     RandomGenerator::destroy();
     Config::destroy_config();
 

@@ -25,9 +25,9 @@ namespace rococo {
 //
 
 int TPL::do_prepare(i64 txn_id) {
-    auto txn = TxnRunner::get_txn(txn_id);
+    auto txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(txn_id);
     verify(txn != NULL);
-    switch (TxnRunner::get_running_mode()) {
+    switch (DTxnMgr::get_sole_mgr()->get_mode()) {
         case MODE_OCC:
             if (((mdb::TxnOCC *)txn)->commit_prepare())
                 return SUCCESS;
@@ -43,7 +43,7 @@ int TPL::do_prepare(i64 txn_id) {
     }
 }
 int TPL::do_abort(i64 txn_id) {
-    auto txn = TxnRunner::del_txn(txn_id);
+    auto txn = DTxnMgr::get_sole_mgr()->del_mdb_txn(txn_id);
     verify(txn != NULL);
     txn->abort();
     delete txn;
@@ -52,9 +52,9 @@ int TPL::do_abort(i64 txn_id) {
 
 
 int TPL::do_commit(i64 txn_id) {
-    auto txn = TxnRunner::del_txn(txn_id);
+    auto txn = DTxnMgr::get_sole_mgr()->del_mdb_txn(txn_id);
     verify(txn != NULL);
-    switch (TxnRunner::get_running_mode()) {
+    switch (DTxnMgr::get_sole_mgr()->get_mode()) {
         case MODE_OCC:
             ((mdb::TxnOCC *)txn)->commit_confirm();
             break;
@@ -129,7 +129,7 @@ std::function<void(void)> TPL::get_2pl_proceed_callback(
     return [header, input, input_size, res] () {
         Log::debug("tid: %ld, pid: %ld, p_type: %d, no lock",
                 header.tid, header.pid, header.p_type);
-        mdb::Txn2PL::PieceStatus *ps = ((mdb::Txn2PL *)TxnRunner::get_txn(header))
+        mdb::Txn2PL::PieceStatus *ps = ((mdb::Txn2PL *)DTxnMgr::get_sole_mgr()->get_mdb_txn(header))
                 ->get_piece_status(header.pid);
         verify(ps != NULL); //FIXME
 

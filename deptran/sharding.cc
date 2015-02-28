@@ -344,11 +344,11 @@ int Sharding::do_tpcc_real_dist_partition_populate_table(
         for (; tb_it != tb_info_.end(); tb_it++) {
             if (!tb_it->second.populated && ready2populate(&(tb_it->second))) {
                 tb_info_t *tb_info_ptr = &(tb_it->second);
-                mdb::Table *const table_ptr = TxnRunner::get_table(tb_it->first);
+                mdb::Table *const table_ptr = DTxnMgr::get_sole_mgr()->get_table(tb_it->first);
                 const mdb::Schema *schema = table_ptr->schema();
                 mdb::SortedTable *tbl_sec_ptr = NULL;
                 if (tb_it->first == TPCC_TB_ORDER)
-                    tbl_sec_ptr = (mdb::SortedTable *)TxnRunner::get_table(TPCC_TB_ORDER_C_ID_SECONDARY);
+                    tbl_sec_ptr = (mdb::SortedTable *)DTxnMgr::get_sole_mgr()->get_table(TPCC_TB_ORDER_C_ID_SECONDARY);
                 verify(schema->columns_count() == tb_info_ptr->columns.size());
 
                 unsigned long long int num_foreign_row = 1;
@@ -710,7 +710,7 @@ int Sharding::do_tpcc_dist_partition_populate_table(
         for (; tb_it != tb_info_.end(); tb_it++) {
             if (!tb_it->second.populated && ready2populate(&(tb_it->second))) {
                 tb_info_t *tb_info_ptr = &(tb_it->second);
-                mdb::Table *const table_ptr = TxnRunner::get_table(tb_it->first);
+                mdb::Table *const table_ptr = DTxnMgr::get_sole_mgr()->get_table(tb_it->first);
                 const mdb::Schema *schema = table_ptr->schema();
                 verify(schema->columns_count() == tb_info_ptr->columns.size());
 
@@ -1028,7 +1028,7 @@ int Sharding::do_tpcc_populate_table(const std::vector<std::string> &table_names
         for (; tb_it != tb_info_.end(); tb_it++) {
             if (!tb_it->second.populated && ready2populate(&(tb_it->second))) {
                 tb_info_t *tb_info_ptr = &(tb_it->second);
-                mdb::Table *const table_ptr = TxnRunner::get_table(tb_it->first);
+                mdb::Table *const table_ptr = DTxnMgr::get_sole_mgr()->get_table(tb_it->first);
                 const mdb::Schema *schema = table_ptr->schema();
                 verify(schema->columns_count() == tb_info_ptr->columns.size());
 
@@ -1106,7 +1106,7 @@ int Sharding::do_tpcc_populate_table(const std::vector<std::string> &table_names
 
                     mdb::SortedTable *tbl_sec_ptr = NULL;
                     if (tb_it->first == TPCC_TB_ORDER)
-                        tbl_sec_ptr = (mdb::SortedTable *)TxnRunner::get_table(TPCC_TB_ORDER_C_ID_SECONDARY);
+                        tbl_sec_ptr = (mdb::SortedTable *)DTxnMgr::get_sole_mgr()->get_table(TPCC_TB_ORDER_C_ID_SECONDARY);
                     for (col_index = 0; col_index < tb_info_ptr->columns.size(); col_index++) {
                         verify(col_it != schema->end());
                         verify(tb_info_ptr->columns[col_index].name == col_it->name);
@@ -1354,7 +1354,7 @@ int Sharding::do_populate_table(const std::vector<std::string> &table_names, uns
             if (!tb_it->second.populated) {
                 tb_info_t *tb_info_ptr = &(tb_it->second);
 
-                mdb::Table *const table_ptr = TxnRunner::get_table(tb_it->first);
+                mdb::Table *const table_ptr = DTxnMgr::get_sole_mgr()->get_table(tb_it->first);
                 if (table_ptr == NULL) {
                     tb_info_ptr->populated = true;
                     number2populate--;

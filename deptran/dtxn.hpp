@@ -244,6 +244,9 @@ typedef std::unordered_map<char *, std::unordered_map<mdb::MultiBlob, mdb::Row *
     } txn_handler_defer_pair_t;
 
 
+/**
+* This class holds all the hard-coded transactions pieces.
+*/
 class TxnRegistry {
 public:
 
@@ -271,41 +274,6 @@ public:
         return get(req_hdr.t_type, req_hdr.p_type);
     }
 
-    static void pre_execute_2pl(const RequestHeader& header,
-                               const std::vector<mdb::Value>& input,
-                               rrr::i32* res,
-                               std::vector<mdb::Value>* output,
-                               DragonBall *db);
-
-    static void pre_execute_2pl(const RequestHeader& header,
-                               const Value *input,
-                               rrr::i32 input_size,
-                               rrr::i32* res,
-                               mdb::Value* output,
-                               rrr::i32* output_size,
-                               DragonBall *db);
-
-    static inline void execute(const RequestHeader& header,
-                               const std::vector<mdb::Value>& input,
-                               rrr::i32* res,
-                               std::vector<mdb::Value>* output) {
-        rrr::i32 output_size = output->size();
-        get(header).txn_handler(header, input.data(), input.size(),
-				res, output->data(), &output_size,
-				NULL, NULL, NULL, NULL);
-        output->resize(output_size);
-    }
-
-    static inline void execute(const RequestHeader& header,
-                               const Value *input,
-                               rrr::i32 input_size,
-                               rrr::i32* res,
-                               mdb::Value* output,
-                               rrr::i32* output_size) {
-        get(header).txn_handler(header, input, input_size,
-				res, output, output_size,
-				NULL, NULL, NULL, NULL);
-    }
 
 
 private:
@@ -317,47 +285,6 @@ private:
 };
 
 
-// TODO: seems that this class is both in charge of of the Txn playground and the 2PL/OCC controller.
-// in charge of locks and staging area
-class TxnRunner {
-public:
-
-    static void get_prepare_log(i64 txn_id,
-            const std::vector<i32> &sids,
-            std::string *str);
-
-    static void init(int mode);
-    // finalize, free up resource
-    static void fini();
-    static inline int get_running_mode() { return running_mode_s; }
-
-    static void reg_table(const string& name,
-            mdb::Table *tbl
-    );
-
-    static mdb::Txn *get_txn(const i64 tid);
-
-    static mdb::Txn *get_txn(const RequestHeader &req);
-
-    static mdb::Txn *del_txn(const i64 tid);
-
-    static inline
-    mdb::Table
-    *get_table(const string& name) {
-        return txn_mgr_s->get_table(name);
-    }
-
-
-private:
-    // prevent instance creation
-    TxnRunner() {}
-
-    static int running_mode_s;
-
-    static map<i64, mdb::Txn *> txn_map_s;
-    static mdb::TxnMgr *txn_mgr_s;
-
-};
 
 
 class DTxnMgr;
@@ -482,13 +409,23 @@ class OCC : public TPL {
 
 };
 
+
+// TODO: seems that this class is both in charge of of the Txn playground and the 2PL/OCC controller.
+// in charge of locks and staging area
 class DTxnMgr {
 public:
     std::map<i64, DTxn*> dtxns_;
+    std::map<i64, mdb::Txn *> mdb_txns_;
+    mdb::TxnMgr *mdb_txn_mgr_;
+    int mode_;
+
+    DTxnMgr(int mode);
+
+    ~DTxnMgr();
 
     DTxn* create(i64 tid) {
         DTxn* ret = nullptr;
-        switch (TxnRunner::get_running_mode()) {
+        switch (mode_) {
             case MODE_RCC:
                 ret = new RCCDTxn(tid, this);
                 break;
@@ -523,6 +460,83 @@ public:
         } else {
             return it->second;
         }
+    }
+
+    inline int get_mode() { return mode_; }
+
+
+    // Below are function calls that go deeper into the mdb.
+    // They are merged from the called TxnRunner.
+
+    inline mdb::Table
+    *get_table(const string& name) {
+        return mdb_txn_mgr_->get_table(name);
+    }
+
+    mdb::Txn *get_mdb_txn(const i64 tid);
+
+    mdb::Txn *get_mdb_txn(const RequestHeader &req);
+
+    mdb::Txn *del_mdb_txn(const i64 tid);
+
+    void get_prepare_log(i64 txn_id,
+            const std::vector<i32> &sids,
+            std::string *str);
+
+
+    // TODO: I am not sure this is supposed to be here.
+    // I think it used to initialized the database?
+    // So it should be somewhere else?
+    void reg_table(const string& name,
+            mdb::Table *tbl
+    );
+
+
+    // Below are merged from TxnRegistry.
+    void pre_execute_2pl(const RequestHeader& header,
+            const std::vector<mdb::Value>& input,
+            rrr::i32* res,
+            std::vector<mdb::Value>* output,
+            DragonBall *db);
+
+    void pre_execute_2pl(const RequestHeader& header,
+            const Value *input,
+            rrr::i32 input_size,
+            rrr::i32* res,
+            mdb::Value* output,
+            rrr::i32* output_size,
+            DragonBall *db);
+
+    void execute(const RequestHeader& header,
+            const std::vector<mdb::Value>& input,
+            rrr::i32* res,
+            std::vector<mdb::Value>* output) {
+        rrr::i32 output_size = output->size();
+        TxnRegistry::get(header).txn_handler(header, input.data(), input.size(),
+                res, output->data(), &output_size,
+                NULL, NULL, NULL, NULL);
+        output->resize(output_size);
+    }
+
+    inline void execute(const RequestHeader& header,
+            const Value *input,
+            rrr::i32 input_size,
+            rrr::i32* res,
+            mdb::Value* output,
+            rrr::i32* output_size) {
+        TxnRegistry::get(header).txn_handler(header, input, input_size,
+                res, output, output_size,
+                NULL, NULL, NULL, NULL);
+    }
+
+    /**
+    * This is legecy code to keep minimal changes on old codes.
+    */
+
+    static DTxnMgr* txn_mgr_s;
+
+    static DTxnMgr* get_sole_mgr() {
+        return txn_mgr_s;
     }
 
 };

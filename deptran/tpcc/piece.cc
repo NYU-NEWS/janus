@@ -33,7 +33,7 @@ void TpccPiece::reg_new_order() {
             verify(input_size == 2);
 
             i32 output_index = 0;
-            mdb::Txn *txn = TxnRunner::get_txn(header);
+            mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
             Value buf;
             mdb::MultiBlob mb(2);
             mb[0] = input[1].get_blob();
@@ -42,7 +42,7 @@ void TpccPiece::reg_new_order() {
             mdb::Row *r = txn->query(txn->get_table(TPCC_TB_DISTRICT), mb,
                 output_size, header.pid).next();
 
-            if (TxnRunner::get_running_mode() == MODE_2PL
+            if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                 && output_size == NULL) {
                 mdb::Txn2PL::PieceStatus *ps
                     = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -134,12 +134,12 @@ void TpccPiece::reg_new_order() {
                 Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_1);
                 verify(input_size == 1);
                 i32 output_index = 0;
-                mdb::Txn *txn = TxnRunner::get_txn(header);
+                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
                 Value buf;
                 mdb::Row *r = txn->query(txn->get_table(TPCC_TB_WAREHOUSE),
                     input[0], output_size, header.pid).next();
 
-                if (TxnRunner::get_running_mode() == MODE_2PL
+                if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                     && output_size == NULL) {
                     mdb::Txn2PL::PieceStatus *ps
                         = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -205,7 +205,7 @@ void TpccPiece::reg_new_order() {
                 verify(input_size == 3);
                 Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_2);
                 i32 output_index = 0;
-                mdb::Txn *txn = TxnRunner::get_txn(header);
+                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
                 Value buf;
                 mdb::MultiBlob mb(3);
                 mb[0] = input[2].get_blob();
@@ -214,7 +214,7 @@ void TpccPiece::reg_new_order() {
                 mdb::Row *r = txn->query(txn->get_table(TPCC_TB_CUSTOMER), mb,
                     output_size, header.pid).next();
 
-                if (TxnRunner::get_running_mode() == MODE_2PL
+                if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                     && output_size == NULL) {
                     mdb::Txn2PL::PieceStatus *ps
                         = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -307,11 +307,11 @@ void TpccPiece::reg_new_order() {
                 verify(input_size == 7);
                 Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_3);
                 i32 output_index = 0;
-                mdb::Txn *txn = TxnRunner::get_txn(header);
+                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
                 mdb::Table *tbl = txn->get_table(TPCC_TB_ORDER);
                 mdb::Row *r = NULL;
 
-                if (TxnRunner::get_running_mode() == MODE_2PL
+                if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                     && output_size == NULL) {
                     mdb::MultiBlob mb(3);
                     mb[0] = input[1].get_blob();
@@ -348,7 +348,7 @@ void TpccPiece::reg_new_order() {
                         input[6]    // o_all_local
                         });
 
-                    switch (TxnRunner::get_running_mode()) {
+                    switch (DTxnMgr::get_sole_mgr()->get_mode()) {
                         case MODE_2PL:
                             r = mdb::FineLockedRow::create(tbl->schema(), row_data);
                             break;
@@ -483,7 +483,7 @@ void TpccPiece::reg_new_order() {
                 verify(input_size == 3);
                 Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_4);
 
-                if (TxnRunner::get_running_mode() == MODE_2PL
+                if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                     && output_size == NULL) {
                     TPL::get_2pl_proceed_callback(header, input,
                         input_size, res)();
@@ -491,7 +491,7 @@ void TpccPiece::reg_new_order() {
                 }
 
                 i32 output_index = 0;
-                mdb::Txn *txn = TxnRunner::get_txn(header);
+                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
                 mdb::Table *tbl = txn->get_table(TPCC_TB_NEW_ORDER);
                 mdb::Row *r = NULL;
 
@@ -503,7 +503,7 @@ void TpccPiece::reg_new_order() {
                         input[0],   // o_id
                         });
 
-                    switch (TxnRunner::get_running_mode()) {
+                    switch (DTxnMgr::get_sole_mgr()->get_mode()) {
                         case MODE_2PL:
                             r = mdb::FineLockedRow::create(tbl->schema(), row_data);
                             break;
@@ -611,12 +611,12 @@ void TpccPiece::reg_new_order() {
                 verify(input_size == 1);
                 Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_5);
                 i32 output_index = 0;
-                mdb::Txn *txn = TxnRunner::get_txn(header);
+                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
                 Value buf;
                 mdb::Row *r = txn->query(txn->get_table(TPCC_TB_ITEM), input[0],
                     output_size, header.pid).next();
 
-                if (TxnRunner::get_running_mode() == MODE_2PL
+                if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                     && output_size == NULL) {
 
                     mdb::Txn2PL::PieceStatus *ps
@@ -698,7 +698,7 @@ void TpccPiece::reg_new_order() {
                 verify(input_size == 3);
                 Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_6);
                 i32 output_index = 0;
-                mdb::Txn *txn = TxnRunner::get_txn(header);
+                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
                 Value buf;
                 mdb::MultiBlob mb(2);
                 mb[0] = input[0].get_blob();
@@ -706,7 +706,7 @@ void TpccPiece::reg_new_order() {
                 mdb::Row *r = txn->query(txn->get_table(TPCC_TB_STOCK), mb,
                     output_size, header.pid).next();
 
-                if (TxnRunner::get_running_mode() == MODE_2PL
+                if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                     && output_size == NULL) {
                     mdb::Txn2PL::PieceStatus *ps
                         = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -781,7 +781,7 @@ void TpccPiece::reg_new_order() {
                 verify(input_size == 4);
                 Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_7);
                 i32 output_index = 0;
-                mdb::Txn *txn = TxnRunner::get_txn(header);
+                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
                 Value buf;
                 mdb::Row *r = NULL;
                 mdb::MultiBlob mb(2);
@@ -792,7 +792,7 @@ void TpccPiece::reg_new_order() {
                         output_size, header.pid).next();
                 }
 
-                if (TxnRunner::get_running_mode() == MODE_2PL
+                if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                     && output_size == NULL) {
 
                     mdb::Txn2PL::PieceStatus *ps
@@ -930,7 +930,7 @@ void TpccPiece::reg_new_order() {
                 verify(input_size == 10);
                 Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_8);
 
-                if (TxnRunner::get_running_mode() == MODE_2PL
+                if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                     && output_size == NULL) {
                     TPL::get_2pl_proceed_callback(header, input,
                         input_size, res)();
@@ -938,14 +938,14 @@ void TpccPiece::reg_new_order() {
                 }
 
                 i32 output_index = 0;
-                mdb::Txn *txn = TxnRunner::get_txn(header);
+                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
                 mdb::Table *tbl = txn->get_table(TPCC_TB_ORDER_LINE);
                 mdb::Row *r = NULL;
 
                 if (row_map == NULL || pv != NULL) { // non deptran || deptran start req
                     std::vector<Value> input_buf(input, input + input_size);
 
-                    switch (TxnRunner::get_running_mode()) {
+                    switch (DTxnMgr::get_sole_mgr()->get_mode()) {
                         case MODE_2PL:
                             r = mdb::FineLockedRow::create(tbl->schema(), input_buf);
                             break;
@@ -1071,12 +1071,12 @@ void TpccPiece::reg_payment() {
                 verify(input_size == 2);
                 Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_0);
                 i32 output_index = 0;
-                mdb::Txn *txn = TxnRunner::get_txn(header);
+                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
                 Value buf;
                 mdb::Row *r = txn->query(txn->get_table(TPCC_TB_WAREHOUSE),
                     input[0], output_size, header.pid).next();
 
-                if (TxnRunner::get_running_mode() == MODE_2PL
+                if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                     && output_size == NULL) {
                     mdb::Txn2PL::PieceStatus *ps
                         = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -1185,7 +1185,7 @@ void TpccPiece::reg_payment() {
                 verify(input_size == 2);
                 Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_1);
                 i32 output_index = 0;
-                mdb::Txn *txn = TxnRunner::get_txn(header);
+                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
                 Value buf;
                 mdb::MultiBlob mb(2);
                 mb[0] = input[1].get_blob();
@@ -1193,7 +1193,7 @@ void TpccPiece::reg_payment() {
                 mdb::Row *r = txn->query(txn->get_table(TPCC_TB_DISTRICT), mb,
                     output_size, header.pid).next();
 
-                if (TxnRunner::get_running_mode() == MODE_2PL
+                if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                     && output_size == NULL) {
                     mdb::Txn2PL::PieceStatus *ps
                         = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -1292,7 +1292,7 @@ void TpccPiece::reg_payment() {
                 verify(input_size == 3);
                 Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_2);
                 i32 output_index = 0;
-                mdb::Txn *txn = TxnRunner::get_txn(header);
+                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
                 Value buf;
                 mdb::Row *r = NULL;
                 mdb::MultiBlob mb(2);
@@ -1304,7 +1304,7 @@ void TpccPiece::reg_payment() {
                         output_size, header.pid).next();
                 }
 
-                if (TxnRunner::get_running_mode() == MODE_2PL
+                if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                     && output_size == NULL) {
                     mdb::Txn2PL::PieceStatus *ps
                         = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -1385,7 +1385,7 @@ void TpccPiece::reg_payment() {
                 verify(input_size == 3);
                 Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_3);
 
-                if (TxnRunner::get_running_mode() == MODE_2PL
+                if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                     && output_size == NULL) {
                     TPL::get_2pl_proceed_callback(header, input,
                         input_size, res)();
@@ -1393,7 +1393,7 @@ void TpccPiece::reg_payment() {
                 }
 
                 i32 output_index = 0;
-                /*mdb::Txn *txn = */TxnRunner::get_txn(header);
+                /*mdb::Txn *txn = */DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
                 mdb::MultiBlob mbl(3), mbh(3);
                 mbl[0] = input[2].get_blob();
                 mbh[0] = input[2].get_blob();
@@ -1451,7 +1451,7 @@ void TpccPiece::reg_payment() {
                 verify(input_size == 6);
                 Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_4);
                 i32 output_index = 0;
-                mdb::Txn *txn = TxnRunner::get_txn(header);
+                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
                 mdb::Row *r = NULL;
                 std::vector<Value> buf;
 
@@ -1466,7 +1466,7 @@ void TpccPiece::reg_payment() {
                         output_size, header.pid).next();
                 }
 
-                if (TxnRunner::get_running_mode() == MODE_2PL
+                if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                     && output_size == NULL) {
                     mdb::Txn2PL::PieceStatus *ps
                         = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -1676,7 +1676,7 @@ void TpccPiece::reg_payment() {
                 verify(input_size == 9);
                 Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_5);
 
-                if (TxnRunner::get_running_mode() == MODE_2PL
+                if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                     && output_size == NULL) {
                     TPL::get_2pl_proceed_callback(header, input,
                         input_size, res)();
@@ -1684,7 +1684,7 @@ void TpccPiece::reg_payment() {
                 }
 
                 i32 output_index = 0;
-                mdb::Txn *txn = TxnRunner::get_txn(header);
+                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
                 mdb::Table *tbl = txn->get_table(TPCC_TB_HISTORY);
 
                 // insert history
@@ -1712,7 +1712,7 @@ void TpccPiece::reg_payment() {
                     row_data[6] = Value(std::to_string(time(NULL)));    // h_date
                     row_data[7] = input[8];             // h_amount =>  h_amount
                     row_data[8] = Value(input[1].get_str() + "    " + input[2].get_str()); // d_data => w_name + 4spaces + d_name
-                    switch (TxnRunner::get_running_mode()) {
+                    switch (DTxnMgr::get_sole_mgr()->get_mode()) {
                         case MODE_2PL:
                             r = mdb::FineLockedRow::create(tbl->schema(), row_data);
                             break;
@@ -1761,7 +1761,7 @@ void TpccPiece::reg_order_status() {
                 verify(input_size == 3);
                 Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_0);
 
-                if (TxnRunner::get_running_mode() == MODE_2PL
+                if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                     && output_size == NULL) {
                     TPL::get_2pl_proceed_callback(header, input,
                         input_size, res)();
@@ -1769,7 +1769,7 @@ void TpccPiece::reg_order_status() {
                 }
 
                 i32 output_index = 0;
-                /*mdb::Txn *txn = */TxnRunner::get_txn(header);
+                /*mdb::Txn *txn = */DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
                 mdb::MultiBlob mbl(3), mbh(3);
                 mbl[0] = input[2].get_blob();
                 mbh[0] = input[2].get_blob();
@@ -1828,7 +1828,7 @@ void TpccPiece::reg_order_status() {
                 Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_1);
                 verify(input_size == 3);
                 i32 output_index = 0;
-                mdb::Txn *txn = TxnRunner::get_txn(header);
+                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
                 mdb::Table *tbl = txn->get_table(TPCC_TB_CUSTOMER);
                 // R customer
                 Value buf;
@@ -1839,7 +1839,7 @@ void TpccPiece::reg_order_status() {
                 mb[2] = input[0].get_blob();
                 mdb::Row *r = txn->query(tbl, mb, output_size, header.pid).next();
 
-                if (TxnRunner::get_running_mode() == MODE_2PL
+                if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                     && output_size == NULL) {
                     mdb::Txn2PL::PieceStatus *ps
                         = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -1928,7 +1928,7 @@ void TpccPiece::reg_order_status() {
                 verify(input_size == 3);
                 i32 output_index = 0;
                 Value buf;
-                mdb::Txn *txn = TxnRunner::get_txn(header);
+                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
 
                 mdb::MultiBlob mb_0(3);
                 mb_0[0] = input[1].get_blob();
@@ -1938,7 +1938,7 @@ void TpccPiece::reg_order_status() {
                     txn->get_table(TPCC_TB_ORDER_C_ID_SECONDARY), mb_0,
                     output_size, header.pid).next();
 
-                if (TxnRunner::get_running_mode() == MODE_2PL
+                if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                     && output_size == NULL) {
 
                     mdb::Txn2PL::PieceStatus *ps
@@ -2062,7 +2062,7 @@ void TpccPiece::reg_order_status() {
 //                ) {
 //                verify(input_size == 3);
 //                Value buf;
-//                mdb::Txn *txn = TxnRunner::get_txn(header);
+//                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
 //
 //                mdb::MultiBlob mb_0(3);
 //                mb_0[0] = input[1].get_blob();
@@ -2086,7 +2086,7 @@ void TpccPiece::reg_order_status() {
                 verify(input_size == 3);
                 i32 output_index = 0;
                 Value buf;
-                mdb::Txn *txn = TxnRunner::get_txn(header);
+                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
                 mdb::MultiBlob mbl(4), mbh(4);
                 Log::debug("ol_d_id: %d, ol_w_id: %d, ol_o_id: %d",
                     input[2].get_i32(), input[1].get_i32(), input[0].get_i32());
@@ -2117,7 +2117,7 @@ void TpccPiece::reg_order_status() {
 
                 verify(row_list.size() != 0);
 
-                if (TxnRunner::get_running_mode() == MODE_2PL
+                if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                     && output_size == NULL) {
                     mdb::Txn2PL::PieceStatus *ps
                         = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -2223,7 +2223,7 @@ void TpccPiece::reg_order_status() {
 //                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
 //                ) {
 //
-//                mdb::Txn *txn = TxnRunner::get_txn(header);
+//                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
 //                mdb::MultiBlob mbl(4), mbh(4);
 //                mbl[0] = input[2].get_blob();
 //                mbh[0] = input[2].get_blob();
@@ -2275,7 +2275,7 @@ void TpccPiece::reg_delivery() {
                 verify(input_size == 2);
                 i32 output_index = 0;
                 Value buf;
-                mdb::Txn *txn = TxnRunner::get_txn(header);
+                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
                 //cell_locator_t cl(TPCC_TB_NEW_ORDER, 3);
                 mdb::Row *r = NULL;
                 mdb::Table *tbl = txn->get_table(TPCC_TB_NEW_ORDER);
@@ -2296,7 +2296,7 @@ void TpccPiece::reg_delivery() {
                     if (rs.has_next()) {
                         r = rs.next();
 
-                        if (TxnRunner::get_running_mode() == MODE_2PL
+                        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                             && output_size == NULL) {
                             mdb::Txn2PL::PieceStatus *ps
                                 = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -2322,7 +2322,7 @@ void TpccPiece::reg_delivery() {
                         output[output_index++] = buf;
                     }
                     else {
-                        if (TxnRunner::get_running_mode() == MODE_2PL
+                        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                             && output_size == NULL) {
                             TPL::get_2pl_proceed_callback(header, input,
                                 input_size, res)();
@@ -2387,7 +2387,7 @@ void TpccPiece::reg_delivery() {
 //                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
 //                ) {
 //                Value buf;
-//                mdb::Txn *txn = TxnRunner::get_txn(header);
+//                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
 //                mdb::MultiBlob mbl(3), mbh(3);
 //                mbl[0] = input[1].get_blob();
 //                mbh[0] = input[1].get_blob();
@@ -2436,7 +2436,7 @@ void TpccPiece::reg_delivery() {
                 verify(input_size == 4);
                 i32 output_index = 0;
                 Value buf;
-                mdb::Txn *txn = TxnRunner::get_txn(header);
+                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
                 mdb::MultiBlob mb(3);
                 //cell_locator_t cl(TPCC_TB_ORDER, 3);
                 mb[0] = input[2].get_blob();
@@ -2447,7 +2447,7 @@ void TpccPiece::reg_delivery() {
                 mdb::Row *r = txn->query(txn->get_table(TPCC_TB_ORDER), mb,
                     output_size, header.pid).next();
 
-                if (TxnRunner::get_running_mode() == MODE_2PL
+                if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                     && output_size == NULL) {
                     mdb::Txn2PL::PieceStatus *ps
                         = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -2529,7 +2529,7 @@ void TpccPiece::reg_delivery() {
                 verify(input_size == 3);
                 i32 output_index = 0;
                 Value buf;
-                mdb::Txn *txn = TxnRunner::get_txn(header);
+                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
                 mdb::MultiBlob mbl(4), mbh(4);
                 mbl[0] = input[2].get_blob();
                 mbh[0] = input[2].get_blob();
@@ -2558,7 +2558,7 @@ void TpccPiece::reg_delivery() {
                     row_list.push_back(rs.next());
                 }
 
-                if (TxnRunner::get_running_mode() == MODE_2PL
+                if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                     && output_size == NULL) {
                     mdb::Txn2PL::PieceStatus *ps
                         = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -2629,7 +2629,7 @@ void TpccPiece::reg_delivery() {
 //                rrr::i32 input_size,
 //                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
 //                ) {
-//            mdb::Txn *txn = TxnRunner::get_txn(header);
+//            mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
 //            mdb::MultiBlob mbl(4), mbh(4);
 //            mbl[0] = input[2].get_blob();
 //            mbh[0] = input[2].get_blob();
@@ -2668,7 +2668,7 @@ void TpccPiece::reg_delivery() {
                 verify(input_size == 4);
                 i32 output_index = 0;
                 Value buf;
-                mdb::Txn *txn = TxnRunner::get_txn(header);
+                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
                 mdb::Row *r = NULL;
                 mdb::MultiBlob mb(3);
                 //cell_locator_t cl(TPCC_TB_CUSTOMER, 3);
@@ -2681,7 +2681,7 @@ void TpccPiece::reg_delivery() {
                         output_size, header.pid).next();
                 }
 
-                if (TxnRunner::get_running_mode() == MODE_2PL
+                if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                     && output_size == NULL) {
                     mdb::Txn2PL::PieceStatus *ps
                         = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -2790,7 +2790,7 @@ void TpccPiece::reg_stock_level() {
                 verify(input_size == 2);
                 i32 output_index = 0;
                 Value buf;
-                mdb::Txn *txn = TxnRunner::get_txn(header);
+                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
                 mdb::MultiBlob mb(2);
                 //cell_locator_t cl(TPCC_TB_DISTRICT, 2);
                 mb[0] = input[1].get_blob();
@@ -2799,7 +2799,7 @@ void TpccPiece::reg_stock_level() {
                 mdb::Row *r = txn->query(txn->get_table(TPCC_TB_DISTRICT), mb,
                     output_size, header.pid).next();
 
-                if (TxnRunner::get_running_mode() == MODE_2PL
+                if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                     && output_size == NULL) {
                     mdb::Txn2PL::PieceStatus *ps
                         = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -2859,7 +2859,7 @@ void TpccPiece::reg_stock_level() {
             verify(input_size == 3);
             i32 output_index = 0;
             Value buf;
-            mdb::Txn *txn = TxnRunner::get_txn(header);
+            mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
             mdb::MultiBlob mbl(4), mbh(4);
             mbl[0] = input[2].get_blob();
             mbh[0] = input[2].get_blob();
@@ -2888,7 +2888,7 @@ void TpccPiece::reg_stock_level() {
 
             verify(row_list.size() != 0);
 
-            if (TxnRunner::get_running_mode() == MODE_2PL
+            if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                 && output_size == NULL) {
                 mdb::Txn2PL::PieceStatus *ps
                     = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -2967,7 +2967,7 @@ void TpccPiece::reg_stock_level() {
                 verify(input_size == 3);
                 i32 output_index = 0;
                 Value buf;
-                mdb::Txn *txn = TxnRunner::get_txn(header);
+                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
                 mdb::MultiBlob mb(2);
                 //cell_locator_t cl(TPCC_TB_STOCK, 2);
                 mb[0] = input[0].get_blob();
@@ -2976,7 +2976,7 @@ void TpccPiece::reg_stock_level() {
                 mdb::Row *r = txn->query(txn->get_table(TPCC_TB_STOCK), mb,
                     output_size, header.pid).next();
 
-                if (TxnRunner::get_running_mode() == MODE_2PL
+                if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
                     && output_size == NULL) {
                     mdb::Txn2PL::PieceStatus *ps
                         = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);

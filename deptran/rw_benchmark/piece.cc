@@ -19,7 +19,7 @@ void RWPiece::reg_pieces() {
                 rrr::i32 *output_size,
                 row_map_t *row_map,
                 Vertex<PieInfo> *pv, Vertex<TxnInfo> *tv, std::vector<TxnInfo *> *conflict_txns) {
-        mdb::Txn *txn = TxnRunner::get_txn(header);
+        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
         Value buf;
         verify(input_size == 1);
         i32 output_index = 0;
@@ -46,7 +46,7 @@ void RWPiece::reg_pieces() {
                 rrr::i32 *output_size,
                 row_map_t *row_map,
                 Vertex<PieInfo> *pv, Vertex<TxnInfo> *tv, std::vector<TxnInfo *> *conflict_txns) {
-        mdb::Txn *txn = TxnRunner::get_txn(header);
+        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
         verify(input_size == 1);
         i32 output_index = 0;
         Value buf;
