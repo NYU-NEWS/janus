@@ -443,8 +443,6 @@ Value MultiVersionedRow::get_column_by_version(int column_id, i64 version_num) c
  * Write will update the stored version number for each rtxn_id
  * Read will simply fetch needed information
  */
-
-/*
 version_t ReadTxnIdTracker::checkIfTxnIdBeenRecorded(int column_id, i64 txnId, bool forWrites, version_t chosenVersion) {
     version_t txnTimeToReturn = 0;
     //recordTime is real time for garbage collection
@@ -493,13 +491,11 @@ version_t ReadTxnIdTracker::checkIfTxnIdBeenRecorded(int column_id, i64 txnId, b
     // if txnTimeToReturn not equal to 0, then it also means we found this txnId in our record
     return txnTimeToReturn;
 }
-*/
 /*
  * This will be called by a dep_checkee, the server that a write check dependencies against.
  * It will check Tracker to see if there were read transactions recorded. If so, get those Ids and
  * return them to coordinator, and then coordinator will pass them to the dep_checker server.
  */
-/*
 std::vector<i64> ReadTxnIdTracker::getReadTxnIds(int column_id) {
     std::vector<i64> returnedIdList;
     if (keyToReadTxnIds.find(column_id) == keyToReadTxnIds.end())
@@ -517,11 +513,11 @@ std::vector<i64> ReadTxnIdTracker::getReadTxnIds(int column_id) {
     keyToLastAccessedTime[column_id] = currentTime;
     return returnedIdList;
 }
-*/
 /*
  * Comment this out here, but we need this functionality when move all implementation to upper level
  * -> RO6DTxn
-Value MultiVersionedRow::get_column(int column_id, i64 txnId) const {
+ */
+Value MultiVersionedRow::get_column(int column_id, i64 txnId) {
     version_t version_number = rtxn_tracker.checkIfTxnIdBeenRecorded(column_id, txnId, false, 0);
     if (version_number != 0) {
         return get_column_by_version(column_id, version_number);
@@ -529,7 +525,6 @@ Value MultiVersionedRow::get_column(int column_id, i64 txnId) const {
         return Row::get_column(column_id);
     }
 }
-*/
 // **** deprecated **** //
 
 } // namespace mdb

@@ -121,38 +121,38 @@ public:
         return get_blob(schema_->get_column_id(col_name));
     }
 
-    virtual void update(int column_id, i32 v) {
+    void update(int column_id, i32 v) {
         const Schema::column_info* info = schema_->get_column_info(column_id);
         verify(info->type == Value::I32);
         update_fixed(info, &v, sizeof(v));
     }
 
-    virtual void update(int column_id, i64 v) {
+    void update(int column_id, i64 v) {
         const Schema::column_info* info = schema_->get_column_info(column_id);
         verify(info->type == Value::I64);
         update_fixed(info, &v, sizeof(v));
     }
-    virtual void update(int column_id, double v) {
+    void update(int column_id, double v) {
         const Schema::column_info* info = schema_->get_column_info(column_id);
         verify(info->type == Value::DOUBLE);
         update_fixed(info, &v, sizeof(v));
     }
-    virtual void update(int column_id, const std::string& str);
-    virtual void update(int column_id, const Value& v);
+    void update(int column_id, const std::string& str);
+    void update(int column_id, const Value& v);
 
-    virtual void update(const std::string& col_name, i32 v) {
+    void update(const std::string& col_name, i32 v) {
         this->update(schema_->get_column_id(col_name), v);
     }
-    virtual void update(const std::string& col_name, i64 v) {
+    void update(const std::string& col_name, i64 v) {
         this->update(schema_->get_column_id(col_name), v);
     }
-    virtual void update(const std::string& col_name, double v) {
+    void update(const std::string& col_name, double v) {
         this->update(schema_->get_column_id(col_name), v);
     }
-    virtual void update(const std::string& col_name, const std::string& v) {
+    void update(const std::string& col_name, const std::string& v) {
         this->update(schema_->get_column_id(col_name), v);
     }
-    virtual void update(const std::string& col_name, const Value& v) {
+    void update(const std::string& col_name, const Value& v) {
         this->update(schema_->get_column_id(col_name), v);
     }
 
@@ -549,6 +549,40 @@ public:
 };
 
 /*
+ * RO-6: A class that keeps tracking of observed read txns.
+ * A write (row_update/insert/delete) should update this class of the corresponding row first by
+ * doing dep_check on a remote row, get rtxn_ids from there, and update its own row's keyToReadTxnIds map
+ * A read will also check this map first to see if it needs to query an old version. The targetted version
+ * number will be also included in this map if so.
+ *
+ * Should be instantiated only by MultiVersionedRow class privately.
+ */
+class ReadTxnIdTracker {
+public:
+    std::map<int, i64> keyToLastAccessedTime;
+
+    version_t checkIfTxnIdBeenRecorded(int column_id, i64 txnId, bool forWrites, version_t chosenVersion);
+
+    std::vector<i64> getReadTxnIds(int column_id);
+
+    void clearContext() {
+        keyToReadTxnIds.clear();
+        keyToLastAccessedTime.clear();
+    }
+
+private:
+    // a pair of information for each read txn (txn_id) we recorded.
+    // first i64 is version number that will be used for later read. Second i64 is the real sys time when this txn_id
+    // is recorded (for GC use)
+    typedef std::pair<i64, i64> TxnTimes;
+    // One entry is for one read txn. i64 is txn_id.
+    typedef std::map<i64, TxnTimes> ReadTxnEntry;
+    // The main data structure used to keep a list of recorded read txns.
+    // "int" is column_id. We
+    std::map<int, ReadTxnEntry> keyToReadTxnIds;
+};
+
+/*
  * RO-6: This class defines a row which keeps old versions of each column.
  * Old versions are stored in a map of maps <column_id, map<timestamp, value> >.
  * column_id is used to point to specific columns; then for each column, it stores
@@ -581,59 +615,59 @@ public:
      *
      * Note: We need to pass set of read_txn_ids taken on by each write txn all the way down to here
      */
-    void update(int column_id, i64 v) {
-        update_internal(column_id, v);
+    void update(int column_id, i64 v, const std::vector<i64>& txnIds) {
+        update_internal(column_id, v, txnIds);
     }
 
-    void update(int column_id, i32 v) {
-        update_internal(column_id, v);
+    void update(int column_id, i32 v, const std::vector<i64>& txnIds) {
+        update_internal(column_id, v, txnIds);
     }
 
-    void update(int column_id, double v) {
-        update_internal(column_id, v);
+    void update(int column_id, double v, const std::vector<i64>& txnIds) {
+        update_internal(column_id, v, txnIds);
     }
 
-    void update(int column_id, const std::string& str) {
-        update_internal(column_id, str);
+    void update(int column_id, const std::string& str, const std::vector<i64>& txnIds) {
+        update_internal(column_id, str, txnIds);
     }
 
-    void update(int column_id, const Value& v) {
-        update_internal(column_id, v);
+    void update(int column_id, const Value& v, const std::vector<i64>& txnIds) {
+        update_internal(column_id, v, txnIds);
     }
 
     /*
      * For update by column name
      */
-    void update(const std::string& col_name, i64 v) {
-        this->update(schema_->get_column_id(col_name), v);
+    void update(const std::string& col_name, i64 v, const std::vector<i64>& txnIds) {
+        this->update(schema_->get_column_id(col_name), v, txnIds);
     }
 
-    void update(const std::string& col_name, i32 v) {
-        this->update(schema_->get_column_id(col_name), v);
+    void update(const std::string& col_name, i32 v, const std::vector<i64>& txnIds) {
+        this->update(schema_->get_column_id(col_name), v, txnIds);
     }
 
-    void update(const std::string& col_name, double v) {
-        this->update(schema_->get_column_id(col_name), v);
+    void update(const std::string& col_name, double v, const std::vector<i64>& txnIds) {
+        this->update(schema_->get_column_id(col_name), v, txnIds);
     }
 
-    void update(const std::string& col_name, const std::string& str) {
-        this->update(schema_->get_column_id(col_name), str);
+    void update(const std::string& col_name, const std::string& str, const std::vector<i64>& txnIds) {
+        this->update(schema_->get_column_id(col_name), str, txnIds);
     }
 
-    void update(const std::string& col_name, const Value& v) {
-        this->update(schema_->get_column_id(col_name), v);
+    void update(const std::string& col_name, const Value& v, const std::vector<i64>& txnIds) {
+        this->update(schema_->get_column_id(col_name), v, txnIds);
     }
 
 
 
     /*
      * For reads, we need the id for this read txn
-    Value get_column(int column_id, i64 txnId) const;
+     */
+    Value get_column(int column_id, i64 txnId);
 
-    Value get_column(const std::string& col_name, i64 txnId) const {
+    Value get_column(const std::string& col_name, i64 txnId) {
         return get_column(schema_->get_column_id(col_name), txnId);
     }
-     */
 
     // retrieve current version number
     version_t getCurrentVersion(int column_id);
@@ -651,7 +685,7 @@ private:
 
     // Internal update logic, a template function to accomodate all types
     template<typename Type>
-    void update_internal(int column_id, Type v) {
+    void update_internal(int column_id, Type v, const std::vector<i64>& txnIds) {
         // first get current value before update, and put current value in old_values_
         Value currentValue = Row::get_column(column_id);
         // get current version
@@ -664,14 +698,10 @@ private:
             // do Garbage Collection
             garbageCollection(column_id, newElementItr);
         }
-
-        /*
-         * Should move this part to upper level -> RO6DTxn
-        // Now we need to update rtxn_tracker first
+        //Now we need to update rtxn_tracker first
         for (i64 txnId : txnIds) {
             rtxn_tracker.checkIfTxnIdBeenRecorded(column_id, txnId, true, currentVersionNumber);
         }
-         */
         // then update column as normal
         Row::update(column_id, v);
     }
@@ -716,42 +746,7 @@ private:
     std::map<column_id_t, std::map<i64, std::map<i64, Value>::iterator> >time_segment;
     // one ReadTxnIdTracker object for each row, for tracking seen read trasactions
     // should be tracked and updated by *this* row's update and read.
-    //ReadTxnIdTracker rtxn_tracker;
+    ReadTxnIdTracker rtxn_tracker;
 };
 
-/*
- * RO-6: A class that keeps tracking of observed read txns.
- * A write (row_update/insert/delete) should update this class of the corresponding row first by
- * doing dep_check on a remote row, get rtxn_ids from there, and update its own row's keyToReadTxnIds map
- * A read will also check this map first to see if it needs to query an old version. The targetted version
- * number will be also included in this map if so.
- *
- * Should be instantiated only by MultiVersionedRow class privately.
- */
-/*
-class ReadTxnIdTracker {
-public:
-    std::map<int, i64> keyToLastAccessedTime;
-
-    version_t checkIfTxnIdBeenRecorded(int column_id, i64 txnId, bool forWrites, version_t chosenVersion);
-
-    std::vector<i64> getReadTxnIds(int column_id);
-
-    void clearContext() {
-        keyToReadTxnIds.clear();
-        keyToLastAccessedTime.clear();
-    }
-
-private:
-    // a pair of information for each read txn (txn_id) we recorded.
-    // first i64 is version number that will be used for later read. Second i64 is the real sys time when this txn_id
-    // is recorded (for GC use)
-    typedef std::pair<i64, i64> TxnTimes;
-    // One entry is for one read txn. i64 is txn_id.
-    typedef std::map<i64, TxnTimes> ReadTxnEntry;
-    // The main data structure used to keep a list of recorded read txns.
-    // "int" is column_id. We
-    std::map<int, ReadTxnEntry> keyToReadTxnIds;
-};
-*/
 } // namespace mdb
