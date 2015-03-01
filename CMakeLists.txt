@@ -154,8 +154,8 @@ add_library(ROCOCO
     deptran/marshal-value.cc
     deptran/marshal-value.h
     deptran/pie_info.h
-    deptran/piece.cc
-    deptran/piece.h
+    deptran/piece.cpp
+    deptran/piece.hpp
     deptran/rcc_rpc.h
     deptran/rcc_rpc.py
     deptran/rcc_rpc.rpc

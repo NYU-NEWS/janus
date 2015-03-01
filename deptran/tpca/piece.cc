@@ -12,15 +12,7 @@ void TpcaPiece::reg_all() {
 }
 
 void TpcaPiece::reg_pieces() {
-    TxnRegistry::reg(TPCA_PAYMENT, TPCA_PAYMENT_1, DF_REAL,
-            [] (const RequestHeader& header,
-                const Value *input,
-                rrr::i32 input_size,
-                rrr::i32* res,
-                Value* output,
-                rrr::i32 *output_size,
-                row_map_t *row_map,
-                Vertex<PieInfo> *pv, Vertex<TxnInfo> *tv, std::vector<TxnInfo *> *conflict_txns) {
+    BEGIN_PIE(TPCA_PAYMENT, TPCA_PAYMENT_1, DF_REAL) {
         Log::debug("output: %p, output_size: %p", output, output_size);
         mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
         Value buf;
@@ -126,17 +118,9 @@ void TpcaPiece::reg_pieces() {
             *output_size = output_index;
             *res = SUCCESS;
         }
-    });
+    } END_PIE
 
-    TxnRegistry::reg(TPCA_PAYMENT, TPCA_PAYMENT_2, DF_REAL,
-            [] (const RequestHeader& header,
-                const Value *input,
-                rrr::i32 input_size,
-                rrr::i32* res,
-                Value* output,
-                rrr::i32 *output_size,
-                row_map_t *row_map,
-                Vertex<PieInfo> *pv, Vertex<TxnInfo> *tv, std::vector<TxnInfo *> *conflict_txns) {
+    BEGIN_PIE(TPCA_PAYMENT, TPCA_PAYMENT_2, DF_REAL) {
         Log::debug("output: %p, output_size: %p", output, output_size);
         mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
         Value buf;
@@ -243,17 +227,9 @@ void TpcaPiece::reg_pieces() {
             *output_size = output_index;
             *res = SUCCESS;
         }
-    });
+    } END_PIE
 
-    TxnRegistry::reg(TPCA_PAYMENT, TPCA_PAYMENT_3, DF_REAL,
-            [] (const RequestHeader& header,
-                const Value *input,
-                rrr::i32 input_size,
-                rrr::i32* res,
-                Value* output,
-                rrr::i32 *output_size,
-                row_map_t *row_map,
-                Vertex<PieInfo> *pv, Vertex<TxnInfo> *tv, std::vector<TxnInfo *> *conflict_txns) {
+    BEGIN_PIE(TPCA_PAYMENT, TPCA_PAYMENT_3, DF_REAL) {
         Log::debug("output: %p, output_size: %p", output, output_size);
         mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
         Value buf;
@@ -361,7 +337,7 @@ void TpcaPiece::reg_pieces() {
             *res = SUCCESS;
         }
 
-    });
+    } END_PIE
 }
 
 void TpcaPiece::reg_lock_oracles() {

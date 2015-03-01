@@ -10,15 +10,7 @@ void RWPiece::reg_all() {
 }
 
 void RWPiece::reg_pieces() {
-    TxnRegistry::reg(RW_BENCHMARK_R_TXN, RW_BENCHMARK_R_TXN_0, DF_NO,
-            [] (const RequestHeader& header,
-                const Value *input,
-                rrr::i32 input_size,
-                rrr::i32* res,
-                Value* output,
-                rrr::i32 *output_size,
-                row_map_t *row_map,
-                Vertex<PieInfo> *pv, Vertex<TxnInfo> *tv, std::vector<TxnInfo *> *conflict_txns) {
+    BEGIN_PIE(RW_BENCHMARK_R_TXN, RW_BENCHMARK_R_TXN_0, DF_NO) {
         mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
         Value buf;
         verify(input_size == 1);
@@ -35,17 +27,9 @@ void RWPiece::reg_pieces() {
         *output_size = output_index;
         *res = SUCCESS;
         return;
-    });
+    } END_PIE
 
-    TxnRegistry::reg(RW_BENCHMARK_W_TXN, RW_BENCHMARK_W_TXN_0, DF_REAL,
-            [] (const RequestHeader& header,
-                const Value *input,
-                rrr::i32 input_size,
-                rrr::i32* res,
-                Value* output,
-                rrr::i32 *output_size,
-                row_map_t *row_map,
-                Vertex<PieInfo> *pv, Vertex<TxnInfo> *tv, std::vector<TxnInfo *> *conflict_txns) {
+    BEGIN_PIE(RW_BENCHMARK_W_TXN, RW_BENCHMARK_W_TXN_0, DF_REAL) {
         mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
         verify(input_size == 1);
         i32 output_index = 0;
@@ -67,7 +51,7 @@ void RWPiece::reg_pieces() {
         *output_size = output_index;
         *res = SUCCESS;
         return;
-    });
+    } END_PIE
 
 }
 

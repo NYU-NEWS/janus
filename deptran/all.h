@@ -94,7 +94,7 @@ static dummy_class dummy___;
 #include "sharding.h"
 #include "timer.h"
 #include "benchmark_control_rpc.h"
-#include "piece.h"
+#include "piece.hpp"
 #include "txn_req_factory.h"
 #include "batch_start_args_helper.h"
 
