@@ -49,7 +49,7 @@ void DTxnMgr::pre_execute_2pl(const RequestHeader& header,
     txn->init_piece(header.tid, header.pid, db, output);
 
     Log::debug("start reg lock");
-    TxnRegistry::get(header).txn_handler(header, input.data(), input.size(),
+    TxnRegistry::get(header).txn_handler(nullptr, header, input.data(), input.size(),
             res, NULL/*output*/, NULL/*output_size*/,
             NULL, NULL, NULL, NULL);
 }
@@ -70,7 +70,7 @@ void DTxnMgr::pre_execute_2pl(const RequestHeader& header,
         db->trigger();
         return;
     }
-    TxnRegistry::get(header).txn_handler(header, input, input_size,
+    TxnRegistry::get(header).txn_handler(nullptr, header, input, input_size,
             res, NULL/*output*/, NULL/*output_size*/,
             NULL, NULL, NULL, NULL);
 }

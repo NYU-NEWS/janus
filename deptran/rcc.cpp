@@ -36,7 +36,7 @@ void RCCDTxn::start(
             int output_size = 300;
             output->resize(output_size);
             int res;
-            txn_handler_pair.txn_handler(
+            txn_handler_pair.txn_handler(nullptr,
                     header, input.data(),
                     input.size(), &res, output->data(),
                     &output_size, NULL, pv,
@@ -56,7 +56,7 @@ void RCCDTxn::start(
                 drs.reserve(100); //XXX
             }
             drs.push_back(dr);
-            txn_handler_pair.txn_handler(
+            txn_handler_pair.txn_handler(nullptr,
                     header, drs.back().inputs.data(),
                     drs.back().inputs.size(), NULL, NULL,
                     NULL, &drs.back().row_map, pv,
@@ -78,7 +78,7 @@ void RCCDTxn::start(
             int output_size = 300; //XXX
             output->resize(output_size);
             int res;
-            txn_handler_pair.txn_handler(
+            txn_handler_pair.txn_handler(nullptr,
                     header, drs.back().inputs.data(),
                     drs.back().inputs.size(), &res,
                     output->data(), &output_size,
@@ -103,7 +103,7 @@ void RCCDTxn::start_ro(
     int output_size = 300;
     output.resize(output_size);
     int res;
-    txn_handler_pair.txn_handler(header, input.data(), input.size(), &res,
+    txn_handler_pair.txn_handler(nullptr, header, input.data(), input.size(), &res,
             output.data(), &output_size, NULL, NULL,
             NULL, conflict_txns/*rw_entry*/);
     output.resize(output_size);
@@ -311,7 +311,7 @@ void RCCDTxn::exe_deferred(
             int output_size = 300;
             output.resize(output_size);
             int res;
-            txn_handler_pair.txn_handler(header, input.data(), input.size(),
+            txn_handler_pair.txn_handler(nullptr, header, input.data(), input.size(),
                     &res, output.data(), &output_size,
                     &req.row_map, NULL, NULL, NULL);
             if (header.p_type == TPCC_PAYMENT_4

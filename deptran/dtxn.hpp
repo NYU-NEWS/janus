@@ -218,30 +218,33 @@ typedef std::unordered_map<char *, std::unordered_map<mdb::MultiBlob, mdb::Row *
 //typedef std::unordered_map<cell_locator_t, entry_t *, cell_locator_t_hash> cell_entry_map_t;
 // in charge of storing the pre-defined procedures
 //
-    typedef std::function<void (
-            const RequestHeader& header,
-            const Value* input,
-            rrr::i32 input_size,
-            rrr::i32* res,
-            Value* output,
-            rrr::i32* output_size,
-            row_map_t *row_map,
+
+class DTxn;
+typedef std::function<void (
+        DTxn *txn,
+        const RequestHeader& header,
+        const Value* input,
+        rrr::i32 input_size,
+        rrr::i32* res,
+        Value* output,
+        rrr::i32* output_size,
+        row_map_t *row_map,
 //            cell_entry_map_t *entry_map
-            Vertex<PieInfo> *pv,
-            Vertex<TxnInfo> *tv,
-            std::vector<TxnInfo *> *ro_conflict_txns
-            )> TxnHandler;
+        Vertex<PieInfo> *pv,
+        Vertex<TxnInfo> *tv,
+        std::vector<TxnInfo *> *ro_conflict_txns
+        )> TxnHandler;
 
-    typedef enum {
-        DF_REAL,
-        DF_NO,
-        DF_FAKE
-    } defer_t;
+typedef enum {
+    DF_REAL,
+    DF_NO,
+    DF_FAKE
+} defer_t;
 
-    typedef struct {
-        TxnHandler txn_handler;
-        defer_t defer;
-    } txn_handler_defer_pair_t;
+typedef struct {
+    TxnHandler txn_handler;
+    defer_t defer;
+} txn_handler_defer_pair_t;
 
 
 /**
@@ -512,7 +515,7 @@ public:
             rrr::i32* res,
             std::vector<mdb::Value>* output) {
         rrr::i32 output_size = output->size();
-        TxnRegistry::get(header).txn_handler(header, input.data(), input.size(),
+        TxnRegistry::get(header).txn_handler(nullptr, header, input.data(), input.size(),
                 res, output->data(), &output_size,
                 NULL, NULL, NULL, NULL);
         output->resize(output_size);
@@ -524,7 +527,7 @@ public:
             rrr::i32* res,
             mdb::Value* output,
             rrr::i32* output_size) {
-        TxnRegistry::get(header).txn_handler(header, input, input_size,
+        TxnRegistry::get(header).txn_handler(nullptr, header, input, input_size,
                 res, output, output_size,
                 NULL, NULL, NULL, NULL);
     }

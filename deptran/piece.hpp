@@ -16,7 +16,8 @@ public:
 
 #define BEGIN_PIE(txn, pie, iod) \
     TxnRegistry::reg(txn, pie, iod, \
-        [] (const RequestHeader &header, \
+        [] (DTxn *dtxn, \
+            const RequestHeader &header, \
             const Value *input, \
             i32 input_size, \
             i32 *res, \
