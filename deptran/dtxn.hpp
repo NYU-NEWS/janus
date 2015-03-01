@@ -300,6 +300,8 @@ public:
     DTxn(i64 tid, DTxnMgr* mgr) : tid_(tid), mgr_(mgr) {
 
     }
+
+    virtual mdb::Row* create(const mdb::Schema* schema, const std::vector<mdb::Value> &values) = 0;
 };
 
 
@@ -356,7 +358,9 @@ public:
             Vertex<TxnInfo>* av
     );
 
-
+    virtual mdb::Row* create(const mdb::Schema* schema, const std::vector<mdb::Value>& values) {
+        return DepRow::create(schema, values);
+    }
 };
 
 class RO6DTxn : public RCCDTxn {

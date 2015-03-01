@@ -320,7 +320,7 @@ void TpccPiece::reg_new_order() {
                     r = mdb::VersionedRow::create(tbl->schema(), row_data);
                     break;
                 case MODE_DEPTRAN:
-                    r = DepRow::create(tbl->schema(), row_data);
+                    r = dtxn->create(tbl->schema(), row_data);
                     break;
                 default:
                     verify(0);
