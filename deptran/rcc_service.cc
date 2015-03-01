@@ -425,12 +425,12 @@ void RococoServiceImpl::rcc_ro_start_pie(
     // execute the IR actions.
 
     //cell_entry_map_t rw_entry;
-    std::vector<TxnInfo*> conflict_txns;
-    txn->start_ro(header, input, *output, &conflict_txns);
+    txn->start_ro(header, input, *output);
+
 
     // get conflicting transactions
     //dep_s->conflict_txn(opset, conflict_txns, rw_entry);
-
+    std::vector<TxnInfo*> &conflict_txns = txn->conflict_txns_;
     // TODO callback: read the value and return.
     std::function<void(void)> cb = [header, /*&input, output, */defer] () {
         defer->reply();
@@ -445,7 +445,6 @@ void RococoServiceImpl::rcc_ro_start_pie(
         tinfo->register_event(TXN_DCD, ball);
     }
     ball->trigger();
-
 }
 
 void RococoServiceImpl::rpc_null(rrr::DeferredReply* defer) {

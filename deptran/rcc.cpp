@@ -4,7 +4,6 @@ namespace rococo {
 
 DepGraph *RCCDTxn::dep_s = NULL;
 
-
 void RCCDTxn::start(
         const RequestHeader &header,
         const std::vector<mdb::Value> &input,
@@ -23,6 +22,9 @@ void RCCDTxn::start(
     Vertex<PieInfo> *pv = NULL;
     Vertex<TxnInfo> *tv = NULL;
     RCCDTxn::dep_s->start_pie(pi, &pv, &tv);
+    tv_ = tv;
+    verify(phase_ == 0);
+    phase_ = 1;
 
     // execute the IR actions.
     *deferred = pi.defer_;
@@ -36,12 +38,10 @@ void RCCDTxn::start(
             int output_size = 300;
             output->resize(output_size);
             int res;
-            txn_handler_pair.txn_handler(nullptr,
+            txn_handler_pair.txn_handler(this,
                     header, input.data(),
                     input.size(), &res, output->data(),
-                    &output_size, NULL, pv,
-                    tv/*rw_entry*/, NULL
-            );
+                    &output_size, NULL);
             output->resize(output_size);
             *deferred = false;
             break;
@@ -56,12 +56,10 @@ void RCCDTxn::start(
                 drs.reserve(100); //XXX
             }
             drs.push_back(dr);
-            txn_handler_pair.txn_handler(nullptr,
+            txn_handler_pair.txn_handler(this,
                     header, drs.back().inputs.data(),
                     drs.back().inputs.size(), NULL, NULL,
-                    NULL, &drs.back().row_map, pv,
-                    tv/*rw_entry*/, NULL
-            );
+                    NULL, &drs.back().row_map);
             *deferred = true;
             break;
         }
@@ -78,13 +76,11 @@ void RCCDTxn::start(
             int output_size = 300; //XXX
             output->resize(output_size);
             int res;
-            txn_handler_pair.txn_handler(nullptr,
+            txn_handler_pair.txn_handler(this,
                     header, drs.back().inputs.data(),
                     drs.back().inputs.size(), &res,
                     output->data(), &output_size,
-                    &drs.back().row_map, pv,
-                    tv/*rw_entry*/, NULL
-            );
+                    &drs.back().row_map);
             output->resize(output_size);
             *deferred = false;
             break;
@@ -97,15 +93,17 @@ void RCCDTxn::start(
 void RCCDTxn::start_ro(
         const RequestHeader &header,
         const std::vector<mdb::Value> &input,
-        std::vector<mdb::Value> &output,
-        std::vector<TxnInfo *> *conflict_txns) {
+        std::vector<mdb::Value> &output) {
+
+    conflict_txns_.clear();
     auto txn_handler_pair = TxnRegistry::get(header.t_type, header.p_type);
     int output_size = 300;
     output.resize(output_size);
     int res;
-    txn_handler_pair.txn_handler(nullptr, header, input.data(), input.size(), &res,
-            output.data(), &output_size, NULL, NULL,
-            NULL, conflict_txns/*rw_entry*/);
+    phase_ = 1;
+
+    txn_handler_pair.txn_handler(this, header, input.data(), input.size(), &res,
+            output.data(), &output_size, NULL);
     output.resize(output_size);
 }
 
@@ -311,9 +309,10 @@ void RCCDTxn::exe_deferred(
             int output_size = 300;
             output.resize(output_size);
             int res;
-            txn_handler_pair.txn_handler(nullptr, header, input.data(), input.size(),
-                    &res, output.data(), &output_size,
-                    &req.row_map, NULL, NULL, NULL);
+            verify(phase_ == 1);
+            phase_ = 2;
+            txn_handler_pair.txn_handler(this, header, input.data(), input.size(),
+                    &res, output.data(), &output_size, &req.row_map);
             if (header.p_type == TPCC_PAYMENT_4
                     && header.t_type == TPCC_PAYMENT)
                 verify(output_size == 15);

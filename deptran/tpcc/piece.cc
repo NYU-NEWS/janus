@@ -14,6 +14,10 @@ char TPCC_TB_STOCK[] =        "stock";
 char TPCC_TB_ORDER_LINE[] =   "order_line";
 char TPCC_TB_ORDER_C_ID_SECONDARY[] = "order_secondary";
 
+#define BEGIN_PHASE_1 ;
+#define END_PHASE_1 ;
+#define BEGIN_PHASE_2 ;
+#define END_PHASE_2 ;
 
 void TpccPiece::reg_new_order() {
 
@@ -54,9 +58,9 @@ void TpccPiece::reg_new_order() {
             return;
         }
 
-        if (pv) {
+        if (IS_MODE_RCC && IN_PHASE_1) {
             int col_id = 10;
-            ((DepRow *)r)->get_dep_entry(col_id)->touch(tv, true);
+            ((DepRow *)r)->get_dep_entry(col_id)->touch(((RCCDTxn*)dtxn)->tv_, true);
         }
 
         // R district
@@ -295,7 +299,7 @@ void TpccPiece::reg_new_order() {
         }
 
         // W order
-        if (row_map == NULL || pv != NULL) { // non deptran || deptran start req
+        if (!IS_MODE_RCC || (IS_MODE_RCC && IN_PHASE_1)) { // non-rcc || rcc start request
             std::vector<Value> row_data({
                 input[1],   // o_d_id
                 input[2],   // o_w_id
@@ -316,7 +320,7 @@ void TpccPiece::reg_new_order() {
                     r = mdb::VersionedRow::create(tbl->schema(), row_data);
                     break;
                 case MODE_DEPTRAN:
-                    r = DepRow::create(tbl->schema(), row_data);
+                    r = dtxn->create(tbl->schema(), row_data);
                     break;
                 default:
                     verify(0);
@@ -325,13 +329,13 @@ void TpccPiece::reg_new_order() {
 
         bool do_finish = true;
         if (row_map) { // deptran
-            if (pv) { // start req
+            if (IS_MODE_RCC && IN_PHASE_1) { // start req
                 //std::map<int, entry_t *> &m = DepTranServiceImpl::dep_s->rw_entries_[TPCC_TB_ORDER][r->get_key()];
                 DepRow *dr = (DepRow *)r;
-                dr->get_dep_entry(0)->touch(tv, false);
-                dr->get_dep_entry(1)->touch(tv, false);
-                dr->get_dep_entry(2)->touch(tv, false);
-                dr->get_dep_entry(5)->touch(tv, false);
+                dr->get_dep_entry(0)->touch(((RCCDTxn*)dtxn)->tv_, false);
+                dr->get_dep_entry(1)->touch(((RCCDTxn*)dtxn)->tv_, false);
+                dr->get_dep_entry(2)->touch(((RCCDTxn*)dtxn)->tv_, false);
+                dr->get_dep_entry(5)->touch(((RCCDTxn*)dtxn)->tv_, false);
 
                 (*row_map)[TPCC_TB_ORDER][r->get_key()] = r;
 
@@ -444,7 +448,7 @@ void TpccPiece::reg_new_order() {
         mdb::Row *r = NULL;
 
         // W new_order
-        if (row_map == NULL || pv != NULL) { // non deptran || deptran start req
+        if (!IS_MODE_RCC || (IS_MODE_RCC && IN_PHASE_1)) { // non-rcc || rcc start request
             std::vector<Value> row_data({
                 input[1],   // o_d_id
                 input[2],   // o_w_id
@@ -469,12 +473,12 @@ void TpccPiece::reg_new_order() {
 
         bool do_finish = true;
         if (row_map) { // deptran
-            if (pv) { // start req
+            if (IS_MODE_RCC && IN_PHASE_1) { // start req
                 //std::map<int, entry_t *> &m = DepTranServiceImpl::dep_s->rw_entries_[TPCC_TB_NEW_ORDER][r->get_key()];
                 DepRow *dr = (DepRow *)r;
-                dr->get_dep_entry(0)->touch(tv, false);
-                dr->get_dep_entry(1)->touch(tv, false);
-                dr->get_dep_entry(2)->touch(tv, false);
+                dr->get_dep_entry(0)->touch(((RCCDTxn*)dtxn)->tv_, false);
+                dr->get_dep_entry(1)->touch(((RCCDTxn*)dtxn)->tv_, false);
+                dr->get_dep_entry(2)->touch(((RCCDTxn*)dtxn)->tv_, false);
 
                 (*row_map)[TPCC_TB_NEW_ORDER][r->get_key()] = r;
 
@@ -723,7 +727,7 @@ void TpccPiece::reg_new_order() {
         mdb::MultiBlob mb(2);
         mb[0] = input[0].get_blob();
         mb[1] = input[1].get_blob();
-        if (row_map == NULL || pv != NULL) { // non deptran || deptran start req
+        if (!IS_MODE_RCC || (IS_MODE_RCC && IN_PHASE_1)) { // non-rcc || rcc start request
             r = txn->query(txn->get_table(TPCC_TB_STOCK), mb,
                 output_size, header.pid).next();
         }
@@ -759,14 +763,14 @@ void TpccPiece::reg_new_order() {
 
         bool do_finish = true;
         if (row_map) { // deptran
-            if (pv) { // start req
+            if (IS_MODE_RCC && IN_PHASE_1) { // start req
                 (*row_map)[TPCC_TB_STOCK][mb] = r;
                 //Log::debug("stock P1: hv: %u, k: %u, r: %p", mdb::MultiBlob::hash()((*row_map)[TPCC_TB_STOCK].begin()->first), mdb::MultiBlob::hash()(cl.primary_key), r);
                 DepRow *dr = (DepRow *)r;
-                dr->get_dep_entry(2)->touch(tv, false);
-                dr->get_dep_entry(13)->touch(tv, false);
-                dr->get_dep_entry(14)->touch(tv, false);
-                dr->get_dep_entry(15)->touch(tv, false);
+                dr->get_dep_entry(2)->touch(((RCCDTxn*)dtxn)->tv_, false);
+                dr->get_dep_entry(13)->touch(((RCCDTxn*)dtxn)->tv_, false);
+                dr->get_dep_entry(14)->touch(((RCCDTxn*)dtxn)->tv_, false);
+                dr->get_dep_entry(15)->touch(((RCCDTxn*)dtxn)->tv_, false);
                 do_finish = false;
             } else {
                 //r = (*row_map)[TPCC_TB_STOCK][cl.primary_key];
@@ -876,7 +880,7 @@ void TpccPiece::reg_new_order() {
         mdb::Table *tbl = txn->get_table(TPCC_TB_ORDER_LINE);
         mdb::Row *r = NULL;
 
-        if (row_map == NULL || pv != NULL) { // non deptran || deptran start req
+        if (!IS_MODE_RCC || (IS_MODE_RCC && IN_PHASE_1)) { // non-rcc || rcc start request
             std::vector<Value> input_buf(input, input + input_size);
 
             switch (DTxnMgr::get_sole_mgr()->get_mode()) {
@@ -897,16 +901,16 @@ void TpccPiece::reg_new_order() {
 
         bool do_finish = true;
         if (row_map) { // deptran
-            if (pv) { // start req
+            if (IS_MODE_RCC && IN_PHASE_1) { // start req
                 //std::map<int, entry_t *> &m = DepTranServiceImpl::dep_s->rw_entries_[TPCC_TB_ORDER_LINE][r->get_key()];
                 DepRow *dr = (DepRow *)r;
-                dr->get_dep_entry(0)->touch(tv, false);
-                dr->get_dep_entry(1)->touch(tv, false);
-                dr->get_dep_entry(2)->touch(tv, false);
-                dr->get_dep_entry(3)->touch(tv, false);
-                dr->get_dep_entry(4)->touch(tv, false);
-                dr->get_dep_entry(6)->touch(tv, false);
-                dr->get_dep_entry(8)->touch(tv, false);
+                dr->get_dep_entry(0)->touch(((RCCDTxn*)dtxn)->tv_, false);
+                dr->get_dep_entry(1)->touch(((RCCDTxn*)dtxn)->tv_, false);
+                dr->get_dep_entry(2)->touch(((RCCDTxn*)dtxn)->tv_, false);
+                dr->get_dep_entry(3)->touch(((RCCDTxn*)dtxn)->tv_, false);
+                dr->get_dep_entry(4)->touch(((RCCDTxn*)dtxn)->tv_, false);
+                dr->get_dep_entry(6)->touch(((RCCDTxn*)dtxn)->tv_, false);
+                dr->get_dep_entry(8)->touch(((RCCDTxn*)dtxn)->tv_, false);
                 (*row_map)[TPCC_TB_ORDER_LINE][r->get_key()] = r;
 
                 //cell_locator_t cl(TPCC_TB_ORDER_LINE, 4);
@@ -1227,7 +1231,7 @@ void TpccPiece::reg_payment() {
         //cell_locator_t cl(TPCC_TB_DISTRICT, 2);
         mb[0] = input[1].get_blob();
         mb[1] = input[0].get_blob();
-        if (row_map == NULL || pv != NULL) { // non deptran || deptran start req
+        if (!IS_MODE_RCC || (IS_MODE_RCC && IN_PHASE_1)) { // non-rcc || rcc start request
             r = txn->query(txn->get_table(TPCC_TB_DISTRICT), mb,
                 output_size, header.pid).next();
         }
@@ -1251,10 +1255,10 @@ void TpccPiece::reg_payment() {
 
         bool do_finish = true;
         if (row_map) { // deptran
-            if (pv) { // start req
+            if (IS_MODE_RCC && IN_PHASE_1) { // start req
                 (*row_map)[TPCC_TB_DISTRICT][mb] = r;
                 DepRow *dr = (DepRow *)r;
-                dr->get_dep_entry(9)->touch(tv, false);
+                dr->get_dep_entry(9)->touch(((RCCDTxn*)dtxn)->tv_, false);
                 do_finish = false;
             } else {
                 //std::unordered_map<mdb::MultiBlob, mdb::Row *, mdb::MultiBlob::hash>::iterator it = (*row_map)[TPCC_TB_DISTRICT].find(cl.primary_key);
@@ -1385,7 +1389,7 @@ void TpccPiece::reg_payment() {
         mb[1] = input[2].get_blob();
         mb[2] = input[1].get_blob();
         // R customer
-        if (row_map == NULL || pv != NULL) { // non deptran || deptran start req
+        if (!IS_MODE_RCC || (IS_MODE_RCC && IN_PHASE_1)) { // non-rcc || rcc start request
             r = txn->query(txn->get_table(TPCC_TB_CUSTOMER), mb,
                 output_size, header.pid).next();
         }
@@ -1462,12 +1466,12 @@ void TpccPiece::reg_payment() {
         bool do_finish = true;
 
         if (row_map) { // deptran
-            if (pv) { // start req
+            if (IS_MODE_RCC && IN_PHASE_1) { // start req
                 (*row_map)[TPCC_TB_CUSTOMER][mb] = r;
                 DepRow *dr = (DepRow *)r;
-                dr->get_dep_entry(16)->touch(tv, false);
-                dr->get_dep_entry(17)->touch(tv, false);
-                dr->get_dep_entry(20)->touch(tv, false);
+                dr->get_dep_entry(16)->touch(((RCCDTxn*)dtxn)->tv_, false);
+                dr->get_dep_entry(17)->touch(((RCCDTxn*)dtxn)->tv_, false);
+                dr->get_dep_entry(20)->touch(((RCCDTxn*)dtxn)->tv_, false);
                 do_finish = false;
             } else {
                 //std::unordered_map<mdb::MultiBlob, mdb::Row *, mdb::MultiBlob::hash>::iterator it = (*row_map)[TPCC_TB_CUSTOMER].find(cl.primary_key);
@@ -1610,13 +1614,13 @@ void TpccPiece::reg_payment() {
 
         // insert history
         mdb::Row *r = NULL;
-        if (row_map == NULL || pv != NULL) { // non deptran || deptran start req
+        if (!IS_MODE_RCC || (IS_MODE_RCC && IN_PHASE_1)) { // non-rcc || rcc start request
         }
 
         bool do_finish = true;
 
         if (row_map) { // deptran
-            if (pv) { // start req
+            if (IS_MODE_RCC && IN_PHASE_1) { // start req
                 do_finish = false;
             } else { // finish req
             }
@@ -1782,8 +1786,8 @@ void TpccPiece::reg_order_status() {
             return;
         }
 
-        if (conflict_txns) {
-            ((DepRow *)r)->get_dep_entry(16)->ro_touch(conflict_txns);
+        if (IS_MODE_RCC) {
+            ((DepRow *)r)->get_dep_entry(16)->ro_touch(&((RCCDTxn*)dtxn)->conflict_txns_);
         }
 
         if (!txn->read_column(r, 3, &buf)) { // read c_first
@@ -1936,8 +1940,8 @@ void TpccPiece::reg_order_status() {
         mdb::Row *r = txn->query(txn->get_table(TPCC_TB_ORDER), mb,
                 true, header.pid).next();
 
-        if (conflict_txns) {
-            ((DepRow *)r)->get_dep_entry(5)->ro_touch(conflict_txns);
+        if (IS_MODE_RCC) {
+            ((DepRow *)r)->get_dep_entry(5)->ro_touch(&((RCCDTxn*)dtxn)->conflict_txns_);
         }
 
         if (!txn->read_column(r, 2, &buf)) {
@@ -2084,8 +2088,8 @@ void TpccPiece::reg_order_status() {
         while (i < row_list.size()) {
             r = row_list[i++];
 
-            if (conflict_txns) {
-                ((DepRow *)r)->get_dep_entry(6)->ro_touch(conflict_txns);
+            if (IS_MODE_RCC) {
+                ((DepRow *)r)->get_dep_entry(6)->ro_touch(&((RCCDTxn*)dtxn)->conflict_txns_);
             }
 
             if (!txn->read_column(r, 4, &buf)) {
@@ -2181,7 +2185,7 @@ void TpccPiece::reg_delivery() {
         //cell_locator_t cl(TPCC_TB_NEW_ORDER, 3);
         mdb::Row *r = NULL;
         mdb::Table *tbl = txn->get_table(TPCC_TB_NEW_ORDER);
-        if (row_map == NULL || pv != NULL) { // non deptran || deptran start req
+        if (!IS_MODE_RCC || (IS_MODE_RCC && IN_PHASE_1)) { // non-rcc || rcc start request
             mdb::MultiBlob mbl(3), mbh(3);
             mbl[0] = input[1].get_blob();
             mbh[0] = input[1].get_blob();
@@ -2237,7 +2241,7 @@ void TpccPiece::reg_delivery() {
         }
 
         if (row_map) { // deptran
-            if (pv) { // deptran start req, top half
+            if (IS_MODE_RCC && IN_PHASE_1) { // deptran start req, top half
                 if (r) { // if find a row
                     //cl.primary_key[0] = input[1].get_blob();
                     //cl.primary_key[1] = input[0].get_blob();
@@ -2246,9 +2250,9 @@ void TpccPiece::reg_delivery() {
                     DepRow *dr = (DepRow *)r;
 
                     (*row_map)[TPCC_TB_NEW_ORDER][r->get_key()] = r;
-                    dr->get_dep_entry(0)->touch(tv, true);
-                    dr->get_dep_entry(1)->touch(tv, true);
-                    dr->get_dep_entry(2)->touch(tv, true);
+                    dr->get_dep_entry(0)->touch(((RCCDTxn*)dtxn)->tv_, true);
+                    dr->get_dep_entry(1)->touch(((RCCDTxn*)dtxn)->tv_, true);
+                    dr->get_dep_entry(2)->touch(((RCCDTxn*)dtxn)->tv_, true);
                     //std::map<int, entry_t *> &m = DepTranServiceImpl::dep_s->rw_entries_[TPCC_TB_NEW_ORDER][r->get_key()];
                     //m[0] = dr->get_dep_entry(0);
                     //m[1] = dr->get_dep_entry(1);
@@ -2359,8 +2363,8 @@ void TpccPiece::reg_delivery() {
         }
 
 
-        if (pv) {
-            ((DepRow *)r)->get_dep_entry(5)->touch(tv, true);
+        if (IS_MODE_RCC && IN_PHASE_1) {
+            ((DepRow *)r)->get_dep_entry(5)->touch(((RCCDTxn*)dtxn)->tv_, true);
         }
         if (!txn->read_column(r, 3, &buf)) {
             *res = REJECT;
@@ -2474,11 +2478,11 @@ void TpccPiece::reg_delivery() {
         while (i < row_list.size()) {
             r = row_list[i++];
 
-            if (pv) {
+            if (IS_MODE_RCC && IN_PHASE_1) {
                 //cl.primary_key[3] = r->get_blob(3);
                 //cl.col_id = 6;
-                ((DepRow *)r)->get_dep_entry(6)->touch(tv, true);
-                ((DepRow *)r)->get_dep_entry(8)->touch(tv, true);
+                ((DepRow *)r)->get_dep_entry(6)->touch(((RCCDTxn*)dtxn)->tv_, true);
+                ((DepRow *)r)->get_dep_entry(8)->touch(((RCCDTxn*)dtxn)->tv_, true);
             }
 
             if (!txn->read_column(r, 8, &buf)) { // read ol_amount
@@ -2554,7 +2558,7 @@ void TpccPiece::reg_delivery() {
         mb[1] = input[2].get_blob();
         mb[2] = input[1].get_blob();
 
-        if (row_map == NULL || pv != NULL) { // non deptran || deptran start req
+        if (!IS_MODE_RCC || (IS_MODE_RCC && IN_PHASE_1)) { // non-rcc || rcc start request
             r = txn->query(txn->get_table(TPCC_TB_CUSTOMER), mb,
                 output_size, header.pid).next();
         }
@@ -2581,11 +2585,11 @@ void TpccPiece::reg_delivery() {
 
         bool do_finish = true;
         if (row_map) { // deptran
-            if (pv) { // start req
+            if (IS_MODE_RCC && IN_PHASE_1) { // start req
                 (*row_map)[TPCC_TB_CUSTOMER][mb] = r;
                 DepRow *dr = (DepRow *)r;
-                dr->get_dep_entry(16)->touch(tv, false);
-                dr->get_dep_entry(19)->touch(tv, false);
+                dr->get_dep_entry(16)->touch(((RCCDTxn*)dtxn)->tv_, false);
+                dr->get_dep_entry(19)->touch(((RCCDTxn*)dtxn)->tv_, false);
                 do_finish = false;
             } else {
                 //std::unordered_map<mdb::MultiBlob, mdb::Row *, mdb::MultiBlob::hash>::iterator it = (*row_map)[TPCC_TB_CUSTOMER].find(cl.primary_key);
@@ -2683,8 +2687,8 @@ void TpccPiece::reg_stock_level() {
             return;
         }
 
-        if (conflict_txns) {
-            ((DepRow *)r)->get_dep_entry(10)->ro_touch(conflict_txns);
+        if (IS_MODE_RCC) {
+            ((DepRow *)r)->get_dep_entry(10)->ro_touch(&((RCCDTxn*)dtxn)->conflict_txns_);
         }
         if (!txn->read_column(r, 10, &buf)) {
             *res = REJECT;
@@ -2843,8 +2847,8 @@ void TpccPiece::reg_stock_level() {
             return;
         }
 
-        if (pv) {
-            ((DepRow *)r)->get_dep_entry(2)->ro_touch(conflict_txns);
+        if (IS_MODE_RCC && IN_PHASE_1) {
+            ((DepRow *)r)->get_dep_entry(2)->ro_touch(&((RCCDTxn*)dtxn)->conflict_txns_);
         }
 
         if (!txn->read_column(r, 2, &buf)) {

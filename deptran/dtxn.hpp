@@ -1,11 +1,13 @@
 #pragma once
-#include "dep_graph.hpp"
 #include "all.h"
 
 namespace rococo {
 
+#define IS_MODE_RCC DTxnMgr::get_sole_mgr()->get_mode() == MODE_RCC
+#define IN_PHASE_1 dtxn->phase_ == 1
+
 struct entry_t {
-    Vertex<TxnInfo> *last_ = NULL;
+    Vertex<TxnInfo> *last_ = NULL; // last transaction(write) that touches this item. (arriving order)
 
     const entry_t &operator=(const entry_t &rhs) {
         last_ = rhs.last_;
@@ -228,12 +230,7 @@ typedef std::function<void (
         rrr::i32* res,
         Value* output,
         rrr::i32* output_size,
-        row_map_t *row_map,
-//            cell_entry_map_t *entry_map
-        Vertex<PieInfo> *pv,
-        Vertex<TxnInfo> *tv,
-        std::vector<TxnInfo *> *ro_conflict_txns
-        )> TxnHandler;
+        row_map_t *row_map)> TxnHandler;
 
 typedef enum {
     DF_REAL,
@@ -296,18 +293,34 @@ class DTxn {
 public:
     int64_t tid_;
     DTxnMgr *mgr_;
+    int phase_;
 
     DTxn() = delete;
 
     DTxn(i64 tid, DTxnMgr* mgr) : tid_(tid), mgr_(mgr) {
 
     }
+
+    virtual mdb::Row* create(const mdb::Schema* schema, const std::vector<mdb::Value> &values) = 0;
 };
 
 
 
 class RCCDTxn : public DTxn {
 public:
+
+    typedef struct {
+        RequestHeader header;
+        std::vector<mdb::Value> inputs;
+        row_map_t row_map;
+    } DeferredRequest;
+
+    static DepGraph *dep_s;
+
+    std::vector<DeferredRequest> dreqs_;
+    Vertex<TxnInfo> *tv_;
+
+    std::vector<TxnInfo*> conflict_txns_; // This is read-only transaction
 
     RCCDTxn(i64 tid, DTxnMgr* mgr) : DTxn(tid, mgr) {
 
@@ -323,8 +336,7 @@ public:
     void start_ro(
             const RequestHeader &header,
             const std::vector<mdb::Value> &input,
-            std::vector<mdb::Value> &output,
-            std::vector<TxnInfo *> *conflict_txns
+            std::vector<mdb::Value> &output
     );
 
     void commit(
@@ -346,16 +358,9 @@ public:
             Vertex<TxnInfo>* av
     );
 
-    typedef struct {
-        RequestHeader header;
-        std::vector<mdb::Value> inputs;
-        row_map_t row_map;
-    } DeferredRequest;
-
-
-    std::vector<DeferredRequest> dreqs_;
-
-    static DepGraph *dep_s;
+    virtual mdb::Row* create(const mdb::Schema* schema, const std::vector<mdb::Value>& values) {
+        return DepRow::create(schema, values);
+    }
 };
 
 class RO6DTxn : public RCCDTxn {
@@ -517,7 +522,7 @@ public:
         rrr::i32 output_size = output->size();
         TxnRegistry::get(header).txn_handler(nullptr, header, input.data(), input.size(),
                 res, output->data(), &output_size,
-                NULL, NULL, NULL, NULL);
+                NULL);
         output->resize(output_size);
     }
 
@@ -529,7 +534,7 @@ public:
             rrr::i32* output_size) {
         TxnRegistry::get(header).txn_handler(nullptr, header, input, input_size,
                 res, output, output_size,
-                NULL, NULL, NULL, NULL);
+                NULL);
     }
 
     /**

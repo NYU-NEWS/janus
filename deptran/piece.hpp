@@ -23,10 +23,7 @@ public:
             i32 *res, \
             Value *output, \
             i32 *output_size, \
-            row_map_t *row_map, \
-            Vertex<PieInfo> *pv, \
-            Vertex<TxnInfo> *tv, \
-            std::vector<TxnInfo *> *conflict_txns)
+            row_map_t *row_map)
 #define END_PIE );
 
 } // namespace rcc

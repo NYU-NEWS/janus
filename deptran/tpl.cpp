@@ -104,13 +104,12 @@ std::function<void(void)> TPL::get_2pl_succ_callback(
                     rrr::i32 output_vec_size = output_vec->size();
                     TxnRegistry::get(header).txn_handler(nullptr, header, input,
                             input_size, res, output_vec->data(),
-                            &output_vec_size, NULL, NULL, NULL, NULL);
+                            &output_vec_size, NULL);
                     output_vec->resize(output_vec_size);
                 }
                 else {
                     TxnRegistry::get(header).txn_handler(nullptr, header, input,
-                            input_size, res, output, output_size, NULL, NULL,
-                            NULL, NULL);
+                            input_size, res, output, output_size, NULL);
                 }
             }
 
@@ -151,13 +150,12 @@ std::function<void(void)> TPL::get_2pl_proceed_callback(
                 rrr::i32 output_vec_size = output_vec->size();
                 TxnRegistry::get(header).txn_handler(nullptr, header, input,
                         input_size, res, output_vec->data(),
-                        &output_vec_size, NULL, NULL, NULL, NULL);
+                        &output_vec_size, NULL);
                 output_vec->resize(output_vec_size);
             }
             else {
                 TxnRegistry::get(header).txn_handler(nullptr, header, input,
-                        input_size, res, output, output_size, NULL, NULL,
-                        NULL, NULL);
+                        input_size, res, output, output_size, NULL);
             }
         }
 
