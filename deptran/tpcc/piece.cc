@@ -1,7 +1,5 @@
 #include "all.h"
 #include <limits>
-#include <QuartzCore/QuartzCore.h>
-
 namespace rococo {
 
 char TPCC_TB_WAREHOUSE[] =    "warehouse";

@@ -417,7 +417,8 @@ void RococoServiceImpl::rcc_ro_start_pie(
         rrr::DeferredReply *defer) {
     std::lock_guard<std::mutex> guard(mtx_);
 
-    auto txn = (RCCDTxn*) txn_mgr_->get_or_create(header.tid);
+    bool ro = true;
+    auto txn = (RCCDTxn*) txn_mgr_->get_or_create(header.tid, true);
 
     // do read only transaction
     //auto lock_oracle = TxnRegistry::get_lock_oracle(header);

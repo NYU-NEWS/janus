@@ -504,10 +504,10 @@ public:
         return it->second;
     }
 
-    DTxn* get_or_create(i64 tid) {
+    DTxn* get_or_create(i64 tid, bool ro=false) {
         auto it = dtxns_.find(tid);
         if (it == dtxns_.end()) {
-            return create(tid);
+            return create(tid, ro);
         } else {
             return it->second;
         }
