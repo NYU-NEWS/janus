@@ -23,7 +23,8 @@ include_directories(
     .
     rrr
     memdb
-    deptran)
+    deptran
+    bench)
 
 add_library(ROCOCO
     rrr/base/all.hpp
@@ -104,27 +105,27 @@ add_library(ROCOCO
     memdb/value.h
     memdb/xxhash.cc
     memdb/xxhash.h
-    deptran/micro/chopper.cc
-    deptran/micro/chopper.h
-    deptran/micro/piece.cc
-    deptran/micro/piece.h
-    deptran/rw_benchmark/chopper.cc
-    deptran/rw_benchmark/chopper.h
-    deptran/rw_benchmark/piece.cc
-    deptran/rw_benchmark/piece.h
-    deptran/tpca/chopper.h
-    deptran/tpca/piece.cc
-    deptran/tpca/piece.h
-    deptran/tpcc/chopper.cc
-    deptran/tpcc/chopper.h
-    deptran/tpcc/piece.cc
-    deptran/tpcc/piece.h
-    deptran/tpcc_dist/chopper.cc
-    deptran/tpcc_dist/chopper.h
-    deptran/tpcc_dist/piece.h
-    deptran/tpcc_real_dist/chopper.cc
-    deptran/tpcc_real_dist/chopper.h
-    deptran/tpcc_real_dist/piece.h
+    bench/micro/chopper.cc
+    bench/micro/chopper.h
+    bench/micro/piece.cc
+    bench/micro/piece.h
+    bench/rw_benchmark/chopper.cc
+    bench/rw_benchmark/chopper.h
+    bench/rw_benchmark/piece.cc
+    bench/rw_benchmark/piece.h
+    bench/tpca/chopper.h
+    bench/tpca/piece.cc
+    bench/tpca/piece.h
+    bench/tpcc/chopper.cc
+    bench/tpcc/chopper.h
+    bench/tpcc/piece.cc
+    bench/tpcc/piece.h
+    bench/tpcc_dist/chopper.cc
+    bench/tpcc_dist/chopper.h
+    bench/tpcc_dist/piece.h
+    bench/tpcc_real_dist/chopper.cc
+    bench/tpcc_real_dist/chopper.h
+    bench/tpcc_real_dist/piece.h
     deptran/__init__.py
     deptran/all.h
     deptran/batch_start_args_helper.cc

@@ -298,6 +298,7 @@ public:
 
     virtual mdb::Row* create(const mdb::Schema* schema, const std::vector<mdb::Value> &values) = 0;
 
+    virtual ~DTxn() {}
 };
 
 

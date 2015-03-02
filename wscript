@@ -116,17 +116,17 @@ def build(bld):
 
     bld.program(source=bld.path.ant_glob("test/test*.cc"), 
                 target="testharness", 
-                includes=". rrr deptran", 
+                includes=". rrr bench deptran", 
                 use="rrr memdb deptran PTHREAD RT")
 
     bld.program(source=bld.path.ant_glob("deptran/s_main.cc"), 
                 target="deptran_server", 
-                includes=". rrr deptran", 
+                includes=". rrr bench deptran", 
                 use="rrr memdb deptran PTHREAD PROFILER RT")
 
     bld.program(source=bld.path.ant_glob("deptran/c_main.cc"), 
                 target="deptran_client", 
-                includes=". rrr deptran", 
+                includes=". rrr bench deptran", 
                 use="rrr memdb deptran PTHREAD RT")
 
 #    bld.program(source="test/rpcbench.cc test/benchmark_service.cc", 
@@ -142,13 +142,14 @@ def build(bld):
     bld.stlib(source=bld.path.ant_glob("deptran/*.cc "
                                        "deptran/*.cpp "
                                        "deptran/util/*.cc "
-                                       "deptran/tpca/*.cc deptran/tpcc/*.cc "
-                                       "deptran/tpcc_real_dist/*.cc "
-                                       "deptran/tpcc_dist/*.cc "
-                                       "deptran/rw_benchmark/*.cc "
-                                       "deptran/micro/*.cc"), 
+                                       "bench/tpca/*.cc " 
+                                       "bench/tpcc/*.cc "
+                                       "bench/tpcc_real_dist/*.cc "
+                                       "bench/tpcc_dist/*.cc "
+                                       "bench/rw_benchmark/*.cc "
+                                       "bench/micro/*.cc"), 
               target="deptran", 
-              includes=". rrr memdb deptran", 
+              includes=". rrr memdb bench deptran", 
               use="PTHREAD APR APR-UTIL base simplerpc memdb")
 
 #
