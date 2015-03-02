@@ -86,8 +86,8 @@ void TpcaPiece::reg_pieces() {
         if (row_map) { // deptran
             if (IS_MODE_RCC && IN_PHASE_1) { // start req
                 (*row_map)[TPCA_CUSTOMER][mb] = r;
-                DepRow *dr = (DepRow *)r;
-                dr->get_dep_entry(1)->touch(((RCCDTxn*)dtxn)->tv_, false);
+                ((RCCDTxn*)dtxn)->kiss(r, 1, false);
+
                 do_finish = false;
             } else {
                 //std::unordered_map<mdb::MultiBlob, mdb::Row *, mdb::MultiBlob::hash>::iterator it = (*row_map)[TPCA_CUSTOMER].find(cl.primary_key);
@@ -195,7 +195,8 @@ void TpcaPiece::reg_pieces() {
             if (IS_MODE_RCC && IN_PHASE_1) { // start req
                 (*row_map)[TPCA_TELLER][mb] = r;
                 DepRow *dr = (DepRow *)r;
-                dr->get_dep_entry(1)->touch(((RCCDTxn*)dtxn)->tv_, false);
+                ((RCCDTxn*)dtxn)->kiss(r, 1, false);
+
                 do_finish = false;
             } else {
                 //std::unordered_map<mdb::MultiBlob, mdb::Row *, mdb::MultiBlob::hash>::iterator it = (*row_map)[TPCA_TELLER].find(cl.primary_key);
@@ -303,8 +304,8 @@ void TpcaPiece::reg_pieces() {
         if (row_map) { // deptran
             if (IS_MODE_RCC && IN_PHASE_1) { // start req
                 (*row_map)[TPCA_BRANCH][mb] = r;
-                DepRow *dr = (DepRow *)r;
-                dr->get_dep_entry(1)->touch(((RCCDTxn*)dtxn)->tv_, false);
+                ((RCCDTxn*)dtxn)->kiss(r, 1, false);
+
                 do_finish = false;
             } else {
                 //std::unordered_map<mdb::MultiBlob, mdb::Row *, mdb::MultiBlob::hash>::iterator it = (*row_map)[TPCA_BRANCH].find(cl.primary_key);

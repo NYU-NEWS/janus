@@ -365,8 +365,9 @@ public:
         return DepRow::create(schema, values);
     }
 
-    virtual void kiss(mdb::Row*, int col, bool immediate, void* data) {
-        entry_t* entry = (entry_t *)data;
+    virtual void kiss(mdb::Row* r, int col, bool immediate) {
+        entry_t* entry = ((DepRow *)r)->get_dep_entry(col);
+
         if (read_only_) {
             entry->ro_touch(&conflict_txns_);
         } else {
