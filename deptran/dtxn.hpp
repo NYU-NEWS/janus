@@ -364,10 +364,20 @@ public:
 };
 
 class RO6DTxn : public RCCDTxn {
+private:
+    i64 txnId = tid_;
 public:
     RO6DTxn(i64 tid, DTxnMgr* mgr): RCCDTxn(tid, mgr) {
-
     }
+
+    void start(
+            const RequestHeader &header,
+            const std::vector<mdb::Value> &input,
+            bool *deferred,
+            std::vector<mdb::Value> *output
+    );
+
+
 };
 
 class TPL {
