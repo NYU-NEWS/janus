@@ -710,6 +710,9 @@ public:
     static version_t next_version() {
         return ++MultiVersionedRow::ver_s;
     }
+    // one ReadTxnIdTracker object for each row, for tracking seen read trasactions
+    // should be tracked and updated by *this* row's update and read.
+    ReadTxnIdTracker rtxn_tracker;
 
     template <class Container>
     static MultiVersionedRow* create(const Schema* schema, const Container& values) {
@@ -744,9 +747,6 @@ private:
     std::map<column_id_t, std::map<i64, Value> > old_values_;
     // data structure to keep real time for each 100 versions. used for GC
     std::map<column_id_t, std::map<i64, std::map<i64, Value>::iterator> >time_segment;
-    // one ReadTxnIdTracker object for each row, for tracking seen read trasactions
-    // should be tracked and updated by *this* row's update and read.
-    ReadTxnIdTracker rtxn_tracker;
 };
 
 } // namespace mdb
