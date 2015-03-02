@@ -13,10 +13,6 @@ char TPCC_TB_STOCK[] =        "stock";
 char TPCC_TB_ORDER_LINE[] =   "order_line";
 char TPCC_TB_ORDER_C_ID_SECONDARY[] = "order_secondary";
 
-#define BEGIN_PHASE_1 ;
-#define END_PHASE_1 ;
-#define BEGIN_PHASE_2 ;
-#define END_PHASE_2 ;
 
 void TpccPiece::reg_new_order() {
 
@@ -36,7 +32,7 @@ void TpccPiece::reg_new_order() {
         mdb::Row *r = txn->query(txn->get_table(TPCC_TB_DISTRICT), mb,
             output_size, header.pid).next();
 
-        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+        if (IS_MODE_2PL
             && output_size == NULL) {
             mdb::Txn2PL::PieceStatus *ps
                 = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -57,7 +53,7 @@ void TpccPiece::reg_new_order() {
             return;
         }
 
-        if (IS_MODE_RCC && IN_PHASE_1) {
+        if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) {
             int col_id = 10;
             ((RCCDTxn*)dtxn)->kiss(r, col_id, true);
         }
@@ -91,24 +87,6 @@ void TpccPiece::reg_new_order() {
         return;
     } END_PIE
 
-//    TxnRegistry::reg_lock_oracle(
-//            TPCC_NEW_ORDER,
-//            TPCC_NEW_ORDER_0,
-//            [] (const RequestHeader& header,
-//                const Value *input,
-//                rrr::i32 input_size,
-//                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
-//                ) {
-//            //cl.col_id = 8;
-//            //(*opset)[cl] = OP_IR; //FIXME optional, since this column will never be written
-//
-//            cell_locator_t cl(TPCC_TB_DISTRICT, 2, 10);
-//            cl.primary_key[0] = input[1].get_blob();
-//            cl.primary_key[1] = input[0].get_blob();
-//
-//            (*opset)[cl] = OP_IR | OP_W; //XXX or simply OP_W in single thread, since the only reason to keep this column is to get an available key for o_id
-//            });
-
     BEGIN_PIE(TPCC_NEW_ORDER,
             TPCC_NEW_ORDER_1, // R warehouse
             DF_NO) {
@@ -122,7 +100,7 @@ void TpccPiece::reg_new_order() {
         mdb::Row *r = txn->query(txn->get_table(TPCC_TB_WAREHOUSE),
             input[0], output_size, header.pid).next();
 
-        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+        if (IS_MODE_2PL
             && output_size == NULL) {
             mdb::Txn2PL::PieceStatus *ps
                 = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -151,24 +129,6 @@ void TpccPiece::reg_new_order() {
         return;
     });
 
-//    TxnRegistry::reg_lock_oracle(
-//            TPCC_NEW_ORDER,
-//            TPCC_NEW_ORDER_1,
-//            [] (const RequestHeader& header,
-//                const Value *input,
-//                rrr::i32 input_size,
-//                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
-//                ) {
-//            //cell_locator_t cl;
-//            //cl.tbl_name = TPCC_TB_WAREHOUSE;
-//            //cl.primary_key = MultiValue(std::vector<Value>({
-//            //        input[0]
-//            //        }));
-//
-//            //cl.col_id = 7;
-//            //(*opset)[cl] = OP_IR; //FIXME optional, since this column will never be written
-//            });
-
     BEGIN_PIE(
             TPCC_NEW_ORDER,
             TPCC_NEW_ORDER_2, // R customer
@@ -188,7 +148,7 @@ void TpccPiece::reg_new_order() {
         mdb::Row *r = txn->query(txn->get_table(TPCC_TB_CUSTOMER), mb,
             output_size, header.pid).next();
 
-        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+        if (IS_MODE_2PL
             && output_size == NULL) {
             mdb::Txn2PL::PieceStatus *ps
                 = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -239,30 +199,6 @@ void TpccPiece::reg_new_order() {
         return;
     });
 
-//    TxnRegistry::reg_lock_oracle(
-//            TPCC_NEW_ORDER,
-//            TPCC_NEW_ORDER_2,
-//            [] (const RequestHeader& header,
-//                const Value *input,
-//                rrr::i32 input_size,
-//                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
-//                ) {
-//            //cell_locator_t cl;
-//            //cl.tbl_name = TPCC_TB_CUSTOMER;
-//            //cl.primary_key = MultiValue(std::vector<Value>({
-//            //        input[2],
-//            //        input[1],
-//            //        input[0]
-//            //        }));
-//
-//            //cl.col_id = 5;
-//            //(*opset)[cl] = OP_DR; //FIXME optional
-//            //cl.col_id = 13;
-//            //(*opset)[cl] = OP_DR; //FIXME ditto
-//            //cl.col_id = 15;
-//            //(*opset)[cl] = OP_DR; //FIXME ditto
-//            });
-
     BEGIN_PIE(TPCC_NEW_ORDER,
             TPCC_NEW_ORDER_3, // W order
             DF_REAL) {
@@ -273,7 +209,7 @@ void TpccPiece::reg_new_order() {
         mdb::Table *tbl = txn->get_table(TPCC_TB_ORDER);
         mdb::Row *r = NULL;
 
-        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+        if (IS_MODE_2PL
             && output_size == NULL) {
             mdb::MultiBlob mb(3);
             mb[0] = input[1].get_blob();
@@ -298,7 +234,7 @@ void TpccPiece::reg_new_order() {
         }
 
         // W order
-        if (!IS_MODE_RCC || (IS_MODE_RCC && IN_PHASE_1)) { // non-rcc || rcc start request
+        if (!(IS_MODE_RCC || IS_MODE_RO6) || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { // non-rcc || rcc start request
             std::vector<Value> row_data({
                 input[1],   // o_d_id
                 input[2],   // o_w_id
@@ -328,7 +264,7 @@ void TpccPiece::reg_new_order() {
 
         bool do_finish = true;
         if (row_map) { // deptran
-            if (IS_MODE_RCC && IN_PHASE_1) { // start req
+            if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { // start req
                 //std::map<int, entry_t *> &m = DepTranServiceImpl::dep_s->rw_entries_[TPCC_TB_ORDER][r->get_key()];
                 ((RCCDTxn*)dtxn)->kiss(r, 0, false);
                 ((RCCDTxn*)dtxn)->kiss(r, 1, false);
@@ -394,37 +330,6 @@ void TpccPiece::reg_new_order() {
         }
     } END_PIE
 
-//    TxnRegistry::reg_lock_oracle(
-//            TPCC_NEW_ORDER,
-//            TPCC_NEW_ORDER_3,
-//            [] (const RequestHeader& header,
-//                const Value *input,
-//                rrr::i32 input_size,
-//                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
-//                ) {
-//            cell_locator_t cl(TPCC_TB_ORDER, 3);
-//            cl.primary_key[0] = input[1].get_blob();
-//            cl.primary_key[1] = input[2].get_blob();
-//            cl.primary_key[2] = input[0].get_blob();
-//
-//            //Log::debug("order lock hash: %u", mdb::MultiBlob::hash()(cl.primary_key));
-//            cl.col_id = 0;
-//            (*opset)[cl] = OP_W;
-//            cl.col_id = 1;
-//            (*opset)[cl] = OP_W;
-//            cl.col_id = 2;
-//            (*opset)[cl] = OP_W;
-//            //cl.col_id = 3;
-//            //(*opset)[cl] = OP_W;
-//            //cl.col_id = 4;
-//            //(*opset)[cl] = OP_W;
-//            cl.col_id = 5;
-//            (*opset)[cl] = OP_W;
-//            //cl.col_id = 6;
-//            //(*opset)[cl] = OP_W;
-//            //cl.col_id = 7;
-//            //(*opset)[cl] = OP_W;
-//            });
 
     BEGIN_PIE(TPCC_NEW_ORDER,
             TPCC_NEW_ORDER_4, // W new_order
@@ -433,7 +338,7 @@ void TpccPiece::reg_new_order() {
         verify(input_size == 3);
         Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_4);
 
-        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+        if (IS_MODE_2PL
             && output_size == NULL) {
             TPL::get_2pl_proceed_callback(header, input,
                 input_size, res)();
@@ -446,7 +351,7 @@ void TpccPiece::reg_new_order() {
         mdb::Row *r = NULL;
 
         // W new_order
-        if (!IS_MODE_RCC || (IS_MODE_RCC && IN_PHASE_1)) { // non-rcc || rcc start request
+        if (!(IS_MODE_RCC || IS_MODE_RO6) || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { // non-rcc || rcc start request
             std::vector<Value> row_data({
                 input[1],   // o_d_id
                 input[2],   // o_w_id
@@ -471,7 +376,7 @@ void TpccPiece::reg_new_order() {
 
         bool do_finish = true;
         if (row_map) { // deptran
-            if (IS_MODE_RCC && IN_PHASE_1) { // start req
+            if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { // start req
                 //std::map<int, entry_t *> &m = DepTranServiceImpl::dep_s->rw_entries_[TPCC_TB_NEW_ORDER][r->get_key()];
 
                 ((RCCDTxn*)dtxn)->kiss(r, 0, false);
@@ -522,26 +427,6 @@ void TpccPiece::reg_new_order() {
         }
     } END_PIE
 
-//    TxnRegistry::reg_lock_oracle(
-//            TPCC_NEW_ORDER,
-//            TPCC_NEW_ORDER_4,
-//            [] (const RequestHeader& header,
-//                const Value *input,
-//                rrr::i32 input_size,
-//                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
-//                ) {
-//            cell_locator_t cl(TPCC_TB_NEW_ORDER, 3);
-//            cl.primary_key[0] = input[1].get_blob();
-//            cl.primary_key[1] = input[2].get_blob();
-//            cl.primary_key[2] = input[0].get_blob();
-//
-//            cl.col_id = 0;
-//            (*opset)[cl] = OP_W;
-//            cl.col_id = 1;
-//            (*opset)[cl] = OP_W;
-//            cl.col_id = 2;
-//            (*opset)[cl] = OP_W;
-//            });
 
     BEGIN_PIE(TPCC_NEW_ORDER,
             TPCC_NEW_ORDER_5, // Ri item
@@ -556,7 +441,7 @@ void TpccPiece::reg_new_order() {
         mdb::Row *r = txn->query(txn->get_table(TPCC_TB_ITEM), input[0],
             output_size, header.pid).next();
 
-        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+        if (IS_MODE_2PL
             && output_size == NULL) {
 
             mdb::Txn2PL::PieceStatus *ps
@@ -607,28 +492,6 @@ void TpccPiece::reg_new_order() {
         return;
     } END_PIE
 
-//    TxnRegistry::reg_lock_oracle(
-//            TPCC_NEW_ORDER,
-//            TPCC_NEW_ORDER_5,
-//            [] (const RequestHeader& header,
-//                const Value *input,
-//                rrr::i32 input_size,
-//                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
-//                ) {
-//            //cell_locator_t cl;
-//            //cl.tbl_name = TPCC_TB_ITEM;
-//            //cl.primary_key = MultiValue(std::vector<Value>({
-//            //        input[0]
-//            //        }));
-//
-//            //cl.col_id = 2;
-//            //(*opset)[cl] = OP_IR; //FIXME optional
-//            //cl.col_id = 3;
-//            //(*opset)[cl] = OP_IR; //FIXME ditto
-//            //cl.col_id = 4;
-//            //(*opset)[cl] = OP_IR; //FIXME ditto
-//            });
-
     BEGIN_PIE(
         TPCC_NEW_ORDER,
         TPCC_NEW_ORDER_6, // Ri stock
@@ -646,7 +509,7 @@ void TpccPiece::reg_new_order() {
         mdb::Row *r = txn->query(txn->get_table(TPCC_TB_STOCK), mb,
             output_size, header.pid).next();
 
-        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+        if (IS_MODE_2PL
             && output_size == NULL) {
             mdb::Txn2PL::PieceStatus *ps
                 = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -691,27 +554,6 @@ void TpccPiece::reg_new_order() {
         return;
     } END_PIE
 
-//    TxnRegistry::reg_lock_oracle(
-//            TPCC_NEW_ORDER,
-//            TPCC_NEW_ORDER_6,
-//            [] (const RequestHeader& header,
-//                const Value *input,
-//                rrr::i32 input_size,
-//                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
-//                ) {
-//            //cell_locator_t cl;
-//            //cl.tbl_name = TPCC_TB_STOCK;
-//            //cl.primary_key = MultiValue(std::vector<Value>({
-//            //        input[0],
-//            //        input[1]
-//            //        }));
-//
-//            //i32 s_dist_col = 3 + input[3].get_i32();
-//            //cl.col_id = s_dist_col;
-//            //(*opset)[cl] = OP_IR; //FIXME not required
-//            //cl.col_id = 16;
-//            //(*opset)[cl] = OP_IR; //FIXME optional, make this in another piece
-//            });
 
     BEGIN_PIE(TPCC_NEW_ORDER,
             TPCC_NEW_ORDER_7, // W stock
@@ -725,12 +567,12 @@ void TpccPiece::reg_new_order() {
         mdb::MultiBlob mb(2);
         mb[0] = input[0].get_blob();
         mb[1] = input[1].get_blob();
-        if (!IS_MODE_RCC || (IS_MODE_RCC && IN_PHASE_1)) { // non-rcc || rcc start request
+        if (!(IS_MODE_RCC || IS_MODE_RO6) || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { // non-rcc || rcc start request
             r = txn->query(txn->get_table(TPCC_TB_STOCK), mb,
                 output_size, header.pid).next();
         }
 
-        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+        if (IS_MODE_2PL
             && output_size == NULL) {
 
             mdb::Txn2PL::PieceStatus *ps
@@ -761,7 +603,7 @@ void TpccPiece::reg_new_order() {
 
         bool do_finish = true;
         if (row_map) { // deptran
-            if (IS_MODE_RCC && IN_PHASE_1) { // start req
+            if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { // start req
                 (*row_map)[TPCC_TB_STOCK][mb] = r;
                 //Log::debug("stock P1: hv: %u, k: %u, r: %p", mdb::MultiBlob::hash()((*row_map)[TPCC_TB_STOCK].begin()->first), mdb::MultiBlob::hash()(cl.primary_key), r);
 
@@ -839,36 +681,13 @@ void TpccPiece::reg_new_order() {
         }
     } END_PIE
 
-//    TxnRegistry::reg_lock_oracle(
-//            TPCC_NEW_ORDER,
-//            TPCC_NEW_ORDER_7,
-//            [] (const RequestHeader& header,
-//                const Value *input,
-//                rrr::i32 input_size,
-//                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
-//                ) {
-//            cell_locator_t cl(TPCC_TB_STOCK, 2);
-//            cl.primary_key[0] = input[0].get_blob();
-//            cl.primary_key[1] = input[1].get_blob();
-//
-//            //Log::debug("stock lock: hv: %u, ", mdb::MultiBlob::hash()(cl.primary_key));
-//            cl.col_id = 2;
-//            (*opset)[cl] = OP_W;
-//            cl.col_id = 13;
-//            (*opset)[cl] = OP_W;
-//            cl.col_id = 14;
-//            (*opset)[cl] = OP_W;
-//            cl.col_id = 15;
-//            (*opset)[cl] = OP_W;
-//            });
-
     BEGIN_PIE(TPCC_NEW_ORDER,
             TPCC_NEW_ORDER_8, // W order_line
             DF_REAL) {
         verify(input_size == 10);
         Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_8);
 
-        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+        if (IS_MODE_2PL
             && output_size == NULL) {
             TPL::get_2pl_proceed_callback(header, input,
                 input_size, res)();
@@ -880,7 +699,7 @@ void TpccPiece::reg_new_order() {
         mdb::Table *tbl = txn->get_table(TPCC_TB_ORDER_LINE);
         mdb::Row *r = NULL;
 
-        if (!IS_MODE_RCC || (IS_MODE_RCC && IN_PHASE_1)) { // non-rcc || rcc start request
+        if (!(IS_MODE_RCC || IS_MODE_RO6) || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { // non-rcc || rcc start request
             std::vector<Value> input_buf(input, input + input_size);
 
             switch (DTxnMgr::get_sole_mgr()->get_mode()) {
@@ -901,7 +720,7 @@ void TpccPiece::reg_new_order() {
 
         bool do_finish = true;
         if (row_map) { // deptran
-            if (IS_MODE_RCC && IN_PHASE_1) { // start req
+            if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { // start req
                 //std::map<int, entry_t *> &m = DepTranServiceImpl::dep_s->rw_entries_[TPCC_TB_ORDER_LINE][r->get_key()];
 
                 ((RCCDTxn*)dtxn)->kiss(r, 0, false);
@@ -963,42 +782,6 @@ void TpccPiece::reg_new_order() {
         }
     } END_PIE
 
-//    TxnRegistry::reg_lock_oracle(
-//            TPCC_NEW_ORDER,
-//            TPCC_NEW_ORDER_8,
-//            [] (const RequestHeader& header,
-//                const Value *input,
-//                rrr::i32 input_size,
-//                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
-//                ) {
-//            cell_locator_t cl(TPCC_TB_ORDER_LINE, 4);
-//            cl.primary_key[0] = input[0].get_blob();
-//            cl.primary_key[1] = input[1].get_blob();
-//            cl.primary_key[2] = input[2].get_blob();
-//            cl.primary_key[3] = input[3].get_blob();
-//
-//            cl.col_id = 0;
-//            (*opset)[cl] = OP_W;
-//            cl.col_id = 1;
-//            (*opset)[cl] = OP_W;
-//            cl.col_id = 2;
-//            (*opset)[cl] = OP_W;
-//            cl.col_id = 3;
-//            (*opset)[cl] = OP_W;
-//            cl.col_id = 4;
-//            (*opset)[cl] = OP_W;
-//            //cl.col_id = 5;
-//            //(*opset)[cl] = OP_W;
-//            cl.col_id = 6;
-//            (*opset)[cl] = OP_W;
-//            //cl.col_id = 7;
-//            //(*opset)[cl] = OP_W;
-//            cl.col_id = 8;
-//            (*opset)[cl] = OP_W;
-//            //cl.col_id = 9;
-//            //(*opset)[cl] = OP_W;
-//            });
-//
 }
 
 void TpccPiece::reg_payment() {
@@ -1014,12 +797,12 @@ void TpccPiece::reg_payment() {
         mdb::Row *r = txn->query(txn->get_table(TPCC_TB_WAREHOUSE),
             input[0], output_size, header.pid).next();
 
-        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+        if (IS_MODE_2PL
             && output_size == NULL) {
             mdb::Txn2PL::PieceStatus *ps
                 = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
-            std::function<void(void)> succ_callback = TPL::                        get_2pl_succ_callback(header, input, input_size, res, ps);
-            std::function<void(void)> fail_callback = TPL::                        get_2pl_fail_callback(header, res, ps);
+            std::function<void(void)> succ_callback = TPL::get_2pl_succ_callback(header, input, input_size, res, ps);
+            std::function<void(void)> fail_callback = TPL::get_2pl_fail_callback(header, res, ps);
 
             ps->reg_rw_lock(
                 std::vector<mdb::column_lock_t>({
@@ -1129,7 +912,7 @@ void TpccPiece::reg_payment() {
         mdb::Row *r = txn->query(txn->get_table(TPCC_TB_DISTRICT), mb,
             output_size, header.pid).next();
 
-        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+        if (IS_MODE_2PL
             && output_size == NULL) {
             mdb::Txn2PL::PieceStatus *ps
                 = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -1210,15 +993,6 @@ void TpccPiece::reg_payment() {
         Log::debug("TPCC_PAYMENT, piece: %d end", TPCC_PAYMENT_1);
     } END_PIE
 
-//    TxnRegistry::reg_lock_oracle(
-//            TPCC_PAYMENT,
-//            TPCC_PAYMENT_1,
-//            [] (const RequestHeader& header,
-//                const Value *input,
-//                rrr::i32 input_size,
-//                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
-//                ) {
-//            });
 
     BEGIN_PIE(TPCC_PAYMENT,      // txn
             TPCC_PAYMENT_2,    // piece 1, Ri & W district
@@ -1233,12 +1007,12 @@ void TpccPiece::reg_payment() {
         //cell_locator_t cl(TPCC_TB_DISTRICT, 2);
         mb[0] = input[1].get_blob();
         mb[1] = input[0].get_blob();
-        if (!IS_MODE_RCC || (IS_MODE_RCC && IN_PHASE_1)) { // non-rcc || rcc start request
+        if (!(IS_MODE_RCC || IS_MODE_RO6) || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { // non-rcc || rcc start request
             r = txn->query(txn->get_table(TPCC_TB_DISTRICT), mb,
                 output_size, header.pid).next();
         }
 
-        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+        if (IS_MODE_2PL
             && output_size == NULL) {
             mdb::Txn2PL::PieceStatus *ps
                 = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -1257,7 +1031,7 @@ void TpccPiece::reg_payment() {
 
         bool do_finish = true;
         if (row_map) { // deptran
-            if (IS_MODE_RCC && IN_PHASE_1) { // start req
+            if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { // start req
                 (*row_map)[TPCC_TB_DISTRICT][mb] = r;
                 ((RCCDTxn*)dtxn)->kiss(r, 9, false);
                 do_finish = false;
@@ -1293,21 +1067,6 @@ void TpccPiece::reg_payment() {
         }
     } END_PIE
 
-//    TxnRegistry::reg_lock_oracle(
-//            TPCC_PAYMENT,
-//            TPCC_PAYMENT_2,
-//            [] (const RequestHeader& header,
-//                const Value *input,
-//                rrr::i32 input_size,
-//                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
-//                ) {
-//            cell_locator_t cl(TPCC_TB_DISTRICT, 2);
-//            cl.primary_key[0] = input[1].get_blob();
-//            cl.primary_key[1] = input[0].get_blob();
-//
-//            cl.col_id = 9;
-//            (*opset)[cl] = OP_W;
-//            });
 
     BEGIN_PIE(TPCC_PAYMENT,      // txn
             TPCC_PAYMENT_3,    // piece 2, R customer secondary index, c_last -> c_id
@@ -1316,7 +1075,7 @@ void TpccPiece::reg_payment() {
         verify(input_size == 3);
         Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_3);
 
-        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+        if (IS_MODE_2PL
             && output_size == NULL) {
             TPL::get_2pl_proceed_callback(header, input,
                 input_size, res)();
@@ -1364,16 +1123,6 @@ void TpccPiece::reg_payment() {
         Log::debug("TPCC_PAYMENT, piece: %d, end", TPCC_PAYMENT_3);
     } END_PIE
 
-//    TxnRegistry::reg_lock_oracle(
-//            TPCC_PAYMENT,
-//            TPCC_PAYMENT_3,
-//            [] (const RequestHeader& header,
-//                const Value *input,
-//                rrr::i32 input_size,
-//                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
-//                ) {
-//            });
-
     BEGIN_PIE(TPCC_PAYMENT,      // txn
             TPCC_PAYMENT_4,    // piece 4, R & W customer
             DF_REAL) {
@@ -1390,12 +1139,12 @@ void TpccPiece::reg_payment() {
         mb[1] = input[2].get_blob();
         mb[2] = input[1].get_blob();
         // R customer
-        if (!IS_MODE_RCC || (IS_MODE_RCC && IN_PHASE_1)) { // non-rcc || rcc start request
+        if (!(IS_MODE_RCC || IS_MODE_RO6) || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { // non-rcc || rcc start request
             r = txn->query(txn->get_table(TPCC_TB_CUSTOMER), mb,
                 output_size, header.pid).next();
         }
 
-        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+        if (IS_MODE_2PL
             && output_size == NULL) {
             mdb::Txn2PL::PieceStatus *ps
                 = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -1467,7 +1216,7 @@ void TpccPiece::reg_payment() {
         bool do_finish = true;
 
         if (row_map) { // deptran
-            if (IS_MODE_RCC && IN_PHASE_1) { // start req
+            if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { // start req
                 (*row_map)[TPCC_TB_CUSTOMER][mb] = r;
 
                 ((RCCDTxn*)dtxn)->kiss(r, 16, false);
@@ -1577,34 +1326,13 @@ void TpccPiece::reg_payment() {
         }
     } END_PIE
 
-//    TxnRegistry::reg_lock_oracle(
-//            TPCC_PAYMENT,
-//            TPCC_PAYMENT_4,
-//            [] (const RequestHeader& header,
-//                const Value *input,
-//                rrr::i32 input_size,
-//                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
-//                ) {
-//            cell_locator_t cl(TPCC_TB_CUSTOMER, 3);
-//            cl.primary_key[0] = input[0].get_blob();
-//            cl.primary_key[1] = input[2].get_blob();
-//            cl.primary_key[2] = input[1].get_blob();
-//
-//            cl.col_id = 16; // c_balance
-//            (*opset)[cl] = /*OP_DR |*/ OP_W;
-//            cl.col_id = 17; // c_ytd_payment
-//            (*opset)[cl] = OP_W;
-//            cl.col_id = 20; // c_data
-//            (*opset)[cl] = OP_W;
-//            });
-
     BEGIN_PIE(TPCC_PAYMENT,      // txn
             TPCC_PAYMENT_5,    // piece 4, W histroy
             DF_REAL) {
         verify(input_size == 9);
         Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_5);
 
-        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+        if (IS_MODE_2PL
             && output_size == NULL) {
             TPL::get_2pl_proceed_callback(header, input,
                 input_size, res)();
@@ -1617,13 +1345,13 @@ void TpccPiece::reg_payment() {
 
         // insert history
         mdb::Row *r = NULL;
-        if (!IS_MODE_RCC || (IS_MODE_RCC && IN_PHASE_1)) { // non-rcc || rcc start request
+        if (!(IS_MODE_RCC || IS_MODE_RO6) || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { // non-rcc || rcc start request
         }
 
         bool do_finish = true;
 
         if (row_map) { // deptran
-            if (IS_MODE_RCC && IN_PHASE_1) { // start req
+            if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { // start req
                 do_finish = false;
             } else { // finish req
             }
@@ -1667,16 +1395,6 @@ void TpccPiece::reg_payment() {
         }
     } END_PIE
 
-//    TxnRegistry::reg_lock_oracle(
-//            TPCC_PAYMENT,
-//            TPCC_PAYMENT_5,
-//            [] (const RequestHeader& header,
-//                const Value *input,
-//                rrr::i32 input_size,
-//                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
-//                ) {
-//            });
-
 }
 
 void TpccPiece::reg_order_status() {
@@ -1687,7 +1405,7 @@ void TpccPiece::reg_order_status() {
         verify(input_size == 3);
         Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_0);
 
-        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+        if (IS_MODE_2PL
             && output_size == NULL) {
             TPL::get_2pl_proceed_callback(header, input,
                 input_size, res)();
@@ -1735,16 +1453,6 @@ void TpccPiece::reg_order_status() {
         Log::debug("TPCC_ORDER_STATUS, piece: %d, end", TPCC_ORDER_STATUS_0);
     } END_PIE
 
-//    TxnRegistry::reg_lock_oracle(
-//            TPCC_ORDER_STATUS,
-//            TPCC_ORDER_STATUS_0,
-//            [] (const RequestHeader& header,
-//                const Value *input,
-//                rrr::i32 input_size,
-//                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
-//                ) {
-//            });
-
     BEGIN_PIE(TPCC_ORDER_STATUS, // RO
             TPCC_ORDER_STATUS_1, // Ri customer
             DF_NO) {
@@ -1763,7 +1471,7 @@ void TpccPiece::reg_order_status() {
         mb[2] = input[0].get_blob();
         mdb::Row *r = txn->query(tbl, mb, output_size, header.pid).next();
 
-        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+        if (IS_MODE_2PL
             && output_size == NULL) {
             mdb::Txn2PL::PieceStatus *ps
                 = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -1789,7 +1497,7 @@ void TpccPiece::reg_order_status() {
             return;
         }
 
-        if (IS_MODE_RCC) {
+        if ((IS_MODE_RCC || IS_MODE_RO6)) {
             ((RCCDTxn*)dtxn)->kiss(r, 16, false);
         }
 
@@ -1825,23 +1533,6 @@ void TpccPiece::reg_order_status() {
 
     } END_PIE
 
-//    TxnRegistry::reg_lock_oracle(
-//            TPCC_ORDER_STATUS,
-//            TPCC_ORDER_STATUS_1,
-//            [] (const RequestHeader& header,
-//                const Value *input,
-//                rrr::i32 input_size,
-//                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
-//                ) {
-//                cell_locator_t cl(TPCC_TB_CUSTOMER, 3);
-//                cl.primary_key[0] = input[2].get_blob();
-//                cl.primary_key[1] = input[1].get_blob();
-//                cl.primary_key[2] = input[0].get_blob();
-//
-//                cl.col_id = 16; // c_balance
-//                (*opset)[cl] = OP_IR;
-//            });
-
     BEGIN_PIE(TPCC_ORDER_STATUS, // RO
             TPCC_ORDER_STATUS_2, // Ri order
             DF_NO) {
@@ -1860,7 +1551,7 @@ void TpccPiece::reg_order_status() {
             txn->get_table(TPCC_TB_ORDER_C_ID_SECONDARY), mb_0,
             output_size, header.pid).next();
 
-        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+        if (IS_MODE_2PL
             && output_size == NULL) {
 
             mdb::Txn2PL::PieceStatus *ps
@@ -1943,7 +1634,7 @@ void TpccPiece::reg_order_status() {
         mdb::Row *r = txn->query(txn->get_table(TPCC_TB_ORDER), mb,
                 true, header.pid).next();
 
-        if (IS_MODE_RCC) {
+        if ((IS_MODE_RCC || IS_MODE_RO6)) {
             ((RCCDTxn*)dtxn)->kiss(r, 5, false);
         }
 
@@ -1974,29 +1665,6 @@ void TpccPiece::reg_order_status() {
 
     } END_PIE
 
-//    TxnRegistry::reg_lock_oracle(
-//            TPCC_ORDER_STATUS,
-//            TPCC_ORDER_STATUS_2,
-//            [] (const RequestHeader& header,
-//                const Value *input,
-//                rrr::i32 input_size,
-//                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
-//                ) {
-//                verify(input_size == 3);
-//                Value buf;
-//                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
-//
-//                mdb::MultiBlob mb_0(3);
-//                mb_0[0] = input[1].get_blob();
-//                mb_0[1] = input[0].get_blob();
-//                mb_0[2] = input[2].get_blob();
-//                mdb::Row *r_0 = txn->query(txn->get_table(TPCC_TB_ORDER_C_ID_SECONDARY), mb_0).next();
-//                cell_locator_t cl(TPCC_TB_ORDER, 3, 5);
-//                cl.primary_key[0] = input[1].get_blob();
-//                cl.primary_key[1] = input[0].get_blob();
-//                cl.primary_key[2] = r_0->get_blob(3);
-//                (*opset)[cl] = OP_IR;
-//            });
 
     BEGIN_PIE(TPCC_ORDER_STATUS, // RO
             TPCC_ORDER_STATUS_3, // R order_line
@@ -2037,7 +1705,7 @@ void TpccPiece::reg_order_status() {
 
         verify(row_list.size() != 0);
 
-        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+        if (IS_MODE_2PL
             && output_size == NULL) {
             mdb::Txn2PL::PieceStatus *ps
                 = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -2091,7 +1759,7 @@ void TpccPiece::reg_order_status() {
         while (i < row_list.size()) {
             r = row_list[i++];
 
-            if (IS_MODE_RCC) {
+            if ((IS_MODE_RCC || IS_MODE_RO6)) {
                 ((RCCDTxn*)dtxn)->kiss(r, 6, false);
             }
 
@@ -2134,41 +1802,6 @@ void TpccPiece::reg_order_status() {
 
     } END_PIE
 
-//    TxnRegistry::reg_lock_oracle(
-//            TPCC_ORDER_STATUS,
-//            TPCC_ORDER_STATUS_3,
-//            [] (const RequestHeader& header,
-//                const Value *input,
-//                rrr::i32 input_size,
-//                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
-//                ) {
-//
-//                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
-//                mdb::MultiBlob mbl(4), mbh(4);
-//                mbl[0] = input[2].get_blob();
-//                mbh[0] = input[2].get_blob();
-//                mbl[1] = input[1].get_blob();
-//                mbh[1] = input[1].get_blob();
-//                mbl[2] = input[0].get_blob();
-//                mbh[2] = input[0].get_blob();
-//                Value ol_number_low(std::numeric_limits<i32>::min()), ol_number_high(std::numeric_limits<i32>::max());
-//                mbl[3] = ol_number_low.get_blob();
-//                mbh[3] = ol_number_high.get_blob();
-//
-//                mdb::ResultSet rs = txn->query_in(txn->get_table(TPCC_TB_ORDER_LINE), mbl, mbh, mdb::ORD_DESC);
-//                mdb::Row *r = NULL;
-//                cell_locator_t cl(TPCC_TB_ORDER_LINE, 4, 6);
-//                cl.primary_key[0] = input[2].get_blob();
-//                cl.primary_key[1] = input[1].get_blob();
-//                cl.primary_key[2] = input[0].get_blob();
-//                while (rs.has_next()) {
-//                    r = rs.next();
-//                    cl.primary_key[3] = r->get_blob(3);
-//                    (*opset)[cl] = OP_IR;
-//                }
-//
-//            });
-
 }
 
 void TpccPiece::reg_delivery() {
@@ -2188,7 +1821,7 @@ void TpccPiece::reg_delivery() {
         //cell_locator_t cl(TPCC_TB_NEW_ORDER, 3);
         mdb::Row *r = NULL;
         mdb::Table *tbl = txn->get_table(TPCC_TB_NEW_ORDER);
-        if (!IS_MODE_RCC || (IS_MODE_RCC && IN_PHASE_1)) { // non-rcc || rcc start request
+        if (!(IS_MODE_RCC || IS_MODE_RO6) || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { // non-rcc || rcc start request
             mdb::MultiBlob mbl(3), mbh(3);
             mbl[0] = input[1].get_blob();
             mbh[0] = input[1].get_blob();
@@ -2205,7 +1838,7 @@ void TpccPiece::reg_delivery() {
             if (rs.has_next()) {
                 r = rs.next();
 
-                if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+                if (IS_MODE_2PL
                     && output_size == NULL) {
                     mdb::Txn2PL::PieceStatus *ps
                         = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -2231,7 +1864,7 @@ void TpccPiece::reg_delivery() {
                 output[output_index++] = buf;
             }
             else {
-                if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+                if (IS_MODE_2PL
                     && output_size == NULL) {
                     TPL::get_2pl_proceed_callback(header, input,
                         input_size, res)();
@@ -2244,7 +1877,7 @@ void TpccPiece::reg_delivery() {
         }
 
         if (row_map) { // deptran
-            if (IS_MODE_RCC && IN_PHASE_1) { // deptran start req, top half
+            if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { // deptran start req, top half
                 if (r) { // if find a row
                     //cl.primary_key[0] = input[1].get_blob();
                     //cl.primary_key[1] = input[0].get_blob();
@@ -2287,44 +1920,6 @@ void TpccPiece::reg_delivery() {
 
     } END_PIE
 
-//    TxnRegistry::reg_lock_oracle(
-//            TPCC_DELIVERY,
-//            TPCC_DELIVERY_0,
-//            [] (const RequestHeader& header,
-//                const Value *input,
-//                rrr::i32 input_size,
-//                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
-//                ) {
-//                Value buf;
-//                mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
-//                mdb::MultiBlob mbl(3), mbh(3);
-//                mbl[0] = input[1].get_blob();
-//                mbh[0] = input[1].get_blob();
-//                mbl[1] = input[0].get_blob();
-//                mbh[1] = input[0].get_blob();
-//                Value no_o_id_low(std::numeric_limits<i32>::min()), no_o_id_high(std::numeric_limits<i32>::max());
-//                mbl[2] = no_o_id_low.get_blob();
-//                mbh[2] = no_o_id_high.get_blob();
-//                mdb::Table *tbl = txn->get_table(TPCC_TB_NEW_ORDER);
-//
-//                mdb::ResultSet rs = txn->query_in(tbl, mbl, mbh, mdb::ORD_ASC);
-//                cell_locator_t cl(TPCC_TB_NEW_ORDER, 3);
-//                cl.primary_key[0] = input[1].get_blob();
-//                cl.primary_key[1] = input[0].get_blob();
-//                if (rs.has_next()) {
-//                    mdb::Row *r = rs.next();
-//                    cl.primary_key[2] = r->get_blob(2);
-//                    cl.col_id = 0;
-//                    (*opset)[cl] = OP_IR | OP_W;
-//                    cl.col_id = 1;
-//                    (*opset)[cl] = OP_IR | OP_W;
-//                    cl.col_id = 2;
-//                    (*opset)[cl] = OP_IR | OP_W;
-//                }
-//                else { // no new order
-//                }
-//            });
-
     BEGIN_PIE(TPCC_DELIVERY,
             TPCC_DELIVERY_1, // Ri & W order
             DF_NO) {
@@ -2345,7 +1940,7 @@ void TpccPiece::reg_delivery() {
         mdb::Row *r = txn->query(txn->get_table(TPCC_TB_ORDER), mb,
             output_size, header.pid).next();
 
-        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+        if (IS_MODE_2PL
             && output_size == NULL) {
             mdb::Txn2PL::PieceStatus *ps
                 = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -2366,7 +1961,7 @@ void TpccPiece::reg_delivery() {
         }
 
 
-        if (IS_MODE_RCC && IN_PHASE_1) {
+        if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) {
             ((RCCDTxn*)dtxn)->kiss(r, 5, true);
         }
         if (!txn->read_column(r, 3, &buf)) {
@@ -2388,24 +1983,6 @@ void TpccPiece::reg_delivery() {
         Log::debug("TPCC_DELIVERY, piece: %d end", TPCC_DELIVERY_1);
     } END_PIE
 
-//    TxnRegistry::reg_lock_oracle(
-//            TPCC_DELIVERY,
-//            TPCC_DELIVERY_1,
-//            [] (const RequestHeader& header,
-//                const Value *input,
-//                rrr::i32 input_size,
-//                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
-//                ) {
-//            cell_locator_t cl(TPCC_TB_ORDER, 3);
-//            cl.primary_key[0] = input[2].get_blob();
-//            cl.primary_key[1] = input[1].get_blob();
-//            cl.primary_key[2] = input[0].get_blob();
-//            //Log::debug("DeliveryLock: o_d_id: %d, o_w_id: %d, o_id: %d, hash: %u", input[2].get_i32(), input[1].get_i32(), input[0].get_i32(), mdb::MultiBlob::hash()(cl.primary_key));
-//            //cl.col_id = 3;
-//            //(*opset)[cl] = OP_IR;
-//            cl.col_id = 5;
-//            (*opset)[cl] = OP_W;
-//            });
 
     BEGIN_PIE(TPCC_DELIVERY,
             TPCC_DELIVERY_2, // Ri & W order_line
@@ -2445,7 +2022,7 @@ void TpccPiece::reg_delivery() {
             row_list.push_back(rs.next());
         }
 
-        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+        if (IS_MODE_2PL
             && output_size == NULL) {
             mdb::Txn2PL::PieceStatus *ps
                 = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -2481,7 +2058,7 @@ void TpccPiece::reg_delivery() {
         while (i < row_list.size()) {
             r = row_list[i++];
 
-            if (IS_MODE_RCC && IN_PHASE_1) {
+            if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) {
                 //cl.primary_key[3] = r->get_blob(3);
                 //cl.col_id = 6;
                 ((RCCDTxn*)dtxn)->kiss(r, 6, true);
@@ -2508,44 +2085,6 @@ void TpccPiece::reg_delivery() {
         Log::debug("TPCC_DELIVERY, piece: %d end", TPCC_DELIVERY_2);
     } END_PIE
 
-//    TxnRegistry::reg_lock_oracle(
-//            TPCC_DELIVERY,
-//            TPCC_DELIVERY_2,
-//            [] (const RequestHeader& header,
-//                const Value *input,
-//                rrr::i32 input_size,
-//                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
-//                ) {
-//            mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
-//            mdb::MultiBlob mbl(4), mbh(4);
-//            mbl[0] = input[2].get_blob();
-//            mbh[0] = input[2].get_blob();
-//            mbl[1] = input[1].get_blob();
-//            mbh[1] = input[1].get_blob();
-//            mbl[2] = input[0].get_blob();
-//            mbh[2] = input[0].get_blob();
-//            Value ol_number_low(std::numeric_limits<i32>::min()), ol_number_high(std::numeric_limits<i32>::max());
-//            mbl[3] = ol_number_low.get_blob();
-//            mbh[3] = ol_number_high.get_blob();
-//
-//            mdb::ResultSet rs = txn->query_in(txn->get_table(TPCC_TB_ORDER_LINE), mbl, mbh, mdb::ORD_ASC);
-//
-//            cell_locator_t cl(TPCC_TB_ORDER_LINE, 4);
-//            cl.primary_key[0] = input[2].get_blob();
-//            cl.primary_key[1] = input[1].get_blob();
-//            cl.primary_key[2] = input[0].get_blob();
-//
-//            while (rs.has_next()) {
-//                DepRow *r = (DepRow *)rs.next();
-//                cl.primary_key[3] = r->get_blob(3);
-//                cl.col_id = 6; // ol_delivery_d
-//                (*opset)[cl] = OP_W;
-//                cl.col_id = 8; // ol_amount
-//                (*opset)[cl] = OP_IR;
-//            }
-//
-//            });
-
     BEGIN_PIE(TPCC_DELIVERY,
             TPCC_DELIVERY_3, // W customer
             DF_REAL) {
@@ -2561,12 +2100,12 @@ void TpccPiece::reg_delivery() {
         mb[1] = input[2].get_blob();
         mb[2] = input[1].get_blob();
 
-        if (!IS_MODE_RCC || (IS_MODE_RCC && IN_PHASE_1)) { // non-rcc || rcc start request
+        if (!(IS_MODE_RCC || IS_MODE_RO6) || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { // non-rcc || rcc start request
             r = txn->query(txn->get_table(TPCC_TB_CUSTOMER), mb,
                 output_size, header.pid).next();
         }
 
-        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+        if (IS_MODE_2PL
             && output_size == NULL) {
             mdb::Txn2PL::PieceStatus *ps
                 = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -2588,7 +2127,7 @@ void TpccPiece::reg_delivery() {
 
         bool do_finish = true;
         if (row_map) { // deptran
-            if (IS_MODE_RCC && IN_PHASE_1) { // start req
+            if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { // start req
                 (*row_map)[TPCC_TB_CUSTOMER][mb] = r;
 
                 ((RCCDTxn*)dtxn)->kiss(r, 16, false);
@@ -2636,24 +2175,6 @@ void TpccPiece::reg_delivery() {
         }
     } END_PIE
 
-//    TxnRegistry::reg_lock_oracle(
-//            TPCC_DELIVERY,
-//            TPCC_DELIVERY_3,
-//            [] (const RequestHeader& header,
-//                const Value *input,
-//                rrr::i32 input_size,
-//                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
-//                ) {
-//            cell_locator_t cl(TPCC_TB_CUSTOMER, 3);
-//            cl.primary_key[0] = input[0].get_blob();
-//            cl.primary_key[1] = input[2].get_blob();
-//            cl.primary_key[2] = input[1].get_blob();
-//            cl.col_id = 16; // c_balance
-//            (*opset)[cl] = OP_W;
-//            cl.col_id = 19; // c_delivery_cnt
-//            (*opset)[cl] = OP_W;
-//            });
-
 }
 
 void TpccPiece::reg_stock_level() {
@@ -2674,7 +2195,7 @@ void TpccPiece::reg_stock_level() {
         mdb::Row *r = txn->query(txn->get_table(TPCC_TB_DISTRICT), mb,
             output_size, header.pid).next();
 
-        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+        if (IS_MODE_2PL
             && output_size == NULL) {
             mdb::Txn2PL::PieceStatus *ps
                 = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -2691,7 +2212,7 @@ void TpccPiece::reg_stock_level() {
             return;
         }
 
-        if (IS_MODE_RCC) {
+        if ((IS_MODE_RCC || IS_MODE_RO6)) {
             ((RCCDTxn*)dtxn)->kiss(r, 10, false);
         }
         if (!txn->read_column(r, 10, &buf)) {
@@ -2705,21 +2226,6 @@ void TpccPiece::reg_stock_level() {
         *output_size = output_index;
         *res = SUCCESS;
     } END_PIE
-
-//    TxnRegistry::reg_lock_oracle(
-//            TPCC_STOCK_LEVEL,
-//            TPCC_STOCK_LEVEL_0,
-//            [] (const RequestHeader& header,
-//                const Value *input,
-//                rrr::i32 input_size,
-//                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
-//                ) {
-//                cell_locator_t cl(TPCC_TB_DISTRICT, 2);
-//                cl.primary_key[0] = input[1].get_blob();
-//                cl.primary_key[1] = input[0].get_blob();
-//                cl.col_id = 10; // d_next_o_id
-//                (*opset)[cl] = OP_IR;
-//            });
 
     BEGIN_PIE(TPCC_STOCK_LEVEL,
             TPCC_STOCK_LEVEL_1, // Ri order_line
@@ -2758,7 +2264,7 @@ void TpccPiece::reg_stock_level() {
 
         verify(row_list.size() != 0);
 
-        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+        if (IS_MODE_2PL
             && output_size == NULL) {
             mdb::Txn2PL::PieceStatus *ps
                 = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -2808,16 +2314,6 @@ void TpccPiece::reg_stock_level() {
         *res = SUCCESS;
     } END_PIE
 
-    //    TxnRegistry::reg_lock_oracle(
-    //            TPCC_STOCK_LEVEL,
-    //            TPCC_STOCK_LEVEL_1,
-    //            [] (const RequestHeader& header,
-    //                const Value *input,
-    //                rrr::i32 input_size,
-    //                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
-    //                ) {
-    //            });
-
     BEGIN_PIE(TPCC_STOCK_LEVEL,
             TPCC_STOCK_LEVEL_2, // R stock
             DF_NO) {
@@ -2834,7 +2330,7 @@ void TpccPiece::reg_stock_level() {
         mdb::Row *r = txn->query(txn->get_table(TPCC_TB_STOCK), mb,
             output_size, header.pid).next();
 
-        if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL
+        if (IS_MODE_2PL
             && output_size == NULL) {
             mdb::Txn2PL::PieceStatus *ps
                 = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -2851,7 +2347,7 @@ void TpccPiece::reg_stock_level() {
             return;
         }
 
-        if (IS_MODE_RCC && IN_PHASE_1) {
+        if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) {
             ((RCCDTxn*)dtxn)->kiss(r, 2, false);
         }
 
@@ -2869,22 +2365,6 @@ void TpccPiece::reg_stock_level() {
         *output_size = output_index;
         *res = SUCCESS;
     } END_PIE
-
-//    TxnRegistry::reg_lock_oracle(
-//            TPCC_STOCK_LEVEL,
-//            TPCC_STOCK_LEVEL_2,
-//            [] (const RequestHeader& header,
-//                const Value *input,
-//                rrr::i32 input_size,
-//                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
-//                ) {
-//                cell_locator_t cl(TPCC_TB_STOCK, 2);
-//                cl.primary_key[0] = input[0].get_blob();
-//                cl.primary_key[1] = input[1].get_blob();
-//
-//                cl.col_id = 2; // s_quantity
-//                (*opset)[cl] = OP_IR;
-//            });
 
 }
 
