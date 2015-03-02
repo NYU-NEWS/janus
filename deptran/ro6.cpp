@@ -1,5 +1,3 @@
-#include <Automator/Automator.h>
-#include <AVFoundation/AVFoundation.h>
 #include "all.h"
 /*
  * RO-6: Define class members for RO6DTxn in dtxn.hpp
