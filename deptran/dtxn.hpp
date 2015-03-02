@@ -1,4 +1,6 @@
 #pragma once
+
+#include <algorithm>
 #include "all.h"
 
 namespace rococo {
@@ -365,7 +367,9 @@ public:
         return DepRow::create(schema, values);
     }
 
-    virtual void kiss(mdb::Row* r, int col, bool immediate) {
+    // de-virtual this function, since we are going to have different function signature anyway
+    // because we need to either pass in a reference or let it return a value -- list of rxn ids
+    void kiss(mdb::Row* r, int col, bool immediate) {
         entry_t* entry = ((DepRow *)r)->get_dep_entry(col);
 
         if (read_only_) {
@@ -374,7 +378,6 @@ public:
             entry->touch(tv_, immediate);
         }
     }
-
 };
 
 class RO6DTxn : public RCCDTxn {
@@ -384,14 +387,30 @@ public:
     RO6DTxn(i64 tid, DTxnMgr* mgr, bool ro): RCCDTxn(tid, mgr, ro) {
     }
 
-    void start(
-            const RequestHeader &header,
-            const std::vector<mdb::Value> &input,
-            bool *deferred,
-            std::vector<mdb::Value> *output
-    );
+    // Implementing create method
+    mdb::Row* create(const mdb::Schema* schema, const std::vector<mdb::Value>& values) {
+        return mdb::MultiVersionedRow::create(schema, values);
+    }
 
-    // TODO for haonan, implement the create and kiss.
+    // Implementing kiss method
+    // This will be called in a txn's start phase
+    // TODO: make sure it's not called by a read-only-transaction's start phase
+    std::vector<i64> kiss(mdb::Row* r, int col, bool immediate) {
+        entry_t* entry = ((DepRow *)r)->get_dep_entry(col);
+        std::vector<i64> txnIds;
+        if (!read_only_) {
+            // We only query cell's rxn table for non-read txns
+            mdb::MultiVersionedRow* theRow = (mdb::MultiVersionedRow*) r;
+            txnIds = theRow->rtxn_tracker.getReadTxnIds(col);
+            // this is what's in original kiss function
+            entry->ro_touch(&conflict_txns_);
+        } else {
+            // do what original kiss function does
+            entry->touch(tv_, immediate);
+        }
+        // return this vector of read txn ids
+        return txnIds;
+    }
 };
 
 class TPL {

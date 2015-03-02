@@ -6,6 +6,10 @@
  * corresponding method
  */
 namespace rococo {
+
+    /*
+     * Pseudo code here
+     *
     // start phase only used for write txns
     void RO6DTxn::start(
             const RequestHeader &header,
@@ -64,4 +68,6 @@ namespace rococo {
         3. for all those columns, update their rtxnIdTracker
         4. proceeds as orginal rococo
     }
+
+    */
 }
