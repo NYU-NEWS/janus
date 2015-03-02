@@ -22,13 +22,6 @@ struct entry_t {
     entry_t(const entry_t &o) {
         last_ = o.last_;
     }
-
-    void touch(Vertex<TxnInfo> *tv, bool immediate);
-
-    void ro_touch(std::vector<TxnInfo *> *conflict_txns) {
-        if (last_)
-            conflict_txns->push_back(&last_->data_);
-    }
 };
 
 class MultiValue {
@@ -367,15 +360,23 @@ public:
         return DepRow::create(schema, values);
     }
 
+    // ??? TODO (Shuai) I do not understand why de-virtual, is it because the return type thing?
     // de-virtual this function, since we are going to have different function signature anyway
     // because we need to either pass in a reference or let it return a value -- list of rxn ids
     void kiss(mdb::Row* r, int col, bool immediate) {
         entry_t* entry = ((DepRow *)r)->get_dep_entry(col);
 
         if (read_only_) {
-            entry->ro_touch(&conflict_txns_);
+            if (entry->last_)
+                conflict_txns_.push_back(&entry->last_->data_);
         } else {
-            entry->touch(tv_, immediate);
+            int8_t edge_type = immediate ? EDGE_I : EDGE_D;
+            if (entry->last_ != NULL) {
+                entry->last_->to_[tv_] |= edge_type;
+                tv_->from_[entry->last_] |= edge_type;
+            } else {
+                entry->last_ = tv_;
+            }
         }
     }
 };
@@ -396,17 +397,18 @@ public:
     // This will be called in a txn's start phase
     // TODO: make sure it's not called by a read-only-transaction's start phase
     std::vector<i64> kiss(mdb::Row* r, int col, bool immediate) {
-        entry_t* entry = ((DepRow *)r)->get_dep_entry(col);
+        entry_t* entry = ((DepRow *)r)->get_dep_entry(col); // FIXME this is not right. fix later.
+
         std::vector<i64> txnIds;
         if (!read_only_) {
             // We only query cell's rxn table for non-read txns
             mdb::MultiVersionedRow* theRow = (mdb::MultiVersionedRow*) r;
             txnIds = theRow->rtxn_tracker.getReadTxnIds(col);
             // this is what's in original kiss function
-            entry->ro_touch(&conflict_txns_);
+//            entry->ro_touch(&conflict_txns_);
         } else {
             // do what original kiss function does
-            entry->touch(tv_, immediate);
+//            entry->touch(tv_, immediate);
         }
         // return this vector of read txn ids
         return txnIds;

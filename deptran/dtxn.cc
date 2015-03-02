@@ -2,15 +2,15 @@
 
 namespace rococo {
 
-void entry_t::touch(Vertex<TxnInfo> *tv, bool immediate ) {
-    int8_t edge_type = immediate ? EDGE_I : EDGE_D;
-    if (last_ != NULL) {
-        last_->to_[tv] |= edge_type;
-        tv->from_[last_] |= edge_type;
-    } else {
-        last_ = tv;
-    }
-}
+//void entry_t::touch(Vertex<TxnInfo> *tv, bool immediate ) {
+//    int8_t edge_type = immediate ? EDGE_I : EDGE_D;
+//    if (last_ != NULL) {
+//        last_->to_[tv] |= edge_type;
+//        tv->from_[last_] |= edge_type;
+//    } else {
+//        last_ = tv;
+//    }
+//}
 
 int MultiValue::compare(const MultiValue& mv) const {
     int i = 0;
