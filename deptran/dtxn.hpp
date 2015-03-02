@@ -302,6 +302,7 @@ public:
     }
 
     virtual mdb::Row* create(const mdb::Schema* schema, const std::vector<mdb::Value> &values) = 0;
+
 };
 
 
@@ -322,8 +323,10 @@ public:
 
     std::vector<TxnInfo*> conflict_txns_; // This is read-only transaction
 
-    RCCDTxn(i64 tid, DTxnMgr* mgr) : DTxn(tid, mgr) {
+    bool read_only_;
 
+    RCCDTxn(i64 tid, DTxnMgr* mgr, bool ro) : DTxn(tid, mgr) {
+        read_only_ = ro;
     }
 
     void start(
@@ -361,13 +364,23 @@ public:
     virtual mdb::Row* create(const mdb::Schema* schema, const std::vector<mdb::Value>& values) {
         return DepRow::create(schema, values);
     }
+
+    virtual void kiss(mdb::Row*, int col, bool immediate, void* data) {
+        entry_t* entry = (entry_t *)data;
+        if (read_only_) {
+            entry->ro_touch(&conflict_txns_);
+        } else {
+            entry->touch(tv_, immediate);
+        }
+    }
+
 };
 
 class RO6DTxn : public RCCDTxn {
 private:
     i64 txnId = tid_;
 public:
-    RO6DTxn(i64 tid, DTxnMgr* mgr): RCCDTxn(tid, mgr) {
+    RO6DTxn(i64 tid, DTxnMgr* mgr, bool ro): RCCDTxn(tid, mgr, ro) {
     }
 
     void start(
@@ -377,7 +390,7 @@ public:
             std::vector<mdb::Value> *output
     );
 
-
+    // TODO for haonan, implement the create and kiss.
 };
 
 class TPL {
@@ -441,14 +454,14 @@ public:
 
     ~DTxnMgr();
 
-    DTxn* create(i64 tid) {
+    DTxn* create(i64 tid, bool ro=false) {
         DTxn* ret = nullptr;
         switch (mode_) {
             case MODE_RCC:
-                ret = new RCCDTxn(tid, this);
+                ret = new RCCDTxn(tid, this, ro);
                 break;
             case MODE_ROT:
-                ret = new RO6DTxn(tid, this);
+                ret = new RO6DTxn(tid, this, ro);
                 break;
             default:
                 verify(0);
