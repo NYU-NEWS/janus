@@ -24,8 +24,12 @@ namespace rococo {
 //
 //
 
-int TPL::do_prepare(i64 txn_id) {
-    auto txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(txn_id);
+TPLDTxn::TPLDTxn(i64 tid, DTxnMgr* mgr) : DTxn(tid, mgr) {
+    mdb_txn_ = mgr->get_mdb_txn(tid_);
+}
+
+int TPLDTxn::prepare() {
+    auto txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(tid_);
     verify(txn != NULL);
     switch (DTxnMgr::get_sole_mgr()->get_mode()) {
         case MODE_OCC:
@@ -42,34 +46,32 @@ int TPL::do_prepare(i64 txn_id) {
             verify(0);
     }
 }
-int TPL::do_abort(i64 txn_id) {
-    auto txn = DTxnMgr::get_sole_mgr()->del_mdb_txn(txn_id);
-    verify(txn != NULL);
-    txn->abort();
-    delete txn;
+int TPLDTxn::abort() {
+    verify(mdb_txn_ != NULL);
+    mdb_txn_->abort();
+    delete mdb_txn_;
     return SUCCESS;
 }
 
 
-int TPL::do_commit(i64 txn_id) {
-    auto txn = DTxnMgr::get_sole_mgr()->del_mdb_txn(txn_id);
-    verify(txn != NULL);
-    switch (DTxnMgr::get_sole_mgr()->get_mode()) {
+int TPLDTxn::commit() {
+    verify(mdb_txn_ != NULL);
+    switch (mgr_->get_mode()) {
         case MODE_OCC:
-            ((mdb::TxnOCC *)txn)->commit_confirm();
+            ((mdb::TxnOCC *)mdb_txn_)->commit_confirm();
             break;
             //case MODE_DEPTRAN:
         case MODE_2PL:
-            txn->commit();
+            mdb_txn_->commit();
             break;
         default:
             verify(0);
     }
-    delete txn;
+    delete mdb_txn_;
     return SUCCESS;
 }
 
-std::function<void(void)> TPL::get_2pl_succ_callback(
+std::function<void(void)> TPLDTxn::get_2pl_succ_callback(
         const RequestHeader &header,
         const mdb::Value *input,
         rrr::i32 input_size,
@@ -120,7 +122,7 @@ std::function<void(void)> TPL::get_2pl_succ_callback(
     };
 }
 
-std::function<void(void)> TPL::get_2pl_proceed_callback(
+std::function<void(void)> TPLDTxn::get_2pl_proceed_callback(
         const RequestHeader &header,
         const mdb::Value *input,
         rrr::i32 input_size,
@@ -164,7 +166,7 @@ std::function<void(void)> TPL::get_2pl_proceed_callback(
     };
 }
 
-std::function<void(void)> TPL::get_2pl_fail_callback(
+std::function<void(void)> TPLDTxn::get_2pl_fail_callback(
         const RequestHeader &header,
         rrr::i32 *res,
         mdb::Txn2PL::PieceStatus *ps) {
@@ -187,7 +189,7 @@ std::function<void(void)> TPL::get_2pl_fail_callback(
     };
 }
 
-std::function<void(void)> TPL::get_2pl_succ_callback(
+std::function<void(void)> TPLDTxn::get_2pl_succ_callback(
         const RequestHeader &header,
         const mdb::Value *input,
         rrr::i32 input_size,

@@ -284,8 +284,6 @@ private:
 };
 
 
-
-
 class DTxnMgr;
 
 class DTxn {
@@ -304,6 +302,7 @@ public:
 
     virtual ~DTxn() {}
 };
+
 
 
 
@@ -443,13 +442,17 @@ public:
     }
 };
 
-class TPL {
+class TPLDTxn : public DTxn {
 public:
-    static int do_prepare(i64 txn_id);
+    mdb::Txn* mdb_txn_;
 
-    static int do_commit(i64 txn_id);
+    TPLDTxn(i64 tid, DTxnMgr* mgr);
 
-    static int do_abort(i64 txn_id);
+    int prepare();
+
+    int commit();
+
+    int abort();
 
     static std::function<void(void)> get_2pl_proceed_callback(
             const RequestHeader &header,
@@ -486,9 +489,9 @@ public:
     );
 };
 
-class OCC : public TPL {
-
-};
+//class OCC : public TPLDTxn {
+//
+//};
 
 
 // TODO: seems that this class is both in charge of of the Txn playground and the 2PL/OCC controller.

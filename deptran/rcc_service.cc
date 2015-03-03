@@ -33,7 +33,7 @@ void RococoServiceImpl::do_start_pie(
         i32 *output_size) {
 
     *res = SUCCESS;
-    if (txn_mgr_->get_mode() == MODE_2PL) {
+    if (IS_MODE_2PL) {
         txn_mgr_->execute(header, input, input_size,
 			     res, output, output_size);
     }
@@ -41,7 +41,7 @@ void RococoServiceImpl::do_start_pie(
         txn_mgr_->execute(header, input, input_size,
 			     res, output, output_size);
     }
-    else if (txn_mgr_->get_mode() == MODE_OCC) {
+    else if (IS_MODE_OCC) {
         txn_mgr_->execute(header, input, input_size,
 			     res, output, output_size);
     }
@@ -99,7 +99,7 @@ void RococoServiceImpl::naive_batch_start_pie(
     
     
     DragonBall *defer_reply_db = NULL;
-    if (txn_mgr_->get_mode() == MODE_2PL) {
+    if (IS_MODE_2PL) {
         defer_reply_db = new DragonBall(headers.size(), [/*&headers, */defer/*, results*/]() {
                 //for (int i = 0; i < results->size(); i++) {
                 //    Log::debug("tid: %ld, pid: %ld, results[%d]: %d", headers[i].tid, headers[i].pid, i, (*results)[i]);
@@ -151,7 +151,9 @@ void RococoServiceImpl::start_pie(
     output->resize(output_size);
     // find stored procedure, and run it
     *res = SUCCESS;
-    if (txn_mgr_->get_mode() == MODE_2PL) {
+    if (IS_MODE_2PL) {
+
+        txn_mgr_->get_or_create(header.tid);
         DragonBall *defer_reply_db = new DragonBall(1, [defer]() {
                 defer->reply();
                 });
@@ -161,7 +163,7 @@ void RococoServiceImpl::start_pie(
         txn_mgr_->execute(header, input, res, output);
         defer->reply();
     }
-    else if (txn_mgr_->get_mode() == MODE_OCC) {
+    else if (IS_MODE_OCC) {
         txn_mgr_->execute(header, input, res, output);
         defer->reply();
     }
@@ -206,7 +208,8 @@ void RococoServiceImpl::prepare_txn_job(
     if (log_s)
         txn_mgr_->get_prepare_log(tid, sids, log_s);
 
-    *res = TPL::do_prepare(tid);
+    auto dtxn = (TPLDTxn*)txn_mgr_->get(tid);
+    *res = dtxn->prepare();
 
 #ifdef PIECE_COUNT
     std::map<piece_count_key_t, uint64_t>::iterator pc_it;
@@ -234,7 +237,11 @@ void RococoServiceImpl::commit_txn(
         rrr::DeferredReply* defer) {
 
     std::lock_guard<std::mutex> guard(mtx_);
-    *res = TPL::do_commit(tid);
+    auto dtxn = (TPLDTxn*)txn_mgr_->get(tid);
+    verify(dtxn != NULL);
+    *res = dtxn->commit();
+    txn_mgr_->destroy(tid);
+
     if (Config::get_config()->do_logging()) {
         const char commit_tag = 'c';
         std::string log_s;
@@ -261,7 +268,11 @@ void RococoServiceImpl::abort_txn(
     //else {
     //    TxnRunner::do_abort(tid, defer);
     //}
-    *res = TPL::do_abort(tid);
+    auto dtxn = (TPLDTxn*) txn_mgr_->get(tid);
+    verify(dtxn != NULL);
+    *res = dtxn->abort();
+    txn_mgr_->destroy(tid);
+
     if (Config::get_config()->do_logging()) {
         const char abort_tag = 'a';
         std::string log_s;
