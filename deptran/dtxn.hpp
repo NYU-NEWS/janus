@@ -296,7 +296,7 @@ public:
 
     DTxn() = delete;
 
-    DTxn(i64 tid, DTxnMgr* mgr) : tid_(tid), mgr_(mgr) {
+    DTxn(i64 tid, DTxnMgr* mgr) : tid_(tid), mgr_(mgr), phase_(0) {
 
     }
 
