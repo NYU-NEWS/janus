@@ -100,7 +100,7 @@ public:
 public:
 
 
-    RococoServiceImpl(ServerControlServiceImpl *scsi = NULL);
+    RococoServiceImpl(DTxnMgr *dtxn_mgr, ServerControlServiceImpl *scsi = NULL);
 
     void rcc_batch_start_pie(
             const std::vector<RequestHeader> &headers,

@@ -617,6 +617,7 @@ public:
     static DTxnMgr* txn_mgr_s;
 
     static DTxnMgr* get_sole_mgr() {
+        verify(txn_mgr_s != NULL);
         return txn_mgr_s;
     }
 

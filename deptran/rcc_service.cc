@@ -3,8 +3,10 @@
 namespace rococo {
 
 
-RococoServiceImpl::RococoServiceImpl(ServerControlServiceImpl *scsi) : 
-    scsi_(scsi) {
+RococoServiceImpl::RococoServiceImpl(
+        DTxnMgr *dtxn_mgr,
+        ServerControlServiceImpl *scsi
+) : scsi_(scsi), txn_mgr_(dtxn_mgr) {
 
 #ifdef PIECE_COUNT
     piece_count_timer_.start();

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-APPNAME="deptran"
+APPNAME="rococo"
 VERSION="0.0"
 
 import os

@@ -26,7 +26,7 @@ void RCCDTxn::start(
     Vertex<TxnInfo> *tv = NULL;
     RCCDTxn::dep_s->start_pie(pi, &pv, &tv);
     tv_ = tv;
-    verify(phase_ == 0);
+    verify(phase_ <= 1);
     phase_ = 1;
 
     // execute the IR actions.
@@ -296,6 +296,9 @@ void RCCDTxn::send_ask_req(Vertex<TxnInfo>* av) {
 void RCCDTxn::exe_deferred(
         std::vector<std::pair<RequestHeader, std::vector<mdb::Value> > >
         &outputs) {
+
+    verify(phase_ == 1);
+    phase_ = 2;
     if (dreqs_.size() == 0) {
         // this tid does not need deferred execution.
         //verify(0);
@@ -312,8 +315,7 @@ void RCCDTxn::exe_deferred(
             int output_size = 300;
             output.resize(output_size);
             int res;
-            verify(phase_ == 1);
-            phase_ = 2;
+
             txn_handler_pair.txn_handler(this, header, input.data(), input.size(),
                     &res, output.data(), &output_size, &req.row_map);
             if (header.p_type == TPCC_PAYMENT_4

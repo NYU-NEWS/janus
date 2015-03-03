@@ -35,7 +35,7 @@ namespace rococo {
 #define MODE_RPC_NULL   (64)
 
     // deprecated.
-#define MODE_DEPTRAN (3)
+#define MODE_DEPTRAN (4)
 
 #define OP_IR   (0x1)
 #define OP_DR   (0x2)

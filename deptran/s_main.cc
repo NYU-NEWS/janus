@@ -82,6 +82,7 @@ int main(int argc, char *argv[]) {
     bool hb = Config::get_config()->do_heart_beat();
 
     if (hb) {
+        // heartbeat controller.
         run_scsi();
     }
 
@@ -100,9 +101,9 @@ int main(int argc, char *argv[]) {
     if (0 != (ret = Config::get_config()->get_my_addr(bind_addr))) {
         return ret;
     }
-
+    
     // init service implement
-    auto *rococo_service = new RococoServiceImpl(scsi);
+    auto *rococo_service = new RococoServiceImpl(mgr, scsi);
 
     // init rrr::PollMgr 1 threads
     int n_io_threads = 1;

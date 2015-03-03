@@ -359,7 +359,7 @@ class ClientController(object):
                 + " 1>\"" + self.log_dir + "/client-" + str(i) + ".log\"" \
                 + " 2>\"" + self.log_dir + "/client-" + str(i) + ".err\"" \
                 + " &"
-            #print cmd
+            print cmd
             subprocess.call(['ssh', '-n', '-f', self.c_info[i][0], cmd])
             i += 1
 
@@ -800,7 +800,7 @@ class ServerController(object):
                 + " 1>\"" + self.log_dir + "/site-" + str(i) + ".log\"" \
                 + " 2>\"" + self.log_dir + "/site-" + str(i) + ".err\"" \
                 + " &"
-            #print cmd
+            print cmd
             subprocess.call(['ssh', '-n', '-f', self.s_info[i][0], cmd])
             i += 1
 

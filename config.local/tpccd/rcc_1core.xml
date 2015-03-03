@@ -3,8 +3,8 @@
     <hosts number="1">
         <site id="0" threads="1">localhost:18000</site>
     </hosts>
-    <clients number="8">
-        <client id="0-7" threads="1">localhost</client>
+    <clients number="1">
+        <client id="0" threads="1">localhost</client>
     </clients>
     <table name="warehouse" all_site="true" shard_method="int_modulus" records="1">
         <schema>

@@ -183,7 +183,7 @@ DTxnMgr::DTxnMgr(int mode) {
         case MODE_OCC:
             mdb_txn_mgr_ = new mdb::TxnMgrOCC();
             break;
-        case MODE_DEPTRAN:
+        case MODE_RCC:
             mdb_txn_mgr_ = new mdb::TxnMgrUnsafe(); //XXX is it OK to use unsafe for deptran
             break;
         default:
