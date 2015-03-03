@@ -329,11 +329,11 @@ public:
         read_only_ = ro;
     }
 
-    void start(
+    virtual void start(
             const RequestHeader &header,
             const std::vector<mdb::Value> &input,
             bool *deferred,
-            std::vector<mdb::Value> *output
+            ChopStartResponse *res
     );
 
     void start_ro(
@@ -342,7 +342,7 @@ public:
             std::vector<mdb::Value> &output
     );
 
-    void commit(
+    virtual void commit(
             const ChopFinishRequest &req,
             ChopFinishResponse* res,
             rrr::DeferredReply* defer
@@ -398,11 +398,34 @@ public:
         return mdb::MultiVersionedRow::create(schema, values);
     }
 
+
+    virtual void start(
+            const RequestHeader &header,
+            const std::vector<mdb::Value> &input,
+            bool *deferred,
+            ChopStartResponse *res
+    ) {
+        RCCDTxn::start(header, input, deferred, res);
+        // TODO for haonan, return the read-only list here.
+        res->ro_list.push_back(1);
+    }
+
+    virtual void commit(
+            const ChopFinishRequest &req,
+            ChopFinishResponse* res,
+            rrr::DeferredReply* defer
+    ) {
+        RCCDTxn::commit(req, res, defer);
+        // TODO for haohan, handle the read-only list here.
+        const std::vector<i64> &ro_list = req.ro_list;
+    }
+
     // Implementing kiss method
     // This will be called in a txn's start phase
-    // TODO: make sure it's not called by a read-only-transaction's start phase
+    // TODO: make sure it's not called by a read-only-transaction's start phase,
+    // shuai: why is that?
     std::vector<i64> kiss(mdb::Row* r, int col, bool immediate) {
-        entry_t* entry = ((DepRow *)r)->get_dep_entry(col); // FIXME this is not right. fix later.
+        //entry_t* entry = ((DepRow *)r)->get_dep_entry(col); // FIXME this is not right. fix later.
 
         std::vector<i64> txnIds;
         if (!read_only_) {
@@ -487,7 +510,7 @@ public:
             case MODE_RCC:
                 ret = new RCCDTxn(tid, this, ro);
                 break;
-            case MODE_ROT:
+            case MODE_RO6:
                 ret = new RO6DTxn(tid, this, ro);
                 break;
             default:

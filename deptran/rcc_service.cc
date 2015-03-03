@@ -279,7 +279,7 @@ void RococoServiceImpl::rcc_batch_start_pie(
         BatchChopStartResponse* res,
         rrr::DeferredReply* defer) {
 
-    verify(txn_mgr_->get_mode() & (MODE_RCC | MODE_ROT));
+    verify(IS_MODE_RCC || IS_MODE_RO6);
     auto txn = (RCCDTxn*) txn_mgr_->get_or_create(headers[0].tid);
 
     res->is_defers.resize(headers.size());
@@ -300,7 +300,7 @@ void RococoServiceImpl::rcc_batch_start_pie(
             //    Log::debug("receive start request. txn_id: %llx, pie_id: %llx", header.tid, header.pid);
 
             bool deferred;
-            txn->start(header, input, &deferred, &output);
+//            txn->start(header, input, &deferred, &output); FIXME this is missing !!!
             res->is_defers[i] = deferred ? 1 : 0;
 
         }
@@ -326,15 +326,13 @@ void RococoServiceImpl::rcc_start_pie(
         ChopStartResponse* res,
         rrr::DeferredReply* defer) {
 //    Log::debug("receive start request. txn_id: %llx, pie_id: %llx", header.tid, header.pid);
-    verify(txn_mgr_->get_mode() & (MODE_RCC | MODE_ROT));
-    auto txn = (RCCDTxn*) txn_mgr_->get_or_create(header.tid);
+    verify(IS_MODE_RCC || IS_MODE_RO6);
 
-    static bool do_record = Config::get_config()->do_logging();
-
-    auto job = [&header, &input, res, defer, this, txn] () {
+    auto job = [&header, &input, res, defer, this] () {
         std::lock_guard<std::mutex> guard(this->mtx_);
+        auto txn = (RCCDTxn*) txn_mgr_->get_or_create(header.tid);
         bool deferred;
-        txn->start(header, input, &deferred, &res->output);
+        txn->start(header, input, &deferred, res);
 
         res->is_defered = deferred ? 1 : 0;
         auto sz_sub_gra = RCCDTxn::dep_s->sub_txn_graph(header.tid, res->gra_m);
@@ -344,6 +342,7 @@ void RococoServiceImpl::rcc_start_pie(
 //    Log::debug("reply to start request. txn_id: %llx, pie_id: %llx, graph size: %d", header.tid, header.pid, (int)res->gra.size());
     };
 
+    static bool do_record = Config::get_config()->do_logging();
     if (do_record) {
         Marshal m;
         m << header;
@@ -362,7 +361,7 @@ void RococoServiceImpl::rcc_finish_txn( // equivalent to commit phrase
 
     //Log::debug("receive finish request. txn_id: %llx, graph size: %d", req.txn_id, req.gra.size());
 
-    verify(txn_mgr_->get_mode() & (MODE_RCC | MODE_ROT));
+    verify(IS_MODE_RCC || IS_MODE_RO6);
     verify(req.gra.size() > 0);
     stat_sz_gra_commit_.sample(req.gra.size());
 

@@ -8,11 +8,14 @@ void RCCDTxn::start(
         const RequestHeader &header,
         const std::vector<mdb::Value> &input,
         bool *deferred,
-        std::vector<mdb::Value> *output) {
+        ChopStartResponse *res ) {
+
     PieInfo pi;
     pi.pie_id_ = header.pid;
     pi.txn_id_ = header.tid;
     pi.type_ = header.p_type;
+
+    std::vector<mdb::Value> *output = &res->output;
 
     //std::unordered_map<cell_locator_t, int,
     //                   cell_locator_t_hash> opset; //OP_W, OP_DR, OP_IR
