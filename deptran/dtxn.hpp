@@ -365,6 +365,8 @@ public:
     }
 
     // ??? TODO (Shuai) I do not understand why de-virtual, is it because the return type thing?
+    // TODO (Haonan.reply) Yes, that's my understanding... If this function has different prototype from
+    // TODO its parent class's function. Can they be virtual functions?
     // de-virtual this function, since we are going to have different function signature anyway
     // because we need to either pass in a reference or let it return a value -- list of rxn ids
     void kiss(mdb::Row* r, int col, bool immediate) {
@@ -406,9 +408,14 @@ public:
     ) {
         RCCDTxn::start(header, input, deferred, res);
         // TODO for haonan, return the read-only list here.
+        // TODO: question: isn't this the start phase for write transactions? If so, isn' it going to
+        // call kiss function? Then kiss will get the ro list. If this is the start phase for read-only
+        // transactions, then read-nnly transaction's start phase doesn't return ro_list. Instead, it waits
+        // for conflicting write txns to commit, then commits itself.
         res->ro_list.push_back(1);
     }
-
+    // TODO (for Shuai) One question: is the start function above and this commit function only for read-only
+    // txns, or for write txns, or for both?
     virtual void commit(
             const ChopFinishRequest &req,
             ChopFinishResponse* res,
@@ -422,7 +429,8 @@ public:
     // Implementing kiss method
     // This will be called in a txn's start phase
     // TODO: make sure it's not called by a read-only-transaction's start phase,
-    // shuai: why is that?
+    // shuai: why is that? (Haonan.reply) kiss is only called in start phase? Then, read-only and
+    // general txns have different things to do in start phase.
     std::vector<i64> kiss(mdb::Row* r, int col, bool immediate) {
         //entry_t* entry = ((DepRow *)r)->get_dep_entry(col); // FIXME this is not right. fix later.
 
