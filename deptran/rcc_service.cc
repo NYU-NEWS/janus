@@ -32,17 +32,18 @@ void RococoServiceImpl::do_start_pie(
         Value *output,
         i32 *output_size) {
 
+    auto dtxn = (TPLDTxn*) txn_mgr_->get_or_create(header.tid);
     *res = SUCCESS;
     if (IS_MODE_2PL) {
-        txn_mgr_->execute(header, input, input_size,
+        dtxn->execute(header, input, input_size,
 			     res, output, output_size);
     }
     else if (txn_mgr_->get_mode() == MODE_NONE) {
-        txn_mgr_->execute(header, input, input_size,
+        dtxn->execute(header, input, input_size,
 			     res, output, output_size);
     }
     else if (IS_MODE_OCC) {
-        txn_mgr_->execute(header, input, input_size,
+        dtxn->execute(header, input, input_size,
 			     res, output, output_size);
     }
     else {
@@ -95,9 +96,9 @@ void RococoServiceImpl::naive_batch_start_pie(
         std::vector<vector<Value>> *outputs,
         rrr::DeferredReply *defer) {
     std::lock_guard<std::mutex> guard(mtx_);
-    
+
     verify(0);
-    
+
     DragonBall *defer_reply_db = NULL;
     if (IS_MODE_2PL) {
         defer_reply_db = new DragonBall(headers.size(), [/*&headers, */defer/*, results*/]() {
@@ -113,13 +114,15 @@ void RococoServiceImpl::naive_batch_start_pie(
     int num_pieces = headers.size();
     for (int i = 0; i < num_pieces; i++) {
         (*outputs)[i].resize(output_sizes[i]);
+        auto dtxn = (TPLDTxn *) txn_mgr_->get_or_create(headers[i].tid);
         if (defer_reply_db) {
-            txn_mgr_->pre_execute_2pl(headers[i], inputs[i],
-                     &((*results)[i]), &((*outputs)[i]), defer_reply_db);
+            dtxn->pre_execute_2pl(headers[i], inputs[i],
+                    &((*results)[i]), &((*outputs)[i]), defer_reply_db);
         }
-        else
-            txn_mgr_->execute(headers[i], inputs[i],
-                     &(*results)[i], &(*outputs)[i]);
+        else {
+            dtxn->execute(headers[i], inputs[i],
+                    &(*results)[i], &(*outputs)[i]);
+        }
     }
     if (!defer_reply_db)
         defer->reply();
@@ -133,12 +136,13 @@ void RococoServiceImpl::start_pie(
         rrr::i32* res,
         std::vector<mdb::Value>* output,
         rrr::DeferredReply* defer) {
+
     std::lock_guard<std::mutex> guard(mtx_);
 
 #ifdef PIECE_COUNT
-    piece_count_key_t piece_count_key = 
+    piece_count_key_t piece_count_key =
         (piece_count_key_t){header.t_type, header.p_type};
-    std::map<piece_count_key_t, uint64_t>::iterator pc_it = 
+    std::map<piece_count_key_t, uint64_t>::iterator pc_it =
         piece_count_.find(piece_count_key);
 
     if (pc_it == piece_count_.end())
@@ -152,19 +156,19 @@ void RococoServiceImpl::start_pie(
     // find stored procedure, and run it
     *res = SUCCESS;
 
-    txn_mgr_->get_or_create(header.tid);
+    auto dtxn = (TPLDTxn*)txn_mgr_->get_or_create(header.tid);
     if (IS_MODE_2PL) {
         DragonBall *defer_reply_db = new DragonBall(1, [defer]() {
                 defer->reply();
                 });
-        txn_mgr_->pre_execute_2pl(header, input, res, output, defer_reply_db);
+        dtxn->pre_execute_2pl(header, input, res, output, defer_reply_db);
 
     } else if (txn_mgr_->get_mode() == MODE_NONE) {
-        txn_mgr_->execute(header, input, res, output);
+        dtxn->execute(header, input, res, output);
         defer->reply();
 
     } else if (IS_MODE_OCC) {
-        txn_mgr_->execute(header, input, res, output);
+        dtxn->execute(header, input, res, output);
         defer->reply();
 
     } else {

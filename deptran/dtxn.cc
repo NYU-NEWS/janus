@@ -33,50 +33,6 @@ map<std::pair<base::i32, base::i32>,
 //map<std::pair<base::i32, base::i32>, TxnRegistry::LockSetOracle> TxnRegistry::lck_oracle_;
 
 
-void DTxnMgr::pre_execute_2pl(const RequestHeader& header,
-                           const std::vector<mdb::Value>& input,
-                           rrr::i32* res,
-                           std::vector<mdb::Value>* output,
-                           DragonBall *db) {
-
-    mdb::Txn2PL *txn = (mdb::Txn2PL *)get_mdb_txn(header);
-    if (txn->is_wound()) {
-        output->resize(0);
-        *res = REJECT;
-        db->trigger();
-        return;
-    }
-    txn->init_piece(header.tid, header.pid, db, output);
-
-    Log::debug("start reg lock");
-    TxnRegistry::get(header).txn_handler(nullptr, header, input.data(), input.size(),
-            res, NULL/*output*/, NULL/*output_size*/,
-            NULL);
-}
-
-void DTxnMgr::pre_execute_2pl(const RequestHeader& header,
-                           const Value *input,
-                           rrr::i32 input_size,
-                           rrr::i32* res,
-                           mdb::Value* output,
-                           rrr::i32* output_size,
-                           DragonBall *db) {
-
-    mdb::Txn2PL *txn = (mdb::Txn2PL *)get_mdb_txn(header);
-    txn->init_piece(header.tid, header.pid, db, output, output_size);
-    if (txn->is_wound()) {
-        *output_size = 0;
-        *res = REJECT;
-        db->trigger();
-        return;
-    }
-    TxnRegistry::get(header).txn_handler(nullptr, header, input, input_size,
-            res, NULL/*output*/, NULL/*output_size*/,
-            NULL);
-}
-
-
-
 mdb::Txn *DTxnMgr::del_mdb_txn(const i64 tid) {
     mdb::Txn *txn = NULL;
     std::map<i64, mdb::Txn *>::iterator it = mdb_txns_.find(tid);
@@ -377,4 +333,4 @@ void DTxnMgr::reg_table(const std::string &name,
 //    }
 //}
 
-} // namespace deptran
+} // namespace rococo

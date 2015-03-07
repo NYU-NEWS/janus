@@ -367,24 +367,10 @@ public:
     // ??? TODO (Shuai) I do not understand why de-virtual, is it because the return type thing?
     // TODO (Haonan.reply) Yes, that's my understanding... If this function has different prototype from
     // TODO its parent class's function. Can they be virtual functions?
+    // TODO (Shuai.reply) I think no.
     // de-virtual this function, since we are going to have different function signature anyway
     // because we need to either pass in a reference or let it return a value -- list of rxn ids
-    void kiss(mdb::Row* r, int col, bool immediate) {
-        entry_t* entry = ((DepRow *)r)->get_dep_entry(col);
-
-        if (read_only_) {
-            if (entry->last_)
-                conflict_txns_.push_back(&entry->last_->data_);
-        } else {
-            int8_t edge_type = immediate ? EDGE_I : EDGE_D;
-            if (entry->last_ != NULL) {
-                entry->last_->to_[tv_] |= edge_type;
-                tv_->from_[entry->last_] |= edge_type;
-            } else {
-                entry->last_ = tv_;
-            }
-        }
-    }
+    void kiss(mdb::Row* r, int col, bool immediate);
 };
 
 class RO6DTxn : public RCCDTxn {
@@ -502,6 +488,52 @@ public:
             rrr::i32 *res,
             mdb::Txn2PL::PieceStatus *ps
     );
+
+    // Below are merged from TxnRegistry.
+    void pre_execute_2pl(
+            const RequestHeader& header,
+            const std::vector<mdb::Value>& input,
+            rrr::i32* res,
+            std::vector<mdb::Value>* output,
+            DragonBall *db
+    );
+
+
+    void pre_execute_2pl(
+            const RequestHeader& header,
+            const Value *input,
+            rrr::i32 input_size,
+            rrr::i32* res,
+            mdb::Value* output,
+            rrr::i32* output_size,
+            DragonBall *db
+    );
+
+    void execute(
+            const RequestHeader& header,
+            const std::vector<mdb::Value>& input,
+            rrr::i32* res,
+            std::vector<mdb::Value>* output
+    ) {
+        rrr::i32 output_size = output->size();
+        TxnRegistry::get(header).txn_handler(nullptr, header, input.data(), input.size(),
+                res, output->data(), &output_size,
+                NULL);
+        output->resize(output_size);
+    }
+
+    inline void execute(
+            const RequestHeader& header,
+            const Value *input,
+            rrr::i32 input_size,
+            rrr::i32* res,
+            mdb::Value* output,
+            rrr::i32* output_size
+    ) {
+        TxnRegistry::get(header).txn_handler(nullptr, header, input, input_size,
+                res, output, output_size,
+                NULL);
+    }
 };
 
 //class OCC : public TPLDTxn {
@@ -595,42 +627,8 @@ public:
     );
 
 
-    // Below are merged from TxnRegistry.
-    void pre_execute_2pl(const RequestHeader& header,
-            const std::vector<mdb::Value>& input,
-            rrr::i32* res,
-            std::vector<mdb::Value>* output,
-            DragonBall *db);
 
-    void pre_execute_2pl(const RequestHeader& header,
-            const Value *input,
-            rrr::i32 input_size,
-            rrr::i32* res,
-            mdb::Value* output,
-            rrr::i32* output_size,
-            DragonBall *db);
 
-    void execute(const RequestHeader& header,
-            const std::vector<mdb::Value>& input,
-            rrr::i32* res,
-            std::vector<mdb::Value>* output) {
-        rrr::i32 output_size = output->size();
-        TxnRegistry::get(header).txn_handler(nullptr, header, input.data(), input.size(),
-                res, output->data(), &output_size,
-                NULL);
-        output->resize(output_size);
-    }
-
-    inline void execute(const RequestHeader& header,
-            const Value *input,
-            rrr::i32 input_size,
-            rrr::i32* res,
-            mdb::Value* output,
-            rrr::i32* output_size) {
-        TxnRegistry::get(header).txn_handler(nullptr, header, input, input_size,
-                res, output, output_size,
-                NULL);
-    }
 
     /**
     * This is legecy code to keep minimal changes on old codes.

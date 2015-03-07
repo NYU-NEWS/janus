@@ -330,4 +330,23 @@ void RCCDTxn::exe_deferred(
     }
 }
 
+
+void RCCDTxn::kiss(mdb::Row* r, int col, bool immediate) {
+
+    entry_t* entry = ((DepRow *)r)->get_dep_entry(col);
+
+    if (read_only_) {
+        if (entry->last_)
+            conflict_txns_.push_back(&entry->last_->data_);
+    } else {
+        int8_t edge_type = immediate ? EDGE_I : EDGE_D;
+        if (entry->last_ != NULL) {
+            entry->last_->to_[tv_] |= edge_type;
+            tv_->from_[entry->last_] |= edge_type;
+        } else {
+            entry->last_ = tv_;
+        }
+    }
+}
+
 } // namespace rcc

@@ -189,7 +189,8 @@ std::function<void(void)> TPLDTxn::get_2pl_fail_callback(
     };
 }
 
-std::function<void(void)> TPLDTxn::get_2pl_succ_callback(
+std::function<void(void)>
+TPLDTxn::get_2pl_succ_callback(
         const RequestHeader &header,
         const mdb::Value *input,
         rrr::i32 input_size,
@@ -230,6 +231,51 @@ std::function<void(void)> TPLDTxn::get_2pl_succ_callback(
         }
     };
 }
+
+
+
+void TPLDTxn::pre_execute_2pl(const RequestHeader& header,
+        const std::vector<mdb::Value>& input,
+        rrr::i32* res,
+        std::vector<mdb::Value>* output,
+        DragonBall *db) {
+
+    mdb::Txn2PL *txn = (mdb::Txn2PL *)mdb_txn_;
+    if (txn->is_wound()) {
+        output->resize(0);
+        *res = REJECT;
+        db->trigger();
+        return;
+    }
+    txn->init_piece(header.tid, header.pid, db, output);
+
+    Log::debug("start reg lock");
+    TxnRegistry::get(header).txn_handler(nullptr, header, input.data(), input.size(),
+            res, NULL/*output*/, NULL/*output_size*/,
+            NULL);
+}
+
+void TPLDTxn::pre_execute_2pl(const RequestHeader& header,
+        const Value *input,
+        rrr::i32 input_size,
+        rrr::i32* res,
+        mdb::Value* output,
+        rrr::i32* output_size,
+        DragonBall *db) {
+
+    mdb::Txn2PL *txn = (mdb::Txn2PL *)mdb_txn_;
+    txn->init_piece(header.tid, header.pid, db, output, output_size);
+    if (txn->is_wound()) {
+        *output_size = 0;
+        *res = REJECT;
+        db->trigger();
+        return;
+    }
+    TxnRegistry::get(header).txn_handler(nullptr, header, input, input_size,
+            res, NULL/*output*/, NULL/*output_size*/,
+            NULL);
+}
+
 
 
 
