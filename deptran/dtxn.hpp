@@ -469,20 +469,20 @@ public:
     }
 
 
-    static std::function<void(void)> get_2pl_proceed_callback(
+    std::function<void(void)> get_2pl_proceed_callback(
             const RequestHeader &header,
             const mdb::Value *input,
             rrr::i32 input_size,
             rrr::i32 *res
     );
 
-    static std::function<void(void)> get_2pl_fail_callback(
+    std::function<void(void)> get_2pl_fail_callback(
             const RequestHeader &header,
             rrr::i32 *res,
             mdb::Txn2PL::PieceStatus *ps
     );
 
-    static std::function<void(void)> get_2pl_succ_callback(
+    std::function<void(void)> get_2pl_succ_callback(
             const RequestHeader &header,
             const mdb::Value *input,
             rrr::i32 input_size,
@@ -495,7 +495,7 @@ public:
                     rrr::i32 *)> func
     );
 
-    static std::function<void(void)> get_2pl_succ_callback(
+    std::function<void(void)> get_2pl_succ_callback(
             const RequestHeader &req,
             const mdb::Value *input,
             rrr::i32 input_size,

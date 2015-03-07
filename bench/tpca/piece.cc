@@ -31,9 +31,9 @@ void TpcaPiece::reg_pieces() {
         if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL && output_size == NULL) {
             mdb::Txn2PL::PieceStatus *ps
                 = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
-            std::function<void(void)> succ = TPLDTxn::get_2pl_succ_callback(
+            std::function<void(void)> succ = ((TPLDTxn*)dtxn)->get_2pl_succ_callback(
                     header, input, input_size, res, ps);
-            std::function<void(void)> fail = TPLDTxn::get_2pl_fail_callback(
+            std::function<void(void)> fail = ((TPLDTxn*)dtxn)->get_2pl_fail_callback(
                     header, res, ps);
             ps->reg_rw_lock(std::vector<mdb::column_lock_t>({
                     mdb::column_lock_t(r, 0, ALock::WLOCK)
@@ -139,9 +139,9 @@ void TpcaPiece::reg_pieces() {
         if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL && output_size == NULL) {
             mdb::Txn2PL::PieceStatus *ps
                 = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
-            std::function<void(void)> succ = TPLDTxn::get_2pl_succ_callback(
+            std::function<void(void)> succ = ((TPLDTxn*)dtxn)->get_2pl_succ_callback(
                     header, input, input_size, res, ps);
-            std::function<void(void)> fail = TPLDTxn::get_2pl_fail_callback(
+            std::function<void(void)> fail = ((TPLDTxn*)dtxn)->get_2pl_fail_callback(
                     header, res, ps);
             ps->reg_rw_lock(std::vector<mdb::column_lock_t>({
                     mdb::column_lock_t(r, 0, ALock::WLOCK)
@@ -249,9 +249,9 @@ void TpcaPiece::reg_pieces() {
         if (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL && output_size == NULL) {
             mdb::Txn2PL::PieceStatus *ps
                 = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
-            std::function<void(void)> succ = TPLDTxn::get_2pl_succ_callback(
+            std::function<void(void)> succ = ((TPLDTxn*)dtxn)->get_2pl_succ_callback(
                     header, input, input_size, res, ps);
-            std::function<void(void)> fail = TPLDTxn::get_2pl_fail_callback(
+            std::function<void(void)> fail = ((TPLDTxn*)dtxn)->get_2pl_fail_callback(
                     header, res, ps);
             ps->reg_rw_lock(std::vector<mdb::column_lock_t>({
                     mdb::column_lock_t(r, 0, ALock::WLOCK)

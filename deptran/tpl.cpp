@@ -127,10 +127,10 @@ std::function<void(void)> TPLDTxn::get_2pl_proceed_callback(
         const mdb::Value *input,
         rrr::i32 input_size,
         rrr::i32 *res) {
-    return [header, input, input_size, res] () {
+    return [header, input, input_size, res, this] () {
         Log::debug("tid: %ld, pid: %ld, p_type: %d, no lock",
                 header.tid, header.pid, header.p_type);
-        mdb::Txn2PL::PieceStatus *ps = ((mdb::Txn2PL *)DTxnMgr::get_sole_mgr()->get_mdb_txn(header))
+        mdb::Txn2PL::PieceStatus *ps = ((mdb::Txn2PL *)this->mdb_txn_)
                 ->get_piece_status(header.pid);
         verify(ps != NULL); //FIXME
 
