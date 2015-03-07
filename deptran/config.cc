@@ -231,16 +231,30 @@ void Config::init_sharding(const char *filename) {
         mode_str[mode_str_i] = tolower(mode_str[mode_str_i]);
         mode_str_i++;
     }
+
+    std::map<string, int> modes_map = {
+            {"none", MODE_NONE},
+            {"2pl", MODE_2PL},
+            {"occ", MODE_OCC},
+            {"rcc", MODE_RCC},
+            {"ro6", MODE_RO6},
+            {"rpc_null", MODE_RPC_NULL},
+            {"deptran", MODE_DEPTRAN},
+            {"deptran_er", MODE_DEPTRAN},
+            {"2pl_w", MODE_2PL},
+            {"2pl_wait_die", MODE_2PL},
+            {"2pl_ww", MODE_2PL},
+            {"2pl_wound_die", MODE_2PL}
+    };
+
     if (mode_str == "2pl") {
         mode_ = MODE_2PL;
     }
     else if (mode_str == "occ") {
         mode_ = MODE_OCC;
-    } else if (mode_str == "rcc") {
-        mode_ = MODE_RCC;
     } else if (mode_str == "none") {
         mode_ = MODE_NONE;
-    } else if (mode_str == "deptran") {
+    } else if (mode_str == "rcc" || mode_str == "deptran") {
         // deprecated
         mode_ = MODE_DEPTRAN;
         early_return_ = false;

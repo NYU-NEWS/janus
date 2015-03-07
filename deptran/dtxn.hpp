@@ -5,10 +5,10 @@
 
 namespace rococo {
 
-#define IS_MODE_RCC (DTxnMgr::get_sole_mgr()->get_mode() == MODE_RCC)
-#define IS_MODE_RO6 (DTxnMgr::get_sole_mgr()->get_mode() == MODE_RO6)
-#define IS_MODE_2PL (DTxnMgr::get_sole_mgr()->get_mode() == MODE_2PL)
-#define IS_MODE_OCC (DTxnMgr::get_sole_mgr()->get_mode() == MODE_OCC)
+#define IS_MODE_RCC (Config::get_config()->get_mode() == MODE_RCC)
+#define IS_MODE_RO6 (Config::get_config()->get_mode() == MODE_RO6)
+#define IS_MODE_2PL (Config::get_config()->get_mode() == MODE_2PL)
+#define IS_MODE_OCC (Config::get_config()->get_mode() == MODE_OCC)
 
 #define IN_PHASE_1 dtxn->phase_ == 1
 
