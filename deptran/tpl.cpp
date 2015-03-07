@@ -276,7 +276,17 @@ void TPLDTxn::pre_execute_2pl(const RequestHeader& header,
             NULL);
 }
 
-
+//
+//void TPLDTxn::french_kiss(i64 pid, std::vector<mdb::column_lock_t> &locks) {
+//    verify(mdb_txn_ != nullptr);
+//    mdb::Txn2PL::PieceStatus *ps
+//            = ((mdb::Txn2PL *)mdb_txn_)->get_piece_status(pid);
+//    std::function<void(void)> succ_callback =
+//            get_2pl_succ_callback(header, input, input_size, res, ps);
+//    std::function<void(void)> fail_callback =
+//            (get_2pl_fail_callback(header, res, ps);
+//    ps->reg_rw_lock(locks, succ_callback, fail_callback);
+//}
 
 
 } // namespace rococo

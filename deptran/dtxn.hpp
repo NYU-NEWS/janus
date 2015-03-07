@@ -454,6 +454,8 @@ public:
         return nullptr;
     }
 
+//    void french_kiss(std::vector<mdb::column_lock_t> &locks);
+
 
     std::function<void(void)> get_2pl_proceed_callback(
             const RequestHeader &header,
