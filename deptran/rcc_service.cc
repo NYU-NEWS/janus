@@ -96,7 +96,7 @@ void RococoServiceImpl::naive_batch_start_pie(
         rrr::DeferredReply *defer) {
     std::lock_guard<std::mutex> guard(mtx_);
     
-    
+    verify(0);
     
     DragonBall *defer_reply_db = NULL;
     if (IS_MODE_2PL) {
@@ -151,24 +151,25 @@ void RococoServiceImpl::start_pie(
     output->resize(output_size);
     // find stored procedure, and run it
     *res = SUCCESS;
-    if (IS_MODE_2PL) {
 
-        txn_mgr_->get_or_create(header.tid);
+    txn_mgr_->get_or_create(header.tid);
+    if (IS_MODE_2PL) {
         DragonBall *defer_reply_db = new DragonBall(1, [defer]() {
                 defer->reply();
                 });
         txn_mgr_->pre_execute_2pl(header, input, res, output, defer_reply_db);
-    }
-    else if (txn_mgr_->get_mode() == MODE_NONE) {
+
+    } else if (txn_mgr_->get_mode() == MODE_NONE) {
         txn_mgr_->execute(header, input, res, output);
         defer->reply();
-    }
-    else if (IS_MODE_OCC) {
+
+    } else if (IS_MODE_OCC) {
         txn_mgr_->execute(header, input, res, output);
         defer->reply();
-    }
-    else
+
+    } else {
         verify(0);
+    }
 }
 
 void RococoServiceImpl::prepare_txn(

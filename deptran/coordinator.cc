@@ -115,7 +115,8 @@ void Coordinator::do_one(TxnRequest& req) {
                 start(ch);
         }
         break;
-    case MODE_DEPTRAN:
+    case MODE_RCC:
+    case MODE_RO6:
         if (recorder_) {
                std::string log_s;
             req.get_log(ch->txn_id_, log_s);
@@ -704,7 +705,7 @@ void Coordinator::deptran_start(TxnChopper* ch) {
 
 /** caller should be thread safe */
 void Coordinator::deptran_finish(TxnChopper *ch) {
-    verify(mode_ == MODE_DEPTRAN);
+    verify(IS_MODE_RCC || IS_MODE_RO6);
     Log::debug("deptran finish, %llx", ch->txn_id_);
 
     // commit or abort piece

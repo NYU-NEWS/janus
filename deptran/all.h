@@ -12,6 +12,7 @@
 #include <iostream>
 #include <condition_variable>
 #include <atomic>
+#include <cstdint>
 
 using std::map;
 using std::unordered_map;

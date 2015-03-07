@@ -462,6 +462,13 @@ public:
 
     int abort();
 
+    // This method should not be used for now.
+    mdb::Row* create(const mdb::Schema* schema, const std::vector<mdb::Value>& values) {
+        verify(0);
+        return nullptr;
+    }
+
+
     static std::function<void(void)> get_2pl_proceed_callback(
             const RequestHeader &header,
             const mdb::Value *input,
@@ -518,6 +525,10 @@ public:
     DTxn* create(i64 tid, bool ro=false) {
         DTxn* ret = nullptr;
         switch (mode_) {
+            case MODE_2PL:
+            case MODE_OCC:
+                ret = new TPLDTxn(tid, this);
+                break;
             case MODE_RCC:
                 ret = new RCCDTxn(tid, this, ro);
                 break;
