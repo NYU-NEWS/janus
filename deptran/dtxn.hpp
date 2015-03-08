@@ -304,8 +304,6 @@ public:
 };
 
 
-
-
 class RCCDTxn : public DTxn {
 public:
 
@@ -335,7 +333,7 @@ public:
             ChopStartResponse *res
     );
 
-    void start_ro(
+    virtual void start_ro(
             const RequestHeader &header,
             const std::vector<mdb::Value> &input,
             std::vector<mdb::Value> &output
@@ -360,8 +358,10 @@ public:
             Vertex<TxnInfo>* av
     );
 
-    virtual mdb::Row* create(const mdb::Schema* schema, const std::vector<mdb::Value>& values) {
-        return DepRow::create(schema, values);
+    virtual mdb::Row* create(
+            const mdb::Schema* schema,
+            const std::vector<mdb::Value>& values) {
+        return RCCRow::create(schema, values);
     }
 
     // ??? TODO (Shuai) I do not understand why de-virtual, is it because the return type thing?
@@ -370,19 +370,20 @@ public:
     // TODO (Shuai.reply) I think no.
     // de-virtual this function, since we are going to have different function signature anyway
     // because we need to either pass in a reference or let it return a value -- list of rxn ids
-    void kiss(mdb::Row* r, int col, bool immediate);
+    virtual void kiss(mdb::Row* r, int col, bool immediate);
 };
 
 class RO6DTxn : public RCCDTxn {
 private:
     i64 txnId = tid_;
+    std::set<i64> ro_;
 public:
     RO6DTxn(i64 tid, DTxnMgr* mgr, bool ro): RCCDTxn(tid, mgr, ro) {
     }
 
     // Implementing create method
     mdb::Row* create(const mdb::Schema* schema, const std::vector<mdb::Value>& values) {
-        return mdb::MultiVersionedRow::create(schema, values);
+        return MultiVersionedRow::create(schema, values);
     }
 
 
@@ -393,15 +394,16 @@ public:
             ChopStartResponse *res
     ) {
         RCCDTxn::start(header, input, deferred, res);
-        // TODO for haonan, return the read-only list here.
-        // TODO: question: isn't this the start phase for write transactions? If so, isn' it going to
-        // call kiss function? Then kiss will get the ro list. If this is the start phase for read-only
-        // transactions, then read-nnly transaction's start phase doesn't return ro_list. Instead, it waits
-        // for conflicting write txns to commit, then commits itself.
-        res->ro_list.push_back(1);
+        res->ro_list.insert(res->ro_list.end(), ro_.begin(), ro_.end());
     }
-    // TODO (for Shuai) One question: is the start function above and this commit function only for read-only
-    // txns, or for write txns, or for both?
+
+    virtual void start_ro(
+            const RequestHeader &header,
+            const std::vector<mdb::Value> &input,
+            std::vector<mdb::Value> &output
+    );
+
+    // the start function above and this commit function only for general(write) transactions
     virtual void commit(
             const ChopFinishRequest &req,
             ChopFinishResponse* res,
@@ -412,28 +414,11 @@ public:
         const std::vector<i64> &ro_list = req.ro_list;
     }
 
-    // Implementing kiss method
-    // This will be called in a txn's start phase
-    // TODO: make sure it's not called by a read-only-transaction's start phase,
-    // shuai: why is that? (Haonan.reply) kiss is only called in start phase? Then, read-only and
-    // general txns have different things to do in start phase.
-    std::vector<i64> kiss(mdb::Row* r, int col, bool immediate) {
-        //entry_t* entry = ((DepRow *)r)->get_dep_entry(col); // FIXME this is not right. fix later.
-
-        std::vector<i64> txnIds;
-        if (!read_only_) {
-            // We only query cell's rxn table for non-read txns
-            mdb::MultiVersionedRow* theRow = (mdb::MultiVersionedRow*) r;
-            txnIds = theRow->rtxn_tracker.getReadTxnIds(col);
-            // this is what's in original kiss function
-//            entry->ro_touch(&conflict_txns_);
-        } else {
-            // do what original kiss function does
-//            entry->touch(tv_, immediate);
-        }
-        // return this vector of read txn ids
-        return txnIds;
-    }
+    // This is not called by a read-only-transaction's start phase,
+    virtual void kiss(
+            mdb::Row* r,
+            int col, bool immediate
+    );
 };
 
 class TPLDTxn : public DTxn {
@@ -453,9 +438,6 @@ public:
         verify(0);
         return nullptr;
     }
-
-//    void french_kiss(std::vector<mdb::column_lock_t> &locks);
-
 
     std::function<void(void)> get_2pl_proceed_callback(
             const RequestHeader &header,
@@ -538,11 +520,6 @@ public:
     }
 };
 
-//class OCC : public TPLDTxn {
-//
-//};
-
-
 // TODO: seems that this class is both in charge of of the Txn playground and the 2PL/OCC controller.
 // in charge of locks and staging area
 class DTxnMgr {
@@ -556,26 +533,7 @@ public:
 
     ~DTxnMgr();
 
-    DTxn* create(i64 tid, bool ro=false) {
-        DTxn* ret = nullptr;
-        switch (mode_) {
-            case MODE_2PL:
-            case MODE_OCC:
-                ret = new TPLDTxn(tid, this);
-                break;
-            case MODE_RCC:
-                ret = new RCCDTxn(tid, this, ro);
-                break;
-            case MODE_RO6:
-                ret = new RO6DTxn(tid, this, ro);
-                break;
-            default:
-                verify(0);
-        }
-        verify(dtxns_[tid] == nullptr);
-        dtxns_[tid] = ret;
-        return ret;
-    }
+    DTxn* create(i64 tid, bool ro=false);
 
     void destroy(i64 tid) {
         auto it = dtxns_.find(tid);
@@ -621,16 +579,12 @@ public:
             std::string *str);
 
 
-    // TODO: I am not sure this is supposed to be here.
+    // TODO: (Shuai: I am not sure this is supposed to be here.)
     // I think it used to initialized the database?
     // So it should be somewhere else?
     void reg_table(const string& name,
             mdb::Table *tbl
     );
-
-
-
-
 
     /**
     * This is legecy code to keep minimal changes on old codes.

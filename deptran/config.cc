@@ -249,8 +249,7 @@ void Config::init_sharding(const char *filename) {
 
     if (mode_str == "2pl") {
         mode_ = MODE_2PL;
-    }
-    else if (mode_str == "occ") {
+    } else if (mode_str == "occ") {
         mode_ = MODE_OCC;
     } else if (mode_str == "none") {
         mode_ = MODE_NONE;
@@ -261,7 +260,7 @@ void Config::init_sharding(const char *filename) {
     } else if (mode_str == "deptran_er") {
         // deprecated
         // ??? what is this for?
-        mode_ = MODE_DEPTRAN;
+        mode_ = MODE_RCC;
         early_return_ = true;
     } else if (mode_str == "rpc_null") {
         mode_ = MODE_RPC_NULL;
@@ -274,6 +273,11 @@ void Config::init_sharding(const char *filename) {
     } else if (mode_str == "2pl_ww" || mode_str == "2pl_wound_die") {
         mode_ = MODE_2PL;
         mdb::FineLockedRow::set_wound_die();
+    } else if (mode_str == "ro6") {
+        mode_ = MODE_RO6;
+    } else {
+        // mode not supported.
+        verify(0);
     }
 
     // get benchmark

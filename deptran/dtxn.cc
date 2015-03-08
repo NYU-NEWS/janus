@@ -185,152 +185,25 @@ void DTxnMgr::reg_table(const std::string &name,
     }
 }
 
-//void txn_entry_t::abort_2pl(
-//        i64 tid,
-//        std::map<i64, txn_entry_t *> *txn_map_s,
-//        //pthread_mutex_t *txn_map_lock,
-//        rrr::DeferredReply* defer
-//        ) {
-//    DragonBall *abort_db = new ConcurrentDragonBall(piece_map_.size(),
-//            [this, tid, txn_map_s, /*txn_map_lock, */defer]() {
-//            txn->abort();
-//            //pthread_mutex_lock(&piece_map_mutex_);
-//            for (unordered_map<i64, PieceStatus *>::iterator it
-//                = piece_map_.begin(); it != piece_map_.end(); it++) {
-//                delete it->second;
-//            }
-//            //pthread_mutex_unlock(&piece_map_mutex_);
-//            delete this;
-//            //pthread_mutex_lock(txn_map_lock);
-//            txn_map_s->erase(tid);
-//            //pthread_mutex_unlock(txn_map_lock);
-//            defer->reply();
-//            Log::debug("end reply abort");
-//            });
-//    //pthread_mutex_lock(&piece_map_mutex_);
-//    std::unordered_map<i64, PieceStatus *> piece_map = piece_map_;
-//    //pthread_mutex_unlock(&piece_map_mutex_);
-//    for (unordered_map<i64, PieceStatus *>::iterator it = piece_map.begin();
-//            it != piece_map.end(); it++) {
-//        it->second->set_abort_dragonball(abort_db);
-//    }
-//    Log::debug("abort_2pl finish");
-//}
-//
-
-
-//PieceStatus *TxnRunner::get_piece_status(
-//        const RequestHeader &header,
-//        bool insert) {
-//    verify(running_mode_s == MODE_2PL);
-//    //pthread_mutex_lock(&txn_map_mutex_s);
-//    std::map<i64, txn_entry_t *>::iterator it = txn_map_s.find(header.tid);
-//    if (it == txn_map_s.end()) {
-//        //pthread_mutex_unlock(&txn_map_mutex_s);
-//        verify(0);
-//        return NULL; //FIXME
-//    }
-//    else {
-//        PieceStatus *ret = NULL;
-//        //pthread_mutex_lock(&it->second->piece_map_mutex_);
-//        std::unordered_map<i64, PieceStatus *>::iterator pit
-//            = it->second->piece_map_.find(header.pid);
-//        if (pit == it->second->piece_map_.end()) {
-//            if (insert) {
-//                ret = new PieceStatus;
-//                it->second->piece_map_[header.pid] = ret;
-//            }
-//        }
-//        else {
-//            ret = pit->second;
-//        }
-//        //pthread_mutex_unlock(&it->second->piece_map_mutex_);
-//        //pthread_mutex_unlock(&txn_map_mutex_s);
-//        return ret;
-//    }
-//}
-//
-//txn_entry_t *TxnRunner::get_txn_entry(const RequestHeader &header) {
-//    if (running_mode_s == MODE_NONE
-//     || running_mode_s == MODE_DEPTRAN) {
-//        if (txn_map_s.empty()) {
-//            txn_entry_t *new_entry = new txn_entry_t;
-//            txn_map_s[0] = new_entry;
-//            new_entry->txn = mdb_txn_mgr_->start(0);
-//        }
-//        return txn_map_s.begin()->second;
-//    }
-//    else {
-//        txn_entry_t *txn_entry_ret = NULL;
-//        //if (running_mode_s == MODE_2PL)
-//        //    pthread_mutex_lock(&txn_map_mutex_s);
-//
-//        std::map<i64, txn_entry_t *>::iterator it = txn_map_s.find(header.tid);
-//        if (it == txn_map_s.end()) {
-//            txn_entry_ret = new txn_entry_t;
-//            mdb::Txn *txn = mdb_txn_mgr_->start(header.tid);
-//            txn_entry_ret->txn = txn;
-//            //XXX using occ lazy mode: increment version at commit time
-//            if (running_mode_s == MODE_OCC) {
-//                ((mdb::TxnOCC *)txn)->set_policy(mdb::OCC_LAZY);
-//            }
-//            else if (running_mode_s == MODE_2PL) {
-//                txn_entry_ret->init_2pl();
-//            }
-//            std::pair<std::map<i64, txn_entry_t *>::iterator, bool> ret
-//                = txn_map_s.insert(std::pair<i64, txn_entry_t *>(header.tid,
-//                            txn_entry_ret));
-//            verify(ret.second);
-//        }
-//        else {
-//            txn_entry_ret = it->second;
-//        }
-//        //if (running_mode_s == MODE_2PL)
-//        //    pthread_mutex_unlock(&txn_map_mutex_s);
-//        return txn_entry_ret;
-//    }
-//}
-//
-//mdb::Txn *TxnRunner::get_txn(const RequestHeader &header) {
-//    if (running_mode_s == MODE_NONE
-//     || running_mode_s == MODE_DEPTRAN) {
-//        if (txn_map_s.empty()) {
-//            txn_entry_t *new_entry = new txn_entry_t;
-//            txn_map_s[0] = new_entry;
-//            new_entry->txn = mdb_txn_mgr_->start(0);
-//        }
-//        return txn_map_s.begin()->second->txn;
-//    }
-//    else {
-//        mdb::Txn *txn_ret = NULL;
-//        //if (running_mode_s == MODE_2PL)
-//        //    pthread_mutex_lock(&txn_map_mutex_s);
-//
-//        std::map<i64, txn_entry_t *>::iterator it = txn_map_s.find(header.tid);
-//        if (it == txn_map_s.end()) {
-//            txn_entry_t *new_entry = new txn_entry_t;
-//            mdb::Txn *txn = mdb_txn_mgr_->start(header.tid);
-//            new_entry->txn = txn;
-//            //XXX using occ lazy mode: increment version at commit time
-//            if (running_mode_s == MODE_OCC) {
-//                ((mdb::TxnOCC *)txn)->set_policy(mdb::OCC_LAZY);
-//            }
-//            else if (running_mode_s == MODE_2PL) {
-//                new_entry->init_2pl();
-//            }
-//            std::pair<std::map<i64, txn_entry_t *>::iterator, bool> ret
-//                = txn_map_s.insert(std::pair<i64, txn_entry_t *>(header.tid,
-//                            new_entry));
-//            verify(ret.second);
-//            txn_ret = txn;
-//        }
-//        else {
-//            txn_ret = it->second->txn;
-//        }
-//        //if (running_mode_s == MODE_2PL)
-//        //    pthread_mutex_unlock(&txn_map_mutex_s);
-//        return txn_ret;
-//    }
-//}
+DTxn* DTxnMgr::create(i64 tid, bool ro) {
+    DTxn* ret = nullptr;
+    switch (mode_) {
+        case MODE_2PL:
+        case MODE_OCC:
+            ret = new TPLDTxn(tid, this);
+            break;
+        case MODE_RCC:
+            ret = new RCCDTxn(tid, this, ro);
+            break;
+        case MODE_RO6:
+            ret = new RO6DTxn(tid, this, ro);
+            break;
+        default:
+            verify(0);
+    }
+    verify(dtxns_[tid] == nullptr);
+    dtxns_[tid] = ret;
+    return ret;
+}
 
 } // namespace rococo

@@ -7,7 +7,7 @@
 #include <vector>
 #include <string>
 
-namespace deptran {
+namespace rococo {
 
 Sharding *Sharding::sharding_s = NULL;
 std::multimap<c_last_id_t, rrr::i32> g_c_last2id;//XXX hardcode
@@ -544,8 +544,11 @@ int Sharding::do_tpcc_real_dist_partition_populate_table(
                                         case MODE_OCC:
                                             table_ptr->insert(mdb::VersionedRow::create(schema, row_data));
                                             break;
-                                        case MODE_DEPTRAN:
-                                            table_ptr->insert(DepRow::create(schema, row_data));
+                                        case MODE_RCC:
+                                            table_ptr->insert(RCCRow::create(schema, row_data));
+                                            break;
+                                        case MODE_RO6:
+                                            table_ptr->insert(RO6Row::create(schema, row_data));
                                             break;
                                         default:
                                             verify(0);
@@ -574,8 +577,11 @@ int Sharding::do_tpcc_real_dist_partition_populate_table(
                                         case MODE_OCC:
                                             table_ptr->insert(mdb::VersionedRow::create(schema, row_data));
                                             break;
-                                        case MODE_DEPTRAN:
-                                            table_ptr->insert(DepRow::create(schema, row_data));
+                                        case MODE_RCC:
+                                            table_ptr->insert(RCCRow::create(schema, row_data));
+                                            break;
+                                        case MODE_RO6:
+                                            table_ptr->insert(RO6Row::create(schema, row_data));
                                             break;
                                         default:
                                             verify(0);
@@ -601,8 +607,11 @@ int Sharding::do_tpcc_real_dist_partition_populate_table(
                                     case MODE_OCC:
                                         r = mdb::VersionedRow::create(schema, row_data);
                                         break;
-                                    case MODE_DEPTRAN:
-                                        r = DepRow::create(schema, row_data);
+                                    case MODE_RCC:
+                                        r = RCCRow::create(schema, row_data);
+                                        break;
+                                    case MODE_RO6:
+                                        r = RO6Row::create(schema, row_data);
                                         break;
                                     default:
                                         verify(0);
@@ -639,8 +648,11 @@ int Sharding::do_tpcc_real_dist_partition_populate_table(
                                             case MODE_OCC:
                                                 r_buf = mdb::VersionedRow::create(sch_buf, sec_row_data_buf);
                                                 break;
-                                            case MODE_DEPTRAN:
-                                                r_buf = DepRow::create(sch_buf, sec_row_data_buf);
+                                            case MODE_RCC:
+                                                r_buf = RCCRow::create(sch_buf, sec_row_data_buf);
+                                                break;
+                                            case MODE_RO6:
+                                                r_buf = RO6Row::create(sch_buf, sec_row_data_buf);
                                                 break;
                                             default:
                                                 verify(0);
@@ -905,8 +917,11 @@ int Sharding::do_tpcc_dist_partition_populate_table(
                                         case MODE_OCC:
                                             table_ptr->insert(mdb::VersionedRow::create(schema, row_data));
                                             break;
-                                        case MODE_DEPTRAN:
-                                            table_ptr->insert(DepRow::create(schema, row_data));
+                                        case MODE_RCC:
+                                            table_ptr->insert(RCCRow::create(schema, row_data));
+                                            break;
+                                        case MODE_RO6:
+                                            table_ptr->insert(RO6Row::create(schema, row_data));
                                             break;
                                         default:
                                             verify(0);
@@ -935,8 +950,11 @@ int Sharding::do_tpcc_dist_partition_populate_table(
                                         case MODE_OCC:
                                             table_ptr->insert(mdb::VersionedRow::create(schema, row_data));
                                             break;
-                                        case MODE_DEPTRAN:
-                                            table_ptr->insert(DepRow::create(schema, row_data));
+                                        case MODE_RCC:
+                                            table_ptr->insert(RCCRow::create(schema, row_data));
+                                            break;
+                                        case MODE_RO6:
+                                            table_ptr->insert(RO6Row::create(schema, row_data));
                                             break;
                                         default:
                                             verify(0);
@@ -962,8 +980,11 @@ int Sharding::do_tpcc_dist_partition_populate_table(
                                     case MODE_OCC:
                                         r = mdb::VersionedRow::create(schema, row_data);
                                         break;
-                                    case MODE_DEPTRAN:
-                                        r = DepRow::create(schema, row_data);
+                                    case MODE_RCC:
+                                        r = RCCRow::create(schema, row_data);
+                                        break;
+                                    case MODE_RO6:
+                                        r = RO6Row::create(schema, row_data);
                                         break;
                                     default:
                                         verify(0);
@@ -1086,8 +1107,11 @@ int Sharding::do_tpcc_populate_table(const std::vector<std::string> &table_names
                                 case MODE_OCC:
                                     table_ptr->insert(mdb::VersionedRow::create(schema, row_data));
                                     break;
-                                case MODE_DEPTRAN:
-                                    table_ptr->insert(DepRow::create(schema, row_data));
+                                case MODE_RCC:
+                                    table_ptr->insert(RCCRow::create(schema, row_data));
+                                    break;
+                                case MODE_RO6:
+                                    table_ptr->insert(RO6Row::create(schema, row_data));
                                     break;
                                 default:
                                     verify(0);
@@ -1252,8 +1276,11 @@ int Sharding::do_tpcc_populate_table(const std::vector<std::string> &table_names
                                     case MODE_OCC:
                                         r = mdb::VersionedRow::create(schema, row_data);
                                         break;
-                                    case MODE_DEPTRAN:
-                                        r = DepRow::create(schema, row_data);
+                                    case MODE_RCC:
+                                        r = RCCRow::create(schema, row_data);
+                                        break;
+                                    case MODE_RO6:
+                                        r = RO6Row::create(schema, row_data);
                                         break;
                                     default:
                                         verify(0);
@@ -1290,8 +1317,11 @@ int Sharding::do_tpcc_populate_table(const std::vector<std::string> &table_names
                                             case MODE_OCC:
                                                 r_buf = mdb::VersionedRow::create(sch_buf, sec_row_data_buf);
                                                 break;
-                                            case MODE_DEPTRAN:
-                                                r_buf = DepRow::create(sch_buf, sec_row_data_buf);
+                                            case MODE_RCC:
+                                                r_buf = RCCRow::create(sch_buf, sec_row_data_buf);
+                                                break;
+                                            case MODE_RO6:
+                                                r_buf = RO6Row::create(sch_buf, sec_row_data_buf);
                                                 break;
                                             default:
                                                 verify(0);
@@ -1416,8 +1446,11 @@ int Sharding::do_populate_table(const std::vector<std::string> &table_names, uns
                             case MODE_OCC:
                                 table_ptr->insert(mdb::VersionedRow::create(schema, row_data));
                                 break;
-                            case MODE_DEPTRAN:
-                                table_ptr->insert(DepRow::create(schema, row_data));
+                            case MODE_RCC:
+                                table_ptr->insert(RCCRow::create(schema, row_data));
+                                break;
+                            case MODE_RO6:
+                                table_ptr->insert(RO6Row::create(schema, row_data));
                                 break;
                             default:
                                 verify(0);

@@ -194,7 +194,7 @@ void TpcaPiece::reg_pieces() {
         if (row_map) { // deptran
             if (IS_MODE_RCC && IN_PHASE_1) { // start req
                 (*row_map)[TPCA_TELLER][mb] = r;
-                DepRow *dr = (DepRow *)r;
+                RCCRow *dr = (RCCRow *)r;
                 ((RCCDTxn*)dtxn)->kiss(r, 1, false);
 
                 do_finish = false;

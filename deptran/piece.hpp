@@ -40,5 +40,24 @@ public:
         return; \
     }
 
+#define CREATE_ROW(schema, row_data) \
+    switch (DTxnMgr::get_sole_mgr()->get_mode()) { \
+    case MODE_2PL: \
+        r = mdb::FineLockedRow::create(schema, row_data); \
+        break; \
+        case MODE_OCC: \
+    case MODE_NONE: \
+        r = mdb::VersionedRow::create(schema, row_data); \
+        break; \
+    case MODE_RCC: \
+        r = dtxn->create(schema, row_data); \
+        break; \
+    case MODE_RO6: \
+        r = dtxn->create(schema, row_data); \
+        break; \
+    default: \
+        verify(0); \
+    }
+
 
 } // namespace rcc

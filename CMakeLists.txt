@@ -140,8 +140,10 @@ add_library(ROCOCO
     deptran/coordinator.h
     deptran/dep_graph.cc
     deptran/dep_graph.hpp
-    deptran/dep_row.cc
-    deptran/dep_row.h
+    deptran/rcc_row.cpp
+    deptran/rcc_row.hpp
+    deptran/ro6_row.hpp
+    deptran/ro6_row.cpp
     deptran/dtxn.cc
     deptran/dtxn.hpp
     deptran/tpl.cpp
@@ -164,7 +166,7 @@ add_library(ROCOCO
     deptran/rcc_service.cc
     deptran/rcc_service.h
     deptran/s_main.cc
-    deptran/sharding.cc
+    deptran/sharding.cpp
     deptran/sharding.h
     deptran/timer.cc
     deptran/timer.h

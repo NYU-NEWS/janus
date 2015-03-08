@@ -70,4 +70,26 @@ namespace rococo {
     }
 
     */
+
+void RO6DTxn::kiss(mdb::Row* r, int col, bool immediate) {
+    RCCDTxn::kiss(r, col, immediate);
+
+    if (!read_only_) {
+        // We only query cell's rxn table for non-read txns
+        MultiVersionedRow* row = (MultiVersionedRow*) r;
+        std::vector<i64> ro_ids = row->rtxn_tracker.getReadTxnIds(col);
+        ro_.insert(ro_ids.begin(), ro_ids.end());
+
+    } else {
+
+    }
 }
+
+void RO6DTxn::start_ro(
+        const RequestHeader &header,
+        const std::vector<mdb::Value> &input,
+        std::vector<mdb::Value> &output) {
+    RCCDTxn::start_ro(header, input, output);
+}
+
+} //namespace rococo

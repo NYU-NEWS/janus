@@ -333,7 +333,7 @@ void RCCDTxn::exe_deferred(
 
 void RCCDTxn::kiss(mdb::Row* r, int col, bool immediate) {
 
-    entry_t* entry = ((DepRow *)r)->get_dep_entry(col);
+    entry_t* entry = ((RCCRow *)r)->get_dep_entry(col);
 
     if (read_only_) {
         if (entry->last_)

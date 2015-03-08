@@ -177,20 +177,7 @@ void TpccPiece::reg_new_order() {
                 input[6]    // o_all_local
                 });
 
-            switch (DTxnMgr::get_sole_mgr()->get_mode()) {
-                case MODE_2PL:
-                    r = mdb::FineLockedRow::create(tbl->schema(), row_data);
-                    break;
-                case MODE_OCC:
-                case MODE_NONE:
-                    r = mdb::VersionedRow::create(tbl->schema(), row_data);
-                    break;
-                case MODE_DEPTRAN:
-                    r = dtxn->create(tbl->schema(), row_data);
-                    break;
-                default:
-                    verify(0);
-            }
+            CREATE_ROW(tbl->schema(), row_data);
         }
 
         bool do_finish = true;
@@ -270,20 +257,7 @@ void TpccPiece::reg_new_order() {
                 input[0],   // o_id
                 });
 
-            switch (DTxnMgr::get_sole_mgr()->get_mode()) {
-                case MODE_2PL:
-                    r = mdb::FineLockedRow::create(tbl->schema(), row_data);
-                    break;
-                case MODE_OCC:
-                case MODE_NONE:
-                    r = mdb::VersionedRow::create(tbl->schema(), row_data);
-                    break;
-                case MODE_DEPTRAN:
-                    r = DepRow::create(tbl->schema(), row_data);
-                    break;
-                default:
-                    verify(0);
-            }
+            CREATE_ROW(tbl->schema(), row_data);
         }
 
         bool do_finish = true;
@@ -536,20 +510,7 @@ void TpccPiece::reg_new_order() {
         if (!(IS_MODE_RCC || IS_MODE_RO6) || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { // non-rcc || rcc start request
             std::vector<Value> input_buf(input, input + input_size);
 
-            switch (DTxnMgr::get_sole_mgr()->get_mode()) {
-                case MODE_2PL:
-                    r = mdb::FineLockedRow::create(tbl->schema(), input_buf);
-                    break;
-                case MODE_OCC:
-                case MODE_NONE:
-                    r = mdb::VersionedRow::create(tbl->schema(), input_buf);
-                    break;
-                case MODE_DEPTRAN:
-                    r = DepRow::create(tbl->schema(), input_buf);
-                    break;
-                default:
-                    verify(0);
-            }
+            CREATE_ROW(tbl->schema(), input_buf);
         }
 
         bool do_finish = true;
@@ -1048,20 +1009,9 @@ void TpccPiece::reg_payment() {
             row_data[6] = Value(std::to_string(time(NULL)));    // h_date
             row_data[7] = input[8];             // h_amount =>  h_amount
             row_data[8] = Value(input[1].get_str() + "    " + input[2].get_str()); // d_data => w_name + 4spaces + d_name
-            switch (DTxnMgr::get_sole_mgr()->get_mode()) {
-                case MODE_2PL:
-                    r = mdb::FineLockedRow::create(tbl->schema(), row_data);
-                    break;
-                case MODE_OCC:
-                case MODE_NONE:
-                    r = mdb::VersionedRow::create(tbl->schema(), row_data);
-                    break;
-                case MODE_DEPTRAN:
-                    r = DepRow::create(tbl->schema(), row_data);
-                    break;
-                default:
-                    verify(0);
-            }
+
+            CREATE_ROW(tbl->schema(), row_data);
+
             if (!txn->insert_row(tbl, r)) {
                 *res = REJECT;
                 *output_size = output_index;

@@ -56,6 +56,7 @@ using rrr::i64;
 #include "memdb/schema.h"
 #include "memdb/table.h"
 #include "memdb/txn.h"
+#include "memdb/utils.h"
 using mdb::Value;
 
 // rpc library
@@ -80,7 +81,8 @@ static dummy_class dummy___;
 #include "config.h"
 #include "pie_info.h"
 #include "txn_info.h"
-#include "dep_row.h"
+#include "rcc_row.hpp"
+#include "ro6_row.hpp"
 #include "txn_info.h"
 #include "graph.hpp"
 #include "rcc_rpc.h"
