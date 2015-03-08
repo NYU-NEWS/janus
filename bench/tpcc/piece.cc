@@ -100,9 +100,7 @@ void TpccPiece::reg_new_order() {
         return;
     });
 
-    BEGIN_PIE(
-            TPCC_NEW_ORDER,
-            TPCC_NEW_ORDER_2, // R customer
+    BEGIN_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_2, // R customer
             DF_NO //XXX either i or d is ok
             ) {
 
@@ -206,26 +204,8 @@ void TpccPiece::reg_new_order() {
 
                 (*row_map)[TPCC_TB_ORDER][r->get_key()] = r;
 
-                //cell_locator_t cl(TPCC_TB_ORDER, 3);
-                //cl.primary_key[0] = r->get_blob(0);
-                //cl.primary_key[1] = r->get_blob(1);
-                //cl.primary_key[2] = r->get_blob(2);
-                //cl.col_id = 0;
-                //(*entry_map)[cl] = dr->get_dep_entry(0);
-                //cl.col_id = 1;
-                //(*entry_map)[cl] = dr->get_dep_entry(1);
-                //cl.col_id = 2;
-                //(*entry_map)[cl] = dr->get_dep_entry(2);
-                //cl.col_id = 5;
-                //(*entry_map)[cl] = dr->get_dep_entry(5);
                 do_finish = false;
             } else { // finish req
-                //mdb::MultiBlob mb(3);
-                //mb[0] = input[1].get_blob();
-                //mb[1] = input[2].get_blob();
-                //mb[2] = input[0].get_blob();
-                //r = (*row_map)[TPCC_TB_ORDER][mb];
-                //verify(r != NULL); //FIXME remove this line after debug
 
                 //DepTranServiceImpl::dep_s->rw_entries_[TPCC_TB_ORDER].erase(mb);
                 auto kv = row_map->begin()->second.begin();
@@ -317,26 +297,8 @@ void TpccPiece::reg_new_order() {
 
                 (*row_map)[TPCC_TB_NEW_ORDER][r->get_key()] = r;
 
-                //cell_locator_t cl(TPCC_TB_NEW_ORDER, 3);
-                //cl.primary_key[0] = r->get_blob(0);
-                //cl.primary_key[1] = r->get_blob(1);
-                //cl.primary_key[2] = r->get_blob(2);
-                //cl.col_id = 0;
-                //(*entry_map)[cl] = dr->get_dep_entry(0);
-                //cl.col_id = 1;
-                //(*entry_map)[cl] = dr->get_dep_entry(1);
-                //cl.col_id = 2;
-                //(*entry_map)[cl] = dr->get_dep_entry(2);
                 do_finish = false;
             } else {
-                //mdb::MultiBlob mb(3);
-                //mb[0] = input[1].get_blob();
-                //mb[1] = input[2].get_blob();
-                //mb[2] = input[0].get_blob();
-                //r = (*row_map)[TPCC_TB_NEW_ORDER][mb];
-                //verify(r != NULL); //FIXME remove this line after debug
-                //DepTranServiceImpl::dep_s->rw_entries_[TPCC_TB_NEW_ORDER].erase(mb);
-                //do_finish = true;
 
                 auto kv = row_map->begin()->second.begin();
                 r = kv->second;
@@ -606,33 +568,9 @@ void TpccPiece::reg_new_order() {
 
                 (*row_map)[TPCC_TB_ORDER_LINE][r->get_key()] = r;
 
-                //cell_locator_t cl(TPCC_TB_ORDER_LINE, 4);
-                //cl.primary_key[0] = r->get_blob(0);
-                //cl.primary_key[1] = r->get_blob(1);
-                //cl.primary_key[2] = r->get_blob(2);
-                //cl.primary_key[3] = r->get_blob(3);
-                //cl.col_id = 0;
-                //(*entry_map)[cl] = dr->get_dep_entry(0);
-                //cl.col_id = 1;
-                //(*entry_map)[cl] = dr->get_dep_entry(1);
-                //cl.col_id = 2;
-                //(*entry_map)[cl] = dr->get_dep_entry(2);
-                //cl.col_id = 3;
-                //(*entry_map)[cl] = dr->get_dep_entry(3);
-                //cl.col_id = 4;
-                //(*entry_map)[cl] = dr->get_dep_entry(4);
-                //cl.col_id = 6;
-                //(*entry_map)[cl] = dr->get_dep_entry(6);
-                //cl.col_id = 8;
-                //(*entry_map)[cl] = dr->get_dep_entry(8);
-
                 do_finish = false;
             } else { // finish req
-                //mdb::MultiBlob mb(4);
-                //mb[0] = input[0].get_blob();
-                //mb[1] = input[1].get_blob();
-                //mb[2] = input[2].get_blob();
-                //mb[3] = input[3].get_blob();
+
                 auto kv = row_map->begin()->second.begin();
                 r = kv->second;
                 //DepTranServiceImpl::dep_s->rw_entries_[TPCC_TB_ORDER_LINE].erase(kv->first);
@@ -716,35 +654,12 @@ void TpccPiece::reg_payment() {
         }
         output[output_index++] = buf; // 5 ==> w_zip
 
-        //if (!txn->read_column(r, 8, &buf)) {
-        //    *res = REJECT;
-        //    *output_size = output_index;
-        //    return;
-        //}
-
-        //// W warehouse
-        //buf.set_double(buf.get_double() + input[1].get_double()); //FIXME delete
-        //if (!txn->write_column(r, 8, buf)) {
-        //    *res = REJECT;
-        //    *output_size = output_index;
-        //    return;
-        //}
 
         verify(*output_size >= output_index);
         *output_size = output_index;
         *res = SUCCESS;
         Log::debug("TPCC_PAYMENT, piece: %d end", TPCC_PAYMENT_0);
     } END_PIE
-
-//    TxnRegistry::reg_lock_oracle(
-//            TPCC_PAYMENT,
-//            TPCC_PAYMENT_0,
-//            [] (const RequestHeader& header,
-//                const Value *input,
-//                rrr::i32 input_size,
-//                std::unordered_map<cell_locator_t, int, cell_locator_t_hash>* opset
-//                ) {
-//            });
 
     BEGIN_PIE(TPCC_PAYMENT,      // txn
             TPCC_PAYMENT_1,    // piece 1, Ri district
@@ -1297,8 +1212,7 @@ void TpccPiece::reg_order_status() {
             txn->get_table(TPCC_TB_ORDER_C_ID_SECONDARY), mb_0,
             output_size, header.pid).next();
 
-        if (IS_MODE_2PL
-            && output_size == NULL) {
+        if (IS_MODE_2PL && output_size == NULL) {
 
             mdb::Txn2PL::PieceStatus *ps
                 = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
@@ -1340,12 +1254,6 @@ void TpccPiece::reg_order_status() {
                                     mdb::column_lock_t(r, 4, ALock::RLOCK),
                                     mdb::column_lock_t(r, 5, ALock::RLOCK)
                                     }), succ_callback1, fail_callback1);
-                            //((mdb::Txn2PL *)txn)->reg_read_column(r, 2,
-                            //    succ_callback1, fail_callback1);
-                            //((mdb::Txn2PL *)txn)->reg_read_column(r, 4,
-                            //    succ_callback1, fail_callback1);
-                            //((mdb::Txn2PL *)txn)->reg_read_column(r, 5,
-                            //    succ_callback1, fail_callback1);
 
                             return;
                         };
@@ -1482,17 +1390,6 @@ void TpccPiece::reg_order_status() {
                 column_locks.push_back(
                         mdb::column_lock_t(r, 8, ALock::RLOCK)
                         );
-
-                //((mdb::Txn2PL *)txn)->reg_read_column(r, 4, succ_callback,
-                //    fail_callback);
-                //((mdb::Txn2PL *)txn)->reg_read_column(r, 5, succ_callback,
-                //    fail_callback);
-                //((mdb::Txn2PL *)txn)->reg_read_column(r, 6, succ_callback,
-                //    fail_callback);
-                //((mdb::Txn2PL *)txn)->reg_read_column(r, 7, succ_callback,
-                //    fail_callback);
-                //((mdb::Txn2PL *)txn)->reg_read_column(r, 8, succ_callback,
-                //    fail_callback);
             }
 
             ps->reg_rw_lock(column_locks, succ_callback, fail_callback);
@@ -1592,12 +1489,6 @@ void TpccPiece::reg_delivery() {
 
                     ps->reg_rm_lock(r, succ_callback, fail_callback);
 
-                    //((mdb::Txn2PL *)txn)->reg_write_column(r, 0, succ_callback,
-                    //    fail_callback);
-                    //((mdb::Txn2PL *)txn)->reg_write_column(r, 1, succ_callback,
-                    //    fail_callback);
-                    //((mdb::Txn2PL *)txn)->reg_write_column(r, 2, succ_callback,
-                    //    fail_callback);
                     return;
                 }
 
@@ -1623,9 +1514,6 @@ void TpccPiece::reg_delivery() {
         if (row_map) { // deptran
             if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { // deptran start req, top half
                 if (r) { // if find a row
-                    //cl.primary_key[0] = input[1].get_blob();
-                    //cl.primary_key[1] = input[0].get_blob();
-                    //cl.primary_key[2] = r->get_blob(2);
 
                     (*row_map)[TPCC_TB_NEW_ORDER][r->get_key()] = r;
 
@@ -1633,10 +1521,6 @@ void TpccPiece::reg_delivery() {
                     ((RCCDTxn*)dtxn)->kiss(r, 1, true);
                     ((RCCDTxn*)dtxn)->kiss(r, 2, true);
 
-                    //std::map<int, entry_t *> &m = DepTranServiceImpl::dep_s->rw_entries_[TPCC_TB_NEW_ORDER][r->get_key()];
-                    //m[0] = dr->get_dep_entry(0);
-                    //m[1] = dr->get_dep_entry(1);
-                    //m[2] = dr->get_dep_entry(2);
 
                     tbl->remove(r, false); // don't release the row
                 }
@@ -1771,11 +1655,6 @@ void TpccPiece::reg_delivery() {
                 column_locks.push_back(
                         mdb::column_lock_t(r, 8, ALock::RLOCK)
                         );
-
-                //((mdb::Txn2PL *)txn)->reg_write_column(r, 6, succ_callback,
-                //    fail_callback);
-                //((mdb::Txn2PL *)txn)->reg_read_column(r, 8, succ_callback,
-                //    fail_callback);
             }
             ps->reg_rw_lock(column_locks, succ_callback, fail_callback);
 
@@ -1996,13 +1875,6 @@ void TpccPiece::reg_stock_level() {
                 return;
             }
 
-            //std::vector<Value> kkk;
-            //txn->read_columns(r, std::vector<mdb::column_id_t>({
-            //    0, 1, 2, 3, 4, 5}), &kkk);
-            //Log::debug("ol_d_id: %d, ol_w_id: %d, ol_o_id: %d,"
-            //      " ol_number: %d, ol_i_id: %d, ol_supply_w_id: %d",
-            //      kkk[0].get_i32(), kkk[1].get_i32(), kkk[2].get_i32(),
-            //      kkk[3].get_i32(), kkk[4].get_i32(), kkk[5].get_i32());
             output[output_index++] = buf;
         }
 
