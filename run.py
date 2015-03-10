@@ -32,6 +32,9 @@ g_interest_txn = "NEW ORDER"
 g_max_latency = 99999.9
 g_max_try = 99999.9
 
+hosts_path_g = ""
+hosts_map_g = dict()
+
 class TxnInfo(object):
     def __init__(self, txn_type, txn_name, interest):
         self.txn_type = txn_type
@@ -93,7 +96,9 @@ class TxnInfo(object):
             self.mid_total_try = 0
             self.mid_commit_txn = 0
 
-    def push_res(self, start_txn, total_txn, total_try, commit_txn, this_latencies, last_latencies, latencies, attempt_latencies, interval_time, n_tried):
+    def push_res(self, start_txn, total_txn, total_try, commit_txn, 
+            this_latencies, last_latencies, latencies, 
+            attempt_latencies, interval_time, n_tried):
         self.start_txn += start_txn
         self.total_txn += total_txn
         self.total_try += total_try
@@ -120,7 +125,8 @@ class TxnInfo(object):
             self.mid_total_try += total_try
             self.mid_commit_txn += commit_txn
 
-    def get_res(self, interval_time, total_time, set_max, all_total_commits, all_interval_commits, do_sample, do_sample_lock):
+    def get_res(self, interval_time, total_time, set_max, 
+            all_total_commits, all_interval_commits, do_sample, do_sample_lock):
         #self.last_latencies.sort()
         min_latency = g_max_latency
         max_latency = g_max_latency
@@ -285,7 +291,8 @@ class TxnInfo(object):
         print "RECORDING_RESULT: TXN: <" + str(self.max_data[1]) + ">; STARTED_TXNS: " + str(self.max_data[2]) + "; FINISHED_TXNS: " + str(self.max_data[3]) + "; ATTEMPTS: " + str(self.max_data[4]) + "; COMMITS: " + str(self.max_data[5]) + "; TPS: " + str(self.max_data[6]) + latency_str + "; TIME: " + str(self.max_interval) + "; LATENCY MIN: " + str(self.max_data[7]) + "; LATENCY MAX: " + str(self.max_data[8]) + n_tried_str
 
 class ClientController(object):
-    def __init__(self, benchmark, timeout, c_info, duration, single_server, taskset, log_dir, interest_txn, recording_path):
+    def __init__(self, benchmark, timeout, c_info, duration, 
+            single_server, taskset, log_dir, interest_txn, recording_path):
         self.print_max = False
         self.benchmark = benchmark
         self.timeout = timeout
@@ -353,6 +360,7 @@ class ClientController(object):
                 + " -f " + filename \
                 + " -p " + self.c_info[i][1] \
                 + " -t " + str(self.timeout) \
+                + " -H " + hosts_path_g \
                 + " -S " + self.single_server \
                 + " -b " \
                 + recording \
@@ -794,6 +802,7 @@ class ServerController(object):
                 + " -s " + str(i) \
                 + " -f " + filename \
                 + " -p " + self.s_info[i][1] \
+                + " -H " + hosts_path_g \
                 + " -t " + str(self.timeout) \
                 + " -b " \
                 + recording \
@@ -804,20 +813,45 @@ class ServerController(object):
             subprocess.call(['ssh', '-n', '-f', self.s_info[i][0], cmd])
             i += 1
 
+def init_hosts_map():
+    global hosts_map_g
+    f = open(hosts_path_g, "r")
+    for line in f:
+        [hostname, sitename] = line.split()
+        hosts_map_g[sitename] = hostname
+
+def site2host_name(sitename):
+    if sitename in hosts_map_g:
+        return hosts_map_g[sitename]
+    else:
+        return sitename
+
+
 def main():
     try:
         parser = OptionParser()
-        parser.add_option("-f", "--file", dest="filename", help="read config from FILE, default is properties.xml", default=deptran_home + "/properties.xml", metavar="FILE")
+        parser.add_option("-f", "--file", dest="filename", help="read config from FILE, default is properties.xml", 
+                default=deptran_home + "/properties.xml", metavar="FILE")
         parser.add_option("-P", "--port", dest="rpc_port", help="port to use", default=5555, metavar="PORT")
-        parser.add_option("-t", "--server-timeout", dest="s_timeout", help="server heart beat timeout in seconds", default=10, action="store", metavar="TIMEOUT")
-        parser.add_option("-i", "--status-time-interval", dest="c_timeout", help="time interval to report benchmark status in seconds", default=5, action="store", metavar="TIME")
-        parser.add_option("-d", "--duration", dest="c_duration", help="benchmark running duration in seconds", default=60, action="store", metavar="TIME")
-        parser.add_option("-S", "--single-server", dest="c_single_server", help="control each client always touch the same server 0, disabled; 1, each thread will touch a single server; 2, each process will touch a single server", default=0, action="store", metavar="[0|1|2]")
-        parser.add_option("-T", "--taskset-schema", dest="s_taskset", help="Choose which core to run each server on. 0: auto; 1: CPU 1; 2: CPU 0, odd cores; 3: CPU 0, even cores;", default=0, action="store", metavar="[0|1|2|3]")
-        parser.add_option("-c", "--client-taskset", dest="c_taskset", help="taskset client processes round robin", default=False, action="store_true")
+        parser.add_option("-t", "--server-timeout", dest="s_timeout", 
+                help="server heart beat timeout in seconds", default=10, action="store", metavar="TIMEOUT")
+        parser.add_option("-i", "--status-time-interval", dest="c_timeout", 
+                help="time interval to report benchmark status in seconds", default=5, action="store", metavar="TIME")
+        parser.add_option("-d", "--duration", dest="c_duration", 
+                help="benchmark running duration in seconds", default=60, action="store", metavar="TIME")
+        parser.add_option("-S", "--single-server", dest="c_single_server", 
+                help="control each client always touch the same server 0, disabled; 1, each thread will touch a single server; 2, each process will touch a single server", 
+                default=0, action="store", metavar="[0|1|2]")
+        parser.add_option("-T", "--taskset-schema", dest="s_taskset", 
+                help="Choose which core to run each server on. 0: auto; 1: CPU 1; 2: CPU 0, odd cores; 3: CPU 0, even cores;", 
+                default=0, action="store", metavar="[0|1|2|3]")
+        parser.add_option("-c", "--client-taskset", dest="c_taskset", 
+                help="taskset client processes round robin", default=False, action="store_true")
         parser.add_option("-l", "--log-dir", dest="log_dir", help="Log file directory", default=g_log_dir, metavar="LOG_DIR")
         parser.add_option("-r", "--recording-path", dest="recording_path", help="Recording path", default="", metavar="RECORDING_PATH")
-        parser.add_option("-x", "--interest-txn", dest="interest_txn", help="interest txn", default=g_interest_txn, metavar="INTEREST_TXN")
+        parser.add_option("-x", "--interest-txn", dest="interest_txn", 
+                help="interest txn", default=g_interest_txn, metavar="INTEREST_TXN")
+        parser.add_option("-H", "--hosts", dest="hosts_path", help="hosts path", default="./config/hosts", metavar="HOSTS_PATH")
 
         (options, args) = parser.parse_args()
 
@@ -831,7 +865,12 @@ def main():
             print "Invalid single server argument"
             return False
 
+        global hosts_path_g
         filename = os.path.realpath(options.filename)
+        hosts_path_g = os.path.realpath(options.hosts_path)
+
+        init_hosts_map()
+
         recording_path_dir = ""
         if (len(options.recording_path) != 0):
             recording_path_dir = os.path.realpath(options.recording_path)
@@ -854,12 +893,14 @@ def main():
         s_info = dict()
         num_site = int(config.find("hosts").attrib["number"])
         for site in config.findall("./hosts/site"):
-            [addr, port] = site.text.split(':')
+            [sitename, port] = site.text.split(':')
+            hostname = site2host_name(sitename)
             sid_index = int(site.attrib["id"])
             if (sid_index < 0 or sid_index >= num_site or (sid_index in s_info)):
                 print "FAIL"
                 return False
-            s_info[sid_index] = tuple((addr, str(rpc_port)))
+            print (hostname, sitename)
+            s_info[sid_index] = tuple((hostname, str(rpc_port)))
             rpc_port += 1
         if (len(s_info) != num_site):
             print "FAIL"
@@ -880,7 +921,9 @@ def main():
                 if (id_index >= num_client or id_index < 0 or (id_index in c_info)):
                     print "FAIL"
                     return False
-                c_info[id_index] = tuple((client.text, str(rpc_port)))
+                hostname = site2host_name(client.text)
+                print hostname
+                c_info[id_index] = tuple((hostname, str(rpc_port)))
                 rpc_port += 1
             elif (dash_index > 0 and dash_index < len(ids_str)):
                 id_start = int(ids_str[0:dash_index])
@@ -893,7 +936,9 @@ def main():
                     if (id_index in c_info):
                         print "FAIL"
                         return False
-                    c_info[id_index] = tuple((client.text, str(rpc_port)))
+                    hostname = site2host_name(client.text)
+                    print hostname
+                    c_info[id_index] = tuple((hostname, str(rpc_port)))
                     rpc_port += 1
                     id_index += 1
             else:
@@ -917,7 +962,8 @@ def main():
         do_sample = Value('i', 0)
         do_sample_lock = Lock()
 
-        server_process = multiprocessing.Process(target=server_controller.server_heart_beat, args=(cond, s_init_finish, do_sample, do_sample_lock))
+        server_process = multiprocessing.Process(target=server_controller.server_heart_beat, 
+                args=(cond, s_init_finish, do_sample, do_sample_lock))
         server_process.daemon = False
         server_process.start()
 
@@ -936,7 +982,8 @@ def main():
         #time.sleep(5);
 
         # init client controller
-        client_controller = ClientController(benchmark, c_timeout, c_info, c_duration, c_single_server, c_taskset, log_dir, c_interest_txn, recording_path_dir)
+        client_controller = ClientController(benchmark, c_timeout, c_info, c_duration, 
+                c_single_server, c_taskset, log_dir, c_interest_txn, recording_path_dir)
 
         print "Starting clients ..."
         client_controller.start(filename)
@@ -969,3 +1016,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

@@ -6,6 +6,12 @@
 
 namespace rococo {
 
+class HostInfo {
+public:
+    std::string name;
+    int port;
+};
+
 class Config {
 public:
     typedef enum {
