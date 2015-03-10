@@ -10,7 +10,8 @@ namespace rococo {
 #define IS_MODE_2PL (Config::get_config()->get_mode() == MODE_2PL)
 #define IS_MODE_OCC (Config::get_config()->get_mode() == MODE_OCC)
 
-#define IN_PHASE_1 dtxn->phase_ == 1
+#define IN_PHASE_1 (dtxn->phase_ == 1)
+#define TPL_PHASE_1 (output_size == nullptr)
 
 struct entry_t {
     Vertex<TxnInfo> *last_ = NULL; // last transaction(write) that touches this item. (arriving order)

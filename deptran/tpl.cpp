@@ -130,8 +130,10 @@ std::function<void(void)> TPLDTxn::get_2pl_proceed_callback(
     return [header, input, input_size, res, this] () {
         Log::debug("tid: %ld, pid: %ld, p_type: %d, no lock",
                 header.tid, header.pid, header.p_type);
-        mdb::Txn2PL::PieceStatus *ps = ((mdb::Txn2PL *)this->mdb_txn_)
-                ->get_piece_status(header.pid);
+//        verify(this->mdb_txn_ != nullptr);
+        mdb::Txn2PL *mdb_txn = (mdb::Txn2PL*)DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
+        mdb::Txn2PL::PieceStatus *ps = mdb_txn->get_piece_status(header.pid);
+
         verify(ps != NULL); //FIXME
 
         if (ps->is_rejected()) {
@@ -240,6 +242,7 @@ void TPLDTxn::pre_execute_2pl(const RequestHeader& header,
         std::vector<mdb::Value>* output,
         DragonBall *db) {
 
+    verify(mdb_txn_ != nullptr);
     mdb::Txn2PL *txn = (mdb::Txn2PL *)mdb_txn_;
     if (txn->is_wound()) {
         output->resize(0);
@@ -263,6 +266,7 @@ void TPLDTxn::pre_execute_2pl(const RequestHeader& header,
         rrr::i32* output_size,
         DragonBall *db) {
 
+    verify(mdb_txn_ != nullptr);
     mdb::Txn2PL *txn = (mdb::Txn2PL *)mdb_txn_;
     txn->init_piece(header.tid, header.pid, db, output, output_size);
     if (txn->is_wound()) {

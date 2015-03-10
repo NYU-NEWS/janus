@@ -162,7 +162,16 @@ void TpccPiece::reg_new_order() {
         mdb::Table *tbl = txn->get_table(TPCC_TB_ORDER);
         mdb::Row *r = NULL;
 
-        TPL_KISS(mdb::column_lock_t(r, 3, ALock::WLOCK));
+        if (IS_MODE_2PL && TPL_PHASE_1) {
+            mdb::MultiBlob mb(3);
+            mb[0] = input[1].get_blob();
+            mb[1] = input[2].get_blob();
+            mb[2] = input[3].get_blob();
+
+            r = txn->query(txn->get_table(TPCC_TB_ORDER_C_ID_SECONDARY),
+                    mb, false, header.pid).next();
+            TPL_KISS(mdb::column_lock_t(r, 3, ALock::WLOCK));
+        }
 
         // W order
         if (!(IS_MODE_RCC || IS_MODE_RO6) ||
