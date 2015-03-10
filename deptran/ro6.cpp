@@ -80,6 +80,11 @@ void RO6DTxn::kiss(mdb::Row* r, int col, bool immediate) {
         std::vector<i64> ro_ids = row->rtxn_tracker.getReadTxnIds(col);
         ro_.insert(ro_ids.begin(), ro_ids.end());
 
+        // put the row and col_id into a map. When this txn gets to
+        // commit phase, we will need the row and col_id to put ro_list
+        // into the table
+        // TODO: for Shuai, is it okay to add this in kiss??
+        row_col_map[r] = col;
     } else {
 
     }
@@ -90,6 +95,20 @@ void RO6DTxn::start_ro(
         const std::vector<mdb::Value> &input,
         std::vector<mdb::Value> &output) {
     RCCDTxn::start_ro(header, input, output);
+    // TODO: for Shuai, this does everything read transactions need in
+    // start phase. See the comments to its declaration in dtxn.hpp
+    // It needs txn_id, row, and column_id for this txn, please implement the
+    // interface for that.
+    // This function also returns the value for this read, since read txn returns
+    // value in start phase (no commit phase). So please also handle the return type
+    // of start_ro
+    // comment it out for now for compiling
+    /*Value result = do_ro(txn_id, &row, col_id);*/
+}
+
+Value RO6DTxn::do_ro(i64 txn_id, MultiVersionedRow* row, int col_id) {
+    Value ret_value = row->get_column(col_id, txn_id);
+    return ret_value;
 }
 
 } //namespace rococo
