@@ -114,7 +114,9 @@ void Recorder::flush_buf() {
         cnt_flush ++;
         sz_flush += ret;
     }
+#ifndef __APPLE__
     fdatasync(fd_);
+#endif
 
     stat_cnt_.sample(cnt_flush);
     stat_sz_.sample(sz_flush);
