@@ -78,7 +78,7 @@ static dummy_class dummy___;
 
 // User include files
 #include "constants.hpp"
-#include "config.h"
+#include "config.hpp"
 #include "pie_info.h"
 #include "txn_info.h"
 #include "rcc_row.hpp"

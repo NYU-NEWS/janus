@@ -20,7 +20,9 @@ private:
     void init_sharding(const char *filename);
     void init_hostsmap(const char* hostspath);
 
-    std::string host_name2addr(std::string& name);
+    std::string site2host_addr(std::string& name);
+
+    std::string site2host_name(std::string& addr);
 
     unsigned int cid_;
     unsigned int sid_;

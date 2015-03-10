@@ -133,8 +133,8 @@ add_library(ROCOCO
     deptran/benchmark_control_rpc.cc
     deptran/benchmark_control_rpc.h
     deptran/c_main.cc
-    deptran/config.cc
-    deptran/config.h
+    deptran/config.cpp
+    deptran/config.hpp
     deptran/constants.hpp
     deptran/coordinator.cc
     deptran/coordinator.h

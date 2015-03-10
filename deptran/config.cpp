@@ -42,7 +42,7 @@ int Config::create_config(int argc, char *argv[]) {
     optind = 1;
     while ((c = getopt(argc, argv, "bc:d:f:h:i:k:p:r:s:S:t:")) != -1) {
         switch (c) {
-            case 'b':
+            case 'b': // heartbeat to controller
                 heart_beat = true;
                 break;
             case 'c': // client id
@@ -206,7 +206,15 @@ void Config::init_hostsmap(const char *hostspath) {
     }
 }
 
-std::string Config::host_name2addr(std::string& name) {
+std::string Config::site2host_addr(std::string& siteaddr) {
+    auto pos = siteaddr.find_first_of(':');
+    verify(pos != std::string::npos);
+    std::string hostname = siteaddr.substr(0, pos);
+    std::string hostaddr = siteaddr.replace(0, pos, hostname);
+    return hostaddr;
+}
+
+std::string Config::site2host_name(std::string& name) {
     auto it = hostsmap_.find(name);
     if (it != hostsmap_.end()) {
         return it->second; 
@@ -341,12 +349,12 @@ void Config::init_sharding(const char *filename) {
             verify(site_[sid] == NULL);
 
             // set site addr
-            std::string site_name = value.second.get<std::string>("<xmltext>");
-            std::string site_addr = host_name2addr(site_name); 
+            std::string siteaddr = value.second.get<std::string>("<xmltext>");
+            std::string hostaddr = site2host_addr(siteaddr);
 
-            site_[sid] = (char *)malloc((site_addr.size() + 1) * sizeof(char));
+            site_[sid] = (char *)malloc((hostaddr.size() + 1) * sizeof(char));
             verify(site_[sid] != NULL);
-            strcpy(site_[sid], site_addr.c_str());
+            strcpy(site_[sid], hostaddr.c_str());
 
             // set site threads
             int threads = value.second.get<int>("<xmlattr>.threads");

@@ -165,7 +165,8 @@ void TpccPiece::reg_new_order() {
         TPL_KISS(mdb::column_lock_t(r, 3, ALock::WLOCK));
 
         // W order
-        if (!(IS_MODE_RCC || IS_MODE_RO6) || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { // non-rcc || rcc start request
+        if (!(IS_MODE_RCC || IS_MODE_RO6) ||
+                ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { // non-rcc || rcc start request
             std::vector<Value> row_data({
                 input[1],   // o_d_id
                 input[2],   // o_w_id
@@ -181,7 +182,7 @@ void TpccPiece::reg_new_order() {
         }
 
         bool do_finish = true;
-        if (row_map) { // deptran
+        if (row_map) { // rococo
             if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { // start req
                 //std::map<int, entry_t *> &m = DepTranServiceImpl::dep_s->rw_entries_[TPCC_TB_ORDER][r->get_key()];
                 ((RCCDTxn*)dtxn)->kiss(r, 0, false);
