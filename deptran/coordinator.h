@@ -10,14 +10,18 @@ class ClientControlServiceImpl;
 /**
 * TODO: Replace the old coordinator with the new DTxnCoordinator
 */
-class DTxnCoordinator {
+class DTxnCoo {
 public:
-
 
 };
 
+class RO6DTxnCoo: public DTxnCoo {
+public:
+    std::set<i64> ro_txn_; // All the read only transactions I have observed.
+};
 
-class Coordinator {
+
+class Coordinator: public RO6DTxnCoo {
 public:
 
     struct deptran_batch_start_t {

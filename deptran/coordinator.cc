@@ -663,6 +663,11 @@ void Coordinator::deptran_start(TxnChopper* ch) {
                 ChopStartResponse res;
                 fu->get_reply() >> res;
 
+                if (IS_MODE_RO6) {
+                    auto &ro = res.ro_list;
+                    this->ro_txn_.insert(ro.begin(), ro.end());
+                }
+
                 // where should I store this graph?
                 Graph<TxnInfo> &gra = *(res.gra_m.gra);
                 Log::debug("start response graph size: %d", (int)gra.size());
@@ -759,6 +764,8 @@ void Coordinator::deptran_finish(TxnChopper *ch) {
     req.gra = ch->gra_;
     if (IS_MODE_RO6) {
         // TODO. merge the read_only list.
+        auto &ro = req.ro_list;
+        ro.insert(ro.begin(), ro_txn_.begin(), ro_txn_.end());
     }
 
     verify(ch->gra_.size() > 0);
