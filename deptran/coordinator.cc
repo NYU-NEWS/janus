@@ -757,6 +757,10 @@ void Coordinator::deptran_finish(TxnChopper *ch) {
     ChopFinishRequest req;
     req.txn_id = ch->txn_id_;
     req.gra = ch->gra_;
+    if (IS_MODE_RO6) {
+        // TODO. merge the read_only list.
+    }
+
     verify(ch->gra_.size() > 0);
     verify(req.gra.size() > 0);
     for (auto& rp: ch->proxies_) {
@@ -893,4 +897,4 @@ void Coordinator::report(TxnReply &txn_reply,
     }
 }
 
-} // namespace deptran
+} // namespace rococo

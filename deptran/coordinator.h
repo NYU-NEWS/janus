@@ -7,6 +7,16 @@ namespace rococo {
 
 class ClientControlServiceImpl;
 
+/**
+* TODO: Replace the old coordinator with the new DTxnCoordinator
+*/
+class DTxnCoordinator {
+public:
+
+
+};
+
+
 class Coordinator {
 public:
 

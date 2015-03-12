@@ -6,10 +6,33 @@
 
 namespace rococo {
 
-class HostInfo {
+class SiteInfo {
 public:
-    std::string name;
-    int port;
+    static std::map<std::string, std::string> dns_;
+
+    static std::string name2host(std::string& site_name);
+
+    static void load_dns(std::string& hosts_path);
+
+public:
+    i64 id_;
+    std::string name_;
+    std::string host_;
+    int port_;
+
+    SiteInfo() = delete;
+
+    SiteInfo(i64 id, std::string& site_addr) {
+        id_ = id;
+        auto pos = site_addr.find(':');
+        verify(pos != std::string::npos);
+        name_ = site_addr.substr(0, pos);
+        std::string port_str = site_addr.substr(pos+1);
+        port_ = std::stoi(port_str);
+
+        host_ = SiteInfo::name2host(name_);
+    }
+
 };
 
 class Config {
@@ -29,6 +52,8 @@ private:
     std::string site2host_addr(std::string& name);
 
     std::string site2host_name(std::string& addr);
+
+
 
     unsigned int cid_;
     unsigned int sid_;

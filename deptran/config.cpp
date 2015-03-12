@@ -12,6 +12,30 @@ namespace rococo {
 
 Config *Config::config_s = NULL;
 
+std::map<std::string, std::string> SiteInfo::dns_;
+
+std::string SiteInfo::name2host(std::string& site_name) {
+    //    Log::debug("find host name by site name: %s", sitename.c_str());
+    auto it = SiteInfo::dns_.find(site_name);
+    if (it != SiteInfo::dns_.end()) {
+        return it->second;
+    } else {
+        verify(0);
+        return site_name;
+    }
+}
+
+void SiteInfo::load_dns(std::string& hosts_path) {
+    std::string host_name, site_name;
+    std::ifstream in(hosts_path);
+    while (in) {
+        in >> host_name;
+        in >> site_name;
+        dns_[site_name] = host_name ;
+    }
+}
+
+
 Config *Config::get_config() {
     if (config_s == NULL)
         config_s = new Config();
