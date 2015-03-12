@@ -76,7 +76,7 @@ void RO6DTxn::kiss(mdb::Row* r, int col, bool immediate) {
 
     if (!read_only_) {
         // We only query cell's rxn table for non-read txns
-        MultiVersionedRow* row = (MultiVersionedRow*) r;
+        auto row = (RO6Row*) r;
         std::vector<i64> ro_ids = row->rtxn_tracker.getReadTxnIds(col);
         ro_.insert(ro_ids.begin(), ro_ids.end());
 
@@ -84,7 +84,9 @@ void RO6DTxn::kiss(mdb::Row* r, int col, bool immediate) {
         // commit phase, we will need the row and col_id to put ro_list
         // into the table
         // TODO: for Shuai, is it okay to add this in kiss??
-        row_col_map[r] = col;
+//        row_col_map[r] = col;
+        // for haonan, i think it is fine this way.
+        row_col_map.insert(std::make_pair(r, col));
     } else {
 
     }

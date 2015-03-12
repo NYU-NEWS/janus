@@ -146,9 +146,11 @@ add_library(ROCOCO
     deptran/ro6_row.cpp
     deptran/dtxn.cc
     deptran/dtxn.hpp
+    deptran/tpl.hpp
     deptran/tpl.cpp
     deptran/rcc.cpp
     deptran/rcc.hpp
+    deptran/ro6.hpp
     deptran/ro6.cpp
     deptran/graph.cc
     deptran/graph.hpp

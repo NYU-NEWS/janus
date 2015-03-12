@@ -7,7 +7,8 @@ private:
     std::set<i64> ro_;
     // for remembering row and col for this txn in start phase. row and col will be
     // used by this txn in commit phase.
-    std::map<mdb::Row*, int>row_col_map;
+    // for haonan, I think it should be like this?
+    std::set<std::pair<mdb::Row*, int>> row_col_map;
 public:
     RO6DTxn(i64 tid, DTxnMgr* mgr, bool ro): RCCDTxn(tid, mgr, ro) {
     }
@@ -43,14 +44,13 @@ public:
         const std::vector<i64> &ro_list = req.ro_list;
         // handle ro list, put ro ids into table
         // I assume one txn may query multiple rows on this node?
-        for (std::pair<mdb::Row*, int> entry : row_col_map) {
-            mdb::Row* row = entry.first;
-            int col_id = entry.second;
-            MultiVersionedRow* r = (MultiVersionedRow*) row;
+        for (auto &pair : row_col_map) {
+            auto row = (RO6Row*)pair.first;
+            int col_id = pair.second;
             // get current version of the cell this txn is going to update
-            version_t current_version = r->getCurrentVersion(col_id);
+            version_t current_version = row->getCurrentVersion(col_id);
             for (i64 ro_id : ro_list) {
-                r->rtxn_tracker.checkIfTxnIdBeenRecorded(col_id, ro_id, true, current_version);
+                row->rtxn_tracker.checkIfTxnIdBeenRecorded(col_id, ro_id, true, current_version);
             }
         }
         // We need to commit this txn after updating the table, because we need to know what the
