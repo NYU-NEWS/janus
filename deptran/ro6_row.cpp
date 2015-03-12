@@ -47,6 +47,12 @@ void RO6Row::garbageCollection(int column_id, std::map<i64, Value>::iterator itr
  * Used when a write needs to record version number for a later read to query at
  */
 version_t RO6Row::getCurrentVersion(int column_id) {
+    if (old_values_.find(column_id) == old_values_.end()) {
+        // current write piece is writing the first value to this column;
+        // then the old version we return should be null, version number should
+        // be 0
+        return 0;
+    }
     std::map<i64, Value>::iterator itr = old_values_[column_id].end();
     return (--itr)->first;
 }
