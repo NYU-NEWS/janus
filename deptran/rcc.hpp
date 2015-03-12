@@ -1,5 +1,6 @@
 #pragma once
 
+//namespace rococo {
 
 class RCCDTxn : public DTxn {
 public:
@@ -15,11 +16,11 @@ public:
     std::vector<DeferredRequest> dreqs_;
     Vertex<TxnInfo> *tv_;
 
-    std::vector<TxnInfo*> conflict_txns_; // This is read-only transaction
+    std::vector<TxnInfo *> conflict_txns_; // This is read-only transaction
 
     bool read_only_;
 
-    RCCDTxn(i64 tid, DTxnMgr* mgr, bool ro) : DTxn(tid, mgr) {
+    RCCDTxn(i64 tid, DTxnMgr *mgr, bool ro) : DTxn(tid, mgr) {
         read_only_ = ro;
     }
 
@@ -33,18 +34,19 @@ public:
     virtual void start_ro(
             const RequestHeader &header,
             const std::vector<mdb::Value> &input,
-            std::vector<mdb::Value> &output
+            std::vector<mdb::Value> &output,
+            rrr::DeferredReply *defer
     );
 
     virtual void commit(
             const ChopFinishRequest &req,
-            ChopFinishResponse* res,
-            rrr::DeferredReply* defer
+            ChopFinishResponse *res,
+            rrr::DeferredReply *defer
     );
 
     void to_decide(
             Vertex<TxnInfo> *v,
-            rrr::DeferredReply* defer
+            rrr::DeferredReply *defer
     );
 
     void exe_deferred(
@@ -52,12 +54,12 @@ public:
     );
 
     void send_ask_req(
-            Vertex<TxnInfo>* av
+            Vertex<TxnInfo> *av
     );
 
-    virtual mdb::Row* create(
-            const mdb::Schema* schema,
-            const std::vector<mdb::Value>& values) {
+    virtual mdb::Row *create(
+            const mdb::Schema *schema,
+            const std::vector<mdb::Value> &values) {
         return RCCRow::create(schema, values);
     }
 
@@ -67,6 +69,7 @@ public:
     // TODO (Shuai.reply) I think no.
     // de-virtual this function, since we are going to have different function signature anyway
     // because we need to either pass in a reference or let it return a value -- list of rxn ids
-    virtual void kiss(mdb::Row* r, int col, bool immediate);
+    virtual void kiss(mdb::Row *r, int col, bool immediate);
 };
 
+//} // namespace rococo

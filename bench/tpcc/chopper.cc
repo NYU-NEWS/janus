@@ -1,6 +1,6 @@
 #include "all.h"
 
-namespace deptran {
+namespace rococo {
 #define TPCC_NEW_ORDER_Ith_INDEX_ITEM(i)        (5 + 4 * i)
 #define TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)    (6 + 4 * i)
 #define TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i) (7 + 4 * i)
@@ -1144,4 +1144,4 @@ TpccChopper::~TpccChopper() {
     //}
 }
 
-}
+} // namespace rococo

@@ -4,7 +4,7 @@
 #include "memdb/value.h"
 #include <vector>
 
-namespace deptran {
+namespace rococo {
 
 class TxnChopper;
 class TxnRequest;

@@ -95,8 +95,10 @@ void RO6DTxn::kiss(mdb::Row* r, int col, bool immediate) {
 void RO6DTxn::start_ro(
         const RequestHeader &header,
         const std::vector<mdb::Value> &input,
-        std::vector<mdb::Value> &output) {
-    RCCDTxn::start_ro(header, input, output);
+        std::vector<mdb::Value> &output,
+        rrr::DeferredReply *defer
+) {
+    RCCDTxn::start_ro(header, input, output, defer);
     // TODO: for Shuai, this does everything read transactions need in
     // start phase. See the comments to its declaration in dtxn.hpp
     // It needs txn_id, row, and column_id for this txn, please implement the

@@ -96,7 +96,8 @@ void RCCDTxn::start(
 void RCCDTxn::start_ro(
         const RequestHeader &header,
         const std::vector<mdb::Value> &input,
-        std::vector<mdb::Value> &output) {
+        std::vector<mdb::Value> &output,
+        DeferredReply *defer) {
 
     conflict_txns_.clear();
     auto txn_handler_pair = TxnRegistry::get(header.t_type, header.p_type);
@@ -108,6 +109,21 @@ void RCCDTxn::start_ro(
     txn_handler_pair.txn_handler(this, header, input.data(), input.size(), &res,
             output.data(), &output_size, NULL);
     output.resize(output_size);
+
+    // get conflicting transactions
+    std::vector<TxnInfo*> &conflict_txns = conflict_txns_;
+    // TODO callback: read the value and return.
+    std::function<void(void)> cb = [header, /*&input, output, */defer] () {
+        defer->reply();
+    };
+    // wait for them become commit.
+
+    DragonBall *ball = new DragonBall(conflict_txns.size() + 1, cb);
+
+    for (auto tinfo: conflict_txns) {
+        tinfo->register_event(TXN_DCD, ball);
+    }
+    ball->trigger();
 }
 
 void RCCDTxn::commit(
@@ -349,4 +365,4 @@ void RCCDTxn::kiss(mdb::Row* r, int col, bool immediate) {
     }
 }
 
-} // namespace rcc
+} // namespace rococo

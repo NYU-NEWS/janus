@@ -435,34 +435,9 @@ void RococoServiceImpl::rcc_ro_start_pie(
     std::lock_guard<std::mutex> guard(mtx_);
 
     bool ro = true;
-    auto txn = (RCCDTxn*) txn_mgr_->get_or_create(header.tid, true);
+    auto dtxn = (RCCDTxn*) txn_mgr_->get_or_create(header.tid, true);
 
-    // do read only transaction
-    //auto lock_oracle = TxnRegistry::get_lock_oracle(header);
-
-    // execute the IR actions.
-
-    //cell_entry_map_t rw_entry;
-    txn->start_ro(header, input, *output);
-
-
-    // get conflicting transactions
-    //dep_s->conflict_txn(opset, conflict_txns, rw_entry);
-    std::vector<TxnInfo*> &conflict_txns = txn->conflict_txns_;
-    // TODO callback: read the value and return.
-    std::function<void(void)> cb = [header, /*&input, output, */defer] () {
-        defer->reply();
-    };
-
-    // wait for them become commit.
-    //
-
-    DragonBall *ball = new DragonBall(conflict_txns.size() + 1, cb);
-
-    for (auto tinfo: conflict_txns) {
-        tinfo->register_event(TXN_DCD, ball);
-    }
-    ball->trigger();
+    dtxn->start_ro(header, input, *output, defer);
 }
 
 void RococoServiceImpl::rpc_null(rrr::DeferredReply* defer) {

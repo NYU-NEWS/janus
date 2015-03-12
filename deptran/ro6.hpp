@@ -1,5 +1,6 @@
 #pragma once
 
+//namespace rococo {
 
 class RO6DTxn : public RCCDTxn {
 private:
@@ -8,14 +9,14 @@ private:
     // for remembering row and col for this txn in start phase. row and col will be
     // used by this txn in commit phase.
     // for haonan, I think it should be like this?
-    std::set<std::pair<mdb::Row*, int>> row_col_map;
+    std::set<std::pair<mdb::Row *, int>> row_col_map;
 public:
-    RO6DTxn(i64 tid, DTxnMgr* mgr, bool ro): RCCDTxn(tid, mgr, ro) {
+    RO6DTxn(i64 tid, DTxnMgr *mgr, bool ro) : RCCDTxn(tid, mgr, ro) {
     }
 
     // Implementing create method
-    mdb::Row* create(const mdb::Schema* schema, const std::vector<mdb::Value>& values) {
-        return MultiVersionedRow::create(schema, values);
+    mdb::Row *create(const mdb::Schema *schema, const std::vector<mdb::Value> &values) {
+        return RO6Row::create(schema, values);
     }
 
 
@@ -32,20 +33,21 @@ public:
     virtual void start_ro(
             const RequestHeader &header,
             const std::vector<mdb::Value> &input,
-            std::vector<mdb::Value> &output
+            std::vector<mdb::Value> &output,
+            rrr::DeferredReply *defer
     );
 
     // the start function above and this commit function only for general(write) transactions
     virtual void commit(
             const ChopFinishRequest &req,
-            ChopFinishResponse* res,
-            rrr::DeferredReply* defer
+            ChopFinishResponse *res,
+            rrr::DeferredReply *defer
     ) {
         const std::vector<i64> &ro_list = req.ro_list;
         // handle ro list, put ro ids into table
         // I assume one txn may query multiple rows on this node?
         for (auto &pair : row_col_map) {
-            auto row = (RO6Row*)pair.first;
+            auto row = (RO6Row *) pair.first;
             int col_id = pair.second;
             // get current version of the cell this txn is going to update
             version_t current_version = row->getCurrentVersion(col_id);
@@ -60,7 +62,7 @@ public:
 
     // This is not called by a read-only-transaction's start phase,
     virtual void kiss(
-            mdb::Row* r,
+            mdb::Row *r,
             int col, bool immediate
     );
 
@@ -69,5 +71,7 @@ public:
     // If it is, then return old version accordingly; if not, add its id into the table
     // *but, before doing those, wait for all conflicting write txns commit.
     // It also does the read, and returns the value with correct version.
-    Value do_ro(i64 txn_id, MultiVersionedRow* row, int col_id);
+    Value do_ro(i64 txn_id, MultiVersionedRow *row, int col_id);
 };
+
+//} // namespace rococo

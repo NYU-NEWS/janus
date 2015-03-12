@@ -2,7 +2,7 @@
 
 #include "coordinator.h"
 
-namespace deptran {
+namespace rococo {
 
 class TpcaPaymentChopper : public TxnChopper {
 
@@ -69,4 +69,4 @@ public:
 
 };
 
-} // namespace deptran
+} // namespace rococo

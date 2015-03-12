@@ -1,5 +1,6 @@
 #pragma once
 
+//namespace rococo {
 
 class TPLDTxn : public DTxn {
 public:
@@ -99,3 +100,5 @@ public:
                 NULL);
     }
 };
+
+//} // namespace rococo

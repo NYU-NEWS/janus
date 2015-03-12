@@ -120,6 +120,8 @@ add_library(ROCOCO
     bench/tpcc/chopper.h
     bench/tpcc/piece.cc
     bench/tpcc/piece.h
+    bench/tpcc/stock_level.cpp
+    bench/tpcc/order_status.cpp
     bench/tpcc_dist/chopper.cc
     bench/tpcc_dist/chopper.h
     bench/tpcc_dist/piece.h
@@ -144,7 +146,7 @@ add_library(ROCOCO
     deptran/rcc_row.hpp
     deptran/ro6_row.hpp
     deptran/ro6_row.cpp
-    deptran/dtxn.cc
+    deptran/dtxn.cpp
     deptran/dtxn.hpp
     deptran/tpl.hpp
     deptran/tpl.cpp

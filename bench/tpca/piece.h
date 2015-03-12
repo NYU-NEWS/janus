@@ -1,5 +1,4 @@
-#ifndef TPCA_PIE_H_
-#define TPCA_PIE_H_
+#pragma once
 
 #include "all.h"
 
@@ -27,6 +26,4 @@ public:
     void reg_lock_oracles();
 };
 
-}
-
-#endif // TPCA_PIE_H_
+} // namespace rococo

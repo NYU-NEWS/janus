@@ -144,6 +144,7 @@ def build(bld):
                                        "deptran/util/*.cc "
                                        "bench/tpca/*.cc " 
                                        "bench/tpcc/*.cc "
+                                       "bench/tpcc/*.cpp "
                                        "bench/tpcc_real_dist/*.cc "
                                        "bench/tpcc_dist/*.cc "
                                        "bench/rw_benchmark/*.cc "

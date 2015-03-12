@@ -1,6 +1,6 @@
 #include "all.h"
 
-namespace deptran {
+namespace rococo {
 
 char TPCA_BRANCH[] = "branch";
 char TPCA_TELLER[] = "teller";
@@ -86,7 +86,7 @@ void TpcaPiece::reg_pieces() {
         if (row_map) { // deptran
             if (IS_MODE_RCC && IN_PHASE_1) { // start req
                 (*row_map)[TPCA_CUSTOMER][mb] = r;
-                ((RCCDTxn*)dtxn)->kiss(r, 1, false);
+                ((rococo::RCCDTxn*)dtxn)->kiss(r, 1, false);
 
                 do_finish = false;
             } else {
@@ -195,7 +195,7 @@ void TpcaPiece::reg_pieces() {
             if (IS_MODE_RCC && IN_PHASE_1) { // start req
                 (*row_map)[TPCA_TELLER][mb] = r;
                 RCCRow *dr = (RCCRow *)r;
-                ((RCCDTxn*)dtxn)->kiss(r, 1, false);
+                ((rococo::RCCDTxn*)dtxn)->kiss(r, 1, false);
 
                 do_finish = false;
             } else {
@@ -382,5 +382,5 @@ void TpcaPiece::reg_lock_oracles() {
 //    });
 }
 
-} // namespace deptran
+} // namespace rococo
 

@@ -1,7 +1,7 @@
 #ifndef TPCC_PIECE_H_
 #define TPCC_PIECE_H_
 
-namespace deptran {
+namespace rococo {
 
 class Piece;
 
