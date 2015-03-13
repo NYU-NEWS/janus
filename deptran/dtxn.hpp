@@ -114,6 +114,8 @@ public:
 
     virtual mdb::Row* create(const mdb::Schema* schema, const std::vector<mdb::Value> &values) = 0;
 
+    virtual bool read_column(mdb::Row* row, mdb::column_id_t col_id, Value* value) = 0;
+
     virtual ~DTxn() {}
 };
 
@@ -175,7 +177,8 @@ public:
 
     void get_prepare_log(i64 txn_id,
             const std::vector<i32> &sids,
-            std::string *str);
+            std::string *str
+    );
 
 
     // TODO: (Shuai: I am not sure this is supposed to be here.)

@@ -66,6 +66,12 @@ public:
             int col, bool immediate
     );
 
+    virtual bool read_column(
+            mdb::Row* row,
+            mdb::column_id_t col_id,
+            Value* value
+    );
+
     // Called by ro_start. It contains the main logics for ROT's start phase
     // For instance, check txnid table to see if this txn's id is in the table.
     // If it is, then return old version accordingly; if not, add its id into the table

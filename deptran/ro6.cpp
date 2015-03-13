@@ -141,7 +141,23 @@ void RO6DTxn::start_ro(
     /*Value result = do_ro(txn_id, &row, col_id);*/
 }
 
-Value RO6DTxn::do_ro(i64 txn_id, MultiVersionedRow* row, int col_id) {
+bool RO6DTxn::read_column(mdb::Row* r, mdb::column_id_t col_id, Value* value) {
+
+    if (read_only_) {
+        // TODO (for haonan) Hi, can you put the read-only transaction here to make things more clear?
+        RO6Row* row = (RO6Row*)r;
+        *value = row->get_column(col_id, tid_);
+    } else {
+        *value = r->get_column(col_id);
+    }
+    // always allowed
+    return true;
+}
+
+// TODO (for haonan) is this read only for read_only transaction or all transactions?
+// I assume this is only for the read_only transaction, am I correct?
+// Please see the above read_column funtion, check whether I am using it correctly.
+Value RO6DTxn::do_ro(i64 txn_id, RO6Row* row, int col_id) {
     Value ret_value = row->get_column(col_id, txn_id);
     return ret_value;
 }

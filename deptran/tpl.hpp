@@ -15,10 +15,13 @@ public:
     int abort();
 
     // This method should not be used for now.
-    mdb::Row* create(const mdb::Schema* schema, const std::vector<mdb::Value>& values) {
+    virtual mdb::Row* create(const mdb::Schema* schema, const std::vector<mdb::Value>& values) {
         verify(0);
         return nullptr;
     }
+
+    virtual bool read_column(mdb::Row* row, mdb::column_id_t col_id, Value* value);
+
 
     std::function<void(void)> get_2pl_proceed_callback(
             const RequestHeader &header,
@@ -81,7 +84,7 @@ public:
             std::vector<mdb::Value>* output
     ) {
         rrr::i32 output_size = output->size();
-        TxnRegistry::get(header).txn_handler(nullptr, header, input.data(), input.size(),
+        TxnRegistry::get(header).txn_handler(this, header, input.data(), input.size(),
                 res, output->data(), &output_size,
                 NULL);
         output->resize(output_size);
@@ -95,7 +98,7 @@ public:
             mdb::Value* output,
             rrr::i32* output_size
     ) {
-        TxnRegistry::get(header).txn_handler(nullptr, header, input, input_size,
+        TxnRegistry::get(header).txn_handler(this, header, input, input_size,
                 res, output, output_size,
                 NULL);
     }

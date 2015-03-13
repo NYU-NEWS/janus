@@ -28,6 +28,12 @@ TPLDTxn::TPLDTxn(i64 tid, DTxnMgr* mgr) : DTxn(tid, mgr) {
     mdb_txn_ = mgr->get_mdb_txn(tid_);
 }
 
+bool TPLDTxn::read_column(mdb::Row* row, mdb::column_id_t col_id, Value* value) {
+    verify(mdb_txn_ != nullptr);
+    return mdb_txn_->read_column(row, col_id, value);
+};
+
+
 int TPLDTxn::prepare() {
     auto txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(tid_);
     verify(txn != NULL);
@@ -77,7 +83,7 @@ std::function<void(void)> TPLDTxn::get_2pl_succ_callback(
         rrr::i32 input_size,
         rrr::i32 *res,
         mdb::Txn2PL::PieceStatus *ps) {
-    return [header, input, input_size, res, ps] () {
+    return [header, input, input_size, res, ps, this] () {
         Log::debug("tid: %ld, pid: %ld, p_type: %d, lock acquired call back",
                 header.tid, header.pid, header.p_type);
         Log::debug("succ 1 callback: PS: %p", ps);
@@ -104,13 +110,13 @@ std::function<void(void)> TPLDTxn::get_2pl_succ_callback(
 
                 if (output_vec != NULL) {
                     rrr::i32 output_vec_size = output_vec->size();
-                    TxnRegistry::get(header).txn_handler(nullptr, header, input,
+                    TxnRegistry::get(header).txn_handler(this, header, input,
                             input_size, res, output_vec->data(),
                             &output_vec_size, NULL);
                     output_vec->resize(output_vec_size);
                 }
                 else {
-                    TxnRegistry::get(header).txn_handler(nullptr, header, input,
+                    TxnRegistry::get(header).txn_handler(this, header, input,
                             input_size, res, output, output_size, NULL);
                 }
             }
@@ -152,13 +158,13 @@ std::function<void(void)> TPLDTxn::get_2pl_proceed_callback(
 
             if (output_vec != NULL) {
                 rrr::i32 output_vec_size = output_vec->size();
-                TxnRegistry::get(header).txn_handler(nullptr, header, input,
+                TxnRegistry::get(header).txn_handler(this, header, input,
                         input_size, res, output_vec->data(),
                         &output_vec_size, NULL);
                 output_vec->resize(output_vec_size);
             }
             else {
-                TxnRegistry::get(header).txn_handler(nullptr, header, input,
+                TxnRegistry::get(header).txn_handler(this, header, input,
                         input_size, res, output, output_size, NULL);
             }
         }
@@ -253,7 +259,7 @@ void TPLDTxn::pre_execute_2pl(const RequestHeader& header,
     txn->init_piece(header.tid, header.pid, db, output);
 
     Log::debug("start reg lock");
-    TxnRegistry::get(header).txn_handler(nullptr, header, input.data(), input.size(),
+    TxnRegistry::get(header).txn_handler(this, header, input.data(), input.size(),
             res, NULL/*output*/, NULL/*output_size*/,
             NULL);
 }
@@ -275,7 +281,7 @@ void TPLDTxn::pre_execute_2pl(const RequestHeader& header,
         db->trigger();
         return;
     }
-    TxnRegistry::get(header).txn_handler(nullptr, header, input, input_size,
+    TxnRegistry::get(header).txn_handler(this, header, input, input_size,
             res, NULL/*output*/, NULL/*output_size*/,
             NULL);
 }

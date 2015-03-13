@@ -122,6 +122,9 @@ add_library(ROCOCO
     bench/tpcc/piece.h
     bench/tpcc/stock_level.cpp
     bench/tpcc/order_status.cpp
+    bench/tpcc/new_order.cpp
+    bench/tpcc/delivery.cpp
+    bench/tpcc/payment.cpp
     bench/tpcc_dist/chopper.cc
     bench/tpcc_dist/chopper.h
     bench/tpcc_dist/piece.h

@@ -13,7 +13,7 @@ public:
     static DepGraph *dep_s;
 
     std::vector<DeferredRequest> dreqs_;
-    Vertex<TxnInfo> *tv_;
+    Vertex <TxnInfo> *tv_;
 
     std::vector<TxnInfo *> conflict_txns_; // This is read-only transaction
 
@@ -44,7 +44,7 @@ public:
     );
 
     void to_decide(
-            Vertex<TxnInfo> *v,
+            Vertex <TxnInfo> *v,
             rrr::DeferredReply *defer
     );
 
@@ -53,7 +53,7 @@ public:
     );
 
     void send_ask_req(
-            Vertex<TxnInfo> *av
+            Vertex <TxnInfo> *av
     );
 
     virtual mdb::Row *create(
@@ -62,13 +62,16 @@ public:
         return RCCRow::create(schema, values);
     }
 
-    // ??? TODO (Shuai) I do not understand why de-virtual, is it because the return type thing?
-    // TODO (Haonan.reply) Yes, that's my understanding... If this function has different prototype from
-    // TODO its parent class's function. Can they be virtual functions?
-    // TODO (Shuai.reply) I think no.
-    // de-virtual this function, since we are going to have different function signature anyway
-    // because we need to either pass in a reference or let it return a value -- list of rxn ids
-    virtual void kiss(mdb::Row *r, int col, bool immediate);
-};
+    virtual void kiss(
+            mdb::Row *r,
+            int col,
+            bool immediate
+    );
 
+    virtual bool read_column(
+            mdb::Row *row,
+            mdb::column_id_t col_id,
+            Value *value
+    );
+};
 //} // namespace rococo

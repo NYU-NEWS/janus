@@ -365,4 +365,10 @@ void RCCDTxn::kiss(mdb::Row* r, int col, bool immediate) {
     }
 }
 
+bool RCCDTxn::read_column(mdb::Row* row, mdb::column_id_t col_id, Value* value) {
+    *value = row->get_column(col_id);
+    // always allowed
+    return true;
+}
+
 } // namespace rococo

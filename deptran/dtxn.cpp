@@ -67,7 +67,8 @@ mdb::Txn *DTxnMgr::get_mdb_txn(const i64 tid) {
 
 mdb::Txn *DTxnMgr::get_mdb_txn(const RequestHeader &header) {
     if (mode_ == MODE_NONE
-            || mode_ == MODE_RCC) {
+            || mode_ == MODE_RCC
+            || mode_ == MODE_RO6) {
         if (mdb_txns_.empty()) {
             mdb::Txn *txn = mdb_txn_mgr_->start(0);
             mdb_txns_[0] = txn;

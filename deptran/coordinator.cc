@@ -118,9 +118,8 @@ void Coordinator::do_one(TxnRequest& req) {
         }
         break;
     case MODE_RCC:
-    case MODE_RO6:
         if (recorder_) {
-               std::string log_s;
+            std::string log_s;
             req.get_log(ch->txn_id_, log_s);
             std::function<void(void)> start_func = [this, ch] () {
                 if (ch->is_read_only())
@@ -141,6 +140,27 @@ void Coordinator::do_one(TxnRequest& req) {
                     deptran_batch_start(ch);
                 else
                     deptran_start(ch);
+            }
+        }
+        break;
+    case MODE_RO6:
+        verify(!batch_optimal_);
+        if (recorder_) {
+               std::string log_s;
+            req.get_log(ch->txn_id_, log_s);
+            std::function<void(void)> start_func = [this, ch] () {
+                if (ch->is_read_only())
+                    ro6_start_ro(ch);
+                else {
+                    deptran_start(ch);
+                }
+            };
+            recorder_->submit(log_s, start_func);
+        } else {
+            if (ch->is_read_only())
+                ro6_start_ro(ch);
+            else {
+                deptran_start(ch);
             }
         }
         break;
@@ -806,6 +826,62 @@ void Coordinator::deptran_start_ro(TxnChopper* ch) {
                 else if (ch->n_started_ == ch->n_pieces_) {
                     ch->read_only_reset();
                     this->deptran_finish_ro(ch);
+                }
+            }
+        };
+
+        RococoProxy* proxy = vec_rpc_proxy_[server_id];
+        Log::debug("send deptran RO start request, tid: %llx, pid: %llx", ch->txn_id_, header.pid);
+        verify(input != nullptr);
+        Future::safe_release(proxy->async_rcc_ro_start_pie(header, *input, fuattr));
+    }
+}
+
+void Coordinator::ro6_start_ro(TxnChopper* ch) {
+
+    // new txn id for every new and retry.
+    RequestHeader header = gen_header(ch);
+
+    int pi;
+    std::vector<Value>* input = nullptr;
+    int32_t server_id;
+    int res;
+    int output_size;
+    while ((res = ch->next_piece(input, output_size, server_id, pi, header.p_type)) == 0) {
+        header.pid = next_pie_id();
+
+        rrr::FutureAttr fuattr;
+        // remember this a asynchronous call! variable funtional range is important!
+        fuattr.callback = [ch, pi, this, header](Future* fu) {
+            {
+                ScopedLock(this->mtx_);
+
+                std::vector<Value> res;
+                fu->get_reply() >> res;
+
+                Log::debug("receive deptran RO start response, tid: %llx, pid: %llx, ", header.tid, header.pid);
+
+                ch->n_started_++;
+                if (ch->read_only_start_callback(pi, NULL, res))
+                    this->ro6_start_ro(ch);
+                else if (ch->n_started_ == ch->n_pieces_) {
+                    // job finish here.
+                    ch->reply_.res_ = SUCCESS;
+
+                    // generate a reply and callback.
+                    Log::debug("ro6 RO callback, %llx", ch->txn_id_);
+                    TxnReply &txn_reply_buf = ch->get_reply();
+                    double last_latency = ch->last_attempt_latency();
+                    this->report(txn_reply_buf, last_latency
+#ifdef TXN_STAT
+                    , ch
+#endif
+                    );
+                    ch->callback_(txn_reply_buf);
+                    delete ch;
+//                    ch->read_only_reset();
+//                    this->deptran_finish_ro(ch);
+                    // TODO add a finish request to free the data structure on server.
                 }
             }
         };

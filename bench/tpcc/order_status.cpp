@@ -61,6 +61,7 @@ void TpccPiece::reg_order_status() {
             TPCC_ORDER_STATUS_1, // Ri customer
             DF_NO) {
         verify(row_map == NULL);
+        verify(dtxn != nullptr);
         Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_1);
         verify(input_size == 3);
         i32 output_index = 0;
@@ -89,25 +90,25 @@ void TpccPiece::reg_order_status() {
         if (RO6_RO_PHASE_1) return;
 
 
-        if (!txn->read_column(r, 3, &buf)) { // read c_first
+        if (!dtxn->read_column(r, 3, &buf)) { // read c_first
             *res = REJECT;
             *output_size = output_index;
             return;
         }
         output[output_index++] = buf; // output[0] ==>  c_first
-        if (!txn->read_column(r, 4, &buf)) { // read c_middle
+        if (!dtxn->read_column(r, 4, &buf)) { // read c_middle
             *res = REJECT;
             *output_size = output_index;
             return;
         }
         output[output_index++] = buf; // output[1] ==>  c_middle
-        if (!txn->read_column(r, 5, &buf)) { // read c_last
+        if (!dtxn->read_column(r, 5, &buf)) { // read c_last
             *res = REJECT;
             *output_size = output_index;
             return;
         }
         output[output_index++] = buf; // output[2] ==> c_last
-        if (!txn->read_column(r, 16, &buf)) { // read c_balance
+        if (!dtxn->read_column(r, 16, &buf)) { // read c_balance
             *res = REJECT;
             *output_size = output_index;
             return;
@@ -154,7 +155,7 @@ void TpccPiece::reg_order_status() {
                             rrr::i32 input_size,
                             rrr::i32 *res) {
 
-                        //txn->read_column(r_0, 3, &buf);
+                        //dtxn->read_column(r_0, 3, &buf);
                         mdb::MultiBlob mb(3);
                         mb[0] = input[1].get_blob();
                         mb[1] = input[0].get_blob();
@@ -200,7 +201,7 @@ void TpccPiece::reg_order_status() {
         }
 
 
-        if (!txn->read_column(r_0, 3, &buf)) {
+        if (!dtxn->read_column(r_0, 3, &buf)) {
             *res = REJECT;
             *output_size = output_index;
             return;
@@ -222,20 +223,20 @@ void TpccPiece::reg_order_status() {
         if (RO6_RO_PHASE_1) return;
 
 
-        if (!txn->read_column(r, 2, &buf)) {
+        if (!dtxn->read_column(r, 2, &buf)) {
             *res = REJECT;
             *output_size = output_index;
             return;
         }
         output[output_index++] = buf; // output[0] ==> o_id
         Log::debug("piece: %d, o_id: %d", TPCC_ORDER_STATUS_2, buf.get_i32());
-        if (!txn->read_column(r, 4, &buf)) {
+        if (!dtxn->read_column(r, 4, &buf)) {
             *res = REJECT;
             *output_size = output_index;
             return;
         }
         output[output_index++] = buf; // output[1] ==> o_entry_d
-        if (!txn->read_column(r, 5, &buf)) {
+        if (!dtxn->read_column(r, 5, &buf)) {
             *res = REJECT;
             *output_size = output_index;
             return;
@@ -341,31 +342,31 @@ void TpccPiece::reg_order_status() {
         while (i < row_list.size()) {
             r = row_list[i++];
 
-            if (!txn->read_column(r, 4, &buf)) {
+            if (!dtxn->read_column(r, 4, &buf)) {
                 *res = REJECT;
                 *output_size = output_index;
                 return;
             }
             output[output_index++] = buf; // output[0] ==> ol_i_id
-            if (!txn->read_column(r, 5, &buf)) {
+            if (!dtxn->read_column(r, 5, &buf)) {
                 *res = REJECT;
                 *output_size = output_index;
                 return;
             }
             output[output_index++] = buf; // output[1] ==> ol_supply_w_id
-            if (!txn->read_column(r, 6, &buf)) {
+            if (!dtxn->read_column(r, 6, &buf)) {
                 *res = REJECT;
                 *output_size = output_index;
                 return;
             }
             output[output_index++] = buf; // output[2] ==> ol_delivery_d
-            if (!txn->read_column(r, 7, &buf)) {
+            if (!dtxn->read_column(r, 7, &buf)) {
                 *res = REJECT;
                 *output_size = output_index;
                 return;
             }
             output[output_index++] = buf; // output[3] ==> ol_quantity
-            if (!txn->read_column(r, 8, &buf)) {
+            if (!dtxn->read_column(r, 8, &buf)) {
                 *res = REJECT;
                 *output_size = output_index;
                 return;

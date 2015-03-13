@@ -9,6 +9,7 @@ void TpccPiece::reg_stock_level() {
             DF_NO) {
 
         verify(row_map == NULL);
+        verify(dtxn != nullptr);
         verify(input_size == 2);
         i32 output_index = 0;
         Value buf;
@@ -31,7 +32,7 @@ void TpccPiece::reg_stock_level() {
         if (RO6_RO_PHASE_1) return;
 
 
-        if (!txn->read_column(r, 10, &buf)) {
+        if (!dtxn->read_column(r, 10, &buf)) {
             *res = REJECT;
             *output_size = output_index;
             return;
@@ -107,7 +108,7 @@ void TpccPiece::reg_stock_level() {
         int i = 0;
         while (i < row_list.size()) {
             mdb::Row *r = row_list[i++];
-            if (!txn->read_column(r, 4, &buf)) {
+            if (!dtxn->read_column(r, 4, &buf)) {
                 *res = REJECT;
                 *output_size = output_index;
                 return;
@@ -149,7 +150,7 @@ void TpccPiece::reg_stock_level() {
         if (RO6_RO_PHASE_1) return;
 
 
-        if (!txn->read_column(r, 2, &buf)) {
+        if (!dtxn->read_column(r, 2, &buf)) {
             *res = REJECT;
             *output_size = output_index;
             return;

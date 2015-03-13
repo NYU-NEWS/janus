@@ -161,6 +161,8 @@ public:
 
     void deptran_finish_ro(TxnChopper* ch);
 
+    void ro6_start_ro(TxnChopper* ch);
+
     RequestHeader gen_header(TxnChopper* ch);
 
     BatchRequestHeader gen_batch_header(TxnChopper* ch);
