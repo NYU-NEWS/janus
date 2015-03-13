@@ -86,6 +86,9 @@ void TpccPiece::reg_order_status() {
             ((RCCDTxn *) dtxn)->kiss(r, 16, false);
         }
 
+        if (RO6_RO_PHASE_1) return;
+
+
         if (!txn->read_column(r, 3, &buf)) { // read c_first
             *res = REJECT;
             *output_size = output_index;
@@ -216,6 +219,9 @@ void TpccPiece::reg_order_status() {
             ((RCCDTxn *) dtxn)->kiss(r, 5, false);
         }
 
+        if (RO6_RO_PHASE_1) return;
+
+
         if (!txn->read_column(r, 2, &buf)) {
             *res = REJECT;
             *output_size = output_index;
@@ -322,13 +328,18 @@ void TpccPiece::reg_order_status() {
         }
 
 
+        if (IS_MODE_RCC || IS_MODE_RO6) {
+            for (int i = 0; i < row_list.size(); i++) {
+                r = row_list[i++];
+                ((RCCDTxn*)dtxn)->kiss(r, 6, false);
+            }
+            if (RO6_RO_PHASE_1) return;
+        }
+
+
         int i = 0;
         while (i < row_list.size()) {
             r = row_list[i++];
-
-            if ((IS_MODE_RCC || IS_MODE_RO6)) {
-                ((RCCDTxn *) dtxn)->kiss(r, 6, false);
-            }
 
             if (!txn->read_column(r, 4, &buf)) {
                 *res = REJECT;

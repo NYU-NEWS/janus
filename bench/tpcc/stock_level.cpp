@@ -27,6 +27,10 @@ void TpccPiece::reg_stock_level() {
         if ((IS_MODE_RCC || IS_MODE_RO6)) {
             ((RCCDTxn *) dtxn)->kiss(r, 10, false);
         }
+
+        if (RO6_RO_PHASE_1) return;
+
+
         if (!txn->read_column(r, 10, &buf)) {
             *res = REJECT;
             *output_size = output_index;
@@ -141,6 +145,9 @@ void TpccPiece::reg_stock_level() {
         if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) {
             ((RCCDTxn *) dtxn)->kiss(r, 2, false);
         }
+
+        if (RO6_RO_PHASE_1) return;
+
 
         if (!txn->read_column(r, 2, &buf)) {
             *res = REJECT;

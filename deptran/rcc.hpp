@@ -1,7 +1,6 @@
 #pragma once
 
 //namespace rococo {
-
 class RCCDTxn : public DTxn {
 public:
 

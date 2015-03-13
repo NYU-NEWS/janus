@@ -87,8 +87,6 @@ void RO6DTxn::kiss(mdb::Row* r, int col, bool immediate) {
 //        row_col_map[r] = col;
         // for haonan, i think it is fine this way.
         row_col_map.insert(std::make_pair(r, col));
-    } else {
-
     }
 }
 
@@ -98,7 +96,40 @@ void RO6DTxn::start_ro(
         std::vector<mdb::Value> &output,
         rrr::DeferredReply *defer
 ) {
-    RCCDTxn::start_ro(header, input, output, defer);
+//    RCCDTxn::start_ro(header, input, output, defer);
+
+    conflict_txns_.clear();
+    auto txn_handler_pair = TxnRegistry::get(header.t_type, header.p_type);
+    int output_size = 300;
+    output.resize(output_size);
+    int res;
+    phase_ = 1;
+
+    txn_handler_pair.txn_handler(this, header, input.data(), input.size(), &res,
+            output.data(), &output_size, NULL);
+    // get conflicting transactions
+    std::vector<TxnInfo*> &conflict_txns = conflict_txns_;
+
+    // TODO callback: read the value and return.
+    std::function<void(void)> cb = [&header, &input, &output, defer, this] () {
+        int res;
+        int output_size = 300;
+        this->phase_ = 2;
+        auto txn_handler_pair = TxnRegistry::get(header.t_type, header.p_type);
+
+        txn_handler_pair.txn_handler(this, header, input.data(), input.size(), &res, output.data(), &output_size, NULL);
+        output.resize(output_size);
+        defer->reply();
+    };
+    // wait for them become commit.
+
+    DragonBall *ball = new DragonBall(conflict_txns.size() + 1, cb);
+
+    for (auto tinfo: conflict_txns) {
+        tinfo->register_event(TXN_DCD, ball);
+    }
+    ball->trigger();
+
     // TODO: for Shuai, this does everything read transactions need in
     // start phase. See the comments to its declaration in dtxn.hpp
     // It needs txn_id, row, and column_id for this txn, please implement the
