@@ -64,10 +64,13 @@ version_t RO6Row::getCurrentVersion(int column_id) {
  *
  * @return: an old value
  */
-Value RO6Row::get_column_by_version(int column_id, i64 version_num) const {
-    //return old_values_[column_id][version_num];
-    Value v;    // stub
-    return v;   // need to modify this later
+Value RO6Row::get_column_by_version(int column_id, i64 version_num) {
+    if (old_values_.find(column_id) == old_values_.end() ||
+        old_values_[column_id].find(version_num) == old_values_[column_id].end()) {
+        // I'm uneasy if I ever get to this case.....
+        return Value("");
+    }
+    return old_values_[column_id][version_num];
 }
 
 /*
@@ -156,11 +159,12 @@ std::vector<i64> ReadTxnIdTracker::getReadTxnIds(int column_id) {
  */
 Value RO6Row::get_column(int column_id, i64 txnId) {
     version_t version_number = rtxn_tracker.checkIfTxnIdBeenRecorded(column_id, txnId, false, 0);
-    if (version_number != 0) {
-        return get_column_by_version(column_id, version_number);
-    } else {
-        return Row::get_column(column_id);
+    if (version_number == 0) {
+        // Should never get into this case. Why on the earth can someone reads a column that has not been
+        // created yet.
+        return Value("");
     }
+    return get_column_by_version(column_id, version_number);
 }
 
 } // namespace rococo

@@ -141,7 +141,7 @@ public:
     version_t getCurrentVersion(int column_id);
 
     // get a value specified by a version number
-    Value get_column_by_version(int column_id, i64 version_num) const;
+    Value get_column_by_version(int column_id, i64 version_num);
 
     // TODO: do some tests to see how slow it is
 
