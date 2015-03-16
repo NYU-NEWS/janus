@@ -163,7 +163,8 @@ Value RO6Row::get_column(int column_id, i64 txnId) {
         // Actually it's possible to get into this case, when a read needs to return a version that before
         // the first value of that column is written. version number 0 is set by write txn. Let's return a
         // pre-set value for this case.
-        return Value("Null");
+        Row::get_column(column_id);
+        //return Value("Null");
     }
     return get_column_by_version(column_id, version_number);
 }
