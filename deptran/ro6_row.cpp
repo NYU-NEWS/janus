@@ -65,8 +65,9 @@ version_t RO6Row::getCurrentVersion(int column_id) {
  * @return: an old value
  */
 Value RO6Row::get_column_by_version(int column_id, i64 version_num) {
-    if (old_values_.find(column_id) == old_values_.end() ||
-        old_values_[column_id].find(version_num) == old_values_[column_id].end()) {
+    verify (old_values_.find(column_id) != old_values_.end());
+
+    if (old_values_[column_id].find(version_num) == old_values_[column_id].end()) {
         // I'm uneasy if I ever get to this case.....
         // Shuai: This is where the bug happens!
 //        return Value("");
