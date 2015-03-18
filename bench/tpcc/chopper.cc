@@ -980,7 +980,10 @@ void TpccChopper::delivery_retry() {
     delivery_dep_.piece_order_lines = false;
 }
 
-void TpccChopper::stock_level_shard(const char *tb, const std::vector<mdb::Value> &input, uint32_t &site) {
+void TpccChopper::stock_level_shard(
+        const char *tb,
+        const std::vector<mdb::Value> &input,
+        uint32_t &site) {
     MultiValue mv;
     if (tb == TPCC_TB_DISTRICT
      || tb == TPCC_TB_ORDER_LINE)
@@ -1036,7 +1039,11 @@ void TpccChopper::stock_level_init(TxnRequest &req) {
     // piece 2 - n, R stock init in stock_level_callback
 }
 
-bool TpccChopper::stock_level_callback(int pi, int res, const Value *output, uint32_t output_size) {
+bool TpccChopper::stock_level_callback(
+        int pi,
+        int res,
+        const Value *output,
+        uint32_t output_size) {
     if (pi == 0) {
         verify(output_size == 1);
         inputs_[1][0] = output[0];

@@ -1,1 +1,1 @@
-./build/deptran_server  -s 0 -f ~/workspace/deptran/properties.xml -p 5433 -t 10
+./build/deptran_server  -s 0 -f /home/shuai/workspace/rococo/config/y.xml -p 5555 -H /home/shuai/workspace/rococo/config/hosts -t 10

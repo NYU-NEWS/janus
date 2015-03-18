@@ -117,7 +117,8 @@ void RO6DTxn::start_ro(
         this->phase_ = 2;
         auto txn_handler_pair = TxnRegistry::get(header.t_type, header.p_type);
 
-        txn_handler_pair.txn_handler(this, header, input.data(), input.size(), &res, output.data(), &output_size, NULL);
+        txn_handler_pair.txn_handler(this, header, input.data(), input.size(),
+                &res, output.data(), &output_size, NULL);
         output.resize(output_size);
         defer->reply();
     };
@@ -144,6 +145,7 @@ void RO6DTxn::start_ro(
 bool RO6DTxn::read_column(mdb::Row* r, mdb::column_id_t col_id, Value* value) {
 
     if (read_only_) {
+//        if (false) {
         // TODO (for haonan) Hi, can you put the read-only transaction here to make things more clear?
         RO6Row* row = (RO6Row*)r;
         *value = row->get_column(col_id, tid_);

@@ -38,6 +38,7 @@ void TpccPiece::reg_stock_level() {
             return;
         }
         output[output_index++] = buf; // output[0] ==> d_next_o_id
+        verify(buf.get_kind() == Value::I32);
 
         verify(*output_size >= output_index);
         *output_size = output_index;
@@ -70,7 +71,8 @@ void TpccPiece::reg_stock_level() {
                 txn->get_table(TPCC_TB_ORDER_LINE), mbl, mbh, output_size,
                 header.pid, mdb::ORD_ASC);
 
-        Log::debug("tid: %llx, stock_level: piece 1: d_next_o_id: %d, ol_w_id: %d, ol_d_id: %d", header.tid, input[0].get_i32(), input[1].get_i32(), input[2].get_i32());
+        Log::debug("tid: %llx, stock_level: piece 1: d_next_o_id: %d, ol_w_id: %d, ol_d_id: %d",
+                header.tid, input[0].get_i32(), input[1].get_i32(), input[2].get_i32());
 
         std::vector<mdb::Row *> row_list;
         row_list.reserve(20);
