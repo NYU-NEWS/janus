@@ -47,13 +47,15 @@ void RO6Row::garbageCollection(int column_id, std::map<i64, Value>::iterator itr
  * Used when a write needs to record version number for a later read to query at
  */
 version_t RO6Row::getCurrentVersion(int column_id) {
-    if (old_values_.find(column_id) == old_values_.end()) {
+    auto& values = old_values_[column_id];
+
+    if (values.size() == 0) {
         // current write piece is writing the first value to this column;
         // then the old version we return should be null, version number should
         // be 0
         return 0;
     }
-    std::map<i64, Value>::iterator itr = old_values_[column_id].end();
+    std::map<i64, Value>::iterator itr = values.end();
     return (--itr)->first;
 }
 
@@ -65,15 +67,17 @@ version_t RO6Row::getCurrentVersion(int column_id) {
  * @return: an old value
  */
 Value RO6Row::get_column_by_version(int column_id, i64 version_num) {
-    verify (old_values_.find(column_id) != old_values_.end());
+//    verify (old_values_.find(column_id) != old_values_.end());
 
-    if (old_values_[column_id].find(version_num) == old_values_[column_id].end()) {
+    auto &values = old_values_[column_id];
+    auto it = values.find(version_num);
+    if (it == values.end()) {
         // I'm uneasy if I ever get to this case.....
         // Shuai: This is where the bug happens!
 //        return Value("");
         return Row::get_column(column_id);
     }
-    return old_values_[column_id][version_num];
+    return it->second;
 }
 
 /*

@@ -71,6 +71,19 @@ namespace rococo {
 
     */
 
+void RO6DTxn::start(
+            const RequestHeader &header,
+            const std::vector<mdb::Value> &input,
+            bool *deferred,
+            ChopStartResponse *res) {
+    RCCDTxn::start(header, input, deferred, res);
+    auto& ro_list = res->ro_list;
+    ro_list.insert(ro_list.end(), ro_.begin(), ro_.end());
+    ro_list.resize(1);
+
+//    Log::debug("read only tx list size %d carried in start_ack.", ro_.size());
+}
+
 void RO6DTxn::kiss(mdb::Row* r, int col, bool immediate) {
     RCCDTxn::kiss(r, col, immediate);
 

@@ -7,7 +7,7 @@ namespace rococo {
 typedef uint64_t version_t;
 
 // RO-6: do GC for every GC_THRESHOLD old values
-const int GC_THRESHOLD = 100;
+const int GC_THRESHOLD = 10000;
 // RO-6: GC time for striping out old versions = 5000 ms
 const int VERSION_SAFE_TIME = 5000;
 

@@ -25,10 +25,7 @@ public:
             const std::vector<mdb::Value> &input,
             bool *deferred,
             ChopStartResponse *res
-    ) {
-        RCCDTxn::start(header, input, deferred, res);
-        res->ro_list.insert(res->ro_list.end(), ro_.begin(), ro_.end());
-    }
+    );
 
     virtual void start_ro(
             const RequestHeader &header,
