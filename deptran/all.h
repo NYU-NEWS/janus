@@ -35,6 +35,9 @@ using std::vector;
 #include <cassert>
 #include <cinttypes>
 
+// google library
+#include <snappy.h>
+
 // misc helper files
 #include "rrr.hpp"
 
@@ -77,6 +80,7 @@ static dummy_class dummy___;
 #define level_s
 
 // User include files
+#include "compress.hpp"
 #include "constants.hpp"
 #include "config.hpp"
 #include "pie_info.h"

@@ -39,23 +39,7 @@ public:
             const ChopFinishRequest &req,
             ChopFinishResponse *res,
             rrr::DeferredReply *defer
-    ) {
-        const std::vector<i64> &ro_list = req.ro_list;
-        // handle ro list, put ro ids into table
-        // I assume one txn may query multiple rows on this node?
-        for (auto &pair : row_col_map) {
-            auto row = (RO6Row *) pair.first;
-            int col_id = pair.second;
-            // get current version of the cell this txn is going to update
-            version_t current_version = row->getCurrentVersion(col_id);
-            for (i64 ro_id : ro_list) {
-                row->rtxn_tracker.checkIfTxnIdBeenRecorded(col_id, ro_id, true, current_version);
-            }
-        }
-        // We need to commit this txn after updating the table, because we need to know what the
-        // old version number was before committing current version.
-        RCCDTxn::commit(req, res, defer);
-    }
+    );
 
     // This is not called by a read-only-transaction's start phase,
     virtual void kiss(

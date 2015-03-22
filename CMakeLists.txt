@@ -184,7 +184,7 @@ add_library(ROCOCO
     deptran/txn_info.h
     deptran/txn_reg.hpp
     deptran/txn_req_factory.cc
-    deptran/txn_req_factory.h)
+    deptran/txn_req_factory.h deptran/compress.hpp)
 
 add_executable(ROCOCO_SERVER deptran/s_main.cc)
 add_executable(ROCOCO_CLIENT deptran/c_main.cc)

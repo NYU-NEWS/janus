@@ -1,4 +1,4 @@
-<benchmark mode="ro6" name="tpcc_real_dist_part" scale_factor="1" concurrent_txn="1" 
+<benchmark mode="2pl" name="tpcc_real_dist_part" scale_factor="1" concurrent_txn="1" 
     batch_start="false" txn_weight="40:40:4:40:4" max_retry="0">
     <hosts number="1">
         <site id="0" threads="1">node1:18000</site>

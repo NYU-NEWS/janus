@@ -684,7 +684,9 @@ void Coordinator::deptran_start(TxnChopper* ch) {
                 fu->get_reply() >> res;
 
                 if (IS_MODE_RO6) {
-                    auto &ro = res.ro_list;
+                    std::vector<i64> ro;
+                    string_to_vector(res.read_only, &ro);
+
                     this->ro_txn_.insert(ro.begin(), ro.end());
                 }
 
@@ -783,9 +785,10 @@ void Coordinator::deptran_finish(TxnChopper *ch) {
     req.txn_id = ch->txn_id_;
     req.gra = ch->gra_;
     if (IS_MODE_RO6) {
-        // TODO. merge the read_only list.
-        auto &ro = req.ro_list;
+        // merge the read_only list.
+        std::vector<i64> ro;
         ro.insert(ro.begin(), ro_txn_.begin(), ro_txn_.end());
+        string_to_vector(req.read_only, &ro);
     }
 
     verify(ch->gra_.size() > 0);

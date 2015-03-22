@@ -26,13 +26,13 @@ struct ChopStartResponse {
     i8 is_defered;
     vector<Value> output;
     GraphMarshaler gra_m;
-    vector<i64> ro_list; // for ro6
+    string read_only; // for ro6
 }
 
 struct ChopFinishRequest {
     i64 txn_id;
     Graph<TxnInfo> gra;
-    vector<i64> ro_list; // for ro6
+    string read_only; // for ro6
 }
 
 struct ChopFinishResponse {

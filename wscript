@@ -50,6 +50,7 @@ def configure(conf):
     _enable_piece_count(conf)
     _enable_txn_count(conf)
     _enable_conflict_count(conf)
+    _enable_snappy(conf)
     #_enable_logging(conf)
 
 
@@ -192,6 +193,12 @@ def _enable_logging(conf):
     conf.env.append_value("CXXFLAGS", "-DRECORD")
     conf.env.append_value("LINKFLAGS", "-laio")
     Logs.pprint("PINK", "Logging enabled")
+
+def _enable_snappy(conf):
+    Logs.pprint("PINK", "google snappy enabled")
+    conf.env.append_value("LINKFLAGS", "-Wl,--no-as-needed")
+    conf.env.append_value("LINKFLAGS", "-lsnappy")
+    conf.env.append_value("LINKFLAGS", "-Wl,--as-needed")
 
 def _enable_tcmalloc(conf):
     if Options.options.tcmalloc:
