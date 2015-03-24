@@ -1,23 +1,16 @@
-<benchmark mode="deptran" name="tpcc_real_dist_part" scale_factor="1" concurrent_txn="1" batch_start="false" txn_weight="45:43:4:40:4" max_retry="0">
-    <hosts number="8">
-        <site id="0" threads="1">beaker-24:18000</site>
-        <site id="1" threads="1">beaker-24:18001</site>
-        <site id="2" threads="1">beaker-24:18002</site>
-        <site id="3" threads="1">beaker-24:18003</site>
-        <site id="4" threads="1">beaker-24:18004</site>
-        <site id="5" threads="1">beaker-24:18005</site>
-        <site id="6" threads="1">beaker-24:18006</site>
-        <site id="7" threads="1">beaker-24:18007</site>
+<benchmark mode="deptran" name="tpcc_real_dist_part" scale_factor="1" concurrent_txn="1" 
+    batch_start="false" txn_weight="45:43:4:40:4" max_retry="0">
+    <hosts number="4">
+        <site id="0" threads="1">beaker-20:18000</site>
+        <site id="1" threads="1">beaker-20:18001</site>
+        <site id="2" threads="1">beaker-20:18002</site>
+        <site id="3" threads="1">beaker-20:18003</site>
     </hosts>
-    <clients number="64">
+    <clients number="32">
         <client id="00-07" threads="1">beaker-14</client>
         <client id="08-15" threads="1">beaker-15</client>
         <client id="16-23" threads="1">beaker-16</client>
         <client id="24-31" threads="1">beaker-17</client>
-        <client id="32-39" threads="1">beaker-18</client>
-        <client id="40-47" threads="1">beaker-19</client>
-        <client id="48-55" threads="1">beaker-20</client>
-        <client id="56-63" threads="1">beaker-21</client>
     </clients>
     <table name="warehouse" all_site="true" shard_method="int_modulus" records="1">
         <schema>

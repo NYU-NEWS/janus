@@ -401,7 +401,7 @@ void RococoServiceImpl::rcc_ask_txn(
 
     std::lock_guard<std::mutex> guard(mtx_);
 
-    verify(txn_mgr_->get_mode() == MODE_RCC);
+    verify(IS_MODE_RCC || IS_MODE_RO6);
     Vertex<TxnInfo> *v = RCCDTxn::dep_s->txn_gra_.find(tid);
 
     std::function<void(void)> callback = [this, res, defer, tid] () {

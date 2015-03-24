@@ -36,7 +36,6 @@ using std::vector;
 #include <cinttypes>
 
 // google library
-#include <snappy.h>
 
 // misc helper files
 #include "rrr.hpp"

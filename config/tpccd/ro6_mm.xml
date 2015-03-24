@@ -1,11 +1,47 @@
-<benchmark mode="ro6" name="tpcc_real_dist_part" scale_factor="1" concurrent_txn="1" 
-    batch_start="false" txn_weight="45:43:4:40:4" max_retry="0">
-    <hosts number="2">
-        <site id="0" threads="1">node1:18000</site>
-        <site id="1" threads="1">node2:18000</site>
+<benchmark mode="deptran" name="tpcc_real_dist_part" scale_factor="1" concurrent_txn="1" batch_start="false" txn_weight="45:43:0:40:0">
+    <hosts number="32">
+        <site id="00" threads="1">beaker-21:18000</site>
+        <site id="01" threads="1">beaker-21:18001</site>
+        <site id="02" threads="1">beaker-21:18002</site>
+        <site id="03" threads="1">beaker-21:18003</site>
+        <site id="04" threads="1">beaker-21:18004</site>
+        <site id="05" threads="1">beaker-21:18005</site>
+        <site id="06" threads="1">beaker-21:18006</site>
+        <site id="07" threads="1">beaker-21:18007</site>
+        <site id="08" threads="1">beaker-22:18000</site>
+        <site id="09" threads="1">beaker-22:18001</site>
+        <site id="10" threads="1">beaker-22:18002</site>
+        <site id="11" threads="1">beaker-22:18003</site>
+        <site id="12" threads="1">beaker-22:18004</site>
+        <site id="13" threads="1">beaker-22:18005</site>
+        <site id="14" threads="1">beaker-22:18006</site>
+        <site id="15" threads="1">beaker-22:18007</site>
+        <site id="16" threads="1">beaker-23:18000</site>
+        <site id="17" threads="1">beaker-23:18001</site>
+        <site id="18" threads="1">beaker-23:18002</site>
+        <site id="19" threads="1">beaker-23:18003</site>
+        <site id="20" threads="1">beaker-23:18004</site>
+        <site id="21" threads="1">beaker-23:18005</site>
+        <site id="22" threads="1">beaker-23:18006</site>
+        <site id="23" threads="1">beaker-23:18007</site>
+        <site id="24" threads="1">beaker-24:18000</site>
+        <site id="25" threads="1">beaker-24:18001</site>
+        <site id="26" threads="1">beaker-24:18002</site>
+        <site id="27" threads="1">beaker-24:18003</site>
+        <site id="28" threads="1">beaker-24:18004</site>
+        <site id="29" threads="1">beaker-24:18005</site>
+        <site id="30" threads="1">beaker-24:18006</site>
+        <site id="31" threads="1">beaker-24:18007</site>
     </hosts>
-    <clients number="1">
-        <client id="0" threads="8">node1</client>
+    <clients number="8">
+        <client id="0" threads="64">beaker-14</client>
+        <client id="1" threads="64">beaker-15</client>
+        <client id="2" threads="64">beaker-16</client>
+        <client id="3" threads="64">beaker-17</client>
+        <client id="4" threads="64">beaker-18</client>
+        <client id="5" threads="64">beaker-19</client>
+        <client id="6" threads="64">beaker-20</client>
+        <client id="7" threads="64">beaker-21</client>
     </clients>
     <table name="warehouse" all_site="true" shard_method="int_modulus" records="1">
         <schema>
@@ -35,7 +71,7 @@
             <column name="d_next_o_id" type="i32"/>
         </schema>
     </table>
-    <table name="customer" all_site="true" shard_method="int_modulus" records="30000">
+    <table name="customer" all_site="true" shard_method="int_modulus" records="3000">
         <schema>
             <column name="c_id" type="i32" primary="true"/>
             <column name="c_d_id" type="i32" primary="true" foreign="district.d_id"/>
@@ -60,7 +96,7 @@
             <column name="c_data" type="str"/>
         </schema>
     </table>
-    <table name="history" all_site="true" shard_method="int_modulus" records="30000">
+    <table name="history" all_site="true" shard_method="int_modulus" records="3000">
         <schema>
             <column name="h_key" type="i32" primary="true"/>
             <column name="h_c_id" type="i32" foreign="customer.c_id"/>
@@ -73,7 +109,7 @@
             <column name="h_data" type="str"/>
         </schema>
     </table>
-    <table name="order" all_site="true" shard_method="int_modulus" records="30000">
+    <table name="order" all_site="true" shard_method="int_modulus" records="3000">
         <schema>
             <column name="o_d_id" type="i32" primary="true" foreign="district.d_id"/>
             <column name="o_w_id" type="i32" primary="true" foreign="district.d_w_id"/>
@@ -85,7 +121,7 @@
             <column name="o_all_local" type="i32"/>
         </schema>
     </table>
-    <table name="new_order" all_site="true" shard_method="int_modulus" records="9000">
+    <table name="new_order" all_site="true" shard_method="int_modulus" records="900">
         <schema>
             <column name="no_d_id" type="i32" primary="true" foreign="order.o_d_id"/>
             <column name="no_w_id" type="i32" primary="true" foreign="order.o_w_id"/>
@@ -122,7 +158,7 @@
             <column name="s_data" type="str"/>
         </schema>
     </table>
-    <table name="order_line" all_site="true" shard_method="int_modulus" records="300000">
+    <table name="order_line" all_site="true" shard_method="int_modulus" records="30000">
         <schema>
             <column name="ol_d_id" type="i32" primary="true" foreign="order.o_d_id"/>
             <column name="ol_w_id" type="i32" primary="true" foreign="order.o_w_id"/>

@@ -2,10 +2,11 @@
     batch_start="false" txn_weight="45:43:4:40:4" max_retry="0">
     <hosts number="2">
         <site id="0" threads="1">node1:18000</site>
-        <site id="1" threads="1">node2:18000</site>
+        <site id="1" threads="1">node2:18001</site>
     </hosts>
-    <clients number="1">
-        <client id="0" threads="8">node1</client>
+    <clients number="18">
+        <client id="00-08" threads="1">node9</client>
+        <client id="09-17" threads="1">node9</client>
     </clients>
     <table name="warehouse" all_site="true" shard_method="int_modulus" records="1">
         <schema>
