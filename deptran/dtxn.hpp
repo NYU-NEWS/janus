@@ -5,6 +5,10 @@
 
 namespace rococo {
 
+using mdb::Row;
+using mdb::Table;
+using mdb::column_id_t;
+
 #define IS_MODE_RCC (Config::get_config()->get_mode() == MODE_RCC)
 #define IS_MODE_RO6 (Config::get_config()->get_mode() == MODE_RO6)
 #define IS_MODE_2PL (Config::get_config()->get_mode() == MODE_2PL)
@@ -107,6 +111,7 @@ public:
     int64_t tid_;
     DTxnMgr *mgr_;
     int phase_;
+    mdb::Txn* mdb_txn_;
 
     DTxn() = delete;
 
@@ -114,7 +119,18 @@ public:
 
     virtual mdb::Row* create(const mdb::Schema* schema, const std::vector<mdb::Value> &values) = 0;
 
-    virtual bool read_column(mdb::Row* row, mdb::column_id_t col_id, Value* value) = 0;
+    virtual bool read_column(mdb::Row* row, mdb::column_id_t col_id, Value* value) ;
+    virtual bool write_column(Row* row, column_id_t col_id, const Value& value) ;
+    virtual bool insert_row(Table* tbl, Row* row) ;
+    virtual bool remove_row(Table* tbl, Row* row) ;
+    virtual mdb::ResultSet query(Table* tbl, const mdb::Value& kv);
+    virtual mdb::ResultSet query(Table* tbl, const mdb::Value& kv, bool retrieve, int64_t pid);
+    virtual mdb::ResultSet query(Table* tbl, const mdb::MultiBlob& mb);
+    virtual mdb::ResultSet query(mdb::Table* tbl, const mdb::MultiBlob& mb, bool retrieve, int64_t pid);
+
+    mdb::Table* get_table(const std::string& tbl_name) const;
+
+    bool write_columns(Row* row, const std::vector<column_id_t>& col_ids, const std::vector<Value>& values);
 
     virtual ~DTxn() {}
 };

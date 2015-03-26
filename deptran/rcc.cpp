@@ -4,6 +4,11 @@ namespace rococo {
 
 DepGraph *RCCDTxn::dep_s = NULL;
 
+RCCDTxn::RCCDTxn(i64 tid, DTxnMgr *mgr, bool ro) : DTxn(tid, mgr) {
+    read_only_ = ro;
+    mdb_txn_ = mgr->get_mdb_txn(tid_);
+}
+
 void RCCDTxn::start(
         const RequestHeader &header,
         const std::vector<mdb::Value> &input,
@@ -364,11 +369,4 @@ void RCCDTxn::kiss(mdb::Row* r, int col, bool immediate) {
         }
     }
 }
-
-bool RCCDTxn::read_column(mdb::Row* row, mdb::column_id_t col_id, Value* value) {
-    *value = row->get_column(col_id);
-    // always allowed
-    return true;
-}
-
 } // namespace rococo

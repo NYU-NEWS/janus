@@ -15,13 +15,12 @@ public:
     std::vector<DeferredRequest> dreqs_;
     Vertex <TxnInfo> *tv_;
 
+
     std::vector<TxnInfo *> conflict_txns_; // This is read-only transaction
 
     bool read_only_;
 
-    RCCDTxn(i64 tid, DTxnMgr *mgr, bool ro) : DTxn(tid, mgr) {
-        read_only_ = ro;
-    }
+    RCCDTxn(i64 tid, DTxnMgr *mgr, bool ro);
 
     virtual void start(
             const RequestHeader &header,
@@ -68,10 +67,26 @@ public:
             bool immediate
     );
 
-    virtual bool read_column(
-            mdb::Row *row,
-            mdb::column_id_t col_id,
-            Value *value
-    );
+//    virtual bool read_column(
+//            mdb::Row *row,
+//            mdb::column_id_t col_id,
+//            Value *value
+//    );
+//
+//    virtual bool write_column(
+//            mdb::Row* row,
+//            mdb::column_id_t col_id,
+//            const Value& value
+//    );
+//
+//    virtual bool insert_row(
+//            mdb::Table* tbl,
+//            mdb::Row* row
+//    );
+//
+//    virtual bool remove_row(
+//            mdb::Table* tbl,
+//            mdb::Row* row
+//    );
 };
 //} // namespace rococo

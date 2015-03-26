@@ -84,6 +84,7 @@ mdb::Txn *DTxnMgr::get_mdb_txn(const RequestHeader &header) {
 }
 
 
+
 void DTxnMgr::get_prepare_log(i64 txn_id,
         const std::vector<i32> &sids,
         std::string *str) {
@@ -205,6 +206,57 @@ DTxn* DTxnMgr::create(i64 tid, bool ro) {
     verify(dtxns_[tid] == nullptr);
     dtxns_[tid] = ret;
     return ret;
+}
+
+
+
+mdb::ResultSet DTxn::query(Table* tbl, const mdb::Value& kv) {
+    verify(mdb_txn_ != nullptr);
+    return mdb_txn_->query(tbl, kv);
+}
+
+mdb::ResultSet DTxn::query(Table* tbl, const Value& kv, bool retrieve, int64_t pid) {
+    verify(mdb_txn_ != nullptr);
+    return mdb_txn_->query(tbl, kv, retrieve, pid);
+}
+
+mdb::ResultSet DTxn::query(Table* tbl, const mdb::MultiBlob& mb) {
+    verify(mdb_txn_ != nullptr);
+    return mdb_txn_->query(tbl, mb);
+}
+
+mdb::ResultSet DTxn::query(mdb::Table* tbl, const mdb::MultiBlob& mb, bool retrieve, int64_t pid) {
+    verify(mdb_txn_ != nullptr);
+    return mdb_txn_->query(tbl, mb, retrieve, pid);
+}
+
+
+bool DTxn::read_column(mdb::Row* row, mdb::column_id_t col_id, Value* value){
+    verify(mdb_txn_ != nullptr);
+    return mdb_txn_->read_column(row, col_id, value);
+}
+bool DTxn::write_column(Row* row, column_id_t col_id, const Value& value) {
+    verify(mdb_txn_ != nullptr);
+    return mdb_txn_->write_column(row, col_id, value);
+}
+
+bool DTxn::write_columns(Row* row, const std::vector<column_id_t>& col_ids, const std::vector<Value>& values) {
+    verify(mdb_txn_ != nullptr);
+    return mdb_txn_->write_columns(row, col_ids, values);
+}
+
+
+bool DTxn::insert_row(Table* tbl, Row* row) {
+    verify(mdb_txn_ != nullptr);
+    return mdb_txn_->insert_row(tbl, row);
+}
+bool DTxn::remove_row(Table* tbl, Row* row) {
+    verify(mdb_txn_ != nullptr);
+    return mdb_txn_->remove_row(tbl, row);
+}
+
+mdb::Table* DTxn::get_table(const std::string& tbl_name) const {
+    return mgr_->get_table(tbl_name);
 }
 
 } // namespace rococo

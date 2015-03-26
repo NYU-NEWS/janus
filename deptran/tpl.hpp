@@ -4,7 +4,6 @@
 
 class TPLDTxn : public DTxn {
 public:
-    mdb::Txn* mdb_txn_;
 
     TPLDTxn(i64 tid, DTxnMgr* mgr);
 

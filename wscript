@@ -50,7 +50,7 @@ def configure(conf):
     _enable_piece_count(conf)
     _enable_txn_count(conf)
     _enable_conflict_count(conf)
-    _enable_snappy(conf)
+#    _enable_snappy(conf)
     #_enable_logging(conf)
 
 
