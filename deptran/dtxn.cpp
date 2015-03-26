@@ -46,10 +46,11 @@ mdb::Txn *DTxnMgr::del_mdb_txn(const i64 tid) {
     return txn;
 }
 
-mdb::Txn *DTxnMgr::get_mdb_txn(const i64 tid) {
-    mdb::Txn *txn = NULL;
+mdb::Txn* DTxnMgr::get_mdb_txn(const i64 tid) {
+    mdb::Txn *txn = nullptr;
     std::map<i64, mdb::Txn *>::iterator it = mdb_txns_.find(tid);
     if (it == mdb_txns_.end()) {
+        verify(IS_MODE_2PL);
         txn = mdb_txn_mgr_->start(tid);
         //XXX using occ lazy mode: increment version at commit time
         if (mode_ == MODE_OCC) {
@@ -62,25 +63,27 @@ mdb::Txn *DTxnMgr::get_mdb_txn(const i64 tid) {
     else {
         txn = it->second;
     }
+    verify(txn != nullptr);
     return txn;
 }
 
 mdb::Txn *DTxnMgr::get_mdb_txn(const RequestHeader &header) {
+    mdb::Txn* txn = nullptr;
     if (mode_ == MODE_NONE
             || mode_ == MODE_RCC
             || mode_ == MODE_RO6) {
         if (mdb_txns_.empty()) {
-            mdb::Txn *txn = mdb_txn_mgr_->start(0);
+            txn = mdb_txn_mgr_->start(0);
             mdb_txns_[0] = txn;
-            return txn;
+        } else {
+            txn =  mdb_txns_.begin()->second;
         }
-        return mdb_txns_.begin()->second;
     }
     else {
-        mdb::Txn *txn = NULL;
         txn = get_mdb_txn(header.tid);
-        return txn;
     }
+    verify(txn != nullptr);
+    return txn;
 }
 
 

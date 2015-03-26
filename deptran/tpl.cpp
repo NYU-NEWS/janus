@@ -25,6 +25,7 @@ namespace rococo {
 //
 
 TPLDTxn::TPLDTxn(i64 tid, DTxnMgr* mgr) : DTxn(tid, mgr) {
+    verify(mdb_txn_ == nullptr);
     mdb_txn_ = mgr->get_mdb_txn(tid_);
 }
 
@@ -54,6 +55,7 @@ int TPLDTxn::prepare() {
 }
 int TPLDTxn::abort() {
     verify(mdb_txn_ != NULL);
+    // TODO fix, might have double delete here.
     mdb_txn_->abort();
     delete mdb_txn_;
     return SUCCESS;

@@ -32,7 +32,7 @@ void RococoServiceImpl::do_start_pie(
         Value *output,
         i32 *output_size) {
 
-    auto dtxn = (TPLDTxn*) txn_mgr_->get_or_create(header.tid);
+    TPLDTxn* dtxn = (TPLDTxn*) txn_mgr_->get_or_create(header.tid);
     *res = SUCCESS;
     if (IS_MODE_2PL) {
         dtxn->execute(header, input, input_size,
@@ -156,7 +156,7 @@ void RococoServiceImpl::start_pie(
     // find stored procedure, and run it
     *res = SUCCESS;
 
-    auto dtxn = (TPLDTxn*)txn_mgr_->get_or_create(header.tid);
+    TPLDTxn* dtxn = (TPLDTxn*)txn_mgr_->get_or_create(header.tid);
     if (IS_MODE_2PL) {
         DragonBall *defer_reply_db = new DragonBall(1, [defer]() {
                 defer->reply();
@@ -213,7 +213,7 @@ void RococoServiceImpl::prepare_txn_job(
     if (log_s)
         txn_mgr_->get_prepare_log(tid, sids, log_s);
 
-    auto dtxn = (TPLDTxn*)txn_mgr_->get(tid);
+    auto *dtxn = (TPLDTxn*)txn_mgr_->get(tid);
     *res = dtxn->prepare();
 
 #ifdef PIECE_COUNT
@@ -242,7 +242,7 @@ void RococoServiceImpl::commit_txn(
         rrr::DeferredReply* defer) {
 
     std::lock_guard<std::mutex> guard(mtx_);
-    auto dtxn = (TPLDTxn*)txn_mgr_->get(tid);
+    auto *dtxn = (TPLDTxn*)txn_mgr_->get(tid);
     verify(dtxn != NULL);
     *res = dtxn->commit();
     txn_mgr_->destroy(tid);
@@ -273,7 +273,7 @@ void RococoServiceImpl::abort_txn(
     //else {
     //    TxnRunner::do_abort(tid, defer);
     //}
-    auto dtxn = (TPLDTxn*) txn_mgr_->get(tid);
+    auto* dtxn = (TPLDTxn*) txn_mgr_->get(tid);
     verify(dtxn != NULL);
     *res = dtxn->abort();
     txn_mgr_->destroy(tid);
@@ -348,7 +348,7 @@ void RococoServiceImpl::rcc_start_pie(
 
     auto job = [&header, &input, res, defer, this] () {
         std::lock_guard<std::mutex> guard(this->mtx_);
-        auto txn = (RCCDTxn*) txn_mgr_->get_or_create(header.tid);
+        RCCDTxn* txn = (RCCDTxn*) txn_mgr_->get_or_create(header.tid);
         bool deferred;
         txn->start(header, input, &deferred, res);
 
@@ -390,7 +390,7 @@ void RococoServiceImpl::rcc_finish_txn( // equivalent to commit phrase
         recorder_->submit(m);
     }
 
-    auto txn = (RCCDTxn*) txn_mgr_->get(req.txn_id);
+    RCCDTxn* txn = (RCCDTxn*) txn_mgr_->get(req.txn_id);
     txn->commit(req, res, defer);
 }
 
@@ -435,7 +435,7 @@ void RococoServiceImpl::rcc_ro_start_pie(
     std::lock_guard<std::mutex> guard(mtx_);
 
     bool ro = true;
-    auto dtxn = (RCCDTxn*) txn_mgr_->get_or_create(header.tid, true);
+    RCCDTxn* dtxn = (RCCDTxn*) txn_mgr_->get_or_create(header.tid, true);
 
     dtxn->start_ro(header, input, *output, defer);
 }

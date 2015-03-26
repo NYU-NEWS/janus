@@ -19,7 +19,7 @@ void TpccPiece::reg_delivery() {
         mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
         //cell_locator_t cl(TPCC_TB_NEW_ORDER, 3);
         mdb::Row *r = NULL;
-        mdb::Table *tbl = txn->get_table(TPCC_TB_NEW_ORDER);
+        mdb::Table *tbl = dtxn->get_table(TPCC_TB_NEW_ORDER);
         if (!(IS_MODE_RCC || IS_MODE_RO6) || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { // non-rcc || rcc start request
             mdb::MultiBlob mbl(3), mbh(3);
             mbl[0] = input[1].get_blob();

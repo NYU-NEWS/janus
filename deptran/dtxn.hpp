@@ -115,7 +115,7 @@ public:
 
     DTxn() = delete;
 
-    DTxn(i64 tid, DTxnMgr* mgr) : tid_(tid), mgr_(mgr), phase_(0) {}
+    DTxn(i64 tid, DTxnMgr* mgr) : tid_(tid), mgr_(mgr), phase_(0), mdb_txn_(nullptr) {}
 
     virtual mdb::Row* create(const mdb::Schema* schema, const std::vector<mdb::Value> &values) = 0;
 

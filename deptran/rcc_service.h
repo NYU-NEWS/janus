@@ -99,6 +99,7 @@ public:
 
 public:
 
+    RococoServiceImpl() = delete;
 
     RococoServiceImpl(DTxnMgr *dtxn_mgr, ServerControlServiceImpl *scsi = NULL);
 
