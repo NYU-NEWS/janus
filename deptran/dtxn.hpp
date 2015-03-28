@@ -13,6 +13,7 @@ using mdb::column_id_t;
 #define IS_MODE_RO6 (Config::get_config()->get_mode() == MODE_RO6)
 #define IS_MODE_2PL (Config::get_config()->get_mode() == MODE_2PL)
 #define IS_MODE_OCC (Config::get_config()->get_mode() == MODE_OCC)
+#define IS_MODE_NONE (Config::get_config()->get_mode() == MODE_NONE)
 
 #define IN_PHASE_1 (dtxn->phase_ == 1)
 #define TPL_PHASE_1 (output_size == nullptr)
@@ -132,7 +133,7 @@ public:
 
     bool write_columns(Row* row, const std::vector<column_id_t>& col_ids, const std::vector<Value>& values);
 
-    virtual ~DTxn() {}
+    virtual ~DTxn();
 };
 
 #include "rcc.hpp"

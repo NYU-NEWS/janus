@@ -27,6 +27,7 @@ namespace rococo {
 TPLDTxn::TPLDTxn(i64 tid, DTxnMgr* mgr) : DTxn(tid, mgr) {
     verify(mdb_txn_ == nullptr);
     mdb_txn_ = mgr->get_mdb_txn(tid_);
+    verify(mdb_txn_ != nullptr);
 }
 
 bool TPLDTxn::read_column(mdb::Row* row, mdb::column_id_t col_id, Value* value) {
@@ -55,6 +56,7 @@ int TPLDTxn::prepare() {
 }
 int TPLDTxn::abort() {
     verify(mdb_txn_ != NULL);
+    verify(mdb_txn_ == mgr_->del_mdb_txn(tid_));
     // TODO fix, might have double delete here.
     mdb_txn_->abort();
     delete mdb_txn_;
@@ -64,6 +66,7 @@ int TPLDTxn::abort() {
 
 int TPLDTxn::commit() {
     verify(mdb_txn_ != NULL);
+    verify(mdb_txn_ == mgr_->del_mdb_txn(tid_));
     switch (mgr_->get_mode()) {
         case MODE_OCC:
             ((mdb::TxnOCC *)mdb_txn_)->commit_confirm();
@@ -244,11 +247,13 @@ TPLDTxn::get_2pl_succ_callback(
 
 
 
-void TPLDTxn::pre_execute_2pl(const RequestHeader& header,
+void TPLDTxn::pre_execute_2pl(
+        const RequestHeader& header,
         const std::vector<mdb::Value>& input,
         rrr::i32* res,
         std::vector<mdb::Value>* output,
-        DragonBall *db) {
+        DragonBall *db
+) {
 
     verify(mdb_txn_ != nullptr);
     mdb::Txn2PL *txn = (mdb::Txn2PL *)mdb_txn_;
@@ -261,32 +266,48 @@ void TPLDTxn::pre_execute_2pl(const RequestHeader& header,
     txn->init_piece(header.tid, header.pid, db, output);
 
     Log::debug("start reg lock");
-    TxnRegistry::get(header).txn_handler(this, header, input.data(), input.size(),
-            res, NULL/*output*/, NULL/*output_size*/,
-            NULL);
+    TxnRegistry::get(header).txn_handler(
+            this,
+            header,
+            input.data(),
+            input.size(),
+            res,
+            NULL/*output*/,
+            NULL/*output_size*/,
+            NULL
+    );
 }
 
-void TPLDTxn::pre_execute_2pl(const RequestHeader& header,
-        const Value *input,
-        rrr::i32 input_size,
-        rrr::i32* res,
-        mdb::Value* output,
-        rrr::i32* output_size,
-        DragonBall *db) {
-
-    verify(mdb_txn_ != nullptr);
-    mdb::Txn2PL *txn = (mdb::Txn2PL *)mdb_txn_;
-    txn->init_piece(header.tid, header.pid, db, output, output_size);
-    if (txn->is_wound()) {
-        *output_size = 0;
-        *res = REJECT;
-        db->trigger();
-        return;
-    }
-    TxnRegistry::get(header).txn_handler(this, header, input, input_size,
-            res, NULL/*output*/, NULL/*output_size*/,
-            NULL);
-}
+//void TPLDTxn::pre_execute_2pl(
+//        const RequestHeader& header,
+//        const Value *input,
+//        rrr::i32 input_size,
+//        rrr::i32* res,
+//        mdb::Value* output,
+//        rrr::i32* output_size,
+//        DragonBall *db
+//) {
+//
+//    verify(mdb_txn_ != nullptr);
+//    mdb::Txn2PL *txn = (mdb::Txn2PL *)mdb_txn_;
+//    txn->init_piece(header.tid, header.pid, db, output, output_size);
+//    if (txn->is_wound()) {
+//        *output_size = 0;
+//        *res = REJECT;
+//        db->trigger();
+//        return;
+//    }
+//    TxnRegistry::get(header).txn_handler(
+//            this,
+//            header,
+//            input,
+//            input_size,
+//            res,
+//            NULL/*output*/,
+//            NULL/*output_size*/,
+//            NULL
+//    );
+//}
 
 //
 //void TPLDTxn::french_kiss(i64 pid, std::vector<mdb::column_lock_t> &locks) {

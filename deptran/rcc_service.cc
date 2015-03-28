@@ -157,13 +157,16 @@ void RococoServiceImpl::start_pie(
     *res = SUCCESS;
 
     TPLDTxn* dtxn = (TPLDTxn*)txn_mgr_->get_or_create(header.tid);
+
+
     if (IS_MODE_2PL) {
+        verify(dtxn->mdb_txn_->rtti() == mdb::symbol_t::TXN_2PL);
         DragonBall *defer_reply_db = new DragonBall(1, [defer]() {
                 defer->reply();
                 });
         dtxn->pre_execute_2pl(header, input, res, output, defer_reply_db);
 
-    } else if (txn_mgr_->get_mode() == MODE_NONE) {
+    } else if (IS_MODE_NONE) {
         dtxn->execute(header, input, res, output);
         defer->reply();
 

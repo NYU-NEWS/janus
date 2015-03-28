@@ -48,7 +48,7 @@ mdb::Txn *DTxnMgr::del_mdb_txn(const i64 tid) {
 
 mdb::Txn* DTxnMgr::get_mdb_txn(const i64 tid) {
     mdb::Txn *txn = nullptr;
-    std::map<i64, mdb::Txn *>::iterator it = mdb_txns_.find(tid);
+    auto it = mdb_txns_.find(tid);
     if (it == mdb_txns_.end()) {
         verify(IS_MODE_2PL);
         txn = mdb_txn_mgr_->start(tid);
@@ -59,10 +59,15 @@ mdb::Txn* DTxnMgr::get_mdb_txn(const i64 tid) {
         std::pair<std::map<i64, mdb::Txn *>::iterator, bool> ret
                 = mdb_txns_.insert(std::pair<i64, mdb::Txn *>(tid, txn));
         verify(ret.second);
-    }
-    else {
+    } else {
         txn = it->second;
     }
+
+    if (IS_MODE_2PL) {
+        verify(mdb_txn_mgr_->rtti() == mdb::symbol_t::TXN_2PL);
+        verify(txn->rtti() == mdb::symbol_t::TXN_2PL);
+    }
+
     verify(txn != nullptr);
     return txn;
 }
@@ -196,6 +201,7 @@ DTxn* DTxnMgr::create(i64 tid, bool ro) {
         case MODE_2PL:
         case MODE_OCC:
             ret = new TPLDTxn(tid, this);
+            verify(ret->mdb_txn_->rtti() == mdb::symbol_t::TXN_2PL);
             break;
         case MODE_RCC:
             ret = new RCCDTxn(tid, this, ro);
@@ -212,6 +218,10 @@ DTxn* DTxnMgr::create(i64 tid, bool ro) {
 }
 
 
+
+DTxn::~DTxn() {
+
+}
 
 mdb::ResultSet DTxn::query(Table* tbl, const mdb::Value& kv) {
     verify(mdb_txn_ != nullptr);
@@ -232,7 +242,6 @@ mdb::ResultSet DTxn::query(mdb::Table* tbl, const mdb::MultiBlob& mb, bool retri
     verify(mdb_txn_ != nullptr);
     return mdb_txn_->query(tbl, mb, retrieve, pid);
 }
-
 
 bool DTxn::read_column(mdb::Row* row, mdb::column_id_t col_id, Value* value){
     verify(mdb_txn_ != nullptr);
