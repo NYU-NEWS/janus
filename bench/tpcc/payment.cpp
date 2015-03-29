@@ -11,9 +11,8 @@ void TpccPiece::reg_payment() {
         verify(input_size == 2);
         Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_0);
         i32 output_index = 0;
-        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
         Value buf;
-        mdb::Row *r = txn->query(txn->get_table(TPCC_TB_WAREHOUSE),
+        mdb::Row *r = dtxn->query(dtxn->get_table(TPCC_TB_WAREHOUSE),
                 input[0], output_size, header.pid).next();
 
         TPL_KISS (
@@ -26,37 +25,37 @@ void TpccPiece::reg_payment() {
         );
 
         // R warehouse
-        if (!txn->read_column(r, 1, &buf)) {
+        if (!dtxn->read_column(r, 1, &buf)) {
             *res = REJECT;
             *output_size = output_index;
             return;
         }
         output[output_index++] = buf; // 0 ==> w_name
-        if (!txn->read_column(r, 2, &buf)) {
+        if (!dtxn->read_column(r, 2, &buf)) {
             *res = REJECT;
             *output_size = output_index;
             return;
         }
         output[output_index++] = buf; // 1 ==> w_street_1
-        if (!txn->read_column(r, 3, &buf)) {
+        if (!dtxn->read_column(r, 3, &buf)) {
             *res = REJECT;
             *output_size = output_index;
             return;
         }
         output[output_index++] = buf; // 2 ==> w_street_2
-        if (!txn->read_column(r, 4, &buf)) {
+        if (!dtxn->read_column(r, 4, &buf)) {
             *res = REJECT;
             *output_size = output_index;
             return;
         }
         output[output_index++] = buf; // 3 ==> w_city
-        if (!txn->read_column(r, 5, &buf)) {
+        if (!dtxn->read_column(r, 5, &buf)) {
             *res = REJECT;
             *output_size = output_index;
             return;
         }
         output[output_index++] = buf; // 4 ==> w_state
-        if (!txn->read_column(r, 6, &buf)) {
+        if (!dtxn->read_column(r, 6, &buf)) {
             *res = REJECT;
             *output_size = output_index;
             return;
@@ -77,12 +76,11 @@ void TpccPiece::reg_payment() {
         verify(input_size == 2);
         Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_1);
         i32 output_index = 0;
-        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
         Value buf;
         mdb::MultiBlob mb(2);
         mb[0] = input[1].get_blob();
         mb[1] = input[0].get_blob();
-        mdb::Row *r = txn->query(txn->get_table(TPCC_TB_DISTRICT), mb,
+        mdb::Row *r = dtxn->query(dtxn->get_table(TPCC_TB_DISTRICT), mb,
                 output_size, header.pid).next();
 
         TPL_KISS(
@@ -95,42 +93,42 @@ void TpccPiece::reg_payment() {
         );
 
         // R district
-        if (!txn->read_column(r, 2, &buf)) {
+        if (!dtxn->read_column(r, 2, &buf)) {
             *res = REJECT;
             *output_size = output_index;
             return;
         }
         output[output_index++] = buf; // output[0] ==> d_name
 
-        if (!txn->read_column(r, 3, &buf)) {
+        if (!dtxn->read_column(r, 3, &buf)) {
             *res = REJECT;
             *output_size = output_index;
             return;
         }
         output[output_index++] = buf; // 1 ==> d_street_1
 
-        if (!txn->read_column(r, 4, &buf)) {
+        if (!dtxn->read_column(r, 4, &buf)) {
             *res = REJECT;
             *output_size = output_index;
             return;
         }
         output[output_index++] = buf; // 2 ==> d_street_2
 
-        if (!txn->read_column(r, 5, &buf)) {
+        if (!dtxn->read_column(r, 5, &buf)) {
             *res = REJECT;
             *output_size = output_index;
             return;
         }
         output[output_index++] = buf; // 3 ==> d_city
 
-        if (!txn->read_column(r, 6, &buf)) {
+        if (!dtxn->read_column(r, 6, &buf)) {
             *res = REJECT;
             *output_size = output_index;
             return;
         }
         output[output_index++] = buf; // 4 ==> d_state
 
-        if (!txn->read_column(r, 7, &buf)) {
+        if (!dtxn->read_column(r, 7, &buf)) {
             *res = REJECT;
             *output_size = output_index;
             return;
@@ -150,7 +148,6 @@ void TpccPiece::reg_payment() {
         verify(input_size == 3);
         Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_2);
         i32 output_index = 0;
-        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
         Value buf;
         mdb::Row *r = NULL;
         mdb::MultiBlob mb(2);
@@ -158,7 +155,7 @@ void TpccPiece::reg_payment() {
         mb[0] = input[1].get_blob();
         mb[1] = input[0].get_blob();
         if (!(IS_MODE_RCC || IS_MODE_RO6) || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { // non-rcc || rcc start request
-            r = txn->query(txn->get_table(TPCC_TB_DISTRICT), mb,
+            r = dtxn->query(dtxn->get_table(TPCC_TB_DISTRICT), mb,
                     output_size, header.pid).next();
         }
 
@@ -181,7 +178,7 @@ void TpccPiece::reg_payment() {
         }
 
         if (do_finish) {
-            if (!txn->read_column(r, 9, &buf)) {
+            if (!dtxn->read_column(r, 9, &buf)) {
                 *res = REJECT;
                 *output_size = output_index;
                 return;
@@ -189,7 +186,7 @@ void TpccPiece::reg_payment() {
 
             // W district
             buf.set_double(buf.get_double() + input[2].get_double());
-            if (!txn->write_column(r, 9, buf)) {
+            if (!dtxn->write_column(r, 9, buf)) {
                 *res = REJECT;
                 *output_size = output_index;
                 return;
@@ -218,7 +215,6 @@ void TpccPiece::reg_payment() {
         }
 
         i32 output_index = 0;
-        /*mdb::Txn *txn = */DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
         mdb::MultiBlob mbl(3), mbh(3);
         mbl[0] = input[2].get_blob();
         mbh[0] = input[2].get_blob();
@@ -263,7 +259,6 @@ void TpccPiece::reg_payment() {
         verify(input_size == 6);
         Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_4);
         i32 output_index = 0;
-        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
         mdb::Row *r = NULL;
         std::vector<Value> buf;
 
@@ -274,7 +269,7 @@ void TpccPiece::reg_payment() {
         mb[2] = input[1].get_blob();
         // R customer
         if (!(IS_MODE_RCC || IS_MODE_RO6) || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { // non-rcc || rcc start request
-            r = txn->query(txn->get_table(TPCC_TB_CUSTOMER), mb,
+            r = dtxn->query(dtxn->get_table(TPCC_TB_CUSTOMER), mb,
                     output_size, header.pid).next();
         }
 
@@ -303,7 +298,7 @@ void TpccPiece::reg_payment() {
 
         bool do_finish = true;
 
-        if (row_map) { // deptran
+        if (row_map) { // rococo
             if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { // start req
                 (*row_map)[TPCC_TB_CUSTOMER][mb] = r;
 
@@ -324,7 +319,7 @@ void TpccPiece::reg_payment() {
         }
 
         if (do_finish) {
-            if (!txn->read_columns(r, std::vector<mdb::column_id_t>({
+            if (!dtxn->read_columns(r, std::vector<mdb::column_id_t>({
                     3,  // c_first          buf[0]
                     4,  // c_middle         buf[1]
                     5,  // c_last           buf[2]
@@ -369,7 +364,7 @@ void TpccPiece::reg_payment() {
                         Value(buf[14].get_double() + input[3].get_double()),
                         c_data
                 });
-                if (!txn->write_columns(r, col_ids, col_data)) {
+                if (!dtxn->write_columns(r, col_ids, col_data)) {
                     *res = REJECT;
                     *output_size = output_index;
                     return;
@@ -384,7 +379,7 @@ void TpccPiece::reg_payment() {
                         Value(buf[13].get_double() - input[3].get_double()),
                         Value(buf[14].get_double() + input[3].get_double())
                 });
-                if (!txn->write_columns(r, col_ids, col_data)) {
+                if (!dtxn->write_columns(r, col_ids, col_data)) {
                     *res = REJECT;
                     *output_size = output_index;
                     return;

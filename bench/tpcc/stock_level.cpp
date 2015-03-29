@@ -13,13 +13,12 @@ void TpccPiece::reg_stock_level() {
         verify(input_size == 2);
         i32 output_index = 0;
         Value buf;
-        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
         mdb::MultiBlob mb(2);
         //cell_locator_t cl(TPCC_TB_DISTRICT, 2);
         mb[0] = input[1].get_blob();
         mb[1] = input[0].get_blob();
 
-        mdb::Row *r = txn->query(txn->get_table(TPCC_TB_DISTRICT), mb,
+        mdb::Row *r = dtxn->query(dtxn->get_table(TPCC_TB_DISTRICT), mb,
                 output_size, header.pid).next();
 
         TPL_KISS(mdb::column_lock_t(r, 10, ALock::RLOCK));
@@ -53,7 +52,6 @@ void TpccPiece::reg_stock_level() {
         verify(input_size == 3);
         i32 output_index = 0;
         Value buf;
-        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
         mdb::MultiBlob mbl(4), mbh(4);
         mbl[0] = input[2].get_blob();
         mbh[0] = input[2].get_blob();
@@ -67,8 +65,8 @@ void TpccPiece::reg_stock_level() {
         mbl[3] = ol_number_low.get_blob();
         mbh[3] = ol_number_high.get_blob();
 
-        mdb::ResultSet rs = txn->query_in(
-                txn->get_table(TPCC_TB_ORDER_LINE), mbl, mbh, output_size,
+        mdb::ResultSet rs = dtxn->query_in(
+                dtxn->get_table(TPCC_TB_ORDER_LINE), mbl, mbh, output_size,
                 header.pid, mdb::ORD_ASC);
 
         Log::debug("tid: %llx, stock_level: piece 1: d_next_o_id: %d, ol_w_id: %d, ol_d_id: %d",
@@ -86,7 +84,7 @@ void TpccPiece::reg_stock_level() {
         if (IS_MODE_2PL
                 && output_size == NULL) {
             mdb::Txn2PL::PieceStatus *ps
-                    = ((mdb::Txn2PL *) txn)->get_piece_status(header.pid);
+                    = ((mdb::Txn2PL *) dtxn)->get_piece_status(header.pid);
             std::function<void(void)> succ_callback = ((TPLDTxn *) dtxn)->get_2pl_succ_callback(header, input, input_size, res, ps);
             std::function<void(void)> fail_callback = ((TPLDTxn *) dtxn)->get_2pl_fail_callback(header, res, ps);
 
@@ -133,13 +131,12 @@ void TpccPiece::reg_stock_level() {
         verify(input_size == 3);
         i32 output_index = 0;
         Value buf;
-        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
         mdb::MultiBlob mb(2);
         //cell_locator_t cl(TPCC_TB_STOCK, 2);
         mb[0] = input[0].get_blob();
         mb[1] = input[1].get_blob();
 
-        mdb::Row *r = txn->query(txn->get_table(TPCC_TB_STOCK), mb,
+        mdb::Row *r = dtxn->query(dtxn->get_table(TPCC_TB_STOCK), mb,
                 output_size, header.pid).next();
 
 
