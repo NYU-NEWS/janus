@@ -50,7 +50,7 @@ mdb::Txn* DTxnMgr::get_mdb_txn(const i64 tid) {
     mdb::Txn *txn = nullptr;
     auto it = mdb_txns_.find(tid);
     if (it == mdb_txns_.end()) {
-        verify(IS_MODE_2PL);
+        //verify(IS_MODE_2PL);
         txn = mdb_txn_mgr_->start(tid);
         //XXX using occ lazy mode: increment version at commit time
         if (mode_ == MODE_OCC) {
@@ -66,6 +66,8 @@ mdb::Txn* DTxnMgr::get_mdb_txn(const i64 tid) {
     if (IS_MODE_2PL) {
         verify(mdb_txn_mgr_->rtti() == mdb::symbol_t::TXN_2PL);
         verify(txn->rtti() == mdb::symbol_t::TXN_2PL);
+    } else {
+            
     }
 
     verify(txn != nullptr);
