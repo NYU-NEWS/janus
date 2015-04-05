@@ -1,23 +1,29 @@
 #!/usr/bin/env python
 
-from tabulate import tabulate
-from optparse import OptionParser
+# python system modules
+import os
+import sys
+import time
+import shutil
+import logging
+import subprocess
 import multiprocessing
+from optparse import OptionParser
 from multiprocessing import Value
 from multiprocessing import Lock
-import subprocess
-import time
-import os
-import shutil
 import xml.etree.ElementTree as ET
-import sys
-import logging
+
+# third-party python modules 
+from tabulate import tabulate
+
+# deptran python modules
 sys.path += os.path.abspath(os.path.join(os.path.split(__file__)[0], "./rrr/pylib")),
+sys.path += os.path.abspath(os.path.join(os.path.split(__file__)[0], "./deptran")),
 from simplerpc import Client
 from simplerpc.marshal import Marshal
-sys.path += os.path.abspath(os.path.join(os.path.split(__file__)[0], "./deptran")),
 from deptran.rcc_rpc import ServerControlProxy
 from deptran.rcc_rpc import ClientControlProxy
+
 
 cwd = os.getcwd()
 deptran_home, ff = os.path.split(os.path.realpath(__file__))
