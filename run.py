@@ -11,6 +11,7 @@ import os
 import shutil
 import xml.etree.ElementTree as ET
 import sys
+import logging
 sys.path += os.path.abspath(os.path.join(os.path.split(__file__)[0], "./rrr/pylib")),
 from simplerpc import Client
 from simplerpc.marshal import Marshal
@@ -603,18 +604,23 @@ class ServerController(object):
         self.s_info = s_info
         self.rpc_proxy = dict()
         self.log_dir = log_dir
-        if (taskset == 1): # set task on CPU 1
+
+        if (taskset == 1):
+            # set task on CPU 1
             self.taskset_func = lambda x: "taskset -c " + str(2 * x + 16)
-            print "Setting servers on CPU 1"
-        elif (taskset == 2): # set task on CPU 0, odd number cores, no overlapping with irq cores
+            logging.info("Setting servers on CPU 1")
+        elif (taskset == 2): 
+            # set task on CPU 0, odd number cores, no overlapping with irq cores
             self.taskset_func = lambda x: "taskset -c " + str(2 * x + 1)
-            print "Setting servers on CPU 0, odd number cores"
-        elif (taskset == 3): # set task on CPU 0, even number cores, overlapping with irq cores
+            logging.info("Setting servers on CPU 0, odd number cores")
+        elif (taskset == 3): 
+            # set task on CPU 0, even number cores, overlapping with irq cores
             self.taskset_func = lambda x: "taskset -c " + str(2 * x)
-            print "Setting servers on CPU 0, even number cores"
+            logging.info("Setting servers on CPU 0, even number cores")
         else:
             self.taskset_func = lambda x: ""
-            print "No taskset, auto scheduling"
+            logging.info("No taskset, auto scheduling")
+
         self.pre_statistics = dict()
         self.pre_time = time.time()
         self.recording_path = recording_path
@@ -828,30 +834,55 @@ def site2host_name(sitename):
 
 
 def main():
+    logging.basicConfig(level=logging.INFO)
     try:
         parser = OptionParser()
-        parser.add_option("-f", "--file", dest="filename", help="read config from FILE, default is properties.xml", 
+
+        parser.add_option("-f", "--file", dest="filename", 
+                help="read config from FILE, default is properties.xml", 
                 default=deptran_home + "/properties.xml", metavar="FILE")
-        parser.add_option("-P", "--port", dest="rpc_port", help="port to use", default=5555, metavar="PORT")
+
+        parser.add_option("-P", "--port", dest="rpc_port", help="port to use", 
+                default=5555, metavar="PORT")
+
         parser.add_option("-t", "--server-timeout", dest="s_timeout", 
-                help="server heart beat timeout in seconds", default=10, action="store", metavar="TIMEOUT")
+                help="server heart beat timeout in seconds", default=10, 
+                action="store", metavar="TIMEOUT")
+
         parser.add_option("-i", "--status-time-interval", dest="c_timeout", 
-                help="time interval to report benchmark status in seconds", default=5, action="store", metavar="TIME")
+                help="time interval to report benchmark status in seconds", 
+                default=5, action="store", metavar="TIME")
+
         parser.add_option("-d", "--duration", dest="c_duration", 
-                help="benchmark running duration in seconds", default=60, action="store", metavar="TIME")
+                help="benchmark running duration in seconds", default=60, 
+                action="store", metavar="TIME")
+
         parser.add_option("-S", "--single-server", dest="c_single_server", 
-                help="control each client always touch the same server 0, disabled; 1, each thread will touch a single server; 2, each process will touch a single server", 
+                help="control each client always touch the same server "
+                     "0, disabled; 1, each thread will touch a single server; "
+                     "2, each process will touch a single server", 
                 default=0, action="store", metavar="[0|1|2]")
+
         parser.add_option("-T", "--taskset-schema", dest="s_taskset", 
-                help="Choose which core to run each server on. 0: auto; 1: CPU 1; 2: CPU 0, odd cores; 3: CPU 0, even cores;", 
+                help="Choose which core to run each server on. "
+                     "0: auto; 1: CPU 1; 2: CPU 0, odd cores; 3: CPU 0, even cores;", 
                 default=0, action="store", metavar="[0|1|2|3]")
+
         parser.add_option("-c", "--client-taskset", dest="c_taskset", 
-                help="taskset client processes round robin", default=False, action="store_true")
-        parser.add_option("-l", "--log-dir", dest="log_dir", help="Log file directory", default=g_log_dir, metavar="LOG_DIR")
-        parser.add_option("-r", "--recording-path", dest="recording_path", help="Recording path", default="", metavar="RECORDING_PATH")
+                help="taskset client processes round robin", default=False, 
+                action="store_true")
+
+        parser.add_option("-l", "--log-dir", dest="log_dir", 
+                help="Log file directory", default=g_log_dir, metavar="LOG_DIR")
+
+        parser.add_option("-r", "--recording-path", dest="recording_path", 
+                help="Recording path", default="", metavar="RECORDING_PATH")
+
         parser.add_option("-x", "--interest-txn", dest="interest_txn", 
                 help="interest txn", default=g_interest_txn, metavar="INTEREST_TXN")
-        parser.add_option("-H", "--hosts", dest="hosts_path", help="hosts path", default="./config/hosts", metavar="HOSTS_PATH")
+
+        parser.add_option("-H", "--hosts", dest="hosts_path", 
+                help="hosts path", default="./config/hosts", metavar="HOSTS_PATH")
 
         (options, args) = parser.parse_args()
 
@@ -862,34 +893,38 @@ def main():
         s_taskset = int(options.s_taskset)
         c_taskset = options.c_taskset
         if (c_single_server not in [0, 1, 2]):
-            print "Invalid single server argument"
+            logging.error("Invalid single server argument.")
             return False
 
+        # user-defined hosts path
         global hosts_path_g
         filename = os.path.realpath(options.filename)
         hosts_path_g = os.path.realpath(options.hosts_path)
-
         init_hosts_map()
 
+        # recording path  
         recording_path_dir = ""
         if (len(options.recording_path) != 0):
             recording_path_dir = os.path.realpath(options.recording_path)
+
+        # (debug) log path
         log_dir = os.path.realpath(options.log_dir)
         shutil.rmtree(log_dir, True)
         os.makedirs(log_dir)
 
+        # the kind of transaction I care about (new-order)
         c_interest_txn = str(options.interest_txn)
 
-        print "Port: " + str(options.rpc_port)
+        logging.info("Experiment controller port: " + str(options.rpc_port))
         rpc_port = int(options.rpc_port)
 
-        print "Start reading config file: " + filename + " ..."
+        # the configuration xml file
+        logging.info("Start reading config file: " + filename + " ...")
         config = ET.parse(filename).getroot()
-        print "Done"
 
         benchmark = config.attrib["name"]
 
-        print "Checking site info ..."
+        logging.info("Checking site info ...")
         s_info = dict()
         num_site = int(config.find("hosts").attrib["number"])
         for site in config.findall("./hosts/site"):
@@ -897,64 +932,62 @@ def main():
             hostname = site2host_name(sitename)
             sid_index = int(site.attrib["id"])
             if (sid_index < 0 or sid_index >= num_site or (sid_index in s_info)):
-                print "FAIL"
+                logging.error("Checking site info ... FAIL")
                 return False
-            print (hostname, sitename)
             s_info[sid_index] = tuple((hostname, str(rpc_port)))
             rpc_port += 1
         if (len(s_info) != num_site):
-            print "FAIL"
+            logging.error("Checking site info ... FAIL")
             return False
-        print "Done"
+        logging.info("Checking site info ... Done")
 
-        print "Checking client info ..."
+        logging.info("Checking client info ...")
         c_info = dict()
         num_client = int(config.find("clients").attrib["number"])
         for client in config.findall("./clients/client"):
             ids_str = client.attrib["id"]
             dash_index = ids_str.find("-")
             if (len(client.text) == 0):
-                print "FAIL"
+                logging.error("Checking client info ... FAIL")
                 return False
             if (dash_index < 0):
                 id_index = int(ids_str)
                 if (id_index >= num_client or id_index < 0 or (id_index in c_info)):
-                    print "FAIL"
+                    logging.error("Checking client info ... FAIL")
                     return False
                 hostname = site2host_name(client.text)
-                print hostname
                 c_info[id_index] = tuple((hostname, str(rpc_port)))
                 rpc_port += 1
             elif (dash_index > 0 and dash_index < len(ids_str)):
                 id_start = int(ids_str[0:dash_index])
                 id_end = int(ids_str[dash_index+1:])
                 if (id_start < 0 or id_start >= id_end or id_end >= num_client):
-                    print "FAIL"
+                    logging.error("Checking client info ... FAIL")
                     return False
                 id_index = id_start
                 while (id_index <= id_end):
                     if (id_index in c_info):
-                        print "FAIL"
+                        logging.error("Checking client info ... FAIL")
                         return False
                     hostname = site2host_name(client.text)
-                    print hostname
                     c_info[id_index] = tuple((hostname, str(rpc_port)))
                     rpc_port += 1
                     id_index += 1
             else:
-                print "FAIL"
+                logging.error("Checking client info ... FAIL")
                 return False
         if (len(c_info) != num_client):
-            print "FAIL"
+            logging.error("Checking client info ... FAIL")
             return False
-        print "Done"
+        logging.info("Checking client info ... Done")
 
         # init server controller
         server_controller = ServerController(s_timeout, s_info, s_taskset, log_dir, recording_path_dir)
 
-        print "Starting servers ..."
+        # start all server processes
+        logging.info("Starting servers ...")
         server_controller.start(filename)
-        print "Servers started ..."
+        logging.info("Starting servers ... Done")
 
         cond = multiprocessing.Condition()
         s_init_finish = Value('i', 0)
@@ -967,17 +1000,17 @@ def main():
         server_process.daemon = False
         server_process.start()
 
-        print "Waiting for server init ..."
+        logging.info("Waiting for server init ...")
         cond.acquire()
         while (s_init_finish.value == 0):
             cond.wait()
         if s_init_finish.value == 5:
-            print "BENCHMARK_FAIL"
+            logging.error("Waiting for server init ... FAIL")
             server_process.join()
             server_controller.server_kill()
             return False
         cond.release()
-        print "All site have finished initialization!"
+        logging.info("Waiting for server init ... Done")
 
         #time.sleep(5);
 
@@ -985,10 +1018,11 @@ def main():
         client_controller = ClientController(benchmark, c_timeout, c_info, c_duration, 
                 c_single_server, c_taskset, log_dir, c_interest_txn, recording_path_dir)
 
-        print "Starting clients ..."
+        logging.info("Starting clients ...")
         client_controller.start(filename)
-        print "Clients started ..."
+        logging.info("Starting clients ... Done")
 
+        # let all clients start running the benchmark
         client_controller.client_run(do_sample, do_sample_lock)
         cond.acquire()
         s_init_finish.value = 0
