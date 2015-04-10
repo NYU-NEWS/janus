@@ -201,7 +201,9 @@ DTxn* DTxnMgr::create(i64 tid, bool ro) {
     DTxn* ret = nullptr;
     switch (mode_) {
         case MODE_2PL:
+            ret = new TPLDTxn(tid, this);
             verify(ret->mdb_txn_->rtti() == mdb::symbol_t::TXN_2PL);
+            break;
         case MODE_OCC:
             ret = new TPLDTxn(tid, this);
             break;
