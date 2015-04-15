@@ -1,5 +1,7 @@
-<benchmark mode="rcc" name="tpcc_real_dist_part" scale_factor="1" concurrent_txn="1" 
-    batch_start="false" txn_weight="45:43:4:40:4" max_retry="0">
+<benchmark mode="rcc" name="tpcc_real_dist_part" 
+    scale_factor="1" concurrent_txn="1" 
+    batch_start="false" txn_weight="45:43:4:40:4" 
+    max_retry="0">
     <hosts number="2">
         <site id="0" threads="1">node1:18000</site>
         <site id="1" threads="1">node2:18001</site>
@@ -7,7 +9,8 @@
     <clients number="1">
         <client id="0" threads="8">node1</client>
     </clients>
-    <table name="warehouse" all_site="true" shard_method="int_modulus" records="1">
+    <table name="warehouse" all_site="true" 
+        shard_method="int_modulus" records="1">
         <schema>
             <column name="w_id" type="i32" primary="true"/>
             <column name="w_name" type="str"/>
