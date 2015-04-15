@@ -1,4 +1,6 @@
 #! /usr/bin/env python
+# -*- coding: utf-8 -*-
+
 
 xxx = [1, 2, 4, 8, 16, 32]
 
@@ -7,8 +9,33 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import FuncFormatter
 
+STR_CONCURRENT_REQS_PER_SERVER = "Concurrent reqs/server"
+STR_THROUGHPUT = "Throughput"
+STR_NUMBER_OF_SERVERS = "Number of servers"
+STR_THROUGHPUT_NEW_ORDER = "Throughput (New-order/s)"
+STR_CPU_UTILIZATION = "CPU Utilization"
+STR_LATENCY_MS = "Latency(ms)"
+STR_ATTEMPT_NEW_ORDER = "Attempts(new-order/s)"
+STR_NUMBER_OF_TRIES_PER_COMMIT = "Number of tries per commit"
+STR_LATENCY_MS_IN_LOG_SCALE = "Latency(ms) in log scale"
+STR_COMMIT_RATE = "commit rate"
+
+
+mpl.rcParams['font.sans-serif'] = ['SimHei']
+STR_CONCURRENT_REQS_PER_SERVER = u"并发请求数/服务器"
+STR_THROUGHPUT = u"吞吐量"
+STR_NUMBER_OF_SERVERS = u"服务器数量"
+STR_THROUGHPUT_NEW_ORDER = u"吞吐量（New-order/s）"
+STR_CPU_UTILIZATION = u"CPU使用率"
+STR_LATENCY_MS = u"延迟（ms）"
+STR_ATTEMPT_NEW_ORDER = u"尝试次数（New-order/s）"
+STR_NUMBER_OF_TRIES_PER_COMMIT = u"每次成功提交需要尝试次数"
+STR_LATENCY_MS_IN_LOG_SCALE = u"延迟（ms）"
+STR_COMMIT_RATE = u"提交成功率"
+
 
 ROCOCO = "Rococo"
+ROCOCO = "DepTran"
 
 SHOW = True
 SHOW = False
@@ -89,7 +116,8 @@ def micro_tp(xs, ys, figname):
     #            ["DepTran 50%", "DepTran 90%", "DepTran 99%"],
     #            ["2PL-P 50%", "2PL-P 90%", "2PL-P 99%"]]
 
-    ax.bar(ind, ys, width, color = '#1B77F9')
+    #ax.bar(ind, ys, width, color = '#1B77F9')
+    ax.bar(ind, ys, width, color = 'black')
 
     plt.xlim(-width/2,  len(xs))
     ys_max = 0.0
@@ -102,7 +130,7 @@ def micro_tp(xs, ys, figname):
 
     #plt.legend(ncol=3, loc="upper center", mode="expand", bbox_to_anchor=(0., 1.1, 1, 0.1))
     #plt.xlabel("")
-    plt.ylabel("Throughput")
+    plt.ylabel(STR_THROUGHPUT)
     ax.set_xticks(ind +width/2)
     plt.setp(ax.set_xticklabels(xs), fontsize=14)
 
@@ -127,8 +155,8 @@ def tpcc_sc_tp(val, figname):
 
     handles, labels = sort_legend(ax, val)
     plt.legend(handles, labels, ncol=1, loc="best")
-    plt.xlabel("Number of servers")
-    plt.ylabel("Throughput (new-order/s)")
+    plt.xlabel(STR_NUMBER_OF_SERVERS)
+    plt.ylabel(STR_THROUGHPUT_NEW_ORDER)
 #    plt.ylim(0,400)
     #plt.xticks(np.arange(len(txt_sizes)), txt_sizes)
     plt.savefig(figname, bbox_inches="tight")
@@ -151,8 +179,8 @@ def tpcc_sc_cpu(val, figname):
 
     handles, labels = sort_legend(ax, val)
     plt.legend(handles, labels, ncol=1, loc="best")
-    plt.xlabel("Number of servers")
-    plt.ylabel("CPU Utilization")
+    plt.xlabel(STR_NUMBER_OF_SERVERS)
+    plt.ylabel(STR_CPU_UTILIZATION)
 #    plt.ylim(0,400)
     #plt.xticks(np.arange(len(txt_sizes)), txt_sizes)
     plt.savefig(figname, bbox_inches="tight")
@@ -177,8 +205,8 @@ def tpcc_ct_tp(val, figname):
 
     handles, labels = sort_legend(ax, val)
     plt.legend(handles, labels, ncol=1, loc="best")
-    plt.xlabel("Concurrent reqs/server")
-    plt.ylabel("Throughput (new-order/s)")
+    plt.xlabel(STR_CONCURRENT_REQS_PER_SERVER)
+    plt.ylabel(STR_THROUGHPUT_NEW_ORDER)
 #    plt.ylim(0,400)
     #plt.xticks(np.arange(len(txt_sizes)), txt_sizes)
     plt.savefig(figname, bbox_inches="tight")
@@ -201,8 +229,8 @@ def tpcc_ct_cpu(val, figname):
 
     handles, labels = sort_legend(ax, val)
     plt.legend(handles, labels, ncol=1, loc="best")
-    plt.xlabel("Concurrent reqs/server")
-    plt.ylabel("CPU Utilization")
+    plt.xlabel(STR_CONCURRENT_REQS_PER_SERVER)
+    plt.ylabel(STR_CPU_UTILIZATION)
 #    plt.ylim(0,400)
     #plt.xticks(np.arange(len(txt_sizes)), txt_sizes)
     plt.savefig(figname, bbox_inches="tight")
@@ -237,8 +265,8 @@ def tpcc_ct_nt_eb(val_50, val_90, val_99, figname):
     #plt.legend(ncol=3, loc="upper center", mode="expand", bbox_to_anchor=(0., 1.1, 1, 0.1))
     handles, labels = sort_legend(ax, val_90)
     plt.legend(handles, labels, ncol=1, loc="best")
-    plt.xlabel("Concurrent reqs/server")
-    plt.ylabel("Number of tries per commit")
+    plt.xlabel(STR_CONCURRENT_REQS_PER_SERVER)
+    plt.ylabel(STR_NUMBER_OF_TRIES_PER_COMMIT)
     plt.savefig(figname, bbox_inches="tight")
     if SHOW: plt.show()
     pass
@@ -282,8 +310,8 @@ def tpcc_ct_lt_eb(val_50, val_90, val_99, figname):
     #plt.legend(ncol=3, loc="upper center", mode="expand", bbox_to_anchor=(0., 1.1, 1, 0.1))
     handles, labels = sort_legend(ax, val_90)
     plt.legend(handles, labels, ncol=1, loc="best")
-    plt.xlabel("Concurrent reqs/server")
-    plt.ylabel("Latency(ms)")
+    plt.xlabel(STR_CONCURRENT_REQS_PER_SERVER)
+    plt.ylabel(STR_LATENCY_MS)
     plt.savefig(figname, bbox_inches="tight")
     if SHOW: plt.show()
     pass
@@ -327,8 +355,8 @@ def tpcc_ct_lt_bar(val_min, val_50, val_90, val_99, figname):
     plt.xticks(xs+3, xs)
 
     plt.legend(ncol=3, loc="upper center", mode="expand", bbox_to_anchor=(0., 1.1, 1, 0.1))
-    plt.xlabel("Concurrent reqs/server")
-    plt.ylabel("Latency(ms) in log scale")
+    plt.xlabel(STR_CONCURRENT_REQS_PER_SERVER)
+    plt.ylabel(STR_LATENCY_MS_IN_LOG_SCALE)
     plt.savefig(figname, bbox_inches="tight")
     if SHOW: plt.show()
     pass
@@ -347,8 +375,8 @@ def tpcc_ct_nt(val, figname):
 
     handles, labels = sort_legend(ax, val)
     plt.legend(handles, labels, ncol=1, loc="upper left")
-    plt.xlabel("Concurrent reqs/server")
-    plt.ylabel("Number of tries per commit")
+    plt.xlabel(STR_CONCURRENT_REQS_PER_SERVER)
+    plt.ylabel(STR_NUMBER_OF_TRIES_PER_COMMIT)
 #    plt.ylim(0,400)
     #plt.xticks(np.arange(len(txt_sizes)), txt_sizes)
     plt.savefig(figname, bbox_inches="tight")
@@ -368,8 +396,8 @@ def tpcc_ct_lt(val, figname):
 
     handles, labels = sort_legend(ax, val)
     plt.legend(handles, labels, ncol=1, loc="upper left")
-    plt.xlabel("Concurrent reqs/server")
-    plt.ylabel("Latency(ms)")
+    plt.xlabel(STR_CONCURRENT_REQS_PER_SERVER)
+    plt.ylabel(STR_LATENCY_MS)
 #    plt.ylim(0,400)
     #plt.xticks(np.arange(len(txt_sizes)), txt_sizes)
     plt.savefig(figname, bbox_inches="tight")
@@ -388,8 +416,8 @@ def tpcc_ct_at(val, figname):
 
     handles, labels = sort_legend(ax, val)
     plt.legend(handles, labels, ncol=1, loc="upper left")
-    plt.xlabel("Concurrent reqs/server")
-    plt.ylabel("Attempts(new-order/s)")
+    plt.xlabel(STR_CONCURRENT_REQS_PER_SERVER)
+    plt.ylabel(STR_ATTEMPT_NEW_ORDER)
 #    plt.ylim(0,400)
     #plt.xticks(np.arange(len(txt_sizes)), txt_sizes)
     plt.savefig(figname, bbox_inches="tight")
@@ -410,8 +438,8 @@ def tpcc_ct_cr(val, figname):
 
     handles, labels = sort_legend(ax, val)
     plt.legend(handles, labels, ncol=1, loc="best")
-    plt.xlabel("Concurrent reqs/server")
-    plt.ylabel("commit rate")
+    plt.xlabel(STR_CONCURRENT_REQS_PER_SERVER)
+    plt.ylabel(STR_COMMIT_RATE)
     plt.ylim(0,1.2)
     #plt.xticks(np.arange(len(txt_sizes)), txt_sizes)
     plt.savefig(figname, bbox_inches="tight")
