@@ -38,7 +38,7 @@ void RococoServiceImpl::do_start_pie(
         dtxn->execute(header, input, input_size,
 			     res, output, output_size);
     }
-    else if (txn_mgr_->get_mode() == MODE_NONE) {
+    else if (IS_MODE_NONE) {
         dtxn->execute(header, input, input_size,
 			     res, output, output_size);
     }

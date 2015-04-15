@@ -207,6 +207,9 @@ DTxn* DTxnMgr::create(i64 tid, bool ro) {
         case MODE_OCC:
             ret = new TPLDTxn(tid, this);
             break;
+        case MODE_NONE:
+            ret = new TPLDTxn(tid, this);
+            break;
         case MODE_RCC:
             ret = new RCCDTxn(tid, this, ro);
             break;
