@@ -9,7 +9,7 @@ namespace rococo {
 
 class DepGraph {
 public:
-    Graph<PieInfo> pie_gra_;
+//    Graph<PieInfo> pie_gra_;
     Graph<TxnInfo> txn_gra_;
 
     /** the entry to (vertexes, type) (a column)*/

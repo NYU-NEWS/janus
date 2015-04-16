@@ -27,16 +27,17 @@ void RCCDTxn::start(
     // get the read and write sets;)
     //lock_oracle(header, input.data(), input.size(), &opset);
 
-    Vertex<PieInfo> *pv = NULL;
+//    Vertex<PieInfo> *pv = NULL;
     Vertex<TxnInfo> *tv = NULL;
-    RCCDTxn::dep_s->start_pie(pi, &pv, &tv);
+    RCCDTxn::dep_s->start_pie(pi, nullptr, &tv);
     tv_ = tv;
     verify(phase_ <= 1);
     phase_ = 1;
 
     // execute the IR actions.
     *deferred = pi.defer_;
-    verify(pv && tv);
+//    verify(pv && tv);
+    verify(tv);
 
     auto txn_handler_pair = TxnRegistry::get(header.t_type, header.p_type);
 

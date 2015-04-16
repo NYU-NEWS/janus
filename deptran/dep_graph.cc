@@ -40,13 +40,13 @@ RococoProxy* DepGraph::get_server_proxy(uint32_t id) {
 void DepGraph::foi_pie_txn(PieInfo &pi,
         Vertex<PieInfo> **pv,
         Vertex<TxnInfo> **tv) {
-    *pv = pie_gra_.find_or_insert(pi);
+//    *pv = pie_gra_.find_or_insert(pi);
     *tv = txn_gra_.find_or_insert(pi.txn_id_);
-
 }
 
 void DepGraph::foi_pie(PieInfo &pi,
         Vertex<PieInfo> **pv) {
+    verify(0);
     //*pv = pie_gra_.find_or_insert(pi);
     *pv = new Vertex<PieInfo>(pi);
 }
@@ -65,22 +65,20 @@ Vertex<TxnInfo> *DepGraph::start_pie_txn(uint64_t tid) {
 }
 
     /** on start_req */
-void DepGraph::start_pie(PieInfo &pi, 
-                         Vertex<PieInfo> **pv, 
-                         Vertex<TxnInfo> **tv
-                         /*, std::unordered_map<cell_locator_t, 
-                           int, cell_locator_t_hash> &opset,
-                           cell_entry_map_t &entry_map*/) {
+void DepGraph::start_pie(
+            PieInfo &pi,
+            Vertex<PieInfo> **pv,
+            Vertex<TxnInfo> **tv
+    ) {
     verify(tv != NULL);
-    if (pv) {
-        foi_pie(pi, pv);
-    }
+    verify(pv == nullptr);
+//    if (pv) {
+//        foi_pie(pi, pv);
+//    }
 
     if (tv) {
         foi_txn(pi.txn_id_, tv);
     }
-  
-    
     static auto id = Config::get_config()->get_site_id();
     (*tv)->data_.servers_.insert(id);
 }
