@@ -839,90 +839,130 @@ def site2host_name(sitename):
         return sitename
 
 
+def create_parser():
+    
+    parser = OptionParser()
+
+    parser.add_option("-f", "--file", dest="config_path", 
+            help="read config from FILE, default is properties.xml", 
+            default="./config/tpccd-sample.xml", metavar="FILE")
+
+    parser.add_option("-P", "--port", dest="rpc_port", help="port to use", 
+            default=5555, metavar="PORT")
+
+    parser.add_option("-t", "--server-timeout", dest="s_timeout", 
+            help="server heart beat timeout in seconds", default=10, 
+            action="store", metavar="TIMEOUT")
+
+    parser.add_option("-i", "--status-time-interval", dest="c_timeout", 
+            help="time interval to report benchmark status in seconds", 
+            default=5, action="store", metavar="TIME")
+
+    parser.add_option("-d", "--duration", dest="c_duration", 
+            help="benchmark running duration in seconds", default=60, 
+            action="store", metavar="TIME")
+
+    parser.add_option("-S", "--single-server", dest="c_single_server", 
+            help="control each client always touch the same server "
+                 "0, disabled; 1, each thread will touch a single server; "
+                 "2, each process will touch a single server", 
+            default=0, action="store", metavar="[0|1|2]")
+
+    parser.add_option("-T", "--taskset-schema", dest="s_taskset", 
+            help="Choose which core to run each server on. "
+                 "0: auto; "
+                 "1: CPU 1; "
+                 "2: CPU 0, odd cores; "
+                 "3: CPU 0, even cores;", 
+            default=0, action="store", metavar="[0|1|2|3]")
+
+    parser.add_option("-c", "--client-taskset", dest="c_taskset", 
+            help="taskset client processes round robin", default=False, 
+            action="store_true")
+
+    parser.add_option("-l", "--log-dir", dest="log_dir", 
+            help="Log file directory", default=g_log_dir, 
+            metavar="LOG_DIR")
+
+    parser.add_option("-r", "--recording-path", dest="recording_path", 
+            help="Recording path", default="", metavar="RECORDING_PATH")
+
+    parser.add_option("-x", "--interest-txn", dest="interest_txn", 
+            help="interest txn", default=g_interest_txn, 
+            metavar="INTEREST_TXN")
+
+    parser.add_option("-H", "--hosts", dest="hosts_path", 
+            help="hosts path", default="./config/hosts-local", 
+            metavar="HOSTS_PATH")
+    
+    return parser
+    
+class TrialConfig:
+    def __init__(self, options):
+        self.s_timeout = int(options.s_timeout)
+        self.c_timeout = int(options.c_timeout)
+        self.c_duration = int(options.c_duration)
+        self.c_single_server = int(options.c_single_server)
+        self.s_taskset = int(options.s_taskset)
+        self.c_taskset = options.c_taskset
+        self.config_path = os.path.realpath(options.config_path)
+        self.hosts_path = os.path.realpath(options.hosts_path)
+        self.recording_path = os.path.realpath(options.recording_path)
+        self.log_path = os.path.realpath(options.log_dir)
+        self.c_interest_txn = str(options.interest_txn)
+        self.rpc_port = int(options.rpc_port)        
+        
+        pass
+        
+    def check_correctness(self):
+        if self.c_single_server not in [0, 1, 2]:
+            logging.error("Invalid single server argument.")
+            return False
+            
+        if not os.path.exists(self.config_path):
+            logging.error("Config path incorrect.")
+            return False
+        
+        if not os.path.exists(self.hosts_path):
+            logging.error("Hosts path incorrect.")
+            return False
+        
+        return True
+
 def main():
     logging.basicConfig(level=logging.INFO)
+    
     try:
-        parser = OptionParser()
-
-        parser.add_option("-f", "--file", dest="filename", 
-                help="read config from FILE, default is properties.xml", 
-                default=deptran_home + "/properties.xml", metavar="FILE")
-
-        parser.add_option("-P", "--port", dest="rpc_port", help="port to use", 
-                default=5555, metavar="PORT")
-
-        parser.add_option("-t", "--server-timeout", dest="s_timeout", 
-                help="server heart beat timeout in seconds", default=10, 
-                action="store", metavar="TIMEOUT")
-
-        parser.add_option("-i", "--status-time-interval", dest="c_timeout", 
-                help="time interval to report benchmark status in seconds", 
-                default=5, action="store", metavar="TIME")
-
-        parser.add_option("-d", "--duration", dest="c_duration", 
-                help="benchmark running duration in seconds", default=60, 
-                action="store", metavar="TIME")
-
-        parser.add_option("-S", "--single-server", dest="c_single_server", 
-                help="control each client always touch the same server "
-                     "0, disabled; 1, each thread will touch a single server; "
-                     "2, each process will touch a single server", 
-                default=0, action="store", metavar="[0|1|2]")
-
-        parser.add_option("-T", "--taskset-schema", dest="s_taskset", 
-                help="Choose which core to run each server on. "
-                     "0: auto; 1: CPU 1; 2: CPU 0, odd cores; 3: CPU 0, even cores;", 
-                default=0, action="store", metavar="[0|1|2|3]")
-
-        parser.add_option("-c", "--client-taskset", dest="c_taskset", 
-                help="taskset client processes round robin", default=False, 
-                action="store_true")
-
-        parser.add_option("-l", "--log-dir", dest="log_dir", 
-                help="Log file directory", default=g_log_dir, metavar="LOG_DIR")
-
-        parser.add_option("-r", "--recording-path", dest="recording_path", 
-                help="Recording path", default="", metavar="RECORDING_PATH")
-
-        parser.add_option("-x", "--interest-txn", dest="interest_txn", 
-                help="interest txn", default=g_interest_txn, metavar="INTEREST_TXN")
-
-        parser.add_option("-H", "--hosts", dest="hosts_path", 
-                help="hosts path", default="./config/hosts", metavar="HOSTS_PATH")
-
+        # load command arguments into configuration
+        parser = create_parser()
         (options, args) = parser.parse_args()
-
+        global hosts_path_g
         s_timeout = int(options.s_timeout)
         c_timeout = int(options.c_timeout)
         c_duration = int(options.c_duration)
         c_single_server = int(options.c_single_server)
         s_taskset = int(options.s_taskset)
         c_taskset = options.c_taskset
-        if (c_single_server not in [0, 1, 2]):
-            logging.error("Invalid single server argument.")
-            return False
-
-        # user-defined hosts path
-        global hosts_path_g
-        filename = os.path.realpath(options.filename)
+        filename = os.path.realpath(options.config_path)
         hosts_path_g = os.path.realpath(options.hosts_path)
-        init_hosts_map()
-
-        # recording path  
+        log_dir = os.path.realpath(options.log_dir)
+        # the kind of transaction I care about (new-order)
+        c_interest_txn = str(options.interest_txn)
+        # recording (recovery log) path  
         recording_path_dir = ""
         if (len(options.recording_path) != 0):
             recording_path_dir = os.path.realpath(options.recording_path)
+        rpc_port = int(options.rpc_port)
+        logging.info("Experiment controller port: " + str(options.rpc_port))
+
+        if not TrialConfig(options).check_correctness():
+            return False;
+
+        init_hosts_map()
 
         # (debug) log path
-        log_dir = os.path.realpath(options.log_dir)
         shutil.rmtree(log_dir, True)
         os.makedirs(log_dir)
-
-        # the kind of transaction I care about (new-order)
-        c_interest_txn = str(options.interest_txn)
-
-        logging.info("Experiment controller port: " + str(options.rpc_port))
-        rpc_port = int(options.rpc_port)
 
         # the configuration xml file
         logging.info("Start reading config file: " + filename + " ...")
@@ -930,6 +970,15 @@ def main():
 
         benchmark = config.attrib["name"]
 
+        # TODO beautify the following code
+        # 1. load server info
+        # 2. load client info
+        # 3. start server and setup heartbeat.
+        # 4. wait until server init 
+        # 5. start client and setup heartbeat.
+        # 6. start bench
+        # 7. collect results
+        # 7. finish bench
         logging.info("Checking site info ...")
         s_info = dict()
         num_site = int(config.find("hosts").attrib["number"])
@@ -988,7 +1037,8 @@ def main():
         logging.info("Checking client info ... Done")
 
         # init server controller
-        server_controller = ServerController(s_timeout, s_info, s_taskset, log_dir, recording_path_dir)
+        server_controller = ServerController(s_timeout, s_info, s_taskset, 
+                log_dir, recording_path_dir)
 
         # start all server processes
         logging.info("Starting servers ...")
@@ -1001,7 +1051,8 @@ def main():
         do_sample = Value('i', 0)
         do_sample_lock = Lock()
 
-        server_process = multiprocessing.Process(target=server_controller.server_heart_beat, 
+        server_process = multiprocessing.Process(
+                target=server_controller.server_heart_beat, 
                 args=(cond, s_init_finish, do_sample, do_sample_lock))
         server_process.daemon = False
         server_process.start()

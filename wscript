@@ -133,16 +133,16 @@ def build(bld):
                 includes=". rrr bench deptran", 
                 use="rrr memdb deptran PTHREAD RT")
 
-#    bld.program(source="test/rpcbench.cc test/benchmark_service.cc", 
-#                target="rpcbench", 
-#                includes=". rrr deptran test", 
-#                use="rrr PTHREAD")
-#
+    bld.program(source="test/rpcbench.cc test/benchmark_service.cc", 
+                target="rpcbench", 
+                includes=". rrr deptran test", 
+                use="rrr PTHREAD")
+
 #    bld.program(source="test/rpc_microbench.cc test/benchmark_service.cc", 
 #                target="rpc_microbench", 
 #                includes=". rrr deptran test", 
 #                use="rrr PTHREAD RT APR APR-UTIL")
-
+#
     bld.stlib(source=bld.path.ant_glob("deptran/*.cc "
                                        "deptran/*.cpp "
                                        "deptran/util/*.cc "
