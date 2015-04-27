@@ -20,6 +20,7 @@ const std::string ServerControlServiceImpl::STAT_N_ASK           =   "ask";
 const std::string ServerControlServiceImpl::STAT_SZ_GRAPH_START  =   "start_graph";
 const std::string ServerControlServiceImpl::STAT_SZ_GRAPH_COMMIT =   "commit_graph";
 const std::string ServerControlServiceImpl::STAT_SZ_GRAPH_ASK    =   "ask_graph";
+const std::string ServerControlServiceImpl::STAT_RO6_SZ_VECTOR    =   "ack_start_vector";
 
 void ServerControlServiceImpl::shutdown_wrapper(int sig) {
     if (scsi_s != NULL) {
