@@ -130,6 +130,8 @@ int main(int argc, char *argv[]) {
                 &rococo_service->stat_sz_gra_ask_);
         scsi->set_stat(ServerControlServiceImpl::STAT_N_ASK,
                 &rococo_service->stat_n_ask_);
+        scsi->set_stat(ServerControlServiceImpl::STAT_RO6_SZ_VECTOR,
+                &rococo_service->stat_ro6_sz_vector_);
     }
     // TODO replace above with set_stat
 

@@ -358,6 +358,9 @@ void RococoServiceImpl::rcc_start_pie(
         res->is_defered = deferred ? 1 : 0;
         auto sz_sub_gra = RCCDTxn::dep_s->sub_txn_graph(header.tid, res->gra_m);
         stat_sz_gra_start_.sample(sz_sub_gra);
+        if (IS_MODE_RO6) {
+            stat_ro6_sz_vector_.sample(res->read_only.size());
+        }
 
         if (defer) defer->reply();
 //    Log::debug("reply to start request. txn_id: %llx, pie_id: %llx, graph size: %d", header.tid, header.pid, (int)res->gra.size());
