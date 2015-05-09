@@ -2,8 +2,10 @@
 
 namespace rococo {
 
-void TpccPiece::reg_new_order() {
+static uint32_t TXN_TYPE = TPCC_NEW_ORDER; 
 
+void TpccPiece::reg_new_order() {
+    
     BEGIN_PIE(TPCC_NEW_ORDER,
             TPCC_NEW_ORDER_0, // Ri & W district
             DF_NO) {

@@ -118,24 +118,74 @@ public:
 
     DTxn(i64 tid, DTxnMgr* mgr) : tid_(tid), mgr_(mgr), phase_(0), mdb_txn_(nullptr) {}
 
-    virtual mdb::Row* create(const mdb::Schema* schema, const std::vector<mdb::Value> &values) = 0;
+    virtual mdb::Row* create(
+            const mdb::Schema* schema, 
+            const std::vector<mdb::Value> &values
+    ) = 0;
 
-    virtual bool read_column(mdb::Row* row, mdb::column_id_t col_id, Value* value) ;
-    virtual bool read_columns(Row* row, const std::vector<column_id_t>& col_ids, std::vector<Value>* values);
-    virtual bool write_column(Row* row, column_id_t col_id, const Value& value) ;
+    virtual bool read_column(
+            mdb::Row* row, 
+            mdb::column_id_t col_id, 
+            Value* value
+    ); 
+
+    virtual bool read_columns(
+            Row* row, 
+            const std::vector<column_id_t>& col_ids, 
+            std::vector<Value>* values
+    );
+
+    virtual bool write_column(
+            Row* row, 
+            column_id_t col_id, 
+            const Value& value
+    );
+
     virtual bool insert_row(Table* tbl, Row* row) ;
-    virtual bool remove_row(Table* tbl, Row* row) ;
-    virtual mdb::ResultSet query(Table* tbl, const mdb::Value& kv);
-    virtual mdb::ResultSet query(Table* tbl, const mdb::Value& kv, bool retrieve, int64_t pid);
-    virtual mdb::ResultSet query(Table* tbl, const mdb::MultiBlob& mb);
-    virtual mdb::ResultSet query(mdb::Table* tbl, const mdb::MultiBlob& mb, bool retrieve, int64_t pid);
-    virtual mdb::ResultSet query_in(Table* tbl, const mdb::SortedMultiKey& low, const mdb::SortedMultiKey& high, mdb::symbol_t order = mdb::symbol_t::ORD_ASC);
-    virtual mdb::ResultSet query_in(Table* tbl, const mdb::MultiBlob& low, const mdb::MultiBlob& high, bool retrieve, int64_t pid, mdb::symbol_t order = mdb::symbol_t::ORD_ASC);
 
+    virtual bool remove_row(Table* tbl, Row* row) ;
+
+    virtual mdb::ResultSet query(Table* tbl, const mdb::Value& kv);
+
+    virtual mdb::ResultSet query(
+            Table* tbl, 
+            const mdb::Value& kv, 
+            bool retrieve, 
+            int64_t pid
+    );
+
+    virtual mdb::ResultSet query(Table* tbl, const mdb::MultiBlob& mb);
+
+    virtual mdb::ResultSet query(
+            mdb::Table* tbl, 
+            const mdb::MultiBlob& mb, 
+            bool retrieve, 
+            int64_t pid
+    );
+
+    virtual mdb::ResultSet query_in(
+            Table* tbl, 
+            const mdb::SortedMultiKey& low, 
+            const mdb::SortedMultiKey& high, 
+            mdb::symbol_t order = mdb::symbol_t::ORD_ASC
+    );
+
+    virtual mdb::ResultSet query_in(
+            Table* tbl, 
+            const mdb::MultiBlob& low, 
+            const mdb::MultiBlob& high, 
+            bool retrieve, 
+            int64_t pid, 
+            mdb::symbol_t order = mdb::symbol_t::ORD_ASC
+    );
 
     mdb::Table* get_table(const std::string& tbl_name) const;
 
-    bool write_columns(Row* row, const std::vector<column_id_t>& col_ids, const std::vector<Value>& values);
+    bool write_columns(
+            Row* row, 
+            const std::vector<column_id_t>& col_ids, 
+            const std::vector<Value>& values
+    );
 
     virtual ~DTxn();
 };
