@@ -48,11 +48,7 @@ void TpccPiece::reg_delivery() {
                     return;
                 }
 
-                if (!txn->read_column(r, 2, &buf)) {
-                    *res = REJECT;
-                    *output_size = output_index;
-                    return;
-                }
+                txn->read_column(r, 2, &buf);
                 output[output_index++] = buf;
             }
             else {
@@ -89,11 +85,7 @@ void TpccPiece::reg_delivery() {
             }
         } else { // non deptran
             if (r) {
-                if (!txn->remove_row(tbl, r)) {
-                    *res = REJECT;
-                    *output_size = output_index;
-                    return;
-                }
+                txn->remove_row(tbl, r);
             }
         }
 
@@ -102,7 +94,7 @@ void TpccPiece::reg_delivery() {
         *res = SUCCESS;
         Log::debug("TPCC_DELIVERY, piece: %d end", TPCC_DELIVERY_0);
 
-    }END_PIE
+    } END_PIE
 
     BEGIN_PIE(TPCC_DELIVERY,
             TPCC_DELIVERY_1, // Ri & W order
@@ -132,24 +124,17 @@ void TpccPiece::reg_delivery() {
         if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) {
             ((RCCDTxn *) dtxn)->kiss(r, 5, true);
         }
-        if (!txn->read_column(r, 3, &buf)) {
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+
+        txn->read_column(r, 3, &buf);
         output[output_index++] = buf; // read o_c_id
 
-        if (!txn->write_column(r, 5, input[3])) { // write o_carrier_id
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+        txn->write_column(r, 5, input[3]); // write o_carrier_id
 
         verify(*output_size >= output_index);
         *output_size = output_index;
         *res = SUCCESS;
         Log::debug("TPCC_DELIVERY, piece: %d end", TPCC_DELIVERY_1);
-    }END_PIE
+    } END_PIE
 
 
     BEGIN_PIE(TPCC_DELIVERY,
@@ -228,17 +213,9 @@ void TpccPiece::reg_delivery() {
                 ((RCCDTxn *) dtxn)->kiss(r, 8, true);
             }
 
-            if (!txn->read_column(r, 8, &buf)) { // read ol_amount
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
+            txn->read_column(r, 8, &buf); // read ol_amount
             ol_amount_buf += buf.get_double();
-            if (!txn->write_column(r, 6, Value(std::to_string(time(NULL))))) {
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
+            txn->write_column(r, 6, Value(std::to_string(time(NULL))));
         }
         output[output_index++] = Value(ol_amount_buf);
 
@@ -246,7 +223,7 @@ void TpccPiece::reg_delivery() {
         *output_size = output_index;
         *res = SUCCESS;
         Log::debug("TPCC_DELIVERY, piece: %d end", TPCC_DELIVERY_2);
-    }END_PIE
+    } END_PIE
 
     BEGIN_PIE(TPCC_DELIVERY,
             TPCC_DELIVERY_3, // W customer
@@ -263,7 +240,8 @@ void TpccPiece::reg_delivery() {
         mb[1] = input[2].get_blob();
         mb[2] = input[1].get_blob();
 
-        if (!(IS_MODE_RCC || IS_MODE_RO6) || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { // non-rcc || rcc start request
+        if (!(IS_MODE_RCC || IS_MODE_RO6) || 
+                ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { // non-rcc || rcc start request
             r = txn->query(txn->get_table(TPCC_TB_CUSTOMER), mb,
                     output_size, header.pid).next();
         }
@@ -293,36 +271,20 @@ void TpccPiece::reg_delivery() {
         }
 
         if (do_finish) {
-            if (!txn->read_column(r, 16, &buf)) {
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
+            txn->read_column(r, 16, &buf);
             buf.set_double(buf.get_double() + input[3].get_double());
-            if (!txn->write_column(r, 16, buf)) {
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
-            if (!txn->read_column(r, 19, &buf)) {
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
+            
+            txn->write_column(r, 16, buf);
+            txn->read_column(r, 19, &buf);
             buf.set_i32(buf.get_i32() + (i32) 1);
-            if (!txn->write_column(r, 19, buf)) {
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
+            txn->write_column(r, 19, buf);
 
             verify(*output_size >= output_index);
             *output_size = output_index;
             *res = SUCCESS;
             Log::debug("TPCC_DELIVERY, piece: %d end", TPCC_DELIVERY_3);
         }
-    }END_PIE
-
+    } END_PIE
 }
 
 } // namespace rococo

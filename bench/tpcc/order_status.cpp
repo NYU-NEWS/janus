@@ -54,7 +54,7 @@ void TpccPiece::reg_order_status() {
         *output_size = output_index;
         *res = SUCCESS;
         Log::debug("TPCC_ORDER_STATUS, piece: %d, end", TPCC_ORDER_STATUS_0);
-    }END_PIE
+    } END_PIE
 
     BEGIN_PIE(TPCC_ORDER_STATUS, // RO
             TPCC_ORDER_STATUS_1, // Ri customer
@@ -88,29 +88,16 @@ void TpccPiece::reg_order_status() {
         if (RO6_RO_PHASE_1) return;
 
 
-        if (!dtxn->read_column(r, 3, &buf)) { // read c_first
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+        dtxn->read_column(r, 3, &buf);// read c_first
         output[output_index++] = buf; // output[0] ==>  c_first
-        if (!dtxn->read_column(r, 4, &buf)) { // read c_middle
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+
+        dtxn->read_column(r, 4, &buf); // read c_middle
         output[output_index++] = buf; // output[1] ==>  c_middle
-        if (!dtxn->read_column(r, 5, &buf)) { // read c_last
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+
+        dtxn->read_column(r, 5, &buf); // read c_last
         output[output_index++] = buf; // output[2] ==> c_last
-        if (!dtxn->read_column(r, 16, &buf)) { // read c_balance
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+
+        dtxn->read_column(r, 16, &buf); // read c_balance
         output[output_index++] = buf; // output[3] ==> c_balance
 
         verify(*output_size >= output_index);
@@ -118,7 +105,7 @@ void TpccPiece::reg_order_status() {
         *res = SUCCESS;
         Log::debug("TPCC_ORDER_STATUS, piece: %d, end", TPCC_ORDER_STATUS_1);
 
-    }END_PIE
+    } END_PIE
 
     BEGIN_PIE(TPCC_ORDER_STATUS, // RO
             TPCC_ORDER_STATUS_2, // Ri order
@@ -197,12 +184,7 @@ void TpccPiece::reg_order_status() {
             return;
         }
 
-
-        if (!dtxn->read_column(r_0, 3, &buf)) {
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+        dtxn->read_column(r_0, 3, &buf);
 
         mdb::MultiBlob mb(3);
         //cell_locator_t cl(TPCC_TB_ORDER, 3);
@@ -220,24 +202,14 @@ void TpccPiece::reg_order_status() {
         if (RO6_RO_PHASE_1) return;
 
 
-        if (!dtxn->read_column(r, 2, &buf)) {
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+        dtxn->read_column(r, 2, &buf);
         output[output_index++] = buf; // output[0] ==> o_id
+
         Log::debug("piece: %d, o_id: %d", TPCC_ORDER_STATUS_2, buf.get_i32());
-        if (!dtxn->read_column(r, 4, &buf)) {
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+        dtxn->read_column(r, 4, &buf);
         output[output_index++] = buf; // output[1] ==> o_entry_d
-        if (!dtxn->read_column(r, 5, &buf)) {
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+
+        dtxn->read_column(r, 5, &buf);
         output[output_index++] = buf; // output[2] ==> o_carrier_id
 
         verify(*output_size >= output_index);
@@ -245,7 +217,7 @@ void TpccPiece::reg_order_status() {
         *res = SUCCESS;
         Log::debug("TPCC_ORDER_STATUS, piece: %d, end", TPCC_ORDER_STATUS_2);
 
-    }END_PIE
+    } END_PIE
 
 
     BEGIN_PIE(TPCC_ORDER_STATUS, // RO
@@ -338,35 +310,19 @@ void TpccPiece::reg_order_status() {
         while (i < row_list.size()) {
             r = row_list[i++];
 
-            if (!dtxn->read_column(r, 4, &buf)) {
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
+            dtxn->read_column(r, 4, &buf);
             output[output_index++] = buf; // output[0] ==> ol_i_id
-            if (!dtxn->read_column(r, 5, &buf)) {
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
+
+            dtxn->read_column(r, 5, &buf);
             output[output_index++] = buf; // output[1] ==> ol_supply_w_id
-            if (!dtxn->read_column(r, 6, &buf)) {
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
+
+            dtxn->read_column(r, 6, &buf);
             output[output_index++] = buf; // output[2] ==> ol_delivery_d
-            if (!dtxn->read_column(r, 7, &buf)) {
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
+
+            dtxn->read_column(r, 7, &buf);
             output[output_index++] = buf; // output[3] ==> ol_quantity
-            if (!dtxn->read_column(r, 8, &buf)) {
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
+
+            dtxn->read_column(r, 8, &buf);
             output[output_index++] = buf; // output[4] ==> ol_amount
         }
 
@@ -375,7 +331,7 @@ void TpccPiece::reg_order_status() {
         *res = SUCCESS;
         Log::debug("TPCC_ORDER_STATUS, piece: %d, end", TPCC_ORDER_STATUS_3);
 
-    }END_PIE
+    } END_PIE
 
 }
 

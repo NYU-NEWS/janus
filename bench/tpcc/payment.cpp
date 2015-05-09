@@ -25,49 +25,29 @@ void TpccPiece::reg_payment() {
         );
 
         // R warehouse
-        if (!dtxn->read_column(r, 1, &buf)) {
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+        dtxn->read_column(r, 1, &buf);
         output[output_index++] = buf; // 0 ==> w_name
-        if (!dtxn->read_column(r, 2, &buf)) {
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
-        output[output_index++] = buf; // 1 ==> w_street_1
-        if (!dtxn->read_column(r, 3, &buf)) {
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
-        output[output_index++] = buf; // 2 ==> w_street_2
-        if (!dtxn->read_column(r, 4, &buf)) {
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
-        output[output_index++] = buf; // 3 ==> w_city
-        if (!dtxn->read_column(r, 5, &buf)) {
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
-        output[output_index++] = buf; // 4 ==> w_state
-        if (!dtxn->read_column(r, 6, &buf)) {
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
-        output[output_index++] = buf; // 5 ==> w_zip
 
+        dtxn->read_column(r, 2, &buf);
+        output[output_index++] = buf; // 1 ==> w_street_1
+
+        dtxn->read_column(r, 3, &buf);
+        output[output_index++] = buf; // 2 ==> w_street_2
+
+        dtxn->read_column(r, 4, &buf);
+        output[output_index++] = buf; // 3 ==> w_city
+
+        dtxn->read_column(r, 5, &buf);
+        output[output_index++] = buf; // 4 ==> w_state
+
+        dtxn->read_column(r, 6, &buf);
+        output[output_index++] = buf; // 5 ==> w_zip
 
         verify(*output_size >= output_index);
         *output_size = output_index;
         *res = SUCCESS;
         Log::debug("TPCC_PAYMENT, piece: %d end", TPCC_PAYMENT_0);
-    }END_PIE
+    } END_PIE
 
     BEGIN_PIE(TPCC_PAYMENT,      // txn
             TPCC_PAYMENT_1,    // piece 1, Ri district
@@ -93,46 +73,22 @@ void TpccPiece::reg_payment() {
         );
 
         // R district
-        if (!dtxn->read_column(r, 2, &buf)) {
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+        dtxn->read_column(r, 2, &buf);
         output[output_index++] = buf; // output[0] ==> d_name
 
-        if (!dtxn->read_column(r, 3, &buf)) {
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+        dtxn->read_column(r, 3, &buf);
         output[output_index++] = buf; // 1 ==> d_street_1
 
-        if (!dtxn->read_column(r, 4, &buf)) {
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+        dtxn->read_column(r, 4, &buf);
         output[output_index++] = buf; // 2 ==> d_street_2
 
-        if (!dtxn->read_column(r, 5, &buf)) {
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+        dtxn->read_column(r, 5, &buf);
         output[output_index++] = buf; // 3 ==> d_city
 
-        if (!dtxn->read_column(r, 6, &buf)) {
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+        dtxn->read_column(r, 6, &buf);
         output[output_index++] = buf; // 4 ==> d_state
 
-        if (!dtxn->read_column(r, 7, &buf)) {
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+        dtxn->read_column(r, 7, &buf);
         output[output_index++] = buf; // 5 ==> d_zip
 
         verify(*output_size >= output_index);
@@ -178,26 +134,18 @@ void TpccPiece::reg_payment() {
         }
 
         if (do_finish) {
-            if (!dtxn->read_column(r, 9, &buf)) {
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
+            dtxn->read_column(r, 9, &buf);
 
             // W district
             buf.set_double(buf.get_double() + input[2].get_double());
-            if (!dtxn->write_column(r, 9, buf)) {
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
+            dtxn->write_column(r, 9, buf);
 
             verify(*output_size >= output_index);
             *output_size = output_index;
             *res = SUCCESS;
             Log::debug("TPCC_PAYMENT, piece: %d end", TPCC_PAYMENT_2);
         }
-    }END_PIE
+    } END_PIE
 
 
     BEGIN_PIE(TPCC_PAYMENT,      // txn
@@ -251,7 +199,7 @@ void TpccPiece::reg_payment() {
         *output_size = output_index;
         *res = SUCCESS;
         Log::debug("TPCC_PAYMENT, piece: %d, end", TPCC_PAYMENT_3);
-    }END_PIE
+    } END_PIE
 
     BEGIN_PIE(TPCC_PAYMENT,      // txn
             TPCC_PAYMENT_4,    // piece 4, R & W customer
@@ -364,11 +312,7 @@ void TpccPiece::reg_payment() {
                         Value(buf[14].get_double() + input[3].get_double()),
                         c_data
                 });
-                if (!dtxn->write_columns(r, col_ids, col_data)) {
-                    *res = REJECT;
-                    *output_size = output_index;
-                    return;
-                }
+                dtxn->write_columns(r, col_ids, col_data);
             }
             else {
                 std::vector<mdb::column_id_t> col_ids({
@@ -379,11 +323,7 @@ void TpccPiece::reg_payment() {
                         Value(buf[13].get_double() - input[3].get_double()),
                         Value(buf[14].get_double() + input[3].get_double())
                 });
-                if (!dtxn->write_columns(r, col_ids, col_data)) {
-                    *res = REJECT;
-                    *output_size = output_index;
-                    return;
-                }
+                dtxn->write_columns(r, col_ids, col_data);
             }
 
             output[output_index++] = input[0];  // output[0]  =>  c_id
@@ -407,7 +347,7 @@ void TpccPiece::reg_payment() {
             *res = SUCCESS;
             Log::debug("TPCC_PAYMENT, piece: %d end", TPCC_PAYMENT_4);
         }
-    }END_PIE
+    } END_PIE
 
     BEGIN_PIE(TPCC_PAYMENT,      // txn
             TPCC_PAYMENT_5,    // piece 4, W histroy
@@ -454,18 +394,14 @@ void TpccPiece::reg_payment() {
 
             CREATE_ROW(tbl->schema(), row_data);
 
-            if (!txn->insert_row(tbl, r)) {
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
+            txn->insert_row(tbl, r);
 
             verify(*output_size >= output_index);
             *output_size = output_index;
             *res = SUCCESS;
             Log::debug("TPCC_PAYMENT, piece: %d end", TPCC_PAYMENT_5);
         }
-    }END_PIE
+    } END_PIE
 
 }
 

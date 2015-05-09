@@ -17,6 +17,7 @@ void TpccPiece::reg_new_order() {
         mdb::MultiBlob mb(2);
         mb[0] = input[1].get_blob();
         mb[1] = input[0].get_blob();
+
         mdb::Row *r = dtxn->query(dtxn->get_table(TPCC_TB_DISTRICT), mb,
                 output_size, header.pid).next();
 
@@ -30,26 +31,15 @@ void TpccPiece::reg_new_order() {
         }
 
         // R district
-        if (!dtxn->read_column(r, 8, &buf)) { // read d_tax
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+        dtxn->read_column(r, 8, &buf); // read d_tax
         output[output_index++] = buf;
-        if (!dtxn->read_column(r, 10, &buf)) { // read d_next_o_id
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+
+        dtxn->read_column(r, 10, &buf); // read d_next_o_id
         output[output_index++] = buf;
 
         // W district
         buf.set_i32((i32)(buf.get_i32() + 1));
-        if (!dtxn->write_column(r, 10, buf)) { // read d_next_o_id, increament by 1
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+        dtxn->write_column(r, 10, buf); // read d_next_o_id, increament by 1
 
         verify(*output_size >= output_index);
         *output_size = output_index;
@@ -73,12 +63,9 @@ void TpccPiece::reg_new_order() {
         TPL_KISS(mdb::column_lock_t(r, 7, ALock::RLOCK));
 
         // R warehouse
-        if (!dtxn->read_column(r, 7, &buf)) { // read w_tax
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+        dtxn->read_column(r, 7, &buf); // read w_tax
         output[output_index++] = buf;
+
         verify(*output_size >= output_index);
         *output_size = output_index;
         *res = SUCCESS;
@@ -110,26 +97,15 @@ void TpccPiece::reg_new_order() {
 
 
         // R customer
-        if (!dtxn->read_column(r, 5, &buf)) {
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+        dtxn->read_column(r, 5, &buf);
         output[output_index++] = buf;
 
-        if (!dtxn->read_column(r, 13, &buf)) {
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+        dtxn->read_column(r, 13, &buf);
         output[output_index++] = buf;
 
-        if (!dtxn->read_column(r, 15, &buf)) {
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+        dtxn->read_column(r, 15, &buf);
         output[output_index++] = buf;
+
         verify(*output_size >= output_index);
         *output_size = output_index;
         *res = SUCCESS;
@@ -197,11 +173,7 @@ void TpccPiece::reg_new_order() {
         }
 
         if (do_finish) { // not deptran
-            if (!dtxn->insert_row(tbl, r)) {
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
+            dtxn->insert_row(tbl, r);
 
             // write TPCC_TB_ORDER_C_ID_SECONDARY
             mdb::MultiBlob mb(3);
@@ -210,11 +182,7 @@ void TpccPiece::reg_new_order() {
             mb[2] = input[3].get_blob();
             r = dtxn->query(dtxn->get_table(TPCC_TB_ORDER_C_ID_SECONDARY),
                     mb, true, header.pid).next();
-            if (!dtxn->write_column(r, 3, input[0])) {
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
+            dtxn->write_column(r, 3, input[0]);
 
             verify(*output_size >= output_index);
             *output_size = output_index;
@@ -275,11 +243,7 @@ void TpccPiece::reg_new_order() {
         }
 
         if (do_finish) {
-            if (!dtxn->insert_row(tbl, r)) {
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
+            dtxn->insert_row(tbl, r);
             verify(*output_size >= output_index);
             *output_size = output_index;
             *res = SUCCESS;
@@ -308,24 +272,15 @@ void TpccPiece::reg_new_order() {
         );
 
         // Ri item
-        if (!dtxn->read_column(r, 2, &buf)) {
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+        dtxn->read_column(r, 2, &buf);
         output[output_index++] = buf; // 0 ==> i_name
-        if (!dtxn->read_column(r, 3, &buf)) {
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+
+        dtxn->read_column(r, 3, &buf);
         output[output_index++] = buf; // 1 ==> i_price
-        if (!dtxn->read_column(r, 4, &buf)) {
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+
+        dtxn->read_column(r, 4, &buf);
         output[output_index++] = buf; // 2 ==> i_data
+
         verify(*output_size >= output_index);
         *output_size = output_index;
         *res = SUCCESS;
@@ -354,18 +309,10 @@ void TpccPiece::reg_new_order() {
 
         //i32 s_dist_col = 3 + input[2].get_i32();
         // Ri stock
-        if (!dtxn->read_column(r, 3, &buf)) { // FIXME compress all s_dist_xx into one column
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+        dtxn->read_column(r, 3, &buf); // FIXME compress all s_dist_xx into one column
         output[output_index++] = buf; // 0 ==> s_dist_xx
 
-        if (!dtxn->read_column(r, 16, &buf)) {
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
+        dtxn->read_column(r, 16, &buf);
         output[output_index++] = buf; // 1 ==> s_data
 
         verify(*output_size >= output_index);
@@ -424,32 +371,16 @@ void TpccPiece::reg_new_order() {
         if (do_finish) {
             // Ri stock
             i32 new_ol_quantity;
-            if (!dtxn->read_column(r, 2, &buf)) {
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
+            dtxn->read_column(r, 2, &buf);
             new_ol_quantity = buf.get_i32() - input[2].get_i32();
 
-            if (!dtxn->read_column(r, 13, &buf)) {
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
+            dtxn->read_column(r, 13, &buf);
             Value new_s_ytd(buf.get_i32() + input[2].get_i32());
 
-            if (!dtxn->read_column(r, 14, &buf)) {
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
+            dtxn->read_column(r, 14, &buf);
             Value new_s_order_cnt((i32)(buf.get_i32() + 1));
 
-            if (!dtxn->read_column(r, 15, &buf)) {
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
+            dtxn->read_column(r, 15, &buf);
             Value new_s_remote_cnt(buf.get_i32() + input[3].get_i32());
 
             if (new_ol_quantity < 10)
@@ -529,11 +460,7 @@ void TpccPiece::reg_new_order() {
         }
 
         if (do_finish) {
-            if (!dtxn->insert_row(tbl, r)) {
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
+            dtxn->insert_row(tbl, r);
             verify(*output_size >= output_index);
             *output_size = output_index;
             *res = SUCCESS;
