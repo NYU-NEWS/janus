@@ -444,9 +444,11 @@ void TpccPiece::reg_new_order() {
     BEGIN_PIE(TPCC_NEW_ORDER,
             TPCC_NEW_ORDER_8, // W order_line
             DF_REAL) {
+        // ############################################################
         verify(input_size == 10);
         Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_8);
-
+        // ############################################################
+        
         if (IS_MODE_2PL
                 && output_size == NULL) {
             ((TPLDTxn*)dtxn)->get_2pl_proceed_callback(header, input,
@@ -459,19 +461,18 @@ void TpccPiece::reg_new_order() {
 
         if (!(IS_MODE_RCC || IS_MODE_RO6) 
                 || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { 
-            // non-rcc finish || rcc start request
+            // 2pl finish || occ start || rcc start request
             std::vector<Value> input_buf(input, input + input_size);
-
             CREATE_ROW(tbl->schema(), input_buf);
         }
 
         bool do_finish = true;
         if (row_map) { // deptran
-            if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { // start req
+            if ((IS_MODE_RCC || IS_MODE_RO6) && 
+                    IN_PHASE_1) { // start req
                 //std::map<int, entry_t *> &m = DepTranServiceImpl::dep_s->rw_entries_[TPCC_TB_ORDER_LINE][r->get_key()];
 
         // ############################################################
-                verify(r);
                 ((RCCDTxn*)dtxn)->kiss(r, 0, false);
                 ((RCCDTxn*)dtxn)->kiss(r, 1, false);
                 ((RCCDTxn*)dtxn)->kiss(r, 2, false);
@@ -483,7 +484,6 @@ void TpccPiece::reg_new_order() {
                 do_finish = false;
         // ############################################################
             } else { // finish req
-
                 auto kv = row_map->begin()->second.begin();
                 r = kv->second;
                 //DepTranServiceImpl::dep_s->rw_entries_[TPCC_TB_ORDER_LINE].erase(kv->first);
@@ -499,8 +499,8 @@ void TpccPiece::reg_new_order() {
             *output_size = oi;
             Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_8);
         // ############################################################
-            return;
             *res = SUCCESS;
+            return;
         }
     } END_PIE
 }
