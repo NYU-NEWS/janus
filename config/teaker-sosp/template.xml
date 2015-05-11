@@ -33,7 +33,7 @@
             <column name="w_ytd" type="double"/>
         </schema>
     </table>
-    <table name="district" all_site="true" shard_method="int_modulus" records="10">
+    <table name="district" all_site="true" shard_method="int_modulus" records="1">
         <schema>
             <column name="d_id" type="i32" primary="true"/>
             <column name="d_w_id" type="i32" primary="true" foreign="warehouse.w_id"/>
