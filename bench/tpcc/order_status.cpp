@@ -59,11 +59,13 @@ void TpccPiece::reg_order_status() {
     BEGIN_PIE(TPCC_ORDER_STATUS, // RO
             TPCC_ORDER_STATUS_1, // Ri customer
             DF_NO) {
+        // #################################################################
         verify(row_map == NULL);
         verify(dtxn != nullptr);
         Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_1);
         verify(input_size == 3);
-        i32 output_index = 0;
+        // #################################################################
+        
         mdb::Table *tbl = dtxn->get_table(TPCC_TB_CUSTOMER);
         // R customer
         Value buf;
@@ -74,12 +76,14 @@ void TpccPiece::reg_order_status() {
         mb[2] = input[0].get_blob();
         mdb::Row *r = dtxn->query(tbl, mb, output_size, header.pid).next();
 
+        // #################################################################
         TPL_KISS(
                 mdb::column_lock_t(r, 3, ALock::RLOCK),
                 mdb::column_lock_t(r, 4, ALock::RLOCK),
                 mdb::column_lock_t(r, 5, ALock::RLOCK),
                 mdb::column_lock_t(r, 16, ALock::RLOCK)
         )
+        // #################################################################
 
         if ((IS_MODE_RCC || IS_MODE_RO6)) {
             ((RCCDTxn *) dtxn)->kiss(r, 16, false);
@@ -87,24 +91,18 @@ void TpccPiece::reg_order_status() {
 
         if (RO6_RO_PHASE_1) return;
 
+        i32 oi = 0; 
+        dtxn->read_column(r, 3, &output[oi++]);// read c_first
+        dtxn->read_column(r, 4, &output[oi++]);// read c_middle
+        dtxn->read_column(r, 5, &output[oi++]);// read c_last
+        dtxn->read_column(r, 16, &output[oi++]);// read c_balance
 
-        dtxn->read_column(r, 3, &buf);// read c_first
-        output[output_index++] = buf; // output[0] ==>  c_first
-
-        dtxn->read_column(r, 4, &buf); // read c_middle
-        output[output_index++] = buf; // output[1] ==>  c_middle
-
-        dtxn->read_column(r, 5, &buf); // read c_last
-        output[output_index++] = buf; // output[2] ==> c_last
-
-        dtxn->read_column(r, 16, &buf); // read c_balance
-        output[output_index++] = buf; // output[3] ==> c_balance
-
-        verify(*output_size >= output_index);
-        *output_size = output_index;
+        // #################################################################
+        verify(*output_size >= oi);
+        *output_size = oi;
         *res = SUCCESS;
         Log::debug("TPCC_ORDER_STATUS, piece: %d, end", TPCC_ORDER_STATUS_1);
-
+        // #################################################################
     } END_PIE
 
     BEGIN_PIE(TPCC_ORDER_STATUS, // RO
@@ -113,7 +111,6 @@ void TpccPiece::reg_order_status() {
         verify(row_map == NULL);
         Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_2);
         verify(input_size == 3);
-        i32 output_index = 0;
         Value buf;
 
         mdb::MultiBlob mb_0(3);
@@ -202,21 +199,18 @@ void TpccPiece::reg_order_status() {
         if (RO6_RO_PHASE_1) return;
 
 
-        dtxn->read_column(r, 2, &buf);
-        output[output_index++] = buf; // output[0] ==> o_id
+        i32 oi = 0;
+        dtxn->read_column(r, 2, &output[oi++]); // output[0] ==> o_id
+        dtxn->read_column(r, 4, &output[oi++]); // output[1] ==> o_entry_d
+        dtxn->read_column(r, 5, &output[oi++]); // output[2] ==> o_carrier_id
+        Log::debug("piece: %d, o_id: %d", TPCC_ORDER_STATUS_2, output[0].get_i32());
 
-        Log::debug("piece: %d, o_id: %d", TPCC_ORDER_STATUS_2, buf.get_i32());
-        dtxn->read_column(r, 4, &buf);
-        output[output_index++] = buf; // output[1] ==> o_entry_d
-
-        dtxn->read_column(r, 5, &buf);
-        output[output_index++] = buf; // output[2] ==> o_carrier_id
-
-        verify(*output_size >= output_index);
-        *output_size = output_index;
+        // ############################################################
+        verify(*output_size >= oi);
+        *output_size = oi;
         *res = SUCCESS;
         Log::debug("TPCC_ORDER_STATUS, piece: %d, end", TPCC_ORDER_STATUS_2);
-
+        // ############################################################
     } END_PIE
 
 
@@ -226,8 +220,6 @@ void TpccPiece::reg_order_status() {
         verify(row_map == NULL);
         Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_3);
         verify(input_size == 3);
-        i32 output_index = 0;
-        Value buf;
         mdb::MultiBlob mbl(4), mbh(4);
         Log::debug("ol_d_id: %d, ol_w_id: %d, ol_o_id: %d",
                 input[2].get_i32(), input[1].get_i32(), input[0].get_i32());
@@ -307,32 +299,24 @@ void TpccPiece::reg_order_status() {
 
 
         int i = 0;
+        i32 oi = 0;
         while (i < row_list.size()) {
             r = row_list[i++];
 
-            dtxn->read_column(r, 4, &buf);
-            output[output_index++] = buf; // output[0] ==> ol_i_id
-
-            dtxn->read_column(r, 5, &buf);
-            output[output_index++] = buf; // output[1] ==> ol_supply_w_id
-
-            dtxn->read_column(r, 6, &buf);
-            output[output_index++] = buf; // output[2] ==> ol_delivery_d
-
-            dtxn->read_column(r, 7, &buf);
-            output[output_index++] = buf; // output[3] ==> ol_quantity
-
-            dtxn->read_column(r, 8, &buf);
-            output[output_index++] = buf; // output[4] ==> ol_amount
+            dtxn->read_column(r, 4, &output[oi++]); // output[0] ==> ol_i_id
+            dtxn->read_column(r, 5, &output[oi++]); // output[1] ==> ol_supply_w_id
+            dtxn->read_column(r, 6, &output[oi++]); // output[2] ==> ol_delivery_d
+            dtxn->read_column(r, 7, &output[oi++]); // output[3] ==> ol_quantity
+            dtxn->read_column(r, 8, &output[oi++]); // output[4] ==> ol_amount
         }
 
-        verify(*output_size >= output_index);
-        *output_size = output_index;
+        // ############################################################
+        verify(*output_size >= oi);
+        *output_size = oi;
         *res = SUCCESS;
         Log::debug("TPCC_ORDER_STATUS, piece: %d, end", TPCC_ORDER_STATUS_3);
-
+        // ############################################################
     } END_PIE
-
 }
 
 } // namespace rococo

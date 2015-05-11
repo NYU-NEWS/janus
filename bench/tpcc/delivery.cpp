@@ -241,7 +241,8 @@ void TpccPiece::reg_delivery() {
         mb[2] = input[1].get_blob();
 
         if (!(IS_MODE_RCC || IS_MODE_RO6) || 
-                ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { // non-rcc || rcc start request
+                ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { 
+            // non-rcc || rcc start request
             r = txn->query(txn->get_table(TPCC_TB_CUSTOMER), mb,
                     output_size, header.pid).next();
         }

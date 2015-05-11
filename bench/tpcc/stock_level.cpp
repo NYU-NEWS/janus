@@ -7,12 +7,11 @@ void TpccPiece::reg_stock_level() {
     BEGIN_PIE(TPCC_STOCK_LEVEL,
             TPCC_STOCK_LEVEL_0, // Ri district
             DF_NO) {
-
+        // ###################################################
         verify(row_map == NULL);
         verify(dtxn != nullptr);
         verify(input_size == 2);
-        i32 output_index = 0;
-        Value buf;
+        // ###################################################
         mdb::MultiBlob mb(2);
         //cell_locator_t cl(TPCC_TB_DISTRICT, 2);
         mb[0] = input[1].get_blob();
@@ -23,32 +22,28 @@ void TpccPiece::reg_stock_level() {
 
         TPL_KISS(mdb::column_lock_t(r, 10, ALock::RLOCK));
 
-
         if ((IS_MODE_RCC || IS_MODE_RO6)) {
             ((RCCDTxn *) dtxn)->kiss(r, 10, false);
         }
 
         if (RO6_RO_PHASE_1) return;
 
+        i32 oi = 0;
+        dtxn->read_column(r, 10, &output[oi++]); // output[0] ==> d_next_o_id
 
-        dtxn->read_column(r, 10, &buf);
-        output[output_index++] = buf; // output[0] ==> d_next_o_id
-
-        verify(buf.get_kind() == Value::I32);
-
-        verify(*output_size >= output_index);
-        *output_size = output_index;
+        // ###################################################
+        verify(*output_size >= oi);
+        *output_size = oi;
         *res = SUCCESS;
-    }END_PIE
+        // ###################################################
+    } END_PIE
 
     BEGIN_PIE(TPCC_STOCK_LEVEL,
             TPCC_STOCK_LEVEL_1, // Ri order_line
             DF_NO) {
-
         verify(row_map == NULL);
         verify(input_size == 3);
-        i32 output_index = 0;
-        Value buf;
+
         mdb::MultiBlob mbl(4), mbh(4);
         mbl[0] = input[2].get_blob();
         mbh[0] = input[2].get_blob();
@@ -102,19 +97,21 @@ void TpccPiece::reg_stock_level() {
             return;
         }
 
-        int i = 0;
+        i32 i = 0;
+        i32 oi = 0;
         while (i < row_list.size()) {
             mdb::Row *r = row_list[i++];
-            dtxn->read_column(r, 4, &buf);
-            output[output_index++] = buf;
+            dtxn->read_column(r, 4, &output[oi++]);
         }
 
-        verify(*output_size >= output_index);
+        // ###################################################
+        verify(*output_size >= oi);
         verify(*output_size >= 100);
         verify(*output_size <= 300);
-        *output_size = output_index;
         *res = SUCCESS;
-    }END_PIE
+        // ###################################################
+        *output_size = oi;
+    } END_PIE
 
     BEGIN_PIE(TPCC_STOCK_LEVEL,
             TPCC_STOCK_LEVEL_2, // R stock
@@ -150,8 +147,7 @@ void TpccPiece::reg_stock_level() {
         verify(*output_size >= output_index);
         *output_size = output_index;
         *res = SUCCESS;
-    }END_PIE
-
+    } END_PIE
 }
 
 } // namespace rococo

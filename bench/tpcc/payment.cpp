@@ -7,14 +7,16 @@ void TpccPiece::reg_payment() {
     BEGIN_PIE(TPCC_PAYMENT,      // txn
             TPCC_PAYMENT_0,    // piece 0, Ri & W warehouse
             DF_NO) { // immediately read
+        // ############################################################
         verify(row_map == NULL);
         verify(input_size == 2);
         Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_0);
-        i32 output_index = 0;
-        Value buf;
+        i32 oi = 0;
+        // ############################################################
         mdb::Row *r = dtxn->query(dtxn->get_table(TPCC_TB_WAREHOUSE),
                 input[0], output_size, header.pid).next();
 
+        // ############################################################
         TPL_KISS (
                 mdb::column_lock_t(r, 1, ALock::RLOCK),
                 mdb::column_lock_t(r, 2, ALock::RLOCK),
@@ -23,39 +25,33 @@ void TpccPiece::reg_payment() {
                 mdb::column_lock_t(r, 5, ALock::RLOCK),
                 mdb::column_lock_t(r, 6, ALock::RLOCK)
         );
+        // ############################################################
 
         // R warehouse
-        dtxn->read_column(r, 1, &buf);
-        output[output_index++] = buf; // 0 ==> w_name
+        dtxn->read_column(r, 1, &output[oi++]);  // 0 ==> w_name
+        dtxn->read_column(r, 2, &output[oi++]);  // 1 ==> w_street_1
+        dtxn->read_column(r, 3, &output[oi++]);  // 2 ==> w_street_2
+        dtxn->read_column(r, 4, &output[oi++]);  // 3 ==> w_city
+        dtxn->read_column(r, 5, &output[oi++]);  // 4 ==> w_state
+        dtxn->read_column(r, 6, &output[oi++]);  // 5 ==> w_zip
 
-        dtxn->read_column(r, 2, &buf);
-        output[output_index++] = buf; // 1 ==> w_street_1
-
-        dtxn->read_column(r, 3, &buf);
-        output[output_index++] = buf; // 2 ==> w_street_2
-
-        dtxn->read_column(r, 4, &buf);
-        output[output_index++] = buf; // 3 ==> w_city
-
-        dtxn->read_column(r, 5, &buf);
-        output[output_index++] = buf; // 4 ==> w_state
-
-        dtxn->read_column(r, 6, &buf);
-        output[output_index++] = buf; // 5 ==> w_zip
-
-        verify(*output_size >= output_index);
-        *output_size = output_index;
+        // ############################################################
+        verify(*output_size >= oi);
+        *output_size = oi;
         *res = SUCCESS;
         Log::debug("TPCC_PAYMENT, piece: %d end", TPCC_PAYMENT_0);
+        // ############################################################
     } END_PIE
 
     BEGIN_PIE(TPCC_PAYMENT,      // txn
             TPCC_PAYMENT_1,    // piece 1, Ri district
             DF_NO) { // immediately read
+        // ############################################################
         verify(row_map == NULL);
         verify(input_size == 2);
         Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_1);
-        i32 output_index = 0;
+        // ############################################################
+        i32 oi = 0;
         Value buf;
         mdb::MultiBlob mb(2);
         mb[0] = input[1].get_blob();
@@ -63,6 +59,7 @@ void TpccPiece::reg_payment() {
         mdb::Row *r = dtxn->query(dtxn->get_table(TPCC_TB_DISTRICT), mb,
                 output_size, header.pid).next();
 
+        // ############################################################
         TPL_KISS(
                 mdb::column_lock_t(r, 2, ALock::RLOCK),
                 mdb::column_lock_t(r, 3, ALock::RLOCK),
@@ -71,46 +68,43 @@ void TpccPiece::reg_payment() {
                 mdb::column_lock_t(r, 6, ALock::RLOCK),
                 mdb::column_lock_t(r, 7, ALock::RLOCK)
         );
+        // ############################################################
 
         // R district
-        dtxn->read_column(r, 2, &buf);
-        output[output_index++] = buf; // output[0] ==> d_name
+        dtxn->read_column(r, 2, &output[oi++]); // output[0] ==> d_name
+        dtxn->read_column(r, 3, &output[oi++]); // 1 ==> d_street_1
+        dtxn->read_column(r, 4, &output[oi++]); // 2 ==> d_street_2
+        dtxn->read_column(r, 5, &output[oi++]); // 3 ==> d_city
+        dtxn->read_column(r, 6, &output[oi++]); // 4 ==> d_state
+        dtxn->read_column(r, 7, &output[oi++]); // 5 ==> d_zip
 
-        dtxn->read_column(r, 3, &buf);
-        output[output_index++] = buf; // 1 ==> d_street_1
-
-        dtxn->read_column(r, 4, &buf);
-        output[output_index++] = buf; // 2 ==> d_street_2
-
-        dtxn->read_column(r, 5, &buf);
-        output[output_index++] = buf; // 3 ==> d_city
-
-        dtxn->read_column(r, 6, &buf);
-        output[output_index++] = buf; // 4 ==> d_state
-
-        dtxn->read_column(r, 7, &buf);
-        output[output_index++] = buf; // 5 ==> d_zip
-
-        verify(*output_size >= output_index);
-        *output_size = output_index;
+        // ############################################################
+        verify(*output_size >= oi);
+        *output_size = oi;
         *res = SUCCESS;
         Log::debug("TPCC_PAYMENT, piece: %d end", TPCC_PAYMENT_1);
-    }END_PIE
+        // ############################################################
+    } END_PIE
 
 
     BEGIN_PIE(TPCC_PAYMENT,      // txn
             TPCC_PAYMENT_2,    // piece 1, Ri & W district
             DF_REAL) {
+        // ############################################################
         verify(input_size == 3);
         Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_2);
         i32 output_index = 0;
+        // ############################################################
+        
         Value buf;
         mdb::Row *r = NULL;
         mdb::MultiBlob mb(2);
         //cell_locator_t cl(TPCC_TB_DISTRICT, 2);
         mb[0] = input[1].get_blob();
         mb[1] = input[0].get_blob();
-        if (!(IS_MODE_RCC || IS_MODE_RO6) || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { // non-rcc || rcc start request
+        if (!(IS_MODE_RCC || IS_MODE_RO6) 
+                || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { 
+            // non-rcc || rcc start request
             r = dtxn->query(dtxn->get_table(TPCC_TB_DISTRICT), mb,
                     output_size, header.pid).next();
         }
@@ -151,9 +145,11 @@ void TpccPiece::reg_payment() {
     BEGIN_PIE(TPCC_PAYMENT,      // txn
             TPCC_PAYMENT_3,    // piece 2, R customer secondary index, c_last -> c_id
             DF_NO) {
+        // ############################################################
         verify(row_map == NULL);
         verify(input_size == 3);
         Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_3);
+        // ############################################################
 
         if (IS_MODE_2PL
                 && output_size == NULL) {
@@ -195,18 +191,22 @@ void TpccPiece::reg_payment() {
         verify(mid_set);
         output[output_index++] = Value(it_mid->second);
 
+        // ############################################################
         verify(*output_size >= output_index);
         *output_size = output_index;
         *res = SUCCESS;
         Log::debug("TPCC_PAYMENT, piece: %d, end", TPCC_PAYMENT_3);
+        // ############################################################
     } END_PIE
 
     BEGIN_PIE(TPCC_PAYMENT,      // txn
             TPCC_PAYMENT_4,    // piece 4, R & W customer
             DF_REAL) {
+        // ############################################################
         verify(input_size == 6);
         Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_4);
         i32 output_index = 0;
+        // ############################################################
         mdb::Row *r = NULL;
         std::vector<Value> buf;
 
@@ -216,7 +216,9 @@ void TpccPiece::reg_payment() {
         mb[1] = input[2].get_blob();
         mb[2] = input[1].get_blob();
         // R customer
-        if (!(IS_MODE_RCC || IS_MODE_RO6) || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { // non-rcc || rcc start request
+        if (!(IS_MODE_RCC || IS_MODE_RO6) || 
+                ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { 
+            // non-rcc || rcc start request
             r = dtxn->query(dtxn->get_table(TPCC_TB_CUSTOMER), mb,
                     output_size, header.pid).next();
         }
@@ -225,6 +227,7 @@ void TpccPiece::reg_payment() {
         ALock::type_t lock_20_type = ALock::RLOCK;
         if (input[0].get_i32() % 10 == 0)
             lock_20_type = ALock::WLOCK;
+        // ############################################################
         TPL_KISS(
                 mdb::column_lock_t(r, 3, ALock::RLOCK),
                 mdb::column_lock_t(r, 4, ALock::RLOCK),
@@ -243,6 +246,7 @@ void TpccPiece::reg_payment() {
                 mdb::column_lock_t(r, 17, ALock::WLOCK),
                 mdb::column_lock_t(r, 20, lock_20_type)
         )
+        // ############################################################
 
         bool do_finish = true;
 
@@ -352,8 +356,10 @@ void TpccPiece::reg_payment() {
     BEGIN_PIE(TPCC_PAYMENT,      // txn
             TPCC_PAYMENT_5,    // piece 4, W histroy
             DF_REAL) {
+        // ############################################################
         verify(input_size == 9);
         Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_5);
+        // ############################################################
 
         if (IS_MODE_2PL
                 && output_size == NULL) {
@@ -368,7 +374,9 @@ void TpccPiece::reg_payment() {
 
         // insert history
         mdb::Row *r = NULL;
-        if (!(IS_MODE_RCC || IS_MODE_RO6) || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { // non-rcc || rcc start request
+        if (!(IS_MODE_RCC || IS_MODE_RO6) || 
+                ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { 
+            // non-rcc || rcc start request
         }
 
         bool do_finish = true;
@@ -396,13 +404,14 @@ void TpccPiece::reg_payment() {
 
             txn->insert_row(tbl, r);
 
+        // ############################################################
             verify(*output_size >= output_index);
             *output_size = output_index;
             *res = SUCCESS;
             Log::debug("TPCC_PAYMENT, piece: %d end", TPCC_PAYMENT_5);
+        // ############################################################
         }
     } END_PIE
-
 }
 
 } // namespace rococo
