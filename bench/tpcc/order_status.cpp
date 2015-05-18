@@ -134,10 +134,10 @@ void TpccPiece::reg_order_status() {
                 dtxn->get_table(TPCC_TB_ORDER), mb,
                 false, header.pid).next();
 
-        mdb::Txn2PL::PieceStatus *ps
-                = ((mdb::Txn2PL *) dtxn)->get_piece_status(header.pid);
 
         if (IS_MODE_2PL && output_size == NULL) {
+            mdb::Txn2PL::PieceStatus *ps
+                    = ((mdb::Txn2PL *) dtxn)->get_piece_status(header.pid);
 
 //            std::function<void(
 //                    const RequestHeader &,
