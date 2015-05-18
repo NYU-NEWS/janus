@@ -19,7 +19,11 @@ public:
         return nullptr;
     }
 
-    virtual bool read_column(mdb::Row* row, mdb::column_id_t col_id, Value* value);
+    virtual bool read_column(
+            mdb::Row* row, 
+            mdb::column_id_t col_id, 
+            Value* value
+    );
 
 
     std::function<void(void)> get_2pl_proceed_callback(
@@ -35,18 +39,18 @@ public:
             mdb::Txn2PL::PieceStatus *ps
     );
 
-    std::function<void(void)> get_2pl_succ_callback(
-            const RequestHeader &header,
-            const mdb::Value *input,
-            rrr::i32 input_size,
-            rrr::i32 *res,
-            mdb::Txn2PL::PieceStatus *ps,
-            std::function<void(
-                    const RequestHeader &,
-                    const Value *,
-                    rrr::i32,
-                    rrr::i32 *)> func
-    );
+//    std::function<void(void)> get_2pl_succ_callback(
+//            const RequestHeader &header,
+//            const mdb::Value *input,
+//            rrr::i32 input_size,
+//            rrr::i32 *res,
+//            mdb::Txn2PL::PieceStatus *ps,
+//            std::function<void(
+//                    const RequestHeader &,
+//                    const Value *,
+//                    rrr::i32,
+//                    rrr::i32 *)> func
+//    );
 
     std::function<void(void)> get_2pl_succ_callback(
             const RequestHeader &req,
@@ -83,9 +87,9 @@ public:
             std::vector<mdb::Value>* output
     ) {
         rrr::i32 output_size = output->size();
-        TxnRegistry::get(header).txn_handler(this, header, input.data(), input.size(),
-                res, output->data(), &output_size,
-                NULL);
+        TxnRegistry::get(header).txn_handler(
+                this, header, input.data(), input.size(),
+                res, output->data(), &output_size, NULL);
         output->resize(output_size);
     }
 
@@ -97,9 +101,9 @@ public:
             mdb::Value* output,
             rrr::i32* output_size
     ) {
-        TxnRegistry::get(header).txn_handler(this, header, input, input_size,
-                res, output, output_size,
-                NULL);
+        TxnRegistry::get(header).txn_handler(
+                this, header, input, input_size,
+                res, output, output_size, NULL);
     }
 };
 

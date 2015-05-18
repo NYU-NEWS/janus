@@ -10,20 +10,20 @@ void TpccPiece::reg_order_status() {
         verify(input_size == 3);
         Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_0);
 
-        if (IS_MODE_2PL
-                && output_size == NULL) {
-            ((TPLDTxn *) dtxn)->get_2pl_proceed_callback(header, input,
-                    input_size, res)();
+        if (IS_MODE_2PL && output_size == NULL) {
+            ((TPLDTxn *) dtxn)->get_2pl_proceed_callback(
+                header, input, input_size, res)();
             return;
         }
 
-        i32 output_index = 0;
         mdb::MultiBlob mbl(3), mbh(3);
         mbl[0] = input[2].get_blob();
         mbh[0] = input[2].get_blob();
         mbl[1] = input[1].get_blob();
         mbh[1] = input[1].get_blob();
-        Value c_id_low(std::numeric_limits<i32>::min()), c_id_high(std::numeric_limits<i32>::max());
+        Value c_id_low(std::numeric_limits<i32>::min());
+        Value c_id_high(std::numeric_limits<i32>::max());
+
         mbl[2] = c_id_low.get_blob();
         mbh[2] = c_id_high.get_blob();
         c_last_id_t key_low(input[0].get_str(), mbl, &g_c_last_schema);
@@ -46,14 +46,19 @@ void TpccPiece::reg_order_status() {
                 it_mid = it;
             }
         }
-        Log::debug("w_id: %d, d_id: %d, c_last: %s, num customer: %d", input[1].get_i32(), input[2].get_i32(), input[0].get_str().c_str(), n_c);
+        Log::debug("w_id: %d, d_id: %d, c_last: %s, num customer: %d", 
+                input[1].get_i32(), input[2].get_i32(), 
+                input[0].get_str().c_str(), n_c);
         verify(mid_set);
-        output[output_index++] = Value(it_mid->second);
+        i32 oi = 0;
+        output[oi++] = Value(it_mid->second);
 
-        verify(*output_size >= output_index);
-        *output_size = output_index;
-        *res = SUCCESS;
+        // #################################################################
         Log::debug("TPCC_ORDER_STATUS, piece: %d, end", TPCC_ORDER_STATUS_0);
+        verify(*output_size >= oi);
+        *res = SUCCESS;
+        // #################################################################
+        *output_size = oi;
     } END_PIE
 
     BEGIN_PIE(TPCC_ORDER_STATUS, // RO
@@ -111,7 +116,6 @@ void TpccPiece::reg_order_status() {
         verify(row_map == NULL);
         Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_2);
         verify(input_size == 3);
-        Value buf;
 
         mdb::MultiBlob mb_0(3);
         mb_0[0] = input[1].get_blob();
@@ -121,59 +125,75 @@ void TpccPiece::reg_order_status() {
                 dtxn->get_table(TPCC_TB_ORDER_C_ID_SECONDARY), mb_0,
                 output_size, header.pid).next();
 
+        mdb::MultiBlob mb(3);
+        mb[0] = input[1].get_blob();
+        mb[1] = input[0].get_blob();
+        mb[2] = r_0->get_blob(3); // FIXME add lock before reading 
+
+        mdb::Row *r = dtxn->query(
+                dtxn->get_table(TPCC_TB_ORDER), mb,
+                false, header.pid).next();
+
+        mdb::Txn2PL::PieceStatus *ps
+                = ((mdb::Txn2PL *) dtxn)->get_piece_status(header.pid);
+
         if (IS_MODE_2PL && output_size == NULL) {
 
-            mdb::Txn2PL::PieceStatus *ps
-                    = ((mdb::Txn2PL *) dtxn)->get_piece_status(header.pid);
+//            std::function<void(
+//                    const RequestHeader &,
+//                    const Value *,
+//                    rrr::i32,
+//                    rrr::i32 *)> func =
+//                    [r_0, dtxn, ps](
+//                            const RequestHeader &header,
+//                            const Value *input,
+//                            rrr::i32 input_size,
+//                            rrr::i32 *res) {
+//                        //dtxn->read_column(r_0, 3, &buf);
+//                        mdb::MultiBlob mb(3);
+//                        mb[0] = input[1].get_blob();
+//                        mb[1] = input[0].get_blob();
+//                        mb[2] = r_0->get_blob(3);
+//
+//                        mdb::Row *r = dtxn->query(
+//                                dtxn->get_table(TPCC_TB_ORDER), mb,
+//                                false, header.pid).next();
+//
+//                        std::function<void(void)> succ_callback1 = 
+//                            ((TPLDTxn *) dtxn)->get_2pl_succ_callback(
+//                                header, input, input_size, res, ps);
+//
+//                        std::function<void(void)> fail_callback1 = 
+//                            ((TPLDTxn *) dtxn)->get_2pl_fail_callback(
+//                                        header, res, ps);
+//
+//                        ps->set_num_waiting_locks(1);
+//
+//                        Log::debug("PS1: %p", ps);
+//
+//                        ps->reg_rw_lock(
+//                                std::vector<mdb::column_lock_t>({
+//                                        mdb::column_lock_t(r, 2, ALock::RLOCK),
+//                                        mdb::column_lock_t(r, 4, ALock::RLOCK),
+//                                        mdb::column_lock_t(r, 5, ALock::RLOCK)
+//                                }), succ_callback1, fail_callback1);
+//                        return;
+//                    };
 
-            std::function<void(
-                    const RequestHeader &,
-                    const Value *,
-                    rrr::i32,
-                    rrr::i32 *)> func =
-                    [r_0, dtxn, ps](const RequestHeader &header,
-                            const Value *input,
-                            rrr::i32 input_size,
-                            rrr::i32 *res) {
+            std::function<void(void)> succ_callback = 
+                ((TPLDTxn *) dtxn)->get_2pl_succ_callback(
+                    header, input, input_size, res, ps);
 
-                        //dtxn->read_column(r_0, 3, &buf);
-                        mdb::MultiBlob mb(3);
-                        mb[0] = input[1].get_blob();
-                        mb[1] = input[0].get_blob();
-                        mb[2] = r_0->get_blob(3);
-
-                        mdb::Row *r = dtxn->query(
-                                dtxn->get_table(TPCC_TB_ORDER), mb,
-                                false, header.pid).next();
-
-                        std::function<void(void)> succ_callback1
-                                = ((TPLDTxn *) dtxn)->get_2pl_succ_callback(
-                                        header, input, input_size, res,
-                                        ps);
-                        std::function<void(void)> fail_callback1
-                                = ((TPLDTxn *) dtxn)->get_2pl_fail_callback(
-                                        header, res, ps);
-                        ps->set_num_waiting_locks(1);
-
-                        Log::debug("PS1: %p", ps);
-
-                        ps->reg_rw_lock(
-                                std::vector<mdb::column_lock_t>({
-                                        mdb::column_lock_t(r, 2, ALock::RLOCK),
-                                        mdb::column_lock_t(r, 4, ALock::RLOCK),
-                                        mdb::column_lock_t(r, 5, ALock::RLOCK)
-                                }), succ_callback1, fail_callback1);
-
-                        return;
-                    };
-
-            std::function<void(void)> succ_callback = ((TPLDTxn *) dtxn)->get_2pl_succ_callback(header, input, input_size, res,
-                    ps, func);
-            std::function<void(void)> fail_callback = ((TPLDTxn *) dtxn)->get_2pl_fail_callback(header, res, ps);
+            std::function<void(void)> fail_callback = 
+                ((TPLDTxn *) dtxn)->get_2pl_fail_callback(
+                    header, res, ps);
 
             ps->reg_rw_lock(
                     std::vector<mdb::column_lock_t>({
-                            mdb::column_lock_t(r_0, 3, ALock::RLOCK)
+                            mdb::column_lock_t(r_0, 3, ALock::RLOCK),
+                            mdb::column_lock_t(r, 2, ALock::RLOCK),
+                            mdb::column_lock_t(r, 4, ALock::RLOCK),
+                            mdb::column_lock_t(r, 5, ALock::RLOCK)
                     }), succ_callback, fail_callback);
 
             //((mdb::Txn2PL *)txn)->reg_read_column(r_0, 3, succ_callback,
@@ -181,23 +201,22 @@ void TpccPiece::reg_order_status() {
             return;
         }
 
-        dtxn->read_column(r_0, 3, &buf);
+//        dtxn->read_column(r_0, 3, &buf);
 
-        mdb::MultiBlob mb(3);
-        //cell_locator_t cl(TPCC_TB_ORDER, 3);
-        mb[0] = input[1].get_blob();
-        mb[1] = input[0].get_blob();
-        mb[2] = r_0->get_blob(3);
+        //mdb::MultiBlob mb(3);
+        ////cell_locator_t cl(TPCC_TB_ORDER, 3);
+        //mb[0] = input[1].get_blob();
+        //mb[1] = input[0].get_blob();
+        //mb[2] = r_0->get_blob(3);
 
-        mdb::Row *r = dtxn->query(dtxn->get_table(TPCC_TB_ORDER), mb,
-                true, header.pid).next();
+//        mdb::Row *r = dtxn->query(dtxn->get_table(TPCC_TB_ORDER), mb,
+//                true, header.pid).next();
 
         if ((IS_MODE_RCC || IS_MODE_RO6)) {
             ((RCCDTxn *) dtxn)->kiss(r, 5, false);
         }
 
         if (RO6_RO_PHASE_1) return;
-
 
         i32 oi = 0;
         dtxn->read_column(r, 2, &output[oi++]); // output[0] ==> o_id
@@ -207,10 +226,10 @@ void TpccPiece::reg_order_status() {
 
         // ############################################################
         verify(*output_size >= oi);
-        *output_size = oi;
         *res = SUCCESS;
         Log::debug("TPCC_ORDER_STATUS, piece: %d, end", TPCC_ORDER_STATUS_2);
         // ############################################################
+        *output_size = oi;
     } END_PIE
 
 
@@ -250,13 +269,15 @@ void TpccPiece::reg_order_status() {
 
         verify(row_list.size() != 0);
 
-        if (IS_MODE_2PL
-                && output_size == NULL) {
-            mdb::Txn2PL::PieceStatus *ps
-                    = ((mdb::Txn2PL *) dtxn)->get_piece_status(header.pid);
-            std::function<void(void)> succ_callback = ((TPLDTxn *) dtxn)->get_2pl_succ_callback(header, input, input_size, res, ps);
-            std::function<void(void)> fail_callback = ((TPLDTxn *) dtxn)->get_2pl_fail_callback(header, res, ps);
-
+        if (IS_MODE_2PL && output_size == NULL) {
+            mdb::Txn2PL::PieceStatus *ps = 
+                ((mdb::Txn2PL *) dtxn)->get_piece_status(header.pid);
+            std::function<void(void)> succ_callback = 
+                ((TPLDTxn *) dtxn)->get_2pl_succ_callback(
+                                            header, input, 
+                                            input_size, res, ps);
+            std::function<void(void)> fail_callback = 
+                ((TPLDTxn *) dtxn)->get_2pl_fail_callback(header, res, ps);
 
             std::vector<mdb::column_lock_t> column_locks;
             column_locks.reserve(5 * row_list.size());
@@ -266,6 +287,7 @@ void TpccPiece::reg_order_status() {
             while (i < row_list.size()) {
                 r = row_list[i++];
 
+            // ############################################################
                 column_locks.push_back(
                         mdb::column_lock_t(r, 4, ALock::RLOCK)
                 );
@@ -281,13 +303,12 @@ void TpccPiece::reg_order_status() {
                 column_locks.push_back(
                         mdb::column_lock_t(r, 8, ALock::RLOCK)
                 );
+            // ############################################################
             }
 
             ps->reg_rw_lock(column_locks, succ_callback, fail_callback);
-
             return;
         }
-
 
         if (IS_MODE_RCC || IS_MODE_RO6) {
             for (int i = 0; i < row_list.size(); i++) {
@@ -297,12 +318,10 @@ void TpccPiece::reg_order_status() {
             if (RO6_RO_PHASE_1) return;
         }
 
-
         int i = 0;
         i32 oi = 0;
         while (i < row_list.size()) {
             r = row_list[i++];
-
             dtxn->read_column(r, 4, &output[oi++]); // output[0] ==> ol_i_id
             dtxn->read_column(r, 5, &output[oi++]); // output[1] ==> ol_supply_w_id
             dtxn->read_column(r, 6, &output[oi++]); // output[2] ==> ol_delivery_d
@@ -318,5 +337,4 @@ void TpccPiece::reg_order_status() {
         // ############################################################
     } END_PIE
 }
-
 } // namespace rococo

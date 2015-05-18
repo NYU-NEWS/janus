@@ -112,6 +112,7 @@ void TpccPiece::reg_payment() {
         TPL_KISS(mdb::column_lock_t(r, 9, ALock::WLOCK));
 
         bool do_finish = true;
+        verify((row_map != nullptr) == (IS_MODE_RCC || IS_MODE_RO6));
         if (row_map) { // deptran
             if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { // start req
                 (*row_map)[TPCC_TB_DISTRICT][mb] = r;
@@ -134,10 +135,12 @@ void TpccPiece::reg_payment() {
             buf.set_double(buf.get_double() + input[2].get_double());
             dtxn->write_column(r, 9, buf);
 
+        // ############################################################
             verify(*output_size >= output_index);
             *output_size = output_index;
             *res = SUCCESS;
             Log::debug("TPCC_PAYMENT, piece: %d end", TPCC_PAYMENT_2);
+        // ############################################################
         }
     } END_PIE
 
@@ -250,6 +253,7 @@ void TpccPiece::reg_payment() {
 
         bool do_finish = true;
 
+        verify((row_map != nullptr) == (IS_MODE_RCC || IS_MODE_RO6));
         if (row_map) { // rococo
             if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { // start req
                 (*row_map)[TPCC_TB_CUSTOMER][mb] = r;
@@ -381,6 +385,7 @@ void TpccPiece::reg_payment() {
 
         bool do_finish = true;
 
+        verify((row_map != nullptr) == (IS_MODE_RCC || IS_MODE_RO6));
         if (row_map) { // deptran
             if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { // start req
                 do_finish = false;

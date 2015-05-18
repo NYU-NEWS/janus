@@ -73,12 +73,18 @@ void TpccPiece::reg_stock_level() {
 
         verify(row_list.size() != 0);
 
-        if (IS_MODE_2PL
-                && output_size == NULL) {
+        if (IS_MODE_2PL && output_size == NULL) {
+
             mdb::Txn2PL::PieceStatus *ps
                     = ((mdb::Txn2PL *) dtxn)->get_piece_status(header.pid);
-            std::function<void(void)> succ_callback = ((TPLDTxn *) dtxn)->get_2pl_succ_callback(header, input, input_size, res, ps);
-            std::function<void(void)> fail_callback = ((TPLDTxn *) dtxn)->get_2pl_fail_callback(header, res, ps);
+
+            std::function<void(void)> succ_callback = 
+                ((TPLDTxn *) dtxn)->get_2pl_succ_callback(
+                    header, input, input_size, res, ps);
+
+            std::function<void(void)> fail_callback = 
+                ((TPLDTxn *) dtxn)->get_2pl_fail_callback(
+                    header, res, ps);
 
             std::vector<mdb::column_lock_t> column_locks;
             column_locks.reserve(row_list.size());
@@ -144,9 +150,11 @@ void TpccPiece::reg_stock_level() {
         else
             output[output_index++] = Value((i32) 0);
 
+        // ##############################################
         verify(*output_size >= output_index);
         *output_size = output_index;
         *res = SUCCESS;
+        // ##############################################
     } END_PIE
 }
 
