@@ -66,7 +66,7 @@ public:
     }
     
 #define RCC_LOAD_ROW(row, index) \
-    if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { \
+    if ((IS_MODE_RCC || IS_MODE_RO6) && !(IN_PHASE_1)) { \
         auto it = row_map->find(index); \
         verify(it != row_map->end()); \
         row = it->second; \
