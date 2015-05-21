@@ -47,7 +47,8 @@ class Row: public RefCounted {
 
     Table* tbl_;
 
-protected:
+//protected:
+public:
 
     void update_fixed(const Schema::column_info* col, void* ptr, int len);
 

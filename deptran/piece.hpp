@@ -50,6 +50,7 @@ public:
 
 #define RCC_KISS(row, col, imdt) \
     if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { \
+        verify(row != nullptr); \
         ((RCCDTxn*)dtxn)->kiss(row, col, imdt); \
     }
 
@@ -57,17 +58,19 @@ public:
     if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) \
         return;
 
-#define RCC_SAVE_ROW(r, index) \
+#define RCC_SAVE_ROW(row, index) \
     if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { \
-        auto ret = row_map->insert(std::pair<int, mdb::Row*>(index, r)); \
+        auto ret = row_map->insert(std::pair<int, mdb::Row*>(index, row)); \
         verify(ret.second); \
+        verify(row->schema_); \
     }
     
-#define RCC_LOAD_ROW(r, index) \
+#define RCC_LOAD_ROW(row, index) \
     if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { \
         auto it = row_map->find(index); \
         verify(it != row_map->end()); \
-        r = it->second; \
+        row = it->second; \
+        verify(row->schema_); \
     }
 
 #define CREATE_ROW(schema, row_data) \

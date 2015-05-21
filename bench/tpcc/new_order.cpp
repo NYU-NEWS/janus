@@ -141,6 +141,8 @@ void TpccPiece::reg_new_order() {
         mdb::Row *r = NULL;
         r = dtxn->query(dtxn->get_table(TPCC_TB_ORDER_C_ID_SECONDARY),
                     mb, false, header.pid).next();
+        verify(r);
+        verify(r->schema_);
         // ############################################################
         TPL_KISS(mdb::column_lock_t(r, 3, ALock::WLOCK));
         // ############################################################
@@ -163,6 +165,7 @@ void TpccPiece::reg_new_order() {
             CREATE_ROW(tbl->schema(), row_data);
         }
 
+        verify(r->schema_);
         RCC_KISS(r, 0, false);
         RCC_KISS(r, 1, false);
         RCC_KISS(r, 2, false);
@@ -171,6 +174,7 @@ void TpccPiece::reg_new_order() {
         RCC_PHASE1_RET; 
         RCC_LOAD_ROW(r, TPCC_NEW_ORDER_3);
 
+        verify(r->schema_);
         dtxn->insert_row(tbl, r);
 
         // write TPCC_TB_ORDER_C_ID_SECONDARY
@@ -288,6 +292,7 @@ void TpccPiece::reg_new_order() {
         mb[1] = input[1].get_blob();
         mdb::Row *r = dtxn->query(dtxn->get_table(TPCC_TB_STOCK), mb,
                 output_size, header.pid).next();
+        verify(r->schema_);
 
         // ############################################################
         TPL_KISS(
@@ -329,6 +334,7 @@ void TpccPiece::reg_new_order() {
             // non-rcc || rcc start request
             r = dtxn->query(dtxn->get_table(TPCC_TB_STOCK), mb,
                     output_size, header.pid).next();
+            verify(r->schema_);
         }
 
         // ############################################################
@@ -347,6 +353,7 @@ void TpccPiece::reg_new_order() {
         RCC_SAVE_ROW(r, TPCC_NEW_ORDER_7);
         RCC_PHASE1_RET; 
         RCC_LOAD_ROW(r, TPCC_NEW_ORDER_7);
+        verify(r->schema_);
 
         // Ri stock
         i32 new_ol_quantity;

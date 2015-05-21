@@ -57,16 +57,15 @@ void TpccPiece::reg_delivery() {
                 }
                 txn->read_column(r, 2, &buf);
                 output[oi++] = buf;
-            }
-            else {
+            } else {
                 TPL_KISS_NONE;
                 output[oi++] = Value((i32) -1);
             }
         }
 
         verify((row_map != nullptr) == (IS_MODE_RCC || IS_MODE_RO6));
-        if (row_map) { // deptran
-            if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { // deptran start req, top half
+        if (IS_MODE_RCC || IS_MODE_RO6) { // deptran
+            if (IN_PHASE_1) { // deptran start req, top half
                 if (r) { // if find a row
                     // FIXME!!!!!
                     RCC_KISS(r, 0, true);

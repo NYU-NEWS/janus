@@ -351,9 +351,9 @@ void RococoServiceImpl::rcc_start_pie(
 
     auto job = [&header, &input, res, defer, this] () {
         std::lock_guard<std::mutex> guard(this->mtx_);
-        RCCDTxn* txn = (RCCDTxn*) txn_mgr_->get_or_create(header.tid);
+        RCCDTxn* dtxn = (RCCDTxn*) txn_mgr_->get_or_create(header.tid);
         bool deferred;
-        txn->start(header, input, &deferred, res);
+        dtxn->start(header, input, &deferred, res);
 
         res->is_defered = deferred ? 1 : 0;
         auto sz_sub_gra = RCCDTxn::dep_s->sub_txn_graph(header.tid, res->gra_m);

@@ -107,6 +107,7 @@ void TpccPiece::reg_payment() {
             // non-rcc || rcc start request
             r = dtxn->query(dtxn->get_table(TPCC_TB_DISTRICT), mb,
                     output_size, header.pid).next();
+            verify(r->schema_ != nullptr);
         }
 
         TPL_KISS(mdb::column_lock_t(r, 9, ALock::WLOCK));
@@ -116,6 +117,7 @@ void TpccPiece::reg_payment() {
         RCC_PHASE1_RET;
         RCC_LOAD_ROW(r, TPCC_PAYMENT_2);
 
+        verify(r->schema_ != nullptr);
         dtxn->read_column(r, 9, &buf);
 
         // W district

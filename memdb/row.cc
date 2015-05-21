@@ -87,6 +87,7 @@ void Row::make_sparse() {
 
 Value Row::get_column(int column_id) const {
     Value v;
+    verify(schema_);
     const Schema::column_info* info = schema_->get_column_info(column_id);
     blob b = this->get_blob(column_id);
     verify(info != nullptr);
