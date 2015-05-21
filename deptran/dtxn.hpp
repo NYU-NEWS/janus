@@ -37,7 +37,16 @@ struct entry_t {
 
 #include "multi_value.hpp"
 
-typedef std::unordered_map<char *, std::unordered_map<mdb::MultiBlob, mdb::Row *, mdb::MultiBlob::hash> > row_map_t;
+typedef std::map<
+    int, 
+    mdb::Row *> row_map_t;
+
+//typedef std::unordered_map<
+//    char *, 
+//    std::unordered_map<
+//        mdb::MultiBlob, 
+//        mdb::Row *, 
+//        mdb::MultiBlob::hash> > row_map_t;
 //typedef std::unordered_map<cell_locator_t, entry_t *, cell_locator_t_hash> cell_entry_map_t;
 // in charge of storing the pre-defined procedures
 //
@@ -63,7 +72,6 @@ typedef struct {
     TxnHandler txn_handler;
     defer_t defer;
 } txn_handler_defer_pair_t;
-
 
 /**
 * This class holds all the hard-coded transactions pieces.
@@ -94,8 +102,6 @@ public:
     static inline txn_handler_defer_pair_t get(const RequestHeader& req_hdr) {
         return get(req_hdr.t_type, req_hdr.p_type);
     }
-
-
 
 private:
     // prevent instance creation

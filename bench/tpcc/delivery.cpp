@@ -59,12 +59,7 @@ void TpccPiece::reg_delivery() {
                 output[oi++] = buf;
             }
             else {
-                if (IS_MODE_2PL && output_size == NULL) {
-                    ((TPLDTxn *) dtxn)->get_2pl_proceed_callback(
-                            header, input,
-                            input_size, res)();
-                    return;
-                }
+                TPL_KISS_NONE;
                 output[oi++] = Value((i32) -1);
             }
         }
@@ -73,20 +68,17 @@ void TpccPiece::reg_delivery() {
         if (row_map) { // deptran
             if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { // deptran start req, top half
                 if (r) { // if find a row
-
-                    (*row_map)[TPCC_TB_NEW_ORDER][r->get_key()] = r;
-
-                    ((RCCDTxn *) dtxn)->kiss(r, 0, true);
-                    ((RCCDTxn *) dtxn)->kiss(r, 1, true);
-                    ((RCCDTxn *) dtxn)->kiss(r, 2, true);
-
-
+                    // FIXME!!!!!
+                    RCC_KISS(r, 0, true);
+                    RCC_KISS(r, 1, true);
+                    RCC_KISS(r, 2, true);
+                    static int iiiii = 0;
+                    RCC_SAVE_ROW(r, iiiii++);
                     tbl->remove(r, false); // don't release the row
                 }
+                return;
             } else { // deptran finish
-                auto &m_buf = (*row_map)[TPCC_TB_NEW_ORDER];
-                for (auto &it : m_buf) {
-                    //verify(1 == DepTranServiceImpl::dep_s->rw_entries_[TPCC_TB_NEW_ORDER].erase(it.second->get_key())); // FIXME remove verify after debug
+                for (auto &it : *row_map) {
                     it.second->release();
                 }
             }
@@ -268,43 +260,26 @@ void TpccPiece::reg_delivery() {
                 mdb::column_lock_t(r, 19, ALock::WLOCK)
         );
 
-        bool do_finish = true;
-        verify((row_map != nullptr) == (IS_MODE_RCC || IS_MODE_RO6));
-        if (row_map) { // deptran
-            if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { // start req
-                (*row_map)[TPCC_TB_CUSTOMER][mb] = r;
+        RCC_KISS(r, 16, false);
+        RCC_KISS(r, 19, false);
+        RCC_SAVE_ROW(r, TPCC_DELIVERY_3);  
+        RCC_PHASE1_RET;
+        RCC_LOAD_ROW(r, TPCC_DELIVERY_3);  
 
-                ((RCCDTxn *) dtxn)->kiss(r, 16, false);
-                ((RCCDTxn *) dtxn)->kiss(r, 19, false);
-
-                do_finish = false;
-            } else {
-                //std::unordered_map<mdb::MultiBlob, mdb::Row *, mdb::MultiBlob::hash>::iterator it = (*row_map)[TPCC_TB_CUSTOMER].find(cl.primary_key);
-                //FIXME remove this line after debug
-                //verify(it != (*row_map)[TPCC_TB_CUSTOMER].end()); 
-                //r = (*row_map)[TPCC_TB_CUSTOMER][cl.primary_key];
-                r = row_map->begin()->second.begin()->second;
-                verify(r != NULL); //FIXME remove this line after debug
-                do_finish = true;
-            }
-        }
-
-        if (do_finish) {
-            txn->read_column(r, 16, &buf);
-            buf.set_double(buf.get_double() + input[3].get_double());
-            
-            txn->write_column(r, 16, buf);
-            txn->read_column(r, 19, &buf);
-            buf.set_i32(buf.get_i32() + (i32) 1);
-            txn->write_column(r, 19, buf);
+        txn->read_column(r, 16, &buf);
+        buf.set_double(buf.get_double() + input[3].get_double());
+        
+        txn->write_column(r, 16, buf);
+        txn->read_column(r, 19, &buf);
+        buf.set_i32(buf.get_i32() + (i32) 1);
+        txn->write_column(r, 19, buf);
 
         // ##############################################
-            verify(*output_size >= oi);
-            *output_size = oi;
-            *res = SUCCESS;
-            Log::debug("TPCC_DELIVERY, piece: %d end", TPCC_DELIVERY_3);
+        verify(*output_size >= oi);
+        *res = SUCCESS;
+        Log::debug("TPCC_DELIVERY, piece: %d end", TPCC_DELIVERY_3);
         // ##############################################
-        }
+        *output_size = oi;
     } END_PIE
 }
 

@@ -6,15 +6,13 @@ void TpccPiece::reg_order_status() {
     BEGIN_PIE(TPCC_ORDER_STATUS, // RO
             TPCC_ORDER_STATUS_0, // piece 0, R customer secondary index, c_last -> c_id
             DF_NO) {
+        // #################################################################
         verify(row_map == NULL);
         verify(input_size == 3);
         Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_0);
+        // #################################################################
 
-        if (IS_MODE_2PL && output_size == NULL) {
-            ((TPLDTxn *) dtxn)->get_2pl_proceed_callback(
-                header, input, input_size, res)();
-            return;
-        }
+        TPL_KISS_NONE;
 
         mdb::MultiBlob mbl(3), mbh(3);
         mbl[0] = input[2].get_blob();
