@@ -75,7 +75,6 @@ void TpccPiece::reg_delivery() {
                     RCC_SAVE_ROW(r, iiiii++);
                     tbl->remove(r, false); // don't release the row
                 }
-                return;
             } else { // deptran finish
                 for (auto &it : *row_map) {
                     it.second->release();
