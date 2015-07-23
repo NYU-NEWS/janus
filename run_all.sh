@@ -240,7 +240,8 @@ make_server_config_str()
         if [ 0 -eq $((${sid}%${SERVS_PER_MACHINE})) ]
         then
             s_m_id=$((${s_m_id}+1))
-            s_port=${SERV_START_PORT}
+            #s_port=${SERV_START_PORT}
+            s_port=$((${s_port}+1))
         else
             s_port=$((${s_port}+1))
         fi

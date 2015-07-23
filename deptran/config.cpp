@@ -15,12 +15,12 @@ Config *Config::config_s = NULL;
 std::map<std::string, std::string> SiteInfo::dns_;
 
 std::string SiteInfo::name2host(std::string& site_name) {
-    Log::debug("find host name by site name: %s", sitename.c_str());
+    Log::debug("find host name by site name: %s", site_name.c_str());
     auto it = SiteInfo::dns_.find(site_name);
     if (it != SiteInfo::dns_.end()) {
         return it->second;
     } else {
-        Log::debug("did not find a mapping to site_name: %s", site_name);
+        Log::debug("did not find a mapping to site_name: %s", site_name.c_str());
         return site_name;
     }
 }
@@ -262,7 +262,6 @@ std::string Config::site2host_name(std::string& sitename) {
     if (it != hostsmap_.end()) {
         return it->second; 
     } else {
-        verify(0);
         return sitename;
     }
 }
