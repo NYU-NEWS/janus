@@ -47,7 +47,9 @@ if __name__ == "__main__":
             [__deptran.commit_rate__],
             #[__2pl.commit_rate__],
             #[__2pl_wait_die.commit_rate__],
-            [__2pl_wound_die.commit_rate__]
+            [__2pl_wound_die.commit_rate__],
+			[__ro6.commit_rate__]
+
             ]
 
     latency_50_val = [
@@ -55,7 +57,9 @@ if __name__ == "__main__":
             [__deptran.latency_50__],
             #[__2pl.latency_50__],
             #[__2pl_wait_die.latency_50__],
-            [__2pl_wound_die.latency_50__]
+            [__2pl_wound_die.latency_50__],
+			[__ro6.latency_50__]
+
             ]
 
     latency_90_val = [
@@ -63,7 +67,9 @@ if __name__ == "__main__":
             [__deptran.latency_90__],
             #[__2pl.latency_90__],
             #[__2pl_wait_die.latency_90__],
-            [__2pl_wound_die.latency_90__]
+            [__2pl_wound_die.latency_90__],
+			[__ro6.latency_90__]
+
             ]
 
     latency_99_val = [
@@ -71,7 +77,9 @@ if __name__ == "__main__":
             [__deptran.latency_99__],
             #[__2pl.latency_99__],
             #[__2pl_wait_die.latency_99__],
-            [__2pl_wound_die.latency_99__]
+            [__2pl_wound_die.latency_99__],
+			[__ro6.latency_99__]
+
             ]
 
     latency_999_val = [
@@ -79,7 +87,9 @@ if __name__ == "__main__":
             [__deptran.latency_999__],
             #[__2pl.latency_999__],
             #[__2pl_wait_die.latency_999__],
-            [__2pl_wound_die.latency_999__]
+            [__2pl_wound_die.latency_999__],
+			[__ro6.latency_999__]
+
             ]
 
     n_try_50_val = [
@@ -87,7 +97,9 @@ if __name__ == "__main__":
             [__deptran.n_try_50__],
             #[__2pl.n_try_50__],
             #[__2pl_wait_die.n_try_50__],
-            [__2pl_wound_die.n_try_50__]
+            [__2pl_wound_die.n_try_50__],
+			[__ro6.n_try_50__]
+
             ]
 
     n_try_90_val = [
@@ -95,7 +107,9 @@ if __name__ == "__main__":
             [__deptran.n_try_90__],
             #[__2pl.n_try_90__],
             #[__2pl_wait_die.n_try_90__],
-            [__2pl_wound_die.n_try_90__]
+            [__2pl_wound_die.n_try_90__],
+			[__ro6.n_try_90__]
+
             ]
 
     n_try_99_val = [
@@ -103,7 +117,9 @@ if __name__ == "__main__":
             [__deptran.n_try_99__],
             #[__2pl.n_try_99__],
             #[__2pl_wait_die.n_try_99__],
-            [__2pl_wound_die.n_try_99__]
+            [__2pl_wound_die.n_try_99__],
+			[__ro6.n_try_99__]
+
             ]
 
     n_try_999_val = [
@@ -111,7 +127,9 @@ if __name__ == "__main__":
             [__deptran.n_try_999__],
             #[__2pl.n_try_999__],
             #[__2pl_wait_die.n_try_999__],
-            [__2pl_wound_die.n_try_999__]
+            [__2pl_wound_die.n_try_999__],
+			[__ro6.n_try_999__]
+
             ]
 
     att_latency_50_val = [
@@ -119,7 +137,9 @@ if __name__ == "__main__":
             [__deptran.att_latency_50__],
             #[__2pl.att_latency_50__],
             #[__2pl_wait_die.att_latency_50__],
-            [__2pl_wound_die.att_latency_50__]
+            [__2pl_wound_die.att_latency_50__],
+			[__ro6.att_latency_50__]
+
             ]
 
     att_latency_90_val = [
@@ -127,7 +147,9 @@ if __name__ == "__main__":
             [__deptran.att_latency_90__],
             #[__2pl.att_latency_90__],
             #[__2pl_wait_die.att_latency_90__],
-            [__2pl_wound_die.att_latency_90__]
+            [__2pl_wound_die.att_latency_90__],
+			[__ro6.att_latency_90__]
+
             ]
 
     att_latency_99_val = [
@@ -135,7 +157,9 @@ if __name__ == "__main__":
             [__deptran.att_latency_99__],
             #[__2pl.att_latency_99__],
             #[__2pl_wait_die.att_latency_99__],
-            [__2pl_wound_die.att_latency_99__]
+            [__2pl_wound_die.att_latency_99__],
+			[__ro6.att_latency_99__]
+
             ]
 
     att_latency_999_val = [
@@ -143,7 +167,9 @@ if __name__ == "__main__":
             [__deptran.att_latency_999__],
             #[__2pl.att_latency_999__],
             #[__2pl_wait_die.att_latency_999__],
-            [__2pl_wound_die.att_latency_999__]
+            [__2pl_wound_die.att_latency_999__],
+			[__ro6.att_latency_999__]
+
             ]
 
     latency_min_val = [
@@ -151,7 +177,9 @@ if __name__ == "__main__":
             [__deptran.min_latency__],
             #[__2pl.min_latency__],
             #[__2pl_wait_die.min_latency__],
-            [__2pl_wound_die.min_latency__]
+            [__2pl_wound_die.min_latency__],
+			[__ro6.min_latency__]
+
             ]
 
     latency_max_val = [
@@ -159,7 +187,9 @@ if __name__ == "__main__":
             [__deptran.max_latency__],
             #[__2pl.max_latency__],
             #[__2pl_wait_die.max_latency__],
-            [__2pl_wound_die.max_latency__]
+            [__2pl_wound_die.max_latency__],
+			[__ro6.max_latency__]
+
             ]
 
     attempts_val = [
@@ -167,7 +197,9 @@ if __name__ == "__main__":
             [__deptran.attempts__],
             #[__2pl.attempts__],
             #[__2pl_wait_die.attempts__],
-            [__2pl_wound_die.attempts__]
+            [__2pl_wound_die.attempts__],
+			[__ro6.attempts__]
+
             ]
 
     graph_size_val = [
