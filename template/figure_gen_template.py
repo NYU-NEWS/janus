@@ -11,7 +11,8 @@ if __name__ == "__main__":
             [__deptran.cpu__], # rococo
             #[__2pl.cpu__], # 2pl timeout
             #[__2pl_wait_die.cpu__], # 2pl wait die
-            [__2pl_wound_die.cpu__] # 2pl wound wait
+            [__2pl_wound_die.cpu__], # 2pl wound wait
+		[__ro6.cpu__] # ro6
             ]
 
     flush_cnt = [
@@ -19,7 +20,8 @@ if __name__ == "__main__":
             [__deptran.flush_cnt__], # rococo
             #[__2pl.flush_cnt__], # 2pl timeout
             #[__2pl_wait_die.flush_cnt__], # 2pl wait die
-            [__2pl_wound_die.flush_cnt__] # 2pl wound wait
+            [__2pl_wound_die.flush_cnt__], # 2pl wound wait
+		[__ro6.flush_cnt__] # ro6
             ]
 
     flush_sz = [
@@ -27,7 +29,8 @@ if __name__ == "__main__":
             [__deptran.flush_sz__], # rococo
             #[__2pl.flush_sz__], # 2pl timeout
             #[__2pl_wait_die.flush_sz__], # 2pl wait die
-            [__2pl_wound_die.flush_sz__] # 2pl wound wait
+            [__2pl_wound_die.flush_sz__], # 2pl wound wait
+		[__ro6.flush_sz__] # ro6
             ]
 
     throughput_val = [
@@ -35,7 +38,8 @@ if __name__ == "__main__":
             [__deptran.tps__], # rococo
             #[__2pl.tps__], # 2pl timeout
             #[__2pl_wait_die.tps__], # 2pl wait die
-            [__2pl_wound_die.tps__] # 2pl wound wait
+            [__2pl_wound_die.tps__], # 2pl wound wait
+		[__ro6.tps__] # ro6
             ]
 
     commit_rate_val = [

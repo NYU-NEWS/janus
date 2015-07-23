@@ -17,6 +17,7 @@ SERV_START_PORT=23000
 
 # server machines
 #SERV_MACHINES=( beaker-20 beaker-21 beaker-22 beaker-23 beaker-24 beaker-25 )
+#SERV_MACHINES=( beaker-22 beaker-23 beaker-24 beaker-25 )
 SERV_MACHINES=( beaker-22 beaker-23 beaker-24 beaker-25 )
 # <<<<<<<< SERVER OPTIONS <<<<<<<<
 
@@ -69,7 +70,7 @@ BENCH_INTEREST_TXN=( "NEW ORDER" "NEW ORDER" )
 MAX_RETRY=5
 
 # available modes
-MODES=( deptran occ 2pl_wound_die )
+MODES=( deptran occ 2pl_wound_die ro6 )
 #MODES=( deptran occ 2pl_wound_die )
 #MODES=( 2pl )
 
