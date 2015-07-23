@@ -32,15 +32,16 @@ inline rrr::Marshal& operator >>(rrr::Marshal& m, point3& o) {
 class BenchmarkService: public rrr::Service {
 public:
     enum {
-        FAST_PRIME = 0x4aa413ce,
-        FAST_DOT_PROD = 0x465fc24d,
-        FAST_ADD = 0x54ea8906,
-        FAST_NOP = 0x4636de70,
-        PRIME = 0x460d64f2,
-        DOT_PROD = 0x6cab52ae,
-        ADD = 0x5f55a4e7,
-        NOP = 0x580501d9,
-        SLEEP = 0x64bef70f,
+        FAST_PRIME = 0x2c5663e1,
+        FAST_DOT_PROD = 0x2e361e42,
+        FAST_ADD = 0x1847daec,
+        FAST_NOP = 0x2b586ce1,
+        FAST_VEC = 0x66643b21,
+        PRIME = 0x30d45ec5,
+        DOT_PROD = 0x1dce8264,
+        ADD = 0x3cf23b1e,
+        NOP = 0x4a1a8309,
+        SLEEP = 0x6b127d28,
     };
     int __reg_to__(rrr::Server* svr) {
         int ret = 0;
@@ -54,6 +55,9 @@ public:
             goto err;
         }
         if ((ret = svr->reg(FAST_NOP, this, &BenchmarkService::__fast_nop__wrapper__)) != 0) {
+            goto err;
+        }
+        if ((ret = svr->reg(FAST_VEC, this, &BenchmarkService::__fast_vec__wrapper__)) != 0) {
             goto err;
         }
         if ((ret = svr->reg(PRIME, this, &BenchmarkService::__prime__wrapper__)) != 0) {
@@ -77,6 +81,7 @@ public:
         svr->unreg(FAST_DOT_PROD);
         svr->unreg(FAST_ADD);
         svr->unreg(FAST_NOP);
+        svr->unreg(FAST_VEC);
         svr->unreg(PRIME);
         svr->unreg(DOT_PROD);
         svr->unreg(ADD);
@@ -90,6 +95,7 @@ public:
     virtual void fast_dot_prod(const point3& p1, const point3& p2, double* v);
     virtual void fast_add(const rrr::v32& a, const rrr::v32& b, rrr::v32* a_add_b);
     virtual void fast_nop(const std::string&);
+    virtual void fast_vec(const rrr::i32& n, std::vector<rrr::i64>* v);
     virtual void prime(const rrr::i32& n, rrr::i8* flag);
     virtual void dot_prod(const point3& p1, const point3& p2, double* v);
     virtual void add(const rrr::v32& a, const rrr::v32& b, rrr::v32* a_add_b);
@@ -138,6 +144,17 @@ private:
         req->m >> in_0;
         this->fast_nop(in_0);
         sconn->begin_reply(req);
+        sconn->end_reply();
+        delete req;
+        sconn->release();
+    }
+    void __fast_vec__wrapper__(rrr::Request* req, rrr::ServerConnection* sconn) {
+        rrr::i32 in_0;
+        req->m >> in_0;
+        std::vector<rrr::i64> out_0;
+        this->fast_vec(in_0, &out_0);
+        sconn->begin_reply(req);
+        *sconn << out_0;
         sconn->end_reply();
         delete req;
         sconn->release();
@@ -295,6 +312,26 @@ public:
             return ENOTCONN;
         }
         rrr::i32 __ret__ = __fu__->get_error_code();
+        __fu__->release();
+        return __ret__;
+    }
+    rrr::Future* async_fast_vec(const rrr::i32& n, const rrr::FutureAttr& __fu_attr__ = rrr::FutureAttr()) {
+        rrr::Future* __fu__ = __cl__->begin_request(BenchmarkService::FAST_VEC, __fu_attr__);
+        if (__fu__ != nullptr) {
+            *__cl__ << n;
+        }
+        __cl__->end_request();
+        return __fu__;
+    }
+    rrr::i32 fast_vec(const rrr::i32& n, std::vector<rrr::i64>* v) {
+        rrr::Future* __fu__ = this->async_fast_vec(n);
+        if (__fu__ == nullptr) {
+            return ENOTCONN;
+        }
+        rrr::i32 __ret__ = __fu__->get_error_code();
+        if (__ret__ == 0) {
+            __fu__->get_reply() >> *v;
+        }
         __fu__->release();
         return __ret__;
     }

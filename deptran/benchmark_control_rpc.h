@@ -31,6 +31,7 @@ static const std::string STAT_N_ASK           ;
 static const std::string STAT_SZ_GRAPH_START  ;
 static const std::string STAT_SZ_GRAPH_COMMIT ;
 static const std::string STAT_SZ_GRAPH_ASK    ;
+static const std::string STAT_RO6_SZ_VECTOR   ;
     
 private:
     Recorder *recorder_;

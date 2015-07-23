@@ -14,13 +14,15 @@ void TpccPiece::reg_delivery() {
 
         Log::debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_0);
         verify(input_size == 2);
-        i32 output_index = 0;
+        i32 oi = 0;
         Value buf;
         mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
         //cell_locator_t cl(TPCC_TB_NEW_ORDER, 3);
         mdb::Row *r = NULL;
         mdb::Table *tbl = dtxn->get_table(TPCC_TB_NEW_ORDER);
-        if (!(IS_MODE_RCC || IS_MODE_RO6) || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { // non-rcc || rcc start request
+        if (!(IS_MODE_RCC || IS_MODE_RO6) || 
+                ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { 
+            // non-rcc || rcc start request
             mdb::MultiBlob mbl(3), mbh(3);
             mbl[0] = input[1].get_blob();
             mbh[0] = input[1].get_blob();
@@ -40,69 +42,58 @@ void TpccPiece::reg_delivery() {
                 if (IS_MODE_2PL && output_size == NULL) {
                     mdb::Txn2PL::PieceStatus *ps
                             = ((mdb::Txn2PL *) txn)->get_piece_status(header.pid);
-                    std::function<void(void)> succ_callback = ((TPLDTxn *) dtxn)->get_2pl_succ_callback(header, input, input_size, res, ps);
-                    std::function<void(void)> fail_callback = ((TPLDTxn *) dtxn)->get_2pl_fail_callback(header, res, ps);
+
+                    std::function<void(void)> succ_callback = 
+                        ((TPLDTxn *) dtxn)->get_2pl_succ_callback(
+                            header, input, input_size, res, ps);
+
+                    std::function<void(void)> fail_callback = 
+                        ((TPLDTxn *) dtxn)->get_2pl_fail_callback(
+                            header, res, ps);
 
                     ps->reg_rm_lock(r, succ_callback, fail_callback);
 
                     return;
                 }
-
-                if (!txn->read_column(r, 2, &buf)) {
-                    *res = REJECT;
-                    *output_size = output_index;
-                    return;
-                }
-                output[output_index++] = buf;
-            }
-            else {
-                if (IS_MODE_2PL && output_size == NULL) {
-                    ((TPLDTxn *) dtxn)->get_2pl_proceed_callback(header, input,
-                            input_size, res)();
-                    return;
-                }
-
-                output[output_index++] = Value((i32) -1);
-
+                txn->read_column(r, 2, &buf);
+                output[oi++] = buf;
+            } else {
+                TPL_KISS_NONE;
+                output[oi++] = Value((i32) -1);
             }
         }
 
-        if (row_map) { // deptran
-            if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { // deptran start req, top half
+        verify((row_map != nullptr) == (IS_MODE_RCC || IS_MODE_RO6));
+        if (IS_MODE_RCC || IS_MODE_RO6) { // deptran
+            if (IN_PHASE_1) { // deptran start req, top half
                 if (r) { // if find a row
-
-                    (*row_map)[TPCC_TB_NEW_ORDER][r->get_key()] = r;
-
-                    ((RCCDTxn *) dtxn)->kiss(r, 0, true);
-                    ((RCCDTxn *) dtxn)->kiss(r, 1, true);
-                    ((RCCDTxn *) dtxn)->kiss(r, 2, true);
-
-
+                    // FIXME!!!!!
+                    RCC_KISS(r, 0, true);
+                    RCC_KISS(r, 1, true);
+                    RCC_KISS(r, 2, true);
+                    static int iiiii = 0;
+                    RCC_SAVE_ROW(r, iiiii++);
                     tbl->remove(r, false); // don't release the row
                 }
             } else { // deptran finish
-                auto &m_buf = (*row_map)[TPCC_TB_NEW_ORDER];
-                for (auto &it : m_buf) {
-                    //verify(1 == DepTranServiceImpl::dep_s->rw_entries_[TPCC_TB_NEW_ORDER].erase(it.second->get_key())); // FIXME remove verify after debug
+                for (auto &it : *row_map) {
                     it.second->release();
                 }
             }
         } else { // non deptran
             if (r) {
-                if (!txn->remove_row(tbl, r)) {
-                    *res = REJECT;
-                    *output_size = output_index;
-                    return;
-                }
+                txn->remove_row(tbl, r);
             }
         }
 
-        verify(*output_size >= output_index);
-        *output_size = output_index;
-        *res = SUCCESS;
+        // ##############################################
+        verify(*output_size >= oi);
+        *output_size = oi;
         Log::debug("TPCC_DELIVERY, piece: %d end", TPCC_DELIVERY_0);
-
-    }END_PIE
+        // ##############################################
+        *res = SUCCESS;
+        return;
+    } END_PIE
 
     BEGIN_PIE(TPCC_DELIVERY,
             TPCC_DELIVERY_1, // Ri & W order
@@ -111,7 +102,7 @@ void TpccPiece::reg_delivery() {
         Log::debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_1);
         verify(row_map == NULL);
         verify(input_size == 4);
-        i32 output_index = 0;
+        i32 oi = 0;
         Value buf;
         mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
         mdb::MultiBlob mb(3);
@@ -132,24 +123,18 @@ void TpccPiece::reg_delivery() {
         if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) {
             ((RCCDTxn *) dtxn)->kiss(r, 5, true);
         }
-        if (!txn->read_column(r, 3, &buf)) {
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
-        output[output_index++] = buf; // read o_c_id
 
-        if (!txn->write_column(r, 5, input[3])) { // write o_carrier_id
-            *res = REJECT;
-            *output_size = output_index;
-            return;
-        }
-
-        verify(*output_size >= output_index);
-        *output_size = output_index;
-        *res = SUCCESS;
+        txn->read_column(r, 3, &output[oi++]); // read o_c_id
+        txn->write_column(r, 5, input[3]); // write o_carrier_id
+        
+        // ##############################################
+        verify(*output_size >= oi);
+        *output_size = oi;
         Log::debug("TPCC_DELIVERY, piece: %d end", TPCC_DELIVERY_1);
-    }END_PIE
+        // ##############################################
+        *res = SUCCESS;
+        return;
+    } END_PIE
 
 
     BEGIN_PIE(TPCC_DELIVERY,
@@ -159,7 +144,7 @@ void TpccPiece::reg_delivery() {
         Log::debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_2);
         verify(row_map == NULL);
         verify(input_size == 3);
-        i32 output_index = 0;
+        i32 oi = 0;
         Value buf;
         mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
         mdb::MultiBlob mbl(4), mbh(4);
@@ -190,13 +175,17 @@ void TpccPiece::reg_delivery() {
             row_list.push_back(rs.next());
         }
 
-        if (IS_MODE_2PL
-                && output_size == NULL) {
+        if (IS_MODE_2PL && output_size == NULL) {
             mdb::Txn2PL::PieceStatus *ps
                     = ((mdb::Txn2PL *) txn)->get_piece_status(header.pid);
-            std::function<void(void)> succ_callback = ((TPLDTxn *) dtxn)->get_2pl_succ_callback(header, input, input_size, res,
-                    ps);
-            std::function<void(void)> fail_callback = ((TPLDTxn *) dtxn)->get_2pl_fail_callback(header, res, ps);
+
+            std::function<void(void)> succ_callback = 
+                ((TPLDTxn *) dtxn)->get_2pl_succ_callback(
+                    header, input, input_size, res, ps);
+
+            std::function<void(void)> fail_callback = 
+                ((TPLDTxn *) dtxn)->get_2pl_fail_callback(
+                    header, res, ps);
 
             std::vector<mdb::column_lock_t> column_locks;
             column_locks.reserve(2 * row_list.size());
@@ -228,32 +217,26 @@ void TpccPiece::reg_delivery() {
                 ((RCCDTxn *) dtxn)->kiss(r, 8, true);
             }
 
-            if (!txn->read_column(r, 8, &buf)) { // read ol_amount
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
+            txn->read_column(r, 8, &buf); // read ol_amount
             ol_amount_buf += buf.get_double();
-            if (!txn->write_column(r, 6, Value(std::to_string(time(NULL))))) {
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
+            txn->write_column(r, 6, Value(std::to_string(time(NULL))));
         }
-        output[output_index++] = Value(ol_amount_buf);
+        output[oi++] = Value(ol_amount_buf);
 
-        verify(*output_size >= output_index);
-        *output_size = output_index;
+        // ##############################################
+        verify(*output_size >= oi);
+        *output_size = oi;
         *res = SUCCESS;
         Log::debug("TPCC_DELIVERY, piece: %d end", TPCC_DELIVERY_2);
-    }END_PIE
+        // ##############################################
+    } END_PIE
 
     BEGIN_PIE(TPCC_DELIVERY,
             TPCC_DELIVERY_3, // W customer
             DF_REAL) {
         Log::debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_3);
         verify(input_size == 4);
-        i32 output_index = 0;
+        i32 oi = 0;
         Value buf;
         mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
         mdb::Row *r = NULL;
@@ -263,7 +246,9 @@ void TpccPiece::reg_delivery() {
         mb[1] = input[2].get_blob();
         mb[2] = input[1].get_blob();
 
-        if (!(IS_MODE_RCC || IS_MODE_RO6) || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { // non-rcc || rcc start request
+        if (!(IS_MODE_RCC || IS_MODE_RO6) || 
+                ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { 
+            // non-rcc || rcc start request
             r = txn->query(txn->get_table(TPCC_TB_CUSTOMER), mb,
                     output_size, header.pid).next();
         }
@@ -273,56 +258,27 @@ void TpccPiece::reg_delivery() {
                 mdb::column_lock_t(r, 19, ALock::WLOCK)
         );
 
-        bool do_finish = true;
-        if (row_map) { // deptran
-            if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { // start req
-                (*row_map)[TPCC_TB_CUSTOMER][mb] = r;
+        RCC_KISS(r, 16, false);
+        RCC_KISS(r, 19, false);
+        RCC_SAVE_ROW(r, TPCC_DELIVERY_3);  
+        RCC_PHASE1_RET;
+        RCC_LOAD_ROW(r, TPCC_DELIVERY_3);  
 
-                ((RCCDTxn *) dtxn)->kiss(r, 16, false);
-                ((RCCDTxn *) dtxn)->kiss(r, 19, false);
+        txn->read_column(r, 16, &buf);
+        buf.set_double(buf.get_double() + input[3].get_double());
+        
+        txn->write_column(r, 16, buf);
+        txn->read_column(r, 19, &buf);
+        buf.set_i32(buf.get_i32() + (i32) 1);
+        txn->write_column(r, 19, buf);
 
-                do_finish = false;
-            } else {
-                //std::unordered_map<mdb::MultiBlob, mdb::Row *, mdb::MultiBlob::hash>::iterator it = (*row_map)[TPCC_TB_CUSTOMER].find(cl.primary_key);
-                //verify(it != (*row_map)[TPCC_TB_CUSTOMER].end()); //FIXME remove this line after debug
-                //r = (*row_map)[TPCC_TB_CUSTOMER][cl.primary_key];
-                r = row_map->begin()->second.begin()->second;
-                verify(r != NULL); //FIXME remove this line after debug
-                do_finish = true;
-            }
-        }
-
-        if (do_finish) {
-            if (!txn->read_column(r, 16, &buf)) {
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
-            buf.set_double(buf.get_double() + input[3].get_double());
-            if (!txn->write_column(r, 16, buf)) {
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
-            if (!txn->read_column(r, 19, &buf)) {
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
-            buf.set_i32(buf.get_i32() + (i32) 1);
-            if (!txn->write_column(r, 19, buf)) {
-                *res = REJECT;
-                *output_size = output_index;
-                return;
-            }
-
-            verify(*output_size >= output_index);
-            *output_size = output_index;
-            *res = SUCCESS;
-            Log::debug("TPCC_DELIVERY, piece: %d end", TPCC_DELIVERY_3);
-        }
-    }END_PIE
-
+        // ##############################################
+        verify(*output_size >= oi);
+        *res = SUCCESS;
+        Log::debug("TPCC_DELIVERY, piece: %d end", TPCC_DELIVERY_3);
+        // ##############################################
+        *output_size = oi;
+    } END_PIE
 }
 
 } // namespace rococo

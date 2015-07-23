@@ -18,6 +18,7 @@ public:
     AvgStat stat_sz_gra_ask_;
     AvgStat stat_sz_scc_;
     AvgStat stat_n_ask_;
+    AvgStat stat_ro6_sz_vector_;
 
     std::mutex mtx_;
     Recorder *recorder_ = NULL;

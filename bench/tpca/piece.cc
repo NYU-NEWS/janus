@@ -82,42 +82,19 @@ void TpcaPiece::reg_pieces() {
             return;
         }
 
-        bool do_finish = true;
-        if (row_map) { // deptran
-            if (IS_MODE_RCC && IN_PHASE_1) { // start req
-                (*row_map)[TPCA_CUSTOMER][mb] = r;
-                ((rococo::RCCDTxn*)dtxn)->kiss(r, 1, false);
+        RCC_KISS(r, 1, false);
+        RCC_SAVE_ROW(r, TPCC_PAYMENT_1); 
+        RCC_PHASE1_RET;
+        RCC_LOAD_ROW(r, TPCC_PAYMENT_1);
 
-                do_finish = false;
-            } else {
-                //std::unordered_map<mdb::MultiBlob, mdb::Row *, mdb::MultiBlob::hash>::iterator it = (*row_map)[TPCA_CUSTOMER].find(cl.primary_key);
-                //verify(it != (*row_map)[TPCA_CUSTOMER].end()); //FIXME remove this line after debug
-                //r = (*row_map)[TPCA_CUSTOMER][cl.primary_key];
-                r = row_map->begin()->second.begin()->second;
-                verify(r != NULL); //FIXME remove this line after debug
-                do_finish = true;
-            }
-        }
+        txn->read_column(r, 1, &buf);
+        buf.set_i64(buf.get_i64() + 1/*input[1].get_i64()*/);
+        txn->write_column(r, 1, buf);
 
-        if (do_finish) {
-            if (!txn->read_column(r, 1, &buf)) {
-                *res = REJECT;
-                *output_size = output_index;
-                Log::debug("Customer id: %d, read failed", input[0].get_i32());
-                return;
-            }
-            buf.set_i64(buf.get_i64() + 1/*input[1].get_i64()*/);
-            if (!txn->write_column(r, 1, buf)) {
-                *res = REJECT;
-                *output_size = output_index;
-                Log::debug("Customer id: %d, write failed", input[0].get_i32());
-                return;
-            }
-            //output[output_index++] = buf;
-            verify(*output_size >= output_index);
-            *output_size = output_index;
-            *res = SUCCESS;
-        }
+        //output[output_index++] = buf;
+        verify(*output_size >= output_index);
+        *output_size = output_index;
+        *res = SUCCESS;
     } END_PIE
 
     BEGIN_PIE(TPCA_PAYMENT, TPCA_PAYMENT_2, DF_REAL) {
@@ -190,44 +167,28 @@ void TpcaPiece::reg_pieces() {
             return;
         }
 
-        bool do_finish = true;
-        if (row_map) { // deptran
-            if (IS_MODE_RCC && IN_PHASE_1) { // start req
-                (*row_map)[TPCA_TELLER][mb] = r;
-                RCCRow *dr = (RCCRow *)r;
-                ((rococo::RCCDTxn*)dtxn)->kiss(r, 1, false);
+        RCC_KISS(r, 1, false);
+        RCC_SAVE_ROW(r, TPCA_PAYMENT_2); 
+        RCC_PHASE1_RET;
+        RCC_LOAD_ROW(r, TPCA_PAYMENT_2); 
 
-                do_finish = false;
-            } else {
-                //std::unordered_map<mdb::MultiBlob, mdb::Row *, mdb::MultiBlob::hash>::iterator it = (*row_map)[TPCA_TELLER].find(cl.primary_key);
-                //verify(it != (*row_map)[TPCA_TELLER].end()); //FIXME remove this line after debug
-                //r = it->second;
-                //r = (*row_map)[TPCA_TELLER][cl.primary_key];
-                r = row_map->begin()->second.begin()->second;
-                verify(r != NULL); //FIXME remove this line after debug
-                do_finish = true;
-            }
-        }
-
-        if (do_finish) {
-            if (!txn->read_column(r, 1, &buf)) {
-                *res = REJECT;
-                *output_size = output_index;
-                Log::debug("Customer id: %d, read failed", input[0].get_i32());
-                return;
-            }
-            buf.set_i64(buf.get_i64() + 1/*input[1].get_i64()*/);
-            if (!txn->write_column(r, 1, buf)) {
-                *res = REJECT;
-                *output_size = output_index;
-                Log::debug("Customer id: %d, write failed", input[0].get_i32());
-                return;
-            }
-            //output[output_index++] = buf;
-            verify(*output_size >= output_index);
+        if (!txn->read_column(r, 1, &buf)) {
+            *res = REJECT;
             *output_size = output_index;
-            *res = SUCCESS;
+            Log::debug("Customer id: %d, read failed", input[0].get_i32());
+            return;
         }
+        buf.set_i64(buf.get_i64() + 1/*input[1].get_i64()*/);
+        if (!txn->write_column(r, 1, buf)) {
+            *res = REJECT;
+            *output_size = output_index;
+            Log::debug("Customer id: %d, write failed", input[0].get_i32());
+            return;
+        }
+        //output[output_index++] = buf;
+        verify(*output_size >= output_index);
+        *output_size = output_index;
+        *res = SUCCESS;
     } END_PIE
 
     BEGIN_PIE(TPCA_PAYMENT, TPCA_PAYMENT_3, DF_REAL) {
@@ -299,44 +260,29 @@ void TpcaPiece::reg_pieces() {
             //((mdb::Txn2PL *)txn)->reg_write_column(r, 19, succ, fail);
             return;
         }
+        
+        RCC_KISS(r, 1, false);
+        RCC_SAVE_ROW(r, TPCA_PAYMENT_3);
+        RCC_PHASE1_RET;
+        RCC_LOAD_ROW(r, TPCA_PAYMENT_3);
 
-        bool do_finish = true;
-        if (row_map) { // deptran
-            if (IS_MODE_RCC && IN_PHASE_1) { // start req
-                (*row_map)[TPCA_BRANCH][mb] = r;
-                ((RCCDTxn*)dtxn)->kiss(r, 1, false);
-
-                do_finish = false;
-            } else {
-                //std::unordered_map<mdb::MultiBlob, mdb::Row *, mdb::MultiBlob::hash>::iterator it = (*row_map)[TPCA_BRANCH].find(cl.primary_key);
-                //verify(it != (*row_map)[TPCA_BRANCH].end()); //FIXME remove this line after debug
-                //r = it->second;
-                //r = (*row_map)[TPCA_BRANCH][cl.primary_key];
-                r = row_map->begin()->second.begin()->second;
-                verify(r != NULL); //FIXME remove this line after debug
-                do_finish = true;
-            }
-        }
-
-        if (do_finish) {
-            if (!txn->read_column(r, 1, &buf)) {
-                *res = REJECT;
-                *output_size = output_index;
-                Log::debug("Customer id: %d, read failed", input[0].get_i32());
-                return;
-            }
-            buf.set_i64(buf.get_i64() + 1/*input[1].get_i64()*/);
-            if (!txn->write_column(r, 1, buf)) {
-                *res = REJECT;
-                *output_size = output_index;
-                Log::debug("Customer id: %d, write failed", input[0].get_i32());
-                return;
-            }
-            //output[output_index++] = buf;
-            verify(*output_size >= output_index);
+        if (!txn->read_column(r, 1, &buf)) {
+            *res = REJECT;
             *output_size = output_index;
-            *res = SUCCESS;
+            Log::debug("Customer id: %d, read failed", input[0].get_i32());
+            return;
         }
+        buf.set_i64(buf.get_i64() + 1/*input[1].get_i64()*/);
+        if (!txn->write_column(r, 1, buf)) {
+            *res = REJECT;
+            *output_size = output_index;
+            Log::debug("Customer id: %d, write failed", input[0].get_i32());
+            return;
+        }
+        //output[output_index++] = buf;
+        verify(*output_size >= output_index);
+        *output_size = output_index;
+        *res = SUCCESS;
 
     } END_PIE
 }

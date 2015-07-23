@@ -16,6 +16,7 @@ service Benchmark {
     fast fast_dot_prod(point3 p1, point3 p2 | double v);
     fast fast_add(v32 a, v32 b | v32 a_add_b);
     fast fast_nop(string);
+    fast fast_vec(i32 n | vector<i64> v);
     prime(i32 n | i8 flag);
     dot_prod(point3 p1, point3 p2 | double v);
     add(v32 a, v32 b | v32 a_add_b);

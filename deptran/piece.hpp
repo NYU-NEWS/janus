@@ -41,6 +41,38 @@ public:
         return; \
     }
 
+#define TPL_KISS_NONE \
+    if (IS_MODE_2PL && output_size == NULL) { \
+        ((TPLDTxn*)dtxn)->get_2pl_proceed_callback( \
+                header, input, input_size, res)(); \
+        return; \
+    }
+
+#define RCC_KISS(row, col, imdt) \
+    if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { \
+        verify(row != nullptr); \
+        ((RCCDTxn*)dtxn)->kiss(row, col, imdt); \
+    }
+
+#define RCC_PHASE1_RET \
+    if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) \
+        return;
+
+#define RCC_SAVE_ROW(row, index) \
+    if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { \
+        auto ret = row_map->insert(std::pair<int, mdb::Row*>(index, row)); \
+        verify(ret.second); \
+        verify(row->schema_); \
+    }
+    
+#define RCC_LOAD_ROW(row, index) \
+    if ((IS_MODE_RCC || IS_MODE_RO6) && !(IN_PHASE_1)) { \
+        auto it = row_map->find(index); \
+        verify(it != row_map->end()); \
+        row = it->second; \
+        verify(row->schema_); \
+    }
+
 #define CREATE_ROW(schema, row_data) \
     switch (DTxnMgr::get_sole_mgr()->get_mode()) { \
     case MODE_2PL: \

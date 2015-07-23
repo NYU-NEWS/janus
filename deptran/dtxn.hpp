@@ -37,7 +37,16 @@ struct entry_t {
 
 #include "multi_value.hpp"
 
-typedef std::unordered_map<char *, std::unordered_map<mdb::MultiBlob, mdb::Row *, mdb::MultiBlob::hash> > row_map_t;
+typedef std::map<
+    int, 
+    mdb::Row *> row_map_t;
+
+//typedef std::unordered_map<
+//    char *, 
+//    std::unordered_map<
+//        mdb::MultiBlob, 
+//        mdb::Row *, 
+//        mdb::MultiBlob::hash> > row_map_t;
 //typedef std::unordered_map<cell_locator_t, entry_t *, cell_locator_t_hash> cell_entry_map_t;
 // in charge of storing the pre-defined procedures
 //
@@ -63,7 +72,6 @@ typedef struct {
     TxnHandler txn_handler;
     defer_t defer;
 } txn_handler_defer_pair_t;
-
 
 /**
 * This class holds all the hard-coded transactions pieces.
@@ -95,8 +103,6 @@ public:
         return get(req_hdr.t_type, req_hdr.p_type);
     }
 
-
-
 private:
     // prevent instance creation
     TxnRegistry() {}
@@ -118,24 +124,74 @@ public:
 
     DTxn(i64 tid, DTxnMgr* mgr) : tid_(tid), mgr_(mgr), phase_(0), mdb_txn_(nullptr) {}
 
-    virtual mdb::Row* create(const mdb::Schema* schema, const std::vector<mdb::Value> &values) = 0;
+    virtual mdb::Row* create(
+            const mdb::Schema* schema, 
+            const std::vector<mdb::Value> &values
+    ) = 0;
 
-    virtual bool read_column(mdb::Row* row, mdb::column_id_t col_id, Value* value) ;
-    virtual bool read_columns(Row* row, const std::vector<column_id_t>& col_ids, std::vector<Value>* values);
-    virtual bool write_column(Row* row, column_id_t col_id, const Value& value) ;
+    virtual bool read_column(
+            mdb::Row* row, 
+            mdb::column_id_t col_id, 
+            Value* value
+    ); 
+
+    virtual bool read_columns(
+            Row* row, 
+            const std::vector<column_id_t>& col_ids, 
+            std::vector<Value>* values
+    );
+
+    virtual bool write_column(
+            Row* row, 
+            column_id_t col_id, 
+            const Value& value
+    );
+
     virtual bool insert_row(Table* tbl, Row* row) ;
-    virtual bool remove_row(Table* tbl, Row* row) ;
-    virtual mdb::ResultSet query(Table* tbl, const mdb::Value& kv);
-    virtual mdb::ResultSet query(Table* tbl, const mdb::Value& kv, bool retrieve, int64_t pid);
-    virtual mdb::ResultSet query(Table* tbl, const mdb::MultiBlob& mb);
-    virtual mdb::ResultSet query(mdb::Table* tbl, const mdb::MultiBlob& mb, bool retrieve, int64_t pid);
-    virtual mdb::ResultSet query_in(Table* tbl, const mdb::SortedMultiKey& low, const mdb::SortedMultiKey& high, mdb::symbol_t order = mdb::symbol_t::ORD_ASC);
-    virtual mdb::ResultSet query_in(Table* tbl, const mdb::MultiBlob& low, const mdb::MultiBlob& high, bool retrieve, int64_t pid, mdb::symbol_t order = mdb::symbol_t::ORD_ASC);
 
+    virtual bool remove_row(Table* tbl, Row* row) ;
+
+    virtual mdb::ResultSet query(Table* tbl, const mdb::Value& kv);
+
+    virtual mdb::ResultSet query(
+            Table* tbl, 
+            const mdb::Value& kv, 
+            bool retrieve, 
+            int64_t pid
+    );
+
+    virtual mdb::ResultSet query(Table* tbl, const mdb::MultiBlob& mb);
+
+    virtual mdb::ResultSet query(
+            mdb::Table* tbl, 
+            const mdb::MultiBlob& mb, 
+            bool retrieve, 
+            int64_t pid
+    );
+
+    virtual mdb::ResultSet query_in(
+            Table* tbl, 
+            const mdb::SortedMultiKey& low, 
+            const mdb::SortedMultiKey& high, 
+            mdb::symbol_t order = mdb::symbol_t::ORD_ASC
+    );
+
+    virtual mdb::ResultSet query_in(
+            Table* tbl, 
+            const mdb::MultiBlob& low, 
+            const mdb::MultiBlob& high, 
+            bool retrieve, 
+            int64_t pid, 
+            mdb::symbol_t order = mdb::symbol_t::ORD_ASC
+    );
 
     mdb::Table* get_table(const std::string& tbl_name) const;
 
-    bool write_columns(Row* row, const std::vector<column_id_t>& col_ids, const std::vector<Value>& values);
+    bool write_columns(
+            Row* row, 
+            const std::vector<column_id_t>& col_ids, 
+            const std::vector<Value>& values
+    );
 
     virtual ~DTxn();
 };

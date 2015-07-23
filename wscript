@@ -120,32 +120,35 @@ def build(bld):
 
     bld.program(source=bld.path.ant_glob("test/test*.cc"), 
                 target="testharness", 
-                includes=". rrr bench deptran", 
+                includes=". rrr bench deptran deptran/ro6 deptran/rcc deptran/tpl", 
                 use="rrr memdb deptran PTHREAD RT")
 
     bld.program(source=bld.path.ant_glob("deptran/s_main.cc"), 
                 target="deptran_server", 
-                includes=". rrr bench deptran", 
+                includes=". rrr bench deptran deptran/ro6 deptran/rcc deptran/tpl", 
                 use="rrr memdb deptran PTHREAD PROFILER RT")
 
     bld.program(source=bld.path.ant_glob("deptran/c_main.cc"), 
                 target="deptran_client", 
-                includes=". rrr bench deptran", 
+                includes=". rrr bench deptran deptran/ro6 deptran/rcc deptran/tpl", 
                 use="rrr memdb deptran PTHREAD RT")
 
-#    bld.program(source="test/rpcbench.cc test/benchmark_service.cc", 
-#                target="rpcbench", 
-#                includes=". rrr deptran test", 
-#                use="rrr PTHREAD")
-#
+    bld.program(source="test/rpcbench.cc test/benchmark_service.cc", 
+                target="rpcbench", 
+                includes=". rrr deptran test", 
+                use="rrr PTHREAD")
+
 #    bld.program(source="test/rpc_microbench.cc test/benchmark_service.cc", 
 #                target="rpc_microbench", 
 #                includes=". rrr deptran test", 
 #                use="rrr PTHREAD RT APR APR-UTIL")
-
+#
     bld.stlib(source=bld.path.ant_glob("deptran/*.cc "
                                        "deptran/*.cpp "
                                        "deptran/util/*.cc "
+                                       "deptran/ro6/*.cpp "
+                                       "deptran/rcc/*.cpp "
+                                       "deptran/tpl/*.cpp "
                                        "bench/tpca/*.cc " 
                                        "bench/tpcc/*.cc "
                                        "bench/tpcc/*.cpp "
@@ -154,7 +157,7 @@ def build(bld):
                                        "bench/rw_benchmark/*.cc "
                                        "bench/micro/*.cc"), 
               target="deptran", 
-              includes=". rrr memdb bench deptran", 
+              includes=". rrr memdb bench deptran deptran/ro6 deptran/rcc deptran/tpl", 
               use="PTHREAD APR APR-UTIL base simplerpc memdb")
 
 #
@@ -230,7 +233,8 @@ def _enable_profile(conf):
 def _enable_debug(conf):
     if Options.options.debug:
         Logs.pprint("PINK", "Debug support enabled")
-        conf.env.append_value("CXXFLAGS", "-Wall -pthread -O0 -DNDEBUG -g -ggdb -DLOG_DEBUG -rdynamic -fno-omit-frame-pointer".split())
+        conf.env.append_value("CXXFLAGS", "-Wall -pthread -O0 -DNDEBUG -g "
+                "-ggdb -DLOG_DEBUG -rdynamic -fno-omit-frame-pointer".split())
     else:
         conf.env.append_value("CXXFLAGS", "-Wall -pthread -O2 -DNDEBUG".split())
 

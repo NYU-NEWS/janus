@@ -23,6 +23,7 @@ int seconds = 10;
 int outgoing_requests = 1000;
 int client_threads = 8;
 int worker_threads = 16;
+int rpc_bench_vector_size = 0;
 
 static string request_str;
 PollMgr* poll;
@@ -61,17 +62,24 @@ static void* stat_proc(void*) {
 static void* client_proc(void*) {
     Client* cl = new Client(poll);
     verify(cl->connect(svr_addr) == 0);
+    FutureAttr fu_attr;
     i32 rpc_id;
+
     if (fast_requests) {
         rpc_id = BenchmarkService::FAST_NOP;
+    } else if (rpc_bench_vector_size > 0) {
+        rpc_id = BenchmarkService::FAST_VEC; 
     } else {
         rpc_id = BenchmarkService::NOP;
     }
-    FutureAttr fu_attr;
     auto do_work = [cl, &fu_attr, rpc_id] {
         if (!should_stop) {
             Future* fu = cl->begin_request(rpc_id, fu_attr);
-            *cl << request_str;
+            if (rpc_id == BenchmarkService::FAST_NOP) {
+                *cl << request_str;
+            } else if (rpc_id == BenchmarkService::FAST_VEC) {
+                *cl << rpc_bench_vector_size;   
+            };
             cl->end_request();
             Future::safe_release(fu);
             req_counter.next();
@@ -114,11 +122,12 @@ int main(int argc, char **argv) {
         printf("                -o    outgoing_requests\n");
         printf("                -t    client_threads\n");
         printf("                -w    worker_threads\n");
+        printf("                -v    vector test\n");
         exit(1);
     }
 
     char ch = 0;
-    while ((ch = getopt(argc, argv, "c:s:b:e:fn:o:t:w:"))!= -1) {
+    while ((ch = getopt(argc, argv, "c:s:b:e:fn:o:t:w:v:"))!= -1) {
         switch (ch) {
         case 'c':
             is_client = true;
@@ -149,6 +158,9 @@ int main(int argc, char **argv) {
         case 'w':
             worker_threads = atoi(optarg);
             break;
+        case 'v':
+            rpc_bench_vector_size = atoi(optarg);
+            break;
         default:
             break;
         }
@@ -166,6 +178,7 @@ int main(int argc, char **argv) {
     Log::info("outgoing requests:       %d", outgoing_requests);
     Log::info("client threads:          %d", client_threads);
     Log::info("worker threads:          %d", worker_threads);
+    Log::info("vector size:             %d", rpc_bench_vector_size);
 
     request_str = string(byte_size, 'x');
     poll = new PollMgr(epoll_instances);

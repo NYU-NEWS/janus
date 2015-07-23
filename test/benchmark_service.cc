@@ -7,6 +7,7 @@ using namespace benchmark;
 using namespace rrr;
 
 static Counter g_nop_counter;
+extern int rpc_bench_vector_size;
 
 void BenchmarkService::fast_prime(const i32& n, i8* flag) {
     if (n <= 0) {
@@ -46,3 +47,10 @@ void BenchmarkService::sleep(const double& sec) {
         usleep(usec);
     }
 }
+
+void BenchmarkService::fast_vec(const i32 &n, std::vector<int64_t> *vec) {
+    //Log::debug("vector size %d", rpc_bench_vector_size);
+    verify(n > 0);
+    vec->insert(vec->begin(), n, 1);
+}
+

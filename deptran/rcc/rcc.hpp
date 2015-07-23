@@ -15,7 +15,6 @@ public:
     std::vector<DeferredRequest> dreqs_;
     Vertex <TxnInfo> *tv_;
 
-
     std::vector<TxnInfo *> conflict_txns_; // This is read-only transaction
 
     bool read_only_;
@@ -48,7 +47,11 @@ public:
     );
 
     void exe_deferred(
-            std::vector<std::pair<RequestHeader, std::vector<mdb::Value> > > &outputs
+            std::vector<
+                std::pair<RequestHeader, 
+                          std::vector<mdb::Value> 
+                         > 
+            > &outputs
     );
 
     void send_ask_req(
