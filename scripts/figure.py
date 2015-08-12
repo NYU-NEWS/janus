@@ -53,7 +53,7 @@ mpl.rcParams['lines.markersize'] =  14 * fig_scale
 mpl.rcParams['axes.grid'] =  True
 
 #txt_legends = ["OCC", ROCOCO, "2PL-T", "2PL-WD", "2PL-WW"]
-txt_legends = ["OCC", ROCOCO, "2PL"]
+txt_legends = ["OCC", ROCOCO, "2PL", "RO6"]
 line_styles = ["v-", "cx--", "mo:", "kp-.", "yd-."]
 colors = ['#F84E1A', 'black', '#1B77F9', '#535353', '#A2DCFD','black', 'blue', 'green', 'red', 'black',"cyan", 'magenta', 'yellow']
 
