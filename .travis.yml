@@ -1,5 +1,5 @@
 language: cpp
-compiler: clang
+compiler: gcc
 before_install:
     - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
     - export CXX="g++-4.8" CC="gcc-4.8"
