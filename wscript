@@ -173,7 +173,7 @@ def _choose_compiler(conf):
         conf.env.append_value("CXXFLAGS", "-stdlib=libc++")
         conf.env.append_value("LINKFLAGS", "-stdlib=libc++")
     else:
-	Logs.pprint("PINK", "failed to choose compiler")
+	Logs.pprint("PINK", "use system default compiler")
 
 def _enable_rpc_s(conf):
     if Options.options.rpc_s:
