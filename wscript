@@ -168,9 +168,12 @@ def _choose_compiler(conf):
     # use clang++ as default compiler (for c++11 support on mac)
     if Options.options.cxx:
         os.environ["CXX"] = "g++"
-    if (sys.platform == 'darwin' and "CXX" not in os.environ) or Options.options.clang:
+    elif (sys.platform == 'darwin' and "CXX" not in os.environ) or Options.options.clang:
         os.environ["CXX"] = "clang++"
         conf.env.append_value("CXXFLAGS", "-stdlib=libc++")
+        conf.env.append_value("LINKFLAGS", "-stdlib=libc++")
+    else:
+	Logs.pprint("PINK", "failed to choose compiler")
 
 def _enable_rpc_s(conf):
     if Options.options.rpc_s:

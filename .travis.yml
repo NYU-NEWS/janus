@@ -1,8 +1,14 @@
 language: cpp
 compiler: clang
 before_install:
+    - sudo add-apt-repository ppa:ubuntu-toolchain-r/test -y
+    - export CXX="g++-4.8" CC="gcc-4.8"
     - sudo apt-get update -qq
-    - sudo apt-get install -y libapr1-dev libaprutil1-dev python-dev libboost-dev libc++-dev 
+    - sudo apt-get install -y build-essential
+    - sudo apt-get install -y libapr1-dev libaprutil1-dev  
+    - sudo apt-get install -y libboost-dev 
+    - sudo apt-get install -y python-dev
+    - sudo apt-get install -y python-pip 
     - sudo pip install tabulate 
 script:
     - ./waf configure --use-clang
