@@ -166,12 +166,11 @@ def build(bld):
 
 def _choose_compiler(conf):
     # use clang++ as default compiler (for c++11 support on mac)
-    if sys.platform == 'darwin' and "CXX" not in os.environ:
-        os.environ["CXX"] = "clang++"
     if Options.options.cxx:
         os.environ["CXX"] = "g++"
-    elif Options.options.clang:
+    if (sys.platform == 'darwin' and "CXX" not in os.environ) or Options.options.clang:
         os.environ["CXX"] = "clang++"
+        conf.env.append_value("CXXFLAGS", "-stdlib=libc++")
 
 def _enable_rpc_s(conf):
     if Options.options.rpc_s:
