@@ -11,6 +11,6 @@ before_install:
     - sudo apt-get install -y python-pip 
     - sudo pip install tabulate 
 script:
-    - ./waf configure --use-clang
+    - ./waf configure
     - ./waf
 
