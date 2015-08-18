@@ -5,6 +5,6 @@ before_install:
     - sudo apt-get install -y libapr1-dev libaprutil1-dev python-dev libboost-dev 
     - sudo pip install tabulate 
 script:
-    - ./waf configure
+    - ./waf configure --use-clang
     - ./waf
 
