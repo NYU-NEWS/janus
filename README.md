@@ -3,6 +3,8 @@
 
 [![Travis-CI](https://travis-ci.org/msmummy/rococo.svg?branch=master)]
 (https://travis-ci.org/msmummy/rococo/)
+[![Code Climate](https://codeclimate.com/github/msmummy/rococo/badges/gpa.svg)]
+(https://codeclimate.com/github/msmummy/rococo)
 
 ### What is Rococo?
 
