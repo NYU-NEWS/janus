@@ -1,7 +1,8 @@
 
 ## Rococo
 
-![Travis-CI](https://travis-ci.org/msmummy/rococo.svg?branch=master)
+[![Travis-CI](https://travis-ci.org/msmummy/rococo.svg?branch=master)]
+(https://travis-ci.org/msmummy/rococo/)
 
 ### What is Rococo?
 
