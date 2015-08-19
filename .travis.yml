@@ -10,9 +10,9 @@ addons:
     - build-essential
     - g++-4.9
     - gcc-4.9
-    - clang-3.8
-    - libapr1-dev
-    - libaprutil1-dev
+    - clang-3.7
+    - libapr1
+    - libaprutil1
     - libboost-dev
     - python-dev
     - python-pip
@@ -28,7 +28,7 @@ before_install:
 #    - sudo apt-get install -y python-dev
 #    - sudo apt-get install -y python-pip 
     - pip install --user tabulate 
-    - export CXX="clang++-3.8" CC="clang-3.8"
+    - export CXX="clang++-3.7" CC="clang-3.7"
 script:
     - ./waf configure
     - ./waf
