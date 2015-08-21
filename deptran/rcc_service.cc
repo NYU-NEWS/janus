@@ -363,60 +363,32 @@ void RococoServiceImpl::rcc_start_pie(
 //    }
 }
 
-void RococoServiceImpl::rcc_finish_txn( // equivalent to commit phrase
+// equivalent to commit phrase
+void RococoServiceImpl::rcc_finish_txn( 
         const ChopFinishRequest& req,
         ChopFinishResponse* res,
         rrr::DeferredReply* defer) {
-    std::lock_guard<std::mutex> guard(mtx_);
-
     //Log::debug("receive finish request. txn_id: %llx, graph size: %d", req.txn_id, req.gra.size());
-
     verify(IS_MODE_RCC || IS_MODE_RO6);
+    verify(defer);
     verify(req.gra.size() > 0);
-    stat_sz_gra_commit_.sample(req.gra.size());
 
-    static bool do_record = Config::get_config()->do_logging();
-    if (do_record) {
-        Marshal m;
-        m << req;
-        recorder_->submit(m);
-    }
-
+    std::lock_guard<std::mutex> guard(mtx_);
     RCCDTxn* txn = (RCCDTxn*) txn_mgr_->get(req.txn_id);
     txn->commit(req, res, defer);
+
+    stat_sz_gra_commit_.sample(req.gra.size());
 }
 
 void RococoServiceImpl::rcc_ask_txn(
         const rrr::i64& tid,
         CollectFinishResponse* res,
-        rrr::DeferredReply* defer) {
-
-    std::lock_guard<std::mutex> guard(mtx_);
-
+        rrr::DeferredReply* defer
+) {
     verify(IS_MODE_RCC || IS_MODE_RO6);
-    Vertex<TxnInfo> *v = RCCDTxn::dep_s->txn_gra_.find(tid);
-
-    std::function<void(void)> callback = [this, res, defer, tid] () {
-
-        // not the entire graph!!!!!
-        // should only return a part of the graph.
-        RCCDTxn::dep_s->sub_txn_graph(tid, res->gra_m);
-//       Log::debug("return a sub graph for other server's unrelated txn: %llx, graph size: %d", tid, (int) res->gra_m.gra->size());
-
-        //Graph<TxnInfo> &txn_gra = this->dep_s->txn_gra_;
-        //Log::debug("return the entire graph for txn: %llx, graph size: %d", tid, txn_gra.size());
-        //res->gra = this->dep_s->txn_gra_;
-        // return the subgraph in a delayed manner.
-        defer->reply();
-    };
-
-
-    DragonBall *ball = new DragonBall(2, callback);
-
-    //register an event, triggered when the status >= COMMITTING;
-    verify (v->data_.is_involved());
-    v->data_.register_event(TXN_CMT, ball);
-    ball->trigger();
+    std::lock_guard<std::mutex> guard(mtx_);
+    RCCDTxn* dtxn = (RCCDTxn*) txn_mgr_->get(tid);
+    dtxn->inquire(res, defer); 
 }
 
 void RococoServiceImpl::rcc_ro_start_pie(
@@ -425,10 +397,7 @@ void RococoServiceImpl::rcc_ro_start_pie(
         vector<Value> *output,
         rrr::DeferredReply *defer) {
     std::lock_guard<std::mutex> guard(mtx_);
-
-    bool ro = true;
     RCCDTxn* dtxn = (RCCDTxn*) txn_mgr_->get_or_create(header.tid, true);
-
     dtxn->start_ro(header, input, *output, defer);
 }
 

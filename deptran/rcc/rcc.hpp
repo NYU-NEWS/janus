@@ -72,6 +72,12 @@ public:
             Vertex <TxnInfo> *av
     );
 
+
+    void inquire(
+        CollectFinishResponse* res,
+        rrr::DeferredReply* defer
+    );
+
     virtual mdb::Row *create(
             const mdb::Schema *schema,
             const std::vector<mdb::Value> &values) {
@@ -83,6 +89,8 @@ public:
             int col,
             bool immediate
     );
+
+    
 
 //    virtual bool read_column(
 //            mdb::Row *row,

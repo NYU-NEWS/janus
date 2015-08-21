@@ -35,8 +35,6 @@ void RCCDTxn::start_after_log(
         ChopStartResponse *res,
         rrr::DeferredReply* defer
 ) {
-    // TODO make sure there is only one application thread
-    // std::lock_guard<std::mutex> guard(this->mtx_);
     bool deferred;
     this->start(header, input, &deferred, res);
     res->is_defered = deferred ? 1 : 0;
@@ -55,8 +53,8 @@ void RCCDTxn::start(
         const RequestHeader &header,
         const std::vector<mdb::Value> &input,
         bool *deferred,
-        ChopStartResponse *res ) {
-
+        ChopStartResponse *res
+) {
     PieInfo pi;
     pi.pie_id_ = header.pid;
     pi.txn_id_ = header.tid;
@@ -356,6 +354,24 @@ void RCCDTxn::send_ask_req(Vertex<TxnInfo>* av) {
 }
 
 
+void RCCDTxn::inquire(
+        CollectFinishResponse* res,
+        rrr::DeferredReply* defer
+) {
+    std::function<void(void)> callback = [this, res, defer] () {
+        // not the entire graph!!!!!
+        // should only return a part of the graph.
+        RCCDTxn::dep_s->sub_txn_graph(this->tid_, res->gra_m);
+        defer->reply();
+    };
+    DragonBall *ball = new DragonBall(2, callback);
+    // TODO Optimize this.
+    Vertex<TxnInfo> *v = RCCDTxn::dep_s->txn_gra_.find(tid_);
+    //register an event, triggered when the status >= COMMITTING;
+    verify (v->data_.is_involved());
+    v->data_.register_event(TXN_CMT, ball);
+    ball->trigger();
+}
 
 void RCCDTxn::exe_deferred(
         std::vector<std::pair<RequestHeader, std::vector<mdb::Value> > >
