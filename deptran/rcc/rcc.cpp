@@ -9,6 +9,48 @@ RCCDTxn::RCCDTxn(i64 tid, DTxnMgr *mgr, bool ro) : DTxn(tid, mgr) {
     mdb_txn_ = mgr->get_mdb_txn(tid_);
 }
 
+void RCCDTxn::start_launch(
+        const RequestHeader &header,
+        const std::vector<mdb::Value> &input,
+        ChopStartResponse *res,
+        rrr::DeferredReply* defer
+) {
+    auto job = [&header, &input, res, defer, this] () {
+        this->start_after_log(header, input, res, defer);
+    };
+    static bool do_record = Config::get_config()->do_logging();
+    if (do_record) {
+        Marshal m;
+        m << header;
+        m << input;
+        recorder_->submit(m, job);
+    } else {
+        job();
+    }
+}
+
+void RCCDTxn::start_after_log(
+        const RequestHeader &header,
+        const std::vector<mdb::Value> &input,
+        ChopStartResponse *res,
+        rrr::DeferredReply* defer
+) {
+    // TODO make sure there is only one application thread
+    // std::lock_guard<std::mutex> guard(this->mtx_);
+    bool deferred;
+    this->start(header, input, &deferred, res);
+    res->is_defered = deferred ? 1 : 0;
+    auto sz_sub_gra = RCCDTxn::dep_s->sub_txn_graph(header.tid, res->gra_m);
+    // TODO fix stat
+    //stat_sz_gra_start_.sample(sz_sub_gra);
+    //if (IS_MODE_RO6) {
+    //    stat_ro6_sz_vector_.sample(res->read_only.size());
+    //}
+
+    if (defer) defer->reply();
+//    Log::debug("reply to start request. txn_id: %llx, pie_id: %llx, graph size: %d", header.tid, header.pid, (int)res->gra.size());
+}
+
 void RCCDTxn::start(
         const RequestHeader &header,
         const std::vector<mdb::Value> &input,

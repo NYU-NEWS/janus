@@ -345,36 +345,22 @@ void RococoServiceImpl::rcc_start_pie(
         const RequestHeader &header,
         const std::vector<Value> &input,
         ChopStartResponse* res,
-        rrr::DeferredReply* defer) {
+        rrr::DeferredReply* defer
+) {
 //    Log::debug("receive start request. txn_id: %llx, pie_id: %llx", header.tid, header.pid);
     verify(IS_MODE_RCC || IS_MODE_RO6);
+    verify(defer);
 
-    auto job = [&header, &input, res, defer, this] () {
-        std::lock_guard<std::mutex> guard(this->mtx_);
-        RCCDTxn* dtxn = (RCCDTxn*) txn_mgr_->get_or_create(header.tid);
-        bool deferred;
-        dtxn->start(header, input, &deferred, res);
+    std::lock_guard<std::mutex> guard(this->mtx_);
+    RCCDTxn* dtxn = (RCCDTxn*) txn_mgr_->get_or_create(header.tid);
+    dtxn->start_launch(header, input, res, defer);
 
-        res->is_defered = deferred ? 1 : 0;
-        auto sz_sub_gra = RCCDTxn::dep_s->sub_txn_graph(header.tid, res->gra_m);
-        stat_sz_gra_start_.sample(sz_sub_gra);
-        if (IS_MODE_RO6) {
-            stat_ro6_sz_vector_.sample(res->read_only.size());
-        }
-
-        if (defer) defer->reply();
-//    Log::debug("reply to start request. txn_id: %llx, pie_id: %llx, graph size: %d", header.tid, header.pid, (int)res->gra.size());
-    };
-
-    static bool do_record = Config::get_config()->do_logging();
-    if (do_record) {
-        Marshal m;
-        m << header;
-        m << input;
-        recorder_->submit(m, job);
-    } else {
-        job();
-    }
+    // TODO remove the stat from here.
+//    auto sz_sub_gra = RCCDTxn::dep_s->sub_txn_graph(header.tid, res->gra_m);
+//    stat_sz_gra_start_.sample(sz_sub_gra);
+//    if (IS_MODE_RO6) {
+//        stat_ro6_sz_vector_.sample(res->read_only.size());
+//    }
 }
 
 void RococoServiceImpl::rcc_finish_txn( // equivalent to commit phrase

@@ -119,6 +119,7 @@ public:
     DTxnMgr *mgr_;
     int phase_;
     mdb::Txn* mdb_txn_;
+    Recorder *recorder_ = NULL;
 
     DTxn() = delete;
 
@@ -206,6 +207,7 @@ public:
     std::map<i64, mdb::Txn *> mdb_txns_;
     mdb::TxnMgr *mdb_txn_mgr_;
     int mode_;
+    Recorder *recorder_;
 
     DTxnMgr(int mode);
 

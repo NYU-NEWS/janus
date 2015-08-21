@@ -161,6 +161,12 @@ DTxnMgr::DTxnMgr(int mode) {
 
     verify(DTxnMgr::txn_mgr_s == NULL);
     DTxnMgr::txn_mgr_s = this;
+
+    if (Config::get_config()->do_logging()) {
+        auto path = Config::get_config()->log_path();
+        // TODO free this
+        recorder_ = new Recorder(path);
+    }
 }
 
 
@@ -221,9 +227,9 @@ DTxn* DTxnMgr::create(i64 tid, bool ro) {
     }
     verify(dtxns_[tid] == nullptr);
     dtxns_[tid] = ret;
+    ret->recorder_ = this->recorder_;
     return ret;
 }
-
 
 
 DTxn::~DTxn() {

@@ -21,6 +21,20 @@ public:
 
     RCCDTxn(i64 tid, DTxnMgr *mgr, bool ro);
 
+    virtual void start_launch(
+            const RequestHeader &header,
+            const std::vector<mdb::Value> &input,
+            ChopStartResponse *res,
+            rrr::DeferredReply* defer
+    );
+
+    virtual void start_after_log(
+            const RequestHeader &header,
+            const std::vector<mdb::Value> &input,
+            ChopStartResponse *res,
+            rrr::DeferredReply* defer
+    );
+
     virtual void start(
             const RequestHeader &header,
             const std::vector<mdb::Value> &input,
