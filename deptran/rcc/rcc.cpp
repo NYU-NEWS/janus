@@ -62,12 +62,6 @@ void RCCDTxn::start(
 
     std::vector<mdb::Value> *output = &res->output;
 
-    //std::unordered_map<cell_locator_t, int,
-    //                   cell_locator_t_hash> opset; //OP_W, OP_DR, OP_IR
-    // get the read and write sets;)
-    //lock_oracle(header, input.data(), input.size(), &opset);
-
-//    Vertex<PieInfo> *pv = NULL;
     Vertex<TxnInfo> *tv = NULL;
     RCCDTxn::dep_s->start_pie(pi, nullptr, &tv);
     tv_ = tv;
@@ -76,11 +70,9 @@ void RCCDTxn::start(
 
     // execute the IR actions.
     *deferred = pi.defer_;
-//    verify(pv && tv);
     verify(tv);
 
     auto txn_handler_pair = TxnRegistry::get(header.t_type, header.p_type);
-
     switch (txn_handler_pair.defer) {
         case DF_NO:
         { // immediate
@@ -178,7 +170,6 @@ void RCCDTxn::commit(
         rrr::DeferredReply *defer) {
     // union the graph into dep graph
     RCCDTxn::dep_s->txn_gra_.union_graph(req.gra, true);
-
     Graph<TxnInfo> &txn_gra_ = RCCDTxn::dep_s->txn_gra_;
     Vertex<TxnInfo> *v = txn_gra_.find(req.txn_id);
 
@@ -191,8 +182,8 @@ void RCCDTxn::commit(
 
 void RCCDTxn::to_decide(
         Vertex<TxnInfo> *v,
-        rrr::DeferredReply* defer) {
-
+        rrr::DeferredReply* defer
+) {
     TxnInfo &tinfo = v->data_;
     if (tinfo.during_commit) {
         Log::debug("this txn is already during commit! tid: %llx", tinfo.id());
@@ -204,13 +195,61 @@ void RCCDTxn::to_decide(
     Graph<TxnInfo> &txn_gra = RCCDTxn::dep_s->txn_gra_;
     // a commit function.
 
-    std::function<void(void)> scc_anc_commit_cb = [&txn_gra, v, defer, this] () {
+    std::function<void(void)> anc_finish_cb =
+            [this, v, defer] () {
+                this->commit_anc_finish(v, defer);
+            };
+
+    std::unordered_set<Vertex<TxnInfo>*> anc;
+    RCCDTxn::dep_s->find_txn_anc_opt(v, anc);
+
+    DragonBall *wait_finish_ball = new DragonBall(anc.size() + 1, anc_finish_cb);
+    for (auto &av: anc) {
+        Log::debug("\t ancestor id: %llx", av->data_.id());
+        av->data_.register_event(TXN_CMT, wait_finish_ball);
+        send_ask_req(av);
+    }
+    wait_finish_ball->trigger();
+}
+
+void RCCDTxn::commit_anc_finish(
+    Vertex<TxnInfo> *v,
+    rrr::DeferredReply* defer
+) {
+    Graph<TxnInfo> &txn_gra = RCCDTxn::dep_s->txn_gra_;
+    std::function<void(void)> scc_anc_commit_cb = [v, defer, this] () {
+        this->commit_scc_anc_commit(v, defer);
+    };
+    Log::debug("all ancestors have finished for txn id: %llx", v->data_.id());
+    // after all ancestors become COMMITTING
+    // wait for all ancestors of scc become DECIDED
+    std::set<Vertex<TxnInfo>* > scc_anc;
+    RCCDTxn::dep_s->find_txn_scc_nearest_anc(v, scc_anc);
+
+    DragonBall *wait_commit_ball = new DragonBall(scc_anc.size() + 1,
+            scc_anc_commit_cb);
+    for (auto &sav: scc_anc) {
+        //Log::debug("\t ancestor id: %llx", sav->data_.id());
+        // what if the ancestor is not related and not committed or not finished?
+        sav->data_.register_event(TXN_DCD, wait_commit_ball);
+        send_ask_req(sav);
+    }
+    wait_commit_ball->trigger();
+}
+
+void RCCDTxn::commit_scc_anc_commit(
+    Vertex<TxnInfo> *v,
+    rrr::DeferredReply* defer
+) {
+    Graph<TxnInfo> &txn_gra = RCCDTxn::dep_s->txn_gra_;
+//    std::function<void(void)> scc_anc_commit_cb = [&txn_gra, v, defer, this] () {
         uint64_t txn_id = v->data_.id();
         Log::debug("all scc ancestors have committed for txn id: %llx", txn_id);
         // after all scc ancestors become DECIDED
         // sort, and commit.
         TxnInfo &tinfo = v->data_;
         if (tinfo.is_commit()) {
+            ;
         } else {
             std::vector<Vertex<TxnInfo>*> sscc;
             txn_gra.sorted_scc(v, &sscc);
@@ -255,47 +294,7 @@ void RCCDTxn::to_decide(
             //}
             defer->reply();
         }
-    };
-
-    //std::function<void(void)> check_commit_cb = [&txn_gra, v, defer, scc_anc_commit_cb] () {
-    //    v->data_.wait_commit_--;
-    //    Log::debug("\tan scc ancestor of txn %llx is committed, %d left", v->data_.id(), (int) v->data_.wait_commit_);
-    //    if (v->data_.wait_commit_ == 0) {
-    //        scc_anc_commit_cb();
-    //    }
     //};
-
-    std::function<void(void)> anc_finish_cb =
-            [this, &txn_gra, v, scc_anc_commit_cb] () {
-
-                Log::debug("all ancestors have finished for txn id: %llx", v->data_.id());
-                // after all ancestors become COMMITTING
-                // wait for all ancestors of scc become DECIDED
-                std::set<Vertex<TxnInfo>* > scc_anc;
-                RCCDTxn::dep_s->find_txn_scc_nearest_anc(v, scc_anc);
-
-                DragonBall *wait_commit_ball = new DragonBall(scc_anc.size() + 1,
-                        scc_anc_commit_cb);
-                for (auto &sav: scc_anc) {
-                    //Log::debug("\t ancestor id: %llx", sav->data_.id());
-                    // what if the ancestor is not related and not committed or not finished?
-                    sav->data_.register_event(TXN_DCD, wait_commit_ball);
-                    send_ask_req(sav);
-                }
-                wait_commit_ball->trigger();
-            };
-
-    std::unordered_set<Vertex<TxnInfo>*> anc;
-    RCCDTxn::dep_s->find_txn_anc_opt(v, anc);
-
-
-    DragonBall *wait_finish_ball = new DragonBall(anc.size() + 1, anc_finish_cb);
-    for (auto &av: anc) {
-        Log::debug("\t ancestor id: %llx", av->data_.id());
-        av->data_.register_event(TXN_CMT, wait_finish_ball);
-        send_ask_req(av);
-    }
-    wait_finish_ball->trigger();
 }
 
 void RCCDTxn::send_ask_req(Vertex<TxnInfo>* av) {

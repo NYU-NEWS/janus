@@ -55,6 +55,16 @@ public:
             rrr::DeferredReply *defer
     );
 
+    virtual void commit_anc_finish(
+        Vertex<TxnInfo> *v,
+        rrr::DeferredReply* defer
+    );
+
+    virtual void commit_scc_anc_commit(
+        Vertex<TxnInfo> *v,
+        rrr::DeferredReply* defer
+    );
+
     void to_decide(
             Vertex <TxnInfo> *v,
             rrr::DeferredReply *defer
