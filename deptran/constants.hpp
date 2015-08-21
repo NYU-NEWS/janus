@@ -15,6 +15,7 @@ namespace rococo {
 //#define TXN_COMMIT  (0x04)
 #define TXN_ABORT   (0x08)
 
+// a transaction (command) status
 #define TXN_UKN (0x00)  // unknown
 #define TXN_STD (0x01)  // started
 #define TXN_CMT (0x02)  // committing

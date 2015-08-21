@@ -191,19 +191,16 @@ void RCCDTxn::to_decide(
     } else {
         tinfo.during_commit = true;
     }
-
     Graph<TxnInfo> &txn_gra = RCCDTxn::dep_s->txn_gra_;
-    // a commit function.
 
+    std::unordered_set<Vertex<TxnInfo>*> anc;
+    RCCDTxn::dep_s->find_txn_anc_opt(v, anc);
     std::function<void(void)> anc_finish_cb =
             [this, v, defer] () {
                 this->commit_anc_finish(v, defer);
             };
-
-    std::unordered_set<Vertex<TxnInfo>*> anc;
-    RCCDTxn::dep_s->find_txn_anc_opt(v, anc);
-
-    DragonBall *wait_finish_ball = new DragonBall(anc.size() + 1, anc_finish_cb);
+    DragonBall *wait_finish_ball = 
+        new DragonBall(anc.size() + 1, anc_finish_cb);
     for (auto &av: anc) {
         Log::debug("\t ancestor id: %llx", av->data_.id());
         av->data_.register_event(TXN_CMT, wait_finish_ball);
@@ -242,59 +239,54 @@ void RCCDTxn::commit_scc_anc_commit(
     rrr::DeferredReply* defer
 ) {
     Graph<TxnInfo> &txn_gra = RCCDTxn::dep_s->txn_gra_;
-//    std::function<void(void)> scc_anc_commit_cb = [&txn_gra, v, defer, this] () {
-        uint64_t txn_id = v->data_.id();
-        Log::debug("all scc ancestors have committed for txn id: %llx", txn_id);
-        // after all scc ancestors become DECIDED
-        // sort, and commit.
-        TxnInfo &tinfo = v->data_;
-        if (tinfo.is_commit()) {
-            ;
-        } else {
-            std::vector<Vertex<TxnInfo>*> sscc;
-            txn_gra.sorted_scc(v, &sscc);
-            //static int64_t sample = 0;
-            //if (RandomGenerator::rand(1, 100)==1) {
-            //    scsi_->do_statistics(S_RES_KEY_N_SCC, sscc.size());
-            //}
-            //this->stat_sz_scc_.sample(sscc.size());
-            for(auto& vv: sscc) {
-                bool commit_by_other = vv->data_.get_status() & TXN_DCD;
+    uint64_t txn_id = v->data_.id();
+    Log::debug("all scc ancestors have committed for txn id: %llx", txn_id);
+    // after all scc ancestors become DECIDED
+    // sort, and commit.
+    TxnInfo &tinfo = v->data_;
+    if (tinfo.is_commit()) {
+        ;
+    } else {
+        std::vector<Vertex<TxnInfo>*> sscc;
+        txn_gra.sorted_scc(v, &sscc);
+        //static int64_t sample = 0;
+        //if (RandomGenerator::rand(1, 100)==1) {
+        //    scsi_->do_statistics(S_RES_KEY_N_SCC, sscc.size());
+        //}
+        //this->stat_sz_scc_.sample(sscc.size());
+        for(auto& vv: sscc) {
+            bool commit_by_other = vv->data_.get_status() & TXN_DCD;
+            if (!commit_by_other) {
+                // apply changes.
 
-                if (!commit_by_other) {
-                    // apply changes.
-
-                    // this res may not be mine !!!!
-                    if (vv->data_.res != nullptr) {
-                        auto txn = (RCCDTxn*) mgr_->get(vv->data_.id());
-                        txn->exe_deferred(vv->data_.res->outputs);
-                        mgr_->destroy(vv->data_.id());
-                    }
-
-                    Log::debug("txn commit. tid:%llx", vv->data_.id());
-                    // delay return back to clients.
-                    //
-                    verify(vv->data_.committed_ == false);
-                    vv->data_.committed_ = true;
-                    vv->data_.union_status(TXN_DCD, false);
+                // this res may not be mine !!!!
+                if (vv->data_.res != nullptr) {
+                    auto txn = (RCCDTxn*) mgr_->get(vv->data_.id());
+                    txn->exe_deferred(vv->data_.res->outputs);
+                    mgr_->destroy(vv->data_.id());
                 }
-            }
 
-            for (auto& vv: sscc) {
-                vv->data_.trigger();
+                Log::debug("txn commit. tid:%llx", vv->data_.id());
+                // delay return back to clients.
+                //
+                verify(vv->data_.committed_ == false);
+                vv->data_.committed_ = true;
+                vv->data_.union_status(TXN_DCD, false);
             }
         }
-
-        if (defer != nullptr) {
-            //if (commit_by_other) {
-            //    Log::debug("reply finish request of txn: %llx, it's committed by other txn", vv->data_.id());
-
-            //} else {
-            Log::debug("reply finish request of txn: %llx", txn_id);
-            //}
-            defer->reply();
+        for (auto& vv: sscc) {
+            vv->data_.trigger();
         }
-    //};
+    }
+
+    if (defer != nullptr) {
+        //if (commit_by_other) {
+        //    Log::debug("reply finish request of txn: %llx, it's committed by other txn", vv->data_.id());
+        //} else {
+        Log::debug("reply finish request of txn: %llx", txn_id);
+        //}
+        defer->reply();
+    }
 }
 
 void RCCDTxn::send_ask_req(Vertex<TxnInfo>* av) {
@@ -332,7 +324,8 @@ void RCCDTxn::send_ask_req(Vertex<TxnInfo>* av) {
                 //stat_sz_gra_ask_.sample(res.gra_m.gra->size());
                 // Be careful! this one could bring more evil than we want.
                 txn_gra.union_graph(*(res.gra_m.gra), true);
-                // for every transaction it unions,  handle this transaction like normal finish workflow.
+                // for every transaction it unions,  handle this transaction 
+                // like normal finish workflow.
                 // FIXME is there problem here?
                 to_decide(av, nullptr);
             };
@@ -351,7 +344,6 @@ void RCCDTxn::send_ask_req(Vertex<TxnInfo>* av) {
     }
 
 }
-
 
 void RCCDTxn::inquire(
         CollectFinishResponse* res,
