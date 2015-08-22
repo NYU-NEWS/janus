@@ -685,7 +685,7 @@ void Coordinator::deptran_start(TxnChopper* ch) {
 
                 if (IS_MODE_RO6) {
                     std::vector<i64> ro;
-                    string_to_vector(res.read_only, &ro);
+                    Compressor::string_to_vector(res.read_only, &ro);
 
                     this->ro_txn_.insert(ro.begin(), ro.end());
                 }
@@ -788,7 +788,7 @@ void Coordinator::deptran_finish(TxnChopper *ch) {
         // merge the read_only list.
         std::vector<i64> ro;
         ro.insert(ro.begin(), ro_txn_.begin(), ro_txn_.end());
-        string_to_vector(req.read_only, &ro);
+        Compressor::string_to_vector(req.read_only, &ro);
     }
 
     verify(ch->gra_.size() > 0);

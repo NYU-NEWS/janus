@@ -300,45 +300,46 @@ void RococoServiceImpl::rcc_batch_start_pie(
         BatchChopStartResponse* res,
         rrr::DeferredReply* defer) {
 
-    verify(IS_MODE_RCC || IS_MODE_RO6);
-    auto txn = (RCCDTxn*) txn_mgr_->get_or_create(headers[0].tid);
-
-    res->is_defers.resize(headers.size());
-    res->outputs.resize(headers.size());
-
-    auto job = [&headers, &inputs, res, defer, this, txn] () {
-        std::lock_guard<std::mutex> guard(mtx_);
-
-        Log::debug("batch req, headers size:%u", headers.size());
-        auto &tid = headers[0].tid;
-//    Vertex<TxnInfo> *tv = RCC::dep_s->start_pie_txn(tid);
-
-        for (int i = 0; i < headers.size(); i++) {
-            auto &header = headers[i];
-            auto &input = inputs[i];
-            auto &output = res->outputs[i];
-
-            //    Log::debug("receive start request. txn_id: %llx, pie_id: %llx", header.tid, header.pid);
-
-            bool deferred;
-//            txn->start(header, input, &deferred, &output); FIXME this is missing !!!
-            res->is_defers[i] = deferred ? 1 : 0;
-
-        }
-        RCCDTxn::dep_s->sub_txn_graph(tid, res->gra_m);
-        defer->reply();
-
-    };
-    static bool do_record = Config::get_config()->do_logging();
-
-    if (do_record) {
-        rrr::Marshal m;
-        m << headers << inputs;
-
-        recorder_->submit(m, job);
-    } else {
-        job();
-    }
+    verify(false);
+//    verify(IS_MODE_RCC || IS_MODE_RO6);
+//    auto txn = (RCCDTxn*) txn_mgr_->get_or_create(headers[0].tid);
+//
+//    res->is_defers.resize(headers.size());
+//    res->outputs.resize(headers.size());
+//
+//    auto job = [&headers, &inputs, res, defer, this, txn] () {
+//        std::lock_guard<std::mutex> guard(mtx_);
+//
+//        Log::debug("batch req, headers size:%u", headers.size());
+//        auto &tid = headers[0].tid;
+////    Vertex<TxnInfo> *tv = RCC::dep_s->start_pie_txn(tid);
+//
+//        for (int i = 0; i < headers.size(); i++) {
+//            auto &header = headers[i];
+//            auto &input = inputs[i];
+//            auto &output = res->outputs[i];
+//
+//            //    Log::debug("receive start request. txn_id: %llx, pie_id: %llx", header.tid, header.pid);
+//
+//            bool deferred;
+////            txn->start(header, input, &deferred, &output); FIXME this is missing !!!
+//            res->is_defers[i] = deferred ? 1 : 0;
+//
+//        }
+//        RCCDTxn::dep_s->sub_txn_graph(tid, res->gra_m);
+//        defer->reply();
+//
+//    };
+//    static bool do_record = Config::get_config()->do_logging();
+//
+//    if (do_record) {
+//        rrr::Marshal m;
+//        m << headers << inputs;
+//
+//        recorder_->submit(m, job);
+//    } else {
+//        job();
+//    }
 }
 
 void RococoServiceImpl::rcc_start_pie(

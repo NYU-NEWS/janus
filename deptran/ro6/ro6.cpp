@@ -80,7 +80,7 @@ void RO6DTxn::start(
 
     std::vector<i64> ro;
     ro.insert(ro.end(), ro_.begin(), ro_.end());
-    vector_to_string(ro, &res->read_only);
+    Compressor::vector_to_string(ro, &res->read_only);
 //    auto& ro_list = res->ro_list;
 
 //    ro_list.insert(ro_list.end(), ro_.begin(), ro_.end());
@@ -165,7 +165,7 @@ void RO6DTxn::commit(
         ChopFinishResponse *res,
         rrr::DeferredReply *defer) {
     std::vector<i64> ids;
-    string_to_vector(req.read_only, &ids);
+    Compressor::string_to_vector(req.read_only, &ids);
 
     // handle ro list, put ro ids into table
     // I assume one txn may query multiple rows on this node?

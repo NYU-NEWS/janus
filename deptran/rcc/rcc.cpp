@@ -191,8 +191,6 @@ void RCCDTxn::to_decide(
     } else {
         tinfo.during_commit = true;
     }
-    Graph<TxnInfo> &txn_gra = RCCDTxn::dep_s->txn_gra_;
-
     std::unordered_set<Vertex<TxnInfo>*> anc;
     RCCDTxn::dep_s->find_txn_anc_opt(v, anc);
     std::function<void(void)> anc_finish_cb =
@@ -213,7 +211,6 @@ void RCCDTxn::commit_anc_finish(
     Vertex<TxnInfo> *v,
     rrr::DeferredReply* defer
 ) {
-    Graph<TxnInfo> &txn_gra = RCCDTxn::dep_s->txn_gra_;
     std::function<void(void)> scc_anc_commit_cb = [v, defer, this] () {
         this->commit_scc_anc_commit(v, defer);
     };
