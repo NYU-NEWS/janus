@@ -62,12 +62,6 @@ public:
             rrr::i32* res,
             rrr::DeferredReply* defer);
 
-    void prepare_txn_job(const rrr::i64& tid,
-            const std::vector<i32> &sids,
-            rrr::i32* res,
-            rrr::DeferredReply* defer,
-            std::string *log_s = NULL);
-
     void commit_txn(const rrr::i64& tid,
             rrr::i32* res,
             rrr::DeferredReply* defer);

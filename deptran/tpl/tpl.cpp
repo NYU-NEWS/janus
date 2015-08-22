@@ -38,6 +38,53 @@ bool TPLDTxn::read_column(
     return mdb_txn_->read_column(row, col_id, value);
 };
 
+int TPLDTxn::start_launch(
+        const RequestHeader& header,
+        const std::vector<mdb::Value>& input,
+        const rrr::i32 &output_size,
+        rrr::i32* res,
+        std::vector<mdb::Value>* output,
+        rrr::DeferredReply* defer
+) {
+    if (IS_MODE_2PL) {
+        verify(this->mdb_txn_->rtti() == mdb::symbol_t::TXN_2PL);
+        DragonBall *defer_reply_db = new DragonBall(1, [defer]() {
+                defer->reply();
+                });
+        this->pre_execute_2pl(header, input, res, output, defer_reply_db);
+
+    } else if (IS_MODE_NONE) {
+        this->execute(header, input, res, output);
+        defer->reply();
+
+    } else if (IS_MODE_OCC) {
+        this->execute(header, input, res, output);
+        defer->reply();
+    } else {
+        verify(0);
+    }
+}
+
+int TPLDTxn::prepare_launch(
+        const std::vector<i32> &sids,
+        rrr::i32* res,
+        rrr::DeferredReply* defer
+) {
+    if (Config::get_config()->do_logging()) {
+        string log_s;
+        mgr_->get_prepare_log(tid_, sids, &log_s);
+        *res = this->prepare();
+
+        if (*res == SUCCESS)
+            recorder_->submit(log_s, [defer](){defer->reply();});
+        else
+            defer->reply();
+    } else {
+        *res = this->prepare();
+        defer->reply();  
+    }
+}
+
 int TPLDTxn::prepare() {
     auto txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(tid_);
     verify(txn != NULL);

@@ -7,6 +7,21 @@ public:
 
     TPLDTxn(i64 tid, DTxnMgr* mgr);
 
+    int start_launch(
+        const RequestHeader& header,
+        const std::vector<mdb::Value>& input,
+        const rrr::i32 &output_size,
+        rrr::i32* res,
+        std::vector<mdb::Value>* output,
+        rrr::DeferredReply* defer
+    );
+    
+    int prepare_launch(
+            const std::vector<i32> &sids,
+            rrr::i32* res,
+            rrr::DeferredReply* defer
+    );
+
     int prepare();
 
     int commit();

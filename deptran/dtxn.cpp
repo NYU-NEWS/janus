@@ -94,7 +94,7 @@ mdb::Txn *DTxnMgr::get_mdb_txn(const RequestHeader &header) {
 }
 
 
-
+// TODO move this to the dtxn class
 void DTxnMgr::get_prepare_log(i64 txn_id,
         const std::vector<i32> &sids,
         std::string *str) {

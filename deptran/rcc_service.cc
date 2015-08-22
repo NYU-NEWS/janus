@@ -135,8 +135,8 @@ void RococoServiceImpl::start_pie(
         const rrr::i32 &output_size,
         rrr::i32* res,
         std::vector<mdb::Value>* output,
-        rrr::DeferredReply* defer) {
-
+        rrr::DeferredReply* defer
+) {
     std::lock_guard<std::mutex> guard(mtx_);
 
 #ifdef PIECE_COUNT
@@ -157,68 +157,19 @@ void RococoServiceImpl::start_pie(
     *res = SUCCESS;
 
     TPLDTxn* dtxn = (TPLDTxn*)txn_mgr_->get_or_create(header.tid);
-
-
-    if (IS_MODE_2PL) {
-        verify(dtxn->mdb_txn_->rtti() == mdb::symbol_t::TXN_2PL);
-        DragonBall *defer_reply_db = new DragonBall(1, [defer]() {
-                defer->reply();
-                });
-        dtxn->pre_execute_2pl(header, input, res, output, defer_reply_db);
-
-    } else if (IS_MODE_NONE) {
-        dtxn->execute(header, input, res, output);
-        defer->reply();
-
-    } else if (IS_MODE_OCC) {
-        dtxn->execute(header, input, res, output);
-        defer->reply();
-
-    } else {
-        verify(0);
-    }
+    dtxn->start_launch(header, input, output_size, res, output, defer);
 }
 
 void RococoServiceImpl::prepare_txn(
         const rrr::i64& tid,
         const std::vector<i32> &sids,
         rrr::i32* res,
-        rrr::DeferredReply* defer) {
-    // logging.
-    // generate proper logging staff.
-
-    if (Config::get_config()->do_logging()) {
-        string log_s;
-        prepare_txn_job(tid, sids, res, NULL, &log_s);
-        //Log::debug("here evil comes!");
-        auto job = [defer] () {
-            defer->reply();
-        };
-
-        if (*res == SUCCESS)
-            recorder_->submit(log_s, job);
-        else
-            defer->reply();
-    } else {
-        prepare_txn_job(tid, sids, res, defer);
-    }
-
-}
-
-void RococoServiceImpl::prepare_txn_job(
-        const rrr::i64& tid,
-        const std::vector<i32> &sids,
-        rrr::i32* res,
-        rrr::DeferredReply* defer,
-        std::string *log_s) {
-
+        rrr::DeferredReply* defer
+) {
     std::lock_guard<std::mutex> guard(mtx_);
-    if (log_s)
-        txn_mgr_->get_prepare_log(tid, sids, log_s);
-
     auto *dtxn = (TPLDTxn*)txn_mgr_->get(tid);
-    *res = dtxn->prepare();
-
+    dtxn->prepare_launch(sids, res, defer);
+// TODO move the stat to somewhere else.
 #ifdef PIECE_COUNT
     std::map<piece_count_key_t, uint64_t>::iterator pc_it;
     if (*res != SUCCESS)
@@ -235,8 +186,6 @@ void RococoServiceImpl::prepare_txn_job(
         piece_count_timer_.start();
     }
 #endif
-    if (defer)
-        defer->reply();
 }
 
 void RococoServiceImpl::commit_txn(
