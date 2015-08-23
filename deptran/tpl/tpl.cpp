@@ -63,6 +63,7 @@ int TPLDTxn::start_launch(
     } else {
         verify(0);
     }
+    return 0;
 }
 
 int TPLDTxn::prepare_launch(
@@ -83,6 +84,7 @@ int TPLDTxn::prepare_launch(
         *res = this->prepare();
         defer->reply();  
     }
+    return 0;
 }
 
 int TPLDTxn::prepare() {
@@ -102,6 +104,27 @@ int TPLDTxn::prepare() {
         default:
             verify(0);
     }
+    return 0;
+}
+
+int TPLDTxn::abort_launch(
+        rrr::i32* res,
+        rrr::DeferredReply* defer
+) {
+    *res = this->abort();
+    if (Config::get_config()->do_logging()) {
+        const char abort_tag = 'a';
+        std::string log_s;
+        log_s.resize(sizeof(tid_) + sizeof(abort_tag));
+        memcpy((void *)log_s.data(), (void *)&tid_, sizeof(tid_));
+        memcpy((void *)log_s.data(), (void *)&abort_tag, sizeof(abort_tag));
+        recorder_->submit(log_s);
+    }
+    // TODO optimize
+    mgr_->destroy(tid_);
+    defer->reply();
+    Log::debug("abort finish");
+    return 0;
 }
 
 int TPLDTxn::abort() {
@@ -111,6 +134,24 @@ int TPLDTxn::abort() {
     mdb_txn_->abort();
     delete mdb_txn_;
     return SUCCESS;
+}
+
+int TPLDTxn::commit_launch(
+        rrr::i32* res,
+        rrr::DeferredReply* defer
+) {
+    *res = this->commit();
+    if (Config::get_config()->do_logging()) {
+        const char commit_tag = 'c';
+        std::string log_s;
+        log_s.resize(sizeof(tid_) + sizeof(commit_tag));
+        memcpy((void *)log_s.data(), (void *)&tid_, sizeof(tid_));
+        memcpy((void *)log_s.data(), (void *)&commit_tag, sizeof(commit_tag));
+        recorder_->submit(log_s);
+    }
+    mgr_->destroy(tid_);
+    defer->reply();
+    return 0;
 }
 
 int TPLDTxn::commit() {

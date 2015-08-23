@@ -24,7 +24,17 @@ public:
 
     int prepare();
 
+    int commit_launch(
+        rrr::i32* res,
+        rrr::DeferredReply* defer
+    );
+
     int commit();
+
+    int abort_launch(
+        rrr::i32* res,
+        rrr::DeferredReply* defer
+    );
 
     int abort();
 

@@ -23,7 +23,7 @@ RococoServiceImpl::RococoServiceImpl(
     }
 }
 
-// deprecated
+// TODO deprecated
 void RococoServiceImpl::do_start_pie(
         const RequestHeader &header,
         const Value *input,
@@ -51,6 +51,7 @@ void RococoServiceImpl::do_start_pie(
     }
 }
 
+// TODO
 void RococoServiceImpl::batch_start_pie(
         const BatchRequestHeader& batch_header,
         const std::vector<Value>& input,
@@ -155,7 +156,6 @@ void RococoServiceImpl::start_pie(
     output->resize(output_size);
     // find stored procedure, and run it
     *res = SUCCESS;
-
     TPLDTxn* dtxn = (TPLDTxn*)txn_mgr_->get_or_create(header.tid);
     dtxn->start_launch(header, input, output_size, res, output, defer);
 }
@@ -191,58 +191,27 @@ void RococoServiceImpl::prepare_txn(
 void RococoServiceImpl::commit_txn(
         const rrr::i64& tid,
         rrr::i32* res,
-        rrr::DeferredReply* defer) {
-
+        rrr::DeferredReply* defer
+) {
     std::lock_guard<std::mutex> guard(mtx_);
     auto *dtxn = (TPLDTxn*)txn_mgr_->get(tid);
     verify(dtxn != NULL);
-    *res = dtxn->commit();
-    txn_mgr_->destroy(tid);
-
-    if (Config::get_config()->do_logging()) {
-        const char commit_tag = 'c';
-        std::string log_s;
-        log_s.resize(sizeof(tid) + sizeof(commit_tag));
-        memcpy((void *)log_s.data(), (void *)&tid, sizeof(tid));
-        memcpy((void *)log_s.data(), (void *)&commit_tag, sizeof(commit_tag));
-        recorder_->submit(log_s);
-    }
-    defer->reply();
+    dtxn->commit_launch(res, defer);
 }
 
 void RococoServiceImpl::abort_txn(
         const rrr::i64& tid,
         rrr::i32* res,
-        rrr::DeferredReply* defer) {
-    
-    std::lock_guard<std::mutex> guard(mtx_);
-
+        rrr::DeferredReply* defer
+) {
     Log::debug("get abort_txn: tid: %ld", tid);
-    //if (txn_mgr_->get_mode() != MODE_2PL) {
-    //    *res = TxnRunner::do_abort(tid, defer);
-    //    defer->reply();
-    //}
-    //else {
-    //    TxnRunner::do_abort(tid, defer);
-    //}
+    std::lock_guard<std::mutex> guard(mtx_);
     auto* dtxn = (TPLDTxn*) txn_mgr_->get(tid);
     verify(dtxn != NULL);
-    *res = dtxn->abort();
-    txn_mgr_->destroy(tid);
-
-    if (Config::get_config()->do_logging()) {
-        const char abort_tag = 'a';
-        std::string log_s;
-        log_s.resize(sizeof(tid) + sizeof(abort_tag));
-        memcpy((void *)log_s.data(), (void *)&tid, sizeof(tid));
-        memcpy((void *)log_s.data(), (void *)&abort_tag, sizeof(abort_tag));
-        recorder_->submit(log_s);
-    }
-    defer->reply();
-    Log::debug("abort finish");
+    *res = dtxn->abort_launch(res, defer);
 }
 
-
+// TODO find a better way to define batch
 void RococoServiceImpl::rcc_batch_start_pie(
         const std::vector<RequestHeader> &headers,
         const std::vector<std::vector<Value>> &inputs,
