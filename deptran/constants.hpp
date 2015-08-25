@@ -3,6 +3,8 @@
 
 namespace rococo {
 
+#define txnid_t uint64_t 
+
 /** read and write type */
 #define WRITE   (0x01)
 #define READ    (0x02)

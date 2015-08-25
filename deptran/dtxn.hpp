@@ -9,6 +9,7 @@ using mdb::Row;
 using mdb::Table;
 using mdb::column_id_t;
 
+
 #define IS_MODE_RCC (Config::get_config()->get_mode() == MODE_RCC)
 #define IS_MODE_RO6 (Config::get_config()->get_mode() == MODE_RO6)
 #define IS_MODE_2PL (Config::get_config()->get_mode() == MODE_2PL)
@@ -60,7 +61,8 @@ typedef std::function<void (
         rrr::i32* res,
         Value* output,
         rrr::i32* output_size,
-        row_map_t *row_map)> TxnHandler;
+        row_map_t *row_map
+)> TxnHandler;
 
 typedef enum {
     DF_REAL,
@@ -83,7 +85,8 @@ public:
             base::i32 t_type, 
             base::i32 p_type,
             defer_t defer, 
-            const TxnHandler& txn_handler) {
+            const TxnHandler& txn_handler
+    ) {
         auto func_key = std::make_pair(t_type, p_type);
         auto it = all_.find(func_key);
         verify(it == all_.end());

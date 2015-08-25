@@ -51,8 +51,10 @@ void DepGraph::foi_pie(PieInfo &pi,
     *pv = new Vertex<PieInfo>(pi);
 }
 
-void DepGraph::foi_txn(uint64_t &txn_id,
-        Vertex<TxnInfo> **tv) {
+void DepGraph::foi_txn(
+        uint64_t &txn_id,
+        Vertex<TxnInfo> **tv
+) {
     *tv = txn_gra_.find_or_insert(txn_id);
 }
 
@@ -66,19 +68,11 @@ Vertex<TxnInfo> *DepGraph::start_pie_txn(uint64_t tid) {
 
     /** on start_req */
 void DepGraph::start_pie(
-            PieInfo &pi,
-            Vertex<PieInfo> **pv,
-            Vertex<TxnInfo> **tv
-    ) {
+        txnid_t txn_id,
+        Vertex<TxnInfo> **tv
+) {
     verify(tv != NULL);
-    verify(pv == nullptr);
-//    if (pv) {
-//        foi_pie(pi, pv);
-//    }
-
-    if (tv) {
-        foi_txn(pi.txn_id_, tv);
-    }
+    *tv = txn_gra_.find_or_insert(txn_id);
     static auto id = Config::get_config()->get_site_id();
     (*tv)->data_.servers_.insert(id);
 }

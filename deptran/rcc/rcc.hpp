@@ -1,5 +1,8 @@
 #pragma once
 
+#define PHASE_RCC_START (1)
+#define PHASE_RCC_COMMIT (2)
+
 //namespace rococo {
 class RCCDTxn : public DTxn {
 public:
@@ -19,7 +22,11 @@ public:
 
     bool read_only_;
 
-    RCCDTxn(i64 tid, DTxnMgr *mgr, bool ro);
+    RCCDTxn(
+            i64 tid, 
+            DTxnMgr *mgr, 
+            bool ro
+    );
 
     virtual void start_launch(
             const RequestHeader &header,
@@ -35,6 +42,15 @@ public:
             rrr::DeferredReply* defer
     );
 
+    virtual bool start_exe_itfr(
+            defer_t defer, 
+            TxnHandler &handler,
+            const RequestHeader &header,
+            const std::vector<mdb::Value> &input,
+            std::vector<mdb::Value> *output
+    );
+
+    // TODO remove
     virtual void start(
             const RequestHeader &header,
             const std::vector<mdb::Value> &input,

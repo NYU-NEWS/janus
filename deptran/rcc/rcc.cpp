@@ -4,7 +4,11 @@ namespace rococo {
 
 DepGraph *RCCDTxn::dep_s = NULL;
 
-RCCDTxn::RCCDTxn(i64 tid, DTxnMgr *mgr, bool ro) : DTxn(tid, mgr) {
+RCCDTxn::RCCDTxn(
+        i64 tid, 
+        DTxnMgr *mgr, 
+        bool ro
+) : DTxn(tid, mgr) {
     read_only_ = ro;
     mdb_txn_ = mgr->get_mdb_txn(tid_);
 }
@@ -15,17 +19,18 @@ void RCCDTxn::start_launch(
         ChopStartResponse *res,
         rrr::DeferredReply* defer
 ) {
-    auto job = [&header, &input, res, defer, this] () {
-        this->start_after_log(header, input, res, defer);
-    };
+    verify(defer);
     static bool do_record = Config::get_config()->do_logging();
     if (do_record) {
         Marshal m;
         m << header;
         m << input;
+        auto job = [&header, &input, res, defer, this] () {
+            this->start_after_log(header, input, res, defer);
+        };
         recorder_->submit(m, job);
     } else {
-        job();
+        this->start_after_log(header, input, res, defer);
     }
 }
 
@@ -35,56 +40,55 @@ void RCCDTxn::start_after_log(
         ChopStartResponse *res,
         rrr::DeferredReply* defer
 ) {
-    bool deferred;
-    this->start(header, input, &deferred, res);
+    Vertex<TxnInfo> *tv = NULL;
+    RCCDTxn::dep_s->start_pie(header.tid, &tv);
+    verify(tv);
+    tv_ = tv;
+    verify(phase_ <= PHASE_RCC_START);
+    phase_ = PHASE_RCC_START;
+    // execute the IR actions.
+    auto pair = TxnRegistry::get(
+            header.t_type, header.p_type);
+
+    bool deferred = start_exe_itfr(
+            pair.defer, pair.txn_handler, header, input, &res->output);
+    // Reply
     res->is_defered = deferred ? 1 : 0;
     auto sz_sub_gra = RCCDTxn::dep_s->sub_txn_graph(header.tid, res->gra_m);
+    if (defer) defer->reply();
     // TODO fix stat
     //stat_sz_gra_start_.sample(sz_sub_gra);
     //if (IS_MODE_RO6) {
     //    stat_ro6_sz_vector_.sample(res->read_only.size());
     //}
 
-    if (defer) defer->reply();
 //    Log::debug("reply to start request. txn_id: %llx, pie_id: %llx, graph size: %d", header.tid, header.pid, (int)res->gra.size());
 }
 
-void RCCDTxn::start(
+bool RCCDTxn::start_exe_itfr(
+        defer_t defer_type, 
+        TxnHandler &handler,
         const RequestHeader &header,
         const std::vector<mdb::Value> &input,
-        bool *deferred,
-        ChopStartResponse *res
+        std::vector<mdb::Value> *output
 ) {
-    PieInfo pi;
-    pi.pie_id_ = header.pid;
-    pi.txn_id_ = header.tid;
-    pi.type_ = header.p_type;
-
-    std::vector<mdb::Value> *output = &res->output;
-
-    Vertex<TxnInfo> *tv = NULL;
-    RCCDTxn::dep_s->start_pie(pi, nullptr, &tv);
-    tv_ = tv;
-    verify(phase_ <= 1);
-    phase_ = 1;
-
-    // execute the IR actions.
-    *deferred = pi.defer_;
-    verify(tv);
-
-    auto txn_handler_pair = TxnRegistry::get(header.t_type, header.p_type);
-    switch (txn_handler_pair.defer) {
+    bool deferred; 
+    switch (defer_type) {
         case DF_NO:
         { // immediate
             int output_size = 300;
             output->resize(output_size);
             int res;
-            txn_handler_pair.txn_handler(this,
-                    header, input.data(),
-                    input.size(), &res, output->data(),
-                    &output_size, NULL);
+            handler(this,
+                    header, 
+                    input.data(),
+                    input.size(), 
+                    &res, 
+                    output->data(),
+                    &output_size, 
+                    NULL);
             output->resize(output_size);
-            *deferred = false;
+            deferred = false;
             break;
         }
         case DF_REAL:
@@ -97,11 +101,15 @@ void RCCDTxn::start(
                 drs.reserve(100); //XXX
             }
             drs.push_back(dr);
-            txn_handler_pair.txn_handler(this,
-                    header, drs.back().inputs.data(),
-                    drs.back().inputs.size(), NULL, NULL,
-                    NULL, &drs.back().row_map);
-            *deferred = true;
+            handler(this,
+                    header, 
+                    drs.back().inputs.data(),
+                    drs.back().inputs.size(), 
+                    NULL, 
+                    NULL,
+                    NULL, 
+                    &drs.back().row_map);
+            deferred = true;
             break;
         }
         case DF_FAKE: //TODO
@@ -117,18 +125,31 @@ void RCCDTxn::start(
             int output_size = 300; //XXX
             output->resize(output_size);
             int res;
-            txn_handler_pair.txn_handler(this,
-                    header, drs.back().inputs.data(),
-                    drs.back().inputs.size(), &res,
-                    output->data(), &output_size,
+            handler(this,
+                    header, 
+                    drs.back().inputs.data(),
+                    drs.back().inputs.size(), 
+                    &res,
+                    output->data(), 
+                    &output_size,
                     &drs.back().row_map);
             output->resize(output_size);
-            *deferred = false;
+            deferred = false;
             break;
         }
         default:
             verify(0);
     }
+    return deferred;
+}
+
+void RCCDTxn::start(
+        const RequestHeader &header,
+        const std::vector<mdb::Value> &input,
+        bool *deferred,
+        ChopStartResponse *res
+) {
+    // TODO Remove
 }
 
 void RCCDTxn::start_ro(

@@ -51,12 +51,10 @@ public:
     Vertex<TxnInfo> *start_pie_txn(uint64_t tid);
 
     /** on start_req */
-    void start_pie(PieInfo &pi, 
-                   Vertex<PieInfo> **pv, 
-                   Vertex<TxnInfo> **tv
-                   /*std::unordered_map<cell_locator_t, int, 
-                     cell_locator_t_hash> &opset, 
-                     cell_entry_map_t &entry_map*/);
+    void start_pie(
+            txnid_t txn_id,
+            Vertex<TxnInfo> **tv
+    );
 
     void union_txn_graph(Graph<TxnInfo>& gra) {
         txn_gra_.union_graph(gra, true);
