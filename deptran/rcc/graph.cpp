@@ -4,8 +4,11 @@
 
 namespace rococo {
 
-
-void GraphMarshaler::marshal_help_1(rrr::Marshal &m, const std::unordered_set<Vertex<TxnInfo>*> &ret_set, Vertex<TxnInfo> *old_sv) const {
+void GraphMarshaler::marshal_help_1(
+        rrr::Marshal &m, 
+        const std::unordered_set<Vertex<TxnInfo>*> &ret_set, 
+        Vertex<TxnInfo> *old_sv
+) const {
     int32_t to_size = 0;
     //if (RandomGenerator::rand(1,200) == 1) {
     //    Log::info("direct parent number, size: %d",  (int)old_sv->to_.size());
@@ -30,7 +33,11 @@ void GraphMarshaler::marshal_help_1(rrr::Marshal &m, const std::unordered_set<Ve
     }
 }
 
-void GraphMarshaler::marshal_help_2(rrr::Marshal &m, const std::unordered_set<Vertex<TxnInfo>*> &ret_set, Vertex<TxnInfo> *old_sv) const {
+void GraphMarshaler::marshal_help_2(
+        rrr::Marshal &m, 
+        const std::unordered_set<Vertex<TxnInfo>*> &ret_set, 
+        Vertex<TxnInfo> *old_sv
+) const {
         //int32_t ma_size = 0;
         for (auto &kv: old_sv->to_) {
             auto old_tv = kv.first;

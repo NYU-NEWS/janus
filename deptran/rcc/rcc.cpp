@@ -9,6 +9,7 @@ RCCDTxn::RCCDTxn(
         DTxnMgr *mgr, 
         bool ro
 ) : DTxn(tid, mgr) {
+    tv_ = nullptr;
     read_only_ = ro;
     mdb_txn_ = mgr->get_mdb_txn(tid_);
 }
@@ -40,16 +41,14 @@ void RCCDTxn::start_after_log(
         ChopStartResponse *res,
         rrr::DeferredReply* defer
 ) {
+    verify(phase_ <= PHASE_RCC_START);
     Vertex<TxnInfo> *tv = NULL;
     RCCDTxn::dep_s->start_pie(header.tid, &tv);
-    verify(tv);
-    tv_ = tv;
-    verify(phase_ <= PHASE_RCC_START);
+    if (tv_) verify(tv_ == tv); else tv_ = tv;
     phase_ = PHASE_RCC_START;
     // execute the IR actions.
     auto pair = TxnRegistry::get(
             header.t_type, header.p_type);
-
     bool deferred = start_exe_itfr(
             pair.defer, pair.txn_handler, header, input, &res->output);
     // Reply
@@ -190,15 +189,14 @@ void RCCDTxn::commit(
         ChopFinishResponse* res,
         rrr::DeferredReply *defer) {
     // union the graph into dep graph
+    verify(tv_ != nullptr);
     RCCDTxn::dep_s->txn_gra_.union_graph(req.gra, true);
     Graph<TxnInfo> &txn_gra_ = RCCDTxn::dep_s->txn_gra_;
-    Vertex<TxnInfo> *v = txn_gra_.find(req.txn_id);
 
-    verify(v != NULL);
-    v->data_.res = res;
-    v->data_.union_status(TXN_CMT);
+    tv_->data_.res = res;
+    tv_->data_.union_status(TXN_CMT);
 
-    to_decide(v, defer);
+    to_decide(tv_, defer);
 }
 
 void RCCDTxn::to_decide(

@@ -1,6 +1,4 @@
 
-#include <pthread.h>
-
 #include "all.h"
 
 
