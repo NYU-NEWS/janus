@@ -78,4 +78,4 @@ void GraphMarshaler::write_to_marshal(rrr::Marshal &m) const {
     //Log::debug("sub graph, return size: %d",  (int)n);
 }
 
-} // namespace rcc
+} // namespace rococo

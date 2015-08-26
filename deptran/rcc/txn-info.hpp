@@ -6,6 +6,7 @@ namespace rococo {
 
 struct ChopFinishResponse;
 
+// TODO Should this class be merged with RCCDTxn?
 class TxnInfo {
 private:
     int8_t status_ = TXN_UKN;
@@ -39,7 +40,12 @@ public:
     }
 
     bool is_involved() {
-        return servers_.find(Config::get_config()->get_site_id()) != servers_.end();
+        auto it = servers_.find(Config::get_config()->get_site_id());
+        if (it == servers_.end()) {
+            return false;
+        } else {
+            return true;
+        }
     }
 
     uint32_t random_server() {
@@ -64,7 +70,11 @@ public:
         txn_id_ = id;
     }
 
-    inline void union_data(const TxnInfo &ti, bool trigger = true, bool server = false) {
+    inline void union_data(
+        const TxnInfo &ti, 
+        bool trigger = true, 
+        bool server = false
+    ) {
         servers_.insert(ti.servers_.begin(), ti.servers_.end());
         union_status(ti.status_, trigger, server);
     }
@@ -81,7 +91,11 @@ public:
         }
     }
 
-    void union_status(int8_t status, bool is_trigger = true, bool is_server = false) {
+    void union_status(
+        int8_t status, 
+        bool is_trigger = true, 
+        bool is_server = false
+    ) {
         if (is_server && is_involved()) {
             // I cannot change the status of this txn.
         } else {

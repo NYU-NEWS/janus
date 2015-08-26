@@ -5,45 +5,11 @@
 
 namespace rococo {
 
-
-//template <typename T> class EdgeMap {
-//public:
-//    std::vector<std::pair<T, int8_t>> edges_;
-//
-//    int8_t& operator[] (T &v) {
-//        for (auto &pair: edges_) {
-//            if (pair.first == v) {
-//                return pair.second;
-//            }
-//        }
-//        //insert.
-//        edges_.push_back(std::make_pair(v, 0));
-//        return edges_.back().second;
-//    }
-//
-//    size_t size() {
-//        return edges_.size();
-//    }
-//
-//    typedef typename std::vector<std::pair<T, int8_t>>::iterator iterator;
-////    typedef typename std::vector<T>::const_iterator const_iterator;
-//    iterator begin() {return edges_.begin();}
-////    const_iterator begin() const {return edges_.begin();}
-////    const_iterator cbegin() const {return edges_.cbegin();}
-//    iterator end() {return edges_.end();}
-////    const_iterator end() const {return edges_.end();}
-////    const_iterator cend() const {return edges_.cend();}
-//};
-
-
 template <typename T> class Vertex {
 
 public:
     std::map<Vertex*, int8_t> from_;
     std::map<Vertex*, int8_t> to_;
-
- //   EdgeMap<Vertex*> from_;
- //   EdgeMap<Vertex*> to_;
 
     T data_;
 
@@ -183,32 +149,6 @@ public:
         return v;
     }
 
-//    Vertex<T>* find_or_insert(T& data) {
-//        auto i = id_index_.find(data.id());
-//        if (i == id_index_.end()) {
-//            Vertex<T> *v = new Vertex<T>(data);
-//            id_index_[data.id()] = v;
-//            vertex_index_.insert(v);
-//            return v;
-//        } else {
-//            return i->second;
-//        }
-//    }
-
-//    Vertex<T>* find_or_insert(uint64_t id) {
-//        auto i = id_index_.find(id);
-//        if (i == id_index_.end()) {
-//            Log::debug("insert into graph based on id. %llx", id);
-//            Vertex<T> *v = new Vertex<T>;
-//            v->data_.set_id(id);
-//            id_index_[id] = v;
-//            vertex_index_.insert(v);
-//            return v;
-//        } else {
-//            return i->second;
-//        }
-//    }
-
     bool insert(Vertex<T>* vertex) {
         auto i = vertex_index_.find(vertex);
         if (i != vertex_index_.end()) {
@@ -228,34 +168,6 @@ public:
         }
         return true;
     };
-
-    //bool remove(Vertex<T>* vertex) {
-    //    auto i = vertex_index_.find(vertex);
-    //    if (i != vertex_index_.end()) {
-    //        for (auto& kv: (*i)->to_) {
-    //            kv.first->from_.erase(vertex);
-    //        }
-
-    //        for (auto& kv: (*i)->from_) {
-    //            kv.first->from_.erase(vertex);
-    //        }
-    //        id_index_.erase(vertex->data_.id());
-    //        vertex_index_.erase(i);
-    //        return true;
-    //    } else {
-    //        return false;
-    //    }
-    //};
-
-    //bool remove(T& data) {
-    //    auto i = id_index_.find(data.id());
-    //    if (i != id_index_.end()) {
-    //        this->remove(i->second);
-    //        return true;
-    //    } else {
-    //        return false;
-    //    }
-    //};
 
     std::set<Vertex<T>*> find_ancestor(Vertex<T>* vertex) {
         std::set<Vertex<T>*> ret;
@@ -412,21 +324,6 @@ public:
         // sort ret following the id;
         verify(start_vv.size() > 0);
         sort_vv(start_vv, 1);
-
-//        int scc_size = scc_set.size();
-//        Log::debug("this scc cycle size: %d", scc_size);
-//
-//        for (auto &v: scc_set) {
-//            Log::debug("\t cycle member, txn_id: %llx", v->data_.id());
-//        }
-//
-//        if (start_vv.size() != scc_size) {
-//            Log::debug("this scc cycle contains RW and WR edges");
-//        } else if (scc_size > 1) {
-//            Log::debug("this scc only contains WW edges");
-//        }
-
-
 
         std::map<Vertex<T>*, int> dfs_status; // 2 for visited vertex.
 
@@ -669,9 +566,17 @@ struct GraphMarshaler {
 
     void write_to_marshal(rrr::Marshal &m) const;
 
-    void marshal_help_1(rrr::Marshal &m, const std::unordered_set<Vertex<TxnInfo>*> &ret_set, Vertex<TxnInfo> *old_sv) const;
+    void marshal_help_1(
+            rrr::Marshal &m,
+            const std::unordered_set<Vertex<TxnInfo>*> &ret_set,
+            Vertex<TxnInfo> *old_sv
+    ) const;
 
-    void marshal_help_2(rrr::Marshal &m, const std::unordered_set<Vertex<TxnInfo>*> &ret_set, Vertex<TxnInfo> *old_sv) const;
+    void marshal_help_2(
+            rrr::Marshal &m,
+            const std::unordered_set<Vertex<TxnInfo>*> &ret_set,
+            Vertex<TxnInfo> *old_sv
+    ) const;
 };
 
 inline rrr::Marshal& operator>> (rrr::Marshal& m, GraphMarshaler &gra_m) {

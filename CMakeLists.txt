@@ -143,25 +143,23 @@ add_library(ROCOCO
     deptran/constants.hpp
     deptran/coordinator.cc
     deptran/coordinator.h
-    deptran/dep_graph.cc
-    deptran/dep_graph.hpp
-    deptran/rcc_row.cpp
-    deptran/rcc_row.hpp
-    deptran/ro6_row.hpp
-    deptran/ro6_row.cpp
+    deptran/multi_value.hpp
+    deptran/rcc/dep_graph.cpp
+    deptran/rcc/dep_graph.hpp
+    deptran/rcc/rcc_row.cpp
+    deptran/rcc/rcc_row.hpp
+    deptran/rcc/graph.cpp
+    deptran/rcc/graph.hpp
+    deptran/rcc/rcc.cpp
+    deptran/rcc/rcc.hpp
     deptran/dtxn.cpp
     deptran/dtxn.hpp
-    deptran/tpl.hpp
-    deptran/tpl.cpp
-    deptran/rcc.cpp
-    deptran/rcc.hpp
-    deptran/ro6.hpp
-    deptran/ro6.cpp
-    deptran/graph.cc
-    deptran/graph.hpp
-    deptran/inactive_client.h
-    deptran/inactive_input.h
-    deptran/inactive_piecegraph.h
+    deptran/tpl/tpl.hpp
+    deptran/tpl/tpl.cpp
+    deptran/ro6/ro6_row.hpp
+    deptran/ro6/ro6_row.cpp
+    deptran/ro6/ro6.hpp
+    deptran/ro6/ro6.cpp
     deptran/marshal-value.cc
     deptran/marshal-value.h
     deptran/pie_info.h
