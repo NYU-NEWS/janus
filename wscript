@@ -123,7 +123,7 @@ def build(bld):
                 includes=". rrr bench deptran deptran/ro6 deptran/rcc deptran/tpl", 
                 use="rrr memdb deptran PTHREAD RT")
 
-    bld.program(source=bld.path.ant_glob("deptran/s_main.cc"), 
+    bld.program(source=bld.path.ant_glob("deptran/s_main.cpp"), 
                 target="deptran_server", 
                 includes=". rrr bench deptran deptran/ro6 deptran/rcc deptran/tpl", 
                 use="rrr memdb deptran PTHREAD PROFILER RT")
