@@ -121,10 +121,10 @@ def build(bld):
 #                includes=". rrr", 
 #                use="base simplerpc PTHREAD")
 
-    bld.program(source=bld.path.ant_glob("test/test*.cc"), 
-                target="testharness", 
-                includes=". rrr bench deptran deptran/ro6 deptran/rcc deptran/tpl", 
-                use="rrr memdb deptran PTHREAD RT")
+#    bld.program(source=bld.path.ant_glob("test/test*.cc"), 
+#                target="testharness", 
+#                includes=". rrr bench deptran deptran/ro6 deptran/rcc deptran/tpl", 
+#                use="rrr memdb deptran PTHREAD RT")
 
     bld.program(source=bld.path.ant_glob("deptran/s_main.cpp"), 
                 target="deptran_server", 
@@ -141,17 +141,17 @@ def build(bld):
                 includes=". rrr deptran test", 
                 use="rrr PTHREAD")
 
-#    bld.program(source="test/rpc_microbench.cc test/benchmark_service.cc", 
+#   bld.program(source="test/rpc_microbench.cc test/benchmark_service.cc", 
 #                target="rpc_microbench", 
 #                includes=". rrr deptran test", 
 #                use="rrr PTHREAD RT APR APR-UTIL")
-    
+   
     bld.program(source=bld.path.ant_glob("new-test/*.cc"),
                 target="run_tests",
                 stlib=bld.env.GTEST_LIBS,
                 stlibpath=bld.env.GTEST_LIBPATH,
-                includes="rrr deptran new-test %s" % bld.env.GTEST_INCLUDE_DIR,
-                use="PTHREAD rrr base memdb")
+                includes=". rrr bench deptran deptran/ro6 deptran/rcc deptran/tpl new-test memdb %s" % bld.env.GTEST_INCLUDE_DIR,
+                use="PTHREAD rrr memdb deptran")
 
 
     bld.stlib(source=bld.path.ant_glob("deptran/*.cc "
@@ -166,7 +166,7 @@ def build(bld):
                                        "bench/tpcc_real_dist/*.cc "
                                        "bench/tpcc_dist/*.cc "
                                        "bench/rw_benchmark/*.cc "
-                                       "bench/micro/*.cc"), 
+                                       "bench/micro/*.cc", excl="deptran/*_main.c*"),
               target="deptran", 
               includes=". rrr memdb bench deptran deptran/ro6 deptran/rcc deptran/tpl", 
               use="PTHREAD APR APR-UTIL base simplerpc memdb")
