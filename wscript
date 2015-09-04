@@ -44,7 +44,6 @@ def configure(conf):
     conf.check_python_headers()
 
     _enable_tcmalloc(conf)
-    _enable_pic(conf)
     _enable_cxx11(conf)
     _enable_debug(conf)
     _enable_profile(conf)
@@ -52,7 +51,7 @@ def configure(conf):
     _enable_piece_count(conf)
     _enable_txn_count(conf)
     _enable_conflict_count(conf)
-    _config_gtest(conf)
+    _configure_gtest(conf)
 #    _enable_snappy(conf)
     #_enable_logging(conf)
 
@@ -64,9 +63,8 @@ def configure(conf):
     conf.check_boost()
 
     conf.env.append_value("CXXFLAGS", "-Wno-sign-compare")
-    conf.env.append_value('INCLUDES', ['/usr/local/include'])
+    conf.env.append_value('INCLUDES', ['/usr/local/include']) 
 
-    conf.env.append_value("CXXFLAGS", "-Wno-sign-compare")
     conf.env.LIB_PTHREAD = 'pthread'
 
     if sys.platform != 'darwin':
@@ -76,7 +74,7 @@ def configure(conf):
     conf.check_python_module('tabulate')
 
 def build(bld):
-    _depend("%s/libgtest_main.a" % bld.env.GTEST_DIR, "%s/gtest/gtest.h" % bld.env.GTEST_INCLUDE_DIR,
+    _depend("%s/libgtest.a" % bld.env.GTEST_DIR, "%s/gtest/gtest.h" % bld.env.GTEST_INCLUDE_DIR,
             "cd %s; cmake .; make clean; make" % bld.env.GTEST_DIR) 
 
     _depend("rrr/pylib/simplerpcgen/rpcgen.py", 
@@ -147,7 +145,15 @@ def build(bld):
 #                target="rpc_microbench", 
 #                includes=". rrr deptran test", 
 #                use="rrr PTHREAD RT APR APR-UTIL")
-#
+    
+    bld.program(source=bld.path.ant_glob("new-test/*.cc"),
+                target="run_tests",
+                stlib=bld.env.GTEST_LIBS,
+                stlibpath=bld.env.GTEST_LIBPATH,
+                includes="rrr deptran new-test %s" % bld.env.GTEST_INCLUDE_DIR,
+                use="PTHREAD rrr base memdb")
+
+
     bld.stlib(source=bld.path.ant_glob("deptran/*.cc "
                                        "deptran/*.cpp "
                                        "deptran/util/*.cc "
@@ -165,7 +171,6 @@ def build(bld):
               includes=". rrr memdb bench deptran deptran/ro6 deptran/rcc deptran/tpl", 
               use="PTHREAD APR APR-UTIL base simplerpc memdb")
 
-
 #
 # waf helper functions
 #
@@ -180,11 +185,11 @@ def _choose_compiler(conf):
     else:
 	Logs.pprint("PINK", "use system default compiler")
 
-def _config_gtest(conf):
-    conf.env.GTEST_DIR = "./googletest/googletest"
-    conf.env.GTEST_INCLUDE_DIR = conf.env.GTEST_DIR + "/include"
-    conf.env.append_value('INCLUDES', [conf.env.GTEST_INCLUDE_DIR])
-    conf.env.append_value("LINKFLAGS", "-L%s -lgtest_main" % (conf.env.GTEST_DIR))
+def _configure_gtest(conf):
+    conf.env.GTEST_DIR = os.path.join(os.getcwd(),"googletest/googletest")
+    conf.env.GTEST_INCLUDE_DIR = os.path.join(os.getcwd(),"googletest/googletest/include")
+    conf.env.GTEST_LIBPATH = [conf.env.GTEST_DIR] 
+    conf.env.GTEST_LIBS = ["gtest", "gtest_main"]
 
 def _enable_rpc_s(conf):
     if Options.options.rpc_s:
