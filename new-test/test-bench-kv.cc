@@ -91,7 +91,6 @@ static void benchmark_kv(TxnMgr* mgr, symbol_t table_type, symbol_t row_type) {
 TEST(MemDbBenchmark, kv_unsafe_unsorted) {
     TxnMgrUnsafe mgr;
     benchmark_kv(&mgr, TBL_UNSORTED, ROW_BASIC);
-	printf("here\n");
 }
 
 TEST(MemDbBenchmark, kv_2pl_unsorted) {
