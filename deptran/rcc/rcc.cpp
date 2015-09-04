@@ -5,8 +5,8 @@ namespace rococo {
 DepGraph *RCCDTxn::dep_s = NULL;
 
 RCCDTxn::RCCDTxn(
-        i64 tid, 
-        DTxnMgr *mgr, 
+        i64 tid,
+        DTxnMgr *mgr,
         bool ro
 ) : DTxn(tid, mgr) {
     tv_ = nullptr;
@@ -65,13 +65,13 @@ void RCCDTxn::start_after_log(
 }
 
 bool RCCDTxn::start_exe_itfr(
-        defer_t defer_type, 
+        defer_t defer_type,
         TxnHandler &handler,
         const RequestHeader &header,
         const std::vector<mdb::Value> &input,
         std::vector<mdb::Value> *output
 ) {
-    bool deferred; 
+    bool deferred;
     switch (defer_type) {
         case DF_NO:
         { // immediate
@@ -79,12 +79,12 @@ bool RCCDTxn::start_exe_itfr(
             output->resize(output_size);
             int res;
             handler(this,
-                    header, 
+                    header,
                     input.data(),
-                    input.size(), 
-                    &res, 
+                    input.size(),
+                    &res,
                     output->data(),
-                    &output_size, 
+                    &output_size,
                     NULL);
             output->resize(output_size);
             deferred = false;
@@ -101,12 +101,12 @@ bool RCCDTxn::start_exe_itfr(
             }
             drs.push_back(dr);
             handler(this,
-                    header, 
+                    header,
                     drs.back().inputs.data(),
-                    drs.back().inputs.size(), 
-                    NULL, 
+                    drs.back().inputs.size(),
                     NULL,
-                    NULL, 
+                    NULL,
+                    NULL,
                     &drs.back().row_map);
             deferred = true;
             break;
@@ -125,11 +125,11 @@ bool RCCDTxn::start_exe_itfr(
             output->resize(output_size);
             int res;
             handler(this,
-                    header, 
+                    header,
                     drs.back().inputs.data(),
-                    drs.back().inputs.size(), 
+                    drs.back().inputs.size(),
                     &res,
-                    output->data(), 
+                    output->data(),
                     &output_size,
                     &drs.back().row_map);
             output->resize(output_size);
@@ -216,7 +216,7 @@ void RCCDTxn::to_decide(
             [this, v, defer] () {
                 this->commit_anc_finish(v, defer);
             };
-    DragonBall *wait_finish_ball = 
+    DragonBall *wait_finish_ball =
         new DragonBall(anc.size() + 1, anc_finish_cb);
     for (auto &av: anc) {
         Log::debug("\t ancestor id: %llx", av->data_.id());
@@ -340,7 +340,7 @@ void RCCDTxn::send_ask_req(Vertex<TxnInfo>* av) {
                 //stat_sz_gra_ask_.sample(res.gra_m.gra->size());
                 // Be careful! this one could bring more evil than we want.
                 txn_gra.union_graph(*(res.gra_m.gra), true);
-                // for every transaction it unions,  handle this transaction 
+                // for every transaction it unions,  handle this transaction
                 // like normal finish workflow.
                 // FIXME is there problem here?
                 to_decide(av, nullptr);
