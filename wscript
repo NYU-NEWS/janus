@@ -56,9 +56,6 @@ def configure(conf):
 
 
     conf.env.append_value("CXXFLAGS", "-Wno-sign-compare")
-
-    conf.check_cfg(package='apr-1', uselib_store='APR', args=pargs)
-    conf.check_cfg(package='apr-util-1', uselib_store='APR-UTIL', args=pargs)
     conf.check_boost()
 
     conf.env.append_value("CXXFLAGS", "-Wno-sign-compare")
@@ -93,15 +90,15 @@ def build(bld):
                                        "rrr/rpc/*.cpp"), 
               target="rrr", 
               includes=". rrr", 
-              use="PTHREAD APR APR-UTIL")
+              use="PTHREAD")
 
 #    bld.stlib(source=bld.path.ant_glob("rpc/*.cc"), target="simplerpc", 
 #              includes=". rrr rpc", 
-#              use="base PTHREAD APR APR-UTIL")
+#              use="base PTHREAD")
 
     bld.stlib(source=bld.path.ant_glob("memdb/*.cc"), target="memdb", 
               includes=". rrr deptran base", 
-              use="rrr PTHREAD APR APR-UTIL")
+              use="rrr PTHREAD")
 
 #    bld.stlib(source="rlog/rlog.cc", target="rlog", 
 #              includes=". rrr rlog rpc", 
@@ -141,7 +138,7 @@ def build(bld):
 #    bld.program(source="test/rpc_microbench.cc test/benchmark_service.cc", 
 #                target="rpc_microbench", 
 #                includes=". rrr deptran test", 
-#                use="rrr PTHREAD RT APR APR-UTIL")
+#                use="rrr PTHREAD RT")
 #
     bld.stlib(source=bld.path.ant_glob("deptran/*.cc "
                                        "deptran/*.cpp "
@@ -158,7 +155,7 @@ def build(bld):
                                        "bench/micro/*.cc"), 
               target="deptran", 
               includes=". rrr memdb bench deptran deptran/ro6 deptran/rcc deptran/tpl", 
-              use="PTHREAD APR APR-UTIL base simplerpc memdb")
+              use="PTHREAD base simplerpc memdb")
 
 #
 # waf helper functions
