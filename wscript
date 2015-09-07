@@ -13,25 +13,25 @@ pargs = ['--cflags', '--libs']
 def options(opt):
     opt.load("compiler_cxx")
     #opt.load("eclipse")
-    opt.add_option('-g', '--use-gxx', dest='cxx', 
+    opt.add_option('-g', '--use-gxx', dest='cxx',
                    default=False, action='store_true')
-    opt.add_option('-c', '--use-clang', dest='clang', 
+    opt.add_option('-c', '--use-clang', dest='clang',
                    default=False, action='store_true')
-    opt.add_option('-p', '--enable-profiling', dest='prof', 
+    opt.add_option('-p', '--enable-profiling', dest='prof',
                    default=False, action='store_true')
-    opt.add_option('-d', '--debug', dest='debug', 
+    opt.add_option('-d', '--debug', dest='debug',
                    default=False, action='store_true')
-    opt.add_option('-t', '--enable-tcmalloc', dest='tcmalloc', 
+    opt.add_option('-t', '--enable-tcmalloc', dest='tcmalloc',
                    default=False, action='store_true')
-    opt.add_option('-s', '--enable-rpc-statistics', dest='rpc_s', 
+    opt.add_option('-s', '--enable-rpc-statistics', dest='rpc_s',
                    default=False, action='store_true')
-    opt.add_option('-P', '--enable-piece-count', dest='pc', 
+    opt.add_option('-P', '--enable-piece-count', dest='pc',
                    default=False, action='store_true')
-    opt.add_option('-C', '--enable-conflict-count', dest='cc', 
+    opt.add_option('-C', '--enable-conflict-count', dest='cc',
                    default=False, action='store_true')
-    opt.add_option('-r', '--enable-logging', dest='log', 
+    opt.add_option('-r', '--enable-logging', dest='log',
                    default=False, action='store_true')
-    opt.add_option('-T', '--enable-txn-stat', dest='txn_stat', 
+    opt.add_option('-T', '--enable-txn-stat', dest='txn_stat',
                    default=False, action='store_true')
     opt.parse_args();
 
@@ -64,6 +64,8 @@ def configure(conf):
     conf.env.append_value("CXXFLAGS", "-Wno-sign-compare")
     conf.env.LIB_PTHREAD = 'pthread'
 
+    conf.check_cfg(package='yaml-cpp', uselib_store='YAML-CPP', args=pargs)
+
     if sys.platform != 'darwin':
         conf.env.LIB_RT = 'rt'
 
@@ -71,73 +73,74 @@ def configure(conf):
     conf.check_python_module('tabulate')
 
 def build(bld):
-    _depend("rrr/pylib/simplerpcgen/rpcgen.py", 
-            "rrr/pylib/simplerpcgen/rpcgen.g", 
+    _depend("rrr/pylib/simplerpcgen/rpcgen.py",
+            "rrr/pylib/simplerpcgen/rpcgen.g",
             "rrr/pylib/yapps/main.py rrr/pylib/simplerpcgen/rpcgen.g")
 
-#    _depend("rlog/log_service.h", "rlog/log_service.rpc", 
+#    _depend("rlog/log_service.h", "rlog/log_service.rpc",
 #            "bin/rpcgen rlog/log_service.rpc")
 
-    _depend("deptran/rcc_rpc.h deptran/rcc_rpc.py", 
-            "deptran/rcc_rpc.rpc", 
+    _depend("deptran/rcc_rpc.h deptran/rcc_rpc.py",
+            "deptran/rcc_rpc.rpc",
             "bin/rpcgen --python --cpp deptran/rcc_rpc.rpc")
 
-    _depend("test/benchmark_service.h", "test/benchmark_service.rpc", 
+    _depend("test/benchmark_service.h", "test/benchmark_service.rpc",
             "bin/rpcgen --cpp test/benchmark_service.rpc")
 
     bld.stlib(source=bld.path.ant_glob("rrr/base/*.cpp "
                                        "rrr/misc/*.cpp "
-                                       "rrr/rpc/*.cpp"), 
-              target="rrr", 
-              includes=". rrr", 
+                                       "rrr/rpc/*.cpp"),
+              target="rrr",
+              includes=". rrr",
               use="PTHREAD")
 
-#    bld.stlib(source=bld.path.ant_glob("rpc/*.cc"), target="simplerpc", 
-#              includes=". rrr rpc", 
+#    bld.stlib(source=bld.path.ant_glob("rpc/*.cc"), target="simplerpc",
+#              includes=". rrr rpc",
 #              use="base PTHREAD")
 
-    bld.stlib(source=bld.path.ant_glob("memdb/*.cc"), target="memdb", 
-              includes=". rrr deptran base", 
+    bld.stlib(source=bld.path.ant_glob("memdb/*.cc"), target="memdb",
+              includes=". rrr deptran base",
               use="rrr PTHREAD")
 
-#    bld.stlib(source="rlog/rlog.cc", target="rlog", 
-#              includes=". rrr rlog rpc", 
+#    bld.stlib(source="rlog/rlog.cc", target="rlog",
+#              includes=". rrr rlog rpc",
 #              use="simplerpc base PTHREAD")
 
-    bld.shlib(features="pyext", 
-              source=bld.path.ant_glob("rrr/pylib/simplerpc/*.cc"), 
-              target="_pyrpc", 
-              includes=". rrr rrr/rpc", 
+    bld.shlib(features="pyext",
+              source=bld.path.ant_glob("rrr/pylib/simplerpc/*.cc"),
+              target="_pyrpc",
+              includes=". rrr rrr/rpc",
               use="rrr simplerpc PYTHON")
 
-#    bld.program(source=bld.path.ant_glob("rlog/*.cc", excl="rlog/rlog.cc"), 
-#                target="rlogserver", 
-#                includes=". rrr", 
+#    bld.program(source=bld.path.ant_glob("rlog/*.cc", excl="rlog/rlog.cc"),
+#                target="rlogserver",
+#                includes=". rrr",
 #                use="base simplerpc PTHREAD")
 
-    bld.program(source=bld.path.ant_glob("test/test*.cc"), 
-                target="testharness", 
-                includes=". rrr bench deptran deptran/ro6 deptran/rcc deptran/tpl", 
-                use="rrr memdb deptran PTHREAD RT")
+    # disable all the unit tests
+    # bld.program(source=bld.path.ant_glob("test/test*.cc"),
+    #             target="testharness",
+    #             includes=". rrr bench deptran deptran/ro6 deptran/rcc deptran/tpl",
+    #             use="rrr memdb deptran YAML-CPP PTHREAD RT")
 
-    bld.program(source=bld.path.ant_glob("deptran/s_main.cpp"), 
-                target="deptran_server", 
-                includes=". rrr bench deptran deptran/ro6 deptran/rcc deptran/tpl", 
-                use="rrr memdb deptran PTHREAD PROFILER RT")
+    bld.program(source=bld.path.ant_glob("deptran/s_main.cpp"),
+                target="deptran_server",
+                includes=". rrr bench deptran deptran/ro6 deptran/rcc deptran/tpl",
+                use="rrr memdb deptran YAML-CPP PTHREAD PROFILER RT")
 
-    bld.program(source=bld.path.ant_glob("deptran/c_main.cc"), 
-                target="deptran_client", 
-                includes=". rrr bench deptran deptran/ro6 deptran/rcc deptran/tpl", 
-                use="rrr memdb deptran PTHREAD RT")
+    bld.program(source=bld.path.ant_glob("deptran/c_main.cc"),
+                target="deptran_client",
+                includes=". rrr bench deptran deptran/ro6 deptran/rcc deptran/tpl",
+                use="rrr memdb deptran YAML-CPP PTHREAD RT")
 
-    bld.program(source="test/rpcbench.cc test/benchmark_service.cc", 
-                target="rpcbench", 
-                includes=". rrr deptran test", 
+    bld.program(source="test/rpcbench.cc test/benchmark_service.cc",
+                target="rpcbench",
+                includes=". rrr deptran test",
                 use="rrr PTHREAD")
 
-#    bld.program(source="test/rpc_microbench.cc test/benchmark_service.cc", 
-#                target="rpc_microbench", 
-#                includes=". rrr deptran test", 
+#    bld.program(source="test/rpc_microbench.cc test/benchmark_service.cc",
+#                target="rpc_microbench",
+#                includes=". rrr deptran test",
 #                use="rrr PTHREAD RT")
 #
     bld.stlib(source=bld.path.ant_glob("deptran/*.cc "
@@ -146,15 +149,15 @@ def build(bld):
                                        "deptran/ro6/*.cpp "
                                        "deptran/rcc/*.cpp "
                                        "deptran/tpl/*.cpp "
-                                       "bench/tpca/*.cc " 
+                                       "bench/tpca/*.cc "
                                        "bench/tpcc/*.cc "
                                        "bench/tpcc/*.cpp "
                                        "bench/tpcc_real_dist/*.cc "
                                        "bench/tpcc_dist/*.cc "
                                        "bench/rw_benchmark/*.cc "
-                                       "bench/micro/*.cc"), 
-              target="deptran", 
-              includes=". rrr memdb bench deptran deptran/ro6 deptran/rcc deptran/tpl", 
+                                       "bench/micro/*.cc"),
+              target="deptran",
+              includes=". rrr memdb bench deptran deptran/ro6 deptran/rcc deptran/tpl",
               use="PTHREAD base simplerpc memdb")
 
 #
