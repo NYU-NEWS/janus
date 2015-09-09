@@ -19,7 +19,6 @@ using std::unordered_map;
 using std::string;
 using std::vector;
 
-
 // system library
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -28,6 +27,10 @@ using std::vector;
 // boost library
 #include <boost/any.hpp>
 #include <boost/foreach.hpp>
+#include <boost/algorithm/string.hpp>
+
+// yaml-cpp
+#include <yaml-cpp/yaml.h>
 
 // c library
 #include <cstdio>
@@ -81,7 +84,7 @@ static dummy_class dummy___;
 // User include files
 #include "compress.hpp"
 #include "constants.hpp"
-#include "config.hpp"
+#include "config.h"
 #include "txn-info.hpp"
 #include "rcc_row.hpp"
 #include "ro6_row.hpp"
