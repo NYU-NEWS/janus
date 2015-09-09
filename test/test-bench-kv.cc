@@ -88,15 +88,16 @@ static void benchmark_kv(TxnMgr* mgr, symbol_t table_type, symbol_t row_type) {
 }
 
 
-TEST(MemDbBenchmark, kv_unsafe_unsorted) {
+TEST(MemDbBenchmark, DISABLED_kv_unsafe_unsorted) {
     TxnMgrUnsafe mgr;
     benchmark_kv(&mgr, TBL_UNSORTED, ROW_BASIC);
 }
 
-TEST(MemDbBenchmark, kv_2pl_unsorted) {
+TEST(MemDbBenchmark, DISABLED_kv_2pl_unsorted) {
     TxnMgr2PL mgr;
     benchmark_kv(&mgr, TBL_UNSORTED, ROW_FINE);
 }
+
 
 TEST(MemDbBenchmark, kv_occ_unsorted) {
     TxnMgrOCC mgr;
@@ -118,32 +119,33 @@ TEST(MemDbBenchmark, kv_multiver_unsorted) {
     benchmark_kv(&mgr, TBL_UNSORTED, ROW_MULTIVER);
 }
 
-TEST(MemDbBenchmark, kv_2pl_sorted_coarse) {
+// TODO: check if these work
+TEST(MemDbBenchmark, DISABLED_kv_2pl_sorted_coarse) {
     TxnMgr2PL mgr;
     benchmark_kv(&mgr, TBL_SORTED, ROW_COARSE);
 }
 
-TEST(MemDbBenchmark, kv_2pl_sorted_fine) {
+TEST(MemDbBenchmark, DISABLED_kv_2pl_sorted_fine) {
     TxnMgr2PL mgr;
     benchmark_kv(&mgr, TBL_SORTED, ROW_FINE);
 }
 
-TEST(MemDbBenchmark, kv_occ_sorted) {
+TEST(MemDbBenchmark, DISABLED_kv_occ_sorted) {
     TxnMgrOCC mgr;
     benchmark_kv(&mgr, TBL_SORTED, ROW_VERSIONED);
 }
 
-TEST(MemDbBenchmark, kv_2pl_snapshot_coarse) {
+TEST(MemDbBenchmark, DISABLED_kv_2pl_snapshot_coarse) {
     TxnMgr2PL mgr;
     benchmark_kv(&mgr, TBL_SNAPSHOT, ROW_COARSE);
 }
 
-TEST(MemDbBenchmark, kv_2pl_snapshot_fine) {
+TEST(MemDbBenchmark, DISABLED_kv_2pl_snapshot_fine) {
     TxnMgr2PL mgr;
     benchmark_kv(&mgr, TBL_SNAPSHOT, ROW_FINE);
 }
 
-TEST(MemDbBenchmark, kv_occ_snapshot) {
+TEST(MemDbBenchmark, DISABLED_kv_occ_snapshot) {
     TxnMgrOCC mgr;
     benchmark_kv(&mgr, TBL_SNAPSHOT, ROW_VERSIONED);
 }
