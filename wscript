@@ -11,7 +11,7 @@ from waflib import Options
 pargs = ['--cflags', '--libs']
 
 def options(opt):
-    opt.load("compiler_cxx")
+    opt.load("compiler_cxx unittest_gtest")
     #opt.load("eclipse")
     opt.add_option('-g', '--use-gxx', dest='cxx',
                    default=False, action='store_true')
@@ -37,13 +37,13 @@ def options(opt):
 
 def configure(conf):
     _choose_compiler(conf)
-    conf.load("compiler_cxx")
+    _enable_pic(conf)
+    conf.load("compiler_cxx unittest_gtest")
     conf.load("python")
     conf.load("boost")
     conf.check_python_headers()
 
     _enable_tcmalloc(conf)
-    _enable_pic(conf)
     _enable_cxx11(conf)
     _enable_debug(conf)
     _enable_profile(conf)
@@ -59,9 +59,8 @@ def configure(conf):
     conf.check_boost()
 
     conf.env.append_value("CXXFLAGS", "-Wno-sign-compare")
-    conf.env.append_value('INCLUDES', ['/usr/local/include'])
+    conf.env.append_value('INCLUDES', ['/usr/local/include']) 
 
-    conf.env.append_value("CXXFLAGS", "-Wno-sign-compare")
     conf.env.LIB_PTHREAD = 'pthread'
 
     conf.check_cfg(package='yaml-cpp', uselib_store='YAML-CPP', args=pargs)
@@ -84,8 +83,8 @@ def build(bld):
             "deptran/rcc_rpc.rpc",
             "bin/rpcgen --python --cpp deptran/rcc_rpc.rpc")
 
-    _depend("test/benchmark_service.h", "test/benchmark_service.rpc",
-            "bin/rpcgen --cpp test/benchmark_service.rpc")
+    _depend("old-test/benchmark_service.h", "old-test/benchmark_service.rpc",
+            "bin/rpcgen --cpp old-test/benchmark_service.rpc")
 
     bld.stlib(source=bld.path.ant_glob("rrr/base/*.cpp "
                                        "rrr/misc/*.cpp "
@@ -117,11 +116,11 @@ def build(bld):
 #                includes=". rrr",
 #                use="base simplerpc PTHREAD")
 
-    # disable all the unit tests
-    # bld.program(source=bld.path.ant_glob("test/test*.cc"),
-    #             target="testharness",
-    #             includes=". rrr bench deptran deptran/ro6 deptran/rcc deptran/tpl",
-    #             use="rrr memdb deptran YAML-CPP PTHREAD RT")
+    bld.program(source=bld.path.ant_glob("test/*.cc"),
+                target="run_tests",
+                features="gtest",
+                includes=". rrr bench deptran deptran/ro6 deptran/rcc deptran/tpl test memdb",
+                use="PTHREAD rrr memdb deptran")
 
     bld.program(source=bld.path.ant_glob("deptran/s_main.cpp"),
                 target="deptran_server",
@@ -133,9 +132,9 @@ def build(bld):
                 includes=". rrr bench deptran deptran/ro6 deptran/rcc deptran/tpl",
                 use="rrr memdb deptran YAML-CPP PTHREAD RT")
 
-    bld.program(source="test/rpcbench.cc test/benchmark_service.cc",
+    bld.program(source="old-test/rpcbench.cc old-test/benchmark_service.cc",
                 target="rpcbench",
-                includes=". rrr deptran test",
+                includes=". rrr deptran old-test",
                 use="rrr PTHREAD")
 
 #    bld.program(source="test/rpc_microbench.cc test/benchmark_service.cc",
@@ -155,7 +154,8 @@ def build(bld):
                                        "bench/tpcc_real_dist/*.cc "
                                        "bench/tpcc_dist/*.cc "
                                        "bench/rw_benchmark/*.cc "
-                                       "bench/micro/*.cc"),
+                                       "bench/micro/*.cc", excl="deptran/*_main.c*"),
+              #use="PTHREAD APR APR-UTIL base simplerpc memdb")
               target="deptran",
               includes=". rrr memdb bench deptran deptran/ro6 deptran/rcc deptran/tpl",
               use="PTHREAD base simplerpc memdb")
@@ -163,7 +163,6 @@ def build(bld):
 #
 # waf helper functions
 #
-
 def _choose_compiler(conf):
     # use clang++ as default compiler (for c++11 support on mac)
     if Options.options.cxx:
