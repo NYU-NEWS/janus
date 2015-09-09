@@ -40,24 +40,24 @@ public:
   } single_server_t;
 
   std::map<string, int> modes_map_ = {
-    { "none", MODE_NONE },
-    { "2pl",  MODE_2PL },
-    { "occ",  MODE_OCC },
-    { "rcc",  MODE_RCC },
-    { "ro6",  MODE_RO6 },
-    { "rpc_null",       MODE_RPC_NULL },
-    { "deptran",        MODE_DEPTRAN },
-    { "deptran_er",     MODE_DEPTRAN },
-    { "2pl_w",          MODE_2PL },
-    { "2pl_wait_die",   MODE_2PL },
-    { "2pl_ww",         MODE_2PL },
-    { "2pl_wound_die",  MODE_2PL }
+    { "none",          MODE_NONE                                         },
+    { "2pl",           MODE_2PL                                          },
+    { "occ",           MODE_OCC                                          },
+    { "rcc",           MODE_RCC                                          },
+    { "ro6",           MODE_RO6                                          },
+    { "rpc_null",      MODE_RPC_NULL                                     },
+    { "deptran",       MODE_DEPTRAN                                      },
+    { "deptran_er",    MODE_DEPTRAN                                      },
+    { "2pl_w",         MODE_2PL                                          },
+    { "2pl_wait_die",  MODE_2PL                                          },
+    { "2pl_ww",        MODE_2PL                                          },
+    { "2pl_wound_die", MODE_2PL                                          }
   };
 
   std::map<string, mdb::symbol_t> tbl_types_map_ = {
-    {"sorted",   mdb::TBL_SORTED},
-    {"unsorted", mdb::TBL_UNSORTED},
-    {"snapshot", mdb::TBL_SNAPSHOT}
+    { "sorted",   mdb::TBL_SORTED         },
+    { "unsorted", mdb::TBL_UNSORTED       },
+    { "snapshot", mdb::TBL_SNAPSHOT       }
   };
 
 private:
@@ -68,37 +68,42 @@ private:
   std::string site2host_addr(std::string& name);
   std::string site2host_name(std::string& addr);
 
-  uint32_t cid_;
-  uint32_t sid_;
-  char    *ctrl_hostname_;
+  // configuration for trial controller.
+  // TODO replace with std::string
+  char *ctrl_hostname_;
   uint32_t ctrl_port_;
   uint32_t ctrl_timeout_;
   char    *ctrl_key_;
   char    *ctrl_init_;
+  uint32_t duration_;
+  bool     heart_beat_;
 
-  // char *ctrl_run_;
-  uint32_t  duration_;
-  bool      heart_beat_;
+  // common configuration
+  int32_t  mode_;
+  char    *logging_path_;
+  int32_t  benchmark_; // workload
+  uint32_t scale_factor_;
+  std::vector<double> txn_weight_;
+
+  // coordinator-side configuration
+  uint32_t cid_;
+  uint32_t concurrent_txn_;
+  bool     batch_start_;
+  bool     retry_wait_;
+  uint32_t max_retry_;
+  int32_t  server_or_client_; // 0 for server, 1 for client, init -1
+  bool     early_return_;
+
+  // server-side configuration
+  uint32_t  sid_;
   char    **site_;
   uint32_t *site_threads_;
   uint32_t  num_site_;
-  int32_t   mode_;
   uint32_t  num_coordinator_threads_;
   uint32_t  start_coordinator_id_;
-  int32_t   benchmark_;
-  uint32_t  scale_factor_;
-  uint32_t  max_retry_;
   single_server_t single_server_;
-  uint32_t        concurrent_txn_;
-  bool batch_start_;
-  int32_t server_or_client_; // 0 for server, 1 for client, init -1
-  std::vector<double> txn_weight_;
-  bool  early_return_;
-  char *logging_path_;
-  bool  retry_wait_;
 
 public:
-
   std::map<string, string> hostsmap_;
 
 protected:

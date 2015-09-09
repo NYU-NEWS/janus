@@ -70,16 +70,17 @@ int Config::create_config(int argc, char *argv[]) {
         break;
       case 'c': // client id
         cid = strtoul(optarg, &end_ptr, 10);
-
-        if ((end_ptr == NULL) || (*end_ptr != '\0')) return -4;
-
-        if (server_or_client != -1) return -4;
+        if ((end_ptr == NULL) || (*end_ptr != '\0'))
+          return -4;
+        if (server_or_client != -1)
+          return -4;
         server_or_client = 1;
         break;
       case 'd': // duration
         duration = strtoul(optarg, &end_ptr, 10);
 
-        if ((end_ptr == NULL) || (*end_ptr != '\0')) return -4;
+        if ((end_ptr == NULL) || (*end_ptr != '\0'))
+          return -4;
         break;
       case 'f': // properties.xml
         filename = std::string(optarg);
