@@ -11,7 +11,7 @@ from waflib import Options
 pargs = ['--cflags', '--libs']
 
 def options(opt):
-    opt.load("compiler_cxx")
+    opt.load("compiler_cxx unittest_gtest")
     #opt.load("eclipse")
     opt.add_option('-g', '--use-gxx', dest='cxx', 
                    default=False, action='store_true')
@@ -38,7 +38,7 @@ def options(opt):
 def configure(conf):
     _choose_compiler(conf)
     _enable_pic(conf)
-    conf.load("compiler_cxx")
+    conf.load("compiler_cxx unittest_gtest")
     conf.load("python")
     conf.load("boost")
     conf.check_python_headers()
@@ -51,7 +51,6 @@ def configure(conf):
     _enable_piece_count(conf)
     _enable_txn_count(conf)
     _enable_conflict_count(conf)
-    _configure_gtest(conf)
 #    _enable_snappy(conf)
     #_enable_logging(conf)
 
@@ -74,8 +73,6 @@ def configure(conf):
     conf.check_python_module('tabulate')
 
 def build(bld):
-    _depend("%s/libgtest.a" % bld.env.GTEST_DIR, "%s/gtest/gtest.h" % bld.env.GTEST_INCLUDE_DIR,
-            "cd %s; cmake .; make clean; make" % bld.env.GTEST_DIR) 
 
     _depend("rrr/pylib/simplerpcgen/rpcgen.py", 
             "rrr/pylib/simplerpcgen/rpcgen.g", 
@@ -148,9 +145,8 @@ def build(bld):
    
     bld.program(source=bld.path.ant_glob("new-test/*.cc"),
                 target="run_tests",
-                stlib=bld.env.GTEST_LIBS,
-                stlibpath=bld.env.GTEST_LIBPATH,
-                includes=". rrr bench deptran deptran/ro6 deptran/rcc deptran/tpl new-test memdb %s" % bld.env.GTEST_INCLUDE_DIR,
+                features="gtest",
+                includes=". rrr bench deptran deptran/ro6 deptran/rcc deptran/tpl new-test memdb",
                 use="PTHREAD rrr memdb deptran")
 
 
@@ -184,12 +180,6 @@ def _choose_compiler(conf):
         conf.env.append_value("LINKFLAGS", "-stdlib=libc++")
     else:
 	Logs.pprint("PINK", "use system default compiler")
-
-def _configure_gtest(conf):
-    conf.env.GTEST_DIR = os.path.join(os.getcwd(),"googletest/googletest")
-    conf.env.GTEST_INCLUDE_DIR = os.path.join(os.getcwd(),"googletest/googletest/include")
-    conf.env.GTEST_LIBPATH = [conf.env.GTEST_DIR] 
-    conf.env.GTEST_LIBS = ["gtest", "gtest_main"]
 
 def _enable_rpc_s(conf):
     if Options.options.rpc_s:
