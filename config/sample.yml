@@ -127,7 +127,7 @@ table: # schema
       - {name: i_name,  type: string}
       - {name: i_price, type: double}
       - {name: i_data,  type: string}
-  - name: stock:
+  - name: stock
     primary: s_i_id, s_w_id,
     column:
       - {name: s_i_id,    type: integer, foreign: item.i_id}
@@ -144,7 +144,7 @@ table: # schema
       - {name: s_dist_08, type: string}
       - {name: s_dist_09, type: string}
       - {name: s_dist_10, type: string}
-  - name: order_line:
+  - name: order_line
     primary: ol_d_id, ol_w_id, ol_o_id, ol_number
     column:
       - {name: ol_d_id,   type: integer}
