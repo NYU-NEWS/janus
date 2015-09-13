@@ -3,32 +3,33 @@
 namespace rococo {
 
 BRQDTxn::BRQDTxn(
-        i64 tid,
+        txnid_t tid,
         DTxnMgr *mgr,
         bool ro
-) : DTxn(tid, mgr) {
-    read_only_ = ro;
-    mdb_txn_ = mgr->get_mdb_txn(tid_);
+) {
+//    read_only_ = ro;
+//    mdb_txn_ = mgr->get_mdb_txn(tid_);
 }
 
-void BRQDTxn::fast_accept(FastAcceptRequest *req, FastStartReply *rep, rrr::DeferredReply *defer) {
+void BRQDTxn::fast_accept(FastAcceptRequest &req, FastAcceptReply *rep, rrr::DeferredReply *defer) {
+  ballot_t ballot = req.ballot;
   if (ballot_cmd_seen_ <= ballot &&
         ballot_deps_seen_ <= ballot) {
     ballot_cmd_seen_ = ballot;
     ballot_deps_seen_ = ballot;
     // accept the command.
-    cmd_.type_ = header.txn_type_;
-    cmd_.input = input;
+    cmd_ = req.cmd;
     // choose the deps (fast quorum)
     ballot_deps_vote_ = (0 << 32) && 0;
     ballot_deps_seen_ = ballot;
     // add into deps. (allocate new vertex)
     // find all interfering commands (transactions)
-    auto pair = TxnRegistry::get(
-            header.t_type, header.p_type);
-    bool deferred = start_exe_itfr(
-            pair.defer, pair.txn_handler,
-            header, input, &res->output);
+    // TODO
+    // auto pair = TxnRegistry::get(
+    //         header.t_type, header.p_type);
+    // bool deferred = start_exe_itfr(
+    //         pair.defer, pair.txn_handler,
+    //         header, input, &res->output);
     // TODO add dep in to reply
     // return the direct dependencies.
     rep->deps = new SubGraph(this, DIRECT);
@@ -40,15 +41,12 @@ void BRQDTxn::fast_accept(FastAcceptRequest *req, FastStartReply *rep, rrr::Defe
     defer->reply();
 }
 
-void BRQDTxn::commit(
-        const CommitRequest &req,
-        CommitReply *rep,
-        rrr::DeferredReply *defer) {
+void BRQDTxn::commit(const CommitRequest &req, CommitReply *rep, rrr::DeferredReply *defer) {
     // TODO aggregate graph
   graph_->aggregate(req.deps);
   status_ = D_CPTD;
   // TODO check wether need to wait/inquire
-  graph_.wait(this, TCPD, [rep](){this->commit_tcpd(rep)});
+  graph_.wait(this, TCPD, [rep](){this->commit_tcpd(rep);});
 }
 
 void BRQDTxn::commit_tcpd(CommitReply *rep) {
@@ -63,8 +61,9 @@ void BRQDTxn::execute(CommitReply *rep) {
   // all predecessors
 }
 
-void BRQDTxn::prepare(PrepareReqeust *request, PrepareReply *rep, rrr:DeferredReply *reply) {
+void BRQDTxn::prepare(PrepareReqeust &req, PrepareReply *rep, rrr::DeferredReply *reply) {
   // TODO
+  ballot_t ballot = req.ballot;
   if (ballot_cmd_seen_ < ballot &&
           ballot_deps_seen_ < ballot) {
     ballot_cmd_seen_ = ballot;

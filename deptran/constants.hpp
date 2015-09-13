@@ -3,7 +3,13 @@
 
 namespace rococo {
 
-#define txnid_t uint64_t 
+#define ballot_t uint64_t
+#define cooid_t uint32_t
+#define status_t uint32_t
+#define txnid_t uint64_t
+#define cmdid_t uint64_t // txnid and cmdid are the same thing
+#define txntype_t uint32_t
+#define groupid_t uint32_t
 
 /** read and write type */
 #define WRITE   (0x01)

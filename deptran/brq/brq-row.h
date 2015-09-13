@@ -1,5 +1,4 @@
-#ifndef DEP_ROW_H_
-#define DEP_ROW_H_
+#pragma once
 
 #include "memdb/row.h"
 #include <vector>
@@ -49,5 +48,3 @@ namespace rococo {
 //};
 
 } // namespace rcc
-
-#endif // DEP_ROW_H_

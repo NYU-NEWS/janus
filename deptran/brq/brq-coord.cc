@@ -3,35 +3,12 @@
 namespace rococo {
 BRQCoordinator::BRQCoordinator(
   uint32_t                  coo_id,
-  std::vector<std::string>& addrs,
-  int32_t                   benchmark,
-  int32_t                   mode,
-  ClientControlServiceImpl *ccsi,
   uint32_t                  thread_id,
   bool                      batch_optimal) : coo_id_(coo_id),
-                                             benchmark_(benchmark),
-                                             mode_(mode),
-                                             ccsi_(ccsi),
                                              thread_id_(thread_id),
-                                             batch_optimal_(batch_optimal),
-                                             site_prepare_(addrs.size(), 0),
-                                             site_commit_(addrs.size(), 0),
-                                             site_abort_(addrs.size(), 0),
-                                             site_piece_(addrs.size(), 0) {
-
+                                             batch_optimal_(batch_optimal) {
   rpc_poll_ = new PollMgr(1);
-
-  for (auto& addr : addrs) {
-    rrr::Client *rpc_cli = new rrr::Client(rpc_poll_);
-    Log::info("connect to site: %s", addr.c_str());
-    auto ret = rpc_cli->connect(addr.c_str());
-    verify(ret == 0);
-    RococoProxy *rpc_proxy = new RococoProxy(rpc_cli);
-    vec_rpc_cli_.push_back(rpc_cli);
-    vec_rpc_proxy_.push_back(rpc_proxy);
-    phase_ = 1;
-  }
-  recorder_ = NULL;
+  recorder_ = nullptr;
   if (Config::get_config()->do_logging()) {
     std::string log_path(Config::get_config()->log_path());
     log_path.append(std::to_string(coo_id_));
@@ -40,39 +17,32 @@ BRQCoordinator::BRQCoordinator(
   }
 }
 
-RequestHeader BRQCoordinator::gen_header(TxnChopper *ch) {
-  RequestHeader header;
-
-  header.cid    = coo_id_;
-  header.tid    = ch->txn_id_;
-  header.t_type = ch->txn_type_;
-  return header;
-}
-
 void BRQCoordinator::launch(Command &cmd) {
   cmd_ = cmd;
+  cmd_id_ = next_cmd_id();
 }
 
 void BRQCoordinator::launch_recovery(cmdid_t cmd_id) {
-  prepare(cmd_id);
+  // TODO
+  prepare();
 }
 
 void BRQCoordinator::fast_accept() {
-  ballotid_t ballot = get_special_ballot();
   // generate fast accept request
-  FastAcceptReqeust request;
-  request.cmd_id = next_cmd_id();
-  request.ballot = ballot;
-  request.cmd = cmd;
+  FastAcceptRequest request;
+  request.cmd_id = cmd_id_;
+  request.cmd = cmd_;
+  request.ballot = magic_ballot();
   // set broadcast callback
-  auto callback = [this, phase_] (groupid_t g, FastAcceptReply* reply) {
-    this->fast_accept_ack(g, reply, phase_);
+  auto phase = phase_;
+  auto callback = [this, phase] (groupid_t g, FastAcceptReply* reply) {
+    this->fast_accept_ack(g, reply, phase);
   };
-  auto timeout_callbak = [this, phase_] (groupdid_t g) {
-    this->fast_accept_ack(g, nullptr, phase_);
+  auto timeout_callback = [this, phase] (groupid_t g) {
+    this->fast_accept_ack(g, nullptr, phase);
   };
   // broadcast
-  for (auto g : cmd.get_groups();) {
+  for (auto g : cmd_.get_groups()) {
     Commo::broadcast(g, request, callback, timeout_callback);
   }
 }
@@ -116,7 +86,7 @@ void BRQCoordinator::fast_accept_ack(groupid_t g, FastAcceptReply *reply,
 }
 
 /** caller should be thread_safe */
-void BRQCoordinator::prepare()) {
+void BRQCoordinator::prepare() {
   // TODO
   // do not do failure recovery for now.
   verify(0);
@@ -128,11 +98,12 @@ void BRQCoordinator::accept() {
   request.cmd_id = cmd_id_;
   request.cmd = cmd;
   request.deps = deps_;
-  auto callback = [this, phase_] (groupid_t g, AcceptReply* reply) {
-    this->accept_ack(g, reply, phase_);
+  auto phase = phase_;
+  auto callback = [this, phase] (groupid_t g, AcceptReply* reply) {
+    this->accept_ack(g, reply, phase);
   }
   auto timeout_callback = [this, phase_] (groupid_t g) {
-    this->accept_ack(g, nullptr, phase_);
+    this->accept_ack(g, nullptr, phase);
   }
 }
 
@@ -148,9 +119,9 @@ void BRQCoordinator::accept_ack(groupid_t g, AcceptReply* reply,
     n.no++;
   }
   if (check_accept_possible()) {
-      if (check_accept()) {
-        // go to commit
-      }
+    if (check_accept()) {
+      // go to commit
+    }
   } else {
     // not handle this currently
     verify(0);
@@ -159,7 +130,7 @@ void BRQCoordinator::accept_ack(groupid_t g, AcceptReply* reply,
 }
 
 void BRQCoordinator::commit() {
-  FastAcceptReqeust request;
+  FastAcceptRequest request;
   request.ballot = ballot_;
   request.cmd_id = cmd_id_;
   request.cmd = cmd;
@@ -171,7 +142,7 @@ void BRQCoordinator::commit() {
     this->commit_ack(g, nullptr, phase_);
   };
   // broadcast
-  for (auto g : cmd.get_groups();) {
+  for (auto g : cmd.get_groups()) {
     Commo::broadcast(g, request, callback, timeout_callback);
   }
 }
@@ -180,12 +151,12 @@ void BRQCoordinator::commit_ack(groupid_t g, CommitReply* reply,
                                 phase_t phase) {
   if (phase != phase_)
     return;
-  if (commit_ack[g])
+  auto &n = n_commit_reply_[g];
+  if (++(n.yes) > 1)
     return; // already seen outputs.
 
   cmd_.feed(reply->output);
-  n_commit++;
-  if (n_commit == commit_ack.size) {
+  if (check_commit()) {
     phase_++;
     // TODO command callback.
   }

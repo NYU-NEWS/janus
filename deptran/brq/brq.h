@@ -1,31 +1,28 @@
 #pragma once
 
-// namespace rococo {
+#include "all.h"
 
-#define ballot_t uint64_t
-#define cooid_t uint32_t
-#define txnid_t uint64_t
-#define txntype_t uint32_t
+namespace rococo {
 
 class BRQCommand {
 public:
-
   txntype_t type_;
   std::vector<mdb::Value> *input_;
   std::vector<mdb::Value> *output_;
 };
 
-class BRQDTxn : public DTxn {
+class BRQDTxn {
 public:
 
   ballot_t   ballot_cmd_seen_; // initialized as (0,cmd_id.COO_ID)
   ballot_t   ballot_cmd_vote_; // initialized as NULL
-  ballot_t   ballot_dep_seen_; // initialized as (0, 0)
-  ballot_t   ballot_dep_vote_; // initialized as NULL
+  ballot_t   ballot_deps_seen_; // initialized as (0, 0)
+  ballot_t   ballot_deps_vote_; // initialized as NULL
   BRQCommand cmd_;             // , initialized as NULL
   // deps// initialized as NULL
   // status, initialized as (PREPARED, FAST_PREPARED, UNKNOWN)
-  BRQStatus status_;
+  status_t status_;
+  txnid_t txn_id_;
 
   // TODO should this be abstracted as a command?
   //    typedef struct {
@@ -35,7 +32,7 @@ public:
   //    } DeferredRequest;
 
   // TODO rewrite dependency graph
-  static BRQGraph *dep_s;
+  BRQGraph *graph;
 
   //    std::vector<DeferredRequest> dreqs_;
   //    Vertex <TxnInfo> *tv_;
@@ -44,18 +41,18 @@ public:
 
   //    bool read_only_;
 
-  BRQDTxn(i64 tid, DTxnMgr * mgr, bool ro);
+  BRQDTxn(txnid_t txn_id, DTxnMgr * mgr, bool ro);
 
   // fast-accept/start
-  void fast_accept();
+  void fast_accept(FastAcceptRequest &req, FastAcceptReply *rep, rrr::DeferredReply *defer);
   // prepare
-  void prepare();
+  void prepare(PrepareReqeust &request, PrepareReply *rep, rrr::DeferredReply *reply);
   // accept
-  void accept();
+  void accept(AcceptRequest& request, AcceptReply *reply, rrr::DeferredReply *defer);
   // commit
-  void commit();
+  void commit(const CommitRequest &req, CommitReply *rep, rrr::DeferredReply *defer);
   // inquire
-  void inquire();
+  void inquire(InquiryReply *rep, rrr::DeferredReply *defer);
 
   //    virtual void start(
   //            const RequestHeader &header,
@@ -122,4 +119,4 @@ public:
   //    );
 };
 
-// } // namespace rococo
+} // namespace rococo
