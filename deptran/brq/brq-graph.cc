@@ -1,5 +1,6 @@
 
-#include "all.h"
+#include "brq-graph.h"
+#include "brq.h"
 
 namespace rococo {
 

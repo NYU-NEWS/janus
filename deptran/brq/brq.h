@@ -1,6 +1,8 @@
 #pragma once
 
 #include "all.h"
+#include "brq-graph.h"
+#include "brq-common.h"
 
 namespace rococo {
 
@@ -11,6 +13,7 @@ public:
   std::vector<mdb::Value> *output_;
 };
 
+class BRQGraph;
 class BRQDTxn {
 public:
 
