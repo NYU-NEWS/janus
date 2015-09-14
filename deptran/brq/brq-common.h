@@ -17,7 +17,8 @@ public:
 };
 
 class SubGraph {
-  // TODO
+public:
+  
 };
 
 struct FastAcceptRequest {
@@ -40,13 +41,14 @@ struct PrepareReqeust {
 
 struct PrepareReply {
   bool     ack;
-  ballot_t max_ballot_cmd_vote;
-  ballot_t max_ballot_deps_vote;
+  ballot_t ballot_cmd_vote;
+  ballot_t ballot_deps_vote;
   Command  cmd;  // optional
   SubGraph deps; // optional
 };
 
 struct AcceptRequest {
+  cmdid_t cmd_id;
   ballot_t ballot;
   Command  cmd;
   SubGraph deps;

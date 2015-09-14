@@ -16,14 +16,16 @@ public:
   uint32_t cmdid_prefix_c_;
   Mutex mtx_;
   Recorder *recorder_;
-  Command cmd_;
+  ballot_t ballot_; // the ballot I am holding
   cmdid_t cmd_id_;
+  Command cmd_;
   // data structures for saving replies.
   struct reply_cnt_t {int yes; int no;};
   std::map<groupid_t, reply_cnt_t> n_fast_accept_reply_;
   std::map<groupid_t, reply_cnt_t> n_accept_reply_;
   std::map<groupid_t, reply_cnt_t> n_prepare_reply_;
   std::map<groupid_t, reply_cnt_t> n_commit_reply_;
+  BRQGraph deps_;
 
   BRQCoordinator(uint32_t coo_id,
                  uint32_t thread_id = 0,

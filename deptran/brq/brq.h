@@ -18,9 +18,15 @@ public:
   ballot_t   ballot_cmd_vote_; // initialized as NULL
   ballot_t   ballot_deps_seen_; // initialized as (0, 0)
   ballot_t   ballot_deps_vote_; // initialized as NULL
-  BRQCommand cmd_;             // , initialized as NULL
+  Command cmd_;             // , initialized as NULL
   // deps// initialized as NULL
   // status, initialized as (PREPARED, FAST_PREPARED, UNKNOWN)
+  enum status_t {
+    UKN,
+    CMT, // committing D_CPTD
+//    CPD, // transitively committing
+    DCD   // decided
+  };
   status_t status_;
   txnid_t txn_id_;
 
@@ -32,7 +38,7 @@ public:
   //    } DeferredRequest;
 
   // TODO rewrite dependency graph
-  BRQGraph *graph;
+  BRQGraph *graph_;
 
   //    std::vector<DeferredRequest> dreqs_;
   //    Vertex <TxnInfo> *tv_;
@@ -51,8 +57,10 @@ public:
   void accept(AcceptRequest& request, AcceptReply *reply, rrr::DeferredReply *defer);
   // commit
   void commit(const CommitRequest &req, CommitReply *rep, rrr::DeferredReply *defer);
+  void commit_tcpd(CommitReply *rep);
   // inquire
   void inquire(InquiryReply *rep, rrr::DeferredReply *defer);
+  void inquire_dcpd(InquiryReply *rep, rrr::DeferredReply *defer);
 
   //    virtual void start(
   //            const RequestHeader &header,

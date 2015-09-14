@@ -19,4 +19,8 @@ BRQDTxn* BRQGraph::search(txnid_t txn_id) {
     return nullptr;
   }
 }
+
+void BRQGraph::aggregate(BRQSubGraph* subgraph) {
+  ;
+}
 } // namespace rococo

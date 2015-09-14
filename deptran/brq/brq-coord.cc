@@ -43,7 +43,8 @@ void BRQCoordinator::fast_accept() {
   };
   // broadcast
   for (auto g : cmd_.get_groups()) {
-    Commo::broadcast(g, request, callback, timeout_callback);
+    // TODO 
+    // Commo::broadcast(g, request, callback, timeout_callback);
   }
 }
 
@@ -54,7 +55,7 @@ void BRQCoordinator::fast_accept_ack(groupid_t g, FastAcceptReply *reply,
     return;
   }
   auto& n = n_fast_accept_reply_[g];
-  if (reply && reply.ack) {
+  if (reply && reply->ack) {
     n.yes++;
   } else {
     n.no++;
@@ -96,15 +97,16 @@ void BRQCoordinator::accept() {
   AcceptRequest request;
   request.ballot = ballot_;
   request.cmd_id = cmd_id_;
-  request.cmd = cmd;
-  request.deps = deps_;
+  request.cmd = cmd_;
+  // TODO
+  //request.deps = deps_;
   auto phase = phase_;
   auto callback = [this, phase] (groupid_t g, AcceptReply* reply) {
     this->accept_ack(g, reply, phase);
-  }
-  auto timeout_callback = [this, phase_] (groupid_t g) {
+  };
+  auto timeout_callback = [this, phase] (groupid_t g) {
     this->accept_ack(g, nullptr, phase);
-  }
+  };
 }
 
 void BRQCoordinator::accept_ack(groupid_t g, AcceptReply* reply,
@@ -133,17 +135,19 @@ void BRQCoordinator::commit() {
   FastAcceptRequest request;
   request.ballot = ballot_;
   request.cmd_id = cmd_id_;
-  request.cmd = cmd;
+  request.cmd = cmd_;
   // set broadcast callback
-  auto callback = [this, phase_] (groupid_t g, CommitReply* reply) {
-    this->commit_ack(g, reply, phase_);
+  auto phase = phase_;
+  auto callback = [this, phase] (groupid_t g, CommitReply* reply) {
+    this->commit_ack(g, reply, phase);
   };
-  auto timeout_callbak = [this, phase_] (groupdid_t g) {
-    this->commit_ack(g, nullptr, phase_);
+  auto timeout_callback = [this, phase] (groupid_t g) {
+    this->commit_ack(g, nullptr, phase);
   };
   // broadcast
-  for (auto g : cmd.get_groups()) {
-    Commo::broadcast(g, request, callback, timeout_callback);
+  for (auto g : cmd_.get_groups()) {
+    // TODO
+    // Commo::broadcast(g, request, callback, timeout_callback);
   }
 }
 
