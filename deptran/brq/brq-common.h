@@ -14,13 +14,13 @@ class Command {
   // TODO
 public:
   std::vector<groupid_t>& get_groups();
-
-  void feed(CommandOutput &output);
+  void feed(CommandOutput &output) {};
+  CommandOutput execute() {}
 };
 
-class SubGraph {
+class BRQSubGraph {
 public:
-  
+
 };
 
 struct FastAcceptRequest {
@@ -32,7 +32,7 @@ struct FastAcceptRequest {
 
 struct FastAcceptReply {
   bool     ack; // true or false: yes or no
-  SubGraph deps;
+  BRQSubGraph deps;
 };
 
 struct PrepareReqeust {
@@ -46,14 +46,14 @@ struct PrepareReply {
   ballot_t ballot_cmd_vote;
   ballot_t ballot_deps_vote;
   Command  cmd;  // optional
-  SubGraph deps; // optional
+  BRQSubGraph deps; // optional
 };
 
 struct AcceptRequest {
   cmdid_t cmd_id;
   ballot_t ballot;
   Command  cmd;
-  SubGraph deps;
+  BRQSubGraph deps;
 };
 
 struct AcceptReply {
@@ -61,9 +61,10 @@ struct AcceptReply {
 };
 
 struct CommitRequest {
+  cmdid_t cmd_id;
   ballot_t ballot;
   Command  cmd;
-  SubGraph deps;
+  BRQSubGraph deps;
 };
 
 struct CommitReply {

@@ -39,13 +39,10 @@ void BRQCoordinator::fast_accept() {
   auto callback = [this, phase] (groupid_t g, FastAcceptReply* reply) {
     this->fast_accept_ack(g, reply, phase);
   };
-  auto timeout_callback = [this, phase] (groupid_t g) {
-    this->fast_accept_ack(g, nullptr, phase);
-  };
   // broadcast
   for (auto g : cmd_.get_groups()) {
-    // TODO 
-    // Commo::broadcast(g, request, callback, timeout_callback);
+    // TODO
+    commo_->broadcast_fast_accept(g, request, callback);
   }
 }
 
@@ -133,7 +130,7 @@ void BRQCoordinator::accept_ack(groupid_t g, AcceptReply* reply,
 }
 
 void BRQCoordinator::commit() {
-  FastAcceptRequest request;
+  CommitRequest request;
   request.ballot = ballot_;
   request.cmd_id = cmd_id_;
   request.cmd = cmd_;
@@ -142,13 +139,10 @@ void BRQCoordinator::commit() {
   auto callback = [this, phase] (groupid_t g, CommitReply* reply) {
     this->commit_ack(g, reply, phase);
   };
-  auto timeout_callback = [this, phase] (groupid_t g) {
-    this->commit_ack(g, nullptr, phase);
-  };
   // broadcast
   for (auto g : cmd_.get_groups()) {
     // TODO
-    // Commo::broadcast(g, request, callback, timeout_callback);
+    commo_->broadcast_commit(g, request, callback);
   }
 }
 

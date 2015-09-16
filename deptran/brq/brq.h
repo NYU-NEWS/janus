@@ -59,8 +59,8 @@ public:
   // accept
   void accept(AcceptRequest& request, AcceptReply *reply, rrr::DeferredReply *defer);
   // commit
-  void commit(const CommitRequest &req, CommitReply *rep, rrr::DeferredReply *defer);
-  void commit_tcpd(CommitReply *rep);
+  void commit(CommitRequest &req, CommitReply *rep, rrr::DeferredReply *defer);
+  void commit_tcpd(CommitReply *rep, rrr::DeferredReply *defer);
   // inquire
   void inquire(InquiryReply *rep, rrr::DeferredReply *defer);
   void inquire_dcpd(InquiryReply *rep, rrr::DeferredReply *defer);

@@ -34,6 +34,7 @@ void BRQDTxn::fast_accept(FastAcceptRequest &req, FastAcceptReply *rep, rrr::Def
     // TODO add dep in to reply
     // return the direct dependencies. TODO
     // rep->deps = new SubGraph(this, OPT);
+    graph_->insert(this);
     rep->ack = true;
   } else {
     rep->ack = false;
@@ -42,20 +43,22 @@ void BRQDTxn::fast_accept(FastAcceptRequest &req, FastAcceptReply *rep, rrr::Def
     defer->reply();
 }
 
-void BRQDTxn::commit(const CommitRequest &req, CommitReply *rep, rrr::DeferredReply *defer) {
-    // TODO aggregate graph
-  // graph_->aggregate(&req.deps); TODO
+void BRQDTxn::commit(CommitRequest &req, CommitReply *rep, rrr::DeferredReply *defer) {
+  // aggregate graph
   status_ = CMT;
-  // TODO check wether need to wait/inquire
-//  graph_.wait(this, TCPD, [rep](){this->commit_tcpd(rep);});
+  graph_->aggregate(&req.deps);
+  // wait the graph scheduler
+  auto callback = [rep, defer, this](){
+    this->commit_tcpd(rep, defer);
+  };
+  graph_->wait_decided(this, callback);
 }
 
-void BRQDTxn::commit_tcpd(CommitReply *rep) {
+void BRQDTxn::commit_tcpd(CommitReply *rep, rrr::DeferredReply *defer) {
   // all predecessors have become COMMITTING
-  // TODO graph_ calculate scc, sort, and trigger execute.
   // TODO execute and return results
-  // TODO auto pair = TxnRegistry::get(header.t_type, header.p_type);
-  //  this->commit_execute();
+  rep->output = cmd_.execute();
+  defer->reply();
 }
 
 //void BRQDTxn::execute(CommitReply *rep) {
