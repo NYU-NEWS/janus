@@ -1,6 +1,7 @@
 #pragma once
 
 #include "all.h"
+#include "command.h"
 #include "brq-graph.h"
 #include "brq-common.h"
 

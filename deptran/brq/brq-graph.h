@@ -16,20 +16,20 @@ public:
     OPT,
     SCC
   };
-  std::map<txnid_t, BRQDTxn *> index_;
+  std::map<txnid_t, BRQDTxn *> vertex_index_;
 
   // insert a new txn
-  void     insert(BRQDTxn *dtxn);
+  void Insert(BRQDTxn *dtxn);
 
   // search by id
-  BRQDTxn* search(txnid_t txn_id);
+  BRQDTxn* Search(txnid_t txn_id);
 
   // take a union of the incoming graph
-  void     aggregate(BRQSubGraph *subgraph);
+  void Aggregate(BRQSubGraph *subgraph);
 
   // this transaction waits until can be executed.
-  void     wait_decided(BRQDTxn                      *dtxn,
-                        std::function<void()>function) { // TODO
-  }
+  void WaitDCD(BRQDTxn *dtxn);
+
+  void WaitCMT(BRQDTxn *dtxn);
 };
 } // namespace rococo

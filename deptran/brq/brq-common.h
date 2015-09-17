@@ -1,23 +1,9 @@
 #pragma once
 
-// #include "all.h"
-
+#include "command.h"
 #include "brq-graph.h"
 
 namespace rococo {
-
-class CommandOutput {
-  // TODO
-};
-
-class Command {
-  // TODO
-public:
-  std::vector<groupid_t>& get_groups();
-  void feed(CommandOutput &output) {};
-  CommandOutput execute() {}
-};
-
 class BRQSubGraph {
 public:
 
