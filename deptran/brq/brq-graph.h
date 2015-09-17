@@ -20,16 +20,16 @@ public:
 
   // insert a new txn
   void Insert(BRQDTxn *dtxn);
-
   // search by id
   BRQDTxn* Search(txnid_t txn_id);
-
   // take a union of the incoming graph
   void Aggregate(BRQSubGraph *subgraph);
+  void AggregateVertex(BRQDTxn *dtxn);
+  void BuildEdgePointer(std::map<txnid_t, BRQDTxn*>&);
+  void TestExecute(BRQDTxn* dtxn);
 
   // this transaction waits until can be executed.
-  void WaitDCD(BRQDTxn *dtxn);
-
-  void WaitCMT(BRQDTxn *dtxn);
+  // void WaitDCD(BRQDTxn *dtxn);
+  // void WaitCMT(BRQDTxn *dtxn);
 };
 } // namespace rococo
