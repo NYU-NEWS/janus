@@ -10,10 +10,10 @@ class BRQDTxn;
 class CommitReply;
 
 class BRQVertex {
+public:
   std::map<BRQVertex *, int> from_; 
   std::map<BRQVertex *, int> to_; 
-  
-  std::shared_ptr<BRQDTxn> dtxn;
+  std::shared_ptr<BRQDTxn> dtxn_;
 };
 
 class BRQGraph {
@@ -22,7 +22,7 @@ public:
     OPT,
     SCC
   };
-  std::map<txnid_t, BRQDTxn *> vertex_index_;
+  std::map<txnid_t, BRQVertex *> vertex_index_;
 
   // insert a new txn
   void Insert(BRQDTxn *dtxn);
@@ -31,17 +31,19 @@ public:
   BRQDTxn* Create(txnid_t txn_id);
   BRQDTxn* FindOrCreate(txnid_t txn_id);
   // take a union of the incoming graph
+  void TestExecute(BRQVertex* dtxn);
   void Aggregate(BRQGraph &subgraph);
-  BRQDTxn* AggregateVertex(BRQDTxn *dtxn);
-  void BuildEdgePointer(std::map<txnid_t, BRQDTxn*>&);
-  void TestExecute(BRQDTxn* dtxn);
-  void CheckStatusChange(std::map<txnid_t, BRQDTxn*>& dtxn_map);
+  BRQVertex* AggregateVertex(BRQVertex*);
+  void BuildEdgePointer(BRQGraph&, std::map<txnid_t, BRQVertex*>&);
+  void CheckStatusChange(std::map<txnid_t, BRQVertex*>& dtxn_map);
   bool CheckPredCMT(BRQDTxn*);
-  bool CheckPredFIN(std::set<BRQDTxn*>& scc);
-  std::set<BRQDTxn*> FindSCC(BRQDTxn*);   
+  bool CheckPredFIN(std::set<BRQVertex*>& scc);
+  std::set<BRQVertex*> FindSCC(BRQVertex*);   
 
   // this transaction waits until can be executed.
   // void WaitDCD(BRQDTxn *dtxn);
   // void WaitCMT(BRQDTxn *dtxn);
+  BRQGraph(){}
+  BRQGraph(const BRQGraph&) = delete;
 };
 } // namespace rococo

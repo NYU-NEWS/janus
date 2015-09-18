@@ -3,20 +3,23 @@
 #include "brq.h"
 
 namespace rococo {
-void BRQGraph::Insert(BRQDTxn *dtxn) {
-  // add into index
-  auto ret = vertex_index_.insert(std::pair<txnid_t, BRQDTxn *>(dtxn->txn_id_, dtxn));
 
-  if (ret.second == false) {
-    verify(0);
-  }
+
+void BRQGraph::Insert(BRQDTxn *dtxn) {
+  // TODO
+  // add into index
+//  auto ret = vertex_index_.insert(std::pair<txnid_t, BRQDTxn *>(dtxn->txn_id_, dtxn));
+//
+//  if (ret.second == false) {
+//    verify(0);
+//  }
 }
 
 BRQDTxn* BRQGraph::Find(txnid_t txn_id) {
   auto it = vertex_index_.find(txn_id);
-
   if (it != vertex_index_.end()) {
-    return it->second;
+    auto sptr = it->second->dtxn_;
+    return sptr.get();
   } else {
     return nullptr;
   }
@@ -24,7 +27,9 @@ BRQDTxn* BRQGraph::Find(txnid_t txn_id) {
 
 BRQDTxn* BRQGraph::Create(txnid_t txn_id) {
   BRQDTxn *dtxn = new BRQDTxn(txn_id, this);
-  vertex_index_[txn_id] = dtxn;
+  auto &sptr = vertex_index_[txn_id]->dtxn_;
+  verify(sptr == nullptr);
+  sptr = std::shared_ptr<BRQDTxn>(dtxn);
   return dtxn;
 }
 
@@ -36,80 +41,90 @@ BRQDTxn* BRQGraph::FindOrCreate(txnid_t txn_id) {
   return ret;
 }
 
-void BRQGraph::BuildEdgePointer(std::map<txnid_t, BRQDTxn*> &dtxn_map) {
-  for (auto &pair: dtxn_map) {
-    auto dtxn = pair.second;
-    for (auto parent_id : dtxn->deps_) {
-      auto parent = dtxn_map[parent_id];
-      dtxn->from_.insert(parent);
-      parent->to_.insert(dtxn);
+void BRQGraph::BuildEdgePointer(BRQGraph &graph, std::map<txnid_t, BRQVertex*>& index) {
+  for (auto &pair: graph.vertex_index_) {
+    auto copy_vertex = pair.second;
+    auto vertex = index[copy_vertex->dtxn_->txn_id_]; 
+    for (auto pair : copy_vertex->from_) {
+      auto parent = index[pair.first->dtxn_->txn_id_];
+      vertex->from_.insert(std::make_pair(parent, 0));
+      parent->to_.insert(std::make_pair(vertex,0));
     }
   }
 }
 
-BRQDTxn* BRQGraph::AggregateVertex(BRQDTxn *a_dtxn) {
+BRQVertex* BRQGraph::AggregateVertex(BRQVertex *av) {
   // create the dtxn if not exist.
-  auto dtxn = this->FindOrCreate(a_dtxn->txn_id_);
-  // add edges.
-  for (auto dep : a_dtxn->deps_) {
-    dtxn->deps_.insert(dep);
+  auto vertex = vertex_index_[av->dtxn_->txn_id_];
+  if (vertex->dtxn_ == nullptr) {
+    vertex->dtxn_ = av->dtxn_;
+  } else {
+    // add edges. // TODO is this right?
+    for (auto dep : av->dtxn_->deps_) {
+      vertex->dtxn_->deps_.insert(dep);
+    }
+    // update status
+    if (av->dtxn_->status_ > vertex->dtxn_->status_) {
+      vertex->dtxn_->status_ = av->dtxn_->status_;
+    }
   }
-  // update status
-  if (a_dtxn->status_ > dtxn->status_) {
-      dtxn->status_ = a_dtxn->status_;
-  }
-  return dtxn;
+  return vertex;
 }
 
 void BRQGraph::Aggregate(BRQGraph &graph) {
-  std::map<txnid_t, BRQDTxn*> txns;
+  // aggregate vertexes
+  std::map<txnid_t, BRQVertex*> index;
   for (auto& pair: graph.vertex_index_) {
-    auto dtxn = this->AggregateVertex(pair.second);
-    txns[dtxn->txn_id_] = dtxn;
+    auto vertex = this->AggregateVertex(pair.second);
+    index[vertex->dtxn_->txn_id_] = vertex;
   }
-  this->BuildEdgePointer(txns);
-  this->CheckStatusChange(txns);
+  // aggregate edges.
+  this->BuildEdgePointer(graph, index);
+  this->CheckStatusChange(index);
 }
 
-void BRQGraph::CheckStatusChange(std::map<txnid_t, BRQDTxn*>& dtxn_map) {
+void BRQGraph::CheckStatusChange(std::map<txnid_t, BRQVertex*>& dtxn_map) {
   for (auto &pair: dtxn_map) {
-    auto dtxn = pair.second;
-    TestExecute(dtxn);
+    auto vertex = pair.second;
+    TestExecute(vertex);
   }
 }
 
-void BRQGraph::TestExecute(BRQDTxn* dtxn) {
+void BRQGraph::TestExecute(BRQVertex* vertex) {
+  auto dtxn = vertex->dtxn_;
   if (dtxn->is_finished_ || dtxn->status_ < BRQDTxn::CMT) {
     return;
   }
-  if (dtxn->status_ == BRQDTxn::CMT && !CheckPredCMT(dtxn)) {
+  if (dtxn->status_ == BRQDTxn::CMT && !CheckPredCMT(dtxn.get())) {
     return;
   }
-  auto scc = FindSCC(dtxn);
+  auto scc = FindSCC(vertex);
   if (!CheckPredFIN(scc))
     return;
-  for (auto dtxn: scc) {
-      dtxn->commit_exec();
+  for (auto v: scc) {
+    v->dtxn_->commit_exec();
   }
-  for (auto dtxn: scc) {
+  for (auto v: scc) {
     // test every decendent
-    for (auto d: dtxn->to_) {
-      TestExecute(d);
+    for (auto pair: v->to_) {
+      TestExecute(pair.first);
     }
   }
 }
 
 bool BRQGraph::CheckPredCMT(BRQDTxn *dtxn) {
-  // TODO
+  // TODO remember to trigger inquiry 
+  return true;
 }
 
-bool BRQGraph::CheckPredFIN(std::set<BRQDTxn*>& scc) {
-  // TODO
+bool BRQGraph::CheckPredFIN(std::set<BRQVertex*>& scc) {
+  // TODO remember to trigger inquiry 
+  return true;
 }
 
-std::set<BRQDTxn*> BRQGraph::FindSCC(BRQDTxn*) {
+std::set<BRQVertex*> BRQGraph::FindSCC(BRQVertex*) {
   // TODO
-  std::set<BRQDTxn*> ret;
+  std::set<BRQVertex*> ret;
   return ret;
 }
 
