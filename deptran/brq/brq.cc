@@ -3,13 +3,8 @@
 
 namespace rococo {
 
-BRQDTxn::BRQDTxn(
-        txnid_t tid,
-        DTxnMgr *mgr,
-        bool ro
-) {
-//    read_only_ = ro;
-//    mdb_txn_ = mgr->get_mdb_txn(tid_);
+BRQDTxn::BRQDTxn(txnid_t txn_id, BRQGraph *graph) 
+  : txn_id_(txn_id), graph_(graph) {
 }
 
 void BRQDTxn::fast_accept(FastAcceptRequest &req, FastAcceptReply *rep, rrr::DeferredReply *defer) {
@@ -34,7 +29,7 @@ void BRQDTxn::fast_accept(FastAcceptRequest &req, FastAcceptReply *rep, rrr::Def
     // TODO add dep in to reply
     // return the direct dependencies. TODO
     // rep->deps = new SubGraph(this, OPT);
-    graph_->insert(this);
+    graph_->Insert(this);
     rep->ack = true;
   } else {
     rep->ack = false;
@@ -44,21 +39,18 @@ void BRQDTxn::fast_accept(FastAcceptRequest &req, FastAcceptReply *rep, rrr::Def
 }
 
 void BRQDTxn::commit(CommitRequest &req, CommitReply *rep, rrr::DeferredReply *defer) {
-  // aggregate graph
-  status_ = CMT;
-  graph_->aggregate(&req.deps);
+  // save stack context
+  commit_stack_.reply = rep;    
+  commit_stack_.defer = defer;
+  // Aggregate graph
   // wait the graph scheduler
-  auto callback = [rep, defer, this](){
-    this->commit_tcpd(rep, defer);
-  };
-  graph_->wait_decided(this, callback);
+  graph_->Aggregate(req.subgraph);
 }
 
-void BRQDTxn::commit_tcpd(CommitReply *rep, rrr::DeferredReply *defer) {
+void BRQDTxn::commit_exec() {
   // all predecessors have become COMMITTING
-  // TODO execute and return results
-  rep->output = cmd_.execute();
-  defer->reply();
+  commit_stack_.reply->output = cmd_.execute();
+  commit_stack_.defer->reply();
 }
 
 //void BRQDTxn::execute(CommitReply *rep) {

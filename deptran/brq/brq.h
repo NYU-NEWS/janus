@@ -29,10 +29,12 @@ public:
     UKN,
     CMT, // committing D_CPTD
 //    CPD, // transitively committing
-    DCD   // decided
+    DCD,   // decided
+    FIN
   };
   status_t status_;
   txnid_t txn_id_;
+  bool is_finished_;
 
   // TODO should this be abstracted as a command?
   //    typedef struct {
@@ -43,15 +45,18 @@ public:
 
   // TODO rewrite dependency graph
   BRQGraph *graph_;
+  //
+  std::set<txnid_t> deps_;
+  std::set<BRQDTxn*> to_; 
+  std::set<BRQDTxn*> from_;
+  // helper for saving stack context of asynchronous calls
+  struct CommitStack {
+    CommitReply *reply; 
+    rrr::DeferredReply *defer;
+  };
+  CommitStack commit_stack_; 
 
-  //    std::vector<DeferredRequest> dreqs_;
-  //    Vertex <TxnInfo> *tv_;
-
-  //    std::vector<TxnInfo *> conflict_txns_; // This is read-only transaction
-
-  //    bool read_only_;
-
-  BRQDTxn(txnid_t txn_id, DTxnMgr * mgr, bool ro);
+  BRQDTxn(txnid_t txn_id, BRQGraph* graph);
 
   // fast-accept/start
   void fast_accept(FastAcceptRequest &req, FastAcceptReply *rep, rrr::DeferredReply *defer);
@@ -61,11 +66,10 @@ public:
   void accept(AcceptRequest& request, AcceptReply *reply, rrr::DeferredReply *defer);
   // commit
   void commit(CommitRequest &req, CommitReply *rep, rrr::DeferredReply *defer);
-  void commit_tcpd(CommitReply *rep, rrr::DeferredReply *defer);
+  void commit_exec();
   // inquire
   void inquire(InquiryReply *rep, rrr::DeferredReply *defer);
   void inquire_dcpd(InquiryReply *rep, rrr::DeferredReply *defer);
-
   //    virtual void start(
   //            const RequestHeader &header,
   //            const std::vector<mdb::Value> &input,
@@ -129,6 +133,7 @@ public:
   //            mdb::Table* tbl,
   //            mdb::Row* row
   //    );
+  
 };
 
 } // namespace rococo

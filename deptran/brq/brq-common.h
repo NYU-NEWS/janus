@@ -4,10 +4,6 @@
 #include "brq-graph.h"
 
 namespace rococo {
-class BRQSubGraph {
-public:
-
-};
 
 struct FastAcceptRequest {
   cmdid_t  cmd_id; // used as instance locater
@@ -18,7 +14,7 @@ struct FastAcceptRequest {
 
 struct FastAcceptReply {
   bool     ack; // true or false: yes or no
-  BRQSubGraph deps;
+  BRQGraph deps;
 };
 
 struct PrepareReqeust {
@@ -32,14 +28,14 @@ struct PrepareReply {
   ballot_t ballot_cmd_vote;
   ballot_t ballot_deps_vote;
   Command  cmd;  // optional
-  BRQSubGraph deps; // optional
+  BRQGraph deps; // optional
 };
 
 struct AcceptRequest {
   cmdid_t cmd_id;
   ballot_t ballot;
   Command  cmd;
-  BRQSubGraph deps;
+  BRQGraph deps;
 };
 
 struct AcceptReply {
@@ -50,7 +46,7 @@ struct CommitRequest {
   cmdid_t cmd_id;
   ballot_t ballot;
   Command  cmd;
-  BRQSubGraph deps;
+  BRQGraph subgraph;
 };
 
 struct CommitReply {
