@@ -1,30 +1,28 @@
 #pragma once
 
 #include <algorithm>
+#include <map>
 #include "all.h"
 
 namespace rococo {
-template<typename T>class Vertex {
-public:
 
+template<typename T>
+class Vertex {
+public:
   std::map<Vertex *, int8_t> from_;
   std::map<Vertex *, int8_t> to_;
-
   T data_;
-
   Vertex() {
     //        Log::debug("an empty vertex created");
   }
-
   Vertex(T& d) : data_(d) {
     //        Log::debug("copy a vertex, from node id: %llx", d.id());
   }
 };
 
-template<typename T>class Graph {
+template<typename T>
+class Graph {
 public:
-
-  std::unordered_set<Vertex<T> *> vertex_index_;
   std::unordered_map<uint64_t, Vertex<T> *> id_index_;
 
   Graph() {
@@ -37,7 +35,6 @@ public:
       uint64_t   id    = kv.first;
       Vertex<T> *old_v = kv.second;
       Vertex<T> *new_v = new Vertex<T>(old_v->data_);
-      vertex_index_.insert(new_v);
       id_index_[id] = new_v;
     }
 
@@ -58,16 +55,11 @@ public:
   }
 
   ~Graph() {
-    for (auto& v : vertex_index_) {
-      delete v;
-    }
+    // TODO delete all vertexes.
   }
 
   Graph<T>& operator=(Graph<T>& gra) {
-    for (auto& v : vertex_index_) {
-      delete v;
-    }
-    vertex_index_.clear();
+    // TODO delete previous vertexes
     id_index_.clear();
 
     // create new vertexes.
@@ -80,7 +72,6 @@ public:
       //            verify(old_v != nullptr);
       //            verify(id == old_v->data_.id());
       Vertex<T> *new_v = new Vertex<T>(old_v->data_);
-      vertex_index_.insert(new_v);
       id_index_[id] = new_v;
     }
 
@@ -113,7 +104,7 @@ public:
   }
 
   int size() const {
-    return vertex_index_.size();
+    return id_index_.size();
   }
 
   Vertex<T>* find(uint64_t id) {
@@ -126,7 +117,7 @@ public:
     }
   }
 
-  Vertex<T>* find(T& data) {
+  Vertex<T>* Find(T& data) {
     auto i = id_index_.find(data.id());
 
     if (i == id_index_.end()) {
@@ -136,36 +127,31 @@ public:
     }
   }
 
-  Vertex<T>* find_or_insert(T& data) {
+  Vertex<T>* FindOrCreate(T& data) {
     auto& v = id_index_[data.id()];
 
     if (v == nullptr) {
       v = new Vertex<T>(data);
-      vertex_index_.insert(v);
     }
     return v;
   }
 
-  Vertex<T>* find_or_insert(uint64_t id) {
+  Vertex<T>* FindOrCreate(uint64_t id) {
     auto& v = id_index_[id];
 
     if (v == nullptr) {
       v = new Vertex<T>;
       v->data_.set_id(id);
-      vertex_index_.insert(v);
     }
     return v;
   }
 
   bool insert(Vertex<T> *vertex) {
-    auto i = vertex_index_.find(vertex);
-
-    if (i != vertex_index_.end()) {
+    auto i = id_index_.find(vertex->data_.id());
+    if (i != id_index_.end()) {
       return false;
     }
     id_index_[vertex->data_.id()] = vertex;
-    vertex_index_.insert(vertex);
-
     for (auto& kv : vertex->from_) {
       Vertex<T> *a = kv.first;
       a->to_[vertex] |= kv.second;
@@ -419,7 +405,7 @@ public:
 
   std::vector<Vertex<T> *>find_scc(T& data) {
     std::vector<int> ret;
-    Vertex<T> *v = this->find(data);
+    Vertex<T> *v = this->find(data.id());
       verify(v != NULL);
     return find_scc(v);
   }
@@ -454,7 +440,8 @@ public:
       verify(gra.size() > 0);
     std::set<Vertex<T> *> new_vs;
 
-    for (auto& v : gra.vertex_index_) {
+    for (auto& pair : gra.id_index_) {
+      auto &v = pair.second;
       // check if i have this vertex in my graph
       Vertex<T> *new_ov;
       auto i = this->id_index_.find(v->data_.id());
@@ -465,7 +452,6 @@ public:
         new_ov                        = new Vertex<T>;
         new_ov->data_                 = v->data_;
         id_index_[new_ov->data_.id()] = new_ov;
-        vertex_index_.insert(new_ov);
       } else {
         //       Log::debug("union: the node is already in the graph. node id:
         // %llx", v->data_.id());
@@ -482,7 +468,6 @@ public:
           new_tv                        = new Vertex<T>;
           new_tv->data_                 = tv->data_;
           id_index_[new_tv->data_.id()] = new_tv;
-          vertex_index_.insert(new_tv);
         } else {
           new_tv = i->second;
         }
@@ -503,7 +488,7 @@ public:
 
 template<typename T>
 inline rrr::Marshal& operator<<(rrr::Marshal& m, const Vertex<T> *& v) {
-  int64_t u = v;
+  int64_t u = std::uintptr_t(v);
 
   m << u;
   return m;
@@ -511,13 +496,14 @@ inline rrr::Marshal& operator<<(rrr::Marshal& m, const Vertex<T> *& v) {
 
 template<typename T>
 inline rrr::Marshal& operator<<(rrr::Marshal& m, const Graph<T>& gra) {
-  int32_t n = gra.vertex_index_.size();
+  int32_t n = gra.size();
 
       verify(n > 0);
   m << n;
   int i = 0;
 
-  for (auto& v : gra.vertex_index_) {
+  for (auto& pair : gra.id_index_) {
+    auto &v = pair.second;
     i++;
     m << v->data_.id();
     m << v->data_;
@@ -533,16 +519,16 @@ inline rrr::Marshal& operator<<(rrr::Marshal& m, const Graph<T>& gra) {
       m << relation;
     }
   }
-      verify(i == n);
+  verify(i == n);
   return m;
 }
 
-template<typename T>
+template<class T>
 rrr::Marshal& operator>>(rrr::Marshal& m, Graph<T>& gra) {
   int32_t n;
 
   m >> n;
-      verify(n > 0);
+  verify(n > 0);
   std::map<uint64_t, Vertex<T> *> ref;
   std::map<uint64_t, std::map<int64_t, int8_t> > v_to;
 
@@ -571,7 +557,6 @@ rrr::Marshal& operator>>(rrr::Marshal& m, Graph<T>& gra) {
 
   for (auto& kv : ref) {
     gra.id_index_[kv.first] = kv.second;
-    gra.vertex_index_.insert(kv.second);
   }
 
   for (auto& kv : v_to) {

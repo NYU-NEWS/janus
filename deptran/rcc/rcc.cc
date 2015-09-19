@@ -14,12 +14,11 @@ RCCDTxn::RCCDTxn(
     mdb_txn_ = mgr->get_mdb_txn(tid_);
 }
 
-void RCCDTxn::start_launch(
+void RCCDTxn::StartLaunch(
         const RequestHeader &header,
         const std::vector<mdb::Value> &input,
         ChopStartResponse *res,
-        rrr::DeferredReply* defer
-) {
+        rrr::DeferredReply* defer) {
     verify(defer);
     static bool do_record = Config::get_config()->do_logging();
     if (do_record) {
@@ -27,15 +26,15 @@ void RCCDTxn::start_launch(
         m << header;
         m << input;
         auto job = [&header, &input, res, defer, this] () {
-            this->start_after_log(header, input, res, defer);
+            this->StartAfterLog(header, input, res, defer);
         };
         recorder_->submit(m, job);
     } else {
-        this->start_after_log(header, input, res, defer);
+        this->StartAfterLog(header, input, res, defer);
     }
 }
 
-void RCCDTxn::start_after_log(
+void RCCDTxn::StartAfterLog(
         const RequestHeader &header,
         const std::vector<mdb::Value> &input,
         ChopStartResponse *res,

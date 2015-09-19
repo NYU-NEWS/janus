@@ -8,9 +8,9 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(APR REQUIRED apr-1)
 pkg_check_modules(PYTHON2 REQUIRED python2)
 pkg_check_modules(YAMLCPP REQUIRED yaml-cpp)
-IF(APPLE)
-ELSE()
-ENDIF()
+#IF(APPLE)
+#ELSE()
+#ENDIF()
 
 link_directories(
         ${PYTHON2_LIBRARY_DIRS}

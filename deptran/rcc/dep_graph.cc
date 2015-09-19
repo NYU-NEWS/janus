@@ -38,7 +38,7 @@ void DepGraph::start_pie(
         Vertex<TxnInfo> **tv
 ) {
     verify(tv != NULL);
-    *tv = txn_gra_.find_or_insert(txn_id);
+    *tv = txn_gra_.FindOrCreate(txn_id);
     static auto id = Config::get_config()->get_site_id();
     (*tv)->data_.servers_.insert(id);
 }

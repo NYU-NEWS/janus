@@ -272,7 +272,7 @@ void RococoServiceImpl::rcc_start_pie(
 
     std::lock_guard<std::mutex> guard(this->mtx_);
     RCCDTxn* dtxn = (RCCDTxn*) txn_mgr_->get_or_create(header.tid);
-    dtxn->start_launch(header, input, res, defer);
+    dtxn->StartLaunch(header, input, res, defer);
 
     // TODO remove the stat from here.
 //    auto sz_sub_gra = RCCDTxn::dep_s->sub_txn_graph(header.tid, res->gra_m);
@@ -283,7 +283,7 @@ void RococoServiceImpl::rcc_start_pie(
 }
 
 // equivalent to commit phrase
-void RococoServiceImpl::rcc_finish_txn( 
+void RococoServiceImpl::rcc_finish_txn(
         const ChopFinishRequest& req,
         ChopFinishResponse* res,
         rrr::DeferredReply* defer) {
@@ -307,7 +307,7 @@ void RococoServiceImpl::rcc_ask_txn(
     verify(IS_MODE_RCC || IS_MODE_RO6);
     std::lock_guard<std::mutex> guard(mtx_);
     RCCDTxn* dtxn = (RCCDTxn*) txn_mgr_->get(tid);
-    dtxn->inquire(res, defer); 
+    dtxn->inquire(res, defer);
 }
 
 void RococoServiceImpl::rcc_ro_start_pie(

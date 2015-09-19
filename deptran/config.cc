@@ -245,7 +245,7 @@ Config::Config(uint32_t        cid,
 }
 
 void Config::load_config_yml(std::string& name) {
-  YAML::Node config = YAML::LoadFile(name);
+//  YAML::Node config = YAML::LoadFile(name);
 }
 
 void Config::init_mode(std::string& mode_str) {
