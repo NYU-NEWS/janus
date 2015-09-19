@@ -143,8 +143,8 @@ bool BRQGraph::CheckPredCMT(BRQVertex* vertex) {
   return TraversePred(vertex, -1, func, walked);
 }
 
-bool BRQGraph::CheckPredFIN(std::set<BRQVertex*>& scc) {
-  std::set<BRQVertex*> walked = scc;
+bool BRQGraph::CheckPredFIN(std::vector<BRQVertex*>& scc) {
+  std::set<BRQVertex*> walked(scc.begin(), scc.end());
   std::function<bool(BRQVertex*)> func = [] (BRQVertex* v) {
     if (v->dtxn_->is_finished_) {
       return true;
@@ -160,10 +160,47 @@ bool BRQGraph::CheckPredFIN(std::set<BRQVertex*>& scc) {
   return true;
 }
 
-std::set<BRQVertex*> BRQGraph::FindSCC(BRQVertex*) {
-  // TODO
-  std::set<BRQVertex*> ret;
-  return ret;
+BRQGraph::scc_t BRQGraph::FindSCC(BRQVertex* vertex) {
+  std::map<BRQVertex *, int> indexes;
+  std::map<BRQVertex *, int> lowlinks;
+  int index = 0;
+  std::vector<BRQVertex *> S;
+  return StrongConnect(vertex, indexes, lowlinks, index, S);
 }
 
+std::vector<BRQVertex*> BRQGraph::StrongConnect(
+    BRQVertex *v,
+    std::map<BRQVertex *, int>& indexes,
+    std::map<BRQVertex *, int>& lowlinks,
+    int& index,
+    std::vector<BRQVertex *>& S) {
+
+  indexes[v]  = index;
+  lowlinks[v] = index;
+  index++;
+  S.push_back(v);
+  for (auto& kv : v->to_) {
+    BRQVertex *w = kv.first;
+    if (indexes.find(w) == indexes.end()) {
+      this->StrongConnect(w, indexes, lowlinks, index, S);
+      lowlinks[v] = (lowlinks[v] < lowlinks[w]) ? lowlinks[v] : lowlinks[w];
+    } else {
+      for (auto& t : S) {
+        if (t == w) {
+          lowlinks[v] = lowlinks[v] < indexes[w] ? lowlinks[v] : indexes[w];
+        }
+      }
+    }
+  }
+  std::vector<BRQVertex *> ret;
+  if (lowlinks[v] == indexes[v]) {
+    BRQVertex *w;
+    do {
+      w = S.back();
+      S.pop_back();
+      ret.push_back(w);
+    } while (w != v);
+  }
+  return ret;
+}
 } // namespace rococo
