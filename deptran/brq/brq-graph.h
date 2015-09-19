@@ -11,8 +11,8 @@ class CommitReply;
 
 class BRQVertex {
 public:
-  std::map<BRQVertex *, int> from_; 
-  std::map<BRQVertex *, int> to_; 
+  std::map<BRQVertex *, int> from_;
+  std::map<BRQVertex *, int> to_;
   std::shared_ptr<BRQDTxn> dtxn_;
 };
 
@@ -36,9 +36,10 @@ public:
   BRQVertex* AggregateVertex(BRQVertex*);
   void BuildEdgePointer(BRQGraph&, std::map<txnid_t, BRQVertex*>&);
   void CheckStatusChange(std::map<txnid_t, BRQVertex*>& dtxn_map);
-  bool CheckPredCMT(BRQDTxn*);
+  bool TraversePred(BRQVertex* vertex, int64_t depth, std::function<bool(BRQVertex*)> &func, std::set<BRQVertex*> &walked);
+  bool CheckPredCMT(BRQVertex*);
   bool CheckPredFIN(std::set<BRQVertex*>& scc);
-  std::set<BRQVertex*> FindSCC(BRQVertex*);   
+  std::set<BRQVertex*> FindSCC(BRQVertex*);
 
   // this transaction waits until can be executed.
   // void WaitDCD(BRQDTxn *dtxn);

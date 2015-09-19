@@ -44,7 +44,7 @@ BRQDTxn* BRQGraph::FindOrCreate(txnid_t txn_id) {
 void BRQGraph::BuildEdgePointer(BRQGraph &graph, std::map<txnid_t, BRQVertex*>& index) {
   for (auto &pair: graph.vertex_index_) {
     auto copy_vertex = pair.second;
-    auto vertex = index[copy_vertex->dtxn_->txn_id_]; 
+    auto vertex = index[copy_vertex->dtxn_->txn_id_];
     for (auto pair : copy_vertex->from_) {
       auto parent = index[pair.first->dtxn_->txn_id_];
       vertex->from_.insert(std::make_pair(parent, 0));
@@ -95,12 +95,13 @@ void BRQGraph::TestExecute(BRQVertex* vertex) {
   if (dtxn->is_finished_ || dtxn->status_ < BRQDTxn::CMT) {
     return;
   }
-  if (dtxn->status_ == BRQDTxn::CMT && !CheckPredCMT(dtxn.get())) {
+  if (dtxn->status_ == BRQDTxn::CMT && !CheckPredCMT(vertex)) {
     return;
   }
   auto scc = FindSCC(vertex);
-  if (!CheckPredFIN(scc))
+  if (!CheckPredFIN(scc)) {
     return;
+  }
   for (auto v: scc) {
     v->dtxn_->commit_exec();
   }
@@ -112,13 +113,50 @@ void BRQGraph::TestExecute(BRQVertex* vertex) {
   }
 }
 
-bool BRQGraph::CheckPredCMT(BRQDTxn *dtxn) {
-  // TODO remember to trigger inquiry 
+bool BRQGraph::TraversePred(BRQVertex* vertex, int64_t depth, std::function<bool(BRQVertex*)> &func, std::set<BRQVertex*> &walked) {
+  auto pair = walked.insert(vertex);
+  if (!pair.second) {
+    return true;
+  }
+  for (auto pair : vertex->from_) {
+    auto v = pair.first;
+    if (!func(v))
+      return false;
+    if (depth < 0 || depth > 0) {
+      if (!TraversePred(v, depth-1, func, walked))
+        return false;
+    }
+  }
   return true;
 }
 
+bool BRQGraph::CheckPredCMT(BRQVertex* vertex) {
+  std::set<BRQVertex*> walked;
+  std::function<bool(BRQVertex*)> func = [] (BRQVertex* v) {
+    if (v->dtxn_->status_ >= BRQDTxn::CMT) {
+      return true;
+    } else {
+      // TODO trigger inquiry
+      return false;
+    }
+  };
+  return TraversePred(vertex, -1, func, walked);
+}
+
 bool BRQGraph::CheckPredFIN(std::set<BRQVertex*>& scc) {
-  // TODO remember to trigger inquiry 
+  std::set<BRQVertex*> walked = scc;
+  std::function<bool(BRQVertex*)> func = [] (BRQVertex* v) {
+    if (v->dtxn_->is_finished_) {
+      return true;
+    } else {
+      // TODO trigger inquiry
+      return false;
+    }
+  };
+  for (auto v : scc) {
+    auto ret = TraversePred(v, 1, func, walked);
+    if (!ret) return false;
+  }
   return true;
 }
 
