@@ -1,7 +1,7 @@
 #pragma once
 
 #include "all.h"
-#include "graph.hpp"
+#include "graph.h"
 
 /**
  * This is NOT thread safe!!!

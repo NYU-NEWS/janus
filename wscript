@@ -122,7 +122,7 @@ def build(bld):
                 includes=". rrr bench deptran deptran/ro6 deptran/rcc deptran/tpl deptran/brq test memdb",
                 use="PTHREAD rrr memdb deptran")
 
-    bld.program(source=bld.path.ant_glob("deptran/s_main.cpp"),
+    bld.program(source=bld.path.ant_glob("deptran/s_main.cc"),
                 target="deptran_server",
                 includes=". rrr bench deptran deptran/ro6 deptran/rcc deptran/tpl deptran/brq",
                 use="rrr memdb deptran YAML-CPP PTHREAD PROFILER RT")
@@ -143,15 +143,13 @@ def build(bld):
 #                use="rrr PTHREAD RT")
 #
     bld.stlib(source=bld.path.ant_glob("deptran/*.cc "
-                                       "deptran/*.cpp "
                                        "deptran/util/*.cc "
-                                       "deptran/ro6/*.cpp "
-                                       "deptran/rcc/*.cpp "
+                                       "deptran/ro6/*.cc "
+                                       "deptran/rcc/*.cc "
                                        "deptran/brq/*.cc "
-                                       "deptran/tpl/*.cpp "
+                                       "deptran/tpl/*.cc "
                                        "bench/tpca/*.cc "
                                        "bench/tpcc/*.cc "
-                                       "bench/tpcc/*.cpp "
                                        "bench/tpcc_real_dist/*.cc "
                                        "bench/tpcc_dist/*.cc "
                                        "bench/rw_benchmark/*.cc "

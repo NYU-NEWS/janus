@@ -36,7 +36,7 @@ struct entry_t {
     }
 };
 
-#include "multi_value.hpp"
+#include "multi_value.h"
 
 typedef std::map<
     int, 
@@ -200,9 +200,9 @@ public:
     virtual ~DTxn();
 };
 
-#include "rcc.hpp"
-#include "ro6.hpp"
-#include "tpl.hpp"
+#include "rcc.h"
+#include "ro6.h"
+#include "tpl.h"
 
 class DTxnMgr {
 public:
