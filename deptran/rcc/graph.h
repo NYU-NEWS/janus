@@ -117,25 +117,6 @@ public:
     }
   }
 
-  Vertex<T>* Find(T& data) {
-    auto i = id_index_.find(data.id());
-
-    if (i == id_index_.end()) {
-      return NULL;
-    } else {
-      return i->second;
-    }
-  }
-
-  Vertex<T>* FindOrCreate(T& data) {
-    auto& v = id_index_[data.id()];
-
-    if (v == nullptr) {
-      v = new Vertex<T>(data);
-    }
-    return v;
-  }
-
   Vertex<T>* FindOrCreate(uint64_t id) {
     auto& v = id_index_[id];
 
@@ -192,11 +173,6 @@ public:
     }
     ret.erase(vertex);
     return ret;
-  }
-
-  std::set<Vertex<T> *>find_ancestor(T& data) {
-    Vertex<T> *v = find(data);
-    return find_ancestor(v);
   }
 
   std::vector<Vertex<T> *>strong_connect(
