@@ -612,7 +612,7 @@ void Coordinator::deptran_batch_start(TxnChopper *ch) {
                 Graph<TxnInfo> &gra = *(res.gra_m.gra);
                 //Log::debug("receive deptran start response, tid: %llx, pid: %llx, graph size: %d", headers[i].tid, headers[i].pid, gra.size());
                 verify(gra.size() > 0);
-                ch->gra_.union_graph(gra);
+                ch->gra_.Aggregate(gra);
 
                 if (gra.size() > 1)
                     ch->disable_early_return();
@@ -694,7 +694,7 @@ void Coordinator::deptran_start(TxnChopper* ch) {
                 Graph<TxnInfo> &gra = *(res.gra_m.gra);
                 Log::debug("start response graph size: %d", (int)gra.size());
                 verify(gra.size() > 0);
-                ch->gra_.union_graph(gra);
+                ch->gra_.Aggregate(gra);
 
                 Log::debug("receive deptran start response, tid: %llx, pid: %llx, graph size: %d", header.tid, header.pid, gra.size());
                 if (gra.size() > 1)
@@ -779,7 +779,7 @@ void Coordinator::deptran_finish(TxnChopper *ch) {
     };
 
     Log::debug("send deptran finish requests to %d servers, tid: %llx, graph size: %d", (int) ch->proxies_.size(), ch->txn_id_, ch->gra_.size());
-    verify (ch->proxies_.size() == ch->gra_.find(ch->txn_id_)->data_.servers_.size());
+    verify (ch->proxies_.size() == ch->gra_.Find(ch->txn_id_)->data_->servers_.size());
 
     ChopFinishRequest req;
     req.txn_id = ch->txn_id_;

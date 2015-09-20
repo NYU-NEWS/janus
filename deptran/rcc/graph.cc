@@ -27,7 +27,7 @@ void GraphMarshaler::marshal_help_1(
     }
     m << to_size;
     for (int i = 0; i < to_size; i++) {
-        uint64_t id = to[i]->data_.id();
+        uint64_t id = to[i]->data_->id();
         m << id;
         m << relation[i];
     }
@@ -62,8 +62,8 @@ void GraphMarshaler::write_to_marshal(rrr::Marshal &m) const {
     m << n;
 
     for (auto &old_sv: ret_set) {
-        m << old_sv->data_.id();
-        m << old_sv->data_;
+        m << old_sv->data_->id();
+        m << *(old_sv->data_);
 
         marshal_help_1(m, ret_set, old_sv);
 

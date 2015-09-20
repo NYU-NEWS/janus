@@ -38,11 +38,11 @@ public:
     );
 
     void union_txn_graph(Graph<TxnInfo>& gra) {
-        txn_gra_.union_graph(gra, true);
+        txn_gra_.Aggregate(gra, true);
     }
 
     std::vector<Vertex<TxnInfo>*> find_txn_scc(TxnInfo &ti) {
-        return txn_gra_.find_scc(ti);
+        return txn_gra_.FindSCC(ti.id());
     }
 
     void find_txn_anc_opt(
@@ -68,7 +68,7 @@ public:
             Vertex<TxnInfo> *v,
             std::set<Vertex<TxnInfo>*> &ret_set
     ) {
-        std::vector<Vertex<TxnInfo>*> scc = txn_gra_.find_scc(v);
+        std::vector<Vertex<TxnInfo>*> scc = txn_gra_.FindSCC(v);
         for (auto v: scc) {
             find_txn_nearest_anc(v, ret_set);
         }

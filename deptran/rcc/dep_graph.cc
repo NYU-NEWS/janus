@@ -40,7 +40,7 @@ void DepGraph::start_pie(
     verify(tv != NULL);
     *tv = txn_gra_.FindOrCreate(txn_id);
     static auto id = Config::get_config()->get_site_id();
-    (*tv)->data_.servers_.insert(id);
+    (*tv)->data_->servers_.insert(id);
 }
 
 uint64_t DepGraph::sub_txn_graph(
@@ -49,7 +49,7 @@ uint64_t DepGraph::sub_txn_graph(
 ) {
     gra_m.gra = &txn_gra_;
 
-    Vertex<TxnInfo> *source = txn_gra_.find(tid);
+    Vertex<TxnInfo> *source = txn_gra_.Find(tid);
     verify(source != NULL);
     // Log::debug("compute for sub graph, tid: %llx parent size: %d", 
     //     tid, (int) source->from_.size());
@@ -77,7 +77,7 @@ void DepGraph::find_txn_anc_opt(
 
         for (auto &kv: v->from_) {
             auto &parent = kv.first;
-            if (! parent->data_.is_commit() 
+            if (! parent->data_->is_commit()
                 && ret_set.find(parent) == ret_set.end()) {
                 ret_set.insert(parent);
                 search_stack.push_back(parent);
@@ -95,7 +95,7 @@ void DepGraph::find_txn_anc_opt(
         uint64_t txn_id,
         std::unordered_set<Vertex<TxnInfo>*> &ret_set
 ) {
-    Vertex<TxnInfo> *source = txn_gra_.find(txn_id);
+    Vertex<TxnInfo> *source = txn_gra_.Find(txn_id);
     verify(source != NULL);
     find_txn_anc_opt(source, ret_set);
 }
@@ -104,7 +104,7 @@ void DepGraph::find_txn_scc_anc_opt(
         uint64_t txn_id,
         std::unordered_set<Vertex<TxnInfo>*> &ret_set
 ) {
-    std::vector<Vertex<TxnInfo>*> scc = txn_gra_.find_scc(txn_id);
+    std::vector<Vertex<TxnInfo>*> scc = txn_gra_.FindSCC(txn_id);
     //for (auto v: scc) {
     //    find_txn_anc_opt(v->data_.id(), ret_set);
     //}
