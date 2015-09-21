@@ -23,7 +23,7 @@ template<typename T>
 class Graph {
  public:
   std::unordered_map<uint64_t, Vertex<T> *> vertex_index_;
-
+  typedef std::vector<Vertex<T>*> scc_t;
   Graph() {
     // Log::debug("an empty graph created");
   }
@@ -106,7 +106,7 @@ class Graph {
     return vertex_index_.size();
   }
 
-  Vertex<T> *Find(uint64_t id) {
+  Vertex<T> *FindV(uint64_t id) {
     auto i = vertex_index_.find(id);
 
     if (i == vertex_index_.end()) {
@@ -116,13 +116,15 @@ class Graph {
     }
   }
 
-  Vertex<T> *FindOrCreate(uint64_t id) {
-    auto &v = vertex_index_[id];
+  Vertex<T>* CreateV(uint64_t id) {
+    auto v = new Vertex<T>(id);
+    vertex_index_[id] = v;
+  }
 
-    if (v == nullptr) {
-      v = new Vertex<T>(id);
-      v->data_->set_id(id);
-    }
+  Vertex<T> *FindOrCreateV(uint64_t id) {
+    auto v = FindV(id);
+    if (v == nullptr)
+      v = CreateV(id);
     return v;
   }
 
@@ -144,34 +146,54 @@ class Graph {
 //    return true;
 //  }
 
-  std::set<Vertex<T> *> FindAncestor(Vertex<T> *vertex) {
-    std::set<Vertex<T> *> ret;
-    std::vector<Vertex<T> *> togo;
+//  std::set<Vertex<T> *> FindAncestor(Vertex<T> *vertex) {
+//    std::set<Vertex<T> *> ret;
+//    std::vector<Vertex<T> *> togo;
+//
+//    togo.push_back(vertex);
+//
+//    while (togo.size() > 0) {
+//      Vertex<T> *v = togo.back();
+//      togo.pop_back();
+//
+//      if (ret.find(v) == ret.end()) {
+//        // this one I have not gone through
+//        ret.insert(v);
+//
+//        for (auto &kv : v->from_) {
+//          if (ret.find(kv.first) == ret.end()) {
+//            // this one I have not gone through
+//            togo.push_back(kv.first);
+//          } else {
+//            // this one I have gone through
+//          }
+//        }
+//      } else {
+//        // this one I have gone through
+//      }
+//    }
+//    ret.erase(vertex);
+//    return ret;
+//  }
 
-    togo.push_back(vertex);
-
-    while (togo.size() > 0) {
-      Vertex<T> *v = togo.back();
-      togo.pop_back();
-
-      if (ret.find(v) == ret.end()) {
-        // this one I have not gone through
-        ret.insert(v);
-
-        for (auto &kv : v->from_) {
-          if (ret.find(kv.first) == ret.end()) {
-            // this one I have not gone through
-            togo.push_back(kv.first);
-          } else {
-            // this one I have gone through
-          }
-        }
-      } else {
-        // this one I have gone through
+  bool TraversePred(Vertex<T>* vertex,
+                    int64_t depth,
+                    std::function<bool(Vertex<T>*)> &func,
+                    std::set<Vertex<T>*> &walked) {
+    auto pair = walked.insert(vertex);
+    if (!pair.second) {
+      return true;
+    }
+    for (auto pair : vertex->from_) {
+      auto v = pair.first;
+      if (!func(v))
+        return false;
+      if (depth < 0 || depth > 0) {
+        if (!TraversePred(v, depth-1, func, walked))
+          return false;
       }
     }
-    ret.erase(vertex);
-    return ret;
+    return true;
   }
 
   std::vector<Vertex<T> *> StrongConnect(
@@ -255,15 +277,12 @@ class Graph {
     std::map<Vertex<T> *, int> lowlinks;
     int index = 0;
     std::vector<Vertex<T> *> S;
-
     std::vector<Vertex<T> *> &ret2 = *ret_sorted_scc;
-
     std::vector<Vertex<T> *> ret = StrongConnect(vertex,
                                                  indexes,
                                                  lowlinks,
                                                  index,
                                                  S);
-
     verify(ret.size() > 0);
 
     // if (RandomGenerator::rand(1, 100) == 1) {
@@ -387,7 +406,7 @@ class Graph {
 
   std::vector<Vertex<T> *> FindSCC(uint64_t id) {
     std::vector<int> ret;
-    Vertex<T> *v = this->Find(id);
+    Vertex<T> *v = this->FindV(id);
     verify(v != NULL);
     return FindSCC(v);
   }

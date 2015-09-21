@@ -39,6 +39,21 @@ include_directories(
         bench/tpcc_real_dist
 )
 
+file(GLOB RRR_SRC
+        "rrr/base/*.hpp"
+        "rrr/base/*.cpp"
+        "rrr/misc/*.hpp"
+        "rrr/misc/*.cpp"
+        "rrr/mq/*.cpp"
+        "rrr/mq/*.h"
+        "rrr/pylib/simplerpc/_pyrpc.cpp"
+        "rrr/rpc/*.cpp"
+        "rrr/rpc/*.hpp"
+        "rrr/utils/*.h"
+        "rrr/rrr.h"
+        "rrr/rrr.hpp"
+        )
+
 file(GLOB MEMDB_SRC
         "memdb/*.h"
         "memdb/*.cc")
@@ -71,66 +86,9 @@ file(GLOB DEPTRAN_SRC
         "deptran/brq/*.cc"
 )
 
+
 add_library(ROCOCO
-        rrr/base/all.hpp
-        rrr/base/basetypes.cpp
-        rrr/base/basetypes.hpp
-        rrr/base/debugging.cpp
-        rrr/base/debugging.hpp
-        rrr/base/logging.cpp
-        rrr/base/logging.hpp
-        rrr/base/misc.cpp
-        rrr/base/misc.hpp
-        rrr/base/strop.cpp
-        rrr/base/strop.hpp
-        rrr/base/threading.cpp
-        rrr/base/threading.hpp
-        rrr/base/unittest.cpp
-        rrr/base/unittest.hpp
-        rrr/misc/alarm.hpp
-        rrr/misc/alock.cpp
-        rrr/misc/alock.hpp
-        rrr/misc/cpuinfo.hpp
-        rrr/misc/dball.hpp
-        rrr/misc/marshal.cpp
-        rrr/misc/marshal.hpp
-        rrr/misc/rand.cpp
-        rrr/misc/rand.hpp
-        rrr/misc/recorder.cpp
-        rrr/misc/recorder.hpp
-        rrr/misc/stat.hpp
-        rrr/mq/buf.cpp
-        rrr/mq/buf.h
-        rrr/mq/client.cpp
-        rrr/mq/client.h
-        rrr/mq/polling.cpp
-        rrr/mq/polling.h
-        rrr/mq/rpc.cpp
-        rrr/mq/rpc.h
-        rrr/mq/rpc_comm.h
-        rrr/mq/server.cpp
-        rrr/mq/server.h
-        rrr/pylib/simplerpc/_pyrpc.cpp
-        rrr/rpc/client.cpp
-        rrr/rpc/client.hpp
-        rrr/rpc/polling.cpp
-        rrr/rpc/polling.hpp
-        rrr/rpc/server.cpp
-        rrr/rpc/server.hpp
-        rrr/rpc/utils.cpp
-        rrr/rpc/utils.hpp
-        rrr/utils/hostname.h
-        rrr/utils/logger.h
-        rrr/utils/mht.h
-        rrr/utils/mlock.h
-        rrr/utils/mpr_dag.h
-        rrr/utils/mpr_hash.h
-        rrr/utils/mpr_queue.h
-        rrr/utils/mpr_thread_pool.h
-        rrr/utils/mtime.h
-        rrr/utils/safe_assert.h
-        rrr/rrr.h
-        rrr/rrr.hpp
+        ${RRR_SRC}
         ${MEMDB_SRC}
         ${BENCH_SRC}
         ${DEPTRAN_SRC}

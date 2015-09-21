@@ -38,7 +38,7 @@ void DepGraph::start_pie(
         Vertex<TxnInfo> **tv
 ) {
     verify(tv != NULL);
-    *tv = txn_gra_.FindOrCreate(txn_id);
+    *tv = txn_gra_.FindOrCreateV(txn_id);
     static auto id = Config::get_config()->get_site_id();
     (*tv)->data_->servers_.insert(id);
 }
@@ -49,7 +49,7 @@ uint64_t DepGraph::sub_txn_graph(
 ) {
     gra_m.gra = &txn_gra_;
 
-    Vertex<TxnInfo> *source = txn_gra_.Find(tid);
+    Vertex<TxnInfo> *source = txn_gra_.FindV(tid);
     verify(source != NULL);
     // Log::debug("compute for sub graph, tid: %llx parent size: %d", 
     //     tid, (int) source->from_.size());
@@ -95,7 +95,7 @@ void DepGraph::find_txn_anc_opt(
         uint64_t txn_id,
         std::unordered_set<Vertex<TxnInfo>*> &ret_set
 ) {
-    Vertex<TxnInfo> *source = txn_gra_.Find(txn_id);
+    Vertex<TxnInfo> *source = txn_gra_.FindV(txn_id);
     verify(source != NULL);
     find_txn_anc_opt(source, ret_set);
 }

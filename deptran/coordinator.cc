@@ -779,7 +779,7 @@ void Coordinator::deptran_finish(TxnChopper *ch) {
     };
 
     Log::debug("send deptran finish requests to %d servers, tid: %llx, graph size: %d", (int) ch->proxies_.size(), ch->txn_id_, ch->gra_.size());
-    verify (ch->proxies_.size() == ch->gra_.Find(ch->txn_id_)->data_->servers_.size());
+    verify (ch->proxies_.size() == ch->gra_.FindV(ch->txn_id_)->data_->servers_.size());
 
     ChopFinishRequest req;
     req.txn_id = ch->txn_id_;

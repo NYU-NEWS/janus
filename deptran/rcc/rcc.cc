@@ -369,7 +369,7 @@ void RCCDTxn::inquire(
   };
   DragonBall *ball = new DragonBall(2, callback);
   // TODO Optimize this.
-  Vertex<TxnInfo> *v = RCCDTxn::dep_s->txn_gra_.Find(tid_);
+  Vertex<TxnInfo> *v = RCCDTxn::dep_s->txn_gra_.FindV(tid_);
   //register an event, triggered when the status >= COMMITTING;
   verify (v->data_->is_involved());
   v->data_->register_event(TXN_CMT, ball);

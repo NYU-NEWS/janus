@@ -29,7 +29,7 @@ void BRQDTxn::fast_accept(FastAcceptRequest &req, FastAcceptReply *rep, rrr::Def
     // TODO add dep in to reply
     // return the direct dependencies. TODO
     // rep->deps = new SubGraph(this, OPT);
-    graph_->Insert(this);
+//    graph_->Insert(this);
     rep->ack = true;
   } else {
     rep->ack = false;
