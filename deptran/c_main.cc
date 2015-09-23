@@ -1,4 +1,6 @@
 #include "all.h"
+#include "rcc_coord.h"
+#include "ro6_coord.h"
 
 using namespace rococo;
 
@@ -21,9 +23,29 @@ void *coo_work(void *_attr) {
     ClientControlServiceImpl *ccsi = attr->ccsi;
     unsigned int concurrent_txn = attr->concurrent_txn;
     uint32_t coo_id = (uint32_t)attr->coo_id;
-    Coordinator *coo = new Coordinator(coo_id, *(attr->servers),
-				       attr->benchmark, attr->mode,
-				       ccsi, id, attr->batch_start);
+    Coordinator *coo;
+    switch (attr->mode) {
+      case MODE_2PL:
+      case MODE_OCC:
+      case MODE_NONE:
+      case MODE_RPC_NULL:
+        coo = new Coordinator(coo_id, *(attr->servers),
+				        attr->benchmark, attr->mode,
+				        ccsi, id, attr->batch_start);
+        break;
+      case MODE_RCC:
+        coo = new RCCCoord(coo_id, *(attr->servers),
+				        attr->benchmark, attr->mode,
+				        ccsi, id, attr->batch_start);
+        break;
+      case MODE_RO6:
+        coo = new RO6Coord(coo_id, *(attr->servers),
+				        attr->benchmark, attr->mode,
+				        ccsi, id, attr->batch_start);
+        break;
+      default:
+        verify(0);
+    }
     //pthread_mutex_t finish_mutex;
     rrr::Mutex finish_mutex;
     //pthread_cond_t finish_cond;

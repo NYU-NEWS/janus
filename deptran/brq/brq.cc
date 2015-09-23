@@ -3,7 +3,7 @@
 
 namespace rococo {
 
-BRQDTxn::BRQDTxn(txnid_t txn_id, BRQGraph *graph) 
+BRQDTxn::BRQDTxn(txnid_t txn_id, BRQGraph *graph)
   : txn_id_(txn_id), graph_(graph) {
 }
 
@@ -40,7 +40,7 @@ void BRQDTxn::fast_accept(FastAcceptRequest &req, FastAcceptReply *rep, rrr::Def
 
 void BRQDTxn::commit(CommitRequest &req, CommitReply *rep, rrr::DeferredReply *defer) {
   // save stack context
-  commit_stack_.reply = rep;    
+  commit_stack_.reply = rep;
   commit_stack_.defer = defer;
   // Aggregate graph
   // wait the graph scheduler
@@ -49,7 +49,7 @@ void BRQDTxn::commit(CommitRequest &req, CommitReply *rep, rrr::DeferredReply *d
 
 void BRQDTxn::commit_exec() {
   // all predecessors have become COMMITTING
-  commit_stack_.reply->output = cmd_.execute();
+  commit_stack_.reply->output = cmd_.Execute();
   commit_stack_.defer->reply();
 }
 

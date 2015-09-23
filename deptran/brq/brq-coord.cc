@@ -40,7 +40,7 @@ void BRQCoordinator::fast_accept() {
     this->fast_accept_ack(g, reply, phase);
   };
   // broadcast
-  for (auto g : cmd_.get_groups()) {
+  for (auto g : cmd_.GetGroups()) {
     // TODO
     commo_->broadcast_fast_accept(g, request, callback);
   }
@@ -140,7 +140,7 @@ void BRQCoordinator::commit() {
     this->commit_ack(g, reply, phase);
   };
   // broadcast
-  for (auto g : cmd_.get_groups()) {
+  for (auto g : cmd_.GetGroups()) {
     // TODO
     commo_->broadcast_commit(g, request, callback);
   }
@@ -154,7 +154,7 @@ void BRQCoordinator::commit_ack(groupid_t g, CommitReply* reply,
   if (++(n.yes) > 1)
     return; // already seen outputs.
 
-  cmd_.feed(reply->output);
+  cmd_.Merge(reply->output);
   if (check_commit()) {
     phase_++;
     // TODO command callback.

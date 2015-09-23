@@ -1,24 +1,18 @@
 #pragma once
 
 namespace rococo {
-class CommandOutput {
-  // TODO
-};
-
-class Command {
-  // TODO
-public:
-  virtual std::vector<groupid_t>& get_groups();
-  virtual CommandOutput pre_execute();
-  virtual CommandOutput execute();
-  virtual void feed(CommandOutput &output);
-  virtual bool is_empty();
-};
-
 /**
- * consists many simple command.
+ * This is the command context to exchange between
+ * coordinator and servers, or server to server.
  */
-class NestedCommand: public Command {
-
+class Command {
+public:
+  virtual std::vector<groupid_t>& GetGroups();
+  virtual void Arrest();
+  virtual Command& Execute();
+  virtual void Merge(Command&);
+  virtual bool IsFinished();
+  virtual Command* GetMinContext(std::map<uint64_t, Command*>);
+  // virtual void HasMoreContext();
 };
 } // namespace rococo

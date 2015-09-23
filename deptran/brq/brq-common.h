@@ -50,7 +50,7 @@ struct CommitRequest {
 };
 
 struct CommitReply {
-  CommandOutput output;
+  Command output;
 };
 
 struct InquiryReply {
