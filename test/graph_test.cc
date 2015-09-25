@@ -7,10 +7,30 @@ using namespace rococo;
 
 struct Id {
   int id_;
+  bool triggered = false;
   Id() : id_(-1) {}
   Id(int id) : id_(id) {}
   int id() { return id_; }
+
+  // TODO: should a graph vertex object really need these?
+  void trigger() { triggered = true; }
+  void union_data(const Id& ti, bool trigger = true, bool server = false) {}
 };
+
+Graph<Id>* CompleteGraph(const int n, int id_start = 0) {
+  Graph<Id>* graph = new Graph<Id>();
+  std::map<int, Vertex<Id>*> nodes;
+  for (int i = id_start; i < id_start + n; i++) {
+    nodes[i] = graph->CreateV(i);
+  }
+  for (int i = id_start; i < id_start + n; i++) {
+    for (int j = id_start; j < id_start + n; j++) {
+      if (i == j) continue;
+      nodes[i]->AddEdge(nodes[j], 0);
+    }
+  }
+  return graph;
+}
 
 Graph<Id>* ParseGraph(const char* graph_str) {
   Graph<Id>* graph = new Graph<Id>();
@@ -19,18 +39,17 @@ Graph<Id>* ParseGraph(const char* graph_str) {
   for (size_t i = 0; i < strlen(graph_str); i++) {
     switch (graph_str[i]) {
       case ' ':
-      case '\0':
         break;
       case '#':
         if (endpoints.size() == 2) {
           auto from = nodes[endpoints[0]];
           auto to = nodes[endpoints[1]];
-          from->AddEdge(to);
-		  endpoints.clear();
+          from->AddEdge(to, 0);
+          endpoints.clear();
         } else {
           printf("bad format: ");
           for (int i : endpoints) printf("%d ", i);
-		  printf("\n");
+          printf("\n");
         }
         break;
       default: {
@@ -53,7 +72,7 @@ TEST(GraphTest, CanAddAnEdge) {
   Graph<Id> g;
   auto v1 = g.CreateV(1);
   auto v2 = g.CreateV(2);
-  v2->AddEdge(v1);
+  v2->AddEdge(v1, 0);
   ASSERT_EQ(1, v1->incoming_.size());
   ASSERT_EQ(1, v2->outgoing_.size());
 }
@@ -62,46 +81,70 @@ TEST(GraphTest, SccWorksForSmallGraph) {
   auto g = ParseGraph("11 22# 22 11# 33 44# 44 33# 55 66#");
   std::vector<Vertex<Id>*> scc;
 
-  int scc_ids[] = { 11, 22, 33, 44 };
-  for (int i : scc_ids) { 
-	scc = g->FindSCC(i);
-	ASSERT_EQ(2, scc.size());
+  int scc2_ids[] = {11, 22, 33, 44};
+  for (int i : scc2_ids) {
+    scc = g->FindSCC(i);
+    ASSERT_EQ(2, scc.size());
   }
-	
-  int non_scc_ids[] = { 55, 66 };
-  for (int i : non_scc_ids) { 
-	ASSERT_EQ(i, scc[0]->id());
-	ASSERT_EQ(1, scc.size());
+
+  int scc1_ids[] = {55, 66};
+  for (int i : scc1_ids) {
+    scc = g->FindSCC(i);
+    ASSERT_EQ(1, scc.size());
+    ASSERT_EQ(i, scc[0]->id());
+  }
+  delete g;
+}
+
+TEST(GraphTest, SccWorksForCompleteGraph) {
+  const int num = 100;
+  auto g = CompleteGraph(num);
+  for (int i = 0; i < num; i++) {
+    ASSERT_EQ(num, g->FindSCC(i).size());
+  }
+  delete g;
+}
+
+TEST(GraphTest, SccWorksForSimpleCycle) {
+  const int num = 100;
+  Graph<Id> graph;
+  std::vector<Vertex<Id>*> nodes;
+  for (int i = 0; i < num; i++) {
+    nodes.push_back(graph.CreateV(i));
+  }
+  for (int i = 0; i < num; i++) {
+    if (i != num - 1) {
+      nodes[i]->AddEdge(nodes[i + 1], 0);
+    } else {
+      nodes[i]->AddEdge(nodes[0], 0);
+    }
+  }
+  for (int i = 0; i < num; i++) {
+    ASSERT_EQ(num, graph.FindSCC(i).size());
   }
 }
 
-// TEST(GraphTest, union_op) {
-//    Graph<TxnInfo> gra1;
-//    Graph<TxnInfo> gra2;
-//
-//    Vertex<TxnInfo> v1;
-//    v1.data_.txn_id_ = 1;
-//
-//    Vertex<TxnInfo> v2;
-//    v2.data_.txn_id_ = 2;
-//
-//    Vertex<TxnInfo> v2p;
-//    v2p.data_.txn_id_ = 2;
-//
-//    Vertex<TxnInfo> v3;
-//    v3.data_.txn_id_ = 3;
-//
-//    gra1.insert(&v1);
-//    v2.from_[&v1] = 1;
-//    gra1.insert(&v2);
-//
-//
-//    gra2.insert(&v2p);
-//    v3.from_[&v2p] = 1;
-//    gra2.insert(&v3);
-//
-//    gra1.union_graph(gra2);
-//    EXPECT_EQ(gra1.size(), 3);
-//    EXPECT_EQ(v2.to_.size(), 1);
-//
-//}
+TEST(GraphTest, SccWorksForMultipleComponents) {
+  const int num = 100;
+  std::vector<Graph<Id>*> components;
+  for (int i = 0; i < num; i++) {
+    components.push_back(CompleteGraph(num, i * num));
+  }
+  for (int i = 1; i < num; i++) {
+    components[0]->Aggregate(*components[i], false);
+  }
+  auto scc_results = components[0]->SCC();
+  ASSERT_EQ(num, scc_results.size());
+  ASSERT_EQ(num * num, components[0]->size());
+  for (int i = 0; i < num; i++) {
+    ASSERT_EQ(num, scc_results[i].size());
+  }
+}
+
+TEST(GraphTest, CanAggregateGraphs) {
+  auto g1 = ParseGraph("11 22# 22 11#");
+  auto g2 = ParseGraph("33 44# 44 33#");
+  g1->Aggregate(*g2, false);
+  ASSERT_EQ(33, g1->FindV(33)->id());
+  ASSERT_EQ(44, g1->FindV(44)->id());
+}

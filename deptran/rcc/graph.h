@@ -6,62 +6,53 @@
 
 namespace rococo {
 
-template<typename T>
+template <typename T>
+struct Edge;
+
+template <typename T>
 class Vertex {
  public:
-  // TODO: why the map here? are we counting or is this an id? if the latter then why?
   std::map<Vertex *, int8_t> outgoing_;
   std::map<Vertex *, int8_t> incoming_;
   std::shared_ptr<T> data_;
 
-  Vertex(uint64_t id) {
-    data_ = std::shared_ptr<T>(new T(id));
+  Vertex(uint64_t id) { data_ = std::shared_ptr<T>(new T(id)); }
+
+  void AddEdge(Vertex<T> *other, int8_t weight) {
+    // printf("add edge: %d -> %d\n", this->id(), other->id());
+    outgoing_[other] = weight;
+    other->incoming_[this] = weight;
   }
 
-  // add a directed edge from this to other
-  void AddEdge(Vertex<T>* other) {
-	outgoing_[other] = other->id();
-	other->incoming_[this] = id(); 
-  }
-
-  int id() const {
-	  return data_->id();
-  }
+  int id() const { return data_->id(); }
 };
 
-template<typename T>
+template <typename T>
 class Graph {
  public:
-  typedef std::vector<Vertex<T>*> VertexList; 
+  typedef std::vector<Vertex<T> *> VertexList;
   std::unordered_map<uint64_t, Vertex<T> *> vertex_index_;
-  
-  Graph() {
-  }
 
-  Graph(const VertexList& vertices) {
-	  add(vertices);
-  }
+  Graph() {}
+
+  Graph(const VertexList &vertices) { AddV(vertices); }
 
   ~Graph() {
-	  for (auto p : vertex_index_) {
-		  auto v = p.second;
-		  delete v;
-	  }
+    for (auto p : vertex_index_) {
+      auto v = p.second;
+      delete v;
+    }
   }
 
+  void AddV(Vertex<T> *v) { vertex_index_[v->id()] = v; }
 
-  void AddV(Vertex<T>* v) {
-	  vertex_index_[v->id()] = v;
+  void AddV(VertexList &l) {
+    for (auto v : l) {
+      AddV(v);
+    }
   }
 
-  void AddV(VertexList& l) {
-	  for (auto v : l) {
-		  add(v);
-	  }
-  }
-	
-
-  Vertex<T>* FindV(uint64_t id) {
+  Vertex<T> *FindV(uint64_t id) {
     auto i = vertex_index_.find(id);
 
     if (i == vertex_index_.end()) {
@@ -71,49 +62,42 @@ class Graph {
     }
   }
 
-  Vertex<T>* CreateV(int32_t id) {
-	  auto v = new Vertex<T>(id);
-      AddV(v);
-	  return v;
+  Vertex<T> *CreateV(int32_t id) {
+    auto v = new Vertex<T>(id);
+    AddV(v);
+    return v;
   }
 
   Vertex<T> *FindOrCreateV(uint64_t id) {
     auto v = FindV(id);
-    if (v == nullptr)
-      v = CreateV(id);
+    if (v == nullptr) v = CreateV(id);
     return v;
   }
 
-  int size() const {
-    return vertex_index_.size();
-  }
+  int size() const { return vertex_index_.size(); }
 
-  bool TraversePred(Vertex<T>* vertex,
-                    int64_t depth,
-                    std::function<bool(Vertex<T>*)> &func,
-                    std::set<Vertex<T>*> &walked) {
+  bool TraversePred(Vertex<T> *vertex, int64_t depth,
+                    std::function<bool(Vertex<T> *)> &func,
+                    std::set<Vertex<T> *> &walked) {
     auto pair = walked.insert(vertex);
     if (!pair.second) {
       return true;
     }
     for (auto pair : vertex->incoming_) {
       auto v = pair.first;
-      if (!func(v))
-        return false;
+      if (!func(v)) return false;
       if (depth < 0 || depth > 0) {
-        if (!TraversePred(v, depth-1, func, walked))
-          return false;
+        if (!TraversePred(v, depth - 1, func, walked)) return false;
       }
     }
     return true;
   }
 
-  std::vector<Vertex<T> *> StrongConnect(
-      Vertex<T> *v,
-      std::map<Vertex<T> *, int> &indexes,
-      std::map<Vertex<T> *, int> &lowlinks,
-      int &index,
-      std::vector<Vertex<T> *> &S) {
+  std::vector<Vertex<T> *> StrongConnect(Vertex<T> *v,
+                                         std::map<Vertex<T> *, int> &indexes,
+                                         std::map<Vertex<T> *, int> &lowlinks,
+                                         int &index,
+                                         std::vector<Vertex<T> *> &S) {
     indexes[v] = index;
     lowlinks[v] = index;
     index++;
@@ -183,18 +167,14 @@ class Graph {
   }
 
   std::vector<Vertex<T> *> FindSortedSCC(
-      Vertex<T> *vertex,
-      std::vector<Vertex<T> *> *ret_sorted_scc) {
+      Vertex<T> *vertex, std::vector<Vertex<T> *> *ret_sorted_scc) {
     std::map<Vertex<T> *, int> indexes;
     std::map<Vertex<T> *, int> lowlinks;
     int index = 0;
     std::vector<Vertex<T> *> S;
     std::vector<Vertex<T> *> &ret2 = *ret_sorted_scc;
-    std::vector<Vertex<T> *> ret = StrongConnect(vertex,
-                                                 indexes,
-                                                 lowlinks,
-                                                 index,
-                                                 S);
+    std::vector<Vertex<T> *> ret =
+        StrongConnect(vertex, indexes, lowlinks, index, S);
     verify(ret.size() > 0);
 
     std::set<Vertex<T> *> scc_set(ret.begin(), ret.end());
@@ -228,7 +208,7 @@ class Graph {
     verify(start_vv.size() > 0);
     SortVV(start_vv, 1);
 
-    std::map<Vertex<T> *, int> dfs_status; // 2 for visited vertex.
+    std::map<Vertex<T> *, int> dfs_status;  // 2 for visited vertex.
 
     while (start_vv.size() > 0) {
       auto v = start_vv.back();
@@ -285,11 +265,8 @@ class Graph {
     std::map<Vertex<T> *, int> lowlinks;
     int index = 0;
     std::vector<Vertex<T> *> S;
-    std::vector<Vertex<T> *> ret = StrongConnect(vertex,
-                                                 indexes,
-                                                 lowlinks,
-                                                 index,
-                                                 S);
+    std::vector<Vertex<T> *> ret =
+        StrongConnect(vertex, indexes, lowlinks, index, S);
 
     return ret;
   }
@@ -301,7 +278,23 @@ class Graph {
     return FindSCC(v);
   }
 
-  // TODO: why do we need to know about is_server?
+  std::vector<VertexList> SCC() {
+    std::vector<VertexList> result;
+    std::map<Vertex<T> *, int> indexes;
+    std::map<Vertex<T> *, int> lowlinks;
+    VertexList S;
+    int index = 0;
+    for (auto pair : vertex_index_) {
+      auto v = pair.second;
+      if (indexes.find(v) == indexes.end()) {
+        std::vector<Vertex<T> *> component =
+            StrongConnect(v, indexes, lowlinks, index, S);
+        result.push_back(component);
+      }
+    }
+    return result;
+  }
+
   void Aggregate(const Graph<T> &gra, bool is_server = false) {
     verify(gra.size() > 0);
     std::set<Vertex<T> *> new_vs;
@@ -339,7 +332,7 @@ class Graph {
         }
 
         // do the logic
-        int relation = kv.second; // TODO?
+        int relation = kv.second;  // TODO?
         new_ov->outgoing_[new_tv] |= relation;
         new_tv->incoming_[new_ov] |= relation;
       }
@@ -352,7 +345,7 @@ class Graph {
   }
 };
 
-template<typename T>
+template <typename T>
 inline rrr::Marshal &operator<<(rrr::Marshal &m, const Vertex<T> *&v) {
   int64_t u = std::uintptr_t(v);
 
@@ -360,7 +353,7 @@ inline rrr::Marshal &operator<<(rrr::Marshal &m, const Vertex<T> *&v) {
   return m;
 }
 
-template<typename T>
+template <typename T>
 inline rrr::Marshal &operator<<(rrr::Marshal &m, const Graph<T> &gra) {
   int32_t n = gra.size();
 
@@ -389,7 +382,7 @@ inline rrr::Marshal &operator<<(rrr::Marshal &m, const Graph<T> &gra) {
   return m;
 }
 
-template<class T>
+template <class T>
 rrr::Marshal &operator>>(rrr::Marshal &m, Graph<T> &gra) {
   int32_t n;
 
@@ -460,17 +453,13 @@ struct GraphMarshaler {
 
   void write_to_marshal(rrr::Marshal &m) const;
 
-  void marshal_help_1(
-      rrr::Marshal &m,
-      const std::unordered_set<Vertex<TxnInfo> *> &ret_set,
-      Vertex<TxnInfo> *old_sv
-  ) const;
+  void marshal_help_1(rrr::Marshal &m,
+                      const std::unordered_set<Vertex<TxnInfo> *> &ret_set,
+                      Vertex<TxnInfo> *old_sv) const;
 
-  void marshal_help_2(
-      rrr::Marshal &m,
-      const std::unordered_set<Vertex<TxnInfo> *> &ret_set,
-      Vertex<TxnInfo> *old_sv
-  ) const;
+  void marshal_help_2(rrr::Marshal &m,
+                      const std::unordered_set<Vertex<TxnInfo> *> &ret_set,
+                      Vertex<TxnInfo> *old_sv) const;
 };
 
 inline rrr::Marshal &operator>>(rrr::Marshal &m, GraphMarshaler &gra_m) {
@@ -488,4 +477,4 @@ inline rrr::Marshal &operator<<(rrr::Marshal &m, const GraphMarshaler &gra_m) {
   gra_m.write_to_marshal(m);
   return m;
 }
-} // namespace rcc
+}  // namespace rcc
