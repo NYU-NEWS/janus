@@ -15,7 +15,7 @@ void GraphMarshaler::marshal_help_1(
     //}
     std::vector<Vertex<TxnInfo>*> to;
     std::vector<int8_t> relation;
-    for (auto &kv: old_sv->to_) {
+    for (auto &kv: old_sv->outgoing_) {
         auto old_tv = kv.first;
         if (ret_set.find(old_tv) != ret_set.end()) {
             to_size++;
@@ -39,7 +39,7 @@ void GraphMarshaler::marshal_help_2(
         Vertex<TxnInfo> *old_sv
 ) const {
         //int32_t ma_size = 0;
-        for (auto &kv: old_sv->to_) {
+        for (auto &kv: old_sv->outgoing_) {
             auto old_tv = kv.first;
             //int8_t relation = kv.second;
             if (ret_set.find(old_tv) != ret_set.end()) {
