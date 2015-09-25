@@ -301,6 +301,7 @@ class Graph {
     return FindSCC(v);
   }
 
+  // TODO: why do we need to know about is_server?
   void Aggregate(const Graph<T> &gra, bool is_server = false) {
     verify(gra.size() > 0);
     std::set<Vertex<T> *> new_vs;
