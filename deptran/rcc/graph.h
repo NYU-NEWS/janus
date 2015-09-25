@@ -119,6 +119,7 @@ class Graph {
   Vertex<T>* CreateV(uint64_t id) {
     auto v = new Vertex<T>(id);
     vertex_index_[id] = v;
+    return v;
   }
 
   Vertex<T> *FindOrCreateV(uint64_t id) {
