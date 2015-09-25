@@ -7,9 +7,6 @@
 namespace rococo {
 
 template <typename T>
-struct Edge;
-
-template <typename T>
 class Vertex {
  public:
   std::map<Vertex *, int8_t> outgoing_;

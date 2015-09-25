@@ -7,13 +7,12 @@ using namespace rococo;
 
 struct Id {
   int id_;
-  bool triggered = false;
   Id() : id_(-1) {}
   Id(int id) : id_(id) {}
   int id() { return id_; }
 
   // TODO: should a graph vertex object really need these?
-  void trigger() { triggered = true; }
+  void trigger() {}
   void union_data(const Id& ti, bool trigger = true, bool server = false) {}
 };
 
