@@ -9,10 +9,10 @@ void BRQGraph::BuildEdgePointer(BRQGraph &graph, std::map<txnid_t, BRQVertex*>& 
   for (auto &pair: graph.vertex_index_) {
     auto copy_vertex = pair.second;
     auto vertex = index[copy_vertex->data_->txn_id_];
-    for (auto pair : copy_vertex->from_) {
+    for (auto pair : copy_vertex->incoming_) {
       auto parent = index[pair.first->data_->txn_id_];
-      vertex->from_.insert(std::make_pair(parent, 0));
-      parent->to_.insert(std::make_pair(vertex,0));
+      vertex->incoming_.insert(std::make_pair(parent, 0));
+      parent->outgoing_.insert(std::make_pair(vertex,0));
     }
   }
 }
@@ -71,7 +71,7 @@ void BRQGraph::TestExecute(BRQVertex* vertex) {
   }
   for (auto v: scc) {
     // test every decendent
-    for (auto pair: v->to_) {
+    for (auto pair: v->outgoing_) {
       TestExecute(pair.first);
     }
   }

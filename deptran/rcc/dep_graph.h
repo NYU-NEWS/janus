@@ -59,7 +59,7 @@ public:
             Vertex<TxnInfo>* v,
             std::set<Vertex<TxnInfo>*> &ret_set
     ) {
-        for (auto &kv: v->from_) {
+        for (auto &kv: v->incoming_) {
             ret_set.insert(kv.first);
         }
     }

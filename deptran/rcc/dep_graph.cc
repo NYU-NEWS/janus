@@ -75,7 +75,7 @@ void DepGraph::find_txn_anc_opt(
         Vertex<TxnInfo> *v  = search_stack.back();
         search_stack.pop_back();
 
-        for (auto &kv: v->from_) {
+        for (auto &kv: v->incoming_) {
             auto &parent = kv.first;
             if (! parent->data_->is_commit()
                 && ret_set.find(parent) == ret_set.end()) {

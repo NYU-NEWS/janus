@@ -1,8 +1,6 @@
-
 #pragma once
 
 #include <map>
-//#include "graph.h"
 #include "all.h"
 
 namespace rococo {
@@ -26,7 +24,7 @@ public:
   void BuildEdgePointer(BRQGraph&, std::map<txnid_t, BRQVertex*>&);
   void CheckStatusChange(std::map<txnid_t, BRQVertex*>& dtxn_map);
   bool CheckPredCMT(BRQVertex*);
-  bool CheckPredFIN(scc_t &scc);
+  bool CheckPredFIN(VertexList& scc);
 
   // this transaction waits until can be executed.
   // void WaitDCD(BRQDTxn *dtxn);
