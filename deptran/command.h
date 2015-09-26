@@ -15,4 +15,10 @@ public:
   virtual Command* GetMinContext(std::map<uint64_t, Command*>);
   // virtual void HasMoreContext();
 };
+
+
+class LegacyCommand : public Command {
+
+};
+
 } // namespace rococo

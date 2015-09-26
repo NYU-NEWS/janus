@@ -59,13 +59,13 @@ public:
   BRQDTxn(txnid_t txn_id, BRQGraph* graph);
 
   // fast-accept/start
-  void fast_accept(FastAcceptRequest &req, FastAcceptReply *rep, rrr::DeferredReply *defer);
+  void FastAccept(FastAcceptRequest &req, FastAcceptReply *rep, rrr::DeferredReply *defer);
   // prepare
-  void prepare(PrepareReqeust &request, PrepareReply *rep, rrr::DeferredReply *reply);
+  void Prepare(PrepareReqeust &request, PrepareReply *rep, rrr::DeferredReply *reply);
   // accept
   void accept(AcceptRequest& request, AcceptReply *reply, rrr::DeferredReply *defer);
   // commit
-  void commit(CommitRequest &req, CommitReply *rep, rrr::DeferredReply *defer);
+  void Commit(CommitRequest &req, CommitReply *rep, rrr::DeferredReply *defer);
   void commit_exec();
   // inquire
   void inquire(InquiryReply *rep, rrr::DeferredReply *defer);

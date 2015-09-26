@@ -135,8 +135,6 @@ public:
 
   void               occ_finish(TxnChopper *ch)  {}
 
-  void               ro6_start_ro(TxnChopper *ch);
-
   RequestHeader      gen_header(TxnChopper *ch);
 
   BatchRequestHeader gen_batch_header(TxnChopper *ch);

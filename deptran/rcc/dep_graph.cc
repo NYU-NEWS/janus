@@ -40,18 +40,20 @@ void DepGraph::start_pie(
     verify(tv != NULL);
     *tv = txn_gra_.FindOrCreateV(txn_id);
     static auto id = Config::get_config()->get_site_id();
-    (*tv)->data_->servers_.insert(id);
+    auto txn_info = (*tv)->data_;
+    verify(txn_info != nullptr);
+    txn_info->servers_.insert(id);
 }
 
 uint64_t DepGraph::sub_txn_graph(
-        uint64_t tid, 
+        uint64_t tid,
         GraphMarshaler &gra_m
 ) {
     gra_m.gra = &txn_gra_;
 
     Vertex<TxnInfo> *source = txn_gra_.FindV(tid);
     verify(source != NULL);
-    // Log::debug("compute for sub graph, tid: %llx parent size: %d", 
+    // Log::debug("compute for sub graph, tid: %llx parent size: %d",
     //     tid, (int) source->from_.size());
 
     auto &ret_set = gra_m.ret_set;
@@ -66,7 +68,7 @@ void DepGraph::find_txn_anc_opt(
         std::unordered_set<Vertex<TxnInfo>*> &ret_set
 ) {
     verify(source != NULL);
-    // Log::debug("compute for sub graph, tid: %llx parent size: %d", 
+    // Log::debug("compute for sub graph, tid: %llx parent size: %d",
     //     tid, (int) source->from_.size());
     std::vector<Vertex<TxnInfo>*> search_stack;
     search_stack.push_back(source);

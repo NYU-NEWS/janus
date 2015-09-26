@@ -205,8 +205,9 @@ void Coordinator::start(TxnChopper *ch) {
             this->finish(ch);
           }
         } else {
-          if (ch->start_callback(pi, res, output)) this->start(ch);
-          else if (ch->n_started_ == ch->n_pieces_) {
+          if (ch->start_callback(pi, res, output)) {
+            this->start(ch);
+          } else if (ch->n_started_ == ch->n_pieces_) {
             if (this->mode_ == MODE_OCC) {
               this->prepare(ch);
             } else if (this->mode_ == MODE_NONE) {

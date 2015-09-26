@@ -269,10 +269,7 @@ void Config::init_mode(std::string& mode_str) {
     mdb::FineLockedRow::set_wait_die();
   } else if ((mode_str == "2pl_ww") || (mode_str == "2pl_wound_die")) {
     mdb::FineLockedRow::set_wound_die();
-  } else {
-    // mode not supported.
-    verify(0);
-  }
+  } 
 }
 
 void Config::init_hostsmap(const char *hostspath) {
