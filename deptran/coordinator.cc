@@ -107,7 +107,7 @@ void Coordinator::do_one(TxnRequest& req) {
           if (batch_optimal_) {
             naive_batch_start(ch);
           } else {
-            start(ch);
+            LegacyStart(ch);
           }
         };
         recorder_->submit(log_s, start_func);
@@ -115,7 +115,7 @@ void Coordinator::do_one(TxnRequest& req) {
         if (batch_optimal_) {
           naive_batch_start(ch);
         } else {
-          start(ch);
+          LegacyStart(ch);
         }
       }
       break;
@@ -159,10 +159,59 @@ void Coordinator::restart(TxnChopper *ch) {
   if (ccsi_) ccsi_->txn_retry_one(this->thread_id_, ch->txn_type_, last_latency);
 
   if (batch_optimal_) naive_batch_start(ch);
-  else start(ch);
+  else LegacyStart(ch);
 }
 
-void Coordinator::start(TxnChopper *ch) {
+//
+//void Coordinator::Start(Command &cmd) {
+//  StartRequest_ req;
+//  req.cmd_id = cmd_id_;
+//
+//  auto phase = phase_;
+//  auto callback = [this, phase] (StartReply* reply) {
+//    this->StartAck(g, reply, phase);
+//  };
+//
+//  Command *subcmd;
+//  while(subcmd = cmd.GetNextSubCmd()) {
+//    commo_->SendStart(subcmd.GetGroup(), subcmd, true);
+//  }
+//}
+//
+//void Coordinator::StartAck(gropuid_t g, StartReply *reply, phase_t phase) {
+//  ScopedLock(this->mtx_);
+//
+//  if (reply->res == REJECT) {
+//    groups_ = cmd_.GetGroups();
+//    cmd_.reset();
+//  } else {
+//    cmd_->merge(reply->output);
+//    if (cmd_.HasMoreSubCmd(subcmds_) && cmd_.Has) {
+//      this->Start(cmd_);
+//    } else {
+//      this->prepare();
+//    }
+//  }
+//
+//
+//  if (!ch->commit_.load()) {
+//    if (ch->n_start_sent_ == 0) {
+//      this->finish(ch);
+//    }
+//  } else {
+//    if (ch->start_callback(pi, res, output)) {
+//      this->LegacyStart(ch);
+//    } else if (ch->n_started_ == ch->n_pieces_) {
+//      if (this->mode_ == MODE_OCC) {
+//        this->prepare(ch);
+//      } else if (this->mode_ == MODE_2PL) {
+//        this->prepare(ch);
+//      }
+//    }
+//  }
+//}
+
+void Coordinator::LegacyStart(TxnChopper *ch) {
   // new txn id for every new and retry.
   RequestHeader header = gen_header(ch);
 
@@ -181,57 +230,13 @@ void Coordinator::start(TxnChopper *ch) {
     header.pid = next_pie_id();
 
     rrr::FutureAttr fuattr;
+    fuattr.callback = [ch, pi, this] (Future *fu) {
+      this->LegacyStartAck(ch, pi, fu);
+    };
 
     // remember this a asynchronous call!
-    // variable funtional range is important!
-    fuattr.callback = [ch, pi, this](Future * fu) {
-      bool callback = false;
-      {
-        ScopedLock(this->mtx_);
+    // variable functional range is important!
 
-        int res;
-        std::vector<mdb::Value> output;
-        fu->get_reply() >> res >> output;
-        ch->n_started_++;
-        ch->n_start_sent_--;
-
-        if (res == REJECT) {
-          verify(this->mode_ == MODE_2PL);
-          ch->commit_.store(false);
-        }
-
-        if (!ch->commit_.load()) {
-          if (ch->n_start_sent_ == 0) {
-            this->finish(ch);
-          }
-        } else {
-          if (ch->start_callback(pi, res, output)) {
-            this->start(ch);
-          } else if (ch->n_started_ == ch->n_pieces_) {
-            if (this->mode_ == MODE_OCC) {
-              this->prepare(ch);
-            } else if (this->mode_ == MODE_NONE) {
-              callback        = true;
-              ch->reply_.res_ = SUCCESS;
-            } else if (this->mode_ == MODE_2PL) {
-              this->prepare(ch);
-            }
-          }
-        }
-      }
-
-      if (callback) {
-        TxnReply& txn_reply_buf = ch->get_reply();
-        double    last_latency  = ch->last_attempt_latency();
-        this->report(txn_reply_buf, last_latency
-#ifdef TXN_STAT
-                     , ch
-#endif // ifdef TXN_STAT
-                     );
-        ch->callback_(txn_reply_buf);
-        delete ch;
-      }
-    };
 
     RococoProxy *proxy = vec_rpc_proxy_[server_id];
     Future::safe_release(proxy->async_start_pie(header,
@@ -242,6 +247,34 @@ void Coordinator::start(TxnChopper *ch) {
     site_piece_[server_id]++;
   }
 }
+
+void Coordinator::LegacyStartAck(TxnChopper* ch, int pi, Future *fu) {
+    ScopedLock(this->mtx_);
+
+    int res;
+    std::vector<mdb::Value> output;
+    fu->get_reply() >> res >> output;
+    ch->n_started_++;
+    ch->n_start_sent_--;
+
+    if (res == REJECT) {
+      verify(this->mode_ == MODE_2PL);
+      ch->commit_.store(false);
+    }
+
+    if (!ch->commit_.load()) {
+      if (ch->n_start_sent_ == 0) {
+        this->finish(ch);
+      }
+    } else {
+      if (ch->start_callback(pi, res, output)) {
+        this->LegacyStart(ch);
+      } else if (ch->n_started_ == ch->n_pieces_) {
+        this->prepare(ch);
+      }
+    }
+}
+
 
 void Coordinator::naive_batch_start(TxnChopper *ch) {
 //   // new txn id for every new and retry.
@@ -488,7 +521,7 @@ void Coordinator::finish(TxnChopper *ch) {
     bool callback = false;
     bool retry    = false;
     {
-        ScopedLock(this->mtx_);
+      ScopedLock(this->mtx_);
       ch->n_finished_++;
 
       Log::debug("finish");

@@ -21,6 +21,7 @@ BRQCoordinator::BRQCoordinator(
 void BRQCoordinator::launch(Command &cmd) {
   cmd_ = cmd;
   cmd_id_ = next_cmd_id();
+  this->FastAccept();
 }
 
 void BRQCoordinator::launch_recovery(cmdid_t cmd_id) {
@@ -28,7 +29,7 @@ void BRQCoordinator::launch_recovery(cmdid_t cmd_id) {
   prepare();
 }
 
-void BRQCoordinator::fast_accept() {
+void BRQCoordinator::FastAccept() {
   // generate fast accept request
   FastAcceptRequest request;
   request.cmd_id = cmd_id_;

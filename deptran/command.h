@@ -12,7 +12,8 @@ public:
   virtual Command& Execute();
   virtual void Merge(Command&);
   virtual bool IsFinished();
-  virtual Command* GetMinContext(std::map<uint64_t, Command*>);
+  virtual Command* GetNextSubCmd(std::map<uint64_t, Command*>);
+  virtual Command* HasMoreSubCmd(std::map<uint64_t, Command*>);
   // virtual void HasMoreContext();
 };
 

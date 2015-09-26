@@ -6,7 +6,7 @@ namespace rococo {
 class ClientControlServiceImpl;
 
 class Coordinator {
-public:
+ public:
 
   rrr::PollMgr *rpc_poll_;
   std::vector<rrr::Client *> vec_rpc_cli_;
@@ -17,8 +17,8 @@ public:
   int32_t mode_;
   ClientControlServiceImpl *ccsi_;
   uint32_t thread_id_;
-  bool     batch_optimal_;
-  bool     retry_wait_;
+  bool batch_optimal_;
+  bool retry_wait_;
 
   std::atomic<uint64_t> next_pie_id_;
   std::atomic<uint64_t> next_txn_id_;
@@ -66,17 +66,17 @@ public:
 #endif /* ifdef TXN_STAT */
   Recorder *recorder_;
   Coordinator(uint32_t coo_id,
-              std::vector<std::string>&addrs,
+              std::vector<std::string> &addrs,
               int benchmark,
               int32_t mode = MODE_OCC,
-              ClientControlServiceImpl * ccsi = NULL,
+              ClientControlServiceImpl *ccsi = NULL,
               uint32_t thread_id = 0,
               bool batch_optimal = false);
 
   virtual ~Coordinator() {
     for (int i = 0; i < site_prepare_.size(); i++) {
       Log::info("Coo: %u, Site: %d, piece: %d, "
-                "prepare: %d, commit: %d, abort: %d",
+                    "prepare: %d, commit: %d, abort: %d",
                 coo_id_, i, site_piece_[i], site_prepare_[i],
                 site_commit_[i], site_abort_[i]);
     }
@@ -113,52 +113,42 @@ public:
 
   /** do it asynchronously, thread safe.
    */
-  virtual void       do_one(TxnRequest&);
+  virtual void do_one(TxnRequest &);
 
-  void               restart(TxnChopper *ch);
+  void restart(TxnChopper *ch);
 
-  void               start(TxnChopper *ch);
+  void LegacyStart(TxnChopper *ch);
+  void LegacyStartAck(TxnChopper *ch, int pi, Future *fu);
+  void rpc_null_start(TxnChopper *ch);
+  void naive_batch_start(TxnChopper *ch);
+  void batch_start(TxnChopper *ch);
+  void prepare(TxnChopper *ch);
+  void finish(TxnChopper *ch);
 
-  void               rpc_null_start(TxnChopper *ch);
-
-  void               naive_batch_start(TxnChopper *ch);
-
-  void               batch_start(TxnChopper *ch);
-
-  void               prepare(TxnChopper *ch);
-
-  void               finish(TxnChopper *ch);
-
-  void               occ_start(TxnChopper *ch)   {}
-
-  void               occ_prepare(TxnChopper *ch) {}
-
-  void               occ_finish(TxnChopper *ch)  {}
-
-  RequestHeader      gen_header(TxnChopper *ch);
+  RequestHeader gen_header(TxnChopper *ch);
 
   BatchRequestHeader gen_batch_header(TxnChopper *ch);
 
-  void               report(TxnReply  & txn_reply,
-                            double last_latency
+  void report(TxnReply &txn_reply,
+              double last_latency
 #ifdef                                  TXN_STAT
-                            ,
-                            TxnChopper *ch
+  ,
+  TxnChopper *ch
 #endif /* ifdef TXN_STAT */
-                            );
+  );
 
   /* deprecated*/
   bool next_piece(std::vector<mdb::Value> **input,
-                  RococoProxy             **proxy,
-                  int                      *pi,
-                  int                      *p_type) {
+                  RococoProxy **proxy,
+                  int *pi,
+                  int *p_type) {
     return false;
   }
 
   void start_callback(TxnRequest *req, int pi, int res,
-                      std::vector<mdb::Value>& output) {}
+                      std::vector<mdb::Value> &output) { }
 
-  int  exe_txn() {
+  int exe_txn() {
     return 0;
   }
 };

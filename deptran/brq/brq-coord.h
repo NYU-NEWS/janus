@@ -40,7 +40,7 @@ public:
 
   void restart();
   // functions needed in the fast accept phase.
-  void fast_accept();
+  void FastAccept();
   void fast_accept_ack(groupid_t, FastAcceptReply*, phase_t);
   bool check_fastpath_possible();
   bool check_fastpath();

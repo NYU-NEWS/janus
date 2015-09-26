@@ -30,6 +30,7 @@ include_directories(
         deptran/rcc
         deptran/ro6
         deptran/brq
+        deptran/none
         bench
         bench/micro
         bench/rw_benchmark
@@ -84,6 +85,8 @@ file(GLOB DEPTRAN_SRC
         "deptran/ro6/*.cc"
         "deptran/brq/*.h"
         "deptran/brq/*.cc"
+        "deptran/none/*.h"
+        "deptran/none/*.cc"
 )
 
 
