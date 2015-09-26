@@ -7,7 +7,7 @@ BRQDTxn::BRQDTxn(txnid_t txn_id, BRQGraph *graph)
   : txn_id_(txn_id), graph_(graph) {
 }
 
-void BRQDTxn::fast_accept(FastAcceptRequest &req, FastAcceptReply *rep, rrr::DeferredReply *defer) {
+void BRQDTxn::FastAccept(FastAcceptRequest &req, FastAcceptReply *rep, rrr::DeferredReply *defer) {
   ballot_t ballot = req.ballot;
   if (ballot_cmd_seen_ <= ballot &&
         ballot_deps_seen_ <= ballot) {
@@ -38,7 +38,7 @@ void BRQDTxn::fast_accept(FastAcceptRequest &req, FastAcceptReply *rep, rrr::Def
     defer->reply();
 }
 
-void BRQDTxn::commit(CommitRequest &req, CommitReply *rep, rrr::DeferredReply *defer) {
+void BRQDTxn::Commit(CommitRequest &req, CommitReply *rep, rrr::DeferredReply *defer) {
   // save stack context
   commit_stack_.reply = rep;
   commit_stack_.defer = defer;
@@ -57,7 +57,7 @@ void BRQDTxn::commit_exec() {
 //  // all predecessors
 //}
 
-void BRQDTxn::prepare(PrepareReqeust &req, PrepareReply *rep, rrr::DeferredReply *reply) {
+void BRQDTxn::Prepare(PrepareReqeust &req, PrepareReply *rep, rrr::DeferredReply *reply) {
   // TODO
   ballot_t ballot = req.ballot;
   if (ballot_cmd_seen_ < ballot &&
