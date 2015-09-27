@@ -15,7 +15,7 @@
 #include <mutex>
 #include <thread>
 #include <functional>
-
+#include <cstdint>
 
 #include "base/all.hpp"
 
@@ -591,53 +591,7 @@ public:
     /**
      * return: how many i locked.
      */
-    uint32_t lock_all(std::vector<ALockReq*>& lock_reqs) {
-        verify(status_ == FREE && n_rlock_ == 0);
-
-        // find next lock. if next lock is read lock, find all
-        // lockable read lock requests.
-
-        auto &alarm = get_alarm_s();
-        auto it = requests_.begin();
-        uint32_t n_lock = 0;
-
-        for (; it != requests_.end(); it++) {
-            auto& next_req = *it;
-            if (next_req.cas_status(ALockReq::WAIT, ALockReq::LOCK)) {
-
-                alarm.remove(next_req.alarm_id_);
-                n_lock++;
-
-                //Log_info("lock req yes: %p", &next_req);
-                lock_reqs.push_back(&next_req);
-
-                if (next_req.type_== RLOCK) {
-                    status_ = RLOCKED;
-                    n_rlock_++;
-                } else {
-                    status_ = WLOCKED;
-                }
-
-                it++;
-                //                tm_last_ = rrr::Time::now();
-                break;
-            }
-        }
-
-        for (; status_ == RLOCKED && it != requests_.end(); it++) {
-            auto& next_req = *it;
-            if (next_req.type_ == RLOCK
-                    && next_req.cas_status(ALockReq::WAIT, ALockReq::LOCK)) {
-
-                alarm.remove(next_req.alarm_id_);
-                n_lock++;
-                n_rlock_ ++;
-                //Log_info("lock req yes: %p", &next_req);
-                lock_reqs.push_back(&next_req);
-            }
-        }
-        return n_lock;
-    }
+    uint32_t lock_all(std::vector<ALockReq*>& lock_reqs);
 
     /**
      *
