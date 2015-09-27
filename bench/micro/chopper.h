@@ -1,6 +1,7 @@
 #pragma once
 
 #include "coordinator.h"
+#include "./bench/micro/piece.h"
 
 namespace deptran {
 

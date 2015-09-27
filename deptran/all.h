@@ -1,80 +1,20 @@
 #ifndef ALL_H_
 #define ALL_H_
 
-//C++ standard library
-#include <map>
-#include <unordered_map>
-#include <mutex>
-#include <string>
-#include <vector>
-#include <chrono>
-#include <thread>
-#include <iostream>
-#include <condition_variable>
-#include <atomic>
-#include <cstdint>
 
-using std::map;
-using std::unordered_map;
-using std::string;
-using std::vector;
-
-// system library
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <fcntl.h>
-
-// boost library
-#include <boost/any.hpp>
-#include <boost/foreach.hpp>
-#include <boost/algorithm/string.hpp>
-
-// yaml-cpp
-#include <yaml-cpp/yaml.h>
-
-// c library
-#include <cstdio>
-#include <cstdlib>
-#include <cassert>
-#include <cinttypes>
-
-// google library
-
-// misc helper files
-#include "rrr.hpp"
-
-using namespace rrr;
-
-#define deptran rococo
-
-using rrr::NoCopy;
-using rrr::Log;
-using rrr::i8;
-using rrr::i16;
-using rrr::i32;
-using rrr::i64;
-
-// User include files
-//
-
-#include "memdb/value.h"
-#include "memdb/schema.h"
-#include "memdb/table.h"
-#include "memdb/txn.h"
-#include "memdb/utils.h"
-using mdb::Value;
+#include "__dep__.h"
 
 // rpc library
 
 class dummy_class {
-public:
-    dummy_class () {
+ public:
+  dummy_class() {
 #ifdef LOG_DEBUG
     Log::set_level(Log::DEBUG);
 #else
     Log::set_level(Log::INFO);
 #endif
-}
+  }
 };
 static dummy_class dummy___;
 
@@ -84,12 +24,12 @@ static dummy_class dummy___;
 // User include files
 #include "compress.h"
 #include "constants.h"
-#include "commo.h"
 #include "config.h"
 #include "txn-info.h"
 #include "rcc_row.h"
 #include "ro6_row.h"
 #include "graph.h"
+#include "graph_marshaler.h"
 #include "rcc_rpc.h"
 #include "dep_graph.h"
 #include "dtxn.h"

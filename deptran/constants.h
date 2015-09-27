@@ -1,5 +1,4 @@
-#ifndef CONSTANTS_HPP_
-#define CONSTANTS_HPP_
+#pragma once
 
 namespace rococo {
 
@@ -12,16 +11,16 @@ namespace rococo {
 #define groupid_t uint32_t
 
 /** read and write type */
-#define WRITE   (0x01)
-#define READ    (0x02)
-#define REREAD  (0x04)
+#define OP_WRITE   (0x01)
+#define OP_READ    (0x02)
+#define OP_REREAD  (0x04)
 
 /** transaction type */
 #define TXN_UNKNOWN (0x00)
 //#define TXN_START   (0x01)
 //#define TXN_FINISH  (0x02)
 //#define TXN_COMMIT  (0x04)
-#define TXN_ABORT   (0x08)
+//#define TXN_ABORT   (0x08)
 
 // a transaction (command) status
 #define TXN_UKN (0x00)  // unknown
@@ -85,6 +84,4 @@ namespace rococo {
 /** micro Benchmark */
 #define MICRO_BENCH (5)
 
-}
-
-#endif // CONSTANTS_HPP_
+} // namespace rococo

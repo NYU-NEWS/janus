@@ -1,17 +1,13 @@
 #pragma once
 
 #include "all.h"
+#include "commo.h"
 
 namespace rococo {
 class ClientControlServiceImpl;
 
 class Coordinator {
  public:
-
-  rrr::PollMgr *rpc_poll_;
-  std::vector<rrr::Client *> vec_rpc_cli_;
-  std::vector<RococoProxy *> vec_rpc_proxy_;
-
   uint32_t coo_id_;
   int benchmark_;
   int32_t mode_;
@@ -24,6 +20,7 @@ class Coordinator {
   std::atomic<uint64_t> next_txn_id_;
 
   Mutex mtx_;
+  Commo *commo_;
 
   std::vector<int> site_prepare_;
   std::vector<int> site_commit_;
@@ -121,8 +118,9 @@ class Coordinator {
   void LegacyStartAck(TxnChopper *ch, int pi, Future *fu);
   void rpc_null_start(TxnChopper *ch);
   void naive_batch_start(TxnChopper *ch);
-  void batch_start(TxnChopper *ch);
+//  void batch_start(TxnChopper *ch);
   void prepare(TxnChopper *ch);
+  void PrepareAck(TxnChopper *ch, Future *fu);
   void finish(TxnChopper *ch);
 
   RequestHeader gen_header(TxnChopper *ch);

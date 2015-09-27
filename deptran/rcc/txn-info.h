@@ -1,6 +1,7 @@
 #pragma once
 
-#include "all.h"
+#include "__dep__.h"
+#include "config.h"
 
 namespace rococo {
 

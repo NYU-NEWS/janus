@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string>
+#include "__dep__.h"
 
 namespace rococo {
 

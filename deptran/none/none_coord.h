@@ -8,7 +8,6 @@ class NoneCoord : public Coordinator {
 
  public:
   virtual void do_one(TxnRequest&);
-  void LegacyStart(TxnChopper *ch);
-
+  void LegacyStartAck(TxnChopper *ch, int pi, Future *fu);
 };
 } // namespace rococo

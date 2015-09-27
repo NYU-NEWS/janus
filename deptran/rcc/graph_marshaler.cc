@@ -1,5 +1,6 @@
 
-#include "all.h"
+#include "graph.h"
+#include "graph_marshaler.h"
 
 
 namespace rococo {

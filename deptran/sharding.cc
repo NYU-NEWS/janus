@@ -1,11 +1,29 @@
-#include "all.h"
+#include "constants.h"
+#include "sharding.h"
 
-#include <stdlib.h>
-#include <string.h>
-#include <algorithm>
-#include <map>
+// for tpca benchmark
+#include "tpca/piece.h"
+#include "tpca/chopper.h"
 
-#include <string>
+// tpcc benchmark
+#include "tpcc/piece.h"
+#include "tpcc/chopper.h"
+
+// tpcc dist partition benchmark
+#include "tpcc_dist/piece.h"
+#include "tpcc_dist/chopper.h"
+
+// tpcc real dist partition benchmark
+#include "tpcc_real_dist/piece.h"
+#include "tpcc_real_dist/chopper.h"
+
+// rw benchmark
+#include "rw_benchmark/piece.h"
+#include "rw_benchmark/chopper.h"
+
+// micro bench
+#include "micro/piece.h"
+#include "micro/chopper.h"
 
 namespace rococo {
 Sharding *Sharding::sharding_s = NULL;

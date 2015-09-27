@@ -1,8 +1,8 @@
 #ifndef CONFIG_H_
 #define CONFIG_H_
 
-#include <vector>
-#include <string>
+#include "__dep__.h"
+#include "constants.h"
 
 namespace rococo {
 class SiteInfo {

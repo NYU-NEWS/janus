@@ -3,6 +3,7 @@
 
 #include "memdb/value.h"
 #include <vector>
+#include "./bench/tpcc/piece.h"
 
 namespace rococo {
 

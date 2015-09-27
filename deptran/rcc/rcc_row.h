@@ -1,8 +1,7 @@
 #ifndef DEP_ROW_H_
 #define DEP_ROW_H_
 
-#include "memdb/row.h"
-#include <vector>
+#include "__dep__.h"
 
 namespace rococo {
 

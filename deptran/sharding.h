@@ -1,13 +1,9 @@
 #ifndef SHARDING_H_
 #define SHARDING_H_
 
-#include "all.h"
+#include "__dep__.h"
 
-#include <map>
-#include <string>
-#include <vector>
-
-namespace deptran {
+namespace rococo {
 class Config;
 class MultiValue;
 
