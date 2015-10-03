@@ -438,25 +438,24 @@ void Config::LoadWorkloadXML(boost::property_tree::ptree &pt) {
 void Config::LoadTopoXML(boost::property_tree::ptree &pt) {
   // parse all the server sites
   num_site_     = pt.get<int>("benchmark.hosts.<xmlattr>.number");
-  site_         = (char **)malloc(sizeof(char *) * num_site_);
-  site_threads_ = (unsigned int *)malloc(sizeof(unsigned int) * num_site_);
-  verify(site_ != NULL);
+//  site_         = (char **)malloc(sizeof(char *) * num_site_);
+//  site_threads_ = (unsigned int *)malloc(sizeof(unsigned int) * num_site_);
+  site_.resize(num_site_);
+  site_threads_.resize(num_site_);
   unsigned int site_found = 0;
-  memset(site_,         0, sizeof(char *) * num_site_);
-  memset(site_threads_, 0, sizeof(unsigned int) * num_site_);
   BOOST_FOREACH(boost::property_tree::ptree::value_type const & value,
                 pt.get_child("benchmark.hosts")) {
     if (value.first == "site") {
       int sid = value.second.get<int>("<xmlattr>.id");
       verify(sid < num_site_ && sid >= 0);
-      verify(site_[sid] == NULL);
 
       // set site addr
       std::string siteaddr = value.second.get<std::string>("<xmltext>");
       std::string hostaddr = site2host_addr(siteaddr);
-      site_[sid] = (char *)malloc((hostaddr.size() + 1) * sizeof(char));
-      verify(site_[sid] != NULL);
-      strcpy(site_[sid], hostaddr.c_str());
+//      site_[sid] = (char *)malloc((hostaddr.size() + 1) * sizeof(char));
+//      verify(site_[sid] != NULL);
+//      strcpy(site_[sid], hostaddr.c_str());
+        site_[sid] = hostaddr;
 
       // set site threads
       int threads = value.second.get<int>("<xmlattr>.threads");
@@ -470,7 +469,7 @@ void Config::LoadTopoXML(boost::property_tree::ptree &pt) {
   // parse all client sites
   int num_clients = pt.get<int>("benchmark.clients.<xmlattr>.number");
   verify(num_clients > 0);
-  bool *clients = (bool *)malloc(sizeof(bool) * num_clients);
+  std::vector<bool> clients = vector<bool>(num_clients); 
 
   for (uint32_t client_index = 0; client_index < num_clients; client_index++) {
     clients[client_index] = false;
@@ -531,9 +530,7 @@ void Config::LoadTopoXML(boost::property_tree::ptree &pt) {
       }
     }
   }
-  free(clients);
   verify(client_found);
-
 }
 
 void Config::LoadSchemeXML(boost::property_tree::ptree &pt) {
@@ -671,18 +668,6 @@ Config::~Config() {
     Sharding::sharding_s = NULL;
   }
 
-  if (site_) {
-    for (unsigned int i = 0; i < num_site_; i++)
-      if (site_[i]) free(site_[i]);
-    free(site_);
-    site_ = NULL;
-  }
-
-  if (site_threads_) {
-    free(site_threads_);
-    site_threads_ = NULL;
-  }
-
   if (ctrl_hostname_) {
     free(ctrl_hostname_);
     ctrl_hostname_ = NULL;
@@ -742,29 +727,20 @@ const char * Config::get_ctrl_init() {
 //
 
 int Config::get_all_site_addr(std::vector<std::string>& servers) {
-  if (site_ == NULL) return -1;
+  if (site_.size() == 0) return -1;
   unsigned int i = 0;
 
   for (; i < num_site_; i++) {
-    if (site_[i] == NULL) {
-      servers.clear();
-      return -2;
-    }
-    std::string siteaddr(site_[i]);
-
-    // std::string hostaddr = site2host_addr(siteaddr);
-    //        Log::info("site address: %s", hostaddr.c_str());
-    servers.push_back(siteaddr);
+    servers.push_back(site_[i]);
   }
   return servers.size();
 }
 
 int Config::get_site_addr(unsigned int sid, std::string& server) {
-  if (site_ == NULL) return -1;
+  if (site_.size() == 0) verify(0);
 
-  if (sid >= num_site_) return -2;
+  if (sid >= num_site_) verify(0);
 
-  if (site_[sid] == NULL) return -3;
   std::string siteaddr(site_[sid]);
 
   //    std::string hostaddr = site2host_addr(siteaddr);
@@ -773,27 +749,20 @@ int Config::get_site_addr(unsigned int sid, std::string& server) {
 }
 
 int Config::get_my_addr(std::string& server) {
-  if (site_ == NULL) return -1;
+  if (site_.size() == 0) verify(0);
 
-  if (sid_ >= num_site_) return -2;
+  if (sid_ >= num_site_) verify(0);
 
-  if (site_[sid_] == NULL) return -3;
   server.assign("0.0.0.0:");
-  unsigned int len = strlen(site_[sid_]), p_start = 0;
-
-  for (unsigned int i = 0; i < len; i++) {
-    if (site_[sid_][i] == ':') {
-      p_start = i + 1;
-      break;
-    }
-  }
+  uint32_t len = site_[sid_].length(), p_start = 0;
+  uint32_t port_pos = site_[sid_].find_first_of(':') + 1;
   verify(p_start < len && p_start > 0);
-  server.append(site_[sid_] + p_start);
+  server.append(site_[sid_].substr(port_pos));
   return 0;
 }
 
 int Config::get_threads(unsigned int& threads) {
-  if (site_threads_ == NULL) return -1;
+  if (site_threads_.size() == 0) return -1;
 
   if (sid_ >= num_site_) return -2;
   threads = site_threads_[sid_];

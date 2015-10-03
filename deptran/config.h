@@ -96,8 +96,8 @@ private:
 
   // server-side configuration
   uint32_t  sid_;
-  char    **site_;
-  uint32_t *site_threads_;
+  vector<string> site_;  
+  vector<uint32_t> site_threads_;
   uint32_t  num_site_;
   uint32_t  num_coordinator_threads_;
   uint32_t  start_coordinator_id_;

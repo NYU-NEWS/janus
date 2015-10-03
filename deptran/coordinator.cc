@@ -34,6 +34,7 @@ Coordinator::Coordinator(uint32_t coo_id,
 
   k <<= 32;
 
+  commo_ = new Commo(addrs);
   this->next_pie_id_.store(k);
   this->next_txn_id_.store(k);
   recorder_ = NULL;
