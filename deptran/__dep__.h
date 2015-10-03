@@ -25,11 +25,14 @@ using std::vector;
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <unistd.h>
 
 // boost library
 #include <boost/any.hpp>
 #include <boost/foreach.hpp>
 #include <boost/algorithm/string.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/xml_parser.hpp>
 
 // yaml-cpp
 #include <yaml-cpp/yaml.h>
@@ -38,6 +41,7 @@ using std::vector;
 #include <cstdio>
 #include <cstdlib>
 #include <cassert>
+#include <cstring>
 #include <cinttypes>
 
 // google library
@@ -75,4 +79,5 @@ using rrr::Marshal;
 #include "memdb/table.h"
 #include "memdb/txn.h"
 #include "memdb/utils.h"
+#include "memdb/row.h"
 using mdb::Value;

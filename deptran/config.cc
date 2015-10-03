@@ -1,12 +1,36 @@
 #include "all.h"
+#include "__dep__.h"
+#include "constants.h"
+#include "config.h"
+#include "sharding.h"
+#include "multi_value.h"
+#include "piece.h"
 
-#include <stdlib.h>
-#include <string.h>
-#include <unistd.h>
+// for tpca benchmark
+#include "tpca/piece.h"
+#include "tpca/chopper.h"
 
-#include <boost/foreach.hpp>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/xml_parser.hpp>
+// tpcc benchmark
+#include "tpcc/piece.h"
+#include "tpcc/chopper.h"
+
+// tpcc dist partition benchmark
+#include "tpcc_dist/piece.h"
+#include "tpcc_dist/chopper.h"
+
+// tpcc real dist partition benchmark
+#include "tpcc_real_dist/piece.h"
+#include "tpcc_real_dist/chopper.h"
+
+// rw benchmark
+#include "rw_benchmark/piece.h"
+#include "rw_benchmark/chopper.h"
+
+// micro bench
+#include "micro/piece.h"
+#include "micro/chopper.h"
+
+
 
 namespace rococo {
 Config *Config::config_s = NULL;
@@ -237,7 +261,7 @@ Config::Config(uint32_t        cid,
     if (boost::algorithm::ends_with(name, "yml")) {
       load_config_yml(name);
     } else if (boost::algorithm::ends_with(name, "xml")) {
-      load_config_xml(name);
+      LoadConfigXML(name);
     } else {
       verify(0);
     }
@@ -246,6 +270,7 @@ Config::Config(uint32_t        cid,
 
 void Config::load_config_yml(std::string& name) {
 //  YAML::Node config = YAML::LoadFile(name);
+  
 }
 
 void Config::init_mode(std::string& mode_str) {
@@ -323,7 +348,7 @@ std::string Config::site2host_name(std::string& sitename) {
   }
 }
 
-void Config::load_config_xml(std::string& filename) {
+void Config::LoadConfigXML(std::string& filename) {
   std::string filename_str(filename);
   boost::property_tree::ptree pt;
   boost::property_tree::xml_parser::read_xml(
@@ -331,10 +356,22 @@ void Config::load_config_xml(std::string& filename) {
     pt,
     boost::property_tree::xml_parser::no_concat_text);
   Sharding::sharding_s = new Sharding();
+
+  // parse every table and its column
+  LoadModeXML(pt);
+  LoadTopoXML(pt);
+  LoadSchemeXML(pt);
+  LoadWorkloadXML(pt); 
+}
+
+void Config::LoadModeXML(boost::property_tree::ptree &pt) {
   // get mode
   std::string mode_str = pt.get<std::string>("benchmark.<xmlattr>.mode", "2PL");
   boost::algorithm::to_lower(mode_str);
   this->init_mode(mode_str);
+}
+
+void Config::LoadWorkloadXML(boost::property_tree::ptree &pt) {
   // get benchmark
   std::string bench_str = pt.get<std::string>("benchmark.<xmlattr>.name");
   this->init_bench(bench_str);
@@ -343,9 +380,9 @@ void Config::load_config_xml(std::string& filename) {
   concurrent_txn_ =
     pt.get<unsigned int>("benchmark.<xmlattr>.concurrent_txn", 1);
   batch_start_ = pt.get<bool>("benchmark.<xmlattr>.batch_start", false);
+  // parse weight
   std::string txn_weight_str = pt.get<std::string>(
     "benchmark.<xmlattr>.txn_weight", "");
-  // parse weight
   size_t txn_weight_str_i = 0, end_txn_weight_str_i;
   char  *txn_weight_str_endptr;
   while (string::npos !=
@@ -362,6 +399,43 @@ void Config::load_config_xml(std::string& filename) {
   verify(*txn_weight_str_endptr == '\0');
   txn_weight_.push_back(d);
 
+  // TODO particular configuration for certain workloads.
+  if (benchmark_ == TPCC_REAL_DIST_PART) {
+    i32 n_w_id =
+      (i32)(Sharding::sharding_s->tb_info_[std::string(TPCC_TB_WAREHOUSE)].
+            num_records);
+    i32 n_d_id =
+      (i32)(num_site_ *
+            Sharding::sharding_s->tb_info_[std::string(TPCC_TB_DISTRICT)].
+            num_records /
+            n_w_id);
+    i32 d_id = 0, w_id = 0;
+
+    for (d_id = 0; d_id < n_d_id; d_id++)
+      for (w_id = 0; w_id < n_w_id; w_id++) {
+        MultiValue mv(std::vector<Value>({
+            Value(d_id),
+            Value(w_id)
+          }));
+        Sharding::sharding_s->insert_dist_mapping(mv);
+      }
+    i32 n_i_id =
+      (i32)(Sharding::sharding_s->tb_info_[std::string(TPCC_TB_ITEM)].
+            num_records);
+    i32 i_id = 0;
+
+    for (i_id = 0; i_id < n_i_id; i_id++)
+      for (w_id = 0; w_id < n_w_id; w_id++) {
+        MultiValue mv(std::vector<Value>({
+            Value(i_id),
+            Value(w_id)
+          }));
+        Sharding::sharding_s->insert_stock_mapping(mv);
+      }
+  }
+}
+
+void Config::LoadTopoXML(boost::property_tree::ptree &pt) {
   // parse all the server sites
   num_site_     = pt.get<int>("benchmark.hosts.<xmlattr>.number");
   site_         = (char **)malloc(sizeof(char *) * num_site_);
@@ -460,7 +534,9 @@ void Config::load_config_xml(std::string& filename) {
   free(clients);
   verify(client_found);
 
-  // parse every table and its column
+}
+
+void Config::LoadSchemeXML(boost::property_tree::ptree &pt) {
   int *site_buf = (int *)malloc(sizeof(int) * num_site_);
   verify(site_buf != NULL);
   BOOST_FOREACH(boost::property_tree::ptree::value_type const & value,
@@ -585,41 +661,6 @@ void Config::load_config_xml(std::string& filename) {
       tb_info.tb_name                         = tb_name;
       Sharding::sharding_s->tb_info_[tb_name] = tb_info;
     }
-  }
-
-  // TODO particular configuration for certain workloads.
-  if (benchmark_ == TPCC_REAL_DIST_PART) {
-    i32 n_w_id =
-      (i32)(Sharding::sharding_s->tb_info_[std::string(TPCC_TB_WAREHOUSE)].
-            num_records);
-    i32 n_d_id =
-      (i32)(num_site_ *
-            Sharding::sharding_s->tb_info_[std::string(TPCC_TB_DISTRICT)].
-            num_records /
-            n_w_id);
-    i32 d_id = 0, w_id = 0;
-
-    for (d_id = 0; d_id < n_d_id; d_id++)
-      for (w_id = 0; w_id < n_w_id; w_id++) {
-        MultiValue mv(std::vector<Value>({
-            Value(d_id),
-            Value(w_id)
-          }));
-        Sharding::sharding_s->insert_dist_mapping(mv);
-      }
-    i32 n_i_id =
-      (i32)(Sharding::sharding_s->tb_info_[std::string(TPCC_TB_ITEM)].
-            num_records);
-    i32 i_id = 0;
-
-    for (i_id = 0; i_id < n_i_id; i_id++)
-      for (w_id = 0; w_id < n_w_id; w_id++) {
-        MultiValue mv(std::vector<Value>({
-            Value(i_id),
-            Value(w_id)
-          }));
-        Sharding::sharding_s->insert_stock_mapping(mv);
-      }
   }
   free(site_buf);
 }

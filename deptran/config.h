@@ -63,7 +63,7 @@ public:
 private:
 
   static Config *config_s;
-  void        load_config_xml(std::string& filename);
+  void LoadConfigXML(std::string& filename);
   void        init_hostsmap(const char *hostspath);
   std::string site2host_addr(std::string& name);
   std::string site2host_name(std::string& addr);
@@ -137,6 +137,11 @@ public:
   void                 load_config_yml(std::string&);
   void                 init_mode(std::string&);
   void                 init_bench(std::string&);
+  void LoadModeXML(boost::property_tree::ptree &pt);
+  void LoadTopoXML(boost::property_tree::ptree &pt);
+  void LoadSchemeXML(boost::property_tree::ptree &pt);
+  void LoadWorkloadXML(boost::property_tree::ptree &pt);
+  
   uint32_t             get_site_id();
   uint32_t             get_client_id();
   uint32_t             get_ctrl_port();
