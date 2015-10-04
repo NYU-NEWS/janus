@@ -1,6 +1,9 @@
 #pragma once
 
 #include "__dep__.h"
+#include "dep_graph.h"
+#include "rcc_row.h"
+#include "ro6_row.h"
 
 namespace rococo {
 

@@ -1,7 +1,10 @@
 
 #include "__dep__.h"
+#include "marshal-value.h"
+#include "coordinator.h"
 #include "txn_chopper.h"
 #include "benchmark_control_rpc.h"
+#include "batch_start_args_helper.h"
 //#include "all.h"
 
 namespace rococo {
@@ -24,8 +27,8 @@ Command* TxnChopper::GetNextSubCmd(map<uint64_t, Command*> &cmdmap) {
       cmd = new SimpleCommand; 
       cmd->inn_id = i;
       cmd->par_id = sharding_[i];
-      cmd->type = p_types[i];
-      cmd->input = &inputs_[i];
+      cmd->type = p_types_[i];
+      cmd->input = inputs_[i];
       cmd->output_size = output_size_[i];
 
       proxies_.insert(sharding_[i]);
@@ -125,8 +128,9 @@ int TxnChopper::batch_next_piece(BatchRequestHeader *batch_header,
 }
 
 void TxnChopper::Merge(Command &cmd) {
-  auto &pi = cmd.inn_id; 
-  auto &output = cmd.output;
+  auto simple_cmd = (SimpleCommand*)&cmd; 
+  auto pi = cmd.inn_id(); 
+  auto &output = simple_cmd->output;
   this->start_callback(pi, SUCCESS, output);
 }
 

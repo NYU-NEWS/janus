@@ -27,18 +27,18 @@ class RococoServiceImpl: public RococoService {
 
   void do_start_pie(const RequestHeader &header,
                     const Value *input,
-                    rrr::i32 input_size,
-                    rrr::i32 *res,
+                    int32_t input_size,
+                    int32_t *res,
                     Value *output,
-                    rrr::i32 *outupt_size);
+                    int32_t *outupt_size);
 
 
  public:
-  void rpc_null(rrr::DeferredReply *defer);
+  void rpc_null(DeferredReply *defer);
 
   void batch_start_pie(const BatchRequestHeader &batch_header,
                        const std::vector<Value> &input,
-                       rrr::i32 *res,
+                       i32 *res,
                        std::vector<Value> *output);
 
   void naive_batch_start_pie(
@@ -47,27 +47,27 @@ class RococoServiceImpl: public RococoService {
       const std::vector<i32> &output_size,
       std::vector<i32> *res,
       std::vector<vector<Value>> *output,
-      rrr::DeferredReply *defer);
+      DeferredReply *defer);
 
   void start_pie(const RequestHeader &header,
                  const std::vector<Value> &input,
-                 const rrr::i32 &output_size,
-                 rrr::i32 *res,
+                 const i32 &output_size,
+                 i32 *res,
                  std::vector<Value> *output,
-                 rrr::DeferredReply *defer);
+                 DeferredReply *defer);
 
-  void prepare_txn(const rrr::i64 &tid,
+  void prepare_txn(const i64 &tid,
                    const std::vector<i32> &sids,
-                   rrr::i32 *res,
-                   rrr::DeferredReply *defer);
+                   i32 *res,
+                   DeferredReply *defer);
 
-  void commit_txn(const rrr::i64 &tid,
-                  rrr::i32 *res,
-                  rrr::DeferredReply *defer);
+  void commit_txn(const i64 &tid,
+                  i32 *res,
+                  DeferredReply *defer);
 
-  void abort_txn(const rrr::i64 &tid,
-                 rrr::i32 *res,
-                 rrr::DeferredReply *defer);
+  void abort_txn(const i64 &tid,
+                 i32 *res,
+                 DeferredReply *defer);
 
 #ifdef PIECE_COUNT
   typedef struct piece_count_key_t{
@@ -101,29 +101,29 @@ class RococoServiceImpl: public RococoService {
       const std::vector<RequestHeader> &headers,
       const std::vector<std::vector<Value>> &inputs,
       BatchChopStartResponse *res,
-      rrr::DeferredReply *defer);
+      DeferredReply *defer);
 
   void rcc_start_pie(
       const RequestHeader &header,
       const std::vector<Value> &input,
       ChopStartResponse *res,
-      rrr::DeferredReply *defer);
+      DeferredReply *defer);
 
   void rcc_finish_txn(
       const ChopFinishRequest &req,
       ChopFinishResponse *res,
-      rrr::DeferredReply *);
+      DeferredReply *);
 
   void rcc_ask_txn(
-      const rrr::i64 &tid,
+      const i64 &tid,
       CollectFinishResponse *res,
-      rrr::DeferredReply *);
+      DeferredReply *);
 
   void rcc_ro_start_pie(
       const RequestHeader &header,
       const vector<Value> &input,
       vector<Value> *output,
-      rrr::DeferredReply *reply);
+      DeferredReply *reply);
 
   uint64_t n_asking_ = 0;
 };

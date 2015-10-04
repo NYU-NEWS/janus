@@ -43,14 +43,14 @@ private:
     } status_t;
 
     //pthread_mutex_t stat_m_;
-    rrr::Mutex stat_m_;
+    Mutex stat_m_;
     std::unordered_map<const char *, ValueTimesPair> statistics_;
     std::map<std::string, AvgStat*> stats_;  
 
     //pthread_mutex_t status_mutex_;
-    rrr::Mutex status_mutex_;
+    Mutex status_mutex_;
     //pthread_cond_t status_cond_;
-    rrr::CondVar status_cond_;
+    CondVar status_cond_;
     status_t status_;
     unsigned int timeout_;
     bool sig_handler_set_;
@@ -63,7 +63,7 @@ private:
 
 public:
     void server_shutdown();
-    void server_ready(rrr::i32* res);
+    void server_ready(i32* res);
     void server_heart_beat_with_data(ServerResponse *res);
     void server_heart_beat();
 
@@ -200,11 +200,11 @@ private:
         }
     } txn_info_t;
 
-    std::vector<rrr::DeferredReply *> ready_block_defers_;
+    std::vector<DeferredReply *> ready_block_defers_;
     //pthread_mutex_t status_mutex_;
-    rrr::Mutex status_mutex_;
+    Mutex status_mutex_;
     //pthread_cond_t status_cond_;
-    rrr::CondVar status_cond_;
+    CondVar status_cond_;
     status_t status_;
     pthread_t **coo_threads_;
     std::map<int32_t, txn_info_t> *txn_info_;
@@ -225,9 +225,9 @@ public:
     void client_shutdown();
     void client_force_stop();
     void client_response(ClientResponse* res);
-    void client_ready_block(rrr::i32 *res,
-            rrr::DeferredReply *defer);
-    void client_ready(rrr::i32* res);
+    void client_ready_block(i32 *res,
+            DeferredReply *defer);
+    void client_ready(i32* res);
     void client_start();
 
     ClientControlServiceImpl(unsigned int num_threads, const std::map<int32_t, std::string> &txn_types);

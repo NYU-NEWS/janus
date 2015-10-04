@@ -5,9 +5,9 @@
 
 namespace rrr {
 
-rrr::Marshal& operator << (rrr::Marshal& m, const mdb::Value &value);
+Marshal& operator << (Marshal& m, const mdb::Value &value);
 
-rrr::Marshal& operator >> (rrr::Marshal& m, mdb::Value &value);
+Marshal& operator >> (Marshal& m, mdb::Value &value);
 
 } // namespace rrr
 

@@ -1,6 +1,9 @@
-
+#include "marshal-value.h"
 #include "ro6_coord.h"
 #include "dtxn.h"
+#include "compress.h"
+#include "txn-chopper-factory.h"
+#include "benchmark_control_rpc.h"
 
 namespace rococo {
 

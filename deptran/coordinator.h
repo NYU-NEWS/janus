@@ -124,7 +124,7 @@ class Coordinator {
   void restart(TxnChopper *ch);
 
   void Start();
-  void StartAck(StartReply *reply, const phase_t &phase);
+  void StartAck(StartReply &reply, const phase_t &phase);
   void LegacyStart(TxnChopper *ch);
   void LegacyStartAck(TxnChopper *ch, int pi, Future *fu);
   void rpc_null_start(TxnChopper *ch);
@@ -133,6 +133,8 @@ class Coordinator {
   void prepare(TxnChopper *ch);
   void PrepareAck(TxnChopper *ch, Future *fu);
   void finish(TxnChopper *ch);
+  void Prepare() {verify(0);}
+  void Abort() {verify(0);}
 
   RequestHeader gen_header(TxnChopper *ch);
 

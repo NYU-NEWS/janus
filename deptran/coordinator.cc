@@ -1,5 +1,5 @@
-#include "coordinator.h"
 #include "marshal-value.h"
+#include "coordinator.h"
 #include "txn_req_factory.h"
 #include "txn-chopper-factory.h"
 #include "benchmark_control_rpc.h"
@@ -159,13 +159,13 @@ void Coordinator::Start() {
 void Coordinator::StartAck(StartReply &reply, const phase_t &phase) {
   ScopedLock(this->mtx_);
   if (phase != phase_) return;
-  if (reply->res == REJECT) {
+  if (reply.res == REJECT) {
     phase_++; 
 //    groups_ = cmd_.GetGroups();
     Abort(); 
   } else {
-    cmd_.Merge(reply->cmd);
-    if (cmd_.HasMoreSubCmd(cmdmap)) {
+    cmd_->Merge(*reply.cmd);
+    if (cmd_->HasMoreSubCmd(cmd_map_)) {
       Start();
     } else {
       phase_++;

@@ -63,7 +63,7 @@ typedef struct c_last_id_t {
     return false;
   }
 } c_last_id_t;
-extern std::multimap<c_last_id_t, rrr::i32> g_c_last2id; // XXX
+extern std::multimap<c_last_id_t, i32> g_c_last2id; // XXX
 extern mdb::Schema g_c_last_schema;
 
 class Sharding {

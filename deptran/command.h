@@ -10,7 +10,9 @@ namespace rococo {
 class Command {
 private:
   cmdtype_t type_;
+  innid_t inn_id_;
 public:
+  virtual innid_t inn_id() {return inn_id_;}
   virtual cmdtype_t type() {return type_;};
   virtual parid_t GetPar() {verify(0);};
   virtual std::vector<parid_t>& GetPars() {verify(0);};
