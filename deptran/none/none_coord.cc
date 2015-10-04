@@ -1,5 +1,7 @@
 
 #include "none_coord.h"
+#include "txn-chopper-factory.h"
+#include "benchmark_control_rpc.h"
 
 namespace rococo {
 

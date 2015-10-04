@@ -1,5 +1,6 @@
 
 #include "ro6_coord.h"
+#include "dtxn.h"
 
 namespace rococo {
 

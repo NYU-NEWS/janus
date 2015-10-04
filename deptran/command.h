@@ -1,4 +1,6 @@
 #pragma once
+#include "__dep__.h"
+#include "constants.h"
 
 namespace rococo {
 /**
@@ -6,14 +8,18 @@ namespace rococo {
  * coordinator and servers, or server to server.
  */
 class Command {
+private:
+  cmdtype_t type_;
 public:
-  virtual std::vector<groupid_t>& GetGroups();
-  virtual void Arrest();
-  virtual Command& Execute();
-  virtual void Merge(Command&);
-  virtual bool IsFinished();
-  virtual Command* GetNextSubCmd(std::map<uint64_t, Command*>);
-  virtual Command* HasMoreSubCmd(std::map<uint64_t, Command*>);
+  virtual cmdtype_t type() {return type_;};
+  virtual parid_t GetPar() {verify(0);};
+  virtual std::vector<parid_t>& GetPars() {verify(0);};
+  virtual void Arrest() {verify(0);};
+  virtual Command& Execute() {verify(0);};
+  virtual void Merge(Command&){verify(0);};;
+  virtual bool IsFinished(){verify(0);};
+  virtual bool HasMoreSubCmd(map<innid_t, Command*>&){verify(0);};;
+  virtual Command* GetNextSubCmd(std::map<innid_t, Command*>&){verify(0);};
   // virtual void HasMoreContext();
 };
 

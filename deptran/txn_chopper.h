@@ -2,6 +2,11 @@
 
 #include "__dep__.h"
 #include "command.h"
+#include "graph.h"
+#include "txn-info.h"
+#include "graph.h"
+#include "graph_marshaler.h"
+#include "rcc_rpc.h"
 
 namespace rococo {
 
@@ -28,7 +33,18 @@ class TxnRequest {
   void get_log(i64 tid, std::string &log);
 };
 
-class TxnChopper {
+class SimpleCommand: public Command {
+public:
+  vector<Value> input;
+  vector<Value> output;
+  int output_size;
+  int inn_id;
+  int par_id;
+  int type;  
+  virtual parid_t GetPar() {return par_id;}
+};
+
+class TxnChopper : public Command {
  private:
   static inline bool is_consistent(const std::vector<mdb::Value> &previous,
                                    const std::vector<mdb::Value> &current) {
@@ -92,25 +108,21 @@ class TxnChopper {
 
   virtual void init(TxnRequest &req) = 0;
 
-  virtual bool start_callback(const std::vector<int> &pi, int res, BatchStartArgsHelper &bsah) = 0;
-
-  virtual bool start_callback(int pi, int res, const std::vector<mdb::Value> &output) = 0;
-
-  virtual bool start_callback(int pi, const ChopStartResponse &res);
-
-  virtual bool start_callback(int pi, std::vector<mdb::Value> &output, bool is_defer);
-
-//    virtual bool start_callback(int pi, const ChopStartResponse &res);
-
-  virtual bool finish_callback(ChopFinishResponse &res) { return false; };
-
-  virtual bool is_read_only() = 0;
-
-  virtual void read_only_reset();
-
   // phase 1, res is NULL
   // phase 2, res returns SUCCESS is output is consistent with previous value
+  virtual bool start_callback(const std::vector<int> &pi, int res, BatchStartArgsHelper &bsah) = 0;
+  virtual bool start_callback(int pi, int res, const std::vector<mdb::Value> &output) = 0;
+  virtual bool start_callback(int pi, const ChopStartResponse &res);
+  virtual bool start_callback(int pi, std::vector<mdb::Value> &output, bool is_defer);
+  virtual bool finish_callback(ChopFinishResponse &res) { return false; }
+  virtual bool is_read_only() = 0;
+  virtual void read_only_reset();
   virtual bool read_only_start_callback(int pi, int *res, const std::vector<mdb::Value> &output);
+
+  virtual bool IsFinished(){verify(0);}
+  virtual void Merge(Command&);
+  virtual bool HasMoreSubCmd(std::map<uint64_t, Command*>&);
+  virtual Command* GetNextSubCmd(std::map<uint64_t, Command*>&);
 
   inline bool can_retry() {
     return (max_try_ == 0 || n_try_ < max_try_);

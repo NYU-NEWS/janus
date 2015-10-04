@@ -1,14 +1,41 @@
 
-#include "all.h"
+#include "__dep__.h"
+#include "txn_chopper.h"
+#include "benchmark_control_rpc.h"
+//#include "all.h"
 
 namespace rococo {
 
 TxnChopper::TxnChopper() {
-    clock_gettime(&start_time_);
-    read_only_failed_ = false;
-    pre_time_ = timespec2ms(start_time_);
-    early_return_ = Config::get_config()->do_early_return();
+  clock_gettime(&start_time_);
+  read_only_failed_ = false;
+  pre_time_ = timespec2ms(start_time_);
+  early_return_ = Config::get_config()->do_early_return();
 }
+
+Command* TxnChopper::GetNextSubCmd(map<uint64_t, Command*> &cmdmap) {
+  if (n_started_ == n_pieces_) {
+    return nullptr;  
+  }
+  SimpleCommand* cmd = nullptr;
+
+  for (int i = 0; i < status_.size(); i++) {
+    if (status_[i] == 0) {
+      cmd = new SimpleCommand; 
+      cmd->inn_id = i;
+      cmd->par_id = sharding_[i];
+      cmd->type = p_types[i];
+      cmd->input = &inputs_[i];
+      cmd->output_size = output_size_[i];
+
+      proxies_.insert(sharding_[i]);
+      status_[i] = 1;
+      return cmd;
+    }
+  }
+  return cmd;
+}
+
 
 int TxnChopper::next_piece(
         std::vector<mdb::Value>* &input,
@@ -47,7 +74,10 @@ int TxnChopper::next_piece(
     }
 }
 
-int TxnChopper::batch_next_piece(BatchRequestHeader *batch_header, std::vector<mdb::Value> &input, int32_t &server_id, std::vector<int> &pi, Coordinator *coo) {
+int TxnChopper::batch_next_piece(BatchRequestHeader *batch_header, 
+                                 std::vector<mdb::Value> &input, 
+                                 int32_t &server_id, std::vector<int> &pi, 
+                                 Coordinator *coo) {
     if (n_started_ == n_pieces_)
         return 2;
 
@@ -92,6 +122,17 @@ int TxnChopper::batch_next_piece(BatchRequestHeader *batch_header, std::vector<m
     }
 
     return status;
+}
+
+void TxnChopper::Merge(Command &cmd) {
+  auto &pi = cmd.inn_id; 
+  auto &output = cmd.output;
+  this->start_callback(pi, SUCCESS, output);
+}
+
+bool TxnChopper::HasMoreSubCmd(map<uint64_t, Command*>& cmdmap) {
+  // TODO   
+  return true; 
 }
 
 bool TxnChopper::start_callback(int pi,

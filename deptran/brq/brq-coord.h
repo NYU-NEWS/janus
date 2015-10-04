@@ -1,12 +1,11 @@
 #pragma once
 
 #include "all.h"
+#include "constants.h"
 #include "command.h"
 #include "brq-graph.h"
 #include "brq-common.h"
 #include "brq-commo.h"
-
-#define phase_t uint64_t
 
 namespace rococo {
 class BRQCoordinator {

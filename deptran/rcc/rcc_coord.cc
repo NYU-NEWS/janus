@@ -1,5 +1,6 @@
 
 #include "rcc_coord.h"
+#include "dtxn.h"
 
 namespace rococo {
 void RCCCoord::deptran_batch_start(TxnChopper *ch) {

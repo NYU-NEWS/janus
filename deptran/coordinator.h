@@ -1,7 +1,12 @@
 #pragma once
 
-#include "all.h"
+#include "__dep__.h"
+#include "constants.h"
+#include "txn_chopper.h"
+//#include "all.h"
+#include "msg.h"
 #include "commo.h"
+
 
 namespace rococo {
 class ClientControlServiceImpl;
@@ -21,6 +26,11 @@ class Coordinator {
 
   Mutex mtx_;
   Commo *commo_;
+  Recorder *recorder_;
+  Command *cmd_; 
+  cmdid_t cmd_id_;
+  phase_t phase_;
+  map<innid_t, Command*> cmd_map_; 
 
   std::vector<int> site_prepare_;
   std::vector<int> site_commit_;
@@ -61,7 +71,6 @@ class Coordinator {
   } txn_stat_t;
   std::unordered_map<int32_t, txn_stat_t> txn_stats_;
 #endif /* ifdef TXN_STAT */
-  Recorder *recorder_;
   Coordinator(uint32_t coo_id,
               std::vector<std::string> &addrs,
               int benchmark,
@@ -114,6 +123,8 @@ class Coordinator {
 
   void restart(TxnChopper *ch);
 
+  void Start();
+  void StartAck(StartReply *reply, const phase_t &phase);
   void LegacyStart(TxnChopper *ch);
   void LegacyStartAck(TxnChopper *ch, int pi, Future *fu);
   void rpc_null_start(TxnChopper *ch);

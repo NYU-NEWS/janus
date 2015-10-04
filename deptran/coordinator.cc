@@ -1,4 +1,8 @@
 #include "coordinator.h"
+#include "marshal-value.h"
+#include "txn_req_factory.h"
+#include "txn-chopper-factory.h"
+#include "benchmark_control_rpc.h"
 
 /**
  * What shoud we do to change this to asynchronous?
@@ -64,7 +68,8 @@ void Coordinator::do_one(TxnRequest &req) {
   // pre-process
   ScopedLock(this->mtx_);
   TxnChopper *ch = TxnChopperFactory::gen_chopper(req, benchmark_);
-  ch->txn_id_ = this->next_txn_id();
+  cmd_ = TxnChopperFactory::gen_chopper(req, benchmark_);
+  cmd_id_ = this->next_txn_id();
 
   // turn off batch now
   // if (batch_optimal_)
@@ -90,11 +95,7 @@ void Coordinator::do_one(TxnRequest &req) {
         };
         recorder_->submit(log_s, start_func);
       } else {
-        if (batch_optimal_) {
-          naive_batch_start(ch);
-        } else {
-          LegacyStart(ch);
-        }
+        Start();
       }
       break;
     case MODE_RPC_NULL:
@@ -106,7 +107,6 @@ void Coordinator::do_one(TxnRequest &req) {
     default:
       verify(0);
   }
-
   // finish request is triggered in the callback of start request.
 }
 
@@ -142,54 +142,38 @@ void Coordinator::restart(TxnChopper *ch) {
   else LegacyStart(ch);
 }
 
-//
-//void Coordinator::Start(Command &cmd) {
-//  StartRequest_ req;
-//  req.cmd_id = cmd_id_;
-//
-//  auto phase = phase_;
-//  auto callback = [this, phase] (StartReply* reply) {
-//    this->StartAck(g, reply, phase);
-//  };
-//
-//  Command *subcmd;
-//  while(subcmd = cmd.GetNextSubCmd()) {
-//    commo_->SendStart(subcmd.GetGroup(), subcmd, true, callback);
-//  }
-//}
-//
-//void Coordinator::StartAck(gropuid_t g, StartReply *reply, phase_t phase) {
-//  ScopedLock(this->mtx_);
-//
-//  if (reply->res == REJECT) {
+void Coordinator::Start() {
+  StartRequest req;
+  req.cmd_id = cmd_id_;
+  Command* subcmd;
+  phase_t phase = phase_;
+  std::function<void(StartReply&)> callback = [this, phase] (StartReply &reply) {
+    this->StartAck(reply, phase);
+  };
+  while ((subcmd = cmd_->GetNextSubCmd(cmd_map_)) != nullptr) {
+    req.cmd = subcmd;
+    commo_->SendStart(cmd_->GetPar(), req, this, callback);
+  }
+}
+
+void Coordinator::StartAck(StartReply &reply, const phase_t &phase) {
+  ScopedLock(this->mtx_);
+  if (phase != phase_) return;
+  if (reply->res == REJECT) {
+    phase_++; 
 //    groups_ = cmd_.GetGroups();
-//    cmd_.reset();
-//  } else {
-//    cmd_->merge(reply->output);
-//    if (cmd_.HasMoreSubCmd(subcmds_) && cmd_.Has) {
-//      this->Start(cmd_);
-//    } else {
-//      this->prepare();
-//    }
-//  }
-//
-//
-//  if (!ch->commit_.load()) {
-//    if (ch->n_start_sent_ == 0) {
-//      this->finish(ch);
-//    }
-//  } else {
-//    if (ch->start_callback(pi, res, output)) {
-//      this->LegacyStart(ch);
-//    } else if (ch->n_started_ == ch->n_pieces_) {
-//      if (this->mode_ == MODE_OCC) {
-//        this->prepare(ch);
-//      } else if (this->mode_ == MODE_2PL) {
-//        this->prepare(ch);
-//      }
-//    }
-//  }
-//}
+    Abort(); 
+  } else {
+    cmd_.Merge(reply->cmd);
+    if (cmd_.HasMoreSubCmd(cmdmap)) {
+      Start();
+    } else {
+      phase_++;
+      Prepare();
+    }
+  } 
+}
+
 
 void Coordinator::LegacyStart(TxnChopper *ch) {
   // new txn id for every new and retry.
@@ -199,7 +183,6 @@ void Coordinator::LegacyStart(TxnChopper *ch) {
   int32_t server_id;
   int res;
   int output_size;
-
   while ((res = ch->next_piece(input,
                                output_size,
                                server_id,
@@ -220,6 +203,7 @@ void Coordinator::LegacyStart(TxnChopper *ch) {
     site_piece_[server_id]++;
   }
 }
+
 
 void Coordinator::LegacyStartAck(TxnChopper *ch, int pi, Future *fu) {
   ScopedLock(this->mtx_);
@@ -248,197 +232,8 @@ void Coordinator::LegacyStartAck(TxnChopper *ch, int pi, Future *fu) {
   }
 }
 
-
 void Coordinator::naive_batch_start(TxnChopper *ch) {
-//   // new txn id for every new and retry.
-//   RequestHeader header = gen_header(ch);
-//
-//   int pi;
-//
-//   std::vector<Value> *input = nullptr;
-//   int32_t server_id;
-//   int     res;
-//   int     output_size;
-//   std::unordered_map<int32_t, deptran_batch_start_t> serv_start_reqs;
-//
-//   while ((res =
-//             ch->next_piece(input, output_size, server_id, pi,
-//                            header.p_type)) == 0) {
-//     header.pid = next_pie_id();
-//     auto it = serv_start_reqs.find(server_id);
-//
-//     if (it == serv_start_reqs.end()) {
-//       it =
-//         serv_start_reqs.insert(std::pair<int32_t,
-//                                          deptran_batch_start_t>(server_id,
-//                                                                 deptran_batch_start_t()))
-//         .first;
-//     }
-//     verify(input != nullptr);
-//     it->second.headers.push_back(header);
-//     it->second.inputs.push_back(*input);
-//     it->second.output_sizes.push_back(output_size);
-//     it->second.pis.push_back(pi);
-//   }
-//
-//   for (auto it = serv_start_reqs.begin(); it != serv_start_reqs.end(); it++) {
-//     // remember this a asynchronous call! variable funtional range is important!
-//     std::vector<int> pis(it->second.pis);
-//     std::vector<RequestHeader> headers(it->second.headers);
-//
-//     it->second.fuattr.callback = [ch, pis, this, headers](Future * fu) {
-//       bool callback = false;
-//       {
-//         Log::debug("Batch back");
-//         ScopedLock(this->mtx_);
-//
-//         std::vector<i32> results;
-//         std::vector<std::vector<Value> > outputs;
-//         fu->get_reply() >> results >> outputs;
-//             verify(pis.size() == results.size());
-//
-//         for (int i = 0; i < results.size(); i++) Log::debug("result[%d]: %d",
-//                                                             i,
-//                                                             results[i]);
-//
-//         bool callback_ret = false, call_finish = false;
-//
-//         for (int i = 0; i < pis.size(); i++) {
-//           int pi                     = pis[i];
-//           int res                    = results[i];
-//           std::vector<Value>& output = outputs[i];
-//
-//           ch->n_started_++;
-//           ch->n_start_sent_--;
-//
-//           if (res == REJECT) {
-//             verify(this->mode_ == MODE_2PL);
-//             ch->commit_.store(false);
-//           }
-//
-//           if (!ch->commit_.load()) {
-//             if (ch->n_start_sent_ == 0) {
-//               call_finish = true;
-//
-//               // this->finish(ch);
-//             }
-//           } else {
-//             if (ch->start_callback(pi, res, output)) callback_ret = true;
-//           }
-//         }
-//
-//         if (call_finish) {
-//           this->finish(ch);
-//         } else if (callback_ret) {
-//           this->naive_batch_start(ch);
-//         } else if (ch->n_started_ == ch->n_pieces_) {
-//           if (this->mode_ == MODE_OCC) {
-//             this->prepare(ch);
-//           } else if (this->mode_ == MODE_NONE) {
-//             callback        = true;
-//             ch->reply_.res_ = SUCCESS;
-//           } else if (this->mode_ == MODE_2PL) {
-//             this->prepare(ch);
-//           }
-//         }
-//       }
-//
-//       if (callback) {
-//         ch->reply_.res_ = SUCCESS;
-//         TxnReply& txn_reply_buf = ch->get_reply();
-//         double    last_latency  = ch->last_attempt_latency();
-//         this->report(txn_reply_buf, last_latency
-// #ifdef TXN_STAT
-//                      , ch
-// #endif // ifdef TXN_STAT
-//                      );
-//         ch->callback_(txn_reply_buf);
-//       }
-//     }
-//
-//     RococoProxy *proxy = vec_rpc_proxy_[it->first];
-//     Future::safe_release(proxy->async_naive_batch_start_pie(
-//                            it->second.headers,
-//                            it->second.inputs,
-//                            it->second.output_sizes,
-//                            it->second.fuattr
-//                            ));
-//     Log::debug("naive start sent: tid: %ld", header.tid);
-//     ch->n_start_sent_ += it->second.headers.size();
-//   }
 }
-
-///** thread safe */
-//void Coordinator::batch_start(TxnChopper *ch) {
-//  // new txn id for every new and retry.
-//  BatchRequestHeader batch_header = gen_batch_header(ch);
-//
-//  std::vector<int> pi;
-//  std::vector<Value> input;
-//  int32_t server_id;
-//  int res;
-//
-//  while ((res =
-//              ch->batch_next_piece(&batch_header, input, server_id, pi,
-//                                   this)) == 0) {
-//    rrr::FutureAttr fuattr;
-//
-//    // remember this a asynchronous call! variable funtional range is important!
-//    fuattr.callback = [ch, pi, this](Future *fu) {
-//      bool callback = false;
-//      {
-//        ScopedLock(this->mtx_);
-//
-//        i32 res;
-//        std::vector<mdb::Value> output;
-//        fu->get_reply() >> res >> output;
-//        ch->n_started_ += pi.size();
-//        ch->n_start_sent_--;
-//
-//        if (res == REJECT) {
-//          verify(mode_ == MODE_2PL);
-//          ch->commit_.store(false);
-//        }
-//
-//        if (!ch->commit_.load()) {
-//          if (ch->n_start_sent_ == 0) this->finish(ch);
-//        } else {
-//          BatchStartArgsHelper bsah;
-//          bsah.init_output_client(&output, pi.size());
-//
-//          if (ch->start_callback(pi, res, bsah)) this->batch_start(ch);
-//          else if (ch->n_started_ == ch->n_pieces_) {
-//            if (this->mode_ == MODE_OCC) {
-//              this->prepare(ch);
-//            } else if (this->mode_ == MODE_NONE) {
-//              callback = true;
-//              ch->reply_.res_ = SUCCESS;
-//            } else if (this->mode_ == MODE_2PL) {
-//              this->prepare(ch);
-//            }
-//          }
-//        }
-//      }
-//
-//      if (callback) {
-//        TxnReply &txn_reply_buf = ch->get_reply();
-//        double last_latency = ch->last_attempt_latency();
-//        this->report(txn_reply_buf, last_latency
-//#ifdef TXN_STAT
-//            , ch
-//#endif // ifdef TXN_STAT
-//        );
-//        ch->callback_(txn_reply_buf);
-//        delete ch;
-//      }
-//    };
-//
-//    RococoProxy *proxy = vec_rpc_proxy_[server_id];
-//    Future::safe_release(proxy->async_batch_start_pie(batch_header, input,
-//                                                      fuattr));
-//    ch->n_start_sent_++;
-//  }
-//}
 
 /** caller should be thread_safe */
 void Coordinator::prepare(TxnChopper *ch) {

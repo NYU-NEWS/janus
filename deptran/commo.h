@@ -5,8 +5,11 @@
 #include "graph.h"
 #include "graph_marshaler.h"
 #include "rcc_rpc.h"
+#include "msg.h"
 
 namespace rococo {
+
+class Coordinator;
 
 class Commo {
  public:
@@ -20,6 +23,13 @@ class Commo {
                  std::vector<Value> &input,
                  int32_t output_size,
                  std::function<void(Future *fu)> &callback);
-  void SendPrepare(groupid_t gid, txnid_t tid, std::vector<int32_t> &sids, std::function<void(Future *fu)> &callback);
+  void SendStart(parid_t par_id, 
+                 StartRequest &req, 
+                 Coordinator *coo,
+                 std::function<void(StartReply&)> &callback);
+  void SendPrepare(groupid_t gid, 
+                   txnid_t tid, 
+                   std::vector<int32_t> &sids, 
+                   std::function<void(Future *fu)> &callback);
 };
 } // namespace rococo

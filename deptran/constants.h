@@ -4,10 +4,14 @@ namespace rococo {
 
 #define ballot_t uint64_t
 #define cooid_t uint32_t
-#define status_t uint32_t
 #define txnid_t uint64_t
 #define cmdid_t uint64_t // txnid and cmdid are the same thing
+#define innid_t uint32_t
+#define parid_t uint32_t
+#define phase_t uint32_t
+#define status_t uint32_t
 #define txntype_t uint32_t
+#define cmdtype_t uint32_t
 #define groupid_t uint32_t
 
 /** read and write type */
@@ -35,11 +39,12 @@ namespace rococo {
 #define REJECT      (-1)
 #define DELAYED     (1)
 
-#define MODE_NONE   (0)
-#define MODE_2PL    (1)
-#define MODE_OCC    (2)
-#define MODE_RCC    (4)
-#define MODE_RO6    (8)
+#define MODE_NONE   (0x00)
+#define MODE_2PL    (0x01)
+#define MODE_OCC    (0x02)
+#define MODE_RCC    (0x04)
+#define MODE_RO6    (0x08)
+#define MODE_BRQ    (0x10)
 #define MODE_RPC_NULL   (64)
 
     // deprecated.
