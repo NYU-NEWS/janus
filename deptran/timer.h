@@ -10,15 +10,15 @@
 namespace deptran {
 
 class TimerLoop {
-private:
-    static void alarm_handler(int sig);
-    static void set_alarm(unsigned int time);
-    static bool run_;
-    static pthread_mutex_t run_mutex_;
+ private:
+  static void alarm_handler(int sig);
+  static void set_alarm(unsigned int time);
+  static bool run_;
+  static pthread_mutex_t run_mutex_;
 
-public:
-    static void init(uint32_t time = 60);
-    static bool is_run();
+ public:
+  static void init(uint32_t time = 60);
+  static bool is_run();
 };
 
 }

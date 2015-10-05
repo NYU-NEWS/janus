@@ -1,9 +1,10 @@
 #ifndef TPCC_PIECE_H_
 #define TPCC_PIECE_H_
 
+#include "piece.h"
+
 namespace rococo {
 
-class Piece;
 
 // ======= New order txn =======
 #define TPCC_NEW_ORDER              10
@@ -62,37 +63,37 @@ extern char TPCC_TB_STOCK[];
 extern char TPCC_TB_ORDER_LINE[];
 extern char TPCC_TB_ORDER_C_ID_SECONDARY[];
 
-class TpccPiece : public Piece {
-protected:
-    // new order
-    virtual void reg_new_order();
+class TpccPiece: public Piece {
+ protected:
+  // new order
+  virtual void reg_new_order();
 
-    // payment
-    virtual void reg_payment();
+  // payment
+  virtual void reg_payment();
 
-    //void reg_payment_remote();
-    //void reg_payment_remote_case1();
-    //void reg_payment_remote_case2();
+  //void reg_payment_remote();
+  //void reg_payment_remote_case1();
+  //void reg_payment_remote_case2();
 
-    //void reg_payment_home();
-    //void reg_payment_home_case1();
-    //void reg_payment_home_case2();
+  //void reg_payment_home();
+  //void reg_payment_home_case1();
+  //void reg_payment_home_case2();
 
-    // order status
-    virtual void reg_order_status();
+  // order status
+  virtual void reg_order_status();
 
-    // delivery
-    virtual void reg_delivery();
+  // delivery
+  virtual void reg_delivery();
 
-    // stock level
-    virtual void reg_stock_level();
+  // stock level
+  virtual void reg_stock_level();
 
-public:
-    virtual void reg_all();
+ public:
+  virtual void reg_all();
 
-    TpccPiece();
+  TpccPiece();
 
-    virtual ~TpccPiece();
+  virtual ~TpccPiece();
 
 };
 

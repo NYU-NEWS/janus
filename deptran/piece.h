@@ -5,12 +5,12 @@
 namespace rococo {
 
 class Piece {
-public:
-    static Piece *get_piece(int benchmark);
+ public:
+  static Piece *get_piece(int benchmark);
 
-    virtual void reg_all() = 0;
+  virtual void reg_all() = 0;
 
-    virtual ~Piece() {}
+  virtual ~Piece() { }
 };
 
 
@@ -64,7 +64,7 @@ public:
         verify(ret.second); \
         verify(row->schema_); \
     }
-    
+
 #define RCC_LOAD_ROW(row, index) \
     if ((IS_MODE_RCC || IS_MODE_RO6) && !(IN_PHASE_1)) { \
         auto it = row_map->find(index); \
@@ -91,6 +91,5 @@ public:
     default: \
         verify(0); \
     }
-
 
 } // namespace rcc

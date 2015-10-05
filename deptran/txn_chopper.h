@@ -63,8 +63,8 @@ class TxnChopper : public Command {
   bool early_return_;
 
  public:
-  uint64_t txn_id_;
-  uint32_t txn_type_;
+  txnid_t txn_id_;
+  txntype_t txn_type_;
 
   Graph<TxnInfo> gra_;
 
