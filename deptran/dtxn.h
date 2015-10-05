@@ -4,6 +4,7 @@
 #include "dep_graph.h"
 #include "rcc_row.h"
 #include "ro6_row.h"
+#include "multi_value.h"
 
 namespace rococo {
 
@@ -38,7 +39,6 @@ struct entry_t {
     }
 };
 
-#include "multi_value.h"
 
 typedef std::map<
     int, 

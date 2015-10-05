@@ -2,7 +2,9 @@
 #define ALL_H_
 
 
-#include "__dep__.h"
+//#include "__dep__.h"
+#include "marshal-value.h"
+
 
 // rpc library
 
@@ -36,7 +38,6 @@ static dummy_class dummy___;
 #include "dtxn.h"
 #include "txn_reg.h"
 #include "rcc.h"
-#include "marshal-value.h"
 #include "rcc_service.h"
 #include "coordinator.h"
 #include "sharding.h"

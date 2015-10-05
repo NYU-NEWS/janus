@@ -12,21 +12,6 @@ namespace rococo {
 //    }
 //}
 
-int MultiValue::compare(const MultiValue& mv) const {
-    int i = 0;
-    for (i = 0; i < n_ && i < mv.n_; i++) {
-        int r = v_[i].compare(mv.v_[i]);
-        if (r != 0) {
-            return r;
-        }
-    }
-    if (i < n_) {
-        return 1;
-    } else if (i < mv.n_) {
-        return -1;
-    }
-    return 0;
-}
 
 map<std::pair<base::i32, base::i32>,
     txn_handler_defer_pair_t> TxnRegistry::all_;

@@ -95,7 +95,7 @@ add_library(ROCOCO
         ${MEMDB_SRC}
         ${BENCH_SRC}
         ${DEPTRAN_SRC}
-)
+        deptran/multi_value.cc.cpp deptran/multi_value.cc.h)
 
 add_executable(ROCOCO_SERVER deptran/s_main.cc)
 add_executable(ROCOCO_CLIENT deptran/c_main.cc)

@@ -2,10 +2,10 @@
 #define SHARDING_H_
 
 #include "__dep__.h"
+#include "multi_value.h"
 
 namespace rococo {
 class Config;
-class MultiValue;
 
 // TODO These below seem to be in the wrong place.
 Value  value_get_zero(Value::kind k);
