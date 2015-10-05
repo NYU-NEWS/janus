@@ -121,8 +121,8 @@ class TxnChopper : public Command {
 
   virtual bool IsFinished(){verify(0);}
   virtual void Merge(Command&);
-  virtual bool HasMoreSubCmd(std::map<uint64_t, Command*>&);
-  virtual Command* GetNextSubCmd(std::map<uint64_t, Command*>&);
+  virtual bool HasMoreSubCmd(std::map<innid_t, Command*>&);
+  virtual Command* GetNextSubCmd(std::map<innid_t, Command*>&);
 
   inline bool can_retry() {
     return (max_try_ == 0 || n_try_ < max_try_);

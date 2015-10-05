@@ -16,7 +16,7 @@ TxnChopper::TxnChopper() {
   early_return_ = Config::get_config()->do_early_return();
 }
 
-Command* TxnChopper::GetNextSubCmd(map<uint64_t, Command*> &cmdmap) {
+Command* TxnChopper::GetNextSubCmd(map<innid_t, Command*> &cmdmap) {
   if (n_started_ == n_pieces_) {
     return nullptr;  
   }
@@ -134,7 +134,7 @@ void TxnChopper::Merge(Command &cmd) {
   this->start_callback(pi, SUCCESS, output);
 }
 
-bool TxnChopper::HasMoreSubCmd(map<uint64_t, Command*>& cmdmap) {
+bool TxnChopper::HasMoreSubCmd(map<innid_t, Command*>& cmdmap) {
   // TODO   
   return true; 
 }
