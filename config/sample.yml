@@ -1,9 +1,32 @@
-server: # each line is replicas of a site
-  - s101, s201, s301
-  - s102, s202, s302
+#
+# host machine
+#   physical process as container  
+#     logical site as a thread
+# site --> process --> host
+#   
+# site: logical site (either as server/coordinator), which lives in a thread (may share thread 
+# process 
+# host is  
 
-client: # host: n_thread
-  - c1: 8
+site:
+  - server: # each line is a partition
+    - s101, s201, s301
+    - s102, s202, s302
+  - client: # each line is
+    - c1-c8 
+
+process:
+  - s101: localhost:8881
+  - s102: localhost:8882
+  - s201: localhost:8883
+  - s202: localhost:8884
+  - s301: localhost:8885
+  - s302: localhost:8886
+  - c1-c8: localhost
+
+# optional 
+host:
+  - localhost: 127.0.0.1
 
 mode:
   - cc: rcc # concurrency control
@@ -173,11 +196,3 @@ shard:
   - stock:      MOD
   - order_line: MOD
 
-host:
-  - s101: 192.168.0.1:8881
-  - s102: 192.168.0.1:8882
-  - s201: 192.168.0.1:8883
-  - s202: 192.168.0.1:8884
-  - s301: 192.168.0.1:8885
-  - s302: 192.168.0.1:8886
-  - c1: 192.168.5.21
