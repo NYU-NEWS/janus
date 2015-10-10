@@ -133,6 +133,7 @@ class Coordinator {
   void prepare(TxnChopper *ch);
   void PrepareAck(TxnChopper *ch, Future *fu);
   void finish(TxnChopper *ch);
+  void FinishAck(TxnChopper *ch, Future *fu);
   void Prepare() {verify(0);}
   void Abort() {verify(0);}
 

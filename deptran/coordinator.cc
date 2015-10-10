@@ -288,58 +288,7 @@ void Coordinator::finish(TxnChopper *ch) {
   // commit or abort piece
   rrr::FutureAttr fuattr;
   fuattr.callback = [ch, this](Future *fu) {
-    bool callback = false;
-    bool retry = false;
-    {
-      ScopedLock(this->mtx_);
-      ch->n_finished_++;
-
-      Log::debug("finish");
-
-      if (ch->n_finished_ == ch->proxies_.size()) {
-        if ((ch->reply_.res_ == REJECT) && ch->can_retry()) {
-          retry = true;
-        } else {
-          callback = true;
-        }
-      }
-    }
-    Log::debug("callback: %s, retry: %s", callback ? "True" : "False",
-               retry ? "True" : "False");
-
-    if (retry) {
-      // random sleep before restart
-      //            struct timespec sleep_time, buf;
-      //            sleep_time.tv_sec = coo_id_;//RandomGenerator::rand(0, 4);
-      //            sleep_time.tv_nsec = 0;//RandomGenerator::rand(0, 1000 *
-      // 1000 * 1000 - 1);
-      //            nanosleep(&sleep_time, &buf);
-      //            uint64_t sleep_time = coo_id_ * 1000000 / 2;
-      //            apr_sleep(sleep_time);
-
-      this->restart(ch);
-    }
-
-    if (callback) {
-      // generate a reply and callback.
-      TxnReply &txn_reply_buf = ch->get_reply();
-      double last_latency = ch->last_attempt_latency();
-      this->report(txn_reply_buf, last_latency
-#ifdef TXN_STAT
-          , ch
-#endif // ifdef TXN_STAT
-      );
-
-      // if (retry_wait_ && txn_reply_buf.res_ != SUCCESS) {
-      //    struct timespec sleep_time, buf;
-      //    sleep_time.tv_sec = 0;
-      //    sleep_time.tv_nsec = RandomGenerator::rand(1000 * 1000, 10 * 1000 *
-      // 1000);
-      //    nanosleep(&sleep_time, &buf);
-      // }
-      ch->callback_(txn_reply_buf);
-      delete ch;
-    }
+    this->FinishAck(ch, fu);
   };
 
   if (ch->commit_.load()) {
@@ -360,6 +309,61 @@ void Coordinator::finish(TxnChopper *ch) {
       Future::safe_release(proxy->async_abort_txn(ch->txn_id_, fuattr));
       site_abort_[rp]++;
     }
+  }
+}
+
+void Coordinator::FinishAck(TxnChopper *ch, Future *fu) {
+  bool callback = false;
+  bool retry = false;
+  {
+    ScopedLock(this->mtx_);
+    ch->n_finished_++;
+
+    Log::debug("finish");
+
+    if (ch->n_finished_ == ch->proxies_.size()) {
+      if ((ch->reply_.res_ == REJECT) && ch->can_retry()) {
+        retry = true;
+      } else {
+        callback = true;
+      }
+    }
+  }
+  Log::debug("callback: %s, retry: %s", callback ? "True" : "False",
+             retry ? "True" : "False");
+
+  if (retry) {
+    // random sleep before restart
+    //            struct timespec sleep_time, buf;
+    //            sleep_time.tv_sec = coo_id_;//RandomGenerator::rand(0, 4);
+    //            sleep_time.tv_nsec = 0;//RandomGenerator::rand(0, 1000 *
+    // 1000 * 1000 - 1);
+    //            nanosleep(&sleep_time, &buf);
+    //            uint64_t sleep_time = coo_id_ * 1000000 / 2;
+    //            apr_sleep(sleep_time);
+
+    this->restart(ch);
+  }
+
+  if (callback) {
+    // generate a reply and callback.
+    TxnReply &txn_reply_buf = ch->get_reply();
+    double last_latency = ch->last_attempt_latency();
+    this->report(txn_reply_buf, last_latency
+#ifdef TXN_STAT
+        , ch
+#endif // ifdef TXN_STAT
+    );
+
+    // if (retry_wait_ && txn_reply_buf.res_ != SUCCESS) {
+    //    struct timespec sleep_time, buf;
+    //    sleep_time.tv_sec = 0;
+    //    sleep_time.tv_nsec = RandomGenerator::rand(1000 * 1000, 10 * 1000 *
+    // 1000);
+    //    nanosleep(&sleep_time, &buf);
+    // }
+    ch->callback_(txn_reply_buf);
+    delete ch;
   }
 }
 
