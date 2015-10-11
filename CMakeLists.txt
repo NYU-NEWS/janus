@@ -104,13 +104,13 @@ target_link_libraries(
     ROCOCO_SERVER
     ROCOCO
     ${CMAKE_THREAD_LIBS_INIT}
-    )
+)
 
 target_link_libraries(
     ROCOCO_CLIENT
     ROCOCO
     ${CMAKE_THREAD_LIBS_INIT}
-    )
+)
 
 #add_executable(ROCOCO_SERVER, deptran/s_main.cc)
 #add_executable(ROCOCO_CLIENT ${SOURCE_FILES})
