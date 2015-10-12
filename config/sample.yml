@@ -10,28 +10,29 @@
 
 # site - partition map
 site:
-  - server: # each line is a partition
-    - s101:8881, s201:8882, s301:8883
-    - s102:8884, s202:8885, s302:8886
-  - client: # each line is a partition (optional)
-    - c1, c2, c3, c4
+  server: # each line is a partition
+    - ["s101:8881", "s201:8882", "s301:8883"]
+    - ["s102:8884", "s202:8885", "s302:8886"]
+  client: # each line is a partition
+    - ["c1", "c2"]
+    - ["c3", "c4"]
 
 # site - process map
 process:
-  - s101: localhost
-  - s102: localhost
-  - s201: localhost
-  - s202: localhost
-  - s301: localhost
-  - s302: localhost
-  - c1: localhost
-  - c2: localhost
-  - c3: localhost
-  - c4: localhost
+  s101: localhost
+  s102: localhost
+  s201: localhost
+  s202: localhost
+  s301: localhost
+  s302: localhost
+  c1: localhost
+  c2: localhost
+  c3: localhost
+  c4: localhost
 
 # process - host map
 host:
-  - localhost: 127.0.0.1
+  localhost: 127.0.0.1
 
 mode:
   - cc: rcc # concurrency control

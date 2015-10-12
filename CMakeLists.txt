@@ -9,6 +9,9 @@ pkg_check_modules(APR REQUIRED apr-1)
 pkg_check_modules(PYTHON2 REQUIRED python2)
 pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
 
+FIND_PACKAGE( Boost COMPONENTS system filesystem REQUIRED )
+INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
+
 # does not seem to solve the problem
 #
 #find_path(YAML_CPP_INCLUDE_DIR
@@ -109,22 +112,23 @@ add_library(ROCOCO
 )
 
 add_executable(ROCOCO_SERVER deptran/s_main.cc)
-add_executable(ROCOCO_CLIENT deptran/c_main.cc)
+#add_executable(ROCOCO_CLIENT deptran/c_main.cc)
 
 target_link_libraries(
     ROCOCO_SERVER
     ROCOCO
     ${CMAKE_THREAD_LIBS_INIT}
     ${YAML_CPP_LIBRARIES}
+    ${Boost_LIBRARIES}
 )
-
-target_link_libraries(
-    ROCOCO_CLIENT
-    ROCOCO
-    ${CMAKE_THREAD_LIBS_INIT}
-    ${YAML_CPP_LIBRARIES}
-
-)
+#
+#target_link_libraries(
+#    ROCOCO_CLIENT
+#    ROCOCO
+#    ${CMAKE_THREAD_LIBS_INIT}
+#    ${YAML_CPP_LIBRARIES}
+#
+#)
 
 #add_executable(ROCOCO_SERVER, deptran/s_main.cc)
 #add_executable(ROCOCO_CLIENT ${SOURCE_FILES})

@@ -46,8 +46,9 @@ Config * Config::GetConfig() {
 int Config::CreateConfig(int argc, char **argv) {
   if (config_s != NULL) return -1;
 
-  std::string filename;
-  std::string proc_name;
+  std::string filename = "./config/sample.yml";
+  std::string proc_name = "localhost"; // default as "localhost"
+  std::string logging_path = "./disk_log/";
   unsigned int sid = 0, cid = 0;
   char *end_ptr    = NULL;
 
@@ -55,7 +56,6 @@ int Config::CreateConfig(int argc, char **argv) {
   char *ctrl_hostname           = NULL;
   char *ctrl_key                = NULL;
   char *ctrl_init               = NULL /*, *ctrl_run = NULL*/;
-  char *logging_path            = NULL;
   unsigned int ctrl_port        = 0;
   unsigned int ctrl_timeout     = 0;
   unsigned int duration         = 0;
@@ -118,8 +118,7 @@ int Config::CreateConfig(int argc, char **argv) {
         break;
       case 'r': // logging path
         // TODO remove
-        logging_path = (char *)malloc((strlen(optarg) + 1) * sizeof(char));
-        strcpy(logging_path, optarg);
+        logging_path = string(optarg);
         break;
       case 'p':
         // TODO remove
@@ -183,7 +182,7 @@ int Config::CreateConfig(int argc, char **argv) {
     }
   }
 
-  if ((server_or_client != 0) && (server_or_client != 1)) return -5;
+//  if ((server_or_client != 0) && (server_or_client != 1)) return -5;
   config_s = new Config(
     filename,
     ctrl_hostname,
@@ -197,8 +196,7 @@ int Config::CreateConfig(int argc, char **argv) {
     heart_beat,
     single_server,
     server_or_client,
-    logging_path,
-    hostspath);
+    logging_path);
   config_s->proc_name_ = proc_name;
   config_s->Load();
   return 0;
@@ -223,8 +221,7 @@ Config::Config(std::string   & filename,
                bool            heart_beat,
                single_server_t single_server,
                int32_t         server_or_client,
-               char           *logging_path,
-               char           *hostspath) :
+               string           logging_path) :
   ctrl_hostname_(ctrl_hostname),
   ctrl_port_(ctrl_port),
   ctrl_timeout_(ctrl_timeout),
@@ -240,7 +237,7 @@ Config::Config(std::string   & filename,
 }
 
 void Config::Load() {
-  std::string configs[2] = {file_name_, "./config/sample.yml" };
+  std::string configs[1] = {file_name_};
 
   for (auto& name: configs) {
     if (boost::algorithm::ends_with(name, "yml")) {
@@ -291,8 +288,9 @@ void Config::LoadSiteYML(YAML::Node config) {
     auto par = *it;
     vector<string> v;
     for (auto iitt = par.begin(); iitt != par.end(); iitt++) {
-      auto site_addr = iitt->as<string>();
-      SiteInfo *info = new SiteInfo(next_site_id_++, site_addr);
+      auto site_name = iitt->as<string>();
+      SiteInfo *info = new SiteInfo(next_site_id_++);
+      info->name = site_name;
       info->server_or_client_ = 1;
       site_infos_[info->name] = info;
       v.push_back(info->name);

@@ -2,7 +2,7 @@
 #include "all.h"
 
 
-rrr::PollMgr *poll_mgr_g = nullptr;
+rrr::PollMgr *svr_poll_mgr_g = nullptr;
 
 namespace rococo {
 
@@ -19,8 +19,8 @@ RococoProxy* DepGraph::get_server_proxy(uint32_t id) {
     verify(id < rpc_proxies_.size());
     RococoProxy *rpc_proxy = rpc_proxies_[id];
     if (rpc_proxy == nullptr) {
-        verify(poll_mgr_g != nullptr);
-        rrr::PollMgr *rpc_poll = poll_mgr_g;
+        verify(svr_poll_mgr_g != nullptr);
+        rrr::PollMgr *rpc_poll = svr_poll_mgr_g;
         auto &addr = server_addrs_[id];
         rrr::Client *rpc_cli = new rrr::Client(rpc_poll);
         int ret = rpc_cli->connect(addr.c_str());

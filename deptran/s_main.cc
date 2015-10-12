@@ -3,17 +3,19 @@
 # include <google/profiler.h>
 #endif // ifdef CPU_PROFILE
 
+#include "client_worker.h"
+
 using namespace rococo;
 
-extern rrr::PollMgr *poll_mgr_g;
+extern rrr::PollMgr *svr_poll_mgr_g;
 static RococoServiceImpl *rsi_g = nullptr;
-static rrr::Server *server_g = nullptr;
+static rrr::Server *svr_server_g = nullptr;
 static base::ThreadPool *thread_pool_g = nullptr;
 
 
-static rrr::PollMgr *hb_poll_mgr_g = NULL;
+static rrr::PollMgr *svr_hb_poll_mgr_g = NULL;
 static ServerControlServiceImpl *scsi_g = NULL;
-static rrr::Server *hb_server_g = NULL;
+static rrr::Server *svr_hb_server_g = NULL;
 static base::ThreadPool *hb_thread_pool_g = NULL;
 
 static void server_pop_table() {
@@ -66,14 +68,14 @@ void server_setup_heartbeat() {
   auto timeout = Config::GetConfig()->get_ctrl_timeout();
   scsi_g = new ServerControlServiceImpl(timeout);
   int n_io_threads = 1;
-  hb_poll_mgr_g = new rrr::PollMgr(n_io_threads);
+  svr_hb_poll_mgr_g = new rrr::PollMgr(n_io_threads);
   hb_thread_pool_g = new rrr::ThreadPool(1);
-  hb_server_g = new rrr::Server(hb_poll_mgr_g, hb_thread_pool_g);
-  hb_server_g->reg(scsi_g);
+  svr_hb_server_g = new rrr::Server(svr_hb_poll_mgr_g, hb_thread_pool_g);
+  svr_hb_server_g->reg(scsi_g);
   auto port = Config::GetConfig()->get_ctrl_port();
   std::string addr_port = std::string("0.0.0.0:") +
       std::to_string(port);
-  hb_server_g->start(addr_port.c_str());
+  svr_hb_server_g->start(addr_port.c_str());
 }
 
 void server_setup_service() {
@@ -92,16 +94,16 @@ void server_setup_service() {
 
   // init rrr::PollMgr 1 threads
   int n_io_threads = 1;
-  poll_mgr_g = new rrr::PollMgr(n_io_threads);
+  svr_poll_mgr_g = new rrr::PollMgr(n_io_threads);
 
   auto &alarm = TimeoutALock::get_alarm_s();
-  poll_mgr_g->add(&alarm);
+  svr_poll_mgr_g->add(&alarm);
 
   // TODO replace below with set_stat
   auto &recorder = ((RococoServiceImpl *) rsi_g)->recorder_;
 
   if (recorder != NULL) {
-    poll_mgr_g->add(recorder);
+    svr_poll_mgr_g->add(recorder);
   }
 
   if (scsi_g) {
@@ -129,18 +131,18 @@ void server_setup_service() {
   thread_pool_g = new base::ThreadPool(num_threads);
 
   // init rrr::Server
-  server_g = new rrr::Server(poll_mgr_g, thread_pool_g);
+  svr_server_g = new rrr::Server(svr_poll_mgr_g, thread_pool_g);
 
   // reg service
-  server_g->reg(rsi_g);
+  svr_server_g->reg(rsi_g);
 
   // start rpc server
-  server_g->start(bind_addr.c_str());
+  svr_server_g->start(bind_addr.c_str());
 
   Log_info("Server ready");
 
 
-  if (hb_server_g != nullptr) {
+  if (svr_hb_server_g != nullptr) {
 #ifdef CPU_PROFILE
     char prof_file[1024];
     verify(0 < Config::get_config()->get_prof_filename(prof_file));
@@ -150,9 +152,9 @@ void server_setup_service() {
 #endif // ifdef CPU_PROFILE
     scsi_g->set_ready();
     scsi_g->wait_for_shutdown();
-    delete hb_server_g;
+    delete svr_hb_server_g;
     delete scsi_g;
-    hb_poll_mgr_g->release();
+    svr_hb_poll_mgr_g->release();
     hb_thread_pool_g->release();
 
     auto &recorder = ((DepTranServiceImpl *) rsi_g)->recorder_;
@@ -179,31 +181,117 @@ void server_setup_service() {
   Log::info("asking other server finish request count: %d",
             ((DepTranServiceImpl *) rsi_g)->n_asking_);
 
-  delete server_g;
+  delete svr_server_g;
   delete rsi_g;
   thread_pool_g->release();
-  poll_mgr_g->release();
+  svr_poll_mgr_g->release();
   delete DTxnMgr::get_sole_mgr();
   RandomGenerator::destroy();
   Config::DestroyConfig();
 }
 
 
+static ClientControlServiceImpl *ccsi_g = nullptr;
+static rrr::PollMgr *cli_poll_mgr_g = nullptr;
+static rrr::Server *cli_hb_server_g = nullptr;
+
+void client_setup_heartbeat() {
+  std::map<int32_t, std::string> txn_types;
+  TxnRequestFactory::get_txn_types(txn_types);
+  unsigned int num_threads = Config::GetConfig()->get_num_threads(); // func
+  bool hb = Config::GetConfig()->do_heart_beat();
+  if (hb) {
+    // setup controller rpc server
+    ccsi_g = new ClientControlServiceImpl(num_threads, txn_types);
+    int n_io_threads = 1;
+    cli_poll_mgr_g = new rrr::PollMgr(n_io_threads);
+    base::ThreadPool *thread_pool = new base::ThreadPool(1);
+    cli_hb_server_g = new rrr::Server(cli_poll_mgr_g, thread_pool);
+    cli_hb_server_g->reg(ccsi_g);
+    cli_hb_server_g->start(std::string("0.0.0.0:").append(
+        std::to_string(Config::GetConfig()->get_ctrl_port())).c_str());
+  }
+}
+
+void client_setup_request_factory() {
+  TxnRequestFactory::init_txn_req(nullptr, 0);
+}
+
+void client_launch_workers() {
+  uint32_t duration = Config::GetConfig()->get_duration();
+  if (duration == 0)
+    verify(0);
+
+  std::vector<std::string> servers;
+  uint32_t num_site = Config::GetConfig()->get_all_site_addr(servers);
+  if (num_site == 0)
+    verify(0);
+  // load some common configuration
+  int benchmark = Config::GetConfig()->get_benchmark();
+  int mode = Config::GetConfig()->get_mode();
+  uint32_t concurrent_txn = Config::GetConfig()->get_concurrent_txn();
+  bool batch_start = Config::GetConfig()->get_batch_start();
+  // start client workers in new threads.
+  vector<Config::SiteInfo*> infos = Config::GetConfig()->GetMyClients();
+  vector<std::thread> client_threads;
+  vector<ClientWorker> workers(infos.size());
+  for (uint32_t thread_index = 0; thread_index < infos.size(); thread_index++) {
+    workers[thread_index].servers = &servers;
+    workers[thread_index].coo_id = infos[thread_index]->id;
+    workers[thread_index].benchmark = benchmark;
+    workers[thread_index].mode = mode;
+    workers[thread_index].batch_start = batch_start;
+    workers[thread_index].id = thread_index;
+    workers[thread_index].duration = duration;
+    workers[thread_index].ccsi = ccsi_g;
+    workers[thread_index].concurrent_txn = concurrent_txn;
+    client_threads.push_back(std::thread(&ClientWorker::work,
+                                         &workers[thread_index]));
+  }
+  for (auto &th: client_threads) {
+    th.join();
+  }
+
+  TxnRequestFactory::destroy();
+  RandomGenerator::destroy();
+  Config::DestroyConfig();
+}
+
+
+void check_current_path() {
+  auto path = boost::filesystem::current_path();
+  std::cout << "Current path is : " << path << std::endl;
+}
+
 int main(int argc, char *argv[]) {
   int ret;
+  check_current_path();
 
   // read configuration
   if (0 != (ret = Config::CreateConfig(argc, argv))) {
     Log_fatal("Read config failed");
     return ret;
   }
-  // setup communication between controller script
-  server_setup_heartbeat();
-  // populate table according to benchmarks
-  server_pop_table();
-  // register txn piece logic
-  server_reg_piece();
-  // start server service
-  server_setup_service();
+
+  vector<Config::SiteInfo*> infos = Config::GetConfig()->GetMyServers();
+  if (infos.size() > 0) {
+    // setup communication between controller script
+    server_setup_heartbeat();
+    // populate table according to benchmarks
+    server_pop_table();
+    // register txn piece logic
+    server_reg_piece();
+    // start server service
+    server_setup_service();
+  }
+
+  //unsigned int cid = Config::get_config()->get_client_id();
+  infos = Config::GetConfig()->GetMyClients();
+  if (infos.size() > 0) {
+    client_setup_request_factory();
+    client_setup_heartbeat();
+    client_launch_workers();
+  }
+
   return 0;
 }

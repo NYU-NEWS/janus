@@ -7,6 +7,9 @@
 
 namespace rococo {
 
+
+
+
 struct ClientWorker {
   uint32_t coo_id;
   std::vector<std::string> *servers;

@@ -96,6 +96,9 @@ class Config {
     string proc_name;
 
     SiteInfo() = delete;
+    SiteInfo(uint32_t id) {
+      this->id = id;
+    }
     SiteInfo(uint32_t id, std::string &site_addr) {
       this->id = id;
       auto pos = site_addr.find(':');
@@ -130,8 +133,7 @@ class Config {
          bool heart_beat,
          single_server_t single_server,
          int server_or_client,
-         char *logging_path,
-         char *hostspath
+         string logging_path
   );
 
  public:
@@ -156,6 +158,28 @@ class Config {
 //  void LoadModeYML();
 //  void LoadSchemeYML();
 //  void LoadWorkloadYML();
+
+  vector<SiteInfo*> GetMyServers() {
+    vector<SiteInfo*> ret;
+    for (auto &pair : site_infos_) {
+      auto info = pair.second;
+      if (info->server_or_client_ == 0) {
+        ret.push_back(info);
+      }
+    }
+    return ret;
+  }
+
+  vector<SiteInfo*> GetMyClients() {
+    vector<SiteInfo*> ret;
+    for (auto &pair : site_infos_) {
+      auto info = pair.second;
+      if (info->server_or_client_ == 1) {
+        ret.push_back(info);
+      }
+    }
+    return ret;
+  }
 
   void init_mode(std::string &);
   void init_bench(std::string &);
