@@ -6,8 +6,13 @@
 using namespace rococo;
 
 extern rrr::PollMgr *poll_mgr_g;
-static ServerControlServiceImpl *scsi_g = NULL;
+static RococoServiceImpl *rsi_g = nullptr;
+static rrr::Server *server_g = nullptr;
+static base::ThreadPool *thread_pool_g = nullptr;
+
+
 static rrr::PollMgr *hb_poll_mgr_g = NULL;
+static ServerControlServiceImpl *scsi_g = NULL;
 static rrr::Server *hb_server_g = NULL;
 static base::ThreadPool *hb_thread_pool_g = NULL;
 
@@ -83,7 +88,7 @@ void server_setup_service() {
   }
 
   // init service implement
-  auto *rococo_service = new RococoServiceImpl(mgr, scsi_g);
+  rsi_g = new RococoServiceImpl(mgr, scsi_g);
 
   // init rrr::PollMgr 1 threads
   int n_io_threads = 1;
@@ -93,7 +98,7 @@ void server_setup_service() {
   poll_mgr_g->add(&alarm);
 
   // TODO replace below with set_stat
-  auto &recorder = ((RococoServiceImpl *) rococo_service)->recorder_;
+  auto &recorder = ((RococoServiceImpl *) rsi_g)->recorder_;
 
   if (recorder != NULL) {
     poll_mgr_g->add(recorder);
@@ -102,17 +107,17 @@ void server_setup_service() {
   if (scsi_g) {
     scsi_g->set_recorder(recorder);
     scsi_g->set_stat(ServerControlServiceImpl::STAT_SZ_SCC,
-                     &rococo_service->stat_sz_scc_);
+                     &rsi_g->stat_sz_scc_);
     scsi_g->set_stat(ServerControlServiceImpl::STAT_SZ_GRAPH_START,
-                     &rococo_service->stat_sz_gra_start_);
+                     &rsi_g->stat_sz_gra_start_);
     scsi_g->set_stat(ServerControlServiceImpl::STAT_SZ_GRAPH_COMMIT,
-                     &rococo_service->stat_sz_gra_commit_);
+                     &rsi_g->stat_sz_gra_commit_);
     scsi_g->set_stat(ServerControlServiceImpl::STAT_SZ_GRAPH_ASK,
-                     &rococo_service->stat_sz_gra_ask_);
+                     &rsi_g->stat_sz_gra_ask_);
     scsi_g->set_stat(ServerControlServiceImpl::STAT_N_ASK,
-                     &rococo_service->stat_n_ask_);
+                     &rsi_g->stat_n_ask_);
     scsi_g->set_stat(ServerControlServiceImpl::STAT_RO6_SZ_VECTOR,
-                     &rococo_service->stat_ro6_sz_vector_);
+                     &rsi_g->stat_ro6_sz_vector_);
   }
 
   // init base::ThreadPool
@@ -121,16 +126,16 @@ void server_setup_service() {
   if (0 != (ret = Config::GetConfig()->get_threads(num_threads))) {
     verify(0);
   }
-  base::ThreadPool *thread_pool = new base::ThreadPool(num_threads);
+  thread_pool_g = new base::ThreadPool(num_threads);
 
   // init rrr::Server
-  rrr::Server *server = new rrr::Server(poll_mgr_g, thread_pool);
+  server_g = new rrr::Server(poll_mgr_g, thread_pool_g);
 
   // reg service
-  server->reg(rococo_service);
+  server_g->reg(rsi_g);
 
   // start rpc server
-  server->start(bind_addr.c_str());
+  server_g->start(bind_addr.c_str());
 
   Log_info("Server ready");
 
@@ -150,7 +155,7 @@ void server_setup_service() {
     hb_poll_mgr_g->release();
     hb_thread_pool_g->release();
 
-    auto &recorder = ((DepTranServiceImpl *) rococo_service)->recorder_;
+    auto &recorder = ((DepTranServiceImpl *) rsi_g)->recorder_;
 
     if (recorder) {
       auto n_flush_avg_ = recorder->stat_cnt_.peek().avg_;
@@ -172,11 +177,11 @@ void server_setup_service() {
   }
 
   Log::info("asking other server finish request count: %d",
-            ((DepTranServiceImpl *) rococo_service)->n_asking_);
+            ((DepTranServiceImpl *) rsi_g)->n_asking_);
 
-  delete server;
-  delete rococo_service;
-  thread_pool->release();
+  delete server_g;
+  delete rsi_g;
+  thread_pool_g->release();
   poll_mgr_g->release();
   delete DTxnMgr::get_sole_mgr();
   RandomGenerator::destroy();

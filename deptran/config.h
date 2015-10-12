@@ -97,7 +97,7 @@ class Config {
 
     SiteInfo() = delete;
     SiteInfo(uint32_t id, std::string &site_addr) {
-      id = id;
+      this->id = id;
       auto pos = site_addr.find(':');
       verify(pos != std::string::npos);
       name = site_addr.substr(0, pos);
