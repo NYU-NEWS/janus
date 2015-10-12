@@ -37,40 +37,17 @@
 namespace rococo {
 Config *Config::config_s = NULL;
 
-std::map<std::string, std::string> SiteInfo::dns_;
 
-std::string SiteInfo::name2host(std::string& site_name) {
-  Log::debug("find host name by site name: %s", site_name.c_str());
-  auto it = SiteInfo::dns_.find(site_name);
-
-  if (it != SiteInfo::dns_.end()) {
-    return it->second;
-  } else {
-    Log::debug("did not find a mapping to site_name: %s", site_name.c_str());
-    return site_name;
-  }
-}
-
-void SiteInfo::load_dns(std::string& hosts_path) {
-  std::string   host_name, site_name;
-  std::ifstream in(hosts_path);
-
-  while (in) {
-    in >> host_name;
-    in >> site_name;
-    dns_[site_name] = host_name;
-  }
-}
-
-Config * Config::get_config() {
+Config * Config::GetConfig() {
   if (config_s == NULL) config_s = new Config();
   return config_s;
 }
 
-int Config::create_config(int argc, char *argv[]) {
+int Config::CreateConfig(int argc, char **argv) {
   if (config_s != NULL) return -1;
 
-  std::string  filename;
+  std::string filename;
+  std::string proc_name;
   unsigned int sid = 0, cid = 0;
   char *end_ptr    = NULL;
 
@@ -89,18 +66,10 @@ int Config::create_config(int argc, char *argv[]) {
   int c;
   optind = 1;
 
-  while ((c = getopt(argc, argv, "bc:d:f:h:i:k:p:r:s:S:t:H:")) != -1) {
+  while ((c = getopt(argc, argv, "bc:d:f:h:i:k:p:P:r:s:S:t:H:")) != -1) {
     switch (c) {
       case 'b': // heartbeat to controller
         heart_beat = true;
-        break;
-      case 'c': // client id
-        cid = strtoul(optarg, &end_ptr, 10);
-        if ((end_ptr == NULL) || (*end_ptr != '\0'))
-          return -4;
-        if (server_or_client != -1)
-          return -4;
-        server_or_client = 1;
         break;
       case 'd': // duration
         duration = strtoul(optarg, &end_ptr, 10);
@@ -108,32 +77,53 @@ int Config::create_config(int argc, char *argv[]) {
         if ((end_ptr == NULL) || (*end_ptr != '\0'))
           return -4;
         break;
+      case 'P':
+        proc_name = std::string(optarg);
+        break;
       case 'f': // properties.xml
         filename = std::string(optarg);
         break;
+      case 't':
+        ctrl_timeout = strtoul(optarg, &end_ptr, 10);
+        if ((end_ptr == NULL) || (*end_ptr != '\0')) return -4;
+        break;
+      case 'c': // client id
+        // TODO remove
+        cid = strtoul(optarg, &end_ptr, 10);
+        if ((end_ptr == NULL) || (*end_ptr != '\0'))
+          return -4;
+        if (server_or_client != -1)
+          return -4;
+        server_or_client = 1;
+        break;
       case 'h': // ctrl_hostname
+        // TODO remove
         ctrl_hostname = (char *)malloc((strlen(optarg) + 1) * sizeof(char));
         strcpy(ctrl_hostname, optarg);
         break;
       case 'H': // ctrl_host
+        // TODO remove
         hostspath = (char *)malloc((strlen(optarg) + 1) * sizeof(char));
         strcpy(hostspath, optarg);
         break;
       case 'i': // ctrl_init
+        // TODO remove
         ctrl_init = (char *)malloc((strlen(optarg) + 1) * sizeof(char));
         strcpy(ctrl_init, optarg);
         break;
       case 'k':
+        // TODO remove
         ctrl_key = (char *)malloc((strlen(optarg) + 1) * sizeof(char));
         strcpy(ctrl_key, optarg);
         break;
       case 'r': // logging path
+        // TODO remove
         logging_path = (char *)malloc((strlen(optarg) + 1) * sizeof(char));
         strcpy(logging_path, optarg);
         break;
       case 'p':
+        // TODO remove
         ctrl_port = strtoul(optarg, &end_ptr, 10);
-
         if ((end_ptr == NULL) || (*end_ptr != '\0')) return -4;
         break;
 
@@ -142,6 +132,7 @@ int Config::create_config(int argc, char *argv[]) {
       //    strcpy(ctrl_run, optarg);
       //    break;
       case 's': // site id
+        // TODO remove
         sid = strtoul(optarg, &end_ptr, 10);
 
         if ((end_ptr == NULL) || (*end_ptr != '\0')) return -4;
@@ -151,6 +142,7 @@ int Config::create_config(int argc, char *argv[]) {
         break;
       case 'S': // client touch only single server
       {
+        // TODO remove
         int single_server_buf = strtoul(optarg, &end_ptr, 10);
 
         if ((end_ptr == NULL) || (*end_ptr != '\0')) return -4;
@@ -170,13 +162,8 @@ int Config::create_config(int argc, char *argv[]) {
         }
         break;
       }
-      case 't':
-        ctrl_timeout = strtoul(optarg, &end_ptr, 10);
-
-        if ((end_ptr == NULL) || (*end_ptr != '\0')) return -4;
-        break;
       case '?':
-
+        // TODO remove
         if ((optopt == 'c') ||
             (optopt == 'd') ||
             (optopt == 'f') ||
@@ -198,8 +185,6 @@ int Config::create_config(int argc, char *argv[]) {
 
   if ((server_or_client != 0) && (server_or_client != 1)) return -5;
   config_s = new Config(
-    cid,
-    sid,
     filename,
     ctrl_hostname,
     ctrl_port,
@@ -214,10 +199,12 @@ int Config::create_config(int argc, char *argv[]) {
     server_or_client,
     logging_path,
     hostspath);
+  config_s->proc_name_ = proc_name;
+  config_s->Load();
   return 0;
 }
 
-void Config::destroy_config() {
+void Config::DestroyConfig() {
   if (config_s) {
     delete config_s;
     config_s = NULL;
@@ -226,9 +213,7 @@ void Config::destroy_config() {
 
 Config::Config() {}
 
-Config::Config(uint32_t        cid,
-               uint32_t        sid,
-               std::string   & filename,
+Config::Config(std::string   & filename,
                char           *ctrl_hostname,
                uint32_t        ctrl_port,
                uint32_t        ctrl_timeout,
@@ -240,8 +225,6 @@ Config::Config(uint32_t        cid,
                int32_t         server_or_client,
                char           *logging_path,
                char           *hostspath) :
-  cid_(cid),
-  sid_(sid),
   ctrl_hostname_(ctrl_hostname),
   ctrl_port_(ctrl_port),
   ctrl_timeout_(ctrl_timeout),
@@ -250,29 +233,90 @@ Config::Config(uint32_t        cid,
   duration_(duration),
   heart_beat_(heart_beat),
   single_server_(single_server),
-  server_or_client_(server_or_client),
   logging_path_(logging_path),
+  file_name_(filename),
   retry_wait_(false) {
-  if (hostspath != NULL) {
-    init_hostsmap(hostspath);
-  }
 
-  std::string configs[2] = { filename, "./config/sample.yml" };
+}
+
+void Config::Load() {
+  std::string configs[2] = {file_name_, "./config/sample.yml" };
 
   for (auto& name: configs) {
     if (boost::algorithm::ends_with(name, "yml")) {
-      load_config_yml(name);
+      LoadYML(name);
     } else if (boost::algorithm::ends_with(name, "xml")) {
-      LoadConfigXML(name);
+      LoadXML(name);
     } else {
       verify(0);
     }
   }
 }
 
-void Config::load_config_yml(std::string& name) {
+void Config::LoadYML(std::string &filename) {
 //  YAML::Node config = YAML::LoadFile(name);
-  
+
+  YAML::Node config = YAML::LoadFile(filename);
+
+  verify(!Sharding::sharding_s);
+  Sharding::sharding_s = new Sharding();
+
+  if (config["site"]) {
+    LoadSiteYML(config["site"]);
+  }
+  if (config["process"]) {
+    LoadProcYML(config["process"]);
+  }
+  if (config["host"]) {
+    LoadHostYML(config["host"]);
+  }
+}
+
+void Config::LoadSiteYML(YAML::Node config) {
+  auto servers = config["server"];
+  for (auto it = servers.begin(); it != servers.end(); it++) {
+    auto par = *it;
+    vector<string> v;
+    for (auto iitt = par.begin(); iitt != par.end(); iitt++) {
+      auto site_addr = iitt->as<string>();
+      SiteInfo *info = new SiteInfo(next_site_id_++, site_addr);
+      info->server_or_client_ = 0;
+      site_infos_[info->name] = info;
+      v.push_back(info->name);
+    }
+    par_servers_.push_back(v);
+  }
+  auto clients = config["client"];
+  for (auto it = clients.begin(); it != clients.end(); it++) {
+    auto par = *it;
+    vector<string> v;
+    for (auto iitt = par.begin(); iitt != par.end(); iitt++) {
+      auto site_addr = iitt->as<string>();
+      SiteInfo *info = new SiteInfo(next_site_id_++, site_addr);
+      info->server_or_client_ = 1;
+      site_infos_[info->name] = info;
+      v.push_back(info->name);
+    }
+    par_clients_.push_back(v);
+  }
+}
+
+void Config::LoadProcYML(YAML::Node config) {
+  for (auto it = config.begin(); it != config.end(); it++) {
+    auto site_name = it->first.as<string>();
+    auto proc_name = it->second.as<string>();
+    auto info = site_infos_[site_name];
+    verify(info != nullptr);
+    info->proc_name = proc_name;
+  }
+}
+
+void Config::LoadHostYML(YAML::Node config) {
+  for (auto it = config.begin(); it != config.end(); it++) {
+    auto proc_name = it->first.as<string>();
+    auto host_name = it->second.as<string>();
+    proc_host_map_[proc_name] = host_name;
+  }
 }
 
 void Config::init_mode(std::string& mode_str) {
@@ -297,17 +341,6 @@ void Config::init_mode(std::string& mode_str) {
   } else if ((mode_str == "2pl_ww") || (mode_str == "2pl_wound_die")) {
     mdb::FineLockedRow::set_wound_die();
   } 
-}
-
-void Config::init_hostsmap(const char *hostspath) {
-  std::string   hostname, sitename;
-  std::ifstream in(hostspath);
-
-  while (in) {
-    in >> hostname;
-    in >> sitename;
-    hostsmap_[sitename] = hostname;
-  }
 }
 
 void Config::init_bench(std::string& bench_str) {
@@ -341,16 +374,16 @@ std::string Config::site2host_addr(std::string& siteaddr) {
 
 std::string Config::site2host_name(std::string& sitename) {
   //    Log::debug("find host name by site name: %s", sitename.c_str());
-  auto it = hostsmap_.find(sitename);
+  auto it = proc_host_map_.find(sitename);
 
-  if (it != hostsmap_.end()) {
+  if (it != proc_host_map_.end()) {
     return it->second;
   } else {
     return sitename;
   }
 }
 
-void Config::LoadConfigXML(std::string& filename) {
+void Config::LoadXML(std::string &filename) {
   std::string filename_str(filename);
   boost::property_tree::ptree pt;
   boost::property_tree::xml_parser::read_xml(
@@ -377,10 +410,10 @@ void Config::LoadWorkloadXML(boost::property_tree::ptree &pt) {
   // get benchmark
   std::string bench_str = pt.get<std::string>("benchmark.<xmlattr>.name");
   this->init_bench(bench_str);
-  scale_factor_   = pt.get<unsigned int>("benchmark.<xmlattr>.scale_factor", 1);
-  max_retry_      = pt.get<unsigned int>("benchmark.<xmlattr>.max_retry", 1);
+  scale_factor_   = pt.get<uint32_t>("benchmark.<xmlattr>.scale_factor", 1);
+  max_retry_      = pt.get<uint32_t>("benchmark.<xmlattr>.max_retry", 1);
   concurrent_txn_ =
-    pt.get<unsigned int>("benchmark.<xmlattr>.concurrent_txn", 1);
+    pt.get<uint32_t>("benchmark.<xmlattr>.concurrent_txn", 1);
   batch_start_ = pt.get<bool>("benchmark.<xmlattr>.batch_start", false);
   // parse weight
   std::string txn_weight_str = pt.get<std::string>(
@@ -689,10 +722,6 @@ Config::~Config() {
   //    free(ctrl_run_);
   //    ctrl_run_ = NULL;
   // }
-  if (logging_path_) {
-    free(logging_path_);
-    logging_path_ = NULL;
-  }
 }
 
 unsigned int Config::get_site_id() {
@@ -836,11 +865,11 @@ bool Config::do_early_return() {
 }
 
 bool Config::do_logging() {
-  return logging_path_ != NULL;
+  return logging_path_.empty();
 }
 
-char * Config::log_path() {
-  return logging_path_;
+const char * Config::log_path() {
+  return logging_path_.c_str();
 }
 
 bool Config::retry_wait() {

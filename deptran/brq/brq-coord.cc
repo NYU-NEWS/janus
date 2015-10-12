@@ -10,8 +10,8 @@ BRQCoordinator::BRQCoordinator(
                                              batch_optimal_(batch_optimal) {
   rpc_poll_ = new PollMgr(1);
   recorder_ = nullptr;
-  if (Config::get_config()->do_logging()) {
-    std::string log_path(Config::get_config()->log_path());
+  if (Config::GetConfig()->do_logging()) {
+    std::string log_path(Config::GetConfig()->log_path());
     log_path.append(std::to_string(coo_id_));
     recorder_ = new Recorder(log_path.c_str());
     rpc_poll_->add(recorder_);

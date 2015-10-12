@@ -41,7 +41,7 @@ Sharding::~Sharding() {
 
 unsigned int Sharding::site_from_key(const MultiValue& key,
                                      const tb_info_t  *tb_info) {
-  const MultiValue& key_buf = Config::get_config()->get_benchmark() !=
+  const MultiValue& key_buf = Config::GetConfig()->get_benchmark() !=
                               TPCC_REAL_DIST_PART
                               ? key :
                               (tb_info->tb_name == TPCC_TB_STOCK ||
@@ -346,7 +346,7 @@ bool Sharding::ready2populate(tb_info_t *tb_info) {
 // TODO this should be moved to per benchmark class
 int Sharding::populate_table(const std::vector<std::string>& table_map,
                              unsigned int                    sid) {
-  switch (Config::get_config()->get_benchmark()) {
+  switch (Config::GetConfig()->get_benchmark()) {
     case TPCC:
       return sharding_s->do_tpcc_populate_table(table_map, sid);
     case TPCC_DIST_PART:
@@ -363,7 +363,7 @@ int Sharding::populate_table(const std::vector<std::string>& table_map,
 int Sharding::do_tpcc_real_dist_partition_populate_table(
   const std::vector<std::string>& table_names,
   unsigned int                    sid) {
-  int mode                     = Config::get_config()->get_mode();
+  int mode                     = Config::GetConfig()->get_mode();
   unsigned int number2populate = tb_info_.size();
 
   while (number2populate > 0) {
@@ -532,7 +532,7 @@ int Sharding::do_tpcc_real_dist_partition_populate_table(
         // TODO (ycui) add a vector in tb_info_t to record used values for key.
         uint64_t loc_num_records =
           (tb_it->first ==
-           TPCC_TB_DISTRICT ? Config::get_config()->get_num_site() : 1) *
+           TPCC_TB_DISTRICT ? Config::GetConfig()->get_num_site() : 1) *
           tb_info_ptr->num_records;
         verify(loc_num_records % num_foreign_row == 0
                || tb_info_ptr->num_records < num_foreign_row);
@@ -617,7 +617,7 @@ int Sharding::do_tpcc_real_dist_partition_populate_table(
                            tb_info_[std::string(TPCC_TB_DISTRICT)].num_records;
                 }
                 else if (last4 == "d_id") {
-                  n = Config::get_config()->get_num_site() *
+                  n = Config::GetConfig()->get_num_site() *
                       tb_info_[std::string(TPCC_TB_DISTRICT)].num_records /
                       tb_info_[std::string(TPCC_TB_WAREHOUSE)].num_records;
                 }
@@ -897,7 +897,7 @@ int Sharding::do_tpcc_real_dist_partition_populate_table(
 int Sharding::do_tpcc_dist_partition_populate_table(
   const std::vector<std::string>& table_names,
   unsigned int                    sid) {
-  int mode                     = Config::get_config()->get_mode();
+  int mode                     = Config::GetConfig()->get_mode();
   unsigned int number2populate = tb_info_.size();
 
   while (number2populate > 0) {
@@ -1012,7 +1012,7 @@ int Sharding::do_tpcc_dist_partition_populate_table(
                 // w_id
                 tmp_int =
                   tb_info_ptr->columns[col_index].foreign_tb->num_records;
-                tmp_index_base = tmp_int * Config::get_config()->get_num_site();
+                tmp_index_base = tmp_int * Config::GetConfig()->get_num_site();
 
                 if (tb_info_ptr->columns[col_index].values != NULL) {
                   if (tb_it->first == TPCC_TB_STOCK) {
@@ -1091,7 +1091,7 @@ int Sharding::do_tpcc_dist_partition_populate_table(
         Value max_key = value_get_n(tb_info_ptr->columns[self_primary_col].type,
                                     num_self_primary *
                                     (tb_it->first ==
-                                     TPCC_TB_WAREHOUSE ? Config::get_config()->
+                                     TPCC_TB_WAREHOUSE ? Config::GetConfig()->
                                      get_num_site() : 1));
         std::vector<Value> row_data;
         row_data.reserve(tb_info_ptr->columns.size());
@@ -1159,7 +1159,7 @@ int Sharding::do_tpcc_dist_partition_populate_table(
                 }
                 else if (last4 == "w_id") {
                   n = tb_info_[std::string(TPCC_TB_WAREHOUSE)].num_records *
-                      Config::get_config()->get_num_site();
+                      Config::GetConfig()->get_num_site();
                 }
                 else if (last4 == "c_id") {
                   if (tb_info_ptr->columns[col_index].name ==
@@ -1388,7 +1388,7 @@ int Sharding::do_tpcc_dist_partition_populate_table(
 
 int Sharding::do_tpcc_populate_table(const std::vector<std::string>& table_names,
                                      unsigned int                    sid) {
-  int mode                     = Config::get_config()->get_mode();
+  int mode                     = Config::GetConfig()->get_mode();
   unsigned int number2populate = tb_info_.size();
 
   while (number2populate > 0) {
@@ -1712,7 +1712,7 @@ int Sharding::do_tpcc_populate_table(const std::vector<std::string>& table_names
                   }
                   else if (last4 == "w_id") {
                     n = tb_info_[std::string(TPCC_TB_WAREHOUSE)].num_records *
-                        Config::get_config()->get_num_site();
+                        Config::GetConfig()->get_num_site();
                   }
                   else if (last4 == "c_id") {
                     if (tb_info_ptr->columns[col_index].name ==
@@ -1906,7 +1906,7 @@ int Sharding::do_tpcc_populate_table(const std::vector<std::string>& table_names
 
 int Sharding::do_populate_table(const std::vector<std::string>& table_names,
                                 unsigned int                    sid) {
-  int mode                     = Config::get_config()->get_mode();
+  int mode                     = Config::GetConfig()->get_mode();
   unsigned int number2populate = tb_info_.size();
 
   while (number2populate > 0) {

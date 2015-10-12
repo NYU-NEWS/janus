@@ -42,7 +42,7 @@ Coordinator::Coordinator(uint32_t coo_id,
   this->next_pie_id_.store(k);
   this->next_txn_id_.store(k);
   recorder_ = NULL;
-  retry_wait_ = Config::get_config()->retry_wait();
+  retry_wait_ = Config::GetConfig()->retry_wait();
 }
 
 RequestHeader Coordinator::gen_header(TxnChopper *ch) {

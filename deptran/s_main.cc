@@ -13,7 +13,7 @@ static base::ThreadPool *hb_thread_pool_g = NULL;
 
 static void server_pop_table() {
   // populate table
-  auto sid = Config::get_config()->get_site_id();
+  auto sid = Config::GetConfig()->get_site_id();
   int ret = 0;
 
   // get all tables
@@ -48,7 +48,7 @@ static void server_pop_table() {
 }
 
 static void server_reg_piece() {
-  auto benchmark = Config::get_config()->get_benchmark();
+  auto benchmark = Config::GetConfig()->get_benchmark();
   Piece *piece = Piece::get_piece(benchmark);
   piece->reg_all();
   delete piece;
@@ -56,16 +56,16 @@ static void server_reg_piece() {
 }
 
 void server_setup_heartbeat() {
-  bool hb = Config::get_config()->do_heart_beat();
+  bool hb = Config::GetConfig()->do_heart_beat();
   if (!hb) return;
-  auto timeout = Config::get_config()->get_ctrl_timeout();
+  auto timeout = Config::GetConfig()->get_ctrl_timeout();
   scsi_g = new ServerControlServiceImpl(timeout);
   int n_io_threads = 1;
   hb_poll_mgr_g = new rrr::PollMgr(n_io_threads);
   hb_thread_pool_g = new rrr::ThreadPool(1);
   hb_server_g = new rrr::Server(hb_poll_mgr_g, hb_thread_pool_g);
   hb_server_g->reg(scsi_g);
-  auto port = Config::get_config()->get_ctrl_port();
+  auto port = Config::GetConfig()->get_ctrl_port();
   std::string addr_port = std::string("0.0.0.0:") +
       std::to_string(port);
   hb_server_g->start(addr_port.c_str());
@@ -74,11 +74,11 @@ void server_setup_heartbeat() {
 void server_setup_service() {
   int ret;
   // set running mode and initialize transaction manager.
-  int running_mode = Config::get_config()->get_mode();
+  int running_mode = Config::GetConfig()->get_mode();
   DTxnMgr *mgr = new DTxnMgr(running_mode);
   std::string bind_addr;
 
-  if (0 != (ret = Config::get_config()->get_my_addr(bind_addr))) {
+  if (0 != (ret = Config::GetConfig()->get_my_addr(bind_addr))) {
     verify(0);
   }
 
@@ -118,7 +118,7 @@ void server_setup_service() {
   // init base::ThreadPool
   uint32_t num_threads;
 
-  if (0 != (ret = Config::get_config()->get_threads(num_threads))) {
+  if (0 != (ret = Config::GetConfig()->get_threads(num_threads))) {
     verify(0);
   }
   base::ThreadPool *thread_pool = new base::ThreadPool(num_threads);
@@ -180,7 +180,7 @@ void server_setup_service() {
   poll_mgr_g->release();
   delete DTxnMgr::get_sole_mgr();
   RandomGenerator::destroy();
-  Config::destroy_config();
+  Config::DestroyConfig();
 }
 
 
@@ -188,7 +188,7 @@ int main(int argc, char *argv[]) {
   int ret;
 
   // read configuration
-  if (0 != (ret = Config::create_config(argc, argv))) {
+  if (0 != (ret = Config::CreateConfig(argc, argv))) {
     Log_fatal("Read config failed");
     return ret;
   }

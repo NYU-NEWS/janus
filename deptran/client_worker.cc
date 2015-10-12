@@ -44,7 +44,7 @@ void ClientWorker::work() {
            num_txn.load(),
            success.load(),
            num_try.load(),
-           Config::get_config()->get_duration());
+           Config::GetConfig()->get_duration());
 
   delete coo;
   if (ccsi) ccsi->wait_for_shutdown();

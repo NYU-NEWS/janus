@@ -7,21 +7,22 @@ find_package(Threads)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(APR REQUIRED apr-1)
 pkg_check_modules(PYTHON2 REQUIRED python2)
-pkg_check_modules(YAMLCPP REQUIRED yaml-cpp)
-#IF(APPLE)
-#ELSE()
-#ENDIF()
+pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
 
-link_directories(
-        ${PYTHON2_LIBRARY_DIRS}
-        ${APR_LIBRARY_DIRS}
-        ${YAMLCPP_LIBRARY_DIRS}
-)
+# does not seem to solve the problem
+
+find_path(YAML_CPP_INCLUDE_DIR
+        NAMES yaml_cpp.h
+        PATHS ${YAML_CPP_INCLUDE_DIRS})
+find_library(YAML_CPP_LIBRARY
+        NAMES YAML_CPP
+        PATHS ${YAML_CPP_LIBRARY_DIRS})
+
 
 include_directories(
         ${PYTHON2_INCLUDE_DIRS}
         ${APR_INCLUDE_DIRS}
-        ${YAMLCPP_INCLUDE_DIRS}
+        ${YAML_CPP_INCLUDE_DIRS}
         .
         rrr
         memdb
@@ -39,6 +40,16 @@ include_directories(
         bench/tpcc_dist
         bench/tpcc_real_dist
 )
+
+link_directories(
+        ${PYTHON2_LIBRARY_DIRS}
+        ${APR_LIBRARY_DIRS}
+        ${YAML_CPP_LIBRARY_DIRS}
+)
+
+
+set (CMAKE_SHARED_LINKER_FLAGS "-Wl, -lyaml-cpp")
+
 
 file(GLOB RRR_SRC
         "rrr/base/*.hpp"

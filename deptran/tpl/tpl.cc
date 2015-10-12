@@ -71,7 +71,7 @@ int TPLDTxn::prepare_launch(
     rrr::i32 *res,
     rrr::DeferredReply *defer
 ) {
-  if (Config::get_config()->do_logging()) {
+  if (Config::GetConfig()->do_logging()) {
     string log_s;
     mgr_->get_prepare_log(tid_, sids, &log_s);
     *res = this->prepare();
@@ -112,7 +112,7 @@ int TPLDTxn::abort_launch(
     rrr::DeferredReply *defer
 ) {
   *res = this->abort();
-  if (Config::get_config()->do_logging()) {
+  if (Config::GetConfig()->do_logging()) {
     const char abort_tag = 'a';
     std::string log_s;
     log_s.resize(sizeof(tid_) + sizeof(abort_tag));
@@ -141,7 +141,7 @@ int TPLDTxn::commit_launch(
     rrr::DeferredReply *defer
 ) {
   *res = this->commit();
-  if (Config::get_config()->do_logging()) {
+  if (Config::GetConfig()->do_logging()) {
     const char commit_tag = 'c';
     std::string log_s;
     log_s.resize(sizeof(tid_) + sizeof(commit_tag));

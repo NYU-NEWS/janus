@@ -45,7 +45,7 @@ class TxnInfo {
   }
 
   bool is_involved() {
-    auto it = servers_.find(Config::get_config()->get_site_id());
+    auto it = servers_.find(Config::GetConfig()->get_site_id());
     if (it == servers_.end()) {
       return false;
     } else {

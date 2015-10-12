@@ -13,15 +13,15 @@ using mdb::Table;
 using mdb::column_id_t;
 
 
-#define IS_MODE_RCC (Config::get_config()->get_mode() == MODE_RCC)
-#define IS_MODE_RO6 (Config::get_config()->get_mode() == MODE_RO6)
-#define IS_MODE_2PL (Config::get_config()->get_mode() == MODE_2PL)
-#define IS_MODE_OCC (Config::get_config()->get_mode() == MODE_OCC)
-#define IS_MODE_NONE (Config::get_config()->get_mode() == MODE_NONE)
+#define IS_MODE_RCC (Config::GetConfig()->get_mode() == MODE_RCC)
+#define IS_MODE_RO6 (Config::GetConfig()->get_mode() == MODE_RO6)
+#define IS_MODE_2PL (Config::GetConfig()->get_mode() == MODE_2PL)
+#define IS_MODE_OCC (Config::GetConfig()->get_mode() == MODE_OCC)
+#define IS_MODE_NONE (Config::GetConfig()->get_mode() == MODE_NONE)
 
 #define IN_PHASE_1 (dtxn->phase_ == 1)
 #define TPL_PHASE_1 (output_size == nullptr)
-#define RO6_RO_PHASE_1 ((Config::get_config()->get_mode() == MODE_RO6) && ((RO6DTxn*)dtxn)->read_only_ && dtxn->phase_ == 1)
+#define RO6_RO_PHASE_1 ((Config::GetConfig()->get_mode() == MODE_RO6) && ((RO6DTxn*)dtxn)->read_only_ && dtxn->phase_ == 1)
 
 struct entry_t {
   Vertex<TxnInfo> *last_ = NULL; // last transaction(write) that touches this item. (arriving order)

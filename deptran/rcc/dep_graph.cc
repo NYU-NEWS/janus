@@ -39,7 +39,7 @@ void DepGraph::start_pie(
 ) {
     verify(tv != NULL);
     *tv = txn_gra_.FindOrCreateV(txn_id);
-    static auto id = Config::get_config()->get_site_id();
+    static auto id = Config::GetConfig()->get_site_id();
     auto txn_info = (*tv)->data_;
     verify(txn_info != nullptr);
     txn_info->servers_.insert(id);

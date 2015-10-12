@@ -12,7 +12,7 @@ TxnChopper::TxnChopper() {
   clock_gettime(&start_time_);
   read_only_failed_ = false;
   pre_time_ = timespec2ms(start_time_);
-  early_return_ = Config::get_config()->do_early_return();
+  early_return_ = Config::GetConfig()->do_early_return();
 }
 
 Command *TxnChopper::GetNextSubCmd(map<innid_t, Command *> &cmdmap) {

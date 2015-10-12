@@ -22,7 +22,7 @@ public:
 
     DepGraph() {
         // TODO remove this out       
-        Config::get_config()->get_all_site_addr(server_addrs_);
+        Config::GetConfig()->get_all_site_addr(server_addrs_);
         rpc_clients_ = std::vector<rrr::Client*>(server_addrs_.size(), nullptr);
         rpc_proxies_ = std::vector<RococoProxy*>(server_addrs_.size(), nullptr);
     }

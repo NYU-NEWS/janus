@@ -33,10 +33,10 @@ namespace rococo {
 
 TxnRequestFactory *TxnRequestFactory::txn_req_factory_s = NULL;
 
-TxnRequestFactory::TxnRequestFactory() : txn_weight_(Config::get_config()->get_txn_weight()) {
-  benchmark_ = Config::get_config()->get_benchmark();
-  n_try_ = Config::get_config()->get_max_retry();
-  single_server_ = Config::get_config()->get_single_server();
+TxnRequestFactory::TxnRequestFactory() : txn_weight_(Config::GetConfig()->get_txn_weight()) {
+  benchmark_ = Config::GetConfig()->get_benchmark();
+  n_try_ = Config::GetConfig()->get_max_retry();
+  single_server_ = Config::GetConfig()->get_single_server();
 
   std::map<std::string, uint64_t> table_num_rows;
   Sharding::get_number_rows(table_num_rows);
@@ -110,8 +110,9 @@ TxnRequestFactory::TxnRequestFactory() : txn_weight_(Config::get_config()->get_t
           break;
         case Config::SS_THREAD_SINGLE:
         case Config::SS_PROCESS_SINGLE: {
-          fix_id_ = Config::get_config()->get_client_id() % tpcc_para_.n_d_id_;
-          tpcc_para_.const_home_w_id_ = Config::get_config()->get_client_id() / tpcc_para_.n_d_id_;
+          fix_id_ = Config::GetConfig()->get_client_id() % tpcc_para_.n_d_id_;
+          tpcc_para_.const_home_w_id_ =
+              Config::GetConfig()->get_client_id() / tpcc_para_.n_d_id_;
           break;
         }
         default:

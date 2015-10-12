@@ -147,8 +147,8 @@ DTxnMgr::DTxnMgr(int mode) {
   verify(DTxnMgr::txn_mgr_s == NULL);
   DTxnMgr::txn_mgr_s = this;
 
-  if (Config::get_config()->do_logging()) {
-    auto path = Config::get_config()->log_path();
+  if (Config::GetConfig()->do_logging()) {
+    auto path = Config::GetConfig()->log_path();
     // TODO free this
     recorder_ = new Recorder(path);
   }

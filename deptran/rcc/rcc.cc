@@ -20,7 +20,7 @@ void RCCDTxn::StartLaunch(
     ChopStartResponse *res,
     rrr::DeferredReply *defer) {
   verify(defer);
-  static bool do_record = Config::get_config()->do_logging();
+  static bool do_record = Config::GetConfig()->do_logging();
   if (do_record) {
     Marshal m;
     m << header;

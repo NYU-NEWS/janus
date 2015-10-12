@@ -8,9 +8,9 @@ static ClientControlServiceImpl *ccsi_g = nullptr;
 void client_setup_heartbeat() {
   std::map<int32_t, std::string> txn_types;
   TxnRequestFactory::get_txn_types(txn_types);
-  unsigned int num_threads = Config::get_config()->get_num_threads(); // func
+  unsigned int num_threads = Config::GetConfig()->get_num_threads(); // func
   rrr::Server *hb_server = nullptr;
-  bool hb = Config::get_config()->do_heart_beat();
+  bool hb = Config::GetConfig()->do_heart_beat();
   if (hb) {
     // setup controller rpc server
     ccsi_g = new ClientControlServiceImpl(num_threads, txn_types);
@@ -20,7 +20,7 @@ void client_setup_heartbeat() {
     hb_server = new rrr::Server(poll_mgr, thread_pool);
     hb_server->reg(ccsi_g);
     hb_server->start(std::string("0.0.0.0:").append(
-        std::to_string(Config::get_config()->get_ctrl_port())).c_str());
+        std::to_string(Config::GetConfig()->get_ctrl_port())).c_str());
   }
 }
 
@@ -29,24 +29,24 @@ void client_setup_request_factory() {
 }
 
 void client_launch_workers() {
-  uint32_t duration = Config::get_config()->get_duration();
+  uint32_t duration = Config::GetConfig()->get_duration();
   if (duration == 0)
     verify(0);
 
   std::vector<std::string> servers;
-  uint32_t num_site = Config::get_config()->get_all_site_addr(servers);
+  uint32_t num_site = Config::GetConfig()->get_all_site_addr(servers);
   if (num_site == 0)
     verify(0);
 
-  uint32_t num_threads = Config::get_config()->get_num_threads();
+  uint32_t num_threads = Config::GetConfig()->get_num_threads();
   std::vector<ClientWorker> worker_attrs(num_threads);
   std::vector<std::thread> client_threads;
 
-  uint32_t start_coo_id = Config::get_config()->get_start_coordinator_id(); // func
-  int benchmark = Config::get_config()->get_benchmark();
-  int mode = Config::get_config()->get_mode();
-  uint32_t concurrent_txn = Config::get_config()->get_concurrent_txn();
-  bool batch_start = Config::get_config()->get_batch_start();
+  uint32_t start_coo_id = Config::GetConfig()->get_start_coordinator_id(); // func
+  int benchmark = Config::GetConfig()->get_benchmark();
+  int mode = Config::GetConfig()->get_mode();
+  uint32_t concurrent_txn = Config::GetConfig()->get_concurrent_txn();
+  bool batch_start = Config::GetConfig()->get_batch_start();
   uint32_t thread_index = 0;
   for (; thread_index < num_threads; thread_index++) {
     worker_attrs[thread_index].servers = &servers;
@@ -67,13 +67,13 @@ void client_launch_workers() {
 
   TxnRequestFactory::destroy();
   RandomGenerator::destroy();
-  Config::destroy_config();
+  Config::DestroyConfig();
 }
 
 int main(int argc, char *argv[]) {
   int ret;
 
-  if (0 != (ret = Config::create_config(argc, argv))) {
+  if (0 != (ret = Config::CreateConfig(argc, argv))) {
     Log_fatal("Read config failed");
     return ret;
   }
