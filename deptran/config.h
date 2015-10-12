@@ -53,16 +53,14 @@ class Config {
   char *ctrl_key_;
   char *ctrl_init_;
   uint32_t duration_;
-  std::string file_name_;
-
-
+  vector<string> config_paths_;
 
   // common configuration
 
   int32_t mode_;
   uint32_t proc_id_;
   int32_t benchmark_; // workload
-  uint32_t scale_factor_;
+  uint32_t scale_factor_ = 1; // currently disabled
   std::vector<double> txn_weight_;
   std::string proc_name_;
   bool batch_start_;
@@ -94,6 +92,7 @@ class Config {
     uint32_t n_thread;   // should be 1 for now
     int32_t server_or_client_; // 0 for server, 1 for client
     string proc_name;
+    parid_t par_id;
 
     SiteInfo() = delete;
     SiteInfo(uint32_t id) {
@@ -106,6 +105,22 @@ class Config {
       name = site_addr.substr(0, pos);
       std::string port_str = site_addr.substr(pos + 1);
       port = std::stoi(port_str);
+    }
+
+    string GetBindAddress() {
+      string ret("0.0.0.0:");
+      ret = ret.append(std::to_string(port));
+      return ret;
+    }
+
+    string GetHostAddr() {
+      if (proc.empty())
+        proc = name;
+      if (host.empty())
+        host = proc;
+      string ret;
+      ret = ret.append(host).append(":").append(std::to_string(port));
+      return ret;
     }
   };
 
@@ -121,8 +136,7 @@ class Config {
 
   Config();
 
-  Config(std::string &filename,
-         char *ctrl_hostname,
+  Config(char *ctrl_hostname,
          uint32_t ctrl_port,
          uint32_t ctrl_timeout,
          char *ctrl_key,
@@ -198,7 +212,7 @@ class Config {
   int32_t get_all_site_addr(std::vector<std::string> &servers);
   int32_t get_site_addr(uint32_t sid,
                         std::string &server);
-  int32_t get_my_addr(std::string &server);
+//  int32_t get_my_addr(std::string &server);
   int32_t get_threads(uint32_t &threads);
   int32_t get_mode();
   uint32_t get_num_threads();

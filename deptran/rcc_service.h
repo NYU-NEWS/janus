@@ -8,7 +8,7 @@
 namespace rococo {
 
 class ServerControlServiceImpl;
-
+class DTxnMgr;
 class RococoServiceImpl: public RococoService {
 
  public:

@@ -152,7 +152,7 @@ void Coordinator::Start() {
   };
   while ((subcmd = cmd_->GetNextSubCmd(cmd_map_)) != nullptr) {
     req.cmd = subcmd;
-    commo_->SendStart(cmd_->GetPar(), req, this, callback);
+    commo_->SendStart(subcmd->GetPar(), req, this, callback);
   }
 }
 

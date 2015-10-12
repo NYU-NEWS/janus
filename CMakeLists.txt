@@ -111,7 +111,8 @@ add_library(ROCOCO
         ${DEPTRAN_SRC}
 )
 
-add_executable(ROCOCO_SERVER deptran/s_main.cc)
+add_executable(ROCOCO_SERVER
+        deptran/s_main.cc)
 #add_executable(ROCOCO_CLIENT deptran/c_main.cc)
 
 target_link_libraries(

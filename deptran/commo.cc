@@ -5,6 +5,7 @@
 namespace rococo {
 
 Commo::Commo(std::vector<std::string> &addrs) {
+  verify(addrs.size() > 0);
   rpc_poll_ = new PollMgr(1);
   for (auto &addr : addrs) {
     rrr::Client *rpc_cli = new rrr::Client(rpc_poll_);

@@ -39,14 +39,15 @@ Config *Config::config_s = NULL;
 
 
 Config * Config::GetConfig() {
-  if (config_s == NULL) config_s = new Config();
+  verify(config_s != nullptr);
   return config_s;
 }
 
 int Config::CreateConfig(int argc, char **argv) {
   if (config_s != NULL) return -1;
 
-  std::string filename = "./config/sample.yml";
+//  std::string filename = "./config/sample.yml";
+  vector<string> config_paths;
   std::string proc_name = "localhost"; // default as "localhost"
   std::string logging_path = "./disk_log/";
   unsigned int sid = 0, cid = 0;
@@ -58,14 +59,14 @@ int Config::CreateConfig(int argc, char **argv) {
   char *ctrl_init               = NULL /*, *ctrl_run = NULL*/;
   unsigned int ctrl_port        = 0;
   unsigned int ctrl_timeout     = 0;
-  unsigned int duration         = 0;
+  uint32_t duration         = 10;
   bool heart_beat               = false;
   single_server_t single_server = SS_DISABLED;
   int server_or_client          = -1;
 
   int c;
   optind = 1;
-
+  string filename;
   while ((c = getopt(argc, argv, "bc:d:f:h:i:k:p:P:r:s:S:t:H:")) != -1) {
     switch (c) {
       case 'b': // heartbeat to controller
@@ -82,6 +83,7 @@ int Config::CreateConfig(int argc, char **argv) {
         break;
       case 'f': // properties.xml
         filename = std::string(optarg);
+        config_paths.push_back(filename);
         break;
       case 't':
         ctrl_timeout = strtoul(optarg, &end_ptr, 10);
@@ -183,8 +185,8 @@ int Config::CreateConfig(int argc, char **argv) {
   }
 
 //  if ((server_or_client != 0) && (server_or_client != 1)) return -5;
+  verify(config_s == nullptr);
   config_s = new Config(
-    filename,
     ctrl_hostname,
     ctrl_port,
     ctrl_timeout,
@@ -198,6 +200,7 @@ int Config::CreateConfig(int argc, char **argv) {
     server_or_client,
     logging_path);
   config_s->proc_name_ = proc_name;
+  config_s->config_paths_ = config_paths;
   config_s->Load();
   return 0;
 }
@@ -211,8 +214,7 @@ void Config::DestroyConfig() {
 
 Config::Config() {}
 
-Config::Config(std::string   & filename,
-               char           *ctrl_hostname,
+Config::Config(char           *ctrl_hostname,
                uint32_t        ctrl_port,
                uint32_t        ctrl_timeout,
                char           *ctrl_key,
@@ -231,15 +233,13 @@ Config::Config(std::string   & filename,
   heart_beat_(heart_beat),
   single_server_(single_server),
   logging_path_(logging_path),
-  file_name_(filename),
   retry_wait_(false) {
 
 }
 
 void Config::Load() {
-  std::string configs[1] = {file_name_};
 
-  for (auto& name: configs) {
+  for (auto& name: config_paths_) {
     if (boost::algorithm::ends_with(name, "yml")) {
       LoadYML(name);
     } else if (boost::algorithm::ends_with(name, "xml")) {
@@ -271,6 +271,7 @@ void Config::LoadYML(std::string &filename) {
 
 void Config::LoadSiteYML(YAML::Node config) {
   auto servers = config["server"];
+  parid_t par_id = 0;
   for (auto it = servers.begin(); it != servers.end(); it++) {
     auto par = *it;
     vector<string> v;
@@ -278,10 +279,12 @@ void Config::LoadSiteYML(YAML::Node config) {
       auto site_addr = iitt->as<string>();
       SiteInfo *info = new SiteInfo(next_site_id_++, site_addr);
       info->server_or_client_ = 0;
+      info->par_id = par_id;
       site_infos_[info->name] = info;
       v.push_back(info->name);
     }
     par_servers_.push_back(v);
+    par_id ++;
   }
   auto clients = config["client"];
   for (auto it = clients.begin(); it != clients.end(); it++) {
@@ -314,6 +317,12 @@ void Config::LoadHostYML(YAML::Node config) {
     auto proc_name = it->first.as<string>();
     auto host_name = it->second.as<string>();
     proc_host_map_[proc_name] = host_name;
+    for (auto &pair: site_infos_) {
+      auto info = pair.second;
+      if (info->proc_name == proc_name) {
+        info->host = host_name;
+      }
+    }
   }
 }
 
@@ -392,7 +401,7 @@ void Config::LoadXML(std::string &filename) {
 
   // parse every table and its column
   LoadModeXML(pt);
-  LoadTopoXML(pt);
+//  LoadTopoXML(pt);
   LoadSchemeXML(pt);
   LoadWorkloadXML(pt); 
 }
@@ -433,15 +442,13 @@ void Config::LoadWorkloadXML(boost::property_tree::ptree &pt) {
   txn_weight_.push_back(d);
 
   // TODO particular configuration for certain workloads.
+  auto &tb_infos = Sharding::sharding_s->tb_info_;
   if (benchmark_ == TPCC_REAL_DIST_PART) {
     i32 n_w_id =
-      (i32)(Sharding::sharding_s->tb_info_[std::string(TPCC_TB_WAREHOUSE)].
-            num_records);
-    i32 n_d_id =
-      (i32)(num_site_ *
-            Sharding::sharding_s->tb_info_[std::string(TPCC_TB_DISTRICT)].
-            num_records /
-            n_w_id);
+      (i32)(tb_infos[std::string(TPCC_TB_WAREHOUSE)].num_records);
+    verify(n_w_id > 0);
+    i32 n_d_id = (i32)(get_num_site() *
+          tb_infos[std::string(TPCC_TB_DISTRICT)].num_records / n_w_id);
     i32 d_id = 0, w_id = 0;
 
     for (d_id = 0; d_id < n_d_id; d_id++)
@@ -453,8 +460,7 @@ void Config::LoadWorkloadXML(boost::property_tree::ptree &pt) {
         Sharding::sharding_s->insert_dist_mapping(mv);
       }
     i32 n_i_id =
-      (i32)(Sharding::sharding_s->tb_info_[std::string(TPCC_TB_ITEM)].
-            num_records);
+      (i32)(tb_infos[std::string(TPCC_TB_ITEM)].num_records);
     i32 i_id = 0;
 
     for (i_id = 0; i_id < n_i_id; i_id++)
@@ -469,6 +475,8 @@ void Config::LoadWorkloadXML(boost::property_tree::ptree &pt) {
 }
 
 void Config::LoadTopoXML(boost::property_tree::ptree &pt) {
+  // TODO remove
+  verify(0);
   // parse all the server sites
   num_site_     = pt.get<int>("benchmark.hosts.<xmlattr>.number");
 //  site_         = (char **)malloc(sizeof(char *) * num_site_);
@@ -567,8 +575,8 @@ void Config::LoadTopoXML(boost::property_tree::ptree &pt) {
 }
 
 void Config::LoadSchemeXML(boost::property_tree::ptree &pt) {
-  int *site_buf = (int *)malloc(sizeof(int) * num_site_);
-  verify(site_buf != NULL);
+//  int *site_buf = (int *)malloc(sizeof(int) * num_site_);
+  vector<int> site_buf(get_num_site());
   BOOST_FOREACH(boost::property_tree::ptree::value_type const & value,
                 pt.get_child("benchmark")) {
     if (value.first == "table") {
@@ -581,28 +589,27 @@ void Config::LoadSchemeXML(boost::property_tree::ptree &pt) {
       uint64_t records = value.second.get<uint64_t>("<xmlattr>.records");
       Sharding::tb_info_t tb_info(method);
       tb_info.num_records = records * scale_factor_;
-      verify(records > 0);
+      verify(tb_info.num_records > 0);
 
       // set tb_info site info
       bool all_site = value.second.get<bool>("<xmlattr>.all_site", true);
 
       if (all_site) {
-        tb_info.num_site = num_site_;
+        tb_info.num_site = get_num_site();
         tb_info.site_id  =
-          (unsigned int *)malloc(sizeof(unsigned int) * num_site_);
+          (unsigned int *)malloc(sizeof(unsigned int) * get_num_site());
         verify(tb_info.site_id != NULL);
 
-        for (int i = 0; i < num_site_; i++) tb_info.site_id[i] = i;
+        for (int i = 0; i < get_num_site(); i++) tb_info.site_id[i] = i;
       } else {
         verify(0);
-        memset(site_buf, 0, sizeof(int) * num_site_);
         unsigned int num_site_buf = 0;
         BOOST_FOREACH(
           boost::property_tree::ptree::value_type const & site_value,
           value.second.get_child("site")) {
           if (site_value.first == "site_id") {
             int sid = site_value.second.get<int>("<xmltext>");
-            verify(sid < num_site_ && sid >= 0);
+            verify(sid < get_num_site() && sid >= 0);
             verify(site_buf[sid] == 0);
 
             if (site_buf[sid] == 0) num_site_buf++;
@@ -615,11 +622,11 @@ void Config::LoadSchemeXML(boost::property_tree::ptree &pt) {
         verify(tb_info.site_id != NULL);
         unsigned int j = 0;
 
-        for (unsigned int i = 0; i < num_site_; i++)
+        for (unsigned int i = 0; i < get_num_site(); i++)
           if (site_buf[i] == 1) tb_info.site_id[j++] = i;
         verify(j == num_site_buf);
       }
-      verify(tb_info.num_site > 0 && tb_info.num_site <= num_site_);
+      verify(tb_info.num_site > 0 && tb_info.num_site <= get_num_site());
 
       // set tb_info.symbol TBL_SORTED or TBL_UNSORTED or TBL_SNAPSHOT
       std::string symbol_str = value.second.get<std::string>("<xmlattr>.type",
@@ -692,7 +699,6 @@ void Config::LoadSchemeXML(boost::property_tree::ptree &pt) {
       Sharding::sharding_s->tb_info_[tb_name] = tb_info;
     }
   }
-  free(site_buf);
 }
 
 Config::~Config() {
@@ -754,18 +760,21 @@ const char * Config::get_ctrl_init() {
 //    return ctrl_run_;
 // }
 //
-
+// TODO obsolete
 int Config::get_all_site_addr(std::vector<std::string>& servers) {
-  if (site_.size() == 0) return -1;
-  unsigned int i = 0;
 
-  for (; i < num_site_; i++) {
-    servers.push_back(site_[i]);
+  for (auto &pair : site_infos_) {
+    auto info = pair.second;
+    if (info->server_or_client_ == 0) {
+      servers.push_back(info->GetHostAddr());
+    }
   }
   return servers.size();
 }
 
 int Config::get_site_addr(unsigned int sid, std::string& server) {
+  // TODO
+  verify(0);
   if (site_.size() == 0) verify(0);
 
   if (sid >= num_site_) verify(0);
@@ -777,20 +786,21 @@ int Config::get_site_addr(unsigned int sid, std::string& server) {
   return 0;
 }
 
-int Config::get_my_addr(std::string& server) {
-  if (site_.size() == 0) verify(0);
-
-  if (sid_ >= num_site_) verify(0);
-
-  server.assign("0.0.0.0:");
-  uint32_t len = site_[sid_].length(), p_start = 0;
-  uint32_t port_pos = site_[sid_].find_first_of(':') + 1;
-  verify(p_start < len && p_start > 0);
-  server.append(site_[sid_].substr(port_pos));
-  return 0;
-}
+//int Config::get_my_addr(std::string& server) {
+//  if (site_.size() == 0) verify(0);
+//
+//  if (sid_ >= num_site_) verify(0);
+//
+//  server.assign("0.0.0.0:");
+//  uint32_t len = site_[sid_].length(), p_start = 0;
+//  uint32_t port_pos = site_[sid_].find_first_of(':') + 1;
+//  verify(p_start < len && p_start > 0);
+//  server.append(site_[sid_].substr(port_pos));
+//  return 0;
+//}
 
 int Config::get_threads(unsigned int& threads) {
+  verify(0);
   if (site_threads_.size() == 0) return -1;
 
   if (sid_ >= num_site_) return -2;
@@ -823,7 +833,7 @@ int Config::get_benchmark() {
 }
 
 unsigned int Config::get_num_site() {
-  return num_site_;
+  return par_servers_.size();
 }
 
 unsigned int Config::get_scale_factor() {
