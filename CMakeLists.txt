@@ -10,13 +10,13 @@ pkg_check_modules(PYTHON2 REQUIRED python2)
 pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
 
 # does not seem to solve the problem
-
-find_path(YAML_CPP_INCLUDE_DIR
-        NAMES yaml_cpp.h
-        PATHS ${YAML_CPP_INCLUDE_DIRS})
-find_library(YAML_CPP_LIBRARY
-        NAMES YAML_CPP
-        PATHS ${YAML_CPP_LIBRARY_DIRS})
+#
+#find_path(YAML_CPP_INCLUDE_DIR
+#        NAMES yaml_cpp.h
+#        PATHS ${YAML_CPP_INCLUDE_DIRS})
+#find_library(YAML_CPP_LIBRARY
+#        NAMES YAML_CPP
+#        PATHS ${YAML_CPP_LIBRARY_DIRS})
 
 
 include_directories(
@@ -48,7 +48,7 @@ link_directories(
 )
 
 
-set (CMAKE_SHARED_LINKER_FLAGS "-Wl, -lyaml-cpp")
+#set (CMAKE_SHARED_LINKER_FLAGS "-Wl, -lyaml-cpp")
 
 
 file(GLOB RRR_SRC
@@ -115,12 +115,15 @@ target_link_libraries(
     ROCOCO_SERVER
     ROCOCO
     ${CMAKE_THREAD_LIBS_INIT}
+    ${YAML_CPP_LIBRARIES}
 )
 
 target_link_libraries(
     ROCOCO_CLIENT
     ROCOCO
     ${CMAKE_THREAD_LIBS_INIT}
+    ${YAML_CPP_LIBRARIES}
+
 )
 
 #add_executable(ROCOCO_SERVER, deptran/s_main.cc)
