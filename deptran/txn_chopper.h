@@ -35,13 +35,13 @@ class TxnRequest {
 
 class SimpleCommand: public Command {
 public:
+  Command* root_;
   vector<Value> input;
   vector<Value> output;
   int output_size;
-  int inn_id;
   int par_id;
-  int type;  
   virtual parid_t GetPar() {return par_id;}
+  virtual Command* GetRootCmd() {return root_;}
 };
 
 class TxnChopper : public Command {
@@ -94,6 +94,8 @@ class TxnChopper : public Command {
   struct timespec start_time_;
 
   TxnChopper();
+
+  virtual cmdtype_t type() {return txn_type_;};
 
   /** this is even a better than better way to write hard coded coordinator.*/
   //virtual int next_piece(std::vector<std::vector<mdb::Value> > &input, int32_t &server_id, std::vector<int> &pi, std::vector<int> &p_type);

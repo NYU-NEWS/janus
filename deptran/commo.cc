@@ -32,7 +32,10 @@ void Commo::SendStart(parid_t par_id,
   RequestHeader header;
   header.cid = coo->coo_id_;
   header.tid = coo->cmd_id_;
-  header.t_type = req.cmd->type();
+  header.t_type = req.cmd->GetRootCmd()->type();
+  header.p_type = req.cmd->type(); // TODO
+  verify(header.t_type);
+  verify(header.p_type);
   SimpleCommand *cmd  = (SimpleCommand*)req.cmd;
   RococoProxy *proxy = vec_rpc_proxy_[par_id];
   std::function<void(Future*)> cb = [coo, this, callback, cmd](Future *fu) {

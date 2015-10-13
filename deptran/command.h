@@ -8,7 +8,7 @@ namespace rococo {
  * coordinator and servers, or server to server.
  */
 class Command {
-private:
+public:
   cmdtype_t type_;
   innid_t inn_id_;
 public:
@@ -22,6 +22,7 @@ public:
   virtual bool IsFinished(){verify(0);};
   virtual bool HasMoreSubCmd(map<innid_t, Command*>&){verify(0);};;
   virtual Command* GetNextSubCmd(std::map<innid_t, Command*>&){verify(0);};
+  virtual Command* GetRootCmd() {return this;};
   // virtual void HasMoreContext();
 };
 

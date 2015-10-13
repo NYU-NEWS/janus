@@ -24,14 +24,15 @@ Command *TxnChopper::GetNextSubCmd(map<innid_t, Command *> &cmdmap) {
   for (int i = 0; i < status_.size(); i++) {
     if (status_[i] == 0) {
       cmd = new SimpleCommand;
-      cmd->inn_id = i;
+      cmd->inn_id_ = i;
       cmd->par_id = sharding_[i];
-      cmd->type = p_types_[i];
+      cmd->type_ = p_types_[i];
       cmd->input = inputs_[i];
       cmd->output_size = output_size_[i];
-
+      cmd->root_ = this;
       proxies_.insert(sharding_[i]);
       status_[i] = 1;
+      verify(cmd->type_ != 0);
       return cmd;
     }
   }
@@ -80,50 +81,51 @@ int TxnChopper::batch_next_piece(BatchRequestHeader *batch_header,
                                  std::vector<mdb::Value> &input,
                                  int32_t &server_id, std::vector<int> &pi,
                                  Coordinator *coo) {
-  if (n_started_ == n_pieces_)
-    return 2;
-
-  int status = 1;
-
-  pi.reserve(status_.size());
-  pi.clear();
-  server_id = 0;
-  uint32_t input_size = 0;
-  for (int i = 0; i < status_.size(); i++) {
-    if (status_[i] == 0) {
-      if (pi.size() == 0) {
-        server_id = sharding_[i];
-        proxies_.insert(server_id);
-        pi.push_back(i);
-        input_size += inputs_[i].size();
-        status_[i] = 1;
-      }
-      else if (server_id == sharding_[i]) {
-        pi.push_back(i);
-        input_size += inputs_[i].size();
-        status_[i] = 1;
-      }
-    }
-    else if (status_[i] == -1)
-      status = -1;
-  }
-
-  if (pi.size() > 0) {
-    BatchStartArgsHelper bsah;
-    bsah.init_input_client(&input, pi.size(), input_size);
-    batch_header->expected_output_size = 0;
-    std::vector<int>::iterator it = pi.begin();
-    for (; it != pi.end(); it++) {
-      bsah.put_next_input_client(inputs_[*it], (i32) p_types_[*it], (i64) coo->next_pie_id(), (i32) output_size_[*it]);
-      batch_header->expected_output_size += (i32) output_size_[*it];
-    }
-
-    batch_header->num_piece = (i32) pi.size();
-
-    return 0;
-  }
-
-  return status;
+  verify(0);
+//  if (n_started_ == n_pieces_)
+//    return 2;
+//
+//  int status = 1;
+//
+//  pi.reserve(status_.size());
+//  pi.clear();
+//  server_id = 0;
+//  uint32_t input_size = 0;
+//  for (int i = 0; i < status_.size(); i++) {
+//    if (status_[i] == 0) {
+//      if (pi.size() == 0) {
+//        server_id = sharding_[i];
+//        proxies_.insert(server_id);
+//        pi.push_back(i);
+//        input_size += inputs_[i].size();
+//        status_[i] = 1;
+//      }
+//      else if (server_id == sharding_[i]) {
+//        pi.push_back(i);
+//        input_size += inputs_[i].size();
+//        status_[i] = 1;
+//      }
+//    }
+//    else if (status_[i] == -1)
+//      status = -1;
+//  }
+//
+//  if (pi.size() > 0) {
+//    BatchStartArgsHelper bsah;
+//    bsah.init_input_client(&input, pi.size(), input_size);
+//    batch_header->expected_output_size = 0;
+//    std::vector<int>::iterator it = pi.begin();
+//    for (; it != pi.end(); it++) {
+//      bsah.put_next_input_client(inputs_[*it], (i32) p_types_[*it], (i64) coo->next_pie_id(), (i32) output_size_[*it]);
+//      batch_header->expected_output_size += (i32) output_size_[*it];
+//    }
+//
+//    batch_header->num_piece = (i32) pi.size();
+//
+//    return 0;
+//  }
+//
+//  return status;
 }
 
 void TxnChopper::Merge(Command &cmd) {

@@ -12,15 +12,7 @@ pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
 FIND_PACKAGE( Boost COMPONENTS system filesystem REQUIRED )
 INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
 
-# does not seem to solve the problem
-#
-#find_path(YAML_CPP_INCLUDE_DIR
-#        NAMES yaml_cpp.h
-#        PATHS ${YAML_CPP_INCLUDE_DIRS})
-#find_library(YAML_CPP_LIBRARY
-#        NAMES YAML_CPP
-#        PATHS ${YAML_CPP_LIBRARY_DIRS})
-
+set(CMAKE_CXX_FLAGS_DEBUG "-DLOG_DEBUG")
 
 include_directories(
         ${PYTHON2_INCLUDE_DIRS}
