@@ -10,13 +10,14 @@ void NoneCoord::do_one(TxnRequest &req) {
   // pre-process
   ScopedLock(this->mtx_);
   TxnChopper *ch = TxnChopperFactory::gen_chopper(req, benchmark_);
-  ch->txn_id_ = this->next_txn_id();
+  cmd_id_ = this->next_txn_id();
 
   Log::debug("do one request");
 
   if (ccsi_) ccsi_->txn_start_one(thread_id_, ch->txn_type_);
 
-  LegacyStart(ch);
+//  LegacyStart(ch);
+  Start();
 }
 
 void NoneCoord::LegacyStartAck(TxnChopper *ch, int pi, Future *fu) {
@@ -41,11 +42,12 @@ void NoneCoord::LegacyStartAck(TxnChopper *ch, int pi, Future *fu) {
 
     if (!ch->commit_.load()) {
       if (ch->n_start_sent_ == 0) {
-        this->finish(ch);
+        this->Finish();
       }
     } else {
       if (ch->start_callback(pi, res, output)) {
-        this->LegacyStart(ch);
+//        this->LegacyStart(ch);
+        Start();
       } else if (ch->n_started_ == ch->n_pieces_) {
         callback = true;
         ch->reply_.res_ = SUCCESS;

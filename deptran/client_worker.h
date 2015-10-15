@@ -22,39 +22,39 @@ struct ClientWorker {
   uint32_t concurrent_txn;
   rrr::Mutex finish_mutex;
   rrr::CondVar finish_cond;
-  Coordinator *coo;
+  Coordinator *coo_;
   std::atomic<uint32_t> num_txn, success, num_try;
 
   Coordinator* GetCoord() {
-    if (coo) return coo;
+    if (coo_) return coo_;
     auto attr = this;
     switch (mode) {
       case MODE_2PL:
       case MODE_OCC:
       case MODE_RPC_NULL:
-        coo = new Coordinator(coo_id, *(attr->servers),
+        coo_ = new Coordinator(coo_id, *(attr->servers),
                               attr->benchmark, attr->mode,
                               ccsi, id, attr->batch_start);
         break;
       case MODE_RCC:
-        coo = new RCCCoord(coo_id, *(attr->servers),
+        coo_ = new RCCCoord(coo_id, *(attr->servers),
                            attr->benchmark, attr->mode,
                            ccsi, id, attr->batch_start);
         break;
       case MODE_RO6:
-        coo = new RO6Coord(coo_id, *(attr->servers),
+        coo_ = new RO6Coord(coo_id, *(attr->servers),
                            attr->benchmark, attr->mode,
                            ccsi, id, attr->batch_start);
         break;
       case MODE_NONE:
-        coo = new NoneCoord(coo_id, *(attr->servers),
+        coo_ = new NoneCoord(coo_id, *(attr->servers),
                             attr->benchmark, attr->mode,
                             ccsi, id, attr->batch_start);
         break;
       default:
         verify(0);
     }
-    return coo;
+    return coo_;
   }
 
   void callback2(TxnReply &txn_reply);

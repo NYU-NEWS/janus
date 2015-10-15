@@ -175,7 +175,7 @@ void RCCCoord::deptran_start(TxnChopper *ch) {
 
     RococoProxy *proxy = commo_->vec_rpc_proxy_[server_id];
     Log::debug("send deptran start request, tid: %llx, pid: %llx",
-               ch->txn_id_,
+               cmd_id_,
                header.pid);
         verify(input != nullptr);
     Future::safe_release(proxy->async_rcc_start_pie(header, *input, fuattr));
@@ -185,7 +185,7 @@ void RCCCoord::deptran_start(TxnChopper *ch) {
 /** caller should be thread safe */
 void RCCCoord::deptran_finish(TxnChopper *ch) {
         verify(IS_MODE_RCC || IS_MODE_RO6);
-  Log::debug("deptran finish, %llx", ch->txn_id_);
+  Log::debug("deptran finish, %llx", cmd_id_);
 
   // commit or abort piece
   rrr::FutureAttr fuattr;
@@ -200,7 +200,7 @@ void RCCCoord::deptran_finish(TxnChopper *ch) {
 
       ChopFinishResponse res;
 
-      Log::debug("receive finish response. tid: %llx", ch->txn_id_);
+      Log::debug("receive finish response. tid: %llx", cmd_id_);
 
       fu->get_reply() >> res;
 
@@ -212,7 +212,7 @@ void RCCCoord::deptran_finish(TxnChopper *ch) {
 
     if (callback) {
       // generate a reply and callback.
-      Log::debug("deptran callback, %llx", ch->txn_id_);
+      Log::debug("deptran callback, %llx", cmd_id_);
 
       if (!ch->do_early_return()) {
         ch->reply_.res_ = SUCCESS;
@@ -232,13 +232,13 @@ void RCCCoord::deptran_finish(TxnChopper *ch) {
   Log::debug(
     "send deptran finish requests to %d servers, tid: %llx, graph size: %d",
     (int)ch->proxies_.size(),
-    ch->txn_id_,
+    cmd_id_,
     ch->gra_.size());
   verify(ch->proxies_.size() == ch->gra_.FindV(
-           ch->txn_id_)->data_->servers_.size());
+           cmd_id_)->data_->servers_.size());
 
   ChopFinishRequest req;
-  req.txn_id = ch->txn_id_;
+  req.txn_id = cmd_id_;
   req.gra    = ch->gra_;
 
   verify(ch->gra_.size() > 0);
@@ -293,7 +293,7 @@ void RCCCoord::deptran_start_ro(TxnChopper *ch) {
 
     RococoProxy *proxy = commo_->vec_rpc_proxy_[server_id];
     Log::debug("send deptran RO start request, tid: %llx, pid: %llx",
-               ch->txn_id_,
+               cmd_id_,
                header.pid);
     verify(input != nullptr);
     Future::safe_release(proxy->async_rcc_ro_start_pie(header, *input, fuattr));
@@ -359,7 +359,7 @@ void RCCCoord::deptran_finish_ro(TxnChopper *ch) {
 
       if (callback) {
         // generate a reply and callback.
-        Log::debug("deptran RO callback, %llx", ch->txn_id_);
+        Log::debug("deptran RO callback, %llx", cmd_id_);
         TxnReply& txn_reply_buf = ch->get_reply();
         double    last_latency  = ch->last_attempt_latency();
         this->report(txn_reply_buf, last_latency
@@ -374,7 +374,7 @@ void RCCCoord::deptran_finish_ro(TxnChopper *ch) {
 
     RococoProxy *proxy = commo_->vec_rpc_proxy_[server_id];
     Log::debug("send deptran RO start request (phase 2), tid: %llx, pid: %llx",
-               ch->txn_id_,
+               cmd_id_,
                header.pid);
     verify(input != nullptr);
     Future::safe_release(proxy->async_rcc_ro_start_pie(header, *input, fuattr));
@@ -385,7 +385,7 @@ void RCCCoord::do_one(TxnRequest& req) {
   // pre-process
   ScopedLock(this->mtx_);
   TxnChopper *ch = TxnChopperFactory::gen_chopper(req, benchmark_);
-  ch->txn_id_ = this->next_txn_id();
+  cmd_id_ = this->next_txn_id();
 
   Log::debug("do one request");
 
@@ -393,7 +393,7 @@ void RCCCoord::do_one(TxnRequest& req) {
 
   if (recorder_) {
     std::string log_s;
-    req.get_log(ch->txn_id_, log_s);
+    req.get_log(cmd_id_, log_s);
     std::function<void(void)> start_func = [this, ch]() {
       if (ch->is_read_only()) deptran_start_ro(ch);
       else {

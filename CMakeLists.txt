@@ -12,7 +12,7 @@ pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
 FIND_PACKAGE( Boost COMPONENTS system filesystem REQUIRED )
 INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
 
-set(CMAKE_CXX_FLAGS_DEBUG "-DLOG_DEBUG")
+#set(CMAKE_CXX_FLAGS_DEBUG "-DLOG_DEBUG")
 
 include_directories(
         ${PYTHON2_INCLUDE_DIRS}

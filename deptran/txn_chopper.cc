@@ -136,8 +136,11 @@ void TxnChopper::Merge(Command &cmd) {
 }
 
 bool TxnChopper::HasMoreSubCmd(map<innid_t, Command *> &cmdmap) {
-  // TODO   
-  return true;
+  verify(cmdmap.size() <= n_pieces_);
+  if (cmdmap.size() == n_pieces_)
+    return false;
+  else
+    return true;
 }
 
 bool TxnChopper::start_callback(int pi,

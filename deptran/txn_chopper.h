@@ -62,8 +62,10 @@ class TxnChopper : public Command {
 
   bool early_return_;
 
+protected:
+  txnid_t txn_id_; // TODO obsolete
+
  public:
-  txnid_t txn_id_;
   txntype_t txn_type_;
 
   Graph<TxnInfo> gra_;

@@ -30,7 +30,8 @@ class Coordinator {
   Command *cmd_; 
   cmdid_t cmd_id_;
   phase_t phase_;
-  map<innid_t, Command*> cmd_map_; 
+  map<innid_t, Command*> cmd_map_;
+  map<innid_t, bool> start_ack_map_;
 
   std::vector<int> site_prepare_;
   std::vector<int> site_commit_;
@@ -120,24 +121,25 @@ class Coordinator {
   /** do it asynchronously, thread safe.
    */
   virtual void do_one(TxnRequest &);
-
+  virtual void cleanup();
   void restart(TxnChopper *ch);
 
   void Start();
   void StartAck(StartReply &reply, const phase_t &phase);
-  void LegacyStart(TxnChopper *ch);
-  void LegacyStartAck(TxnChopper *ch, int pi, Future *fu);
+//  void LegacyStart(TxnChopper *ch);
+//  void LegacyStartAck(TxnChopper *ch, int pi, Future *fu);
   void rpc_null_start(TxnChopper *ch);
   void naive_batch_start(TxnChopper *ch);
 //  void batch_start(TxnChopper *ch);
-  void prepare(TxnChopper *ch);
+  void Prepare();
   void PrepareAck(TxnChopper *ch, Future *fu);
-  void finish(TxnChopper *ch);
+  void Finish();
   void FinishAck(TxnChopper *ch, Future *fu);
-  void Prepare() {verify(0);}
   void Abort() {verify(0);}
 
-  RequestHeader gen_header(TxnChopper *ch);
+  bool AllStartAckCollected();
+
+    RequestHeader gen_header(TxnChopper *ch);
 
   BatchRequestHeader gen_batch_header(TxnChopper *ch);
 

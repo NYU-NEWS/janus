@@ -10,7 +10,7 @@ void ClientWorker::callback2(TxnReply &txn_reply) {
     TxnRequestFactory::init_txn_req(&req, coo_id);
     req.callback_ = std::bind(&ClientWorker::callback2, this,
                               std::placeholders::_1);
-    coo->do_one(req);
+    coo_->do_one(req);
   } else {
     Log::debug("time up. stop.");
     finish_mutex.lock();

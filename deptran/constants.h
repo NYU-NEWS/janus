@@ -38,7 +38,7 @@ namespace rococo {
 
 #define SUCCESS     (0)
 #define CONTENTION  (-1)
-#define REJECT      (-1)
+#define REJECT      (-10)
 #define DELAYED     (1)
 
 #define MODE_NONE   (0x00)
