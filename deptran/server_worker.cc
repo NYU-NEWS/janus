@@ -41,7 +41,6 @@ void ServerWorker::PopTable() {
 
   // populate table
   auto sid = Config::GetConfig()->get_site_id();
-
   auto par_id = site_info_->par_id;
   int ret = 0;
 
@@ -74,6 +73,7 @@ void ServerWorker::PopTable() {
     DTxnMgr::get_sole_mgr()->reg_table(*table_it, tb);
   }
   Sharding::populate_table(table_names, sid);
+  Log_info("Site %d data populated", sid);
   verify(ret > 0);
 }
 
@@ -130,7 +130,11 @@ void ServerWorker::SetupService() {
   svr_server_g->reg(rsi_g);
 
   // start rpc server
-  svr_server_g->start(bind_addr.c_str());
+  ret = svr_server_g->start(bind_addr.c_str());
+  if (ret != 0) {
+    Log_fatal("server launch failed.");
+  }
+
 
   Log_info("Server ready");
 
@@ -151,7 +155,6 @@ void ServerWorker::SetupService() {
     hb_thread_pool_g->release();
 
     auto &recorder = ((DepTranServiceImpl *) rsi_g)->recorder_;
-
     if (recorder) {
       auto n_flush_avg_ = recorder->stat_cnt_.peek().avg_;
       auto sz_flush_avg_ = recorder->stat_sz_.peek().avg_;

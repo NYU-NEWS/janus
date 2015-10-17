@@ -19,7 +19,7 @@ struct ClientWorker {
   uint32_t id;
   uint32_t duration;
   ClientControlServiceImpl *ccsi;
-  uint32_t concurrent_txn;
+  uint32_t n_outstanding_;
   rrr::Mutex finish_mutex;
   rrr::CondVar finish_cond;
   Coordinator *coo_;

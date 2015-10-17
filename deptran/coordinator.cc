@@ -162,6 +162,10 @@ void Coordinator::Start() {
     this->StartAck(reply, phase);
   };
   while ((subcmd = cmd_->GetNextSubCmd(cmd_map_)) != nullptr) {
+    req.pie_id = next_pie_id();
+    Log_debug("send out start request, "
+                  "cmd_id: %lx, inn_id: %d, pie_id: %lx",
+              cmd_id_, subcmd->inn_id_, req.pie_id);
     verify(cmd_map_.find(subcmd->inn_id_) == cmd_map_.end());
 //    auto &cmd = cmd_map_[subcmd->inn_id_];
 //    verify(cmd == nullptr);
@@ -181,6 +185,8 @@ bool Coordinator::AllStartAckCollected() {
 void Coordinator::StartAck(StartReply &reply, const phase_t &phase) {
   ScopedLock(this->mtx_);
   if (phase != phase_) return;
+  Log_debug("get start ack for cmd_id: %lx, inn_id: %d",
+            cmd_id_, reply.cmd->inn_id_);
   start_ack_map_[reply.cmd->inn_id_] = true;
   if (reply.res == REJECT) {
     phase_++; 
@@ -188,9 +194,15 @@ void Coordinator::StartAck(StartReply &reply, const phase_t &phase) {
     Abort(); 
   } else {
     cmd_->Merge(*reply.cmd);
+    TxnChopper *ch = (TxnChopper *)cmd_;
+    ch->n_started_++; // TODO replace this
     if (cmd_->HasMoreSubCmd(cmd_map_)) {
+      Log_debug("command has more sub-cmd, cmd_id: %lx,"
+                    " n_started_: %d, n_pieces: %d",
+                cmd_id_, ch->n_started_, ch->n_pieces_);
       Start();
     } else if (AllStartAckCollected()) {
+      Log_debug("receive all start acks, txn_id: %lx", cmd_id_);
       phase_++;
       Prepare();
     } else {
@@ -313,6 +325,7 @@ void Coordinator::Finish() {
   TxnChopper *ch = (TxnChopper*)cmd_;
   verify(mode_ == MODE_OCC || mode_ == MODE_2PL);
 
+  Log_debug("send out finish request, cmd_id: %lx", cmd_id_);
   // commit or abort piece
   rrr::FutureAttr fuattr;
   fuattr.callback = [ch, this](Future *fu) {

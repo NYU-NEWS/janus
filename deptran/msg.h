@@ -8,6 +8,7 @@ namespace rococo {
 
 struct StartRequest {
   cmdid_t cmd_id;
+  cmdid_t pie_id; // TODO obsolete
   Command *cmd; 
 };
 

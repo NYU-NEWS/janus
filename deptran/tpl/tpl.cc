@@ -48,7 +48,8 @@ int TPLDTxn::start_launch(
 ) {
   if (IS_MODE_2PL) {
     verify(this->mdb_txn_->rtti() == mdb::symbol_t::TXN_2PL);
-    DragonBall *defer_reply_db = new DragonBall(1, [defer]() {
+    DragonBall *defer_reply_db = new DragonBall(1, [defer, res]() {
+      auto r = *res;
       defer->reply();
     });
     this->pre_execute_2pl(header, input, res, output, defer_reply_db);
@@ -179,12 +180,12 @@ std::function<void(void)> TPLDTxn::get_2pl_succ_callback(
     rrr::i32 *res,
     mdb::Txn2PL::PieceStatus *ps) {
   return [header, input, input_size, res, ps, this]() {
-    Log::debug("tid: %ld, pid: %ld, p_type: %d, lock acquired call back",
+    Log_debug("lock acquired call back, txn_id: %lx, pie_id: %lx, p_type: %d, ",
                header.tid, header.pid, header.p_type);
-    Log::debug("succ 1 callback: PS: %p", ps);
+    Log_debug("succ 1 callback: PS: %p", ps);
     verify(ps != NULL); //FIXME
     ps->start_yes_callback();
-    Log::debug("tid: %ld, pid: %ld, p_type: %d, get lock",
+    Log_debug("tid: %lx, pid: %lx, p_type: %d, get lock",
                header.tid, header.pid, header.p_type);
 
     if (ps->can_proceed()) {
@@ -351,7 +352,8 @@ void TPLDTxn::pre_execute_2pl(
   }
   txn->init_piece(header.tid, header.pid, db, output);
 
-  Log::debug("start reg lock");
+  Log_debug("get txn handler and start reg lock, txn_id: %lx, pie_id: %lx",
+            header.tid, header.pid);
   TxnRegistry::get(header).txn_handler(
       this,
       header,

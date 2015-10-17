@@ -11,7 +11,7 @@
 class dummy_class {
  public:
   dummy_class() {
-#ifdef LOG_DEBUG
+#ifdef LOG_LEVEL_AS_DEBUG
     Log::set_level(Log::DEBUG);
 #else
     Log::set_level(Log::INFO);
