@@ -6,6 +6,7 @@ addons:
     sources:
     - ubuntu-toolchain-r-test
     - llvm-toolchain-precise-3.6
+    - boost-latest
     packages:
     - build-essential
     - g++-4.9
