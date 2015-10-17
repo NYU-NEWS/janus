@@ -56,7 +56,7 @@ def configure(conf):
 
 
     conf.env.append_value("CXXFLAGS", "-Wno-sign-compare")
-    conf.check_boost()
+    conf.check_boost(lib='system filesystem')
 
     conf.env.append_value("CXXFLAGS", "-Wno-sign-compare")
     conf.env.append_value('INCLUDES', ['/usr/local/include'])
@@ -123,18 +123,20 @@ def build(bld):
                          "deptran/rcc deptran/tpl "
                          "deptran/brq deptran/none "
                          "test memdb",
+                uselib="BOOST BOOST_SYSTEM",
                 use="PTHREAD rrr memdb deptran")
 
     bld.program(source=bld.path.ant_glob("deptran/s_main.cc"),
                 target="deptran_server",
                 includes=". rrr bench deptran deptran/none "
                          "deptran/ro6 deptran/rcc deptran/tpl deptran/brq",
+                uselib="BOOST BOOST_SYSTEM",
                 use="rrr memdb deptran YAML-CPP PTHREAD PROFILER RT")
 
-    bld.program(source=bld.path.ant_glob("deptran/c_main.cc"),
-                target="deptran_client",
-                includes=". rrr bench deptran deptran/ro6 deptran/rcc deptran/tpl deptran/brq deptran/none",
-                use="rrr memdb deptran YAML-CPP PTHREAD RT")
+#    bld.program(source=bld.path.ant_glob("deptran/c_main.cc"),
+#                target="deptran_client",
+#                includes=". rrr bench deptran deptran/ro6 deptran/rcc deptran/tpl deptran/brq deptran/none",
+#                use="rrr memdb deptran YAML-CPP PTHREAD RT")
 
     bld.program(source="old-test/rpcbench.cc old-test/benchmark_service.cc",
                 target="rpcbench",
