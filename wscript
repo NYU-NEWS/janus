@@ -123,7 +123,7 @@ def build(bld):
                          "deptran/rcc deptran/tpl "
                          "deptran/brq deptran/none "
                          "test memdb",
-                uselib="BOOST BOOST_SYSTEM",
+                uselib="BOOST BOOST_SYSTEM YAML-CPP",
                 use="PTHREAD rrr memdb deptran")
 
     bld.program(source=bld.path.ant_glob("deptran/s_main.cc"),
