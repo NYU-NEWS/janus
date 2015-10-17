@@ -61,7 +61,7 @@ void client_launch_workers() {
     workers[thread_index].id = thread_index;
     workers[thread_index].duration = duration;
     workers[thread_index].ccsi = ccsi_g;
-    workers[thread_index].concurrent_txn = concurrent_txn;
+    workers[thread_index].n_outstanding_ = concurrent_txn;
     client_threads.push_back(std::thread(&ClientWorker::work,
                                          &workers[thread_index]));
   }

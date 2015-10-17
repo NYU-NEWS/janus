@@ -137,7 +137,8 @@ void TxnChopper::Merge(Command &cmd) {
 
 bool TxnChopper::HasMoreSubCmd(map<innid_t, Command *> &cmdmap) {
   verify(cmdmap.size() <= n_pieces_);
-  if (cmdmap.size() == n_pieces_)
+//  if (cmdmap.size() == n_pieces_)
+  if (n_pieces_ == n_started_)
     return false;
   else
     return true;
@@ -146,7 +147,7 @@ bool TxnChopper::HasMoreSubCmd(map<innid_t, Command *> &cmdmap) {
 bool TxnChopper::start_callback(int pi,
                                 std::vector<mdb::Value> &output,
                                 bool is_defer) {
-
+  verify(0);
   if (is_defer && output_size_[pi] != 0)
     early_return_ = false;
   if (is_defer)
@@ -157,7 +158,7 @@ bool TxnChopper::start_callback(int pi,
 
 bool TxnChopper::start_callback(int pi,
                                 const ChopStartResponse &res) {
-
+  verify(0);
   if (res.is_defered && output_size_[pi] != 0)
     early_return_ = false;
   if (res.is_defered)

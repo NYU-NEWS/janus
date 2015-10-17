@@ -9,37 +9,38 @@ pkg_check_modules(APR REQUIRED apr-1)
 pkg_check_modules(PYTHON2 REQUIRED python2)
 pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
 
-FIND_PACKAGE( Boost COMPONENTS system filesystem REQUIRED )
-INCLUDE_DIRECTORIES( ${Boost_INCLUDE_DIR} )
+FIND_PACKAGE(Boost COMPONENTS system filesystem REQUIRED)
+INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
 #set(CMAKE_CXX_FLAGS_DEBUG "-DLOG_DEBUG")
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DLOG_LEVEL_AS_DEBUG")
 
 include_directories(
-        ${PYTHON2_INCLUDE_DIRS}
-        ${APR_INCLUDE_DIRS}
-        ${YAML_CPP_INCLUDE_DIRS}
-        .
-        rrr
-        memdb
-        deptran
-        deptran/tpl
-        deptran/rcc
-        deptran/ro6
-        deptran/brq
-        deptran/none
-        bench
-        bench/micro
-        bench/rw_benchmark
-        bench/tpca
-        bench/tpcc
-        bench/tpcc_dist
-        bench/tpcc_real_dist
+    ${PYTHON2_INCLUDE_DIRS}
+    ${APR_INCLUDE_DIRS}
+    ${YAML_CPP_INCLUDE_DIRS}
+    .
+    rrr
+    memdb
+    deptran
+    deptran/tpl
+    deptran/rcc
+    deptran/ro6
+    deptran/brq
+    deptran/none
+    bench
+    bench/micro
+    bench/rw_benchmark
+    bench/tpca
+    bench/tpcc
+    bench/tpcc_dist
+    bench/tpcc_real_dist
 )
 
 link_directories(
-        ${PYTHON2_LIBRARY_DIRS}
-        ${APR_LIBRARY_DIRS}
-        ${YAML_CPP_LIBRARY_DIRS}
+    ${PYTHON2_LIBRARY_DIRS}
+    ${APR_LIBRARY_DIRS}
+    ${YAML_CPP_LIBRARY_DIRS}
 )
 
 
@@ -47,64 +48,64 @@ link_directories(
 
 
 file(GLOB RRR_SRC
-        "rrr/base/*.hpp"
-        "rrr/base/*.cpp"
-        "rrr/misc/*.hpp"
-        "rrr/misc/*.cpp"
-        "rrr/mq/*.cpp"
-        "rrr/mq/*.h"
-        "rrr/pylib/simplerpc/_pyrpc.cpp"
-        "rrr/rpc/*.cpp"
-        "rrr/rpc/*.hpp"
-        "rrr/utils/*.h"
-        "rrr/rrr.h"
-        "rrr/rrr.hpp"
-        )
+    "rrr/base/*.hpp"
+    "rrr/base/*.cpp"
+    "rrr/misc/*.hpp"
+    "rrr/misc/*.cpp"
+    "rrr/mq/*.cpp"
+    "rrr/mq/*.h"
+    "rrr/pylib/simplerpc/_pyrpc.cpp"
+    "rrr/rpc/*.cpp"
+    "rrr/rpc/*.hpp"
+    "rrr/utils/*.h"
+    "rrr/rrr.h"
+    "rrr/rrr.hpp"
+)
 
 file(GLOB MEMDB_SRC
-        "memdb/*.h"
-        "memdb/*.cc")
+    "memdb/*.h"
+    "memdb/*.cc")
 
 file(GLOB BENCH_SRC
-        "bench/micro/*.h"
-        "bench/micro/*.cc"
-        "bench/rw_benchmark/*.cc"
-        "bench/rw_benchmark/*.h"
-        "bench/tpca/*.h"
-        "bench/tpca/*.cc"
-        "bench/tpcc/*.cc"
-        "bench/tpcc/*.h"
-        "bench/tpcc_dist/*.cc"
-        "bench/tpcc_dist/*.h"
-        "bench/tpcc_real_dist/*.cc"
-        "bench/tpcc_real_dist/*.h"
+    "bench/micro/*.h"
+    "bench/micro/*.cc"
+    "bench/rw_benchmark/*.cc"
+    "bench/rw_benchmark/*.h"
+    "bench/tpca/*.h"
+    "bench/tpca/*.cc"
+    "bench/tpcc/*.cc"
+    "bench/tpcc/*.h"
+    "bench/tpcc_dist/*.cc"
+    "bench/tpcc_dist/*.h"
+    "bench/tpcc_real_dist/*.cc"
+    "bench/tpcc_real_dist/*.h"
 )
 
 file(GLOB DEPTRAN_SRC
-        "deptran/*.h"
-        "deptran/*.cc"
-        "deptran/tpl/*.h"
-        "deptran/tpl/*.cc"
-        "deptran/rcc/*.h"
-        "deptran/rcc/*.cc"
-        "deptran/ro6/*.h"
-        "deptran/ro6/*.cc"
-        "deptran/brq/*.h"
-        "deptran/brq/*.cc"
-        "deptran/none/*.h"
-        "deptran/none/*.cc"
+    "deptran/*.h"
+    "deptran/*.cc"
+    "deptran/tpl/*.h"
+    "deptran/tpl/*.cc"
+    "deptran/rcc/*.h"
+    "deptran/rcc/*.cc"
+    "deptran/ro6/*.h"
+    "deptran/ro6/*.cc"
+    "deptran/brq/*.h"
+    "deptran/brq/*.cc"
+    "deptran/none/*.h"
+    "deptran/none/*.cc"
 )
 
 
 add_library(ROCOCO
-        ${RRR_SRC}
-        ${MEMDB_SRC}
-        ${BENCH_SRC}
-        ${DEPTRAN_SRC}
+    ${RRR_SRC}
+    ${MEMDB_SRC}
+    ${BENCH_SRC}
+    ${DEPTRAN_SRC}
 )
 
 add_executable(ROCOCO_SERVER
-        deptran/s_main.cc)
+    deptran/s_main.cc)
 #add_executable(ROCOCO_CLIENT deptran/c_main.cc)
 
 target_link_libraries(

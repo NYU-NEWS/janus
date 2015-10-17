@@ -31,7 +31,8 @@ void Commo::SendStart(parid_t par_id,
   rrr::FutureAttr fuattr;
   RequestHeader header;
   header.cid = coo->coo_id_;
-  header.tid = coo->cmd_id_;
+  header.tid = req.cmd_id;
+  header.pid = req.pie_id;
   header.t_type = req.cmd->GetRootCmd()->type();
   header.p_type = req.cmd->type(); // TODO
   verify(header.t_type);
@@ -45,7 +46,8 @@ void Commo::SendStart(parid_t par_id,
     callback(reply);
   };
   fuattr.callback = cb;
-  Future::safe_release(proxy->async_start_pie(header, cmd->input, cmd->output_size, fuattr));
+  Future::safe_release(proxy->async_start_pie(header, cmd->input,
+                                              cmd->output_size, fuattr));
 }
 
 void Commo::SendStart(parid_t par_id, 

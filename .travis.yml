@@ -12,6 +12,8 @@ addons:
     - gcc-4.9
     - clang-3.6
     - libboost-dev
+    - libboost-system-dev
+    - libboost-filesystem-dev
     - python-dev
     - python-pip
 before_install:

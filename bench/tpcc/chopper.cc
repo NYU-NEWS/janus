@@ -486,6 +486,8 @@ void TpccChopper::payment_init(TxnRequest &req) {
   }
     // query by c_id, invalidate piece 2
   else {
+    Log_debug("payment transaction lookup by customer name");
+//    verify(0);
     // piece 3, R customer, set it to finish
     status_[3] = 2;
     // piece 4, set it to ready
