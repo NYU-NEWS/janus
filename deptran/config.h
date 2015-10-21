@@ -62,6 +62,7 @@ class Config {
   int32_t benchmark_; // workload
   uint32_t scale_factor_ = 1; // currently disabled
   std::vector<double> txn_weight_;
+  map<string, double> txn_weights_;
   std::string proc_name_;
   bool batch_start_;
   bool early_return_;
@@ -156,18 +157,22 @@ class Config {
   static Config *GetConfig();
   static void DestroyConfig();
 
-  void Load();
+  void InitTPCCD();
+
+    void Load();
 
   void LoadXML(std::string &filename);
   void LoadTopoXML(boost::property_tree::ptree &pt);
   void LoadModeXML(boost::property_tree::ptree &pt);
   void LoadSchemeXML(boost::property_tree::ptree &pt);
-  void LoadWorkloadXML(boost::property_tree::ptree &pt);
+  void LoadBenchXML(boost::property_tree::ptree &pt);
 
   void LoadYML(std::string &);
   void LoadSiteYML(YAML::Node config);
   void LoadProcYML(YAML::Node config);
   void LoadHostYML(YAML::Node config);
+  void LoadModeYML(YAML::Node config);
+  void LoadBenchYML(YAML::Node config);
 //
 //  void LoadModeYML();
 //  void LoadSchemeYML();

@@ -366,9 +366,10 @@ void TxnRequestFactory::get_micro_bench_txn_req(TxnRequest *req, uint32_t cid) c
 
 void TxnRequestFactory::get_tpcc_txn_req(TxnRequest *req, uint32_t cid) const {
   req->n_try_ = n_try_;
-  if (txn_weight_.size() != 5)
+  if (txn_weight_.size() != 5) {
+    verify(0);
     get_tpcc_new_order_txn_req(req, cid);
-  else
+  } else {
     switch (RandomGenerator::weighted_select(txn_weight_)) {
       case 0:
         get_tpcc_new_order_txn_req(req, cid);
@@ -388,6 +389,7 @@ void TxnRequestFactory::get_tpcc_txn_req(TxnRequest *req, uint32_t cid) const {
       default:
         verify(0);
     }
+  }
 }
 
 void TxnRequestFactory::get_txn_req(TxnRequest *req, uint32_t cid) const {
