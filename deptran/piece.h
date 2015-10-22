@@ -74,7 +74,7 @@ class Piece {
     }
 
 #define CREATE_ROW(schema, row_data) \
-    switch (DTxnMgr::get_sole_mgr()->get_mode()) { \
+    switch (Config::config_s->mode_) { \
     case MODE_2PL: \
         r = mdb::FineLockedRow::create(schema, row_data); \
         break; \

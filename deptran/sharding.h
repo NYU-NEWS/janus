@@ -67,7 +67,7 @@ extern std::multimap<c_last_id_t, i32> g_c_last2id; // XXX
 extern mdb::Schema g_c_last_schema;
 
 class Sharding {
- private:
+ public:
 
   enum method_t {
     MODULUS,
@@ -93,13 +93,13 @@ class Sharding {
     bool is_primary;
     column_t *foreign;
     tb_info_t *foreign_tb;
-    std::vector<Value> *values;
+    std::vector<Value> *values; // ? what is this about?
   } column_t;
 
-  typedef struct tb_info_t {
+  struct tb_info_t {
     tb_info_t()
         : sharding_method(MODULUS), num_site(0), site_id(NULL),
-          num_records(0), populated(false) { }
+          num_records(0) { }
 
     tb_info_t(std::string method,
               uint32_t ns = 0,
@@ -107,7 +107,7 @@ class Sharding {
               uint64_t _num_records = 0,
               mdb::symbol_t _symbol = mdb::TBL_UNSORTED
     ) : num_site(ns), site_id(sid), num_records(_num_records),
-        populated(false), symbol(_symbol) {
+        symbol(_symbol) {
       if (method == "modulus") sharding_method = MODULUS;
       else if (method == "int_modulus") sharding_method = INT_MODULUS;
       else sharding_method = MODULUS;
@@ -117,14 +117,15 @@ class Sharding {
     uint32_t num_site;
     uint32_t *site_id;
     uint64_t num_records;
-    bool populated;
+//    bool populated;
+    map<uint32_t, bool> populated;
 
     std::vector<column_t> columns;
     mdb::symbol_t symbol;
     std::string tb_name;
-  } tb_info_t;
+  };
 
-  std::map<std::string, tb_info_t> tb_info_;
+  std::map<std::string, tb_info_t> tb_infos_;
 
   std::map<MultiValue, MultiValue> dist2sid_;
   std::map<MultiValue, MultiValue> stock2sid_;
@@ -150,15 +151,15 @@ class Sharding {
   int do_tpcc_dist_partition_populate_table(
       const std::vector<std::string> &table_names,
       unsigned int sid);
-
-  int do_tpcc_real_dist_partition_populate_table(
-      const std::vector<std::string> &table_names,
-      unsigned int sid);
+//
+//  int do_tpcc_real_dist_partition_populate_table(
+//      const std::vector<std::string> &table_names,
+//      unsigned int sid);
 
   int do_tpcc_populate_table(const std::vector<std::string> &table_names,
                              unsigned int sid);
 
-  bool ready2populate(tb_info_t *tb_info);
+  bool Ready2Populate(tb_info_t *tb_info);
 
   void release_foreign_values();
 
@@ -178,6 +179,7 @@ class Sharding {
   static unsigned int int_modulus(const MultiValue &key,
                                   unsigned int num_site,
                                   const unsigned int *site_id);
+
 
   static Sharding *sharding_s;
 
@@ -220,8 +222,8 @@ class Sharding {
 
   static int get_number_rows(std::map<std::string, uint64_t> &table_map);
 
-  static int populate_table(const std::vector<std::string> &table_names,
-                            unsigned int sid);
+  virtual int populate_table(const std::vector<std::string> &table_names,
+                            uint32_t sid);
 
   //    static int get_site_id(const char *txn_name, unsigned int piece, const
   // char *key, unsigned int &site_id);
@@ -238,6 +240,8 @@ class Sharding {
 
   friend class Config;
 };
-}
+
+
+} // namespace rococo
 
 #endif // ifndef SHARDING_H_

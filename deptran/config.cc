@@ -7,30 +7,31 @@
 #include "multi_value.h"
 #include "sharding.h"
 #include "piece.h"
+#include "frame.h"
 
 // for tpca benchmark
-#include "tpca/piece.h"
-#include "tpca/chopper.h"
+#include "bench/tpca/piece.h"
+#include "bench/tpca/chopper.h"
 
 // tpcc benchmark
-#include "tpcc/piece.h"
-#include "tpcc/chopper.h"
+#include "bench/tpcc/piece.h"
+#include "bench/tpcc/chopper.h"
 
 // tpcc dist partition benchmark
-#include "tpcc_dist/piece.h"
-#include "tpcc_dist/chopper.h"
+#include "bench/tpcc_dist/piece.h"
+#include "bench/tpcc_dist/chopper.h"
 
 // tpcc real dist partition benchmark
-#include "tpcc_real_dist/piece.h"
-#include "tpcc_real_dist/chopper.h"
+#include "bench/tpcc_real_dist/piece.h"
+#include "bench/tpcc_real_dist/chopper.h"
 
 // rw benchmark
-#include "rw_benchmark/piece.h"
-#include "rw_benchmark/chopper.h"
+#include "bench/rw_benchmark/piece.h"
+#include "bench/rw_benchmark/chopper.h"
 
 // micro bench
-#include "micro/piece.h"
-#include "micro/chopper.h"
+#include "bench/micro/piece.h"
+#include "bench/micro/chopper.h"
 
 
 
@@ -238,7 +239,8 @@ Config::Config(char           *ctrl_hostname,
 }
 
 void Config::Load() {
-  Sharding::sharding_s = new Sharding();
+
+//  Sharding::sharding_s = Frame().CreateSharding();
   for (auto &name: config_paths_) {
     if (boost::algorithm::ends_with(name, "xml")) {
       LoadXML(name);
@@ -258,7 +260,7 @@ void Config::LoadYML(std::string &filename) {
 
   YAML::Node config = YAML::LoadFile(filename);
 
-  verify(Sharding::sharding_s);
+//  verify(Sharding::sharding_s);
 //  Sharding::sharding_s = new Sharding();
 
   if (config["site"]) {
@@ -444,12 +446,13 @@ void Config::LoadBenchYML(YAML::Node config) {
   txn_weight_.push_back(txn_weights_["delivery"]);
   txn_weight_.push_back(txn_weights_["stock_level"]);
 //  this->InitTPCCD();
+  Sharding::sharding_s = Frame().CreateSharding();
 }
 
 void Config::InitTPCCD() {
 
   // TODO particular configuration for certain workloads.
-  auto &tb_infos = Sharding::sharding_s->tb_info_;
+  auto &tb_infos = Sharding::sharding_s->tb_infos_;
   if (benchmark_ == TPCC_REAL_DIST_PART) {
     i32 n_w_id =
         (i32)(tb_infos[std::string(TPCC_TB_WAREHOUSE)].num_records);
@@ -626,8 +629,8 @@ void Config::LoadSchemeXML(boost::property_tree::ptree &pt) {
     if (value.first == "table") {
       std::string tb_name = value.second.get<std::string>("<xmlattr>.name");
 
-      if (Sharding::sharding_s->tb_info_.find(tb_name) !=
-          Sharding::sharding_s->tb_info_.end()) verify(0);
+      if (Sharding::sharding_s->tb_infos_.find(tb_name) !=
+          Sharding::sharding_s->tb_infos_.end()) verify(0);
       std::string method =
         value.second.get<std::string>("<xmlattr>.shard_method");
       uint64_t records = value.second.get<uint64_t>("<xmlattr>.records");
@@ -689,22 +692,18 @@ void Config::LoadSchemeXML(boost::property_tree::ptree &pt) {
             verify(c_foreign.size() > pos + 1);
             std::string foreign_column = c_foreign.substr(pos + 1);
 
-            std::map<std::string,
-                     Sharding::tb_info_t>::iterator ftb_it =
-              Sharding::sharding_s->tb_info_.find(foreign_tb);
-            verify(ftb_it != Sharding::sharding_s->tb_info_.end());
+            auto ftb_it = Sharding::sharding_s->tb_infos_.find(foreign_tb);
+            verify(ftb_it != Sharding::sharding_s->tb_infos_.end());
             foreign_key_tb = &(ftb_it->second);
 
-            std::vector<Sharding::column_t>::iterator fc_it =
-              ftb_it->second.columns.begin();
+            auto fc_it = ftb_it->second.columns.begin();
 
             for (; fc_it != ftb_it->second.columns.end(); fc_it++)
               if (fc_it->name == foreign_column) {
                 verify(fc_it->type == c_v_type);
 
-                if ((fc_it->values == NULL) &&
-                    (server_or_client_ ==
-                     0)) fc_it->values = new std::vector<Value>();
+                if ((fc_it->values == NULL) && (server_or_client_ == 0))
+                  fc_it->values = new std::vector<Value>();
                 foreign_key_column = &(*fc_it);
                 break;
               }
@@ -717,8 +716,8 @@ void Config::LoadSchemeXML(boost::property_tree::ptree &pt) {
         }
       }
 
-      tb_info.tb_name                         = tb_name;
-      Sharding::sharding_s->tb_info_[tb_name] = tb_info;
+      tb_info.tb_name = tb_name;
+      Sharding::sharding_s->tb_infos_[tb_name] = tb_info;
     }
   }
 }
@@ -751,10 +750,12 @@ Config::~Config() {
 }
 
 unsigned int Config::get_site_id() {
+  verify(0);
   return sid_;
 }
 
 unsigned int Config::get_client_id() {
+  verify(0);
   return cid_;
 }
 

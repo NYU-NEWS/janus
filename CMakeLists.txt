@@ -28,13 +28,13 @@ include_directories(
     deptran/ro6
     deptran/brq
     deptran/none
-    bench
-    bench/micro
-    bench/rw_benchmark
-    bench/tpca
-    bench/tpcc
-    bench/tpcc_dist
-    bench/tpcc_real_dist
+#    bench
+#    bench/micro
+#    bench/rw_benchmark
+#    bench/tpca
+#    bench/tpcc
+#    bench/tpcc_dist
+#    bench/tpcc_real_dist
 )
 
 link_directories(

@@ -333,7 +333,8 @@ void TpccPiece::reg_payment() {
         TPL_KISS_NONE;
 
         i32 output_index = 0;
-        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
+//        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
+                           mdb::Txn *txn = dtxn->mdb_txn_;
         mdb::Table *tbl = txn->get_table(TPCC_TB_HISTORY);
 
         // insert history

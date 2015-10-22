@@ -272,12 +272,27 @@ class DTxnMgr {
                  mdb::Table *tbl
   );
 
-  static DTxnMgr *txn_mgr_s;
+//  static DTxnMgr *txn_mgr_s;
+  static map<uint32_t, DTxnMgr*> txn_mgrs_s;
 
-  static DTxnMgr *get_sole_mgr() {
-    verify(txn_mgr_s != NULL);
-    return txn_mgr_s;
+  static DTxnMgr* CreateTxnMgr(uint32_t site_id) {
+    auto mgr = new DTxnMgr(Config::config_s->mode_);
+    auto it = txn_mgrs_s.find(site_id);
+    verify(it == txn_mgrs_s.end());
+    txn_mgrs_s[site_id] = mgr;
+    return mgr;
   }
+
+  static DTxnMgr* GetTxnMgr(uint32_t site_id) {
+    auto it = txn_mgrs_s.find(site_id);
+    verify(it != txn_mgrs_s.end());
+    return it->second;
+  }
+
+//  static DTxnMgr *get_sole_mgr() {
+//    verify(txn_mgr_s != NULL);
+//    return txn_mgr_s;
+//  }
 };
 
 } // namespace rococo

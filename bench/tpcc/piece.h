@@ -1,7 +1,7 @@
 #ifndef TPCC_PIECE_H_
 #define TPCC_PIECE_H_
 
-#include "piece.h"
+#include "deptran/piece.h"
 
 namespace rococo {
 

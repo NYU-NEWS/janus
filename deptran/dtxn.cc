@@ -121,7 +121,9 @@ void DTxnMgr::get_prepare_log(i64 txn_id,
   }
 }
 
-DTxnMgr *DTxnMgr::txn_mgr_s = NULL;
+//DTxnMgr *DTxnMgr::txn_mgr_s = NULL;
+map<uint32_t, DTxnMgr*> DTxnMgr::txn_mgrs_s;
+
 
 DTxnMgr::DTxnMgr(int mode) {
   mode_ = mode;
@@ -144,8 +146,8 @@ DTxnMgr::DTxnMgr(int mode) {
       verify(0);
   }
 
-  verify(DTxnMgr::txn_mgr_s == NULL);
-  DTxnMgr::txn_mgr_s = this;
+//  verify(DTxnMgr::txn_mgr_s == NULL);
+//  DTxnMgr::txn_mgr_s = this;
 
   if (Config::GetConfig()->do_logging()) {
     auto path = Config::GetConfig()->log_path();

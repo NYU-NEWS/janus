@@ -28,6 +28,8 @@ class ServerWorker {
   Config::SiteInfo *site_info_;
 //  Sharding *sharding_;
 
+  DTxnMgr* txn_mgr_;
+
   static void server_reg_piece() {
     auto benchmark = Config::GetConfig()->get_benchmark();
     Piece *piece = Piece::get_piece(benchmark);

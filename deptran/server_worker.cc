@@ -37,17 +37,16 @@ void ServerWorker::PopTable() {
 
   // TODO this needs to be done before poping table
   int running_mode = Config::GetConfig()->get_mode();
-  DTxnMgr *mgr     = new DTxnMgr(running_mode);
 
   // populate table
-  auto sid = Config::GetConfig()->get_site_id();
+  txn_mgr_ = DTxnMgr::CreateTxnMgr(site_info_->id);
   auto par_id = site_info_->par_id;
   int ret = 0;
 
   // get all tables
   std::vector<std::string> table_names;
 
-  ret = Sharding::get_table_names(sid, table_names);
+  ret = Sharding::get_table_names(site_info_->id, table_names);
   verify(ret > 0);
 
   std::vector<std::string>::iterator table_it = table_names.begin();
@@ -70,10 +69,11 @@ void ServerWorker::PopTable() {
       default:
         verify(0);
     }
-    DTxnMgr::get_sole_mgr()->reg_table(*table_it, tb);
+    txn_mgr_->reg_table(*table_it, tb);
   }
-  Sharding::populate_table(table_names, sid);
-  Log_info("Site %d data populated", sid);
+  verify(Sharding::sharding_s);
+  Sharding::sharding_s->populate_table(table_names, site_info_->id);
+  Log_info("Site %d data populated", site_info_->id);
   verify(ret > 0);
 }
 
@@ -87,7 +87,7 @@ void ServerWorker::SetupService() {
 //  }
 
   // init service implement
-  rsi_g = new RococoServiceImpl(DTxnMgr::get_sole_mgr(), scsi_g);
+  rsi_g = new RococoServiceImpl(txn_mgr_, scsi_g);
 
   // init rrr::PollMgr 1 threads
   int n_io_threads = 1;

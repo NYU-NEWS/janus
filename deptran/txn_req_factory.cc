@@ -4,28 +4,28 @@
 #include "txn_req_factory.h"
 
 // for tpca benchmark
-#include "tpca/piece.h"
-#include "tpca/chopper.h"
+#include "bench/tpca/piece.h"
+#include "bench/tpca/chopper.h"
 
 // tpcc benchmark
-#include "tpcc/piece.h"
-#include "tpcc/chopper.h"
+#include "bench/tpcc/piece.h"
+#include "bench/tpcc/chopper.h"
 
 // tpcc dist partition benchmark
-#include "tpcc_dist/piece.h"
-#include "tpcc_dist/chopper.h"
+#include "bench/tpcc_dist/piece.h"
+#include "bench/tpcc_dist/chopper.h"
 
 // tpcc real dist partition benchmark
-#include "tpcc_real_dist/piece.h"
-#include "tpcc_real_dist/chopper.h"
+#include "bench/tpcc_real_dist/piece.h"
+#include "bench/tpcc_real_dist/chopper.h"
 
 // rw benchmark
-#include "rw_benchmark/piece.h"
-#include "rw_benchmark/chopper.h"
+#include "bench/rw_benchmark/piece.h"
+#include "bench/rw_benchmark/chopper.h"
 
 // micro bench
-#include "micro/piece.h"
-#include "micro/chopper.h"
+#include "bench/micro/piece.h"
+#include "bench/micro/chopper.h"
 
 #include "txn-chopper-factory.h"
 
