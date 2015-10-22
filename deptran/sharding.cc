@@ -331,6 +331,7 @@ int Sharding::get_table_names(uint32_t sid,
   return tables.size();
 }
 
+
 bool Sharding::Ready2Populate(tb_info_t *tb_info) {
 
   auto &columns = tb_info->columns;
@@ -338,27 +339,30 @@ bool Sharding::Ready2Populate(tb_info_t *tb_info) {
   for (auto c_it = columns.begin(); c_it != columns.end(); c_it++)
     if ((c_it->foreign != NULL) && (c_it->foreign->values != NULL) &&
         (c_it->foreign->values->size() == 0))
+      // have foreign table
+      // foreign table has some mysterious values
+      // those values have not been put in
       return false;
 
   return true;
 }
 
 // TODO this should be moved to per benchmark class
-int Sharding::populate_table(const std::vector<std::string> &table_map,
-                             uint32_t sid) {
+int Sharding::PopulateTable(uint32_t sid) {
 
   verify(0);
   switch (Config::GetConfig()->get_benchmark()) {
     case TPCC:
-      return sharding_s->do_tpcc_populate_table(table_map, sid);
+//      return sharding_s->do_tpcc_populate_table(sid);
     case TPCC_DIST_PART:
-      return sharding_s->do_tpcc_dist_partition_populate_table(table_map, sid);
+//      return sharding_s->do_tpcc_dist_partition_populate_table(table_map, sid);
 //    case TPCC_REAL_DIST_PART:
 //      return sharding_s->do_tpcc_real_dist_partition_populate_table(table_map,
 //                                                                    sid);
     case TPCA:
     default:
-      return sharding_s->do_populate_table(table_map, sid);
+//      return sharding_s->do_populate_table(table_map, sid);
+      verify(0);
   }
 }
 

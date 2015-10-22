@@ -1,13 +1,16 @@
 #pragma once
+#include "__dep__.h"
 #include "deptran/sharding.h"
 
 namespace rococo {
 
+extern std::multimap<c_last_id_t, i32> g_c_last2id; // XXX
+extern mdb::Schema g_c_last_schema;
+
 class TPCCDSharding: public Sharding {
  public:
   void PopulateTable(tb_info_t *tb_info, uint32_t);
-  int populate_table(const std::vector<std::string> &table_names,
-                     unsigned int sid);
+  int PopulateTable(unsigned int sid);
   void temp1(tb_info_t *tb_info,
              uint32_t col_index,
              mdb::Schema::iterator &col_it,

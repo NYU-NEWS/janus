@@ -1,5 +1,7 @@
 #include "all.h"
 
+#include "bench/tpcc_real_dist/sharding.h"
+
 namespace rococo {
 
 void TpccPiece::reg_order_status() {

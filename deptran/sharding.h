@@ -63,8 +63,7 @@ typedef struct c_last_id_t {
     return false;
   }
 } c_last_id_t;
-extern std::multimap<c_last_id_t, i32> g_c_last2id; // XXX
-extern mdb::Schema g_c_last_schema;
+
 
 class Sharding {
  public:
@@ -222,8 +221,7 @@ class Sharding {
 
   static int get_number_rows(std::map<std::string, uint64_t> &table_map);
 
-  virtual int populate_table(const std::vector<std::string> &table_names,
-                            uint32_t sid);
+  virtual int PopulateTable(uint32_t sid);
 
   //    static int get_site_id(const char *txn_name, unsigned int piece, const
   // char *key, unsigned int &site_id);

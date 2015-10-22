@@ -4,6 +4,7 @@
 #include "dtxn.h"
 #include "bench/tpcc_real_dist/sharding.h"
 #include "bench/tpcc/piece.h"
+#include "frame.h"
 
 namespace rococo {
 
@@ -24,7 +25,6 @@ void TPCCDSharding::temp2(tb_info_t *tb_info,
 
     row_data.clear();
 
-    int mode = Config::GetConfig()->get_mode();
     bool record_key = true;
     int counter = 0;
     for (col_index = 0; col_index < tb_info->columns.size();
@@ -40,26 +40,20 @@ void TPCCDSharding::temp2(tb_info_t *tb_info,
           if (tb_info->columns[col_index].values != NULL) {
             tb_info->columns[col_index].values->push_back(key_value);
           }
-        }
-
+        } else if (tb_info->columns[col_index].foreign != NULL) {
           // primary key and foreign key
-        else if (tb_info->columns[col_index].foreign != NULL) {
+
           Value v_buf;
 
           if ((tb_info->columns[col_index].foreign->name == "i_id")
               || (tb_info->columns[col_index].foreign->name ==
                   "w_id"))
-            v_buf = Value(
-                (i32) prim_foreign_index[col_index].first);
+            v_buf = Value((i32) prim_foreign_index[col_index].first);
           else
-            v_buf =
-                (*tb_info->columns[col_index].foreign->values)[
-                    prim_foreign_index
-                    [
-                        col_index].first];
+            v_buf = (*tb_info->columns[col_index].foreign->values)
+            [prim_foreign_index[col_index].first];
           row_data.push_back(v_buf);
-        }
-        else { // primary key
+        } else { // primary key
           row_data.push_back(key_value);
 
           if ((tb_info->columns[col_index].values != NULL)
@@ -69,8 +63,7 @@ void TPCCDSharding::temp2(tb_info_t *tb_info,
             record_key = false;
           }
         }
-      }
-      else if (tb_info->columns[col_index].foreign != NULL) {
+      } else if (tb_info->columns[col_index].foreign != NULL) {
         bool use_key_value = false;
         int n;
         size_t fc_size =
@@ -93,21 +86,18 @@ void TPCCDSharding::temp2(tb_info_t *tb_info,
           else
             n = tb_infos_[std::string(TPCC_TB_CUSTOMER)].num_records /
                 tb_infos_[std::string(TPCC_TB_DISTRICT)].num_records;
-        }
-        else if (last4 == "d_id") {
+        } else if (last4 == "d_id") {
           n = Config::GetConfig()->get_num_site() *
               tb_infos_[std::string(TPCC_TB_DISTRICT)].num_records /
               tb_infos_[std::string(TPCC_TB_WAREHOUSE)].num_records;
-        }
-        else {
+        } else {
           n = tb_info->columns[col_index].foreign_tb->num_records;
         }
         Value v_buf;
 
         if (use_key_value) {
           v_buf = key_value;
-        }
-        else {
+        } else {
           v_buf = value_get_n(tb_info->columns[col_index].type,
                               RandomGenerator::rand(0, n - 1));
         }
@@ -146,29 +136,8 @@ void TPCCDSharding::temp2(tb_info_t *tb_info,
         if (sid == site_from_key(mv, tb_info)) {
           counter++;
 
-          switch (mode) {
-            case MODE_2PL:
-              table_ptr->insert(mdb::FineLockedRow::create(schema,
-                                                           row_data));
-              break;
-
-            case MODE_NONE: // FIXME
-            case MODE_OCC:
-              table_ptr->insert(mdb::VersionedRow::create(schema,
-                                                          row_data));
-              break;
-
-            case MODE_RCC:
-              table_ptr->insert(RCCRow::create(schema, row_data));
-              break;
-
-            case MODE_RO6:
-              table_ptr->insert(RO6Row::create(schema, row_data));
-              break;
-
-            default:
-              verify(0);
-          }
+          auto r = Frame().CreateRow(schema, row_data);
+          table_ptr->insert(r);
 
           // log
           // std::string buf;
@@ -189,30 +158,8 @@ void TPCCDSharding::temp2(tb_info_t *tb_info,
 
         if (sid == site_from_key(mv, tb_info)) {
           counter++;
-
-          switch (mode) {
-            case MODE_2PL:
-              table_ptr->insert(mdb::FineLockedRow::create(schema,
-                                                           row_data));
-              break;
-
-            case MODE_NONE: // FIXME
-            case MODE_OCC:
-              table_ptr->insert(mdb::VersionedRow::create(schema,
-                                                          row_data));
-              break;
-
-            case MODE_RCC:
-              table_ptr->insert(RCCRow::create(schema, row_data));
-              break;
-
-            case MODE_RO6:
-              table_ptr->insert(RO6Row::create(schema, row_data));
-              break;
-
-            default:
-              verify(0);
-          }
+          auto r = Frame().CreateRow(schema, row_data);
+          table_ptr->insert(r);
 
           for (int i = 0; i < key_size;
                i++)
@@ -230,29 +177,7 @@ void TPCCDSharding::temp2(tb_info_t *tb_info,
       }
       else {
         counter++;
-        mdb::Row *r = NULL;
-
-        switch (mode) {
-          case MODE_2PL:
-            r = mdb::FineLockedRow::create(schema, row_data);
-            break;
-
-          case MODE_NONE: // FIXME
-          case MODE_OCC:
-            r = mdb::VersionedRow::create(schema, row_data);
-            break;
-
-          case MODE_RCC:
-            r = RCCRow::create(schema, row_data);
-            break;
-
-          case MODE_RO6:
-            r = RO6Row::create(schema, row_data);
-            break;
-
-          default:
-            verify(0);
-        }
+        auto r = Frame().CreateRow(schema, row_data);
         table_ptr->insert(r);
 
         // XXX order (o_d_id, o_w_id, o_c_id) --> maximum o_id
@@ -282,36 +207,11 @@ void TPCCDSharding::temp2(tb_info_t *tb_info,
 
             for (col_info_it = sch_buf->begin();
                  col_info_it != sch_buf->end();
-                 col_info_it++)
-              sec_row_data_buf.push_back(r->get_column(
-                  col_info_it->
-                      name));
-            mdb::Row *r_buf = NULL;
-
-            switch (mode) {
-              case MODE_2PL:
-                r_buf = mdb::FineLockedRow::create(sch_buf,
-                                                   sec_row_data_buf);
-                break;
-
-              case MODE_NONE: // FIXME
-              case MODE_OCC:
-                r_buf = mdb::VersionedRow::create(sch_buf,
-                                                  sec_row_data_buf);
-                break;
-
-              case MODE_RCC:
-                r_buf = RCCRow::create(sch_buf, sec_row_data_buf);
-                break;
-
-              case MODE_RO6:
-                r_buf = RO6Row::create(sch_buf, sec_row_data_buf);
-                break;
-
-              default:
-                verify(0);
+                 col_info_it++) {
+              sec_row_data_buf.push_back(r->get_column(col_info_it->name));
             }
-            tbl_sec_ptr->insert(r_buf);
+            auto r = Frame().CreateRow(sch_buf, sec_row_data_buf);
+            tbl_sec_ptr->insert(r);
           }
         }
 
@@ -392,20 +292,17 @@ void TPCCDSharding::temp1(tb_info_t *tb_info,
       if (tb_info->columns[col_index].foreign->name == "i_id") {
         // refers to item.i_id, use all available i_id instead
         // of local i_id
-        tmp_int =
-            tb_info->columns[col_index].foreign_tb->num_records;
+        tmp_int = tb_info->columns[col_index].foreign_tb->num_records;
         tmp_index_base = tmp_int;
 
         if (tb_info->columns[col_index].values != NULL) {
           delete tb_info->columns[col_index].values;
           tb_info->columns[col_index].values = NULL;
         }
-      } else if (tb_info->columns[col_index].foreign->name
-          == "w_id") {
+      } else if (tb_info->columns[col_index].foreign->name == "w_id") {
         // refers to warehouse.w_id, use all available w_id instead
         // of local w_id
-        tmp_int =
-            tb_info->columns[col_index].foreign_tb->num_records;
+        tmp_int = tb_info->columns[col_index].foreign_tb->num_records;
         tmp_index_base = tmp_int;
 
         if (tb_info->columns[col_index].values != NULL) {
@@ -418,20 +315,17 @@ void TPCCDSharding::temp1(tb_info_t *tb_info,
         }
       } else {
         times_tmp_int = false;
-        tmp_int =
-            tb_info->columns[col_index].foreign_tb->num_records;
+        tmp_int = tb_info->columns[col_index].foreign_tb->num_records;
 
         if (num_foreign_row == 1) num_foreign_row *= tmp_int;
-        column_t *foreign_column =
-            tb_info->columns[col_index].foreign;
+        column_t *foreign_column = tb_info->columns[col_index].foreign;
         verify(foreign_column->values);
         tmp_index_base = foreign_column->values->size();
         size_t foreign_col_name_size = foreign_column->name.size();
 
         if ((foreign_col_name_size >= 4)
             && ((foreign_column->name.substr(foreign_col_name_size - 4)
-                ==
-                    "w_id")
+                == "w_id")
                 || (foreign_column->name.substr(foreign_col_name_size -
                     4) == "d_id"))) {
           if (!bound_foreign_index.empty())
@@ -472,16 +366,17 @@ void TPCCDSharding::temp1(tb_info_t *tb_info,
 
 void TPCCDSharding::PopulateTable(tb_info_t *tb_info, uint32_t sid) {
   int mode = Config::GetConfig()->get_mode();
-
+  // find table and secondary table
   mdb::Table *const table_ptr = DTxnMgr::GetTxnMgr(sid)->get_table(
       tb_info->tb_name);
   const mdb::Schema *schema = table_ptr->schema();
   mdb::SortedTable *tbl_sec_ptr = NULL;
 
-  if (tb_info->tb_name == TPCC_TB_ORDER)
+  if (tb_info->tb_name == TPCC_TB_ORDER) {
     tbl_sec_ptr =
         (mdb::SortedTable *) DTxnMgr::GetTxnMgr(sid)->get_table(
             TPCC_TB_ORDER_C_ID_SECONDARY);
+  }
   verify(schema->columns_count() == tb_info->columns.size());
 
   uint64_t num_foreign_row = 1;
@@ -493,9 +388,7 @@ void TPCCDSharding::PopulateTable(tb_info_t *tb_info, uint32_t sid) {
   std::vector<uint32_t> bound_foreign_index;
   mdb::Schema::iterator col_it = schema->begin();
   uint32_t col_index = 0;
-
-  for (col_index = 0; col_index < tb_info->columns.size();
-       col_index++) {
+  for (col_index = 0; col_index < tb_info->columns.size(); col_index++) {
     verify(col_it != schema->end());
     verify(tb_info->columns[col_index].name == col_it->name);
     verify(tb_info->columns[col_index].type == col_it->type);
@@ -528,22 +421,16 @@ void TPCCDSharding::PopulateTable(tb_info_t *tb_info, uint32_t sid) {
   // Log_debug("begin:%s", tb_it->first.c_str());
   for (; key_value < max_key || num_self_primary == 0; ++key_value) {
     init_index(prim_foreign_index);
-
-    temp2(tb_info, sid, col_index, bound_foreign_index, num_self_primary,
-          prim_foreign_index, row_data, key_value, schema, table_ptr,
-          tbl_sec_ptr);
-
+    temp2(tb_info, sid, col_index, bound_foreign_index,
+          num_self_primary, prim_foreign_index, row_data,
+          key_value, schema, table_ptr, tbl_sec_ptr);
   }
-
   // log
   // Log_debug("end:%s", tb_it->first.c_str());
   tb_info->populated[sid] = true;
-
 }
 
-int TPCCDSharding::populate_table(
-    const std::vector<std::string> &table_names,
-    uint32_t sid) {
+int TPCCDSharding::PopulateTable(uint32_t sid) {
   uint32_t number2populate = tb_infos_.size();
   verify(number2populate > 0);
 
