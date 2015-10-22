@@ -21,12 +21,13 @@ void TPCCDSharding::temp2(tb_info_t *tb_info,
                           const mdb::Schema *schema,
                           mdb::Table *const table_ptr,
                           mdb::SortedTable *tbl_sec_ptr) {
+
+  bool record_key = true;
+  int counter = 0;
   while (true) {
 
     row_data.clear();
 
-    bool record_key = true;
-    int counter = 0;
     for (col_index = 0; col_index < tb_info->columns.size();
          col_index++) {
       if (tb_info->columns[col_index].is_primary) {
