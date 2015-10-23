@@ -24,9 +24,9 @@ void TpcaPaymentChopper::init(TxnRequest &req) {
 
   // get sharding info
   sharding_ = {0, 0, 0};
-  Sharding::get_site_id(TPCA_CUSTOMER, cus, sharding_[0]);
-  Sharding::get_site_id(TPCA_TELLER, tel, sharding_[1]);
-  Sharding::get_site_id(TPCA_BRANCH, bra, sharding_[2]);
+  sss_->get_site_id_from_tb(TPCA_CUSTOMER, cus, sharding_[0]);
+  sss_->get_site_id_from_tb(TPCA_TELLER, tel, sharding_[1]);
+  sss_->get_site_id_from_tb(TPCA_BRANCH, bra, sharding_[2]);
 
   // all pieces are ready
   n_pieces_ = 3;

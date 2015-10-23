@@ -26,9 +26,14 @@ class ServerWorker {
   base::ThreadPool *hb_thread_pool_g;
 
   Config::SiteInfo *site_info_;
-//  Sharding *sharding_;
-
+  Sharding *sharding_;
   DTxnMgr* txn_mgr_;
+
+  void SetupHeartbeat();
+  void PopTable();
+  void SetupService();
+
+  static map<uint32_t, ServerWorker*> server_workers_s;
 
   static void server_reg_piece() {
     auto benchmark = Config::GetConfig()->get_benchmark();
@@ -37,12 +42,6 @@ class ServerWorker {
     delete piece;
     piece = NULL;
   }
-
-  void SetupHeartbeat();
-
-  void PopTable();
-
-  void SetupService();
 };
 
 

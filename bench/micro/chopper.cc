@@ -43,10 +43,10 @@ void MicroBenchChopper::init(TxnRequest &req) {
     commit_.store(true);
 
     sharding_.resize(4);
-    Sharding::get_site_id(MICRO_BENCH_TABLE_A, req.input_[0], sharding_[0]);
-    Sharding::get_site_id(MICRO_BENCH_TABLE_B, req.input_[1], sharding_[1]);
-    Sharding::get_site_id(MICRO_BENCH_TABLE_C, req.input_[2], sharding_[2]);
-    Sharding::get_site_id(MICRO_BENCH_TABLE_D, req.input_[3], sharding_[3]);
+    sss_->get_site_id_from_tb(MICRO_BENCH_TABLE_A, req.input_[0], sharding_[0]);
+    sss_->get_site_id_from_tb(MICRO_BENCH_TABLE_B, req.input_[1], sharding_[1]);
+    sss_->get_site_id_from_tb(MICRO_BENCH_TABLE_C, req.input_[2], sharding_[2]);
+    sss_->get_site_id_from_tb(MICRO_BENCH_TABLE_D, req.input_[3], sharding_[3]);
 
 }
 

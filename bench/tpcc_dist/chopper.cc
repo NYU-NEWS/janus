@@ -25,7 +25,7 @@ void TpccDistChopper::new_order_shard(const char *tb, const std::vector<Value> &
         mv = MultiValue(std::vector<Value>({input[4 + 3 * cnt], input[5 + 3 * cnt]}));
     else
         verify(0);
-    int ret = Sharding::get_site_id(tb, mv, site);
+    int ret = sss_->get_site_id_from_tb(tb, mv, site);
     verify(ret == 0);
 }
 
@@ -45,7 +45,7 @@ void TpccDistChopper::payment_shard(const char *tb, const std::vector<Value> &in
         mv = MultiValue(input[6]);
     else
         verify(0);
-    int ret = Sharding::get_site_id(tb, mv, site);
+    int ret = sss_->get_site_id_from_tb(tb, mv, site);
     verify(ret == 0);
 }
 
@@ -58,7 +58,7 @@ void TpccDistChopper::order_status_shard(const char *tb, const std::vector<mdb::
         mv = MultiValue(std::vector<Value>({input[1], input[0]}));
     else
         verify(0);
-    int ret = Sharding::get_site_id(tb, mv, site);
+    int ret = sss_->get_site_id_from_tb(tb, mv, site);
     verify(ret == 0);
 }
 
@@ -72,7 +72,7 @@ void TpccDistChopper::delivery_shard(const char *tb, const std::vector<mdb::Valu
         mv = MultiValue(std::vector<Value>({Value((i32)cnt), input[0]}));
     else
         verify(0);
-    int ret = Sharding::get_site_id(tb, mv, site);
+    int ret = sss_->get_site_id_from_tb(tb, mv, site);
     verify(ret == 0);
 }
 
@@ -87,7 +87,7 @@ void TpccDistChopper::stock_level_shard(const char *tb, const std::vector<mdb::V
         mv = MultiValue(std::vector<Value>({input[0], input[1]}));
     else
         verify(0);
-    int ret = Sharding::get_site_id(tb, mv, site);
+    int ret = sss_->get_site_id_from_tb(tb, mv, site);
     verify(ret == 0);
 }
 

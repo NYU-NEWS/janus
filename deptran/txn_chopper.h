@@ -91,6 +91,8 @@ protected:
   int max_try_ = 0;
   int n_try_ = 0;
 
+  Sharding *sss_;
+
   std::function<void(TxnReply &)> callback_;
   TxnReply reply_;
   struct timespec start_time_;

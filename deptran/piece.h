@@ -6,17 +6,16 @@ namespace rococo {
 
 class Piece {
  public:
+  Sharding* sss_;
   static Piece *get_piece(int benchmark);
-
   virtual void reg_all() = 0;
-
   virtual ~Piece() { }
 };
 
 
 #define BEGIN_PIE(txn, pie, iod) \
-    TxnRegistry::reg(txn, pie, iod, \
-        [] (DTxn *dtxn, \
+  TxnRegistry::reg(txn, pie, iod, \
+        [this] (DTxn *dtxn, \
             const RequestHeader &header, \
             const Value *input, \
             i32 input_size, \
@@ -92,8 +91,8 @@ class Piece {
         verify(0); \
     }
 
-#define C_LAST_SCHEMA (((TPCCDSharding*)(Sharding::sharding_s))->g_c_last_schema)
+#define C_LAST_SCHEMA (((TPCCDSharding*)(this->sss_))->g_c_last_schema)
 
-#define C_LAST2ID (((TPCCDSharding*)(Sharding::sharding_s))->g_c_last2id)
+#define C_LAST2ID (((TPCCDSharding*)(this->sss_))->g_c_last2id)
 
 } // namespace rcc

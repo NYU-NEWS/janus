@@ -71,8 +71,8 @@ void ServerWorker::PopTable() {
     }
     txn_mgr_->reg_table(*table_it, tb);
   }
-  verify(Sharding::sharding_s);
-  Sharding::sharding_s->PopulateTable(site_info_->id);
+  verify(sharding_);
+  sharding_->PopulateTable(site_info_->id);
   Log_info("Site %d data populated", site_info_->id);
   verify(ret > 0);
 }

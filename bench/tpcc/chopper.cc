@@ -83,7 +83,7 @@ void TpccChopper::new_order_shard(const char *tb,
     mv = MultiValue(input[5 + 3 * cnt]);
   else
     verify(0);
-  int ret = Sharding::get_site_id(tb, mv, site);
+  int ret = sss_->get_site_id_from_tb(tb, mv, site);
   verify(ret == 0);
 }
 
@@ -410,7 +410,7 @@ void TpccChopper::payment_shard(const char *tb,
     mv = MultiValue(input[6]);
   else
     verify(0);
-  int ret = Sharding::get_site_id(tb, mv, site);
+  int ret = sss_->get_site_id_from_tb(tb, mv, site);
   verify(ret == 0);
 }
 
@@ -624,7 +624,7 @@ void TpccChopper::order_status_shard(const char *tb,
   }
   else
     verify(0);
-  int ret = Sharding::get_site_id(tb, mv, site);
+  int ret = sss_->get_site_id_from_tb(tb, mv, site);
   verify(ret == 0);
 }
 
@@ -770,7 +770,7 @@ void TpccChopper::delivery_shard(const char *tb,
     mv = MultiValue(input[0]);
   else
     verify(0);
-  int ret = Sharding::get_site_id(tb, mv, site);
+  int ret = sss_->get_site_id_from_tb(tb, mv, site);
   verify(ret == 0);
 }
 
@@ -1059,7 +1059,7 @@ void TpccChopper::stock_level_shard(
     mv = MultiValue(input[1]);
   else
     verify(0);
-  int ret = Sharding::get_site_id(tb, mv, site);
+  int ret = sss_->get_site_id_from_tb(tb, mv, site);
   verify(ret == 0);
 }
 

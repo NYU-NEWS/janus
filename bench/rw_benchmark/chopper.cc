@@ -11,7 +11,7 @@ void RWChopper::W_txn_init(TxnRequest &req) {
             });
     p_types_ = {RW_BENCHMARK_W_TXN_0};
     sharding_.resize(1);
-    Sharding::get_site_id(RW_BENCHMARK_TABLE, req.input_[0], sharding_[0]);
+    sss_->get_site_id_from_tb(RW_BENCHMARK_TABLE, req.input_[0], sharding_[0]);
     status_ = {0};
     status_.assign(1, 0);
     n_pieces_ = 1;
@@ -26,7 +26,7 @@ void RWChopper::R_txn_init(TxnRequest &req) {
             });
     p_types_ = {RW_BENCHMARK_R_TXN_0};
     sharding_.resize(1);
-    Sharding::get_site_id(RW_BENCHMARK_TABLE, req.input_[0], sharding_[0]);
+    sss_->get_site_id_from_tb(RW_BENCHMARK_TABLE, req.input_[0], sharding_[0]);
     status_ = {0};
     status_.assign(1, 0);
     n_pieces_ = 1;

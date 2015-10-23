@@ -199,47 +199,47 @@ class Sharding {
                                   const unsigned int *site_id);
 
 
-  static Sharding *sharding_s;
+//  static Sharding *sharding_s;
 
   Sharding();
   Sharding(const Sharding& sharding);
 
  public:
-
-  static int get_site_id(const char *tb_name,
-                         const Value &key,
-                         unsigned int &site_id);
-
-  static int get_site_id(const std::string &tb_name,
-                         const Value &key,
-                         unsigned int &site_id);
-
-  static int get_site_id(const char *tb_name,
-                         const MultiValue &key,
-                         unsigned int &site_id);
-
-  static int get_site_id(const std::string &tb_name,
-                         const MultiValue &key,
-                         unsigned int &site_id);
-
-  static int get_site_id(const char *tb_name,
-                         std::vector<unsigned int> &site_id);
-
-  static int get_site_id(const std::string &tb_name,
-                         std::vector<unsigned int> &site_id);
-
-  static int init_schema(const char *tb_name,
-                         mdb::Schema *schema,
-                         mdb::symbol_t *symbol);
-
-  static int init_schema(const std::string &tb_name,
-                         mdb::Schema *schema,
-                         mdb::symbol_t *symbol);
-
-  static int get_table_names(unsigned int sid,
-                             std::vector<std::string> &tables);
-
-  static int get_number_rows(std::map<std::string, uint64_t> &table_map);
+//
+//  static int get_site_id(const char *tb_name,
+//                         const Value &key,
+//                         unsigned int &site_id);
+//
+//  static int get_site_id(const std::string &tb_name,
+//                         const Value &key,
+//                         unsigned int &site_id);
+//
+//  static int get_site_id(const char *tb_name,
+//                         const MultiValue &key,
+//                         unsigned int &site_id);
+//
+//  static int get_site_id(const std::string &tb_name,
+//                         const MultiValue &key,
+//                         unsigned int &site_id);
+//
+//  static int get_site_id(const char *tb_name,
+//                         std::vector<unsigned int> &site_id);
+//
+//  static int get_site_id(const std::string &tb_name,
+//                         std::vector<unsigned int> &site_id);
+//
+//  static int init_schema(const char *tb_name,
+//                         mdb::Schema *schema,
+//                         mdb::symbol_t *symbol);
+//
+//  static int init_schema(const std::string &tb_name,
+//                         mdb::Schema *schema,
+//                         mdb::symbol_t *symbol);
+//
+//  static int get_table_names(unsigned int sid,
+//                             std::vector<std::string> &tables);
+//
+//  static int get_number_rows(std::map<std::string, uint64_t> &table_map);
 
   virtual int PopulateTable(uint32_t sid);
 

@@ -8,6 +8,7 @@
 #include "sharding.h"
 #include "piece.h"
 #include "frame.h"
+#include "sharding.h"
 
 // for tpca benchmark
 #include "bench/tpca/piece.h"
@@ -239,8 +240,6 @@ Config::Config(char           *ctrl_hostname,
 }
 
 void Config::Load() {
-
-//  Sharding::sharding_s = Frame().CreateSharding();
   for (auto &name: config_paths_) {
     if (boost::algorithm::ends_with(name, "xml")) {
       LoadXML(name);
@@ -411,7 +410,7 @@ void Config::LoadXML(std::string &filename) {
     filename_str,
     pt,
     boost::property_tree::xml_parser::no_concat_text);
-  verify(Sharding::sharding_s);
+  verify(sharding_);
   // parse every table and its column
 //  LoadModeXML(pt);
 //  LoadTopoXML(pt);
@@ -446,13 +445,13 @@ void Config::LoadBenchYML(YAML::Node config) {
   txn_weight_.push_back(txn_weights_["delivery"]);
   txn_weight_.push_back(txn_weights_["stock_level"]);
 //  this->InitTPCCD();
-  Sharding::sharding_s = Frame().CreateSharding();
+  sharding_ = Frame().CreateSharding();
 }
 
 void Config::InitTPCCD() {
 
   // TODO particular configuration for certain workloads.
-  auto &tb_infos = Sharding::sharding_s->tb_infos_;
+  auto &tb_infos = sharding_->tb_infos_;
   if (benchmark_ == TPCC_REAL_DIST_PART) {
     i32 n_w_id =
         (i32)(tb_infos[std::string(TPCC_TB_WAREHOUSE)].num_records);
@@ -465,7 +464,7 @@ void Config::InitTPCCD() {
       for (w_id = 0; w_id < n_w_id; w_id++) {
         MultiValue mv(std::vector<Value>({Value(d_id),
                                           Value(w_id)}));
-        Sharding::sharding_s->insert_dist_mapping(mv);
+        sharding_->insert_dist_mapping(mv);
       }
     i32 n_i_id =
         (i32)(tb_infos[std::string(TPCC_TB_ITEM)].num_records);
@@ -477,7 +476,7 @@ void Config::InitTPCCD() {
                                              Value(i_id),
                                              Value(w_id)
                                          }));
-        Sharding::sharding_s->insert_stock_mapping(mv);
+        sharding_->insert_stock_mapping(mv);
       }
   }
 }
@@ -627,8 +626,8 @@ void Config::LoadSchemeXML(boost::property_tree::ptree &pt) {
     if (value.first == "table") {
       std::string tb_name = value.second.get<std::string>("<xmlattr>.name");
 
-      if (Sharding::sharding_s->tb_infos_.find(tb_name) !=
-          Sharding::sharding_s->tb_infos_.end()) verify(0);
+      if (sharding_->tb_infos_.find(tb_name) !=
+          sharding_->tb_infos_.end()) verify(0);
       std::string method =
         value.second.get<std::string>("<xmlattr>.shard_method");
       uint64_t records = value.second.get<uint64_t>("<xmlattr>.records");
@@ -702,16 +701,16 @@ void Config::LoadSchemeXML(boost::property_tree::ptree &pt) {
       }
 
       tb_info.tb_name = tb_name;
-      Sharding::sharding_s->tb_infos_[tb_name] = tb_info;
+      sharding_->tb_infos_[tb_name] = tb_info;
     }
   }
-  Sharding::sharding_s->BuildTableInfoPtr();
+  sharding_->BuildTableInfoPtr();
 }
 
 Config::~Config() {
-  if (Sharding::sharding_s) {
-    delete Sharding::sharding_s;
-    Sharding::sharding_s = NULL;
+  if (sharding_) {
+    delete sharding_;
+    sharding_ = NULL;
   }
 
   if (ctrl_hostname_) {
