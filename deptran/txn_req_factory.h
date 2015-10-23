@@ -45,8 +45,10 @@ class TxnRequestFactory {
   int single_server_;
   int fix_id_;
   std::vector<double> &txn_weight_;
+  Sharding* sharding_;
 
-  TxnRequestFactory();
+ public:
+  TxnRequestFactory(Sharding* sd);
 
   void get_txn_req(TxnRequest *req, uint32_t cid) const;
 
@@ -79,8 +81,8 @@ class TxnRequestFactory {
 
  public:
   static void get_txn_types(std::map<int32_t, std::string> &txn_types);
-  static void init_txn_req(TxnRequest *req, uint32_t cid);
-  static void destroy();
+//  static void init_txn_req(TxnRequest *req, uint32_t cid);
+//  static void destroy();
 
   ~TxnRequestFactory();
 };

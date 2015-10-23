@@ -4,6 +4,8 @@
 #include "bench/tpcc_real_dist/sharding.h"
 #include "rcc/rcc_row.h"
 #include "ro6/ro6_row.h"
+#include "marshal-value.h"
+#include "coordinator.h"
 
 namespace rococo {
 
@@ -48,6 +50,11 @@ mdb::Row* Frame::CreateRow(const mdb::Schema *schema,
       verify(0);
   }
   return r;
+}
+
+Coordinator* Frame::CreateCoord() {
+  // TODO
+  return nullptr;
 }
 
 

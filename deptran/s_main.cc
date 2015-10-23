@@ -32,9 +32,9 @@ void client_setup_heartbeat() {
   }
 }
 
-void client_setup_request_factory() {
-  TxnRequestFactory::init_txn_req(nullptr, 0);
-}
+//void client_setup_request_factory() {
+////  TxnRequestFactory::init_txn_req(nullptr, 0);
+//}
 
 void client_launch_workers() {
   uint32_t duration = Config::GetConfig()->get_duration();
@@ -69,7 +69,7 @@ void client_launch_workers() {
     th.join();
   }
 
-  TxnRequestFactory::destroy();
+//  TxnRequestFactory::destroy();
   RandomGenerator::destroy();
   Config::DestroyConfig();
 }
@@ -118,7 +118,7 @@ int main(int argc, char *argv[]) {
   infos = Config::GetConfig()->GetMyClients();
   if (infos.size() > 0) {
     Log_info("launching clients, number of sites: %d", infos.size());
-    client_setup_request_factory();
+//    client_setup_request_factory();
     client_setup_heartbeat();
     client_launch_workers();
   }

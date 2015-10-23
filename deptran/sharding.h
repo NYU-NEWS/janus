@@ -187,7 +187,7 @@ class Sharding {
   //    int get_site_id(const std::string &txn_name, unsigned int piece,
   // std::vector<unsigned int> &site_id);
   //
-  static unsigned int site_from_key(const MultiValue &key,
+  uint32_t site_from_key(const MultiValue &key,
                                     const tb_info_t *tb_info);
 
   static unsigned int modulus(const MultiValue &key,
@@ -232,14 +232,14 @@ class Sharding {
 //                         mdb::Schema *schema,
 //                         mdb::symbol_t *symbol);
 //
-//  static int init_schema(const std::string &tb_name,
-//                         mdb::Schema *schema,
-//                         mdb::symbol_t *symbol);
-//
-//  static int get_table_names(unsigned int sid,
-//                             std::vector<std::string> &tables);
-//
-//  static int get_number_rows(std::map<std::string, uint64_t> &table_map);
+  int init_schema(const std::string &tb_name,
+                         mdb::Schema *schema,
+                         mdb::symbol_t *symbol);
+
+  int get_table_names(uint32_t sid,
+                      std::vector<std::string> &tables);
+
+  int get_number_rows(std::map<std::string, uint64_t> &table_map);
 
   virtual int PopulateTable(uint32_t sid);
 

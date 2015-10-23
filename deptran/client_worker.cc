@@ -2,12 +2,14 @@
 
 namespace rococo {
 
-
+ClientWorker::ClientWorker() {
+  txn_req_factory_ = new TxnRequestFactory(Config::GetConfig()->sharding_);
+}
 
 void ClientWorker::callback2(TxnReply &txn_reply) {
   TIMER_IF_NOT_END {
     TxnRequest req;
-    TxnRequestFactory::init_txn_req(&req, coo_id);
+    txn_req_factory_->get_txn_req(&req, coo_id);
     req.callback_ = std::bind(&ClientWorker::callback2, this,
                               std::placeholders::_1);
     coo_->do_one(req);
@@ -33,7 +35,7 @@ void ClientWorker::work() {
   verify(n_outstanding_ == 1);
   for (uint32_t n_txn = 0; n_txn < n_outstanding_; n_txn++) {
     TxnRequest req;
-    TxnRequestFactory::init_txn_req(&req, coo_id);
+    txn_req_factory_->get_txn_req(&req, coo_id);
     req.callback_ = std::bind(&ClientWorker::callback2, this,
                               std::placeholders::_1);
     coo->do_one(req);

@@ -75,44 +75,43 @@ void Sharding::BuildTableInfoPtr() {
 
 }
 
-//uint32_t Sharding::site_from_key(const MultiValue &key,
-//                                 const tb_info_t *tb_info) {
-//  const MultiValue &key_buf = Config::GetConfig()->get_benchmark() !=
-//      TPCC_REAL_DIST_PART
-//                              ? key :
-//                              (tb_info->tb_name == TPCC_TB_STOCK ||
-//                                  tb_info->tb_name == TPCC_TB_ITEM
-//                               ? sharding_s->stock_mapping(key) :
-//                               (tb_info->tb_name != TPCC_TB_HISTORY ?
-//                                sharding_s->dist_mapping(key) :
-//                                key));
-//
-//  //    if (tb_info->tb_name == TPCC_TB_STOCK
-//  //     || tb_info->tb_name == TPCC_TB_ITEM)
-//  //        key_buf = sharding_s->stock_mapping(key);
-//  //    else if (tb_info->tb_name != TPCC_TB_HISTORY)
-//  //        key_buf = sharding_s->dist_mapping(key);
-//  //    else
-//  //        key_buf = key;
-//  // else
-//  //    key_buf = key;
-//  uint32_t ret;
-//
-//  switch (tb_info->sharding_method) {
-//    case MODULUS:
-//      ret = modulus(key_buf, tb_info->num_site, tb_info->site_id);
-//      break;
-//
-//    case INT_MODULUS:
-//      ret = int_modulus(key_buf, tb_info->num_site, tb_info->site_id);
-//      break;
-//
-//    default:
-//      ret = modulus(key_buf, tb_info->num_site, tb_info->site_id);
-//      break;
-//  }
-//  return ret;
-//}
+uint32_t Sharding::site_from_key(const MultiValue &key,
+                                 const tb_info_t *tb_info) {
+  const MultiValue &key_buf =
+      Config::GetConfig()->get_benchmark() != TPCC_REAL_DIST_PART ?
+      key :
+      (tb_info->tb_name == TPCC_TB_STOCK
+           || tb_info->tb_name == TPCC_TB_ITEM ?
+       stock_mapping(key) :
+       (tb_info->tb_name != TPCC_TB_HISTORY ?
+        dist_mapping(key) : key));
+
+  //    if (tb_info->tb_name == TPCC_TB_STOCK
+  //     || tb_info->tb_name == TPCC_TB_ITEM)
+  //        key_buf = sharding_s->stock_mapping(key);
+  //    else if (tb_info->tb_name != TPCC_TB_HISTORY)
+  //        key_buf = sharding_s->dist_mapping(key);
+  //    else
+  //        key_buf = key;
+  // else
+  //    key_buf = key;
+  uint32_t ret;
+
+  switch (tb_info->sharding_method) {
+    case MODULUS:
+      ret = modulus(key_buf, tb_info->num_site, tb_info->site_id);
+      break;
+
+    case INT_MODULUS:
+      ret = int_modulus(key_buf, tb_info->num_site, tb_info->site_id);
+      break;
+
+    default:
+      ret = modulus(key_buf, tb_info->num_site, tb_info->site_id);
+      break;
+  }
+  return ret;
+}
 
 uint32_t Sharding::modulus(const MultiValue &key,
                            uint32_t num_site,
@@ -328,45 +327,44 @@ int Sharding::get_site_id_from_tb(const std::string &tb_name,
 //  return init_schema(std::string(tb_name), schema, symbol);
 //}
 //
-//int Sharding::init_schema(const std::string &tb_name,
-//                          mdb::Schema *schema,
-//                          mdb::symbol_t *symbol) {
-//  auto &tb_infos = sharding_s->tb_infos_;
-//  std::map<std::string, tb_info_t>::iterator it;
-//
-//  it = tb_infos.find(tb_name);
-//
-//  if (it == tb_infos.end()) return -1;
-//  auto &tb_info = it->second;
-//  std::vector<column_t>::iterator column_it = tb_info.columns.begin();
-//
-//  for (; column_it != tb_info.columns.end(); column_it++) {
-//    schema->add_column(
-//        column_it->name.c_str(), column_it->type, column_it->is_primary);
-//  }
-//  *symbol = tb_info.symbol;
-//  return schema->columns_count();
-//}
-//
-//int Sharding::get_table_names(uint32_t sid,
-//                              std::vector<std::string> &tables) {
-//  tables.clear();
-//  std::map<std::string, tb_info_t>::iterator it = sharding_s->tb_infos_.begin();
-//  uint32_t i;
-//
-//  for (; it != sharding_s->tb_infos_.end(); it++) {
-//    auto &tb_info = it->second;
-//
-//    for (i = 0; i < tb_info.num_site; i++) {
-//      if (tb_info.site_id[i] == sid) {
-//        tables.push_back(it->first);
-//        break;
-//      }
-//    }
-//  }
-//  return tables.size();
-//}
+int Sharding::init_schema(const std::string &tb_name,
+                          mdb::Schema *schema,
+                          mdb::symbol_t *symbol) {
+  auto &tb_infos = tb_infos_;
+  std::map<std::string, tb_info_t>::iterator it;
 
+  it = tb_infos.find(tb_name);
+
+  if (it == tb_infos.end()) return -1;
+  auto &tb_info = it->second;
+  std::vector<column_t>::iterator column_it = tb_info.columns.begin();
+
+  for (; column_it != tb_info.columns.end(); column_it++) {
+    schema->add_column(
+        column_it->name.c_str(), column_it->type, column_it->is_primary);
+  }
+  *symbol = tb_info.symbol;
+  return schema->columns_count();
+}
+//
+int Sharding::get_table_names(uint32_t sid,
+                              std::vector<std::string> &tables) {
+  tables.clear();
+  std::map<std::string, tb_info_t>::iterator it = tb_infos_.begin();
+  uint32_t i;
+
+  for (; it != tb_infos_.end(); it++) {
+    auto &tb_info = it->second;
+
+    for (i = 0; i < tb_info.num_site; i++) {
+      if (tb_info.site_id[i] == sid) {
+        tables.push_back(it->first);
+        break;
+      }
+    }
+  }
+  return tables.size();
+}
 
 bool Sharding::Ready2Populate(tb_info_t *tb_info) {
 
@@ -1470,15 +1468,13 @@ int Sharding::PopulateTable(uint32_t sid) {
 //  release_foreign_values();
 //  return 0;
 //}
-//
-//int Sharding::get_number_rows(std::map<std::string, uint64_t> &table_map) {
-//  std::map<std::string, tb_info_t>::iterator it = sharding_s->tb_infos_.begin();
-//
-//  for (; it != sharding_s->tb_infos_.end();
-//         it++)
-//    table_map[it->first] = (uint64_t) (it->second.num_records);
-//  return 0;
-//}
+
+int Sharding::get_number_rows(std::map<std::string, uint64_t> &table_map) {
+
+  for (auto it = tb_infos_.begin(); it != tb_infos_.end(); it++)
+    table_map[it->first] = (uint64_t) (it->second.num_records);
+  return 0;
+}
 
 void Sharding::release_foreign_values() {
   std::map<std::string, tb_info_t>::iterator tb_it = tb_infos_.begin();

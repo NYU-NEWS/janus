@@ -24,6 +24,9 @@ struct ClientWorker {
   rrr::CondVar finish_cond;
   Coordinator *coo_;
   std::atomic<uint32_t> num_txn, success, num_try;
+  TxnRequestFactory* txn_req_factory_;
+ public:
+  ClientWorker();
 
   Coordinator* GetCoord() {
     if (coo_) return coo_;

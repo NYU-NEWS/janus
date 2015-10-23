@@ -46,7 +46,7 @@ void ServerWorker::PopTable() {
   // get all tables
   std::vector<std::string> table_names;
 
-  ret = Sharding::get_table_names(site_info_->id, table_names);
+  ret = sharding_->get_table_names(site_info_->id, table_names);
   verify(ret > 0);
 
   std::vector<std::string>::iterator table_it = table_names.begin();
@@ -54,7 +54,7 @@ void ServerWorker::PopTable() {
   for (; table_it != table_names.end(); table_it++) {
     mdb::Schema *schema = new mdb::Schema();
     mdb::symbol_t symbol;
-    Sharding::init_schema(*table_it, schema, &symbol);
+    sharding_->init_schema(*table_it, schema, &symbol);
     mdb::Table *tb;
     switch (symbol) {
       case mdb::TBL_SORTED:
