@@ -4,11 +4,11 @@
 
 namespace rococo {
 
-extern std::multimap<c_last_id_t, i32> g_c_last2id; // XXX
-extern mdb::Schema g_c_last_schema;
-
 class TPCCDSharding: public Sharding {
  public:
+  std::multimap<c_last_id_t, rrr::i32> g_c_last2id; // XXX hardcode
+  mdb::Schema g_c_last_schema;                      // XXX
+
   void PopulateTable(tb_info_t *tb_info, uint32_t);
   int PopulateTable(unsigned int sid);
   void temp1(tb_info_t *tb_info,
@@ -34,6 +34,7 @@ class TPCCDSharding: public Sharding {
              const mdb::Schema *schema,
              mdb::Table *const table_ptr,
              mdb::SortedTable *tbl_sec_ptr);
+
 };
 
 } // namespace rococo

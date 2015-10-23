@@ -25,8 +25,8 @@ Value value_rr_get_next(const std::string &s,
                         int max,
                         int start = 0);
 
-int init_index(std::map<unsigned int, std::pair<unsigned int,
-                                                unsigned int> > &index);
+int init_index(map<uint32_t, std::pair<uint32_t,
+                                            uint32_t> > &index);
 
 int index_reverse_increase(std::map<unsigned int, std::pair<unsigned int,
                                                             unsigned int> > &index);
@@ -79,17 +79,26 @@ class Sharding {
     column_t(Value::kind _type,
              std::string _name,
              bool _is_primary,
-             tb_info_t *_foreign_tb,
-             column_t *_foreign) : type(_type), name(_name), is_primary(
-        _is_primary),
-                                   values(NULL) {
-      foreign_tb = _foreign_tb;
-      foreign = _foreign;
+             bool _is_foreign,
+             string ftbl_name,
+             string fcol_name
+//             tb_info_t *_foreign_tb,
+//             column_t *_foreign
+    ) :
+        type(_type), name(_name), is_primary(_is_primary), values(NULL),
+        is_foreign(_is_foreign),
+        foreign_tbl_name(ftbl_name),
+        foreign_col_name(fcol_name),
+        foreign_tb(nullptr),
+        foreign(nullptr) {
     }
 
     Value::kind type;
     std::string name;
     bool is_primary;
+    bool is_foreign;
+    string foreign_tbl_name;
+    string foreign_col_name;
     column_t *foreign;
     tb_info_t *foreign_tb;
     std::vector<Value> *values; // ? what is this about?
@@ -112,6 +121,14 @@ class Sharding {
       else sharding_method = MODULUS;
     }
 
+//    tb_info_t(const tb_info_t& tbl)
+//        : num_site(tbl.num_site), site_id(tbl.site_id),
+//          num_records(tbl.num_records), symbol(tbl.symbol),
+//          sharding_method(tbl.sharding_method), populated(tbl.populated),
+//          columns(tbl.columns), tb_name(tbl.tb_name) {
+//      // TODO
+//    }
+
     method_t sharding_method;
     uint32_t num_site;
     uint32_t *site_id;
@@ -122,12 +139,14 @@ class Sharding {
     std::vector<column_t> columns;
     mdb::symbol_t symbol;
     std::string tb_name;
+
   };
 
   std::map<std::string, tb_info_t> tb_infos_;
-
   std::map<MultiValue, MultiValue> dist2sid_;
   std::map<MultiValue, MultiValue> stock2sid_;
+
+  void BuildTableInfoPtr();
 
   void insert_dist_mapping(const MultiValue &mv);
 
@@ -144,12 +163,12 @@ class Sharding {
   int get_site_id_from_tb(const std::string &tb_name,
                           std::vector<unsigned int> &site_id);
 
-  int do_populate_table(const std::vector<std::string> &table_names,
-                        unsigned int sid);
-
-  int do_tpcc_dist_partition_populate_table(
-      const std::vector<std::string> &table_names,
-      unsigned int sid);
+//  int do_populate_table(const std::vector<std::string> &table_names,
+//                        unsigned int sid);
+//
+//  int do_tpcc_dist_partition_populate_table(
+//      const std::vector<std::string> &table_names,
+//      unsigned int sid);
 //
 //  int do_tpcc_real_dist_partition_populate_table(
 //      const std::vector<std::string> &table_names,
@@ -183,6 +202,7 @@ class Sharding {
   static Sharding *sharding_s;
 
   Sharding();
+  Sharding(const Sharding& sharding);
 
  public:
 

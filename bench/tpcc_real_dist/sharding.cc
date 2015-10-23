@@ -92,7 +92,9 @@ void TPCCDSharding::temp2(tb_info_t *tb_info,
               tb_infos_[std::string(TPCC_TB_DISTRICT)].num_records /
               tb_infos_[std::string(TPCC_TB_WAREHOUSE)].num_records;
         } else {
-          n = tb_info->columns[col_index].foreign_tb->num_records;
+          auto ftbl = tb_info->columns[col_index].foreign_tb;
+          verify(ftbl);
+          n = ftbl->num_records;
         }
         Value v_buf;
 

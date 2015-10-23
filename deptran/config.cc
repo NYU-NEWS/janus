@@ -463,10 +463,8 @@ void Config::InitTPCCD() {
 
     for (d_id = 0; d_id < n_d_id; d_id++)
       for (w_id = 0; w_id < n_w_id; w_id++) {
-        MultiValue mv(std::vector<Value>({
-                                             Value(d_id),
-                                             Value(w_id)
-                                         }));
+        MultiValue mv(std::vector<Value>({Value(d_id),
+                                          Value(w_id)}));
         Sharding::sharding_s->insert_dist_mapping(mv);
       }
     i32 n_i_id =
@@ -683,36 +681,23 @@ void Config::LoadSchemeXML(boost::property_tree::ptree &pt) {
             column.second.get<std::string>("<xmlattr>.foreign", "");
           Sharding::column_t  *foreign_key_column = NULL;
           Sharding::tb_info_t *foreign_key_tb     = NULL;
-
-          if (c_foreign.size() > 0) {
+          std::string ftbl_name;
+          std::string fcol_name;
+          bool is_foreign = (c_foreign.size() > 0);
+          if (is_foreign) {
             size_t pos = c_foreign.find('.');
             verify(pos != std::string::npos);
 
-            std::string foreign_tb = c_foreign.substr(0, pos);
+            ftbl_name = c_foreign.substr(0, pos);
+            fcol_name = c_foreign.substr(pos + 1);
             verify(c_foreign.size() > pos + 1);
-            std::string foreign_column = c_foreign.substr(pos + 1);
-
-            auto ftb_it = Sharding::sharding_s->tb_infos_.find(foreign_tb);
-            verify(ftb_it != Sharding::sharding_s->tb_infos_.end());
-            foreign_key_tb = &(ftb_it->second);
-
-            auto fc_it = ftb_it->second.columns.begin();
-
-            for (; fc_it != ftb_it->second.columns.end(); fc_it++)
-              if (fc_it->name == foreign_column) {
-                verify(fc_it->type == c_v_type);
-
-                if ((fc_it->values == NULL) && (server_or_client_ == 0))
-                  fc_it->values = new std::vector<Value>();
-                foreign_key_column = &(*fc_it);
-                break;
-              }
-            verify(fc_it != ftb_it->second.columns.end());
           }
-          tb_info.columns.push_back(Sharding::column_t(c_v_type, c_name,
+          tb_info.columns.push_back(Sharding::column_t(c_v_type,
+                                                       c_name,
                                                        c_primary,
-                                                       foreign_key_tb,
-                                                       foreign_key_column));
+                                                       is_foreign,
+                                                       ftbl_name,
+                                                       fcol_name));
         }
       }
 
@@ -720,6 +705,7 @@ void Config::LoadSchemeXML(boost::property_tree::ptree &pt) {
       Sharding::sharding_s->tb_infos_[tb_name] = tb_info;
     }
   }
+  Sharding::sharding_s->BuildTableInfoPtr();
 }
 
 Config::~Config() {

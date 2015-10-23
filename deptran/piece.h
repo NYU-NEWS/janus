@@ -92,4 +92,8 @@ class Piece {
         verify(0); \
     }
 
+#define C_LAST_SCHEMA (((TPCCDSharding*)(Sharding::sharding_s))->g_c_last_schema)
+
+#define C_LAST2ID (((TPCCDSharding*)(Sharding::sharding_s))->g_c_last2id)
+
 } // namespace rcc

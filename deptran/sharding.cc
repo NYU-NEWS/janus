@@ -27,16 +27,52 @@
 
 namespace rococo {
 Sharding *Sharding::sharding_s = NULL;
-std::multimap<c_last_id_t, rrr::i32> g_c_last2id; // XXX hardcode
-mdb::Schema g_c_last_schema;                      // XXX
+
 
 Sharding::Sharding() { }
+
+Sharding::Sharding(const Sharding &sharding)
+    : tb_infos_(sharding.tb_infos_), dist2sid_(sharding.dist2sid_),
+      stock2sid_(sharding.stock2sid_) {
+  BuildTableInfoPtr();
+}
 
 Sharding::~Sharding() {
   std::map<std::string, tb_info_t>::iterator it;
 
   for (it = tb_infos_.begin(); it != tb_infos_.end(); it++)
     if (it->second.site_id) free(it->second.site_id);
+}
+
+void Sharding::BuildTableInfoPtr() {
+
+  for (auto tbl_it = tb_infos_.begin(); tbl_it != tb_infos_.end(); tbl_it++ ) {
+    auto &tbl = tbl_it->second;
+    auto &columns = tbl.columns;
+    for (auto col_it = columns.begin(); col_it != columns.end(); col_it++) {
+      auto &col = *col_it;
+      if (col.is_foreign) {
+        auto ftb_it = tb_infos_.find(col.foreign_tbl_name);
+        verify(ftb_it != tb_infos_.end());
+        auto &ftbl = ftb_it->second;
+        col.foreign_tb = &ftbl;
+        auto fcol_it = ftbl.columns.begin();
+        for (; fcol_it != ftbl.columns.end(); fcol_it++) {
+          if (fcol_it->name == col.foreign_col_name) {
+            verify(fcol_it->type == col.type);
+            if (fcol_it->values == NULL) {
+              fcol_it->values = new std::vector<Value>();
+            }
+            col.foreign = &(*fcol_it);
+            break;
+          }
+        }
+        verify(fcol_it != ftbl.columns.end());
+      }
+    }
+
+  }
+
 }
 
 uint32_t Sharding::site_from_key(const MultiValue &key,
@@ -367,1073 +403,1073 @@ int Sharding::PopulateTable(uint32_t sid) {
 }
 
 
-int Sharding::do_tpcc_dist_partition_populate_table(
-    const std::vector<std::string> &table_names,
-    uint32_t sid) {
-  int mode = Config::GetConfig()->get_mode();
-  uint32_t number2populate = tb_infos_.size();
-
-  while (number2populate > 0) {
-    uint32_t pre_num2populate = number2populate;
-    std::map<std::string, tb_info_t>::iterator tb_it = tb_infos_.begin();
-
-    for (; tb_it != tb_infos_.end(); tb_it++) {
-      if (!tb_it->second.populated[sid] && Ready2Populate(&(tb_it->second))) {
-        tb_info_t *tb_info_ptr = &(tb_it->second);
-        mdb::Table *const table_ptr = DTxnMgr::GetTxnMgr(sid)->get_table(
-            tb_it->first);
-        const mdb::Schema *schema = table_ptr->schema();
-        verify(schema->columns_count() == tb_info_ptr->columns.size());
-
-        uint64_t num_foreign_row = 1;
-        uint64_t num_self_primary = 0;
-        uint32_t self_primary_col = 0;
-        bool self_primary_col_find = false;
-        std::map<uint32_t,
-                 std::pair<uint32_t, uint32_t> > prim_foreign_index;
-        std::vector<uint32_t> bound_foreign_index;
-        mdb::Schema::iterator col_it = schema->begin();
-        uint32_t col_index = 0;
-
-        for (col_index = 0; col_index < tb_info_ptr->columns.size();
-             col_index++) {
-          verify(col_it != schema->end());
-          verify(tb_info_ptr->columns[col_index].name == col_it->name);
-          verify(tb_info_ptr->columns[col_index].type == col_it->type);
-
-          if (tb_info_ptr->columns[col_index].is_primary) {
-            verify(col_it->indexed);
-
-            if (tb_it->first == TPCC_TB_CUSTOMER) { // XXX
-              if (col_it->name != "c_id")
-                g_c_last_schema.add_column(
-                    col_it->name.c_str(),
-                    col_it->type,
-                    true);
-            } // XXX
-
-            if (tb_info_ptr->columns[col_index].foreign_tb != NULL) {
-              uint32_t tmp_int;
-              uint32_t tmp_index_base;
-              bool times_tmp_int = true;
-
-              if (tb_info_ptr->columns[col_index].foreign->name == "i_id") {
-                // refers
-                // to
-                // item.i_id,
-                // use
-                // all
-                // available
-                // i_id
-                // instead
-                // of
-                // local
-                // i_id
-                tmp_int =
-                    tb_info_ptr->columns[col_index].foreign_tb->num_records;
-                tmp_index_base = tmp_int;
-
-                if (tb_info_ptr->columns[col_index].values != NULL) {
-                  delete tb_info_ptr->columns[col_index].values;
-                  tb_info_ptr->columns[col_index].values = NULL;
-                }
-              }
-              else if (tb_info_ptr->columns[col_index].foreign->name
-                  == "w_id") {
-                // refers to warehouse.w_id, use all available w_id
-                // instead of local w_id
-                tmp_int =
-                    tb_info_ptr->columns[col_index].foreign_tb->num_records;
-                tmp_index_base = tmp_int * Config::GetConfig()->get_num_site();
-
-                if (tb_info_ptr->columns[col_index].values != NULL) {
-                  if (tb_it->first == TPCC_TB_STOCK) {
-                    delete tb_info_ptr->columns[col_index].values;
-                    tb_info_ptr->columns[col_index].values = NULL;
-                  }
-                  else
-                    verify(tb_it->first == TPCC_TB_DISTRICT);
-                }
-              }
-              else {
-                times_tmp_int = false;
-                tmp_int =
-                    tb_info_ptr->columns[col_index].foreign_tb->num_records;
-
-                if (num_foreign_row == 1) num_foreign_row *= tmp_int;
-                column_t *foreign_column =
-                    tb_info_ptr->columns[col_index].foreign;
-                tmp_index_base = foreign_column->values->size();
-                size_t foreign_col_name_size = foreign_column->name.size();
-
-                if ((foreign_col_name_size >= 4)
-                    && ((foreign_column->name.substr(foreign_col_name_size - 4)
-                        ==
-                            "w_id")
-                        || (foreign_column->name.substr(foreign_col_name_size -
-                            4) == "d_id"))) {
-                  if (!bound_foreign_index.empty())
-                    verify(
-                        tmp_index_base ==
-                            prim_foreign_index[bound_foreign_index[0]].second);
-                  bound_foreign_index.push_back(col_index);
-                }
-
-                if (tb_info_ptr->columns[col_index].values != NULL) {
-                  tb_info_ptr->columns[col_index].values->assign(
-                      foreign_column->values->begin(),
-                      foreign_column->values->end());
-                }
-              }
-              verify(tmp_index_base > 0);
-              prim_foreign_index[col_index] =
-                  std::pair<uint32_t, uint32_t>(0, tmp_index_base);
-
-              if (times_tmp_int) num_foreign_row *= tmp_int;
-            }
-            else {
-              // only one primary key can refer to no other table.
-              verify(!self_primary_col_find);
-              self_primary_col = col_index;
-              self_primary_col_find = true;
-
-              if ((tb_info_ptr->columns[col_index].name == "i_id")
-                  || (tb_info_ptr->columns[col_index].name == "w_id")) {
-                if (tb_info_ptr->columns[col_index].values != NULL) {
-                  delete tb_info_ptr->columns[col_index].values;
-                  tb_info_ptr->columns[col_index].values = NULL;
-                }
-              }
-            }
-          }
-          col_it++;
-        }
-
-        if (tb_it->first == TPCC_TB_CUSTOMER) { // XXX
-          g_c_last_schema.add_column("c_id", mdb::Value::I32, true);
-        }                                       // XXX
-        verify(col_it == schema->end());
-
-        // TODO (ycui) add a vector in tb_info_t to record used values for key.
-        verify(tb_info_ptr->num_records % num_foreign_row == 0
-                   || tb_info_ptr->num_records < num_foreign_row);
-
-        // Log_debug("foreign row: %llu, this row: %llu", num_foreign_row,
-        // tb_info_ptr->num_records);
-        num_self_primary = tb_info_ptr->num_records / num_foreign_row;
-        Value key_value = value_get_zero(
-            tb_info_ptr->columns[self_primary_col].type);
-        Value max_key = value_get_n(tb_info_ptr->columns[self_primary_col].type,
-                                    num_self_primary *
-                                        (tb_it->first ==
-                                            TPCC_TB_WAREHOUSE
-                                         ? Config::GetConfig()->
-                                                get_num_site() : 1));
-        std::vector<Value> row_data;
-        row_data.reserve(tb_info_ptr->columns.size());
-
-        // log
-        // Log_debug("begin:%s", tb_it->first.c_str());
-        for (; key_value < max_key || num_self_primary == 0; ++key_value) {
-          bool record_key = true;
-          init_index(prim_foreign_index);
-          int counter = 0;
-
-          while (true) {
-            row_data.clear();
-
-            for (col_index = 0; col_index < tb_info_ptr->columns.size();
-                 col_index++) {
-              if (tb_info_ptr->columns[col_index].is_primary) {
-                if (prim_foreign_index.size() == 0) {
-                  if (sid != site_from_key(key_value, tb_info_ptr)) break;
-                  row_data.push_back(key_value);
-
-                  if (tb_info_ptr->columns[col_index].values != NULL) {
-                    tb_info_ptr->columns[col_index].values->push_back(key_value);
-                  }
-                }
-
-                  // primary key and foreign key
-                else if (tb_info_ptr->columns[col_index].foreign != NULL) {
-                  Value v_buf;
-
-                  if ((tb_info_ptr->columns[col_index].foreign->name == "i_id")
-                      || (tb_info_ptr->columns[col_index].foreign->name ==
-                          "w_id"))
-                    v_buf = Value(
-                        (i32) prim_foreign_index[col_index].first);
-                  else
-                    v_buf =
-                        (*tb_info_ptr->columns[col_index].foreign->values)[
-                            prim_foreign_index
-                            [
-                                col_index].first];
-                  row_data.push_back(v_buf);
-                }
-                else { // primary key
-                  row_data.push_back(key_value);
-
-                  if ((tb_info_ptr->columns[col_index].values != NULL)
-                      && (tb_it->first != TPCC_TB_DISTRICT)
-                      && record_key) {
-                    tb_info_ptr->columns[col_index].values->push_back(key_value);
-                    record_key = false;
-                  }
-                }
-              }
-              else if (tb_info_ptr->columns[col_index].foreign != NULL) {
-                bool use_key_value = false;
-                int n;
-                size_t fc_size =
-                    tb_info_ptr->columns[col_index].foreign->name.size();
-                std::string last4 =
-                    tb_info_ptr->columns[col_index].foreign->name.substr(
-                        fc_size - 4,
-                        4);
-
-                if (last4 == "i_id") {
-                  n = tb_infos_[std::string(TPCC_TB_ITEM)].num_records;
-                }
-                else if (last4 == "w_id") {
-                  n = tb_infos_[std::string(TPCC_TB_WAREHOUSE)].num_records *
-                      Config::GetConfig()->get_num_site();
-                }
-                else if (last4 == "c_id") {
-                  if (tb_info_ptr->columns[col_index].name ==
-                      "o_c_id")
-                    use_key_value = true;
-                  else
-                    n = tb_infos_[std::string(TPCC_TB_CUSTOMER)].num_records /
-                        tb_infos_[std::string(TPCC_TB_DISTRICT)].num_records;
-                }
-                else if (last4 == "d_id") {
-                  n = tb_infos_[std::string(TPCC_TB_DISTRICT)].num_records /
-                      tb_infos_[std::string(TPCC_TB_WAREHOUSE)].num_records;
-                }
-                else {
-                  n = tb_info_ptr->columns[col_index].foreign_tb->num_records;
-                }
-                Value v_buf;
-
-                if (use_key_value) {
-                  v_buf = key_value;
-                }
-                else {
-                  v_buf = value_get_n(tb_info_ptr->columns[col_index].type,
-                                      RandomGenerator::rand(0, n - 1));
-                }
-                row_data.push_back(v_buf);
-              }
-              else {
-                Value
-                    v_buf = random_value(tb_info_ptr->columns[col_index].type);
-
-                if (tb_info_ptr->columns[col_index].name ==
-                    "d_next_o_id")
-                  v_buf =
-                      Value((i32) (
-                          tb_infos_[std::string(TPCC_TB_ORDER)].num_records /
-                              tb_infos_[std::string(TPCC_TB_DISTRICT)].
-                                  num_records)); // XXX
-
-                if (tb_info_ptr->columns[col_index].name ==
-                    "c_last")
-                  v_buf =
-                      Value(RandomGenerator::int2str_n(
-                          key_value.get_i32() % 1000, 3));
-                row_data.push_back(v_buf);
-              }
-            }
-
-            if (col_index == tb_info_ptr->columns.size()) {
-              if (tb_it->first == TPCC_TB_STOCK) {
-                int key_size;
-                key_size = schema->key_columns_id().size();
-                MultiValue mv(key_size);
-
-                for (int i = 0; i < key_size;
-                     i++)
-                  mv[i] = row_data[schema->key_columns_id()[i]];
-
-                if (sid == site_from_key(mv, tb_info_ptr)) {
-                  counter++;
-
-                  switch (mode) {
-                    case MODE_2PL:
-                      table_ptr->insert(mdb::FineLockedRow::create(schema,
-                                                                   row_data));
-                      break;
-
-                    case MODE_NONE: // FIXME
-                    case MODE_OCC:
-                      table_ptr->insert(mdb::VersionedRow::create(schema,
-                                                                  row_data));
-                      break;
-
-                    case MODE_RCC:
-                      table_ptr->insert(RCCRow::create(schema, row_data));
-                      break;
-
-                    case MODE_RO6:
-                      table_ptr->insert(RO6Row::create(schema, row_data));
-                      break;
-
-                    default:
-                      verify(0);
-                  }
-
-                  // log
-                  // std::string buf;
-                  // for (int i = 0; i < tb_info_ptr->columns.size(); i++)
-                  //
-                  //  buf.append(tb_info_ptr->columns[i].name).append(":").append(to_string(row_data[i])).append(";
-                  // ");
-                  // Log_debug("%s", buf.c_str());
-                }
-              }
-              else if (tb_it->first == TPCC_TB_DISTRICT) {
-                int key_size;
-                key_size = schema->key_columns_id().size();
-                MultiValue mv(key_size);
-
-                for (int i = 0; i < key_size;
-                     i++)
-                  mv[i] = row_data[schema->key_columns_id()[i]];
-
-                if (sid == site_from_key(mv, tb_info_ptr)) {
-                  counter++;
-
-                  switch (mode) {
-                    case MODE_2PL:
-                      table_ptr->insert(mdb::FineLockedRow::create(schema,
-                                                                   row_data));
-                      break;
-
-                    case MODE_NONE: // FIXME
-                    case MODE_OCC:
-                      table_ptr->insert(mdb::VersionedRow::create(schema,
-                                                                  row_data));
-                      break;
-
-                    case MODE_RCC:
-                      table_ptr->insert(RCCRow::create(schema, row_data));
-                      break;
-
-                    case MODE_RO6:
-                      table_ptr->insert(RO6Row::create(schema, row_data));
-                      break;
-
-                    default:
-                      verify(0);
-                  }
-
-                  for (int i = 0; i < key_size;
-                       i++)
-                    tb_info_ptr->columns[schema->key_columns_id()[i]].
-                            values
-                        ->push_back(mv[i]);
-
-                  // log
-                  // std::string buf;
-                  // for (int i = 0; i < tb_info_ptr->columns.size(); i++)
-                  //
-                  //  buf.append(tb_info_ptr->columns[i].name).append(":").append(to_string(row_data[i])).append(";
-                  // ");
-                  // Log_debug("%s", buf.c_str());
-                }
-              }
-              else {
-                counter++;
-                mdb::Row *r = NULL;
-
-                switch (mode) {
-                  case MODE_2PL:
-                    r = mdb::FineLockedRow::create(schema, row_data);
-                    break;
-
-                  case MODE_NONE: // FIXME
-                  case MODE_OCC:
-                    r = mdb::VersionedRow::create(schema, row_data);
-                    break;
-
-                  case MODE_RCC:
-                    r = RCCRow::create(schema, row_data);
-                    break;
-
-                  case MODE_RO6:
-                    r = RO6Row::create(schema, row_data);
-                    break;
-
-                  default:
-                    verify(0);
-                }
-                table_ptr->insert(r);
-
-                // XXX c_last secondary index
-                if (tb_it->first == TPCC_TB_CUSTOMER) {
-                  std::string c_last_buf = r->get_column(
-                      "c_last").get_str();
-                  rrr::i32 c_id_buf = r->get_column(
-                      "c_id").get_i32();
-                  size_t mb_size =
-                      g_c_last_schema.key_columns_id().size(), mb_i = 0;
-                  mdb::MultiBlob mb_buf(mb_size);
-                  mdb::Schema::iterator col_info_it = g_c_last_schema.begin();
-
-                  for (; col_info_it != g_c_last_schema.end(); col_info_it++) {
-                    mb_buf[mb_i++] = r->get_blob(col_info_it->name);
-                  }
-                  g_c_last2id.insert(std::make_pair(c_last_id_t(c_last_buf,
-                                                                mb_buf,
-                                                                &g_c_last_schema),
-                                                    c_id_buf));
-                } // XXX
-
-                // log
-                // std::string buf;
-                // for (int i = 0; i < tb_info_ptr->columns.size(); i++)
-                //
-                //  buf.append(tb_info_ptr->columns[i].name).append(":").append(to_string(row_data[i])).append(";
-                // ");
-                // Log_debug("%s", buf.c_str());
-              }
-
-              if ((num_self_primary == 0) &&
-                  (counter >= tb_info_ptr->num_records)) {
-                num_self_primary = 1;
-                break;
-              }
-            }
-
-            if (num_self_primary == 0) {
-              if (0 !=
-                  index_increase(prim_foreign_index,
-                                 bound_foreign_index))
-                verify(0);
-            }
-            else if (0 !=
-                index_increase(prim_foreign_index,
-                               bound_foreign_index))
-              break;
-          }
-        }
-
-        // Log::debug("end:%s", tb_it->first.c_str());
-        tb_info_ptr->populated[sid] = true;
-        number2populate--;
-
-        // finish populate one table
-      }
-    }
-
-    verify(pre_num2populate > number2populate);
-  }
-
-  release_foreign_values();
-
-  return 0;
-}
-
-int Sharding::do_tpcc_populate_table(const std::vector<std::string> &table_names,
-                                     uint32_t sid) {
-  int32_t mode = Config::GetConfig()->get_mode();
-  uint32_t number2populate = tb_infos_.size();
-
-  while (number2populate > 0) {
-    uint32_t pre_num2populate = number2populate;
-    std::map<std::string, tb_info_t>::iterator tb_it = tb_infos_.begin();
-
-    for (; tb_it != tb_infos_.end(); tb_it++) {
-      if (!tb_it->second.populated[sid] && Ready2Populate(&(tb_it->second))) {
-        tb_info_t *tb_info_ptr = &(tb_it->second);
-        mdb::Table *const table_ptr = DTxnMgr::GetTxnMgr(sid)->get_table(
-            tb_it->first);
-        const mdb::Schema *schema = table_ptr->schema();
-        verify(schema->columns_count() == tb_info_ptr->columns.size());
-
-        uint32_t col_index = 0;
-
-        if (tb_it->first == TPCC_TB_WAREHOUSE) { // warehouse table
-          Value key_value, max_key;
-          mdb::Schema::iterator col_it = schema->begin();
-
-          for (col_index = 0; col_index < tb_info_ptr->columns.size();
-               col_index++) {
-            verify(col_it != schema->end());
-            verify(tb_info_ptr->columns[col_index].name == col_it->name);
-            verify(tb_info_ptr->columns[col_index].type == col_it->type);
-
-            if (tb_info_ptr->columns[col_index].is_primary) {
-              verify(col_it->indexed);
-              key_value = value_get_zero(tb_info_ptr->columns[col_index].type);
-              max_key = value_get_n(tb_info_ptr->columns[col_index].type,
-                                    tb_info_ptr->num_records *
-                                        tb_info_ptr->num_site);
-            }
-            col_it++;
-          }
-          verify(col_it == schema->end());
-          std::vector<Value> row_data;
-
-          for (; key_value < max_key; ++key_value) {
-            row_data.clear();
-
-            for (col_index = 0; col_index < tb_info_ptr->columns.size();
-                 col_index++) {
-              if (tb_info_ptr->columns[col_index].is_primary) {
-                if (sid != site_from_key(key_value, tb_info_ptr)) break;
-
-                if (tb_info_ptr->columns[col_index].values !=
-                    NULL)
-                  tb_info_ptr->columns[col_index].values->push_back(
-                      key_value);
-                row_data.push_back(key_value);
-
-                // Log_debug("%s (primary): %s",
-                // tb_info_ptr->columns[col_index].name.c_str(),
-                // to_string(key_value).c_str());
-                // std::cerr << tb_info_ptr->columns[col_index].name <<
-                // "(primary):" << row_data.back() << "; ";
-              } else if (tb_info_ptr->columns[col_index].foreign != NULL) {
-                // TODO (ycui) use RandomGenerator
-                Log_fatal("Table %s shouldn't have a foreign key!",
-                          TPCC_TB_WAREHOUSE);
-                verify(0);
-              } else {
-                // TODO (ycui) use RandomGenerator
-                Value
-                    v_buf = random_value(tb_info_ptr->columns[col_index].type);
-                row_data.push_back(v_buf);
-              }
-            }
-
-            if (col_index == tb_info_ptr->columns.size()) {
-              // log
-              // std::string buf;
-              // for (int i = 0; i < tb_info_ptr->columns.size(); i++)
-              //
-              //  buf.append(tb_info_ptr->columns[i].name).append(":").append(to_string(row_data[i])).append(";
-              // ");
-              // rrr::Log::info("%s", buf.c_str());
-              switch (mode) {
-                case MODE_2PL:
-                  table_ptr->insert(mdb::FineLockedRow::create(schema,
-                                                               row_data));
-                  break;
-
-                case MODE_NONE: // FIXME
-                case MODE_OCC:
-                  table_ptr->insert(mdb::VersionedRow::create(schema,
-                                                              row_data));
-                  break;
-
-                case MODE_RCC:
-                  table_ptr->insert(RCCRow::create(schema, row_data));
-                  break;
-
-                case MODE_RO6:
-                  table_ptr->insert(RO6Row::create(schema, row_data));
-                  break;
-
-                default:
-                  verify(0);
-              }
-
-              // Log_debug("Row inserted");
-            }
-          }
-        } else { // non warehouse tables
-          uint64_t num_foreign_row = 1;
-          uint64_t num_self_primary = 0;
-          uint32_t self_primary_col = 0;
-          bool self_primary_col_find = false;
-          std::map<uint32_t,
-                   std::pair<uint32_t, uint32_t> > prim_foreign_index;
-          mdb::Schema::iterator col_it = schema->begin();
-
-          mdb::SortedTable *tbl_sec_ptr = NULL;
-
-          if (tb_it->first ==
-              TPCC_TB_ORDER)
-            tbl_sec_ptr =
-                (mdb::SortedTable *) DTxnMgr::GetTxnMgr(sid)->get_table(
-                    TPCC_TB_ORDER_C_ID_SECONDARY);
-
-          for (col_index = 0; col_index < tb_info_ptr->columns.size();
-               col_index++) {
-            verify(col_it != schema->end());
-            verify(tb_info_ptr->columns[col_index].name == col_it->name);
-            verify(tb_info_ptr->columns[col_index].type == col_it->type);
-
-            if (tb_info_ptr->columns[col_index].is_primary) {
-              verify(col_it->indexed);
-
-              if (tb_it->first == TPCC_TB_CUSTOMER) { // XXX
-                if (col_it->name != "c_id")
-                  g_c_last_schema.add_column(
-                      col_it->name.c_str(),
-                      col_it->type,
-                      true);
-              } // XXX
-
-              if (tb_info_ptr->columns[col_index].foreign_tb != NULL) {
-                uint32_t tmp_int;
-
-                if (tb_info_ptr->columns[col_index].foreign->name == "i_id") {
-
-                  // refers to item.i_id, use all available i_id 
-                  // instead of local i_id
-                  tmp_int =
-                      tb_info_ptr->columns[col_index].foreign_tb->num_records;
-
-                  if (tb_info_ptr->columns[col_index].values != NULL) {
-                    tb_info_ptr->columns[col_index].values->resize(tmp_int);
-
-                    for (i32 i = 0; i < tmp_int;
-                         i++)
-                      (*tb_info_ptr->columns[col_index].values)[i] =
-                          Value(i);
-                  }
-                }
-                else {
-                  column_t *foreign_column =
-                      tb_info_ptr->columns[col_index].foreign;
-                  tmp_int = foreign_column->values->size();
-
-                  if (tb_info_ptr->columns[col_index].values != NULL) {
-                    tb_info_ptr->columns[col_index].values->assign(
-                        foreign_column->values->begin(),
-                        foreign_column->values->end());
-                  }
-                }
-                verify(tmp_int > 0);
-                prim_foreign_index[col_index] =
-                    std::pair<uint32_t, uint32_t>(0, tmp_int);
-                num_foreign_row *= tmp_int;
-              }
-              else {
-                // only one primary key can refer to no other table.
-                verify(!self_primary_col_find);
-                self_primary_col = col_index;
-                self_primary_col_find = true;
-              }
-            }
-            col_it++;
-          }
-
-          if (tb_it->first == TPCC_TB_CUSTOMER) { // XXX
-            g_c_last_schema.add_column("c_id", mdb::Value::I32, true);
-          }                                       // XXX
-          // TODO (ycui) add a vector in
-          // tb_info_t to record used
-          // values for key.
-          verify(tb_info_ptr->num_records % num_foreign_row == 0
-                     || tb_info_ptr->num_records < num_foreign_row);
-
-          // Log_debug("foreign row: %llu, this row: %llu", num_foreign_row,
-          // tb_info_ptr->num_records);
-          num_self_primary = tb_info_ptr->num_records / num_foreign_row;
-          Value key_value = value_get_zero(
-              tb_info_ptr->columns[self_primary_col].type);
-          Value max_key = value_get_n(
-              tb_info_ptr->columns[self_primary_col].type,
-              num_self_primary);
-          std::vector<Value> row_data;
-
-          // Log_debug("Begin primary key: %s, Max primary key: %s",
-          // to_string(key_value).c_str(), to_string(max_key).c_str());
-          for (; key_value < max_key || num_self_primary == 0; ++key_value) {
-            bool record_key = true;
-            init_index(prim_foreign_index);
-            int counter = 0;
-
-            while (true) {
-              row_data.clear();
-
-              for (col_index = 0; col_index < tb_info_ptr->columns.size();
-                   col_index++) {
-                if (tb_info_ptr->columns[col_index].is_primary) {
-                  if (prim_foreign_index.size() == 0) {
-                    if (sid != site_from_key(key_value, tb_info_ptr)) break;
-                    row_data.push_back(key_value);
-
-                    if (tb_info_ptr->columns[col_index].values != NULL) {
-                      tb_info_ptr->columns[col_index].values->push_back(
-                          key_value);
-                    }
-
-                    // Log_debug("%s (primary): %s",
-                    // tb_info_ptr->columns[col_index].name.c_str(),
-                    // to_string(key_value).c_str());
-                  }
-
-                    // primary key and foreign key
-                  else if (tb_info_ptr->columns[col_index].foreign != NULL) {
-                    Value v_buf;
-
-                    if (tb_info_ptr->columns[col_index].foreign->name ==
-                        "i_id")
-                      v_buf = Value(
-                          (i32) prim_foreign_index[col_index].first);
-                    else
-                      v_buf =
-                          (*tb_info_ptr->columns[col_index].foreign->values)[
-                              prim_foreign_index[col_index].first];
-
-                    // Log_debug("%s (primary, foreign): %s",
-                    // tb_info_ptr->columns[col_index].name.c_str(),
-                    // to_string(v_buf).c_str());
-                    row_data.push_back(v_buf);
-                  }
-                  else { // primary key
-                    row_data.push_back(key_value);
-
-                    if ((tb_info_ptr->columns[col_index].values != NULL)
-                        && record_key) {
-                      tb_info_ptr->columns[col_index].values->push_back(
-                          key_value);
-                      record_key = false;
-                    }
-
-                    // Log_debug("%s (primary): %s",
-                    // tb_info_ptr->columns[col_index].name.c_str(),
-                    // to_string(key_value).c_str());
-                  }
-                }
-                else if (tb_info_ptr->columns[col_index].foreign != NULL) {
-                  bool use_key_value = false;
-                  int n;
-                  size_t fc_size =
-                      tb_info_ptr->columns[col_index].foreign->name.size();
-                  std::string last4 =
-                      tb_info_ptr->columns[col_index].foreign->name.substr(
-                          fc_size - 4,
-                          4);
-
-                  if (last4 == "i_id") {
-                    n = tb_infos_[std::string(TPCC_TB_ITEM)].num_records;
-                  }
-                  else if (last4 == "w_id") {
-                    n = tb_infos_[std::string(TPCC_TB_WAREHOUSE)].num_records *
-                        Config::GetConfig()->get_num_site();
-                  }
-                  else if (last4 == "c_id") {
-                    if (tb_info_ptr->columns[col_index].name ==
-                        "o_c_id")
-                      use_key_value = true;
-                    else
-                      n = tb_infos_[std::string(TPCC_TB_CUSTOMER)].num_records /
-                          tb_infos_[std::string(TPCC_TB_DISTRICT)].num_records;
-                  }
-                  else if (last4 == "d_id") {
-                    n = tb_infos_[std::string(TPCC_TB_DISTRICT)].num_records /
-                        tb_infos_[std::string(TPCC_TB_WAREHOUSE)].num_records;
-                  }
-                  else {
-                    n = tb_info_ptr->columns[col_index].foreign_tb->num_records;
-                  }
-                  Value v_buf;
-
-                  if (use_key_value) v_buf = key_value;
-                  else
-                    v_buf = value_get_n(tb_info_ptr->columns[col_index].type,
-                                        RandomGenerator::rand(0, n - 1));
-                  row_data.push_back(v_buf);
-
-                  // Log_debug("%s (foreign): %s",
-                  // tb_info_ptr->columns[col_index].name.c_str(),
-                  // to_string(v_buf).c_str());
-                }
-                else {
-                  Value v_buf =
-                      random_value(tb_info_ptr->columns[col_index].type);
-
-                  if (tb_info_ptr->columns[col_index].name ==
-                      "d_next_o_id")
-                    v_buf =
-                        Value((i32) (
-                            tb_infos_[std::string(TPCC_TB_ORDER)].num_records
-                                / tb_infos_[std::string(TPCC_TB_DISTRICT)].
-                                    num_records)); // XXX
-
-                  if (tb_info_ptr->columns[col_index].name ==
-                      "c_last")
-                    v_buf =
-                        Value(RandomGenerator::int2str_n(
-                            key_value.get_i32() % 1000,
-                            3));
-                  row_data.push_back(v_buf);
-
-                  // Log_debug("%s: %s",
-                  // tb_info_ptr->columns[col_index].name.c_str(),
-                  // to_string(v_buf).c_str());
-                }
-              }
-
-              if (col_index == tb_info_ptr->columns.size()) {
-                // log
-                // std::string buf;
-                // for (int i = 0; i < tb_info_ptr->columns.size(); i++)
-                //
-                //  buf.append(tb_info_ptr->columns[i].name).append(":").append(to_string(row_data[i])).append(";
-                // ");
-                // rrr::Log::info("%s", buf.c_str());
-                mdb::Row *r = NULL;
-
-                switch (mode) {
-                  case MODE_2PL:
-                    r = mdb::FineLockedRow::create(schema, row_data);
-                    break;
-
-                  case MODE_NONE: // FIXME
-                  case MODE_OCC:
-                    r = mdb::VersionedRow::create(schema, row_data);
-                    break;
-
-                  case MODE_RCC:
-                    r = RCCRow::create(schema, row_data);
-                    break;
-
-                  case MODE_RO6:
-                    r = RO6Row::create(schema, row_data);
-                    break;
-
-                  default:
-                    verify(0);
-                }
-                table_ptr->insert(r);
-
-                //
-                if (tbl_sec_ptr) {
-                  rrr::i32 cur_o_id_buf = r->get_column("o_id").get_i32();
-                  const mdb::Schema *sch_buf = tbl_sec_ptr->schema();
-                  mdb::MultiBlob mb_buf(sch_buf->key_columns_id().size());
-                  mdb::Schema::iterator col_info_it = sch_buf->begin();
-                  size_t mb_i = 0;
-
-                  for (; col_info_it != sch_buf->end(); col_info_it++)
-                    if (col_info_it->indexed)
-                      mb_buf[mb_i++] = r->get_blob(
-                          col_info_it->name);
-                  mdb::SortedTable::Cursor rs = tbl_sec_ptr->query(mb_buf);
-
-                  if (rs.has_next()) {
-                    mdb::Row *r_buf = rs.next();
-                    rrr::i32 o_id_buf = r_buf->get_column("o_id").get_i32();
-
-                    if (o_id_buf < cur_o_id_buf)
-                      r_buf->update("o_id",
-                                    cur_o_id_buf);
-                  }
-                  else {
-                    std::vector<Value> sec_row_data_buf;
-
-                    for (col_info_it = sch_buf->begin();
-                         col_info_it != sch_buf->end();
-                         col_info_it++)
-                      sec_row_data_buf.push_back(r->get_column(
-                          col_info_it->
-                              name));
-                    mdb::Row *r_buf = NULL;
-
-                    switch (mode) {
-                      case MODE_2PL:
-                        r_buf = mdb::FineLockedRow::create(sch_buf,
-                                                           sec_row_data_buf);
-                        break;
-
-                      case MODE_NONE: // FIXME
-                      case MODE_OCC:
-                        r_buf = mdb::VersionedRow::create(sch_buf,
-                                                          sec_row_data_buf);
-                        break;
-
-                      case MODE_RCC:
-                        r_buf = RCCRow::create(sch_buf, sec_row_data_buf);
-                        break;
-
-                      case MODE_RO6:
-                        r_buf = RO6Row::create(sch_buf, sec_row_data_buf);
-                        break;
-
-                      default:
-                        verify(0);
-                    }
-                    tbl_sec_ptr->insert(r_buf);
-                  }
-                }
-
-
-                // XXX c_last secondary index
-                if (tb_it->first == TPCC_TB_CUSTOMER) {
-                  std::string c_last_buf = r->get_column(
-                      "c_last").get_str();
-                  rrr::i32 c_id_buf = r->get_column(
-                      "c_id").get_i32();
-                  size_t mb_size =
-                      g_c_last_schema.key_columns_id().size(), mb_i = 0;
-                  mdb::MultiBlob mb_buf(mb_size);
-                  mdb::Schema::iterator col_info_it = g_c_last_schema.begin();
-
-                  for (; col_info_it != g_c_last_schema.end(); col_info_it++) {
-                    mb_buf[mb_i++] = r->get_blob(col_info_it->name);
-                  }
-                  g_c_last2id.insert(std::make_pair(c_last_id_t(c_last_buf,
-                                                                mb_buf,
-                                                                &g_c_last_schema),
-                                                    c_id_buf));
-                } // XXX
-
-                // Log_debug("Row inserted");
-                counter++;
-
-                if ((num_self_primary == 0) &&
-                    (counter >= tb_info_ptr->num_records)) {
-                  num_self_primary = 1;
-                  break;
-                }
-              }
-
-              if (num_self_primary == 0) {
-                if (0 != index_increase(prim_foreign_index)) verify(0);
-              }
-              else if (0 != index_increase(prim_foreign_index)) break;
-            }
-          }
-        }
-
-        tb_info_ptr->populated[sid] = true;
-        number2populate--;
-
-        // finish populate one table
-      }
-    }
-
-    verify(pre_num2populate > number2populate);
-  }
-
-  release_foreign_values();
-
-  return 0;
-}
-
-int Sharding::do_populate_table(const std::vector<std::string> &table_names,
-                                uint32_t sid) {
-  int mode = Config::GetConfig()->get_mode();
-  uint32_t number2populate = tb_infos_.size();
-
-  while (number2populate > 0) {
-    std::map<std::string, tb_info_t>::iterator tb_it = tb_infos_.begin();
-
-    for (; tb_it != tb_infos_.end(); tb_it++) {
-      if (!tb_it->second.populated[sid]) {
-        tb_info_t *tb_info_ptr = &(tb_it->second);
-
-        mdb::Table *const table_ptr = DTxnMgr::GetTxnMgr(sid)->get_table(
-            tb_it->first);
-
-        if (table_ptr == NULL) {
-          tb_info_ptr->populated[sid] = true;
-          number2populate--;
-          continue;
-        }
-        const mdb::Schema *schema = table_ptr->schema();
-        verify(schema->columns_count() == tb_info_ptr->columns.size());
-
-        Value key_value, max_key;
-        mdb::Schema::iterator col_it = schema->begin();
-        uint32_t col_index = 0;
-
-        for (; col_index < tb_info_ptr->columns.size(); col_index++) {
-          verify(col_it != schema->end());
-          verify(tb_info_ptr->columns[col_index].name == col_it->name);
-          verify(tb_info_ptr->columns[col_index].type == col_it->type);
-
-          if (tb_info_ptr->columns[col_index].is_primary) {
-            verify(col_it->indexed);
-            key_value = value_get_zero(tb_info_ptr->columns[col_index].type);
-            max_key = value_get_n(tb_info_ptr->columns[col_index].type,
-                                  tb_info_ptr->num_records);
-          }
-          col_it++;
-        }
-
-        std::vector<Value> row_data;
-
-        for (; key_value < max_key; ++key_value) {
-          row_data.clear();
-
-          for (col_index = 0; col_index < tb_info_ptr->columns.size();
-               col_index++) {
-            if (tb_info_ptr->columns[col_index].is_primary) {
-              // if (tb_info_ptr->columns[col_index].values != NULL)
-              //
-              //  tb_info_ptr->columns[col_index].values->push_back(key_value);
-              if (sid != site_from_key(key_value, tb_info_ptr)) break;
-              row_data.push_back(key_value);
-
-              // std::cerr << tb_info_ptr->columns[col_index].name <<
-              // "(primary):" << row_data.back() << "; ";
-            } else if (tb_info_ptr->columns[col_index].foreign != NULL) {
-              Value v_buf = value_get_n(tb_info_ptr->columns[col_index].type,
-                                        RandomGenerator::rand(0,
-                                                              tb_info_ptr->columns
-                                                              [col_index].
-                                                                  foreign_tb->
-                                                                  num_records
-                                                                  - 1));
-              row_data.push_back(v_buf);
-
-              // std::cerr << tb_info_ptr->columns[col_index].name <<
-              // "(foreign:" << tb_info_ptr->columns[col_index].foreign->name <<
-              // "):" << v_buf << "; ";
-            } else {
-              Value v_buf;
-
-              // TODO (ycui) use RandomGenerator
-              v_buf = random_value(tb_info_ptr->columns[col_index].type);
-              row_data.push_back(v_buf);
-
-              // std::cerr << tb_info_ptr->columns[col_index].name << ":" <<
-              // v_buf << "; ";
-            }
-          }
-
-          if (col_index == tb_info_ptr->columns.size()) {
-            switch (mode) {
-              case MODE_2PL:
-                table_ptr->insert(mdb::FineLockedRow::create(schema, row_data));
-                break;
-
-              case MODE_NONE:
-              case MODE_RPC_NULL:
-              case MODE_OCC:
-                table_ptr->insert(mdb::VersionedRow::create(schema, row_data));
-                break;
-
-              case MODE_RCC:
-                table_ptr->insert(RCCRow::create(schema, row_data));
-                break;
-
-              case MODE_RO6:
-                table_ptr->insert(RO6Row::create(schema, row_data));
-                break;
-
-              default:
-                verify(0);
-            }
-          }
-        }
-
-        tb_info_ptr->populated[sid] = true;
-        number2populate--;
-      }
-    }
-  }
-  release_foreign_values();
-  return 0;
-}
+//int Sharding::do_tpcc_dist_partition_populate_table(
+//    const std::vector<std::string> &table_names,
+//    uint32_t sid) {
+//  int mode = Config::GetConfig()->get_mode();
+//  uint32_t number2populate = tb_infos_.size();
+//
+//  while (number2populate > 0) {
+//    uint32_t pre_num2populate = number2populate;
+//    std::map<std::string, tb_info_t>::iterator tb_it = tb_infos_.begin();
+//
+//    for (; tb_it != tb_infos_.end(); tb_it++) {
+//      if (!tb_it->second.populated[sid] && Ready2Populate(&(tb_it->second))) {
+//        tb_info_t *tb_info_ptr = &(tb_it->second);
+//        mdb::Table *const table_ptr = DTxnMgr::GetTxnMgr(sid)->get_table(
+//            tb_it->first);
+//        const mdb::Schema *schema = table_ptr->schema();
+//        verify(schema->columns_count() == tb_info_ptr->columns.size());
+//
+//        uint64_t num_foreign_row = 1;
+//        uint64_t num_self_primary = 0;
+//        uint32_t self_primary_col = 0;
+//        bool self_primary_col_find = false;
+//        std::map<uint32_t,
+//                 std::pair<uint32_t, uint32_t> > prim_foreign_index;
+//        std::vector<uint32_t> bound_foreign_index;
+//        mdb::Schema::iterator col_it = schema->begin();
+//        uint32_t col_index = 0;
+//
+//        for (col_index = 0; col_index < tb_info_ptr->columns.size();
+//             col_index++) {
+//          verify(col_it != schema->end());
+//          verify(tb_info_ptr->columns[col_index].name == col_it->name);
+//          verify(tb_info_ptr->columns[col_index].type == col_it->type);
+//
+//          if (tb_info_ptr->columns[col_index].is_primary) {
+//            verify(col_it->indexed);
+//
+//            if (tb_it->first == TPCC_TB_CUSTOMER) { // XXX
+//              if (col_it->name != "c_id")
+//                g_c_last_schema.add_column(
+//                    col_it->name.c_str(),
+//                    col_it->type,
+//                    true);
+//            } // XXX
+//
+//            if (tb_info_ptr->columns[col_index].foreign_tb != NULL) {
+//              uint32_t tmp_int;
+//              uint32_t tmp_index_base;
+//              bool times_tmp_int = true;
+//
+//              if (tb_info_ptr->columns[col_index].foreign->name == "i_id") {
+//                // refers
+//                // to
+//                // item.i_id,
+//                // use
+//                // all
+//                // available
+//                // i_id
+//                // instead
+//                // of
+//                // local
+//                // i_id
+//                tmp_int =
+//                    tb_info_ptr->columns[col_index].foreign_tb->num_records;
+//                tmp_index_base = tmp_int;
+//
+//                if (tb_info_ptr->columns[col_index].values != NULL) {
+//                  delete tb_info_ptr->columns[col_index].values;
+//                  tb_info_ptr->columns[col_index].values = NULL;
+//                }
+//              }
+//              else if (tb_info_ptr->columns[col_index].foreign->name
+//                  == "w_id") {
+//                // refers to warehouse.w_id, use all available w_id
+//                // instead of local w_id
+//                tmp_int =
+//                    tb_info_ptr->columns[col_index].foreign_tb->num_records;
+//                tmp_index_base = tmp_int * Config::GetConfig()->get_num_site();
+//
+//                if (tb_info_ptr->columns[col_index].values != NULL) {
+//                  if (tb_it->first == TPCC_TB_STOCK) {
+//                    delete tb_info_ptr->columns[col_index].values;
+//                    tb_info_ptr->columns[col_index].values = NULL;
+//                  }
+//                  else
+//                    verify(tb_it->first == TPCC_TB_DISTRICT);
+//                }
+//              }
+//              else {
+//                times_tmp_int = false;
+//                tmp_int =
+//                    tb_info_ptr->columns[col_index].foreign_tb->num_records;
+//
+//                if (num_foreign_row == 1) num_foreign_row *= tmp_int;
+//                column_t *foreign_column =
+//                    tb_info_ptr->columns[col_index].foreign;
+//                tmp_index_base = foreign_column->values->size();
+//                size_t foreign_col_name_size = foreign_column->name.size();
+//
+//                if ((foreign_col_name_size >= 4)
+//                    && ((foreign_column->name.substr(foreign_col_name_size - 4)
+//                        ==
+//                            "w_id")
+//                        || (foreign_column->name.substr(foreign_col_name_size -
+//                            4) == "d_id"))) {
+//                  if (!bound_foreign_index.empty())
+//                    verify(
+//                        tmp_index_base ==
+//                            prim_foreign_index[bound_foreign_index[0]].second);
+//                  bound_foreign_index.push_back(col_index);
+//                }
+//
+//                if (tb_info_ptr->columns[col_index].values != NULL) {
+//                  tb_info_ptr->columns[col_index].values->assign(
+//                      foreign_column->values->begin(),
+//                      foreign_column->values->end());
+//                }
+//              }
+//              verify(tmp_index_base > 0);
+//              prim_foreign_index[col_index] =
+//                  std::pair<uint32_t, uint32_t>(0, tmp_index_base);
+//
+//              if (times_tmp_int) num_foreign_row *= tmp_int;
+//            }
+//            else {
+//              // only one primary key can refer to no other table.
+//              verify(!self_primary_col_find);
+//              self_primary_col = col_index;
+//              self_primary_col_find = true;
+//
+//              if ((tb_info_ptr->columns[col_index].name == "i_id")
+//                  || (tb_info_ptr->columns[col_index].name == "w_id")) {
+//                if (tb_info_ptr->columns[col_index].values != NULL) {
+//                  delete tb_info_ptr->columns[col_index].values;
+//                  tb_info_ptr->columns[col_index].values = NULL;
+//                }
+//              }
+//            }
+//          }
+//          col_it++;
+//        }
+//
+//        if (tb_it->first == TPCC_TB_CUSTOMER) { // XXX
+//          g_c_last_schema.add_column("c_id", mdb::Value::I32, true);
+//        }                                       // XXX
+//        verify(col_it == schema->end());
+//
+//        // TODO (ycui) add a vector in tb_info_t to record used values for key.
+//        verify(tb_info_ptr->num_records % num_foreign_row == 0
+//                   || tb_info_ptr->num_records < num_foreign_row);
+//
+//        // Log_debug("foreign row: %llu, this row: %llu", num_foreign_row,
+//        // tb_info_ptr->num_records);
+//        num_self_primary = tb_info_ptr->num_records / num_foreign_row;
+//        Value key_value = value_get_zero(
+//            tb_info_ptr->columns[self_primary_col].type);
+//        Value max_key = value_get_n(tb_info_ptr->columns[self_primary_col].type,
+//                                    num_self_primary *
+//                                        (tb_it->first ==
+//                                            TPCC_TB_WAREHOUSE
+//                                         ? Config::GetConfig()->
+//                                                get_num_site() : 1));
+//        std::vector<Value> row_data;
+//        row_data.reserve(tb_info_ptr->columns.size());
+//
+//        // log
+//        // Log_debug("begin:%s", tb_it->first.c_str());
+//        for (; key_value < max_key || num_self_primary == 0; ++key_value) {
+//          bool record_key = true;
+//          init_index(prim_foreign_index);
+//          int counter = 0;
+//
+//          while (true) {
+//            row_data.clear();
+//
+//            for (col_index = 0; col_index < tb_info_ptr->columns.size();
+//                 col_index++) {
+//              if (tb_info_ptr->columns[col_index].is_primary) {
+//                if (prim_foreign_index.size() == 0) {
+//                  if (sid != site_from_key(key_value, tb_info_ptr)) break;
+//                  row_data.push_back(key_value);
+//
+//                  if (tb_info_ptr->columns[col_index].values != NULL) {
+//                    tb_info_ptr->columns[col_index].values->push_back(key_value);
+//                  }
+//                }
+//
+//                  // primary key and foreign key
+//                else if (tb_info_ptr->columns[col_index].foreign != NULL) {
+//                  Value v_buf;
+//
+//                  if ((tb_info_ptr->columns[col_index].foreign->name == "i_id")
+//                      || (tb_info_ptr->columns[col_index].foreign->name ==
+//                          "w_id"))
+//                    v_buf = Value(
+//                        (i32) prim_foreign_index[col_index].first);
+//                  else
+//                    v_buf =
+//                        (*tb_info_ptr->columns[col_index].foreign->values)[
+//                            prim_foreign_index
+//                            [
+//                                col_index].first];
+//                  row_data.push_back(v_buf);
+//                }
+//                else { // primary key
+//                  row_data.push_back(key_value);
+//
+//                  if ((tb_info_ptr->columns[col_index].values != NULL)
+//                      && (tb_it->first != TPCC_TB_DISTRICT)
+//                      && record_key) {
+//                    tb_info_ptr->columns[col_index].values->push_back(key_value);
+//                    record_key = false;
+//                  }
+//                }
+//              }
+//              else if (tb_info_ptr->columns[col_index].foreign != NULL) {
+//                bool use_key_value = false;
+//                int n;
+//                size_t fc_size =
+//                    tb_info_ptr->columns[col_index].foreign->name.size();
+//                std::string last4 =
+//                    tb_info_ptr->columns[col_index].foreign->name.substr(
+//                        fc_size - 4,
+//                        4);
+//
+//                if (last4 == "i_id") {
+//                  n = tb_infos_[std::string(TPCC_TB_ITEM)].num_records;
+//                }
+//                else if (last4 == "w_id") {
+//                  n = tb_infos_[std::string(TPCC_TB_WAREHOUSE)].num_records *
+//                      Config::GetConfig()->get_num_site();
+//                }
+//                else if (last4 == "c_id") {
+//                  if (tb_info_ptr->columns[col_index].name ==
+//                      "o_c_id")
+//                    use_key_value = true;
+//                  else
+//                    n = tb_infos_[std::string(TPCC_TB_CUSTOMER)].num_records /
+//                        tb_infos_[std::string(TPCC_TB_DISTRICT)].num_records;
+//                }
+//                else if (last4 == "d_id") {
+//                  n = tb_infos_[std::string(TPCC_TB_DISTRICT)].num_records /
+//                      tb_infos_[std::string(TPCC_TB_WAREHOUSE)].num_records;
+//                }
+//                else {
+//                  n = tb_info_ptr->columns[col_index].foreign_tb->num_records;
+//                }
+//                Value v_buf;
+//
+//                if (use_key_value) {
+//                  v_buf = key_value;
+//                }
+//                else {
+//                  v_buf = value_get_n(tb_info_ptr->columns[col_index].type,
+//                                      RandomGenerator::rand(0, n - 1));
+//                }
+//                row_data.push_back(v_buf);
+//              }
+//              else {
+//                Value
+//                    v_buf = random_value(tb_info_ptr->columns[col_index].type);
+//
+//                if (tb_info_ptr->columns[col_index].name ==
+//                    "d_next_o_id")
+//                  v_buf =
+//                      Value((i32) (
+//                          tb_infos_[std::string(TPCC_TB_ORDER)].num_records /
+//                              tb_infos_[std::string(TPCC_TB_DISTRICT)].
+//                                  num_records)); // XXX
+//
+//                if (tb_info_ptr->columns[col_index].name ==
+//                    "c_last")
+//                  v_buf =
+//                      Value(RandomGenerator::int2str_n(
+//                          key_value.get_i32() % 1000, 3));
+//                row_data.push_back(v_buf);
+//              }
+//            }
+//
+//            if (col_index == tb_info_ptr->columns.size()) {
+//              if (tb_it->first == TPCC_TB_STOCK) {
+//                int key_size;
+//                key_size = schema->key_columns_id().size();
+//                MultiValue mv(key_size);
+//
+//                for (int i = 0; i < key_size;
+//                     i++)
+//                  mv[i] = row_data[schema->key_columns_id()[i]];
+//
+//                if (sid == site_from_key(mv, tb_info_ptr)) {
+//                  counter++;
+//
+//                  switch (mode) {
+//                    case MODE_2PL:
+//                      table_ptr->insert(mdb::FineLockedRow::create(schema,
+//                                                                   row_data));
+//                      break;
+//
+//                    case MODE_NONE: // FIXME
+//                    case MODE_OCC:
+//                      table_ptr->insert(mdb::VersionedRow::create(schema,
+//                                                                  row_data));
+//                      break;
+//
+//                    case MODE_RCC:
+//                      table_ptr->insert(RCCRow::create(schema, row_data));
+//                      break;
+//
+//                    case MODE_RO6:
+//                      table_ptr->insert(RO6Row::create(schema, row_data));
+//                      break;
+//
+//                    default:
+//                      verify(0);
+//                  }
+//
+//                  // log
+//                  // std::string buf;
+//                  // for (int i = 0; i < tb_info_ptr->columns.size(); i++)
+//                  //
+//                  //  buf.append(tb_info_ptr->columns[i].name).append(":").append(to_string(row_data[i])).append(";
+//                  // ");
+//                  // Log_debug("%s", buf.c_str());
+//                }
+//              }
+//              else if (tb_it->first == TPCC_TB_DISTRICT) {
+//                int key_size;
+//                key_size = schema->key_columns_id().size();
+//                MultiValue mv(key_size);
+//
+//                for (int i = 0; i < key_size;
+//                     i++)
+//                  mv[i] = row_data[schema->key_columns_id()[i]];
+//
+//                if (sid == site_from_key(mv, tb_info_ptr)) {
+//                  counter++;
+//
+//                  switch (mode) {
+//                    case MODE_2PL:
+//                      table_ptr->insert(mdb::FineLockedRow::create(schema,
+//                                                                   row_data));
+//                      break;
+//
+//                    case MODE_NONE: // FIXME
+//                    case MODE_OCC:
+//                      table_ptr->insert(mdb::VersionedRow::create(schema,
+//                                                                  row_data));
+//                      break;
+//
+//                    case MODE_RCC:
+//                      table_ptr->insert(RCCRow::create(schema, row_data));
+//                      break;
+//
+//                    case MODE_RO6:
+//                      table_ptr->insert(RO6Row::create(schema, row_data));
+//                      break;
+//
+//                    default:
+//                      verify(0);
+//                  }
+//
+//                  for (int i = 0; i < key_size;
+//                       i++)
+//                    tb_info_ptr->columns[schema->key_columns_id()[i]].
+//                            values
+//                        ->push_back(mv[i]);
+//
+//                  // log
+//                  // std::string buf;
+//                  // for (int i = 0; i < tb_info_ptr->columns.size(); i++)
+//                  //
+//                  //  buf.append(tb_info_ptr->columns[i].name).append(":").append(to_string(row_data[i])).append(";
+//                  // ");
+//                  // Log_debug("%s", buf.c_str());
+//                }
+//              }
+//              else {
+//                counter++;
+//                mdb::Row *r = NULL;
+//
+//                switch (mode) {
+//                  case MODE_2PL:
+//                    r = mdb::FineLockedRow::create(schema, row_data);
+//                    break;
+//
+//                  case MODE_NONE: // FIXME
+//                  case MODE_OCC:
+//                    r = mdb::VersionedRow::create(schema, row_data);
+//                    break;
+//
+//                  case MODE_RCC:
+//                    r = RCCRow::create(schema, row_data);
+//                    break;
+//
+//                  case MODE_RO6:
+//                    r = RO6Row::create(schema, row_data);
+//                    break;
+//
+//                  default:
+//                    verify(0);
+//                }
+//                table_ptr->insert(r);
+//
+//                // XXX c_last secondary index
+//                if (tb_it->first == TPCC_TB_CUSTOMER) {
+//                  std::string c_last_buf = r->get_column(
+//                      "c_last").get_str();
+//                  rrr::i32 c_id_buf = r->get_column(
+//                      "c_id").get_i32();
+//                  size_t mb_size =
+//                      g_c_last_schema.key_columns_id().size(), mb_i = 0;
+//                  mdb::MultiBlob mb_buf(mb_size);
+//                  mdb::Schema::iterator col_info_it = g_c_last_schema.begin();
+//
+//                  for (; col_info_it != g_c_last_schema.end(); col_info_it++) {
+//                    mb_buf[mb_i++] = r->get_blob(col_info_it->name);
+//                  }
+//                  g_c_last2id.insert(std::make_pair(c_last_id_t(c_last_buf,
+//                                                                mb_buf,
+//                                                                &g_c_last_schema),
+//                                                    c_id_buf));
+//                } // XXX
+//
+//                // log
+//                // std::string buf;
+//                // for (int i = 0; i < tb_info_ptr->columns.size(); i++)
+//                //
+//                //  buf.append(tb_info_ptr->columns[i].name).append(":").append(to_string(row_data[i])).append(";
+//                // ");
+//                // Log_debug("%s", buf.c_str());
+//              }
+//
+//              if ((num_self_primary == 0) &&
+//                  (counter >= tb_info_ptr->num_records)) {
+//                num_self_primary = 1;
+//                break;
+//              }
+//            }
+//
+//            if (num_self_primary == 0) {
+//              if (0 !=
+//                  index_increase(prim_foreign_index,
+//                                 bound_foreign_index))
+//                verify(0);
+//            }
+//            else if (0 !=
+//                index_increase(prim_foreign_index,
+//                               bound_foreign_index))
+//              break;
+//          }
+//        }
+//
+//        // Log::debug("end:%s", tb_it->first.c_str());
+//        tb_info_ptr->populated[sid] = true;
+//        number2populate--;
+//
+//        // finish populate one table
+//      }
+//    }
+//
+//    verify(pre_num2populate > number2populate);
+//  }
+//
+//  release_foreign_values();
+//
+//  return 0;
+//}
+
+//int Sharding::do_tpcc_populate_table(const std::vector<std::string> &table_names,
+//                                     uint32_t sid) {
+//  int32_t mode = Config::GetConfig()->get_mode();
+//  uint32_t number2populate = tb_infos_.size();
+//
+//  while (number2populate > 0) {
+//    uint32_t pre_num2populate = number2populate;
+//    std::map<std::string, tb_info_t>::iterator tb_it = tb_infos_.begin();
+//
+//    for (; tb_it != tb_infos_.end(); tb_it++) {
+//      if (!tb_it->second.populated[sid] && Ready2Populate(&(tb_it->second))) {
+//        tb_info_t *tb_info_ptr = &(tb_it->second);
+//        mdb::Table *const table_ptr = DTxnMgr::GetTxnMgr(sid)->get_table(
+//            tb_it->first);
+//        const mdb::Schema *schema = table_ptr->schema();
+//        verify(schema->columns_count() == tb_info_ptr->columns.size());
+//
+//        uint32_t col_index = 0;
+//
+//        if (tb_it->first == TPCC_TB_WAREHOUSE) { // warehouse table
+//          Value key_value, max_key;
+//          mdb::Schema::iterator col_it = schema->begin();
+//
+//          for (col_index = 0; col_index < tb_info_ptr->columns.size();
+//               col_index++) {
+//            verify(col_it != schema->end());
+//            verify(tb_info_ptr->columns[col_index].name == col_it->name);
+//            verify(tb_info_ptr->columns[col_index].type == col_it->type);
+//
+//            if (tb_info_ptr->columns[col_index].is_primary) {
+//              verify(col_it->indexed);
+//              key_value = value_get_zero(tb_info_ptr->columns[col_index].type);
+//              max_key = value_get_n(tb_info_ptr->columns[col_index].type,
+//                                    tb_info_ptr->num_records *
+//                                        tb_info_ptr->num_site);
+//            }
+//            col_it++;
+//          }
+//          verify(col_it == schema->end());
+//          std::vector<Value> row_data;
+//
+//          for (; key_value < max_key; ++key_value) {
+//            row_data.clear();
+//
+//            for (col_index = 0; col_index < tb_info_ptr->columns.size();
+//                 col_index++) {
+//              if (tb_info_ptr->columns[col_index].is_primary) {
+//                if (sid != site_from_key(key_value, tb_info_ptr)) break;
+//
+//                if (tb_info_ptr->columns[col_index].values !=
+//                    NULL)
+//                  tb_info_ptr->columns[col_index].values->push_back(
+//                      key_value);
+//                row_data.push_back(key_value);
+//
+//                // Log_debug("%s (primary): %s",
+//                // tb_info_ptr->columns[col_index].name.c_str(),
+//                // to_string(key_value).c_str());
+//                // std::cerr << tb_info_ptr->columns[col_index].name <<
+//                // "(primary):" << row_data.back() << "; ";
+//              } else if (tb_info_ptr->columns[col_index].foreign != NULL) {
+//                // TODO (ycui) use RandomGenerator
+//                Log_fatal("Table %s shouldn't have a foreign key!",
+//                          TPCC_TB_WAREHOUSE);
+//                verify(0);
+//              } else {
+//                // TODO (ycui) use RandomGenerator
+//                Value
+//                    v_buf = random_value(tb_info_ptr->columns[col_index].type);
+//                row_data.push_back(v_buf);
+//              }
+//            }
+//
+//            if (col_index == tb_info_ptr->columns.size()) {
+//              // log
+//              // std::string buf;
+//              // for (int i = 0; i < tb_info_ptr->columns.size(); i++)
+//              //
+//              //  buf.append(tb_info_ptr->columns[i].name).append(":").append(to_string(row_data[i])).append(";
+//              // ");
+//              // rrr::Log::info("%s", buf.c_str());
+//              switch (mode) {
+//                case MODE_2PL:
+//                  table_ptr->insert(mdb::FineLockedRow::create(schema,
+//                                                               row_data));
+//                  break;
+//
+//                case MODE_NONE: // FIXME
+//                case MODE_OCC:
+//                  table_ptr->insert(mdb::VersionedRow::create(schema,
+//                                                              row_data));
+//                  break;
+//
+//                case MODE_RCC:
+//                  table_ptr->insert(RCCRow::create(schema, row_data));
+//                  break;
+//
+//                case MODE_RO6:
+//                  table_ptr->insert(RO6Row::create(schema, row_data));
+//                  break;
+//
+//                default:
+//                  verify(0);
+//              }
+//
+//              // Log_debug("Row inserted");
+//            }
+//          }
+//        } else { // non warehouse tables
+//          uint64_t num_foreign_row = 1;
+//          uint64_t num_self_primary = 0;
+//          uint32_t self_primary_col = 0;
+//          bool self_primary_col_find = false;
+//          std::map<uint32_t,
+//                   std::pair<uint32_t, uint32_t> > prim_foreign_index;
+//          mdb::Schema::iterator col_it = schema->begin();
+//
+//          mdb::SortedTable *tbl_sec_ptr = NULL;
+//
+//          if (tb_it->first ==
+//              TPCC_TB_ORDER)
+//            tbl_sec_ptr =
+//                (mdb::SortedTable *) DTxnMgr::GetTxnMgr(sid)->get_table(
+//                    TPCC_TB_ORDER_C_ID_SECONDARY);
+//
+//          for (col_index = 0; col_index < tb_info_ptr->columns.size();
+//               col_index++) {
+//            verify(col_it != schema->end());
+//            verify(tb_info_ptr->columns[col_index].name == col_it->name);
+//            verify(tb_info_ptr->columns[col_index].type == col_it->type);
+//
+//            if (tb_info_ptr->columns[col_index].is_primary) {
+//              verify(col_it->indexed);
+//
+//              if (tb_it->first == TPCC_TB_CUSTOMER) { // XXX
+//                if (col_it->name != "c_id")
+//                  g_c_last_schema.add_column(
+//                      col_it->name.c_str(),
+//                      col_it->type,
+//                      true);
+//              } // XXX
+//
+//              if (tb_info_ptr->columns[col_index].foreign_tb != NULL) {
+//                uint32_t tmp_int;
+//
+//                if (tb_info_ptr->columns[col_index].foreign->name == "i_id") {
+//
+//                  // refers to item.i_id, use all available i_id
+//                  // instead of local i_id
+//                  tmp_int =
+//                      tb_info_ptr->columns[col_index].foreign_tb->num_records;
+//
+//                  if (tb_info_ptr->columns[col_index].values != NULL) {
+//                    tb_info_ptr->columns[col_index].values->resize(tmp_int);
+//
+//                    for (i32 i = 0; i < tmp_int;
+//                         i++)
+//                      (*tb_info_ptr->columns[col_index].values)[i] =
+//                          Value(i);
+//                  }
+//                }
+//                else {
+//                  column_t *foreign_column =
+//                      tb_info_ptr->columns[col_index].foreign;
+//                  tmp_int = foreign_column->values->size();
+//
+//                  if (tb_info_ptr->columns[col_index].values != NULL) {
+//                    tb_info_ptr->columns[col_index].values->assign(
+//                        foreign_column->values->begin(),
+//                        foreign_column->values->end());
+//                  }
+//                }
+//                verify(tmp_int > 0);
+//                prim_foreign_index[col_index] =
+//                    std::pair<uint32_t, uint32_t>(0, tmp_int);
+//                num_foreign_row *= tmp_int;
+//              }
+//              else {
+//                // only one primary key can refer to no other table.
+//                verify(!self_primary_col_find);
+//                self_primary_col = col_index;
+//                self_primary_col_find = true;
+//              }
+//            }
+//            col_it++;
+//          }
+//
+//          if (tb_it->first == TPCC_TB_CUSTOMER) { // XXX
+//            g_c_last_schema.add_column("c_id", mdb::Value::I32, true);
+//          }                                       // XXX
+//          // TODO (ycui) add a vector in
+//          // tb_info_t to record used
+//          // values for key.
+//          verify(tb_info_ptr->num_records % num_foreign_row == 0
+//                     || tb_info_ptr->num_records < num_foreign_row);
+//
+//          // Log_debug("foreign row: %llu, this row: %llu", num_foreign_row,
+//          // tb_info_ptr->num_records);
+//          num_self_primary = tb_info_ptr->num_records / num_foreign_row;
+//          Value key_value = value_get_zero(
+//              tb_info_ptr->columns[self_primary_col].type);
+//          Value max_key = value_get_n(
+//              tb_info_ptr->columns[self_primary_col].type,
+//              num_self_primary);
+//          std::vector<Value> row_data;
+//
+//          // Log_debug("Begin primary key: %s, Max primary key: %s",
+//          // to_string(key_value).c_str(), to_string(max_key).c_str());
+//          for (; key_value < max_key || num_self_primary == 0; ++key_value) {
+//            bool record_key = true;
+//            init_index(prim_foreign_index);
+//            int counter = 0;
+//
+//            while (true) {
+//              row_data.clear();
+//
+//              for (col_index = 0; col_index < tb_info_ptr->columns.size();
+//                   col_index++) {
+//                if (tb_info_ptr->columns[col_index].is_primary) {
+//                  if (prim_foreign_index.size() == 0) {
+//                    if (sid != site_from_key(key_value, tb_info_ptr)) break;
+//                    row_data.push_back(key_value);
+//
+//                    if (tb_info_ptr->columns[col_index].values != NULL) {
+//                      tb_info_ptr->columns[col_index].values->push_back(
+//                          key_value);
+//                    }
+//
+//                    // Log_debug("%s (primary): %s",
+//                    // tb_info_ptr->columns[col_index].name.c_str(),
+//                    // to_string(key_value).c_str());
+//                  }
+//
+//                    // primary key and foreign key
+//                  else if (tb_info_ptr->columns[col_index].foreign != NULL) {
+//                    Value v_buf;
+//
+//                    if (tb_info_ptr->columns[col_index].foreign->name ==
+//                        "i_id")
+//                      v_buf = Value(
+//                          (i32) prim_foreign_index[col_index].first);
+//                    else
+//                      v_buf =
+//                          (*tb_info_ptr->columns[col_index].foreign->values)[
+//                              prim_foreign_index[col_index].first];
+//
+//                    // Log_debug("%s (primary, foreign): %s",
+//                    // tb_info_ptr->columns[col_index].name.c_str(),
+//                    // to_string(v_buf).c_str());
+//                    row_data.push_back(v_buf);
+//                  }
+//                  else { // primary key
+//                    row_data.push_back(key_value);
+//
+//                    if ((tb_info_ptr->columns[col_index].values != NULL)
+//                        && record_key) {
+//                      tb_info_ptr->columns[col_index].values->push_back(
+//                          key_value);
+//                      record_key = false;
+//                    }
+//
+//                    // Log_debug("%s (primary): %s",
+//                    // tb_info_ptr->columns[col_index].name.c_str(),
+//                    // to_string(key_value).c_str());
+//                  }
+//                }
+//                else if (tb_info_ptr->columns[col_index].foreign != NULL) {
+//                  bool use_key_value = false;
+//                  int n;
+//                  size_t fc_size =
+//                      tb_info_ptr->columns[col_index].foreign->name.size();
+//                  std::string last4 =
+//                      tb_info_ptr->columns[col_index].foreign->name.substr(
+//                          fc_size - 4,
+//                          4);
+//
+//                  if (last4 == "i_id") {
+//                    n = tb_infos_[std::string(TPCC_TB_ITEM)].num_records;
+//                  }
+//                  else if (last4 == "w_id") {
+//                    n = tb_infos_[std::string(TPCC_TB_WAREHOUSE)].num_records *
+//                        Config::GetConfig()->get_num_site();
+//                  }
+//                  else if (last4 == "c_id") {
+//                    if (tb_info_ptr->columns[col_index].name ==
+//                        "o_c_id")
+//                      use_key_value = true;
+//                    else
+//                      n = tb_infos_[std::string(TPCC_TB_CUSTOMER)].num_records /
+//                          tb_infos_[std::string(TPCC_TB_DISTRICT)].num_records;
+//                  }
+//                  else if (last4 == "d_id") {
+//                    n = tb_infos_[std::string(TPCC_TB_DISTRICT)].num_records /
+//                        tb_infos_[std::string(TPCC_TB_WAREHOUSE)].num_records;
+//                  }
+//                  else {
+//                    n = tb_info_ptr->columns[col_index].foreign_tb->num_records;
+//                  }
+//                  Value v_buf;
+//
+//                  if (use_key_value) v_buf = key_value;
+//                  else
+//                    v_buf = value_get_n(tb_info_ptr->columns[col_index].type,
+//                                        RandomGenerator::rand(0, n - 1));
+//                  row_data.push_back(v_buf);
+//
+//                  // Log_debug("%s (foreign): %s",
+//                  // tb_info_ptr->columns[col_index].name.c_str(),
+//                  // to_string(v_buf).c_str());
+//                }
+//                else {
+//                  Value v_buf =
+//                      random_value(tb_info_ptr->columns[col_index].type);
+//
+//                  if (tb_info_ptr->columns[col_index].name ==
+//                      "d_next_o_id")
+//                    v_buf =
+//                        Value((i32) (
+//                            tb_infos_[std::string(TPCC_TB_ORDER)].num_records
+//                                / tb_infos_[std::string(TPCC_TB_DISTRICT)].
+//                                    num_records)); // XXX
+//
+//                  if (tb_info_ptr->columns[col_index].name ==
+//                      "c_last")
+//                    v_buf =
+//                        Value(RandomGenerator::int2str_n(
+//                            key_value.get_i32() % 1000,
+//                            3));
+//                  row_data.push_back(v_buf);
+//
+//                  // Log_debug("%s: %s",
+//                  // tb_info_ptr->columns[col_index].name.c_str(),
+//                  // to_string(v_buf).c_str());
+//                }
+//              }
+//
+//              if (col_index == tb_info_ptr->columns.size()) {
+//                // log
+//                // std::string buf;
+//                // for (int i = 0; i < tb_info_ptr->columns.size(); i++)
+//                //
+//                //  buf.append(tb_info_ptr->columns[i].name).append(":").append(to_string(row_data[i])).append(";
+//                // ");
+//                // rrr::Log::info("%s", buf.c_str());
+//                mdb::Row *r = NULL;
+//
+//                switch (mode) {
+//                  case MODE_2PL:
+//                    r = mdb::FineLockedRow::create(schema, row_data);
+//                    break;
+//
+//                  case MODE_NONE: // FIXME
+//                  case MODE_OCC:
+//                    r = mdb::VersionedRow::create(schema, row_data);
+//                    break;
+//
+//                  case MODE_RCC:
+//                    r = RCCRow::create(schema, row_data);
+//                    break;
+//
+//                  case MODE_RO6:
+//                    r = RO6Row::create(schema, row_data);
+//                    break;
+//
+//                  default:
+//                    verify(0);
+//                }
+//                table_ptr->insert(r);
+//
+//                //
+//                if (tbl_sec_ptr) {
+//                  rrr::i32 cur_o_id_buf = r->get_column("o_id").get_i32();
+//                  const mdb::Schema *sch_buf = tbl_sec_ptr->schema();
+//                  mdb::MultiBlob mb_buf(sch_buf->key_columns_id().size());
+//                  mdb::Schema::iterator col_info_it = sch_buf->begin();
+//                  size_t mb_i = 0;
+//
+//                  for (; col_info_it != sch_buf->end(); col_info_it++)
+//                    if (col_info_it->indexed)
+//                      mb_buf[mb_i++] = r->get_blob(
+//                          col_info_it->name);
+//                  mdb::SortedTable::Cursor rs = tbl_sec_ptr->query(mb_buf);
+//
+//                  if (rs.has_next()) {
+//                    mdb::Row *r_buf = rs.next();
+//                    rrr::i32 o_id_buf = r_buf->get_column("o_id").get_i32();
+//
+//                    if (o_id_buf < cur_o_id_buf)
+//                      r_buf->update("o_id",
+//                                    cur_o_id_buf);
+//                  }
+//                  else {
+//                    std::vector<Value> sec_row_data_buf;
+//
+//                    for (col_info_it = sch_buf->begin();
+//                         col_info_it != sch_buf->end();
+//                         col_info_it++)
+//                      sec_row_data_buf.push_back(r->get_column(
+//                          col_info_it->
+//                              name));
+//                    mdb::Row *r_buf = NULL;
+//
+//                    switch (mode) {
+//                      case MODE_2PL:
+//                        r_buf = mdb::FineLockedRow::create(sch_buf,
+//                                                           sec_row_data_buf);
+//                        break;
+//
+//                      case MODE_NONE: // FIXME
+//                      case MODE_OCC:
+//                        r_buf = mdb::VersionedRow::create(sch_buf,
+//                                                          sec_row_data_buf);
+//                        break;
+//
+//                      case MODE_RCC:
+//                        r_buf = RCCRow::create(sch_buf, sec_row_data_buf);
+//                        break;
+//
+//                      case MODE_RO6:
+//                        r_buf = RO6Row::create(sch_buf, sec_row_data_buf);
+//                        break;
+//
+//                      default:
+//                        verify(0);
+//                    }
+//                    tbl_sec_ptr->insert(r_buf);
+//                  }
+//                }
+//
+//
+//                // XXX c_last secondary index
+//                if (tb_it->first == TPCC_TB_CUSTOMER) {
+//                  std::string c_last_buf = r->get_column(
+//                      "c_last").get_str();
+//                  rrr::i32 c_id_buf = r->get_column(
+//                      "c_id").get_i32();
+//                  size_t mb_size =
+//                      g_c_last_schema.key_columns_id().size(), mb_i = 0;
+//                  mdb::MultiBlob mb_buf(mb_size);
+//                  mdb::Schema::iterator col_info_it = g_c_last_schema.begin();
+//
+//                  for (; col_info_it != g_c_last_schema.end(); col_info_it++) {
+//                    mb_buf[mb_i++] = r->get_blob(col_info_it->name);
+//                  }
+//                  g_c_last2id.insert(std::make_pair(c_last_id_t(c_last_buf,
+//                                                                mb_buf,
+//                                                                &g_c_last_schema),
+//                                                    c_id_buf));
+//                } // XXX
+//
+//                // Log_debug("Row inserted");
+//                counter++;
+//
+//                if ((num_self_primary == 0) &&
+//                    (counter >= tb_info_ptr->num_records)) {
+//                  num_self_primary = 1;
+//                  break;
+//                }
+//              }
+//
+//              if (num_self_primary == 0) {
+//                if (0 != index_increase(prim_foreign_index)) verify(0);
+//              }
+//              else if (0 != index_increase(prim_foreign_index)) break;
+//            }
+//          }
+//        }
+//
+//        tb_info_ptr->populated[sid] = true;
+//        number2populate--;
+//
+//        // finish populate one table
+//      }
+//    }
+//
+//    verify(pre_num2populate > number2populate);
+//  }
+//
+//  release_foreign_values();
+//
+//  return 0;
+//}
+
+//int Sharding::do_populate_table(const std::vector<std::string> &table_names,
+//                                uint32_t sid) {
+//  int mode = Config::GetConfig()->get_mode();
+//  uint32_t number2populate = tb_infos_.size();
+//
+//  while (number2populate > 0) {
+//    std::map<std::string, tb_info_t>::iterator tb_it = tb_infos_.begin();
+//
+//    for (; tb_it != tb_infos_.end(); tb_it++) {
+//      if (!tb_it->second.populated[sid]) {
+//        tb_info_t *tb_info_ptr = &(tb_it->second);
+//
+//        mdb::Table *const table_ptr = DTxnMgr::GetTxnMgr(sid)->get_table(
+//            tb_it->first);
+//
+//        if (table_ptr == NULL) {
+//          tb_info_ptr->populated[sid] = true;
+//          number2populate--;
+//          continue;
+//        }
+//        const mdb::Schema *schema = table_ptr->schema();
+//        verify(schema->columns_count() == tb_info_ptr->columns.size());
+//
+//        Value key_value, max_key;
+//        mdb::Schema::iterator col_it = schema->begin();
+//        uint32_t col_index = 0;
+//
+//        for (; col_index < tb_info_ptr->columns.size(); col_index++) {
+//          verify(col_it != schema->end());
+//          verify(tb_info_ptr->columns[col_index].name == col_it->name);
+//          verify(tb_info_ptr->columns[col_index].type == col_it->type);
+//
+//          if (tb_info_ptr->columns[col_index].is_primary) {
+//            verify(col_it->indexed);
+//            key_value = value_get_zero(tb_info_ptr->columns[col_index].type);
+//            max_key = value_get_n(tb_info_ptr->columns[col_index].type,
+//                                  tb_info_ptr->num_records);
+//          }
+//          col_it++;
+//        }
+//
+//        std::vector<Value> row_data;
+//
+//        for (; key_value < max_key; ++key_value) {
+//          row_data.clear();
+//
+//          for (col_index = 0; col_index < tb_info_ptr->columns.size();
+//               col_index++) {
+//            if (tb_info_ptr->columns[col_index].is_primary) {
+//              // if (tb_info_ptr->columns[col_index].values != NULL)
+//              //
+//              //  tb_info_ptr->columns[col_index].values->push_back(key_value);
+//              if (sid != site_from_key(key_value, tb_info_ptr)) break;
+//              row_data.push_back(key_value);
+//
+//              // std::cerr << tb_info_ptr->columns[col_index].name <<
+//              // "(primary):" << row_data.back() << "; ";
+//            } else if (tb_info_ptr->columns[col_index].foreign != NULL) {
+//              Value v_buf = value_get_n(tb_info_ptr->columns[col_index].type,
+//                                        RandomGenerator::rand(0,
+//                                                              tb_info_ptr->columns
+//                                                              [col_index].
+//                                                                  foreign_tb->
+//                                                                  num_records
+//                                                                  - 1));
+//              row_data.push_back(v_buf);
+//
+//              // std::cerr << tb_info_ptr->columns[col_index].name <<
+//              // "(foreign:" << tb_info_ptr->columns[col_index].foreign->name <<
+//              // "):" << v_buf << "; ";
+//            } else {
+//              Value v_buf;
+//
+//              // TODO (ycui) use RandomGenerator
+//              v_buf = random_value(tb_info_ptr->columns[col_index].type);
+//              row_data.push_back(v_buf);
+//
+//              // std::cerr << tb_info_ptr->columns[col_index].name << ":" <<
+//              // v_buf << "; ";
+//            }
+//          }
+//
+//          if (col_index == tb_info_ptr->columns.size()) {
+//            switch (mode) {
+//              case MODE_2PL:
+//                table_ptr->insert(mdb::FineLockedRow::create(schema, row_data));
+//                break;
+//
+//              case MODE_NONE:
+//              case MODE_RPC_NULL:
+//              case MODE_OCC:
+//                table_ptr->insert(mdb::VersionedRow::create(schema, row_data));
+//                break;
+//
+//              case MODE_RCC:
+//                table_ptr->insert(RCCRow::create(schema, row_data));
+//                break;
+//
+//              case MODE_RO6:
+//                table_ptr->insert(RO6Row::create(schema, row_data));
+//                break;
+//
+//              default:
+//                verify(0);
+//            }
+//          }
+//        }
+//
+//        tb_info_ptr->populated[sid] = true;
+//        number2populate--;
+//      }
+//    }
+//  }
+//  release_foreign_values();
+//  return 0;
+//}
 
 int Sharding::get_number_rows(std::map<std::string, uint64_t> &table_map) {
   std::map<std::string, tb_info_t>::iterator it = sharding_s->tb_infos_.begin();

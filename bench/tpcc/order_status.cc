@@ -26,12 +26,12 @@ void TpccPiece::reg_order_status() {
 
         mbl[2] = c_id_low.get_blob();
         mbh[2] = c_id_high.get_blob();
-        c_last_id_t key_low(input[0].get_str(), mbl, &g_c_last_schema);
-        c_last_id_t key_high(input[0].get_str(), mbh, &g_c_last_schema);
+        c_last_id_t key_low(input[0].get_str(), mbl, &(C_LAST_SCHEMA));
+        c_last_id_t key_high(input[0].get_str(), mbh, &(C_LAST_SCHEMA));
         std::multimap<c_last_id_t, rrr::i32>::iterator it, it_low, it_high, it_mid;
         bool inc = false, mid_set = false;
-        it_low = g_c_last2id.lower_bound(key_low);
-        it_high = g_c_last2id.upper_bound(key_high);
+        it_low = C_LAST2ID.lower_bound(key_low);
+        it_high = C_LAST2ID.upper_bound(key_high);
         int n_c = 0;
         for (it = it_low; it != it_high; it++) {
             n_c++;
@@ -46,7 +46,7 @@ void TpccPiece::reg_order_status() {
                 it_mid = it;
             }
         }
-        Log::debug("w_id: %d, d_id: %d, c_last: %s, num customer: %d", 
+        Log_debug("w_id: %d, d_id: %d, c_last: %s, num customer: %d",
                 input[1].get_i32(), input[2].get_i32(), 
                 input[0].get_str().c_str(), n_c);
         verify(mid_set);
@@ -54,7 +54,7 @@ void TpccPiece::reg_order_status() {
         output[oi++] = Value(it_mid->second);
 
         // #################################################################
-        Log::debug("TPCC_ORDER_STATUS, piece: %d, end", TPCC_ORDER_STATUS_0);
+        Log_debug("TPCC_ORDER_STATUS, piece: %d, end", TPCC_ORDER_STATUS_0);
         verify(*output_size >= oi);
         *res = SUCCESS;
         // #################################################################
@@ -240,7 +240,7 @@ void TpccPiece::reg_order_status() {
         Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_3);
         verify(input_size == 3);
         mdb::MultiBlob mbl(4), mbh(4);
-        Log::debug("ol_d_id: %d, ol_w_id: %d, ol_o_id: %d",
+        Log_debug("ol_d_id: %d, ol_w_id: %d, ol_o_id: %d",
                 input[2].get_i32(), input[1].get_i32(), input[0].get_i32());
         mbl[0] = input[1].get_blob();
         mbh[0] = input[1].get_blob();
