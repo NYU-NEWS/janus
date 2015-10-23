@@ -6,6 +6,7 @@
 //#include "all.h"
 #include "msg.h"
 #include "commo.h"
+#include "client_worker.h"
 
 
 namespace rococo {
@@ -32,6 +33,7 @@ class Coordinator {
   phase_t phase_;
   map<innid_t, Command*> cmd_map_;
   map<innid_t, bool> start_ack_map_;
+  Sharding* sharding_ = nullptr;
 
   std::vector<int> site_prepare_;
   std::vector<int> site_commit_;

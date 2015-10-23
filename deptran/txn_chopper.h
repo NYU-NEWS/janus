@@ -12,6 +12,7 @@ namespace rococo {
 
 class BatchStartArgsHelper;
 class Coordinator;
+class Sharding;
 
 class TxnReply {
  public:
@@ -110,20 +111,29 @@ protected:
                                std::vector<int> &pi,
                                Coordinator *coo);
 
-  virtual int next_piece(std::vector<mdb::Value> *&input, int &output_size, int32_t &server_id, int &pi, int &p_type);
+  virtual int next_piece(std::vector<mdb::Value> *&input,
+                         int &output_size,
+                         int32_t &server_id,
+                         int &pi,
+                         int &p_type);
 
   virtual void init(TxnRequest &req) = 0;
 
   // phase 1, res is NULL
   // phase 2, res returns SUCCESS is output is consistent with previous value
-  virtual bool start_callback(const std::vector<int> &pi, int res, BatchStartArgsHelper &bsah) = 0;
-  virtual bool start_callback(int pi, int res, const std::vector<mdb::Value> &output) = 0;
+  virtual bool start_callback(const std::vector<int> &pi,
+                              int res,
+                              BatchStartArgsHelper &bsah) = 0;
+  virtual bool start_callback(int pi, int res,
+                              const std::vector<mdb::Value> &output) = 0;
   virtual bool start_callback(int pi, const ChopStartResponse &res);
-  virtual bool start_callback(int pi, std::vector<mdb::Value> &output, bool is_defer);
+  virtual bool start_callback(int pi, std::vector<mdb::Value> &output,
+                              bool is_defer);
   virtual bool finish_callback(ChopFinishResponse &res) { return false; }
   virtual bool is_read_only() = 0;
   virtual void read_only_reset();
-  virtual bool read_only_start_callback(int pi, int *res, const std::vector<mdb::Value> &output);
+  virtual bool read_only_start_callback(int pi, int *res,
+                                        const std::vector<mdb::Value> &output);
 
   virtual bool IsFinished(){verify(0);}
   virtual void Merge(Command&);

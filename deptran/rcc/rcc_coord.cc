@@ -1,5 +1,6 @@
 #include "marshal-value.h"
 #include "rcc_coord.h"
+#include "frame.h"
 #include "dtxn.h"
 #include "txn-chopper-factory.h"
 #include "benchmark_control_rpc.h"
@@ -384,7 +385,7 @@ void RCCCoord::deptran_finish_ro(TxnChopper *ch) {
 void RCCCoord::do_one(TxnRequest& req) {
   // pre-process
   ScopedLock(this->mtx_);
-  TxnChopper *ch = TxnChopperFactory::gen_chopper(req, benchmark_);
+  TxnChopper *ch = Frame().CreateChopper(req);
   cmd_id_ = this->next_txn_id();
 
   Log::debug("do one request");

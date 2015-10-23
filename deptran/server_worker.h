@@ -33,15 +33,7 @@ class ServerWorker {
   void PopTable();
   void SetupService();
 
-  static map<uint32_t, ServerWorker*> server_workers_s;
-
-  static void server_reg_piece() {
-    auto benchmark = Config::GetConfig()->get_benchmark();
-    Piece *piece = Piece::get_piece(benchmark);
-    piece->reg_all();
-    delete piece;
-    piece = NULL;
-  }
+  void RegPiece();
 };
 
 

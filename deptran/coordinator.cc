@@ -1,5 +1,7 @@
 #include "marshal-value.h"
 #include "coordinator.h"
+#include "frame.h"
+#include "sharding.h"
 #include "txn_req_factory.h"
 #include "txn-chopper-factory.h"
 #include "benchmark_control_rpc.h"
@@ -68,7 +70,7 @@ BatchRequestHeader Coordinator::gen_batch_header(TxnChopper *ch) {
 void Coordinator::do_one(TxnRequest &req) {
   // pre-process
   ScopedLock(this->mtx_);
-  TxnChopper *ch = TxnChopperFactory::gen_chopper(req, benchmark_);
+  TxnChopper *ch = Frame().CreateChopper(req);
   cmd_ = ch;
   cmd_id_ = this->next_txn_id();
   cleanup(); // In case of reuse.

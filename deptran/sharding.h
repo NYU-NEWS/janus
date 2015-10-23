@@ -175,7 +175,8 @@ class Sharding {
 //      unsigned int sid);
 
   int do_tpcc_populate_table(const std::vector<std::string> &table_names,
-                             unsigned int sid);
+                             unsigned int sid)
+  ;
 
   bool Ready2Populate(tb_info_t *tb_info);
 

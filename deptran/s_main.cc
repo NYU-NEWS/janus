@@ -3,6 +3,7 @@
 # include <google/profiler.h>
 #endif // ifdef CPU_PROFILE
 
+#include "frame.h"
 #include "client_worker.h"
 
 using namespace rococo;
@@ -16,7 +17,7 @@ static rrr::Server *cli_hb_server_g = nullptr;
 
 void client_setup_heartbeat() {
   std::map<int32_t, std::string> txn_types;
-  TxnRequestFactory::get_txn_types(txn_types);
+  Frame().GetTxnTypes(txn_types);
   unsigned int num_threads = Config::GetConfig()->get_num_threads(); // func
   bool hb = Config::GetConfig()->do_heart_beat();
   if (hb) {
@@ -53,6 +54,8 @@ void client_launch_workers() {
   vector<std::thread> client_threads;
   vector<ClientWorker> workers(infos.size());
   for (uint32_t thread_index = 0; thread_index < infos.size(); thread_index++) {
+    auto &worker = workers[thread_index];
+    worker.txn_req_factory_ = new TxnRequestFactory(Config::GetConfig()->sharding_);
     workers[thread_index].servers = &servers;
     workers[thread_index].coo_id = infos[thread_index]->id;
     workers[thread_index].benchmark = benchmark;
@@ -80,13 +83,17 @@ void server_launch_worker() {
   vector<ServerWorker> workers(infos.size());
 
   for (uint32_t index = 0; index < infos.size(); index++) {
-    workers[index].site_info_ = infos[index];
+    auto &worker = workers[index];
+    worker.sharding_ = Frame().CreateSharding(Config::GetConfig()->sharding_);
+    // register txn piece logic
+    worker.RegPiece();
+    worker.site_info_ = infos[index];
     // setup communication between controller script
-    workers[index].SetupHeartbeat();
+    worker.SetupHeartbeat();
     // populate table according to benchmarks
-    workers[index].PopTable();
+    worker.PopTable();
     // start server service
-    workers[index].SetupService();
+    worker.SetupService();
   }
 }
 
@@ -108,8 +115,7 @@ int main(int argc, char *argv[]) {
   vector<Config::SiteInfo*> infos = Config::GetConfig()->GetMyServers();
   if (infos.size() > 0) {
     Log_info("launching servers, number of sites: %d", infos.size());
-    // register txn piece logic
-    ServerWorker::server_reg_piece();
+
     // start server service
     server_launch_worker();
   }

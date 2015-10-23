@@ -1,5 +1,6 @@
 #include "marshal-value.h"
 #include "ro6_coord.h"
+#include "frame.h"
 #include "dtxn.h"
 #include "compress.h"
 #include "txn-chopper-factory.h"
@@ -234,7 +235,7 @@ void RO6Coord::ro6_start_ro(TxnChopper *ch) {
 void RO6Coord::do_one(TxnRequest & req) {
   // pre-process
   ScopedLock(this->mtx_);
-  TxnChopper *ch = TxnChopperFactory::gen_chopper(req, benchmark_);
+  TxnChopper *ch = Frame().CreateChopper(req);
   cmd_id_ = this->next_txn_id();
 
   Log::debug("do one request");

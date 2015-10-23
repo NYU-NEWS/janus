@@ -31,7 +31,7 @@
 
 namespace rococo {
 
-TxnRequestFactory *TxnRequestFactory::txn_req_factory_s = NULL;
+//TxnRequestFactory *TxnRequestFactory::txn_req_factory_s = NULL;
 
 TxnRequestFactory::TxnRequestFactory(Sharding* sd)
     : txn_weight_(Config::GetConfig()->get_txn_weight()),
@@ -418,7 +418,7 @@ void TxnRequestFactory::get_txn_req(TxnRequest *req, uint32_t cid) const {
 
 void TxnRequestFactory::get_txn_types(std::map<int32_t, std::string> &txn_types) {
   txn_types.clear();
-  switch (txn_req_factory_s->benchmark_) {
+  switch (benchmark_) {
     case TPCA:
       txn_types[TPCA_PAYMENT] = std::string(TPCA_PAYMENT_NAME);
       break;

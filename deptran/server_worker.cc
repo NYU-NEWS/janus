@@ -77,6 +77,17 @@ void ServerWorker::PopTable() {
   verify(ret > 0);
 }
 
+void ServerWorker::RegPiece() {
+  auto benchmark = Config::GetConfig()->get_benchmark();
+  Piece *piece = Piece::get_piece(benchmark);
+  piece->sss_ = sharding_;
+  piece->reg_all();
+  // TODO fix the memory leak without hurting sharding.
+//    delete piece;
+//    piece = NULL;
+}
+
+
 void ServerWorker::SetupService() {
   int ret;
   // set running mode and initialize transaction manager.
