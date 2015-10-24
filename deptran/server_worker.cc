@@ -81,6 +81,7 @@ void ServerWorker::RegPiece() {
   auto benchmark = Config::GetConfig()->get_benchmark();
   Piece *piece = Piece::get_piece(benchmark);
   piece->sss_ = sharding_;
+  piece->txn_reg_ = new TxnRegistry();
   piece->reg_all();
   // TODO fix the memory leak without hurting sharding.
 //    delete piece;

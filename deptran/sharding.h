@@ -84,14 +84,19 @@ class Sharding {
              string fcol_name
 //             tb_info_t *_foreign_tb,
 //             column_t *_foreign
-    ) :
-        type(_type), name(_name), is_primary(_is_primary), values(NULL),
+    ) : type(_type), name(_name), is_primary(_is_primary), values(NULL),
         is_foreign(_is_foreign),
         foreign_tbl_name(ftbl_name),
         foreign_col_name(fcol_name),
         foreign_tb(nullptr),
         foreign(nullptr) {
     }
+
+    column_t(const column_t& c)
+        : type(c.type), name(c.name), is_primary(c.is_primary),
+          is_foreign(c.is_foreign), foreign_tbl_name(c.foreign_tbl_name),
+          foreign_col_name(c.foreign_col_name), foreign(nullptr),
+          foreign_tb(nullptr), values(nullptr) {}
 
     Value::kind type;
     std::string name;

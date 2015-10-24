@@ -4,9 +4,12 @@
 
 namespace rococo {
 
+class TxnRegistry;
+
 class Piece {
  public:
-  Sharding* sss_;
+  Sharding* sss_ = nullptr;
+  TxnRegistry *txn_reg_ = nullptr;
   static Piece *get_piece(int benchmark);
   virtual void reg_all() = 0;
   virtual ~Piece() { }
@@ -14,7 +17,7 @@ class Piece {
 
 
 #define BEGIN_PIE(txn, pie, iod) \
-  TxnRegistry::reg(txn, pie, iod, \
+  txn_reg_->reg(txn, pie, iod, \
         [this] (DTxn *dtxn, \
             const RequestHeader &header, \
             const Value *input, \

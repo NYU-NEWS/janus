@@ -112,7 +112,7 @@ class TPLDTxn: public DTxn {
       std::vector <mdb::Value> *output
   ) {
     rrr::i32 output_size = output->size();
-    TxnRegistry::get(header).txn_handler(
+    txn_reg_->get(header).txn_handler(
         this, header, input.data(), input.size(),
         res, output->data(), &output_size, NULL);
     output->resize(output_size);
@@ -126,7 +126,7 @@ class TPLDTxn: public DTxn {
       mdb::Value *output,
       rrr::i32 *output_size
   ) {
-    TxnRegistry::get(header).txn_handler(
+    txn_reg_->get(header).txn_handler(
         this, header, input, input_size,
         res, output, output_size, NULL);
   }

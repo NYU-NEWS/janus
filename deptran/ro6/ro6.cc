@@ -117,7 +117,7 @@ void RO6DTxn::start_ro(
 //    RCCDTxn::start_ro(header, input, output, defer);
 
   conflict_txns_.clear();
-  auto txn_handler_pair = TxnRegistry::get(header.t_type, header.p_type);
+  auto txn_handler_pair = txn_reg_->get(header.t_type, header.p_type);
   int output_size = 300;
   output.resize(output_size);
   int res;
@@ -133,7 +133,7 @@ void RO6DTxn::start_ro(
     int res;
     int output_size = 300;
     this->phase_ = 2;
-    auto txn_handler_pair = TxnRegistry::get(header.t_type, header.p_type);
+    auto txn_handler_pair = txn_reg_->get(header.t_type, header.p_type);
 
     txn_handler_pair.txn_handler(this, header, input.data(), input.size(),
                                  &res, output.data(), &output_size, NULL);

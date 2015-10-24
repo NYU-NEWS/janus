@@ -85,6 +85,7 @@ void server_launch_worker() {
   for (uint32_t index = 0; index < infos.size(); index++) {
     auto &worker = workers[index];
     worker.sharding_ = Frame().CreateSharding(Config::GetConfig()->sharding_);
+    worker.sharding_->BuildTableInfoPtr();
     // register txn piece logic
     worker.RegPiece();
     worker.site_info_ = infos[index];

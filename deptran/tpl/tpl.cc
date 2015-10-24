@@ -206,13 +206,13 @@ std::function<void(void)> TPLDTxn::get_2pl_succ_callback(
 
         if (output_vec != NULL) {
           rrr::i32 output_vec_size = output_vec->size();
-          TxnRegistry::get(header).txn_handler(this, header, input,
+          txn_reg_->get(header).txn_handler(this, header, input,
                                                input_size, res, output_vec->data(),
                                                &output_vec_size, NULL);
           output_vec->resize(output_vec_size);
         }
         else {
-          TxnRegistry::get(header).txn_handler(this, header, input,
+          txn_reg_->get(header).txn_handler(this, header, input,
                                                input_size, res, output, output_size, NULL);
         }
       }
@@ -252,13 +252,13 @@ std::function<void(void)> TPLDTxn::get_2pl_proceed_callback(
 
       if (output_vec != NULL) {
         rrr::i32 output_vec_size = output_vec->size();
-        TxnRegistry::get(header).txn_handler(this, header, input,
+        txn_reg_->get(header).txn_handler(this, header, input,
                                              input_size, res, output_vec->data(),
                                              &output_vec_size, NULL);
         output_vec->resize(output_vec_size);
       }
       else {
-        TxnRegistry::get(header).txn_handler(this, header, input,
+        txn_reg_->get(header).txn_handler(this, header, input,
                                              input_size, res, output, output_size, NULL);
       }
     }
@@ -354,7 +354,7 @@ void TPLDTxn::pre_execute_2pl(
 
   Log_debug("get txn handler and start reg lock, txn_id: %lx, pie_id: %lx",
             header.tid, header.pid);
-  TxnRegistry::get(header).txn_handler(
+  txn_reg_->get(header).txn_handler(
       this,
       header,
       input.data(),

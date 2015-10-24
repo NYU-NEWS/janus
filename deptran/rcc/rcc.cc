@@ -2,8 +2,6 @@
 
 namespace rococo {
 
-DepGraph *RCCDTxn::dep_s = NULL;
-
 RCCDTxn::RCCDTxn(
     i64 tid,
     DTxnMgr *mgr,
@@ -46,8 +44,7 @@ void RCCDTxn::StartAfterLog(
   if (tv_) verify(tv_ == tv); else tv_ = tv;
   phase_ = PHASE_RCC_START;
   // execute the IR actions.
-  auto pair = TxnRegistry::get(
-      header.t_type, header.p_type);
+  auto pair = txn_reg_->get(header.t_type, header.p_type);
   bool deferred = start_exe_itfr(
       pair.defer, pair.txn_handler, header, input, &res->output);
   // Reply
@@ -155,7 +152,7 @@ void RCCDTxn::start_ro(
     DeferredReply *defer) {
 
   conflict_txns_.clear();
-  auto txn_handler_pair = TxnRegistry::get(header.t_type, header.p_type);
+  auto txn_handler_pair = txn_reg_->get(header.t_type, header.p_type);
   int output_size = 300;
   output.resize(output_size);
   int res;
@@ -391,7 +388,7 @@ void RCCDTxn::exe_deferred(
     for (auto &req: dreqs_) {
       auto &header = req.header;
       auto &input = req.inputs;
-      auto txn_handler_pair = TxnRegistry::get(header.t_type, header.p_type);
+      auto txn_handler_pair = txn_reg_->get(header.t_type, header.p_type);
       verify(header.tid == tid_);
 
       std::vector<Value> output;

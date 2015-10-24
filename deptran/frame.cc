@@ -6,6 +6,7 @@
 #include "ro6/ro6_row.h"
 #include "marshal-value.h"
 #include "coordinator.h"
+#include "dtxn.h"
 
 // for tpca benchmark
 #include "bench/tpca/piece.h"
@@ -179,6 +180,33 @@ TxnChopper* Frame::CreateChopper(TxnRequest &req) {
   ch->sss_ = Config::GetConfig()->sharding_;
   ch->init(req);
   return ch;
+}
+
+DTxn* Frame::CreateDTxn(txnid_t tid, bool ro, DTxnMgr* mgr) {
+  DTxn *ret = nullptr;
+  auto mode_ = Config::GetConfig()->mode_;
+
+  switch (mode_) {
+    case MODE_2PL:
+      ret = new TPLDTxn(tid, mgr);
+      verify(ret->mdb_txn_->rtti() == mdb::symbol_t::TXN_2PL);
+      break;
+    case MODE_OCC:
+      ret = new TPLDTxn(tid, mgr);
+      break;
+    case MODE_NONE:
+      ret = new TPLDTxn(tid, mgr);
+      break;
+    case MODE_RCC:
+      ret = new RCCDTxn(tid, mgr, ro);
+      break;
+    case MODE_RO6:
+      ret = new RO6DTxn(tid, mgr, ro);
+      break;
+    default:
+      verify(0);
+  }
+  return ret;
 }
 
 } // namespace rococo;

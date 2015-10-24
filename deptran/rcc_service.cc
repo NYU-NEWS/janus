@@ -13,8 +13,8 @@ RococoServiceImpl::RococoServiceImpl(
   piece_count_prepare_fail_ = 0;
   piece_count_prepare_success_ = 0;
 #endif
-  verify(RCCDTxn::dep_s == NULL);
-  RCCDTxn::dep_s = new DepGraph();
+//  verify(RCCDTxn::dep_s == NULL);
+//  RCCDTxn::dep_s = new DepGraph();
 
   if (Config::GetConfig()->do_logging()) {
     auto path = Config::GetConfig()->log_path();
@@ -32,7 +32,7 @@ void RococoServiceImpl::do_start_pie(
     Value *output,
     i32 *output_size) {
 
-  TPLDTxn *dtxn = (TPLDTxn *) txn_mgr_->get_or_create(header.tid);
+  TPLDTxn *dtxn = (TPLDTxn *) txn_mgr_->GetOrCreate(header.tid);
   *res = SUCCESS;
   if (IS_MODE_2PL) {
     dtxn->execute(header, input, input_size,
@@ -115,7 +115,7 @@ void RococoServiceImpl::naive_batch_start_pie(
   int num_pieces = headers.size();
   for (int i = 0; i < num_pieces; i++) {
     (*outputs)[i].resize(output_sizes[i]);
-    auto dtxn = (TPLDTxn *) txn_mgr_->get_or_create(headers[i].tid);
+    auto dtxn = (TPLDTxn *) txn_mgr_->GetOrCreate(headers[i].tid);
     if (defer_reply_db) {
       dtxn->pre_execute_2pl(headers[i], inputs[i],
                             &((*results)[i]), &((*outputs)[i]), defer_reply_db);
@@ -156,7 +156,7 @@ void RococoServiceImpl::start_pie(
   output->resize(output_size);
   // find stored procedure, and run it
   *res = SUCCESS;
-  TPLDTxn *dtxn = (TPLDTxn *) txn_mgr_->get_or_create(header.tid);
+  TPLDTxn *dtxn = (TPLDTxn *) txn_mgr_->GetOrCreate(header.tid);
   dtxn->start_launch(header, input, output_size, res, output, defer);
 }
 
@@ -271,7 +271,7 @@ void RococoServiceImpl::rcc_start_pie(
   verify(defer);
 
   std::lock_guard<std::mutex> guard(this->mtx_);
-  RCCDTxn *dtxn = (RCCDTxn *) txn_mgr_->get_or_create(header.tid);
+  RCCDTxn *dtxn = (RCCDTxn *) txn_mgr_->GetOrCreate(header.tid);
   dtxn->StartLaunch(header, input, res, defer);
 
   // TODO remove the stat from here.
@@ -316,7 +316,7 @@ void RococoServiceImpl::rcc_ro_start_pie(
     vector<Value> *output,
     rrr::DeferredReply *defer) {
   std::lock_guard<std::mutex> guard(mtx_);
-  RCCDTxn *dtxn = (RCCDTxn *) txn_mgr_->get_or_create(header.tid, true);
+  RCCDTxn *dtxn = (RCCDTxn *) txn_mgr_->GetOrCreate(header.tid, true);
   dtxn->start_ro(header, input, *output, defer);
 }
 

@@ -52,6 +52,7 @@ void Sharding::BuildTableInfoPtr() {
     for (auto col_it = columns.begin(); col_it != columns.end(); col_it++) {
       auto &col = *col_it;
       if (col.is_foreign) {
+        verify(!col.foreign_col_name.empty());
         auto ftb_it = tb_infos_.find(col.foreign_tbl_name);
         verify(ftb_it != tb_infos_.end());
         auto &ftbl = ftb_it->second;

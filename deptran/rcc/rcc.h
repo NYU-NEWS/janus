@@ -14,7 +14,7 @@ class RCCDTxn: public DTxn {
     row_map_t row_map;
   } DeferredRequest;
 
-  static DepGraph *dep_s;
+  DepGraph *dep_s;
 
   std::vector <DeferredRequest> dreqs_;
   Vertex <TxnInfo> *tv_;

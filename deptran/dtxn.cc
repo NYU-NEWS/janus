@@ -1,4 +1,5 @@
 #include "all.h"
+#include "frame.h"
 
 namespace rococo {
 
@@ -11,11 +12,6 @@ namespace rococo {
 //        last_ = tv;
 //    }
 //}
-
-
-map<std::pair<base::i32, base::i32>,
-    txn_handler_defer_pair_t> TxnRegistry::all_;
-//map<std::pair<base::i32, base::i32>, TxnRegistry::LockSetOracle> TxnRegistry::lck_oracle_;
 
 
 mdb::Txn *DTxnMgr::del_mdb_txn(const i64 tid) {
@@ -189,30 +185,12 @@ void DTxnMgr::reg_table(const std::string &name,
   }
 }
 
-DTxn *DTxnMgr::create(i64 tid, bool ro) {
+DTxn *DTxnMgr::Create(i64 tid, bool ro) {
+
   DTxn *ret = nullptr;
-  switch (mode_) {
-    case MODE_2PL:
-      ret = new TPLDTxn(tid, this);
-      verify(ret->mdb_txn_->rtti() == mdb::symbol_t::TXN_2PL);
-      break;
-    case MODE_OCC:
-      ret = new TPLDTxn(tid, this);
-      break;
-    case MODE_NONE:
-      ret = new TPLDTxn(tid, this);
-      break;
-    case MODE_RCC:
-      ret = new RCCDTxn(tid, this, ro);
-      break;
-    case MODE_RO6:
-      ret = new RO6DTxn(tid, this, ro);
-      break;
-    default:
-      verify(0);
-  }
+
   verify(dtxns_[tid] == nullptr);
-  dtxns_[tid] = ret;
+  dtxns_[tid] = Frame().CreateDTxn(tid, ro, this);
   ret->recorder_ = this->recorder_;
   return ret;
 }
