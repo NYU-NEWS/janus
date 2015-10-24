@@ -1,6 +1,8 @@
 #pragma once
 
-//namespace rococo {
+#include "dtxn.h"
+
+namespace rococo {
 
 class TPLDTxn: public DTxn {
  public:
@@ -132,4 +134,4 @@ class TPLDTxn: public DTxn {
   }
 };
 
-//} // namespace rococo
+} // namespace rococo

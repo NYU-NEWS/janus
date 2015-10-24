@@ -1,4 +1,5 @@
 #include "all.h"
+#include "dtxn_mgr.h"
 
 namespace rococo {
 

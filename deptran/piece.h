@@ -1,6 +1,8 @@
 #pragma once
 
 #include "__dep__.h"
+#include "tpl.h"
+#include "ro6.h"
 
 namespace rococo {
 
@@ -93,6 +95,12 @@ class Piece {
     default: \
         verify(0); \
     }
+
+
+#define IN_PHASE_1 (dtxn->phase_ == 1)
+#define TPL_PHASE_1 (output_size == nullptr)
+#define RO6_RO_PHASE_1 ((Config::GetConfig()->get_mode() == MODE_RO6) && ((RO6DTxn*)dtxn)->read_only_ && dtxn->phase_ == 1)
+
 
 #define C_LAST_SCHEMA (((TPCCDSharding*)(this->sss_))->g_c_last_schema)
 

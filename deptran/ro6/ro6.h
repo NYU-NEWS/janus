@@ -1,6 +1,7 @@
 #pragma once
 
-//namespace rococo {
+#include "rcc.h"
+namespace rococo {
 
 class RO6DTxn: public RCCDTxn {
  private:
@@ -61,4 +62,4 @@ class RO6DTxn: public RCCDTxn {
   Value do_ro(i64 txn_id, MultiVersionedRow *row, int col_id);
 };
 
-//} // namespace rococo
+} // namespace rococo

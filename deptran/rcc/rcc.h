@@ -1,10 +1,10 @@
 #pragma once
-
+#include "dtxn.h"
 
 #define PHASE_RCC_START (1)
 #define PHASE_RCC_COMMIT (2)
 
-//namespace rococo {
+namespace rococo {
 class RCCDTxn: public DTxn {
  public:
 
@@ -141,4 +141,4 @@ class RCCDTxn: public DTxn {
 //            mdb::Row* row
 //    );
 };
-//} // namespace rococo
+} // namespace rococo

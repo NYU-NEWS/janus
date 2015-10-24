@@ -3,6 +3,7 @@
 #include "rcc_service.h"
 #include "benchmark_control_rpc.h"
 #include "sharding.h"
+#include "dtxn_mgr.h"
 
 
 namespace rococo {
@@ -37,9 +38,11 @@ void ServerWorker::PopTable() {
 
   // TODO this needs to be done before poping table
   int running_mode = Config::GetConfig()->get_mode();
+  verify(txn_reg_);
+  txn_mgr_ = DTxnMgr::CreateTxnMgr(site_info_->id);
+  txn_mgr_->txn_reg_ = txn_reg_;
 
   // populate table
-  txn_mgr_ = DTxnMgr::CreateTxnMgr(site_info_->id);
   auto par_id = site_info_->par_id;
   int ret = 0;
 
@@ -80,8 +83,11 @@ void ServerWorker::PopTable() {
 void ServerWorker::RegPiece() {
   auto benchmark = Config::GetConfig()->get_benchmark();
   Piece *piece = Piece::get_piece(benchmark);
+  verify(!txn_reg_);
+  txn_reg_ = new TxnRegistry();
+  verify(sharding_);
   piece->sss_ = sharding_;
-  piece->txn_reg_ = new TxnRegistry();
+  piece->txn_reg_ = txn_reg_;
   piece->reg_all();
   // TODO fix the memory leak without hurting sharding.
 //    delete piece;
