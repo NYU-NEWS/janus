@@ -349,7 +349,7 @@ void TPLDTxn::pre_execute_2pl(
     output->resize(0);
     *res = REJECT;
     db->trigger();
-    verify(0);
+//    verify(0);
     return;
   }
   txn->init_piece(header.tid, header.pid, db, output);
