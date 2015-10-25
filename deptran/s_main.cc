@@ -83,6 +83,7 @@ void server_launch_worker() {
   vector<ServerWorker> workers(infos.size());
 
   for (uint32_t index = 0; index < infos.size(); index++) {
+    Log_info("launching server, site: %x", infos[index]->id);
     auto &worker = workers[index];
     worker.sharding_ = Frame().CreateSharding(Config::GetConfig()->sharding_);
     worker.sharding_->BuildTableInfoPtr();
@@ -115,7 +116,7 @@ int main(int argc, char *argv[]) {
 
   vector<Config::SiteInfo*> infos = Config::GetConfig()->GetMyServers();
   if (infos.size() > 0) {
-    Log_info("launching servers, number of sites: %d", infos.size());
+    Log_info("server enabled, number of sites: %d", infos.size());
 
     // start server service
     server_launch_worker();
