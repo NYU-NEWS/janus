@@ -60,7 +60,7 @@ void TpccPiece::reg_stock_level() {
                 dtxn->get_table(TPCC_TB_ORDER_LINE), mbl, mbh, output_size,
                 header.pid, mdb::ORD_ASC);
 
-        Log::debug("tid: %llx, stock_level: piece 1: d_next_o_id: %d, ol_w_id: %d, ol_d_id: %d",
+        Log_debug("tid: %llx, stock_level: piece 1: d_next_o_id: %d, ol_w_id: %d, ol_d_id: %d",
                 header.tid, input[0].get_i32(), input[1].get_i32(), input[2].get_i32());
 
         std::vector<mdb::Row *> row_list;
@@ -73,9 +73,8 @@ void TpccPiece::reg_stock_level() {
         verify(row_list.size() != 0);
 
         if (IS_MODE_2PL && output_size == NULL) {
-
-            mdb::Txn2PL::PieceStatus *ps
-                    = ((mdb::Txn2PL *) dtxn)->get_piece_status(header.pid);
+            auto mdb_txn = (mdb::Txn2PL*) dtxn->mdb_txn_;
+            auto ps = mdb_txn->get_piece_status(header.pid);
 
             std::function<void(void)> succ_callback = 
                 ((TPLDTxn *) dtxn)->get_2pl_succ_callback(

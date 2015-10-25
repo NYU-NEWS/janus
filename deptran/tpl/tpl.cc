@@ -45,8 +45,7 @@ int TPLDTxn::start_launch(
     const rrr::i32 &output_size,
     rrr::i32 *res,
     std::vector<mdb::Value> *output,
-    rrr::DeferredReply *defer
-) {
+    rrr::DeferredReply *defer) {
   if (IS_MODE_2PL) {
     verify(this->mdb_txn_->rtti() == mdb::symbol_t::TXN_2PL);
     DragonBall *defer_reply_db = new DragonBall(1, [defer, res]() {
@@ -357,16 +356,10 @@ void TPLDTxn::pre_execute_2pl(
 
   Log_debug("get txn handler and start reg lock, txn_id: %lx, pie_id: %lx",
             header.tid, header.pid);
-  txn_reg_->get(header).txn_handler(
-      this,
-      header,
-      input.data(),
-      input.size(),
-      res,
-      NULL/*output*/,
-      NULL/*output_size*/,
-      NULL
-  );
+  auto entry = txn_reg_->get(header);
+  entry.txn_handler(this, header, input.data(),
+                    input.size(), res, NULL/*output*/,
+                    NULL/*output_size*/, NULL);
 }
 
 //void TPLDTxn::pre_execute_2pl(

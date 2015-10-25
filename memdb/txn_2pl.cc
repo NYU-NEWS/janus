@@ -9,16 +9,16 @@
 
 namespace mdb {
 
-Txn2PL::PieceStatus *Txn2PL::ps_cache_s = NULL;
+//Txn2PL::PieceStatus *Txn2PL::ps_cache_s = nullptr;
 
 Txn2PL::PieceStatus* Txn2PL::ps_cache() {
-  verify(ps_cache_ == ps_cache_s);
+//  verify(ps_cache_ == ps_cache_s);
   return ps_cache_;
 }
 
 void Txn2PL::SetPsCache(PieceStatus* ps) {
-  verify(ps_cache_ == ps_cache_s);
-  ps_cache_s = ps;
+//  verify(ps_cache_ == ps_cache_s);
+//  ps_cache_s = ps;
   ps_cache_ = ps;
 }
 
@@ -35,7 +35,7 @@ Txn2PL::Txn2PL(const TxnMgr *mgr, txn_id_t txnid) :
     outcome_(symbol_t::NONE),
     wound_(false),
     prepared_(false),
-    ps_cache_(ps_cache_s),
+    ps_cache_(nullptr),
     piece_map_(std::unordered_map<i64, PieceStatus *>()) {
 }
 

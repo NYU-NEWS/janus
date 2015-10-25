@@ -221,8 +221,8 @@ class Txn2PL: public Txn {
   bool wound_, prepared_;
 
   std::unordered_map<i64, PieceStatus *> piece_map_;
-  static PieceStatus *ps_cache_s; // TODO fix
-  PieceStatus *ps_cache_; // TODO fix
+//  static PieceStatus *ps_cache_s; // TODO fix
+  PieceStatus *ps_cache_;
 
  public:
 
