@@ -174,7 +174,7 @@ class Txn2PL: public Txn {
     }
 
     void start_yes_callback() {
-//      ps_cache_ = this;
+      ps_cache_ = this;
       num_acquired_++;
       verify(num_acquired_ <= num_waiting_);
       if (is_rw_)
@@ -184,7 +184,7 @@ class Txn2PL: public Txn {
     }
 
     void start_no_callback() {
-//      ps_cache_ = this;
+      ps_cache_ = this;
       num_acquired_++;
       rej_ = true;
       verify(num_acquired_ <= num_waiting_);
@@ -218,18 +218,12 @@ class Txn2PL: public Txn {
   std::unordered_map<i64, PieceStatus *> piece_map_;
 
  public:
-  PieceStatus *ps_cache_ = nullptr; // TODO fix
+  static PieceStatus *ps_cache_; // TODO fix
 
   Txn2PL() = delete;
+  Txn2PL(const TxnMgr *mgr, txn_id_t txnid);
+  ~Txn2PL();
 
-  Txn2PL(const TxnMgr *mgr, txn_id_t txnid) :
-      Txn(mgr, txnid),
-      outcome_(symbol_t::NONE),
-      wound_(false),
-      prepared_(false),
-      ps_cache_(nullptr),
-      piece_map_(std::unordered_map<i64, PieceStatus *>()) {
-  }
   virtual bool commit_prepare() {
     prepared_ = true;
     if (wound_)
@@ -237,7 +231,6 @@ class Txn2PL: public Txn {
     else
       return true;
   }
-  ~Txn2PL();
 
   bool is_wound() {
     return wound_;

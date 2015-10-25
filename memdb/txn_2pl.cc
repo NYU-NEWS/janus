@@ -9,7 +9,16 @@
 
 namespace mdb {
 
-//Txn2PL::PieceStatus *Txn2PL::ps_cache_ = NULL;
+Txn2PL::PieceStatus *Txn2PL::ps_cache_ = NULL;
+
+Txn2PL::Txn2PL(const TxnMgr *mgr, txn_id_t txnid) :
+    Txn(mgr, txnid),
+    outcome_(symbol_t::NONE),
+    wound_(false),
+    prepared_(false),
+//      ps_cache_(nullptr),
+    piece_map_(std::unordered_map<i64, PieceStatus *>()) {
+}
 
 Txn2PL::~Txn2PL() {
   verify(this->rtti() == symbol_t::TXN_2PL);
