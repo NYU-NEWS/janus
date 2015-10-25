@@ -23,7 +23,6 @@ void Txn2PL::SetPsCache(PieceStatus* ps) {
 }
 
 query_buf_t& Txn2PL::GetQueryBuf(int64_t pid) {
-  verify(ps_cache_);
   verify(piece_map_.find(pid) != piece_map_.end());
   query_buf_t &qb = (pid == ps_cache()->pid_) ? ps_cache()->query_buf_
                                               : piece_map_[pid]->query_buf_;
@@ -36,7 +35,7 @@ Txn2PL::Txn2PL(const TxnMgr *mgr, txn_id_t txnid) :
     outcome_(symbol_t::NONE),
     wound_(false),
     prepared_(false),
-    ps_cache_(nullptr),
+    ps_cache_(ps_cache_s),
     piece_map_(std::unordered_map<i64, PieceStatus *>()) {
 }
 
@@ -200,11 +199,13 @@ void Txn2PL::init_piece(i64 tid, i64 pid, rrr::DragonBall *db,
 }
 
 Txn2PL::PieceStatus* Txn2PL::get_piece_status(i64 pid) {
-  if (ps_cache() == nullptr || ps_cache()->pid_ != pid) {
+  auto ps = ps_cache();
+  if (ps == nullptr || ps->pid_ != pid) {
     verify(piece_map_.find(pid) != piece_map_.end());
-    SetPsCache(piece_map_[pid]);
+    ps = piece_map_[pid];
+    SetPsCache(ps);
   }
-  return ps_cache();
+  return ps;
 }
 
 void Txn2PL::marshal_stage(std::string &str) {
