@@ -64,6 +64,7 @@ typedef struct c_last_id_t {
   }
 } c_last_id_t;
 
+class DTxnMgr;
 
 class Sharding {
  public:
@@ -150,6 +151,7 @@ class Sharding {
   std::map<std::string, tb_info_t> tb_infos_;
   std::map<MultiValue, MultiValue> dist2sid_;
   std::map<MultiValue, MultiValue> stock2sid_;
+  DTxnMgr* dtxn_mgr_;
 
   void BuildTableInfoPtr();
 
@@ -187,22 +189,16 @@ class Sharding {
 
   void release_foreign_values();
 
-  //    int get_site_id(const std::string &txn_name, unsigned int piece, const
-  // std::string &key, unsigned int &site_id);
-  //
-  //    int get_site_id(const std::string &txn_name, unsigned int piece,
-  // std::vector<unsigned int> &site_id);
-  //
   uint32_t site_from_key(const MultiValue &key,
                                     const tb_info_t *tb_info);
 
-  static unsigned int modulus(const MultiValue &key,
-                              unsigned int num_site,
-                              const unsigned int *site_id);
+  uint32_t modulus(const MultiValue &key,
+                   unsigned int num_site,
+                   const unsigned int *site_id);
 
-  static unsigned int int_modulus(const MultiValue &key,
-                                  unsigned int num_site,
-                                  const unsigned int *site_id);
+  uint32_t int_modulus(const MultiValue &key,
+                       unsigned int num_site,
+                       const unsigned int *site_id);
 
 
 //  static Sharding *sharding_s;
@@ -211,33 +207,7 @@ class Sharding {
   Sharding(const Sharding& sharding);
 
  public:
-//
-//  static int get_site_id(const char *tb_name,
-//                         const Value &key,
-//                         unsigned int &site_id);
-//
-//  static int get_site_id(const std::string &tb_name,
-//                         const Value &key,
-//                         unsigned int &site_id);
-//
-//  static int get_site_id(const char *tb_name,
-//                         const MultiValue &key,
-//                         unsigned int &site_id);
-//
-//  static int get_site_id(const std::string &tb_name,
-//                         const MultiValue &key,
-//                         unsigned int &site_id);
-//
-//  static int get_site_id(const char *tb_name,
-//                         std::vector<unsigned int> &site_id);
-//
-//  static int get_site_id(const std::string &tb_name,
-//                         std::vector<unsigned int> &site_id);
-//
-//  static int init_schema(const char *tb_name,
-//                         mdb::Schema *schema,
-//                         mdb::symbol_t *symbol);
-//
+
   int init_schema(const std::string &tb_name,
                          mdb::Schema *schema,
                          mdb::symbol_t *symbol);
@@ -248,17 +218,6 @@ class Sharding {
   int get_number_rows(std::map<std::string, uint64_t> &table_map);
 
   virtual int PopulateTable(uint32_t sid);
-
-  //    static int get_site_id(const char *txn_name, unsigned int piece, const
-  // char *key, unsigned int &site_id);
-  //    static int get_site_id(const std::string &txn_name, unsigned int piece,
-  // const std::string &key, unsigned int &site_id);
-  //
-  //    static int get_site_id(const char *txn_name, unsigned int piece,
-  // std::vector<unsigned int> &site_id);
-  //    static int get_site_id(const std::string &txn_name, unsigned int piece,
-  // std::vector<unsigned int> &site_id);
-  //
 
   ~Sharding();
 

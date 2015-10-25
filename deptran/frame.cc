@@ -7,6 +7,7 @@
 #include "marshal-value.h"
 #include "coordinator.h"
 #include "dtxn.h"
+#include "dtxn_mgr.h"
 
 // for tpca benchmark
 #include "bench/tpca/piece.h"
@@ -207,6 +208,12 @@ DTxn* Frame::CreateDTxn(txnid_t tid, bool ro, DTxnMgr* mgr) {
       verify(0);
   }
   return ret;
+}
+
+DTxnMgr* Frame::CreateDTxnMgr() {
+  auto mode = Config::GetConfig()->mode_;
+  auto mgr = new DTxnMgr(mode);
+  return mgr;
 }
 
 } // namespace rococo;

@@ -184,7 +184,8 @@ std::function<void(void)> TPLDTxn::get_2pl_succ_callback(
     Log_debug("lock acquired call back, txn_id: %lx, pie_id: %lx, p_type: %d, ",
                header.tid, header.pid, header.p_type);
     Log_debug("succ 1 callback: PS: %p", ps);
-    verify(ps != NULL); //FIXME
+    verify(ps != NULL);
+    ((mdb::Txn2PL*)this->mdb_txn_)->ps_cache_ = ps;
     ps->start_yes_callback();
     Log_debug("tid: %lx, pid: %lx, p_type: %d, get lock",
                header.tid, header.pid, header.p_type);
@@ -273,12 +274,13 @@ std::function<void(void)> TPLDTxn::get_2pl_fail_callback(
     const RequestHeader &header,
     rrr::i32 *res,
     mdb::Txn2PL::PieceStatus *ps) {
-  return [header, res, ps]() {
+  return [header, res, ps, this]() {
     Log_debug("tid: %ld, pid: %ld, p_type: %d, lock timeout call back",
                header.tid, header.pid, header.p_type);
     //PieceStatus *ps = TPL::get_piece_status(header);
     Log::debug("fail callback: PS: %p", ps);
     verify(ps != NULL); //FIXME
+    ((mdb::Txn2PL*)this->mdb_txn_)->ps_cache_ = ps;
     ps->start_no_callback();
 
     if (ps->can_proceed()) {

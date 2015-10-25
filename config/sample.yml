@@ -14,7 +14,7 @@ site:
 #    - ["s101:8881", "s201:8882", "s301:8883"]
 #    - ["s102:8884", "s202:8885", "s302:8886"]
     - ["s101:8881"]
-    - ["s102:8884"]
+#    - ["s102:8884"]
   client: # each line is a partition
      - ["c1"]
 #    - ["c1", "c2"]
@@ -23,7 +23,7 @@ site:
 # site - process map
 process:
   s101: localhost
-  s102: localhost
+#  s102: localhost
 #  s201: localhost
 #  s202: localhost
 #  s301: localhost
@@ -38,7 +38,7 @@ host:
   localhost: 127.0.0.1
 
 mode:
-  cc: 2pl # concurrency control
+  cc: 2pl_ww # concurrency control
   read_only: occ
   batch: false
   retry: 0

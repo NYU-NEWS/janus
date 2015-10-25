@@ -31,6 +31,9 @@ Command *TxnChopper::GetNextSubCmd(map<innid_t, Command *> &cmdmap) {
       cmd->output_size = output_size_[i];
       cmd->root_ = this;
       proxies_.insert(sharding_[i]);
+      Log_debug("getting subcmd i: %d, thread id: %x",
+                i, std::this_thread::get_id());
+      verify(status_[i] == 0);
       status_[i] = 1;
       verify(cmd->type_ != 0);
       return cmd;

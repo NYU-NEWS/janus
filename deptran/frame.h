@@ -20,6 +20,7 @@ class Frame {
   void GetTxnTypes(std::map<int32_t, std::string> &txn_types);
   TxnChopper* CreateChopper(TxnRequest &req);
   DTxn* CreateDTxn(txnid_t txn_id, bool ro, DTxnMgr* mgr);
+  DTxnMgr* CreateDTxnMgr();
 };
 
 

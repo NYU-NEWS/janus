@@ -26,6 +26,7 @@ class Coordinator {
   std::atomic<uint64_t> next_txn_id_;
 
   Mutex mtx_;
+  std::mutex start_mtx_;
   Commo *commo_;
   Recorder *recorder_;
   Command *cmd_; 
@@ -84,7 +85,7 @@ class Coordinator {
 
   virtual ~Coordinator() {
     for (int i = 0; i < site_prepare_.size(); i++) {
-      Log::info("Coo: %u, Site: %d, piece: %d, "
+      Log_info("Coo: %u, Site: %d, piece: %d, "
                     "prepare: %d, commit: %d, abort: %d",
                 coo_id_, i, site_piece_[i], site_prepare_[i],
                 site_commit_[i], site_abort_[i]);

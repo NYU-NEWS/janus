@@ -1,0 +1,772 @@
+
+#include <limits>
+
+#include "row.h"
+#include "table.h"
+#include "txn.h"
+#include "txn_2pl.h"
+#include "txn_occ.h"
+
+namespace mdb {
+
+//Txn2PL::PieceStatus *Txn2PL::ps_cache_ = NULL;
+
+Txn2PL::~Txn2PL() {
+  verify(this->rtti() == symbol_t::TXN_2PL);
+  release_resource();
+  verify(piece_map_.size() == 0);
+}
+
+ResultSet Txn2PL::query(Table *tbl, const MultiBlob &mb,
+                        bool retrieve, int64_t pid) {
+  verify(piece_map_.find(pid) != piece_map_.end());
+  verify(ps_cache_);
+  query_buf_t &qb = (pid == ps_cache_->pid_) ? ps_cache_->query_buf_
+                                             : piece_map_[pid]->query_buf_;
+  if (retrieve) {
+    Log_debug("query from buf, qb size: %d, pid: %lx, buf addr: %lx",
+              qb.buf.size(), pid, &qb);
+    verify(qb.buf.size() > 0);
+    verify(qb.buf.size() > qb.retrieve_index);
+    ResultSet rs = qb.buf[qb.retrieve_index++];
+    rs.reset();
+    return rs;
+  } else {
+    Log_debug("query from table, qb size: %d, pid: %lx, buf addr: %lx",
+              qb.buf.size(), pid, &qb);
+    ResultSet rs = do_query(tbl, mb);
+    qb.buf.push_back(rs);
+    verify(qb.buf.size() > 0);
+    return rs;
+  }
+}
+
+void Txn2PL::release_piece_map(bool commit) {
+  verify(piece_map_.size() != 0);
+  ps_cache_ = nullptr;
+  if (commit) {
+    for (auto &it : piece_map_) {
+      it.second->commit();
+      delete it.second;
+    }
+    piece_map_.clear();
+  }
+  else {
+    for (auto &it : piece_map_) {
+      it.second->abort();
+      delete it.second;
+    }
+    piece_map_.clear();
+  }
+}
+
+void Txn2PL::release_resource() {
+  verify(this->rtti() == symbol_t::TXN_2PL);
+  updates_.clear();
+  inserts_.clear();
+  removes_.clear();
+
+
+  // unlocking alock group
+  //for (auto &it : alock_group_list_) {
+  //    it->unlock_all();
+  //    delete it;
+  //}
+  //alock_group_list_.clear();
+
+  // unlocking rm alock group
+  //for (auto &it : rm_alock_group_list_) {
+  //    verify(it.first->rtti() == ROW_FINE);
+  //    it.second->unlock_all();
+  //    delete it.second;
+  //}
+  //rm_alock_group_list_.clear();
+
+  // unlocking
+  //for (auto& it : alocks_) {
+  //    Row* row = it.first;
+  //    if (row->rtti() == ROW_COARSE) {
+  //        verify(0);
+  //        //assert(it.second == -1);
+  //        //((CoarseLockedRow *) row)->unlock_row_by(this->id());
+  //    } else if (row->rtti() == ROW_FINE) {
+  //        column_id_t column_id = it.second.first;
+  //        uint64_t lock_req_id = it.second.second;
+  //        //((FineLockedRow *) row)->unlock_column_by(column_id, this->id());
+  //        ((FineLockedRow *) row)->unlock_column_by(column_id, lock_req_id);
+  //    } else {
+  //        // row must either be FineLockedRow or CoarseLockedRow
+  //        verify(row->rtti() == symbol_t::ROW_COARSE || row->rtti() == symbol_t::ROW_FINE);
+  //    }
+  //}
+  //alocks_.clear();
+}
+
+void Txn2PL::PieceStatus::reg_rm_lock(Row *row,
+                                      const std::function<void(void)> &succ_callback,
+                                      const std::function<void(void)> &fail_callback) {
+  rm_succ_ = false;
+  is_rw_ = false;
+  verify(row->rtti() == symbol_t::ROW_FINE);
+  FineLockedRow *fl_row = (FineLockedRow *) row;
+  for (int i = 0; i < row->schema()->columns_count(); i++)
+    rm_lock_group_.add(fl_row->get_alock(i), rrr::ALock::WLOCK);
+  rm_lock_group_.lock_all(succ_callback, fail_callback);
+}
+
+void Txn2PL::PieceStatus::reg_rw_lock(const std::vector<column_lock_t> &col_locks,
+                                      const std::function<void(void)> &succ_callback,
+                                      const std::function<void(void)> &fail_callback) {
+  rw_succ_ = false;
+  is_rw_ = true;
+  std::vector<column_lock_t>::const_iterator it;
+  for (it = col_locks.begin(); it != col_locks.end(); it++) {
+    verify(it->row->rtti() == symbol_t::ROW_FINE);
+    rw_lock_group_.add(((FineLockedRow *) it->row)->get_alock(it->column_id),
+                       it->type);
+  }
+  rw_lock_group_.lock_all(succ_callback, fail_callback);
+}
+
+// insert piece in piece_map_, set reply dragonball & set output
+void Txn2PL::init_piece(i64 tid, i64 pid, rrr::DragonBall *db,
+                        mdb::Value *output,
+                        rrr::i32 *output_size) {
+  PieceStatus *ps = new PieceStatus(tid,
+                                    pid,
+                                    db,
+                                    output,
+                                    output_size,
+                                    &wound_,
+                                    [this]() -> int {
+                                      if (prepared_) { // can't wound
+                                        return 1;
+                                      }
+                                      else {
+                                        wound_ = true;
+                                        return 0;
+                                      }
+                                    });
+  piece_map_[pid] = ps;
+  ps_cache_ = ps;
+}
+
+void Txn2PL::init_piece(i64 tid, i64 pid, rrr::DragonBall *db,
+                        std::vector<mdb::Value> *output) {
+  PieceStatus *ps = new PieceStatus(tid,
+                                    pid,
+                                    db,
+                                    output,
+                                    &wound_,
+                                    [this, tid, pid]() -> int {
+                                      if (prepared_) { // can't wound
+                                        return 1;
+                                      }
+                                      else {
+                                        wound_ = true;
+                                        return 0;
+                                      }
+                                    });
+  piece_map_[pid] = ps;
+  ps_cache_ = ps;
+}
+
+Txn2PL::PieceStatus* Txn2PL::get_piece_status(i64 pid) {
+  if (ps_cache_ == nullptr || ps_cache_->pid_ != pid) {
+    verify(piece_map_.find(pid) != piece_map_.end());
+    ps_cache_ = piece_map_[pid];
+  }
+  return ps_cache_;
+}
+
+void Txn2PL::marshal_stage(std::string &str) {
+  uint64_t len = str.size();
+
+  // marshal reads_
+  uint32_t num_reads = reads_.size();
+  str.resize(len + sizeof(num_reads));
+  memcpy((void *) (str.data() + len), (void *) &num_reads, sizeof(num_reads));
+  len += sizeof(num_reads);
+  verify(len == str.size());
+  for (auto &it : reads_) {
+    MultiBlob mb = it.first->get_key();
+    int count = mb.count();
+    str.resize(len + sizeof(count));
+    memcpy((void *) (str.data() + len), (void *) (&count), sizeof(count));
+    len += sizeof(count);
+    verify(len == str.size());
+    for (int i = 0; i < count; i++) {
+      str.resize(len + sizeof(mb[i].len) + mb[i].len);
+      memcpy((void *) (str.data() + len),
+             (void *) (&(mb[i].len)),
+             sizeof(mb[i].len));
+      len += sizeof(mb[i].len);
+      memcpy((void *) (str.data() + len), (void *) mb[i].data, mb[i].len);
+      len += mb[i].len;
+    }
+    verify(len == str.size());
+    str.resize(len + sizeof(it.second));
+    memcpy((void *) (str.data() + len),
+           (void *) (&it.second),
+           sizeof(it.second));
+    len += sizeof(it.second);
+  }
+
+  // marshal inserts_
+  uint32_t num_inserts = inserts_.size();
+  str.resize(len + sizeof(num_inserts));
+  memcpy((void *) (str.data() + len),
+         (void *) &num_inserts,
+         sizeof(num_inserts));
+  len += sizeof(num_inserts);
+  verify(len == str.size());
+  for (auto &it : inserts_) {
+    it.row->to_string(str);
+  }
+  len = str.size();
+
+  // marshal updates_
+  uint32_t num_updates = updates_.size();
+  str.resize(len + sizeof(num_updates));
+  memcpy((void *) (str.data() + len),
+         (void *) &num_updates,
+         sizeof(num_updates));
+  len += sizeof(num_updates);
+  verify(len == str.size());
+  for (auto &it : updates_) {
+    MultiBlob mb = it.first->get_key();
+    int count = mb.count();
+    str.resize(len + sizeof(count));
+    memcpy((void *) (str.data() + len), (void *) (&count), sizeof(count));
+    len += sizeof(count);
+    verify(len == str.size());
+    for (int i = 0; i < count; i++) {
+      str.resize(len + sizeof(mb[i].len) + mb[i].len);
+      memcpy((void *) (str.data() + len),
+             (void *) (&(mb[i].len)),
+             sizeof(mb[i].len));
+      len += sizeof(mb[i].len);
+      memcpy((void *) (str.data() + len), (void *) mb[i].data, mb[i].len);
+      len += mb[i].len;
+    }
+    verify(len == str.size());
+    str.resize(len + sizeof(it.second.first));
+    memcpy((void *) (str.data() + len),
+           (void *) (&it.second.first),
+           sizeof(it.second.first));
+    len += sizeof(it.second.first);
+    std::string v_str = to_string(it.second.second);
+    uint32_t v_str_len = v_str.size();
+    str.resize(len + sizeof(v_str_len) + v_str_len);
+    memcpy((void *) (str.data() + len), (void *) &v_str_len, sizeof(v_str_len));
+    len += sizeof(v_str_len);
+    memcpy((void *) (str.data() + len), (void *) v_str.data(), v_str_len);
+    len += v_str_len;
+    verify(len == str.size());
+  }
+
+  // marshal removes_
+  uint32_t num_removes = removes_.size();
+  str.resize(len + sizeof(num_removes));
+  memcpy((void *) (str.data() + len),
+         (void *) &num_removes,
+         sizeof(num_removes));
+  len += sizeof(num_removes);
+  verify(len == str.size());
+  for (auto &it : removes_) {
+    MultiBlob mb = it.row->get_key();
+    int count = mb.count();
+    str.resize(len + sizeof(count));
+    memcpy((void *) (str.data() + len), (void *) (&count), sizeof(count));
+    len += sizeof(count);
+    verify(len == str.size());
+    for (int i = 0; i < count; i++) {
+      str.resize(len + sizeof(mb[i].len) + mb[i].len);
+      memcpy((void *) (str.data() + len),
+             (void *) (&(mb[i].len)),
+             sizeof(mb[i].len));
+      len += sizeof(mb[i].len);
+      memcpy((void *) (str.data() + len), (void *) mb[i].data, mb[i].len);
+      len += mb[i].len;
+    }
+    verify(len == str.size());
+  }
+}
+
+void Txn2PL::abort() {
+  verify(this->rtti() == symbol_t::TXN_2PL);
+  verify(outcome_ == symbol_t::NONE);
+  outcome_ = symbol_t::TXN_ABORT;
+  release_resource();
+  release_piece_map(false/*abort*/);
+}
+
+//static void redirect_locks(unordered_multimap<Row*, std::pair<column_id_t, uint64_t>>& locks, Row* new_row, Row* old_row) {
+//    auto it_pair = locks.equal_range(old_row);
+//    vector<std::pair<column_id_t, uint64_t>> locked_columns;
+//    for (auto it_lock = it_pair.first; it_lock != it_pair.second; ++it_lock) {
+//        locked_columns.push_back(it_lock->second);
+//    }
+//    if (!locked_columns.empty()) {
+//        locks.erase(old_row);
+//    }
+//    for (auto& col_id : locked_columns) {
+//        insert_into_map(locks, new_row, col_id);
+//    }
+//}
+//
+
+bool Txn2PL::commit() {
+  verify(this->rtti() == symbol_t::TXN_2PL);
+  verify(outcome_ == symbol_t::NONE);
+  for (auto &it : inserts_) {
+    it.table->insert(it.row);
+  }
+  for (auto it = updates_.begin(); it != updates_.end(); /* no ++it! */) {
+    Row *row = it->first;
+    const Table *tbl = row->get_table();
+    if (tbl->rtti() == TBL_SNAPSHOT) {
+      verify(0);
+      // update on snapshot table (remove then insert)
+      Row *new_row = row->copy();
+
+      // batch update all values
+      auto it_end = updates_.upper_bound(row);
+      while (it != it_end) {
+        column_id_t column_id = it->second.first;
+        Value &value = it->second.second;
+        new_row->update(column_id, value);
+        ++it;
+      }
+
+      SnapshotTable *ss_tbl = (SnapshotTable *) tbl;
+      ss_tbl->remove(row);
+      ss_tbl->insert(new_row);
+
+      //redirect_locks(alocks_, new_row, row);
+    } else {
+      column_id_t column_id = it->second.first;
+      Value &value = it->second.second;
+      row->update(column_id, value);
+      ++it;
+    }
+  }
+
+  std::vector<Row *> rows_to_remove;
+  for (auto &it : removes_) {
+    // remove the locks since the row has gone already
+    //alocks_.erase(it.row);
+    it.table->remove(it.row,
+                     false/* DO NOT free the row until it's erased from tbl */);
+    rows_to_remove.push_back(it.row);
+  }
+  outcome_ = symbol_t::TXN_COMMIT;
+  release_resource();
+  for (auto &it : rows_to_remove)
+    it->release();
+  release_piece_map(true/*commit*/);
+  return true;
+}
+
+//void Txn2PL::reg_rm_lock_group(Row *row,
+//        const std::function<void(void)> &succ_callback,
+//        const std::function<void(void)> &fail_callback) {
+//    rrr::ALockGroup *alock_grp = new rrr::ALockGroup;
+//    std::function<void(void)> yes_callback = [this, row, succ_callback, alock_grp]()
+//    {
+//        rm_alock_group_list_.insert(std::pair<Row *, rrr::ALockGroup *>(row, alock_grp));
+//        succ_callback();
+//    };
+//    verify(row->rtti() == symbol_t::ROW_FINE);
+//    rrr::ALock *alock = ((FineLockedRow *)row)->get_alock(0);
+//    for (int i = 0; i < row->schema()->columns_count(); i++)
+//        alock_grp->add(*(alock + i), rrr::ALock::WLOCK);
+//    alock_grp->lock_all(yes_callback, fail_callback);
+//}
+//
+//void Txn2PL::reg_lock_group(const std::vector<column_lock_t> &col_locks,
+//        const std::function<void(void)> &succ_callback,
+//        const std::function<void(void)> &fail_callback) {
+//    rrr::ALockGroup *alock_grp = new rrr::ALockGroup;
+//    std::function<void(void)> yes_callback = [this, succ_callback, alock_grp]()
+//    {
+//        alock_group_list_.push_back(alock_grp);
+//        succ_callback();
+//    };
+//    std::vector<column_lock_t>::const_iterator it;
+//    for (it = col_locks.begin(); it != col_locks.end(); it++) {
+//        verify(it->row->rtti() == symbol_t::ROW_FINE);
+//        alock_grp->add(*(((FineLockedRow *)it->row)->get_alock(it->column_id)),
+//                it->type);
+//    }
+//    alock_grp->lock_all(yes_callback, fail_callback);
+//}
+//
+//void Txn2PL::reg_read_column(Row *row, column_id_t col_id, std::function<void(void)> succ_callback, std::function<void(void)> fail_callback) {
+//    verify(0);
+//    verify(row->rtti() == symbol_t::ROW_FINE);
+//    FineLockedRow* fine_row = ((FineLockedRow *) row);
+//    std::function<void(uint64_t)> yes_callback
+//        = [row, col_id, succ_callback, this] (uint64_t lock_req_id) {
+//            insert_into_map(alocks_, row,
+//                    std::pair<column_id_t, uint64_t>(col_id, lock_req_id));
+//            succ_callback();
+//        };
+//    /*uint64_t lock_req_id = */ // don't need req_id, since no abort happend
+//                                // until all locks timeout or acquired
+//    fine_row->reg_rlock(col_id, yes_callback, fail_callback);
+//}
+
+bool Txn2PL::read_column(Row *row, column_id_t col_id, Value *value) {
+  verify(this->rtti() == symbol_t::TXN_2PL);
+  assert(debug_check_row_valid(row));
+  verify(outcome_ == symbol_t::NONE);
+
+  if (row->get_table() == nullptr) {
+    // row not inserted into table, just read from staging area
+    *value = row->get_column(col_id);
+    return true;
+  }
+
+  auto eq_range = updates_.equal_range(row);
+  for (auto it = eq_range.first; it != eq_range.second; ++it) {
+    if (it->second.first == col_id) {
+      *value = it->second.second;
+      return true;
+    }
+  }
+
+  // reading from actual table data, needs locking
+  //if (row->rtti() == symbol_t::ROW_COARSE) {
+  //    CoarseLockedRow* coarse_row = (CoarseLockedRow *) row;
+  //    if (!coarse_row->rlock_row_by(this->id())) {
+  //        return false;
+  //    }
+  //    insert_into_map(locks_, row, -1);
+  //} else if (row->rtti() == symbol_t::ROW_FINE) {
+  //    FineLockedRow* fine_row = ((FineLockedRow *) row);
+  //    if (!fine_row->rlock_column_by(col_id, this->id())) {
+  //        return false;
+  //    }
+  //    insert_into_map(locks_, row, col_id);
+  //} else {
+  //    // row must either be FineLockedRow or CoarseLockedRow
+  //    verify(row->rtti() == symbol_t::ROW_COARSE || row->rtti() == symbol_t::ROW_FINE);
+  //}
+  *value = row->get_column(col_id);
+  insert_into_map(reads_, row, col_id);
+
+  return true;
+}
+
+//void Txn2PL::reg_write_column(Row *row, column_id_t col_id, std::function<void(void)> succ_callback, std::function<void(void)> fail_callback) {
+//    verify(0);
+//    verify(row->rtti() == symbol_t::ROW_FINE);
+//    FineLockedRow* fine_row = ((FineLockedRow *) row);
+//    std::function<void(uint64_t)> yes_callback
+//        = [row, col_id, succ_callback, this] (uint64_t lock_req_id) {
+//            insert_into_map(alocks_, row,
+//                    std::pair<column_id_t, uint64_t>(col_id, lock_req_id));
+//            succ_callback();
+//        };
+//
+//    /*uint64_t lock_req_id = */
+//    fine_row->reg_wlock(col_id, yes_callback, fail_callback);
+//}
+
+bool Txn2PL::write_column(Row *row, column_id_t col_id, const Value &value) {
+  verify(this->rtti() == symbol_t::TXN_2PL);
+  assert(debug_check_row_valid(row));
+  verify(outcome_ == symbol_t::NONE);
+
+  if (row->get_table() == nullptr) {
+    // row not inserted into table, just write to staging area
+    row->update(col_id, value);
+    return true;
+  }
+
+  auto eq_range = updates_.equal_range(row);
+  for (auto it = eq_range.first; it != eq_range.second; ++it) {
+    if (it->second.first == col_id) {
+      it->second.second = value;
+      return true;
+    }
+  }
+
+  // update staging area, needs locking
+  //if (row->rtti() == symbol_t::ROW_COARSE) {
+  //    CoarseLockedRow* coarse_row = (CoarseLockedRow *) row;
+  //    if (!coarse_row->wlock_row_by(this->id())) {
+  //        return false;
+  //    }
+  //    insert_into_map(locks_, row, -1);
+  //} else if (row->rtti() == symbol_t::ROW_FINE) {
+  //    FineLockedRow* fine_row = ((FineLockedRow *) row);
+  //    if (!fine_row->wlock_column_by(col_id, this->id())) {
+  //        return false;
+  //    }
+  //    insert_into_map(locks_, row, col_id);
+  //} else {
+  //    // row must either be FineLockedRow or CoarseLockedRow
+  //    verify(row->rtti() == symbol_t::ROW_COARSE || row->rtti() == symbol_t::ROW_FINE);
+  //}
+  insert_into_map(updates_, row, std::make_pair(col_id, value));
+
+  return true;
+}
+
+bool Txn2PL::insert_row(Table *tbl, Row *row) {
+  verify(this->rtti() == symbol_t::TXN_2PL);
+  verify(outcome_ == symbol_t::NONE);
+  verify(row->get_table() == nullptr);
+  inserts_.insert(table_row_pair(tbl, row));
+  removes_.erase(table_row_pair(tbl, row));
+  return true;
+}
+
+bool Txn2PL::remove_row(Table *tbl, Row *row) {
+  verify(this->rtti() == symbol_t::TXN_2PL);
+  assert(debug_check_row_valid(row));
+  verify(outcome_ == symbol_t::NONE);
+
+  // we need to sweep inserts_ to find the Row with exact pointer match
+  auto it_pair = inserts_.equal_range(table_row_pair(tbl, row));
+  auto it = it_pair.first;
+  while (it != it_pair.second) {
+    if (it->row == row) {
+      break;
+    }
+    ++it;
+  }
+
+  if (it == it_pair.second) {
+    // lock whole row, only if row is on real table
+    //if (row->rtti() == symbol_t::ROW_COARSE) {
+    //    CoarseLockedRow* coarse_row = (CoarseLockedRow *) row;
+    //    if (!coarse_row->wlock_row_by(this->id())) {
+    //        return false;
+    //    }
+    //    insert_into_map(locks_, row, -1);
+    //} else if (row->rtti() == symbol_t::ROW_FINE) {
+    //    FineLockedRow* fine_row = ((FineLockedRow *) row);
+    //    for (size_t col_id = 0; col_id < row->schema()->columns_count(); col_id++) {
+    //        if (!fine_row->wlock_column_by(col_id, this->id())) {
+    //            return false;
+    //        }
+    //        insert_into_map(locks_, row, col_id);
+    //    }
+    //} else {
+    //    // row must either be FineLockedRow or CoarseLockedRow
+    //    verify(row->rtti() == symbol_t::ROW_COARSE || row->rtti() == symbol_t::ROW_FINE);
+    //}
+    removes_.insert(table_row_pair(tbl, row));
+  } else {
+    it->row->release();
+    inserts_.erase(it);
+  }
+  updates_.erase(row);
+
+  return true;
+}
+
+
+
+ResultSet Txn2PL::do_query(Table *tbl, const MultiBlob &mb) {
+  MergedCursor *merged_cursor = nullptr;
+  KeyOnlySearchRow key_search_row(tbl->schema(), &mb);
+
+  auto inserts_begin =
+      inserts_.lower_bound(table_row_pair(tbl, &key_search_row));
+  auto inserts_end = inserts_.upper_bound(table_row_pair(tbl, &key_search_row));
+
+  Enumerator<const Row *> *cursor = nullptr;
+  if (tbl->rtti() == TBL_UNSORTED) {
+    UnsortedTable *t = (UnsortedTable *) tbl;
+    cursor = new UnsortedTable::Cursor(t->query(mb));
+  } else if (tbl->rtti() == TBL_SORTED) {
+    SortedTable *t = (SortedTable *) tbl;
+    cursor = new SortedTable::Cursor(t->query(mb));
+  } else if (tbl->rtti() == TBL_SNAPSHOT) {
+    SnapshotTable *t = (SnapshotTable *) tbl;
+    cursor = new SnapshotTable::Cursor(t->query(mb));
+  } else {
+    verify(tbl->rtti() == TBL_UNSORTED || tbl->rtti() == TBL_SORTED
+               || tbl->rtti() == TBL_SNAPSHOT);
+  }
+  merged_cursor =
+      new MergedCursor(tbl, cursor, inserts_begin, inserts_end, removes_);
+
+  return ResultSet(merged_cursor);
+}
+
+
+ResultSet Txn2PL::do_query_lt(Table *tbl,
+                              const SortedMultiKey &smk,
+                              symbol_t order /* =? */) {
+  verify(order == symbol_t::ORD_ASC || order == symbol_t::ORD_DESC
+             || order == symbol_t::ORD_ANY);
+
+  Enumerator<const Row *> *cursor = nullptr;
+  if (tbl->rtti() == TBL_SORTED) {
+    SortedTable *t = (SortedTable *) tbl;
+    cursor = new SortedTable::Cursor(t->query_lt(smk, order));
+  } else if (tbl->rtti() == TBL_SNAPSHOT) {
+    SnapshotTable *t = (SnapshotTable *) tbl;
+    cursor = new SnapshotTable::Cursor(t->query_lt(smk, order));
+  } else {
+    // range query only works on sorted and snapshot table
+    verify(tbl->rtti() == TBL_SORTED || tbl->rtti() == TBL_SNAPSHOT);
+  }
+
+  KeyOnlySearchRow key_search_row(tbl->schema(), &smk.get_multi_blob());
+  auto inserts_begin =
+      inserts_.lower_bound(table_row_pair(tbl, table_row_pair::ROW_MIN));
+  auto inserts_end = inserts_.lower_bound(table_row_pair(tbl, &key_search_row));
+  MergedCursor *merged_cursor = nullptr;
+
+  if (order == symbol_t::ORD_DESC) {
+    auto inserts_rbegin =
+        std::multiset<table_row_pair>::const_reverse_iterator(inserts_end);
+    auto inserts_rend =
+        std::multiset<table_row_pair>::const_reverse_iterator(inserts_begin);
+    merged_cursor =
+        new MergedCursor(tbl, cursor, inserts_rbegin, inserts_rend, removes_);
+
+  } else {
+    merged_cursor =
+        new MergedCursor(tbl, cursor, inserts_begin, inserts_end, removes_);
+  }
+
+  return ResultSet(merged_cursor);
+}
+
+ResultSet Txn2PL::do_query_gt(Table *tbl,
+                              const SortedMultiKey &smk,
+                              symbol_t order /* =? */) {
+  verify(order == symbol_t::ORD_ASC || order == symbol_t::ORD_DESC
+             || order == symbol_t::ORD_ANY);
+
+  Enumerator<const Row *> *cursor = nullptr;
+  if (tbl->rtti() == TBL_SORTED) {
+    SortedTable *t = (SortedTable *) tbl;
+    cursor = new SortedTable::Cursor(t->query_gt(smk, order));
+  } else if (tbl->rtti() == TBL_SNAPSHOT) {
+    SnapshotTable *t = (SnapshotTable *) tbl;
+    cursor = new SnapshotTable::Cursor(t->query_gt(smk, order));
+  } else {
+    // range query only works on sorted and snapshot table
+    verify(tbl->rtti() == TBL_SORTED || tbl->rtti() == TBL_SNAPSHOT);
+  }
+
+  KeyOnlySearchRow key_search_row(tbl->schema(), &smk.get_multi_blob());
+  auto inserts_begin =
+      inserts_.upper_bound(table_row_pair(tbl, &key_search_row));
+  auto inserts_end =
+      inserts_.upper_bound(table_row_pair(tbl, table_row_pair::ROW_MAX));
+  MergedCursor *merged_cursor = nullptr;
+
+  if (order == symbol_t::ORD_DESC) {
+    auto inserts_rbegin =
+        std::multiset<table_row_pair>::const_reverse_iterator(inserts_end);
+    auto inserts_rend =
+        std::multiset<table_row_pair>::const_reverse_iterator(inserts_begin);
+    merged_cursor =
+        new MergedCursor(tbl, cursor, inserts_rbegin, inserts_rend, removes_);
+
+  } else {
+    merged_cursor =
+        new MergedCursor(tbl, cursor, inserts_begin, inserts_end, removes_);
+  }
+
+  return ResultSet(merged_cursor);
+}
+
+ResultSet Txn2PL::do_query_in(Table *tbl,
+                              const SortedMultiKey &low,
+                              const SortedMultiKey &high,
+                              symbol_t order /* =? */) {
+  verify(order == symbol_t::ORD_ASC || order == symbol_t::ORD_DESC
+             || order == symbol_t::ORD_ANY);
+
+  Enumerator<const Row *> *cursor = nullptr;
+  if (tbl->rtti() == TBL_SORTED) {
+    SortedTable *t = (SortedTable *) tbl;
+    cursor = new SortedTable::Cursor(t->query_in(low, high, order));
+  } else if (tbl->rtti() == TBL_SNAPSHOT) {
+    SnapshotTable *t = (SnapshotTable *) tbl;
+    cursor = new SnapshotTable::Cursor(t->query_in(low, high, order));
+  } else {
+    // range query only works on sorted and snapshot table
+    verify(tbl->rtti() == TBL_SORTED || tbl->rtti() == TBL_SNAPSHOT);
+  }
+
+  MergedCursor *merged_cursor = nullptr;
+  KeyOnlySearchRow key_search_row_low(tbl->schema(), &low.get_multi_blob());
+  KeyOnlySearchRow key_search_row_high(tbl->schema(), &high.get_multi_blob());
+  auto inserts_begin =
+      inserts_.upper_bound(table_row_pair(tbl, &key_search_row_low));
+  auto inserts_end =
+      inserts_.lower_bound(table_row_pair(tbl, &key_search_row_high));
+
+  if (order == symbol_t::ORD_DESC) {
+    auto inserts_rbegin =
+        std::multiset<table_row_pair>::const_reverse_iterator(inserts_end);
+    auto inserts_rend =
+        std::multiset<table_row_pair>::const_reverse_iterator(inserts_begin);
+    merged_cursor =
+        new MergedCursor(tbl, cursor, inserts_rbegin, inserts_rend, removes_);
+
+  } else {
+    merged_cursor =
+        new MergedCursor(tbl, cursor, inserts_begin, inserts_end, removes_);
+  }
+
+  return ResultSet(merged_cursor);
+}
+
+
+ResultSet Txn2PL::do_all(Table *tbl, symbol_t order /* =? */) {
+  verify(order == symbol_t::ORD_ASC || order == symbol_t::ORD_DESC
+             || order == symbol_t::ORD_ANY);
+
+  Enumerator<const Row *> *cursor = nullptr;
+  if (tbl->rtti() == TBL_UNSORTED) {
+    // unsorted tables only accept ORD_ANY
+    verify(order == symbol_t::ORD_ANY);
+    UnsortedTable *t = (UnsortedTable *) tbl;
+    cursor = new UnsortedTable::Cursor(t->all());
+  } else if (tbl->rtti() == TBL_SORTED) {
+    SortedTable *t = (SortedTable *) tbl;
+    cursor = new SortedTable::Cursor(t->all(order));
+  } else if (tbl->rtti() == TBL_SNAPSHOT) {
+    SnapshotTable *t = (SnapshotTable *) tbl;
+    cursor = new SnapshotTable::Cursor(t->all(order));
+  } else {
+    verify(tbl->rtti() == TBL_UNSORTED || tbl->rtti() == TBL_SORTED
+               || tbl->rtti() == TBL_SNAPSHOT);
+  }
+
+  MergedCursor *merged_cursor = nullptr;
+  auto inserts_begin =
+      inserts_.lower_bound(table_row_pair(tbl, table_row_pair::ROW_MIN));
+  auto inserts_end =
+      inserts_.upper_bound(table_row_pair(tbl, table_row_pair::ROW_MAX));
+
+  if (order == symbol_t::ORD_DESC) {
+    auto inserts_rbegin =
+        std::multiset<table_row_pair>::const_reverse_iterator(inserts_end);
+    auto inserts_rend =
+        std::multiset<table_row_pair>::const_reverse_iterator(inserts_begin);
+    merged_cursor =
+        new MergedCursor(tbl, cursor, inserts_rbegin, inserts_rend, removes_);
+  } else {
+    merged_cursor =
+        new MergedCursor(tbl, cursor, inserts_begin, inserts_end, removes_);
+  }
+
+  return ResultSet(merged_cursor);
+}
+
+
+
+} // namespace mdb

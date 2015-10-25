@@ -35,7 +35,9 @@ Coordinator::Coordinator(uint32_t coo_id,
                                                site_prepare_(addrs.size(), 0),
                                                site_commit_(addrs.size(), 0),
                                                site_abort_(addrs.size(), 0),
-                                               site_piece_(addrs.size(), 0) {
+                                               site_piece_(addrs.size(), 0),
+                                               mtx_(),
+                                               start_mtx_() {
   uint64_t k = coo_id_;
 
   k <<= 32;
@@ -156,6 +158,7 @@ void Coordinator::restart(TxnChopper *ch) {
 }
 
 void Coordinator::Start() {
+  std::lock_guard<std::mutex> lock(start_mtx_);
   StartRequest req;
   req.cmd_id = cmd_id_;
   Command* subcmd;

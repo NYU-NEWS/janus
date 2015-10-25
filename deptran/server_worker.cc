@@ -4,6 +4,7 @@
 #include "benchmark_control_rpc.h"
 #include "sharding.h"
 #include "dtxn_mgr.h"
+#include "frame.h"
 
 
 namespace rococo {
@@ -39,8 +40,9 @@ void ServerWorker::PopTable() {
   // TODO this needs to be done before poping table
   int running_mode = Config::GetConfig()->get_mode();
   verify(txn_reg_);
-  txn_mgr_ = DTxnMgr::CreateTxnMgr(site_info_->id);
+  txn_mgr_ = Frame().CreateDTxnMgr();
   txn_mgr_->txn_reg_ = txn_reg_;
+  sharding_->dtxn_mgr_ = txn_mgr_;
 
   // populate table
   auto par_id = site_info_->par_id;

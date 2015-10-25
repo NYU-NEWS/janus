@@ -50,15 +50,6 @@ class DTxnMgr {
                  mdb::Table *tbl
   );
 
-//  static DTxnMgr *txn_mgr_s;
-  static map<uint32_t, DTxnMgr*> txn_mgrs_s;
-  static DTxnMgr* CreateTxnMgr(uint32_t site_id);
-  static DTxnMgr* GetTxnMgr(uint32_t site_id);
-
-//  static DTxnMgr *get_sole_mgr() {
-//    verify(txn_mgr_s != NULL);
-//    return txn_mgr_s;
-//  }
 };
 
 

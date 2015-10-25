@@ -79,6 +79,8 @@ using rrr::Marshal;
 #include "memdb/schema.h"
 #include "memdb/table.h"
 #include "memdb/txn.h"
+#include "memdb/txn_2pl.h"
+#include "memdb/txn_occ.h"
 #include "memdb/utils.h"
 #include "memdb/row.h"
 using mdb::Value;
