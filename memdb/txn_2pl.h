@@ -74,6 +74,7 @@ class Txn2PL: public Txn {
     bool *wound_;
 
     query_buf_t query_buf_;
+    Txn2PL *txn_;
 
     PieceStatus() : rw_lock_group_(0), rm_lock_group_(0) {
       verify(0);
@@ -87,7 +88,8 @@ class Txn2PL: public Txn {
    public:
     PieceStatus(i64 tid, i64 pid, rrr::DragonBall *db, mdb::Value *output,
                 rrr::i32 *output_size, bool *wound,
-                const std::function<int(void)> &wound_callback) :
+                const std::function<int(void)> &wound_callback,
+                Txn2PL* txn) :
         pid_(pid),
         num_waiting_(1),
         num_acquired_(0),
@@ -103,12 +105,14 @@ class Txn2PL: public Txn {
         rm_lock_group_(swap_bits(tid), wound_callback),
         is_rw_(false),
         wound_(wound),
-        query_buf_(query_buf_t()){
+        query_buf_(query_buf_t()),
+        txn_(txn) {
     }
 
     PieceStatus(i64 tid, i64 pid, rrr::DragonBall *db,
                 std::vector<mdb::Value> *output, bool *wound,
-                const std::function<int(void)> &wound_callback) :
+                const std::function<int(void)> &wound_callback,
+                Txn2PL* txn) :
         pid_(pid),
         num_waiting_(1),
         num_acquired_(0),
@@ -124,7 +128,8 @@ class Txn2PL: public Txn {
         rm_lock_group_(swap_bits(tid), wound_callback),
         is_rw_(false),
         wound_(wound),
-        query_buf_(query_buf_t()){
+        query_buf_(query_buf_t()),
+        txn_(txn) {
     }
 
     ~PieceStatus() {
@@ -174,7 +179,7 @@ class Txn2PL: public Txn {
     }
 
     void start_yes_callback() {
-      ps_cache_ = this;
+      txn_->SetPsCache(this);
       num_acquired_++;
       verify(num_acquired_ <= num_waiting_);
       if (is_rw_)
@@ -184,7 +189,7 @@ class Txn2PL: public Txn {
     }
 
     void start_no_callback() {
-      ps_cache_ = this;
+      txn_->SetPsCache(this);
       num_acquired_++;
       rej_ = true;
       verify(num_acquired_ <= num_waiting_);
@@ -216,14 +221,18 @@ class Txn2PL: public Txn {
   bool wound_, prepared_;
 
   std::unordered_map<i64, PieceStatus *> piece_map_;
+  static PieceStatus *ps_cache_s; // TODO fix
+  PieceStatus *ps_cache_; // TODO fix
 
  public:
-  static PieceStatus *ps_cache_; // TODO fix
 
   Txn2PL() = delete;
   Txn2PL(const TxnMgr *mgr, txn_id_t txnid);
   ~Txn2PL();
 
+  PieceStatus* ps_cache();
+  void SetPsCache(PieceStatus*);
+  query_buf_t& GetQueryBuf(int64_t);
   virtual bool commit_prepare() {
     prepared_ = true;
     if (wound_)
@@ -234,10 +243,6 @@ class Txn2PL: public Txn {
 
   bool is_wound() {
     return wound_;
-  }
-
-  PieceStatus *get_cached_piece_status() {
-    return ps_cache_;
   }
 
   virtual symbol_t rtti() const {
@@ -294,8 +299,7 @@ class Txn2PL: public Txn {
                              bool retrieve,
                              int64_t pid,
                              symbol_t order = symbol_t::ORD_ASC) {
-    query_buf_t &qb = (pid == ps_cache_->pid_) ? ps_cache_->query_buf_
-                                               : piece_map_[pid]->query_buf_;
+    query_buf_t &qb = GetQueryBuf(pid);
     if (retrieve) {
       ResultSet rs = qb.buf[qb.retrieve_index++];
       rs.reset();
@@ -317,9 +321,7 @@ class Txn2PL: public Txn {
                              bool retrieve,
                              int64_t pid,
                              symbol_t order = symbol_t::ORD_ASC) {
-    verify(ps_cache_);
-    query_buf_t &qb = (pid == ps_cache_->pid_) ? ps_cache_->query_buf_
-                                               : piece_map_[pid]->query_buf_;
+    query_buf_t &qb = GetQueryBuf(pid);
     if (retrieve) {
       ResultSet rs = qb.buf[qb.retrieve_index++];
       rs.reset();
@@ -343,8 +345,7 @@ class Txn2PL: public Txn {
                              bool retrieve,
                              int64_t pid,
                              symbol_t order = symbol_t::ORD_ASC) {
-    query_buf_t &qb = (pid == ps_cache_->pid_) ? ps_cache_->query_buf_
-                                               : piece_map_[pid]->query_buf_;
+    query_buf_t &qb = GetQueryBuf(pid);
     if (retrieve) {
       ResultSet rs = qb.buf[qb.retrieve_index++];
       rs.reset();
@@ -363,9 +364,7 @@ class Txn2PL: public Txn {
                         bool retrieve,
                         int64_t pid,
                         symbol_t order = symbol_t::ORD_ANY) {
-    verify(ps_cache_);
-    query_buf_t &qb = (pid == ps_cache_->pid_) ? ps_cache_->query_buf_
-                                               : piece_map_[pid]->query_buf_;
+    query_buf_t &qb = GetQueryBuf(pid);
     if (retrieve) {
       ResultSet rs = qb.buf[qb.retrieve_index++];
       rs.reset();

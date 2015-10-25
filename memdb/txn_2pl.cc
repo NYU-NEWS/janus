@@ -9,14 +9,34 @@
 
 namespace mdb {
 
-Txn2PL::PieceStatus *Txn2PL::ps_cache_ = NULL;
+Txn2PL::PieceStatus *Txn2PL::ps_cache_s = NULL;
+
+Txn2PL::PieceStatus* Txn2PL::ps_cache() {
+  verify(ps_cache_ == ps_cache_s);
+  return ps_cache_;
+}
+
+void Txn2PL::SetPsCache(PieceStatus* ps) {
+  verify(ps_cache_ == ps_cache_s);
+  ps_cache_s = ps;
+  ps_cache_ = ps;
+}
+
+query_buf_t& Txn2PL::GetQueryBuf(int64_t pid) {
+  verify(ps_cache_);
+  verify(piece_map_.find(pid) != piece_map_.end());
+  query_buf_t &qb = (pid == ps_cache()->pid_) ? ps_cache()->query_buf_
+                                              : piece_map_[pid]->query_buf_;
+  return qb;
+}
+
 
 Txn2PL::Txn2PL(const TxnMgr *mgr, txn_id_t txnid) :
     Txn(mgr, txnid),
     outcome_(symbol_t::NONE),
     wound_(false),
     prepared_(false),
-//      ps_cache_(nullptr),
+    ps_cache_(nullptr),
     piece_map_(std::unordered_map<i64, PieceStatus *>()) {
 }
 
@@ -28,10 +48,7 @@ Txn2PL::~Txn2PL() {
 
 ResultSet Txn2PL::query(Table *tbl, const MultiBlob &mb,
                         bool retrieve, int64_t pid) {
-  verify(piece_map_.find(pid) != piece_map_.end());
-  verify(ps_cache_);
-  query_buf_t &qb = (pid == ps_cache_->pid_) ? ps_cache_->query_buf_
-                                             : piece_map_[pid]->query_buf_;
+  query_buf_t &qb = GetQueryBuf(pid);
   if (retrieve) {
     Log_debug("query from buf, qb size: %d, pid: %lx, buf addr: %lx",
               qb.buf.size(), pid, &qb);
@@ -52,7 +69,7 @@ ResultSet Txn2PL::query(Table *tbl, const MultiBlob &mb,
 
 void Txn2PL::release_piece_map(bool commit) {
   verify(piece_map_.size() != 0);
-  ps_cache_ = nullptr;
+  SetPsCache(nullptr);
   if (commit) {
     for (auto &it : piece_map_) {
       it.second->commit();
@@ -155,9 +172,10 @@ void Txn2PL::init_piece(i64 tid, i64 pid, rrr::DragonBall *db,
                                         wound_ = true;
                                         return 0;
                                       }
-                                    });
+                                    },
+                                    this);
   piece_map_[pid] = ps;
-  ps_cache_ = ps;
+  SetPsCache(ps);
 }
 
 void Txn2PL::init_piece(i64 tid, i64 pid, rrr::DragonBall *db,
@@ -175,17 +193,18 @@ void Txn2PL::init_piece(i64 tid, i64 pid, rrr::DragonBall *db,
                                         wound_ = true;
                                         return 0;
                                       }
-                                    });
+                                    },
+                                    this);
   piece_map_[pid] = ps;
-  ps_cache_ = ps;
+  SetPsCache(ps);
 }
 
 Txn2PL::PieceStatus* Txn2PL::get_piece_status(i64 pid) {
-  if (ps_cache_ == nullptr || ps_cache_->pid_ != pid) {
+  if (ps_cache() == nullptr || ps_cache()->pid_ != pid) {
     verify(piece_map_.find(pid) != piece_map_.end());
-    ps_cache_ = piece_map_[pid];
+    SetPsCache(piece_map_[pid]);
   }
-  return ps_cache_;
+  return ps_cache();
 }
 
 void Txn2PL::marshal_stage(std::string &str) {
