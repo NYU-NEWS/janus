@@ -10,7 +10,7 @@ namespace rococo {
 //}
 
 void ClientWorker::callback2(TxnReply &txn_reply) {
-  TIMER_IF_NOT_END {
+  if (timer_->elapsed() < duration) {
     TxnRequest req;
     txn_req_factory_->get_txn_req(&req, coo_id);
     req.callback_ = std::bind(&ClientWorker::callback2, this,
@@ -34,7 +34,8 @@ void ClientWorker::work() {
   Coordinator *coo = GetCoord();
   if (ccsi) ccsi->wait_for_start(id);
 
-  TIMER_SET(duration);
+  timer_ = new Timer();
+  timer_->start();
   verify(n_outstanding_ == 1);
   for (uint32_t n_txn = 0; n_txn < n_outstanding_; n_txn++) {
     TxnRequest req;

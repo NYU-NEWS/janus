@@ -18,7 +18,7 @@ site:
   client: # each line is a partition
 #     - ["c1"]
     - ["c1", "c2"]
-#    - ["c3", "c4"]
+    - ["c3", "c4"]
 
 # site - process map
 process:
@@ -29,9 +29,9 @@ process:
 #  s301: localhost
 #  s302: localhost
   c1: localhost
-#  c2: localhost
-#  c3: localhost
-#  c4: localhost
+  c2: localhost
+  c3: localhost
+  c4: localhost
 
 # process - host map
 host:

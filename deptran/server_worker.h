@@ -33,8 +33,8 @@ class ServerWorker {
   void SetupHeartbeat();
   void PopTable();
   void SetupService();
-
   void RegPiece();
+  void ShutDown();
 };
 
 

@@ -197,14 +197,17 @@ void ServerWorker::SetupService() {
   Log::info("asking other server finish request count: %d",
             ((DepTranServiceImpl *) rsi_g)->n_asking_);
 
-  // TODO move this to somewhere else
-//  delete svr_server_g;
-//  delete rsi_g;
-//  thread_pool_g->release();
-//  svr_poll_mgr_g->release();
+}
+
+void ServerWorker::ShutDown() {
+
+  // TODO
+  delete svr_server_g;
+  delete rsi_g;
+  thread_pool_g->release();
+  svr_poll_mgr_g->release();
 //  delete DTxnMgr::get_sole_mgr();
 //  RandomGenerator::destroy();
 //  Config::DestroyConfig();
 }
-
 } // namespace rococo

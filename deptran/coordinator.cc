@@ -190,17 +190,24 @@ bool Coordinator::AllStartAckCollected() {
 void Coordinator::StartAck(StartReply &reply, const phase_t &phase) {
   ScopedLock(this->mtx_);
   if (phase != phase_) return;
+
+  TxnChopper *ch = (TxnChopper *)cmd_;
+  ch->n_started_++; // TODO replace this
+  ch->n_start_sent_--;
+
   Log_debug("get start ack for cmd_id: %lx, inn_id: %d",
             cmd_id_, reply.cmd->inn_id_);
   start_ack_map_[reply.cmd->inn_id_] = true;
   if (reply.res == REJECT) {
-    phase_++; 
-//    groups_ = cmd_.GetGroups();
-    Abort(); 
+    ch->commit_.store(false);
+  }
+  if (!ch->commit_.load()) {
+    if (ch->n_start_sent_ == 0) {
+      phase_++;
+      this->Finish();
+    }
   } else {
     cmd_->Merge(*reply.cmd);
-    TxnChopper *ch = (TxnChopper *)cmd_;
-    ch->n_started_++; // TODO replace this
     if (cmd_->HasMoreSubCmd(cmd_map_)) {
       Log_debug("command has more sub-cmd, cmd_id: %lx,"
                     " n_started_: %d, n_pieces: %d",

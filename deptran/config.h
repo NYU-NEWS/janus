@@ -137,7 +137,7 @@ class Config {
 
  protected:
 
-  Config();
+  Config() = default;
 
   Config(char *ctrl_hostname,
          uint32_t ctrl_port,

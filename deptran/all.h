@@ -40,7 +40,6 @@ static dummy_class dummy___;
 #include "rcc_service.h"
 #include "coordinator.h"
 #include "sharding.h"
-#include "timer.h"
 #include "benchmark_control_rpc.h"
 #include "piece.h"
 #include "txn_req_factory.h"

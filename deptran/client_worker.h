@@ -24,6 +24,7 @@ class ClientWorker {
   Coordinator *coo_;
   std::atomic<uint32_t> num_txn, success, num_try;
   TxnRequestFactory* txn_req_factory_;
+  Timer *timer_;
  public:
   ClientWorker() = default;
 

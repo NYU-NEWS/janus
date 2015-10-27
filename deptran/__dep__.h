@@ -26,6 +26,8 @@ using std::vector;
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <signal.h>
+
 
 // boost library
 #include <boost/any.hpp>

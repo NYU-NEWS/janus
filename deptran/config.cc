@@ -214,7 +214,7 @@ void Config::DestroyConfig() {
   }
 }
 
-Config::Config() {}
+//Config::Config() {}
 
 Config::Config(char           *ctrl_hostname,
                uint32_t        ctrl_port,
@@ -235,7 +235,39 @@ Config::Config(char           *ctrl_hostname,
   heart_beat_(heart_beat),
   single_server_(single_server),
   logging_path_(logging_path),
-  retry_wait_(false) {
+  retry_wait_(false),
+  next_site_id_(0),
+  site_infos_(map<string, SiteInfo*>()),
+  par_servers_(vector<vector<string>>()),
+  par_clients_(vector<vector<string>>()),
+  proc_host_map_(map<string, string>()),
+  sharding_(nullptr),
+  config_paths_(vector<string>()),
+  mode_(0),
+  proc_id_(0),
+  benchmark_(0),
+  scale_factor_(1),
+  txn_weight_(vector<double>()),
+  txn_weights_(map<string, double>()),
+  proc_name_(string()),
+  batch_start_(false),
+  early_return_(false),
+  concurrent_txn_(1),
+  max_retry_(1),
+  num_site_(0),
+  start_coordinator_id_(0),
+  site_(vector<string>()),
+  site_threads_(vector<uint32_t>()),
+  num_coordinator_threads_(1),
+  sid_(1),
+  cid_(1),
+  server_or_client_(1)
+{
+
+  uint32_t num_coordinator_threads_;
+  uint32_t sid_;
+  uint32_t cid_;
+  uint32_t server_or_client_;
 
 }
 
