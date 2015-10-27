@@ -113,7 +113,7 @@ public:
 
 class Mutex: public Lockable {
 public:
-    Mutex() {
+    Mutex() : m_() {
         pthread_mutexattr_t attr;
         pthread_mutexattr_init(&attr);
         pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_ERRORCHECK);
@@ -145,7 +145,7 @@ private:
 
 class CondVar: public NoCopy {
 public:
-    CondVar() {
+    CondVar() : cv_() {
         Pthread_cond_init(&cv_, nullptr);
 
     }
@@ -175,6 +175,8 @@ class ScopedLock: public NoCopy {
 public:
     explicit ScopedLock(Lockable* lock): m_(lock) { m_->lock(); }
     explicit ScopedLock(Lockable& lock): m_(&lock) { m_->lock(); }
+    ScopedLock(const ScopedLock&) = delete;
+    ScopedLock& operator=(const ScopedLock&) = delete;
     ~ScopedLock() { m_->unlock(); }
 private:
     Lockable* m_;
@@ -192,10 +194,12 @@ class Queue: public NoCopy {
 
 public:
 
-    Queue(): q_(new std::list<T>) {
+    Queue(): q_(new std::list<T>), not_empty_(), m_() {
         Pthread_mutex_init(&m_, nullptr);
         Pthread_cond_init(&not_empty_, nullptr);
     }
+    Queue(const Queue&) = delete;
+    Queue& operator=(const Queue&) = delete;
 
     ~Queue() {
         Pthread_cond_destroy(&not_empty_);
@@ -261,6 +265,8 @@ protected:
 
 public:
     ThreadPool(int n = get_ncpu() * 2);
+    ThreadPool(const ThreadPool&) = delete;
+    ThreadPool& operator=(const ThreadPool&) = delete;
 
     // return 0 when queuing ok, otherwise EPERM
     int run_async(const std::function<void()>&);

@@ -45,6 +45,8 @@ protected:
 public:
 
     PollMgr(int n_threads = 1);
+    PollMgr(const PollMgr&) = delete;
+    PollMgr& operator=(const PollMgr&) = delete;
 
     void add(Pollable*);
     void remove(Pollable*);

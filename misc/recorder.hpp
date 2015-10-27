@@ -39,7 +39,8 @@ public:
     AvgStat stat_sz_;
 
     Recorder(const char *path);
-
+    Recorder(const Recorder&) = delete;
+    Recorder& operator=(const Recorder&) = delete;
     //    void submit(const std::string &buf);
 
     void submit(const std::string &buf, 

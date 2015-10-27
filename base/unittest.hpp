@@ -10,7 +10,10 @@ class TestCase {
     const char* name_;
     int failures_;
 public:
-    TestCase(const char* _group, const char* _name): group_(_group), name_(_name), failures_(0) { }
+    TestCase(const TestCase&) = delete;
+    TestCase& operator=(const TestCase&) = delete;
+    TestCase(const char* _group, const char* _name)
+        : group_(_group), name_(_name), failures_(0) { }
     virtual ~TestCase() {}
     virtual void run() = 0;
     const char* group() { return group_; }
@@ -22,7 +25,7 @@ public:
 
 // singleton
 class TestMgr {
-    TestMgr() { }
+    TestMgr() :tests_() { }
     static TestMgr* instance_s;
     std::vector<TestCase*> tests_;
 public:

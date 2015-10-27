@@ -131,7 +131,7 @@ public:
 
 class Timer {
 public:
-    Timer() { reset(); }
+    Timer();
     void start();
     void stop();
     void reset();

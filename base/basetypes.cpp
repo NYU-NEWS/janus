@@ -227,6 +227,9 @@ i64 SparseInt::load_i64(const char* buf) {
     return val;
 }
 
+Timer::Timer() : begin_(), end_() {
+    reset();
+}
 
 void Timer::start() {
     reset();
@@ -255,7 +258,7 @@ double Timer::elapsed() const {
     return end_.tv_sec - begin_.tv_sec + (end_.tv_usec - begin_.tv_usec) / 1000000.0;
 }
 
-Rand::Rand() {
+Rand::Rand() : rand_() {
     struct timeval now;
     gettimeofday(&now, nullptr);
     rand_.seed(now.tv_sec + now.tv_usec + (long long) pthread_self() + (long long) this);

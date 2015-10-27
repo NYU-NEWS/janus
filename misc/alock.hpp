@@ -107,11 +107,7 @@ protected:
         std::function<void(void)> no_callback;
         lock_req_status_t status;
 
-        lock_req_t() {
-            id = 0;
-            priority = 0;
-            type = WLOCK;
-            status = WAIT;
+        lock_req_t(): id(0), priority(0), type(WLOCK), status(WAIT) {
         }
 
         lock_req_t(uint64_t _id,

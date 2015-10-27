@@ -96,7 +96,8 @@ public:
     void remove(FrequentJob*);
 };
 
-PollMgr::PollMgr(int n_threads /* =... */): n_threads_(n_threads) {
+PollMgr::PollMgr(int n_threads /* =... */)
+    : n_threads_(n_threads), poll_threads_() {
     verify(n_threads_ > 0);
     poll_threads_ = new PollThread[n_threads_];
     for (int i = 0; i < n_threads_; i++) {
