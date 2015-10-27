@@ -60,7 +60,7 @@ void client_launch_workers() {
     auto &worker = workers[thread_index];
     worker.txn_req_factory_ = new TxnRequestFactory(Config::GetConfig()->sharding_);
     workers[thread_index].servers = &servers;
-    workers[thread_index].cooXF___id = infos[thread_index]->id;
+    workers[thread_index].coo_id = infos[thread_index]->id;
     workers[thread_index].benchmark = benchmark;
     workers[thread_index].mode = mode;
     workers[thread_index].batch_start = batch_start;
