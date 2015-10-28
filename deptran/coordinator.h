@@ -22,6 +22,13 @@ class Coordinator {
   bool batch_optimal_;
   bool retry_wait_;
 
+  uint32_t n_start_ = 0;
+  uint32_t n_start_ack_ = 0;
+  uint32_t n_prepare_req_ = 0;
+  uint32_t n_prepare_ack_ = 0;
+  uint32_t n_finish_req_ = 0;
+  uint32_t n_finish_ack_ = 0;
+
   std::atomic<uint64_t> next_pie_id_;
   std::atomic<uint64_t> next_txn_id_;
 
@@ -32,7 +39,7 @@ class Coordinator {
   Command *cmd_; 
   cmdid_t cmd_id_;
   phase_t phase_;
-  map<innid_t, Command*> cmd_map_;
+//  map<innid_t, Command*> cmd_map_;
   map<innid_t, bool> start_ack_map_;
   Sharding* sharding_ = nullptr;
 

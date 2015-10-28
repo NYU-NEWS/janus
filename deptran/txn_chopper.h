@@ -74,20 +74,19 @@ protected:
 
   std::vector<std::vector<mdb::Value> > inputs_;  // input of each piece.
   //std::vector<std::vector<mdb::Value> > outputs_; // output of each piece.
-  std::vector<size_t> output_size_;
+  std::vector<int32_t> output_size_;
   std::vector<int32_t> p_types_;                  // types of each piece.
   std::atomic<bool> commit_;
   std::vector<uint32_t> sharding_;
   /** which server to which piece */
   std::vector<int> status_; // -1 waiting; 0 ready; 1 ongoing; 2 finished;
-  std::set<int32_t> proxies_;
+  std::vector<Command*> cmd_vec_;
+  std::set<parid_t> partitions_;
   /** server involved*/
 
-  int n_start_sent_ = 0;
-  int n_pieces_ = 0;
-  int n_started_ = 0;
+  int n_pieces_all_ = 0;
+  int n_pieces_out_ = 0;
   /** finished pieces counting */
-  int n_prepared_ = 0;
   int n_finished_ = 0;
 
   int max_try_ = 0;
@@ -138,8 +137,9 @@ protected:
 
   virtual bool IsFinished(){verify(0);}
   virtual void Merge(Command&);
-  virtual bool HasMoreSubCmd(std::map<innid_t, Command*>&);
-  virtual Command* GetNextSubCmd(std::map<innid_t, Command*>&);
+  virtual bool HasMoreSubCmd();
+  virtual Command* GetNextSubCmd();
+  virtual set<parid_t> GetPars();
 
   inline bool can_retry() {
     return (max_try_ == 0 || n_try_ < max_try_);

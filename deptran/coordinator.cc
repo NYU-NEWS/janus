@@ -161,10 +161,14 @@ void Coordinator::rpc_null_start(TxnChopper *ch) {
 }
 
 void Coordinator::cleanup() {
-  cmd_map_.clear();
+  n_start_ = 0;
+  n_start_ack_ = 0;
+  n_prepare_req_ = 0;
+  n_prepare_ack_ = 0;
+  n_finish_req_ = 0;
+  n_finish_ack_ = 0;
   start_ack_map_.clear();
   TxnChopper *ch = (TxnChopper *) cmd_;
-  if (ch) ch->n_start_sent_ = 0; // TODO remove
 }
 
 void Coordinator::restart(TxnChopper *ch) {
@@ -190,16 +194,15 @@ void Coordinator::Start() {
   std::function<void(StartReply &)> callback = [this, phase](StartReply &reply) {
     this->StartAck(reply, phase);
   };
-  while ((subcmd = cmd_->GetNextSubCmd(cmd_map_)) != nullptr) {
+  while ((subcmd = cmd_->GetNextSubCmd()) != nullptr) {
     req.pie_id = next_pie_id();
     Log_debug("send out start request, "
                   "cmd_id: %lx, inn_id: %d, pie_id: %lx",
               cmd_id_, subcmd->inn_id_, req.pie_id);
-    verify(cmd_map_.find(subcmd->inn_id_) == cmd_map_.end());
 //    auto &cmd = cmd_map_[subcmd->inn_id_];
 //    verify(cmd == nullptr);
-    cmd_map_[subcmd->inn_id_] = subcmd;
     req.cmd = subcmd;
+    n_start_++;
     commo_->SendStart(subcmd->GetPar(), req, this, callback);
   }
 }
@@ -216,8 +219,7 @@ void Coordinator::StartAck(StartReply &reply, const phase_t &phase) {
   if (phase != phase_) return;
 
   TxnChopper *ch = (TxnChopper *) cmd_;
-  ch->n_started_++; // TODO replace this
-  ch->n_start_sent_--;
+  n_start_ack_++;
 
   Log_debug("get start ack for cmd_id: %lx, inn_id: %d",
             cmd_id_, reply.cmd->inn_id_);
@@ -226,23 +228,23 @@ void Coordinator::StartAck(StartReply &reply, const phase_t &phase) {
     ch->commit_.store(false);
   }
   if (!ch->commit_.load()) {
-    if (ch->n_start_sent_ == 0) {
+    if (n_start_ack_ == n_start_) {
       phase_++;
       this->Finish();
     }
   } else {
     cmd_->Merge(*reply.cmd);
-    if (cmd_->HasMoreSubCmd(cmd_map_)) {
+    if (cmd_->HasMoreSubCmd()) {
       Log_debug("command has more sub-cmd, cmd_id: %lx,"
                     " n_started_: %d, n_pieces: %d",
-                cmd_id_, ch->n_started_, ch->n_pieces_);
+                cmd_id_, ch->n_pieces_out_, ch->n_pieces_all_);
       Start();
     } else if (AllStartAckCollected()) {
       Log_debug("receive all start acks, txn_id: %lx", cmd_id_);
       phase_++;
       Prepare();
     } else {
-      // skip
+      if (n_start_ == n_start_ack_) verify(0);
     }
   }
 }
@@ -323,10 +325,10 @@ void Coordinator::Prepare() {
   std::vector<i32> sids;
 //  sids.reserve(ch->proxies_.size());
 
-  for (auto &rp : ch->proxies_) {
+  for (auto &rp : ch->partitions_) {
     sids.push_back(rp);
   }
-  for (auto &rp : ch->proxies_) {
+  for (auto &rp : ch->partitions_) {
     Log::debug("send prepare tid: %ld", header.tid);
     commo_->SendPrepare(rp, header.tid, sids, callback);
     site_prepare_[rp]++;
@@ -335,7 +337,7 @@ void Coordinator::Prepare() {
 
 void Coordinator::PrepareAck(TxnChopper *ch, Future *fu) {
   ScopedLock(this->mtx_);
-  ch->n_prepared_++;
+  n_prepare_ack_++;
   int32_t e = fu->get_error_code();
 
   if (e != 0) {
@@ -351,7 +353,8 @@ void Coordinator::PrepareAck(TxnChopper *ch, Future *fu) {
     }
   }
 
-  if (ch->n_prepared_ == ch->proxies_.size()) {
+  if (n_prepare_ack_ == ch->partitions_.size()) {
+    phase_ ++;
     this->Finish();
   }
 }
@@ -363,27 +366,21 @@ void Coordinator::Finish() {
 
   Log_debug("send out finish request, cmd_id: %lx", cmd_id_);
   // commit or abort piece
-  rrr::FutureAttr fuattr;
-  fuattr.callback = [ch, this](Future *fu) {
+  std::function<void(Future *)> callback = [ch, this](Future *fu) {
     this->FinishAck(ch, fu);
   };
-
   if (ch->commit_.load()) {
-    Log::debug("send finish");
+    Log_debug("send finish");
     ch->reply_.res_ = SUCCESS;
-
-    for (auto &rp : ch->proxies_) {
-      RococoProxy *proxy = commo_->vec_rpc_proxy_[rp];
-      Future::safe_release(proxy->async_commit_txn(cmd_id_, fuattr));
+    for (auto &rp : ch->partitions_) {
+      commo_->SendCommit(rp, cmd_id_, callback);
       site_commit_[rp]++;
     }
   } else {
-    Log::debug("send abort");
+    Log_debug("send abort");
     ch->reply_.res_ = REJECT;
-
-    for (auto &rp : ch->proxies_) {
-      RococoProxy *proxy = commo_->vec_rpc_proxy_[rp];
-      Future::safe_release(proxy->async_abort_txn(cmd_id_, fuattr));
+    for (auto &rp : ch->partitions_) {
+      commo_->SendAbort(rp, cmd_id_, callback);
       site_abort_[rp]++;
     }
   }
@@ -394,11 +391,11 @@ void Coordinator::FinishAck(TxnChopper *ch, Future *fu) {
   bool retry = false;
   {
     ScopedLock(this->mtx_);
-    ch->n_finished_++;
+    n_finish_ack_++;
 
     Log::debug("finish");
 
-    if (ch->n_finished_ == ch->proxies_.size()) {
+    if (n_finish_ack_ == ch->GetPars().size()) {
       if ((ch->reply_.res_ == REJECT) && ch->can_retry()) {
         retry = true;
       } else {
@@ -441,9 +438,6 @@ void Coordinator::FinishAck(TxnChopper *ch, Future *fu) {
     // }
     ch->callback_(txn_reply_buf);
     delete ch;
-    for (auto &pair : cmd_map_) {
-//      delete pair.second;
-    }
   }
 }
 

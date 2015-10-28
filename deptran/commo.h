@@ -31,5 +31,9 @@ class Commo {
                    txnid_t tid, 
                    std::vector<int32_t> &sids, 
                    std::function<void(Future *fu)> &callback);
+  void SendCommit(parid_t pid, txnid_t tid,
+                  std::function<void(Future *fu)> &callback);
+  void SendAbort(parid_t pid, txnid_t tid,
+                 std::function<void(Future *fu)> &callback);
 };
 } // namespace rococo

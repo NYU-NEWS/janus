@@ -71,4 +71,20 @@ void Commo::SendPrepare(groupid_t gid, txnid_t tid,
   Future::safe_release(proxy->async_prepare_txn(tid, sids, fuattr));
 }
 
+void Commo::SendCommit(parid_t pid, txnid_t tid,
+                       std::function<void(Future *fu)> &callback) {
+  FutureAttr fuattr;
+  fuattr.callback = callback;
+  RococoProxy *proxy = vec_rpc_proxy_[pid];
+  Future::safe_release(proxy->async_commit_txn(tid, fuattr));
+}
+
+void Commo::SendAbort(parid_t pid, txnid_t tid,
+                       std::function<void(Future *fu)> &callback) {
+  FutureAttr fuattr;
+  fuattr.callback = callback;
+  RococoProxy *proxy = vec_rpc_proxy_[pid];
+  Future::safe_release(proxy->async_abort_txn(tid, fuattr));
+}
+
 } // namespace

@@ -15,33 +15,46 @@ TxnChopper::TxnChopper() {
   early_return_ = Config::GetConfig()->do_early_return();
 }
 
-Command *TxnChopper::GetNextSubCmd(map<innid_t, Command *> &cmdmap) {
-  if (n_started_ == n_pieces_) {
+
+set<parid_t> TxnChopper::GetPars() {
+  return partitions_;
+}
+
+
+Command *TxnChopper::GetNextSubCmd() {
+  if (n_pieces_out_ == n_pieces_all_) {
     return nullptr;
   }
   SimpleCommand *cmd = nullptr;
 
-  for (int i = 0; i < status_.size(); i++) {
+  auto sz = status_.size();
+  verify(sz > 0);
+  if (cmd_vec_.size() < sz) {
+    cmd_vec_.resize(sz);
+  }
+
+  for (int i = 0; i < sz; i++) {
     if (status_[i] == 0) {
       cmd = new SimpleCommand();
+      cmd_vec_[i] = cmd;
       cmd->inn_id_ = i;
       cmd->par_id = sharding_[i];
       cmd->type_ = p_types_[i];
       cmd->input = inputs_[i];
       cmd->output_size = output_size_[i];
       cmd->root_ = this;
-      proxies_.insert(sharding_[i]);
+      partitions_.insert(sharding_[i]);
       Log_debug("getting subcmd i: %d, thread id: %x",
                 i, std::this_thread::get_id());
       verify(status_[i] == 0);
       status_[i] = 1;
       verify(cmd->type_ != 0);
+      n_pieces_out_++;
       return cmd;
     }
   }
   return cmd;
 }
-
 
 int TxnChopper::next_piece(
     std::vector<mdb::Value> *&input,
@@ -50,7 +63,7 @@ int TxnChopper::next_piece(
     int32_t &pi,
     int32_t &p_type) {
 
-  if (n_started_ == n_pieces_) {
+  if (n_pieces_out_ == n_pieces_all_) {
     return 2;
   }
 
@@ -58,7 +71,7 @@ int TxnChopper::next_piece(
   for (int i = 0; i < status_.size(); i++) {
     if (status_[i] == 0) {
       server_id = sharding_[i];
-      proxies_.insert(server_id);
+      partitions_.insert(server_id);
       pi = i;
       p_type = p_types_[i];
       input = &inputs_[i];
@@ -138,10 +151,9 @@ void TxnChopper::Merge(Command &cmd) {
   this->start_callback(pi, SUCCESS, output);
 }
 
-bool TxnChopper::HasMoreSubCmd(map<innid_t, Command *> &cmdmap) {
-  verify(cmdmap.size() <= n_pieces_);
-//  if (cmdmap.size() == n_pieces_)
-  if (n_pieces_ == n_started_)
+bool TxnChopper::HasMoreSubCmd() {
+
+  if (n_pieces_all_ == n_pieces_out_)
     return false;
   else
     return true;
@@ -176,9 +188,9 @@ void TxnChopper::read_only_reset() {
 }
 
 bool TxnChopper::read_only_start_callback(int pi, int *res, const std::vector<mdb::Value> &output) {
-  verify(pi < n_pieces_);
+  verify(pi < n_pieces_all_);
   if (res == NULL) { // phase one, store outputs only
-    outputs_.resize(n_pieces_);
+    outputs_.resize(n_pieces_all_);
     outputs_[pi] = output;
   }
   else { // phase two, check if this try not failed yet
@@ -186,12 +198,12 @@ bool TxnChopper::read_only_start_callback(int pi, int *res, const std::vector<md
     // store current outputs
     if (read_only_failed_) {
       *res = REJECT;
-      if (n_pieces_ != outputs_.size())
-        outputs_.resize(n_pieces_);
+      if (n_pieces_all_ != outputs_.size())
+        outputs_.resize(n_pieces_all_);
     }
     else if (pi >= outputs_.size()) {
       *res = REJECT;
-      outputs_.resize(n_pieces_);
+      outputs_.resize(n_pieces_all_);
       read_only_failed_ = true;
     }
     else if (is_consistent(outputs_[pi], output))

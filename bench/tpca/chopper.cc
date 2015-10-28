@@ -29,7 +29,7 @@ void TpcaPaymentChopper::init(TxnRequest &req) {
   sss_->get_site_id_from_tb(TPCA_BRANCH, bra, sharding_[2]);
 
   // all pieces are ready
-  n_pieces_ = 3;
+  n_pieces_all_ = 3;
   callback_ = req.callback_;
   max_try_ = req.n_try_;
   n_try_ = 1;

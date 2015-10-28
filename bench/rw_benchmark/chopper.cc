@@ -14,7 +14,7 @@ void RWChopper::W_txn_init(TxnRequest &req) {
     sss_->get_site_id_from_tb(RW_BENCHMARK_TABLE, req.input_[0], sharding_[0]);
     status_ = {0};
     status_.assign(1, 0);
-    n_pieces_ = 1;
+    n_pieces_all_ = 1;
 }
 
 void RWChopper::R_txn_init(TxnRequest &req) {
@@ -29,7 +29,7 @@ void RWChopper::R_txn_init(TxnRequest &req) {
     sss_->get_site_id_from_tb(RW_BENCHMARK_TABLE, req.input_[0], sharding_[0]);
     status_ = {0};
     status_.assign(1, 0);
-    n_pieces_ = 1;
+    n_pieces_all_ = 1;
 }
 
 RWChopper::RWChopper() {
@@ -73,10 +73,8 @@ bool RWChopper::is_read_only() {
 void RWChopper::retry() {
     status_ = {0};
     commit_.store(true);
-    proxies_.clear();
-    n_started_ = 0;
-    n_prepared_ = 0;
-    n_finished_ = 0;
+    partitions_.clear();
+    n_pieces_out_ = 0;
     n_try_++;
 }
 

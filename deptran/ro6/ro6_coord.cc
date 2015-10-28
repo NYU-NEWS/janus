@@ -58,10 +58,10 @@ void RO6Coord::deptran_start(TxnChopper *ch) {
 
         if (gra.size() > 1) ch->disable_early_return();
 
-        ch->n_started_++;
+        ch->n_pieces_out_++;
 
         if (ch->start_callback(pi, res)) this->deptran_start(ch);
-        else if (ch->n_started_ == ch->n_pieces_) {
+        else if (ch->n_pieces_out_ == ch->n_pieces_all_) {
           this->deptran_finish(ch);
 
           if (ch->do_early_return()) {
@@ -105,7 +105,7 @@ void RO6Coord::deptran_finish(TxnChopper *ch) {
     bool callback = false;
     {
       ScopedLock(this->mtx_);
-      ch->n_finished_++;
+      n_finish_ack_++;
 
       ChopFinishResponse res;
 
@@ -113,7 +113,7 @@ void RO6Coord::deptran_finish(TxnChopper *ch) {
 
       fu->get_reply() >> res;
 
-      if (ch->n_finished_ == ch->proxies_.size()) {
+      if (n_finish_ack_ == ch->GetPars().size()) {
         ch->finish_callback(res);
         callback = true;
       }
@@ -140,10 +140,10 @@ void RO6Coord::deptran_finish(TxnChopper *ch) {
 
   Log::debug(
     "send deptran finish requests to %d servers, tid: %llx, graph size: %d",
-    (int)ch->proxies_.size(),
+    (int)ch->partitions_.size(),
     cmd_id_,
     ch->gra_.size());
-  verify(ch->proxies_.size() == ch->gra_.FindV(
+  verify(ch->partitions_.size() == ch->gra_.FindV(
            cmd_id_)->data_->servers_.size());
 
   ChopFinishRequest req;
@@ -160,7 +160,7 @@ void RO6Coord::deptran_finish(TxnChopper *ch) {
   verify(ch->gra_.size() > 0);
   verify(req.gra.size() > 0);
 
-  for (auto& rp : ch->proxies_) {
+  for (auto& rp : ch->partitions_) {
     RococoProxy *proxy = commo_->vec_rpc_proxy_[rp];
     Future::safe_release(proxy->async_rcc_finish_txn(req, fuattr));
   }
@@ -196,11 +196,11 @@ void RO6Coord::ro6_start_ro(TxnChopper *ch) {
                    header.tid,
                    header.pid);
 
-        ch->n_started_++;
+        ch->n_pieces_out_++;
 
         if (ch->read_only_start_callback(pi, NULL, res)) {
           this->ro6_start_ro(ch);
-        } else if (ch->n_started_ == ch->n_pieces_) {
+        } else if (ch->n_pieces_out_ == ch->n_pieces_all_) {
           // job finish here.
           ch->reply_.res_ = SUCCESS;
 

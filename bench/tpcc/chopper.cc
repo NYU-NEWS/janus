@@ -108,12 +108,12 @@ void TpccChopper::new_order_init(TxnRequest &req) {
   memset(new_order_dep_.piece_items, false, sizeof(bool) * ol_cnt);
   memset(new_order_dep_.piece_stocks, false, sizeof(bool) * ol_cnt);
 
-  n_pieces_ = 5 + 4 * ol_cnt;
-  inputs_.resize(n_pieces_);
-  output_size_.resize(n_pieces_);
-  p_types_.resize(n_pieces_);
-  sharding_.resize(n_pieces_);
-  status_.resize(n_pieces_);
+  n_pieces_all_ = 5 + 4 * ol_cnt;
+  inputs_.resize(n_pieces_all_);
+  output_size_.resize(n_pieces_all_);
+  p_types_.resize(n_pieces_all_);
+  sharding_.resize(n_pieces_all_);
+  status_.resize(n_pieces_all_);
 
   // piece 0, Ri&W district
   inputs_[0] = std::vector<Value>({
@@ -428,12 +428,12 @@ void TpccChopper::payment_init(TxnRequest &req) {
    *  6       ==> h_key
    **/
 
-  n_pieces_ = 6;
-  inputs_.resize(n_pieces_);
-  output_size_.resize(n_pieces_);
-  p_types_.resize(n_pieces_);
-  sharding_.resize(n_pieces_);
-  status_.resize(n_pieces_);
+  n_pieces_all_ = 6;
+  inputs_.resize(n_pieces_all_);
+  output_size_.resize(n_pieces_all_);
+  p_types_.resize(n_pieces_all_);
+  sharding_.resize(n_pieces_all_);
+  status_.resize(n_pieces_all_);
 
   // piece 0, Ri
   inputs_[0] = std::vector<Value>({
@@ -492,7 +492,7 @@ void TpccChopper::payment_init(TxnRequest &req) {
     status_[3] = 2;
     // piece 4, set it to ready
     status_[4] = 0;
-    n_started_ = 1;
+    n_pieces_out_ = 1;
 
     payment_dep_.piece_last2id = true;
     payment_dep_.piece_ori_last2id = true;
@@ -600,7 +600,7 @@ void TpccChopper::payment_retry() {
   if (payment_dep_.piece_ori_last2id) {
     status_[3] = 2;
     status_[4] = 0;
-    n_started_ = 1;
+    n_pieces_out_ = 1;
   }
     // query by c_last
   else {
@@ -637,12 +637,12 @@ void TpccChopper::order_status_init(TxnRequest &req) {
    *  2       ==> c_id or last_name
    **/
 
-  n_pieces_ = 4;
-  inputs_.resize(n_pieces_);
-  output_size_.resize(n_pieces_);
-  p_types_.resize(n_pieces_);
-  sharding_.resize(n_pieces_);
-  status_.resize(n_pieces_);
+  n_pieces_all_ = 4;
+  inputs_.resize(n_pieces_all_);
+  output_size_.resize(n_pieces_all_);
+  p_types_.resize(n_pieces_all_);
+  sharding_.resize(n_pieces_all_);
+  status_.resize(n_pieces_all_);
 
   if (req.input_[2].get_kind() == Value::I32) { // query by c_id
     status_[0] = 2; // piece 0 not needed
@@ -652,7 +652,7 @@ void TpccChopper::order_status_init(TxnRequest &req) {
     order_status_dep_.piece_last2id = true;
     order_status_dep_.piece_ori_last2id = true;
 
-    n_started_ = 1; // since piece 0 not needed, set it as one started piece
+    n_pieces_out_ = 1; // since piece 0 not needed, set it as one started piece
   }
   else { // query by c_last
 
@@ -747,7 +747,7 @@ void TpccChopper::order_status_retry() {
     status_[0] = 2;
     status_[1] = 0;
     status_[2] = 0;
-    n_started_ = 1;
+    n_pieces_out_ = 1;
   }
   else {
     status_[0] = 0;
@@ -854,12 +854,12 @@ void TpccChopper::delivery_init(TxnRequest &req) {
    *  2       ==> d_id
    **/
   int d_id = req.input_[2].get_i32();
-  n_pieces_ = 4;
-  inputs_.resize(n_pieces_);
-  output_size_.resize(n_pieces_);
-  p_types_.resize(n_pieces_);
-  sharding_.resize(n_pieces_);
-  status_.resize(n_pieces_);
+  n_pieces_all_ = 4;
+  inputs_.resize(n_pieces_all_);
+  output_size_.resize(n_pieces_all_);
+  p_types_.resize(n_pieces_all_);
+  sharding_.resize(n_pieces_all_);
+  status_.resize(n_pieces_all_);
 
   delivery_dep_.piece_new_orders = false;
   delivery_dep_.piece_orders = false;
@@ -979,7 +979,7 @@ bool TpccChopper::delivery_callback(int pi,
       status_[1] = 2;
       status_[2] = 2;
       status_[3] = 2;
-      n_started_ += 3;
+      n_pieces_out_ += 3;
       Log::info("TPCC DELIVERY: no more new order for w_id: %d, d_id: %d",
                 inputs_[pi][0].get_i32(),
                 inputs_[pi][1].get_i32());
@@ -1070,12 +1070,12 @@ void TpccChopper::stock_level_init(TxnRequest &req) {
    *  1       ==> d_id
    *  2       ==> threshold
    **/
-  n_pieces_ = 2;
-  inputs_.resize(n_pieces_);
-  output_size_.resize(n_pieces_);
-  p_types_.resize(n_pieces_);
-  sharding_.resize(n_pieces_);
-  status_.resize(n_pieces_);
+  n_pieces_all_ = 2;
+  inputs_.resize(n_pieces_all_);
+  output_size_.resize(n_pieces_all_);
+  p_types_.resize(n_pieces_all_);
+  sharding_.resize(n_pieces_all_);
+  status_.resize(n_pieces_all_);
 
   stock_level_dep_.w_id = req.input_[0].get_i32();
   stock_level_dep_.threshold = req.input_[2].get_i32();
@@ -1122,12 +1122,12 @@ bool TpccChopper::stock_level_callback(
     std::unordered_set<i32> s_i_ids;
     for (int i = 0; i < output_size; i++)
       s_i_ids.insert(output[i].get_i32());
-    n_pieces_ += s_i_ids.size();
-    inputs_.resize(n_pieces_);
-    output_size_.resize(n_pieces_);
-    p_types_.resize(n_pieces_);
-    sharding_.resize(n_pieces_);
-    status_.resize(n_pieces_);
+    n_pieces_all_ += s_i_ids.size();
+    inputs_.resize(n_pieces_all_);
+    output_size_.resize(n_pieces_all_);
+    p_types_.resize(n_pieces_all_);
+    sharding_.resize(n_pieces_all_);
+    status_.resize(n_pieces_all_);
     int i = 0;
     for (std::unordered_set<i32>::iterator s_i_ids_it = s_i_ids.begin();
          s_i_ids_it != s_i_ids.end(); s_i_ids_it++) {
@@ -1149,21 +1149,19 @@ bool TpccChopper::stock_level_callback(
 }
 
 void TpccChopper::stock_level_retry() {
-  n_pieces_ = 2;
-  inputs_.resize(n_pieces_);
-  output_size_.resize(n_pieces_);
-  p_types_.resize(n_pieces_);
-  sharding_.resize(n_pieces_);
-  status_.resize(n_pieces_);
+  n_pieces_all_ = 2;
+  inputs_.resize(n_pieces_all_);
+  output_size_.resize(n_pieces_all_);
+  p_types_.resize(n_pieces_all_);
+  sharding_.resize(n_pieces_all_);
+  status_.resize(n_pieces_all_);
   status_[0] = 0;
   status_[1] = -1;
 }
 
 void TpccChopper::retry() {
-  proxies_.clear();
-  n_started_ = 0;
-  n_prepared_ = 0;
-  n_finished_ = 0;
+  partitions_.clear();
+  n_pieces_out_ = 0;
   n_try_++;
   commit_.store(true);
   switch (txn_type_) {

@@ -23,12 +23,10 @@ public:
     virtual bool is_read_only() { return false; }
 
     virtual void retry() {
-        n_started_ = 0;
-        n_prepared_ = 0;
-        n_finished_ = 0;
+        n_pieces_out_ = 0;
         status_ = {0, 0, 0};
         commit_.store(true);
-        proxies_.clear();
+        partitions_.clear();
         n_try_ ++;
     }
 

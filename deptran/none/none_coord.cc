@@ -29,8 +29,7 @@ void NoneCoord::LegacyStartAck(TxnChopper *ch, int pi, Future *fu) {
     int res;
     std::vector<mdb::Value> output;
     fu->get_reply() >> res >> output;
-    ch->n_started_++;
-    ch->n_start_sent_--;
+    ch->n_pieces_out_++;
 
 //        LegacyCommandOutput output;
 //        fu-get_reply() >> output;
@@ -42,14 +41,14 @@ void NoneCoord::LegacyStartAck(TxnChopper *ch, int pi, Future *fu) {
     }
 
     if (!ch->commit_.load()) {
-      if (ch->n_start_sent_ == 0) {
+      if (n_start_ == n_start_ack_) {
         this->Finish();
       }
     } else {
       if (ch->start_callback(pi, res, output)) {
 //        this->LegacyStart(ch);
         Start();
-      } else if (ch->n_started_ == ch->n_pieces_) {
+      } else if (ch->n_pieces_out_ == ch->n_pieces_all_) {
         callback = true;
         ch->reply_.res_ = SUCCESS;
       }

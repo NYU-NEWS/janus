@@ -64,7 +64,7 @@ void RCCCoord::deptran_batch_start(TxnChopper *ch) {
         bool callback_ret = false;
 
         for (int i = 0; i < res.is_defers.size(); i++) {
-          ch->n_started_++;
+          ch->n_pieces_out_++;
 
           if (ch->start_callback(pis[i],  res.outputs[i], res.is_defers[i])) {
             callback_ret = true;
@@ -75,7 +75,7 @@ void RCCCoord::deptran_batch_start(TxnChopper *ch) {
           this->deptran_batch_start(ch);
         }
 
-        else if (ch->n_started_ == ch->n_pieces_) {
+        else if (ch->n_pieces_out_ == ch->n_pieces_all_) {
           this->deptran_finish(ch);
 
           if (ch->do_early_return()) {
@@ -149,10 +149,10 @@ void RCCCoord::deptran_start(TxnChopper *ch) {
 
         if (gra.size() > 1) ch->disable_early_return();
 
-        ch->n_started_++;
+        ch->n_pieces_out_++;
 
         if (ch->start_callback(pi, res)) this->deptran_start(ch);
-        else if (ch->n_started_ == ch->n_pieces_) {
+        else if (ch->n_pieces_out_ == ch->n_pieces_all_) {
           this->deptran_finish(ch);
 
           if (ch->do_early_return()) {
@@ -197,7 +197,7 @@ void RCCCoord::deptran_finish(TxnChopper *ch) {
     bool callback = false;
     {
       ScopedLock(this->mtx_);
-      ch->n_finished_++;
+      n_finish_ack_++;
 
       ChopFinishResponse res;
 
@@ -205,7 +205,7 @@ void RCCCoord::deptran_finish(TxnChopper *ch) {
 
       fu->get_reply() >> res;
 
-      if (ch->n_finished_ == ch->proxies_.size()) {
+      if (n_finish_ack_ == ch->GetPars().size()) {
         ch->finish_callback(res);
         callback = true;
       }
@@ -232,10 +232,10 @@ void RCCCoord::deptran_finish(TxnChopper *ch) {
 
   Log::debug(
     "send deptran finish requests to %d servers, tid: %llx, graph size: %d",
-    (int)ch->proxies_.size(),
+    (int)ch->partitions_.size(),
     cmd_id_,
     ch->gra_.size());
-  verify(ch->proxies_.size() == ch->gra_.FindV(
+  verify(ch->partitions_.size() == ch->gra_.FindV(
            cmd_id_)->data_->servers_.size());
 
   ChopFinishRequest req;
@@ -245,7 +245,7 @@ void RCCCoord::deptran_finish(TxnChopper *ch) {
   verify(ch->gra_.size() > 0);
   verify(req.gra.size() > 0);
 
-  for (auto& rp : ch->proxies_) {
+  for (auto& rp : ch->partitions_) {
     RococoProxy *proxy = commo_->vec_rpc_proxy_[rp];
     Future::safe_release(proxy->async_rcc_finish_txn(req, fuattr));
   }
@@ -281,11 +281,11 @@ void RCCCoord::deptran_start_ro(TxnChopper *ch) {
                    header.tid,
                    header.pid);
 
-        ch->n_started_++;
+        ch->n_pieces_out_++;
 
         if (ch->read_only_start_callback(pi, NULL, res)) this->deptran_start_ro(
             ch);
-        else if (ch->n_started_ == ch->n_pieces_) {
+        else if (ch->n_pieces_out_ == ch->n_pieces_all_) {
           ch->read_only_reset();
           this->deptran_finish_ro(ch);
         }
@@ -332,11 +332,11 @@ void RCCCoord::deptran_finish_ro(TxnChopper *ch) {
           header.tid,
           header.pid);
 
-        ch->n_started_++;
+        ch->n_pieces_out_++;
         bool do_next_piece = ch->read_only_start_callback(pi, &res, output);
 
         if (do_next_piece) deptran_finish_ro(ch);
-        else if (ch->n_started_ == ch->n_pieces_) {
+        else if (ch->n_pieces_out_ == ch->n_pieces_all_) {
           if (res == SUCCESS) {
             ch->reply_.res_ = SUCCESS;
             callback        = true;

@@ -15,11 +15,13 @@
 #include <atomic>
 #include <cstdint>
 #include <algorithm>
+#include <set>
 
 using std::map;
 using std::unordered_map;
 using std::string;
 using std::vector;
+using std::set;
 
 // system library
 #include <sys/types.h>

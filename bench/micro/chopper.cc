@@ -34,7 +34,7 @@ void MicroBenchChopper::init(TxnRequest &req) {
             verify(0);
     }
 
-    n_pieces_ = 4;
+    n_pieces_all_ = 4;
     callback_ = req.callback_;
     max_try_ = req.n_try_;
     n_try_ = 1;
@@ -78,12 +78,10 @@ bool MicroBenchChopper::is_read_only() {
 }
 
 void MicroBenchChopper::retry() {
-    n_started_ = 0;
-    n_prepared_ = 0;
-    n_finished_ = 0;
+    n_pieces_out_ = 0;
     status_ = {0, 0, 0, 0};
     commit_.store(true);
-    proxies_.clear();
+    partitions_.clear();
     n_try_ ++;
 }
 
