@@ -49,6 +49,30 @@ Coordinator::Coordinator(uint32_t coo_id,
   retry_wait_ = Config::GetConfig()->retry_wait();
 }
 
+Coordinator::~Coordinator() {
+  for (int i = 0; i < site_prepare_.size(); i++) {
+    Log_info("Coo: %u, Site: %d, piece: %d, "
+                 "prepare: %d, commit: %d, abort: %d",
+             coo_id_, i, site_piece_[i], site_prepare_[i],
+             site_commit_[i], site_abort_[i]);
+  }
+
+  if (commo_) {
+    delete commo_;
+  }
+
+  if (recorder_) delete recorder_;
+#ifdef TXN_STAT
+
+  for (auto& it : txn_stats_) {
+        Log::info("TXN: %d", it.first);
+        it.second.output();
+      }
+#endif /* ifdef TXN_STAT */
+
+// TODO (shuai) destroy all the rpc clients and proxies.
+}
+
 // TODO obsolete
 RequestHeader Coordinator::gen_header(TxnChopper *ch) {
   RequestHeader header;
@@ -139,7 +163,7 @@ void Coordinator::rpc_null_start(TxnChopper *ch) {
 void Coordinator::cleanup() {
   cmd_map_.clear();
   start_ack_map_.clear();
-  TxnChopper *ch = (TxnChopper*) cmd_;
+  TxnChopper *ch = (TxnChopper *) cmd_;
   if (ch) ch->n_start_sent_ = 0; // TODO remove
 }
 
@@ -161,9 +185,9 @@ void Coordinator::Start() {
   std::lock_guard<std::mutex> lock(start_mtx_);
   StartRequest req;
   req.cmd_id = cmd_id_;
-  Command* subcmd;
+  Command *subcmd;
   phase_t phase = phase_;
-  std::function<void(StartReply&)> callback = [this, phase] (StartReply &reply) {
+  std::function<void(StartReply &)> callback = [this, phase](StartReply &reply) {
     this->StartAck(reply, phase);
   };
   while ((subcmd = cmd_->GetNextSubCmd(cmd_map_)) != nullptr) {
@@ -191,7 +215,7 @@ void Coordinator::StartAck(StartReply &reply, const phase_t &phase) {
   ScopedLock(this->mtx_);
   if (phase != phase_) return;
 
-  TxnChopper *ch = (TxnChopper *)cmd_;
+  TxnChopper *ch = (TxnChopper *) cmd_;
   ch->n_started_++; // TODO replace this
   ch->n_start_sent_--;
 
@@ -220,7 +244,7 @@ void Coordinator::StartAck(StartReply &reply, const phase_t &phase) {
     } else {
       // skip
     }
-  } 
+  }
 }
 
 //
@@ -287,12 +311,12 @@ void Coordinator::naive_batch_start(TxnChopper *ch) {
 
 /** caller should be thread_safe */
 void Coordinator::Prepare() {
-  TxnChopper *ch = (TxnChopper*) cmd_;
+  TxnChopper *ch = (TxnChopper *) cmd_;
   verify(mode_ == MODE_OCC || mode_ == MODE_2PL);
   RequestHeader header = gen_header(ch);
 
   // prepare piece, currently only useful for OCC
-  std::function<void(Future*)> callback = [ch, this] (Future *fu) {
+  std::function<void(Future *)> callback = [ch, this](Future *fu) {
     this->PrepareAck(ch, fu);
   };
 
@@ -304,7 +328,7 @@ void Coordinator::Prepare() {
   }
   for (auto &rp : ch->proxies_) {
     Log::debug("send prepare tid: %ld", header.tid);
-    commo_->SendPrepare(rp, header.tid, sids, callback); 
+    commo_->SendPrepare(rp, header.tid, sids, callback);
     site_prepare_[rp]++;
   }
 }
@@ -334,7 +358,7 @@ void Coordinator::PrepareAck(TxnChopper *ch, Future *fu) {
 
 /** caller should be thread safe */
 void Coordinator::Finish() {
-  TxnChopper *ch = (TxnChopper*)cmd_;
+  TxnChopper *ch = (TxnChopper *) cmd_;
   verify(mode_ == MODE_OCC || mode_ == MODE_2PL);
 
   Log_debug("send out finish request, cmd_id: %lx", cmd_id_);
@@ -417,6 +441,9 @@ void Coordinator::FinishAck(TxnChopper *ch, Future *fu) {
     // }
     ch->callback_(txn_reply_buf);
     delete ch;
+    for (auto &pair : cmd_map_) {
+//      delete pair.second;
+    }
   }
 }
 

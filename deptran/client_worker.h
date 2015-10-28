@@ -27,6 +27,7 @@ class ClientWorker {
   Timer *timer_;
  public:
   ClientWorker() = default;
+  ~ClientWorker();
 
   Coordinator* GetCoord();
 

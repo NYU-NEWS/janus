@@ -23,7 +23,7 @@ Command *TxnChopper::GetNextSubCmd(map<innid_t, Command *> &cmdmap) {
 
   for (int i = 0; i < status_.size(); i++) {
     if (status_[i] == 0) {
-      cmd = new SimpleCommand;
+      cmd = new SimpleCommand();
       cmd->inn_id_ = i;
       cmd->par_id = sharding_[i];
       cmd->type_ = p_types_[i];

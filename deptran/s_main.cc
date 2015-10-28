@@ -15,7 +15,7 @@ static ClientControlServiceImpl *ccsi_g = nullptr;
 static rrr::PollMgr *cli_poll_mgr_g = nullptr;
 static rrr::Server *cli_hb_server_g = nullptr;
 
-static vector<ServerWorker>* cli_workers = nullptr;
+static vector<ServerWorker>*svr_workers = nullptr;
 
 
 void client_setup_heartbeat() {
@@ -75,19 +75,20 @@ void client_launch_workers() {
     th.join();
   }
 
+
+
 //  TxnRequestFactory::destroy();
-  RandomGenerator::destroy();
-  Config::DestroyConfig();
+//  Config::DestroyConfig();
 }
 
 
 void server_launch_worker() {
   vector<Config::SiteInfo*> infos = Config::GetConfig()->GetMyServers();
-  cli_workers = new vector<ServerWorker>(infos.size());
+  svr_workers = new vector<ServerWorker>(infos.size());
 
   for (uint32_t index = 0; index < infos.size(); index++) {
     Log_info("launching server, site: %x", infos[index]->id);
-    auto &worker = (*cli_workers)[index];
+    auto &worker = (*svr_workers)[index];
     worker.sharding_ = Frame().CreateSharding(Config::GetConfig()->sharding_);
     worker.sharding_->BuildTableInfoPtr();
     // register txn piece logic
@@ -104,7 +105,7 @@ void server_launch_worker() {
 
 void server_shutdown() {
   // TODO
-  for (auto &worker : *cli_workers) {
+  for (auto &worker : *svr_workers) {
     worker.ShutDown();
   }
 }
@@ -147,6 +148,9 @@ int main(int argc, char *argv[]) {
       sleep(1000);
     }
   }
+
+  RandomGenerator::destroy();
+  Config::DestroyConfig();
 
   return 0;
 }

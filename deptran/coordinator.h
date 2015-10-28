@@ -83,25 +83,7 @@ class Coordinator {
               uint32_t thread_id = 0,
               bool batch_optimal = false);
 
-  virtual ~Coordinator() {
-    for (int i = 0; i < site_prepare_.size(); i++) {
-      Log_info("Coo: %u, Site: %d, piece: %d, "
-                    "prepare: %d, commit: %d, abort: %d",
-                coo_id_, i, site_piece_[i], site_prepare_[i],
-                site_commit_[i], site_abort_[i]);
-    }
-
-    if (recorder_) delete recorder_;
-#ifdef TXN_STAT
-
-    for (auto& it : txn_stats_) {
-      Log::info("TXN: %d", it.first);
-      it.second.output();
-    }
-#endif /* ifdef TXN_STAT */
-
-    // TODO (shuai) destroy all the rpc clients and proxies.
-  }
+  virtual ~Coordinator();
 
   /** thread safe */
   uint64_t next_pie_id() {

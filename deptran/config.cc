@@ -760,6 +760,10 @@ Config::~Config() {
     ctrl_init_ = NULL;
   }
 
+  for (auto &pair: site_infos_) {
+    delete pair.second;
+  }
+
   // if (ctrl_run_) {
   //    free(ctrl_run_);
   //    ctrl_run_ = NULL;

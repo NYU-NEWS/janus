@@ -42,7 +42,8 @@ void Commo::SendStart(parid_t par_id,
   std::function<void(Future*)> cb = [coo, this, callback, cmd](Future *fu) {
     StartReply reply; 
     reply.cmd = cmd;
-    fu->get_reply() >> reply.res >> cmd->output;
+    Marshal &m = fu->get_reply();
+    m >> reply.res >> cmd->output;
     callback(reply);
   };
   fuattr.callback = cb;

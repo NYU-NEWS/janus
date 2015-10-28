@@ -9,6 +9,11 @@ namespace rococo {
 //  txn_req_factory_ = new TxnRequestFactory(Config::GetConfig()->sharding_);
 //}
 
+ClientWorker::~ClientWorker() {
+  if (txn_req_factory_)
+    delete txn_req_factory_;
+}
+
 void ClientWorker::callback2(TxnReply &txn_reply) {
   if (timer_->elapsed() < duration) {
     TxnRequest req;
@@ -57,6 +62,7 @@ void ClientWorker::work() {
 
   delete coo;
   if (ccsi) ccsi->wait_for_shutdown();
+  delete timer_;
   return;
 }
 

@@ -41,6 +41,7 @@ public:
   vector<Value> output;
   int output_size;
   int par_id;
+  SimpleCommand() = default;
   virtual parid_t GetPar() {return par_id;}
   virtual Command* GetRootCmd() {return root_;}
 };
