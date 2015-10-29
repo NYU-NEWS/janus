@@ -35,10 +35,6 @@ void NoneCoord::LegacyStartAck(TxnChopper *ch, int pi, Future *fu) {
 //        fu-get_reply() >> output;
 //        ch->merge(output);
 
-    if (res == REJECT) {
-      verify(this->mode_ == MODE_2PL);
-      ch->commit_.store(false);
-    }
 
     if (!ch->commit_.load()) {
       if (n_start_ == n_start_ack_) {

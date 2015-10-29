@@ -5,8 +5,6 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Weffc++")
 
-
-
 find_package(Threads)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(APR REQUIRED apr-1)
@@ -18,6 +16,14 @@ INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
 #set(CMAKE_CXX_FLAGS_DEBUG "-DLOG_DEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DLOG_LEVEL_AS_DEBUG")
+
+#FIND_LIBRARY (DMALLOC_LIBRARY dmalloc /usr/lib /sw/lib)
+#FIND_PATH (DMALLOC_INCLUDE_DIR dmalloc.h PATHS /usr/include /sw/include)
+#IF(DMALLOC_LIBRARY)
+#  ADD_DEFINITIONS(-D_USE_DMALLOC)
+#  SET(LINK_TO_DMALLOC 1)
+#ENDIF(DMALLOC_LIBRARY)
+
 
 include_directories(
     ${PYTHON2_INCLUDE_DIRS}

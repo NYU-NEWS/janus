@@ -38,7 +38,7 @@ class Coordinator {
   Recorder *recorder_;
   Command *cmd_; 
   cmdid_t cmd_id_;
-  phase_t phase_;
+  phase_t phase_ = 0;
 //  map<innid_t, Command*> cmd_map_;
   map<innid_t, bool> start_ack_map_;
   Sharding* sharding_ = nullptr;
