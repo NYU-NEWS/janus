@@ -889,6 +889,10 @@ def create_parser():
             help="read config from FILE, default is properties.xml", 
             default="./config/tpccd-sample.xml", metavar="FILE")
 
+    parser.add_option("-y", "--yaml", dest="yaml_config_path", 
+            help="read config from a yaml FILE, default is sample.yml", 
+            default="./config/sample.yml", metavar="YAML")
+
     parser.add_option("-P", "--port", dest="rpc_port", help="port to use", 
             default=5555, metavar="PORT")
 
@@ -986,6 +990,7 @@ def main():
         s_taskset = int(options.s_taskset)
         c_taskset = options.c_taskset
         filename = os.path.realpath(options.config_path)
+        yaml_filename = os.path.realpath(options.yaml_config_path)
         hosts_path_g = os.path.realpath(options.hosts_path)
         log_dir = os.path.realpath(options.log_dir)
         # the kind of transaction I care about (new-order)
@@ -1024,45 +1029,25 @@ def main():
         logging.info("Checking site info ...")
         s_info = dict()
 
-        yml_filename = os.path.realpath("./config/sample.yml")
-        stream = file(yml_filename, 'r')
-        yaml_obj = yaml.load(stream)
+        yaml_config = yaml.load(file(yaml_filename, 'r'))
 
-        load_workers('server', yaml_obj, rpc_port, s_info)
+        load_workers('server', yaml_config, rpc_port, s_info)
         print s_info
 
         c_info = dict()
-        load_workers('client', yaml_obj, rpc_port + len(s_info), c_info)
-        print c_info
-        # server_info = site_info['server']
+        load_workers('client', yaml_config, rpc_port + len(s_info), c_info)
         
-        # sidx = 0
-        # for partition in server_info:
-        #     for server in partition:
-        #         # print server
-        #         [workername, port] = server.split(':')
-        #         hostname = worker2host(workername, yaml_obj)
-        #         s_info[sidx] = tuple((hostname, str(rpc_port)))
-        #         sidx += 1
-        #         rpc_port += 1
-        #         print workername
-        #         print hostname
-        #         # print port
-        # print s_info
-
-        if 'client' not in site_info:
-            logging.error("Configuration: Didn't specify the clients.")
-            return False
-
+        print c_info
         # print server_info
         return True
+
         # init server controller
         server_controller = ServerController(s_timeout, s_info, s_taskset, 
                 log_dir, recording_path_dir)
 
         # start all server processes
         logging.info("Starting servers ...")
-        server_controller.start(filename)
+        server_controller.start(yaml_filename)
         logging.info("Starting servers ... Done")
 
         cond = multiprocessing.Condition()
