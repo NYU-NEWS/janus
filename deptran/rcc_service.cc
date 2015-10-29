@@ -209,7 +209,7 @@ void RococoServiceImpl::abort_txn(
   std::lock_guard<std::mutex> guard(mtx_);
   auto *dtxn = (TPLDTxn *) txn_mgr_->get(tid);
   verify(dtxn != NULL);
-  *res = dtxn->abort_launch(res, defer);
+  dtxn->abort_launch(res, defer);
 }
 
 // TODO find a better way to define batch
