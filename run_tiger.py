@@ -886,12 +886,8 @@ def create_parser():
     parser = OptionParser()
 
     parser.add_option("-f", "--file", dest="config_path", 
-            help="read config from FILE, default is properties.xml", 
-            default="./config/tpccd-sample.xml", metavar="FILE")
-
-    parser.add_option("-y", "--yaml", dest="yaml_config_path", 
-            help="read config from a yaml FILE, default is sample.yml", 
-            default="./config/sample.yml", metavar="YAML")
+            help="read config from FILE, default is sample.yml", 
+            default="./config/sample.yml", metavar="FILE")
 
     parser.add_option("-P", "--port", dest="rpc_port", help="port to use", 
             default=5555, metavar="PORT")
@@ -990,7 +986,6 @@ def main():
         s_taskset = int(options.s_taskset)
         c_taskset = options.c_taskset
         filename = os.path.realpath(options.config_path)
-        yaml_filename = os.path.realpath(options.yaml_config_path)
         hosts_path_g = os.path.realpath(options.hosts_path)
         log_dir = os.path.realpath(options.log_dir)
         # the kind of transaction I care about (new-order)
@@ -1013,11 +1008,8 @@ def main():
 
         # the configuration xml file
         logging.info("Start reading config file: " + filename + " ...")
-        config = ET.parse(filename).getroot()
+        config_obj = yaml.load(file(filename, 'r'))
 
-        benchmark = config.attrib["name"]
-
-        # TODO beautify the following code
         # 1. load server info
         # 2. load client info
         # 3. start server and setup heartbeat.
@@ -1026,18 +1018,16 @@ def main():
         # 6. start bench
         # 7. collect results
         # 7. finish bench
-        logging.info("Checking site info ...")
+
+        #1. Load server info
         s_info = dict()
+        load_workers('server', config_obj, rpc_port, s_info)
+        # print s_info
 
-        yaml_config = yaml.load(file(yaml_filename, 'r'))
-
-        load_workers('server', yaml_config, rpc_port, s_info)
-        print s_info
-
+        #2. Load client info
         c_info = dict()
-        load_workers('client', yaml_config, rpc_port + len(s_info), c_info)
-        
-        print c_info
+        load_workers('client', config_obj, rpc_port + len(s_info), c_info)
+        # print c_info
         # print server_info
         return True
 
@@ -1047,7 +1037,7 @@ def main():
 
         # start all server processes
         logging.info("Starting servers ...")
-        server_controller.start(yaml_filename)
+        server_controller.start(filename)
         logging.info("Starting servers ... Done")
 
         cond = multiprocessing.Condition()
