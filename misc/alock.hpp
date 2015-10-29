@@ -126,7 +126,8 @@ class WaitDieALock: public ALock {
 
     lock_req_t(const lock_req_t &lock_req)
         : id(lock_req.id), priority(lock_req.priority), type(lock_req.type),
-          yes_callback(lock_req.yes_callback), no_callback(lock_req.no_callback),
+          yes_callback(lock_req.yes_callback),
+          no_callback(lock_req.no_callback),
           status(lock_req.status) {
     }
 
@@ -184,7 +185,8 @@ class WaitDieALock: public ALock {
               (*it)->yes_callback,
               (*it)->id));
     }
-    std::vector<std::pair<std::function<void(uint64_t)>, uint64_t> >::iterator cit;
+    std::vector<std::pair<std::function<void(uint64_t)>, uint64_t> >::iterator
+        cit;
     for (cit = to_calls.begin(); cit != to_calls.end(); cit++) {
       cit->first(cit->second);
     }
@@ -282,8 +284,8 @@ class WoundDieALock: public ALock {
     std::function<int(void)> wound_callback;
     lock_req_status_t status;
 
-    lock_req_t(): id(0), priority(0), type(WLOCK), status(WAIT),
-                  yes_callback(), no_callback(), wound_callback() {
+    lock_req_t() : id(0), priority(0), type(WLOCK), status(WAIT),
+                   yes_callback(), no_callback(), wound_callback() {
     }
 
     lock_req_t(uint64_t _id,
@@ -304,7 +306,8 @@ class WoundDieALock: public ALock {
 
     lock_req_t(const lock_req_t &lock_req)
         : id(lock_req.id), priority(lock_req.priority), type(lock_req.type),
-          yes_callback(lock_req.yes_callback), no_callback(lock_req.no_callback),
+          yes_callback(lock_req.yes_callback),
+          no_callback(lock_req.no_callback),
           wound_callback(lock_req.wound_callback), status(lock_req.status) {
     }
 
@@ -381,7 +384,8 @@ class WoundDieALock: public ALock {
               (*it)->yes_callback,
               (*it)->id));
     }
-    std::vector<std::pair<std::function<void(uint64_t)>, uint64_t> >::iterator cit;
+    std::vector<std::pair<std::function<void(uint64_t)>, uint64_t> >::iterator
+        cit;
     for (cit = to_calls.begin(); cit != to_calls.end(); cit++) {
       cit->first(cit->second);
     }
@@ -490,11 +494,9 @@ class TimeoutALock: public ALock {
 
 //        std::mutex mtx_;
 
-    ALockReq(uint64_t id,
-             type_t type) :
-        id_(id),
-        type_(type),
-        status_(WAIT) { }
+    ALockReq(uint64_t id, type_t type)
+        : id_(id), type_(type), time_(), timeout_(),
+          status_(WAIT), yes_callback_(), no_callback_() { }
 
 
     ALockReq(uint64_t id,
