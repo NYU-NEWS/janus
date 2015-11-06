@@ -186,7 +186,7 @@ void Coordinator::restart(TxnChopper *ch) {
 }
 
 void Coordinator::Start() {
-  std::lock_guard<std::mutex> lock(start_mtx_);
+  ScopedLock(this->mtx_);
   StartRequest req;
   req.cmd_id = cmd_id_;
   Command *subcmd;
@@ -218,7 +218,10 @@ bool Coordinator::AllStartAckCollected() {
 
 void Coordinator::StartAck(StartReply &reply, const phase_t &phase) {
   ScopedLock(this->mtx_);
-  if (phase != phase_) return;
+  if (phase != phase_) {
+    Log_debug("phase doesn't match %d %d\n", phase, phase_);
+    return;
+  }
 
   TxnChopper *ch = (TxnChopper *) cmd_;
   n_start_ack_++;
@@ -368,7 +371,7 @@ void Coordinator::Finish() {
   TxnChopper *ch = (TxnChopper *) cmd_;
   verify(mode_ == MODE_OCC || mode_ == MODE_2PL);
 
-  Log_debug("send out finish request, cmd_id: %lx", cmd_id_);
+  Log_debug("send out finish request, cmd_id: %lx, %ld", cmd_id_, this->n_prepare_ack_);
   // commit or abort piece
   std::function<void(Future *)> callback = [ch, this](Future *fu) {
     this->FinishAck(ch, fu);
