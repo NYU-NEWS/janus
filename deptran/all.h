@@ -32,7 +32,7 @@ static dummy_class dummy___;
 #include "ro6_row.h"
 #include "graph.h"
 #include "graph_marshaler.h"
-#include "rcc_rpc.h"
+//#include "rcc_rpc.h"
 #include "txn_chopper.h"
 #include "dep_graph.h"
 #include "dtxn.h"

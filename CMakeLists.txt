@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8.4)
 project(rococo)
-
+set(CMAKE_VERBOSE_MAKEFILE on)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Weffc++")
@@ -8,6 +8,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 find_package(Threads)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(APR REQUIRED apr-1)
+pkg_check_modules(APRUTIL REQUIRED apr-util-1)
 pkg_check_modules(PYTHON2 REQUIRED python2)
 pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
 
@@ -115,7 +116,9 @@ add_library(ROCOCO
 )
 
 add_executable(ROCOCO_SERVER
-    deptran/s_main.cc)
+    deptran/s_main.cc
+    ${RRR_SRC}
+    )
 #add_executable(ROCOCO_CLIENT deptran/c_main.cc)
 
 target_link_libraries(
@@ -124,6 +127,9 @@ target_link_libraries(
     ${CMAKE_THREAD_LIBS_INIT}
     ${YAML_CPP_LIBRARIES}
     ${Boost_LIBRARIES}
+    ${PYTHON2_LIBRARIES}
+    ${APR_LIBRARIES}
+    ${APRUTIL_LIBRARIES}
 )
 #
 #target_link_libraries(

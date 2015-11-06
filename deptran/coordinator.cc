@@ -356,6 +356,8 @@ void Coordinator::PrepareAck(TxnChopper *ch, Future *fu) {
   }
 
   if (n_prepare_ack_ == ch->partitions_.size()) {
+    RequestHeader header = gen_header(ch);
+    Log_debug("2PL prepare finished for %ld", header.tid);
     phase_ ++;
     this->Finish();
   }
