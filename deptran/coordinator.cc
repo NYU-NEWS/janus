@@ -1,6 +1,7 @@
 #include "marshal-value.h"
 #include "coordinator.h"
 #include "frame.h"
+#include "constants.h"
 #include "sharding.h"
 #include "txn_req_factory.h"
 #include "txn-chopper-factory.h"
@@ -101,10 +102,6 @@ void Coordinator::do_one(TxnRequest &req) {
   cmd_id_ = this->next_txn_id();
   cleanup(); // In case of reuse.
 
-  // turn off batch now
-  // if (batch_optimal_)
-  //     batch_start(ch);
-
   Log::debug("do one request");
 
   if (ccsi_) ccsi_->txn_start_one(thread_id_, ch->txn_type_);
@@ -112,21 +109,7 @@ void Coordinator::do_one(TxnRequest &req) {
   switch (mode_) {
     case MODE_OCC:
     case MODE_2PL:
-      //        if (recorder_) {
-      if (false) {
-//        std::string log_s;
-//        req.get_log(ch->txn_id_, log_s);
-//        std::function<void(void)> start_func = [this, ch]() {
-//          if (batch_optimal_) {
-//            naive_batch_start(ch);
-//          } else {
-//            LegacyStart(ch);
-//          }
-//        };
-//        recorder_->submit(log_s, start_func);
-      } else {
-        Start();
-      }
+      Start();
       break;
     case MODE_RPC_NULL:
       rpc_null_start(ch);
@@ -186,7 +169,8 @@ void Coordinator::restart(TxnChopper *ch) {
 }
 
 void Coordinator::Start() {
-  ScopedLock(this->mtx_);
+  //ScopedLock(this->mtx_);
+  std::lock_guard<std::mutex> lock(start_mtx_);
   StartRequest req;
   req.cmd_id = cmd_id_;
   Command *subcmd;
@@ -218,10 +202,10 @@ bool Coordinator::AllStartAckCollected() {
 
 void Coordinator::StartAck(StartReply &reply, const phase_t &phase) {
   ScopedLock(this->mtx_);
-  if (phase != phase_) {
-    Log_debug("phase doesn't match %d %d\n", phase, phase_);
-    return;
-  }
+//  if (phase != phase_) {
+//    Log_debug("phase doesn't match %d %d\n", phase, phase_);
+//    return;
+//  }
 
   TxnChopper *ch = (TxnChopper *) cmd_;
   n_start_ack_++;
@@ -347,13 +331,15 @@ void Coordinator::PrepareAck(TxnChopper *ch, Future *fu) {
 
   if (e != 0) {
     ch->commit_.store(false);
-    Log_debug("2PL prepare failed");
+    Log_debug("2PL prepare failed due to error");
   } else {
     int res;
     fu->get_reply() >> res;
     Log::debug("pre res: %d", res);
 
     if (res == REJECT) {
+      RequestHeader header = gen_header(ch);
+      Log::debug("Prepare rejected for %ld by %ld\n", header.tid, ch->inn_id());
       ch->commit_.store(false);
     }
   }

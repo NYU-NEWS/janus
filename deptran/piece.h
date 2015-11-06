@@ -59,8 +59,12 @@ class Piece {
     }
 
 #define RCC_PHASE1_RET \
-    if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) \
-        return;
+    { \
+        if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { \
+            Log::debug("RETURN mode is RCC or RO6 and in phase 1\n"); \
+            return; \
+        } \
+    } while(0);
 
 #define RCC_SAVE_ROW(row, index) \
     if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) { \
