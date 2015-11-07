@@ -36,10 +36,6 @@ void client_setup_heartbeat() {
   }
 }
 
-//void client_setup_request_factory() {
-////  TxnRequestFactory::init_txn_req(nullptr, 0);
-//}
-
 void client_launch_workers() {
   uint32_t duration = Config::GetConfig()->get_duration();
   if (duration == 0)
@@ -75,10 +71,6 @@ void client_launch_workers() {
     th.join();
   }
 
-
-
-//  TxnRequestFactory::destroy();
-//  Config::DestroyConfig();
 }
 
 
