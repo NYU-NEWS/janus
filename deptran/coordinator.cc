@@ -202,10 +202,10 @@ bool Coordinator::AllStartAckCollected() {
 
 void Coordinator::StartAck(StartReply &reply, const phase_t &phase) {
   ScopedLock(this->mtx_);
-//  if (phase != phase_) {
-//    Log_debug("phase doesn't match %d %d\n", phase, phase_);
+  if (phase != phase_) {
+    Log_debug("phase doesn't match %d %d\n", phase, phase_);
 //    return;
-//  }
+  }
 
   TxnChopper *ch = (TxnChopper *) cmd_;
   n_start_ack_++;

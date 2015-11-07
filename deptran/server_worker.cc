@@ -1,4 +1,3 @@
-
 #include "server_worker.h"
 #include "rcc_service.h"
 #include "benchmark_control_rpc.h"
@@ -8,16 +7,6 @@
 
 
 namespace rococo {
-
-//rrr::PollMgr* ServerWorker::svr_poll_mgr_g = nullptr;
-//RococoServiceImpl* ServerWorker::rsi_g = nullptr;
-//rrr::Server* ServerWorker::svr_server_g = nullptr;
-//base::ThreadPool* ServerWorker::thread_pool_g = nullptr;
-//
-//rrr::PollMgr* ServerWorker::svr_hb_poll_mgr_g = NULL;
-//ServerControlServiceImpl* ServerWorker::scsi_g = NULL;
-//rrr::Server* ServerWorker::svr_hb_server_g = NULL;
-//base::ThreadPool* ServerWorker::hb_thread_pool_g = NULL;
 
 void ServerWorker::SetupHeartbeat() {
   bool hb = Config::GetConfig()->do_heart_beat();
@@ -38,14 +27,12 @@ void ServerWorker::SetupHeartbeat() {
 void ServerWorker::PopTable() {
 
   // TODO this needs to be done before poping table
-  int running_mode = Config::GetConfig()->get_mode();
   verify(txn_reg_);
   txn_mgr_ = Frame().CreateDTxnMgr();
   txn_mgr_->txn_reg_ = txn_reg_;
   sharding_->dtxn_mgr_ = txn_mgr_;
 
   // populate table
-  auto par_id = site_info_->par_id;
   int ret = 0;
 
   // get all tables
@@ -102,10 +89,6 @@ void ServerWorker::SetupService() {
   // set running mode and initialize transaction manager.
   std::string bind_addr = site_info_->GetBindAddress();
 
-//  if (0 != (ret = Config::GetConfig()->get_my_addr(bind_addr))) {
-//    verify(0);
-//  }
-
   // init service implement
   rsi_g = new RococoServiceImpl(txn_mgr_, scsi_g);
 
@@ -155,9 +138,7 @@ void ServerWorker::SetupService() {
     Log_fatal("server launch failed.");
   }
 
-
   Log_info("Server ready");
-
 
   if (svr_hb_server_g != nullptr) {
 #ifdef CPU_PROFILE
@@ -188,11 +169,6 @@ void ServerWorker::SetupService() {
     ProfilerStop();
 #endif // ifdef CPU_PROFILE
   }
-//  else {
-//    while (1) {
-//      sleep(1000);
-//    }
-//  }
 
   Log::info("asking other server finish request count: %d",
             ((DepTranServiceImpl *) rsi_g)->n_asking_);
@@ -200,7 +176,6 @@ void ServerWorker::SetupService() {
 }
 
 void ServerWorker::ShutDown() {
-
   // TODO
   delete svr_server_g;
   delete rsi_g;
