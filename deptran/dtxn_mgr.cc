@@ -179,6 +179,7 @@ void DTxnMgr::reg_table(const std::string &name,
 
 DTxn* DTxnMgr::Create(i64 tid, bool ro) {
   verify(dtxns_[tid] == nullptr);
+  Log_debug("create tid %ld\n", tid);
   DTxn* dtxn = Frame().CreateDTxn(tid, ro, this);
   dtxns_[tid] = dtxn;
   dtxn->recorder_ = this->recorder_;
@@ -196,8 +197,8 @@ DTxn* DTxnMgr::GetOrCreate(i64 tid, bool ro) {
   }
 }
 
-
 void DTxnMgr::destroy(i64 tid) {
+  Log_debug("destroy tid %ld\n", tid);
   auto it = dtxns_.find(tid);
   verify(it != dtxns_.end());
   delete it->second;
@@ -209,25 +210,5 @@ DTxn* DTxnMgr::get(i64 tid) {
   verify(it != dtxns_.end());
   return it->second;
 }
-
-
-
-//DTxnMgr *DTxnMgr::txn_mgr_s = NULL;
-//map<uint32_t, DTxnMgr*> DTxnMgr::txn_mgrs_s;
-//
-//DTxnMgr* DTxnMgr::CreateTxnMgr(uint32_t site_id) {
-//  auto mgr = new DTxnMgr(Config::config_s->mode_);
-//  auto it = txn_mgrs_s.find(site_id);
-//  verify(it == txn_mgrs_s.end());
-//  txn_mgrs_s[site_id] = mgr;
-//  return mgr;
-//}
-//
-//DTxnMgr* DTxnMgr::GetTxnMgr(uint32_t site_id) {
-//  auto it = txn_mgrs_s.find(site_id);
-//  verify(it != txn_mgrs_s.end());
-//  return it->second;
-//}
-
 
 } // namespace rococo

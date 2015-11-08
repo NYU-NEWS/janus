@@ -16,14 +16,8 @@ Commo::Commo(std::vector<std::string> &addrs) {
     vec_rpc_cli_.push_back(rpc_cli);
     vec_rpc_proxy_.push_back(rpc_proxy);
   }
-
-//  if (Config::get_config()->do_logging()) {
-//    std::string log_path(Config::get_config()->log_path());
-//    log_path.append(std::to_string(coo_id_));
-//    recorder_ = new Recorder(log_path.c_str());
-//    rpc_poll_->add(recorder_);
-//  }
 }
+
 void Commo::SendStart(parid_t par_id, 
                       StartRequest &req, 
                       Coordinator *coo,
@@ -39,14 +33,16 @@ void Commo::SendStart(parid_t par_id,
   verify(header.p_type);
   SimpleCommand *cmd  = (SimpleCommand*)req.cmd;
   RococoProxy *proxy = vec_rpc_proxy_[par_id];
-  std::function<void(Future*)> cb = [coo, this, callback, cmd](Future *fu) {
-    StartReply reply; 
+  std::function<void(Future*)> cb = [coo, this, callback, cmd, par_id](Future *fu) {
+    StartReply reply;
+    Log_debug("SendStart callback for %ld from %ld", par_id, coo->coo_id_);
     reply.cmd = cmd;
     Marshal &m = fu->get_reply();
     m >> reply.res >> cmd->output;
     callback(reply);
   };
   fuattr.callback = cb;
+  Log_debug("SendStart to %ld from %ld", par_id, coo->coo_id_);
   Future::safe_release(proxy->async_start_pie(header, cmd->input,
                                               cmd->output_size, fuattr));
 }
@@ -68,6 +64,8 @@ void Commo::SendPrepare(groupid_t gid, txnid_t tid,
   FutureAttr fuattr;
   fuattr.callback = callback;
   RococoProxy *proxy = vec_rpc_proxy_[gid];
+
+  Log_debug("SendPrepare to %ld sites gid:%ld, tid:%ld\n", sids.size(), gid, tid);
   Future::safe_release(proxy->async_prepare_txn(tid, sids, fuattr));
 }
 
@@ -76,6 +74,7 @@ void Commo::SendCommit(parid_t pid, txnid_t tid,
   FutureAttr fuattr;
   fuattr.callback = callback;
   RococoProxy *proxy = vec_rpc_proxy_[pid];
+  Log_debug("SendPrepare to %ld tid:%ld\n", pid, tid);
   Future::safe_release(proxy->async_commit_txn(tid, fuattr));
 }
 
@@ -84,6 +83,7 @@ void Commo::SendAbort(parid_t pid, txnid_t tid,
   FutureAttr fuattr;
   fuattr.callback = callback;
   RococoProxy *proxy = vec_rpc_proxy_[pid];
+  Log_debug("SendPrepare to %ld tid:%ld\n", pid, tid);
   Future::safe_release(proxy->async_abort_txn(tid, fuattr));
 }
 

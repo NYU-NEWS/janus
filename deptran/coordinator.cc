@@ -214,10 +214,12 @@ void Coordinator::StartAck(StartReply &reply, const phase_t &phase) {
             cmd_id_, reply.cmd->inn_id_);
   start_ack_map_[reply.cmd->inn_id_] = true;
   if (reply.res == REJECT) {
+    Log::debug("got REJECT reply for cmd_id: %lx, inn_id: %d; NOT COMMITING", cmd_id_,reply.cmd->inn_id());
     ch->commit_.store(false);
   }
   if (!ch->commit_.load()) {
     if (n_start_ack_ == n_start_) {
+      Log::debug("received all start acks; calling Finish()");
       phase_++;
       this->Finish();
     }
@@ -237,64 +239,6 @@ void Coordinator::StartAck(StartReply &reply, const phase_t &phase) {
     }
   }
 }
-
-//
-//void Coordinator::LegacyStart(TxnChopper *ch) {
-//  // new txn id for every new and retry.
-//  RequestHeader header = gen_header(ch);
-//  int pi;
-//  std::vector<Value> *input;
-//  int32_t server_id;
-//  int res;
-//  int output_size;
-//  while ((res = ch->next_piece(input,
-//                               output_size,
-//                               server_id,
-//                               pi,
-//                               header.p_type)) == 0) {
-//    header.pid = next_pie_id();
-//
-//    std::function<void(Future*)> callback = [ch, pi, this](Future *fu) {
-//      this->LegacyStartAck(ch, pi, fu);
-//    };
-//
-//    // remember this a asynchronous call!
-//    // variable functional range is important!
-//
-//    commo_->SendStart(server_id, header, *input, output_size, callback);
-//
-//    ch->n_start_sent_++;
-//    site_piece_[server_id]++;
-//  }
-//}
-
-//
-//void Coordinator::LegacyStartAck(TxnChopper *ch, int pi, Future *fu) {
-//  ScopedLock(this->mtx_);
-//
-//  int res;
-//  std::vector<mdb::Value> output;
-//  fu->get_reply() >> res >> output;
-//  ch->n_started_++;
-//  ch->n_start_sent_--;
-//
-//  if (res == REJECT) {
-//    verify(this->mode_ == MODE_2PL);
-//    ch->commit_.store(false);
-//  }
-//
-//  if (!ch->commit_.load()) {
-//    if (ch->n_start_sent_ == 0) {
-//      this->finish(ch);
-//    }
-//  } else {
-//    if (ch->start_callback(pi, res, output)) {
-//      this->LegacyStart(ch);
-//    } else if (ch->n_started_ == ch->n_pieces_) {
-//      this->Prepare(ch);
-//    }
-//  }
-//}
 
 void Coordinator::naive_batch_start(TxnChopper *ch) {
 
@@ -334,11 +278,11 @@ void Coordinator::PrepareAck(TxnChopper *ch, Future *fu) {
     Log_debug("2PL prepare failed due to error");
   } else {
     int res;
+    RequestHeader header = gen_header(ch);
     fu->get_reply() >> res;
-    Log::debug("pre res: %d", res);
+    Log::debug("tid %ld; prepare result %d", header.tid, res);
 
     if (res == REJECT) {
-      RequestHeader header = gen_header(ch);
       Log::debug("Prepare rejected for %ld by %ld\n", header.tid, ch->inn_id());
       ch->commit_.store(false);
     }
@@ -400,15 +344,6 @@ void Coordinator::FinishAck(TxnChopper *ch, Future *fu) {
              retry ? "True" : "False");
 
   if (retry) {
-    // random sleep before restart
-    //            struct timespec sleep_time, buf;
-    //            sleep_time.tv_sec = coo_id_;//RandomGenerator::rand(0, 4);
-    //            sleep_time.tv_nsec = 0;//RandomGenerator::rand(0, 1000 *
-    // 1000 * 1000 - 1);
-    //            nanosleep(&sleep_time, &buf);
-    //            uint64_t sleep_time = coo_id_ * 1000000 / 2;
-    //            apr_sleep(sleep_time);
-
     this->restart(ch);
   }
 
@@ -422,13 +357,6 @@ void Coordinator::FinishAck(TxnChopper *ch, Future *fu) {
 #endif // ifdef TXN_STAT
     );
 
-    // if (retry_wait_ && txn_reply_buf.res_ != SUCCESS) {
-    //    struct timespec sleep_time, buf;
-    //    sleep_time.tv_sec = 0;
-    //    sleep_time.tv_nsec = RandomGenerator::rand(1000 * 1000, 10 * 1000 *
-    // 1000);
-    //    nanosleep(&sleep_time, &buf);
-    // }
     ch->callback_(txn_reply_buf);
     delete ch;
   }

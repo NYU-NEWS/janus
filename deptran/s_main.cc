@@ -8,7 +8,6 @@
 
 using namespace rococo;
 
-
 #include "server_worker.h"
 
 static ClientControlServiceImpl *ccsi_g = nullptr;
@@ -16,7 +15,6 @@ static rrr::PollMgr *cli_poll_mgr_g = nullptr;
 static rrr::Server *cli_hb_server_g = nullptr;
 
 static vector<ServerWorker>*svr_workers = nullptr;
-
 
 void client_setup_heartbeat() {
   std::map<int32_t, std::string> txn_types;
@@ -125,11 +123,9 @@ int main(int argc, char *argv[]) {
     server_launch_worker();
   }
 
-  //unsigned int cid = Config::get_config()->get_client_id();
   infos = Config::GetConfig()->GetMyClients();
   if (infos.size() > 0) {
     Log_info("client enabled, number of sites: %d", infos.size());
-//    client_setup_request_factory();
     client_setup_heartbeat();
     client_launch_workers();
     // TODO shutdown servers.

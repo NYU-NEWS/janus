@@ -25,7 +25,6 @@ void ServerWorker::SetupHeartbeat() {
 }
 
 void ServerWorker::PopTable() {
-
   // TODO this needs to be done before poping table
   verify(txn_reg_);
   txn_mgr_ = Frame().CreateDTxnMgr();

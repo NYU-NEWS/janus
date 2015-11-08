@@ -5,20 +5,15 @@ namespace mdb {
 
 class Txn2PL: public Txn {
  private:
-
   void release_piece_map(bool commit);
   void release_resource();
 
-  //rrr::ALockGroup rw_alock_grp_;
-  //rrr::ALockGroup rm_alock_grp_;
  protected:
-
   symbol_t outcome_;
   std::multimap<Row *, column_id_t> reads_;
   std::multimap<Row *, std::pair<column_id_t, Value>> updates_;
   std::multiset<table_row_pair> inserts_;
   std::unordered_set<table_row_pair, table_row_pair::hash> removes_;
-  //std::unordered_multimap<Row*, std::pair<column_id_t, uint64_t>> alocks_;
 
   bool debug_check_row_valid(Row *row) const {
     for (auto &it : removes_) {
@@ -48,7 +43,6 @@ class Txn2PL: public Txn {
   class PieceStatus {
     friend class Txn2PL;
     //FIXME when locking thread starts to process a piece, and main thread starts to abort one txn
-    // probably we can use a
    private:
     static int64_t swap_bits(int64_t num) {
       int64_t ret = num << 32;
@@ -221,7 +215,7 @@ class Txn2PL: public Txn {
   bool wound_, prepared_;
 
   std::unordered_map<i64, PieceStatus *> piece_map_;
-//  static PieceStatus *ps_cache_s; // TODO fix
+  //  static PieceStatus *ps_cache_s; // TODO fix
   PieceStatus *ps_cache_;
 
  public:
