@@ -24,7 +24,7 @@ public:
 
     virtual void retry() {
         n_pieces_out_ = 0;
-        status_ = std::vector<CommandStatus>(4, READY);
+        status_ = std::vector<CommandStatus>(3, READY);
         commit_.store(true);
         partitions_.clear();
         n_try_ ++;
