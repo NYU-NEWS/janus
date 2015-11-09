@@ -45,7 +45,6 @@ Command *TxnChopper::GetNextSubCmd() {
       cmd->output_size = output_size_[i];
       cmd->root_ = this;
       cmd_vec_[i] = cmd;
-      _mm_mfence();
 
       partitions_.insert(sharding_[i]);
 
