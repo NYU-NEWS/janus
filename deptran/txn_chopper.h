@@ -46,6 +46,9 @@ public:
   virtual Command* GetRootCmd() {return root_;}
 };
 
+
+enum CommandStatus {WAITING=-1, READY, ONGOING, FINISHED};
+
 class TxnChopper : public Command {
  private:
   static inline bool is_consistent(const std::vector<mdb::Value> &previous,
@@ -79,7 +82,7 @@ protected:
   std::atomic<bool> commit_;
   std::vector<uint32_t> sharding_;
   /** which server to which piece */
-  std::vector<int> status_; // -1 waiting; 0 ready; 1 ongoing; 2 finished;
+  std::vector<CommandStatus> status_; // -1 waiting; 0 ready; 1 ongoing; 2 finished;
   std::vector<Command*> cmd_vec_;
   std::set<parid_t> partitions_;
   /** server involved*/

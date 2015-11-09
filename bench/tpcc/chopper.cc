@@ -124,7 +124,7 @@ void TpccChopper::new_order_init(TxnRequest &req) {
   p_types_[0] = TPCC_NEW_ORDER_0;
   new_order_shard(TPCC_TB_DISTRICT, req.input_,  // sharding based on d_w_id
                   sharding_[0]);
-  status_[0] = 0;
+  status_[0] = READY;
 
   // piece 1, R warehouse
   inputs_[1] = std::vector<Value>({
@@ -134,7 +134,7 @@ void TpccChopper::new_order_init(TxnRequest &req) {
   p_types_[1] = TPCC_NEW_ORDER_1;
   new_order_shard(TPCC_TB_WAREHOUSE, req.input_,  // sharding based on w_id
                   sharding_[1]);
-  status_[1] = 0;
+  status_[1] = READY;
 
   // piece 2, R customer
   inputs_[2] = std::vector<Value>({
@@ -146,7 +146,7 @@ void TpccChopper::new_order_init(TxnRequest &req) {
   p_types_[2] = TPCC_NEW_ORDER_2;
   new_order_shard(TPCC_TB_CUSTOMER, req.input_,  // sharding based on c_w_id
                   sharding_[2]);
-  status_[2] = 0;
+  status_[2] = READY;
 
   bool all_local = true;
   for (int i = 0; i < ol_cnt; i++) {
@@ -167,7 +167,7 @@ void TpccChopper::new_order_init(TxnRequest &req) {
                     req.input_,
                     sharding_[TPCC_NEW_ORDER_Ith_INDEX_ITEM(i)],
                     i);
-    status_[TPCC_NEW_ORDER_Ith_INDEX_ITEM(i)] = 0;
+    status_[TPCC_NEW_ORDER_Ith_INDEX_ITEM(i)] = READY;
 
     // piece 6 + 4 * i, Ri stock
     inputs_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)] = std::vector<Value>({
@@ -185,7 +185,7 @@ void TpccChopper::new_order_init(TxnRequest &req) {
     p_types_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)] = TPCC_NEW_ORDER_6;
     new_order_shard(TPCC_TB_STOCK, req.input_,
                     sharding_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)], i);
-    status_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)] = 0;
+    status_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)] = READY;
 
     // piece 7 + 4 * i, W stock
     inputs_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)] = std::vector<Value>({
@@ -207,7 +207,7 @@ void TpccChopper::new_order_init(TxnRequest &req) {
     p_types_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)] = TPCC_NEW_ORDER_7;
     new_order_shard(TPCC_TB_STOCK, req.input_,
                     sharding_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)], i);
-    status_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)] = 0;
+    status_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)] = READY;
 
     // piece 8 + 4 * i, W order_line, depends on piece 0 & 5+3*i & 6+3*i
     inputs_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)] = std::vector<Value>({
@@ -240,7 +240,7 @@ void TpccChopper::new_order_init(TxnRequest &req) {
     p_types_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)] = TPCC_NEW_ORDER_8;
     new_order_shard(TPCC_TB_ORDER_LINE, req.input_,// sharding based on ol_w_id
                     sharding_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)]);
-    status_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)] = -1;
+    status_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)] = WAITING;
   }
   // piece 3, W order, depends on piece 0
   inputs_[3] = std::vector<Value>({
@@ -257,7 +257,7 @@ void TpccChopper::new_order_init(TxnRequest &req) {
   p_types_[3] = TPCC_NEW_ORDER_3;
   new_order_shard(TPCC_TB_ORDER, req.input_, // sharding based on o_w_id
                   sharding_[3]);
-  status_[3] = -1;
+  status_[3] = WAITING;
 
   // piece 4, W new_order, depends on piece 0
   inputs_[4] = std::vector<Value>({
@@ -269,7 +269,7 @@ void TpccChopper::new_order_init(TxnRequest &req) {
   p_types_[4] = TPCC_NEW_ORDER_4;
   new_order_shard(TPCC_TB_NEW_ORDER, req.input_, // sharding based on no_w_id
                   sharding_[4]);
-  status_[4] = -1;
+  status_[4] = WAITING;
 }
 
 bool TpccChopper::new_order_callback(int pi,
@@ -281,14 +281,14 @@ bool TpccChopper::new_order_callback(int pi,
     new_order_dep_.piece_0_dist = true;
     Value o_id = output[1];
     inputs_[3][0] = o_id;
-    status_[3] = 0;
+    status_[3] = READY;
     inputs_[4][0] = o_id;
-    status_[4] = 0;
+    status_[4] = READY;
 
     for (size_t i = 0; i < new_order_dep_.ol_cnt; i++) {
       inputs_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)][2] = o_id;
       if (new_order_dep_.piece_items[i] && new_order_dep_.piece_stocks[i])
-        status_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)] = 0;
+        status_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)] = READY;
     }
 
     return true;
@@ -300,7 +300,7 @@ bool TpccChopper::new_order_callback(int pi,
     new_order_dep_.piece_items[TPCC_NEW_ORDER_INDEX_ITEM_TO_CNT(pi)] = true;
     if (new_order_dep_.piece_0_dist
         && new_order_dep_.piece_stocks[TPCC_NEW_ORDER_INDEX_ITEM_TO_CNT(pi)]) {
-      status_[TPCC_NEW_ORDER_INDEX_ITEM_TO_ORDER_LINE(pi)] = 0;
+      status_[TPCC_NEW_ORDER_INDEX_ITEM_TO_ORDER_LINE(pi)] = READY;
       return true;
     }
     else
@@ -312,7 +312,7 @@ bool TpccChopper::new_order_callback(int pi,
         true;
     if (new_order_dep_.piece_0_dist
         && new_order_dep_.piece_items[TPCC_NEW_ORDER_INDEX_IM_STOCK_TO_CNT(pi)]) {
-      status_[TPCC_NEW_ORDER_INDEX_IM_STOCK_TO_ORDER_LINE(pi)] = 0;
+      status_[TPCC_NEW_ORDER_INDEX_IM_STOCK_TO_ORDER_LINE(pi)] = READY;
       return true;
     }
     else
@@ -381,19 +381,19 @@ bool TpccChopper::start_callback(const std::vector<int> &pi,
 }
 
 void TpccChopper::new_order_retry() {
-  status_[0] = 0;
-  status_[1] = 0;
-  status_[2] = 0;
-  status_[3] = -1;
-  status_[4] = -1;
+  status_[0] = READY;
+  status_[1] = READY;
+  status_[2] = READY;
+  status_[3] = WAITING;
+  status_[4] = WAITING;
   new_order_dep_.piece_0_dist = false;
   for (size_t i = 0; i < new_order_dep_.ol_cnt; i++) {
     new_order_dep_.piece_items[i] = false;
     new_order_dep_.piece_stocks[i] = false;
-    status_[TPCC_NEW_ORDER_Ith_INDEX_ITEM(i)] = 0;
-    status_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)] = 0;
-    status_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)] = 0;
-    status_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)] = -1;
+    status_[TPCC_NEW_ORDER_Ith_INDEX_ITEM(i)] = READY;
+    status_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)] = READY;
+    status_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)] = READY;
+    status_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)] = WAITING;
   }
 }
 
@@ -443,7 +443,7 @@ void TpccChopper::payment_init(TxnRequest &req) {
   output_size_[0] = 6;
   p_types_[0] = TPCC_PAYMENT_0;
   payment_shard(TPCC_TB_WAREHOUSE, req.input_, sharding_[0]);
-  status_[0] = 0;
+  status_[0] = READY;
 
   // piece 1, Ri district
   inputs_[1] = std::vector<Value>({
@@ -453,7 +453,7 @@ void TpccChopper::payment_init(TxnRequest &req) {
   output_size_[1] = 6;
   p_types_[1] = TPCC_PAYMENT_1;
   payment_shard(TPCC_TB_DISTRICT, req.input_, sharding_[1]);
-  status_[1] = 0;
+  status_[1] = READY;
 
   // piece 2, W district
   inputs_[2] = std::vector<Value>({
@@ -464,7 +464,7 @@ void TpccChopper::payment_init(TxnRequest &req) {
   output_size_[2] = 0;
   p_types_[2] = TPCC_PAYMENT_2;
   payment_shard(TPCC_TB_DISTRICT, req.input_, sharding_[2]);
-  status_[2] = 0;
+  status_[2] = READY;
 
   // query by c_last
   if (req.input_[2].get_kind() == mdb::Value::STR) {
@@ -477,9 +477,9 @@ void TpccChopper::payment_init(TxnRequest &req) {
     output_size_[3] = 1;
     p_types_[3] = TPCC_PAYMENT_3;
     payment_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[3]);
-    status_[3] = 0;
+    status_[3] = READY;
     // piece 4, set it to waiting
-    status_[4] = -1;
+    status_[4] = WAITING;
 
     payment_dep_.piece_last2id = false;
     payment_dep_.piece_ori_last2id = false;
@@ -489,9 +489,9 @@ void TpccChopper::payment_init(TxnRequest &req) {
     Log_debug("payment transaction lookup by customer name");
 //    verify(0);
     // piece 3, R customer, set it to finish
-    status_[3] = 2;
+    status_[3] = FINISHED;
     // piece 4, set it to ready
-    status_[4] = 0;
+    status_[4] = READY;
     n_pieces_out_ = 1;
 
     payment_dep_.piece_last2id = true;
@@ -526,7 +526,7 @@ void TpccChopper::payment_init(TxnRequest &req) {
   output_size_[5] = 0;
   p_types_[5] = TPCC_PAYMENT_5;
   payment_shard(TPCC_TB_HISTORY, req.input_, sharding_[5]);
-  status_[5] = -1;
+  status_[5] = WAITING;
 }
 
 bool TpccChopper::payment_callback(int pi,
@@ -541,7 +541,7 @@ bool TpccChopper::payment_callback(int pi,
     inputs_[5][1] = output[0];
     if (payment_dep_.piece_district && payment_dep_.piece_last2id) {
       Log_debug("warehouse: d_name c_id ready");
-      status_[5] = 0;
+      status_[5] = READY;
       return true;
     }
     Log_debug("warehouse: d_name c_id not ready");
@@ -554,7 +554,7 @@ bool TpccChopper::payment_callback(int pi,
     inputs_[5][2] = output[0];
     if (payment_dep_.piece_warehouse && payment_dep_.piece_last2id) {
       Log_debug("warehouse: w_name c_id ready");
-      status_[5] = 0;
+      status_[5] = READY;
       return true;
     }
     Log_debug("warehouse: w_name c_id not ready");
@@ -569,11 +569,11 @@ bool TpccChopper::payment_callback(int pi,
     payment_dep_.piece_last2id = true;
     // set piece 4 ready
     inputs_[4][0] = output[0];
-    status_[4] = 0;
+    status_[4] = READY;
 
     inputs_[5][5] = output[0];
     if (payment_dep_.piece_warehouse && payment_dep_.piece_district) {
-      status_[5] = 0;
+      status_[5] = READY;
       Log_debug("customer: w_name c_id not ready");
     }
     return true;
@@ -593,21 +593,21 @@ bool TpccChopper::payment_callback(int pi,
 }
 
 void TpccChopper::payment_retry() {
-  status_[0] = 0;
-  status_[1] = 0;
-  status_[2] = 0;
+  status_[0] = READY;
+  status_[1] = READY;
+  status_[2] = READY;
   // query by c_id
   if (payment_dep_.piece_ori_last2id) {
-    status_[3] = 2;
-    status_[4] = 0;
+    status_[3] = FINISHED;
+    status_[4] = READY;
     n_pieces_out_ = 1;
   }
     // query by c_last
   else {
-    status_[3] = 0;
-    status_[4] = -1;
+    status_[3] = READY;
+    status_[4] = WAITING;
   }
-  status_[5] = -1;
+  status_[5] = WAITING;
   payment_dep_.piece_warehouse = false;
   payment_dep_.piece_district = false;
   payment_dep_.piece_last2id = payment_dep_.piece_ori_last2id;
@@ -645,9 +645,9 @@ void TpccChopper::order_status_init(TxnRequest &req) {
   status_.resize(n_pieces_all_);
 
   if (req.input_[2].get_kind() == Value::I32) { // query by c_id
-    status_[0] = 2; // piece 0 not needed
-    status_[1] = 0; // piece 1 ready
-    status_[2] = 0; // piece 2 ready
+    status_[0] = FINISHED; // piece 0 not needed
+    status_[1] = READY; // piece 1 ready
+    status_[2] = READY; // piece 2 ready
 
     order_status_dep_.piece_last2id = true;
     order_status_dep_.piece_ori_last2id = true;
@@ -666,13 +666,13 @@ void TpccChopper::order_status_init(TxnRequest &req) {
     p_types_[0] = TPCC_ORDER_STATUS_0;
     order_status_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[0]);
 
-    status_[0] = 0;  // piece 0 ready
+    status_[0] = READY;  // piece 0 ready
 
     order_status_dep_.piece_last2id = false;
     order_status_dep_.piece_ori_last2id = false;
 
-    status_[1] = -1; // piece 1 waiting for piece 0
-    status_[2] = -1; // piece 2 waiting for piece 0
+    status_[1] = WAITING; // piece 1 waiting for piece 0
+    status_[2] = WAITING; // piece 2 waiting for piece 0
   }
 
   // piece 1, R customer, depends on piece 0 if using c_last instead of c_id
@@ -704,7 +704,7 @@ void TpccChopper::order_status_init(TxnRequest &req) {
   output_size_[3] = 15 * 5;
   p_types_[3] = TPCC_ORDER_STATUS_3;
   order_status_shard(TPCC_TB_ORDER_LINE, req.input_, sharding_[3]);
-  status_[3] = -1;
+  status_[3] = WAITING;
 
 }
 
@@ -716,9 +716,9 @@ bool TpccChopper::order_status_callback(int pi,
     verify(!order_status_dep_.piece_last2id);
     order_status_dep_.piece_last2id = true;
     inputs_[1][2] = output[0];
-    status_[1] = 0;
+    status_[1] = READY;
     inputs_[2][2] = output[0];
-    status_[2] = 0;
+    status_[2] = READY;
 
     return true;
   }
@@ -730,7 +730,7 @@ bool TpccChopper::order_status_callback(int pi,
     verify(!order_status_dep_.piece_order);
     order_status_dep_.piece_order = true;
     inputs_[3][2] = output[0];
-    status_[3] = 0;
+    status_[3] = READY;
     return true;
   }
   else if (pi == 3) {
@@ -744,17 +744,17 @@ void TpccChopper::order_status_retry() {
   order_status_dep_.piece_last2id = order_status_dep_.piece_ori_last2id;
   order_status_dep_.piece_order = false;
   if (order_status_dep_.piece_last2id) {
-    status_[0] = 2;
-    status_[1] = 0;
-    status_[2] = 0;
+    status_[0] = FINISHED;
+    status_[1] = READY;
+    status_[2] = READY;
     n_pieces_out_ = 1;
   }
   else {
-    status_[0] = 0;
-    status_[1] = -1;
-    status_[2] = -1;
+    status_[0] = READY;
+    status_[1] = WAITING;
+    status_[2] = WAITING;
   }
-  status_[3] = -1;
+  status_[3] = WAITING;
 }
 
 void TpccChopper::delivery_shard(const char *tb,
@@ -880,7 +880,7 @@ void TpccChopper::delivery_init(TxnRequest &req) {
   output_size_[0] = 1;
   p_types_[0] = TPCC_DELIVERY_0;
   delivery_shard(TPCC_TB_NEW_ORDER, req.input_, sharding_[0], d_id);
-  status_[0] = 0;
+  status_[0] = READY;
 
   // piece 1, Ri & W order
   inputs_[1] = std::vector<Value>({
@@ -892,7 +892,7 @@ void TpccChopper::delivery_init(TxnRequest &req) {
   output_size_[1] = 1;
   p_types_[1] = TPCC_DELIVERY_1;
   delivery_shard(TPCC_TB_ORDER, req.input_, sharding_[1], d_id);
-  status_[1] = -1;
+  status_[1] = WAITING;
 
   // piece 2, Ri & W order_line
   inputs_[2] = std::vector<Value>({
@@ -903,7 +903,7 @@ void TpccChopper::delivery_init(TxnRequest &req) {
   output_size_[2] = 1;
   p_types_[2] = TPCC_DELIVERY_2;
   delivery_shard(TPCC_TB_ORDER_LINE, req.input_, sharding_[2], d_id);
-  status_[2] = -1;
+  status_[2] = WAITING;
 
   // piece 3, W customer
   inputs_[3] = std::vector<Value>({
@@ -915,7 +915,7 @@ void TpccChopper::delivery_init(TxnRequest &req) {
   output_size_[3] = 0;
   p_types_[3] = TPCC_DELIVERY_3;
   delivery_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[3], d_id);
-  status_[3] = -1;
+  status_[3] = WAITING;
 }
 
 //bool TpccChopper::delivery_callback(int pi, int res, const Value *output, uint32_t output_size) {
@@ -976,9 +976,9 @@ bool TpccChopper::delivery_callback(int pi,
     verify(output_size == 1);
     verify(!delivery_dep_.piece_new_orders);
     if (output[0].get_i32() == (i32) -1) { // new_order not found
-      status_[1] = 2;
-      status_[2] = 2;
-      status_[3] = 2;
+      status_[1] = FINISHED;
+      status_[2] = FINISHED;
+      status_[3] = FINISHED;
       n_pieces_out_ += 3;
       Log::info("TPCC DELIVERY: no more new order for w_id: %d, d_id: %d",
                 inputs_[pi][0].get_i32(),
@@ -988,8 +988,8 @@ bool TpccChopper::delivery_callback(int pi,
     else {
       inputs_[1][0] = output[0];
       inputs_[2][0] = output[0];
-      status_[1] = 0;
-      status_[2] = 0;
+      status_[1] = READY;
+      status_[2] = READY;
       delivery_dep_.piece_new_orders = true;
       return true;
     }
@@ -999,7 +999,7 @@ bool TpccChopper::delivery_callback(int pi,
     inputs_[3][0] = output[0];
     delivery_dep_.piece_orders = true;
     if (delivery_dep_.piece_order_lines) {
-      status_[3] = 0;
+      status_[3] = READY;
       return true;
     }
     else
@@ -1010,7 +1010,7 @@ bool TpccChopper::delivery_callback(int pi,
     inputs_[3][3] = output[0];
     delivery_dep_.piece_order_lines = true;
     if (delivery_dep_.piece_orders) {
-      status_[3] = 0;
+      status_[3] = READY;
       return true;
     }
     else
@@ -1036,10 +1036,10 @@ bool TpccChopper::delivery_callback(int pi,
 //}
 
 void TpccChopper::delivery_retry() {
-  status_[0] = 0;
-  status_[1] = -1;
-  status_[2] = -1;
-  status_[3] = -1;
+  status_[0] = READY;
+  status_[1] = WAITING;
+  status_[2] = WAITING;
+  status_[3] = WAITING;
   delivery_dep_.piece_new_orders = false;
   delivery_dep_.piece_orders = false;
   delivery_dep_.piece_order_lines = false;
@@ -1088,7 +1088,7 @@ void TpccChopper::stock_level_init(TxnRequest &req) {
   output_size_[0] = 1;
   p_types_[0] = TPCC_STOCK_LEVEL_0;
   stock_level_shard(TPCC_TB_DISTRICT, req.input_, sharding_[0]);
-  status_[0] = 0;
+  status_[0] = READY;
 
   // piece 1, R order_line
   inputs_[1] = std::vector<Value>({
@@ -1099,7 +1099,7 @@ void TpccChopper::stock_level_init(TxnRequest &req) {
   output_size_[1] = 20 * 15; // 20 orders * 15 order_line per order at most
   p_types_[1] = TPCC_STOCK_LEVEL_1;
   stock_level_shard(TPCC_TB_ORDER_LINE, req.input_, sharding_[1]);
-  status_[1] = -1;
+  status_[1] = WAITING;
 
   // piece 2 - n, R stock init in stock_level_callback
 }
@@ -1112,7 +1112,7 @@ bool TpccChopper::stock_level_callback(
   if (pi == 0) {
     verify(output_size == 1);
     inputs_[1][0] = output[0];
-    status_[1] = 0;
+    status_[1] = READY;
     return true;
   }
   else if (pi == 1) {
@@ -1139,7 +1139,7 @@ bool TpccChopper::stock_level_callback(
       output_size_[2 + i] = 1;
       p_types_[2 + i] = TPCC_STOCK_LEVEL_2;
       stock_level_shard(TPCC_TB_STOCK, inputs_[2 + i], sharding_[2 + i]);
-      status_[2 + i] = 0;
+      status_[2 + i] = READY;
       i++;
     }
     return true;
@@ -1155,8 +1155,8 @@ void TpccChopper::stock_level_retry() {
   p_types_.resize(n_pieces_all_);
   sharding_.resize(n_pieces_all_);
   status_.resize(n_pieces_all_);
-  status_[0] = 0;
-  status_[1] = -1;
+  status_[0] = READY;
+  status_[1] = WAITING;
 }
 
 void TpccChopper::retry() {

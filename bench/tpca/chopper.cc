@@ -35,7 +35,7 @@ void TpcaPaymentChopper::init(TxnRequest &req) {
   n_try_ = 1;
 
 
-  status_ = {0, 0, 0};
+  status_ = std::vector<CommandStatus>(3, READY);
   commit_.store(true);
 
 }

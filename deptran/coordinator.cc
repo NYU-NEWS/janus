@@ -231,7 +231,7 @@ void Coordinator::StartAck(StartReply &reply, const phase_t &phase) {
                 cmd_id_, ch->n_pieces_out_, ch->n_pieces_all_);
       Start();
     } else if (AllStartAckCollected()) {
-      Log_debug("receive all start acks, txn_id: %lx; START PREPARE", cmd_id_);
+      Log_debug("receive all start acks, txn_id: %ld; START PREPARE", cmd_id_);
       phase_++;
       Prepare();
     } else {

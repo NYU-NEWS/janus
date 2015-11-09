@@ -46,8 +46,8 @@ Command *TxnChopper::GetNextSubCmd() {
       partitions_.insert(sharding_[i]);
       Log_debug("getting subcmd i: %d, thread id: %x",
                 i, std::this_thread::get_id());
-      verify(status_[i] == 0);
-      status_[i] = 1;
+      verify(status_[i] == READY);
+      status_[i] = ONGOING;
       verify(cmd->type_ != 0);
       n_pieces_out_++;
       return cmd;
@@ -75,7 +75,7 @@ int TxnChopper::next_piece(
       pi = i;
       p_type = p_types_[i];
       input = &inputs_[i];
-      status_[i] = 1;
+      status_[i] = ONGOING;
       output_size = output_size_[i];
       return 0;
     } else if (status_[i] == 1) {
@@ -86,7 +86,7 @@ int TxnChopper::next_piece(
 
   if (status == 1) {
     return 1;   // all pieces are ongoing.
-  } else if (status == -1) {
+  } else if (status == WAITING) {
     return -1;  // some pieces are not ready.
   } else {
     verify(0);

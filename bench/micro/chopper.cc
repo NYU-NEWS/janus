@@ -39,7 +39,7 @@ void MicroBenchChopper::init(TxnRequest &req) {
     max_try_ = req.n_try_;
     n_try_ = 1;
 
-    status_ = {0, 0, 0, 0};
+    status_ = std::vector<CommandStatus>(4, READY);
     commit_.store(true);
 
     sharding_.resize(4);
@@ -79,7 +79,7 @@ bool MicroBenchChopper::is_read_only() {
 
 void MicroBenchChopper::retry() {
     n_pieces_out_ = 0;
-    status_ = {0, 0, 0, 0};
+    status_ = std::vector<CommandStatus>(4, READY);
     commit_.store(true);
     partitions_.clear();
     n_try_ ++;
