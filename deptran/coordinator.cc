@@ -178,7 +178,7 @@ void Coordinator::Start() {
 
   std::function<void(StartReply &)> callback = [this, phase](StartReply &reply) {
     this->StartAck(reply, phase);
-    delete reply.cmd;
+    //delete reply.cmd;
   };
 
   while ((subcmd = cmd_->GetNextSubCmd(cmd_map_)) != nullptr) {
@@ -186,7 +186,6 @@ void Coordinator::Start() {
     Log_debug("send out start request, "
                   "cmd_id: %lx, inn_id: %d, pie_id: %lx",
               cmd_id_, subcmd->inn_id_, req.pie_id);
-    // this command is passed back to the callback function -- free it there
     req.cmd = subcmd;
     n_start_++;
     commo_->SendStart(subcmd->GetPar(), req, this, callback);
@@ -204,7 +203,7 @@ void Coordinator::StartAck(StartReply &reply, const phase_t &phase) {
   ScopedLock(this->mtx_);
   if (phase != phase_) {
     Log_debug("phase doesn't match %d %d\n", phase, phase_);
-//    return;
+    // return;
   }
 
   TxnChopper *ch = (TxnChopper *) cmd_;
@@ -248,7 +247,6 @@ void Coordinator::naive_batch_start(TxnChopper *ch) {
 void Coordinator::Prepare() {
   TxnChopper *ch = (TxnChopper *) cmd_;
   verify(mode_ == MODE_OCC || mode_ == MODE_2PL);
-  RequestHeader header = gen_header(ch);
 
   // prepare piece, currently only useful for OCC
   std::function<void(Future *)> callback = [ch, this](Future *fu) {
@@ -262,6 +260,7 @@ void Coordinator::Prepare() {
     sids.push_back(rp);
   }
   for (auto &rp : ch->partitions_) {
+    RequestHeader header = gen_header(ch);
     Log::debug("send prepare tid: %ld", header.tid);
     commo_->SendPrepare(rp, header.tid, sids, callback);
     site_prepare_[rp]++;

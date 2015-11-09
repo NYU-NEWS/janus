@@ -34,20 +34,27 @@ Command *TxnChopper::GetNextSubCmd() {
   }
 
   for (int i = 0; i < sz; i++) {
-    if (status_[i] == 0) {
+
+    if (status_[i] == READY) {
+      status_[i] = INIT;
       cmd = new SimpleCommand();
-      cmd_vec_[i] = cmd;
       cmd->inn_id_ = i;
       cmd->par_id = sharding_[i];
       cmd->type_ = p_types_[i];
       cmd->input = inputs_[i];
       cmd->output_size = output_size_[i];
       cmd->root_ = this;
+      cmd_vec_[i] = cmd;
+      _mm_mfence();
+
       partitions_.insert(sharding_[i]);
+
       Log_debug("getting subcmd i: %d, thread id: %x",
                 i, std::this_thread::get_id());
-      verify(status_[i] == READY);
+
+      verify(status_[i] == INIT);
       status_[i] = ONGOING;
+
       verify(cmd->type_ != 0);
       n_pieces_out_++;
       return cmd;
@@ -69,7 +76,7 @@ int TxnChopper::next_piece(
 
   int status = 1;
   for (int i = 0; i < status_.size(); i++) {
-    if (status_[i] == 0) {
+    if (status_[i] == READY) {
       server_id = sharding_[i];
       partitions_.insert(server_id);
       pi = i;
@@ -78,8 +85,8 @@ int TxnChopper::next_piece(
       status_[i] = ONGOING;
       output_size = output_size_[i];
       return 0;
-    } else if (status_[i] == 1) {
-    } else if (status_[i] == -1) {
+    } else if (status_[i] == ONGOING) {
+    } else if (status_[i] == WAITING) {
       status = -1;
     }
   }

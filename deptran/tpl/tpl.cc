@@ -287,8 +287,8 @@ std::function<void(void)> TPLDTxn::get_2pl_fail_callback(
 
       ps->remove_output();
 
-      ps->trigger_reply_dragonball();
       ps->set_finish();
+      ps->trigger_reply_dragonball();
     }
   };
 }

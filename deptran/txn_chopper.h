@@ -47,7 +47,7 @@ public:
 };
 
 
-enum CommandStatus {WAITING=-1, READY, ONGOING, FINISHED};
+enum CommandStatus {WAITING=-1, READY, ONGOING, FINISHED, INIT};
 
 class TxnChopper : public Command {
  private:
