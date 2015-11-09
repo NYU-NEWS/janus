@@ -91,7 +91,7 @@ int TxnChopper::next_piece(
     }
   }
 
-  if (status == 1) {
+  if (status == ONGOING) {
     return 1;   // all pieces are ongoing.
   } else if (status == WAITING) {
     return -1;  // some pieces are not ready.
