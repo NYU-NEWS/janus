@@ -81,6 +81,7 @@ int TxnChopper::next_piece(
       pi = i;
       p_type = p_types_[i];
       input = &inputs_[i];
+      verify(status_[i] == READY);
       status_[i] = ONGOING;
       output_size = output_size_[i];
       return 0;
