@@ -143,6 +143,25 @@ void Coordinator::rpc_null_start(TxnChopper *ch) {
   Future::safe_release(proxy->async_rpc_null(fuattr));
 }
 
+void Coordinator::move_to_stage(CoordinatorStage stage) {
+  phase_++;
+  stage_ = stage;
+  Log_debug("moving to phase %ld; stage %d", phase_, stage_);
+}
+
+bool Coordinator::is_stale(phase_t phase, CoordinatorStage stage) {
+  bool result = false;
+  if (phase_ != phase) {
+      Log_debug("phase %d doesn't match %d\n", phase, phase_);
+      result = true;
+  }
+  if (stage_ != stage) {
+      Log_debug("stage %d doesn't match %d\n", stage, stage_);
+      result = true;
+  }
+  return result;
+}
+
 void Coordinator::cleanup() {
   n_start_ = 0;
   n_start_ack_ = 0;
@@ -151,7 +170,7 @@ void Coordinator::cleanup() {
   n_finish_req_ = 0;
   n_finish_ack_ = 0;
   start_ack_map_.clear();
-  phase_ = START;
+    move_to_stage(START);
   TxnChopper *ch = (TxnChopper *) cmd_;
 }
 
@@ -175,13 +194,14 @@ void Coordinator::Start() {
     req.cmd_id = cmd_id_;
     Command *subcmd;
 
-    if (phase_ != START) {
-        Log_debug("not in start phase; current phase is %d; ignore message\n", phase_);
+    if (stage_ != START) {
+        Log_debug("not in start stage; current stage is %d; ignore message\n", stage_);
         return;
     }
 
-    std::function<void(StartReply &)> callback = [this](StartReply &reply) {
-        this->StartAck(reply);
+    auto phase = phase_;
+    std::function<void(StartReply &)> callback = [this, phase](StartReply &reply) {
+        this->StartAck(reply, phase);
         //delete reply.cmd;
     };
 
@@ -203,10 +223,10 @@ bool Coordinator::AllStartAckCollected() {
   return true;
 }
 
-void Coordinator::StartAck(StartReply &reply) {
+void Coordinator::StartAck(StartReply &reply, phase_t phase) {
   std::lock_guard<std::mutex> lock(this->mtx_);
-  if (phase_ != START) {
-    Log_debug("not in start phase; current phase is %d; ignore message\n", phase_);
+  if (is_stale(phase, START)) {
+    Log_debug("ignore stale startack\n");
     return;
   }
 
@@ -223,7 +243,7 @@ void Coordinator::StartAck(StartReply &reply) {
   if (!ch->commit_.load()) {
     if (n_start_ack_ == n_start_) {
       Log::debug("received all start acks (at least one is REJECT); calling Finish()");
-      phase_ = FINISH;
+        move_to_stage(FINISH);
       this->Finish();
     }
   } else {
@@ -235,7 +255,7 @@ void Coordinator::StartAck(StartReply &reply) {
       Start();
     } else if (AllStartAckCollected()) {
       Log_debug("receive all start acks, txn_id: %ld; START PREPARE", cmd_id_);
-      phase_ = PREPARE;
+        move_to_stage(PREPARE);
       Prepare();
     } else {
       if (n_start_ == n_start_ack_) verify(0);
@@ -249,8 +269,8 @@ void Coordinator::naive_batch_start(TxnChopper *ch) {
 
 /** caller should be thread_safe */
 void Coordinator::Prepare() {
-  if (phase_ != PREPARE) {
-      Log_debug("not in prepare phase; current phase is %d; ignore message\n", phase_);
+  if (stage_ != PREPARE) {
+      Log_debug("not in prepare stage; current stage is %d; ignore message\n", stage_);
       return;
   }
 
@@ -258,8 +278,9 @@ void Coordinator::Prepare() {
   verify(mode_ == MODE_OCC || mode_ == MODE_2PL);
 
   // prepare piece, currently only useful for OCC
-  std::function<void(Future *)> callback = [ch, this](Future *fu) {
-    this->PrepareAck(ch, fu);
+  auto phase = phase_;
+  std::function<void(Future *)> callback = [ch, phase, this](Future *fu) {
+    this->PrepareAck(ch, phase, fu);
   };
 
   std::vector<i32> sids;
@@ -276,10 +297,10 @@ void Coordinator::Prepare() {
   }
 }
 
-void Coordinator::PrepareAck(TxnChopper *ch, Future *fu) {
+void Coordinator::PrepareAck(TxnChopper *ch, phase_t phase, Future *fu) {
   std::lock_guard<std::mutex> lock(this->mtx_);
-  if (phase_ != PREPARE) {
-      Log_debug("not in prepare phase; current phase is %d; ignore message\n", phase_);
+  if (is_stale(phase, PREPARE)) {
+      Log_debug("ignore stale prepareack\n");
       return;
   }
 
@@ -304,15 +325,15 @@ void Coordinator::PrepareAck(TxnChopper *ch, Future *fu) {
   if (n_prepare_ack_ == ch->partitions_.size()) {
     RequestHeader header = gen_header(ch);
     Log_debug("2PL prepare finished for %ld", header.tid);
-    phase_ = FINISH;
+      move_to_stage(FINISH);
     this->Finish();
   }
 }
 
 /** caller should be thread safe */
 void Coordinator::Finish() {
-  if (phase_ != FINISH) {
-    Log_debug("not in finish phase; current phase is %d; ignore message\n", phase_);
+  if (stage_ != FINISH) {
+    Log_debug("not in finish stage; current stage is %d; ignore message\n", stage_);
     return;
   }
   TxnChopper *ch = (TxnChopper *) cmd_;
@@ -321,8 +342,9 @@ void Coordinator::Finish() {
   Log_debug("send out finish request, cmd_id: %lx, %ld", cmd_id_, n_finish_req_);
 
   // commit or abort piece
-  std::function<void(Future *)> callback = [ch, this](Future *fu) {
-    this->FinishAck(ch, fu);
+  auto phase = phase_;
+  std::function<void(Future *)> callback = [ch, phase, this](Future *fu) {
+    this->FinishAck(ch, phase, fu);
   };
   if (ch->commit_.load()) {
     Log_debug("send finish");
@@ -341,13 +363,13 @@ void Coordinator::Finish() {
   }
 }
 
-void Coordinator::FinishAck(TxnChopper *ch, Future *fu) {
+void Coordinator::FinishAck(TxnChopper *ch, phase_t phase, Future *fu) {
   bool callback = false;
   bool retry = false;
   {
     std::lock_guard<std::mutex> lock(this->mtx_);
-    if (phase_ != FINISH) {
-        Log_debug("not in finish phase; current phase is %d; ignore message\n", phase_);
+    if (is_stale(phase, FINISH)) {
+        Log_debug("ignore stale finish ack\n");
         return;
     }
     n_finish_ack_++;
