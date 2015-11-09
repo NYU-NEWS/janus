@@ -98,50 +98,6 @@ int TxnChopper::batch_next_piece(BatchRequestHeader *batch_header,
                                  int32_t &server_id, std::vector<int> &pi,
                                  Coordinator *coo) {
   verify(0);
-//  if (n_started_ == n_pieces_)
-//    return 2;
-//
-//  int status = 1;
-//
-//  pi.reserve(status_.size());
-//  pi.clear();
-//  server_id = 0;
-//  uint32_t input_size = 0;
-//  for (int i = 0; i < status_.size(); i++) {
-//    if (status_[i] == 0) {
-//      if (pi.size() == 0) {
-//        server_id = sharding_[i];
-//        proxies_.insert(server_id);
-//        pi.push_back(i);
-//        input_size += inputs_[i].size();
-//        status_[i] = 1;
-//      }
-//      else if (server_id == sharding_[i]) {
-//        pi.push_back(i);
-//        input_size += inputs_[i].size();
-//        status_[i] = 1;
-//      }
-//    }
-//    else if (status_[i] == -1)
-//      status = -1;
-//  }
-//
-//  if (pi.size() > 0) {
-//    BatchStartArgsHelper bsah;
-//    bsah.init_input_client(&input, pi.size(), input_size);
-//    batch_header->expected_output_size = 0;
-//    std::vector<int>::iterator it = pi.begin();
-//    for (; it != pi.end(); it++) {
-//      bsah.put_next_input_client(inputs_[*it], (i32) p_types_[*it], (i64) coo->next_pie_id(), (i32) output_size_[*it]);
-//      batch_header->expected_output_size += (i32) output_size_[*it];
-//    }
-//
-//    batch_header->num_piece = (i32) pi.size();
-//
-//    return 0;
-//  }
-//
-//  return status;
 }
 
 void TxnChopper::Merge(Command &cmd) {
@@ -216,56 +172,6 @@ bool TxnChopper::read_only_start_callback(int pi, int *res, const std::vector<md
   }
   return start_callback(pi, SUCCESS, output);
 }
-
-//int TxnChopper::next_piece(
-//        std::vector<std::vector<mdb::Value> > &input,
-//        int32_t& server_id,
-//        std::vector<int32_t> &pi,
-//        std::vector<int32_t> &p_type) {
-//
-//    input.clear();
-//    pi.clear();
-//    p_type.clear();
-//    if (n_started_ == n_pieces_) {
-//        return 2;
-//    }
-//
-//    bool server_set = false;
-//    int status = 1;
-//    for (int i = 0; i < status_.size(); i++) {
-//        if (status_[i] == 0) {
-//            if (!server_set) {
-//                server_set = true;
-//                server_id = sharding_[i];
-//                proxies_.insert(server_id);
-//                pi.push_back(i);
-//                p_type.push_back(p_types_[i]);
-//                input.push_back(inputs_[i]);
-//                status_[i] = 1;
-//            }
-//            else if (server_id == sharding_[i]) {
-//                pi.push_back(i);
-//                p_type.push_back(p_types_[i]);
-//                input.push_back(inputs_[i]);
-//                status_[i] = 1;
-//            }
-//        } else if (status_[i] == 1) {
-//        } else if (status_[i] == -1) {
-//            status = -1;
-//        }
-//    }
-//
-//    if (server_set)
-//        return 0;
-//
-//    if (status == 1) {
-//        return 1;   // all pieces are ongoing.
-//    } else if (status == -1) {
-//        return -1;  // some pieces are not ready.
-//    } else {
-//        verify(0);
-//    }
-//}
 
 double TxnChopper::last_attempt_latency() {
   double tmp = pre_time_;
