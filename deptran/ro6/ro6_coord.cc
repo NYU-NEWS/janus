@@ -32,7 +32,7 @@ void RO6Coord::deptran_start(TxnChopper *ch) {
       {
         //     Log::debug("try locking at start response, tid: %llx, pid: %llx",
         // header.tid, header.pid);
-        ScopedLock(this->mtx_);
+        std::lock_guard<std::mutex> lock(this->mtx_);
 
         ChopStartResponse  res;
         fu->get_reply() >> res;
@@ -104,7 +104,7 @@ void RO6Coord::deptran_finish(TxnChopper *ch) {
 
     bool callback = false;
     {
-      ScopedLock(this->mtx_);
+      std::lock_guard<std::mutex> lock(this->mtx_);
       n_finish_ack_++;
 
       ChopFinishResponse res;
@@ -187,7 +187,7 @@ void RO6Coord::ro6_start_ro(TxnChopper *ch) {
     // remember this a asynchronous call! variable funtional range is important!
     fuattr.callback = [ch, pi, this, header](Future * fu) {
       {
-        ScopedLock(this->mtx_);
+        std::lock_guard<std::mutex> lock(this->mtx_);
 
         std::vector<Value> res;
         fu->get_reply() >> res;
@@ -234,7 +234,8 @@ void RO6Coord::ro6_start_ro(TxnChopper *ch) {
 
 void RO6Coord::do_one(TxnRequest & req) {
   // pre-process
-  ScopedLock(this->mtx_);
+  std::lock_guard<std::mutex> lock(this->mtx_);
+
   TxnChopper *ch = Frame().CreateChopper(req);
   cmd_id_ = this->next_txn_id();
 

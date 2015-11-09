@@ -46,7 +46,7 @@ void RCCCoord::deptran_batch_start(TxnChopper *ch) {
       bool early_return = false;
       {
         Log::debug("Batch back");
-        ScopedLock(this->mtx_);
+        std::lock_guard<std::mutex> lock(this->mtx_);
 
         BatchChopStartResponse res;
         fu->get_reply() >>     res;
@@ -130,7 +130,7 @@ void RCCCoord::deptran_start(TxnChopper *ch) {
       {
         //     Log::debug("try locking at start response, tid: %llx, pid: %llx",
         // header.tid, header.pid);
-        ScopedLock(this->mtx_);
+        std::lock_guard<std::mutex> lock(this->mtx_);
 
         ChopStartResponse  res;
         fu->get_reply() >> res;
@@ -196,7 +196,7 @@ void RCCCoord::deptran_finish(TxnChopper *ch) {
 
     bool callback = false;
     {
-      ScopedLock(this->mtx_);
+      std::lock_guard<std::mutex> lock(this->mtx_);
       n_finish_ack_++;
 
       ChopFinishResponse res;
@@ -272,7 +272,7 @@ void RCCCoord::deptran_start_ro(TxnChopper *ch) {
     // remember this a asynchronous call! variable funtional range is important!
     fuattr.callback = [ch, pi, this, header](Future * fu) {
       {
-        ScopedLock(this->mtx_);
+        std::lock_guard<std::mutex> lock(this->mtx_);
 
         std::vector<Value> res;
         fu->get_reply() >> res;
@@ -321,7 +321,7 @@ void RCCCoord::deptran_finish_ro(TxnChopper *ch) {
     fuattr.callback = [ch, pi, this, header](Future * fu) {
       bool callback = false;
       {
-        ScopedLock(this->mtx_);
+        std::lock_guard<std::mutex> lock(this->mtx_);
 
         int res;
         std::vector<Value> output;
@@ -384,7 +384,7 @@ void RCCCoord::deptran_finish_ro(TxnChopper *ch) {
 
 void RCCCoord::do_one(TxnRequest& req) {
   // pre-process
-  ScopedLock(this->mtx_);
+  std::lock_guard<std::mutex> lock(this->mtx_);
   TxnChopper *ch = Frame().CreateChopper(req);
   cmd_id_ = this->next_txn_id();
 

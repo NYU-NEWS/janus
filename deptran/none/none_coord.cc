@@ -9,7 +9,7 @@ namespace rococo {
 /** thread safe */
 void NoneCoord::do_one(TxnRequest &req) {
   // pre-process
-  ScopedLock(this->mtx_);
+  std::lock_guard<std::mutex> lock(this->mtx_);
   TxnChopper *ch = Frame().CreateChopper(req);
   cmd_id_ = this->next_txn_id();
 
@@ -24,7 +24,7 @@ void NoneCoord::do_one(TxnRequest &req) {
 void NoneCoord::LegacyStartAck(TxnChopper *ch, int pi, Future *fu) {
   bool callback = false;
   {
-    ScopedLock(this->mtx_);
+    std::lock_guard<std::mutex> lock(this->mtx_);
 
     int res;
     std::vector<mdb::Value> output;

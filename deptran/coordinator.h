@@ -32,7 +32,7 @@ class Coordinator {
   std::atomic<uint64_t> next_pie_id_;
   std::atomic<uint64_t> next_txn_id_;
 
-  Mutex mtx_;
+  std::mutex mtx_;
   std::mutex start_mtx_;
   Commo *commo_;
   Recorder *recorder_;
