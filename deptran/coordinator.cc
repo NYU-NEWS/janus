@@ -170,7 +170,7 @@ void Coordinator::cleanup() {
   n_finish_req_ = 0;
   n_finish_ack_ = 0;
   start_ack_map_.clear();
-    move_to_stage(START);
+  move_to_stage(START);
   TxnChopper *ch = (TxnChopper *) cmd_;
 }
 
@@ -243,7 +243,7 @@ void Coordinator::StartAck(StartReply &reply, phase_t phase) {
   if (!ch->commit_.load()) {
     if (n_start_ack_ == n_start_) {
       Log::debug("received all start acks (at least one is REJECT); calling Finish()");
-        move_to_stage(FINISH);
+      move_to_stage(FINISH);
       this->Finish();
     }
   } else {
@@ -255,7 +255,7 @@ void Coordinator::StartAck(StartReply &reply, phase_t phase) {
       Start();
     } else if (AllStartAckCollected()) {
       Log_debug("receive all start acks, txn_id: %ld; START PREPARE", cmd_id_);
-        move_to_stage(PREPARE);
+      move_to_stage(PREPARE);
       Prepare();
     } else {
       if (n_start_ == n_start_ack_) verify(0);
@@ -325,7 +325,7 @@ void Coordinator::PrepareAck(TxnChopper *ch, phase_t phase, Future *fu) {
   if (n_prepare_ack_ == ch->partitions_.size()) {
     RequestHeader header = gen_header(ch);
     Log_debug("2PL prepare finished for %ld", header.tid);
-      move_to_stage(FINISH);
+    move_to_stage(FINISH);
     this->Finish();
   }
 }
