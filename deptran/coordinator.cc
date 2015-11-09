@@ -151,6 +151,7 @@ void Coordinator::cleanup() {
   n_finish_req_ = 0;
   n_finish_ack_ = 0;
   start_ack_map_.clear();
+  phase_ = START;
   TxnChopper *ch = (TxnChopper *) cmd_;
 }
 
@@ -173,10 +174,14 @@ void Coordinator::Start() {
     StartRequest req;
     req.cmd_id = cmd_id_;
     Command *subcmd;
-    phase_t phase = phase_;
 
-    std::function<void(StartReply &)> callback = [this, phase](StartReply &reply) {
-        this->StartAck(reply, phase);
+    if (phase_ != START) {
+        Log_debug("not in start phase; current phase is %d; ignore message\n", phase_);
+        return;
+    }
+
+    std::function<void(StartReply &)> callback = [this](StartReply &reply) {
+        this->StartAck(reply);
         //delete reply.cmd;
     };
 
@@ -198,11 +203,11 @@ bool Coordinator::AllStartAckCollected() {
   return true;
 }
 
-void Coordinator::StartAck(StartReply &reply, const phase_t &phase) {
+void Coordinator::StartAck(StartReply &reply) {
   std::lock_guard<std::mutex> lock(this->mtx_);
-  if (phase != phase_) {
-    Log_debug("phase doesn't match %d %d\n", phase, phase_);
-    // return;
+  if (phase_ != START) {
+    Log_debug("not in start phase; current phase is %d; ignore message\n", phase_);
+    return;
   }
 
   TxnChopper *ch = (TxnChopper *) cmd_;
@@ -218,7 +223,7 @@ void Coordinator::StartAck(StartReply &reply, const phase_t &phase) {
   if (!ch->commit_.load()) {
     if (n_start_ack_ == n_start_) {
       Log::debug("received all start acks (at least one is REJECT); calling Finish()");
-      phase_++;
+      phase_ = FINISH;
       this->Finish();
     }
   } else {
@@ -230,7 +235,7 @@ void Coordinator::StartAck(StartReply &reply, const phase_t &phase) {
       Start();
     } else if (AllStartAckCollected()) {
       Log_debug("receive all start acks, txn_id: %ld; START PREPARE", cmd_id_);
-      phase_++;
+      phase_ = PREPARE;
       Prepare();
     } else {
       if (n_start_ == n_start_ack_) verify(0);
@@ -244,6 +249,11 @@ void Coordinator::naive_batch_start(TxnChopper *ch) {
 
 /** caller should be thread_safe */
 void Coordinator::Prepare() {
+  if (phase_ != PREPARE) {
+      Log_debug("not in prepare phase; current phase is %d; ignore message\n", phase_);
+      return;
+  }
+
   TxnChopper *ch = (TxnChopper *) cmd_;
   verify(mode_ == MODE_OCC || mode_ == MODE_2PL);
 
@@ -268,6 +278,11 @@ void Coordinator::Prepare() {
 
 void Coordinator::PrepareAck(TxnChopper *ch, Future *fu) {
   std::lock_guard<std::mutex> lock(this->mtx_);
+  if (phase_ != PREPARE) {
+      Log_debug("not in prepare phase; current phase is %d; ignore message\n", phase_);
+      return;
+  }
+
   n_prepare_ack_++;
   int32_t e = fu->get_error_code();
 
@@ -289,17 +304,22 @@ void Coordinator::PrepareAck(TxnChopper *ch, Future *fu) {
   if (n_prepare_ack_ == ch->partitions_.size()) {
     RequestHeader header = gen_header(ch);
     Log_debug("2PL prepare finished for %ld", header.tid);
-    phase_ ++;
+    phase_ = FINISH;
     this->Finish();
   }
 }
 
 /** caller should be thread safe */
 void Coordinator::Finish() {
+  if (phase_ != FINISH) {
+    Log_debug("not in finish phase; current phase is %d; ignore message\n", phase_);
+    return;
+  }
   TxnChopper *ch = (TxnChopper *) cmd_;
   verify(mode_ == MODE_OCC || mode_ == MODE_2PL);
+  n_finish_req_++;
+  Log_debug("send out finish request, cmd_id: %lx, %ld", cmd_id_, n_finish_req_);
 
-  Log_debug("send out finish request, cmd_id: %lx, %ld", cmd_id_, this->n_prepare_ack_);
   // commit or abort piece
   std::function<void(Future *)> callback = [ch, this](Future *fu) {
     this->FinishAck(ch, fu);
@@ -326,10 +346,14 @@ void Coordinator::FinishAck(TxnChopper *ch, Future *fu) {
   bool retry = false;
   {
     std::lock_guard<std::mutex> lock(this->mtx_);
+    if (phase_ != FINISH) {
+        Log_debug("not in finish phase; current phase is %d; ignore message\n", phase_);
+        return;
+    }
     n_finish_ack_++;
 
-    Log::debug("finish");
-
+    Log::debug("finish cmd_id_: %ld; n_finish_ack_: %ld; n_finish_req_: %ld", cmd_id_, n_finish_ack_, n_finish_req_);
+    verify(ch->GetPars().size() == n_finish_req_);
     if (n_finish_ack_ == ch->GetPars().size()) {
       if ((ch->reply_.res_ == REJECT) && ch->can_retry()) {
         retry = true;

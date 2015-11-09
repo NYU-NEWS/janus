@@ -218,8 +218,8 @@ std::function<void(void)> TPLDTxn::get_2pl_succ_callback(
         }
       }
 
-      ps->trigger_reply_dragonball();
       ps->set_finish();
+      ps->trigger_reply_dragonball();
     }
   };
 }
@@ -264,8 +264,8 @@ std::function<void(void)> TPLDTxn::get_2pl_proceed_callback(
       }
     }
 
-    ps->trigger_reply_dragonball();
     ps->set_finish();
+    ps->trigger_reply_dragonball();
   };
 }
 

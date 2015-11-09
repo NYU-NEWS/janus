@@ -206,6 +206,7 @@ void DTxnMgr::destroy(i64 tid) {
 }
 
 DTxn* DTxnMgr::get(i64 tid) {
+  //Log_debug("DTxnMgr::get(%ld)\n", tid);
   auto it = dtxns_.find(tid);
   verify(it != dtxns_.end());
   return it->second;

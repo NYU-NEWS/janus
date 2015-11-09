@@ -12,6 +12,8 @@
 namespace rococo {
 class ClientControlServiceImpl;
 
+enum CoordinatorPhase { START, PREPARE, FINISH };
+
 class Coordinator {
  public:
   uint32_t coo_id_;
@@ -38,7 +40,7 @@ class Coordinator {
   Recorder *recorder_;
   Command *cmd_; 
   cmdid_t cmd_id_;
-  phase_t phase_ = 0;
+  CoordinatorPhase phase_ = START;
 //  map<innid_t, Command*> cmd_map_;
   map<innid_t, bool> start_ack_map_;
   Sharding* sharding_ = nullptr;
@@ -117,7 +119,7 @@ class Coordinator {
   void restart(TxnChopper *ch);
 
   void Start();
-  void StartAck(StartReply &reply, const phase_t &phase);
+  void StartAck(StartReply &reply);
 //  void LegacyStart(TxnChopper *ch);
 //  void LegacyStartAck(TxnChopper *ch, int pi, Future *fu);
   void rpc_null_start(TxnChopper *ch);
