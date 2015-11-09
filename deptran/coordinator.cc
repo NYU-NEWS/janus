@@ -169,8 +169,8 @@ void Coordinator::restart(TxnChopper *ch) {
 }
 
 void Coordinator::Start() {
-  //ScopedLock(this->mtx_);
-  std::lock_guard<std::mutex> lock(start_mtx_);
+  ScopedLock(this->mtx_);
+  //std::lock_guard<std::mutex> lock(start_mtx_);
   StartRequest req;
   req.cmd_id = cmd_id_;
   Command *subcmd;
@@ -219,7 +219,7 @@ void Coordinator::StartAck(StartReply &reply, const phase_t &phase) {
   }
   if (!ch->commit_.load()) {
     if (n_start_ack_ == n_start_) {
-      Log::debug("received all start acks; calling Finish()");
+      Log::debug("received all start acks (at least one is REJECT); calling Finish()");
       phase_++;
       this->Finish();
     }
@@ -231,7 +231,7 @@ void Coordinator::StartAck(StartReply &reply, const phase_t &phase) {
                 cmd_id_, ch->n_pieces_out_, ch->n_pieces_all_);
       Start();
     } else if (AllStartAckCollected()) {
-      Log_debug("receive all start acks, txn_id: %lx", cmd_id_);
+      Log_debug("receive all start acks, txn_id: %lx; START PREPARE", cmd_id_);
       phase_++;
       Prepare();
     } else {

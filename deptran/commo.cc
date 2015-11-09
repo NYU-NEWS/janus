@@ -55,6 +55,7 @@ void Commo::SendStart(parid_t par_id,
   rrr::FutureAttr fuattr;
   fuattr.callback = callback;
   RococoProxy *proxy = vec_rpc_proxy_[par_id];
+  Log_debug("SendStart to %ld\n", par_id);
   Future::safe_release(proxy->async_start_pie(header, input, output_size, fuattr));
 }
 
@@ -74,7 +75,7 @@ void Commo::SendCommit(parid_t pid, txnid_t tid,
   FutureAttr fuattr;
   fuattr.callback = callback;
   RococoProxy *proxy = vec_rpc_proxy_[pid];
-  Log_debug("SendPrepare to %ld tid:%ld\n", pid, tid);
+  Log_debug("SendCommit to %ld tid:%ld\n", pid, tid);
   Future::safe_release(proxy->async_commit_txn(tid, fuattr));
 }
 
@@ -83,7 +84,7 @@ void Commo::SendAbort(parid_t pid, txnid_t tid,
   FutureAttr fuattr;
   fuattr.callback = callback;
   RococoProxy *proxy = vec_rpc_proxy_[pid];
-  Log_debug("SendPrepare to %ld tid:%ld\n", pid, tid);
+  Log_debug("SendAbort to %ld tid:%ld\n", pid, tid);
   Future::safe_release(proxy->async_abort_txn(tid, fuattr));
 }
 
