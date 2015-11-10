@@ -190,7 +190,10 @@ void Coordinator::restart(TxnChopper *ch) {
 
 void Coordinator::Start() {
     std::lock_guard<std::mutex> lock(start_mtx_);
-    change_stage(START);
+
+    if (stage_ != START) {
+      change_stage(START);
+    }
 
     StartRequest req;
     req.cmd_id = cmd_id_;
