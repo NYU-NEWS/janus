@@ -132,8 +132,8 @@ class Coordinator {
   void FinishAck(TxnChopper *ch, phase_t phase, Future *fu);
   void Abort() {verify(0);}
 
-  bool is_stale(phase_t phase, CoordinatorStage stage);
-  void move_to_stage(CoordinatorStage stage);
+  bool has_stale_phase_or_stage(phase_t phase, CoordinatorStage stage);
+  void change_stage(CoordinatorStage stage);
   bool AllStartAckCollected();
 
   RequestHeader gen_header(TxnChopper *ch);

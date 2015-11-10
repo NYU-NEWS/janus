@@ -143,13 +143,13 @@ void Coordinator::rpc_null_start(TxnChopper *ch) {
   Future::safe_release(proxy->async_rpc_null(fuattr));
 }
 
-void Coordinator::move_to_stage(CoordinatorStage stage) {
+void Coordinator::change_stage(CoordinatorStage stage) {
   phase_++;
   stage_ = stage;
   Log_debug("moving to phase %ld; stage %d", phase_, stage_);
 }
 
-bool Coordinator::is_stale(phase_t phase, CoordinatorStage stage) {
+bool Coordinator::has_stale_phase_or_stage(phase_t phase, CoordinatorStage stage) {
   bool result = false;
   if (phase_ != phase) {
       Log_debug("phase %d doesn't match %d\n", phase, phase_);
@@ -170,7 +170,7 @@ void Coordinator::cleanup() {
   n_finish_req_ = 0;
   n_finish_ack_ = 0;
   start_ack_map_.clear();
-  move_to_stage(START);
+  change_stage(START);
   TxnChopper *ch = (TxnChopper *) cmd_;
 }
 
@@ -190,14 +190,11 @@ void Coordinator::restart(TxnChopper *ch) {
 
 void Coordinator::Start() {
     std::lock_guard<std::mutex> lock(start_mtx_);
+    change_stage(START);
+
     StartRequest req;
     req.cmd_id = cmd_id_;
     Command *subcmd;
-
-    if (stage_ != START) {
-        Log_debug("not in start stage; current stage is %d; ignore message\n", stage_);
-        return;
-    }
 
     auto phase = phase_;
     std::function<void(StartReply &)> callback = [this, phase](StartReply &reply) {
@@ -225,7 +222,7 @@ bool Coordinator::AllStartAckCollected() {
 
 void Coordinator::StartAck(StartReply &reply, phase_t phase) {
   std::lock_guard<std::mutex> lock(this->mtx_);
-  if (is_stale(phase, START)) {
+  if (has_stale_phase_or_stage(phase, START)) {
     Log_debug("ignore stale startack\n");
     return;
   }
@@ -243,7 +240,6 @@ void Coordinator::StartAck(StartReply &reply, phase_t phase) {
   if (!ch->commit_.load()) {
     if (n_start_ack_ == n_start_) {
       Log::debug("received all start acks (at least one is REJECT); calling Finish()");
-      move_to_stage(FINISH);
       this->Finish();
     }
   } else {
@@ -255,10 +251,7 @@ void Coordinator::StartAck(StartReply &reply, phase_t phase) {
       Start();
     } else if (AllStartAckCollected()) {
       Log_debug("receive all start acks, txn_id: %ld; START PREPARE", cmd_id_);
-      move_to_stage(PREPARE);
       Prepare();
-    } else {
-      if (n_start_ == n_start_ack_) verify(0);
     }
   }
 }
@@ -269,23 +262,16 @@ void Coordinator::naive_batch_start(TxnChopper *ch) {
 
 /** caller should be thread_safe */
 void Coordinator::Prepare() {
-  if (stage_ != PREPARE) {
-      Log_debug("not in prepare stage; current stage is %d; ignore message\n", stage_);
-      return;
-  }
-
+  change_stage(PREPARE);
   TxnChopper *ch = (TxnChopper *) cmd_;
   verify(mode_ == MODE_OCC || mode_ == MODE_2PL);
-
   // prepare piece, currently only useful for OCC
   auto phase = phase_;
   std::function<void(Future *)> callback = [ch, phase, this](Future *fu) {
     this->PrepareAck(ch, phase, fu);
   };
-
   std::vector<i32> sids;
-//  sids.reserve(ch->proxies_.size());
-
+  // sids.reserve(ch->proxies_.size());
   for (auto &rp : ch->partitions_) {
     sids.push_back(rp);
   }
@@ -299,7 +285,7 @@ void Coordinator::Prepare() {
 
 void Coordinator::PrepareAck(TxnChopper *ch, phase_t phase, Future *fu) {
   std::lock_guard<std::mutex> lock(this->mtx_);
-  if (is_stale(phase, PREPARE)) {
+  if (has_stale_phase_or_stage(phase, PREPARE)) {
       Log_debug("ignore stale prepareack\n");
       return;
   }
@@ -325,17 +311,13 @@ void Coordinator::PrepareAck(TxnChopper *ch, phase_t phase, Future *fu) {
   if (n_prepare_ack_ == ch->partitions_.size()) {
     RequestHeader header = gen_header(ch);
     Log_debug("2PL prepare finished for %ld", header.tid);
-    move_to_stage(FINISH);
     this->Finish();
   }
 }
 
 /** caller should be thread safe */
 void Coordinator::Finish() {
-  if (stage_ != FINISH) {
-    Log_debug("not in finish stage; current stage is %d; ignore message\n", stage_);
-    return;
-  }
+  change_stage(FINISH);
   TxnChopper *ch = (TxnChopper *) cmd_;
   verify(mode_ == MODE_OCC || mode_ == MODE_2PL);
   n_finish_req_++;
@@ -368,12 +350,12 @@ void Coordinator::FinishAck(TxnChopper *ch, phase_t phase, Future *fu) {
   bool retry = false;
   {
     std::lock_guard<std::mutex> lock(this->mtx_);
-    if (is_stale(phase, FINISH)) {
+    if (has_stale_phase_or_stage(phase, FINISH)) {
         Log_debug("ignore stale finish ack\n");
         return;
     }
-    n_finish_ack_++;
 
+    n_finish_ack_++;
     Log::debug("finish cmd_id_: %ld; n_finish_ack_: %ld; n_finish_req_: %ld", cmd_id_, n_finish_ack_, n_finish_req_);
     verify(ch->GetPars().size() == n_finish_req_);
     if (n_finish_ack_ == ch->GetPars().size()) {
