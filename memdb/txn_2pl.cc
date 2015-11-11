@@ -17,8 +17,6 @@ Txn2PL::PieceStatus* Txn2PL::ps_cache() {
 }
 
 void Txn2PL::SetPsCache(PieceStatus* ps) {
-//  verify(ps_cache_ == ps_cache_s);
-//  ps_cache_s = ps;
   ps_cache_ = ps;
 }
 
@@ -90,41 +88,6 @@ void Txn2PL::release_resource() {
   updates_.clear();
   inserts_.clear();
   removes_.clear();
-
-
-  // unlocking alock group
-  //for (auto &it : alock_group_list_) {
-  //    it->unlock_all();
-  //    delete it;
-  //}
-  //alock_group_list_.clear();
-
-  // unlocking rm alock group
-  //for (auto &it : rm_alock_group_list_) {
-  //    verify(it.first->rtti() == ROW_FINE);
-  //    it.second->unlock_all();
-  //    delete it.second;
-  //}
-  //rm_alock_group_list_.clear();
-
-  // unlocking
-  //for (auto& it : alocks_) {
-  //    Row* row = it.first;
-  //    if (row->rtti() == ROW_COARSE) {
-  //        verify(0);
-  //        //assert(it.second == -1);
-  //        //((CoarseLockedRow *) row)->unlock_row_by(this->id());
-  //    } else if (row->rtti() == ROW_FINE) {
-  //        column_id_t column_id = it.second.first;
-  //        uint64_t lock_req_id = it.second.second;
-  //        //((FineLockedRow *) row)->unlock_column_by(column_id, this->id());
-  //        ((FineLockedRow *) row)->unlock_column_by(column_id, lock_req_id);
-  //    } else {
-  //        // row must either be FineLockedRow or CoarseLockedRow
-  //        verify(row->rtti() == symbol_t::ROW_COARSE || row->rtti() == symbol_t::ROW_FINE);
-  //    }
-  //}
-  //alocks_.clear();
 }
 
 void Txn2PL::PieceStatus::reg_rm_lock(Row *row,
@@ -330,21 +293,6 @@ void Txn2PL::abort() {
   release_piece_map(false/*abort*/);
 }
 
-//static void redirect_locks(unordered_multimap<Row*, std::pair<column_id_t, uint64_t>>& locks, Row* new_row, Row* old_row) {
-//    auto it_pair = locks.equal_range(old_row);
-//    vector<std::pair<column_id_t, uint64_t>> locked_columns;
-//    for (auto it_lock = it_pair.first; it_lock != it_pair.second; ++it_lock) {
-//        locked_columns.push_back(it_lock->second);
-//    }
-//    if (!locked_columns.empty()) {
-//        locks.erase(old_row);
-//    }
-//    for (auto& col_id : locked_columns) {
-//        insert_into_map(locks, new_row, col_id);
-//    }
-//}
-//
-
 bool Txn2PL::commit() {
   verify(this->rtti() == symbol_t::TXN_2PL);
   verify(outcome_ == symbol_t::NONE);
@@ -397,55 +345,6 @@ bool Txn2PL::commit() {
   return true;
 }
 
-//void Txn2PL::reg_rm_lock_group(Row *row,
-//        const std::function<void(void)> &succ_callback,
-//        const std::function<void(void)> &fail_callback) {
-//    rrr::ALockGroup *alock_grp = new rrr::ALockGroup;
-//    std::function<void(void)> yes_callback = [this, row, succ_callback, alock_grp]()
-//    {
-//        rm_alock_group_list_.insert(std::pair<Row *, rrr::ALockGroup *>(row, alock_grp));
-//        succ_callback();
-//    };
-//    verify(row->rtti() == symbol_t::ROW_FINE);
-//    rrr::ALock *alock = ((FineLockedRow *)row)->get_alock(0);
-//    for (int i = 0; i < row->schema()->columns_count(); i++)
-//        alock_grp->add(*(alock + i), rrr::ALock::WLOCK);
-//    alock_grp->lock_all(yes_callback, fail_callback);
-//}
-//
-//void Txn2PL::reg_lock_group(const std::vector<column_lock_t> &col_locks,
-//        const std::function<void(void)> &succ_callback,
-//        const std::function<void(void)> &fail_callback) {
-//    rrr::ALockGroup *alock_grp = new rrr::ALockGroup;
-//    std::function<void(void)> yes_callback = [this, succ_callback, alock_grp]()
-//    {
-//        alock_group_list_.push_back(alock_grp);
-//        succ_callback();
-//    };
-//    std::vector<column_lock_t>::const_iterator it;
-//    for (it = col_locks.begin(); it != col_locks.end(); it++) {
-//        verify(it->row->rtti() == symbol_t::ROW_FINE);
-//        alock_grp->add(*(((FineLockedRow *)it->row)->get_alock(it->column_id)),
-//                it->type);
-//    }
-//    alock_grp->lock_all(yes_callback, fail_callback);
-//}
-//
-//void Txn2PL::reg_read_column(Row *row, column_id_t col_id, std::function<void(void)> succ_callback, std::function<void(void)> fail_callback) {
-//    verify(0);
-//    verify(row->rtti() == symbol_t::ROW_FINE);
-//    FineLockedRow* fine_row = ((FineLockedRow *) row);
-//    std::function<void(uint64_t)> yes_callback
-//        = [row, col_id, succ_callback, this] (uint64_t lock_req_id) {
-//            insert_into_map(alocks_, row,
-//                    std::pair<column_id_t, uint64_t>(col_id, lock_req_id));
-//            succ_callback();
-//        };
-//    /*uint64_t lock_req_id = */ // don't need req_id, since no abort happend
-//                                // until all locks timeout or acquired
-//    fine_row->reg_rlock(col_id, yes_callback, fail_callback);
-//}
-
 bool Txn2PL::read_column(Row *row, column_id_t col_id, Value *value) {
   verify(this->rtti() == symbol_t::TXN_2PL);
   assert(debug_check_row_valid(row));
@@ -465,43 +364,11 @@ bool Txn2PL::read_column(Row *row, column_id_t col_id, Value *value) {
     }
   }
 
-  // reading from actual table data, needs locking
-  //if (row->rtti() == symbol_t::ROW_COARSE) {
-  //    CoarseLockedRow* coarse_row = (CoarseLockedRow *) row;
-  //    if (!coarse_row->rlock_row_by(this->id())) {
-  //        return false;
-  //    }
-  //    insert_into_map(locks_, row, -1);
-  //} else if (row->rtti() == symbol_t::ROW_FINE) {
-  //    FineLockedRow* fine_row = ((FineLockedRow *) row);
-  //    if (!fine_row->rlock_column_by(col_id, this->id())) {
-  //        return false;
-  //    }
-  //    insert_into_map(locks_, row, col_id);
-  //} else {
-  //    // row must either be FineLockedRow or CoarseLockedRow
-  //    verify(row->rtti() == symbol_t::ROW_COARSE || row->rtti() == symbol_t::ROW_FINE);
-  //}
   *value = row->get_column(col_id);
   insert_into_map(reads_, row, col_id);
 
   return true;
 }
-
-//void Txn2PL::reg_write_column(Row *row, column_id_t col_id, std::function<void(void)> succ_callback, std::function<void(void)> fail_callback) {
-//    verify(0);
-//    verify(row->rtti() == symbol_t::ROW_FINE);
-//    FineLockedRow* fine_row = ((FineLockedRow *) row);
-//    std::function<void(uint64_t)> yes_callback
-//        = [row, col_id, succ_callback, this] (uint64_t lock_req_id) {
-//            insert_into_map(alocks_, row,
-//                    std::pair<column_id_t, uint64_t>(col_id, lock_req_id));
-//            succ_callback();
-//        };
-//
-//    /*uint64_t lock_req_id = */
-//    fine_row->reg_wlock(col_id, yes_callback, fail_callback);
-//}
 
 bool Txn2PL::write_column(Row *row, column_id_t col_id, const Value &value) {
   verify(this->rtti() == symbol_t::TXN_2PL);
@@ -522,23 +389,6 @@ bool Txn2PL::write_column(Row *row, column_id_t col_id, const Value &value) {
     }
   }
 
-  // update staging area, needs locking
-  //if (row->rtti() == symbol_t::ROW_COARSE) {
-  //    CoarseLockedRow* coarse_row = (CoarseLockedRow *) row;
-  //    if (!coarse_row->wlock_row_by(this->id())) {
-  //        return false;
-  //    }
-  //    insert_into_map(locks_, row, -1);
-  //} else if (row->rtti() == symbol_t::ROW_FINE) {
-  //    FineLockedRow* fine_row = ((FineLockedRow *) row);
-  //    if (!fine_row->wlock_column_by(col_id, this->id())) {
-  //        return false;
-  //    }
-  //    insert_into_map(locks_, row, col_id);
-  //} else {
-  //    // row must either be FineLockedRow or CoarseLockedRow
-  //    verify(row->rtti() == symbol_t::ROW_COARSE || row->rtti() == symbol_t::ROW_FINE);
-  //}
   insert_into_map(updates_, row, std::make_pair(col_id, value));
 
   return true;
@@ -569,25 +419,6 @@ bool Txn2PL::remove_row(Table *tbl, Row *row) {
   }
 
   if (it == it_pair.second) {
-    // lock whole row, only if row is on real table
-    //if (row->rtti() == symbol_t::ROW_COARSE) {
-    //    CoarseLockedRow* coarse_row = (CoarseLockedRow *) row;
-    //    if (!coarse_row->wlock_row_by(this->id())) {
-    //        return false;
-    //    }
-    //    insert_into_map(locks_, row, -1);
-    //} else if (row->rtti() == symbol_t::ROW_FINE) {
-    //    FineLockedRow* fine_row = ((FineLockedRow *) row);
-    //    for (size_t col_id = 0; col_id < row->schema()->columns_count(); col_id++) {
-    //        if (!fine_row->wlock_column_by(col_id, this->id())) {
-    //            return false;
-    //        }
-    //        insert_into_map(locks_, row, col_id);
-    //    }
-    //} else {
-    //    // row must either be FineLockedRow or CoarseLockedRow
-    //    verify(row->rtti() == symbol_t::ROW_COARSE || row->rtti() == symbol_t::ROW_FINE);
-    //}
     removes_.insert(table_row_pair(tbl, row));
   } else {
     it->row->release();
@@ -795,7 +626,5 @@ ResultSet Txn2PL::do_all(Table *tbl, symbol_t order /* =? */) {
 
   return ResultSet(merged_cursor);
 }
-
-
 
 } // namespace mdb

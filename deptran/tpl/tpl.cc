@@ -3,28 +3,6 @@
 
 namespace rococo {
 
-//int TPL::do_abort(i64 txn_id, rrr::DeferredReply* defer) {
-//    //map<i64, txn_entry_t *>::iterator it = txn_map_s.find(txn_id);
-//    //verify(it != txn_map_s.end() && it->second != NULL);
-//    if (running_mode_s == MODE_2PL) {
-//        //pthread_mutex_lock(&txn_map_mutex_s);
-//        txn_entry_t *txn_entry = NULL;
-//        map<i64, txn_entry_t *>::iterator it = txn_map_s.find(txn_id);
-//        txn_entry = it->second;
-//        //pthread_mutex_unlock(&txn_map_mutex_s);
-//        txn_entry->abort_2pl(txn_id, &txn_map_s, /*&txn_map_mutex_s, */defer);
-//    }
-//    else {
-//        map<i64, txn_entry_t *>::iterator it = txn_map_s.find(txn_id);
-//        it->second->txn->abort();
-//        delete it->second;
-//        txn_map_s.erase(it);
-//    }
-//    return SUCCESS;
-//}
-//
-//
-
 TPLDTxn::TPLDTxn(i64 tid, DTxnMgr *mgr) : DTxn(tid, mgr) {
   verify(mdb_txn_ == nullptr);
   mdb_txn_ = mgr->get_mdb_txn(tid_);
@@ -49,7 +27,6 @@ int TPLDTxn::start_launch(
   if (IS_MODE_2PL) {
     verify(this->mdb_txn_->rtti() == mdb::symbol_t::TXN_2PL);
     DragonBall *defer_reply_db = new DragonBall(1, [defer, res]() {
-//      auto r = *res;
       defer->reply();
     });
     this->pre_execute_2pl(header, input, res, output, defer_reply_db);
@@ -184,7 +161,6 @@ std::function<void(void)> TPLDTxn::get_2pl_succ_callback(
                header.tid, header.pid, header.p_type);
     Log_debug("succ 1 callback: PS: %p", ps);
     verify(ps != NULL);
-//    ((mdb::Txn2PL*)this->mdb_txn_)->ps_cache_ = ps;
     ps->start_yes_callback();
     Log_debug("tid: %lx, pid: %lx, p_type: %d, get lock",
                header.tid, header.pid, header.p_type);
@@ -218,6 +194,7 @@ std::function<void(void)> TPLDTxn::get_2pl_succ_callback(
         }
       }
 
+      Log_debug("set finish on tid %ld\n", header.tid);
       ps->set_finish();
       ps->trigger_reply_dragonball();
     }
@@ -230,7 +207,7 @@ std::function<void(void)> TPLDTxn::get_2pl_proceed_callback(
     rrr::i32 input_size,
     rrr::i32 *res) {
   return [header, input, input_size, res, this]() {
-    Log_debug("tid: %ld, pid: %ld, p_type: %d, no lock",
+    Log_debug("PROCEED WITH COMMIT: tid: %ld, pid: %ld, p_type: %d, no lock",
                header.tid, header.pid, header.p_type);
 //        verify(this->mdb_txn_ != nullptr);
     mdb::Txn2PL *mdb_txn = (mdb::Txn2PL *) mdb_txn_;
@@ -293,49 +270,6 @@ std::function<void(void)> TPLDTxn::get_2pl_fail_callback(
   };
 }
 
-//std::function<void(void)>
-//TPLDTxn::get_2pl_succ_callback(
-//        const RequestHeader &header,
-//        const mdb::Value *input,
-//        rrr::i32 input_size,
-//        rrr::i32 *res,
-//        mdb::Txn2PL::PieceStatus *ps,
-//        std::function<void(
-//                const RequestHeader &,
-//                const Value *,
-//                rrr::i32,
-//                rrr::i32 *)> func) {
-//    return [header, input, input_size, res, func, ps] () {
-//        Log::debug("tid: %ld, pid: %ld, p_type: %d, lock acquired call back",
-//                header.tid, header.pid, header.p_type);
-//        //PieceStatus *ps = TPL::get_piece_status(header);
-//        verify(ps != NULL); //FIXME
-//        Log::debug("succ 2 callback: PS: %p", ps);
-//        ps->start_yes_callback();
-//        Log::debug("tid: %ld, pid: %ld, p_type: %d, get lock",
-//                header.tid, header.pid, header.p_type);
-//
-//        if (ps->can_proceed()) {
-//            Log::debug("proceed");
-//            if (ps->is_rejected()) {
-//                *res = REJECT;
-//
-//                ps->remove_output();
-//
-//                Log::debug("rejected");
-//
-//                ps->trigger_reply_dragonball();
-//                ps->set_finish();
-//            }
-//            else {
-//                Log::debug("before func");
-//                func(header, input, input_size, res);
-//                Log::debug("end func");
-//            }
-//        }
-//    };
-//}
-
 void TPLDTxn::pre_execute_2pl(
     const RequestHeader &header,
     const std::vector<mdb::Value> &input,
@@ -362,46 +296,4 @@ void TPLDTxn::pre_execute_2pl(
                     NULL/*output_size*/, NULL);
 }
 
-//void TPLDTxn::pre_execute_2pl(
-//        const RequestHeader& header,
-//        const Value *input,
-//        rrr::i32 input_size,
-//        rrr::i32* res,
-//        mdb::Value* output,
-//        rrr::i32* output_size,
-//        DragonBall *db
-//) {
-//
-//    verify(mdb_txn_ != nullptr);
-//    mdb::Txn2PL *txn = (mdb::Txn2PL *)mdb_txn_;
-//    txn->init_piece(header.tid, header.pid, db, output, output_size);
-//    if (txn->is_wound()) {
-//        *output_size = 0;
-//        *res = REJECT;
-//        db->trigger();
-//        return;
-//    }
-//    TxnRegistry::get(header).txn_handler(
-//            this,
-//            header,
-//            input,
-//            input_size,
-//            res,
-//            NULL/*output*/,
-//            NULL/*output_size*/,
-//            NULL
-//    );
-//}
-
-//
-//void TPLDTxn::french_kiss(i64 pid, std::vector<mdb::column_lock_t> &locks) {
-//    verify(mdb_txn_ != nullptr);
-//    mdb::Txn2PL::PieceStatus *ps
-//            = ((mdb::Txn2PL *)mdb_txn_)->get_piece_status(pid);
-//    std::function<void(void)> succ_callback =
-//            get_2pl_succ_callback(header, input, input_size, res, ps);
-//    std::function<void(void)> fail_callback =
-//            (get_2pl_fail_callback(header, res, ps);
-//    ps->reg_rw_lock(locks, succ_callback, fail_callback);
-//}
 } // namespace rococo
