@@ -10,8 +10,9 @@ namespace rococo {
 //}
 
 ClientWorker::~ClientWorker() {
-  if (txn_req_factory_)
+  if (txn_req_factory_) {
     delete txn_req_factory_;
+  }
 }
 
 void ClientWorker::callback2(TxnReply &txn_reply) {

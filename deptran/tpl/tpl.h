@@ -66,19 +66,6 @@ class TPLDTxn: public DTxn {
       mdb::Txn2PL::PieceStatus *ps
   );
 
-//    std::function<void(void)> get_2pl_succ_callback(
-//            const RequestHeader &header,
-//            const mdb::Value *input,
-//            rrr::i32 input_size,
-//            rrr::i32 *res,
-//            mdb::Txn2PL::PieceStatus *ps,
-//            std::function<void(
-//                    const RequestHeader &,
-//                    const Value *,
-//                    rrr::i32,
-//                    rrr::i32 *)> func
-//    );
-
   std::function<void(void)> get_2pl_succ_callback(
       const RequestHeader &req,
       const mdb::Value *input,

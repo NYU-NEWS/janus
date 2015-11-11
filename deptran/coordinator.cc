@@ -205,15 +205,17 @@ void Coordinator::Start() {
         //delete reply.cmd;
     };
 
+    int cnt = 0;
     while ((subcmd = cmd_->GetNextSubCmd()) != nullptr) {
         req.pie_id = next_pie_id();
         n_start_++;
-        Log_debug("send out start request %ld, "
-                          "cmd_id: %lx, inn_id: %d, pie_id: %lx",
+        cnt++;
+        Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
                   n_start_, cmd_id_, subcmd->inn_id_, req.pie_id);
         req.cmd = subcmd;
         commo_->SendStart(subcmd->GetPar(), req, this, callback);
     }
+    Log_debug("sent %d SubCmds\n", cnt);
 }
 
 bool Coordinator::AllStartAckCollected() {
@@ -225,16 +227,17 @@ bool Coordinator::AllStartAckCollected() {
 
 void Coordinator::StartAck(StartReply &reply, phase_t phase) {
   std::lock_guard<std::mutex> lock(this->mtx_);
+
+  TxnChopper *ch = (TxnChopper *) cmd_;
   if (has_stale_phase_or_stage(phase, START)) {
     Log_debug("ignore stale startack\n");
     return;
   }
 
-  TxnChopper *ch = (TxnChopper *) cmd_;
   n_start_ack_++;
-
   Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
             n_start_ack_, n_start_, cmd_id_, reply.cmd->inn_id_);
+
   start_ack_map_[reply.cmd->inn_id_] = true;
   if (reply.res == REJECT) {
     Log::debug("got REJECT reply for cmd_id: %lx, inn_id: %d; NOT COMMITING", cmd_id_,reply.cmd->inn_id());
@@ -269,15 +272,17 @@ void Coordinator::Prepare() {
   TxnChopper *ch = (TxnChopper *) cmd_;
   verify(mode_ == MODE_OCC || mode_ == MODE_2PL);
   // prepare piece, currently only useful for OCC
+
   auto phase = phase_;
   std::function<void(Future *)> callback = [ch, phase, this](Future *fu) {
     this->PrepareAck(ch, phase, fu);
   };
+
   std::vector<i32> sids;
-  // sids.reserve(ch->proxies_.size());
   for (auto &rp : ch->partitions_) {
     sids.push_back(rp);
   }
+
   for (auto &rp : ch->partitions_) {
     RequestHeader header = gen_header(ch);
     Log::debug("send prepare tid: %ld", header.tid);
@@ -331,17 +336,19 @@ void Coordinator::Finish() {
   std::function<void(Future *)> callback = [ch, phase, this](Future *fu) {
     this->FinishAck(ch, phase, fu);
   };
+
+  RequestHeader header = gen_header(ch);
   if (ch->commit_.load()) {
-    Log_debug("send finish");
     ch->reply_.res_ = SUCCESS;
     for (auto &rp : ch->partitions_) {
+      Log_debug("send commit for txn_id %ld to %ld\n", header.tid, rp);
       commo_->SendCommit(rp, cmd_id_, callback);
       site_commit_[rp]++;
     }
   } else {
-    Log_debug("send abort");
     ch->reply_.res_ = REJECT;
     for (auto &rp : ch->partitions_) {
+      Log_debug("send abort for txn_id %ld to %ld\n", header.tid, rp);
       commo_->SendAbort(rp, cmd_id_, callback);
       site_abort_[rp]++;
     }
