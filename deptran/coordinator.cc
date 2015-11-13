@@ -212,6 +212,7 @@ void Coordinator::Start() {
         start_ack_map_[subcmd->inn_id()] = false;
         commo_->SendStart(subcmd->GetPar(), req, this, callback);
     }
+
     Log_debug("sent %d SubCmds\n", cnt);
 }
 
@@ -224,17 +225,17 @@ bool Coordinator::AllStartAckCollected() {
 void Coordinator::StartAck(StartReply &reply, phase_t phase) {
   std::lock_guard<std::mutex> lock(this->mtx_);
 
-  TxnChopper *ch = (TxnChopper *) cmd_;
   if (has_stale_phase_or_stage(phase, START)) {
     Log_debug("ignore stale startack\n");
     return;
   }
-
   n_start_ack_++;
+  TxnChopper *ch = (TxnChopper *) cmd_;
+  start_ack_map_[reply.cmd->inn_id_] = true;
+
   Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
             n_start_ack_, n_start_, cmd_id_, reply.cmd->inn_id_);
 
-  start_ack_map_[reply.cmd->inn_id_] = true;
   if (reply.res == REJECT) {
     Log::debug("got REJECT reply for cmd_id: %lx, inn_id: %d; NOT COMMITING", cmd_id_,reply.cmd->inn_id());
     ch->commit_.store(false);
