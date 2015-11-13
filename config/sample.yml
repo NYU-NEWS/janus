@@ -11,22 +11,18 @@
 # site - partition map
 site:
   server: # each line is a partition
-   - ["s101:8881", "s201:8882", "s301:8883"]
-   - ["s102:8884", "s202:8885", "s302:8886"]
-    # - ["s101:8881"]
+#    - ["s101:8881", "s201:8882", "s301:8883"]
+#    - ["s102:8884", "s202:8885", "s302:8886"]
+    - ["s101:8881"]
+#    - ["s102:8884"]
   client: # each line is a partition
-     # - ["c1"]
-   - ["c1", "c2"]
-   - ["c3", "c4"]
+#     - ["c1"]
+    - ["c1", "c2"]
+    - ["c3", "c4"]
 
 # site - process map
 process:
   s101: localhost
-  s201: localhost
-  s301: localhost
-  s102: localhost
-  s202: localhost
-  s302: localhost
 #  s102: localhost
 #  s201: localhost
 #  s202: localhost

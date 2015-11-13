@@ -40,7 +40,6 @@ Coordinator::Coordinator(uint32_t coo_id,
                                                mtx_(),
                                                start_mtx_() {
   uint64_t k = coo_id_;
-
   k <<= 32;
   k++;
   commo_ = new Commo(addrs);
@@ -182,9 +181,6 @@ void Coordinator::restart(TxnChopper *ch) {
   double last_latency = ch->last_attempt_latency();
 
   if (ccsi_) ccsi_->txn_retry_one(this->thread_id_, ch->txn_type_, last_latency);
-
-//  if (batch_optimal_) naive_batch_start(ch);
-//  else LegacyStart(ch);
   Start();
 }
 
@@ -213,16 +209,16 @@ void Coordinator::Start() {
         Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
                   n_start_, cmd_id_, subcmd->inn_id_, req.pie_id);
         req.cmd = subcmd;
+        start_ack_map_[subcmd->inn_id()] = false;
         commo_->SendStart(subcmd->GetPar(), req, this, callback);
     }
     Log_debug("sent %d SubCmds\n", cnt);
 }
 
 bool Coordinator::AllStartAckCollected() {
-  for (auto &pair: start_ack_map_) {
-    if (!pair.second) return false;
-  }
-  return true;
+  return std::all_of(start_ack_map_.begin(),
+                     start_ack_map_.end(),
+                     [](std::pair<innid_t, bool> pair){ return pair.second; });
 }
 
 void Coordinator::StartAck(StartReply &reply, phase_t phase) {
