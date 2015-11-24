@@ -3,10 +3,9 @@
 
 #include "__dep__.h"
 #include "constants.h"
+#include "sharding.h"
 
 namespace rococo {
-
-class Sharding;
 
 class Config {
  public:
@@ -161,12 +160,15 @@ class Config {
 
   void InitTPCCD();
 
-    void Load();
+  void Load();
 
   void LoadXML(std::string &filename);
   void LoadTopoXML(boost::property_tree::ptree &pt);
   void LoadModeXML(boost::property_tree::ptree &pt);
   void LoadSchemeXML(boost::property_tree::ptree &pt);
+  void LoadSchemaTableXML(boost::property_tree::ptree::value_type const & value);
+  void LoadSchemaTableColumnXML(Sharding::tb_info_t &tb_info,
+                                boost::property_tree::ptree::value_type const & column);
   void LoadBenchXML(boost::property_tree::ptree &pt);
 
   void LoadYML(std::string &);
@@ -175,6 +177,10 @@ class Config {
   void LoadHostYML(YAML::Node config);
   void LoadModeYML(YAML::Node config);
   void LoadBenchYML(YAML::Node config);
+  void LoadShardingYML(YAML::Node config);
+  void LoadSchemaYML(YAML::Node config);
+  void LoadSchemaTableColumnYML(Sharding::tb_info_t &tb_info,
+                                YAML::Node column);
 //
 //  void LoadModeYML();
 //  void LoadSchemeYML();

@@ -273,9 +273,11 @@ Config::Config(char           *ctrl_hostname,
 
 void Config::Load() {
   for (auto &name: config_paths_) {
-    if (boost::algorithm::ends_with(name, "xml")) {
-      LoadXML(name);
-    } else if (boost::algorithm::ends_with(name, "yml")) {
+    // XML configurations are deprecated
+//    if (boost::algorithm::ends_with(name, "xml")) {
+//      LoadXML(name);
+//    }
+    if (boost::algorithm::ends_with(name, "yml")) {
       LoadYML(name);
     } else {
       verify(0);
@@ -305,6 +307,9 @@ void Config::LoadYML(std::string &filename) {
   }
   if (config["mode"]) {
     LoadModeYML(config["mode"]);
+  }
+  if (config["schema"]) {
+    LoadModeYML(config["schema"]);
   }
   if (config["bench"]) {
     LoadBenchYML(config["bench"]);
@@ -478,6 +483,95 @@ void Config::LoadBenchYML(YAML::Node config) {
   txn_weight_.push_back(txn_weights_["stock_level"]);
 //  this->InitTPCCD();
   sharding_ = Frame().CreateSharding();
+  auto populations = config["populations"];
+  auto &tb_infos = sharding_->tb_infos_;
+  for (auto it = populations.begin(); it != populations.end(); it++) {
+    auto tbl_name = it->first.as<string>();
+    auto info_it = tb_infos.find(tbl_name);
+    verify(info_it != tb_infos.end());
+    auto &tbl_info = info_it->second;
+    int pop = it->second.as<int>();
+    tbl_info.num_records = scale_factor_ * pop;
+    verify(tbl_info.num_records > 0);
+  }
+}
+
+void Config::LoadSchemaYML(YAML::Node config) {
+  for (auto it = config.begin(); it != config.end(); it++) {
+    std::string tb_name = config["name"].as<string>();
+
+    Sharding::tb_info_t tb_info;
+    auto columns = config["column"];
+    for (auto iitt = columns.begin(); iitt != columns.end(); iitt++) {
+      auto column = *iitt;
+      LoadSchemaTableColumnYML(tb_info, column);
+    }
+
+    tb_info.tb_name = tb_name;
+    sharding_->tb_infos_[tb_name] = tb_info;
+  }
+}
+
+void Config::LoadSchemaTableColumnYML(Sharding::tb_info_t &tb_info,
+                                      YAML::Node column) {
+  std::string c_type = column["type"].as<string>();
+  verify(c_type.size() > 0);
+  Value::kind c_v_type;
+
+  if (c_type == "i32") c_v_type = Value::I32;
+  else if (c_type == "i64") c_v_type = Value::I64;
+  else if (c_type == "double") c_v_type = Value::DOUBLE;
+  else if (c_type == "str") c_v_type = Value::STR;
+  else c_v_type = Value::UNKNOWN;
+
+  std::string c_name = column["name"].as<string>();
+  verify(c_name.size() > 0);
+
+  bool c_primary = column["primary"].as<bool>(false);
+
+  std::string c_foreign = column["foreign"].as<string>("");
+  Sharding::column_t  *foreign_key_column = NULL;
+  Sharding::tb_info_t *foreign_key_tb     = NULL;
+  std::string ftbl_name;
+  std::string fcol_name;
+  bool is_foreign = (c_foreign.size() > 0);
+  if (is_foreign) {
+    size_t pos = c_foreign.find('.');
+    verify(pos != std::string::npos);
+
+    ftbl_name = c_foreign.substr(0, pos);
+    fcol_name = c_foreign.substr(pos + 1);
+    verify(c_foreign.size() > pos + 1);
+  }
+  tb_info.columns.push_back(Sharding::column_t(c_v_type,
+                                               c_name,
+                                               c_primary,
+                                               is_foreign,
+                                               ftbl_name,
+                                               fcol_name));
+}
+
+void Config::LoadShardingYML(YAML::Node config) {
+  auto &tb_infos = sharding_->tb_infos_;
+  for (auto it = config.begin(); it != config.end(); it++) {
+    auto tbl_name = it->first.as<string>();
+    auto info_it = tb_infos.find(tbl_name);
+    verify(info_it != tb_infos.end());
+    auto &tbl_info = info_it->second;
+    string method = it->second.as<string>();
+
+    tbl_info.num_site = get_num_site();
+    tbl_info.site_id  =
+        (uint32_t *)malloc(sizeof(uint32_t) * get_num_site());
+    verify(tbl_info.site_id != NULL);
+
+    for (int i = 0; i < get_num_site(); i++) {
+      tbl_info.site_id[i] = i;
+    }
+    verify(tbl_info.num_site > 0 && tbl_info.num_site <= get_num_site());
+    // set tb_info.symbol TBL_SORTED or TBL_UNSORTED or TBL_SNAPSHOT
+    tbl_info.symbol = tbl_types_map_["sorted"];
+  }
 }
 
 void Config::InitTPCCD() {
@@ -650,90 +744,99 @@ void Config::LoadTopoXML(boost::property_tree::ptree &pt) {
   verify(client_found);
 }
 
+void Config::LoadSchemaTableColumnXML(Sharding::tb_info_t &tb_info,
+                                      boost::property_tree::ptree::value_type const & column) {
+  if (column.first == "column") {
+    std::string c_type = column.second.get<std::string>("<xmlattr>.type");
+    verify(c_type.size() > 0);
+    Value::kind c_v_type;
+
+    if (c_type == "i32") c_v_type = Value::I32;
+    else if (c_type == "i64") c_v_type = Value::I64;
+    else if (c_type == "double") c_v_type = Value::DOUBLE;
+    else if (c_type == "str") c_v_type = Value::STR;
+    else c_v_type = Value::UNKNOWN;
+
+    std::string c_name = column.second.get<std::string>("<xmlattr>.name");
+    verify(c_name.size() > 0);
+
+    bool c_primary = column.second.get<bool>("<xmlattr>.primary", false);
+
+    std::string c_foreign =
+            column.second.get<std::string>("<xmlattr>.foreign", "");
+    Sharding::column_t  *foreign_key_column = NULL;
+    Sharding::tb_info_t *foreign_key_tb     = NULL;
+    std::string ftbl_name;
+    std::string fcol_name;
+    bool is_foreign = (c_foreign.size() > 0);
+    if (is_foreign) {
+      size_t pos = c_foreign.find('.');
+      verify(pos != std::string::npos);
+
+      ftbl_name = c_foreign.substr(0, pos);
+      fcol_name = c_foreign.substr(pos + 1);
+      verify(c_foreign.size() > pos + 1);
+    }
+    tb_info.columns.push_back(Sharding::column_t(c_v_type,
+                                                 c_name,
+                                                 c_primary,
+                                                 is_foreign,
+                                                 ftbl_name,
+                                                 fcol_name));
+  }
+}
+
+void Config::LoadSchemaTableXML(boost::property_tree::ptree::value_type const & value) {
+  std::string tb_name = value.second.get<std::string>("<xmlattr>.name");
+
+  if (sharding_->tb_infos_.find(tb_name) !=
+      sharding_->tb_infos_.end()) verify(0);
+  std::string method =
+          value.second.get<std::string>("<xmlattr>.shard_method");
+  uint64_t records = value.second.get<uint64_t>("<xmlattr>.records");
+  Sharding::tb_info_t tb_info(method);
+  tb_info.num_records = records * scale_factor_;
+  verify(tb_info.num_records > 0);
+
+  // set tb_info site info
+  bool all_site = value.second.get<bool>("<xmlattr>.all_site", true);
+
+  if (all_site) {
+    tb_info.num_site = get_num_site();
+    tb_info.site_id  =
+            (uint32_t *)malloc(sizeof(uint32_t) * get_num_site());
+    verify(tb_info.site_id != NULL);
+
+    for (int i = 0; i < get_num_site(); i++) tb_info.site_id[i] = i;
+  } else {
+    verify(0);
+  }
+  verify(tb_info.num_site > 0 && tb_info.num_site <= get_num_site());
+
+  // set tb_info.symbol TBL_SORTED or TBL_UNSORTED or TBL_SNAPSHOT
+  std::string symbol_str = value.second.get<std::string>("<xmlattr>.type",
+                                                         "sorted");
+  auto it = tbl_types_map_.find(symbol_str);
+  verify(it != tbl_types_map_.end());
+  tb_info.symbol = it->second;
+
+  // set tb_info.columns
+  BOOST_FOREACH(boost::property_tree::ptree::value_type const & column,
+                value.second.get_child("schema")) {
+    LoadSchemaTableColumnXML(tb_info, column);
+  }
+
+  tb_info.tb_name = tb_name;
+  sharding_->tb_infos_[tb_name] = tb_info;
+}
+
 void Config::LoadSchemeXML(boost::property_tree::ptree &pt) {
 //  int *site_buf = (int *)malloc(sizeof(int) * num_site_);
   vector<int> site_buf(get_num_site());
   BOOST_FOREACH(boost::property_tree::ptree::value_type const & value,
                 pt.get_child("benchmark")) {
     if (value.first == "table") {
-      std::string tb_name = value.second.get<std::string>("<xmlattr>.name");
-
-      if (sharding_->tb_infos_.find(tb_name) !=
-          sharding_->tb_infos_.end()) verify(0);
-      std::string method =
-        value.second.get<std::string>("<xmlattr>.shard_method");
-      uint64_t records = value.second.get<uint64_t>("<xmlattr>.records");
-      Sharding::tb_info_t tb_info(method);
-      tb_info.num_records = records * scale_factor_;
-      verify(tb_info.num_records > 0);
-
-      // set tb_info site info
-      bool all_site = value.second.get<bool>("<xmlattr>.all_site", true);
-
-      if (all_site) {
-        tb_info.num_site = get_num_site();
-        tb_info.site_id  =
-          (uint32_t *)malloc(sizeof(uint32_t) * get_num_site());
-        verify(tb_info.site_id != NULL);
-
-        for (int i = 0; i < get_num_site(); i++) tb_info.site_id[i] = i;
-      } else {
-        verify(0);
-      }
-      verify(tb_info.num_site > 0 && tb_info.num_site <= get_num_site());
-
-      // set tb_info.symbol TBL_SORTED or TBL_UNSORTED or TBL_SNAPSHOT
-      std::string symbol_str = value.second.get<std::string>("<xmlattr>.type",
-                                                             "sorted");
-      auto it = tbl_types_map_.find(symbol_str);
-      verify(it != tbl_types_map_.end());
-      tb_info.symbol = it->second;
-
-      // set tb_info.columns
-      BOOST_FOREACH(boost::property_tree::ptree::value_type const & column,
-                    value.second.get_child("schema")) {
-        if (column.first == "column") {
-          std::string c_type = column.second.get<std::string>("<xmlattr>.type");
-          verify(c_type.size() > 0);
-          Value::kind c_v_type;
-
-          if (c_type == "i32") c_v_type = Value::I32;
-          else if (c_type == "i64") c_v_type = Value::I64;
-          else if (c_type == "double") c_v_type = Value::DOUBLE;
-          else if (c_type == "str") c_v_type = Value::STR;
-          else c_v_type = Value::UNKNOWN;
-
-          std::string c_name = column.second.get<std::string>("<xmlattr>.name");
-          verify(c_name.size() > 0);
-
-          bool c_primary = column.second.get<bool>("<xmlattr>.primary", false);
-
-          std::string c_foreign =
-            column.second.get<std::string>("<xmlattr>.foreign", "");
-          Sharding::column_t  *foreign_key_column = NULL;
-          Sharding::tb_info_t *foreign_key_tb     = NULL;
-          std::string ftbl_name;
-          std::string fcol_name;
-          bool is_foreign = (c_foreign.size() > 0);
-          if (is_foreign) {
-            size_t pos = c_foreign.find('.');
-            verify(pos != std::string::npos);
-
-            ftbl_name = c_foreign.substr(0, pos);
-            fcol_name = c_foreign.substr(pos + 1);
-            verify(c_foreign.size() > pos + 1);
-          }
-          tb_info.columns.push_back(Sharding::column_t(c_v_type,
-                                                       c_name,
-                                                       c_primary,
-                                                       is_foreign,
-                                                       ftbl_name,
-                                                       fcol_name));
-        }
-      }
-
-      tb_info.tb_name = tb_name;
-      sharding_->tb_infos_[tb_name] = tb_info;
+      LoadSchemaTableXML(value);
     }
   }
   sharding_->BuildTableInfoPtr();

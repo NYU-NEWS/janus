@@ -65,7 +65,7 @@ bench:
     stock: 100000
     order_line: 300000
 
-table: # schema
+schema: # schema
   - name: warehouse
     primary: w_id
     column:

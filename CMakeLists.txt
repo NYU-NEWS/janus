@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 2.8.4)
 project(rococo)
 set(CMAKE_VERBOSE_MAKEFILE on)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Weffc++")
 
 find_package(Threads)
@@ -63,8 +63,8 @@ file(GLOB RRR_SRC
     "rrr/base/*.cpp"
     "rrr/misc/*.hpp"
     "rrr/misc/*.cpp"
-    "rrr/mq/*.cpp"
-    "rrr/mq/*.h"
+#    "rrr/mq/*.cpp"
+#    "rrr/mq/*.h"
     "rrr/pylib/simplerpc/_pyrpc.cpp"
     "rrr/rpc/*.cpp"
     "rrr/rpc/*.hpp"
@@ -106,7 +106,6 @@ file(GLOB DEPTRAN_SRC
     "deptran/none/*.h"
     "deptran/none/*.cc"
 )
-
 
 add_library(ROCOCO
     ${RRR_SRC}
