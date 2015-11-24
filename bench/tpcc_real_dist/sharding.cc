@@ -448,8 +448,9 @@ int TPCCDSharding::PopulateTable(uint32_t sid) {
 
       // TODO is this unnecessary?
       auto it = tb_info->populated.find(sid);
-      if (it == tb_info->populated.end())
+      if (it == tb_info->populated.end()) {
         tb_info->populated[sid] = false;
+      }
 
       if (!tb_info->populated[sid] && Ready2Populate(tb_info)) {
         PopulateTable(tb_info, sid);

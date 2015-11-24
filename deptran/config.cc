@@ -524,6 +524,7 @@ void Config::LoadSchemaYML(YAML::Node config) {
     tbl_info.tb_name = tbl_name;
     sharding_->tb_infos_[tbl_name] = tbl_info;
   }
+  sharding_->BuildTableInfoPtr();
 }
 
 void Config::LoadSchemaTableColumnYML(Sharding::tb_info_t &tb_info,

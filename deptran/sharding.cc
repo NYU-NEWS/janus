@@ -45,10 +45,11 @@ Sharding::~Sharding() {
 }
 
 void Sharding::BuildTableInfoPtr() {
-
+  verify(tb_infos_.size() > 0);
   for (auto tbl_it = tb_infos_.begin(); tbl_it != tb_infos_.end(); tbl_it++ ) {
     auto &tbl = tbl_it->second;
     auto &columns = tbl.columns;
+    verify(columns.size() > 0);
     for (auto col_it = columns.begin(); col_it != columns.end(); col_it++) {
       auto &col = *col_it;
       if (col.is_foreign) {
