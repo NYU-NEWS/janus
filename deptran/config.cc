@@ -308,11 +308,14 @@ void Config::LoadYML(std::string &filename) {
   if (config["mode"]) {
     LoadModeYML(config["mode"]);
   }
-  if (config["schema"]) {
-    LoadModeYML(config["schema"]);
-  }
   if (config["bench"]) {
     LoadBenchYML(config["bench"]);
+  }
+  if (config["schema"]) {
+    LoadSchemaYML(config["schema"]);
+  }
+  if (config["sharding"]) {
+    LoadShardingYML(config["sharding"]);
   }
 }
 
@@ -483,12 +486,15 @@ void Config::LoadBenchYML(YAML::Node config) {
   txn_weight_.push_back(txn_weights_["stock_level"]);
 //  this->InitTPCCD();
   sharding_ = Frame().CreateSharding();
-  auto populations = config["populations"];
+  auto populations = config["population"];
   auto &tb_infos = sharding_->tb_infos_;
   for (auto it = populations.begin(); it != populations.end(); it++) {
     auto tbl_name = it->first.as<string>();
     auto info_it = tb_infos.find(tbl_name);
-    verify(info_it != tb_infos.end());
+    if(info_it == tb_infos.end()) {
+      tb_infos[tbl_name] = Sharding::tb_info_t();
+      info_it = tb_infos.find(tbl_name);
+    }
     auto &tbl_info = info_it->second;
     int pop = it->second.as<int>();
     tbl_info.num_records = scale_factor_ * pop;
@@ -497,18 +503,26 @@ void Config::LoadBenchYML(YAML::Node config) {
 }
 
 void Config::LoadSchemaYML(YAML::Node config) {
+  verify(sharding_);
+  auto &tb_infos = sharding_->tb_infos_;
   for (auto it = config.begin(); it != config.end(); it++) {
-    std::string tb_name = config["name"].as<string>();
+    auto table_node = *it;
+    std::string tbl_name = table_node["name"].as<string>();
 
-    Sharding::tb_info_t tb_info;
-    auto columns = config["column"];
+    auto info_it = tb_infos.find(tbl_name);
+    if(info_it == tb_infos.end()) {
+      tb_infos[tbl_name] = Sharding::tb_info_t();
+      info_it = tb_infos.find(tbl_name);
+    }
+    auto &tbl_info = info_it->second;
+    auto columns = table_node["column"];
     for (auto iitt = columns.begin(); iitt != columns.end(); iitt++) {
       auto column = *iitt;
-      LoadSchemaTableColumnYML(tb_info, column);
+      LoadSchemaTableColumnYML(tbl_info, column);
     }
 
-    tb_info.tb_name = tb_name;
-    sharding_->tb_infos_[tb_name] = tb_info;
+    tbl_info.tb_name = tbl_name;
+    sharding_->tb_infos_[tbl_name] = tbl_info;
   }
 }
 
@@ -518,11 +532,18 @@ void Config::LoadSchemaTableColumnYML(Sharding::tb_info_t &tb_info,
   verify(c_type.size() > 0);
   Value::kind c_v_type;
 
-  if (c_type == "i32") c_v_type = Value::I32;
-  else if (c_type == "i64") c_v_type = Value::I64;
-  else if (c_type == "double") c_v_type = Value::DOUBLE;
-  else if (c_type == "str") c_v_type = Value::STR;
-  else c_v_type = Value::UNKNOWN;
+  if (c_type == "i32" || c_type == "integer") {
+    c_v_type = Value::I32;
+  } else if (c_type == "i64") {
+    c_v_type = Value::I64;
+  } else if (c_type == "double") {
+    c_v_type = Value::DOUBLE;
+  } else if (c_type == "str" || c_type == "string") {
+    c_v_type = Value::STR;
+  } else {
+    c_v_type = Value::UNKNOWN;
+    verify(0);
+  }
 
   std::string c_name = column["name"].as<string>();
   verify(c_name.size() > 0);
@@ -552,6 +573,7 @@ void Config::LoadSchemaTableColumnYML(Sharding::tb_info_t &tb_info,
 }
 
 void Config::LoadShardingYML(YAML::Node config) {
+  verify(sharding_);
   auto &tb_infos = sharding_->tb_infos_;
   for (auto it = config.begin(); it != config.end(); it++) {
     auto tbl_name = it->first.as<string>();

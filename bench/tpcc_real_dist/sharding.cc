@@ -457,7 +457,6 @@ int TPCCDSharding::PopulateTable(uint32_t sid) {
         number2populate--;
       }
     }
-
     verify(pre_num2populate > number2populate);
   }
 

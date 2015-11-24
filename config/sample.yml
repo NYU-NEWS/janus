@@ -195,14 +195,14 @@ schema: # schema
 # default is MOD by primary key.
 # CUSTOM means strategy is defined in the code.
 # TODO a better way to define sharding strategy.
-shard:
-  - warehouse:  MOD
-  - district:   MOD
-  - customer:   CUSTOM
-  - history:    MOD
-  - order:      MOD
-  - new_order:  MOD
-  - item:       MOD
-  - stock:      MOD
-  - order_line: MOD
+sharding:
+  warehouse:  MOD
+  district:   MOD
+  customer:   CUSTOM
+  history:    MOD
+  order:      MOD
+  new_order:  MOD
+  item:       MOD
+  stock:      MOD
+  order_line: MOD
 
