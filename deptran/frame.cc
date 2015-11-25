@@ -7,7 +7,7 @@
 #include "marshal-value.h"
 #include "coordinator.h"
 #include "dtxn.h"
-#include "dtxn_mgr.h"
+#include "scheduler.h"
 #include "none/coord.h"
 #include "rcc/rcc_coord.h"
 #include "ro6/ro6_coord.h"

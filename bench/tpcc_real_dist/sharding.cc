@@ -5,7 +5,7 @@
 #include "bench/tpcc_real_dist/sharding.h"
 #include "bench/tpcc/piece.h"
 #include "frame.h"
-#include "dtxn_mgr.h"
+#include "scheduler.h"
 
 namespace rococo {
 

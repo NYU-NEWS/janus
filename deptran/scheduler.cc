@@ -1,7 +1,7 @@
 #include "__dep__.h"
 #include "constants.h"
 #include "dtxn.h"
-#include "dtxn_mgr.h"
+#include "scheduler.h"
 #include "graph.h"
 #include "graph_marshaler.h"
 #include "marshal-value.h"
