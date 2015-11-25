@@ -121,14 +121,14 @@ def build(bld):
                 features="gtest",
                 includes=". rrr deptran deptran/ro6 "
                          "deptran/rcc deptran/tpl "
-                         "deptran/brq deptran/none "
+                         "deptran/brq "
                          "test memdb",
                 uselib="BOOST BOOST_SYSTEM YAML-CPP",
                 use="PTHREAD rrr memdb deptran")
 
     bld.program(source=bld.path.ant_glob("deptran/s_main.cc"),
                 target="deptran_server",
-                includes=". rrr deptran deptran/none "
+                includes=". rrr deptran "
                          "deptran/ro6 deptran/rcc deptran/tpl deptran/brq",
                 uselib="BOOST BOOST_SYSTEM",
                 use="rrr memdb deptran YAML-CPP PTHREAD PROFILER RT")
@@ -163,7 +163,7 @@ def build(bld):
                                        "bench/micro/*.cc", excl="deptran/*_main.c*"),
               #use="PTHREAD APR APR-UTIL base simplerpc memdb")
               target="deptran",
-              includes=". rrr memdb bench deptran deptran/ro6 deptran/rcc deptran/tpl deptran/brq deptran/none",
+              includes=". rrr memdb bench deptran deptran/ro6 deptran/rcc deptran/tpl deptran/brq ",
               use="PTHREAD base simplerpc memdb")
 
 #

@@ -38,7 +38,7 @@ include_directories(
     deptran/rcc
     deptran/ro6
     deptran/brq
-    deptran/none
+#    deptran/none
 #    bench
 #    bench/micro
 #    bench/rw_benchmark
@@ -111,8 +111,7 @@ add_library(ROCOCO
     ${RRR_SRC}
     ${MEMDB_SRC}
     ${BENCH_SRC}
-    ${DEPTRAN_SRC}
-)
+    ${DEPTRAN_SRC})
 
 add_executable(ROCOCO_SERVER
     deptran/s_main.cc

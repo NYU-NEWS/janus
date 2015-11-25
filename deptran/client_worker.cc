@@ -1,7 +1,7 @@
 #include "client_worker.h"
-#include "rcc_coord.h"
-#include "ro6_coord.h"
-#include "none_coord.h"
+#include "rcc/rcc_coord.h"
+#include "ro6/ro6_coord.h"
+#include "none/coord.h"
 
 namespace rococo {
 
