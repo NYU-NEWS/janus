@@ -1,7 +1,5 @@
 #include "client_worker.h"
-#include "rcc/rcc_coord.h"
-#include "ro6/ro6_coord.h"
-#include "none/coord.h"
+#include "frame.h"
 
 namespace rococo {
 
@@ -16,6 +14,7 @@ ClientWorker::~ClientWorker() {
 }
 
 void ClientWorker::callback2(TxnReply &txn_reply) {
+  verify(coo_ != nullptr);
   if (timer_->elapsed() < duration) {
     TxnRequest req;
     txn_req_factory_->get_txn_req(&req, coo_id);
@@ -37,7 +36,9 @@ void ClientWorker::callback2(TxnReply &txn_reply) {
 }
 
 void ClientWorker::work() {
-  Coordinator *coo = GetCoord();
+  verify(coo_ == nullptr);
+  coo_ = Frame().CreateCoord(coo_id, *servers, benchmark,
+                             mode, ccsi, id, batch_start);
   if (ccsi) ccsi->wait_for_start(id);
 
   timer_ = new Timer();
@@ -48,7 +49,7 @@ void ClientWorker::work() {
     txn_req_factory_->get_txn_req(&req, coo_id);
     req.callback_ = std::bind(&ClientWorker::callback2, this,
                               std::placeholders::_1);
-    coo->do_one(req);
+    coo_->do_one(req);
   }
   finish_mutex.lock();
   while (n_outstanding_ > 0) {
@@ -61,44 +62,12 @@ void ClientWorker::work() {
            num_try.load(),
            Config::GetConfig()->get_duration());
 
-  delete coo;
+  delete coo_;
   if (ccsi) ccsi->wait_for_shutdown();
   delete timer_;
   return;
 }
 
-Coordinator* ClientWorker::GetCoord() {
-  if (coo_) return coo_;
-  auto attr = this;
-  switch (mode) {
-    case MODE_2PL:
-    case MODE_OCC:
-    case MODE_RPC_NULL:
-      coo_ = new Coordinator(coo_id, *(attr->servers),
-                             attr->benchmark, attr->mode,
-                             ccsi, id, attr->batch_start);
-      break;
-    case MODE_RCC:
-      coo_ = new RCCCoord(coo_id, *(attr->servers),
-                          attr->benchmark, attr->mode,
-                          ccsi, id, attr->batch_start);
-      break;
-    case MODE_RO6:
-      coo_ = new RO6Coord(coo_id, *(attr->servers),
-                          attr->benchmark, attr->mode,
-                          ccsi, id, attr->batch_start);
-      break;
-    case MODE_NONE:
-      coo_ = new NoneCoord(coo_id, *(attr->servers),
-                           attr->benchmark, attr->mode,
-                           ccsi, id, attr->batch_start);
-      break;
-    default:
-      verify(0);
-  }
-  coo_->sharding_ = Config::GetConfig()->sharding_;
-  return coo_;
-}
 
 
 

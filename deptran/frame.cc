@@ -8,6 +8,9 @@
 #include "coordinator.h"
 #include "dtxn.h"
 #include "dtxn_mgr.h"
+#include "none/coord.h"
+#include "rcc/rcc_coord.h"
+#include "ro6/ro6_coord.h"
 
 // for tpca benchmark
 #include "bench/tpca/piece.h"
@@ -87,39 +90,41 @@ mdb::Row* Frame::CreateRow(const mdb::Schema *schema,
   return r;
 }
 
-Coordinator* Frame::CreateCoord() {
-  // TODO
-//  Coordinator *coo;
-//  auto attr = this;
-//  auto mode = Config::GetConfig()->mode_;
-//  switch (mode) {
-//    case MODE_2PL:
-//    case MODE_OCC:
-//    case MODE_RPC_NULL:
-//      coo_ = new Coordinator(coo_id, *(attr->servers),
-//                             attr->benchmark, attr->mode,
-//                             ccsi, id, attr->batch_start);
-//      break;
-//    case MODE_RCC:
-//      coo_ = new RCCCoord(coo_id, *(attr->servers),
-//                          attr->benchmark, attr->mode,
-//                          ccsi, id, attr->batch_start);
-//      break;
-//    case MODE_RO6:
-//      coo_ = new RO6Coord(coo_id, *(attr->servers),
-//                          attr->benchmark, attr->mode,
-//                          ccsi, id, attr->batch_start);
-//      break;
-//    case MODE_NONE:
-//      coo_ = new NoneCoord(coo_id, *(attr->servers),
-//                           attr->benchmark, attr->mode,
-//                           ccsi, id, attr->batch_start);
-//      break;
-//    default:
-//      verify(0);
-//  }
-//  return coo;
-//  return nullptr;
+Coordinator* Frame::CreateCoord(cooid_t coo_id, vector<std::string>& servers,
+                                int benchmark, int mode,
+                                ClientControlServiceImpl *ccsi,
+                                uint32_t id, bool batch_start) {
+//   TODO
+  Coordinator *coo;
+  auto attr = this;
+  switch (mode) {
+    case MODE_2PL:
+    case MODE_OCC:
+    case MODE_RPC_NULL:
+      coo = new Coordinator(coo_id, servers,
+                             benchmark, mode,
+                             ccsi, id, batch_start);
+      break;
+    case MODE_RCC:
+      coo = new RCCCoord(coo_id, servers,
+                          benchmark, mode,
+                          ccsi, id, batch_start);
+      break;
+    case MODE_RO6:
+      coo = new RO6Coord(coo_id, servers,
+                          benchmark, mode,
+                          ccsi, id, batch_start);
+      break;
+    case MODE_NONE:
+      coo = new NoneCoord(coo_id, servers,
+                           benchmark, mode,
+                           ccsi, id,
+                           batch_start);
+      break;
+    default:
+      verify(0);
+  }
+  return coo;
 }
 
 void Frame::GetTxnTypes(std::map<int32_t, std::string> &txn_types) {

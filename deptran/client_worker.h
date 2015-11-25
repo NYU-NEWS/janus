@@ -29,8 +29,6 @@ class ClientWorker {
   ClientWorker() = default;
   ~ClientWorker();
 
-  Coordinator* GetCoord();
-
   void callback2(TxnReply &txn_reply);
 
   void work();
