@@ -5,7 +5,7 @@ namespace rococo {
 
 class DTxn;
 class RequestHeader;
-class DTxnMgr {
+class Scheduler {
  public:
   std::map<i64, DTxn *> dtxns_;
   std::map<i64, mdb::Txn *> mdb_txns_;
@@ -14,8 +14,8 @@ class DTxnMgr {
   Recorder *recorder_;
   TxnRegistry *txn_reg_;
 
-  DTxnMgr(int mode);
-  ~DTxnMgr();
+  Scheduler(int mode);
+  ~Scheduler();
 
   DTxn *get(i64 tid);
   DTxn *Create(i64 tid, bool ro = false);

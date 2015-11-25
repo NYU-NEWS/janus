@@ -5,7 +5,7 @@ namespace rococo {
 
 RCCDTxn::RCCDTxn(
     i64 tid,
-    DTxnMgr *mgr,
+    Scheduler *mgr,
     bool ro
 ) : DTxn(tid, mgr) {
   tv_ = nullptr;

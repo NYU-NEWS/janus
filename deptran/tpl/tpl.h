@@ -7,7 +7,7 @@ namespace rococo {
 class TPLDTxn: public DTxn {
  public:
 
-  TPLDTxn(i64 tid, DTxnMgr *mgr);
+  TPLDTxn(i64 tid, Scheduler *mgr);
 
   int start_launch(
       const RequestHeader &header,

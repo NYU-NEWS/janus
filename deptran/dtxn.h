@@ -49,12 +49,12 @@ struct entry_t {
 
 
 
-class DTxnMgr;
+class Scheduler;
 
 class DTxn {
  public:
   int64_t tid_;
-  DTxnMgr *mgr_;
+  Scheduler *mgr_;
   int phase_;
   mdb::Txn *mdb_txn_;
   Recorder *recorder_ = NULL;
@@ -62,7 +62,7 @@ class DTxn {
 
   DTxn() = delete;
 
-  DTxn(i64 tid, DTxnMgr *mgr)
+  DTxn(i64 tid, Scheduler *mgr)
       : tid_(tid), mgr_(mgr), phase_(0), mdb_txn_(nullptr) { }
 
   virtual mdb::Row *create(

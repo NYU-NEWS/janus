@@ -27,7 +27,7 @@ class ServerWorker {
 
   Config::SiteInfo *site_info_;
   Sharding *sharding_;
-  DTxnMgr* txn_mgr_;
+  Scheduler * txn_mgr_;
   TxnRegistry *txn_reg_;
 
   void SetupHeartbeat();

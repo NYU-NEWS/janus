@@ -3,7 +3,7 @@
 
 namespace rococo {
 
-TPLDTxn::TPLDTxn(i64 tid, DTxnMgr *mgr) : DTxn(tid, mgr) {
+TPLDTxn::TPLDTxn(i64 tid, Scheduler *mgr) : DTxn(tid, mgr) {
   verify(mdb_txn_ == nullptr);
   mdb_txn_ = mgr->get_mdb_txn(tid_);
   verify(mdb_txn_ != nullptr);

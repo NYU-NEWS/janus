@@ -64,7 +64,7 @@ typedef struct c_last_id_t {
   }
 } c_last_id_t;
 
-class DTxnMgr;
+class Scheduler;
 
 class Sharding {
  public:
@@ -151,7 +151,7 @@ class Sharding {
   std::map<std::string, tb_info_t> tb_infos_;
   std::map<MultiValue, MultiValue> dist2sid_;
   std::map<MultiValue, MultiValue> stock2sid_;
-  DTxnMgr* dtxn_mgr_;
+  Scheduler * dtxn_mgr_;
 
   void BuildTableInfoPtr();
 

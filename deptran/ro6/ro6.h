@@ -12,7 +12,7 @@ class RO6DTxn: public RCCDTxn {
   // for haonan, I think it should be like this?
   std::set <std::pair<mdb::Row *, int>> row_col_map;
  public:
-  RO6DTxn(i64 tid, DTxnMgr *mgr, bool ro) : RCCDTxn(tid, mgr, ro) {
+  RO6DTxn(i64 tid, Scheduler *mgr, bool ro) : RCCDTxn(tid, mgr, ro) {
   }
 
   // Implementing create method

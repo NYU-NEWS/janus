@@ -188,7 +188,7 @@ TxnChopper* Frame::CreateChopper(TxnRequest &req) {
   return ch;
 }
 
-DTxn* Frame::CreateDTxn(txnid_t tid, bool ro, DTxnMgr* mgr) {
+DTxn* Frame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {
   DTxn *ret = nullptr;
   auto mode_ = Config::GetConfig()->mode_;
 
@@ -215,9 +215,9 @@ DTxn* Frame::CreateDTxn(txnid_t tid, bool ro, DTxnMgr* mgr) {
   return ret;
 }
 
-DTxnMgr* Frame::CreateDTxnMgr() {
+Scheduler * Frame::CreateDTxnMgr() {
   auto mode = Config::GetConfig()->mode_;
-  auto mgr = new DTxnMgr(mode);
+  auto mgr = new Scheduler(mode);
   return mgr;
 }
 

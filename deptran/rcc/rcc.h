@@ -25,7 +25,7 @@ class RCCDTxn: public DTxn {
 
   RCCDTxn(
       i64 tid,
-      DTxnMgr *mgr,
+      Scheduler *mgr,
       bool ro
   );
 

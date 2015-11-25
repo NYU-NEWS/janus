@@ -11,7 +11,7 @@
 
 namespace rococo {
 
-mdb::Txn *DTxnMgr::del_mdb_txn(const i64 tid) {
+mdb::Txn *Scheduler::del_mdb_txn(const i64 tid) {
   mdb::Txn *txn = NULL;
   std::map<i64, mdb::Txn *>::iterator it = mdb_txns_.find(tid);
   if (it == mdb_txns_.end()) {
@@ -24,7 +24,7 @@ mdb::Txn *DTxnMgr::del_mdb_txn(const i64 tid) {
   return txn;
 }
 
-mdb::Txn *DTxnMgr::get_mdb_txn(const i64 tid) {
+mdb::Txn *Scheduler::get_mdb_txn(const i64 tid) {
   mdb::Txn *txn = nullptr;
   auto it = mdb_txns_.find(tid);
   if (it == mdb_txns_.end()) {
@@ -52,7 +52,7 @@ mdb::Txn *DTxnMgr::get_mdb_txn(const i64 tid) {
   return txn;
 }
 
-mdb::Txn *DTxnMgr::get_mdb_txn(const RequestHeader &header) {
+mdb::Txn *Scheduler::get_mdb_txn(const RequestHeader &header) {
   mdb::Txn *txn = nullptr;
   if (mode_ == MODE_NONE
       || mode_ == MODE_RCC
@@ -72,9 +72,9 @@ mdb::Txn *DTxnMgr::get_mdb_txn(const RequestHeader &header) {
 
 
 // TODO move this to the dtxn class
-void DTxnMgr::get_prepare_log(i64 txn_id,
-                              const std::vector<i32> &sids,
-                              std::string *str) {
+void Scheduler::get_prepare_log(i64 txn_id,
+                                const std::vector<i32> &sids,
+                                std::string *str) {
   map<i64, mdb::Txn *>::iterator it = mdb_txns_.find(txn_id);
   verify(it != mdb_txns_.end() && it->second != NULL);
 
@@ -113,7 +113,7 @@ void DTxnMgr::get_prepare_log(i64 txn_id,
   }
 }
 
-DTxnMgr::DTxnMgr(int mode) {
+Scheduler::Scheduler(int mode) {
   mode_ = mode;
   switch (mode) {
     case MODE_NONE:
@@ -145,7 +145,7 @@ DTxnMgr::DTxnMgr(int mode) {
 }
 
 
-DTxnMgr::~DTxnMgr() {
+Scheduler::~Scheduler() {
   map<i64, mdb::Txn *>::iterator it = mdb_txns_.begin();
   for (; it != mdb_txns_.end(); it++)
     Log::info("tid: %ld still running", it->first);
@@ -159,8 +159,8 @@ DTxnMgr::~DTxnMgr() {
   mdb_txn_mgr_ = NULL;
 }
 
-void DTxnMgr::reg_table(const std::string &name,
-                        mdb::Table *tbl) {
+void Scheduler::reg_table(const std::string &name,
+                          mdb::Table *tbl) {
   verify(mdb_txn_mgr_ != NULL);
   mdb_txn_mgr_->reg_table(name, tbl);
   if (name == TPCC_TB_ORDER) {
@@ -177,7 +177,7 @@ void DTxnMgr::reg_table(const std::string &name,
   }
 }
 
-DTxn* DTxnMgr::Create(i64 tid, bool ro) {
+DTxn*Scheduler::Create(i64 tid, bool ro) {
   verify(dtxns_[tid] == nullptr);
   Log_debug("create tid %ld\n", tid);
   DTxn* dtxn = Frame().CreateDTxn(tid, ro, this);
@@ -188,7 +188,7 @@ DTxn* DTxnMgr::Create(i64 tid, bool ro) {
   return dtxn;
 }
 
-DTxn* DTxnMgr::GetOrCreate(i64 tid, bool ro) {
+DTxn*Scheduler::GetOrCreate(i64 tid, bool ro) {
   auto it = dtxns_.find(tid);
   if (it == dtxns_.end()) {
     return Create(tid, ro);
@@ -197,7 +197,7 @@ DTxn* DTxnMgr::GetOrCreate(i64 tid, bool ro) {
   }
 }
 
-void DTxnMgr::destroy(i64 tid) {
+void Scheduler::destroy(i64 tid) {
   Log_debug("destroy tid %ld\n", tid);
   auto it = dtxns_.find(tid);
   verify(it != dtxns_.end());
@@ -205,7 +205,7 @@ void DTxnMgr::destroy(i64 tid) {
   dtxns_.erase(it);
 }
 
-DTxn* DTxnMgr::get(i64 tid) {
+DTxn*Scheduler::get(i64 tid) {
   //Log_debug("DTxnMgr::get(%ld)\n", tid);
   auto it = dtxns_.find(tid);
   verify(it != dtxns_.end());

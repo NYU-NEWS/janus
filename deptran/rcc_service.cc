@@ -5,7 +5,7 @@ namespace rococo {
 
 
 RococoServiceImpl::RococoServiceImpl(
-    DTxnMgr *dtxn_mgr,
+    Scheduler *dtxn_mgr,
     ServerControlServiceImpl *scsi
 ) : scsi_(scsi), txn_mgr_(dtxn_mgr) {
 

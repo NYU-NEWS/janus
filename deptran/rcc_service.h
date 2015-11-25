@@ -8,7 +8,7 @@
 namespace rococo {
 
 class ServerControlServiceImpl;
-class DTxnMgr;
+class Scheduler;
 class RococoServiceImpl: public RococoService {
 
  public:
@@ -23,7 +23,7 @@ class RococoServiceImpl: public RococoService {
   std::mutex mtx_;
   Recorder *recorder_ = NULL;
   ServerControlServiceImpl *scsi_; // for statistics;
-  DTxnMgr *txn_mgr_;
+  Scheduler *txn_mgr_;
 
   void do_start_pie(const RequestHeader &header,
                     const Value *input,
@@ -95,7 +95,7 @@ class RococoServiceImpl: public RococoService {
 
   RococoServiceImpl() = delete;
 
-  RococoServiceImpl(DTxnMgr *dtxn_mgr, ServerControlServiceImpl *scsi = NULL);
+  RococoServiceImpl(Scheduler *dtxn_mgr, ServerControlServiceImpl *scsi = NULL);
 
   void rcc_batch_start_pie(
       const std::vector<RequestHeader> &headers,
