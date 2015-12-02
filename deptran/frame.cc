@@ -11,6 +11,7 @@
 #include "none/coord.h"
 #include "rcc/rcc_coord.h"
 #include "ro6/ro6_coord.h"
+#include "tpl/coord.h"
 
 
 // for tpca benchmark
@@ -102,6 +103,9 @@ Coordinator* Frame::CreateCoord(cooid_t coo_id, vector<std::string>& servers,
   auto attr = this;
   switch (mode) {
     case MODE_2PL:
+      coo = new TPLCoord(coo_id, servers, benchmark,
+                         mode, ccsi, id, batch_start);
+      break;
     case MODE_OCC:
     case MODE_RPC_NULL:
       coo = new Coordinator(coo_id, servers,
@@ -220,8 +224,12 @@ DTxn* Frame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {
 
 Scheduler * Frame::CreateDTxnMgr() {
   auto mode = Config::GetConfig()->mode_;
-  auto mgr = new Scheduler(mode);
-  return mgr;
+  Scheduler *sch = nullptr;
+  switch(mode) {
+    default:
+      sch = new Scheduler(mode);
+  }
+  return sch;
 }
 
 } // namespace rococo;

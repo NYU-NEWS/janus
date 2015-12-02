@@ -67,14 +67,12 @@ class DTxn {
 
   virtual mdb::Row *create(
       const mdb::Schema *schema,
-      const std::vector<mdb::Value> &values
-  ) = 0;
+      const std::vector<mdb::Value> &values) = 0;
 
   virtual bool read_column(
       mdb::Row *row,
       mdb::column_id_t col_id,
-      Value *value
-  );
+      Value *value);
 
   virtual bool read_columns(
       Row *row,

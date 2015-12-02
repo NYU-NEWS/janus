@@ -153,6 +153,7 @@ def build(bld):
                                        "deptran/ro6/*.cc "
                                        "deptran/rcc/*.cc "
                                        "deptran/brq/*.cc "
+                                       "deptran/three_phase/*.cc "
                                        "deptran/tpl/*.cc "
                                        "deptran/none/*.cc "
                                        "bench/tpca/*.cc "

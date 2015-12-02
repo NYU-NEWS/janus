@@ -99,7 +99,7 @@ int TPLDTxn::abort_launch(
     recorder_->submit(log_s);
   }
   // TODO optimize
-  mgr_->destroy(tid_);
+  mgr_->Destroy(tid_);
   defer->reply();
   Log::debug("abort finish");
   return 0;
@@ -127,7 +127,7 @@ int TPLDTxn::commit_launch(
     memcpy((void *) log_s.data(), (void *) &commit_tag, sizeof(commit_tag));
     recorder_->submit(log_s);
   }
-  mgr_->destroy(tid_);
+  mgr_->Destroy(tid_);
   defer->reply();
   return 0;
 }

@@ -20,7 +20,7 @@ class Scheduler {
   DTxn *get(i64 tid);
   DTxn *Create(i64 tid, bool ro = false);
   DTxn *GetOrCreate(i64 tid, bool ro = false);
-  void destroy(i64 tid);
+  void Destroy(i64 tid);
 
 
   inline int get_mode() { return mode_; }

@@ -197,7 +197,7 @@ DTxn*Scheduler::GetOrCreate(i64 tid, bool ro) {
   }
 }
 
-void Scheduler::destroy(i64 tid) {
+void Scheduler::Destroy(i64 tid) {
   Log_debug("destroy tid %ld\n", tid);
   auto it = dtxns_.find(tid);
   verify(it != dtxns_.end());

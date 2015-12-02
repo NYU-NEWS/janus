@@ -273,7 +273,7 @@ void RCCDTxn::commit_scc_anc_commit(
         if (vv->data_->res != nullptr) {
           auto txn = (RCCDTxn *) mgr_->get(vv->data_->id());
           txn->exe_deferred(vv->data_->res->outputs);
-          mgr_->destroy(vv->data_->id());
+          mgr_->Destroy(vv->data_->id());
         }
 
         Log::debug("txn commit. tid:%llx", vv->data_->id());
