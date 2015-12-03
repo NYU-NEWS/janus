@@ -5,6 +5,8 @@ namespace rococo {
 
 class DTxn;
 class RequestHeader;
+class TxnRegistry;
+
 class Scheduler {
  public:
   std::map<i64, DTxn *> dtxns_;
@@ -14,6 +16,7 @@ class Scheduler {
   Recorder *recorder_;
   TxnRegistry *txn_reg_;
 
+  Scheduler();
   Scheduler(int mode);
   ~Scheduler();
 
@@ -33,9 +36,9 @@ class Scheduler {
     return mdb_txn_mgr_->get_table(name);
   }
 
-  mdb::Txn *get_mdb_txn(const i64 tid);
-  mdb::Txn *get_mdb_txn(const RequestHeader &req);
-  mdb::Txn *del_mdb_txn(const i64 tid);
+  virtual mdb::Txn *get_mdb_txn(const i64 tid);
+  virtual mdb::Txn *get_mdb_txn(const RequestHeader &req);
+  virtual mdb::Txn *del_mdb_txn(const i64 tid);
 
   void get_prepare_log(i64 txn_id,
                        const std::vector<i32> &sids,
@@ -53,4 +56,4 @@ class Scheduler {
 };
 
 
-}
+} // namespace rococo

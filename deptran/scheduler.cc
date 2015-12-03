@@ -113,15 +113,25 @@ void Scheduler::get_prepare_log(i64 txn_id,
   }
 }
 
+
+Scheduler::Scheduler() {
+  //  verify(DTxnMgr::txn_mgr_s == NULL);
+//  DTxnMgr::txn_mgr_s = this;
+
+  if (Config::GetConfig()->do_logging()) {
+    auto path = Config::GetConfig()->log_path();
+    // TODO free this
+    recorder_ = new Recorder(path);
+  }
+}
+
 Scheduler::Scheduler(int mode) {
+  Scheduler();
   mode_ = mode;
   switch (mode) {
     case MODE_NONE:
     case MODE_RPC_NULL:
       mdb_txn_mgr_ = new mdb::TxnMgrUnsafe();
-      break;
-    case MODE_2PL:
-      mdb_txn_mgr_ = new mdb::TxnMgr2PL();
       break;
     case MODE_OCC:
       mdb_txn_mgr_ = new mdb::TxnMgrOCC();
@@ -132,15 +142,6 @@ Scheduler::Scheduler(int mode) {
       break;
     default:
       verify(0);
-  }
-
-//  verify(DTxnMgr::txn_mgr_s == NULL);
-//  DTxnMgr::txn_mgr_s = this;
-
-  if (Config::GetConfig()->do_logging()) {
-    auto path = Config::GetConfig()->log_path();
-    // TODO free this
-    recorder_ = new Recorder(path);
   }
 }
 

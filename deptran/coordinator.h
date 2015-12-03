@@ -95,71 +95,18 @@ class Coordinator {
 
   virtual ~Coordinator();
 
-  /** thread safe */
+  /** thread unsafe */
   uint64_t next_pie_id() {
     return this->next_pie_id_++;
   }
 
-  /** thread safe */
+  /** thread unsafe */
   uint64_t next_txn_id() {
     return this->next_txn_id_++;
   }
 
-  /** return: SUCCESS or REJECT */
-
-  // virtual int do_one() = 0;
-
-  // /** return: SUCCESS or REJECT */
-  // virtual int do_one(uint32_t &max_try) = 0; /** 0 TRY UNTIL SUCCESS; >=1 TRY
-  // TIMES */
-
-  /** do it asynchronously, thread safe.
-   */
-  virtual void do_one(TxnRequest &);
-  virtual void cleanup();
-  void restart(TxnChopper *ch);
-
-  void Start();
-  void StartAck(StartReply &reply, phase_t phase);
-//  void LegacyStart(TxnChopper *ch);
-//  void LegacyStartAck(TxnChopper *ch, int pi, Future *fu);
-  void rpc_null_start(TxnChopper *ch);
-  void naive_batch_start(TxnChopper *ch);
-//  void batch_start(TxnChopper *ch);
-  void Prepare();
-  void PrepareAck(TxnChopper *ch, phase_t phase, Future *fu);
-  void Finish();
-  void FinishAck(TxnChopper *ch, phase_t phase, Future *fu);
-  void Abort() {verify(0);}
-
-  bool has_stale_phase_or_stage(phase_t phase, CoordinatorStage stage);
-  void change_stage(CoordinatorStage stage);
-  bool AllStartAckCollected();
-
-  RequestHeader gen_header(TxnChopper *ch);
-  BatchRequestHeader gen_batch_header(TxnChopper *ch);
-
-  void report(TxnReply &txn_reply,
-              double last_latency
-#ifdef                                  TXN_STAT
-  ,
-  TxnChopper *ch
-#endif /* ifdef TXN_STAT */
-  );
-
-  /* deprecated*/
-  bool next_piece(std::vector<mdb::Value> **input,
-                  RococoProxy **proxy,
-                  int *pi,
-                  int *p_type) {
-    return false;
-  }
-
-  void start_callback(TxnRequest *req, int pi, int res,
-                      std::vector<mdb::Value> &output) { }
-
-  int exe_txn() {
-    return 0;
-  }
+  virtual void do_one(TxnRequest &) = 0;
+  virtual void cleanup() = 0;
+  virtual void restart(TxnChopper *ch) = 0;
 };
 }

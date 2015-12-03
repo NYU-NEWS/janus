@@ -27,7 +27,7 @@ void ServerWorker::SetupHeartbeat() {
 void ServerWorker::PopTable() {
   // TODO this needs to be done before poping table
   verify(txn_reg_);
-  txn_mgr_ = Frame().CreateDTxnMgr();
+  txn_mgr_ = Frame().CreateScheduler();
   txn_mgr_->txn_reg_ = txn_reg_;
   sharding_->dtxn_mgr_ = txn_mgr_;
 

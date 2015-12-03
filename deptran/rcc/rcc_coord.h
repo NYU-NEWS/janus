@@ -1,10 +1,10 @@
 #pragma once
 
-#include "coordinator.h"
+#include "../three_phase/coord.h"
 
 namespace rococo {
-class RCCCoord : public Coordinator {
-  using Coordinator::Coordinator;
+class RCCCoord : public ThreePhaseCoord {
+  using ThreePhaseCoord::ThreePhaseCoord;
 
 public:
 

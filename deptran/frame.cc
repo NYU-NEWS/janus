@@ -12,6 +12,7 @@
 #include "rcc/rcc_coord.h"
 #include "ro6/ro6_coord.h"
 #include "tpl/coord.h"
+#include "occ/coord.h"
 
 
 // for tpca benchmark
@@ -108,7 +109,7 @@ Coordinator* Frame::CreateCoord(cooid_t coo_id, vector<std::string>& servers,
       break;
     case MODE_OCC:
     case MODE_RPC_NULL:
-      coo = new Coordinator(coo_id, servers,
+      coo = new OCCCoord(coo_id, servers,
                              benchmark, mode,
                              ccsi, id, batch_start);
       break;
@@ -195,6 +196,7 @@ TxnChopper* Frame::CreateChopper(TxnRequest &req) {
   return ch;
 }
 
+
 DTxn* Frame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {
   DTxn *ret = nullptr;
   auto mode_ = Config::GetConfig()->mode_;
@@ -222,10 +224,19 @@ DTxn* Frame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {
   return ret;
 }
 
-Scheduler * Frame::CreateDTxnMgr() {
+Scheduler * Frame::CreateScheduler() {
   auto mode = Config::GetConfig()->mode_;
   Scheduler *sch = nullptr;
   switch(mode) {
+    case MODE_2PL:
+      sch = new TPLSched();
+      break;
+    case MODE_NONE:
+    case MODE_RPC_NULL:
+    case MODE_OCC:
+    case MODE_RCC:
+    case MODE_RO6:
+      break;
     default:
       sch = new Scheduler(mode);
   }
