@@ -42,6 +42,7 @@
 #include "txn-chopper-factory.h"
 
 #include "tpl/sched.h"
+#include "occ/sched.h"
 
 
 namespace rococo {
@@ -231,9 +232,12 @@ Scheduler * Frame::CreateScheduler() {
     case MODE_2PL:
       sch = new TPLSched();
       break;
+    case MODE_OCC:
+      sch = new OCCSched();
+      break;
     case MODE_NONE:
     case MODE_RPC_NULL:
-    case MODE_OCC:
+
     case MODE_RCC:
     case MODE_RO6:
       break;

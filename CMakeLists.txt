@@ -34,10 +34,10 @@ include_directories(
     rrr
     memdb
     deptran
-    deptran/tpl
-    deptran/rcc
-    deptran/ro6
-    deptran/brq
+#    deptran/tpl
+#    deptran/rcc
+#    deptran/ro6
+#    deptran/brq
 #    deptran/none
 #    bench
 #    bench/micro
@@ -78,33 +78,15 @@ file(GLOB MEMDB_SRC
     "memdb/*.cc")
 
 file(GLOB BENCH_SRC
-    "bench/micro/*.h"
-    "bench/micro/*.cc"
-    "bench/rw_benchmark/*.cc"
-    "bench/rw_benchmark/*.h"
-    "bench/tpca/*.h"
-    "bench/tpca/*.cc"
-    "bench/tpcc/*.cc"
-    "bench/tpcc/*.h"
-    "bench/tpcc_dist/*.cc"
-    "bench/tpcc_dist/*.h"
-    "bench/tpcc_real_dist/*.cc"
-    "bench/tpcc_real_dist/*.h"
+    "bench/*/*.h"
+    "bench/*/*.cc"
 )
 
 file(GLOB DEPTRAN_SRC
     "deptran/*.h"
     "deptran/*.cc"
-    "deptran/tpl/*.h"
-    "deptran/tpl/*.cc"
-    "deptran/rcc/*.h"
-    "deptran/rcc/*.cc"
-    "deptran/ro6/*.h"
-    "deptran/ro6/*.cc"
-    "deptran/brq/*.h"
-    "deptran/brq/*.cc"
-    "deptran/none/*.h"
-    "deptran/none/*.cc"
+    "deptran/*/*.cc"
+    "deptran/*/*.h"
 )
 
 add_library(ROCOCO

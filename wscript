@@ -149,22 +149,12 @@ def build(bld):
 #                use="rrr PTHREAD RT")
 #
     bld.stlib(source=bld.path.ant_glob("deptran/*.cc "
-                                       "deptran/util/*.cc "
-                                       "deptran/ro6/*.cc "
-                                       "deptran/rcc/*.cc "
-                                       "deptran/brq/*.cc "
-                                       "deptran/three_phase/*.cc "
-                                       "deptran/tpl/*.cc "
-                                       "deptran/none/*.cc "
-                                       "bench/tpca/*.cc "
-                                       "bench/tpcc/*.cc "
-                                       "bench/tpcc_real_dist/*.cc "
-                                       "bench/tpcc_dist/*.cc "
-                                       "bench/rw_benchmark/*.cc "
-                                       "bench/micro/*.cc", excl="deptran/*_main.c*"),
+                                       "deptran/*/*.cc "
+                                       "bench/*/*.cc ",
+                                       excl="deptran/*_main.c*"),
               #use="PTHREAD APR APR-UTIL base simplerpc memdb")
               target="deptran",
-              includes=". rrr memdb bench deptran deptran/ro6 deptran/rcc deptran/brq ",
+              includes=". rrr memdb bench deptran ",
               use="PTHREAD base simplerpc memdb")
 
 #

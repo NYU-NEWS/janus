@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rcc.h"
+#include "rcc/rcc.h"
 namespace rococo {
 
 class RO6DTxn: public RCCDTxn {

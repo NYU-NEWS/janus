@@ -1,9 +1,9 @@
 #pragma once
 
 #include "__dep__.h"
-#include "dep_graph.h"
-#include "rcc_row.h"
-#include "ro6_row.h"
+#include "rcc/dep_graph.h"
+#include "rcc/rcc_row.h"
+#include "ro6/ro6_row.h"
 #include "multi_value.h"
 #include "txn_reg.h"
 

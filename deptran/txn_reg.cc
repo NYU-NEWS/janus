@@ -1,6 +1,6 @@
 #include "txn_reg.h"
-#include "graph.h"
-#include "graph_marshaler.h"
+#include "rcc/graph.h"
+#include "rcc/graph_marshaler.h"
 #include "marshal-value.h"
 #include "rcc_rpc.h"
 

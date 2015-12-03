@@ -2,8 +2,8 @@
 
 #include "__dep__.h"
 #include "marshal-value.h"
-#include "graph.h"
-#include "graph_marshaler.h"
+#include "rcc/graph.h"
+#include "rcc/graph_marshaler.h"
 #include "rcc_rpc.h"
 #include "rcc_service.h"
 #include "sharding.h"

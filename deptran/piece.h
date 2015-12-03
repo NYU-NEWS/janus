@@ -2,7 +2,7 @@
 
 #include "__dep__.h"
 #include "tpl/tpl.h"
-#include "ro6.h"
+#include "ro6/ro6.h"
 
 namespace rococo {
 
