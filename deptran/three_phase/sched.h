@@ -12,13 +12,6 @@ class ThreePhaseSched: public NoneSched {
  public:
   void OnPhaseTwoRequest();
   void OnPhaseThreeRequest();
-  virtual int OnPhaseOneRequest(
-      const RequestHeader &header,
-      const std::vector<mdb::Value> &input,
-      const rrr::i32 &output_size,
-      rrr::i32 *res,
-      std::vector<mdb::Value> *output,
-      rrr::DeferredReply *defer);
 };
 
 }
