@@ -8,6 +8,7 @@
 
 namespace rococo {
 
+class Executor;
 class TPLSched: public ThreePhaseSched {
  public:
   TPLSched();
@@ -23,6 +24,7 @@ class TPLSched: public ThreePhaseSched {
   virtual mdb::Txn *get_mdb_txn(const i64 tid);
   virtual mdb::Txn *get_mdb_txn(const RequestHeader &req);
   virtual mdb::Txn *del_mdb_txn(const i64 tid);
+
 };
 
 } // namespace rococo

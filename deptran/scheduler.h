@@ -1,16 +1,20 @@
 #pragma once
 #include "__dep__.h"
+#include "constants.h"
 
 namespace rococo {
 
 class DTxn;
 class RequestHeader;
 class TxnRegistry;
+class Executor;
 
 class Scheduler {
  public:
   std::map<i64, DTxn *> dtxns_;
   std::map<i64, mdb::Txn *> mdb_txns_;
+  map<cmdid_t, Executor*> executors_;
+
   mdb::TxnMgr *mdb_txn_mgr_;
   int mode_;
   Recorder *recorder_;
@@ -25,6 +29,10 @@ class Scheduler {
   DTxn *GetOrCreate(i64 tid, bool ro = false);
   void Destroy(i64 tid);
 
+  Executor* GetExecutor(txnid_t txn_id);
+  Executor* CreateExecutor(txnid_t txn_id);
+  Executor* GetOrCreateExecutor(txnid_t txn_id);
+  void DestroyExecutor(txnid_t txn_id);
 
   inline int get_mode() { return mode_; }
 

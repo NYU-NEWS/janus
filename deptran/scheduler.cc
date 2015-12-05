@@ -8,6 +8,7 @@
 #include "rcc_rpc.h"
 #include "frame.h"
 #include "bench/tpcc/piece.h"
+#include "executor.h"
 
 namespace rococo {
 
@@ -114,7 +115,7 @@ void Scheduler::get_prepare_log(i64 txn_id,
 }
 
 
-Scheduler::Scheduler() {
+Scheduler::Scheduler() : executors_() {
   //  verify(DTxnMgr::txn_mgr_s == NULL);
 //  DTxnMgr::txn_mgr_s = this;
 
@@ -212,5 +213,42 @@ DTxn*Scheduler::get(i64 tid) {
   verify(it != dtxns_.end());
   return it->second;
 }
+
+Executor* Scheduler::CreateExecutor(cmdid_t cmd_id) {
+  verify(executors_.find(cmd_id) == executors_.end());
+  Log_debug("create tid %ld\n", cmd_id);
+//  DTxn* dtxn = Frame().CreateDTxn(tid, ro, this);
+  Executor *exec = Frame().CreateExecutor(cmd_id, this);
+  executors_[cmd_id] = exec;
+  exec->recorder_ = this->recorder_;
+  exec->txn_reg_ = txn_reg_;
+  verify(txn_reg_);
+  return exec;
+}
+
+Executor* Scheduler::GetOrCreateExecutor(cmdid_t cmd_id) {
+  auto it = executors_.find(cmd_id);
+  if (it == executors_.end()) {
+    return CreateExecutor(cmd_id);
+  } else {
+    return it->second;
+  }
+}
+
+void Scheduler::DestroyExecutor(cmdid_t cmd_id) {
+  Log_debug("destroy tid %ld\n", cmd_id);
+  auto it = executors_.find(cmd_id);
+  verify(it != executors_.end());
+  delete it->second;
+  executors_.erase(it);
+}
+
+Executor* Scheduler::GetExecutor(cmdid_t cmd_id) {
+  //Log_debug("DTxnMgr::get(%ld)\n", tid);
+  auto it = executors_.find(cmd_id);
+  verify(it != executors_.end());
+  return it->second;
+}
+
 
 } // namespace rococo

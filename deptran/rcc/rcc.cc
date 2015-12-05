@@ -74,7 +74,9 @@ bool RCCDTxn::start_exe_itfr(
       int output_size = 300;
       output->resize(output_size);
       int res;
-      handler(this,
+      // TODO fix
+      handler(nullptr,
+              this,
               header,
               input.data(),
               input.size(),
@@ -95,7 +97,8 @@ bool RCCDTxn::start_exe_itfr(
         drs.reserve(100); //XXX
       }
       drs.push_back(dr);
-      handler(this,
+      handler(nullptr,
+              this,
               header,
               drs.back().inputs.data(),
               drs.back().inputs.size(),
@@ -119,7 +122,8 @@ bool RCCDTxn::start_exe_itfr(
       int output_size = 300; //XXX
       output->resize(output_size);
       int res;
-      handler(this,
+      handler(nullptr,
+              this,
               header,
               drs.back().inputs.data(),
               drs.back().inputs.size(),
@@ -159,8 +163,15 @@ void RCCDTxn::start_ro(
   int res;
   phase_ = 1;
 
-  txn_handler_pair.txn_handler(this, header, input.data(), input.size(), &res,
-                               output.data(), &output_size, NULL);
+  txn_handler_pair.txn_handler(nullptr,
+                               this,
+                               header,
+                               input.data(),
+                               input.size(),
+                               &res,
+                               output.data(),
+                               &output_size,
+                               NULL);
   output.resize(output_size);
 
   // get conflicting transactions
@@ -397,8 +408,15 @@ void RCCDTxn::exe_deferred(
       output.resize(output_size);
       int res;
 
-      txn_handler_pair.txn_handler(this, header, input.data(), input.size(),
-                                   &res, output.data(), &output_size, &req.row_map);
+      txn_handler_pair.txn_handler(nullptr,
+                                   this,
+                                   header,
+                                   input.data(),
+                                   input.size(),
+                                   &res,
+                                   output.data(),
+                                   &output_size,
+                                   &req.row_map);
       if (header.p_type == TPCC_PAYMENT_4
           && header.t_type == TPCC_PAYMENT)
         verify(output_size == 15);

@@ -122,9 +122,16 @@ void RO6DTxn::start_ro(
   output.resize(output_size);
   int res;
   phase_ = 1;
-
-  txn_handler_pair.txn_handler(this, header, input.data(), input.size(), &res,
-                               output.data(), &output_size, NULL);
+  // TODO fix
+  txn_handler_pair.txn_handler(nullptr,
+                               this,
+                               header,
+                               input.data(),
+                               input.size(),
+                               &res,
+                               output.data(),
+                               &output_size,
+                               NULL);
   // get conflicting transactions
   std::vector<TxnInfo *> &conflict_txns = conflict_txns_;
 
@@ -134,9 +141,16 @@ void RO6DTxn::start_ro(
     int output_size = 300;
     this->phase_ = 2;
     auto txn_handler_pair = txn_reg_->get(header.t_type, header.p_type);
-
-    txn_handler_pair.txn_handler(this, header, input.data(), input.size(),
-                                 &res, output.data(), &output_size, NULL);
+    // TODO fix
+    txn_handler_pair.txn_handler(nullptr,
+                                 this,
+                                 header,
+                                 input.data(),
+                                 input.size(),
+                                 &res,
+                                 output.data(),
+                                 &output_size,
+                                 NULL);
     output.resize(output_size);
     defer->reply();
   };

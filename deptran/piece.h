@@ -1,6 +1,7 @@
 #pragma once
 
 #include "__dep__.h"
+#include "tpl/exec.h"
 #include "tpl/tpl.h"
 #include "ro6/ro6.h"
 
@@ -20,8 +21,9 @@ class Piece {
 
 #define BEGIN_PIE(txn, pie, iod) \
   txn_reg_->reg(txn, pie, iod, \
-        [this] (DTxn *dtxn, \
-            const RequestHeader &header, \
+        [this] (Executor* exec, \
+DTxn *dtxn, \
+                const RequestHeader &header, \
             const Value *input, \
             i32 input_size, \
             i32 *res, \
@@ -36,9 +38,9 @@ class Piece {
         mdb::Txn2PL::PieceStatus *ps \
             = tpl_txn->get_piece_status(header.pid); \
         std::function<void(void)> succ_callback = \
-            ((TPLDTxn*)dtxn)->get_2pl_succ_callback(header, input, input_size, res, ps); \
+            ((TPLExecutor*)exec)->get_2pl_succ_callback(header, input, input_size, res, ps); \
         std::function<void(void)> fail_callback = \
-            ((TPLDTxn*)dtxn)->get_2pl_fail_callback(header, res, ps); \
+            ((TPLExecutor*)exec)->get_2pl_fail_callback(header, res, ps); \
         ps->reg_rw_lock( \
             std::vector<mdb::column_lock_t>({__VA_ARGS__}), \
             succ_callback, fail_callback); \
@@ -47,7 +49,7 @@ class Piece {
 
 #define TPL_KISS_NONE \
     if (IS_MODE_2PL && output_size == NULL) { \
-        ((TPLDTxn*)dtxn)->get_2pl_proceed_callback( \
+        ((TPLExecutor*)exec)->get_2pl_proceed_callback( \
                 header, input, input_size, res)(); \
         return; \
     }

@@ -6,9 +6,11 @@
 #include "config.h"
 #include "multi_value.h"
 #include "sharding.h"
-#include "piece.h"
 #include "frame.h"
 #include "sharding.h"
+#include "rcc/dep_graph.h"
+#include "rcc/graph_marshaler.h"
+#include "piece.h"
 
 // for tpca benchmark
 #include "bench/tpca/piece.h"

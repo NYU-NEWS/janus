@@ -3,6 +3,7 @@
 namespace rococo {
 
 class RequestHeader;
+class Executor;
 
 typedef std::map<
     int,
@@ -11,6 +12,7 @@ typedef std::map<
 class DTxn;
 
 typedef std::function<void(
+    Executor* exec,
     DTxn *txn,
     const RequestHeader &header,
     const Value *input,

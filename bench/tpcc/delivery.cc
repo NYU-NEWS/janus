@@ -44,11 +44,11 @@ void TpccPiece::reg_delivery() {
                           = ((mdb::Txn2PL *) txn)->get_piece_status(header.pid);
 
                   std::function<void(void)> succ_callback =
-                      ((TPLDTxn *) dtxn)->get_2pl_succ_callback(
+                      ((TPLExecutor*) exec)->get_2pl_succ_callback(
                           header, input, input_size, res, ps);
 
                   std::function<void(void)> fail_callback =
-                      ((TPLDTxn *) dtxn)->get_2pl_fail_callback(
+                      ((TPLExecutor*) exec)->get_2pl_fail_callback(
                           header, res, ps);
 
                   ps->reg_rm_lock(r, succ_callback, fail_callback);
@@ -182,11 +182,11 @@ void TpccPiece::reg_delivery() {
                   = ((mdb::Txn2PL *) txn)->get_piece_status(header.pid);
 
           std::function<void(void)> succ_callback =
-              ((TPLDTxn *) dtxn)->get_2pl_succ_callback(
+              ((TPLExecutor*) exec)->get_2pl_succ_callback(
                   header, input, input_size, res, ps);
 
           std::function<void(void)> fail_callback =
-              ((TPLDTxn *) dtxn)->get_2pl_fail_callback(
+              ((TPLExecutor*) exec)->get_2pl_fail_callback(
                   header, res, ps);
 
           std::vector<mdb::column_lock_t> column_locks;

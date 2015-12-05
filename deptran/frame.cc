@@ -13,6 +13,7 @@
 #include "ro6/ro6_coord.h"
 #include "tpl/coord.h"
 #include "occ/coord.h"
+#include "tpl/exec.h"
 
 
 // for tpca benchmark
@@ -223,6 +224,20 @@ DTxn* Frame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {
       verify(0);
   }
   return ret;
+}
+
+Executor* Frame::CreateExecutor(cmdid_t cmd_id, Scheduler* sched) {
+  verify(0);
+  Executor* exec = nullptr;
+  auto mode = Config::GetConfig()->mode_;
+  switch (mode) {
+    case MODE_2PL:
+      exec = new TPLExecutor(cmd_id, sched);
+      break;
+    default:
+      verify(0);
+  }
+  return exec;
 }
 
 Scheduler * Frame::CreateScheduler() {

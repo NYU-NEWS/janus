@@ -33,24 +33,24 @@ void RococoServiceImpl::do_start_pie(
     rrr::i32 *res,
     Value *output,
     i32 *output_size) {
-
-  TPLDTxn *dtxn = (TPLDTxn *) dtxn_sched_->GetOrCreate(header.tid);
-  *res = SUCCESS;
-  if (IS_MODE_2PL) {
-    dtxn->execute(header, input, input_size,
-                  res, output, output_size);
-  }
-  else if (IS_MODE_NONE) {
-    dtxn->execute(header, input, input_size,
-                  res, output, output_size);
-  }
-  else if (IS_MODE_OCC) {
-    dtxn->execute(header, input, input_size,
-                  res, output, output_size);
-  }
-  else {
-    verify(0);
-  }
+  verify(0);
+//  TPLDTxn *dtxn = (TPLDTxn *) dtxn_sched_->GetOrCreate(header.tid);
+//  *res = SUCCESS;
+//  if (IS_MODE_2PL) {
+//    dtxn->execute(header, input, input_size,
+//                  res, output, output_size);
+//  }
+//  else if (IS_MODE_NONE) {
+//    dtxn->execute(header, input, input_size,
+//                  res, output, output_size);
+//  }
+//  else if (IS_MODE_OCC) {
+//    dtxn->execute(header, input, input_size,
+//                  res, output, output_size);
+//  }
+//  else {
+//    verify(0);
+//  }
 }
 
 // TODO
@@ -101,35 +101,35 @@ void RococoServiceImpl::naive_batch_start_pie(
   std::lock_guard<std::mutex> guard(mtx_);
 
   verify(0);
-
-  DragonBall *defer_reply_db = NULL;
-  if (IS_MODE_2PL) {
-    defer_reply_db = new DragonBall(headers.size(), [/*&headers, */defer/*, results*/]() {
-      //for (int i = 0; i < results->size(); i++) {
-      //    Log::debug("tid: %ld, pid: %ld, results[%d]: %d", headers[i].tid, headers[i].pid, i, (*results)[i]);
-      //}
-      defer->reply();
-    });
-  }
-  Log::debug("naive_batch_start_pie: tid: %ld", headers[0].tid);
-  results->resize(headers.size());
-  outputs->resize(headers.size());
-  int num_pieces = headers.size();
-  for (int i = 0; i < num_pieces; i++) {
-    (*outputs)[i].resize(output_sizes[i]);
-    auto dtxn = (TPLDTxn *) dtxn_sched_->GetOrCreate(headers[i].tid);
-    if (defer_reply_db) {
-      dtxn->pre_execute_2pl(headers[i], inputs[i],
-                            &((*results)[i]), &((*outputs)[i]), defer_reply_db);
-    }
-    else {
-      dtxn->execute(headers[i], inputs[i],
-                    &(*results)[i], &(*outputs)[i]);
-    }
-  }
-  if (!defer_reply_db)
-    defer->reply();
-  Log::debug("still fine");
+//
+//  DragonBall *defer_reply_db = NULL;
+//  if (IS_MODE_2PL) {
+//    defer_reply_db = new DragonBall(headers.size(), [/*&headers, */defer/*, results*/]() {
+//      //for (int i = 0; i < results->size(); i++) {
+//      //    Log::debug("tid: %ld, pid: %ld, results[%d]: %d", headers[i].tid, headers[i].pid, i, (*results)[i]);
+//      //}
+//      defer->reply();
+//    });
+//  }
+//  Log::debug("naive_batch_start_pie: tid: %ld", headers[0].tid);
+//  results->resize(headers.size());
+//  outputs->resize(headers.size());
+//  int num_pieces = headers.size();
+//  for (int i = 0; i < num_pieces; i++) {
+//    (*outputs)[i].resize(output_sizes[i]);
+//    auto dtxn = (TPLDTxn *) dtxn_sched_->GetOrCreate(headers[i].tid);
+//    if (defer_reply_db) {
+//      dtxn->pre_execute_2pl(headers[i], inputs[i],
+//                            &((*results)[i]), &((*outputs)[i]), defer_reply_db);
+//    }
+//    else {
+//      dtxn->execute(headers[i], inputs[i],
+//                    &(*results)[i], &(*outputs)[i]);
+//    }
+//  }
+//  if (!defer_reply_db)
+//    defer->reply();
+//  Log::debug("still fine");
 }
 
 void RococoServiceImpl::start_pie(
@@ -169,8 +169,10 @@ void RococoServiceImpl::prepare_txn(
     rrr::DeferredReply *defer
 ) {
   std::lock_guard<std::mutex> guard(mtx_);
-  auto *dtxn = (TPLDTxn *) dtxn_sched_->get(tid);
-  dtxn->prepare_launch(sids, res, defer);
+  auto sched = (ThreePhaseSched*)dtxn_sched_;
+  sched->OnPhaseTwoRequest(tid, sids, res, defer);
+//  auto *dtxn = (TPLDTxn *) dtxn_sched_->get(tid);
+//  dtxn->prepare_launch(sids, res, defer);
 // TODO move the stat to somewhere else.
 #ifdef PIECE_COUNT
   std::map<piece_count_key_t, uint64_t>::iterator pc_it;
@@ -196,9 +198,8 @@ void RococoServiceImpl::commit_txn(
     rrr::DeferredReply *defer
 ) {
   std::lock_guard<std::mutex> guard(mtx_);
-  auto *dtxn = (TPLDTxn *) dtxn_sched_->get(tid);
-  verify(dtxn != NULL);
-  dtxn->commit_launch(res, defer);
+  auto sched = (ThreePhaseSched*) dtxn_sched_;
+  sched->OnPhaseThreeRequest(tid, SUCCESS, res, defer);
 }
 
 void RococoServiceImpl::abort_txn(
@@ -207,10 +208,8 @@ void RococoServiceImpl::abort_txn(
     rrr::DeferredReply *defer
 ) {
   Log::debug("get abort_txn: tid: %ld", tid);
-  std::lock_guard<std::mutex> guard(mtx_);
-  auto *dtxn = (TPLDTxn *) dtxn_sched_->get(tid);
-  verify(dtxn != NULL);
-  dtxn->abort_launch(res, defer);
+  auto sched = (ThreePhaseSched*) dtxn_sched_;
+  sched->OnPhaseThreeRequest(tid, REJECT, res, defer);
 }
 
 // TODO find a better way to define batch

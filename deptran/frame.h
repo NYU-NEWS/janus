@@ -9,6 +9,7 @@ class Coordinator;
 class TxnChopper;
 class TxnRequest;
 class DTxn;
+class Executor;
 class Scheduler;
 class ClientControlServiceImpl;
 
@@ -23,7 +24,8 @@ class Frame {
                            uint32_t id, bool batch_start);
   void GetTxnTypes(std::map<int32_t, std::string> &txn_types);
   TxnChopper* CreateChopper(TxnRequest &req);
-  DTxn* CreateDTxn(txnid_t txn_id, bool ro, Scheduler * mgr);
+  DTxn* CreateDTxn(txnid_t txn_id, bool ro, Scheduler *sch);
+  Executor* CreateExecutor(cmdid_t cmd_id, Scheduler *sch);
   Scheduler *CreateScheduler();
 };
 

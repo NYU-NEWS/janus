@@ -11,6 +11,7 @@
 #include "../marshal-value.h"
 #include "../rcc_rpc.h"
 #include "sched.h"
+#include "exec.h"
 #include "tpl.h"
 
 namespace rococo {
@@ -27,11 +28,12 @@ int TPLSched::OnPhaseOneRequest(
     std::vector<mdb::Value> *output,
     rrr::DeferredReply *defer) {
   TPLDTxn* dtxn = (TPLDTxn*)this->GetOrCreate(header.tid);
+  TPLExecutor* exec = (TPLExecutor*) GetOrCreateExecutor(header.tid);
   verify(dtxn->mdb_txn_->rtti() == mdb::symbol_t::TXN_2PL);
   DragonBall *defer_reply_db = new DragonBall(1, [defer, res]() {
     defer->reply();
   });
-  dtxn->pre_execute_2pl(header, input, res, output, defer_reply_db);
+  exec->pre_execute_2pl(header, input, res, output, defer_reply_db);
   return 0;
 }
 

@@ -1,6 +1,11 @@
 
+
+#include "../config.h"
+#include "../multi_value.h"
+#include "../rcc/dep_graph.h"
+#include "../rcc/graph_marshaler.h"
 #include "sched.h"
-#include "../tpl/tpl.h"
+#include "../tpl/exec.h"
 
 namespace rococo {
 
@@ -11,8 +16,8 @@ int NoneSched::OnPhaseOneRequest(
     rrr::i32 *res,
     std::vector<mdb::Value> *output,
     rrr::DeferredReply *defer) {
-  TPLDTxn* dtxn = (TPLDTxn*) this->GetOrCreate(header.tid);
-  dtxn->execute(header, input, res, output);
+  TPLExecutor *exec = (TPLExecutor*) GetOrCreateExecutor(header.tid);
+  exec->execute(header, input, res, output);
   defer->reply();
   return 0;
 }
