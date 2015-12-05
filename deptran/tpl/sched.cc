@@ -11,11 +11,28 @@
 #include "../marshal-value.h"
 #include "../rcc_rpc.h"
 #include "sched.h"
+#include "tpl.h"
 
 namespace rococo {
 
-TPLSched::TPLSched() : Scheduler() {
+TPLSched::TPLSched() : ThreePhaseSched() {
   mdb_txn_mgr_ = new mdb::TxnMgr2PL();
+}
+
+int TPLSched::OnPhaseOneRequest(
+    const RequestHeader &header,
+    const std::vector<mdb::Value> &input,
+    const rrr::i32 &output_size,
+    rrr::i32 *res,
+    std::vector<mdb::Value> *output,
+    rrr::DeferredReply *defer) {
+  TPLDTxn* dtxn = (TPLDTxn*)this->GetOrCreate(header.tid);
+  verify(dtxn->mdb_txn_->rtti() == mdb::symbol_t::TXN_2PL);
+  DragonBall *defer_reply_db = new DragonBall(1, [defer, res]() {
+    defer->reply();
+  });
+  dtxn->pre_execute_2pl(header, input, res, output, defer_reply_db);
+  return 0;
 }
 
 

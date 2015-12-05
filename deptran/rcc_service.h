@@ -23,7 +23,7 @@ class RococoServiceImpl: public RococoService {
   std::mutex mtx_;
   Recorder *recorder_ = NULL;
   ServerControlServiceImpl *scsi_; // for statistics;
-  Scheduler *txn_mgr_;
+  Scheduler *dtxn_sched_;
 
   void do_start_pie(const RequestHeader &header,
                     const Value *input,

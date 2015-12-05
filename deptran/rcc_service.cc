@@ -1,5 +1,6 @@
 #include "all.h"
 #include "scheduler.h"
+#include "three_phase/sched.h"
 
 namespace rococo {
 
@@ -7,7 +8,7 @@ namespace rococo {
 RococoServiceImpl::RococoServiceImpl(
     Scheduler *dtxn_mgr,
     ServerControlServiceImpl *scsi
-) : scsi_(scsi), txn_mgr_(dtxn_mgr) {
+) : scsi_(scsi), dtxn_sched_(dtxn_mgr) {
 
 #ifdef PIECE_COUNT
   piece_count_timer_.start();
@@ -33,7 +34,7 @@ void RococoServiceImpl::do_start_pie(
     Value *output,
     i32 *output_size) {
 
-  TPLDTxn *dtxn = (TPLDTxn *) txn_mgr_->GetOrCreate(header.tid);
+  TPLDTxn *dtxn = (TPLDTxn *) dtxn_sched_->GetOrCreate(header.tid);
   *res = SUCCESS;
   if (IS_MODE_2PL) {
     dtxn->execute(header, input, input_size,
@@ -116,7 +117,7 @@ void RococoServiceImpl::naive_batch_start_pie(
   int num_pieces = headers.size();
   for (int i = 0; i < num_pieces; i++) {
     (*outputs)[i].resize(output_sizes[i]);
-    auto dtxn = (TPLDTxn *) txn_mgr_->GetOrCreate(headers[i].tid);
+    auto dtxn = (TPLDTxn *) dtxn_sched_->GetOrCreate(headers[i].tid);
     if (defer_reply_db) {
       dtxn->pre_execute_2pl(headers[i], inputs[i],
                             &((*results)[i]), &((*outputs)[i]), defer_reply_db);
@@ -157,8 +158,8 @@ void RococoServiceImpl::start_pie(
   output->resize(output_size);
   // find stored procedure, and run it
   *res = SUCCESS;
-  TPLDTxn *dtxn = (TPLDTxn *) txn_mgr_->GetOrCreate(header.tid);
-  dtxn->start_launch(header, input, output_size, res, output, defer);
+  ((ThreePhaseSched*)dtxn_sched_)->
+      OnPhaseOneRequest(header, input, output_size, res, output, defer);
 }
 
 void RococoServiceImpl::prepare_txn(
@@ -168,7 +169,7 @@ void RococoServiceImpl::prepare_txn(
     rrr::DeferredReply *defer
 ) {
   std::lock_guard<std::mutex> guard(mtx_);
-  auto *dtxn = (TPLDTxn *) txn_mgr_->get(tid);
+  auto *dtxn = (TPLDTxn *) dtxn_sched_->get(tid);
   dtxn->prepare_launch(sids, res, defer);
 // TODO move the stat to somewhere else.
 #ifdef PIECE_COUNT
@@ -195,7 +196,7 @@ void RococoServiceImpl::commit_txn(
     rrr::DeferredReply *defer
 ) {
   std::lock_guard<std::mutex> guard(mtx_);
-  auto *dtxn = (TPLDTxn *) txn_mgr_->get(tid);
+  auto *dtxn = (TPLDTxn *) dtxn_sched_->get(tid);
   verify(dtxn != NULL);
   dtxn->commit_launch(res, defer);
 }
@@ -207,7 +208,7 @@ void RococoServiceImpl::abort_txn(
 ) {
   Log::debug("get abort_txn: tid: %ld", tid);
   std::lock_guard<std::mutex> guard(mtx_);
-  auto *dtxn = (TPLDTxn *) txn_mgr_->get(tid);
+  auto *dtxn = (TPLDTxn *) dtxn_sched_->get(tid);
   verify(dtxn != NULL);
   dtxn->abort_launch(res, defer);
 }
@@ -272,7 +273,7 @@ void RococoServiceImpl::rcc_start_pie(
   verify(defer);
 
   std::lock_guard<std::mutex> guard(this->mtx_);
-  RCCDTxn *dtxn = (RCCDTxn *) txn_mgr_->GetOrCreate(header.tid);
+  RCCDTxn *dtxn = (RCCDTxn *) dtxn_sched_->GetOrCreate(header.tid);
   dtxn->StartLaunch(header, input, res, defer);
 
   // TODO remove the stat from here.
@@ -294,7 +295,7 @@ void RococoServiceImpl::rcc_finish_txn(
   verify(req.gra.size() > 0);
 
   std::lock_guard<std::mutex> guard(mtx_);
-  RCCDTxn *txn = (RCCDTxn *) txn_mgr_->get(req.txn_id);
+  RCCDTxn *txn = (RCCDTxn *) dtxn_sched_->get(req.txn_id);
   txn->commit(req, res, defer);
 
   stat_sz_gra_commit_.sample(req.gra.size());
@@ -307,7 +308,7 @@ void RococoServiceImpl::rcc_ask_txn(
 ) {
   verify(IS_MODE_RCC || IS_MODE_RO6);
   std::lock_guard<std::mutex> guard(mtx_);
-  RCCDTxn *dtxn = (RCCDTxn *) txn_mgr_->get(tid);
+  RCCDTxn *dtxn = (RCCDTxn *) dtxn_sched_->get(tid);
   dtxn->inquire(res, defer);
 }
 
@@ -317,7 +318,7 @@ void RococoServiceImpl::rcc_ro_start_pie(
     vector<Value> *output,
     rrr::DeferredReply *defer) {
   std::lock_guard<std::mutex> guard(mtx_);
-  RCCDTxn *dtxn = (RCCDTxn *) txn_mgr_->GetOrCreate(header.tid, true);
+  RCCDTxn *dtxn = (RCCDTxn *) dtxn_sched_->GetOrCreate(header.tid, true);
   dtxn->start_ro(header, input, *output, defer);
 }
 

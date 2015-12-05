@@ -1,3 +1,4 @@
+#pragma once
 
 #include "../three_phase/coord.h"
 
