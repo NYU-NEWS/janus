@@ -7,7 +7,62 @@
 namespace rococo {
 
 class TPLExecutor: public ThreePhaseExecutor {
- using ThreePhaseExecutor::ThreePhaseExecutor;
+  using ThreePhaseExecutor::ThreePhaseExecutor;
+ public:
+  virtual int start_launch(
+      const RequestHeader &header,
+      const std::vector <mdb::Value> &input,
+      const rrr::i32 &output_size,
+      rrr::i32 *res,
+      std::vector <mdb::Value> *output,
+      rrr::DeferredReply *defer
+  );
+
+
+  // Below are merged from TxnRegistry.
+  void pre_execute_2pl(
+      const RequestHeader &header,
+      const std::vector <mdb::Value> &input,
+      rrr::i32 *res,
+      std::vector <mdb::Value> *output,
+      DragonBall *db
+  );
+
+
+  void pre_execute_2pl(
+      const RequestHeader &header,
+      const Value *input,
+      rrr::i32 input_size,
+      rrr::i32 *res,
+      mdb::Value *output,
+      rrr::i32 *output_size,
+      DragonBall *db
+  );
+
+
+  std::function<void(void)> get_2pl_proceed_callback(
+      const RequestHeader &header,
+      const mdb::Value *input,
+      rrr::i32 input_size,
+      rrr::i32 *res
+  );
+
+  std::function<void(void)> get_2pl_fail_callback(
+      const RequestHeader &header,
+      rrr::i32 *res,
+      mdb::Txn2PL::PieceStatus *ps
+  );
+
+  std::function<void(void)> get_2pl_succ_callback(
+      const RequestHeader &req,
+      const mdb::Value *input,
+      rrr::i32 input_size,
+      rrr::i32 *res,
+      mdb::Txn2PL::PieceStatus *ps
+  );
+
+  virtual int prepare();
+  virtual int commit();
 
 };
 

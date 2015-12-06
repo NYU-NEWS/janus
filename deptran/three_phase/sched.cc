@@ -7,6 +7,23 @@
 
 namespace rococo {
 
+int ThreePhaseSched::OnPhaseOneRequest(
+    const RequestHeader &header,
+    const std::vector<mdb::Value> &input,
+    const rrr::i32 &output_size,
+    rrr::i32 *res,
+    std::vector<mdb::Value> *output,
+    rrr::DeferredReply *defer) {
+  auto exec = (ThreePhaseExecutor*) GetOrCreateExecutor(header.tid);
+  exec->start_launch(header,
+                     input,
+                     output_size,
+                     res,
+                     output,
+                     defer);
+  defer->reply();
+  return 0;
+}
 
 int ThreePhaseSched::OnPhaseTwoRequest(
     cmdid_t cmd_id,

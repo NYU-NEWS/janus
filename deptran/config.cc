@@ -444,7 +444,6 @@ std::string Config::site2host_name(std::string& sitename) {
   }
 }
 
-
 void Config::LoadXML(std::string &filename) {
   std::string filename_str(filename);
   boost::property_tree::ptree pt;
@@ -459,7 +458,6 @@ void Config::LoadXML(std::string &filename) {
 //  LoadBenchXML(pt);
   LoadSchemeXML(pt);
 }
-
 
 void Config::LoadModeYML(YAML::Node config) {
   auto mode_str = config["cc"].as<string>();

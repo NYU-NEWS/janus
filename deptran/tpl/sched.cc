@@ -27,9 +27,7 @@ int TPLSched::OnPhaseOneRequest(
     rrr::i32 *res,
     std::vector<mdb::Value> *output,
     rrr::DeferredReply *defer) {
-  TPLDTxn* dtxn = (TPLDTxn*)this->GetOrCreate(header.tid);
   TPLExecutor* exec = (TPLExecutor*) GetOrCreateExecutor(header.tid);
-  verify(dtxn->mdb_txn_->rtti() == mdb::symbol_t::TXN_2PL);
   DragonBall *defer_reply_db = new DragonBall(1, [defer, res]() {
     defer->reply();
   });
