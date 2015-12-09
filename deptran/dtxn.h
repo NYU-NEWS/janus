@@ -56,7 +56,7 @@ class DTxn {
   int64_t tid_;
   Scheduler *mgr_;
   int phase_;
-  mdb::Txn *mdb_txn_;
+  mdb::Txn *mdb_txn_ = nullptr;
   Recorder *recorder_ = NULL;
   TxnRegistry *txn_reg_;
 

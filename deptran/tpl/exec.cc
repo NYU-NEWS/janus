@@ -15,46 +15,36 @@ int TPLExecutor::start_launch(
     rrr::i32 *res,
     std::vector <mdb::Value> *output,
     rrr::DeferredReply *defer) {
+  verify(mdb_txn_ != nullptr);
   verify(this->mdb_txn_->rtti() == mdb::symbol_t::TXN_2PL);
-  DragonBall *defer_reply_db = new DragonBall(1, [defer, res]() {
+
+  DragonBall *db = new DragonBall(1, [defer, res]() {
     defer->reply();
   });
-  this->pre_execute_2pl(header, input, res, output, defer_reply_db);
-}
 
-
-void TPLExecutor::pre_execute_2pl(
-    const RequestHeader &header,
-    const std::vector <mdb::Value> &input,
-    rrr::i32 *res,
-    std::vector <mdb::Value> *output,
-    DragonBall *db
-) {
-  verify(mdb_txn_ != nullptr);
   mdb::Txn2PL *txn = (mdb::Txn2PL *) mdb_txn_;
   if (txn->is_wound()) {
     output->resize(0);
     *res = REJECT;
     db->trigger();
-//    verify(0);
-    return;
+  } else {
+    txn->init_piece(header.tid, header.pid, db, output);
+
+    Log_debug("get txn handler and start reg lock, txn_id: %lx, pie_id: %lx",
+              header.tid, header.pid);
+    auto entry = txn_reg_->get(header);
+    entry.txn_handler(this,
+                      dtxn_,
+                      header,
+                      input.data(),
+                      input.size(),
+                      res,
+                      NULL/*output*/,
+                      NULL/*output_size*/,
+                      NULL);
   }
-  txn->init_piece(header.tid, header.pid, db, output);
-
-  Log_debug("get txn handler and start reg lock, txn_id: %lx, pie_id: %lx",
-            header.tid, header.pid);
-  auto entry = txn_reg_->get(header);
-  entry.txn_handler(this,
-                    dtxn_,
-                    header,
-                    input.data(),
-                    input.size(),
-                    res,
-                    NULL/*output*/,
-                    NULL/*output_size*/,
-                    NULL);
+  return 0;
 }
-
 
 std::function<void(void)> TPLExecutor::get_2pl_succ_callback(
     const RequestHeader &header,

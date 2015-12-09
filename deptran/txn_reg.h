@@ -13,7 +13,7 @@ class DTxn;
 
 typedef std::function<void(
     Executor* exec,
-    DTxn *txn,
+    DTxn *dtxn,
     const RequestHeader &header,
     const Value *input,
     rrr::i32 input_size,

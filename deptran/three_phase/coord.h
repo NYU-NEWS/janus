@@ -12,40 +12,40 @@ class ClientControlServiceImpl;
 class ThreePhaseCoord : public Coordinator {
   using Coordinator::Coordinator;
  public:
-  uint32_t coo_id_;
-  int benchmark_;
-  int32_t mode_;
-  ClientControlServiceImpl *ccsi_;
-  uint32_t thread_id_;
-  bool batch_optimal_;
-  bool retry_wait_;
-
-  uint32_t n_start_ = 0;
-  uint32_t n_start_ack_ = 0;
-  uint32_t n_prepare_req_ = 0;
-  uint32_t n_prepare_ack_ = 0;
-  uint32_t n_finish_req_ = 0;
-  uint32_t n_finish_ack_ = 0;
-
-  std::atomic<uint64_t> next_pie_id_;
-  std::atomic<uint64_t> next_txn_id_;
-
-  std::mutex mtx_;
-  std::mutex start_mtx_;
-  Commo *commo_;
-  Recorder *recorder_;
-  Command *cmd_;
-  cmdid_t cmd_id_;
-  CoordinatorStage stage_ = START;
-  phase_t phase_ = 0;
-//  map<innid_t, Command*> cmd_map_;
-  map<innid_t, bool> start_ack_map_;
-  Sharding* sharding_ = nullptr;
-
-  std::vector<int> site_prepare_;
-  std::vector<int> site_commit_;
-  std::vector<int> site_abort_;
-  std::vector<int> site_piece_;
+//  uint32_t coo_id_;
+//  int benchmark_;
+//  int32_t mode_;
+//  ClientControlServiceImpl *ccsi_;
+//  uint32_t thread_id_;
+//  bool batch_optimal_;
+//  bool retry_wait_;
+//
+//  uint32_t n_start_ = 0;
+//  uint32_t n_start_ack_ = 0;
+//  uint32_t n_prepare_req_ = 0;
+//  uint32_t n_prepare_ack_ = 0;
+//  uint32_t n_finish_req_ = 0;
+//  uint32_t n_finish_ack_ = 0;
+//
+//  std::atomic<uint64_t> next_pie_id_;
+//  std::atomic<uint64_t> next_txn_id_;
+//
+//  std::mutex mtx_;
+//  std::mutex start_mtx_;
+//  Commo *commo_;
+//  Recorder *recorder_;
+//  Command *cmd_;
+//  cmdid_t cmd_id_;
+//  CoordinatorStage stage_ = START;
+//  phase_t phase_ = 0;
+////  map<innid_t, Command*> cmd_map_;
+//  map<innid_t, bool> start_ack_map_;
+//  Sharding* sharding_ = nullptr;
+//
+//  std::vector<int> site_prepare_;
+//  std::vector<int> site_commit_;
+//  std::vector<int> site_abort_;
+//  std::vector<int> site_piece_;
 #ifdef TXN_STAT
   typedef struct txn_stat_t {
     uint64_t                             n_serv_tch;

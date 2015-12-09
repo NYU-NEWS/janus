@@ -18,27 +18,7 @@ class TPLExecutor: public ThreePhaseExecutor {
       rrr::DeferredReply *defer
   );
 
-
   // Below are merged from TxnRegistry.
-  void pre_execute_2pl(
-      const RequestHeader &header,
-      const std::vector <mdb::Value> &input,
-      rrr::i32 *res,
-      std::vector <mdb::Value> *output,
-      DragonBall *db
-  );
-
-
-  void pre_execute_2pl(
-      const RequestHeader &header,
-      const Value *input,
-      rrr::i32 input_size,
-      rrr::i32 *res,
-      mdb::Value *output,
-      rrr::i32 *output_size,
-      DragonBall *db
-  );
-
 
   std::function<void(void)> get_2pl_proceed_callback(
       const RequestHeader &header,

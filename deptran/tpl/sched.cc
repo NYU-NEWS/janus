@@ -28,10 +28,9 @@ int TPLSched::OnPhaseOneRequest(
     std::vector<mdb::Value> *output,
     rrr::DeferredReply *defer) {
   TPLExecutor* exec = (TPLExecutor*) GetOrCreateExecutor(header.tid);
-  DragonBall *defer_reply_db = new DragonBall(1, [defer, res]() {
-    defer->reply();
-  });
-  exec->pre_execute_2pl(header, input, res, output, defer_reply_db);
+  exec->start_launch(header, input, output_size,
+                     res, output, defer);
+
   return 0;
 }
 

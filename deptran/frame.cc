@@ -97,10 +97,13 @@ mdb::Row* Frame::CreateRow(const mdb::Schema *schema,
   return r;
 }
 
-Coordinator* Frame::CreateCoord(cooid_t coo_id, vector<std::string>& servers,
-                                int benchmark, int mode,
+Coordinator* Frame::CreateCoord(cooid_t coo_id,
+                                vector<std::string>& servers,
+                                int benchmark,
+                                int mode,
                                 ClientControlServiceImpl *ccsi,
-                                uint32_t id, bool batch_start) {
+                                uint32_t id,
+                                bool batch_start) {
 //   TODO
   Coordinator *coo;
   auto attr = this;
@@ -227,7 +230,7 @@ DTxn* Frame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {
 }
 
 Executor* Frame::CreateExecutor(cmdid_t cmd_id, Scheduler* sched) {
-  verify(0);
+//  verify(0);
   Executor* exec = nullptr;
   auto mode = Config::GetConfig()->mode_;
   switch (mode) {
