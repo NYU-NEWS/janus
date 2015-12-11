@@ -12,4 +12,11 @@ Executor::Executor(cmdid_t cmd_id, Scheduler *sched)
   mdb_txn_ = txn;
 }
 
+Executor::~Executor(){
+  verify(mdb_txn_ == nullptr);
+  verify(dtxn_ != nullptr);
+  sched_->DestroyDTxn(cmd_id_);
+  dtxn_ = nullptr;
+}
+
 } // namespace rococo

@@ -9,6 +9,8 @@ namespace rococo {
 class TPLExecutor: public ThreePhaseExecutor {
   using ThreePhaseExecutor::ThreePhaseExecutor;
  public:
+  virtual ~TPLExecutor(){};
+
   virtual int start_launch(
       const RequestHeader &header,
       const std::vector <mdb::Value> &input,

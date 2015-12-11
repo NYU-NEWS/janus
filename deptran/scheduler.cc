@@ -12,6 +12,42 @@
 
 namespace rococo {
 
+
+DTxn*Scheduler::CreateDTxn(i64 tid, bool ro) {
+  Log_debug("create tid %ld\n", tid);
+  verify(dtxns_.find(tid) == dtxns_.end());
+  DTxn* dtxn = Frame().CreateDTxn(tid, ro, this);
+  dtxns_[tid] = dtxn;
+  dtxn->recorder_ = this->recorder_;
+  verify(txn_reg_);
+  dtxn->txn_reg_ = txn_reg_;
+  return dtxn;
+}
+
+DTxn*Scheduler::GetOrCreateDTxn(i64 tid, bool ro) {
+  auto it = dtxns_.find(tid);
+  if (it == dtxns_.end()) {
+    return CreateDTxn(tid, ro);
+  } else {
+    return it->second;
+  }
+}
+
+void Scheduler::DestroyDTxn(i64 tid) {
+  Log_debug("destroy tid %ld\n", tid);
+  auto it = dtxns_.find(tid);
+  verify(it != dtxns_.end());
+  delete it->second;
+  dtxns_.erase(it);
+}
+
+DTxn*Scheduler::GetDTxn(i64 tid) {
+  //Log_debug("DTxnMgr::get(%ld)\n", tid);
+  auto it = dtxns_.find(tid);
+  verify(it != dtxns_.end());
+  return it->second;
+}
+
 mdb::Txn* Scheduler::GetMTxn(const i64 tid) {
   mdb::Txn *txn = nullptr;
   auto it = mdb_txns_.find(tid);
@@ -23,15 +59,11 @@ mdb::Txn* Scheduler::GetMTxn(const i64 tid) {
   return txn;
 }
 
-mdb::Txn *Scheduler::del_mdb_txn(const i64 tid) {
+mdb::Txn *Scheduler::RemoveMTxn(const i64 tid) {
   mdb::Txn *txn = nullptr;
   std::map<i64, mdb::Txn *>::iterator it = mdb_txns_.find(tid);
-  if (it == mdb_txns_.end()) {
-    verify(0);
-  }
-  else {
-    txn = it->second;
-  }
+  verify(it != mdb_txns_.end());
+  txn = it->second;
   mdb_txns_.erase(it);
   return txn;
 }
@@ -190,47 +222,13 @@ void Scheduler::reg_table(const std::string &name,
   }
 }
 
-DTxn*Scheduler::Create(i64 tid, bool ro) {
-  verify(dtxns_[tid] == nullptr);
-  Log_debug("create tid %ld\n", tid);
-  DTxn* dtxn = Frame().CreateDTxn(tid, ro, this);
-  dtxns_[tid] = dtxn;
-  dtxn->recorder_ = this->recorder_;
-  verify(txn_reg_);
-  dtxn->txn_reg_ = txn_reg_;
-  return dtxn;
-}
-
-DTxn*Scheduler::GetOrCreate(i64 tid, bool ro) {
-  auto it = dtxns_.find(tid);
-  if (it == dtxns_.end()) {
-    return Create(tid, ro);
-  } else {
-    return it->second;
-  }
-}
-
-void Scheduler::Destroy(i64 tid) {
-  Log_debug("destroy tid %ld\n", tid);
-  auto it = dtxns_.find(tid);
-  verify(it != dtxns_.end());
-  delete it->second;
-  dtxns_.erase(it);
-}
-
-DTxn*Scheduler::get(i64 tid) {
-  //Log_debug("DTxnMgr::get(%ld)\n", tid);
-  auto it = dtxns_.find(tid);
-  verify(it != dtxns_.end());
-  return it->second;
-}
 
 Executor* Scheduler::CreateExecutor(cmdid_t cmd_id) {
   verify(executors_.find(cmd_id) == executors_.end());
   Log_debug("create tid %ld\n", cmd_id);
 //  DTxn* dtxn = Frame().CreateDTxn(tid, ro, this);
   Executor *exec = Frame().CreateExecutor(cmd_id, this);
-  DTxn* dtxn = Create(cmd_id, this);
+  DTxn* dtxn = CreateDTxn(cmd_id, this);
   exec->dtxn_ = dtxn;
   executors_[cmd_id] = exec;
   exec->recorder_ = this->recorder_;
@@ -252,8 +250,9 @@ void Scheduler::DestroyExecutor(cmdid_t cmd_id) {
   Log_debug("destroy tid %ld\n", cmd_id);
   auto it = executors_.find(cmd_id);
   verify(it != executors_.end());
-  delete it->second;
+  auto exec = it->second;
   executors_.erase(it);
+  delete exec;
 }
 
 Executor* Scheduler::GetExecutor(cmdid_t cmd_id) {

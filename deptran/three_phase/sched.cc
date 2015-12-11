@@ -35,12 +35,10 @@ int ThreePhaseSched::OnPhaseTwoRequest(
   return 0;
 }
 
-int ThreePhaseSched::OnPhaseThreeRequest(
-    cmdid_t cmd_id,
-    int commit_or_abort,
-    rrr::i32 *res,
-    rrr::DeferredReply *defer
-) {
+int ThreePhaseSched::OnPhaseThreeRequest(cmdid_t cmd_id,
+                                         int commit_or_abort,
+                                         rrr::i32 *res,
+                                         rrr::DeferredReply *defer) {
   auto exec = (ThreePhaseExecutor*)GetExecutor(cmd_id);
   verify(exec->phase_ < 3);
   exec->phase_ = 3;
@@ -51,6 +49,7 @@ int ThreePhaseSched::OnPhaseThreeRequest(
   } else {
     verify(0);
   }
+  DestroyExecutor(cmd_id);
   return 0;
 }
 

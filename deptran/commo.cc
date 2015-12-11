@@ -90,7 +90,7 @@ void Commo::SendCommit(parid_t pid, txnid_t tid,
 
 void Commo::SendAbort(parid_t pid, txnid_t tid,
                        std::function<void(Future *fu)> &callback) {
-  ___LogSent(pid, tid);
+//  ___LogSent(pid, tid);
   FutureAttr fuattr;
   fuattr.callback = callback;
   RococoProxy *proxy = vec_rpc_proxy_[pid];

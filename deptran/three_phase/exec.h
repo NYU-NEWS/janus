@@ -12,6 +12,8 @@ class ThreePhaseExecutor: public Executor {
   using Executor::Executor;
  public:
 
+  virtual ~ThreePhaseExecutor();
+
   virtual int start_launch(
       const RequestHeader &header,
       const std::vector <mdb::Value> &input,

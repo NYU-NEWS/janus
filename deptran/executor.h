@@ -19,6 +19,7 @@ class Executor {
   int phase_ = -1;
 
   Executor(cmdid_t cmd_id, Scheduler* sched);
+  virtual ~Executor();
 };
 
 } // namespace rococo

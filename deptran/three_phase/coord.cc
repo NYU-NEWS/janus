@@ -130,7 +130,7 @@ void ThreePhaseCoord::restart(TxnChopper *ch) {
 
 void ThreePhaseCoord::Start() {
   std::lock_guard<std::mutex> lock(start_mtx_);
-  ___TestPhaseOne(cmd_id_);
+//  ___TestPhaseOne(cmd_id_);
 
   if (stage_ != START) {
     IncrementPhaseAndChangeStage(START);
@@ -372,7 +372,7 @@ void ThreePhaseCoord::report(TxnReply &txn_reply,
 
 void ThreePhaseCoord::___TestPhaseThree(txnid_t txn_id) {
   auto it = ___phase_three_tids_.find(txn_id);
-  verify(it == ___phase_three_tids_.end());
+//  verify(it == ___phase_three_tids_.end());
   ___phase_three_tids_.insert(txn_id);
 }
 

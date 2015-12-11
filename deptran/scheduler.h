@@ -24,10 +24,10 @@ class Scheduler {
   Scheduler(int mode);
   ~Scheduler();
 
-  DTxn *get(i64 tid);
-  DTxn *Create(i64 tid, bool ro = false);
-  DTxn *GetOrCreate(i64 tid, bool ro = false);
-  void Destroy(i64 tid);
+  DTxn *GetDTxn(i64 tid);
+  DTxn *CreateDTxn(i64 tid, bool ro = false);
+  DTxn *GetOrCreateDTxn(i64 tid, bool ro = false);
+  void DestroyDTxn(i64 tid);
 
   Executor* GetExecutor(txnid_t txn_id);
   Executor* CreateExecutor(txnid_t txn_id);
@@ -47,7 +47,7 @@ class Scheduler {
   virtual mdb::Txn* GetMTxn(const i64 tid);
   virtual mdb::Txn *GetOrCreateMTxn(const i64 tid);
   virtual mdb::Txn *get_mdb_txn(const RequestHeader &req);
-  virtual mdb::Txn *del_mdb_txn(const i64 tid);
+  virtual mdb::Txn *RemoveMTxn(const i64 tid);
 
   void get_prepare_log(i64 txn_id,
                        const std::vector<i32> &sids,

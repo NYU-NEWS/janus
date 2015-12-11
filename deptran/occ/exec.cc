@@ -36,9 +36,10 @@ int OCCExecutor::prepare() {
 
 int OCCExecutor::commit() {
   verify(mdb_txn_ != NULL);
-//  verify(mdb_txn_ == sched_->del_mdb_txn(cmd_id_));
+  verify(mdb_txn_ == sched_->RemoveMTxn(cmd_id_));
   ((mdb::TxnOCC *) mdb_txn_)->commit_confirm();
   delete mdb_txn_;
+  mdb_txn_ = nullptr;
   return SUCCESS;
 }
 

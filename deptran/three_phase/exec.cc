@@ -8,6 +8,9 @@
 
 namespace rococo {
 
+ThreePhaseExecutor::~ThreePhaseExecutor() {
+}
+
 int ThreePhaseExecutor::start_launch(
     const RequestHeader &header,
     const std::vector<mdb::Value> &input,
@@ -24,6 +27,8 @@ int ThreePhaseExecutor::prepare_launch(
     rrr::i32 *res,
     rrr::DeferredReply *defer
 ) {
+  verify(phase_ < 2);
+  phase_ = 2;
   if (Config::GetConfig()->do_logging()) {
     string log_s;
     sched_->get_prepare_log(cmd_id_, sids, &log_s);
@@ -66,17 +71,16 @@ int ThreePhaseExecutor::abort_launch(
 
 int ThreePhaseExecutor::abort() {
   verify(mdb_txn_ != NULL);
-//  verify(mdb_txn_ == sched_->del_mdb_txn(cmd_id_));
+  verify(mdb_txn_ == sched_->RemoveMTxn(cmd_id_));
   // TODO fix, might have double delete here.
   mdb_txn_->abort();
-//  delete mdb_txn_;
+  delete mdb_txn_;
+  mdb_txn_ = nullptr;
   return SUCCESS;
 }
 
-int ThreePhaseExecutor::commit_launch(
-    rrr::i32 *res,
-    rrr::DeferredReply *defer
-) {
+int ThreePhaseExecutor::commit_launch(rrr::i32 *res,
+                                      rrr::DeferredReply *defer) {
   *res = this->commit();
   if (Config::GetConfig()->do_logging()) {
     const char commit_tag = 'c';
@@ -86,7 +90,6 @@ int ThreePhaseExecutor::commit_launch(
     memcpy((void *) log_s.data(), (void *) &commit_tag, sizeof(commit_tag));
     recorder_->submit(log_s);
   }
-//  sched_->Destroy(cmd_id_);
   defer->reply();
   return 0;
 }
