@@ -4,7 +4,8 @@
 
 namespace rococo {
 
-Commo::Commo(std::vector<std::string> &addrs) {
+Commo::Commo(std::vector<std::string> &addrs)
+    : vec_rpc_cli_(), vec_rpc_proxy_(), phase_three_sent_() {
   verify(addrs.size() > 0);
   rpc_poll_ = new PollMgr(1);
   for (auto &addr : addrs) {
@@ -70,8 +71,16 @@ void Commo::SendPrepare(groupid_t gid, txnid_t tid,
   Future::safe_release(proxy->async_prepare_txn(tid, sids, fuattr));
 }
 
+void Commo::___LogSent(parid_t pid, txnid_t tid) {
+  auto it = phase_three_sent_.find(std::make_pair(pid, tid));
+  verify(it == phase_three_sent_.end());
+  phase_three_sent_.insert(std::make_pair(pid, tid));
+}
+
 void Commo::SendCommit(parid_t pid, txnid_t tid,
                        std::function<void(Future *fu)> &callback) {
+  ___LogSent(pid, tid);
+
   FutureAttr fuattr;
   fuattr.callback = callback;
   RococoProxy *proxy = vec_rpc_proxy_[pid];
@@ -81,6 +90,7 @@ void Commo::SendCommit(parid_t pid, txnid_t tid,
 
 void Commo::SendAbort(parid_t pid, txnid_t tid,
                        std::function<void(Future *fu)> &callback) {
+  ___LogSent(pid, tid);
   FutureAttr fuattr;
   fuattr.callback = callback;
   RococoProxy *proxy = vec_rpc_proxy_[pid];

@@ -55,8 +55,8 @@ void ThreePhaseCoord::do_one(TxnRequest &req) {
       Start();
       break;
     case MODE_RPC_NULL:
-      rpc_null_start(ch);
-      break;
+//      rpc_null_start(ch);
+//      break;
     case MODE_RCC:
     case MODE_RO6:
     case MODE_NONE:
@@ -86,13 +86,13 @@ void ThreePhaseCoord::rpc_null_start(TxnChopper *ch) {
   Future::safe_release(proxy->async_rpc_null(fuattr));
 }
 
-void ThreePhaseCoord::change_stage(CoordinatorStage stage) {
+void ThreePhaseCoord::IncrementPhaseAndChangeStage(CoordinatorStage stage) {
   phase_++;
   stage_ = stage;
   Log_debug("moving to phase %ld; stage %d", phase_, stage_);
 }
 
-bool ThreePhaseCoord::has_stale_phase_or_stage(phase_t phase, CoordinatorStage stage) {
+bool ThreePhaseCoord::IsPhaseOrStageStale(phase_t phase, CoordinatorStage stage) {
   bool result = false;
   if (phase_ != phase) {
     Log_debug("phase %d doesn't match %d\n", phase, phase_);
@@ -113,7 +113,7 @@ void ThreePhaseCoord::cleanup() {
   n_finish_req_ = 0;
   n_finish_ack_ = 0;
   start_ack_map_.clear();
-  change_stage(START);
+  IncrementPhaseAndChangeStage(START);
   TxnChopper *ch = (TxnChopper *) cmd_;
 }
 
@@ -130,9 +130,10 @@ void ThreePhaseCoord::restart(TxnChopper *ch) {
 
 void ThreePhaseCoord::Start() {
   std::lock_guard<std::mutex> lock(start_mtx_);
+  ___TestPhaseOne(cmd_id_);
 
   if (stage_ != START) {
-    change_stage(START);
+    IncrementPhaseAndChangeStage(START);
   }
 
   StartRequest req;
@@ -169,7 +170,7 @@ bool ThreePhaseCoord::AllStartAckCollected() {
 void ThreePhaseCoord::StartAck(StartReply &reply, phase_t phase) {
   std::lock_guard<std::mutex> lock(this->mtx_);
 
-  if (has_stale_phase_or_stage(phase, START)) {
+  if (IsPhaseOrStageStale(phase, START)) {
     Log_debug("ignore stale startack\n");
     return;
   }
@@ -209,7 +210,7 @@ void ThreePhaseCoord::naive_batch_start(TxnChopper *ch) {
 
 /** caller should be thread_safe */
 void ThreePhaseCoord::Prepare() {
-  change_stage(PREPARE);
+  IncrementPhaseAndChangeStage(PREPARE);
   TxnChopper *ch = (TxnChopper *) cmd_;
   verify(mode_ == MODE_OCC || mode_ == MODE_2PL);
   // prepare piece, currently only useful for OCC
@@ -234,7 +235,7 @@ void ThreePhaseCoord::Prepare() {
 
 void ThreePhaseCoord::PrepareAck(TxnChopper *ch, phase_t phase, Future *fu) {
   std::lock_guard<std::mutex> lock(this->mtx_);
-  if (has_stale_phase_or_stage(phase, PREPARE)) {
+  if (IsPhaseOrStageStale(phase, PREPARE)) {
     Log_debug("ignore stale prepareack\n");
     return;
   }
@@ -266,7 +267,8 @@ void ThreePhaseCoord::PrepareAck(TxnChopper *ch, phase_t phase, Future *fu) {
 
 /** caller should be thread safe */
 void ThreePhaseCoord::Finish() {
-  change_stage(FINISH);
+  IncrementPhaseAndChangeStage(FINISH);
+  ___TestPhaseThree(cmd_id_);
   TxnChopper *ch = (TxnChopper *) cmd_;
   verify(mode_ == MODE_OCC || mode_ == MODE_2PL);
   n_finish_req_++;
@@ -301,13 +303,14 @@ void ThreePhaseCoord::FinishAck(TxnChopper *ch, phase_t phase, Future *fu) {
   bool retry = false;
   {
     std::lock_guard<std::mutex> lock(this->mtx_);
-    if (has_stale_phase_or_stage(phase, FINISH)) {
+    if (IsPhaseOrStageStale(phase, FINISH)) {
       Log_debug("ignore stale finish ack\n");
       return;
     }
 
     n_finish_ack_++;
-    Log::debug("finish cmd_id_: %ld; n_finish_ack_: %ld; n_finish_req_: %ld", cmd_id_, n_finish_ack_, n_finish_req_);
+    Log::debug("finish cmd_id_: %ld; n_finish_ack_: %ld; n_finish_req_: %ld",
+               cmd_id_, n_finish_ack_, n_finish_req_);
     verify(ch->GetPars().size() == n_finish_req_);
     if (n_finish_ack_ == ch->GetPars().size()) {
       if ((ch->reply_.res_ == REJECT) && ch->can_retry()) {
@@ -366,4 +369,18 @@ void ThreePhaseCoord::report(TxnReply &txn_reply,
                             txn_reply.n_try_);
   }
 }
+
+void ThreePhaseCoord::___TestPhaseThree(txnid_t txn_id) {
+  auto it = ___phase_three_tids_.find(txn_id);
+  verify(it == ___phase_three_tids_.end());
+  ___phase_three_tids_.insert(txn_id);
+}
+
+void ThreePhaseCoord::___TestPhaseOne(txnid_t txn_id) {
+  auto it = ___phase_one_tids_.find(txn_id);
+  verify(it == ___phase_one_tids_.end());
+  ___phase_one_tids_.insert(txn_id);
+}
+
+
 } // namespace rococo

@@ -119,8 +119,8 @@ class ThreePhaseCoord : public Coordinator {
   void FinishAck(TxnChopper *ch, phase_t phase, Future *fu);
   void Abort() {verify(0);}
 
-  bool has_stale_phase_or_stage(phase_t phase, CoordinatorStage stage);
-  void change_stage(CoordinatorStage stage);
+  bool IsPhaseOrStageStale(phase_t phase, CoordinatorStage stage);
+  void IncrementPhaseAndChangeStage(CoordinatorStage stage);
   bool AllStartAckCollected();
 
   RequestHeader gen_header(TxnChopper *ch);
@@ -148,5 +148,11 @@ class ThreePhaseCoord : public Coordinator {
   int exe_txn() {
     return 0;
   }
+
+  // for debug
+  set<txnid_t> ___phase_one_tids_ = set<txnid_t>();
+  set<txnid_t> ___phase_three_tids_ = set<txnid_t>();
+  void ___TestPhaseOne(txnid_t txn_id);
+  void ___TestPhaseThree(txnid_t txn_id);
 };
 }
