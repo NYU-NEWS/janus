@@ -42,6 +42,8 @@ int ThreePhaseSched::OnPhaseThreeRequest(
     rrr::DeferredReply *defer
 ) {
   auto exec = (ThreePhaseExecutor*)GetExecutor(cmd_id);
+  verify(exec->phase_ < 3);
+  exec->phase_ = 3;
   if (commit_or_abort == SUCCESS) {
     exec->commit_launch(res, defer);
   } else if (commit_or_abort == REJECT) {

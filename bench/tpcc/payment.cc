@@ -29,12 +29,12 @@ void TpccPiece::reg_payment() {
         // ############################################################
 
         // R warehouse
-        dtxn->read_column(r, 1, &output[oi++]);  // 0 ==> w_name
-        dtxn->read_column(r, 2, &output[oi++]);  // 1 ==> w_street_1
-        dtxn->read_column(r, 3, &output[oi++]);  // 2 ==> w_street_2
-        dtxn->read_column(r, 4, &output[oi++]);  // 3 ==> w_city
-        dtxn->read_column(r, 5, &output[oi++]);  // 4 ==> w_state
-        dtxn->read_column(r, 6, &output[oi++]);  // 5 ==> w_zip
+                         dtxn->ReadColumn(r, 1, &output[oi++]);  // 0 ==> w_name
+                         dtxn->ReadColumn(r, 2, &output[oi++]);  // 1 ==> w_street_1
+                         dtxn->ReadColumn(r, 3, &output[oi++]);  // 2 ==> w_street_2
+                         dtxn->ReadColumn(r, 4, &output[oi++]);  // 3 ==> w_city
+                         dtxn->ReadColumn(r, 5, &output[oi++]);  // 4 ==> w_state
+                         dtxn->ReadColumn(r, 6, &output[oi++]);  // 5 ==> w_zip
 
         // ############################################################
         verify(*output_size >= oi);
@@ -72,12 +72,12 @@ void TpccPiece::reg_payment() {
         // ############################################################
 
         // R district
-        dtxn->read_column(r, 2, &output[oi++]); // output[0] ==> d_name
-        dtxn->read_column(r, 3, &output[oi++]); // 1 ==> d_street_1
-        dtxn->read_column(r, 4, &output[oi++]); // 2 ==> d_street_2
-        dtxn->read_column(r, 5, &output[oi++]); // 3 ==> d_city
-        dtxn->read_column(r, 6, &output[oi++]); // 4 ==> d_state
-        dtxn->read_column(r, 7, &output[oi++]); // 5 ==> d_zip
+                         dtxn->ReadColumn(r, 2, &output[oi++]); // output[0] ==> d_name
+                         dtxn->ReadColumn(r, 3, &output[oi++]); // 1 ==> d_street_1
+                         dtxn->ReadColumn(r, 4, &output[oi++]); // 2 ==> d_street_2
+                         dtxn->ReadColumn(r, 5, &output[oi++]); // 3 ==> d_city
+                         dtxn->ReadColumn(r, 6, &output[oi++]); // 4 ==> d_state
+                         dtxn->ReadColumn(r, 7, &output[oi++]); // 5 ==> d_zip
 
         // ############################################################
         verify(*output_size >= oi);
@@ -119,11 +119,11 @@ void TpccPiece::reg_payment() {
         RCC_LOAD_ROW(r, TPCC_PAYMENT_2);
 
         verify(r->schema_ != nullptr);
-        dtxn->read_column(r, 9, &buf);
+                           dtxn->ReadColumn(r, 9, &buf);
 
         // W district
         buf.set_double(buf.get_double() + input[2].get_double());
-        dtxn->write_column(r, 9, buf);
+                           dtxn->WriteColumn(r, 9, buf);
 
         // ############################################################
         verify(*output_size >= output_index);
@@ -242,24 +242,24 @@ void TpccPiece::reg_payment() {
         RCC_PHASE1_RET;
         RCC_LOAD_ROW(r, TPCC_PAYMENT_4);
 
-        if (!dtxn->read_columns(r, std::vector<mdb::column_id_t>({
-                3,  // c_first          buf[0]
-                4,  // c_middle         buf[1]
-                5,  // c_last           buf[2]
-                6,  // c_street_1       buf[3]
-                7,  // c_street_2       buf[4]
-                8,  // c_city           buf[5]
-                9,  // c_state          buf[6]
-                10, // c_zip            buf[7]
-                11, // c_phone          buf[8]
-                12, // c_since          buf[9]
-                13, // c_credit         buf[10]
-                14, // c_credit_lim     buf[11]
-                15, // c_discount       buf[12]
-                16, // c_balance        buf[13]
-                17, // c_ytd_payment    buf[14]
-                20  // c_data           buf[15]
-        }), &buf)) {
+        if (!dtxn->ReadColumns(r, std::vector<mdb::column_id_t>({
+                                                                    3,  // c_first          buf[0]
+                                                                    4,  // c_middle         buf[1]
+                                                                    5,  // c_last           buf[2]
+                                                                    6,  // c_street_1       buf[3]
+                                                                    7,  // c_street_2       buf[4]
+                                                                    8,  // c_city           buf[5]
+                                                                    9,  // c_state          buf[6]
+                                                                    10, // c_zip            buf[7]
+                                                                    11, // c_phone          buf[8]
+                                                                    12, // c_since          buf[9]
+                                                                    13, // c_credit         buf[10]
+                                                                    14, // c_credit_lim     buf[11]
+                                                                    15, // c_discount       buf[12]
+                                                                    16, // c_balance        buf[13]
+                                                                    17, // c_ytd_payment    buf[14]
+                                                                    20  // c_data           buf[15]
+                                                                }), &buf)) {
             *res = REJECT;
             *output_size = output_index;
             return;
@@ -287,7 +287,7 @@ void TpccPiece::reg_payment() {
                     Value(buf[14].get_double() + input[3].get_double()),
                     c_data
             });
-            dtxn->write_columns(r, col_ids, col_data);
+            dtxn->WriteColumns(r, col_ids, col_data);
         }
         else {
             std::vector<mdb::column_id_t> col_ids({
@@ -298,7 +298,7 @@ void TpccPiece::reg_payment() {
                     Value(buf[13].get_double() - input[3].get_double()),
                     Value(buf[14].get_double() + input[3].get_double())
             });
-            dtxn->write_columns(r, col_ids, col_data);
+            dtxn->WriteColumns(r, col_ids, col_data);
         }
 
         output[output_index++] = input[0];  // output[0]  =>  c_id

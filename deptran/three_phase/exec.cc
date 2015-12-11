@@ -58,7 +58,7 @@ int ThreePhaseExecutor::abort_launch(
     recorder_->submit(log_s);
   }
   // TODO optimize
-  sched_->Destroy(cmd_id_);
+//  sched_->Destroy(cmd_id_);
   defer->reply();
   Log::debug("abort finish");
   return 0;
@@ -66,10 +66,10 @@ int ThreePhaseExecutor::abort_launch(
 
 int ThreePhaseExecutor::abort() {
   verify(mdb_txn_ != NULL);
-  verify(mdb_txn_ == sched_->del_mdb_txn(cmd_id_));
+//  verify(mdb_txn_ == sched_->del_mdb_txn(cmd_id_));
   // TODO fix, might have double delete here.
   mdb_txn_->abort();
-  delete mdb_txn_;
+//  delete mdb_txn_;
   return SUCCESS;
 }
 
@@ -86,7 +86,7 @@ int ThreePhaseExecutor::commit_launch(
     memcpy((void *) log_s.data(), (void *) &commit_tag, sizeof(commit_tag));
     recorder_->submit(log_s);
   }
-  sched_->Destroy(cmd_id_);
+//  sched_->Destroy(cmd_id_);
   defer->reply();
   return 0;
 }

@@ -33,13 +33,13 @@ void TpccPiece::reg_new_order() {
         i32 oi = 0;
         Value buf;
         // R district
-        dtxn->read_column(r, 8, &output[oi++]); // read d_tax
-        dtxn->read_column(r, 10, &buf); // read d_next_o_id
+                         dtxn->ReadColumn(r, 8, &output[oi++]); // read d_tax
+                         dtxn->ReadColumn(r, 10, &buf); // read d_next_o_id
         output[oi++] = buf;
 
         // W district
         buf.set_i32((i32)(buf.get_i32() + 1));
-        dtxn->write_column(r, 10, buf); // read d_next_o_id, increament by 1
+                         dtxn->WriteColumn(r, 10, buf); // read d_next_o_id, increament by 1
 
         // ############################################################
         verify(*output_size >= oi);
@@ -69,7 +69,7 @@ void TpccPiece::reg_new_order() {
 
         i32 oi = 0;
         // R warehouse
-        dtxn->read_column(r, 7, &output[oi++]); // read w_tax
+                         dtxn->ReadColumn(r, 7, &output[oi++]); // read w_tax
 
         // ############################################################
         verify(*output_size >= oi);
@@ -108,9 +108,9 @@ void TpccPiece::reg_new_order() {
         // ############################################################
 
         // R customer
-        dtxn->read_column(r, 5, &output[oi++]);
-        dtxn->read_column(r, 13, &output[oi++]);
-        dtxn->read_column(r, 15, &output[oi++]);
+            dtxn->ReadColumn(r, 5, &output[oi++]);
+            dtxn->ReadColumn(r, 13, &output[oi++]);
+            dtxn->ReadColumn(r, 15, &output[oi++]);
 
         // ############################################################
         verify(*output_size >= oi);
@@ -184,7 +184,7 @@ void TpccPiece::reg_new_order() {
         //mb[2] = input[3].get_blob();
         r = dtxn->query(dtxn->get_table(TPCC_TB_ORDER_C_ID_SECONDARY),
                 mb, true, header.pid).next();
-        dtxn->write_column(r, 3, input[0]);
+                           dtxn->WriteColumn(r, 3, input[0]);
 
         // ############################################################
         verify(*output_size >= oi);
@@ -263,9 +263,9 @@ void TpccPiece::reg_new_order() {
 
         i32 oi = 0;
         // Ri item
-        dtxn->read_column(r, 2, &output[oi++]); // 0 ==> i_name
-        dtxn->read_column(r, 3, &output[oi++]); // 1 ==> i_price
-        dtxn->read_column(r, 4, &output[oi++]); // 2 ==> i_data
+                         dtxn->ReadColumn(r, 2, &output[oi++]); // 0 ==> i_name
+                         dtxn->ReadColumn(r, 3, &output[oi++]); // 1 ==> i_price
+                         dtxn->ReadColumn(r, 4, &output[oi++]); // 2 ==> i_data
 
         // ############################################################
         verify(*output_size >= oi);
@@ -304,8 +304,8 @@ void TpccPiece::reg_new_order() {
         //i32 s_dist_col = 3 + input[2].get_i32();
         // Ri stock
         // FIXME compress all s_dist_xx into one column
-        dtxn->read_column(r, 3, &output[oi++]); // 0 ==> s_dist_xx
-        dtxn->read_column(r, 16, &output[oi++]); // 1 ==> s_data
+                         dtxn->ReadColumn(r, 3, &output[oi++]); // 0 ==> s_dist_xx
+                         dtxn->ReadColumn(r, 16, &output[oi++]); // 1 ==> s_data
 
         // ############################################################
         verify(*output_size >= oi);
@@ -357,33 +357,35 @@ void TpccPiece::reg_new_order() {
 
         // Ri stock
         i32 new_ol_quantity;
-        dtxn->read_column(r, 2, &buf);
+                           dtxn->ReadColumn(r, 2, &buf);
         new_ol_quantity = buf.get_i32() - input[2].get_i32();
 
-        dtxn->read_column(r, 13, &buf);
+                           dtxn->ReadColumn(r, 13, &buf);
         Value new_s_ytd(buf.get_i32() + input[2].get_i32());
 
-        dtxn->read_column(r, 14, &buf);
+                           dtxn->ReadColumn(r, 14, &buf);
         Value new_s_order_cnt((i32)(buf.get_i32() + 1));
 
-        dtxn->read_column(r, 15, &buf);
+                           dtxn->ReadColumn(r, 15, &buf);
         Value new_s_remote_cnt(buf.get_i32() + input[3].get_i32());
 
         if (new_ol_quantity < 10)
             new_ol_quantity += 91;
         Value new_ol_quantity_value(new_ol_quantity);
 
-        if (!dtxn->write_columns(r, std::vector<mdb::column_id_t>({
-                2,  // s_quantity
-                13, // s_ytd
-                14, // s_order_cnt
-                15  // s_remote_cnt
-        }), std::vector<Value>({
-                new_ol_quantity_value,
-                new_s_ytd,
-                new_s_order_cnt,
-                new_s_remote_cnt
-        }))) {
+        if (!dtxn->WriteColumns(r,
+                                std::vector<mdb::column_id_t>({
+                                                                  2,  // s_quantity
+                                                                  13, // s_ytd
+                                                                  14, // s_order_cnt
+                                                                  15  // s_remote_cnt
+                                                              }),
+                                std::vector<Value>({
+                                                       new_ol_quantity_value,
+                                                       new_s_ytd,
+                                                       new_s_order_cnt,
+                                                       new_s_remote_cnt
+                                                   }))) {
             *res = REJECT;
             *output_size = oi;
             return;

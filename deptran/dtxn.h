@@ -69,22 +69,40 @@ class DTxn {
       const mdb::Schema *schema,
       const std::vector<mdb::Value> &values) = 0;
 
-  virtual bool read_column(
-      mdb::Row *row,
-      mdb::column_id_t col_id,
-      Value *value);
+  virtual bool ReadColumn(mdb::Row *row,
+                          mdb::column_id_t col_id,
+                          Value *value);
 
-  virtual bool read_columns(
-      Row *row,
-      const std::vector<column_id_t> &col_ids,
-      std::vector<Value> *values
+  virtual bool ReadColumns(Row *row,
+                           const std::vector<column_id_t> &col_ids,
+                           std::vector<Value> *values);
+
+  virtual bool WriteColumn(Row *row,
+                           column_id_t col_id,
+                           const Value &value);
+
+  virtual bool WriteColumns(Row *row,
+                            const std::vector<column_id_t> &col_ids,
+                            const std::vector<Value> &values
   );
 
-  virtual bool write_column(
-      Row *row,
-      column_id_t col_id,
-      const Value &value
+  virtual bool ReadColumnUnsafe(mdb::Row *row,
+                                mdb::column_id_t col_id,
+                                Value *value);
+
+  virtual bool ReadColumnsUnsafe(mdb::Row *row,
+                                 const std::vector<column_id_t> &col_ids,
+                                 std::vector<Value> *values);
+
+  virtual bool WriteColumnUnsafe(Row *row,
+                                 column_id_t col_id,
+                                 const Value &value);
+
+  virtual bool WriteColumnsUnsafe(Row *row,
+                            const std::vector<column_id_t> &col_ids,
+                            const std::vector<Value> &values
   );
+
 
   virtual bool insert_row(Table *tbl, Row *row);
 
@@ -126,11 +144,6 @@ class DTxn {
 
   mdb::Table *get_table(const std::string &tbl_name) const;
 
-  bool write_columns(
-      Row *row,
-      const std::vector<column_id_t> &col_ids,
-      const std::vector<Value> &values
-  );
 
   virtual ~DTxn();
 };

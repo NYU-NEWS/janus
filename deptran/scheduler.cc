@@ -12,8 +12,19 @@
 
 namespace rococo {
 
+mdb::Txn* Scheduler::GetMTxn(const i64 tid) {
+  mdb::Txn *txn = nullptr;
+  auto it = mdb_txns_.find(tid);
+  if (it == mdb_txns_.end()) {
+    verify(0);
+  } else {
+    txn = it->second;
+  }
+  return txn;
+}
+
 mdb::Txn *Scheduler::del_mdb_txn(const i64 tid) {
-  mdb::Txn *txn = NULL;
+  mdb::Txn *txn = nullptr;
   std::map<i64, mdb::Txn *>::iterator it = mdb_txns_.find(tid);
   if (it == mdb_txns_.end()) {
     verify(0);
@@ -25,7 +36,7 @@ mdb::Txn *Scheduler::del_mdb_txn(const i64 tid) {
   return txn;
 }
 
-mdb::Txn *Scheduler::get_mdb_txn(const i64 tid) {
+mdb::Txn *Scheduler::GetOrCreateMTxn(const i64 tid) {
   mdb::Txn *txn = nullptr;
   auto it = mdb_txns_.find(tid);
   if (it == mdb_txns_.end()) {
@@ -65,7 +76,7 @@ mdb::Txn *Scheduler::get_mdb_txn(const RequestHeader &header) {
       txn = mdb_txns_.begin()->second;
     }
   } else {
-    txn = get_mdb_txn(header.tid);
+    txn = GetOrCreateMTxn(header.tid);
   }
   verify(txn != nullptr);
   return txn;

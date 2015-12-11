@@ -63,41 +63,64 @@ mdb::ResultSet DTxn::query(
   return mdb_txn_->query(tbl, mb, retrieve, pid);
 }
 
-bool DTxn::read_column(
-    mdb::Row *row,
-    mdb::column_id_t col_id,
-    Value *value) {
+bool DTxn::ReadColumn(mdb::Row *row,
+                      mdb::column_id_t col_id,
+                      Value *value) {
   verify(mdb_txn_ != nullptr);
   auto ret = mdb_txn_->read_column(row, col_id, value);
   verify(ret == true);
   return true;
 }
 
-bool DTxn::read_columns(
-    Row *row,
-    const std::vector<column_id_t> &col_ids,
-    std::vector<Value> *values) {
+bool DTxn::ReadColumns(Row *row,
+                       const std::vector<column_id_t> &col_ids,
+                       std::vector<Value> *values) {
   verify(mdb_txn_ != nullptr);
   auto ret = mdb_txn_->read_columns(row, col_ids, values);
   verify(ret == true);
   return true;
 }
 
-bool DTxn::write_column(Row *row, column_id_t col_id, const Value &value) {
+bool DTxn::WriteColumn(Row *row,
+                       column_id_t col_id,
+                       const Value &value) {
   verify(mdb_txn_ != nullptr);
   auto ret = mdb_txn_->write_column(row, col_id, value);
   verify(ret == true);
   return true;
 }
 
-bool DTxn::write_columns(
-    Row *row,
-    const std::vector<column_id_t> &col_ids,
-    const std::vector<Value> &values) {
+bool DTxn::WriteColumns(Row *row,
+                        const std::vector<column_id_t> &col_ids,
+                        const std::vector<Value> &values) {
   verify(mdb_txn_ != nullptr);
   auto ret = mdb_txn_->write_columns(row, col_ids, values);
   verify(ret == true);
   return true;
+}
+
+bool DTxn::ReadColumnUnsafe(mdb::Row *row,
+                            mdb::column_id_t col_id,
+                            Value *value) {
+  ReadColumn(row, col_id, value);
+}
+
+bool DTxn::ReadColumnsUnsafe(Row *row,
+                             const std::vector<column_id_t> &col_ids,
+                             std::vector<Value> *values) {
+  ReadColumns(row, col_ids, values);
+}
+
+bool DTxn::WriteColumnUnsafe(Row *row,
+                             column_id_t col_id,
+                             const Value &value) {
+  WriteColumn(row, col_id, value);
+}
+
+bool DTxn::WriteColumnsUnsafe(Row *row,
+                        const std::vector<column_id_t> &col_ids,
+                        const std::vector<Value> &values) {
+  WriteColumns(row, col_ids, values);
 }
 
 

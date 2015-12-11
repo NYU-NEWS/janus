@@ -16,7 +16,8 @@ int TPLExecutor::start_launch(
     std::vector <mdb::Value> *output,
     rrr::DeferredReply *defer) {
   verify(mdb_txn_ != nullptr);
-  verify(this->mdb_txn_->rtti() == mdb::symbol_t::TXN_2PL);
+  auto rtti = this->mdb_txn_->rtti();
+  verify(rtti == mdb::symbol_t::TXN_2PL);
 
   DragonBall *db = new DragonBall(1, [defer, res]() {
     defer->reply();
@@ -205,10 +206,10 @@ int TPLExecutor::prepare() {
 
 
 int TPLExecutor::commit() {
-  verify(mdb_txn_ != NULL);
-  verify(mdb_txn_ == sched_->del_mdb_txn(cmd_id_));
+  verify(mdb_txn_ != nullptr);
+//  verify(mdb_txn_ == sched_->del_mdb_txn(cmd_id_));
   mdb_txn_->commit();
-  delete mdb_txn_;
+//  delete mdb_txn_;
   return SUCCESS;
 }
 

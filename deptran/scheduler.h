@@ -44,7 +44,8 @@ class Scheduler {
     return mdb_txn_mgr_->get_table(name);
   }
 
-  virtual mdb::Txn *get_mdb_txn(const i64 tid);
+  virtual mdb::Txn* GetMTxn(const i64 tid);
+  virtual mdb::Txn *GetOrCreateMTxn(const i64 tid);
   virtual mdb::Txn *get_mdb_txn(const RequestHeader &req);
   virtual mdb::Txn *del_mdb_txn(const i64 tid);
 

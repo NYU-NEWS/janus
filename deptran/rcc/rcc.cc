@@ -10,7 +10,7 @@ RCCDTxn::RCCDTxn(
 ) : DTxn(tid, mgr) {
   tv_ = nullptr;
   read_only_ = ro;
-  mdb_txn_ = mgr->get_mdb_txn(tid_);
+  mdb_txn_ = mgr->GetOrCreateMTxn(tid_);
 }
 
 void RCCDTxn::StartLaunch(

@@ -5,11 +5,11 @@ namespace rococo {
 
 TPLDTxn::TPLDTxn(i64 tid, Scheduler *mgr) : DTxn(tid, mgr) {
   verify(mdb_txn_ == nullptr);
-  mdb_txn_ = mgr->get_mdb_txn(tid_);
+  mdb_txn_ = mgr->GetOrCreateMTxn(tid_);
   verify(mdb_txn_ != nullptr);
 }
 
-bool TPLDTxn::read_column(
+bool TPLDTxn::ReadColumn(
     mdb::Row *row,
     mdb::column_id_t col_id,
     Value *value) {

@@ -96,11 +96,11 @@ void TpccPiece::reg_order_status() {
 
         if (RO6_RO_PHASE_1) return;
 
-        i32 oi = 0; 
-        dtxn->read_column(r, 3, &output[oi++]);// read c_first
-        dtxn->read_column(r, 4, &output[oi++]);// read c_middle
-        dtxn->read_column(r, 5, &output[oi++]);// read c_last
-        dtxn->read_column(r, 16, &output[oi++]);// read c_balance
+        i32 oi = 0;
+                         dtxn->ReadColumn(r, 3, &output[oi++]);// read c_first
+                         dtxn->ReadColumn(r, 4, &output[oi++]);// read c_middle
+                         dtxn->ReadColumn(r, 5, &output[oi++]);// read c_last
+                         dtxn->ReadColumn(r, 16, &output[oi++]);// read c_balance
 
         // #################################################################
         verify(*output_size >= oi);
@@ -219,9 +219,9 @@ void TpccPiece::reg_order_status() {
         if (RO6_RO_PHASE_1) return;
 
         i32 oi = 0;
-        dtxn->read_column(r, 2, &output[oi++]); // output[0] ==> o_id
-        dtxn->read_column(r, 4, &output[oi++]); // output[1] ==> o_entry_d
-        dtxn->read_column(r, 5, &output[oi++]); // output[2] ==> o_carrier_id
+                         dtxn->ReadColumn(r, 2, &output[oi++]); // output[0] ==> o_id
+                         dtxn->ReadColumn(r, 4, &output[oi++]); // output[1] ==> o_entry_d
+                         dtxn->ReadColumn(r, 5, &output[oi++]); // output[2] ==> o_carrier_id
         Log::debug("piece: %d, o_id: %d", TPCC_ORDER_STATUS_2, output[0].get_i32());
 
         // ############################################################
@@ -322,11 +322,11 @@ void TpccPiece::reg_order_status() {
         i32 oi = 0;
         while (i < row_list.size()) {
             r = row_list[i++];
-            dtxn->read_column(r, 4, &output[oi++]); // output[0] ==> ol_i_id
-            dtxn->read_column(r, 5, &output[oi++]); // output[1] ==> ol_supply_w_id
-            dtxn->read_column(r, 6, &output[oi++]); // output[2] ==> ol_delivery_d
-            dtxn->read_column(r, 7, &output[oi++]); // output[3] ==> ol_quantity
-            dtxn->read_column(r, 8, &output[oi++]); // output[4] ==> ol_amount
+            dtxn->ReadColumn(r, 4, &output[oi++]); // output[0] ==> ol_i_id
+            dtxn->ReadColumn(r, 5, &output[oi++]); // output[1] ==> ol_supply_w_id
+            dtxn->ReadColumn(r, 6, &output[oi++]); // output[2] ==> ol_delivery_d
+            dtxn->ReadColumn(r, 7, &output[oi++]); // output[3] ==> ol_quantity
+            dtxn->ReadColumn(r, 8, &output[oi++]); // output[4] ==> ol_amount
         }
 
         // ############################################################

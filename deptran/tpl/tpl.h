@@ -25,7 +25,7 @@ class TPLDTxn: public DTxn {
     return nullptr;
   }
 
-  virtual bool read_column(
+  virtual bool ReadColumn(
       mdb::Row *row,
       mdb::column_id_t col_id,
       Value *value
