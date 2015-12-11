@@ -5,153 +5,153 @@ namespace rococo {
 static uint32_t TXN_TYPE = TPCC_NEW_ORDER; 
 
 void TpccPiece::reg_new_order() {
-    BEGIN_PIE(TPCC_NEW_ORDER,
+  BEGIN_PIE(TPCC_NEW_ORDER,
             TPCC_NEW_ORDER_0, // Ri & W district
             DF_NO) {
-        // ############################################################
-        verify(row_map == NULL);
-        verify(input_size == 2);
-        // ############################################################
+    // ############################################################
+    verify(row_map == NULL);
+    verify(input_size == 2);
+    // ############################################################
         
-        mdb::MultiBlob mb(2);
-        mb[0] = input[1].get_blob();
-        mb[1] = input[0].get_blob();
-        mdb::Row *r = dtxn->query(dtxn->get_table(TPCC_TB_DISTRICT), 
-                mb, output_size, header.pid).next();
+    mdb::MultiBlob mb(2);
+    mb[0] = input[1].get_blob();
+    mb[1] = input[0].get_blob();
+    mdb::Row *r = dtxn->query(dtxn->get_table(TPCC_TB_DISTRICT),
+                              mb, output_size, header.pid).next();
+    // ############################################################
+    TPL_KISS(
+      mdb::column_lock_t(r, 8, ALock::RLOCK),
+      mdb::column_lock_t(r, 10, ALock::WLOCK)
+    );
 
-        // ############################################################
-        TPL_KISS(
-                mdb::column_lock_t(r, 8, ALock::RLOCK),
-                mdb::column_lock_t(r, 10, ALock::WLOCK)
-        );
+    if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) {
+      ((RCCDTxn*)dtxn)->kiss(r, 10, true);
+    }
+    // ############################################################
 
-        if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) {
-            ((RCCDTxn*)dtxn)->kiss(r, 10, true);
-        }
-        // ############################################################
-
-        i32 oi = 0;
-        Value buf;
-        // R district
-                         dtxn->ReadColumn(r, 8, &output[oi++]); // read d_tax
-                         dtxn->ReadColumn(r, 10, &buf); // read d_next_o_id
-        output[oi++] = buf;
+    i32 oi = 0;
+    Value buf;
+    // R district
+    dtxn->ReadColumn(r, 8, &output[oi++]); // read d_tax
+    dtxn->ReadColumn(r, 10, &buf); // read d_next_o_id
+    output[oi++] = buf;
 
         // W district
-        buf.set_i32((i32)(buf.get_i32() + 1));
-                         dtxn->WriteColumn(r, 10, buf); // read d_next_o_id, increament by 1
+    buf.set_i32((i32)(buf.get_i32() + 1));
+    dtxn->WriteColumn(r, 10, buf); // read d_next_o_id, increment by 1
 
-        // ############################################################
-        verify(*output_size >= oi);
-        Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_0);
-        *res = SUCCESS;
-        // ############################################################
+    // ############################################################
+    verify(*output_size >= oi);
+    Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_0);
+    *res = SUCCESS;
+    // ############################################################
 
-        *output_size = oi;
-        return;
-    } END_PIE
+    *output_size = oi;
+    return;
+  } END_PIE
 
-    BEGIN_PIE(TPCC_NEW_ORDER,
+  BEGIN_PIE(TPCC_NEW_ORDER,
             TPCC_NEW_ORDER_1, // R warehouse
             DF_NO) {
-        // ############################################################
-        verify(input_size == 1);
-        verify(row_map == NULL);
-        Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_1);
-        // ############################################################
+    // ############################################################
+    verify(input_size == 1);
+    verify(row_map == NULL);
+    Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_1);
+    // ############################################################
 
-        mdb::Row *r = dtxn->query(dtxn->get_table(TPCC_TB_WAREHOUSE), 
-                input[0], output_size, header.pid).next();
+    mdb::Row *r = dtxn->query(dtxn->get_table(TPCC_TB_WAREHOUSE),
+                              input[0], output_size, header.pid).next();
 
-        // ############################################################
-        TPL_KISS(mdb::column_lock_t(r, 7, ALock::RLOCK));
-        // ############################################################
+    // ############################################################
+    TPL_KISS(mdb::column_lock_t(r, 7, ALock::RLOCK));
+    // ############################################################
 
-        i32 oi = 0;
-        // R warehouse
-                         dtxn->ReadColumn(r, 7, &output[oi++]); // read w_tax
+    i32 oi = 0;
+    // R warehouse
+    dtxn->ReadColumn(r, 7, &output[oi++]); // read w_tax
 
-        // ############################################################
-        verify(*output_size >= oi);
-        Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_1);
-        *res = SUCCESS;
-        // ############################################################
+    // ############################################################
+    verify(*output_size >= oi);
+    Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_1);
+    *res = SUCCESS;
+    // ############################################################
         
-        *output_size = oi;
-        return;
-    } END_PIE
+    *output_size = oi;
+    return;
+  } END_PIE
 
-    BEGIN_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_2, // R customer
+  BEGIN_PIE(TPCC_NEW_ORDER,
+            TPCC_NEW_ORDER_2, // R customer
             DF_NO //XXX either i or d is ok
-    ) {
-        // ############################################################
-        verify(row_map == NULL);
-        verify(input_size == 3);
-        Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_2);
-        i32 oi = 0;
-        // ############################################################
+  ) {
+    // ############################################################
+    verify(row_map == NULL);
+    verify(input_size == 3);
+    Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_2);
+    i32 oi = 0;
+    // ############################################################
 
-        mdb::MultiBlob mb(3);
-        mb[0] = input[2].get_blob();
-        mb[1] = input[1].get_blob();
-        mb[2] = input[0].get_blob();
-        auto table = dtxn->get_table(TPCC_TB_CUSTOMER);
-        mdb::Row *r = dtxn->query(table, mb,
+    mdb::MultiBlob mb(3);
+    mb[0] = input[2].get_blob();
+    mb[1] = input[1].get_blob();
+    mb[2] = input[0].get_blob();
+    auto table = dtxn->get_table(TPCC_TB_CUSTOMER);
+    mdb::Row *r = dtxn->query(table, mb,
                 output_size, header.pid).next();
 
-        // ############################################################
-        TPL_KISS(
-                mdb::column_lock_t(r, 5, ALock::RLOCK),
-                mdb::column_lock_t(r, 13, ALock::RLOCK),
-                mdb::column_lock_t(r, 15, ALock::RLOCK)
-        );
-        // ############################################################
+    // ############################################################
+    TPL_KISS(
+      mdb::column_lock_t(r, 5, ALock::RLOCK),
+      mdb::column_lock_t(r, 13, ALock::RLOCK),
+      mdb::column_lock_t(r, 15, ALock::RLOCK)
+    );
+    // ############################################################
 
-        // R customer
-            dtxn->ReadColumn(r, 5, &output[oi++]);
-            dtxn->ReadColumn(r, 13, &output[oi++]);
-            dtxn->ReadColumn(r, 15, &output[oi++]);
+    // R customer
+    dtxn->ReadColumn(r, 5, &output[oi++]);
+    dtxn->ReadColumn(r, 13, &output[oi++]);
+    dtxn->ReadColumn(r, 15, &output[oi++]);
 
-        // ############################################################
-        verify(*output_size >= oi);
-        Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_2);
-        *res = SUCCESS;
-        // ############################################################
+    // ############################################################
+    verify(*output_size >= oi);
+    Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_2);
+    *res = SUCCESS;
+    // ############################################################
         
-        *output_size = oi;
-        return;
-    } END_PIE
+    *output_size = oi;
+    return;
+  } END_PIE
 
-    BEGIN_PIE(TPCC_NEW_ORDER,
+  BEGIN_PIE(TPCC_NEW_ORDER,
             TPCC_NEW_ORDER_3, // W order
             DF_REAL) {
-        // ############################################################
-        verify(input_size == 7);
-        Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_3);
-        i32 oi = 0;
-        // ############################################################
+    // ############################################################
+    verify(input_size == 7);
+    Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_3);
+    i32 oi = 0;
+    // ############################################################
         
-        mdb::Table *tbl = dtxn->get_table(TPCC_TB_ORDER);
+    mdb::Table *tbl = dtxn->get_table(TPCC_TB_ORDER);
 
-        mdb::MultiBlob mb(3);
-        mb[0] = input[1].get_blob();
-        mb[1] = input[2].get_blob();
-        mb[2] = input[3].get_blob();
+    mdb::MultiBlob mb(3);
+    mb[0] = input[1].get_blob();
+    mb[1] = input[2].get_blob();
+    mb[2] = input[3].get_blob();
 
-        mdb::Row *r = NULL;
-        r = dtxn->query(dtxn->get_table(TPCC_TB_ORDER_C_ID_SECONDARY),
+    mdb::Row *r = NULL;
+    r = dtxn->query(dtxn->get_table(TPCC_TB_ORDER_C_ID_SECONDARY),
                     mb, false, header.pid).next();
-        verify(r);
-        verify(r->schema_);
-        // ############################################################
-        TPL_KISS(mdb::column_lock_t(r, 3, ALock::WLOCK));
-        // ############################################################
+    verify(r);
+    verify(r->schema_);
+    // ############################################################
+    TPL_KISS(mdb::column_lock_t(r, 3, ALock::WLOCK));
+    // ############################################################
 
-        // W order
-        if (!(IS_MODE_RCC || IS_MODE_RO6) ||
-                ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { 
-            // non-rcc finish || rcc start request
-            std::vector<Value> row_data({
+    // W order
+    if (!(IS_MODE_RCC || IS_MODE_RO6) ||
+          ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) {
+      // non-rcc finish || rcc start request
+      std::vector<Value> row_data({
                     input[1],   // o_d_id
                     input[2],   // o_w_id
                     input[0],   // o_id
@@ -160,40 +160,40 @@ void TpccPiece::reg_new_order() {
                     input[4],   // o_carrier_id
                     input[5],   // o_ol_cnt
                     input[6]    // o_all_local
-            });
+      });
 
-            CREATE_ROW(tbl->schema(), row_data);
-        }
+      CREATE_ROW(tbl->schema(), row_data);
+    }
 
-        verify(r->schema_);
-        RCC_KISS(r, 0, false);
-        RCC_KISS(r, 1, false);
-        RCC_KISS(r, 2, false);
-        RCC_KISS(r, 5, false);
-        RCC_SAVE_ROW(r, TPCC_NEW_ORDER_3);
-        RCC_PHASE1_RET; 
-        RCC_LOAD_ROW(r, TPCC_NEW_ORDER_3);
+    verify(r->schema_);
+    RCC_KISS(r, 0, false);
+    RCC_KISS(r, 1, false);
+    RCC_KISS(r, 2, false);
+    RCC_KISS(r, 5, false);
+    RCC_SAVE_ROW(r, TPCC_NEW_ORDER_3);
+    RCC_PHASE1_RET;
+    RCC_LOAD_ROW(r, TPCC_NEW_ORDER_3);
 
-        verify(r->schema_);
-        dtxn->insert_row(tbl, r);
+    verify(r->schema_);
+    dtxn->insert_row(tbl, r);
 
-        // write TPCC_TB_ORDER_C_ID_SECONDARY
-        //mdb::MultiBlob mb(3);
-        //mb[0] = input[1].get_blob();
-        //mb[1] = input[2].get_blob();
-        //mb[2] = input[3].get_blob();
-        r = dtxn->query(dtxn->get_table(TPCC_TB_ORDER_C_ID_SECONDARY),
-                mb, true, header.pid).next();
-                           dtxn->WriteColumn(r, 3, input[0]);
+    // write TPCC_TB_ORDER_C_ID_SECONDARY
+    //mdb::MultiBlob mb(3);
+    //mb[0] = input[1].get_blob();
+    //mb[1] = input[2].get_blob();
+    //mb[2] = input[3].get_blob();
+    r = dtxn->query(dtxn->get_table(TPCC_TB_ORDER_C_ID_SECONDARY),
+                    mb, true, header.pid).next();
+    dtxn->WriteColumn(r, 3, input[0]);
 
-        // ############################################################
-        verify(*output_size >= oi);
-        *res = SUCCESS;
-        Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_3);
-        // ############################################################
-        *output_size = oi;
-        return;
-    } END_PIE
+    // ############################################################
+    verify(*output_size >= oi);
+    *res = SUCCESS;
+    Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_3);
+    // ############################################################
+    *output_size = oi;
+    return;
+  } END_PIE
 
     BEGIN_PIE(TPCC_NEW_ORDER,
             TPCC_NEW_ORDER_4, // W new_order

@@ -441,7 +441,7 @@ void RCCDTxn::kiss(mdb::Row *r, int col, bool immediate) {
     int8_t edge_type = immediate ? EDGE_I : EDGE_D;
     if (entry->last_ != NULL) {
       entry->last_->outgoing_[tv_] |= edge_type;
-      tv_->incoming_[entry->last_] |= edge_type;
+      tv_->incoming_[entry->lXSast_] |= edge_type;
     } else {
       entry->last_ = tv_;
     }
