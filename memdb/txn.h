@@ -195,8 +195,9 @@ class Txn: public NoCopy {
                      symbol_t order = symbol_t::ORD_ASC) {
     return query_gt(tbl, kv.get_blob(), retrieve, pid, order);
   }
-  ResultSet query_gt
-      (Table *tbl, const MultiBlob &mb, symbol_t order = symbol_t::ORD_ASC);
+  ResultSet query_gt(Table *tbl,
+                     const MultiBlob &mb,
+                     symbol_t order = symbol_t::ORD_ASC);
   ResultSet query_gt(Table *tbl,
                      const MultiBlob &mb,
                      bool retrieve,
