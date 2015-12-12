@@ -84,7 +84,7 @@ class ResultSet: public Enumerator<Row *> {
 };
 
 class Txn: public NoCopy {
- protected:
+ public:
   const TxnMgr *mgr_;
   txn_id_t txnid_;
   Txn(const TxnMgr *mgr, txn_id_t txnid) : mgr_(mgr), txnid_(txnid) { }
@@ -282,50 +282,6 @@ class TxnMgr: public NoCopy {
   SnapshotTable *get_snapshot_table(const std::string &tbl_name) const;
 };
 
-
-class TxnUnsafe: public Txn {
- public:
-  TxnUnsafe(const TxnMgr *mgr, txn_id_t txnid) : Txn(mgr, txnid) { }
-  virtual symbol_t rtti() const {
-    return symbol_t::TXN_UNSAFE;
-  }
-  void abort() {
-    // do nothing
-  }
-  bool commit() {
-    // always allowed
-    return true;
-  }
-  virtual bool read_column(Row *row, column_id_t col_id, Value *value);
-  virtual bool write_column(Row *row, column_id_t col_id, const Value &value);
-  virtual bool insert_row(Table *tbl, Row *row);
-  virtual bool remove_row(Table *tbl, Row *row);
-
-  virtual ResultSet query(Table *tbl, const MultiBlob &mb);
-
-  virtual ResultSet query_lt(Table *tbl,
-                             const SortedMultiKey &smk,
-                             symbol_t order = symbol_t::ORD_ASC);
-  virtual ResultSet query_gt(Table *tbl,
-                             const SortedMultiKey &smk,
-                             symbol_t order = symbol_t::ORD_ASC);
-  virtual ResultSet query_in(Table *tbl,
-                             const SortedMultiKey &low,
-                             const SortedMultiKey &high,
-                             symbol_t order = symbol_t::ORD_ASC);
-
-  virtual ResultSet all(Table *tbl, symbol_t order = symbol_t::ORD_ANY);
-};
-
-class TxnMgrUnsafe: public TxnMgr {
- public:
-  virtual Txn *start(txn_id_t txnid) {
-    return new TxnUnsafe(this, txnid);
-  }
-  virtual symbol_t rtti() const {
-    return symbol_t::TXN_UNSAFE;
-  }
-};
 
 
 struct table_row_pair {
@@ -533,6 +489,21 @@ class MergedCursor: public NoCopy, public Enumerator<const Row *> {
   }
 };
 
+static void redirect_locks(std::unordered_multimap<Row *, column_id_t> &locks,
+                           Row *new_row,
+                           Row *old_row) {
+  auto it_pair = locks.equal_range(old_row);
+  std::vector<column_id_t> locked_columns;
+  for (auto it_lock = it_pair.first; it_lock != it_pair.second; ++it_lock) {
+    locked_columns.push_back(it_lock->second);
+  }
+  if (!locked_columns.empty()) {
+    locks.erase(old_row);
+  }
+  for (auto &col_id : locked_columns) {
+    insert_into_map(locks, new_row, col_id);
+  }
+}
 
 
 } // namespace mdb
