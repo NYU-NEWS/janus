@@ -71,7 +71,7 @@ void TpccPiece::reg_order_status() {
         verify(input_size == 3);
         // #################################################################
         
-        mdb::Table *tbl = dtxn->get_table(TPCC_TB_CUSTOMER);
+        mdb::Table *tbl = dtxn->GetTable(TPCC_TB_CUSTOMER);
         // R customer
         Value buf;
         mdb::MultiBlob mb(3);
@@ -79,7 +79,7 @@ void TpccPiece::reg_order_status() {
         mb[0] = input[2].get_blob();
         mb[1] = input[1].get_blob();
         mb[2] = input[0].get_blob();
-        mdb::Row *r = dtxn->query(tbl, mb, output_size, header.pid).next();
+        mdb::Row *r = dtxn->Query(tbl, mb, output_size, header.pid).next();
 
         // #################################################################
         TPL_KISS(
@@ -121,18 +121,18 @@ void TpccPiece::reg_order_status() {
         mb_0[0] = input[1].get_blob();
         mb_0[1] = input[0].get_blob();
         mb_0[2] = input[2].get_blob();
-        mdb::Row *r_0 = dtxn->query(
-                dtxn->get_table(TPCC_TB_ORDER_C_ID_SECONDARY), mb_0,
-                output_size, header.pid).next();
+        mdb::Row *r_0 = dtxn->Query(
+            dtxn->GetTable(TPCC_TB_ORDER_C_ID_SECONDARY), mb_0,
+            output_size, header.pid).next();
 
         mdb::MultiBlob mb(3);
         mb[0] = input[1].get_blob();
         mb[1] = input[0].get_blob();
         mb[2] = r_0->get_blob(3); // FIXME add lock before reading 
 
-        mdb::Row *r = dtxn->query(
-                dtxn->get_table(TPCC_TB_ORDER), mb,
-                false, header.pid).next();
+        mdb::Row *r = dtxn->Query(
+            dtxn->GetTable(TPCC_TB_ORDER), mb,
+            false, header.pid).next();
 
 
         if (IS_MODE_2PL && output_size == NULL) {
@@ -253,9 +253,9 @@ void TpccPiece::reg_order_status() {
         mbl[3] = ol_number_low.get_blob();
         mbh[3] = ol_number_high.get_blob();
 
-        mdb::ResultSet rs = dtxn->query_in(
-                dtxn->get_table(TPCC_TB_ORDER_LINE), mbl, mbh,
-                output_size, header.pid, mdb::ORD_DESC);
+        mdb::ResultSet rs = dtxn->QueryIn(
+            dtxn->GetTable(TPCC_TB_ORDER_LINE), mbl, mbh,
+            output_size, header.pid, mdb::ORD_DESC);
         mdb::Row *r = NULL;
         //cell_locator_t cl(TPCC_TB_ORDER_LINE, 4);
         //cl.primary_key[0] = input[2].get_blob();

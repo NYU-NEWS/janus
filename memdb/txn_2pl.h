@@ -80,27 +80,31 @@ class Txn2PL: public Txn {
     }
 
    public:
-    PieceStatus(i64 tid, i64 pid, rrr::DragonBall *db, mdb::Value *output,
-                rrr::i32 *output_size, bool *wound,
+    PieceStatus(i64 tid,
+                i64 pid,
+                rrr::DragonBall *db,
+                mdb::Value *output,
+                rrr::i32 *output_size,
+                bool *wound,
                 const std::function<int(void)> &wound_callback,
-                Txn2PL* txn) :
-        pid_(pid),
-        num_waiting_(1),
-        num_acquired_(0),
-        rej_(false),
-        reply_db_(db),
-        output_buf_(output),
-        output_size_buf_(output_size),
-        output_vec_(NULL),
-        finish_(false),
-        rw_succ_(false),
-        rw_lock_group_(swap_bits(tid), wound_callback),
-        rm_succ_(false),
-        rm_lock_group_(swap_bits(tid), wound_callback),
-        is_rw_(false),
-        wound_(wound),
-        query_buf_(query_buf_t()),
-        txn_(txn) {
+                Txn2PL* txn)
+        : pid_(pid),
+          num_waiting_(1),
+          num_acquired_(0),
+          rej_(false),
+          reply_db_(db),
+          output_buf_(output),
+          output_size_buf_(output_size),
+          output_vec_(NULL),
+          finish_(false),
+          rw_succ_(false),
+          rw_lock_group_(swap_bits(tid), wound_callback),
+          rm_succ_(false),
+          rm_lock_group_(swap_bits(tid), wound_callback),
+          is_rw_(false),
+          wound_(wound),
+          query_buf_(query_buf_t()),
+          txn_(txn) {
     }
 
     PieceStatus(i64 tid, i64 pid, rrr::DragonBall *db,
@@ -344,8 +348,7 @@ class Txn2PL: public Txn {
       ResultSet rs = qb.buf[qb.retrieve_index++];
       rs.reset();
       return rs;
-    }
-    else {
+    } else {
       ResultSet rs = do_query_in(tbl, low, high, order);
       qb.buf.push_back(rs);
       return rs;

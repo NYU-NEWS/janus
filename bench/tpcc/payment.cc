@@ -14,8 +14,8 @@ void TpccPiece::reg_payment() {
         Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_0);
         i32 oi = 0;
         // ############################################################
-        mdb::Row *r = dtxn->query(dtxn->get_table(TPCC_TB_WAREHOUSE),
-                input[0], output_size, header.pid).next();
+        mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_WAREHOUSE),
+                                  input[0], output_size, header.pid).next();
 
         // ############################################################
         TPL_KISS (
@@ -57,8 +57,8 @@ void TpccPiece::reg_payment() {
         mdb::MultiBlob mb(2);
         mb[0] = input[1].get_blob();
         mb[1] = input[0].get_blob();
-        mdb::Row *r = dtxn->query(dtxn->get_table(TPCC_TB_DISTRICT), mb,
-                output_size, header.pid).next();
+        mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT), mb,
+                                  output_size, header.pid).next();
 
         // ############################################################
         TPL_KISS(
@@ -106,8 +106,8 @@ void TpccPiece::reg_payment() {
         if (!(IS_MODE_RCC || IS_MODE_RO6) 
                 || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { 
             // non-rcc || rcc start request
-            r = dtxn->query(dtxn->get_table(TPCC_TB_DISTRICT), mb,
-                    output_size, header.pid).next();
+            r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT), mb,
+                            output_size, header.pid).next();
             verify(r->schema_ != nullptr);
         }
 
@@ -207,8 +207,8 @@ void TpccPiece::reg_payment() {
         if (!(IS_MODE_RCC || IS_MODE_RO6) || 
                 ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { 
             // non-rcc || rcc start request
-            r = dtxn->query(dtxn->get_table(TPCC_TB_CUSTOMER), mb,
-                    output_size, header.pid).next();
+            r = dtxn->Query(dtxn->GetTable(TPCC_TB_CUSTOMER), mb,
+                            output_size, header.pid).next();
         }
 
 

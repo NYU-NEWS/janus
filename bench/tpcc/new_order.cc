@@ -16,7 +16,7 @@ void TpccPiece::reg_new_order() {
     mdb::MultiBlob mb(2);
     mb[0] = input[1].get_blob();
     mb[1] = input[0].get_blob();
-    mdb::Row *r = dtxn->query(dtxn->get_table(TPCC_TB_DISTRICT),
+    mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT),
                               mb, output_size, header.pid).next();
     // ############################################################
     TPL_KISS(
@@ -59,7 +59,7 @@ void TpccPiece::reg_new_order() {
     Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_1);
     // ############################################################
 
-    mdb::Row *r = dtxn->query(dtxn->get_table(TPCC_TB_WAREHOUSE),
+    mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_WAREHOUSE),
                               input[0], output_size, header.pid).next();
 
     // ############################################################
@@ -95,9 +95,9 @@ void TpccPiece::reg_new_order() {
     mb[0] = input[2].get_blob();
     mb[1] = input[1].get_blob();
     mb[2] = input[0].get_blob();
-    auto table = dtxn->get_table(TPCC_TB_CUSTOMER);
-    mdb::Row *r = dtxn->query(table, mb,
-                output_size, header.pid).next();
+    auto table = dtxn->GetTable(TPCC_TB_CUSTOMER);
+    mdb::Row *r = dtxn->Query(table, mb,
+                              output_size, header.pid).next();
 
     // ############################################################
     TPL_KISS(
@@ -131,7 +131,7 @@ void TpccPiece::reg_new_order() {
     i32 oi = 0;
     // ############################################################
         
-    mdb::Table *tbl = dtxn->get_table(TPCC_TB_ORDER);
+    mdb::Table *tbl = dtxn->GetTable(TPCC_TB_ORDER);
 
     mdb::MultiBlob mb(3);
     mb[0] = input[1].get_blob();
@@ -139,7 +139,7 @@ void TpccPiece::reg_new_order() {
     mb[2] = input[3].get_blob();
 
     mdb::Row *r = NULL;
-    r = dtxn->query(dtxn->get_table(TPCC_TB_ORDER_C_ID_SECONDARY),
+    r = dtxn->Query(dtxn->GetTable(TPCC_TB_ORDER_C_ID_SECONDARY),
                     mb, false, header.pid).next();
     verify(r);
     verify(r->schema_);
@@ -175,14 +175,14 @@ void TpccPiece::reg_new_order() {
     RCC_LOAD_ROW(r, TPCC_NEW_ORDER_3);
 
     verify(r->schema_);
-    dtxn->insert_row(tbl, r);
+                         dtxn->InsertRow(tbl, r);
 
     // write TPCC_TB_ORDER_C_ID_SECONDARY
     //mdb::MultiBlob mb(3);
     //mb[0] = input[1].get_blob();
     //mb[1] = input[2].get_blob();
     //mb[2] = input[3].get_blob();
-    r = dtxn->query(dtxn->get_table(TPCC_TB_ORDER_C_ID_SECONDARY),
+    r = dtxn->Query(dtxn->GetTable(TPCC_TB_ORDER_C_ID_SECONDARY),
                     mb, true, header.pid).next();
     dtxn->WriteColumn(r, 3, input[0]);
 
@@ -206,7 +206,7 @@ void TpccPiece::reg_new_order() {
         TPL_KISS_NONE;
 
         i32 oi = 0;
-        mdb::Table *tbl = dtxn->get_table(TPCC_TB_NEW_ORDER);
+        mdb::Table *tbl = dtxn->GetTable(TPCC_TB_NEW_ORDER);
         mdb::Row *r = NULL;
 
         // ############################################################
@@ -231,7 +231,7 @@ void TpccPiece::reg_new_order() {
         RCC_PHASE1_RET; 
         RCC_LOAD_ROW(r, TPCC_NEW_ORDER_4);
 
-        dtxn->insert_row(tbl, r);
+                           dtxn->InsertRow(tbl, r);
         // ############################################################
         verify(*output_size >= oi);
         Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_4);
@@ -250,8 +250,8 @@ void TpccPiece::reg_new_order() {
         verify(input_size == 1);
         Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_5);
         // ############################################################
-        mdb::Row *r = dtxn->query(dtxn->get_table(TPCC_TB_ITEM), input[0],
-                output_size, header.pid).next();
+        mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_ITEM), input[0],
+                                  output_size, header.pid).next();
 
         // ############################################################
         TPL_KISS(
@@ -290,8 +290,8 @@ void TpccPiece::reg_new_order() {
         mdb::MultiBlob mb(2);
         mb[0] = input[0].get_blob();
         mb[1] = input[1].get_blob();
-        mdb::Row *r = dtxn->query(dtxn->get_table(TPCC_TB_STOCK), mb,
-                output_size, header.pid).next();
+        mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_STOCK), mb,
+                                  output_size, header.pid).next();
         verify(r->schema_);
 
         // ############################################################
@@ -332,8 +332,8 @@ void TpccPiece::reg_new_order() {
         if (!(IS_MODE_RCC || IS_MODE_RO6) 
                 || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { 
             // non-rcc || rcc start request
-            r = dtxn->query(dtxn->get_table(TPCC_TB_STOCK), mb,
-                    output_size, header.pid).next();
+            r = dtxn->Query(dtxn->GetTable(TPCC_TB_STOCK), mb,
+                            output_size, header.pid).next();
             verify(r->schema_);
         }
 
@@ -410,7 +410,7 @@ void TpccPiece::reg_new_order() {
         
         TPL_KISS_NONE;
 
-        mdb::Table *tbl = dtxn->get_table(TPCC_TB_ORDER_LINE);
+        mdb::Table *tbl = dtxn->GetTable(TPCC_TB_ORDER_LINE);
         mdb::Row *r = NULL;
 
         if (!(IS_MODE_RCC || IS_MODE_RO6) 
@@ -432,7 +432,7 @@ void TpccPiece::reg_new_order() {
         RCC_LOAD_ROW(r, TPCC_NEW_ORDER_8);
         
         i32 oi = 0;
-        dtxn->insert_row(tbl, r);
+                           dtxn->InsertRow(tbl, r);
         // ############################################################
         verify(*output_size >= oi);
         *output_size = oi;
