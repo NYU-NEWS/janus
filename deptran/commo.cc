@@ -34,7 +34,8 @@ void Commo::SendStart(parid_t par_id,
   verify(header.p_type);
   SimpleCommand *cmd  = (SimpleCommand*)req.cmd;
   RococoProxy *proxy = vec_rpc_proxy_[par_id];
-  std::function<void(Future*)> cb = [coo, this, callback, cmd, par_id](Future *fu) {
+  std::function<void(Future*)> cb =
+      [coo, this, callback, cmd, par_id] (Future *fu) {
     StartReply reply;
     Log_debug("SendStart callback for %ld from %ld", par_id, coo->coo_id_);
     reply.cmd = cmd;
@@ -44,8 +45,10 @@ void Commo::SendStart(parid_t par_id,
   };
   fuattr.callback = cb;
   Log_debug("SendStart to %ld from %ld", par_id, coo->coo_id_);
-  Future::safe_release(proxy->async_start_pie(header, cmd->input,
-                                              cmd->output_size, fuattr));
+  Future::safe_release(proxy->async_start_pie(header,
+                                              cmd->input,
+                                              cmd->output_size,
+                                              fuattr));
 }
 
 void Commo::SendStart(parid_t par_id, 

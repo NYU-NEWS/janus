@@ -1,4 +1,3 @@
-
 #include "../config.h"
 #include "../multi_value.h"
 #include "../rcc/dep_graph.h"
@@ -16,14 +15,14 @@ int ThreePhaseExecutor::start_launch(
     const std::vector<mdb::Value> &input,
     const rrr::i32 &output_size,
     rrr::i32 *res,
-    std::vector<mdb::Value> *output,
+    map<int32_t, Value> &output,
     rrr::DeferredReply *defer) {
   verify(0);
 }
 
 
 int ThreePhaseExecutor::prepare_launch(
-    const std::vector <i32> &sids,
+    const std::vector<i32> &sids,
     rrr::i32 *res,
     rrr::DeferredReply *defer
 ) {
@@ -98,35 +97,37 @@ int ThreePhaseExecutor::commit() {
   verify(0);
 }
 
-void ThreePhaseExecutor::execute(
-    const RequestHeader &header,
-    const Value *input,
-    rrr::i32 input_size,
-    rrr::i32 *res,
-    mdb::Value *output,
-    rrr::i32 *output_size
-) {
-  txn_reg_->get(header).txn_handler(
-      this, dtxn_, header, input, input_size,
-      res, output, output_size);
+void ThreePhaseExecutor::execute(const RequestHeader &header,
+                                 const Value *input,
+                                 rrr::i32 input_size,
+                                 rrr::i32 *res,
+                                 map<int32_t, Value> &output,
+                                 rrr::i32 *output_size) {
+  txn_reg_->get(header).txn_handler(this,
+                                    dtxn_,
+                                    header,
+                                    input,
+                                    input_size,
+                                    res,
+                                    output,
+                                    output_size);
 }
 
 void ThreePhaseExecutor::execute(
     const RequestHeader &header,
-    const std::vector <mdb::Value> &input,
+    const std::vector<mdb::Value> &input,
     rrr::i32 *res,
-    std::vector <mdb::Value> *output
+    map<int32_t, Value> &output
 ) {
-  rrr::i32 output_size = output->size();
+  rrr::i32 output_size = 0;
   txn_reg_->get(header).txn_handler(this,
                                     dtxn_,
                                     header,
                                     input.data(),
                                     input.size(),
                                     res,
-                                    output->data(),
+                                    output,
                                     &output_size);
-  output->resize(output_size);
 }
 
 } // namespace rococo;

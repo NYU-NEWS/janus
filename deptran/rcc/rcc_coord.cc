@@ -274,8 +274,8 @@ void RCCCoord::deptran_start_ro(TxnChopper *ch) {
       {
         std::lock_guard<std::mutex> lock(this->mtx_);
 
-        std::vector<Value> res;
-        fu->get_reply() >> res;
+        map<int32_t, Value> output;
+        fu->get_reply() >> output;
 
         Log::debug("receive deptran RO start response, tid: %llx, pid: %llx, ",
                    header.tid,
@@ -283,9 +283,9 @@ void RCCCoord::deptran_start_ro(TxnChopper *ch) {
 
         ch->n_pieces_out_++;
 
-        if (ch->read_only_start_callback(pi, NULL, res)) this->deptran_start_ro(
-            ch);
-        else if (ch->n_pieces_out_ == ch->n_pieces_all_) {
+        if (ch->read_only_start_callback(pi, NULL, output)) {
+          this->deptran_start_ro(ch);
+        } else if (ch->n_pieces_out_ == ch->n_pieces_all_) {
           ch->read_only_reset();
           this->deptran_finish_ro(ch);
         }
@@ -324,7 +324,7 @@ void RCCCoord::deptran_finish_ro(TxnChopper *ch) {
         std::lock_guard<std::mutex> lock(this->mtx_);
 
         int res;
-        std::vector<Value> output;
+        map<int32_t, Value> output;
         fu->get_reply() >> output;
 
         Log::debug(

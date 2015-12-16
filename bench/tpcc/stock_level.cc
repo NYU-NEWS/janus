@@ -107,9 +107,9 @@ void TpccPiece::reg_stock_level() {
         }
 
         // ###################################################
-        verify(*output_size >= oi);
-        verify(*output_size >= 100);
-        verify(*output_size <= 300);
+//        verify(*output_size >= oi);
+//        verify(*output_size >= 100);
+//        verify(*output_size <= 300);
         *res = SUCCESS;
         // ###################################################
         *output_size = oi;

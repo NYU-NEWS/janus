@@ -48,7 +48,7 @@ class RCCDTxn: public DTxn {
       TxnHandler &handler,
       const RequestHeader &header,
       const std::vector <mdb::Value> &input,
-      std::vector <mdb::Value> *output
+      map<int32_t, Value> *output
   );
 
   // TODO remove
@@ -62,7 +62,7 @@ class RCCDTxn: public DTxn {
   virtual void start_ro(
       const RequestHeader &header,
       const std::vector <mdb::Value> &input,
-      std::vector <mdb::Value> &output,
+      map<int32_t, Value> &output,
       rrr::DeferredReply *defer
   );
 
@@ -88,11 +88,8 @@ class RCCDTxn: public DTxn {
   );
 
   void exe_deferred(
-      std::vector <
-      std::pair<RequestHeader,
-                std::vector < mdb::Value>
-      >
-  > &outputs
+      std::vector <std::pair<RequestHeader,
+                             map<int32_t, Value> > > &outputs
   );
 
   void send_ask_req(

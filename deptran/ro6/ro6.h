@@ -31,7 +31,7 @@ class RO6DTxn: public RCCDTxn {
   virtual void start_ro(
       const RequestHeader &header,
       const std::vector <mdb::Value> &input,
-      std::vector <mdb::Value> &output,
+      std::map<int32_t, mdb::Value> &output,
       rrr::DeferredReply *defer
   );
 

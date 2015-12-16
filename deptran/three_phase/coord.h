@@ -111,7 +111,7 @@ class ThreePhaseCoord : public Coordinator {
 //  void LegacyStart(TxnChopper *ch);
 //  void LegacyStartAck(TxnChopper *ch, int pi, Future *fu);
   void rpc_null_start(TxnChopper *ch);
-  void naive_batch_start(TxnChopper *ch);
+//  void naive_batch_start(TxnChopper *ch);
 //  void batch_start(TxnChopper *ch);
   void Prepare();
   void PrepareAck(TxnChopper *ch, phase_t phase, Future *fu);

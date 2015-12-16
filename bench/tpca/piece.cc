@@ -13,8 +13,8 @@ void TpcaPiece::reg_all() {
 }
 
 void TpcaPiece::reg_pieces() {
-    BEGIN_PIE(TPCA_PAYMENT, TPCA_PAYMENT_1, DF_REAL) {
-        Log::debug("output: %p, output_size: %p", output, output_size);
+  BEGIN_PIE(TPCA_PAYMENT, TPCA_PAYMENT_1, DF_REAL) {
+//        Log::debug("output: %p, output_size: %p", output, output_size);
 //        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
       mdb::Txn *txn = dtxn->mdb_txn_;
         Value buf;
@@ -100,7 +100,7 @@ void TpcaPiece::reg_pieces() {
     } END_PIE
 
     BEGIN_PIE(TPCA_PAYMENT, TPCA_PAYMENT_2, DF_REAL) {
-        Log::debug("output: %p, output_size: %p", output, output_size);
+//        Log::debug("output: %p, output_size: %p", output, output_size);
 //        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
         mdb::Txn *txn = dtxn->mdb_txn_;
         Value buf;
@@ -195,7 +195,7 @@ void TpcaPiece::reg_pieces() {
     } END_PIE
 
     BEGIN_PIE(TPCA_PAYMENT, TPCA_PAYMENT_3, DF_REAL) {
-        Log::debug("output: %p, output_size: %p", output, output_size);
+//        Log::debug("output: %p, output_size: %p", output, output_size);
 //        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
                                                        mdb::Txn *txn = dtxn->mdb_txn_;
         Value buf;

@@ -46,8 +46,11 @@ void RCCDTxn::StartAfterLog(
   phase_ = PHASE_RCC_START;
   // execute the IR actions.
   auto pair = txn_reg_->get(header.t_type, header.p_type);
-  bool deferred = start_exe_itfr(
-      pair.defer, pair.txn_handler, header, input, &res->output);
+  bool deferred = start_exe_itfr(pair.defer,
+                                 pair.txn_handler,
+                                 header,
+                                 input,
+                                 &res->output);
   // Reply
   res->is_defered = deferred ? 1 : 0;
   auto sz_sub_gra = RCCDTxn::dep_s->sub_txn_graph(header.tid, res->gra_m);
@@ -66,13 +69,11 @@ bool RCCDTxn::start_exe_itfr(
     TxnHandler &handler,
     const RequestHeader &header,
     const std::vector<mdb::Value> &input,
-    std::vector<mdb::Value> *output
-) {
+    map<int32_t, Value> *output) {
   bool deferred;
   switch (defer_type) {
     case DF_NO: { // immediate
       int output_size = 300;
-      output->resize(output_size);
       int res;
       // TODO fix
       handler(nullptr,
@@ -81,9 +82,8 @@ bool RCCDTxn::start_exe_itfr(
               input.data(),
               input.size(),
               &res,
-              output->data(),
+              *output,
               &output_size);
-      output->resize(output_size);
       deferred = false;
       break;
     }
@@ -96,13 +96,14 @@ bool RCCDTxn::start_exe_itfr(
         drs.reserve(100); //XXX
       }
       drs.push_back(dr);
+      map<int32_t, Value> no_use;
       handler(nullptr,
               this,
               header,
               drs.back().inputs.data(),
               drs.back().inputs.size(),
               NULL,
-              NULL,
+              no_use,
               NULL);
       deferred = true;
       break;
@@ -118,7 +119,6 @@ bool RCCDTxn::start_exe_itfr(
       }
       drs.push_back(dr);
       int output_size = 300; //XXX
-      output->resize(output_size);
       int res;
       handler(nullptr,
               this,
@@ -126,9 +126,8 @@ bool RCCDTxn::start_exe_itfr(
               drs.back().inputs.data(),
               drs.back().inputs.size(),
               &res,
-              output->data(),
+              *output,
               &output_size);
-      output->resize(output_size);
       deferred = false;
       break;
     }
@@ -150,25 +149,23 @@ void RCCDTxn::start(
 void RCCDTxn::start_ro(
     const RequestHeader &header,
     const std::vector<mdb::Value> &input,
-    std::vector<mdb::Value> &output,
+    map<int32_t, Value> &output,
     DeferredReply *defer) {
 
   conflict_txns_.clear();
   auto txn_handler_pair = txn_reg_->get(header.t_type, header.p_type);
-  int output_size = 300;
-  output.resize(output_size);
   int res;
   phase_ = 1;
 
+  int output_size;
   txn_handler_pair.txn_handler(nullptr,
                                this,
                                header,
                                input.data(),
                                input.size(),
                                &res,
-                               output.data(),
+                               output,
                                &output_size);
-  output.resize(output_size);
 
   // get conflicting transactions
   std::vector<TxnInfo *> &conflict_txns = conflict_txns_;
@@ -382,8 +379,8 @@ void RCCDTxn::inquire(
 }
 
 void RCCDTxn::exe_deferred(
-    std::vector<std::pair<RequestHeader, std::vector<mdb::Value> > >
-    &outputs) {
+    std::vector<std::pair<RequestHeader,
+                          map<int32_t, Value> > > &outputs) {
 
   verify(phase_ == 1);
   phase_ = 2;
@@ -399,23 +396,20 @@ void RCCDTxn::exe_deferred(
       auto txn_handler_pair = txn_reg_->get(header.t_type, header.p_type);
       verify(header.tid == tid_);
 
-      std::vector<Value> output;
-      int output_size = 300;
-      output.resize(output_size);
+      map<int32_t, Value> output;
+      int output_size = 0;
       int res;
-
       txn_handler_pair.txn_handler(nullptr,
                                    this,
                                    header,
                                    input.data(),
                                    input.size(),
                                    &res,
-                                   output.data(),
+                                   output,
                                    &output_size);
       if (header.p_type == TPCC_PAYMENT_4
           && header.t_type == TPCC_PAYMENT)
         verify(output_size == 15);
-      output.resize(output_size);
 
       // FIXME. what the fuck happens here?
       auto pp = std::make_pair(header, output);

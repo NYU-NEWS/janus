@@ -19,7 +19,8 @@ public:
 
     virtual bool start_callback(const std::vector<int> &pi, int res, BatchStartArgsHelper &bsah);
 
-    virtual bool start_callback(int pi, int res, const std::vector<mdb::Value> &output);
+    virtual bool start_callback(int pi, int res,
+                                map<int32_t, Value> &output);
 
     virtual bool is_read_only();
 

@@ -204,9 +204,9 @@ void ThreePhaseCoord::StartAck(StartReply &reply, phase_t phase) {
   }
 }
 
-void ThreePhaseCoord::naive_batch_start(TxnChopper *ch) {
-
-}
+//void ThreePhaseCoord::naive_batch_start(TxnChopper *ch) {
+//
+//}
 
 /** caller should be thread_safe */
 void ThreePhaseCoord::Prepare() {

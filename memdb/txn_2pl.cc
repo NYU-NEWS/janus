@@ -117,31 +117,31 @@ void Txn2PL::PieceStatus::reg_rw_lock(const std::vector<column_lock_t> &col_lock
 }
 
 // insert piece in piece_map_, set reply dragonball & set output
-void Txn2PL::init_piece(i64 tid, i64 pid, rrr::DragonBall *db,
-                        mdb::Value *output,
-                        rrr::i32 *output_size) {
-  PieceStatus *ps = new PieceStatus(tid,
-                                    pid,
-                                    db,
-                                    output,
-                                    output_size,
-                                    &wound_,
-                                    [this]() -> int {
-                                      if (prepared_) { // can't wound
-                                        return 1;
-                                      }
-                                      else {
-                                        wound_ = true;
-                                        return 0;
-                                      }
-                                    },
-                                    this);
-  piece_map_[pid] = ps;
-  SetPsCache(ps);
-}
+//void Txn2PL::init_piece(i64 tid, i64 pid, rrr::DragonBall *db,
+//                        mdb::Value *output,
+//                        rrr::i32 *output_size) {
+//  PieceStatus *ps = new PieceStatus(tid,
+//                                    pid,
+//                                    db,
+//                                    output,
+//                                    output_size,
+//                                    &wound_,
+//                                    [this]() -> int {
+//                                      if (prepared_) { // can't wound
+//                                        return 1;
+//                                      }
+//                                      else {
+//                                        wound_ = true;
+//                                        return 0;
+//                                      }
+//                                    },
+//                                    this);
+//  piece_map_[pid] = ps;
+//  SetPsCache(ps);
+//}
 
 void Txn2PL::init_piece(i64 tid, i64 pid, rrr::DragonBall *db,
-                        std::vector<mdb::Value> *output) {
+                        std::map<int32_t, mdb::Value> *output) {
   PieceStatus *ps = new PieceStatus(tid,
                                     pid,
                                     db,

@@ -137,7 +137,7 @@ void RococoServiceImpl::start_pie(
     const std::vector<mdb::Value> &input,
     const rrr::i32 &output_size,
     rrr::i32 *res,
-    std::vector<mdb::Value> *output,
+    map<int32_t, Value> *output,
     rrr::DeferredReply *defer
 ) {
   std::lock_guard<std::mutex> guard(mtx_);
@@ -155,7 +155,7 @@ void RococoServiceImpl::start_pie(
   piece_count_tid_.insert(header.tid);
 #endif
 
-  output->resize(output_size);
+//  output->resize(output_size);
   // find stored procedure, and run it
   *res = SUCCESS;
   ((ThreePhaseSched*)dtxn_sched_)->
@@ -314,7 +314,7 @@ void RococoServiceImpl::rcc_ask_txn(
 void RococoServiceImpl::rcc_ro_start_pie(
     const RequestHeader &header,
     const vector<Value> &input,
-    vector<Value> *output,
+    map<int32_t, Value> *output,
     rrr::DeferredReply *defer) {
   std::lock_guard<std::mutex> guard(mtx_);
   RCCDTxn *dtxn = (RCCDTxn *) dtxn_sched_->GetOrCreateDTxn(header.tid, true);

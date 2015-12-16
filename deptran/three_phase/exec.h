@@ -14,14 +14,12 @@ class ThreePhaseExecutor: public Executor {
 
   virtual ~ThreePhaseExecutor();
 
-  virtual int start_launch(
-      const RequestHeader &header,
-      const std::vector <mdb::Value> &input,
-      const rrr::i32 &output_size,
-      rrr::i32 *res,
-      std::vector <mdb::Value> *output,
-      rrr::DeferredReply *defer
-  );
+  virtual int start_launch(const RequestHeader &header,
+                           const std::vector <mdb::Value> &input,
+                           const rrr::i32 &output_size,
+                           rrr::i32 *res,
+                           map<int32_t, Value> &output,
+                           rrr::DeferredReply *defer);
 
   int prepare_launch(
       const std::vector <i32> &sids,
@@ -45,21 +43,17 @@ class ThreePhaseExecutor: public Executor {
 
   int abort();
 
-  void execute(
-      const RequestHeader &header,
-      const std::vector <mdb::Value> &input,
-      rrr::i32 *res,
-      std::vector <mdb::Value> *output
-  );
+  void execute(const RequestHeader &header,
+               const std::vector <mdb::Value> &input,
+               rrr::i32 *res,
+               map<int32_t, Value> &output);
 
-  void execute(
-      const RequestHeader &header,
-      const Value *input,
-      rrr::i32 input_size,
-      rrr::i32 *res,
-      mdb::Value *output,
-      rrr::i32 *output_size
-  );
+  void execute(const RequestHeader &header,
+               const Value *input,
+               rrr::i32 input_size,
+               rrr::i32 *res,
+               map<int32_t, Value> &output,
+               rrr::i32 *output_size);
 
 };
 

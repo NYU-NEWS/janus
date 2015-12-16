@@ -12,14 +12,14 @@ int ThreePhaseSched::OnPhaseOneRequest(
     const std::vector<mdb::Value> &input,
     const rrr::i32 &output_size,
     rrr::i32 *res,
-    std::vector<mdb::Value> *output,
+    map<int32_t, Value> *output,
     rrr::DeferredReply *defer) {
   auto exec = (ThreePhaseExecutor*) GetOrCreateExecutor(header.tid);
   exec->start_launch(header,
                      input,
                      output_size,
                      res,
-                     output,
+                     *output,
                      defer);
   defer->reply();
   return 0;

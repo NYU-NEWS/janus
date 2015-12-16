@@ -18,13 +18,13 @@ struct BatchRequestHeader {
 
 struct BatchChopStartResponse {
     vector<i8> is_defers;
-    vector<vector<Value>> outputs;
+    vector<map<int32_t, Value>> outputs;
     GraphMarshaler gra_m;
 }
 
 struct ChopStartResponse {
     i8 is_defered;
-    vector<Value> output;
+    map<i32, Value> output;
     GraphMarshaler gra_m;
     string read_only; // for ro6
 }
@@ -37,7 +37,7 @@ struct ChopFinishRequest {
 
 struct ChopFinishResponse {
     i32 res;
-    vector<pair<RequestHeader, vector<Value>>> outputs;
+    vector<pair<RequestHeader, map<i32, Value>>> outputs;
 }
 
 struct CollectFinishResponse {
@@ -52,7 +52,7 @@ abstract service Rococo {
                      vector<Value> input, 
                      i32 output_size | 
                      i32 res, 
-                     vector<Value> output); 
+                     map<i32, Value> output); 
 
     defer prepare_txn (i64 tid, 
                        vector<i32> sids | 
@@ -68,16 +68,6 @@ abstract service Rococo {
     // output: contains many pieces, each piece consist of
     // | <i32 res> <i32 output_size> <output_0> <output_1> ... |
 
-    fast batch_start_pie (BatchRequestHeader batch_header, 
-                         vector<Value> input | 
-                         i32 res, 
-                         vector<Value> output);
-
-    defer naive_batch_start_pie (vector<RequestHeader> header, 
-                                 vector<vector<Value>> input, 
-                                 vector<i32> output_size | 
-                                 vector<i32> res, 
-                                 vector<vector<Value>> output);
 
     // Below is for rococo only
 
@@ -93,7 +83,7 @@ abstract service Rococo {
 
     defer rcc_ro_start_pie(RequestHeader header, 
                            vector<Value> input | 
-                           vector<Value> output);
+                           map<i32, Value> output);
 
     defer rcc_batch_start_pie(vector<RequestHeader> headers, 
                               vector<vector<Value>> inputs | 

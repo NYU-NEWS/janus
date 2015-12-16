@@ -27,7 +27,7 @@ class Piece {
                 const Value *input, \
                 i32 input_size, \
                 i32 *res, \
-                Value *output, \
+                map<int32_t, Value> &output, \
                 i32 *output_size)
 // \
 //                row_map_t *row_map)

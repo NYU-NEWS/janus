@@ -53,7 +53,7 @@ class RococoServiceImpl: public RococoService {
                  const std::vector<Value> &input,
                  const i32 &output_size,
                  i32 *res,
-                 std::vector<Value> *output,
+                 map<int32_t, Value> *output,
                  DeferredReply *defer);
 
   void prepare_txn(const i64 &tid,
@@ -122,7 +122,7 @@ class RococoServiceImpl: public RococoService {
   void rcc_ro_start_pie(
       const RequestHeader &header,
       const vector<Value> &input,
-      vector<Value> *output,
+      map<int32_t, Value> *output,
       DeferredReply *reply);
 
   uint64_t n_asking_ = 0;

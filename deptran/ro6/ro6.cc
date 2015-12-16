@@ -108,18 +108,15 @@ void RO6DTxn::kiss(mdb::Row *r, int col, bool immediate) {
   }
 }
 
-void RO6DTxn::start_ro(
-    const RequestHeader &header,
-    const std::vector<mdb::Value> &input,
-    std::vector<mdb::Value> &output,
-    rrr::DeferredReply *defer
-) {
+void RO6DTxn::start_ro(const RequestHeader &header,
+                       const std::vector<mdb::Value> &input,
+                       map<int32_t, Value> &output,
+                       rrr::DeferredReply *defer) {
 //    RCCDTxn::start_ro(header, input, output, defer);
 
   conflict_txns_.clear();
   auto txn_handler_pair = txn_reg_->get(header.t_type, header.p_type);
   int output_size = 300;
-  output.resize(output_size);
   int res;
   phase_ = 1;
   // TODO fix
@@ -129,7 +126,7 @@ void RO6DTxn::start_ro(
                                input.data(),
                                input.size(),
                                &res,
-                               output.data(),
+                               output,
                                &output_size);
   // get conflicting transactions
   std::vector<TxnInfo *> &conflict_txns = conflict_txns_;
@@ -137,7 +134,7 @@ void RO6DTxn::start_ro(
   // TODO callback: read the value and return.
   std::function<void(void)> cb = [&header, &input, &output, defer, this]() {
     int res;
-    int output_size = 300;
+    int output_size = 0;
     this->phase_ = 2;
     auto txn_handler_pair = txn_reg_->get(header.t_type, header.p_type);
     // TODO fix
@@ -147,9 +144,8 @@ void RO6DTxn::start_ro(
                                  input.data(),
                                  input.size(),
                                  &res,
-                                 output.data(),
+                                 output,
                                  &output_size);
-    output.resize(output_size);
     defer->reply();
   };
   // wait for them become commit.

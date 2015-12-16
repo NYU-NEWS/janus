@@ -18,7 +18,7 @@ typedef std::function<void(
     const Value *input,
     rrr::i32 input_size,
     rrr::i32 *res,
-    Value *output,
+    map<int32_t, Value> &output,
     rrr::i32 *output_size//,
 //    row_map_t *row_map
 )> TxnHandler;

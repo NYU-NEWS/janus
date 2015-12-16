@@ -20,7 +20,7 @@ class TxnReply {
   int32_t n_try_;
   struct timespec start_time_;
   double time_;
-  std::vector<mdb::Value> output_;
+  map<int32_t, Value> output_;
   int32_t txn_type_;
 };
 
@@ -38,7 +38,7 @@ class SimpleCommand: public Command {
 public:
   Command* root_;
   vector<Value> input;
-  vector<Value> output;
+  map<int32_t, Value> output;
   int output_size;
   int par_id;
   SimpleCommand() = default;
@@ -51,8 +51,8 @@ enum CommandStatus {WAITING=-1, READY, ONGOING, FINISHED, INIT};
 
 class TxnChopper : public Command {
  private:
-  static inline bool is_consistent(const std::vector<mdb::Value> &previous,
-                                   const std::vector<mdb::Value> &current) {
+  static inline bool is_consistent(map<int32_t, Value> &previous,
+                                   map<int32_t, Value> &current) {
     if (current.size() != previous.size())
       return false;
     for (size_t i = 0; i < current.size(); i++)
@@ -60,7 +60,7 @@ class TxnChopper : public Command {
         return false;
     return true;
   }
-  std::vector<std::vector<mdb::Value> > outputs_;
+  std::vector<map<int32_t, Value> > outputs_;
   bool read_only_failed_;
 
   double pre_time_;
@@ -127,16 +127,20 @@ protected:
   virtual bool start_callback(const std::vector<int> &pi,
                               int res,
                               BatchStartArgsHelper &bsah) = 0;
-  virtual bool start_callback(int pi, int res,
-                              const std::vector<mdb::Value> &output) = 0;
-  virtual bool start_callback(int pi, const ChopStartResponse &res);
-  virtual bool start_callback(int pi, std::vector<mdb::Value> &output,
+  virtual bool start_callback(int pi,
+                              int res,
+                              map<int32_t, Value> &output) = 0;
+  virtual bool start_callback(int pi,
+                              ChopStartResponse &res);
+  virtual bool start_callback(int pi,
+                              map<int32_t, mdb::Value> &output,
                               bool is_defer);
   virtual bool finish_callback(ChopFinishResponse &res) { return false; }
   virtual bool is_read_only() = 0;
   virtual void read_only_reset();
-  virtual bool read_only_start_callback(int pi, int *res,
-                                        const std::vector<mdb::Value> &output);
+  virtual bool read_only_start_callback(int pi,
+                                        int *res,
+                                        map<int32_t, Value> &output);
 
   virtual bool IsFinished(){verify(0);}
   virtual void Merge(Command&);

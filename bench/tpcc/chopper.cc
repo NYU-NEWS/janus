@@ -324,7 +324,12 @@ bool TpccChopper::new_order_callback(int pi,
 
 bool TpccChopper::start_callback(int pi,
                                  int res,
-                                 const std::vector<mdb::Value> &output) {
+                                 map<int32_t, mdb::Value> &output_map) {
+  vector<mdb::Value> output;
+  for (auto it : output_map) {
+    output.push_back(it.second);
+  }
+
   switch (txn_type_) {
     case TPCC_NEW_ORDER:
       return new_order_callback(pi, res, output.data(), output.size());

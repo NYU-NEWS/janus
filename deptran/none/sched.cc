@@ -14,10 +14,10 @@ int NoneSched::OnPhaseOneRequest(
     const std::vector<mdb::Value> &input,
     const rrr::i32 &output_size,
     rrr::i32 *res,
-    std::vector<mdb::Value> *output,
+    map<int32_t, Value> *output,
     rrr::DeferredReply *defer) {
   TPLExecutor *exec = (TPLExecutor*) GetOrCreateExecutor(header.tid);
-  exec->execute(header, input, res, output);
+  exec->execute(header, input, res, *output);
   defer->reply();
   return 0;
 }

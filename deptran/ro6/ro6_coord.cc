@@ -189,7 +189,7 @@ void RO6Coord::ro6_start_ro(TxnChopper *ch) {
       {
         std::lock_guard<std::mutex> lock(this->mtx_);
 
-        std::vector<Value> res;
+        map<int32_t, Value> res;
         fu->get_reply() >> res;
 
         Log::debug("receive deptran RO start response, tid: %llx, pid: %llx, ",
