@@ -9,7 +9,6 @@ void TpccPiece::reg_payment() {
             TPCC_PAYMENT_0,    // piece 0, Ri & W warehouse
             DF_NO) { // immediately read
         // ############################################################
-        verify(row_map == NULL);
         verify(input_size == 2);
         Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_0);
         i32 oi = 0;
@@ -48,7 +47,6 @@ void TpccPiece::reg_payment() {
             TPCC_PAYMENT_1,    // piece 1, Ri district
             DF_NO) { // immediately read
         // ############################################################
-        verify(row_map == NULL);
         verify(input_size == 2);
         Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_1);
         // ############################################################
@@ -138,7 +136,6 @@ void TpccPiece::reg_payment() {
             TPCC_PAYMENT_3,    // piece 2, R customer secondary index, c_last -> c_id
             DF_NO) {
         // ############################################################
-        verify(row_map == NULL);
         verify(input_size == 3);
         Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_3);
         // ############################################################

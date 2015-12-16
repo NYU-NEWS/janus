@@ -130,8 +130,7 @@ void RO6DTxn::start_ro(
                                input.size(),
                                &res,
                                output.data(),
-                               &output_size,
-                               NULL);
+                               &output_size);
   // get conflicting transactions
   std::vector<TxnInfo *> &conflict_txns = conflict_txns_;
 
@@ -149,8 +148,7 @@ void RO6DTxn::start_ro(
                                  input.size(),
                                  &res,
                                  output.data(),
-                                 &output_size,
-                                 NULL);
+                                 &output_size);
     output.resize(output_size);
     defer->reply();
   };

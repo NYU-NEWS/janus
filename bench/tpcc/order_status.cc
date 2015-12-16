@@ -9,7 +9,6 @@ void TpccPiece::reg_order_status() {
             TPCC_ORDER_STATUS_0, // piece 0, R customer secondary index, c_last -> c_id
             DF_NO) {
         // #################################################################
-        verify(row_map == NULL);
         verify(input_size == 3);
         Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_0);
         // #################################################################
@@ -65,7 +64,6 @@ void TpccPiece::reg_order_status() {
             TPCC_ORDER_STATUS_1, // Ri customer
             DF_NO) {
         // #################################################################
-        verify(row_map == NULL);
         verify(dtxn != nullptr);
         Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_1);
         verify(input_size == 3);
@@ -113,7 +111,6 @@ void TpccPiece::reg_order_status() {
     BEGIN_PIE(TPCC_ORDER_STATUS, // RO
             TPCC_ORDER_STATUS_2, // Ri order
             DF_NO) {
-        verify(row_map == NULL);
         Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_2);
         verify(input_size == 3);
 
@@ -236,7 +233,6 @@ void TpccPiece::reg_order_status() {
     BEGIN_PIE(TPCC_ORDER_STATUS, // RO
             TPCC_ORDER_STATUS_3, // R order_line
             DF_NO) {
-        verify(row_map == NULL);
         Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_3);
         verify(input_size == 3);
         mdb::MultiBlob mbl(4), mbh(4);

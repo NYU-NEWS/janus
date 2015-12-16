@@ -108,7 +108,7 @@ void ThreePhaseExecutor::execute(
 ) {
   txn_reg_->get(header).txn_handler(
       this, dtxn_, header, input, input_size,
-      res, output, output_size, NULL);
+      res, output, output_size);
 }
 
 void ThreePhaseExecutor::execute(
@@ -118,9 +118,14 @@ void ThreePhaseExecutor::execute(
     std::vector <mdb::Value> *output
 ) {
   rrr::i32 output_size = output->size();
-  txn_reg_->get(header).txn_handler(
-      this, dtxn_, header, input.data(), input.size(),
-      res, output->data(), &output_size, NULL);
+  txn_reg_->get(header).txn_handler(this,
+                                    dtxn_,
+                                    header,
+                                    input.data(),
+                                    input.size(),
+                                    res,
+                                    output->data(),
+                                    &output_size);
   output->resize(output_size);
 }
 

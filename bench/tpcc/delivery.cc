@@ -63,7 +63,6 @@ void TpccPiece::reg_delivery() {
           }
       }
 
-      verify((row_map != nullptr) == (IS_MODE_RCC || IS_MODE_RO6));
       if (IS_MODE_RCC || IS_MODE_RO6) { // deptran
           if (IN_PHASE_1) { // deptran start req, top half
               if (r) { // if find a row
@@ -76,7 +75,8 @@ void TpccPiece::reg_delivery() {
                   tbl->remove(r, false); // don't release the row
               }
           } else { // deptran finish
-              for (auto &it : *row_map) {
+            auto &row_map = ((RCCDTxn*)dtxn)->dreqs_.back().row_map;
+              for (auto &it : row_map) {
                   it.second->release();
               }
           }
@@ -100,7 +100,6 @@ void TpccPiece::reg_delivery() {
           DF_NO) {
 
       Log::debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_1);
-      verify(row_map == NULL);
       verify(input_size == 4);
       i32 oi = 0;
       Value buf;
@@ -143,7 +142,6 @@ void TpccPiece::reg_delivery() {
           DF_NO) {
 
       Log::debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_2);
-      verify(row_map == NULL);
       verify(input_size == 3);
       i32 oi = 0;
       Value buf;

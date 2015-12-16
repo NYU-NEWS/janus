@@ -41,8 +41,7 @@ int TPLExecutor::start_launch(
                       input.size(),
                       res,
                       NULL/*output*/,
-                      NULL/*output_size*/,
-                      NULL);
+                      NULL/*output_size*/);
   }
   return 0;
 }
@@ -87,8 +86,7 @@ std::function<void(void)> TPLExecutor::get_2pl_succ_callback(
                                             input_size,
                                             res,
                                             output_vec->data(),
-                                            &output_vec_size,
-                                            NULL);
+                                            &output_vec_size);
           output_vec->resize(output_vec_size);
         } else {
           txn_reg_->get(header).txn_handler(this,
@@ -98,8 +96,7 @@ std::function<void(void)> TPLExecutor::get_2pl_succ_callback(
                                             input_size,
                                             res,
                                             output,
-                                            output_size,
-                                            NULL);
+                                            output_size);
         }
       }
 
@@ -146,8 +143,7 @@ std::function<void(void)> TPLExecutor::get_2pl_proceed_callback(
                                           input_size,
                                           res,
                                           output_vec->data(),
-                                          &output_vec_size,
-                                          NULL);
+                                          &output_vec_size);
         output_vec->resize(output_vec_size);
       }
       else {
@@ -158,8 +154,7 @@ std::function<void(void)> TPLExecutor::get_2pl_proceed_callback(
                                           input_size,
                                           res,
                                           output,
-                                          output_size,
-                                          NULL);
+                                          output_size);
       }
     }
 

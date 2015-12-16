@@ -7,7 +7,6 @@ void TpccPiece::reg_stock_level() {
             TPCC_STOCK_LEVEL_0, // Ri district
             DF_NO) {
         // ###################################################
-        verify(row_map == NULL);
         verify(dtxn != nullptr);
         verify(input_size == 2);
         // ###################################################
@@ -40,7 +39,6 @@ void TpccPiece::reg_stock_level() {
     BEGIN_PIE(TPCC_STOCK_LEVEL,
             TPCC_STOCK_LEVEL_1, // Ri order_line
             DF_NO) {
-        verify(row_map == NULL);
         verify(input_size == 3);
 
         mdb::MultiBlob mbl(4), mbh(4);
@@ -120,7 +118,6 @@ void TpccPiece::reg_stock_level() {
     BEGIN_PIE(TPCC_STOCK_LEVEL,
             TPCC_STOCK_LEVEL_2, // R stock
             DF_NO) {
-        verify(row_map == NULL);
         verify(input_size == 3);
         i32 output_index = 0;
         Value buf;

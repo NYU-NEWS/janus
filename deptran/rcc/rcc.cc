@@ -82,8 +82,7 @@ bool RCCDTxn::start_exe_itfr(
               input.size(),
               &res,
               output->data(),
-              &output_size,
-              NULL);
+              &output_size);
       output->resize(output_size);
       deferred = false;
       break;
@@ -104,8 +103,7 @@ bool RCCDTxn::start_exe_itfr(
               drs.back().inputs.size(),
               NULL,
               NULL,
-              NULL,
-              &drs.back().row_map);
+              NULL);
       deferred = true;
       break;
     }
@@ -129,8 +127,7 @@ bool RCCDTxn::start_exe_itfr(
               drs.back().inputs.size(),
               &res,
               output->data(),
-              &output_size,
-              &drs.back().row_map);
+              &output_size);
       output->resize(output_size);
       deferred = false;
       break;
@@ -170,8 +167,7 @@ void RCCDTxn::start_ro(
                                input.size(),
                                &res,
                                output.data(),
-                               &output_size,
-                               NULL);
+                               &output_size);
   output.resize(output_size);
 
   // get conflicting transactions
@@ -415,8 +411,7 @@ void RCCDTxn::exe_deferred(
                                    input.size(),
                                    &res,
                                    output.data(),
-                                   &output_size,
-                                   &req.row_map);
+                                   &output_size);
       if (header.p_type == TPCC_PAYMENT_4
           && header.t_type == TPCC_PAYMENT)
         verify(output_size == 15);

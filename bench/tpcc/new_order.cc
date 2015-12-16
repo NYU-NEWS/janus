@@ -9,7 +9,6 @@ void TpccPiece::reg_new_order() {
             TPCC_NEW_ORDER_0, // Ri & W district
             DF_NO) {
     // ############################################################
-    verify(row_map == NULL);
     verify(input_size == 2);
     // ############################################################
         
@@ -55,7 +54,6 @@ void TpccPiece::reg_new_order() {
             DF_NO) {
     // ############################################################
     verify(input_size == 1);
-    verify(row_map == NULL);
     Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_1);
     // ############################################################
 
@@ -85,7 +83,6 @@ void TpccPiece::reg_new_order() {
             DF_NO //XXX either i or d is ok
   ) {
     // ############################################################
-    verify(row_map == NULL);
     verify(input_size == 3);
     Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_2);
     i32 oi = 0;
@@ -246,7 +243,6 @@ void TpccPiece::reg_new_order() {
             TPCC_NEW_ORDER_5, // Ri item
             DF_NO) {
         // ############################################################
-        verify(row_map == NULL);
         verify(input_size == 1);
         Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_5);
         // ############################################################
@@ -280,7 +276,6 @@ void TpccPiece::reg_new_order() {
             TPCC_NEW_ORDER_6, // Ri stock
             DF_NO) {
         // ############################################################
-        verify(row_map == NULL);
         verify(input_size == 3);
         Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_6);
         // ############################################################
