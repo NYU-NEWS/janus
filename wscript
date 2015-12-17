@@ -83,6 +83,10 @@ def build(bld):
             "deptran/rcc_rpc.rpc",
             "bin/rpcgen --python --cpp deptran/rcc_rpc.rpc")
 
+    _depend("deptran/mdcc/mdcc.h",
+            "deptran/mdcc/mdcc.rpc",
+            "bin/rpcgen --cpp deptran/mdcc/mdcc.rpc")
+
     _depend("old-test/benchmark_service.h", "old-test/benchmark_service.rpc",
             "bin/rpcgen --cpp old-test/benchmark_service.rpc")
 
@@ -152,10 +156,10 @@ def build(bld):
                                        "deptran/*/*.cc "
                                        "bench/*/*.cc ",
                                        excl="deptran/*_main.c*"),
-              #use="PTHREAD APR APR-UTIL base simplerpc memdb")
-              target="deptran",
-              includes=". rrr memdb bench deptran ",
-              use="PTHREAD base simplerpc memdb")
+        #use="PTHREAD APR APR-UTIL base simplerpc memdb")
+        target="deptran",
+        includes=". rrr memdb bench deptran ",
+        use="PTHREAD base simplerpc memdb")
 
 #
 # waf helper functions
