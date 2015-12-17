@@ -21,7 +21,7 @@ class Commo {
 
   void SendStart(groupid_t gid,
                  RequestHeader &header,
-                 std::vector<Value> &input,
+                 map<int32_t, Value> &input,
                  int32_t output_size,
                  std::function<void(Future *fu)> &callback);
   void SendStart(parid_t par_id, 

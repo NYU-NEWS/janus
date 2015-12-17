@@ -13,7 +13,7 @@ class TPLExecutor: public ThreePhaseExecutor {
 
   virtual int start_launch(
       const RequestHeader &header,
-      const std::vector <mdb::Value> &input,
+      const map<int32_t, Value> &input,
       const rrr::i32 &output_size,
       rrr::i32 *res,
       map <int32_t, Value> *output,
@@ -24,8 +24,7 @@ class TPLExecutor: public ThreePhaseExecutor {
 
   std::function<void(void)> get_2pl_proceed_callback(
       const RequestHeader &header,
-      const mdb::Value *input,
-      rrr::i32 input_size,
+      const map<int32_t, Value> &input,
       rrr::i32 *res
   );
 
@@ -37,8 +36,7 @@ class TPLExecutor: public ThreePhaseExecutor {
 
   std::function<void(void)> get_2pl_succ_callback(
       const RequestHeader &req,
-      const mdb::Value *input,
-      rrr::i32 input_size,
+      const map<int32_t, Value> &input,
       rrr::i32 *res,
       mdb::Txn2PL::PieceStatus *ps
   );

@@ -24,8 +24,7 @@ class Piece {
         [this] (Executor* exec, \
                 DTxn *dtxn, \
                 const RequestHeader &header, \
-                const Value *input, \
-                i32 input_size, \
+                map<int32_t, Value> &input, \
                 i32 *res, \
                 map<int32_t, Value> &output, \
                 i32 *output_size)
@@ -39,7 +38,7 @@ class Piece {
     mdb::Txn2PL::PieceStatus *ps \
         = tpl_txn->get_piece_status(header.pid); \
     std::function<void(void)> succ_callback = \
-        ((TPLExecutor*)exec)->get_2pl_succ_callback(header, input, input_size, res, ps); \
+        ((TPLExecutor*)exec)->get_2pl_succ_callback(header, input, res, ps); \
     std::function<void(void)> fail_callback = \
         ((TPLExecutor*)exec)->get_2pl_fail_callback(header, res, ps); \
     ps->reg_rw_lock( \
@@ -51,7 +50,7 @@ class Piece {
 #define TPL_KISS_NONE \
     if (IS_MODE_2PL && output_size == NULL) { \
         ((TPLExecutor*)exec)->get_2pl_proceed_callback( \
-                header, input, input_size, res)(); \
+                header, input, res)(); \
         return; \
     }
 

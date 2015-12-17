@@ -12,7 +12,7 @@ void RCCCoord::deptran_batch_start(TxnChopper *ch) {
 
   int pi;
 
-  std::vector<Value> *input = nullptr;
+  map<int32_t, Value> *input = nullptr;
   int32_t server_id;
   int     res;
   int     output_size;
@@ -112,13 +112,16 @@ void RCCCoord::deptran_start(TxnChopper *ch) {
 
   int pi;
 
-  std::vector<Value> *input = nullptr;
+  map<int32_t, Value> *input = nullptr;
   int32_t server_id;
   int     res;
   int     output_size;
 
   while ((res =
-            ch->next_piece(input, output_size, server_id, pi,
+            ch->next_piece(input,
+                           output_size,
+                           server_id,
+                           pi,
                            header.p_type)) == 0) {
     header.pid = next_pie_id();
 
@@ -230,7 +233,7 @@ void RCCCoord::deptran_finish(TxnChopper *ch) {
     }
   };
 
-  Log::debug(
+  Log_debug(
     "send deptran finish requests to %d servers, tid: %llx, graph size: %d",
     (int)ch->partitions_.size(),
     cmd_id_,
@@ -257,7 +260,7 @@ void RCCCoord::deptran_start_ro(TxnChopper *ch) {
 
   int pi;
 
-  std::vector<Value> *input = nullptr;
+  map<int32_t, Value> *input = nullptr;
   int32_t server_id;
   int     res;
   int     output_size;
@@ -305,7 +308,7 @@ void RCCCoord::deptran_finish_ro(TxnChopper *ch) {
   RequestHeader header = gen_header(ch);
   int pi;
 
-  std::vector<Value> *input = nullptr;
+  map<int32_t, Value> *input = nullptr;
   int32_t server_id;
   int     res;
   int     output_size;

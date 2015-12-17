@@ -4,7 +4,8 @@ namespace deptran {
 
 void RWChopper::W_txn_init(TxnRequest &req) {
   inputs_.assign({
-                     std::vector<Value>({req.input_[0]/*, req.input_[1]*/})
+                     map<int32_t, Value>({{0, req.input_[0]}/*, req
+ * .input_[1]*/})
                  });
   output_size_.assign({
                           0
@@ -18,7 +19,7 @@ void RWChopper::W_txn_init(TxnRequest &req) {
 
 void RWChopper::R_txn_init(TxnRequest &req) {
   inputs_.assign({
-                     std::vector<Value>({req.input_[0]})
+                     map<int32_t, Value>({{0, req.input_[0]}})
                  });
   output_size_.assign({
                           1

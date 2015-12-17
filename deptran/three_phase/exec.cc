@@ -12,7 +12,7 @@ ThreePhaseExecutor::~ThreePhaseExecutor() {
 
 int ThreePhaseExecutor::start_launch(
     const RequestHeader &header,
-    const std::vector<mdb::Value> &input,
+    const map<int32_t, Value> &input,
     const rrr::i32 &output_size,
     rrr::i32 *res,
     map<int32_t, Value> &output,
@@ -98,16 +98,14 @@ int ThreePhaseExecutor::commit() {
 }
 
 void ThreePhaseExecutor::execute(const RequestHeader &header,
-                                 const Value *input,
-                                 rrr::i32 input_size,
+                                 const map<int32_t, Value> &input,
                                  rrr::i32 *res,
                                  map<int32_t, Value> &output,
                                  rrr::i32 *output_size) {
   txn_reg_->get(header).txn_handler(this,
                                     dtxn_,
                                     header,
-                                    input,
-                                    input_size,
+                                    const_cast<map<int32_t, Value>&>(input),
                                     res,
                                     output,
                                     output_size);
@@ -115,7 +113,7 @@ void ThreePhaseExecutor::execute(const RequestHeader &header,
 
 void ThreePhaseExecutor::execute(
     const RequestHeader &header,
-    const std::vector<mdb::Value> &input,
+    const map<int32_t, Value> &input,
     rrr::i32 *res,
     map<int32_t, Value> &output
 ) {
@@ -123,8 +121,7 @@ void ThreePhaseExecutor::execute(
   txn_reg_->get(header).txn_handler(this,
                                     dtxn_,
                                     header,
-                                    input.data(),
-                                    input.size(),
+                                    const_cast<map<int32_t, Value>&>(input),
                                     res,
                                     output,
                                     &output_size);

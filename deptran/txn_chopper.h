@@ -37,7 +37,7 @@ class TxnRequest {
 class SimpleCommand: public Command {
 public:
   Command* root_;
-  vector<Value> input;
+  map<int32_t, Value> input;
   map<int32_t, Value> output;
   int output_size;
   int par_id;
@@ -75,7 +75,7 @@ protected:
 
   Graph<TxnInfo> gra_;
 
-  std::vector<std::vector<mdb::Value> > inputs_;  // input of each piece.
+  std::vector<map<int32_t, Value> > inputs_;  // input of each piece.
   //std::vector<std::vector<mdb::Value> > outputs_; // output of each piece.
   std::vector<int32_t> output_size_;
   std::vector<int32_t> p_types_;                  // types of each piece.
@@ -114,7 +114,7 @@ protected:
                                std::vector<int> &pi,
                                Coordinator *coo);
 
-  virtual int next_piece(std::vector<mdb::Value> *&input,
+  virtual int next_piece(map<int32_t, Value>* &input,
                          int &output_size,
                          int32_t &server_id,
                          int &pi,

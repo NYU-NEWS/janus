@@ -10,7 +10,7 @@
 namespace rococo {
 int TPLExecutor::start_launch(
     const RequestHeader &header,
-    const std::vector <mdb::Value> &input,
+    const map<int32_t, Value> &input,
     const rrr::i32 &output_size,
     rrr::i32 *res,
     map<int32_t, Value> *output,
@@ -28,7 +28,10 @@ int TPLExecutor::start_launch(
     *res = REJECT;
     db->trigger();
   } else {
-    txn->init_piece(header.tid, header.pid, db, output);
+    txn->init_piece(header.tid,
+                    header.pid,
+                    db,
+                    output);
 
     Log_debug("get txn handler and start reg lock, txn_id: %lx, pie_id: %lx",
               header.tid, header.pid);
@@ -37,8 +40,7 @@ int TPLExecutor::start_launch(
     entry.txn_handler(this,
                       dtxn_,
                       header,
-                      input.data(),
-                      input.size(),
+                      const_cast<map<int32_t, Value>&>(input),
                       res,
                       no_use/*output*/,
                       NULL/*output_size*/);
@@ -48,11 +50,10 @@ int TPLExecutor::start_launch(
 
 std::function<void(void)> TPLExecutor::get_2pl_succ_callback(
     const RequestHeader &header,
-    const mdb::Value *input,
-    rrr::i32 input_size,
+    const map<int32_t, Value> &input,
     rrr::i32 *res,
     mdb::Txn2PL::PieceStatus *ps) {
-  return [header, input, input_size, res, ps, this]() {
+  return [header, input, res, ps, this]() {
     Log_debug("lock acquired call back, txn_id: %lx, pie_id: %lx, p_type: %d, ",
               header.tid, header.pid, header.p_type);
     Log_debug("succ 1 callback: PS: %p", ps);
@@ -69,8 +70,7 @@ std::function<void(void)> TPLExecutor::get_2pl_succ_callback(
         ps->remove_output();
 
         Log::debug("rejected");
-      }
-      else {
+      } else {
         std::map <int32_t, mdb::Value> *output_vec;
         mdb::Value *output;
         rrr::i32 *output_size;
@@ -82,8 +82,8 @@ std::function<void(void)> TPLExecutor::get_2pl_succ_callback(
           txn_reg_->get(header).txn_handler(this,
                                             dtxn_,
                                             header,
-                                            input,
-                                            input_size,
+                                            const_cast<map<int32_t, Value>&>
+                                            (input),
                                             res,
                                             *output_vec,
                                             &output_vec_size);
@@ -95,8 +95,8 @@ std::function<void(void)> TPLExecutor::get_2pl_succ_callback(
           txn_reg_->get(header).txn_handler(this,
                                             dtxn_,
                                             header,
-                                            input,
-                                            input_size,
+                                            const_cast<map<int32_t, Value>&>
+                                            (input),
                                             res,
                                             no_use,
                                             output_size);
@@ -112,10 +112,9 @@ std::function<void(void)> TPLExecutor::get_2pl_succ_callback(
 
 std::function<void(void)> TPLExecutor::get_2pl_proceed_callback(
     const RequestHeader &header,
-    const mdb::Value *input,
-    rrr::i32 input_size,
+    const map<int32_t, Value> &input,
     rrr::i32 *res) {
-  return [header, input, input_size, res, this]() {
+  return [header, input, res, this]() {
     Log_debug("PROCEED WITH COMMIT: tid: %ld, pid: %ld, p_type: %d, no lock",
               header.tid, header.pid, header.p_type);
 //        verify(this->mdb_txn_ != nullptr);
@@ -141,8 +140,8 @@ std::function<void(void)> TPLExecutor::get_2pl_proceed_callback(
         txn_reg_->get(header).txn_handler(this,
                                           dtxn_,
                                           header,
-                                          input,
-                                          input_size,
+                                          const_cast<map<int32_t, Value>&>
+                                          (input),
                                           res,
                                           *output_vec,
                                           &output_vec_size);
@@ -154,8 +153,8 @@ std::function<void(void)> TPLExecutor::get_2pl_proceed_callback(
         txn_reg_->get(header).txn_handler(this,
                                           dtxn_,
                                           header,
-                                          input,
-                                          input_size,
+                                          const_cast<map<int32_t, Value>&>
+                                          (input),
                                           res,
                                           no_use,
                                           output_size);

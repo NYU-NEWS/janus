@@ -14,10 +14,11 @@ void RWPiece::reg_pieces() {
 //    mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
     mdb::Txn *txn = dtxn->mdb_txn_;
     Value buf;
-    verify(input_size == 1);
+    verify(input.size() == 1);
     i32 output_index = 0;
 
-    mdb::Row *r = txn->query(txn->get_table(RW_BENCHMARK_TABLE), input[0]).next();
+    mdb::Row *r = txn->query(txn->get_table(RW_BENCHMARK_TABLE),
+                             input.at(0)).next();
     if (!txn->read_column(r, 1, &buf)) {
         *res = REJECT;
         *output_size = output_index;
@@ -33,7 +34,7 @@ void RWPiece::reg_pieces() {
     BEGIN_PIE(RW_BENCHMARK_W_TXN, RW_BENCHMARK_W_TXN_0, DF_REAL) {
 //        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
       mdb::Txn *txn = dtxn->mdb_txn_;
-        verify(input_size == 1);
+        verify(input.size() == 1);
         i32 output_index = 0;
         Value buf;
 

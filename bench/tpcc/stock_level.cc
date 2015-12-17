@@ -8,12 +8,12 @@ void TpccPiece::reg_stock_level() {
             DF_NO) {
         // ###################################################
         verify(dtxn != nullptr);
-        verify(input_size == 2);
+        verify(input.size() == 2);
         // ###################################################
         mdb::MultiBlob mb(2);
         //cell_locator_t cl(TPCC_TB_DISTRICT, 2);
-        mb[0] = input[1].get_blob();
-        mb[1] = input[0].get_blob();
+        mb[0] = input.at(1).get_blob();
+        mb[1] = input.at(0).get_blob();
 
         mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT), mb,
                                   output_size, header.pid).next();
@@ -39,13 +39,13 @@ void TpccPiece::reg_stock_level() {
     BEGIN_PIE(TPCC_STOCK_LEVEL,
             TPCC_STOCK_LEVEL_1, // Ri order_line
             DF_NO) {
-        verify(input_size == 3);
+        verify(input.size() == 3);
 
         mdb::MultiBlob mbl(4), mbh(4);
-        mbl[0] = input[2].get_blob();
-        mbh[0] = input[2].get_blob();
-        mbl[1] = input[1].get_blob();
-        mbh[1] = input[1].get_blob();
+        mbl[0] = input.at(2).get_blob();
+        mbh[0] = input.at(2).get_blob();
+        mbl[1] = input.at(1).get_blob();
+        mbh[1] = input.at(1).get_blob();
         Value ol_o_id_low(input[0].get_i32() - (i32) 21);
         mbl[2] = ol_o_id_low.get_blob();
         mbh[2] = input[0].get_blob();
@@ -74,11 +74,11 @@ void TpccPiece::reg_stock_level() {
             auto mdb_txn = (mdb::Txn2PL*) dtxn->mdb_txn_;
             auto ps = mdb_txn->get_piece_status(header.pid);
 
-            std::function<void(void)> succ_callback = 
+            std::function<void(void)> succ_callback =
                 ((TPLExecutor *) exec)->get_2pl_succ_callback(
-                    header, input, input_size, res, ps);
+                    header, input, res, ps);
 
-            std::function<void(void)> fail_callback = 
+            std::function<void(void)> fail_callback =
                 ((TPLExecutor *) exec)->get_2pl_fail_callback(
                     header, res, ps);
 
@@ -118,7 +118,7 @@ void TpccPiece::reg_stock_level() {
     BEGIN_PIE(TPCC_STOCK_LEVEL,
             TPCC_STOCK_LEVEL_2, // R stock
             DF_NO) {
-        verify(input_size == 3);
+        verify(input.size() == 3);
         i32 output_index = 0;
         Value buf;
         mdb::MultiBlob mb(2);

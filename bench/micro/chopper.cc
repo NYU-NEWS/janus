@@ -8,10 +8,22 @@ MicroBenchChopper::MicroBenchChopper() {
 void MicroBenchChopper::init_W(TxnRequest &req) {
   verify(req.txn_type_ == MICRO_BENCH_W);
   txn_type_ = MICRO_BENCH_W;
-  inputs_.push_back({req.input_[0], req.input_[4]});
-  inputs_.push_back({req.input_[1], req.input_[5]});
-  inputs_.push_back({req.input_[2], req.input_[6]});
-  inputs_.push_back({req.input_[3], req.input_[7]});
+  inputs_.push_back({
+                        {0, req.input_[0]},
+                        {1, req.input_[4]}
+                    });
+  inputs_.push_back({
+                        {0, req.input_[1]},
+                        {1, req.input_[5]}
+                    });
+  inputs_.push_back({
+                        {0, req.input_[2]},
+                        {1, req.input_[6]}
+                    });
+  inputs_.push_back({
+                        {0, req.input_[3]},
+                        {1, req.input_[7]}
+                    });
 
   output_size_.assign({0, 0, 0, 0});
 
@@ -54,10 +66,10 @@ void MicroBenchChopper::init(TxnRequest &req) {
 void MicroBenchChopper::init_R(TxnRequest &req) {
   verify(req.txn_type_ == MICRO_BENCH_R);
   txn_type_ = MICRO_BENCH_R;
-  inputs_.push_back({req.input_[0]});
-  inputs_.push_back({req.input_[1]});
-  inputs_.push_back({req.input_[2]});
-  inputs_.push_back({req.input_[3]});
+  inputs_.push_back({{0, req.input_[0]}});
+  inputs_.push_back({{1, req.input_[1]}});
+  inputs_.push_back({{2, req.input_[2]}});
+  inputs_.push_back({{3, req.input_[3]}});
 
   output_size_.assign({1, 1, 1, 1});
 

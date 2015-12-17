@@ -10,7 +10,7 @@ public:
 
   struct deptran_batch_start_t {
     std::vector<RequestHeader>      headers;
-    std::vector<std::vector<Value> >inputs;
+    std::vector<map<int32_t, Value> >inputs;
     std::vector<int>                output_sizes;
     std::vector<int>                pis;
     rrr::FutureAttr                 fuattr;

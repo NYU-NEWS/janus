@@ -9,12 +9,12 @@ void TpccPiece::reg_new_order() {
             TPCC_NEW_ORDER_0, // Ri & W district
             DF_NO) {
     // ############################################################
-    verify(input_size == 2);
+    verify(input.size() == 2);
     // ############################################################
         
     mdb::MultiBlob mb(2);
-    mb[0] = input[1].get_blob();
-    mb[1] = input[0].get_blob();
+    mb[0] = input.at(1).get_blob();
+    mb[1] = input.at(0).get_blob();
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT),
                               mb, output_size, header.pid).next();
     // ############################################################
@@ -53,7 +53,7 @@ void TpccPiece::reg_new_order() {
             TPCC_NEW_ORDER_1, // R warehouse
             DF_NO) {
     // ############################################################
-    verify(input_size == 1);
+    verify(input.size() == 1);
     Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_1);
     // ############################################################
 
@@ -83,7 +83,7 @@ void TpccPiece::reg_new_order() {
             DF_NO //XXX either i or d is ok
   ) {
     // ############################################################
-    verify(input_size == 3);
+    verify(input.size() == 3);
     Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_2);
     i32 oi = 0;
     // ############################################################
@@ -123,7 +123,7 @@ void TpccPiece::reg_new_order() {
             TPCC_NEW_ORDER_3, // W order
             DF_REAL) {
     // ############################################################
-    verify(input_size == 7);
+    verify(input.size() == 7);
     Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_3);
     i32 oi = 0;
     // ############################################################
@@ -196,7 +196,7 @@ void TpccPiece::reg_new_order() {
             TPCC_NEW_ORDER_4, // W new_order
             DF_REAL) {
         // ############################################################
-        verify(input_size == 3);
+        verify(input.size() == 3);
         Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_4);
         // ############################################################
 
@@ -243,7 +243,7 @@ void TpccPiece::reg_new_order() {
             TPCC_NEW_ORDER_5, // Ri item
             DF_NO) {
         // ############################################################
-        verify(input_size == 1);
+        verify(input.size() == 1);
         Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_5);
         // ############################################################
         mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_ITEM), input[0],
@@ -276,7 +276,7 @@ void TpccPiece::reg_new_order() {
             TPCC_NEW_ORDER_6, // Ri stock
             DF_NO) {
         // ############################################################
-        verify(input_size == 3);
+        verify(input.size() == 3);
         Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_6);
         // ############################################################
        
@@ -315,7 +315,7 @@ void TpccPiece::reg_new_order() {
     BEGIN_PIE(TPCC_NEW_ORDER,
             TPCC_NEW_ORDER_7, // W stock
             DF_REAL) {
-        verify(input_size == 4);
+        verify(input.size() == 4);
         Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_7);
         i32 oi = 0;
         Value buf;
@@ -395,46 +395,49 @@ void TpccPiece::reg_new_order() {
         
     } END_PIE
 
-    BEGIN_PIE(TPCC_NEW_ORDER,
+  BEGIN_PIE(TPCC_NEW_ORDER,
             TPCC_NEW_ORDER_8, // W order_line
             DF_REAL) {
-        // ############################################################
-        verify(input_size == 10);
-        Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_8);
-        // ############################################################
+    // ############################################################
+    verify(input.size() == 10);
+    Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_8);
+    // ############################################################
         
-        TPL_KISS_NONE;
+    TPL_KISS_NONE;
 
-        mdb::Table *tbl = dtxn->GetTable(TPCC_TB_ORDER_LINE);
-        mdb::Row *r = NULL;
+    mdb::Table *tbl = dtxn->GetTable(TPCC_TB_ORDER_LINE);
+    mdb::Row *r = NULL;
 
-        if (!(IS_MODE_RCC || IS_MODE_RO6) 
-                || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { 
-            // 2pl finish || occ start || rcc start request
-            std::vector<Value> input_buf(input, input + input_size);
-            CREATE_ROW(tbl->schema(), input_buf);
-        }
+    if (!(IS_MODE_RCC || IS_MODE_RO6)
+        || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) {
+      // 2pl finish || occ start || rcc start request
+      std::vector<Value> input_buf(input.size());
+      for (auto it : input) {
+        input_buf[it.first] = it.second;
+      }
+      CREATE_ROW(tbl->schema(), input_buf);
+    }
 
-        RCC_KISS(r, 0, false);
-        RCC_KISS(r, 1, false);
-        RCC_KISS(r, 2, false);
-        RCC_KISS(r, 3, false);
-        RCC_KISS(r, 4, false);
-        RCC_KISS(r, 6, false);
-        RCC_KISS(r, 8, false);
-        RCC_SAVE_ROW(r, TPCC_NEW_ORDER_8);
-        RCC_PHASE1_RET;
-        RCC_LOAD_ROW(r, TPCC_NEW_ORDER_8);
+    RCC_KISS(r, 0, false);
+    RCC_KISS(r, 1, false);
+    RCC_KISS(r, 2, false);
+    RCC_KISS(r, 3, false);
+    RCC_KISS(r, 4, false);
+    RCC_KISS(r, 6, false);
+    RCC_KISS(r, 8, false);
+    RCC_SAVE_ROW(r, TPCC_NEW_ORDER_8);
+    RCC_PHASE1_RET;
+    RCC_LOAD_ROW(r, TPCC_NEW_ORDER_8);
         
-        i32 oi = 0;
-                           dtxn->InsertRow(tbl, r);
-        // ############################################################
-        verify(*output_size >= oi);
-        *output_size = oi;
-        Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_8);
-        // ############################################################
-        *res = SUCCESS;
-        return;
-    } END_PIE
+    i32 oi = 0;
+    dtxn->InsertRow(tbl, r);
+    // ############################################################
+    verify(*output_size >= oi);
+    *output_size = oi;
+    Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_8);
+    // ############################################################
+    *res = SUCCESS;
+    return;
+  } END_PIE
 }
 } // namespace rococo

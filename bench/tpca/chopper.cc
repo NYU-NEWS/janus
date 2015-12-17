@@ -14,9 +14,9 @@ void TpcaPaymentChopper::init(TxnRequest &req) {
   //Value& inc = req.input_[3];
 
   inputs_.clear();
-  inputs_.push_back({cus/*, inc*/});
-  inputs_.push_back({tel/*, inc*/});
-  inputs_.push_back({bra/*, inc*/});
+  inputs_.push_back({{0, cus}/*, inc*/});
+  inputs_.push_back({{0, tel}/*, inc*/});
+  inputs_.push_back({{0, bra}/*, inc*/});
 
   output_size_.assign({0, 0, 0});
 

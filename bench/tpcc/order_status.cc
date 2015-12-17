@@ -9,7 +9,7 @@ void TpccPiece::reg_order_status() {
             TPCC_ORDER_STATUS_0, // piece 0, R customer secondary index, c_last -> c_id
             DF_NO) {
         // #################################################################
-        verify(input_size == 3);
+        verify(input.size() == 3);
         Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_0);
         // #################################################################
 
@@ -66,7 +66,7 @@ void TpccPiece::reg_order_status() {
         // #################################################################
         verify(dtxn != nullptr);
         Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_1);
-        verify(input_size == 3);
+        verify(input.size() == 3);
         // #################################################################
         
         mdb::Table *tbl = dtxn->GetTable(TPCC_TB_CUSTOMER);
@@ -112,7 +112,7 @@ void TpccPiece::reg_order_status() {
             TPCC_ORDER_STATUS_2, // Ri order
             DF_NO) {
         Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_2);
-        verify(input_size == 3);
+        verify(input.size() == 3);
 
         mdb::MultiBlob mb_0(3);
         mb_0[0] = input[1].get_blob();
@@ -144,7 +144,7 @@ void TpccPiece::reg_order_status() {
 //                    [r_0, dtxn, ps](
 //                            const RequestHeader &header,
 //                            const Value *input,
-//                            rrr::i32 input_size,
+//                            rrr::i32 input.size(),
 //                            rrr::i32 *res) {
 //                        //dtxn->read_column(r_0, 3, &buf);
 //                        mdb::MultiBlob mb(3);
@@ -158,7 +158,7 @@ void TpccPiece::reg_order_status() {
 //
 //                        std::function<void(void)> succ_callback1 = 
 //                            ((TPLDTxn *) dtxn)->get_2pl_succ_callback(
-//                                header, input, input_size, res, ps);
+//                                header, input, input.size(), res, ps);
 //
 //                        std::function<void(void)> fail_callback1 = 
 //                            ((TPLDTxn *) dtxn)->get_2pl_fail_callback(
@@ -179,7 +179,7 @@ void TpccPiece::reg_order_status() {
 
             std::function<void(void)> succ_callback = 
                 ((TPLExecutor *) exec)->get_2pl_succ_callback(
-                    header, input, input_size, res, ps);
+                    header, input, res, ps);
 
             std::function<void(void)> fail_callback = 
                 ((TPLExecutor *) exec)->get_2pl_fail_callback(
@@ -234,7 +234,7 @@ void TpccPiece::reg_order_status() {
             TPCC_ORDER_STATUS_3, // R order_line
             DF_NO) {
         Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_3);
-        verify(input_size == 3);
+        verify(input.size() == 3);
         mdb::MultiBlob mbl(4), mbh(4);
         Log_debug("ol_d_id: %d, ol_w_id: %d, ol_o_id: %d",
                 input[2].get_i32(), input[1].get_i32(), input[0].get_i32());
@@ -270,8 +270,7 @@ void TpccPiece::reg_order_status() {
             auto ps = mdb_txn->get_piece_status(header.pid);
             std::function<void(void)> succ_callback = 
                 ((TPLExecutor *) exec)->get_2pl_succ_callback(
-                                            header, input, 
-                                            input_size, res, ps);
+                                            header, input, res, ps);
             std::function<void(void)> fail_callback = 
                 ((TPLExecutor *) exec)->get_2pl_fail_callback(header, res, ps);
 

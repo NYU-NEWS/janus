@@ -116,10 +116,10 @@ void TpccChopper::new_order_init(TxnRequest &req) {
   status_.resize(n_pieces_all_);
 
   // piece 0, Ri&W district
-  inputs_[0] = std::vector<Value>({
-                                      req.input_[0],  // 0 ==> d_w_id
-                                      req.input_[1]   // 1 ==> d_id
-                                  });
+  inputs_[0] = map<int32_t, Value>({
+                                       {0, req.input_[0]},  // 0 ==> d_w_id
+                                       {1, req.input_[1]}   // 1 ==> d_id
+                                   });
   output_size_[0] = 2;
   p_types_[0] = TPCC_NEW_ORDER_0;
   new_order_shard(TPCC_TB_DISTRICT, req.input_,  // sharding based on d_w_id
@@ -127,9 +127,9 @@ void TpccChopper::new_order_init(TxnRequest &req) {
   status_[0] = READY;
 
   // piece 1, R warehouse
-  inputs_[1] = std::vector<Value>({
-                                      req.input_[0]   // 0 ==> w_id
-                                  });
+  inputs_[1] = map<int32_t, Value>({
+                                       {0, req.input_[0]}   // 0 ==> w_id
+                                   });
   output_size_[1] = 1;
   p_types_[1] = TPCC_NEW_ORDER_1;
   new_order_shard(TPCC_TB_WAREHOUSE, req.input_,  // sharding based on w_id
@@ -137,11 +137,11 @@ void TpccChopper::new_order_init(TxnRequest &req) {
   status_[1] = READY;
 
   // piece 2, R customer
-  inputs_[2] = std::vector<Value>({
-                                      req.input_[0],  // 0 ==> c_w_id
-                                      req.input_[1],  // 1 ==> c_d_id
-                                      req.input_[2]   // 2 ==> c_id
-                                  });
+  inputs_[2] = map<int32_t, Value>({
+                                       {0, req.input_[0]},  // 0 ==> c_w_id
+                                       {1, req.input_[1]},  // 1 ==> c_d_id
+                                       {2, req.input_[2]}   // 2 ==> c_id
+                                   });
   output_size_[2] = 3;
   p_types_[2] = TPCC_NEW_ORDER_2;
   new_order_shard(TPCC_TB_CUSTOMER, req.input_,  // sharding based on c_w_id
@@ -156,11 +156,10 @@ void TpccChopper::new_order_init(TxnRequest &req) {
       is_remote.set_i32((i32) 1);
     }
     // piece 5 + 4 * i, Ri item
-    inputs_[TPCC_NEW_ORDER_Ith_INDEX_ITEM(i)] = std::vector<Value>({
-                                                                       req.input_[
-                                                                           4 + 3
-                                                                               * i]   // 0 ==> i_id
-                                                                   });
+    inputs_[TPCC_NEW_ORDER_Ith_INDEX_ITEM(i)] =
+        map<int32_t, Value>({
+                                {0, req.input_[4 + 3 * i]}   // 0 ==> i_id
+                            });
     output_size_[TPCC_NEW_ORDER_Ith_INDEX_ITEM(i)] = 3;
     p_types_[TPCC_NEW_ORDER_Ith_INDEX_ITEM(i)] = TPCC_NEW_ORDER_5;
     new_order_shard(TPCC_TB_ITEM,
@@ -170,17 +169,13 @@ void TpccChopper::new_order_init(TxnRequest &req) {
     status_[TPCC_NEW_ORDER_Ith_INDEX_ITEM(i)] = READY;
 
     // piece 6 + 4 * i, Ri stock
-    inputs_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)] = std::vector<Value>({
-                                                                           req.input_[
-                                                                               4
-                                                                                   + 3
-                                                                                       * i],  // 0 ==> s_i_id
-                                                                           req.input_[
-                                                                               5
-                                                                                   + 3
-                                                                                       * i],  // 1 ==> ol_supply_w_id / s_w_id
-                                                                           req.input_[1]           // 2 ==> d_id
-                                                                       });
+    inputs_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)] =
+        map<int32_t, Value>({
+                                {0, req.input_[4 + 3 * i]},  // 0 ==> s_i_id
+                                {1, req.input_[5 + 3 * i]},  // 1 ==>
+                                // ol_supply_w_id / s_w_id
+                                {2, req.input_[1]}           // 2 ==> d_id
+                            });
     output_size_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)] = 2;
     p_types_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)] = TPCC_NEW_ORDER_6;
     new_order_shard(TPCC_TB_STOCK, req.input_,
@@ -188,21 +183,16 @@ void TpccChopper::new_order_init(TxnRequest &req) {
     status_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)] = READY;
 
     // piece 7 + 4 * i, W stock
-    inputs_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)] = std::vector<Value>({
-                                                                              req.input_[
-                                                                                  4
-                                                                                      + 3
-                                                                                          * i],  // 0 ==> s_i_id
-                                                                              req.input_[
-                                                                                  5
-                                                                                      + 3
-                                                                                          * i],  // 1 ==> ol_supply_w_id / s_w_id
-                                                                              req.input_[
-                                                                                  6
-                                                                                      + 3
-                                                                                          * i],  // 2 ==> ol_quantity
-                                                                              is_remote               // 3 ==> increase delta s_remote_cnt
-                                                                          });
+    inputs_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)] =
+        map<int32_t, Value>({
+                                {0, req.input_[4 + 3 * i]},  // 0 ==> s_i_id
+                                {1, req.input_[5 + 3 * i]},  // 1 ==>
+                                // ol_supply_w_id / s_w_id
+                                {2, req.input_[6 + 3 * i]},  // 2 ==>
+                                // ol_quantity
+                                {3, is_remote}               // 3 ==> increase
+                                    // delta s_remote_cnt
+                            });
     output_size_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)] = 0;
     p_types_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)] = TPCC_NEW_ORDER_7;
     new_order_shard(TPCC_TB_STOCK, req.input_,
@@ -210,32 +200,19 @@ void TpccChopper::new_order_init(TxnRequest &req) {
     status_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)] = READY;
 
     // piece 8 + 4 * i, W order_line, depends on piece 0 & 5+3*i & 6+3*i
-    inputs_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)] = std::vector<Value>({
-                                                                             req.input_[1],          // 0 ==> ol_d_id
-                                                                             req.input_[0],          // 1 ==> ol_w_id
-                                                                             Value(
-                                                                                 (i32) 0),          // 2 ==> ol_o_id    depends on piece 0
-                                                                             Value(
-                                                                                 (i32) i),          // 3 ==> ol_number
-                                                                             req.input_[
-                                                                                 4
-                                                                                     + 3
-                                                                                         * i],  // 4 ==> ol_i_id
-                                                                             req.input_[
-                                                                                 5
-                                                                                     + 3
-                                                                                         * i],  // 5 ==> ol_supply_w_id
-                                                                             Value(
-                                                                                 std::string()),   // 6 ==> ol_deliver_d
-                                                                             req.input_[
-                                                                                 6
-                                                                                     + 3
-                                                                                         * i],  // 7 ==> ol_quantity
-                                                                             Value(
-                                                                                 (double) 0.0),     // 8 ==> ol_amount  depends on piece 5+3*i
-                                                                             Value(
-                                                                                 std::string()),   // 9 ==> ol_dist_info depends on piece 6+3*i
-                                                                         });
+    inputs_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)] =
+        map<int32_t, Value>({
+            {0, req.input_[1]},          // 0 ==> ol_d_id
+            {1, req.input_[0]},          // 1 ==> ol_w_id
+            {2, Value((i32) 0)},          // 2 ==> ol_o_id    depends on piece 0
+            {3, Value((i32) i)},          // 3 ==> ol_number
+            {4, req.input_[4 + 3 * i]},  // 4 ==> ol_i_id
+            {5, req.input_[5 + 3 * i]},  // 5 ==> ol_supply_w_id
+            {6, Value(std::string())},   // 6 ==> ol_deliver_d
+            {7, req.input_[6 + 3 * i]},  // 7 ==> ol_quantity
+            {8, Value((double) 0.0)},     // 8 ==> ol_amount  depends on piece 5+3*i
+            {9, Value(std::string())},   // 9 ==> ol_dist_info depends on piece 6+3*i
+                            });
     output_size_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)] = 0;
     p_types_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)] = TPCC_NEW_ORDER_8;
     new_order_shard(TPCC_TB_ORDER_LINE, req.input_,// sharding based on ol_w_id
@@ -243,16 +220,24 @@ void TpccChopper::new_order_init(TxnRequest &req) {
     status_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)] = WAITING;
   }
   // piece 3, W order, depends on piece 0
-  inputs_[3] = std::vector<Value>({
-                                      Value((i32) 0),          // 0 ==> o_id   depends on piece 0
-                                      req.input_[1],          // 1 ==> o_d_id
-                                      req.input_[0],          // 2 ==> o_w_id
-                                      req.input_[2],          // 3 ==> o_c_id
-                                      Value((i32) 0),          // 4 ==> o_carrier_id
-                                      req.input_[3],          // 5 ==> o_ol_cnt
-                                      all_local ? Value((i32) 1)
-                                                : Value((i32) 0) // 6 ==> o_all_local
-                                  });
+  inputs_[3] =
+      map<int32_t, Value>({
+                              {0, Value((i32) 0)},
+                              // 0 ==> // o_id   depends on piece 0
+                              {1, req.input_[1]},
+                              // 1 ==> // o_d_id
+                              {2, req.input_[0]},
+                              // 2 ==> // o_w_id
+                              {3, req.input_[2]},
+                              // 3 ==> // o_c_id
+                              {4, Value((i32) 0)},
+                              // 4 ==> // o_carrier_id
+                              {5, req.input_[3]},
+                              // 5 ==> // o_ol_cnt
+                              {6, all_local ?
+                                  Value((i32) 1) : Value((i32) 0)
+                              }// 6 ==> // o_all_local
+                          });
   output_size_[3] = 0;
   p_types_[3] = TPCC_NEW_ORDER_3;
   new_order_shard(TPCC_TB_ORDER, req.input_, // sharding based on o_w_id
@@ -260,11 +245,11 @@ void TpccChopper::new_order_init(TxnRequest &req) {
   status_[3] = WAITING;
 
   // piece 4, W new_order, depends on piece 0
-  inputs_[4] = std::vector<Value>({
-                                      Value((i32) 0),          // 0 ==> no_id   depends on piece 0
-                                      req.input_[1],          // 1 ==> no_d_id
-                                      req.input_[0],          // 2 ==> no_w_id
-                                  });
+  inputs_[4] = map<int32_t, Value>({
+      {0, Value((i32) 0)},          // 0 ==> no_id   depends on piece 0
+      {1, req.input_[1]},          // 1 ==> no_d_id
+      {2, req.input_[0]},          // 2 ==> no_w_id
+                                   });
   output_size_[4] = 0;
   p_types_[4] = TPCC_NEW_ORDER_4;
   new_order_shard(TPCC_TB_NEW_ORDER, req.input_, // sharding based on no_w_id
@@ -441,31 +426,34 @@ void TpccChopper::payment_init(TxnRequest &req) {
   status_.resize(n_pieces_all_);
 
   // piece 0, Ri
-  inputs_[0] = std::vector<Value>({
-                                      req.input_[0],  // 0 ==>    w_id
-                                      req.input_[5]   // 1 ==>    h_amount
-                                  });
+  inputs_[0] = map<int32_t, Value>({
+                                       {0, req.input_[0]},  // 0 ==>    w_id
+                                       {1, req.input_[5]}  // 1 ==>    h_amount
+                                   });
   output_size_[0] = 6;
   p_types_[0] = TPCC_PAYMENT_0;
   payment_shard(TPCC_TB_WAREHOUSE, req.input_, sharding_[0]);
   status_[0] = READY;
 
   // piece 1, Ri district
-  inputs_[1] = std::vector<Value>({
-                                      req.input_[0],  // 0 ==>    d_w_id
-                                      req.input_[1],  // 1 ==>    d_id
-                                  });
+  inputs_[1] = map<int32_t, Value>({
+                                       {0, req.input_[0]},  // 0 ==>    d_w_id
+                                       {1, req.input_[1]},  // 1 ==>    d_id
+                                   });
   output_size_[1] = 6;
   p_types_[1] = TPCC_PAYMENT_1;
   payment_shard(TPCC_TB_DISTRICT, req.input_, sharding_[1]);
   status_[1] = READY;
 
   // piece 2, W district
-  inputs_[2] = std::vector<Value>({
-                                      req.input_[0],  // 0 ==>    d_w_id
-                                      req.input_[1],  // 1 ==>    d_id
-                                      req.input_[5]   // 2 ==>    h_amount
-                                  });
+  inputs_[2] = map<int32_t, Value>({
+                                       {0, req.input_[0]},
+                                       // 0 ==>    d_w_id
+                                       {1, req.input_[1]},
+                                       // 1 ==>    d_id
+                                       {2, req.input_[5]}
+                                       // 2 ==>    h_amount
+                                   });
   output_size_[2] = 0;
   p_types_[2] = TPCC_PAYMENT_2;
   payment_shard(TPCC_TB_DISTRICT, req.input_, sharding_[2]);
@@ -474,11 +462,11 @@ void TpccChopper::payment_init(TxnRequest &req) {
   // query by c_last
   if (req.input_[2].get_kind() == mdb::Value::STR) {
     // piece 3, R customer, c_last -> c_id
-    inputs_[3] = std::vector<Value>({
-                                        req.input_[2],  // 0 ==>    c_last
-                                        req.input_[3],  // 1 ==>    c_w_id
-                                        req.input_[4],  // 2 ==>    c_d_id
-                                    });
+    inputs_[3] = map<int32_t, Value>({
+        {0, req.input_[2]},  // 0 ==>    c_last
+        {1, req.input_[3]},  // 1 ==>    c_w_id
+        {2, req.input_[4]},  // 2 ==>    c_d_id
+                                     });
     output_size_[3] = 1;
     p_types_[3] = TPCC_PAYMENT_3;
     payment_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[3]);
@@ -504,30 +492,30 @@ void TpccChopper::payment_init(TxnRequest &req) {
   }
 
   // piece 4, R & W customer
-  inputs_[4] = std::vector<Value>({
-                                      req.input_[2],  // 0 ==>    c_id
-                                      req.input_[3],  // 1 ==>    c_w_id
-                                      req.input_[4],  // 2 ==>    c_d_id
-                                      req.input_[5],  // 3 ==>    h_amount
-                                      req.input_[0],  // 4 ==>    w_id
-                                      req.input_[1]   // 5 ==>    d_id
-                                  });
+  inputs_[4] = map<int32_t, Value>({
+      {0, req.input_[2]},  // 0 ==>    c_id
+      {1, req.input_[3]},  // 1 ==>    c_w_id
+      {2, req.input_[4]},  // 2 ==>    c_d_id
+      {3, req.input_[5]},  // 3 ==>    h_amount
+      {4, req.input_[0]},  // 4 ==>    w_id
+      {5, req.input_[1]}   // 5 ==>    d_id
+                                   });
   output_size_[4] = 15;
   p_types_[4] = TPCC_PAYMENT_4;
   payment_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[4]);
 
   // piece 5, W history (insert), depends on piece 0, 1
-  inputs_[5] = std::vector<Value>({
-                                      req.input_[6],  // 0 ==>    h_key
-                                      Value(),        // 1 ==>    w_name depends on piece 0
-                                      Value(),        // 2 ==>    d_name depends on piece 1
-                                      req.input_[0],  // 3 ==>    w_id
-                                      req.input_[1],  // 4 ==>    d_id
-                                      req.input_[2],  // 5 ==>    c_id depends on piece 2 if querying by c_last
-                                      req.input_[3],  // 6 ==>    c_w_id
-                                      req.input_[4],  // 7 ==>    c_d_id
-                                      req.input_[5]   // 8 ==>    h_amount
-                                  });
+  inputs_[5] = map<int32_t, Value>({
+      {0, req.input_[6]},  // 0 ==>    h_key
+      {1, Value()},        // 1 ==>    w_name depends on piece 0
+      {2, Value()},        // 2 ==>    d_name depends on piece 1
+      {3, req.input_[0]},  // 3 ==>    w_id
+      {4, req.input_[1]},  // 4 ==>    d_id
+      {5, req.input_[2]},  // 5 ==>    c_id depends on piece 2 if querying by c_last
+      {6, req.input_[3]},  // 6 ==>    c_w_id
+      {7, req.input_[4]},  // 7 ==>    c_d_id
+      {8, req.input_[5]}   // 8 ==>    h_amount
+                                   });
   output_size_[5] = 0;
   p_types_[5] = TPCC_PAYMENT_5;
   payment_shard(TPCC_TB_HISTORY, req.input_, sharding_[5]);
@@ -662,10 +650,10 @@ void TpccChopper::order_status_init(TxnRequest &req) {
   else { // query by c_last
 
     // piece 0, R customer, c_last --> c_id
-    inputs_[0] = std::vector<Value>({
-                                        req.input_[2],  // 0 ==>    c_last
-                                        req.input_[0],  // 1 ==>    c_w_id
-                                        req.input_[1]   // 2 ==>    c_d_id
+    inputs_[0] = map<int32_t, Value>({
+        {0, req.input_[2]},  // 0 ==>    c_last
+        {1, req.input_[0]},  // 1 ==>    c_w_id
+        {2, req.input_[1]}   // 2 ==>    c_d_id
                                     });
     output_size_[0] = 1; // return c_id only
     p_types_[0] = TPCC_ORDER_STATUS_0;
@@ -681,31 +669,37 @@ void TpccChopper::order_status_init(TxnRequest &req) {
   }
 
   // piece 1, R customer, depends on piece 0 if using c_last instead of c_id
-  inputs_[1] = std::vector<Value>({
-                                      req.input_[0],  // 0 ==>    c_w_id
-                                      req.input_[1],  // 1 ==>    c_d_id
-                                      req.input_[2]   // 2 ==>    c_id, may depends on piece 0
-                                  });
+  inputs_[1] = map<int32_t, Value>({
+      {0, req.input_[0]},  // 0 ==>    c_w_id
+      {1, req.input_[1]},  // 1 ==>    c_d_id
+      {2, req.input_[2]}   // 2 ==>    c_id, may depends on piece 0
+                                   });
   output_size_[1] = 4;
   p_types_[1] = TPCC_ORDER_STATUS_1;
   order_status_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[1]);
 
   // piece 2, R order, depends on piece 0 if using c_last instead of c_id
-  inputs_[2] = std::vector<Value>({
-                                      req.input_[0],  // 0 ==>    o_w_id
-                                      req.input_[1],  // 1 ==>    o_d_id
-                                      req.input_[2]   // 2 ==>    o_c_id, may depends on piece 0
-                                  });
+  inputs_[2] = map<int32_t, Value>({
+                                       {0, req.input_[0]},
+                                       // 0 ==>    o_w_id
+                                       {1, req.input_[1]},
+                                       // 1 ==>    o_d_id
+                                       {2, req.input_[2]}
+                                       // 2 ==>    o_c_id, may depends on piece 0
+                                   });
   output_size_[2] = 3;
   p_types_[2] = TPCC_ORDER_STATUS_2;
   order_status_shard(TPCC_TB_ORDER, req.input_, sharding_[2]);
 
   // piece 3, R order_line, depends on piece 2
-  inputs_[3] = std::vector<Value>({
-                                      req.input_[0],  // 0 ==>    ol_w_id
-                                      req.input_[1],  // 1 ==>    ol_d_id
-                                      Value()         // 2 ==>    ol_o_id, depends on piece 2
-                                  });
+  inputs_[3] = map<int32_t, Value>({
+                                       {0, req.input_[0]},
+                                       // 0 ==>    ol_w_id
+                                       {1, req.input_[1]},
+                                       // 1 ==>    ol_d_id
+                                       {2, Value()}
+                                       // 2 ==>    ol_o_id, depends on piece 2
+                                   });
   output_size_[3] = 15 * 5;
   p_types_[3] = TPCC_ORDER_STATUS_3;
   order_status_shard(TPCC_TB_ORDER_LINE, req.input_, sharding_[3]);
@@ -878,45 +872,45 @@ void TpccChopper::delivery_init(TxnRequest &req) {
   //memset(delivery_dep_.piece_order_lines, false, sizeof(bool) * d_cnt);
 
   // piece 0, Ri & W new_order
-  inputs_[0] = std::vector<Value>({
-                                      req.input_[0],  // 0 ==>    no_w_id
-                                      req.input_[2]   // 1 ==>    no_d_id
-                                  });
+  inputs_[0] = map<int32_t, Value>({
+                                       {0, req.input_[0]},  // 0 ==>    no_w_id
+                                       {1, req.input_[2]}  // 1 ==>    no_d_id
+                                   });
   output_size_[0] = 1;
   p_types_[0] = TPCC_DELIVERY_0;
   delivery_shard(TPCC_TB_NEW_ORDER, req.input_, sharding_[0], d_id);
   status_[0] = READY;
 
   // piece 1, Ri & W order
-  inputs_[1] = std::vector<Value>({
-                                      Value(),        // 0 ==>    o_id,   depends on piece 0
-                                      req.input_[0],  // 1 ==>    o_w_id
-                                      req.input_[2],  // 2 ==>    o_d_id
-                                      req.input_[1]   // 3 ==>    o_carrier_id
-                                  });
+  inputs_[1] = map<int32_t, Value>({
+      {0, Value()},        // 0 ==>    o_id,   depends on piece 0
+      {1, req.input_[0]},  // 1 ==>    o_w_id
+      {2, req.input_[2]},  // 2 ==>    o_d_id
+      {3, req.input_[1]}   // 3 ==>    o_carrier_id
+                                   });
   output_size_[1] = 1;
   p_types_[1] = TPCC_DELIVERY_1;
   delivery_shard(TPCC_TB_ORDER, req.input_, sharding_[1], d_id);
   status_[1] = WAITING;
 
   // piece 2, Ri & W order_line
-  inputs_[2] = std::vector<Value>({
-                                      Value(),        // 0 ==>    ol_o_id,   depends on piece 0
-                                      req.input_[0],  // 1 ==>    ol_w_id
-                                      req.input_[2]   // 2 ==>    ol_d_id
-                                  });
+  inputs_[2] = map<int32_t, Value>({
+      {0, Value()},        // 0 ==>    ol_o_id,   depends on piece 0
+      {1, req.input_[0]},  // 1 ==>    ol_w_id
+      {2, req.input_[2]}   // 2 ==>    ol_d_id
+                                   });
   output_size_[2] = 1;
   p_types_[2] = TPCC_DELIVERY_2;
   delivery_shard(TPCC_TB_ORDER_LINE, req.input_, sharding_[2], d_id);
   status_[2] = WAITING;
 
   // piece 3, W customer
-  inputs_[3] = std::vector<Value>({
-                                      Value(),        // 0 ==>    c_id,   depends on piece 1
-                                      req.input_[0],  // 1 ==>    c_w_id
-                                      req.input_[2],  // 2 ==>    c_d_id
-                                      Value()         // 3 ==>    ol_amount, depends on piece 2
-                                  });
+  inputs_[3] = map<int32_t, Value>({
+      {0, Value()},        // 0 ==>    c_id,   depends on piece 1
+      {1, req.input_[0]},  // 1 ==>    c_w_id
+      {2, req.input_[2]},  // 2 ==>    c_d_id
+      {3, Value()}         // 3 ==>    ol_amount, depends on piece 2
+                                   });
   output_size_[3] = 0;
   p_types_[3] = TPCC_DELIVERY_3;
   delivery_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[3], d_id);
@@ -1068,6 +1062,24 @@ void TpccChopper::stock_level_shard(
   verify(ret == 0);
 }
 
+void TpccChopper::stock_level_shard(
+    const char *tb,
+    const map<int32_t, Value> &input,
+    uint32_t &site) {
+  MultiValue mv;
+  if (tb == TPCC_TB_DISTRICT
+      || tb == TPCC_TB_ORDER_LINE)
+    // based on w_id
+    mv = MultiValue(input.at(0));
+  else if (tb == TPCC_TB_STOCK)
+    // based on s_w_id
+    mv = MultiValue(input.at(1));
+  else
+    verify(0);
+  int ret = sss_->get_site_id_from_tb(tb, mv, site);
+  verify(ret == 0);
+}
+
 void TpccChopper::stock_level_init(TxnRequest &req) {
   /**
    * req.input_
@@ -1086,9 +1098,9 @@ void TpccChopper::stock_level_init(TxnRequest &req) {
   stock_level_dep_.threshold = req.input_[2].get_i32();
 
   // piece 0, R district
-  inputs_[0] = std::vector<Value>({
-                                      req.input_[0],  // 0    ==> w_id
-                                      req.input_[1]   // 1    ==> d_id
+  inputs_[0] = map<int32_t, Value>({
+      {0, req.input_[0]},  // 0    ==> w_id
+      {1, req.input_[1]}   // 1    ==> d_id
                                   });
   output_size_[0] = 1;
   p_types_[0] = TPCC_STOCK_LEVEL_0;
@@ -1096,10 +1108,10 @@ void TpccChopper::stock_level_init(TxnRequest &req) {
   status_[0] = READY;
 
   // piece 1, R order_line
-  inputs_[1] = std::vector<Value>({
-                                      Value(),        // 0    ==> d_next_o_id, depends on piece 0
-                                      req.input_[0],  // 1    ==> ol_w_id
-                                      req.input_[1]   // 2    ==> ol_d_id
+  inputs_[1] = map<int32_t, Value>({
+      {0, Value()},        // 0    ==> d_next_o_id, depends on piece 0
+      {1, req.input_[0]},  // 1    ==> ol_w_id
+      {2, req.input_[1]}   // 2    ==> ol_d_id
                                   });
   output_size_[1] = 20 * 15; // 20 orders * 15 order_line per order at most
   p_types_[1] = TPCC_STOCK_LEVEL_1;
@@ -1136,11 +1148,11 @@ bool TpccChopper::stock_level_callback(
     int i = 0;
     for (std::unordered_set<i32>::iterator s_i_ids_it = s_i_ids.begin();
          s_i_ids_it != s_i_ids.end(); s_i_ids_it++) {
-      inputs_[2 + i] = std::vector<Value>({
-                                              Value(*s_i_ids_it),                     // 0 ==> s_i_id
-                                              Value((i32) stock_level_dep_.w_id),      // 1 ==> s_w_id
-                                              Value((i32) stock_level_dep_.threshold)  // 2 ==> threshold
-                                          });
+      inputs_[2 + i] = map<int32_t, Value>({
+          {0, Value(*s_i_ids_it)},                      // 0 ==> s_i_id
+          {1, Value((i32) stock_level_dep_.w_id)},      // 1 ==> s_w_id
+          {2, Value((i32) stock_level_dep_.threshold)}  // 2 ==> threshold
+                                           });
       output_size_[2 + i] = 1;
       p_types_[2 + i] = TPCC_STOCK_LEVEL_2;
       stock_level_shard(TPCC_TB_STOCK, inputs_[2 + i], sharding_[2 + i]);

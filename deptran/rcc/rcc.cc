@@ -15,7 +15,7 @@ RCCDTxn::RCCDTxn(
 
 void RCCDTxn::StartLaunch(
     const RequestHeader &header,
-    const std::vector<mdb::Value> &input,
+    const map<int32_t, Value> &input,
     ChopStartResponse *res,
     rrr::DeferredReply *defer) {
   verify(defer);
@@ -35,7 +35,7 @@ void RCCDTxn::StartLaunch(
 
 void RCCDTxn::StartAfterLog(
     const RequestHeader &header,
-    const std::vector<mdb::Value> &input,
+    const map<int32_t, Value> &input,
     ChopStartResponse *res,
     rrr::DeferredReply *defer
 ) {
@@ -64,12 +64,11 @@ void RCCDTxn::StartAfterLog(
 //    Log::debug("reply to start request. txn_id: %llx, pie_id: %llx, graph size: %d", header.tid, header.pid, (int)res->gra.size());
 }
 
-bool RCCDTxn::start_exe_itfr(
-    defer_t defer_type,
-    TxnHandler &handler,
-    const RequestHeader &header,
-    const std::vector<mdb::Value> &input,
-    map<int32_t, Value> *output) {
+bool RCCDTxn::start_exe_itfr(defer_t defer_type,
+                             TxnHandler &handler,
+                             const RequestHeader &header,
+                             const map<int32_t, Value> &input,
+                             map<int32_t, Value> *output) {
   bool deferred;
   switch (defer_type) {
     case DF_NO: { // immediate
@@ -79,8 +78,7 @@ bool RCCDTxn::start_exe_itfr(
       handler(nullptr,
               this,
               header,
-              input.data(),
-              input.size(),
+              const_cast<map<int32_t, Value>&>(input),
               &res,
               *output,
               &output_size);
@@ -100,8 +98,7 @@ bool RCCDTxn::start_exe_itfr(
       handler(nullptr,
               this,
               header,
-              drs.back().inputs.data(),
-              drs.back().inputs.size(),
+              drs.back().inputs,
               NULL,
               no_use,
               NULL);
@@ -123,8 +120,7 @@ bool RCCDTxn::start_exe_itfr(
       handler(nullptr,
               this,
               header,
-              drs.back().inputs.data(),
-              drs.back().inputs.size(),
+              drs.back().inputs,
               &res,
               *output,
               &output_size);
@@ -148,7 +144,7 @@ void RCCDTxn::start(
 
 void RCCDTxn::start_ro(
     const RequestHeader &header,
-    const std::vector<mdb::Value> &input,
+    const map<int32_t, Value> &input,
     map<int32_t, Value> &output,
     DeferredReply *defer) {
 
@@ -161,8 +157,7 @@ void RCCDTxn::start_ro(
   txn_handler_pair.txn_handler(nullptr,
                                this,
                                header,
-                               input.data(),
-                               input.size(),
+                               const_cast<map<int32_t, Value>&>(input),
                                &res,
                                output,
                                &output_size);
@@ -402,8 +397,7 @@ void RCCDTxn::exe_deferred(
       txn_handler_pair.txn_handler(nullptr,
                                    this,
                                    header,
-                                   input.data(),
-                                   input.size(),
+                                   input,
                                    &res,
                                    output,
                                    &output_size);

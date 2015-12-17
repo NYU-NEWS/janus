@@ -22,14 +22,18 @@ TPLSched::TPLSched() : ThreePhaseSched() {
 
 int TPLSched::OnPhaseOneRequest(
     const RequestHeader &header,
-    const std::vector<mdb::Value> &input,
+    const map<int32_t, Value> &input,
     const rrr::i32 &output_size,
     rrr::i32 *res,
     map<int32_t, Value> *output,
     rrr::DeferredReply *defer) {
   TPLExecutor* exec = (TPLExecutor*) GetOrCreateExecutor(header.tid);
-  exec->start_launch(header, input, output_size,
-                     res, output, defer);
+  exec->start_launch(header,
+                     input,
+                     output_size,
+                     res,
+                     output,
+                     defer);
 
   return 0;
 }

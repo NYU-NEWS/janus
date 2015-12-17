@@ -63,7 +63,7 @@ Command *TxnChopper::GetNextSubCmd() {
 }
 
 int TxnChopper::next_piece(
-    std::vector<mdb::Value> *&input,
+    map<int32_t, Value>* &input,
     int &output_size,
     int32_t &server_id,
     int32_t &pi,

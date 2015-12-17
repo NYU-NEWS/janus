@@ -109,7 +109,7 @@ void RO6DTxn::kiss(mdb::Row *r, int col, bool immediate) {
 }
 
 void RO6DTxn::start_ro(const RequestHeader &header,
-                       const std::vector<mdb::Value> &input,
+                       const map<int32_t, Value> &input,
                        map<int32_t, Value> &output,
                        rrr::DeferredReply *defer) {
 //    RCCDTxn::start_ro(header, input, output, defer);
@@ -123,8 +123,7 @@ void RO6DTxn::start_ro(const RequestHeader &header,
   txn_handler_pair.txn_handler(nullptr,
                                this,
                                header,
-                               input.data(),
-                               input.size(),
+                               const_cast<map<int32_t, Value>&>(input),
                                &res,
                                output,
                                &output_size);
@@ -141,8 +140,7 @@ void RO6DTxn::start_ro(const RequestHeader &header,
     txn_handler_pair.txn_handler(nullptr,
                                  this,
                                  header,
-                                 input.data(),
-                                 input.size(),
+                                 const_cast<map<int32_t, Value>&>(input),
                                  &res,
                                  output,
                                  &output_size);

@@ -134,7 +134,7 @@ void RococoServiceImpl::naive_batch_start_pie(
 
 void RococoServiceImpl::start_pie(
     const RequestHeader &header,
-    const std::vector<mdb::Value> &input,
+    const map<int32_t, Value> &input,
     const rrr::i32 &output_size,
     rrr::i32 *res,
     map<int32_t, Value> *output,
@@ -215,7 +215,7 @@ void RococoServiceImpl::abort_txn(
 // TODO find a better way to define batch
 void RococoServiceImpl::rcc_batch_start_pie(
     const std::vector<RequestHeader> &headers,
-    const std::vector<std::vector<Value>> &inputs,
+    const std::vector<map<int32_t, Value>> &inputs,
     BatchChopStartResponse *res,
     rrr::DeferredReply *defer) {
 
@@ -263,7 +263,7 @@ void RococoServiceImpl::rcc_batch_start_pie(
 
 void RococoServiceImpl::rcc_start_pie(
     const RequestHeader &header,
-    const std::vector<Value> &input,
+    const map<int32_t, Value> &input,
     ChopStartResponse *res,
     rrr::DeferredReply *defer
 ) {
@@ -313,7 +313,7 @@ void RococoServiceImpl::rcc_ask_txn(
 
 void RococoServiceImpl::rcc_ro_start_pie(
     const RequestHeader &header,
-    const vector<Value> &input,
+    const map<int32_t, Value> &input,
     map<int32_t, Value> *output,
     rrr::DeferredReply *defer) {
   std::lock_guard<std::mutex> guard(mtx_);

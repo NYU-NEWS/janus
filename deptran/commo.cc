@@ -53,7 +53,7 @@ void Commo::SendStart(parid_t par_id,
 
 void Commo::SendStart(parid_t par_id, 
                       RequestHeader &header, 
-                      std::vector<Value> &input, 
+                      map<int32_t, Value> &input,
                       int32_t output_size,
                       std::function<void(Future *fu)> &callback) {
   rrr::FutureAttr fuattr;

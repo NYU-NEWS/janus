@@ -14,7 +14,7 @@ void RO6Coord::deptran_start(TxnChopper *ch) {
 
   int pi;
 
-  std::vector<Value> *input = nullptr;
+  map<int32_t, Value> *input = nullptr;
   int32_t server_id;
   int     res;
   int     output_size;
@@ -172,7 +172,7 @@ void RO6Coord::ro6_start_ro(TxnChopper *ch) {
 
   int pi;
 
-  std::vector<Value> *input = nullptr;
+  map<int32_t, Value> *input = nullptr;
   int32_t server_id;
   int     res;
   int     output_size;

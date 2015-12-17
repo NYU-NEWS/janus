@@ -12,7 +12,7 @@ void TpccPiece::reg_delivery() {
       // including the vertex entry
 
       Log::debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_0);
-      verify(input_size == 2);
+      verify(input.size() == 2);
       i32 oi = 0;
       Value buf;
 //        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
@@ -45,7 +45,7 @@ void TpccPiece::reg_delivery() {
 
                   std::function<void(void)> succ_callback =
                       ((TPLExecutor*) exec)->get_2pl_succ_callback(
-                          header, input, input_size, res, ps);
+                          header, input, res, ps);
 
                   std::function<void(void)> fail_callback =
                       ((TPLExecutor*) exec)->get_2pl_fail_callback(
@@ -100,7 +100,7 @@ void TpccPiece::reg_delivery() {
           DF_NO) {
 
       Log::debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_1);
-      verify(input_size == 4);
+      verify(input.size() == 4);
       i32 oi = 0;
       Value buf;
 //        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
@@ -142,7 +142,7 @@ void TpccPiece::reg_delivery() {
           DF_NO) {
 
       Log::debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_2);
-      verify(input_size == 3);
+      verify(input.size() == 3);
       i32 oi = 0;
       Value buf;
 //        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
@@ -181,7 +181,7 @@ void TpccPiece::reg_delivery() {
 
           std::function<void(void)> succ_callback =
               ((TPLExecutor*) exec)->get_2pl_succ_callback(
-                  header, input, input_size, res, ps);
+                  header, input, res, ps);
 
           std::function<void(void)> fail_callback =
               ((TPLExecutor*) exec)->get_2pl_fail_callback(
@@ -235,7 +235,7 @@ void TpccPiece::reg_delivery() {
           TPCC_DELIVERY_3, // W customer
           DF_REAL) {
       Log::debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_3);
-      verify(input_size == 4);
+      verify(input.size() == 4);
       i32 oi = 0;
       Value buf;
 //        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);

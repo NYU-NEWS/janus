@@ -89,6 +89,10 @@ class TpccChopper: public TxnChopper {
                                  const std::vector<mdb::Value> &input,
                                  uint32_t &site);
 
+  virtual void stock_level_shard(const char *tb,
+                                 const map<int32_t, mdb::Value> &input,
+                                 uint32_t &site);
+
   virtual void stock_level_init(TxnRequest &req);
 
   virtual bool stock_level_callback(int pi, int res,

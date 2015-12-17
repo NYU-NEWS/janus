@@ -9,7 +9,7 @@ void TpccPiece::reg_payment() {
             TPCC_PAYMENT_0,    // piece 0, Ri & W warehouse
             DF_NO) { // immediately read
         // ############################################################
-        verify(input_size == 2);
+        verify(input.size() == 2);
         Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_0);
         i32 oi = 0;
         // ############################################################
@@ -47,7 +47,7 @@ void TpccPiece::reg_payment() {
             TPCC_PAYMENT_1,    // piece 1, Ri district
             DF_NO) { // immediately read
         // ############################################################
-        verify(input_size == 2);
+        verify(input.size() == 2);
         Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_1);
         // ############################################################
         i32 oi = 0;
@@ -90,7 +90,7 @@ void TpccPiece::reg_payment() {
             TPCC_PAYMENT_2,    // piece 1, Ri & W district
             DF_REAL) {
         // ############################################################
-        verify(input_size == 3);
+        verify(input.size() == 3);
         Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_2);
         i32 output_index = 0;
         // ############################################################
@@ -136,7 +136,7 @@ void TpccPiece::reg_payment() {
             TPCC_PAYMENT_3,    // piece 2, R customer secondary index, c_last -> c_id
             DF_NO) {
         // ############################################################
-        verify(input_size == 3);
+        verify(input.size() == 3);
         Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_3);
         // ############################################################
 
@@ -188,7 +188,7 @@ void TpccPiece::reg_payment() {
             TPCC_PAYMENT_4,    // piece 4, R & W customer
             DF_REAL) {
         // ############################################################
-        verify(input_size == 6);
+        verify(input.size() == 6);
         Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_4);
         i32 output_index = 0;
         // ############################################################
@@ -326,7 +326,7 @@ void TpccPiece::reg_payment() {
             TPCC_PAYMENT_5,    // piece 4, W histroy
             DF_REAL) {
         // ############################################################
-        verify(input_size == 9);
+        verify(input.size() == 9);
         Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_5);
         // ############################################################
 

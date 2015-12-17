@@ -10,7 +10,7 @@ class RCCDTxn: public DTxn {
 
   typedef struct {
     RequestHeader header;
-    std::vector <mdb::Value> inputs;
+    map<int32_t, Value> inputs;
     row_map_t row_map;
   } DeferredRequest;
 
@@ -31,14 +31,14 @@ class RCCDTxn: public DTxn {
 
   virtual void StartLaunch(
       const RequestHeader &header,
-      const std::vector <mdb::Value> &input,
+      const map<int32_t, Value> &input,
       ChopStartResponse *res,
       rrr::DeferredReply *defer
   );
 
   virtual void StartAfterLog(
       const RequestHeader &header,
-      const std::vector <mdb::Value> &input,
+      const map<int32_t, Value> &input,
       ChopStartResponse *res,
       rrr::DeferredReply *defer
   );
@@ -47,7 +47,7 @@ class RCCDTxn: public DTxn {
       defer_t defer,
       TxnHandler &handler,
       const RequestHeader &header,
-      const std::vector <mdb::Value> &input,
+      const map<int32_t, Value> &input,
       map<int32_t, Value> *output
   );
 
@@ -61,7 +61,7 @@ class RCCDTxn: public DTxn {
 
   virtual void start_ro(
       const RequestHeader &header,
-      const std::vector <mdb::Value> &input,
+      const map<int32_t, Value> &input,
       map<int32_t, Value> &output,
       rrr::DeferredReply *defer
   );

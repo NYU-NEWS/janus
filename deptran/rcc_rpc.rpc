@@ -49,7 +49,7 @@ abstract service Rococo {
     // below is for 2PL and OCC
 
     defer start_pie (RequestHeader header, 
-                     vector<Value> input, 
+                     map<i32, Value> input,
                      i32 output_size | 
                      i32 res, 
                      map<i32, Value> output); 
@@ -72,7 +72,7 @@ abstract service Rococo {
     // Below is for rococo only
 
     defer rcc_start_pie(RequestHeader header, 
-                        vector<Value> input | 
+                        map<i32, Value> input |
                         ChopStartResponse res);  
 
     defer rcc_finish_txn(ChopFinishRequest req | 
@@ -82,11 +82,11 @@ abstract service Rococo {
                       CollectFinishResponse res);
 
     defer rcc_ro_start_pie(RequestHeader header, 
-                           vector<Value> input | 
+                           map<i32, Value> input |
                            map<i32, Value> output);
 
     defer rcc_batch_start_pie(vector<RequestHeader> headers, 
-                              vector<vector<Value>> inputs | 
+                              vector<map<i32, Value>> inputs |
                               BatchChopStartResponse res);  
 
     // below is for what?

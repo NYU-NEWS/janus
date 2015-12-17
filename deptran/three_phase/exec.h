@@ -15,7 +15,7 @@ class ThreePhaseExecutor: public Executor {
   virtual ~ThreePhaseExecutor();
 
   virtual int start_launch(const RequestHeader &header,
-                           const std::vector <mdb::Value> &input,
+                           const map<int32_t, Value> &input,
                            const rrr::i32 &output_size,
                            rrr::i32 *res,
                            map<int32_t, Value> &output,
@@ -44,13 +44,12 @@ class ThreePhaseExecutor: public Executor {
   int abort();
 
   void execute(const RequestHeader &header,
-               const std::vector <mdb::Value> &input,
+               const map<int32_t, Value> &input,
                rrr::i32 *res,
                map<int32_t, Value> &output);
 
   void execute(const RequestHeader &header,
-               const Value *input,
-               rrr::i32 input_size,
+               const map<int32_t, Value> &input,
                rrr::i32 *res,
                map<int32_t, Value> &output,
                rrr::i32 *output_size);

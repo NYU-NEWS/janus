@@ -15,7 +15,7 @@ class TPLSched: public ThreePhaseSched {
 
   virtual int OnPhaseOneRequest(
       const RequestHeader &header,
-      const std::vector<mdb::Value> &input,
+      const map<int32_t, Value> &input,
       const rrr::i32 &output_size,
       rrr::i32 *res,
       map<int32_t, Value> *output,

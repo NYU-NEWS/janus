@@ -50,7 +50,7 @@ class RococoServiceImpl: public RococoService {
       DeferredReply *defer);
 
   void start_pie(const RequestHeader &header,
-                 const std::vector<Value> &input,
+                 const map<int32_t, Value> &input,
                  const i32 &output_size,
                  i32 *res,
                  map<int32_t, Value> *output,
@@ -99,13 +99,13 @@ class RococoServiceImpl: public RococoService {
 
   void rcc_batch_start_pie(
       const std::vector<RequestHeader> &headers,
-      const std::vector<std::vector<Value>> &inputs,
+      const std::vector<map<int32_t, Value>> &inputs,
       BatchChopStartResponse *res,
       DeferredReply *defer);
 
   void rcc_start_pie(
       const RequestHeader &header,
-      const std::vector<Value> &input,
+      const map<int32_t, Value> &input,
       ChopStartResponse *res,
       DeferredReply *defer);
 
@@ -121,7 +121,7 @@ class RococoServiceImpl: public RococoService {
 
   void rcc_ro_start_pie(
       const RequestHeader &header,
-      const vector<Value> &input,
+      const map<int32_t, Value> &input,
       map<int32_t, Value> *output,
       DeferredReply *reply);
 
