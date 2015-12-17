@@ -93,6 +93,7 @@ class Config {
     uint32_t n_thread;   // should be 1 for now
     SiteInfoType type_; 
     string proc_name;
+    uint32_t partition_id_=0;
 
     SiteInfo() = delete;
     SiteInfo(uint32_t id) {

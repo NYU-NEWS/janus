@@ -23,9 +23,6 @@ void MdccAcceptorService::ProposeFast(const ProposeRequest &req,
                                       ProposeResponse *res, rrr::DeferredReply *defer) {
 }
 
-void MdccLeaderService::Recover() {
-}
-
 void MdccAcceptorService::Decide(const Result &result,
                                  rrr::DeferredReply *defer) {
 }

@@ -72,23 +72,26 @@ void client_launch_workers() {
 
 
 void server_launch_worker() {
-  vector<Config::SiteInfo> infos = Config::GetConfig()->GetMyServers();
-  svr_workers = new vector<ServerWorker>(infos.size());
-
-  for (uint32_t index = 0; index < infos.size(); index++) {
-    Log_info("launching server, site: %x", infos[index].id);
-    auto &worker = (*svr_workers)[index];
-    worker.sharding_ = Frame().CreateSharding(Config::GetConfig()->sharding_);
-    worker.sharding_->BuildTableInfoPtr();
-    // register txn piece logic
-    worker.RegPiece();
-    worker.site_info_ = &infos[index];
-    // setup communication between controller script
-    worker.SetupHeartbeat();
-    // populate table according to benchmarks
-    worker.PopTable();
-    // start server service
-    worker.SetupService();
+  Config* cfg = Config::GetConfig();
+  std::vector<ServerWorker> server_workers(cfg->get_num_site());
+  auto worker_it = server_workers.begin();
+  for (auto& replica_group : cfg->replica_groups_) {
+    for (auto& site_info : replica_group.replicas) {
+        Log_info("launching server, site: %x", site_info.id);
+        auto& worker = *worker_it;
+        worker.sharding_ = Frame().CreateSharding(Config::GetConfig()->sharding_);
+        worker.sharding_->BuildTableInfoPtr();
+        // register txn piece logic
+        worker.RegPiece();
+        worker.site_info_ = &site_info;
+        // setup communication between controller script
+        worker.SetupHeartbeat();
+        // populate table according to benchmarks
+        worker.PopTable();
+        // start server service
+        worker.SetupService();
+        worker_it++;
+    }
   }
 }
 

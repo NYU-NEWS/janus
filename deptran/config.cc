@@ -310,6 +310,7 @@ void Config::LoadSiteYML(YAML::Node config) {
     for (auto group_it = group.begin(); group_it != group.end(); group_it++) {
       auto site_addr = group_it->as<string>();
       SiteInfo info(site_id++, site_addr);
+      info.partition_id_ = replica_group.partition_id;
       info.type_ = SERVER;
       replica_group.replicas.push_back(info);
     }
@@ -400,6 +401,8 @@ void Config::init_bench(std::string& bench_str) {
     benchmark_ = RW_BENCHMARK;
   } else if (bench_str == "micro_bench") {
     benchmark_ = MICRO_BENCH;
+  } else if (bench_str == "simple_bench") {
+    benchmark_ = SIMPLE_BENCH;
   } else {
     Log_error("No implementation for benchmark: %s", bench_str.c_str());
     verify(0);

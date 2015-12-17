@@ -47,29 +47,23 @@
 
 #include "tpl/sched.h"
 #include "occ/sched.h"
-
-#include "coordinator.h"
-
-#include "bench/simple/SimpleBenchSharding.h"
-#include "bench/simple/SimpleBenchChopper.h"
+#include "deptran/mdcc/coordinator.h"
 
 namespace rococo {
 
 Sharding* Frame::CreateSharding() {
-
   Sharding* ret;
   auto bench = Config::config_s->benchmark_;
   switch (bench) {
     case TPCC_REAL_DIST_PART:
       ret = new TPCCDSharding();
       break;
-    case SIMPLE_BENCH:
-      ret = new SimpleBenchSharding();
+    case RW_BENCHMARK:
+      ret = new Sharding();
       break;
     default:
       verify(0);
   }
-
   return ret;
 }
 

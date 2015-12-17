@@ -40,14 +40,11 @@ void ServerWorker::PopTable() {
   ret = sharding_->get_table_names(site_info_->id, table_names);
   verify(ret > 0);
 
-  std::vector<std::string>::iterator table_it = table_names.begin();
-
-  for (; table_it != table_names.end(); table_it++) {
+  for (auto table_name : table_names) {
     mdb::Schema *schema = new mdb::Schema();
     mdb::symbol_t symbol;
-    sharding_->init_schema(*table_it, schema, &symbol);
+    sharding_->init_schema(table_name, schema, &symbol);
     mdb::Table *tb;
-    std::vector<std::string> table_names;
 
     switch (symbol) {
       case mdb::TBL_SORTED:
@@ -62,10 +59,10 @@ void ServerWorker::PopTable() {
       default:
         verify(0);
     }
-    txn_mgr_->reg_table(*table_it, tb);
+    txn_mgr_->reg_table(table_name, tb);
   }
   verify(sharding_);
-  sharding_->PopulateTable(site_info_->id);
+  sharding_->PopulateTable(site_info_->partition_id_);
   Log_info("Site %d data populated", site_info_->id);
   verify(ret > 0);
 }
