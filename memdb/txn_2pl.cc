@@ -21,6 +21,7 @@ void Txn2PL::SetPsCache(PieceStatus* ps) {
 }
 
 query_buf_t& Txn2PL::GetQueryBuf(int64_t pid) {
+  verify(0);
   verify(piece_map_.find(pid) != piece_map_.end());
   query_buf_t &qb = (pid == ps_cache()->pid_) ? ps_cache()->query_buf_
                                               : piece_map_[pid]->query_buf_;
@@ -43,23 +44,25 @@ Txn2PL::~Txn2PL() {
   verify(piece_map_.size() == 0);
 }
 
-ResultSet Txn2PL::query(Table *tbl, const MultiBlob &mb,
-                        bool retrieve, int64_t pid) {
-  query_buf_t &qb = GetQueryBuf(pid);
+ResultSet Txn2PL::query(Table *tbl,
+                        const MultiBlob &mb,
+                        bool retrieve,
+                        int64_t pid) {
+//  query_buf_t &qb = GetQueryBuf(pid);
   if (retrieve) {
-    Log_debug("query from buf, qb size: %d, pid: %lx, buf addr: %lx",
-              qb.buf.size(), pid, &qb);
-    verify(qb.buf.size() > 0);
-    verify(qb.buf.size() > qb.retrieve_index);
-    ResultSet rs = qb.buf[qb.retrieve_index++];
-    rs.reset();
-    return rs;
+//    Log_debug("query from buf, qb size: %d, pid: %lx, buf addr: %lx",
+//              qb.buf.size(), pid, &qb);
+//    verify(qb.buf.size() > 0);
+//    verify(qb.buf.size() > qb.retrieve_index);
+//    ResultSet rs = qb.buf[qb.retrieve_index++];
+//    rs.reset();
+//    return rs;
   } else {
-    Log_debug("query from table, qb size: %d, pid: %lx, buf addr: %lx",
-              qb.buf.size(), pid, &qb);
+//    Log_debug("query from table, qb size: %d, pid: %lx, buf addr: %lx",
+//              qb.buf.size(), pid, &qb);
     ResultSet rs = do_query(tbl, mb);
-    qb.buf.push_back(rs);
-    verify(qb.buf.size() > 0);
+//    qb.buf.push_back(rs);
+//    verify(qb.buf.size() > 0);
     return rs;
   }
 }

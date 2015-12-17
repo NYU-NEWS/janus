@@ -14,8 +14,6 @@ namespace rococo {
 //    }
 //}
 
-
-
 DTxn::~DTxn() {
 
 }
@@ -31,11 +29,27 @@ DTxn::~DTxn() {
 mdb::ResultSet DTxn::QueryIn(Table *tbl,
                              const mdb::MultiBlob &low,
                              const mdb::MultiBlob &high,
-                             bool retrieve,
-                             int64_t pid,
-                             mdb::symbol_t order) {
+                             mdb::symbol_t order,
+                             int rs_context_id) {
   verify(mdb_txn_ != nullptr);
-  return mdb_txn_->query_in(tbl, low, high, retrieve, pid, order);
+
+  verify(mdb_txn_ != nullptr);
+  auto &rs_map = context_rs_;
+  if (rs_context_id > 0) {
+    auto it = rs_map.find(rs_context_id);
+    if (it != rs_map.end()) {
+      mdb::ResultSet ret_rs = it->second;
+      ret_rs.reset();
+      return ret_rs;
+    } else {
+      mdb::ResultSet ret_rs = mdb_txn_->query_in(tbl, low, high, order);
+      rs_map.insert(std::make_pair(rs_context_id, ret_rs));
+      return ret_rs;
+    }
+  } else {
+    verify(0);
+  }
+
 }
 
 
@@ -44,25 +58,38 @@ mdb::ResultSet DTxn::QueryIn(Table *tbl,
 //  return mdb_txn_->query(tbl, kv);
 //}
 
-mdb::ResultSet DTxn::Query(Table *tbl,
-                           const Value &kv,
-                           bool retrieve,
-                           int64_t pid) {
-  verify(mdb_txn_ != nullptr);
-  return mdb_txn_->query(tbl, kv, retrieve, pid);
-}
+//mdb::ResultSet DTxn::Query(Table *tbl,
+//                           const Value &kv,
+//                           bool retrieve,
+//                           int64_t pid) {
+//  verify(mdb_txn_ != nullptr);
+//  return mdb_txn_->query(tbl, kv, retrieve, pid);
+//}
 
 //mdb::ResultSet DTxn::query(Table *tbl, const mdb::MultiBlob &mb) {
 //  verify(mdb_txn_ != nullptr);
 //  return mdb_txn_->query(tbl, mb);
 //}
 
-mdb::ResultSet DTxn::Query(mdb::Table *tbl,
-                           const mdb::MultiBlob &mb,
-                           bool retrieve,
-                           int64_t pid) {
+mdb::Row* DTxn::Query(mdb::Table *tbl,
+                      const mdb::MultiBlob &mb,
+                      int row_context_id) {
   verify(mdb_txn_ != nullptr);
-  return mdb_txn_->query(tbl, mb, retrieve, pid);
+  mdb::Row* ret_row;
+  auto &row_map = context_row_;
+  if (row_context_id > 0) {
+    auto it = row_map.find(row_context_id);
+    if (it != row_map.end()) {
+      ret_row = it->second;
+    } else {
+      ret_row = mdb_txn_->query(tbl, mb).next();
+      row_map[row_context_id] = ret_row;
+    }
+  } else {
+    verify(0);
+//    ret_row = mdb_txn_->query(tbl, mb, retrieve, pid).next();
+  }
+  return ret_row;
 }
 
 bool DTxn::ReadColumn(mdb::Row *row,

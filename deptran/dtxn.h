@@ -60,10 +60,16 @@ class DTxn {
   Recorder *recorder_ = NULL;
   TxnRegistry *txn_reg_;
 
+  map<int32_t, mdb::Row*> context_row_;
+  map<int32_t, Value> context_value_;
+  map<int32_t, mdb::ResultSet> context_rs_;
+
   DTxn() = delete;
 
   DTxn(i64 tid, Scheduler *mgr)
-      : tid_(tid), mgr_(mgr), phase_(0), mdb_txn_(nullptr) { }
+      : tid_(tid), mgr_(mgr),
+        phase_(0), mdb_txn_(nullptr),
+        context_row_(), context_value_(), context_rs_() { }
 
   virtual mdb::Row *create(const mdb::Schema *schema,
                            const std::vector<mdb::Value> &values) = 0;
@@ -122,22 +128,20 @@ class DTxn {
 //  );
 
 
-  virtual mdb::ResultSet Query(Table *tbl,
-                               const mdb::Value &kv,
-                               bool retrieve,
-                               int64_t pid);
+//  virtual mdb::ResultSet Query(Table *tbl,
+//                               const mdb::Value &kv,
+//                               bool retrieve,
+//                               int64_t pid);
 
-  virtual mdb::ResultSet Query(mdb::Table *tbl,
-                               const mdb::MultiBlob &mb,
-                               bool retrieve,
-                               int64_t pid);
+  virtual mdb::Row* Query(mdb::Table *tbl,
+                          const mdb::MultiBlob &mb,
+                          int row_context_id = 0);
 
   virtual mdb::ResultSet QueryIn(Table *tbl,
                                  const mdb::MultiBlob &low,
                                  const mdb::MultiBlob &high,
-                                 bool retrieve,
-                                 int64_t pid,
-                                 mdb::symbol_t order = mdb::symbol_t::ORD_ASC);
+                                 mdb::symbol_t order = mdb::symbol_t::ORD_ASC,
+                                 int rs_context_id = 0);
 
   mdb::Table *GetTable(const std::string &tbl_name) const;
 

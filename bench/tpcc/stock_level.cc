@@ -15,8 +15,9 @@ void TpccPiece::reg_stock_level() {
         mb[0] = input.at(1).get_blob();
         mb[1] = input.at(0).get_blob();
 
-        mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT), mb,
-                                  output_size, header.pid).next();
+        mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT),
+                                  mb,
+                                  ROW_DISTRICT);
 
         TPL_KISS(mdb::column_lock_t(r, 10, ALock::RLOCK));
 
@@ -54,9 +55,11 @@ void TpccPiece::reg_stock_level() {
         mbl[3] = ol_number_low.get_blob();
         mbh[3] = ol_number_high.get_blob();
 
-        mdb::ResultSet rs = dtxn->QueryIn(
-            dtxn->GetTable(TPCC_TB_ORDER_LINE), mbl, mbh, output_size,
-            header.pid, mdb::ORD_ASC);
+        mdb::ResultSet rs = dtxn->QueryIn(dtxn->GetTable(TPCC_TB_ORDER_LINE),
+                                          mbl,
+                                          mbh,
+                                          mdb::ORD_ASC,
+                                          header.pid);
 
         Log_debug("tid: %llx, stock_level: piece 1: d_next_o_id: %d, ol_w_id: %d, ol_d_id: %d",
                 header.tid, input[0].get_i32(), input[1].get_i32(), input[2].get_i32());
@@ -127,7 +130,7 @@ void TpccPiece::reg_stock_level() {
         mb[1] = input[1].get_blob();
 
         mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_STOCK), mb,
-                                  output_size, header.pid).next();
+                                  ROW_STOCK + header.pid);
 
 
         TPL_KISS(mdb::column_lock_t(r, 2, ALock::RLOCK));

@@ -16,7 +16,8 @@ void TpccPiece::reg_new_order() {
     mb[0] = input.at(1).get_blob();
     mb[1] = input.at(0).get_blob();
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT),
-                              mb, output_size, header.pid).next();
+                              mb,
+                              ROW_DISTRICT);
     // ############################################################
     TPL_KISS(
       mdb::column_lock_t(r, 8, ALock::RLOCK),
@@ -58,7 +59,8 @@ void TpccPiece::reg_new_order() {
     // ############################################################
 
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_WAREHOUSE),
-                              input[0], output_size, header.pid).next();
+                              input[0].get_blob(),
+                              ROW_WAREHOUSE);
 
     // ############################################################
     TPL_KISS(mdb::column_lock_t(r, 7, ALock::RLOCK));
@@ -93,8 +95,9 @@ void TpccPiece::reg_new_order() {
     mb[1] = input[1].get_blob();
     mb[2] = input[0].get_blob();
     auto table = dtxn->GetTable(TPCC_TB_CUSTOMER);
-    mdb::Row *r = dtxn->Query(table, mb,
-                              output_size, header.pid).next();
+    mdb::Row *r = dtxn->Query(table,
+                              mb,
+                              ROW_CUSTOMER);
 
     // ############################################################
     TPL_KISS(
@@ -135,9 +138,9 @@ void TpccPiece::reg_new_order() {
     mb[1] = input[2].get_blob();
     mb[2] = input[3].get_blob();
 
-    mdb::Row *r = NULL;
-    r = dtxn->Query(dtxn->GetTable(TPCC_TB_ORDER_C_ID_SECONDARY),
-                    mb, false, header.pid).next();
+    mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_ORDER_C_ID_SECONDARY),
+                              mb,
+                              ROW_ORDER_SEC + header.pid);
     verify(r);
     verify(r->schema_);
     // ############################################################
@@ -180,7 +183,8 @@ void TpccPiece::reg_new_order() {
     //mb[1] = input[2].get_blob();
     //mb[2] = input[3].get_blob();
     r = dtxn->Query(dtxn->GetTable(TPCC_TB_ORDER_C_ID_SECONDARY),
-                    mb, true, header.pid).next();
+                    mb,
+                    ROW_ORDER_SEC + header.pid);
     dtxn->WriteColumn(r, 3, input[0]);
 
     // ############################################################
@@ -246,8 +250,9 @@ void TpccPiece::reg_new_order() {
         verify(input.size() == 1);
         Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_5);
         // ############################################################
-        mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_ITEM), input[0],
-                                  output_size, header.pid).next();
+        mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_ITEM),
+                                  input[0].get_blob(),
+                                  ROW_ITEM + header.pid);
 
         // ############################################################
         TPL_KISS(
@@ -285,8 +290,9 @@ void TpccPiece::reg_new_order() {
         mdb::MultiBlob mb(2);
         mb[0] = input[0].get_blob();
         mb[1] = input[1].get_blob();
-        mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_STOCK), mb,
-                                  output_size, header.pid).next();
+        mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_STOCK),
+                                  mb,
+                                  ROW_STOCK + header.pid);
         verify(r->schema_);
 
         // ############################################################
@@ -327,8 +333,9 @@ void TpccPiece::reg_new_order() {
         if (!(IS_MODE_RCC || IS_MODE_RO6) 
                 || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { 
             // non-rcc || rcc start request
-            r = dtxn->Query(dtxn->GetTable(TPCC_TB_STOCK), mb,
-                            output_size, header.pid).next();
+            r = dtxn->Query(dtxn->GetTable(TPCC_TB_STOCK),
+                            mb,
+                            ROW_STOCK_TEMP +header.pid);
             verify(r->schema_);
         }
 

@@ -33,8 +33,11 @@ void TpccPiece::reg_delivery() {
           mbl[2] = no_o_id_low.get_blob();
           mbh[2] = no_o_id_high.get_blob();
 
-          mdb::ResultSet rs = txn->query_in(tbl, mbl, mbh,
-                  output_size, header.pid, mdb::ORD_ASC);
+          mdb::ResultSet rs = dtxn->QueryIn(tbl,
+                                            mbl,
+                                            mbh,
+                                            mdb::ORD_ASC,
+                                            header.pid);
 
           if (rs.has_next()) {
               r = rs.next();
@@ -112,8 +115,9 @@ void TpccPiece::reg_delivery() {
       mb[2] = input[0].get_blob();
       //Log::debug("Delivery: o_d_id: %d, o_w_id: %d, o_id: %d, hash: %u", input[2].get_i32(), input[1].get_i32(), input[0].get_i32(), mdb::MultiBlob::hash()(cl.primary_key));
 
-      mdb::Row *r = txn->query(txn->get_table(TPCC_TB_ORDER), mb,
-              output_size, header.pid).next();
+      mdb::Row *r = dtxn->Query(txn->get_table(TPCC_TB_ORDER),
+                                mb,
+                                ROW_ORDER);
 
       TPL_KISS(
               mdb::column_lock_t(r, 3, ALock::RLOCK),
@@ -159,9 +163,11 @@ void TpccPiece::reg_delivery() {
       mbl[3] = ol_number_low.get_blob();
       mbh[3] = ol_number_high.get_blob();
 
-      mdb::ResultSet rs = txn->query_in(
-              txn->get_table(TPCC_TB_ORDER_LINE), mbl, mbh,
-              output_size, header.pid, mdb::ORD_ASC);
+      mdb::ResultSet rs = dtxn->QueryIn(txn->get_table(TPCC_TB_ORDER_LINE),
+                                        mbl,
+                                        mbh,
+                                        mdb::ORD_ASC,
+                                        header.pid);
       double ol_amount_buf = 0.0;
       mdb::Row *r = NULL;
 //                cell_locator_t cl(TPCC_TB_ORDER_LINE, 4);
@@ -250,8 +256,9 @@ void TpccPiece::reg_delivery() {
       if (!(IS_MODE_RCC || IS_MODE_RO6) ||
               ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) {
           // non-rcc || rcc start request
-          r = txn->query(txn->get_table(TPCC_TB_CUSTOMER), mb,
-                  output_size, header.pid).next();
+          r = dtxn->Query(txn->get_table(TPCC_TB_CUSTOMER),
+                          mb,
+                          ROW_CUSTOMER);
       }
 
       TPL_KISS(

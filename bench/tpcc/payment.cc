@@ -14,7 +14,8 @@ void TpccPiece::reg_payment() {
         i32 oi = 0;
         // ############################################################
         mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_WAREHOUSE),
-                                  input[0], output_size, header.pid).next();
+                                  input[0].get_blob(),
+                                  ROW_WAREHOUSE);
 
         // ############################################################
         TPL_KISS (
@@ -55,8 +56,9 @@ void TpccPiece::reg_payment() {
         mdb::MultiBlob mb(2);
         mb[0] = input[1].get_blob();
         mb[1] = input[0].get_blob();
-        mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT), mb,
-                                  output_size, header.pid).next();
+        mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT),
+                                  mb,
+                                  ROW_DISTRICT);
 
         // ############################################################
         TPL_KISS(
@@ -104,8 +106,9 @@ void TpccPiece::reg_payment() {
         if (!(IS_MODE_RCC || IS_MODE_RO6) 
                 || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { 
             // non-rcc || rcc start request
-            r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT), mb,
-                            output_size, header.pid).next();
+            r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT),
+                            mb,
+                            ROW_DISTRICT_TEMP);
             verify(r->schema_ != nullptr);
         }
 
@@ -172,7 +175,7 @@ void TpccPiece::reg_payment() {
                 it_mid = it;
             }
         }
-        Log::debug("w_id: %d, d_id: %d, c_last: %s, num customer: %d", input[1].get_i32(), input[2].get_i32(), input[0].get_str().c_str(), n_c);
+        Log_debug("w_id: %d, d_id: %d, c_last: %s, num customer: %d", input[1].get_i32(), input[2].get_i32(), input[0].get_str().c_str(), n_c);
         verify(mid_set);
         output[output_index++] = Value(it_mid->second);
 
@@ -204,8 +207,9 @@ void TpccPiece::reg_payment() {
         if (!(IS_MODE_RCC || IS_MODE_RO6) || 
                 ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) { 
             // non-rcc || rcc start request
-            r = dtxn->Query(dtxn->GetTable(TPCC_TB_CUSTOMER), mb,
-                            output_size, header.pid).next();
+            r = dtxn->Query(dtxn->GetTable(TPCC_TB_CUSTOMER),
+                            mb,
+                            ROW_CUSTOMER);
         }
 
 
