@@ -1,0 +1,65 @@
+namespace mdcc;
+
+service MdccLearner {
+    Learn(Result r);
+};
+
+service MdccClient {
+    Start(StartRequest r);
+};
+
+service MdccLeader {
+    Propose(ProposeRequest r);
+    Recover();
+};
+
+service MdccAcceptor {
+    Propose(ProposeRequest r);
+    ProposeFast(ProposeRequest r);
+    Accept(AcceptRequest r);
+    Decide(Result r);
+};
+
+struct ConsensusValue {
+};
+
+struct ProposalNum {
+    i64 num;
+    i64 server;
+};
+
+struct StartRequest {
+    i64 tid;
+};
+
+// Phase1a
+struct ProposeRequest {
+    i64 start;
+    i64 end;
+    ProposalNum m
+};
+
+// Phase1b
+struct ProposeResponse {
+    i64 start;
+    i64 end;
+    ProposalNum m
+};
+
+// Phase2a
+struct AcceptRequest {
+    ProposalNum m;
+    ConsensusValue v
+};
+
+// Phase2b
+struct AcceptResponse {
+    ProposalNum m;
+    ConsensusValue v
+};
+
+// called 'Visibility' in the paper
+struct Result {
+    i8 result; // true = accept; false = reject
+    ConsensusValue v
+};
