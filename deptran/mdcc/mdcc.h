@@ -49,6 +49,20 @@ inline rrr::Marshal& operator >>(rrr::Marshal& m, StartRequest& o) {
     return m;
 }
 
+struct StartResponse {
+    rrr::i8 result;
+};
+
+inline rrr::Marshal& operator <<(rrr::Marshal& m, const StartResponse& o) {
+    m << o.result;
+    return m;
+}
+
+inline rrr::Marshal& operator >>(rrr::Marshal& m, StartResponse& o) {
+    m >> o.result;
+    return m;
+}
+
 struct ProposeRequest {
     rrr::i64 start;
     rrr::i64 end;
@@ -143,7 +157,7 @@ inline rrr::Marshal& operator >>(rrr::Marshal& m, Result& o) {
 class MdccLearnerService: public rrr::Service {
 public:
     enum {
-        LEARN = 0x5b3732d4,
+        LEARN = 0x199f3850,
     };
     int __reg_to__(rrr::Server* svr) {
         int ret = 0;
@@ -200,7 +214,7 @@ public:
 class MdccClientService: public rrr::Service {
 public:
     enum {
-        START = 0x5afa7258,
+        START = 0x51934ab9,
     };
     int __reg_to__(rrr::Server* svr) {
         int ret = 0;
@@ -214,14 +228,16 @@ public:
     }
     // these RPC handler functions need to be implemented by user
     // for 'raw' handlers, remember to reply req, delete req, and sconn->release(); use sconn->run_async for heavy job
-    virtual void Start(const StartRequest& r);
+    virtual void Start(const StartRequest& req, StartResponse* res);
 private:
     void __Start__wrapper__(rrr::Request* req, rrr::ServerConnection* sconn) {
         auto f = [=] {
             StartRequest in_0;
             req->m >> in_0;
-            this->Start(in_0);
+            StartResponse out_0;
+            this->Start(in_0, &out_0);
             sconn->begin_reply(req);
+            *sconn << out_0;
             sconn->end_reply();
             delete req;
             sconn->release();
@@ -235,20 +251,23 @@ protected:
     rrr::Client* __cl__;
 public:
     MdccClientProxy(rrr::Client* cl): __cl__(cl) { }
-    rrr::Future* async_Start(const StartRequest& r, const rrr::FutureAttr& __fu_attr__ = rrr::FutureAttr()) {
+    rrr::Future* async_Start(const StartRequest& req, const rrr::FutureAttr& __fu_attr__ = rrr::FutureAttr()) {
         rrr::Future* __fu__ = __cl__->begin_request(MdccClientService::START, __fu_attr__);
         if (__fu__ != nullptr) {
-            *__cl__ << r;
+            *__cl__ << req;
         }
         __cl__->end_request();
         return __fu__;
     }
-    rrr::i32 Start(const StartRequest& r) {
-        rrr::Future* __fu__ = this->async_Start(r);
+    rrr::i32 Start(const StartRequest& req, StartResponse* res) {
+        rrr::Future* __fu__ = this->async_Start(req);
         if (__fu__ == nullptr) {
             return ENOTCONN;
         }
         rrr::i32 __ret__ = __fu__->get_error_code();
+        if (__ret__ == 0) {
+            __fu__->get_reply() >> *res;
+        }
         __fu__->release();
         return __ret__;
     }
@@ -257,8 +276,8 @@ public:
 class MdccLeaderService: public rrr::Service {
 public:
     enum {
-        PROPOSE = 0x118a56a0,
-        RECOVER = 0x1db559ea,
+        PROPOSE = 0x2c365417,
+        RECOVER = 0x415300c9,
     };
     int __reg_to__(rrr::Server* svr) {
         int ret = 0;
@@ -276,20 +295,22 @@ public:
     }
     // these RPC handler functions need to be implemented by user
     // for 'raw' handlers, remember to reply req, delete req, and sconn->release(); use sconn->run_async for heavy job
-    virtual void Propose(const ProposeRequest& r);
+    virtual void Propose(const ProposeRequest& req, ProposeResponse* res, rrr::DeferredReply* defer);
     virtual void Recover();
 private:
     void __Propose__wrapper__(rrr::Request* req, rrr::ServerConnection* sconn) {
-        auto f = [=] {
-            ProposeRequest in_0;
-            req->m >> in_0;
-            this->Propose(in_0);
-            sconn->begin_reply(req);
-            sconn->end_reply();
-            delete req;
-            sconn->release();
+        ProposeRequest* in_0 = new ProposeRequest;
+        req->m >> *in_0;
+        ProposeResponse* out_0 = new ProposeResponse;
+        auto __marshal_reply__ = [=] {
+            *sconn << *out_0;
         };
-        sconn->run_async(f);
+        auto __cleanup__ = [=] {
+            delete in_0;
+            delete out_0;
+        };
+        rrr::DeferredReply* __defer__ = new rrr::DeferredReply(req, sconn, __marshal_reply__, __cleanup__);
+        this->Propose(*in_0, out_0, __defer__);
     }
     void __Recover__wrapper__(rrr::Request* req, rrr::ServerConnection* sconn) {
         auto f = [=] {
@@ -308,20 +329,23 @@ protected:
     rrr::Client* __cl__;
 public:
     MdccLeaderProxy(rrr::Client* cl): __cl__(cl) { }
-    rrr::Future* async_Propose(const ProposeRequest& r, const rrr::FutureAttr& __fu_attr__ = rrr::FutureAttr()) {
+    rrr::Future* async_Propose(const ProposeRequest& req, const rrr::FutureAttr& __fu_attr__ = rrr::FutureAttr()) {
         rrr::Future* __fu__ = __cl__->begin_request(MdccLeaderService::PROPOSE, __fu_attr__);
         if (__fu__ != nullptr) {
-            *__cl__ << r;
+            *__cl__ << req;
         }
         __cl__->end_request();
         return __fu__;
     }
-    rrr::i32 Propose(const ProposeRequest& r) {
-        rrr::Future* __fu__ = this->async_Propose(r);
+    rrr::i32 Propose(const ProposeRequest& req, ProposeResponse* res) {
+        rrr::Future* __fu__ = this->async_Propose(req);
         if (__fu__ == nullptr) {
             return ENOTCONN;
         }
         rrr::i32 __ret__ = __fu__->get_error_code();
+        if (__ret__ == 0) {
+            __fu__->get_reply() >> *res;
+        }
         __fu__->release();
         return __ret__;
     }
@@ -344,10 +368,10 @@ public:
 class MdccAcceptorService: public rrr::Service {
 public:
     enum {
-        PROPOSE = 0x3572e2ae,
-        PROPOSEFAST = 0x6d4ed8ba,
-        ACCEPT = 0x4e870569,
-        DECIDE = 0x21d1c287,
+        PROPOSE = 0x518662fc,
+        PROPOSEFAST = 0x155cef39,
+        ACCEPT = 0x51d40724,
+        DECIDE = 0x20eebf07,
     };
     int __reg_to__(rrr::Server* svr) {
         int ret = 0;
@@ -373,58 +397,63 @@ public:
     }
     // these RPC handler functions need to be implemented by user
     // for 'raw' handlers, remember to reply req, delete req, and sconn->release(); use sconn->run_async for heavy job
-    virtual void Propose(const ProposeRequest& r);
-    virtual void ProposeFast(const ProposeRequest& r);
-    virtual void Accept(const AcceptRequest& r);
-    virtual void Decide(const Result& r);
+    virtual void Propose(const ProposeRequest& req, ProposeResponse* res, rrr::DeferredReply* defer);
+    virtual void ProposeFast(const ProposeRequest& req, ProposeResponse* res, rrr::DeferredReply* defer);
+    virtual void Accept(const AcceptRequest& req, AcceptResponse* res, rrr::DeferredReply* defer);
+    virtual void Decide(const Result& result, rrr::DeferredReply* defer);
 private:
     void __Propose__wrapper__(rrr::Request* req, rrr::ServerConnection* sconn) {
-        auto f = [=] {
-            ProposeRequest in_0;
-            req->m >> in_0;
-            this->Propose(in_0);
-            sconn->begin_reply(req);
-            sconn->end_reply();
-            delete req;
-            sconn->release();
+        ProposeRequest* in_0 = new ProposeRequest;
+        req->m >> *in_0;
+        ProposeResponse* out_0 = new ProposeResponse;
+        auto __marshal_reply__ = [=] {
+            *sconn << *out_0;
         };
-        sconn->run_async(f);
+        auto __cleanup__ = [=] {
+            delete in_0;
+            delete out_0;
+        };
+        rrr::DeferredReply* __defer__ = new rrr::DeferredReply(req, sconn, __marshal_reply__, __cleanup__);
+        this->Propose(*in_0, out_0, __defer__);
     }
     void __ProposeFast__wrapper__(rrr::Request* req, rrr::ServerConnection* sconn) {
-        auto f = [=] {
-            ProposeRequest in_0;
-            req->m >> in_0;
-            this->ProposeFast(in_0);
-            sconn->begin_reply(req);
-            sconn->end_reply();
-            delete req;
-            sconn->release();
+        ProposeRequest* in_0 = new ProposeRequest;
+        req->m >> *in_0;
+        ProposeResponse* out_0 = new ProposeResponse;
+        auto __marshal_reply__ = [=] {
+            *sconn << *out_0;
         };
-        sconn->run_async(f);
+        auto __cleanup__ = [=] {
+            delete in_0;
+            delete out_0;
+        };
+        rrr::DeferredReply* __defer__ = new rrr::DeferredReply(req, sconn, __marshal_reply__, __cleanup__);
+        this->ProposeFast(*in_0, out_0, __defer__);
     }
     void __Accept__wrapper__(rrr::Request* req, rrr::ServerConnection* sconn) {
-        auto f = [=] {
-            AcceptRequest in_0;
-            req->m >> in_0;
-            this->Accept(in_0);
-            sconn->begin_reply(req);
-            sconn->end_reply();
-            delete req;
-            sconn->release();
+        AcceptRequest* in_0 = new AcceptRequest;
+        req->m >> *in_0;
+        AcceptResponse* out_0 = new AcceptResponse;
+        auto __marshal_reply__ = [=] {
+            *sconn << *out_0;
         };
-        sconn->run_async(f);
+        auto __cleanup__ = [=] {
+            delete in_0;
+            delete out_0;
+        };
+        rrr::DeferredReply* __defer__ = new rrr::DeferredReply(req, sconn, __marshal_reply__, __cleanup__);
+        this->Accept(*in_0, out_0, __defer__);
     }
     void __Decide__wrapper__(rrr::Request* req, rrr::ServerConnection* sconn) {
-        auto f = [=] {
-            Result in_0;
-            req->m >> in_0;
-            this->Decide(in_0);
-            sconn->begin_reply(req);
-            sconn->end_reply();
-            delete req;
-            sconn->release();
+        Result* in_0 = new Result;
+        req->m >> *in_0;
+        auto __marshal_reply__ = [=] {
         };
-        sconn->run_async(f);
+        auto __cleanup__ = [=] {
+            delete in_0;
+        };
+        rrr::DeferredReply* __defer__ = new rrr::DeferredReply(req, sconn, __marshal_reply__, __cleanup__);
+        this->Decide(*in_0, __defer__);
     }
 };
 
@@ -433,67 +462,76 @@ protected:
     rrr::Client* __cl__;
 public:
     MdccAcceptorProxy(rrr::Client* cl): __cl__(cl) { }
-    rrr::Future* async_Propose(const ProposeRequest& r, const rrr::FutureAttr& __fu_attr__ = rrr::FutureAttr()) {
+    rrr::Future* async_Propose(const ProposeRequest& req, const rrr::FutureAttr& __fu_attr__ = rrr::FutureAttr()) {
         rrr::Future* __fu__ = __cl__->begin_request(MdccAcceptorService::PROPOSE, __fu_attr__);
         if (__fu__ != nullptr) {
-            *__cl__ << r;
+            *__cl__ << req;
         }
         __cl__->end_request();
         return __fu__;
     }
-    rrr::i32 Propose(const ProposeRequest& r) {
-        rrr::Future* __fu__ = this->async_Propose(r);
+    rrr::i32 Propose(const ProposeRequest& req, ProposeResponse* res) {
+        rrr::Future* __fu__ = this->async_Propose(req);
         if (__fu__ == nullptr) {
             return ENOTCONN;
         }
         rrr::i32 __ret__ = __fu__->get_error_code();
+        if (__ret__ == 0) {
+            __fu__->get_reply() >> *res;
+        }
         __fu__->release();
         return __ret__;
     }
-    rrr::Future* async_ProposeFast(const ProposeRequest& r, const rrr::FutureAttr& __fu_attr__ = rrr::FutureAttr()) {
+    rrr::Future* async_ProposeFast(const ProposeRequest& req, const rrr::FutureAttr& __fu_attr__ = rrr::FutureAttr()) {
         rrr::Future* __fu__ = __cl__->begin_request(MdccAcceptorService::PROPOSEFAST, __fu_attr__);
         if (__fu__ != nullptr) {
-            *__cl__ << r;
+            *__cl__ << req;
         }
         __cl__->end_request();
         return __fu__;
     }
-    rrr::i32 ProposeFast(const ProposeRequest& r) {
-        rrr::Future* __fu__ = this->async_ProposeFast(r);
+    rrr::i32 ProposeFast(const ProposeRequest& req, ProposeResponse* res) {
+        rrr::Future* __fu__ = this->async_ProposeFast(req);
         if (__fu__ == nullptr) {
             return ENOTCONN;
         }
         rrr::i32 __ret__ = __fu__->get_error_code();
+        if (__ret__ == 0) {
+            __fu__->get_reply() >> *res;
+        }
         __fu__->release();
         return __ret__;
     }
-    rrr::Future* async_Accept(const AcceptRequest& r, const rrr::FutureAttr& __fu_attr__ = rrr::FutureAttr()) {
+    rrr::Future* async_Accept(const AcceptRequest& req, const rrr::FutureAttr& __fu_attr__ = rrr::FutureAttr()) {
         rrr::Future* __fu__ = __cl__->begin_request(MdccAcceptorService::ACCEPT, __fu_attr__);
         if (__fu__ != nullptr) {
-            *__cl__ << r;
+            *__cl__ << req;
         }
         __cl__->end_request();
         return __fu__;
     }
-    rrr::i32 Accept(const AcceptRequest& r) {
-        rrr::Future* __fu__ = this->async_Accept(r);
+    rrr::i32 Accept(const AcceptRequest& req, AcceptResponse* res) {
+        rrr::Future* __fu__ = this->async_Accept(req);
         if (__fu__ == nullptr) {
             return ENOTCONN;
         }
         rrr::i32 __ret__ = __fu__->get_error_code();
+        if (__ret__ == 0) {
+            __fu__->get_reply() >> *res;
+        }
         __fu__->release();
         return __ret__;
     }
-    rrr::Future* async_Decide(const Result& r, const rrr::FutureAttr& __fu_attr__ = rrr::FutureAttr()) {
+    rrr::Future* async_Decide(const Result& result, const rrr::FutureAttr& __fu_attr__ = rrr::FutureAttr()) {
         rrr::Future* __fu__ = __cl__->begin_request(MdccAcceptorService::DECIDE, __fu_attr__);
         if (__fu__ != nullptr) {
-            *__cl__ << r;
+            *__cl__ << result;
         }
         __cl__->end_request();
         return __fu__;
     }
-    rrr::i32 Decide(const Result& r) {
-        rrr::Future* __fu__ = this->async_Decide(r);
+    rrr::i32 Decide(const Result& result) {
+        rrr::Future* __fu__ = this->async_Decide(result);
         if (__fu__ == nullptr) {
             return ENOTCONN;
         }
@@ -504,3 +542,6 @@ public:
 };
 
 } // namespace mdcc
+
+
+
