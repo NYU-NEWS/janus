@@ -43,23 +43,23 @@ struct ProposeRequest {
 struct ProposeResponse {
     i64 start;
     i64 end;
-    ProposalNum m
+    ProposalNum m;
 };
 
 // Phase2a
 struct AcceptRequest {
     ProposalNum m;
-    ConsensusValue v
+    ConsensusValue v;
 };
 
 // Phase2b
 struct AcceptResponse {
     ProposalNum m;
-    ConsensusValue v
+    ConsensusValue v;
 };
 
 // called 'Visibility' in the paper
 struct Result {
     i8 result; // true = accept; false = reject
-    ConsensusValue v
+    ConsensusValue v;
 };
