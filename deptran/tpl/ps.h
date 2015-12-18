@@ -31,6 +31,7 @@ class PieceStatus {
   bool rm_succ_;
   rrr::ALockGroup rm_lock_group_;
   bool is_rw_;
+  bool is_rm_ = false;
   TxnHandler handler_;
 
 //  bool *wound_;
@@ -113,8 +114,7 @@ class PieceStatus {
   }
 
   bool can_proceed() {
-    verify(num_waiting_ == num_acquired_);
-    return num_waiting_ == num_acquired_;
+    return true;
   }
 
   void set_finish() {

@@ -35,7 +35,7 @@ void PieceStatus::start_yes_callback() {
   verify(num_acquired_ <= num_waiting_);
   if (is_rw_)
     rw_succ_ = true;
-  else
+  if (is_rm_)
     rm_succ_ = true;
 }
 
@@ -51,7 +51,7 @@ void PieceStatus::reg_rm_lock(mdb::Row *row,
                               const std::function<void(void)> &succ_callback,
                               const std::function<void(void)> &fail_callback) {
   rm_succ_ = false;
-  is_rw_ = false;
+  is_rm_ = true;
   verify(row->rtti() == mdb::symbol_t::ROW_FINE);
   mdb::FineLockedRow *fl_row = (mdb::FineLockedRow *) row;
   for (int i = 0; i < row->schema()->columns_count(); i++)

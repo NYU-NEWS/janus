@@ -6,7 +6,7 @@ namespace rococo {
 
 class OCCExecutor: public ThreePhaseExecutor {
  public:
-  virtual int start_launch(
+  virtual int StartLaunch(
       const RequestHeader &header,
       const map<int32_t, Value> &input,
       const rrr::i32 &output_size,

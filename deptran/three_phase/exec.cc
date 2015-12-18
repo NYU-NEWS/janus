@@ -11,7 +11,7 @@ namespace rococo {
 ThreePhaseExecutor::~ThreePhaseExecutor() {
 }
 
-int ThreePhaseExecutor::start_launch(
+int ThreePhaseExecutor::StartLaunch(
     const RequestHeader &header,
     const map<int32_t, Value> &input,
     const rrr::i32 &output_size,

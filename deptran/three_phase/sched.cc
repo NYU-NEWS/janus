@@ -15,12 +15,12 @@ int ThreePhaseSched::OnPhaseOneRequest(
     map<int32_t, Value> *output,
     rrr::DeferredReply *defer) {
   auto exec = (ThreePhaseExecutor*) GetOrCreateExecutor(header.tid);
-  exec->start_launch(header,
-                     const_cast<map<int32_t, Value>&>(input),
-                     output_size,
-                     res,
-                     *output,
-                     defer);
+  exec->StartLaunch(header,
+                    const_cast<map<int32_t, Value> &>(input),
+                    output_size,
+                    res,
+                    *output,
+                    defer);
   defer->reply();
   return 0;
 }

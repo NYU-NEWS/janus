@@ -15,12 +15,12 @@ class ThreePhaseExecutor: public Executor {
 
   virtual ~ThreePhaseExecutor();
 
-  virtual int start_launch(const RequestHeader &header,
-                           const map<int32_t, Value> &input,
-                           const rrr::i32 &output_size,
-                           rrr::i32 *res,
-                           map<int32_t, Value> &output,
-                           rrr::DeferredReply *defer);
+  virtual int StartLaunch(const RequestHeader &header,
+                          const map<int32_t, Value> &input,
+                          const rrr::i32 &output_size,
+                          rrr::i32 *res,
+                          map<int32_t, Value> &output,
+                          rrr::DeferredReply *defer);
 
   int prepare_launch(
       const std::vector <i32> &sids,

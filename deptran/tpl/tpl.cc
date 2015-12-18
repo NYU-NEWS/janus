@@ -9,40 +9,70 @@ TPLDTxn::TPLDTxn(i64 tid, Scheduler *mgr) : DTxn(tid, mgr) {
   verify(mdb_txn_ != nullptr);
 }
 
-bool TPLDTxn::ReadColumn(
-    mdb::Row *row,
-    mdb::column_id_t col_id,
-    Value *value) {
-  verify(mdb_txn_ != nullptr);
-  return mdb_txn_->read_column(row, col_id, value);
-};
 
-//int TPLDTxn::start_launch(
-//    const RequestHeader &header,
-//    const std::vector<mdb::Value> &input,
-//    const rrr::i32 &output_size,
-//    rrr::i32 *res,
-//    std::vector<mdb::Value> *output,
-//    rrr::DeferredReply *defer) {
-//  if (IS_MODE_2PL) {
-//    verify(this->mdb_txn_->rtti() == mdb::symbol_t::TXN_2PL);
-//    DragonBall *defer_reply_db = new DragonBall(1, [defer, res]() {
-//      defer->reply();
-//    });
-//    this->pre_execute_2pl(header, input, res, output, defer_reply_db);
-//
-//  } else if (IS_MODE_NONE) {
-//    this->execute(header, input, res, output);
-//    defer->reply();
-//
-//  } else if (IS_MODE_OCC) {
-//    this->execute(header, input, res, output);
-//    defer->reply();
-//  } else {
-//    verify(0);
-//  }
-//  return 0;
-//}
+bool TPLDTxn::ReadColumn(mdb::Row *row,
+                         mdb::column_id_t col_id,
+                         Value *value,
+                         bool unsafe) {
+  if (locking_) {
+    verify(0);
+    locks_.push_back(mdb::column_lock_t(row, col_id, ALock::RLOCK));
+  } else {
+    verify(mdb_txn_ != nullptr);
+    auto ret = mdb_txn_->read_column(row, col_id, value);
+    verify(ret == true);
+  }
+  return true;
+}
 
+bool TPLDTxn::ReadColumns(Row *row,
+                       const std::vector<column_id_t> &col_ids,
+                       std::vector<Value> *values,
+                       bool unsafe) {
+  if (locking_) {
+    verify(0);
+    for (auto col_id : col_ids) {
+      locks_.push_back(mdb::column_lock_t(row, col_id, ALock::RLOCK));
+    }
+  } else {
+    verify(mdb_txn_ != nullptr);
+    auto ret = mdb_txn_->read_columns(row, col_ids, values);
+    verify(ret == true);
+    return true;
+  }
+}
+
+bool TPLDTxn::WriteColumn(Row *row,
+                          column_id_t col_id,
+                          const Value &value,
+                          bool unsafe) {
+  if (locking_) {
+    verify(0);
+    locks_.push_back(mdb::column_lock_t(row, col_id, ALock::WLOCK));
+  } else {
+    verify(mdb_txn_ != nullptr);
+    auto ret = mdb_txn_->write_column(row, col_id, value);
+    verify(ret == true);
+  }
+  return true;
+}
+
+bool TPLDTxn::WriteColumns(Row *row,
+                        const std::vector<column_id_t> &col_ids,
+                        const std::vector<Value> &values,
+                        bool unsafe) {
+
+  if (locking_) {
+    verify(0);
+    for (auto col_id : col_ids) {
+      locks_.push_back(mdb::column_lock_t(row, col_id, ALock::WLOCK));
+    }
+  } else {
+    verify(mdb_txn_ != nullptr);
+    auto ret = mdb_txn_->write_columns(row, col_ids, values);
+    verify(ret == true);
+  }
+  return true;
+}
 
 } // namespace rococo

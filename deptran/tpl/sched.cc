@@ -28,12 +28,12 @@ int TPLSched::OnPhaseOneRequest(
     map<int32_t, Value> *output,
     rrr::DeferredReply *defer) {
   TPLExecutor* exec = (TPLExecutor*) GetOrCreateExecutor(header.tid);
-  exec->start_launch(header,
-                     input,
-                     output_size,
-                     res,
-                     output,
-                     defer);
+  exec->StartLaunch(header,
+                    input,
+                    output_size,
+                    res,
+                    output,
+                    defer);
 
   return 0;
 }

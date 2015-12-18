@@ -7,7 +7,7 @@
 
 namespace rococo {
 
-int OCCExecutor::start_launch(
+int OCCExecutor::StartLaunch(
     const RequestHeader &header,
     const map<int32_t, Value> &input,
     const rrr::i32 &output_size,

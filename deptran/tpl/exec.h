@@ -26,22 +26,14 @@ class TPLExecutor: public ThreePhaseExecutor {
 
   virtual ~TPLExecutor(){};
 
-  virtual int start_launch(
-      const RequestHeader &header,
-      const map<int32_t, Value> &input,
-      const rrr::i32 &output_size,
-      rrr::i32 *res,
-      map <int32_t, Value> *output,
-      rrr::DeferredReply *defer
-  );
+  virtual int StartLaunch(const RequestHeader &header,
+                          const map<int32_t, Value> &input,
+                          const rrr::i32 &output_size,
+                          rrr::i32 *res,
+                          map<int32_t, Value> *output,
+                          rrr::DeferredReply *defer);
 
   // Below are merged from TxnRegistry.
-
-  std::function<void(void)> get_2pl_proceed_callback(
-      const RequestHeader &header,
-      const map<int32_t, Value> &input,
-      rrr::i32 *res
-  );
 
   std::function<void(void)> get_2pl_fail_callback(
       const RequestHeader &header,
