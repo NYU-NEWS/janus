@@ -155,7 +155,7 @@ inline rrr::Marshal& operator >>(rrr::Marshal& m, Result& o) {
 }
 
 class MdccLearnerService: public rrr::Service {
-public:
+  public:
     enum {
         LEARN = 0x199f3850,
     };
@@ -165,14 +165,14 @@ public:
             goto err;
         }
         return 0;
-    err:
+err:
         svr->unreg(LEARN);
         return ret;
     }
     // these RPC handler functions need to be implemented by user
     // for 'raw' handlers, remember to reply req, delete req, and sconn->release(); use sconn->run_async for heavy job
     virtual void Learn(const Result& r);
-private:
+  private:
     void __Learn__wrapper__(rrr::Request* req, rrr::ServerConnection* sconn) {
         auto f = [=] {
             Result in_0;
@@ -188,9 +188,9 @@ private:
 };
 
 class MdccLearnerProxy {
-protected:
+  protected:
     rrr::Client* __cl__;
-public:
+  public:
     MdccLearnerProxy(rrr::Client* cl): __cl__(cl) { }
     rrr::Future* async_Learn(const Result& r, const rrr::FutureAttr& __fu_attr__ = rrr::FutureAttr()) {
         rrr::Future* __fu__ = __cl__->begin_request(MdccLearnerService::LEARN, __fu_attr__);
@@ -212,7 +212,7 @@ public:
 };
 
 class MdccClientService: public rrr::Service {
-public:
+  public:
     enum {
         START = 0x51934ab9,
     };
@@ -222,14 +222,14 @@ public:
             goto err;
         }
         return 0;
-    err:
+err:
         svr->unreg(START);
         return ret;
     }
     // these RPC handler functions need to be implemented by user
     // for 'raw' handlers, remember to reply req, delete req, and sconn->release(); use sconn->run_async for heavy job
     virtual void Start(const StartRequest& req, StartResponse* res);
-private:
+  private:
     void __Start__wrapper__(rrr::Request* req, rrr::ServerConnection* sconn) {
         auto f = [=] {
             StartRequest in_0;
@@ -247,9 +247,9 @@ private:
 };
 
 class MdccClientProxy {
-protected:
+  protected:
     rrr::Client* __cl__;
-public:
+  public:
     MdccClientProxy(rrr::Client* cl): __cl__(cl) { }
     rrr::Future* async_Start(const StartRequest& req, const rrr::FutureAttr& __fu_attr__ = rrr::FutureAttr()) {
         rrr::Future* __fu__ = __cl__->begin_request(MdccClientService::START, __fu_attr__);
@@ -274,7 +274,7 @@ public:
 };
 
 class MdccLeaderService: public rrr::Service {
-public:
+  public:
     enum {
         PROPOSE = 0x2c365417,
         RECOVER = 0x415300c9,
@@ -288,7 +288,7 @@ public:
             goto err;
         }
         return 0;
-    err:
+err:
         svr->unreg(PROPOSE);
         svr->unreg(RECOVER);
         return ret;
@@ -297,7 +297,7 @@ public:
     // for 'raw' handlers, remember to reply req, delete req, and sconn->release(); use sconn->run_async for heavy job
     virtual void Propose(const ProposeRequest& req, ProposeResponse* res, rrr::DeferredReply* defer);
     virtual void Recover();
-private:
+  private:
     void __Propose__wrapper__(rrr::Request* req, rrr::ServerConnection* sconn) {
         ProposeRequest* in_0 = new ProposeRequest;
         req->m >> *in_0;
@@ -325,9 +325,9 @@ private:
 };
 
 class MdccLeaderProxy {
-protected:
+  protected:
     rrr::Client* __cl__;
-public:
+  public:
     MdccLeaderProxy(rrr::Client* cl): __cl__(cl) { }
     rrr::Future* async_Propose(const ProposeRequest& req, const rrr::FutureAttr& __fu_attr__ = rrr::FutureAttr()) {
         rrr::Future* __fu__ = __cl__->begin_request(MdccLeaderService::PROPOSE, __fu_attr__);
@@ -366,7 +366,7 @@ public:
 };
 
 class MdccAcceptorService: public rrr::Service {
-public:
+  public:
     enum {
         PROPOSE = 0x518662fc,
         PROPOSEFAST = 0x155cef39,
@@ -388,7 +388,7 @@ public:
             goto err;
         }
         return 0;
-    err:
+err:
         svr->unreg(PROPOSE);
         svr->unreg(PROPOSEFAST);
         svr->unreg(ACCEPT);
@@ -401,7 +401,7 @@ public:
     virtual void ProposeFast(const ProposeRequest& req, ProposeResponse* res, rrr::DeferredReply* defer);
     virtual void Accept(const AcceptRequest& req, AcceptResponse* res, rrr::DeferredReply* defer);
     virtual void Decide(const Result& result, rrr::DeferredReply* defer);
-private:
+  private:
     void __Propose__wrapper__(rrr::Request* req, rrr::ServerConnection* sconn) {
         ProposeRequest* in_0 = new ProposeRequest;
         req->m >> *in_0;
@@ -458,9 +458,9 @@ private:
 };
 
 class MdccAcceptorProxy {
-protected:
+  protected:
     rrr::Client* __cl__;
-public:
+  public:
     MdccAcceptorProxy(rrr::Client* cl): __cl__(cl) { }
     rrr::Future* async_Propose(const ProposeRequest& req, const rrr::FutureAttr& __fu_attr__ = rrr::FutureAttr()) {
         rrr::Future* __fu__ = __cl__->begin_request(MdccAcceptorService::PROPOSE, __fu_attr__);
