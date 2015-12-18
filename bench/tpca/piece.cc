@@ -30,59 +30,30 @@ void TpcaPiece::reg_pieces() {
             r = txn->query(txn->get_table(TPCA_CUSTOMER), mb).next();
         }
 
-        if (IS_MODE_2PL && output_size == NULL) {
-            PieceStatus *ps
-                = ((TPLExecutor*)exec)->get_piece_status(header.pid);
-            std::function<void(void)> succ = ((TPLExecutor*) exec)->get_2pl_succ_callback(
-                    header, input, res, ps);
-            std::function<void(void)> fail = ((TPLExecutor*) exec)->get_2pl_fail_callback(
-                    header, res, ps);
-            ps->reg_rw_lock(std::vector<mdb::column_lock_t>({
-                    mdb::column_lock_t(r, 0, ALock::WLOCK)
-                    //mdb::column_lock_t(r, 0, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 1, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 2, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 3, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 4, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 5, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 6, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 7, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 8, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 9, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 10, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 11, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 12, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 13, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 14, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 15, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 16, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 17, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 18, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 19, ALock::WLOCK)
-            }),
-                succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 0, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 1, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 2, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 3, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 4, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 5, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 6, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 7, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 8, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 9, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 10, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 11, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 12, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 13, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 14, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 15, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 16, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 17, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 18, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 19, succ, fail);
-            return;
-        }
+
+      TPL_KISS({
+//                 mdb::column_lock_t(r, 0, ALock::WLOCK)
+                 mdb::column_lock_t(r, 0, ALock::WLOCK),
+                 mdb::column_lock_t(r, 1, ALock::WLOCK),
+                 mdb::column_lock_t(r, 2, ALock::WLOCK),
+                 mdb::column_lock_t(r, 3, ALock::WLOCK),
+                 mdb::column_lock_t(r, 4, ALock::WLOCK),
+                 mdb::column_lock_t(r, 5, ALock::WLOCK),
+                 mdb::column_lock_t(r, 6, ALock::WLOCK),
+                 mdb::column_lock_t(r, 7, ALock::WLOCK),
+                 mdb::column_lock_t(r, 8, ALock::WLOCK),
+                 mdb::column_lock_t(r, 9, ALock::WLOCK),
+                 mdb::column_lock_t(r, 10, ALock::WLOCK),
+                 mdb::column_lock_t(r, 11, ALock::WLOCK),
+                 mdb::column_lock_t(r, 12, ALock::WLOCK),
+                 mdb::column_lock_t(r, 13, ALock::WLOCK),
+                 mdb::column_lock_t(r, 14, ALock::WLOCK),
+                 mdb::column_lock_t(r, 15, ALock::WLOCK),
+                 mdb::column_lock_t(r, 16, ALock::WLOCK),
+                 mdb::column_lock_t(r, 17, ALock::WLOCK),
+                 mdb::column_lock_t(r, 18, ALock::WLOCK),
+                 mdb::column_lock_t(r, 19, ALock::WLOCK)
+               });
 
         RCC_KISS(r, 1, false);
         RCC_SAVE_ROW(r, TPCC_PAYMENT_1); 
@@ -116,61 +87,32 @@ void TpcaPiece::reg_pieces() {
             r = txn->query(txn->get_table(TPCA_TELLER), mb).next();
         }
 
-        if (IS_MODE_2PL && output_size == NULL) {
-            PieceStatus *ps
-                = ((TPLExecutor*)exec)->get_piece_status(header.pid);
-            std::function<void(void)> succ = ((TPLExecutor*) exec)->get_2pl_succ_callback(
-                    header, input, res, ps);
-            std::function<void(void)> fail = ((TPLExecutor*) exec)->get_2pl_fail_callback(
-                    header, res, ps);
-            ps->reg_rw_lock(std::vector<mdb::column_lock_t>({
-                    mdb::column_lock_t(r, 0, ALock::WLOCK)
-                    //mdb::column_lock_t(r, 0, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 1, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 2, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 3, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 4, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 5, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 6, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 7, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 8, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 9, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 10, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 11, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 12, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 13, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 14, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 15, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 16, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 17, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 18, ALock::WLOCK),
-                    //mdb::column_lock_t(r, 19, ALock::WLOCK)
-            }),
-                succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 0, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 1, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 2, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 3, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 4, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 5, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 6, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 7, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 8, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 9, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 10, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 11, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 12, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 13, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 14, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 15, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 16, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 17, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 18, succ, fail);
-            //((mdb::Txn2PL *)txn)->reg_write_column(r, 19, succ, fail);
-            return;
-        }
 
-        RCC_KISS(r, 1, false);
+      TPL_KISS({
+                 mdb::column_lock_t(r, 0, ALock::WLOCK)
+                 //mdb::column_lock_t(r, 0, ALock::WLOCK),
+                 //mdb::column_lock_t(r, 1, ALock::WLOCK),
+                 //mdb::column_lock_t(r, 2, ALock::WLOCK),
+                 //mdb::column_lock_t(r, 3, ALock::WLOCK),
+                 //mdb::column_lock_t(r, 4, ALock::WLOCK),
+                 //mdb::column_lock_t(r, 5, ALock::WLOCK),
+                 //mdb::column_lock_t(r, 6, ALock::WLOCK),
+                 //mdb::column_lock_t(r, 7, ALock::WLOCK),
+                 //mdb::column_lock_t(r, 8, ALock::WLOCK),
+                 //mdb::column_lock_t(r, 9, ALock::WLOCK),
+                 //mdb::column_lock_t(r, 10, ALock::WLOCK),
+                 //mdb::column_lock_t(r, 11, ALock::WLOCK),
+                 //mdb::column_lock_t(r, 12, ALock::WLOCK),
+                 //mdb::column_lock_t(r, 13, ALock::WLOCK),
+                 //mdb::column_lock_t(r, 14, ALock::WLOCK),
+                 //mdb::column_lock_t(r, 15, ALock::WLOCK),
+                 //mdb::column_lock_t(r, 16, ALock::WLOCK),
+                 //mdb::column_lock_t(r, 17, ALock::WLOCK),
+                 //mdb::column_lock_t(r, 18, ALock::WLOCK),
+                 //mdb::column_lock_t(r, 19, ALock::WLOCK)
+               });
+
+                                                       RCC_KISS(r, 1, false);
         RCC_SAVE_ROW(r, TPCA_PAYMENT_2); 
         RCC_PHASE1_RET;
         RCC_LOAD_ROW(r, TPCA_PAYMENT_2); 
@@ -212,13 +154,14 @@ void TpcaPiece::reg_pieces() {
         }
 
         if (IS_MODE_2PL && output_size == NULL) {
-            PieceStatus *ps
-                = ((TPLExecutor*)exec)->get_piece_status(header.pid);
-            std::function<void(void)> succ = ((TPLExecutor*) exec)->get_2pl_succ_callback(
-                    header, input, res, ps);
-            std::function<void(void)> fail = ((TPLExecutor*) exec)->get_2pl_fail_callback(
-                    header, res, ps);
-            ps->reg_rw_lock(std::vector<mdb::column_lock_t>({
+//            PieceStatus *ps
+//                = ((TPLExecutor*)exec)->get_piece_status(header.pid);
+//            std::function<void(void)> succ = ((TPLExecutor*) exec)->get_2pl_succ_callback(
+//                    header, input, res, ps);
+//            std::function<void(void)> fail = ((TPLExecutor*) exec)->get_2pl_fail_callback(
+//                    header, res, ps);
+//            ps->reg_rw_lock(
+          std::vector<mdb::column_lock_t> column_locks({
                     mdb::column_lock_t(r, 0, ALock::WLOCK)
                     //mdb::column_lock_t(r, 0, ALock::WLOCK),
                     //mdb::column_lock_t(r, 1, ALock::WLOCK),
@@ -240,8 +183,9 @@ void TpcaPiece::reg_pieces() {
                     //mdb::column_lock_t(r, 17, ALock::WLOCK),
                     //mdb::column_lock_t(r, 18, ALock::WLOCK),
                     //mdb::column_lock_t(r, 19, ALock::WLOCK)
-            }),
-                succ, fail);
+            });
+          TPL_KISS(column_locks);
+//                succ, fail);
             //((mdb::Txn2PL *)txn)->reg_write_column(r, 0, succ, fail);
             //((mdb::Txn2PL *)txn)->reg_write_column(r, 1, succ, fail);
             //((mdb::Txn2PL *)txn)->reg_write_column(r, 2, succ, fail);

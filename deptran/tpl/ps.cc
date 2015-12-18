@@ -1,4 +1,4 @@
-
+#include <deptran/txn_reg.h>
 #include "__dep__.h"
 #include "ps.h"
 #include "tpl.h"
@@ -6,6 +6,28 @@
 
 namespace rococo {
 
+PieceStatus::PieceStatus(const RequestHeader &header,
+                         rrr::DeferredReply *defer,
+                         std::map <int32_t, mdb::Value> *output,
+                         const std::function<int(void)> &wound_callback,
+                         TPLExecutor *exec)
+    : pid_(header.pid),
+      num_waiting_(1),
+      num_acquired_(0),
+      rej_(false),
+      defer_(defer),
+      output_buf_(NULL),
+      output_size_buf_(NULL),
+      output_(output),
+      finish_(false),
+      rw_succ_(false),
+      rw_lock_group_(swap_bits(header.tid), wound_callback),
+      rm_succ_(false),
+      rm_lock_group_(swap_bits(header.tid), wound_callback),
+      is_rw_(false),
+      exec_(exec) {
+  handler_ = exec_->txn_reg_->get(header).txn_handler;
+}
 
 void PieceStatus::start_yes_callback() {
   exec_->SetPsCache(this);

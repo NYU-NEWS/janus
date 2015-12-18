@@ -32,7 +32,7 @@ class Piece {
 // \
 //                row_map_t *row_map)
 #define END_PIE );
-
+//std::vector<mdb::column_lock_t>(__VA_ARGS__),
 #define TPL_KISS(...) \
   if (IS_MODE_2PL && output_size == NULL) { \
     PieceStatus *ps \
@@ -42,10 +42,22 @@ class Piece {
     std::function<void(void)> fail_callback = \
         ((TPLExecutor*)exec)->get_2pl_fail_callback(header, res, ps); \
     ps->reg_rw_lock( \
-        std::vector<mdb::column_lock_t>({__VA_ARGS__}), \
+std::vector<mdb::column_lock_t>({__VA_ARGS__}),\
         succ_callback, fail_callback); \
     return; \
   }
+#define TPL_KISS_ROW(r) \
+  if (IS_MODE_2PL && output_size == NULL) { \
+    PieceStatus *ps = ((TPLExecutor*)exec)->get_piece_status(header.pid); \
+    std::function<void(void)> succ_callback = \
+      ((TPLExecutor*) exec)->get_2pl_succ_callback( \
+        header, input, res, ps); \
+    std::function<void(void)> fail_callback = \
+      ((TPLExecutor*) exec)->get_2pl_fail_callback( \
+        header, res, ps); \
+    ps->reg_rm_lock(r, succ_callback, fail_callback); \
+    return; \
+}
 
 #define TPL_KISS_NONE \
     if (IS_MODE_2PL && output_size == NULL) { \

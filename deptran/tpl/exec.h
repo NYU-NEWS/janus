@@ -20,10 +20,9 @@ class TPLExecutor: public ThreePhaseExecutor {
   void SetPsCache(PieceStatus*);
   PieceStatus *get_piece_status(i64 pid);
   void release_piece_map(bool commit);
-  void init_piece(i64 tid,
-                  i64 pid,
-                  rrr::DragonBall *db,
-                  std::map<int32_t, Value> *output);
+  void InitPieceStatus(const RequestHeader &header,
+                       rrr::DeferredReply *defer,
+                       std::map<int32_t, Value> *output);
 
   virtual ~TPLExecutor(){};
 

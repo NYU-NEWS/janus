@@ -57,6 +57,8 @@ class Txn2PL: public Txn {
 //      return false;
 //    else
 //      return true;
+    verify(0);
+    return true;
   }
 
   virtual symbol_t rtti() const {

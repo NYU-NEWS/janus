@@ -1,6 +1,7 @@
 #pragma once
 
 #include "__dep__.h"
+#include "exec.h"
 
 namespace rococo {
 
@@ -19,10 +20,10 @@ class PieceStatus {
   int num_waiting_;
   int num_acquired_;
   bool rej_;
-  rrr::DragonBall *reply_db_;
+  rrr::DeferredReply* defer_;
   mdb::Value *output_buf_;
   rrr::i32 *output_size_buf_;
-  std::map <int32_t, Value> *output_vec_;
+  std::map <int32_t, Value> *output_;
   bool finish_;
 
   bool rw_succ_;
@@ -30,10 +31,11 @@ class PieceStatus {
   bool rm_succ_;
   rrr::ALockGroup rm_lock_group_;
   bool is_rw_;
+  TxnHandler handler_;
 
-  bool *wound_;
+//  bool *wound_;
 
-  mdb::Txn2PL *txn_;
+//  mdb::Txn2PL *txn_;
   TPLExecutor *exec_;
 
   PieceStatus() : rw_lock_group_(0), rm_lock_group_(0) {
@@ -46,63 +48,18 @@ class PieceStatus {
   }
 
  public:
-//    PieceStatus(i64 tid,
-//                i64 pid,
-//                rrr::DragonBall *db,
-//                mdb::Value *output,
-//                rrr::i32 *output_size,
-//                bool *wound,
-//                const std::function<int(void)> &wound_callback,
-//                Txn2PL* txn)
-//        : pid_(pid),
-//          num_waiting_(1),
-//          num_acquired_(0),
-//          rej_(false),
-//          reply_db_(db),
-//          output_buf_(output),
-//          output_size_buf_(output_size),
-//          output_vec_(NULL),
-//          finish_(false),
-//          rw_succ_(false),
-//          rw_lock_group_(swap_bits(tid), wound_callback),
-//          rm_succ_(false),
-//          rm_lock_group_(swap_bits(tid), wound_callback),
-//          is_rw_(false),
-//          wound_(wound),
-//          query_buf_(query_buf_t()),
-//          txn_(txn) {
-//    }
 
-  PieceStatus(i64 tid, i64 pid, rrr::DragonBall *db,
+  PieceStatus(const RequestHeader &header,
+              rrr::DeferredReply *defer,
               std::map <int32_t, mdb::Value> *output,
-              bool *wound,
               const std::function<int(void)> &wound_callback,
-              TPLExecutor *exec,
-              mdb::Txn2PL *txn) :
-      pid_(pid),
-      num_waiting_(1),
-      num_acquired_(0),
-      rej_(false),
-      reply_db_(db),
-      output_buf_(NULL),
-      output_size_buf_(NULL),
-      output_vec_(output),
-      finish_(false),
-      rw_succ_(false),
-      rw_lock_group_(swap_bits(tid), wound_callback),
-      rm_succ_(false),
-      rm_lock_group_(swap_bits(tid), wound_callback),
-      is_rw_(false),
-      wound_(wound),
-      exec_(exec),
-      txn_(txn) {
-  }
+              TPLExecutor *exec);
 
   ~PieceStatus() {
   }
 
   bool is_rejected() {
-    return rej_ || *wound_;
+    return rej_ || exec_->wounded_;
   }
 
   void reg_rm_lock(mdb::Row *row,
@@ -131,7 +88,7 @@ class PieceStatus {
     if (output_buf_) {
       verify(output_size_buf_ != NULL);
       *output_size_buf_ = 0;
-    } else if (output_vec_) {
+    } else if (output_) {
 //        output_vec_->resize(0);
     }
   }
@@ -146,20 +103,18 @@ class PieceStatus {
   void start_yes_callback();
   void start_no_callback();
 
-  void get_output(std::map <int32_t, mdb::Value> **output_map,
-                  mdb::Value **output, rrr::i32 **output_size) {
-    *output_map = output_vec_;
+  void get_output(map<int32_t, Value> **output_map,
+                  mdb::Value **output,
+                  rrr::i32 **output_size) {
+    *output_map = output_;
     verify(output_buf_ == nullptr);
     *output = output_buf_;
     *output_size = output_size_buf_;
   }
 
   bool can_proceed() {
+    verify(num_waiting_ == num_acquired_);
     return num_waiting_ == num_acquired_;
-  }
-
-  void trigger_reply_dragonball() {
-    reply_db_->trigger();
   }
 
   void set_finish() {

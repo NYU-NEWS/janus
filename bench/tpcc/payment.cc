@@ -18,13 +18,13 @@ void TpccPiece::reg_payment() {
                                   ROW_WAREHOUSE);
 
         // ############################################################
-        TPL_KISS (
+        TPL_KISS ({
                 mdb::column_lock_t(r, 1, ALock::RLOCK),
                 mdb::column_lock_t(r, 2, ALock::RLOCK),
                 mdb::column_lock_t(r, 3, ALock::RLOCK),
                 mdb::column_lock_t(r, 4, ALock::RLOCK),
                 mdb::column_lock_t(r, 5, ALock::RLOCK),
-                mdb::column_lock_t(r, 6, ALock::RLOCK)
+                mdb::column_lock_t(r, 6, ALock::RLOCK)}
         );
         // ############################################################
 

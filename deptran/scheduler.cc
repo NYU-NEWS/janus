@@ -228,7 +228,7 @@ Executor* Scheduler::CreateExecutor(cmdid_t cmd_id) {
   Log_debug("create tid %ld\n", cmd_id);
 //  DTxn* dtxn = Frame().CreateDTxn(tid, ro, this);
   Executor *exec = Frame().CreateExecutor(cmd_id, this);
-  DTxn* dtxn = CreateDTxn(cmd_id, this);
+  DTxn* dtxn = CreateDTxn(cmd_id);
   exec->dtxn_ = dtxn;
   executors_[cmd_id] = exec;
   exec->recorder_ = this->recorder_;

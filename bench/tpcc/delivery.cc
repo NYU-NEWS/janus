@@ -42,22 +42,7 @@ void TpccPiece::reg_delivery() {
           if (rs.has_next()) {
               r = rs.next();
 
-              if (IS_MODE_2PL && output_size == NULL) {
-                  PieceStatus *ps
-                          = ((TPLExecutor*)exec)->get_piece_status(header.pid);
-
-                  std::function<void(void)> succ_callback =
-                      ((TPLExecutor*) exec)->get_2pl_succ_callback(
-                          header, input, res, ps);
-
-                  std::function<void(void)> fail_callback =
-                      ((TPLExecutor*) exec)->get_2pl_fail_callback(
-                          header, res, ps);
-
-                  ps->reg_rm_lock(r, succ_callback, fail_callback);
-
-                  return;
-              }
+            TPL_KISS_ROW(r);
               txn->read_column(r, 2, &buf);
               output[oi++] = buf;
           } else {
@@ -119,9 +104,10 @@ void TpccPiece::reg_delivery() {
                                 mb,
                                 ROW_ORDER);
 
-      TPL_KISS(
+      TPL_KISS({
               mdb::column_lock_t(r, 3, ALock::RLOCK),
               mdb::column_lock_t(r, 5, ALock::WLOCK)
+               }
       );
 
       if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) {
@@ -182,16 +168,7 @@ void TpccPiece::reg_delivery() {
       }
 
       if (IS_MODE_2PL && output_size == NULL) {
-          PieceStatus *ps
-                  = ((TPLExecutor*)exec)->get_piece_status(header.pid);
 
-          std::function<void(void)> succ_callback =
-              ((TPLExecutor*) exec)->get_2pl_succ_callback(
-                  header, input, res, ps);
-
-          std::function<void(void)> fail_callback =
-              ((TPLExecutor*) exec)->get_2pl_fail_callback(
-                  header, res, ps);
 
           std::vector<mdb::column_lock_t> column_locks;
           column_locks.reserve(2 * row_list.size());
@@ -207,7 +184,7 @@ void TpccPiece::reg_delivery() {
                       mdb::column_lock_t(r, 8, ALock::RLOCK)
               );
           }
-          ps->reg_rw_lock(column_locks, succ_callback, fail_callback);
+        TPL_KISS(column_locks);
 
           return;
       }

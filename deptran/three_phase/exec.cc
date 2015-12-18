@@ -2,6 +2,7 @@
 #include "../multi_value.h"
 #include "../rcc/dep_graph.h"
 #include "../rcc/graph_marshaler.h"
+#include "../rcc_rpc.h"
 #include "exec.h"
 #include "sched.h"
 

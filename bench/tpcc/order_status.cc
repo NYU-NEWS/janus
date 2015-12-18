@@ -176,21 +176,23 @@ void TpccPiece::reg_order_status() {
 //                        return;
 //                    };
 
-            std::function<void(void)> succ_callback = 
-                ((TPLExecutor *) exec)->get_2pl_succ_callback(
-                    header, input, res, ps);
-
-            std::function<void(void)> fail_callback = 
-                ((TPLExecutor *) exec)->get_2pl_fail_callback(
-                    header, res, ps);
-
-            ps->reg_rw_lock(
-                    std::vector<mdb::column_lock_t>({
-                            mdb::column_lock_t(r_0, 3, ALock::RLOCK),
-                            mdb::column_lock_t(r, 2, ALock::RLOCK),
-                            mdb::column_lock_t(r, 4, ALock::RLOCK),
-                            mdb::column_lock_t(r, 5, ALock::RLOCK)
-                    }), succ_callback, fail_callback);
+            std::vector<mdb::column_lock_t> column_locks =
+                {
+                    mdb::column_lock_t(r_0, 3, ALock::RLOCK),
+                    mdb::column_lock_t(r, 2, ALock::RLOCK),
+                    mdb::column_lock_t(r, 4, ALock::RLOCK),
+                    mdb::column_lock_t(r, 5, ALock::RLOCK)
+                };
+            TPL_KISS(column_locks);
+//            std::function<void(void)> succ_callback =
+//                ((TPLExecutor *) exec)->get_2pl_succ_callback(
+//                    header, input, res, ps);
+//
+//            std::function<void(void)> fail_callback =
+//                ((TPLExecutor *) exec)->get_2pl_fail_callback(
+//                    header, res, ps);
+//
+//            ps->reg_rw_lock(column_locks, succ_callback, fail_callback);
 
             //((mdb::Txn2PL *)txn)->reg_read_column(r_0, 3, succ_callback,
             //    fail_callback);
@@ -267,12 +269,7 @@ void TpccPiece::reg_order_status() {
         verify(row_list.size() != 0);
 
         if (IS_MODE_2PL && output_size == NULL) {
-            auto ps = ((TPLExecutor*)exec)->get_piece_status(header.pid);
-            std::function<void(void)> succ_callback = 
-                ((TPLExecutor *) exec)->get_2pl_succ_callback(
-                                            header, input, res, ps);
-            std::function<void(void)> fail_callback = 
-                ((TPLExecutor *) exec)->get_2pl_fail_callback(header, res, ps);
+
 
             std::vector<mdb::column_lock_t> column_locks;
             column_locks.reserve(5 * row_list.size());
@@ -301,7 +298,14 @@ void TpccPiece::reg_order_status() {
             // ############################################################
             }
 
-            ps->reg_rw_lock(column_locks, succ_callback, fail_callback);
+            TPL_KISS(column_locks);
+//            auto ps = ((TPLExecutor*)exec)->get_piece_status(header.pid);
+//            std::function<void(void)> succ_callback =
+//                ((TPLExecutor *) exec)->get_2pl_succ_callback(
+//                    header, input, res, ps);
+//            std::function<void(void)> fail_callback =
+//                ((TPLExecutor *) exec)->get_2pl_fail_callback(header, res, ps);
+//            ps->reg_rw_lock(column_locks, succ_callback, fail_callback);
             return;
         }
 

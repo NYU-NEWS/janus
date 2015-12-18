@@ -19,7 +19,7 @@ void TpccPiece::reg_stock_level() {
                                   mb,
                                   ROW_DISTRICT);
 
-        TPL_KISS(mdb::column_lock_t(r, 10, ALock::RLOCK));
+        TPL_KISS({mdb::column_lock_t(r, 10, ALock::RLOCK)});
 
         if ((IS_MODE_RCC || IS_MODE_RO6)) {
             ((RCCDTxn *) dtxn)->kiss(r, 10, false);
@@ -74,15 +74,6 @@ void TpccPiece::reg_stock_level() {
         verify(row_list.size() != 0);
 
         if (IS_MODE_2PL && output_size == NULL) {
-            auto ps = ((TPLExecutor*)exec)->get_piece_status(header.pid);
-
-            std::function<void(void)> succ_callback =
-                ((TPLExecutor *) exec)->get_2pl_succ_callback(
-                    header, input, res, ps);
-
-            std::function<void(void)> fail_callback =
-                ((TPLExecutor *) exec)->get_2pl_fail_callback(
-                    header, res, ps);
 
             std::vector<mdb::column_lock_t> column_locks;
             column_locks.reserve(row_list.size());
@@ -96,7 +87,7 @@ void TpccPiece::reg_stock_level() {
                 //((mdb::Txn2PL *)txn)->reg_read_column(row_list[i++], 4,
                 //    succ_callback, fail_callback);
             }
-            ps->reg_rw_lock(column_locks, succ_callback, fail_callback);
+            TPL_KISS(column_locks);
 
             return;
         }

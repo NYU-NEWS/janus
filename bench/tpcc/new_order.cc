@@ -19,10 +19,10 @@ void TpccPiece::reg_new_order() {
                               mb,
                               ROW_DISTRICT);
     // ############################################################
-    TPL_KISS(
+    TPL_KISS({
       mdb::column_lock_t(r, 8, ALock::RLOCK),
       mdb::column_lock_t(r, 10, ALock::WLOCK)
-    );
+             });
 
     if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) {
       ((RCCDTxn*)dtxn)->kiss(r, 10, true);

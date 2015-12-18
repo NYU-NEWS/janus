@@ -19,20 +19,16 @@ int TPLExecutor::start_launch(
   verify(mdb_txn_->rtti() == mdb::symbol_t::TXN_2PL);
   verify(phase_ <= 1);
 
-  DragonBall *db = new DragonBall(1, [defer, res]() {
-    defer->reply();
-  });
 
   mdb::Txn2PL *txn = (mdb::Txn2PL *) mdb_txn_;
   verify(mdb_txn_ != nullptr);
   if (wounded_) {
     *res = REJECT;
-    db->trigger();
+    defer->reply();
   } else {
-    init_piece(header.tid,
-               header.pid,
-               db,
-               output);
+    InitPieceStatus(header,
+                    defer,
+                    output);
 
     Log_debug("get txn handler and start reg lock, txn_id: %lx, pie_id: %lx",
               header.tid, header.pid);
@@ -106,7 +102,7 @@ std::function<void(void)> TPLExecutor::get_2pl_succ_callback(
 
       Log_debug("set finish on tid %ld\n", header.tid);
       ps->set_finish();
-      ps->trigger_reply_dragonball();
+      ps->defer_->reply();
     }
   };
 }
@@ -130,7 +126,7 @@ std::function<void(void)> TPLExecutor::get_2pl_proceed_callback(
       ps->remove_output();
       Log::debug("rejected");
     } else {
-      map<int32_t, mdb::Value> *output_vec;
+      map<int32_t, Value> *output_vec;
       mdb::Value *output;
       rrr::i32 *output_size;
 
@@ -163,7 +159,7 @@ std::function<void(void)> TPLExecutor::get_2pl_proceed_callback(
     }
 
     ps->set_finish();
-    ps->trigger_reply_dragonball();
+    ps->defer_->reply();
   };
 }
 
@@ -186,7 +182,7 @@ std::function<void(void)> TPLExecutor::get_2pl_fail_callback(
       ps->remove_output();
 
       ps->set_finish();
-      ps->trigger_reply_dragonball();
+      ps->defer_->reply();
     }
   };
 }
@@ -219,6 +215,7 @@ int TPLExecutor::commit() {
 int TPLExecutor::abort() {
   ThreePhaseExecutor::abort();
   release_piece_map(false);
+  return 0;
 }
 
 PieceStatus* TPLExecutor::ps_cache() {
@@ -260,34 +257,31 @@ PieceStatus* TPLExecutor::get_piece_status(i64 pid) {
   return ps;
 }
 
-void TPLExecutor::init_piece(i64 tid,
-                             i64 pid,
-                             rrr::DragonBall *db,
-                             std::map<int32_t, Value> *output) {
+void TPLExecutor::InitPieceStatus(const RequestHeader &header,
+                                  rrr::DeferredReply* defer,
+                                  std::map<int32_t, Value> *output) {
 
+  auto tid = header.tid;
+  auto pid = header.pid;
   std::function<int(void)> wound_callback =
       [this, tid, pid]() -> int {
         if (this->prepared_) {
           // can't wound
           return 1;
         } else {
-//          ((mdb::Txn2PL*)this->mdb_txn_)->wound_ = true;
           this->wounded_ = true;
           return 0;
         }
       };
   PieceStatus *ps =
-      new PieceStatus(tid,
-                      pid,
-                      db,
+      new PieceStatus(header,
+                      defer,
                       output,
-                      &this->wounded_,
+//                      &this->wounded_,
                       wound_callback,
-                      this,
-                      (mdb::Txn2PL*)mdb_txn_);
+                      this);
   piece_map_[pid] = ps;
   SetPsCache(ps);
 }
-
 
 } // namespace rococo
