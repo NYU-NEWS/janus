@@ -133,8 +133,7 @@ void TpccPiece::reg_order_status() {
 
 
         if (IS_MODE_2PL && output_size == NULL) {
-            auto txn = (mdb::Txn2PL*) dtxn->mdb_txn_;
-            auto ps = txn->get_piece_status(header.pid);
+            auto ps = ((TPLExecutor*)exec)->get_piece_status(header.pid);
 
 //            std::function<void(
 //                    const RequestHeader &,
@@ -268,8 +267,7 @@ void TpccPiece::reg_order_status() {
         verify(row_list.size() != 0);
 
         if (IS_MODE_2PL && output_size == NULL) {
-            auto mdb_txn = (mdb::Txn2PL*) dtxn->mdb_txn_;
-            auto ps = mdb_txn->get_piece_status(header.pid);
+            auto ps = ((TPLExecutor*)exec)->get_piece_status(header.pid);
             std::function<void(void)> succ_callback = 
                 ((TPLExecutor *) exec)->get_2pl_succ_callback(
                                             header, input, res, ps);

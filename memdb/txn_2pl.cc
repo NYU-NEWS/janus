@@ -11,37 +11,26 @@ namespace mdb {
 
 //Txn2PL::PieceStatus *Txn2PL::ps_cache_s = nullptr;
 
-Txn2PL::PieceStatus* Txn2PL::ps_cache() {
-//  verify(ps_cache_ == ps_cache_s);
-  return ps_cache_;
-}
-
-void Txn2PL::SetPsCache(PieceStatus* ps) {
-  ps_cache_ = ps;
-}
 
 query_buf_t& Txn2PL::GetQueryBuf(int64_t pid) {
   verify(0);
-  verify(piece_map_.find(pid) != piece_map_.end());
-  query_buf_t &qb = (pid == ps_cache()->pid_) ? ps_cache()->query_buf_
-                                              : piece_map_[pid]->query_buf_;
-  return qb;
+//  verify(piece_map_.find(pid) != piece_map_.end());
+//  query_buf_t &qb = (pid == ps_cache()->pid_) ? ps_cache()->query_buf_
+//                                              : piece_map_[pid]->query_buf_;
+//  return qb;
 }
 
 
 Txn2PL::Txn2PL(const TxnMgr *mgr, txn_id_t txnid) :
     Txn(mgr, txnid),
-    outcome_(symbol_t::NONE),
-    wound_(false),
-    prepared_(false),
-    ps_cache_(nullptr),
-    piece_map_(std::unordered_map<i64, PieceStatus *>()) {
+    outcome_(symbol_t::NONE) {
+
 }
 
 Txn2PL::~Txn2PL() {
   verify(this->rtti() == symbol_t::TXN_2PL);
   release_resource();
-  verify(piece_map_.size() == 0);
+//  verify(piece_map_.size() == 0);
 }
 
 ResultSet Txn2PL::query(Table *tbl,
@@ -67,25 +56,6 @@ ResultSet Txn2PL::query(Table *tbl,
   }
 }
 
-void Txn2PL::release_piece_map(bool commit) {
-  verify(piece_map_.size() != 0);
-  SetPsCache(nullptr);
-  if (commit) {
-    for (auto &it : piece_map_) {
-      it.second->commit();
-      delete it.second;
-    }
-    piece_map_.clear();
-  }
-  else {
-    for (auto &it : piece_map_) {
-      it.second->abort();
-      delete it.second;
-    }
-    piece_map_.clear();
-  }
-}
-
 void Txn2PL::release_resource() {
   verify(this->rtti() == symbol_t::TXN_2PL);
   updates_.clear();
@@ -93,31 +63,6 @@ void Txn2PL::release_resource() {
   removes_.clear();
 }
 
-void Txn2PL::PieceStatus::reg_rm_lock(Row *row,
-                                      const std::function<void(void)> &succ_callback,
-                                      const std::function<void(void)> &fail_callback) {
-  rm_succ_ = false;
-  is_rw_ = false;
-  verify(row->rtti() == symbol_t::ROW_FINE);
-  FineLockedRow *fl_row = (FineLockedRow *) row;
-  for (int i = 0; i < row->schema()->columns_count(); i++)
-    rm_lock_group_.add(fl_row->get_alock(i), rrr::ALock::WLOCK);
-  rm_lock_group_.lock_all(succ_callback, fail_callback);
-}
-
-void Txn2PL::PieceStatus::reg_rw_lock(const std::vector<column_lock_t> &col_locks,
-                                      const std::function<void(void)> &succ_callback,
-                                      const std::function<void(void)> &fail_callback) {
-  rw_succ_ = false;
-  is_rw_ = true;
-  std::vector<column_lock_t>::const_iterator it;
-  for (it = col_locks.begin(); it != col_locks.end(); it++) {
-    verify(it->row->rtti() == symbol_t::ROW_FINE);
-    rw_lock_group_.add(((FineLockedRow *) it->row)->get_alock(it->column_id),
-                       it->type);
-  }
-  rw_lock_group_.lock_all(succ_callback, fail_callback);
-}
 
 // insert piece in piece_map_, set reply dragonball & set output
 //void Txn2PL::init_piece(i64 tid, i64 pid, rrr::DragonBall *db,
@@ -143,36 +88,7 @@ void Txn2PL::PieceStatus::reg_rw_lock(const std::vector<column_lock_t> &col_lock
 //  SetPsCache(ps);
 //}
 
-void Txn2PL::init_piece(i64 tid, i64 pid, rrr::DragonBall *db,
-                        std::map<int32_t, mdb::Value> *output) {
-  PieceStatus *ps = new PieceStatus(tid,
-                                    pid,
-                                    db,
-                                    output,
-                                    &wound_,
-                                    [this, tid, pid]() -> int {
-                                      if (prepared_) { // can't wound
-                                        return 1;
-                                      }
-                                      else {
-                                        wound_ = true;
-                                        return 0;
-                                      }
-                                    },
-                                    this);
-  piece_map_[pid] = ps;
-  SetPsCache(ps);
-}
 
-Txn2PL::PieceStatus* Txn2PL::get_piece_status(i64 pid) {
-  auto ps = ps_cache();
-  if (ps == nullptr || ps->pid_ != pid) {
-    verify(piece_map_.find(pid) != piece_map_.end());
-    ps = piece_map_[pid];
-    SetPsCache(ps);
-  }
-  return ps;
-}
 
 void Txn2PL::marshal_stage(std::string &str) {
   uint64_t len = str.size();
@@ -293,7 +209,6 @@ void Txn2PL::abort() {
   verify(outcome_ == symbol_t::NONE);
   outcome_ = symbol_t::TXN_ABORT;
   release_resource();
-  release_piece_map(false/*abort*/);
 }
 
 bool Txn2PL::commit() {
@@ -344,7 +259,6 @@ bool Txn2PL::commit() {
   release_resource();
   for (auto &it : rows_to_remove)
     it->release();
-  release_piece_map(true/*commit*/);
   return true;
 }
 

@@ -12,6 +12,7 @@ class ThreePhaseExecutor: public Executor {
   using Executor::Executor;
  public:
 
+
   virtual ~ThreePhaseExecutor();
 
   virtual int start_launch(const RequestHeader &header,
@@ -41,7 +42,7 @@ class ThreePhaseExecutor: public Executor {
       rrr::DeferredReply *defer
   );
 
-  int abort();
+  virtual int abort();
 
   void execute(const RequestHeader &header,
                const map<int32_t, Value> &input,

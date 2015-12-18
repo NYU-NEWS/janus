@@ -5,7 +5,7 @@
 #include "../rcc/graph_marshaler.h"
 #include "exec.h"
 #include "sched.h"
-
+#include "ps.h"
 
 namespace rococo {
 int TPLExecutor::start_launch(
@@ -24,14 +24,15 @@ int TPLExecutor::start_launch(
   });
 
   mdb::Txn2PL *txn = (mdb::Txn2PL *) mdb_txn_;
-  if (txn->is_wound()) {
+  verify(mdb_txn_ != nullptr);
+  if (wounded_) {
     *res = REJECT;
     db->trigger();
   } else {
-    txn->init_piece(header.tid,
-                    header.pid,
-                    db,
-                    output);
+    init_piece(header.tid,
+               header.pid,
+               db,
+               output);
 
     Log_debug("get txn handler and start reg lock, txn_id: %lx, pie_id: %lx",
               header.tid, header.pid);
@@ -52,7 +53,7 @@ std::function<void(void)> TPLExecutor::get_2pl_succ_callback(
     const RequestHeader &header,
     const map<int32_t, Value> &input,
     rrr::i32 *res,
-    mdb::Txn2PL::PieceStatus *ps) {
+    PieceStatus *ps) {
   return [header, input, res, ps, this]() {
     Log_debug("lock acquired call back, txn_id: %lx, pie_id: %lx, p_type: %d, ",
               header.tid, header.pid, header.p_type);
@@ -119,7 +120,7 @@ std::function<void(void)> TPLExecutor::get_2pl_proceed_callback(
               header.tid, header.pid, header.p_type);
 //        verify(this->mdb_txn_ != nullptr);
     mdb::Txn2PL *mdb_txn = (mdb::Txn2PL *) mdb_txn_;
-    mdb::Txn2PL::PieceStatus *ps = mdb_txn->get_piece_status(header.pid);
+    PieceStatus *ps = get_piece_status(header.pid);
 
     verify(ps != NULL); //FIXME
 
@@ -169,7 +170,7 @@ std::function<void(void)> TPLExecutor::get_2pl_proceed_callback(
 std::function<void(void)> TPLExecutor::get_2pl_fail_callback(
     const RequestHeader &header,
     rrr::i32 *res,
-    mdb::Txn2PL::PieceStatus *ps) {
+    PieceStatus *ps) {
   return [header, res, ps, this]() {
     Log_debug("tid: %ld, pid: %ld, p_type: %d, lock timeout call back",
               header.tid, header.pid, header.p_type);
@@ -196,10 +197,12 @@ int TPLExecutor::prepare() {
   verify(txn != NULL);
 //  verify(Config::config_s->mode_ == MODE_2PL);
 
-  if (txn->commit_prepare())
+  prepared_ = true;
+  if (!wounded_) {
     return SUCCESS;
-  else
+  } else {
     return REJECT;
+  }
 }
 
 
@@ -209,7 +212,81 @@ int TPLExecutor::commit() {
   mdb_txn_->commit();
   delete mdb_txn_;
   mdb_txn_ = nullptr;
+  release_piece_map(true/*commit*/);
   return SUCCESS;
+}
+
+int TPLExecutor::abort() {
+  ThreePhaseExecutor::abort();
+  release_piece_map(false);
+}
+
+PieceStatus* TPLExecutor::ps_cache() {
+//  verify(ps_cache_ == ps_cache_s);
+  return ps_cache_;
+}
+
+void TPLExecutor::SetPsCache(PieceStatus* ps) {
+  ps_cache_ = ps;
+}
+
+
+void TPLExecutor::release_piece_map(bool commit) {
+  verify(piece_map_.size() != 0);
+  SetPsCache(nullptr);
+  if (commit) {
+    for (auto &it : piece_map_) {
+      it.second->commit();
+      delete it.second;
+    }
+    piece_map_.clear();
+  }
+  else {
+    for (auto &it : piece_map_) {
+      it.second->abort();
+      delete it.second;
+    }
+    piece_map_.clear();
+  }
+}
+
+PieceStatus* TPLExecutor::get_piece_status(i64 pid) {
+  auto ps = ps_cache();
+  if (ps == nullptr || ps->pid_ != pid) {
+    verify(piece_map_.find(pid) != piece_map_.end());
+    ps = piece_map_[pid];
+    SetPsCache(ps);
+  }
+  return ps;
+}
+
+void TPLExecutor::init_piece(i64 tid,
+                             i64 pid,
+                             rrr::DragonBall *db,
+                             std::map<int32_t, Value> *output) {
+
+  std::function<int(void)> wound_callback =
+      [this, tid, pid]() -> int {
+        if (this->prepared_) {
+          // can't wound
+          return 1;
+        } else {
+//          ((mdb::Txn2PL*)this->mdb_txn_)->wound_ = true;
+          this->wounded_ = true;
+          return 0;
+        }
+      };
+  PieceStatus *ps =
+      new PieceStatus(tid,
+                      pid,
+                      db,
+                      output,
+                      &this->wounded_,
+                      wound_callback,
+                      this,
+                      (mdb::Txn2PL*)mdb_txn_);
+  piece_map_[pid] = ps;
+  SetPsCache(ps);
 }
 
 

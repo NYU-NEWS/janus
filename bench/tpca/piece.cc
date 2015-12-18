@@ -31,8 +31,8 @@ void TpcaPiece::reg_pieces() {
         }
 
         if (IS_MODE_2PL && output_size == NULL) {
-            mdb::Txn2PL::PieceStatus *ps
-                = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
+            PieceStatus *ps
+                = ((TPLExecutor*)exec)->get_piece_status(header.pid);
             std::function<void(void)> succ = ((TPLExecutor*) exec)->get_2pl_succ_callback(
                     header, input, res, ps);
             std::function<void(void)> fail = ((TPLExecutor*) exec)->get_2pl_fail_callback(
@@ -117,8 +117,8 @@ void TpcaPiece::reg_pieces() {
         }
 
         if (IS_MODE_2PL && output_size == NULL) {
-            mdb::Txn2PL::PieceStatus *ps
-                = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
+            PieceStatus *ps
+                = ((TPLExecutor*)exec)->get_piece_status(header.pid);
             std::function<void(void)> succ = ((TPLExecutor*) exec)->get_2pl_succ_callback(
                     header, input, res, ps);
             std::function<void(void)> fail = ((TPLExecutor*) exec)->get_2pl_fail_callback(
@@ -212,8 +212,8 @@ void TpcaPiece::reg_pieces() {
         }
 
         if (IS_MODE_2PL && output_size == NULL) {
-            mdb::Txn2PL::PieceStatus *ps
-                = ((mdb::Txn2PL *)txn)->get_piece_status(header.pid);
+            PieceStatus *ps
+                = ((TPLExecutor*)exec)->get_piece_status(header.pid);
             std::function<void(void)> succ = ((TPLExecutor*) exec)->get_2pl_succ_callback(
                     header, input, res, ps);
             std::function<void(void)> fail = ((TPLExecutor*) exec)->get_2pl_fail_callback(

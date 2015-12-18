@@ -4,6 +4,7 @@
 #include "tpl/exec.h"
 #include "tpl/tpl.h"
 #include "ro6/ro6.h"
+#include "tpl/ps.h"
 
 namespace rococo {
 
@@ -34,9 +35,8 @@ class Piece {
 
 #define TPL_KISS(...) \
   if (IS_MODE_2PL && output_size == NULL) { \
-    mdb::Txn2PL *tpl_txn = (mdb::Txn2PL *)dtxn->mdb_txn_; \
-    mdb::Txn2PL::PieceStatus *ps \
-        = tpl_txn->get_piece_status(header.pid); \
+    PieceStatus *ps \
+        = ((TPLExecutor*)exec)->get_piece_status(header.pid); \
     std::function<void(void)> succ_callback = \
         ((TPLExecutor*)exec)->get_2pl_succ_callback(header, input, res, ps); \
     std::function<void(void)> fail_callback = \
