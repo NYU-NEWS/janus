@@ -169,8 +169,7 @@ Scheduler::Scheduler() : executors_() {
   }
 }
 
-Scheduler::Scheduler(int mode) {
-  Scheduler();
+Scheduler::Scheduler(int mode) : Scheduler() {
   mode_ = mode;
   switch (mode) {
     case MODE_NONE:
@@ -180,6 +179,7 @@ Scheduler::Scheduler(int mode) {
     case MODE_OCC:
       mdb_txn_mgr_ = new mdb::TxnMgrOCC();
       break;
+    case MODE_MDCC:
     case MODE_RCC:
     case MODE_RO6:
       mdb_txn_mgr_ = new mdb::TxnMgrUnsafe(); //XXX is it OK to use unsafe for deptran

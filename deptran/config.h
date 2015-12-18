@@ -29,7 +29,8 @@ class Config {
       {"2pl_w", MODE_2PL},
       {"2pl_wait_die", MODE_2PL},
       {"2pl_ww", MODE_2PL},
-      {"2pl_wound_die", MODE_2PL}
+      {"2pl_wound_die", MODE_2PL},
+      {"mdcc", MODE_MDCC}
   };
 
   std::map<string, mdb::symbol_t> tbl_types_map_ = {
