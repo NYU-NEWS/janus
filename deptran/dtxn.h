@@ -60,9 +60,9 @@ class DTxn {
   Recorder *recorder_ = NULL;
   TxnRegistry *txn_reg_;
 
-  map<int32_t, mdb::Row*> context_row_;
-  map<int32_t, Value> context_value_;
-  map<int32_t, mdb::ResultSet> context_rs_;
+  map<int64_t, mdb::Row*> context_row_;
+  map<int64_t, Value> context_value_;
+  map<int64_t, mdb::ResultSet> context_rs_;
 
   DTxn() = delete;
 
@@ -135,7 +135,7 @@ class DTxn {
 
   virtual mdb::Row* Query(mdb::Table *tbl,
                           const mdb::MultiBlob &mb,
-                          int row_context_id = 0);
+                          int64_t row_context_id = 0);
 
   virtual mdb::ResultSet QueryIn(Table *tbl,
                                  const mdb::MultiBlob &low,

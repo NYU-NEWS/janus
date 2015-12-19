@@ -73,7 +73,7 @@ mdb::ResultSet DTxn::QueryIn(Table *tbl,
 
 mdb::Row* DTxn::Query(mdb::Table *tbl,
                       const mdb::MultiBlob &mb,
-                      int row_context_id) {
+                      int64_t row_context_id) {
   verify(mdb_txn_ != nullptr);
   mdb::Row* ret_row;
   auto &row_map = context_row_;
