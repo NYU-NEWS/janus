@@ -35,6 +35,7 @@ bool TPLDTxn::ReadColumns(Row *row,
       locks_.push_back(mdb::column_lock_t(row, col_id, ALock::RLOCK));
     }
   } else {
+    values->clear();
     verify(mdb_txn_ != nullptr);
     auto ret = mdb_txn_->read_columns(row, col_ids, values);
     verify(ret == true);

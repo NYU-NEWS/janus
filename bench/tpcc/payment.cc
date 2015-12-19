@@ -148,7 +148,6 @@ void TpccPiece::reg_payment() {
     // ############################################################
     verify(input.size() == 6);
     Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_4);
-    i32 output_index = 0;
     // ############################################################
     mdb::Row *r = NULL;
 
@@ -178,9 +177,12 @@ void TpccPiece::reg_payment() {
     RCC_PHASE1_RET;
     RCC_LOAD_ROW(r, TPCC_PAYMENT_4);
 
-    vector<Value> buf(16, Value());
-    buf[13] = 0.0;
-    buf[14] = 0.0;
+    vector<Value> buf({
+        Value(""), Value(""), Value(""), Value(""),
+        Value(""), Value(""), Value(""), Value(""),
+        Value(""), Value(""), Value(""), Value(""),
+        Value(""), Value(0.0), Value(0.0), Value("")}
+    );
     dtxn->ReadColumns(r,
                       std::vector<mdb::column_id_t>({
                                                         3,  // c_first          buf[0]
@@ -237,6 +239,7 @@ void TpccPiece::reg_payment() {
       dtxn->WriteColumns(r, col_ids, col_data);
     }
 
+    int32_t output_index = 0;
     output[output_index++] = input[0];  // output[0]  =>  c_id
     output[output_index++] = buf[0];    // output[1]  =>  c_first
     output[output_index++] = buf[1];    // output[2]  =>  c_middle
@@ -253,58 +256,47 @@ void TpccPiece::reg_payment() {
     output[output_index++] = buf[12];   // output[13] =>  c_discount
     output[output_index++] = Value(buf[13].get_double() - input[3].get_double()); // output[14] =>  c_balance
 
-    // ############################################################
-//        verify(*output_size >= output_index);
-//        Log::debug("TPCC_PAYMENT, piece: %d end", TPCC_PAYMENT_4);
-//                           *output_size = output_index;
-    // ############################################################
-                       *res = SUCCESS;
+    *res = SUCCESS;
   } END_PIE
 
   BEGIN_PIE(TPCC_PAYMENT,      // txn
           TPCC_PAYMENT_5,    // piece 4, W histroy
           DF_REAL) {
-      // ############################################################
-      verify(input.size() == 9);
-      Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_5);
-      // ############################################################
+    // ############################################################
+    verify(input.size() == 9);
+    Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_5);
+    // ############################################################
 
 
-      i32 output_index = 0;
+    i32 output_index = 0;
 //        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
-                         mdb::Txn *txn = dtxn->mdb_txn_;
-      mdb::Table *tbl = txn->get_table(TPCC_TB_HISTORY);
+                       mdb::Txn *txn = dtxn->mdb_txn_;
+    mdb::Table *tbl = txn->get_table(TPCC_TB_HISTORY);
 
-      // insert history
-      mdb::Row *r = NULL;
-      if (!(IS_MODE_RCC || IS_MODE_RO6) ||
-              ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) {
-          // non-rcc || rcc start request
-      }
+    // insert history
+    mdb::Row *r = NULL;
+    if (!(IS_MODE_RCC || IS_MODE_RO6) ||
+            ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) {
+        // non-rcc || rcc start request
+    }
 
-      RCC_PHASE1_RET;
+    RCC_PHASE1_RET;
 
-      std::vector<Value> row_data(9);
-      row_data[0] = input[0];             // h_key
-      row_data[1] = input[5];             // h_c_id   =>  c_id
-      row_data[2] = input[7];             // h_c_d_id =>  c_d_id
-      row_data[3] = input[6];             // h_c_w_id =>  c_w_id
-      row_data[4] = input[4];             // h_d_id   =>  d_id
-      row_data[5] = input[3];             // h_d_w_id =>  d_w_id
-      row_data[6] = Value(std::to_string(time(NULL)));    // h_date
-      row_data[7] = input[8];             // h_amount =>  h_amount
-      row_data[8] = Value(input[1].get_str() + "    " + input[2].get_str()); // d_data => w_name + 4spaces + d_name
+    std::vector<Value> row_data(9);
+    row_data[0] = input[0];             // h_key
+    row_data[1] = input[5];             // h_c_id   =>  c_id
+    row_data[2] = input[7];             // h_c_d_id =>  c_d_id
+    row_data[3] = input[6];             // h_c_w_id =>  c_w_id
+    row_data[4] = input[4];             // h_d_id   =>  d_id
+    row_data[5] = input[3];             // h_d_w_id =>  d_w_id
+    row_data[6] = Value(std::to_string(time(NULL)));    // h_date
+    row_data[7] = input[8];             // h_amount =>  h_amount
+    row_data[8] = Value(input[1].get_str() + "    " + input[2].get_str()); // d_data => w_name + 4spaces + d_name
 
-      CREATE_ROW(tbl->schema(), row_data);
+    CREATE_ROW(tbl->schema(), row_data);
 
-      txn->insert_row(tbl, r);
-
-      // ############################################################
-//        verify(*output_size >= output_index);
-//        Log::debug("TPCC_PAYMENT, piece: %d end", TPCC_PAYMENT_5);
-//                           *output_size = output_index;
-      // ############################################################
-                         *res = SUCCESS;
+    txn->insert_row(tbl, r);
+    *res = SUCCESS;
   } END_PIE
 }
 

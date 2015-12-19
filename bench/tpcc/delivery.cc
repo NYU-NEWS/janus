@@ -120,7 +120,6 @@ void TpccPiece::reg_delivery() {
     Log::debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_2);
     verify(input.size() == 3);
     i32 oi = 0;
-    Value buf;
     //        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
     mdb::MultiBlob mbl(4), mbh(4);
     mbl[0] = input[2].get_blob();
@@ -165,7 +164,7 @@ void TpccPiece::reg_delivery() {
           ((RCCDTxn *) dtxn)->kiss(r, 6, true);
           ((RCCDTxn *) dtxn)->kiss(r, 8, true);
       }
-
+      Value buf(0.0);
       dtxn->ReadColumn(r, 8, &buf); // read ol_amount
       ol_amount_buf += buf.get_double();
       dtxn->WriteColumn(r, 6, Value(std::to_string(time(NULL))));
@@ -181,7 +180,6 @@ void TpccPiece::reg_delivery() {
     Log::debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_3);
     verify(input.size() == 4);
     i32 oi = 0;
-    Value buf;
 //        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
                        mdb::Txn *txn = dtxn->mdb_txn_;
     mdb::Row *r = NULL;
@@ -206,6 +204,7 @@ void TpccPiece::reg_delivery() {
     RCC_PHASE1_RET;
     RCC_LOAD_ROW(r, TPCC_DELIVERY_3);
 
+    Value buf(0.0);
     dtxn->ReadColumn(r, 16, &buf);
     buf.set_double(buf.get_double() + input[3].get_double());
 

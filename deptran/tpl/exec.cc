@@ -105,6 +105,18 @@ std::function<void(void)> TPLExecutor::get_2pl_succ_callback(
                                         res,
                                         *output);
       verify(*res == SUCCESS);
+      // ____debug purpose
+      for (auto &kv : *output) {
+        auto &v = kv.second;
+        auto k = v.get_kind();
+        if (k == Value::I32 || k == Value::I64
+                   || k == Value::STR || k == Value::DOUBLE) {
+
+        } else {
+          Log_fatal("xxx: %d", header.p_type);
+          verify(0);
+        }
+      }
     }
 
     Log_debug("set finish on tid %ld\n", header.tid);
