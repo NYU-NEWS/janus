@@ -41,6 +41,7 @@ int TPLExecutor::StartLaunch(
     // pre execute to establish interference.
     TPLDTxn *dtxn = (TPLDTxn*) dtxn_;
     dtxn->locks_.clear();
+    dtxn->row_lock_ = nullptr;
     dtxn->locking_ = true;
     entry.txn_handler(this,
                       dtxn_,
@@ -50,13 +51,18 @@ int TPLExecutor::StartLaunch(
                       no_use/*output*/);
     // try to require all the locks.
     dtxn->locking_ = false;
-//    PieceStatus *ps = get_piece_status(header.pid);
-//    verify(ps_cache_ == ps);
-//    if (dtxn->locks_.size() > 0) {
-//      auto succ_callback = get_2pl_succ_callback(header, input, res, ps);
-//      auto fail_callback = get_2pl_fail_callback(header, res, ps);
-//      ps->reg_rw_lock(dtxn->locks_, succ_callback, fail_callback);
-//    }
+    PieceStatus *ps = get_piece_status(header.pid);
+    verify(ps_cache_ == ps);
+    auto succ_callback = get_2pl_succ_callback(header, input, res, ps);
+    if (dtxn->locks_.size() > 0) {
+      auto fail_callback = get_2pl_fail_callback(header, res, ps);
+      ps->reg_rw_lock(dtxn->locks_, succ_callback, fail_callback);
+    } else if (dtxn->row_lock_ != nullptr) {
+      auto fail_callback = get_2pl_fail_callback(header, res, ps);
+      ps->reg_rm_lock(dtxn->row_lock_, succ_callback, fail_callback);
+    } else {
+      succ_callback();
+    }
   }
   return 0;
 }
@@ -86,18 +92,18 @@ std::function<void(void)> TPLExecutor::get_2pl_succ_callback(
       ps->remove_output();
       Log::debug("rejected");
     } else {
-      std::map <int32_t, mdb::Value> *output_vec;
-      mdb::Value *output;
+      std::map <int32_t, mdb::Value> *output;
+      mdb::Value *output_value;
       rrr::i32 *output_size;
-      ps->get_output(&output_vec, &output, &output_size);
-      rrr::i32 output_vec_size;
+      ps->get_output(&output, &output_value, &output_size);
+      output->clear();
       txn_reg_->get(header).txn_handler(this,
                                         dtxn_,
                                         header,
                                         const_cast<map<int32_t, Value>&>
                                         (input),
                                         res,
-                                        *output_vec);
+                                        *output);
       verify(*res == SUCCESS);
     }
 
