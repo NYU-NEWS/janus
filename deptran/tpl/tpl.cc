@@ -76,4 +76,14 @@ bool TPLDTxn::WriteColumns(Row *row,
   return true;
 }
 
+bool TPLDTxn::InsertRow(Table *tbl, Row *row) {
+  if (locking_) {
+
+  } else {
+    verify(mdb_txn_ != nullptr);
+    mdb_txn_->insert_row(tbl, row);
+  }
+  return true;
+}
+
 } // namespace rococo

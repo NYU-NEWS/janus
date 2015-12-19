@@ -147,7 +147,7 @@ void TpccPiece::reg_new_order() {
     RCC_LOAD_ROW(r, TPCC_NEW_ORDER_3);
 
     verify(r->schema_);
-                         dtxn->InsertRow(tbl, r);
+    dtxn->InsertRow(tbl, r);
 
     // write TPCC_TB_ORDER_C_ID_SECONDARY
     //mdb::MultiBlob mb(3);
@@ -348,11 +348,6 @@ void TpccPiece::reg_new_order() {
         
     i32 oi = 0;
     dtxn->InsertRow(tbl, r);
-    // ############################################################
-//    verify(*output_size >= oi);
-//    *output_size = oi;
-//    Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_8);
-    // ############################################################
     *res = SUCCESS;
     return;
   } END_PIE

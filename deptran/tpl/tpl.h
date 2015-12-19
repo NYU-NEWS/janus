@@ -52,7 +52,7 @@ class TPLDTxn: public DTxn {
                             const std::vector<Value> &values,
                             bool unsafe = false);
 
-//  virtual bool InsertRow(Table *tbl, Row *row);
+  virtual bool InsertRow(Table *tbl, Row *row);
 };
 
 } // namespace rococo

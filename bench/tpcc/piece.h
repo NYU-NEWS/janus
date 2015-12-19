@@ -54,7 +54,7 @@ namespace rococo {
 
 // context id
 #define ROW_DISTRICT          __LINE__
-#define ROW_DISTRICT_TEMP          __LINE__
+#define ROW_DISTRICT_TEMP     __LINE__
 #define ROW_WAREHOUSE         __LINE__
 #define ROW_CUSTOMER          __LINE__
 #define ROW_ORDER_SEC         __LINE__
