@@ -41,12 +41,12 @@ void TpccPiece::reg_new_order() {
     dtxn->WriteColumn(r, 10, buf); // read d_next_o_id, increment by 1
 
     // ############################################################
-    verify(*output_size >= oi);
-    Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_0);
-    *res = SUCCESS;
+//    verify(*output_size >= oi);
+//    Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_0);
+//    *res = SUCCESS;
     // ############################################################
 
-    *output_size = oi;
+//    *output_size = oi;
     return;
   } END_PIE
 
@@ -71,12 +71,12 @@ void TpccPiece::reg_new_order() {
     dtxn->ReadColumn(r, 7, &output[oi++]); // read w_tax
 
     // ############################################################
-    verify(*output_size >= oi);
-    Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_1);
-    *res = SUCCESS;
+//    verify(*output_size >= oi);
+//    Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_1);
+//    *res = SUCCESS;
     // ############################################################
         
-    *output_size = oi;
+//    *output_size = oi;
     return;
   } END_PIE
 
@@ -113,12 +113,12 @@ void TpccPiece::reg_new_order() {
     dtxn->ReadColumn(r, 15, &output[oi++]);
 
     // ############################################################
-    verify(*output_size >= oi);
-    Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_2);
-    *res = SUCCESS;
+//    verify(*output_size >= oi);
+//    Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_2);
+//    *res = SUCCESS;
     // ############################################################
         
-    *output_size = oi;
+//    *output_size = oi;
     return;
   } END_PIE
 
@@ -188,11 +188,11 @@ void TpccPiece::reg_new_order() {
     dtxn->WriteColumn(r, 3, input[0]);
 
     // ############################################################
-    verify(*output_size >= oi);
-    *res = SUCCESS;
-    Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_3);
+//    verify(*output_size >= oi);
+//    *res = SUCCESS;
+//    Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_3);
     // ############################################################
-    *output_size = oi;
+//    *output_size = oi;
     return;
   } END_PIE
 
@@ -234,11 +234,11 @@ void TpccPiece::reg_new_order() {
 
                            dtxn->InsertRow(tbl, r);
         // ############################################################
-        verify(*output_size >= oi);
-        Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_4);
-        *res = SUCCESS;
+//        verify(*output_size >= oi);
+//        Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_4);
+//        *res = SUCCESS;
         // ############################################################
-        *output_size = oi;
+//        *output_size = oi;
         return;
     } END_PIE
 
@@ -269,9 +269,9 @@ void TpccPiece::reg_new_order() {
                          dtxn->ReadColumn(r, 4, &output[oi++]); // 2 ==> i_data
 
         // ############################################################
-        verify(*output_size >= oi);
-        *output_size = oi;
-        Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_5);
+//        verify(*output_size >= oi);
+//        *output_size = oi;
+//        Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_5);
         *res = SUCCESS;
         // ############################################################
         return;
@@ -309,10 +309,10 @@ void TpccPiece::reg_new_order() {
                          dtxn->ReadColumn(r, 16, &output[oi++]); // 1 ==> s_data
 
         // ############################################################
-        verify(*output_size >= oi);
-        *output_size = oi;
+//        verify(*output_size >= oi);
+//        *output_size = oi;
         *res = SUCCESS;
-        Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_6);
+//        Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_6);
         // ############################################################
         return;
     } END_PIE
@@ -389,12 +389,12 @@ void TpccPiece::reg_new_order() {
                                                        new_s_remote_cnt
                                                    }))) {
             *res = REJECT;
-            *output_size = oi;
+//            *output_size = oi;
             return;
         }
         // ############################################################
-        verify(*output_size >= oi);
-        *output_size = oi;
+//        verify(*output_size >= oi);
+//        *output_size = oi;
         Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_7);
         // ############################################################
         *res = SUCCESS;
@@ -439,9 +439,9 @@ void TpccPiece::reg_new_order() {
     i32 oi = 0;
     dtxn->InsertRow(tbl, r);
     // ############################################################
-    verify(*output_size >= oi);
-    *output_size = oi;
-    Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_8);
+//    verify(*output_size >= oi);
+//    *output_size = oi;
+//    Log::debug("TPCC_NEW_ORDER, piece: %d end", TPCC_NEW_ORDER_8);
     // ############################################################
     *res = SUCCESS;
     return;

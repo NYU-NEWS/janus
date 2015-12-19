@@ -17,8 +17,8 @@ typedef std::function<void(
     const RequestHeader &header,
     map<int32_t, Value> &input,
     rrr::i32 *res,
-    map<int32_t, Value> &output,
-    rrr::i32 *output_size//,
+    map<int32_t, Value> &output //,
+//    rrr::i32 *output_size//,
 //    row_map_t *row_map
 )> TxnHandler;
 

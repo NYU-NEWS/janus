@@ -37,11 +37,11 @@ void TpccPiece::reg_payment() {
                          dtxn->ReadColumn(r, 6, &output[oi++]);  // 5 ==> w_zip
 
         // ############################################################
-        verify(*output_size >= oi);
-        *output_size = oi;
-        *res = SUCCESS;
-        Log::debug("TPCC_PAYMENT, piece: %d end", TPCC_PAYMENT_0);
+//        verify(*output_size >= oi);
+//        *output_size = oi;
+//        Log::debug("TPCC_PAYMENT, piece: %d end", TPCC_PAYMENT_0);
         // ############################################################
+                         *res = SUCCESS;
     } END_PIE
 
     BEGIN_PIE(TPCC_PAYMENT,      // txn
@@ -80,10 +80,10 @@ void TpccPiece::reg_payment() {
                          dtxn->ReadColumn(r, 7, &output[oi++]); // 5 ==> d_zip
 
         // ############################################################
-        verify(*output_size >= oi);
-        *output_size = oi;
+//        verify(*output_size >= oi);
+//        *output_size = oi;
         *res = SUCCESS;
-        Log::debug("TPCC_PAYMENT, piece: %d end", TPCC_PAYMENT_1);
+//        Log::debug("TPCC_PAYMENT, piece: %d end", TPCC_PAYMENT_1);
         // ############################################################
     } END_PIE
 
@@ -127,11 +127,11 @@ void TpccPiece::reg_payment() {
                            dtxn->WriteColumn(r, 9, buf);
 
         // ############################################################
-        verify(*output_size >= output_index);
-        *output_size = output_index;
-        *res = SUCCESS;
-        Log::debug("TPCC_PAYMENT, piece: %d end", TPCC_PAYMENT_2);
+//        verify(*output_size >= output_index);
+//        *output_size = output_index;
+//        Log::debug("TPCC_PAYMENT, piece: %d end", TPCC_PAYMENT_2);
         // ############################################################
+                           *res = SUCCESS;
     } END_PIE
 
 
@@ -180,11 +180,11 @@ void TpccPiece::reg_payment() {
         output[output_index++] = Value(it_mid->second);
 
         // ############################################################
-        verify(*output_size >= output_index);
-        *output_size = output_index;
-        *res = SUCCESS;
-        Log::debug("TPCC_PAYMENT, piece: %d, end", TPCC_PAYMENT_3);
+//        verify(*output_size >= output_index);
+//        *output_size = output_index;
+//        Log::debug("TPCC_PAYMENT, piece: %d, end", TPCC_PAYMENT_3);
         // ############################################################
+                         *res = SUCCESS;
     } END_PIE
 
     BEGIN_PIE(TPCC_PAYMENT,      // txn
@@ -262,7 +262,7 @@ void TpccPiece::reg_payment() {
                                                                     20  // c_data           buf[15]
                                                                 }), &buf)) {
             *res = REJECT;
-            *output_size = output_index;
+//            *output_size = output_index;
             return;
         }
 
@@ -319,11 +319,11 @@ void TpccPiece::reg_payment() {
         output[output_index++] = Value(buf[13].get_double() - input[3].get_double()); // output[14] =>  c_balance
 
         // ############################################################
-        verify(*output_size >= output_index);
-        *res = SUCCESS;
-        Log::debug("TPCC_PAYMENT, piece: %d end", TPCC_PAYMENT_4);
+//        verify(*output_size >= output_index);
+//        Log::debug("TPCC_PAYMENT, piece: %d end", TPCC_PAYMENT_4);
+//                           *output_size = output_index;
         // ############################################################
-        *output_size = output_index;
+                           *res = SUCCESS;
     } END_PIE
 
     BEGIN_PIE(TPCC_PAYMENT,      // txn
@@ -366,11 +366,11 @@ void TpccPiece::reg_payment() {
         txn->insert_row(tbl, r);
 
         // ############################################################
-        verify(*output_size >= output_index);
-        *res = SUCCESS;
-        Log::debug("TPCC_PAYMENT, piece: %d end", TPCC_PAYMENT_5);
+//        verify(*output_size >= output_index);
+//        Log::debug("TPCC_PAYMENT, piece: %d end", TPCC_PAYMENT_5);
+//                           *output_size = output_index;
         // ############################################################
-        *output_size = output_index;
+                           *res = SUCCESS;
     } END_PIE
 }
 

@@ -39,18 +39,17 @@ int TPLExecutor::StartLaunch(
 
 
     // pre execute to establish interference.
-//    TPLDTxn *dtxn = (TPLDTxn*) dtxn_;
-//    dtxn->locks_.clear();
-//    dtxn->locking_ = true;
+    TPLDTxn *dtxn = (TPLDTxn*) dtxn_;
+    dtxn->locks_.clear();
+    dtxn->locking_ = true;
     entry.txn_handler(this,
                       dtxn_,
                       header,
                       const_cast<map<int32_t, Value>&>(input),
                       res,
-                      no_use/*output*/,
-                      NULL/*output_size*/);
+                      no_use/*output*/);
     // try to require all the locks.
-//    dtxn->locking_ = false;
+    dtxn->locking_ = false;
 //    PieceStatus *ps = get_piece_status(header.pid);
 //    verify(ps_cache_ == ps);
 //    if (dtxn->locks_.size() > 0) {
@@ -80,8 +79,8 @@ std::function<void(void)> TPLExecutor::get_2pl_succ_callback(
     ps->start_yes_callback();
     Log_debug("tid: %lx, pid: %lx, p_type: %d, get lock",
               header.tid, header.pid, header.p_type);
-
     Log::debug("proceed");
+    ((TPLDTxn*)dtxn_)->locking_ = false;
     if (ps->is_rejected()) {
       *res = REJECT;
       ps->remove_output();
@@ -90,33 +89,16 @@ std::function<void(void)> TPLExecutor::get_2pl_succ_callback(
       std::map <int32_t, mdb::Value> *output_vec;
       mdb::Value *output;
       rrr::i32 *output_size;
-
       ps->get_output(&output_vec, &output, &output_size);
-
-      if (output_vec != NULL) {
-        rrr::i32 output_vec_size;
-        txn_reg_->get(header).txn_handler(this,
-                                          dtxn_,
-                                          header,
-                                          const_cast<map<int32_t, Value>&>
-                                          (input),
-                                          res,
-                                          *output_vec,
-                                          &output_vec_size);
-//          output_vec->resize(output_vec_size);
-      } else {
-          verify(output == nullptr);
-          verify(0);
-        std::map <int32_t, mdb::Value> no_use;
-        txn_reg_->get(header).txn_handler(this,
-                                          dtxn_,
-                                          header,
-                                          const_cast<map<int32_t, Value>&>
-                                          (input),
-                                          res,
-                                          no_use,
-                                          output_size);
-      }
+      rrr::i32 output_vec_size;
+      txn_reg_->get(header).txn_handler(this,
+                                        dtxn_,
+                                        header,
+                                        const_cast<map<int32_t, Value>&>
+                                        (input),
+                                        res,
+                                        *output_vec);
+      verify(*res == SUCCESS);
     }
 
     Log_debug("set finish on tid %ld\n", header.tid);

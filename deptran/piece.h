@@ -27,14 +27,15 @@ class Piece {
                 const RequestHeader &header, \
                 map<int32_t, Value> &input, \
                 i32 *res, \
-                map<int32_t, Value> &output, \
-                i32 *output_size)
+                map<int32_t, Value> &output)
 // \
 //                row_map_t *row_map)
 #define END_PIE );
+
 //std::vector<mdb::column_lock_t>(__VA_ARGS__),
+//verify(((TPLDTxn*)dtxn)->locking_ == (output_size == nullptr));
 #define TPL_KISS(...) \
-  if (IS_MODE_2PL && output_size == NULL) { \
+  if (IS_MODE_2PL && ((TPLDTxn*)dtxn)->locking_) { \
     PieceStatus *ps \
         = ((TPLExecutor*)exec)->get_piece_status(header.pid); \
     std::function<void(void)> succ_callback = \
@@ -47,7 +48,7 @@ std::vector<mdb::column_lock_t>({__VA_ARGS__}),\
     return; \
   }
 #define TPL_KISS_ROW(r) \
-  if (IS_MODE_2PL && output_size == NULL) { \
+  if (IS_MODE_2PL && ((TPLDTxn*)dtxn)->locking_) { \
     PieceStatus *ps = ((TPLExecutor*)exec)->get_piece_status(header.pid); \
     std::function<void(void)> succ_callback = \
       ((TPLExecutor*) exec)->get_2pl_succ_callback( \
@@ -60,7 +61,7 @@ std::vector<mdb::column_lock_t>({__VA_ARGS__}),\
 }
 
 #define TPL_KISS_NONE \
-    if (IS_MODE_2PL && output_size == NULL) { \
+    if (IS_MODE_2PL && ((TPLDTxn*)dtxn)->locking_) { \
 PieceStatus *ps = ((TPLExecutor*)exec)->get_piece_status(header.pid); \
         ((TPLExecutor*)exec)->get_2pl_succ_callback( \
                 header, input, res, ps)(); \

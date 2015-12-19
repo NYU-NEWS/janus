@@ -80,8 +80,7 @@ bool RCCDTxn::start_exe_itfr(defer_t defer_type,
               header,
               const_cast<map<int32_t, Value>&>(input),
               &res,
-              *output,
-              &output_size);
+              *output);
       deferred = false;
       break;
     }
@@ -100,8 +99,7 @@ bool RCCDTxn::start_exe_itfr(defer_t defer_type,
               header,
               drs.back().inputs,
               NULL,
-              no_use,
-              NULL);
+              no_use);
       deferred = true;
       break;
     }
@@ -122,8 +120,7 @@ bool RCCDTxn::start_exe_itfr(defer_t defer_type,
               header,
               drs.back().inputs,
               &res,
-              *output,
-              &output_size);
+              *output);
       deferred = false;
       break;
     }
@@ -159,8 +156,7 @@ void RCCDTxn::start_ro(
                                header,
                                const_cast<map<int32_t, Value>&>(input),
                                &res,
-                               output,
-                               &output_size);
+                               output);
 
   // get conflicting transactions
   std::vector<TxnInfo *> &conflict_txns = conflict_txns_;
@@ -399,8 +395,7 @@ void RCCDTxn::exe_deferred(
                                    header,
                                    input,
                                    &res,
-                                   output,
-                                   &output_size);
+                                   output);
       if (header.p_type == TPCC_PAYMENT_4
           && header.t_type == TPCC_PAYMENT)
         verify(output_size == 15);

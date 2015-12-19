@@ -64,9 +64,9 @@ void TpcaPiece::reg_pieces() {
         buf.set_i64(buf.get_i64() + 1/*input[1].get_i64()*/);
         txn->write_column(r, 1, buf);
 
-        //output[output_index++] = buf;
-        verify(*output_size >= output_index);
-        *output_size = output_index;
+        output[output_index++] = buf;
+//        verify(*output_size >= output_index);
+//        *output_size = output_index;
         *res = SUCCESS;
     } END_PIE
 
@@ -119,20 +119,20 @@ void TpcaPiece::reg_pieces() {
 
         if (!txn->read_column(r, 1, &buf)) {
             *res = REJECT;
-            *output_size = output_index;
-            Log::debug("Customer id: %d, read failed", input.at(0).get_i32());
+//            *output_size = output_index;
+//            Log::debug("Customer id: %d, read failed", input.at(0).get_i32());
             return;
         }
         buf.set_i64(buf.get_i64() + 1/*input[1].get_i64()*/);
         if (!txn->write_column(r, 1, buf)) {
             *res = REJECT;
-            *output_size = output_index;
+//            *output_size = output_index;
             Log::debug("Customer id: %d, write failed", input.at(0).get_i32());
             return;
         }
         //output[output_index++] = buf;
-        verify(*output_size >= output_index);
-        *output_size = output_index;
+//        verify(*output_size >= output_index);
+//        *output_size = output_index;
         *res = SUCCESS;
     } END_PIE
 
@@ -153,14 +153,7 @@ void TpcaPiece::reg_pieces() {
             r = txn->query(txn->get_table(TPCA_BRANCH), mb).next();
         }
 
-        if (IS_MODE_2PL && output_size == NULL) {
-//            PieceStatus *ps
-//                = ((TPLExecutor*)exec)->get_piece_status(header.pid);
-//            std::function<void(void)> succ = ((TPLExecutor*) exec)->get_2pl_succ_callback(
-//                    header, input, res, ps);
-//            std::function<void(void)> fail = ((TPLExecutor*) exec)->get_2pl_fail_callback(
-//                    header, res, ps);
-//            ps->reg_rw_lock(
+
           std::vector<mdb::column_lock_t> column_locks({
                     mdb::column_lock_t(r, 0, ALock::WLOCK)
                     //mdb::column_lock_t(r, 0, ALock::WLOCK),
@@ -206,8 +199,7 @@ void TpcaPiece::reg_pieces() {
             //((mdb::Txn2PL *)txn)->reg_write_column(r, 17, succ, fail);
             //((mdb::Txn2PL *)txn)->reg_write_column(r, 18, succ, fail);
             //((mdb::Txn2PL *)txn)->reg_write_column(r, 19, succ, fail);
-            return;
-        }
+
         
         RCC_KISS(r, 1, false);
         RCC_SAVE_ROW(r, TPCA_PAYMENT_3);
@@ -216,20 +208,20 @@ void TpcaPiece::reg_pieces() {
 
         if (!txn->read_column(r, 1, &buf)) {
             *res = REJECT;
-            *output_size = output_index;
+//            *output_size = output_index;
             Log::debug("Customer id: %d, read failed", input.at(0).get_i32());
             return;
         }
         buf.set_i64(buf.get_i64() + 1/*input[1].get_i64()*/);
         if (!txn->write_column(r, 1, buf)) {
             *res = REJECT;
-            *output_size = output_index;
+//            *output_size = output_index;
             Log::debug("Customer id: %d, write failed", input.at(0).get_i32());
             return;
         }
         //output[output_index++] = buf;
-        verify(*output_size >= output_index);
-        *output_size = output_index;
+//        verify(*output_size >= output_index);
+//        *output_size = output_index;
         *res = SUCCESS;
 
     } END_PIE

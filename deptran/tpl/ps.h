@@ -22,7 +22,7 @@ class PieceStatus {
   bool rej_;
   rrr::DeferredReply* defer_;
   mdb::Value *output_buf_;
-  rrr::i32 *output_size_buf_;
+//  rrr::i32 *output_size_buf_;
   std::map <int32_t, Value> *output_;
   bool finish_;
 
@@ -87,8 +87,8 @@ class PieceStatus {
 
   void remove_output() {
     if (output_buf_) {
-      verify(output_size_buf_ != NULL);
-      *output_size_buf_ = 0;
+//      verify(output_size_buf_ != NULL);
+//      *output_size_buf_ = 0;
     } else if (output_) {
 //        output_vec_->resize(0);
     }
@@ -110,7 +110,7 @@ class PieceStatus {
     *output_map = output_;
     verify(output_buf_ == nullptr);
     *output = output_buf_;
-    *output_size = output_size_buf_;
+//    *output_size = output_size_buf_;
   }
 
   bool can_proceed() {

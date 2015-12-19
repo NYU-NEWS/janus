@@ -125,8 +125,7 @@ void RO6DTxn::start_ro(const RequestHeader &header,
                                header,
                                const_cast<map<int32_t, Value>&>(input),
                                &res,
-                               output,
-                               &output_size);
+                               output);
   // get conflicting transactions
   std::vector<TxnInfo *> &conflict_txns = conflict_txns_;
 
@@ -142,8 +141,7 @@ void RO6DTxn::start_ro(const RequestHeader &header,
                                  header,
                                  const_cast<map<int32_t, Value>&>(input),
                                  &res,
-                                 output,
-                                 &output_size);
+                                 output);
     defer->reply();
   };
   // wait for them become commit.

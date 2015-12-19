@@ -75,9 +75,9 @@ void TpccPiece::reg_delivery() {
       }
 
       // ##############################################
-      verify(*output_size >= oi);
-      *output_size = oi;
-      Log::debug("TPCC_DELIVERY, piece: %d end", TPCC_DELIVERY_0);
+//      verify(*output_size >= oi);
+//      *output_size = oi;
+//      Log::debug("TPCC_DELIVERY, piece: %d end", TPCC_DELIVERY_0);
       // ##############################################
       *res = SUCCESS;
       return;
@@ -118,9 +118,9 @@ void TpccPiece::reg_delivery() {
       txn->write_column(r, 5, input[3]); // write o_carrier_id
 
       // ##############################################
-      verify(*output_size >= oi);
-      *output_size = oi;
-      Log::debug("TPCC_DELIVERY, piece: %d end", TPCC_DELIVERY_1);
+//      verify(*output_size >= oi);
+//      *output_size = oi;
+//      Log::debug("TPCC_DELIVERY, piece: %d end", TPCC_DELIVERY_1);
       // ##############################################
       *res = SUCCESS;
       return;
@@ -167,29 +167,24 @@ void TpccPiece::reg_delivery() {
           row_list.push_back(rs.next());
       }
 
-      if (IS_MODE_2PL && output_size == NULL) {
-
-
-          std::vector<mdb::column_lock_t> column_locks;
-          column_locks.reserve(2 * row_list.size());
-
-          int i = 0;
-          while (i < row_list.size()) {
-              r = row_list[i++];
-
-              column_locks.push_back(
-                      mdb::column_lock_t(r, 6, ALock::WLOCK)
-              );
-              column_locks.push_back(
-                      mdb::column_lock_t(r, 8, ALock::RLOCK)
-              );
-          }
-        TPL_KISS(column_locks);
-
-          return;
-      }
+      std::vector<mdb::column_lock_t> column_locks;
+      column_locks.reserve(2 * row_list.size());
 
       int i = 0;
+      while (i < row_list.size()) {
+          r = row_list[i++];
+
+          column_locks.push_back(
+                  mdb::column_lock_t(r, 6, ALock::WLOCK)
+          );
+          column_locks.push_back(
+                  mdb::column_lock_t(r, 8, ALock::RLOCK)
+          );
+      }
+                   TPL_KISS(column_locks);
+
+
+      i = 0;
       while (i < row_list.size()) {
           r = row_list[i++];
 
@@ -207,10 +202,10 @@ void TpccPiece::reg_delivery() {
       output[oi++] = Value(ol_amount_buf);
 
       // ##############################################
-      verify(*output_size >= oi);
-      *output_size = oi;
+//      verify(*output_size >= oi);
+//      *output_size = oi;
       *res = SUCCESS;
-      Log::debug("TPCC_DELIVERY, piece: %d end", TPCC_DELIVERY_2);
+//      Log::debug("TPCC_DELIVERY, piece: %d end", TPCC_DELIVERY_2);
       // ##############################################
   } END_PIE
 
@@ -258,11 +253,11 @@ void TpccPiece::reg_delivery() {
       txn->write_column(r, 19, buf);
 
       // ##############################################
-      verify(*output_size >= oi);
+//      verify(*output_size >= oi);
       *res = SUCCESS;
-      Log::debug("TPCC_DELIVERY, piece: %d end", TPCC_DELIVERY_3);
+//      Log::debug("TPCC_DELIVERY, piece: %d end", TPCC_DELIVERY_3);
       // ##############################################
-      *output_size = oi;
+//      *output_size = oi;
   } END_PIE
 }
 

@@ -53,11 +53,11 @@ void TpccPiece::reg_order_status() {
         output[oi++] = Value(it_mid->second);
 
         // #################################################################
-        Log_debug("TPCC_ORDER_STATUS, piece: %d, end", TPCC_ORDER_STATUS_0);
-        verify(*output_size >= oi);
-        *res = SUCCESS;
+//        Log_debug("TPCC_ORDER_STATUS, piece: %d, end", TPCC_ORDER_STATUS_0);
+//        verify(*output_size >= oi);
+//                         *output_size = oi;
         // #################################################################
-        *output_size = oi;
+                         *res = SUCCESS;
     } END_PIE
 
     BEGIN_PIE(TPCC_ORDER_STATUS, // RO
@@ -101,11 +101,11 @@ void TpccPiece::reg_order_status() {
                          dtxn->ReadColumn(r, 16, &output[oi++]);// read c_balance
 
         // #################################################################
-        verify(*output_size >= oi);
-        *output_size = oi;
-        *res = SUCCESS;
-        Log::debug("TPCC_ORDER_STATUS, piece: %d, end", TPCC_ORDER_STATUS_1);
+//        verify(*output_size >= oi);
+//        *output_size = oi;
+//        Log::debug("TPCC_ORDER_STATUS, piece: %d, end", TPCC_ORDER_STATUS_1);
         // #################################################################
+                         *res = SUCCESS;
     } END_PIE
 
     BEGIN_PIE(TPCC_ORDER_STATUS, // RO
@@ -132,50 +132,6 @@ void TpccPiece::reg_order_status() {
                                   ROW_ORDER);
 
 
-        if (IS_MODE_2PL && output_size == NULL) {
-            auto ps = ((TPLExecutor*)exec)->get_piece_status(header.pid);
-
-//            std::function<void(
-//                    const RequestHeader &,
-//                    const Value *,
-//                    rrr::i32,
-//                    rrr::i32 *)> func =
-//                    [r_0, dtxn, ps](
-//                            const RequestHeader &header,
-//                            const Value *input,
-//                            rrr::i32 input.size(),
-//                            rrr::i32 *res) {
-//                        //dtxn->read_column(r_0, 3, &buf);
-//                        mdb::MultiBlob mb(3);
-//                        mb[0] = input[1].get_blob();
-//                        mb[1] = input[0].get_blob();
-//                        mb[2] = r_0->get_blob(3);
-//
-//                        mdb::Row *r = dtxn->query(
-//                                dtxn->get_table(TPCC_TB_ORDER), mb,
-//                                false, header.pid).next();
-//
-//                        std::function<void(void)> succ_callback1 = 
-//                            ((TPLDTxn *) dtxn)->get_2pl_succ_callback(
-//                                header, input, input.size(), res, ps);
-//
-//                        std::function<void(void)> fail_callback1 = 
-//                            ((TPLDTxn *) dtxn)->get_2pl_fail_callback(
-//                                        header, res, ps);
-//
-//                        ps->set_num_waiting_locks(1);
-//
-//                        Log::debug("PS1: %p", ps);
-//
-//                        ps->reg_rw_lock(
-//                                std::vector<mdb::column_lock_t>({
-//                                        mdb::column_lock_t(r, 2, ALock::RLOCK),
-//                                        mdb::column_lock_t(r, 4, ALock::RLOCK),
-//                                        mdb::column_lock_t(r, 5, ALock::RLOCK)
-//                                }), succ_callback1, fail_callback1);
-//                        return;
-//                    };
-
             std::vector<mdb::column_lock_t> column_locks =
                 {
                     mdb::column_lock_t(r_0, 3, ALock::RLOCK),
@@ -184,31 +140,7 @@ void TpccPiece::reg_order_status() {
                     mdb::column_lock_t(r, 5, ALock::RLOCK)
                 };
             TPL_KISS(column_locks);
-//            std::function<void(void)> succ_callback =
-//                ((TPLExecutor *) exec)->get_2pl_succ_callback(
-//                    header, input, res, ps);
-//
-//            std::function<void(void)> fail_callback =
-//                ((TPLExecutor *) exec)->get_2pl_fail_callback(
-//                    header, res, ps);
-//
-//            ps->reg_rw_lock(column_locks, succ_callback, fail_callback);
 
-            //((mdb::Txn2PL *)txn)->reg_read_column(r_0, 3, succ_callback,
-            //    fail_callback);
-            return;
-        }
-
-//        dtxn->read_column(r_0, 3, &buf);
-
-        //mdb::MultiBlob mb(3);
-        ////cell_locator_t cl(TPCC_TB_ORDER, 3);
-        //mb[0] = input[1].get_blob();
-        //mb[1] = input[0].get_blob();
-        //mb[2] = r_0->get_blob(3);
-
-//        mdb::Row *r = dtxn->query(dtxn->get_table(TPCC_TB_ORDER), mb,
-//                true, header.pid).next();
 
         if ((IS_MODE_RCC || IS_MODE_RO6)) {
             ((RCCDTxn *) dtxn)->kiss(r, 5, false);
@@ -223,11 +155,11 @@ void TpccPiece::reg_order_status() {
         Log::debug("piece: %d, o_id: %d", TPCC_ORDER_STATUS_2, output[0].get_i32());
 
         // ############################################################
-        verify(*output_size >= oi);
+//        verify(*output_size >= oi);
         *res = SUCCESS;
-        Log::debug("TPCC_ORDER_STATUS, piece: %d, end", TPCC_ORDER_STATUS_2);
+//        Log::debug("TPCC_ORDER_STATUS, piece: %d, end", TPCC_ORDER_STATUS_2);
         // ############################################################
-        *output_size = oi;
+//        *output_size = oi;
     } END_PIE
 
 
@@ -268,46 +200,36 @@ void TpccPiece::reg_order_status() {
 
         verify(row_list.size() != 0);
 
-        if (IS_MODE_2PL && output_size == NULL) {
 
 
-            std::vector<mdb::column_lock_t> column_locks;
-            column_locks.reserve(5 * row_list.size());
+        std::vector<mdb::column_lock_t> column_locks;
+        column_locks.reserve(5 * row_list.size());
 
-            int i = 0;
-            Log::debug("row_list size: %u", row_list.size());
-            while (i < row_list.size()) {
-                r = row_list[i++];
+        int i = 0;
+        Log::debug("row_list size: %u", row_list.size());
+        while (i < row_list.size()) {
+            r = row_list[i++];
 
-            // ############################################################
-                column_locks.push_back(
-                        mdb::column_lock_t(r, 4, ALock::RLOCK)
-                );
-                column_locks.push_back(
-                        mdb::column_lock_t(r, 5, ALock::RLOCK)
-                );
-                column_locks.push_back(
-                        mdb::column_lock_t(r, 6, ALock::RLOCK)
-                );
-                column_locks.push_back(
-                        mdb::column_lock_t(r, 7, ALock::RLOCK)
-                );
-                column_locks.push_back(
-                        mdb::column_lock_t(r, 8, ALock::RLOCK)
-                );
-            // ############################################################
-            }
-
-            TPL_KISS(column_locks);
-//            auto ps = ((TPLExecutor*)exec)->get_piece_status(header.pid);
-//            std::function<void(void)> succ_callback =
-//                ((TPLExecutor *) exec)->get_2pl_succ_callback(
-//                    header, input, res, ps);
-//            std::function<void(void)> fail_callback =
-//                ((TPLExecutor *) exec)->get_2pl_fail_callback(header, res, ps);
-//            ps->reg_rw_lock(column_locks, succ_callback, fail_callback);
-            return;
+        // ############################################################
+            column_locks.push_back(
+                    mdb::column_lock_t(r, 4, ALock::RLOCK)
+            );
+            column_locks.push_back(
+                    mdb::column_lock_t(r, 5, ALock::RLOCK)
+            );
+            column_locks.push_back(
+                    mdb::column_lock_t(r, 6, ALock::RLOCK)
+            );
+            column_locks.push_back(
+                    mdb::column_lock_t(r, 7, ALock::RLOCK)
+            );
+            column_locks.push_back(
+                    mdb::column_lock_t(r, 8, ALock::RLOCK)
+            );
+        // ############################################################
         }
+
+        TPL_KISS(column_locks);
 
         if (IS_MODE_RCC || IS_MODE_RO6) {
             for (int i = 0; i < row_list.size(); i++) {
@@ -317,7 +239,7 @@ void TpccPiece::reg_order_status() {
             if (RO6_RO_PHASE_1) return;
         }
 
-        int i = 0;
+        i = 0;
         i32 oi = 0;
         while (i < row_list.size()) {
             r = row_list[i++];
@@ -329,10 +251,10 @@ void TpccPiece::reg_order_status() {
         }
 
         // ############################################################
-        verify(*output_size >= oi);
-        *output_size = oi;
+//        verify(*output_size >= oi);
+//        *output_size = oi;
         *res = SUCCESS;
-        Log::debug("TPCC_ORDER_STATUS, piece: %d, end", TPCC_ORDER_STATUS_3);
+//        Log::debug("TPCC_ORDER_STATUS, piece: %d, end", TPCC_ORDER_STATUS_3);
         // ############################################################
     } END_PIE
 }

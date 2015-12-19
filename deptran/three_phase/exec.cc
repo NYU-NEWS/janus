@@ -108,8 +108,7 @@ void ThreePhaseExecutor::execute(const RequestHeader &header,
                                     header,
                                     const_cast<map<int32_t, Value>&>(input),
                                     res,
-                                    output,
-                                    output_size);
+                                    output);
 }
 
 void ThreePhaseExecutor::execute(
@@ -124,8 +123,7 @@ void ThreePhaseExecutor::execute(
                                     header,
                                     const_cast<map<int32_t, Value>&>(input),
                                     res,
-                                    output,
-                                    &output_size);
+                                    output);
 }
 
 } // namespace rococo;

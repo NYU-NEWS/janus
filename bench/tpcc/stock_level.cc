@@ -31,8 +31,8 @@ void TpccPiece::reg_stock_level() {
                          dtxn->ReadColumn(r, 10, &output[oi++]); // output[0] ==> d_next_o_id
 
         // ###################################################
-        verify(*output_size >= oi);
-        *output_size = oi;
+//        verify(*output_size >= oi);
+//        *output_size = oi;
         *res = SUCCESS;
         // ###################################################
     } END_PIE
@@ -73,26 +73,22 @@ void TpccPiece::reg_stock_level() {
 
         verify(row_list.size() != 0);
 
-        if (IS_MODE_2PL && output_size == NULL) {
 
-            std::vector<mdb::column_lock_t> column_locks;
-            column_locks.reserve(row_list.size());
+        std::vector<mdb::column_lock_t> column_locks;
+        column_locks.reserve(row_list.size());
 
-            int i = 0;
-            while (i < row_list.size()) {
-                column_locks.push_back(
-                        mdb::column_lock_t(row_list[i++], 4, ALock::RLOCK)
-                );
+        int i = 0;
+        while (i < row_list.size()) {
+            column_locks.push_back(
+                    mdb::column_lock_t(row_list[i++], 4, ALock::RLOCK)
+            );
 
-                //((mdb::Txn2PL *)txn)->reg_read_column(row_list[i++], 4,
-                //    succ_callback, fail_callback);
-            }
-            TPL_KISS(column_locks);
-
-            return;
+            //((mdb::Txn2PL *)txn)->reg_read_column(row_list[i++], 4,
+            //    succ_callback, fail_callback);
         }
+        TPL_KISS(column_locks);
 
-        i32 i = 0;
+        i = 0;
         i32 oi = 0;
         while (i < row_list.size()) {
             mdb::Row *r = row_list[i++];
@@ -105,7 +101,7 @@ void TpccPiece::reg_stock_level() {
 //        verify(*output_size <= 300);
         *res = SUCCESS;
         // ###################################################
-        *output_size = oi;
+//        *output_size = oi;
     } END_PIE
 
     BEGIN_PIE(TPCC_STOCK_LEVEL,
@@ -139,8 +135,8 @@ void TpccPiece::reg_stock_level() {
             output[output_index++] = Value((i32) 0);
 
         // ##############################################
-        verify(*output_size >= output_index);
-        *output_size = output_index;
+//        verify(*output_size >= output_index);
+//        *output_size = output_index;
         *res = SUCCESS;
         // ##############################################
     } END_PIE
