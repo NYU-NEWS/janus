@@ -93,7 +93,7 @@ void TpccPiece::reg_stock_level() {
     mb[1] = input[1].get_blob();
 
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_STOCK), mb,
-                              ROW_STOCK + header.pid);
+                              ROW_STOCK);
     if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) {
         ((RCCDTxn *) dtxn)->kiss(r, 2, false);
     }

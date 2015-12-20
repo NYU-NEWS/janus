@@ -115,7 +115,7 @@ void TpccPiece::reg_new_order() {
 
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_ORDER_C_ID_SECONDARY),
                               mb,
-                              ROW_ORDER_SEC + header.pid);
+                              ROW_ORDER_SEC);
     verify(r);
     verify(r->schema_);
 
@@ -156,7 +156,7 @@ void TpccPiece::reg_new_order() {
     //mb[2] = input[3].get_blob();
     r = dtxn->Query(dtxn->GetTable(TPCC_TB_ORDER_C_ID_SECONDARY),
                     mb,
-                    ROW_ORDER_SEC + header.pid);
+                    ROW_ORDER_SEC);
     dtxn->WriteColumn(r, 3, input[0]);
     return;
   } END_PIE
@@ -210,7 +210,7 @@ void TpccPiece::reg_new_order() {
     // ############################################################
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_ITEM),
                               input[0].get_blob(),
-                              ROW_ITEM + header.pid);
+                              ROW_ITEM);
 
     i32 oi = 0;
     // Ri item
@@ -237,7 +237,7 @@ void TpccPiece::reg_new_order() {
     mb[1] = input[1].get_blob();
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_STOCK),
                               mb,
-                              ROW_STOCK + header.pid);
+                              ROW_STOCK);
     verify(r->schema_);
     //i32 s_dist_col = 3 + input[2].get_i32();
     // Ri stock
@@ -249,70 +249,70 @@ void TpccPiece::reg_new_order() {
   } END_PIE
 
 
-    BEGIN_PIE(TPCC_NEW_ORDER,
-            TPCC_NEW_ORDER_7, // W stock
-            DF_REAL) {
-      verify(input.size() == 4);
-      Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_7);
-      i32 oi = 0;
-      mdb::Row *r = NULL;
-      mdb::MultiBlob mb(2);
-      mb[0] = input[0].get_blob();
-      mb[1] = input[1].get_blob();
+  BEGIN_PIE(TPCC_NEW_ORDER,
+          TPCC_NEW_ORDER_7, // W stock
+          DF_REAL) {
+    verify(input.size() == 4);
+    Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_7);
+    i32 oi = 0;
+    mdb::Row *r = NULL;
+    mdb::MultiBlob mb(2);
+    mb[0] = input[0].get_blob();
+    mb[1] = input[1].get_blob();
 
-      if (!(IS_MODE_RCC || IS_MODE_RO6)
-              || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) {
-        // non-rcc || rcc start request
-        r = dtxn->Query(dtxn->GetTable(TPCC_TB_STOCK),
-                        mb,
-                        ROW_STOCK_TEMP +header.pid);
-        verify(r->schema_);
-      }
-
-      RCC_KISS(r, 2, false);
-      RCC_KISS(r, 13, false);
-      RCC_KISS(r, 14, false);
-      RCC_KISS(r, 15, false);
-      RCC_SAVE_ROW(r, TPCC_NEW_ORDER_7);
-      RCC_PHASE1_RET;
-      RCC_LOAD_ROW(r, TPCC_NEW_ORDER_7);
+    if (!(IS_MODE_RCC || IS_MODE_RO6)
+            || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) {
+      // non-rcc || rcc start request
+      r = dtxn->Query(dtxn->GetTable(TPCC_TB_STOCK),
+                      mb,
+                      ROW_STOCK_TEMP);
       verify(r->schema_);
+    }
 
-      verify(input.size() == 4);
-      // Ri stock
-      Value buf(0);
-      dtxn->ReadColumn(r, 2, &buf);
-      int32_t new_ol_quantity = buf.get_i32() - input[2].get_i32();
+    RCC_KISS(r, 2, false);
+    RCC_KISS(r, 13, false);
+    RCC_KISS(r, 14, false);
+    RCC_KISS(r, 15, false);
+    RCC_SAVE_ROW(r, TPCC_NEW_ORDER_7);
+    RCC_PHASE1_RET;
+    RCC_LOAD_ROW(r, TPCC_NEW_ORDER_7);
+    verify(r->schema_);
 
-      dtxn->ReadColumn(r, 13, &buf);
-      Value new_s_ytd(buf.get_i32() + input[2].get_i32());
+    verify(input.size() == 4);
+    // Ri stock
+    Value buf(0);
+    dtxn->ReadColumn(r, 2, &buf);
+    int32_t new_ol_quantity = buf.get_i32() - input[2].get_i32();
 
-      dtxn->ReadColumn(r, 14, &buf);
-      Value new_s_order_cnt((i32)(buf.get_i32() + 1));
+    dtxn->ReadColumn(r, 13, &buf);
+    Value new_s_ytd(buf.get_i32() + input[2].get_i32());
 
-      dtxn->ReadColumn(r, 15, &buf);
-      Value new_s_remote_cnt(buf.get_i32() + input[3].get_i32());
+    dtxn->ReadColumn(r, 14, &buf);
+    Value new_s_order_cnt((i32)(buf.get_i32() + 1));
 
-      if (new_ol_quantity < 10)
-        new_ol_quantity += 91;
-      Value new_ol_quantity_value(new_ol_quantity);
+    dtxn->ReadColumn(r, 15, &buf);
+    Value new_s_remote_cnt(buf.get_i32() + input[3].get_i32());
 
-      dtxn->WriteColumns(r,
-                         vector<mdb::column_id_t>({
-                                                      2,  // s_quantity
-                                                      13, // s_ytd
-                                                      14, // s_order_cnt
-                                                      15  // s_remote_cnt
-                                                  }),
-                         vector<Value>({
-                                           new_ol_quantity_value,
-                                           new_s_ytd,
-                                           new_s_order_cnt,
-                                           new_s_remote_cnt
-                                       }));
-      *res = SUCCESS;
-      return;
-    } END_PIE
+    if (new_ol_quantity < 10)
+      new_ol_quantity += 91;
+    Value new_ol_quantity_value(new_ol_quantity);
+
+    dtxn->WriteColumns(r,
+                       vector<mdb::column_id_t>({
+                                                    2,  // s_quantity
+                                                    13, // s_ytd
+                                                    14, // s_order_cnt
+                                                    15  // s_remote_cnt
+                                                }),
+                       vector<Value>({
+                                         new_ol_quantity_value,
+                                         new_s_ytd,
+                                         new_s_order_cnt,
+                                         new_s_remote_cnt
+                                     }));
+    *res = SUCCESS;
+    return;
+  } END_PIE
 
   BEGIN_PIE(TPCC_NEW_ORDER,
             TPCC_NEW_ORDER_8, // W order_line

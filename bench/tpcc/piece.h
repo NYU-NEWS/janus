@@ -57,11 +57,11 @@ namespace rococo {
 #define ROW_DISTRICT_TEMP     __LINE__
 #define ROW_WAREHOUSE         __LINE__
 #define ROW_CUSTOMER          __LINE__
-#define ROW_ORDER_SEC         __LINE__
 #define ROW_ORDER             __LINE__
-#define ROW_ITEM              __LINE__
-#define ROW_STOCK             __LINE__
-#define ROW_STOCK_TEMP        __LINE__
+#define ROW_ORDER_SEC         (header.pid)
+#define ROW_ITEM              (header.pid)
+#define ROW_STOCK             (header.pid)
+#define ROW_STOCK_TEMP        (header.pid)
 
 extern char TPCC_TB_WAREHOUSE[];
 extern char TPCC_TB_DISTRICT[];
