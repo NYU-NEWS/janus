@@ -95,7 +95,8 @@ mdb::Row* DTxn::Query(mdb::Table *tbl,
 bool DTxn::ReadColumn(mdb::Row *row,
                       mdb::column_id_t col_id,
                       Value *value,
-                      bool unsafe) {
+                      bool unsafe,
+                      bool deferred) {
   verify(mdb_txn_ != nullptr);
   auto ret = mdb_txn_->read_column(row, col_id, value);
   verify(ret == true);
@@ -105,7 +106,8 @@ bool DTxn::ReadColumn(mdb::Row *row,
 bool DTxn::ReadColumns(Row *row,
                        const std::vector<column_id_t> &col_ids,
                        std::vector<Value> *values,
-                       bool unsafe) {
+                       bool unsafe,
+                       bool deferred) {
   verify(mdb_txn_ != nullptr);
   auto ret = mdb_txn_->read_columns(row, col_ids, values);
   verify(ret == true);
@@ -115,7 +117,8 @@ bool DTxn::ReadColumns(Row *row,
 bool DTxn::WriteColumn(Row *row,
                        column_id_t col_id,
                        const Value &value,
-                       bool unsafe) {
+                       bool unsafe,
+                       bool deferred) {
   verify(mdb_txn_ != nullptr);
   auto ret = mdb_txn_->write_column(row, col_id, value);
   verify(ret == true);
@@ -125,7 +128,8 @@ bool DTxn::WriteColumn(Row *row,
 bool DTxn::WriteColumns(Row *row,
                         const std::vector<column_id_t> &col_ids,
                         const std::vector<Value> &values,
-                        bool unsafe) {
+                        bool unsafe,
+                        bool deferred) {
   verify(mdb_txn_ != nullptr);
   auto ret = mdb_txn_->write_columns(row, col_ids, values);
   verify(ret == true);

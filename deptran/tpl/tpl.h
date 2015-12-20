@@ -35,22 +35,26 @@ class TPLDTxn: public DTxn {
   virtual bool ReadColumn(mdb::Row *row,
                           mdb::column_id_t col_id,
                           Value *value,
-                          bool unsafe = false);
+                          bool unsafe = false,
+                          bool deferred = true);
 
   virtual bool ReadColumns(Row *row,
                            const std::vector<column_id_t> &col_ids,
                            std::vector<Value> *values,
-                           bool unsafe = false);
+                           bool unsafe = false,
+                           bool deferred = true);
 
   virtual bool WriteColumn(Row *row,
                            column_id_t col_id,
                            const Value &value,
-                           bool unsafe = false);
+                           bool unsafe = false,
+                           bool deferred = true);
 
   virtual bool WriteColumns(Row *row,
                             const std::vector<column_id_t> &col_ids,
                             const std::vector<Value> &values,
-                            bool unsafe = false);
+                            bool unsafe = false,
+                            bool deferred = true);
 
   virtual bool InsertRow(Table *tbl, Row *row);
 };

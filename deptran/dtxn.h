@@ -13,6 +13,10 @@ using mdb::Row;
 using mdb::Table;
 using mdb::column_id_t;
 
+#define TXN_BYPASS (true)
+#define TXN_SAFE   (false)
+#define TXN_DEFERRED (true)
+#define TXN_INSTANT  (false)
 
 #define IS_MODE_RCC (Config::GetConfig()->get_mode() == MODE_RCC)
 #define IS_MODE_RO6 (Config::GetConfig()->get_mode() == MODE_RO6)
@@ -77,22 +81,26 @@ class DTxn {
   virtual bool ReadColumn(mdb::Row *row,
                           mdb::column_id_t col_id,
                           Value *value,
-                          bool unsafe = false);
+                          bool unsafe = false,
+                          bool deferred = true);
 
   virtual bool ReadColumns(Row *row,
                            const std::vector<column_id_t> &col_ids,
                            std::vector<Value> *values,
-                           bool unsafe = false);
+                           bool unsafe = false,
+                           bool deferred = true);
 
   virtual bool WriteColumn(Row *row,
                            column_id_t col_id,
                            const Value &value,
-                           bool unsafe = false);
+                           bool unsafe = false,
+                           bool deferred = true);
 
   virtual bool WriteColumns(Row *row,
                             const std::vector<column_id_t> &col_ids,
                             const std::vector<Value> &values,
-                            bool unsafe = false);
+                            bool unsafe = false,
+                            bool deferred = true);
 
   virtual bool InsertRow(Table *tbl, Row *row);
 

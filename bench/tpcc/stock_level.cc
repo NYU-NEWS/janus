@@ -19,14 +19,9 @@ void TpccPiece::reg_stock_level() {
                               mb,
                               ROW_DISTRICT);
 
-    if ((IS_MODE_RCC || IS_MODE_RO6)) {
-        ((RCCDTxn *) dtxn)->kiss(r, 10, false);
-    }
-
-    if (RO6_RO_PHASE_1) return;
-
     i32 oi = 0;
-    dtxn->ReadColumn(r, 10, &output[oi++]); // output[0] ==> d_next_o_id
+    dtxn->ReadColumn(r, 10, &output[oi++], TXN_SAFE, TXN_DEFERRED);
+                   // output[0] ==> d_next_o_id
 
     *res = SUCCESS;
   } END_PIE
@@ -94,13 +89,7 @@ void TpccPiece::reg_stock_level() {
 
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_STOCK), mb,
                               ROW_STOCK);
-    if ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1) {
-        ((RCCDTxn *) dtxn)->kiss(r, 2, false);
-    }
-
-    if (RO6_RO_PHASE_1) return;
-
-    dtxn->ReadColumn(r, 2, &buf);
+    dtxn->ReadColumn(r, 2, &buf, TXN_SAFE, TXN_DEFERRED);
 
     if (buf.get_i32() < input[2].get_i32())
         output[output_index++] = Value((i32) 1);

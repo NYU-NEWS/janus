@@ -68,25 +68,14 @@ void TpccPiece::reg_payment() {
     //cell_locator_t cl(TPCC_TB_DISTRICT, 2);
     mb[0] = input[1].get_blob();
     mb[1] = input[0].get_blob();
-    if (!(IS_MODE_RCC || IS_MODE_RO6)
-            || ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) {
-      // non-rcc || rcc start request
-      r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT),
-                      mb,
-                      ROW_DISTRICT_TEMP);
-      verify(r->schema_ != nullptr);
-    }
-
-    RCC_KISS(r, 9, false);
-    RCC_SAVE_ROW(r, TPCC_PAYMENT_2);
-    RCC_PHASE1_RET;
-    RCC_LOAD_ROW(r, TPCC_PAYMENT_2);
-
+    r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT),
+                    mb,
+                    ROW_DISTRICT_TEMP);
     verify(r->schema_ != nullptr);
-    dtxn->ReadColumn(r, 9, &buf, true);
+    dtxn->ReadColumn(r, 9, &buf, TXN_BYPASS);
     // W district
     buf.set_double(buf.get_double() + input[2].get_double());
-    dtxn->WriteColumn(r, 9, buf);
+    dtxn->WriteColumn(r, 9, buf, TXN_SAFE, TXN_DEFERRED);
     *res = SUCCESS;
   } END_PIE
 
@@ -94,52 +83,47 @@ void TpccPiece::reg_payment() {
   BEGIN_PIE(TPCC_PAYMENT,      // txn
           TPCC_PAYMENT_3,    // piece 2, R customer secondary index, c_last -> c_id
           DF_NO) {
-      // ############################################################
-      verify(input.size() == 3);
-      Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_3);
-      // ############################################################
+    // ############################################################
+    verify(input.size() == 3);
+    Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_3);
+    // ############################################################
 
 
-      i32 output_index = 0;
-      mdb::MultiBlob mbl(3), mbh(3);
-      mbl[0] = input[2].get_blob();
-      mbh[0] = input[2].get_blob();
-      mbl[1] = input[1].get_blob();
-      mbh[1] = input[1].get_blob();
-      Value c_id_low(std::numeric_limits<i32>::min()), c_id_high(std::numeric_limits<i32>::max());
-      mbl[2] = c_id_low.get_blob();
-      mbh[2] = c_id_high.get_blob();
+    i32 output_index = 0;
+    mdb::MultiBlob mbl(3), mbh(3);
+    mbl[0] = input[2].get_blob();
+    mbh[0] = input[2].get_blob();
+    mbl[1] = input[1].get_blob();
+    mbh[1] = input[1].get_blob();
+    Value c_id_low(std::numeric_limits<i32>::min()), c_id_high(std::numeric_limits<i32>::max());
+    mbl[2] = c_id_low.get_blob();
+    mbh[2] = c_id_high.get_blob();
 
-      c_last_id_t key_low(input[0].get_str(), mbl, &C_LAST_SCHEMA);
-      c_last_id_t key_high(input[0].get_str(), mbh, &C_LAST_SCHEMA);
-      std::multimap<c_last_id_t, rrr::i32>::iterator it, it_low, it_high, it_mid;
-      bool inc = false, mid_set = false;
-      it_low = C_LAST2ID.lower_bound(key_low);
-      it_high = C_LAST2ID.upper_bound(key_high);
-      int n_c = 0;
-      for (it = it_low; it != it_high; it++) {
-          n_c++;
-          if (mid_set) if (inc) {
-              it_mid++;
-              inc = false;
-          }
-          else
-              inc = true;
-          else {
-              mid_set = true;
-              it_mid = it;
-          }
-      }
-      Log_debug("w_id: %d, d_id: %d, c_last: %s, num customer: %d", input[1].get_i32(), input[2].get_i32(), input[0].get_str().c_str(), n_c);
-      verify(mid_set);
-      output[output_index++] = Value(it_mid->second);
+    c_last_id_t key_low(input[0].get_str(), mbl, &C_LAST_SCHEMA);
+    c_last_id_t key_high(input[0].get_str(), mbh, &C_LAST_SCHEMA);
+    std::multimap<c_last_id_t, rrr::i32>::iterator it, it_low, it_high, it_mid;
+    bool inc = false, mid_set = false;
+    it_low = C_LAST2ID.lower_bound(key_low);
+    it_high = C_LAST2ID.upper_bound(key_high);
+    int n_c = 0;
+    for (it = it_low; it != it_high; it++) {
+        n_c++;
+        if (mid_set) if (inc) {
+            it_mid++;
+            inc = false;
+        }
+        else
+            inc = true;
+        else {
+            mid_set = true;
+            it_mid = it;
+        }
+    }
+    Log_debug("w_id: %d, d_id: %d, c_last: %s, num customer: %d", input[1].get_i32(), input[2].get_i32(), input[0].get_str().c_str(), n_c);
+    verify(mid_set);
+    output[output_index++] = Value(it_mid->second);
 
-      // ############################################################
-//        verify(*output_size >= output_index);
-//        *output_size = output_index;
-//        Log::debug("TPCC_PAYMENT, piece: %d, end", TPCC_PAYMENT_3);
-      // ############################################################
-                       *res = SUCCESS;
+    *res = SUCCESS;
   } END_PIE
 
   BEGIN_PIE(TPCC_PAYMENT,      // txn
@@ -157,25 +141,12 @@ void TpccPiece::reg_payment() {
     mb[1] = input[2].get_blob();
     mb[2] = input[1].get_blob();
     // R customer
-    if (!(IS_MODE_RCC || IS_MODE_RO6) ||
-            ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) {
-        // non-rcc || rcc start request
-        r = dtxn->Query(dtxn->GetTable(TPCC_TB_CUSTOMER),
-                        mb,
-                        ROW_CUSTOMER);
-    }
-
-
+    r = dtxn->Query(dtxn->GetTable(TPCC_TB_CUSTOMER),
+                    mb,
+                    ROW_CUSTOMER);
     ALock::type_t lock_20_type = ALock::RLOCK;
     if (input[0].get_i32() % 10 == 0)
         lock_20_type = ALock::WLOCK;
-
-    RCC_KISS(r, 16, false);
-    RCC_KISS(r, 17, false);
-    RCC_KISS(r, 20, false);
-    RCC_SAVE_ROW(r, TPCC_PAYMENT_4);
-    RCC_PHASE1_RET;
-    RCC_LOAD_ROW(r, TPCC_PAYMENT_4);
 
     vector<Value> buf({
         Value(""), Value(""), Value(""), Value(""),
@@ -183,26 +154,23 @@ void TpccPiece::reg_payment() {
         Value(""), Value(""), Value(""), Value(""),
         Value(""), Value(0.0), Value(0.0), Value("")}
     );
-    dtxn->ReadColumns(r,
-                      std::vector<mdb::column_id_t>({
-                                                        3,  // c_first          buf[0]
-                                                        4,  // c_middle         buf[1]
-                                                        5,  // c_last           buf[2]
-                                                        6,  // c_street_1       buf[3]
-                                                        7,  // c_street_2       buf[4]
-                                                        8,  // c_city           buf[5]
-                                                        9,  // c_state          buf[6]
-                                                        10, // c_zip            buf[7]
-                                                        11, // c_phone          buf[8]
-                                                        12, // c_since          buf[9]
-                                                        13, // c_credit         buf[10]
-                                                        14, // c_credit_lim     buf[11]
-                                                        15, // c_discount       buf[12]
-                                                        16, // c_balance        buf[13]
-                                                        17, // c_ytd_payment    buf[14]
-                                                        20  // c_data           buf[15]
-                                                    }),
-                      &buf);
+    int oi = 0;
+    dtxn->ReadColumn(r, 3,  /* c_first      */ &buf[0] , TXN_BYPASS );
+    dtxn->ReadColumn(r, 4,  /* c_middle     */ &buf[1] , TXN_BYPASS );
+    dtxn->ReadColumn(r, 5,  /* c_last       */ &buf[2] , TXN_BYPASS );
+    dtxn->ReadColumn(r, 6,  /* c_street_1   */ &buf[3] , TXN_BYPASS );
+    dtxn->ReadColumn(r, 7,  /* c_street_2   */ &buf[4] , TXN_BYPASS );
+    dtxn->ReadColumn(r, 8,  /* c_city       */ &buf[5] , TXN_BYPASS );
+    dtxn->ReadColumn(r, 9,  /* c_state      */ &buf[6] , TXN_BYPASS );
+    dtxn->ReadColumn(r, 10, /* c_zip        */ &buf[7] , TXN_BYPASS );
+    dtxn->ReadColumn(r, 11, /* c_phone      */ &buf[8] , TXN_BYPASS );
+    dtxn->ReadColumn(r, 12, /* c_since      */ &buf[9] , TXN_BYPASS );
+    dtxn->ReadColumn(r, 13, /* c_credit     */ &buf[10], TXN_BYPASS );
+    dtxn->ReadColumn(r, 14, /* c_credit_lim */ &buf[11], TXN_BYPASS );
+    dtxn->ReadColumn(r, 15, /* c_discount   */ &buf[12], TXN_BYPASS );
+    dtxn->ReadColumn(r, 16, /* c_balance    */ &buf[13], TXN_BYPASS, TXN_DEFERRED);
+    dtxn->ReadColumn(r, 17, /* c_ytd_payment*/ &buf[14], TXN_BYPASS, TXN_DEFERRED);
+    dtxn->ReadColumn(r, 20, /* c_data       */ &buf[15], TXN_BYPASS, TXN_DEFERRED);
 
     // if c_credit == "BC" (bad) 10%
     // here we use c_id to pick up 10% instead of c_credit
@@ -275,12 +243,6 @@ void TpccPiece::reg_payment() {
 
     // insert history
     mdb::Row *r = NULL;
-    if (!(IS_MODE_RCC || IS_MODE_RO6) ||
-            ((IS_MODE_RCC || IS_MODE_RO6) && IN_PHASE_1)) {
-        // non-rcc || rcc start request
-    }
-
-    RCC_PHASE1_RET;
 
     std::vector<Value> row_data(9);
     row_data[0] = input[0];             // h_key

@@ -72,17 +72,11 @@ void TpccPiece::reg_order_status() {
     mb[2] = input[0].get_blob();
     mdb::Row *r = dtxn->Query(tbl, mb, ROW_CUSTOMER);
 
-    if ((IS_MODE_RCC || IS_MODE_RO6)) {
-        ((RCCDTxn *) dtxn)->kiss(r, 16, false);
-    }
-
-    if (RO6_RO_PHASE_1) return;
-
     i32 oi = 0;
-    dtxn->ReadColumn(r, 3, &output[oi++]);// read c_first
-    dtxn->ReadColumn(r, 4, &output[oi++]);// read c_middle
-    dtxn->ReadColumn(r, 5, &output[oi++]);// read c_last
-    dtxn->ReadColumn(r, 16, &output[oi++]);// read c_balance
+    dtxn->ReadColumn(r, 3, &output[oi++], TXN_BYPASS);// read c_first
+    dtxn->ReadColumn(r, 4, &output[oi++], TXN_BYPASS);// read c_middle
+    dtxn->ReadColumn(r, 5, &output[oi++], TXN_BYPASS);// read c_last
+    dtxn->ReadColumn(r, 16, &output[oi++], TXN_SAFE, TXN_DEFERRED);// read c_balance
 
     *res = SUCCESS;
   } END_PIE
@@ -109,17 +103,10 @@ void TpccPiece::reg_order_status() {
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_ORDER),
                               mb,
                               ROW_ORDER);
-
-    if ((IS_MODE_RCC || IS_MODE_RO6)) {
-        ((RCCDTxn *) dtxn)->kiss(r, 5, false);
-    }
-
-    if (RO6_RO_PHASE_1) return;
-
     i32 oi = 0;
-    dtxn->ReadColumn(r, 2, &output[oi++]); // output[0] ==> o_id
-    dtxn->ReadColumn(r, 4, &output[oi++]); // output[1] ==> o_entry_d
-    dtxn->ReadColumn(r, 5, &output[oi++]); // output[2] ==> o_carrier_id
+    dtxn->ReadColumn(r, 2, &output[oi++], TXN_BYPASS); // output[0] ==> o_id
+    dtxn->ReadColumn(r, 4, &output[oi++], TXN_BYPASS); // output[1] ==> o_entry_d
+    dtxn->ReadColumn(r, 5, &output[oi++], TXN_SAFE, TXN_DEFERRED); // output[2] ==> o_carrier_id
 //        Log::debug("piece: %d, o_id: %d", TPCC_ORDER_STATUS_2, output[0].get_i32());
     *res = SUCCESS;
   } END_PIE
@@ -168,23 +155,15 @@ void TpccPiece::reg_order_status() {
     int i = 0;
     Log::debug("row_list size: %u", row_list.size());
 
-    if (IS_MODE_RCC || IS_MODE_RO6) {
-      for (int i = 0; i < row_list.size(); i++) {
-        r = row_list[i++];
-        ((RCCDTxn*)dtxn)->kiss(r, 6, false);
-      }
-      if (RO6_RO_PHASE_1) return;
-    }
-
     i = 0;
     i32 oi = 0;
     while (i < row_list.size()) {
       r = row_list[i++];
-      dtxn->ReadColumn(r, 4, &output[oi++]); // output[0] ==> ol_i_id
-      dtxn->ReadColumn(r, 5, &output[oi++]); // output[1] ==> ol_supply_w_id
-      dtxn->ReadColumn(r, 6, &output[oi++]); // output[2] ==> ol_delivery_d
-      dtxn->ReadColumn(r, 7, &output[oi++]); // output[3] ==> ol_quantity
-      dtxn->ReadColumn(r, 8, &output[oi++]); // output[4] ==> ol_amount
+      dtxn->ReadColumn(r, 4, &output[oi++], TXN_BYPASS); // output[0] ==> ol_i_id
+      dtxn->ReadColumn(r, 5, &output[oi++], TXN_BYPASS); // output[1] ==> ol_supply_w_id
+      dtxn->ReadColumn(r, 6, &output[oi++], TXN_SAFE, TXN_DEFERRED); // output[2] ==> ol_delivery_d
+      dtxn->ReadColumn(r, 7, &output[oi++], TXN_BYPASS); // output[3] ==> ol_quantity
+      dtxn->ReadColumn(r, 8, &output[oi++], TXN_BYPASS); // output[4] ==> ol_amount
     }
 
     *res = SUCCESS;
