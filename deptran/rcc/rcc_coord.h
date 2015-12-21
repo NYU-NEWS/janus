@@ -3,10 +3,18 @@
 #include "../three_phase/coord.h"
 
 namespace rococo {
-class RCCCoord : public ThreePhaseCoord {
-  using ThreePhaseCoord::ThreePhaseCoord;
+class RCCCoord : public ThreePhaseCoordinator {
+
+protected:
+  inline RococoCommunicator* comm() {
+    return static_cast<RococoCommunicator*>(commo_);
+  }
 
 public:
+  RCCCoord(uint32_t coo_id, vector<string> &addrs, int benchmark, int32_t mode, ClientControlServiceImpl *ccsi,
+           uint32_t thread_id, bool batch_optimal) : ThreePhaseCoordinator(coo_id, addrs, benchmark, mode, ccsi,
+                                                                           thread_id, batch_optimal) {
+  }
 
   struct deptran_batch_start_t {
     std::vector<RequestHeader>      headers;

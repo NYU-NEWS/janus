@@ -42,7 +42,6 @@ Coordinator::Coordinator(uint32_t coo_id,
   uint64_t k = coo_id_;
   k <<= 32;
   k++;
-  commo_ = new Commo(addrs);
   this->next_pie_id_.store(k);
   this->next_txn_id_.store(k);
   recorder_ = NULL;
@@ -58,9 +57,6 @@ Coordinator::~Coordinator() {
              site_commit_[i], site_abort_[i]);
   }
 
-  if (commo_) {
-    delete commo_;
-  }
 
   if (recorder_) delete recorder_;
 #ifdef TXN_STAT

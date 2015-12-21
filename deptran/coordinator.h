@@ -36,13 +36,11 @@ class Coordinator {
 
   std::mutex mtx_;
   std::mutex start_mtx_;
-  Commo *commo_;
   Recorder *recorder_;
   Command *cmd_; 
   cmdid_t cmd_id_;
   CoordinatorStage stage_ = START;
   phase_t phase_ = 0;
-//  map<innid_t, Command*> cmd_map_;
   map<innid_t, bool> start_ack_map_;
   Sharding* sharding_ = nullptr;
 

@@ -6,36 +6,38 @@
 #include "rcc/graph_marshaler.h"
 #include "rcc_rpc.h"
 #include "msg.h"
+#include "deptran/three_phase/communicator.h"
 
 namespace rococo {
 
 class Coordinator;
 
-class Commo {
+
+class RococoCommunicator : public ThreePhaseCommunicator {
  public:
   rrr::PollMgr *rpc_poll_ = nullptr;
   std::vector<rrr::Client *> vec_rpc_cli_;
   std::vector<RococoProxy *> vec_rpc_proxy_;
 
-  Commo(std::vector<std::string> &addrs);
+  RococoCommunicator(std::vector<std::string> &addrs);
 
   void SendStart(groupid_t gid,
                  RequestHeader &header,
                  map<int32_t, Value> &input,
                  int32_t output_size,
-                 std::function<void(Future *fu)> &callback);
-  void SendStart(parid_t par_id, 
-                 StartRequest &req, 
+                 std::function<void(Future *fu)> &callback) override;
+  void SendStart(parid_t par_id,
+                 StartRequest &req,
                  Coordinator *coo,
-                 std::function<void(StartReply&)> &callback);
+                 std::function<void(StartReply&)> &callback) override;
   void SendPrepare(parid_t gid,
                    txnid_t tid, 
                    std::vector<int32_t> &sids, 
-                   std::function<void(Future *fu)> &callback);
+                   std::function<void(Future *fu)> &callback) override;
   void SendCommit(parid_t pid, txnid_t tid,
-                  std::function<void(Future *fu)> &callback);
+                  std::function<void(Future *fu)> &callback) override;
   void SendAbort(parid_t pid, txnid_t tid,
-                 std::function<void(Future *fu)> &callback);
+                 std::function<void(Future *fu)> &callback) override;
 
   // for debug
   set<std::pair<txnid_t, parid_t>> phase_three_sent_;

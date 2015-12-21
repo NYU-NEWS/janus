@@ -9,43 +9,24 @@
 namespace rococo {
 class ClientControlServiceImpl;
 
-class ThreePhaseCoord : public Coordinator {
-  using Coordinator::Coordinator;
+class ThreePhaseCoordinator : public Coordinator {
+ protected:
+  ThreePhaseCommunicator *commo_=nullptr;
  public:
-//  uint32_t coo_id_;
-//  int benchmark_;
-//  int32_t mode_;
-//  ClientControlServiceImpl *ccsi_;
-//  uint32_t thread_id_;
-//  bool batch_optimal_;
-//  bool retry_wait_;
-//
-//  uint32_t n_start_ = 0;
-//  uint32_t n_start_ack_ = 0;
-//  uint32_t n_prepare_req_ = 0;
-//  uint32_t n_prepare_ack_ = 0;
-//  uint32_t n_finish_req_ = 0;
-//  uint32_t n_finish_ack_ = 0;
-//
-//  std::atomic<uint64_t> next_pie_id_;
-//  std::atomic<uint64_t> next_txn_id_;
-//
-//  std::mutex mtx_;
-//  std::mutex start_mtx_;
-//  Commo *commo_;
-//  Recorder *recorder_;
-//  Command *cmd_;
-//  cmdid_t cmd_id_;
-//  CoordinatorStage stage_ = START;
-//  phase_t phase_ = 0;
-////  map<innid_t, Command*> cmd_map_;
-//  map<innid_t, bool> start_ack_map_;
-//  Sharding* sharding_ = nullptr;
-//
-//  std::vector<int> site_prepare_;
-//  std::vector<int> site_commit_;
-//  std::vector<int> site_abort_;
-//  std::vector<int> site_piece_;
+  ThreePhaseCoordinator(uint32_t coo_id, vector<string> &addrs, int benchmark, int32_t mode, ClientControlServiceImpl *ccsi,
+                        uint32_t thread_id, bool batch_optimal) : Coordinator(coo_id, addrs, benchmark, mode, ccsi, thread_id,
+                              batch_optimal) {
+    // TODO: doesn't belong here;
+    // it is currently here so that subclasses such as RCCCoord and OCCoord don't break
+    commo_ = new RococoCommunicator(addrs);
+  }
+
+  virtual ~ThreePhaseCoordinator() {
+    if (commo_) {
+      delete commo_;
+    }
+  }
+
 #ifdef TXN_STAT
   typedef struct txn_stat_t {
     uint64_t                             n_serv_tch;
@@ -92,62 +73,37 @@ class ThreePhaseCoord : public Coordinator {
     return this->next_txn_id_++;
   }
 
-  /** return: SUCCESS or REJECT */
-
-  // virtual int do_one() = 0;
-
-  // /** return: SUCCESS or REJECT */
-  // virtual int do_one(uint32_t &max_try) = 0; /** 0 TRY UNTIL SUCCESS; >=1 TRY
-  // TIMES */
-
-  /** do it asynchronously, thread safe.
-   */
+  /** do it asynchronously, thread safe. */
   virtual void do_one(TxnRequest &);
   virtual void cleanup();
   void restart(TxnChopper *ch);
 
   void Start();
   void StartAck(StartReply &reply, phase_t phase);
-//  void LegacyStart(TxnChopper *ch);
-//  void LegacyStartAck(TxnChopper *ch, int pi, Future *fu);
-  void rpc_null_start(TxnChopper *ch);
-//  void naive_batch_start(TxnChopper *ch);
-//  void batch_start(TxnChopper *ch);
   void Prepare();
   void PrepareAck(TxnChopper *ch, phase_t phase, Future *fu);
   void Finish();
   void FinishAck(TxnChopper *ch, phase_t phase, Future *fu);
-  void Abort() {verify(0);}
+  void Abort() {
+    verify(0);
+  }
 
   bool IsPhaseOrStageStale(phase_t phase, CoordinatorStage stage);
   void IncrementPhaseAndChangeStage(CoordinatorStage stage);
   bool AllStartAckCollected();
 
   RequestHeader gen_header(TxnChopper *ch);
-  BatchRequestHeader gen_batch_header(TxnChopper *ch);
 
   void report(TxnReply &txn_reply,
               double last_latency
 #ifdef                                  TXN_STAT
-  ,
-  TxnChopper *ch
+              ,
+              TxnChopper *ch
 #endif /* ifdef TXN_STAT */
-  );
-
-  /* deprecated*/
-  bool next_piece(std::vector<mdb::Value> **input,
-                  RococoProxy **proxy,
-                  int *pi,
-                  int *p_type) {
-    return false;
-  }
+             );
 
   void start_callback(TxnRequest *req, int pi, int res,
                       std::vector<mdb::Value> &output) { }
-
-  int exe_txn() {
-    return 0;
-  }
 
   // for debug
   set<txnid_t> ___phase_one_tids_ = set<txnid_t>();

@@ -18,7 +18,7 @@
 namespace rococo {
 
 // TODO obsolete
-RequestHeader ThreePhaseCoord::gen_header(TxnChopper *ch) {
+RequestHeader ThreePhaseCoordinator::gen_header(TxnChopper *ch) {
   RequestHeader header;
 
   header.cid = coo_id_;
@@ -27,17 +27,8 @@ RequestHeader ThreePhaseCoord::gen_header(TxnChopper *ch) {
   return header;
 }
 
-BatchRequestHeader ThreePhaseCoord::gen_batch_header(TxnChopper *ch) {
-  BatchRequestHeader batch_header;
-
-  batch_header.t_type = ch->txn_type_;
-  batch_header.cid = coo_id_;
-  batch_header.tid = cmd_id_;
-  return batch_header;
-}
-
 /** thread safe */
-void ThreePhaseCoord::do_one(TxnRequest &req) {
+void ThreePhaseCoordinator::do_one(TxnRequest &req) {
   // pre-process
   std::lock_guard<std::mutex> lock(this->mtx_);
   TxnChopper *ch = Frame().CreateChopper(req);
@@ -66,33 +57,33 @@ void ThreePhaseCoord::do_one(TxnRequest &req) {
   // finish request is triggered in the callback of start request.
 }
 
-void ThreePhaseCoord::rpc_null_start(TxnChopper *ch) {
-  rrr::FutureAttr fuattr;
+//void ThreePhaseCoord::rpc_null_start(TxnChopper *ch) {
+//  rrr::FutureAttr fuattr;
+//
+//  fuattr.callback = [ch, this](Future *fu) {
+//    ch->reply_.res_ = SUCCESS;
+//    TxnReply &txn_reply_buf = ch->get_reply();
+//    double last_latency = ch->last_attempt_latency();
+//    this->report(txn_reply_buf, last_latency
+//#ifdef TXN_STAT
+//        , ch
+//#endif // ifdef TXN_STAT
+//    );
+//    ch->callback_(txn_reply_buf);
+//    delete ch;
+//  };
+//
+//  RococoProxy *proxy = commo_->vec_rpc_proxy_[coo_id_ % commo_->vec_rpc_proxy_.size()];
+//  Future::safe_release(proxy->async_rpc_null(fuattr));
+//}
 
-  fuattr.callback = [ch, this](Future *fu) {
-    ch->reply_.res_ = SUCCESS;
-    TxnReply &txn_reply_buf = ch->get_reply();
-    double last_latency = ch->last_attempt_latency();
-    this->report(txn_reply_buf, last_latency
-#ifdef TXN_STAT
-        , ch
-#endif // ifdef TXN_STAT
-    );
-    ch->callback_(txn_reply_buf);
-    delete ch;
-  };
-
-  RococoProxy *proxy = commo_->vec_rpc_proxy_[coo_id_ % commo_->vec_rpc_proxy_.size()];
-  Future::safe_release(proxy->async_rpc_null(fuattr));
-}
-
-void ThreePhaseCoord::IncrementPhaseAndChangeStage(CoordinatorStage stage) {
+void ThreePhaseCoordinator::IncrementPhaseAndChangeStage(CoordinatorStage stage) {
   phase_++;
   stage_ = stage;
   Log_debug("moving to phase %ld; stage %d", phase_, stage_);
 }
 
-bool ThreePhaseCoord::IsPhaseOrStageStale(phase_t phase, CoordinatorStage stage) {
+bool ThreePhaseCoordinator::IsPhaseOrStageStale(phase_t phase, CoordinatorStage stage) {
   bool result = false;
   if (phase_ != phase) {
     Log_debug("phase %d doesn't match %d\n", phase, phase_);
@@ -105,7 +96,7 @@ bool ThreePhaseCoord::IsPhaseOrStageStale(phase_t phase, CoordinatorStage stage)
   return result;
 }
 
-void ThreePhaseCoord::cleanup() {
+void ThreePhaseCoordinator::cleanup() {
   n_start_ = 0;
   n_start_ack_ = 0;
   n_prepare_req_ = 0;
@@ -117,7 +108,7 @@ void ThreePhaseCoord::cleanup() {
   TxnChopper *ch = (TxnChopper *) cmd_;
 }
 
-void ThreePhaseCoord::restart(TxnChopper *ch) {
+void ThreePhaseCoordinator::restart(TxnChopper *ch) {
   std::lock_guard<std::mutex> lock(this->mtx_);
   cleanup();
   ch->retry();
@@ -128,9 +119,9 @@ void ThreePhaseCoord::restart(TxnChopper *ch) {
   Start();
 }
 
-void ThreePhaseCoord::Start() {
+void ThreePhaseCoordinator::Start() {
   std::lock_guard<std::mutex> lock(start_mtx_);
-//  ___TestPhaseOne(cmd_id_);
+  //  ___TestPhaseOne(cmd_id_);
 
   if (stage_ != START) {
     IncrementPhaseAndChangeStage(START);
@@ -161,13 +152,13 @@ void ThreePhaseCoord::Start() {
   Log_debug("sent %d SubCmds\n", cnt);
 }
 
-bool ThreePhaseCoord::AllStartAckCollected() {
+bool ThreePhaseCoordinator::AllStartAckCollected() {
   return std::all_of(start_ack_map_.begin(),
                      start_ack_map_.end(),
                      [](std::pair<innid_t, bool> pair){ return pair.second; });
 }
 
-void ThreePhaseCoord::StartAck(StartReply &reply, phase_t phase) {
+void ThreePhaseCoordinator::StartAck(StartReply &reply, phase_t phase) {
   std::lock_guard<std::mutex> lock(this->mtx_);
 
   if (IsPhaseOrStageStale(phase, START)) {
@@ -204,12 +195,8 @@ void ThreePhaseCoord::StartAck(StartReply &reply, phase_t phase) {
   }
 }
 
-//void ThreePhaseCoord::naive_batch_start(TxnChopper *ch) {
-//
-//}
-
 /** caller should be thread_safe */
-void ThreePhaseCoord::Prepare() {
+void ThreePhaseCoordinator::Prepare() {
   IncrementPhaseAndChangeStage(PREPARE);
   TxnChopper *ch = (TxnChopper *) cmd_;
   verify(mode_ == MODE_OCC || mode_ == MODE_2PL);
@@ -233,7 +220,7 @@ void ThreePhaseCoord::Prepare() {
   }
 }
 
-void ThreePhaseCoord::PrepareAck(TxnChopper *ch, phase_t phase, Future *fu) {
+void ThreePhaseCoordinator::PrepareAck(TxnChopper *ch, phase_t phase, Future *fu) {
   std::lock_guard<std::mutex> lock(this->mtx_);
   if (IsPhaseOrStageStale(phase, PREPARE)) {
     Log_debug("ignore stale prepareack\n");
@@ -266,7 +253,7 @@ void ThreePhaseCoord::PrepareAck(TxnChopper *ch, phase_t phase, Future *fu) {
 }
 
 /** caller should be thread safe */
-void ThreePhaseCoord::Finish() {
+void ThreePhaseCoordinator::Finish() {
   IncrementPhaseAndChangeStage(FINISH);
   ___TestPhaseThree(cmd_id_);
   TxnChopper *ch = (TxnChopper *) cmd_;
@@ -298,7 +285,7 @@ void ThreePhaseCoord::Finish() {
   }
 }
 
-void ThreePhaseCoord::FinishAck(TxnChopper *ch, phase_t phase, Future *fu) {
+void ThreePhaseCoordinator::FinishAck(TxnChopper *ch, phase_t phase, Future *fu) {
   bool callback = false;
   bool retry = false;
   {
@@ -342,8 +329,8 @@ void ThreePhaseCoord::FinishAck(TxnChopper *ch, phase_t phase, Future *fu) {
   }
 }
 
-void ThreePhaseCoord::report(TxnReply &txn_reply,
-                         double last_latency
+void ThreePhaseCoordinator::report(TxnReply &txn_reply,
+                                   double last_latency
 #ifdef TXN_STAT
     , TxnChopper *ch
 #endif // ifdef TXN_STAT
@@ -370,13 +357,13 @@ void ThreePhaseCoord::report(TxnReply &txn_reply,
   }
 }
 
-void ThreePhaseCoord::___TestPhaseThree(txnid_t txn_id) {
+void ThreePhaseCoordinator::___TestPhaseThree(txnid_t txn_id) {
   auto it = ___phase_three_tids_.find(txn_id);
 //  verify(it == ___phase_three_tids_.end());
   ___phase_three_tids_.insert(txn_id);
 }
 
-void ThreePhaseCoord::___TestPhaseOne(txnid_t txn_id) {
+void ThreePhaseCoordinator::___TestPhaseOne(txnid_t txn_id) {
   auto it = ___phase_one_tids_.find(txn_id);
   verify(it == ___phase_one_tids_.end());
   ___phase_one_tids_.insert(txn_id);

@@ -4,7 +4,7 @@
 
 namespace rococo {
 
-Commo::Commo(std::vector<std::string> &addrs)
+RococoCommunicator::RococoCommunicator(std::vector<std::string> &addrs)
     : vec_rpc_cli_(), vec_rpc_proxy_(), phase_three_sent_() {
   verify(addrs.size() > 0);
   rpc_poll_ = new PollMgr(1);
@@ -19,10 +19,10 @@ Commo::Commo(std::vector<std::string> &addrs)
   }
 }
 
-void Commo::SendStart(parid_t par_id, 
-                      StartRequest &req, 
-                      Coordinator *coo,
-                      std::function<void(StartReply&)> &callback) {
+void RococoCommunicator::SendStart(parid_t par_id,
+                                   StartRequest &req,
+                                   Coordinator *coo,
+                                   std::function<void(StartReply&)> &callback) {
   rrr::FutureAttr fuattr;
   RequestHeader header;
   header.cid = coo->coo_id_;
@@ -51,11 +51,11 @@ void Commo::SendStart(parid_t par_id,
                                               fuattr));
 }
 
-void Commo::SendStart(parid_t par_id, 
-                      RequestHeader &header, 
-                      map<int32_t, Value> &input,
-                      int32_t output_size,
-                      std::function<void(Future *fu)> &callback) {
+void RococoCommunicator::SendStart(parid_t par_id,
+                                   RequestHeader &header,
+                                   map<int32_t, Value> &input,
+                                   int32_t output_size,
+                                   std::function<void(Future *fu)> &callback) {
   rrr::FutureAttr fuattr;
   fuattr.callback = callback;
   RococoProxy *proxy = vec_rpc_proxy_[par_id];
@@ -63,9 +63,9 @@ void Commo::SendStart(parid_t par_id,
   Future::safe_release(proxy->async_start_pie(header, input, output_size, fuattr));
 }
 
-void Commo::SendPrepare(groupid_t gid, txnid_t tid, 
-                        std::vector<int32_t> &sids, 
-                        std::function<void(Future *fu)> &callback) {
+void RococoCommunicator::SendPrepare(groupid_t gid, txnid_t tid,
+                                     std::vector<int32_t> &sids,
+                                     std::function<void(Future *fu)> &callback) {
   FutureAttr fuattr;
   fuattr.callback = callback;
   RococoProxy *proxy = vec_rpc_proxy_[gid];
@@ -74,14 +74,14 @@ void Commo::SendPrepare(groupid_t gid, txnid_t tid,
   Future::safe_release(proxy->async_prepare_txn(tid, sids, fuattr));
 }
 
-void Commo::___LogSent(parid_t pid, txnid_t tid) {
+void RococoCommunicator::___LogSent(parid_t pid, txnid_t tid) {
   auto it = phase_three_sent_.find(std::make_pair(pid, tid));
   verify(it == phase_three_sent_.end());
   phase_three_sent_.insert(std::make_pair(pid, tid));
 }
 
-void Commo::SendCommit(parid_t pid, txnid_t tid,
-                       std::function<void(Future *fu)> &callback) {
+void RococoCommunicator::SendCommit(parid_t pid, txnid_t tid,
+                                    std::function<void(Future *fu)> &callback) {
   ___LogSent(pid, tid);
 
   FutureAttr fuattr;
@@ -91,8 +91,8 @@ void Commo::SendCommit(parid_t pid, txnid_t tid,
   Future::safe_release(proxy->async_commit_txn(tid, fuattr));
 }
 
-void Commo::SendAbort(parid_t pid, txnid_t tid,
-                       std::function<void(Future *fu)> &callback) {
+void RococoCommunicator::SendAbort(parid_t pid, txnid_t tid,
+                                   std::function<void(Future *fu)> &callback) {
 //  ___LogSent(pid, tid);
   FutureAttr fuattr;
   fuattr.callback = callback;
