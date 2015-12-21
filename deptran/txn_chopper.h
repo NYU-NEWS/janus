@@ -75,7 +75,7 @@ protected:
 
   Graph<TxnInfo> gra_;
 
-  std::vector<map<int32_t, Value> > inputs_;  // input of each piece.
+  map<int32_t, map<int32_t, Value> > inputs_;  // input of each piece.
   //std::vector<std::vector<mdb::Value> > outputs_; // output of each piece.
   std::vector<int32_t> output_size_;
   std::vector<int32_t> p_types_;                  // types of each piece.

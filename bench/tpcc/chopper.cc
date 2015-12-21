@@ -109,7 +109,7 @@ void TpccChopper::new_order_init(TxnRequest &req) {
   memset(new_order_dep_.piece_stocks, false, sizeof(bool) * ol_cnt);
 
   n_pieces_all_ = 5 + 4 * ol_cnt;
-  inputs_.resize(n_pieces_all_);
+//  inputs_.resize(n_pieces_all_);
   output_size_.resize(n_pieces_all_);
   p_types_.resize(n_pieces_all_);
   sharding_.resize(n_pieces_all_);
@@ -419,7 +419,7 @@ void TpccChopper::payment_init(TxnRequest &req) {
    **/
 
   n_pieces_all_ = 6;
-  inputs_.resize(n_pieces_all_);
+//  inputs_.resize(n_pieces_all_);
   output_size_.resize(n_pieces_all_);
   p_types_.resize(n_pieces_all_);
   sharding_.resize(n_pieces_all_);
@@ -631,7 +631,7 @@ void TpccChopper::order_status_init(TxnRequest &req) {
    **/
 
   n_pieces_all_ = 4;
-  inputs_.resize(n_pieces_all_);
+//  inputs_.resize(n_pieces_all_);
   output_size_.resize(n_pieces_all_);
   p_types_.resize(n_pieces_all_);
   sharding_.resize(n_pieces_all_);
@@ -854,7 +854,7 @@ void TpccChopper::delivery_init(TxnRequest &req) {
    **/
   int d_id = req.input_[2].get_i32();
   n_pieces_all_ = 4;
-  inputs_.resize(n_pieces_all_);
+//  inputs_.resize(n_pieces_all_);
   output_size_.resize(n_pieces_all_);
   p_types_.resize(n_pieces_all_);
   sharding_.resize(n_pieces_all_);
@@ -1088,7 +1088,7 @@ void TpccChopper::stock_level_init(TxnRequest &req) {
    *  2       ==> threshold
    **/
   n_pieces_all_ = 2;
-  inputs_.resize(n_pieces_all_);
+//  inputs_.resize(n_pieces_all_);
   output_size_.resize(n_pieces_all_);
   p_types_.resize(n_pieces_all_);
   sharding_.resize(n_pieces_all_);
@@ -1140,7 +1140,7 @@ bool TpccChopper::stock_level_callback(
     for (int i = 0; i < output_size; i++)
       s_i_ids.insert(output[i].get_i32());
     n_pieces_all_ += s_i_ids.size();
-    inputs_.resize(n_pieces_all_);
+//    inputs_.resize(n_pieces_all_);
     output_size_.resize(n_pieces_all_);
     p_types_.resize(n_pieces_all_);
     sharding_.resize(n_pieces_all_);
@@ -1167,7 +1167,7 @@ bool TpccChopper::stock_level_callback(
 
 void TpccChopper::stock_level_retry() {
   n_pieces_all_ = 2;
-  inputs_.resize(n_pieces_all_);
+//  inputs_.resize(n_pieces_all_);
   output_size_.resize(n_pieces_all_);
   p_types_.resize(n_pieces_all_);
   sharding_.resize(n_pieces_all_);
