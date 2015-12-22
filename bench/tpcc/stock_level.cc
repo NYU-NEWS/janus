@@ -111,8 +111,7 @@ void TpccPiece::reg_stock_level() {
                               ROW_DISTRICT);
 
     i32 oi = 0;
-    dtxn->ReadColumn(r, 10, &output[oi++], TXN_SAFE, TXN_DEFERRED);
-                   // output[0] ==> d_next_o_id
+    dtxn->ReadColumn(r, TPCC_COL_DISTRICT_D_NEXT_O_ID, &output[oi++], TXN_SAFE, TXN_DEFERRED);
 
     *res = SUCCESS;
   } END_PIE
@@ -169,7 +168,7 @@ void TpccPiece::reg_stock_level() {
     i32 oi = 0;
     while (i < row_list.size()) {
         mdb::Row *r = row_list[i++];
-        dtxn->ReadColumn(r, 4, &output[oi++]);
+        dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_I_ID, &output[oi++]);
     }
 //    verify(output_size <= 300);
     *res = SUCCESS;
@@ -222,7 +221,7 @@ void TpccPiece::reg_stock_level() {
 
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_STOCK), mb,
                               ROW_STOCK);
-    dtxn->ReadColumn(r, 2, &buf, TXN_SAFE, TXN_DEFERRED);
+    dtxn->ReadColumn(r, TPCC_COL_STOCK_S_QUANTITY, &buf, TXN_SAFE, TXN_DEFERRED);
 
     if (buf.get_i32() < input[2].get_i32())
         output[output_index++] = Value((i32) 1);
@@ -231,10 +230,6 @@ void TpccPiece::reg_stock_level() {
 
     *res = SUCCESS;
   } END_PIE
-
-  BEGIN_CB(TPCC_STOCK_LEVEL, 2)
-    return false;
-  END_CB
 }
 
 } // namespace rococo

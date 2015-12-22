@@ -63,6 +63,76 @@ namespace rococo {
 #define ROW_STOCK             (header.pid)
 #define ROW_STOCK_TEMP        (header.pid)
 
+#define TPCC_COL_WAREHOUSE_W_NAME              (1)
+#define TPCC_COL_WAREHOUSE_W_STREET_1          (2)
+#define TPCC_COL_WAREHOUSE_W_STREET_2          (3)
+#define TPCC_COL_WAREHOUSE_W_CITY              (4)
+#define TPCC_COL_WAREHOUSE_W_STATE             (5)
+#define TPCC_COL_WAREHOUSE_W_ZIP               (6)
+  
+#define TPCC_COL_NEW_ORDER_NO_O_ID             (0)
+#define TPCC_COL_NEW_ORDER_NO_D_ID             (1)
+#define TPCC_COL_NEW_ORDER_NO_W_ID             (2)
+
+#define TPCC_COL_DISTRICT_D_NAME               (2)
+#define TPCC_COL_DISTRICT_D_STREET_1           (3)
+#define TPCC_COL_DISTRICT_D_STREET_2           (4)
+#define TPCC_COL_DISTRICT_D_CITY               (5)
+#define TPCC_COL_DISTRICT_D_STATE              (6)
+#define TPCC_COL_DISTRICT_D_ZIP                (7)
+#define TPCC_COL_DISTRICT_D_TAX                (8)
+#define TPCC_COL_DISTRICT_D_YTD                (9)
+#define TPCC_COL_DISTRICT_D_NEXT_O_ID          (10)
+  
+#define TPCC_COL_CUSTOMER_C_FIRST              (3)  /* c_first      */ 
+#define TPCC_COL_CUSTOMER_C_MIDDLE             (4)  /* c_middle     */ 
+#define TPCC_COL_CUSTOMER_C_LAST               (5)  /* c_last       */ 
+#define TPCC_COL_CUSTOMER_C_STREET_1           (6)  /* c_street_1   */ 
+#define TPCC_COL_CUSTOMER_C_STREET_2           (7)  /* c_street_2   */ 
+#define TPCC_COL_CUSTOMER_C_CITY               (8)  /* c_city       */ 
+#define TPCC_COL_CUSTOMER_C_STATE              (9)  /* c_state      */ 
+#define TPCC_COL_CUSTOMER_C_ZIP                (10) /* c_zip        */ 
+#define TPCC_COL_CUSTOMER_C_PHONE              (11) /* c_phone      */ 
+#define TPCC_COL_CUSTOMER_C_SINCE              (12) /* c_since      */ 
+#define TPCC_COL_CUSTOMER_C_CREDIT             (13) /* c_credit     */ 
+#define TPCC_COL_CUSTOMER_C_CREDIT_LIM         (14) /* c_credit_lim */ 
+#define TPCC_COL_CUSTOMER_C_DISCOUNT           (15) /* c_discount   */ 
+#define TPCC_COL_CUSTOMER_C_BALANCE            (16) /* c_balance    */ 
+#define TPCC_COL_CUSTOMER_C_YTD_PAYMENT        (17) /* c_ytd_payment*/ 
+#define TPCC_COL_CUSTOMER_C_PAYMENT_CNT        (18) /* c_ytd_payment*/ 
+#define TPCC_COL_CUSTOMER_C_DELIVERY_CNT       (19) /* c_ytd_payment*/ 
+#define TPCC_COL_CUSTOMER_C_DATA               (20) /* c_data       */ 
+
+#define TPCC_COL_ORDER_LINE_OL_I_ID            (4)
+#define TPCC_COL_ORDER_LINE_OL_AMOUNT          (8)
+
+#define TPCC_COL_STOCK_S_I_ID                  (0)
+#define TPCC_COL_STOCK_S_W_ID                  (1)
+#define TPCC_COL_STOCK_S_QUANTITY              (2)
+#define TPCC_COL_STOCK_S_DIST_XX               (3)
+#define TPCC_COL_STOCK_S_YTD                   (13)
+#define TPCC_COL_STOCK_S_ORDER_CNT             (14)
+#define TPCC_COL_STOCK_S_REMOTE_CNT            (15)
+#define TPCC_COL_STOCK_S_DATA                  (16)
+
+#define TPCC_COL_ORDER_O_ID                    (2)
+#define TPCC_COL_ORDER_O_C_ID                  (3)
+#define TPCC_COL_ORDER_O_ENTRY_D               (4)
+#define TPCC_COL_ORDER_O_CARRIER_ID            (5)
+
+#define TPCC_COL_ORDER_LINE_OL_I_ID            (4)
+#define TPCC_COL_ORDER_LINE_OL_SUPPLY_W_ID     (5)
+#define TPCC_COL_ORDER_LINE_OL_DELIVERY_D      (6)
+#define TPCC_COL_ORDER_LINE_OL_QUANTITY        (7)
+#define TPCC_COL_ORDER_LINE_OL_AMOUNT          (8)
+
+#define TPCC_COL_ITEM_I_ID                     (0)
+#define TPCC_COL_ITEM_I_IM_ID                  (1)
+#define TPCC_COL_ITEM_I_NAME                   (2)
+#define TPCC_COL_ITEM_I_PRICE                  (3)
+#define TPCC_COL_ITEM_I_DATA                   (4)
+
+
 #define TPCC_NEW_ORDER_Ith_INDEX_ITEM(i)        (5 + 4 * i)
 #define TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)    (6 + 4 * i)
 #define TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i) (7 + 4 * i)

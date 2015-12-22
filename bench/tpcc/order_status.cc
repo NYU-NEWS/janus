@@ -53,37 +53,37 @@ void TpccChopper::order_status_init(TxnRequest &req) {
   }
 
   // piece 1, R customer, depends on piece 0 if using c_last instead of c_id
-  inputs_[1] = map<int32_t, Value>({
-                                       {0, req.input_[0]},  // 0 ==>    c_w_id
-                                       {1, req.input_[1]},  // 1 ==>    c_d_id
-                                       {2, req.input_[2]}   // 2 ==>    c_id, may depends on piece 0
-                                   });
+  inputs_[1] = {
+      {0, req.input_[0]},  // 0 ==> c_w_id
+      {1, req.input_[1]},  // 1 ==> c_d_id
+      {2, req.input_[2]}   // 2 ==> c_id, may depends on piece 0
+  };
   output_size_[1] = 4;
   p_types_[1] = TPCC_ORDER_STATUS_1;
   order_status_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[1]);
 
   // piece 2, R order, depends on piece 0 if using c_last instead of c_id
-  inputs_[2] = map<int32_t, Value>({
-                                       {0, req.input_[0]},
-                                       // 0 ==>    o_w_id
-                                       {1, req.input_[1]},
-                                       // 1 ==>    o_d_id
-                                       {2, req.input_[2]}
-                                       // 2 ==>    o_c_id, may depends on piece 0
-                                   });
+  inputs_[2] = {
+      {0, req.input_[0]},
+      // 0 ==>    o_w_id
+      {1, req.input_[1]},
+      // 1 ==>    o_d_id
+      {2, req.input_[2]}
+      // 2 ==>    o_c_id, may depends on piece 0
+  };
   output_size_[2] = 3;
   p_types_[2] = TPCC_ORDER_STATUS_2;
   order_status_shard(TPCC_TB_ORDER, req.input_, sharding_[2]);
 
   // piece 3, R order_line, depends on piece 2
-  inputs_[3] = map<int32_t, Value>({
-                                       {0, req.input_[0]},
-                                       // 0 ==>    ol_w_id
-                                       {1, req.input_[1]},
-                                       // 1 ==>    ol_d_id
-                                       {2, Value()}
-                                       // 2 ==>    ol_o_id, depends on piece 2
-                                   });
+  inputs_[3] = {
+      {0, req.input_[0]},
+      // 0 ==>    ol_w_id
+      {1, req.input_[1]},
+      // 1 ==>    ol_d_id
+      {2, Value()}
+      // 2 ==>    ol_o_id, depends on piece 2
+  };
   output_size_[3] = 15 * 5;
   p_types_[3] = TPCC_ORDER_STATUS_3;
   order_status_shard(TPCC_TB_ORDER_LINE, req.input_, sharding_[3]);
@@ -96,13 +96,13 @@ void TpccChopper::order_status_shard(const char *tb,
                                      const std::vector<mdb::Value> &input,
                                      uint32_t &site) {
   MultiValue mv;
-  if (tb == TPCC_TB_CUSTOMER
-      || tb == TPCC_TB_ORDER
-      || tb == TPCC_TB_ORDER_LINE) {
+  if (tb == TPCC_TB_CUSTOMER ||
+      tb == TPCC_TB_ORDER ||
+      tb == TPCC_TB_ORDER_LINE) {
     mv = MultiValue(input[0]);
-  }
-  else
+  } else {
     verify(0);
+  }
   int ret = sss_->get_site_id_from_tb(tb, mv, site);
   verify(ret == 0);
 }
@@ -190,11 +190,8 @@ void TpccPiece::reg_order_status() {
   BEGIN_PIE(TPCC_ORDER_STATUS, // RO
           TPCC_ORDER_STATUS_1, // Ri customer
           DF_NO) {
-    // #################################################################
-    verify(dtxn != nullptr);
-    Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_1);
+    Log_debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_1);
     verify(input.size() == 3);
-    // #################################################################
 
     mdb::Table *tbl = dtxn->GetTable(TPCC_TB_CUSTOMER);
     // R customer
@@ -207,10 +204,10 @@ void TpccPiece::reg_order_status() {
     mdb::Row *r = dtxn->Query(tbl, mb, ROW_CUSTOMER);
 
     i32 oi = 0;
-    dtxn->ReadColumn(r, 3, &output[oi++], TXN_BYPASS);// read c_first
-    dtxn->ReadColumn(r, 4, &output[oi++], TXN_BYPASS);// read c_middle
-    dtxn->ReadColumn(r, 5, &output[oi++], TXN_BYPASS);// read c_last
-    dtxn->ReadColumn(r, 16, &output[oi++], TXN_SAFE, TXN_DEFERRED);// read c_balance
+    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_FIRST,   &output[oi++], TXN_BYPASS);// read c_first
+    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_MIDDLE,  &output[oi++], TXN_BYPASS);// read c_middle
+    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_LAST,    &output[oi++], TXN_BYPASS);// read c_last
+    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_BALANCE, &output[oi++], TXN_SAFE, TXN_DEFERRED);// read c_balance
 
     *res = SUCCESS;
   } END_PIE
@@ -238,9 +235,9 @@ void TpccPiece::reg_order_status() {
                               mb,
                               ROW_ORDER);
     i32 oi = 0;
-    dtxn->ReadColumn(r, 2, &output[oi++], TXN_BYPASS); // output[0] ==> o_id
-    dtxn->ReadColumn(r, 4, &output[oi++], TXN_BYPASS); // output[1] ==> o_entry_d
-    dtxn->ReadColumn(r, 5, &output[oi++], TXN_SAFE, TXN_DEFERRED); // output[2] ==> o_carrier_id
+    dtxn->ReadColumn(r, TPCC_COL_ORDER_O_ID, &output[oi++], TXN_BYPASS); // output[0] ==> o_id
+    dtxn->ReadColumn(r, TPCC_COL_ORDER_O_ENTRY_D, &output[oi++], TXN_BYPASS); // output[1] ==> o_entry_d
+    dtxn->ReadColumn(r, TPCC_COL_ORDER_O_CARRIER_ID, &output[oi++], TXN_SAFE, TXN_DEFERRED); // output[2] ==> o_carrier_id
 //        Log::debug("piece: %d, o_id: %d", TPCC_ORDER_STATUS_2, output[0].get_i32());
     *res = SUCCESS;
   } END_PIE
@@ -302,11 +299,11 @@ void TpccPiece::reg_order_status() {
     i32 oi = 0;
     while (i < row_list.size()) {
       r = row_list[i++];
-      dtxn->ReadColumn(r, 4, &output[oi++], TXN_BYPASS); // output[0] ==> ol_i_id
-      dtxn->ReadColumn(r, 5, &output[oi++], TXN_BYPASS); // output[1] ==> ol_supply_w_id
-      dtxn->ReadColumn(r, 6, &output[oi++], TXN_SAFE, TXN_DEFERRED); // output[2] ==> ol_delivery_d
-      dtxn->ReadColumn(r, 7, &output[oi++], TXN_BYPASS); // output[3] ==> ol_quantity
-      dtxn->ReadColumn(r, 8, &output[oi++], TXN_BYPASS); // output[4] ==> ol_amount
+      dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_I_ID, &output[oi++], TXN_BYPASS); // output[0] ==> ol_i_id
+      dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_SUPPLY_W_ID, &output[oi++], TXN_BYPASS); // output[1] ==> ol_supply_w_id
+      dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_DELIVERY_D, &output[oi++], TXN_SAFE, TXN_DEFERRED); // output[2] ==> ol_delivery_d
+      dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_QUANTITY, &output[oi++], TXN_BYPASS); // output[3] ==> ol_quantity
+      dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_AMOUNT, &output[oi++], TXN_BYPASS); // output[4] ==> ol_amount
     }
 
     *res = SUCCESS;
