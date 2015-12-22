@@ -12,6 +12,8 @@ typedef std::map<
 
 class DTxn;
 class TxnChopper;
+class TxnRequest;
+
 
 typedef std::function<void(Executor* exec,
                            DTxn *dtxn,
@@ -34,13 +36,31 @@ typedef struct {
   defer_t defer;
 } txn_handler_defer_pair_t;
 
-typedef std::function<bool(TxnChopper*, map<int32_t, Value>&)> PieceCallbackHandler;
+typedef std::function<bool(TxnChopper*,
+                           map<int32_t, Value>&)>
+    PieceCallbackHandler;
+
+//class PieceCallbackMap {
+// public:
+//  map<std::pair<txntype_t, innid_t>, PieceCallbackHandler> callbacks_ = {};
+//  virtual PieceCallbackHandler& Get(txntype_t txn_type, innid_t inn_id) {
+//    return callbacks_.at(std::make_pair(txn_type, inn_id));
+//  }
+//
+//  virtual void Set(txntype_t txn_type, innid_t inn_id,
+//                   PieceCallbackHandler& handler) {
+//    callbacks_[std::make_pair(txn_type, inn_id)] = handler;
+//  }
+//};
+
 
 /**
 * This class holds all the hard-coded transactions pieces.
 */
 class TxnRegistry {
  public:
+
+  TxnRegistry() : callbacks_() {};
 
   void reg(base::i32 t_type, base::i32 p_type,
            defer_t defer, const TxnHandler &txn_handler) {
@@ -64,6 +84,10 @@ class TxnRegistry {
 //  TxnRegistry() { }
   map<std::pair<base::i32, base::i32>, txn_handler_defer_pair_t> all_ = {};
   map<std::pair<txntype_t, innid_t>, PieceCallbackHandler> callbacks_ = {};
+  map<txntype_t, std::function<void(TxnChopper* ch, TxnRequest& req)> > init_ = {};
+  map<txntype_t, std::function<void(TxnChopper* ch)>> retry_ = {};
+
+//  PieceCallbackMap callbacks_;
 //    static map<std::pair<base::i32, base::i32>, LockSetOracle> lck_oracle_;
 
 };

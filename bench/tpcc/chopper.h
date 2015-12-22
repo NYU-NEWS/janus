@@ -65,11 +65,6 @@ class TpccChopper: public TxnChopper {
 
   virtual void new_order_init(TxnRequest &req);
 
-  virtual bool new_order_callback(int pi,
-                                  int res,
-                                  const Value *output,
-                                  uint32_t output_size);
-
   virtual void new_order_retry();
 
   // payment
@@ -78,9 +73,6 @@ class TpccChopper: public TxnChopper {
                              uint32_t &site);
 
   virtual void payment_init(TxnRequest &req);
-
-  virtual bool payment_callback(int pi, int res,
-                                const Value *output, uint32_t output_size);
 
   virtual void payment_retry();
 
@@ -95,9 +87,6 @@ class TpccChopper: public TxnChopper {
 
   virtual void stock_level_init(TxnRequest &req);
 
-  virtual bool stock_level_callback(int pi, int res,
-                                    const Value *output, uint32_t output_size);
-
   virtual void stock_level_retry();
 
   // delivery
@@ -106,9 +95,6 @@ class TpccChopper: public TxnChopper {
                               uint32_t &site, int cnt);
 
   virtual void delivery_init(TxnRequest &req);
-
-  virtual bool delivery_callback(int pi, int res,
-                                 const Value *output, uint32_t output_size);
 
   virtual void delivery_retry();
 
@@ -119,18 +105,12 @@ class TpccChopper: public TxnChopper {
 
   virtual void order_status_init(TxnRequest &req);
 
-  virtual bool order_status_callback(int pi, int res,
-                                     const Value *output, uint32_t output_size);
-
   virtual void order_status_retry();
 
  public:
   TpccChopper();
 
   virtual void init(TxnRequest &req);
-  virtual bool start_callback(const std::vector<int> &pi,
-                              int res,
-                              BatchStartArgsHelper &bsah);
   virtual bool start_callback(int pi,
                               int res,
                               map<int32_t, Value> &output);

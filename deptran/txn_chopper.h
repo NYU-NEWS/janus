@@ -126,9 +126,7 @@ class TxnChopper : public Command {
 
   // phase 1, res is NULL
   // phase 2, res returns SUCCESS is output is consistent with previous value
-  virtual bool start_callback(const std::vector<int> &pi,
-                              int res,
-                              BatchStartArgsHelper &bsah) = 0;
+
   virtual bool start_callback(int pi,
                               int res,
                               map<int32_t, Value> &output) = 0;

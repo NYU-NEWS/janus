@@ -2,6 +2,108 @@
 
 namespace rococo {
 
+
+void TpccChopper::delivery_init(TxnRequest &req) {
+  /**
+   * req.input_
+   *  0       ==> w_id
+   *  1       ==> o_carrier_id
+   *  2       ==> d_id
+   **/
+  int d_id = req.input_[2].get_i32();
+  n_pieces_all_ = 4;
+//  inputs_.resize(n_pieces_all_);
+  output_size_.resize(n_pieces_all_);
+  p_types_.resize(n_pieces_all_);
+  sharding_.resize(n_pieces_all_);
+  status_.resize(n_pieces_all_);
+
+  delivery_dep_.piece_new_orders = false;
+  delivery_dep_.piece_orders = false;
+  delivery_dep_.piece_order_lines = false;
+  //delivery_dep_.d_cnt = (size_t)d_cnt;
+  //delivery_dep_.piece_new_orders = (bool *)malloc(sizeof(bool) * d_cnt);
+  //delivery_dep_.piece_orders = (bool *)malloc(sizeof(bool) * d_cnt);
+  //delivery_dep_.piece_order_lines = (bool *)malloc(sizeof(bool) * d_cnt);
+  //memset(delivery_dep_.piece_new_orders, false, sizeof(bool) * d_cnt);
+  //memset(delivery_dep_.piece_orders, false, sizeof(bool) * d_cnt);
+  //memset(delivery_dep_.piece_order_lines, false, sizeof(bool) * d_cnt);
+
+  // piece 0, Ri & W new_order
+  inputs_[0] = map<int32_t, Value>({
+                                       {0, req.input_[0]},  // 0 ==>    no_w_id
+                                       {1, req.input_[2]}  // 1 ==>    no_d_id
+                                   });
+  output_size_[0] = 1;
+  p_types_[0] = TPCC_DELIVERY_0;
+  delivery_shard(TPCC_TB_NEW_ORDER, req.input_, sharding_[0], d_id);
+  status_[0] = READY;
+
+  // piece 1, Ri & W order
+  inputs_[1] = map<int32_t, Value>({
+                                       {0, Value()},        // 0 ==>    o_id,   depends on piece 0
+                                       {1, req.input_[0]},  // 1 ==>    o_w_id
+                                       {2, req.input_[2]},  // 2 ==>    o_d_id
+                                       {3, req.input_[1]}   // 3 ==>    o_carrier_id
+                                   });
+  output_size_[1] = 1;
+  p_types_[1] = TPCC_DELIVERY_1;
+  delivery_shard(TPCC_TB_ORDER, req.input_, sharding_[1], d_id);
+  status_[1] = WAITING;
+
+  // piece 2, Ri & W order_line
+  inputs_[2] = map<int32_t, Value>({
+                                       {0, Value()},        // 0 ==>    ol_o_id,   depends on piece 0
+                                       {1, req.input_[0]},  // 1 ==>    ol_w_id
+                                       {2, req.input_[2]}   // 2 ==>    ol_d_id
+                                   });
+  output_size_[2] = 1;
+  p_types_[2] = TPCC_DELIVERY_2;
+  delivery_shard(TPCC_TB_ORDER_LINE, req.input_, sharding_[2], d_id);
+  status_[2] = WAITING;
+
+  // piece 3, W customer
+  inputs_[3] = map<int32_t, Value>({
+                                       {0, Value()},        // 0 ==>    c_id,   depends on piece 1
+                                       {1, req.input_[0]},  // 1 ==>    c_w_id
+                                       {2, req.input_[2]},  // 2 ==>    c_d_id
+                                       {3, Value()}         // 3 ==>    ol_amount, depends on piece 2
+                                   });
+  output_size_[3] = 0;
+  p_types_[3] = TPCC_DELIVERY_3;
+  delivery_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[3], d_id);
+  status_[3] = WAITING;
+}
+
+
+void TpccChopper::delivery_shard(const char *tb,
+                                 const std::vector<mdb::Value> &input,
+                                 uint32_t &site,
+                                 int cnt) {
+  MultiValue mv;
+  if (tb == TPCC_TB_NEW_ORDER
+      || tb == TPCC_TB_ORDER
+      || tb == TPCC_TB_ORDER_LINE
+      || tb == TPCC_TB_CUSTOMER)
+    // based on w_id
+    mv = MultiValue(input[0]);
+  else
+    verify(0);
+  int ret = sss_->get_site_id_from_tb(tb, mv, site);
+  verify(ret == 0);
+}
+
+void TpccChopper::delivery_retry() {
+  status_[0] = READY;
+  status_[1] = WAITING;
+  status_[2] = WAITING;
+  status_[3] = WAITING;
+  delivery_dep_.piece_new_orders = false;
+  delivery_dep_.piece_orders = false;
+  delivery_dep_.piece_order_lines = false;
+}
+
+
 void TpccPiece::reg_delivery() {
   BEGIN_PIE(TPCC_DELIVERY,
           TPCC_DELIVERY_0, // Ri & W new_order
@@ -15,8 +117,7 @@ void TpccPiece::reg_delivery() {
     verify(input.size() == 2);
     i32 oi = 0;
     Value buf;
-//        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
-                       mdb::Txn *txn = dtxn->mdb_txn_;
+    mdb::Txn *txn = dtxn->mdb_txn_;
     //cell_locator_t cl(TPCC_TB_NEW_ORDER, 3);
     mdb::Row *r = NULL;
     mdb::Table *tbl = dtxn->GetTable(TPCC_TB_NEW_ORDER);

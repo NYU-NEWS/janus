@@ -63,6 +63,18 @@ namespace rococo {
 #define ROW_STOCK             (header.pid)
 #define ROW_STOCK_TEMP        (header.pid)
 
+#define TPCC_NEW_ORDER_Ith_INDEX_ITEM(i)        (5 + 4 * i)
+#define TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)    (6 + 4 * i)
+#define TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i) (7 + 4 * i)
+#define TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)  (8 + 4 * i)
+#define TPCC_NEW_ORDER_IS_ITEM_INDEX(i)         ((i >= 5) && (i % 4) == 1)
+#define TPCC_NEW_ORDER_IS_IM_STOCK_INDEX(i)     ((i >= 5) && (i % 4) == 2)
+#define TPCC_NEW_ORDER_INDEX_ITEM_TO_ORDER_LINE(i)  (i + 3)
+#define TPCC_NEW_ORDER_INDEX_ITEM_TO_DEFER_STOCK(i) (i + 2)
+#define TPCC_NEW_ORDER_INDEX_IM_STOCK_TO_ORDER_LINE(i) (i + 2)
+#define TPCC_NEW_ORDER_INDEX_ITEM_TO_CNT(i)     ((i - 5) / 4)
+#define TPCC_NEW_ORDER_INDEX_IM_STOCK_TO_CNT(i) ((i - 6) / 4)
+
 extern char TPCC_TB_WAREHOUSE[];
 extern char TPCC_TB_DISTRICT[];
 extern char TPCC_TB_CUSTOMER[];
@@ -73,6 +85,7 @@ extern char TPCC_TB_ITEM[];
 extern char TPCC_TB_STOCK[];
 extern char TPCC_TB_ORDER_LINE[];
 extern char TPCC_TB_ORDER_C_ID_SECONDARY[];
+
 
 class TpccPiece: public Piece {
  protected:

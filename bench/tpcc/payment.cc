@@ -4,6 +4,165 @@
 
 namespace rococo {
 
+
+void TpccChopper::payment_init(TxnRequest &req) {
+  payment_dep_.piece_warehouse = false;
+  payment_dep_.piece_district = false;
+  /**
+   * req.input_
+   *  0       ==> w_id, d_w_id
+   *  1       ==> d_id
+   *  2       ==> c_id or last_name
+   *  3       ==> c_w_id
+   *  4       ==> c_d_id
+   *  5       ==> h_amount
+   *  6       ==> h_key
+   **/
+
+  n_pieces_all_ = 6;
+//  inputs_.resize(n_pieces_all_);
+  output_size_.resize(n_pieces_all_);
+  p_types_.resize(n_pieces_all_);
+  sharding_.resize(n_pieces_all_);
+  status_.resize(n_pieces_all_);
+
+  // piece 0, Ri
+  inputs_[0] = map<int32_t, Value>({
+                                       {0, req.input_[0]},  // 0 ==>    w_id
+                                       {1, req.input_[5]}  // 1 ==>    h_amount
+                                   });
+  output_size_[0] = 6;
+  p_types_[0] = TPCC_PAYMENT_0;
+  payment_shard(TPCC_TB_WAREHOUSE, req.input_, sharding_[0]);
+  status_[0] = READY;
+
+  // piece 1, Ri district
+  inputs_[1] = map<int32_t, Value>({
+                                       {0, req.input_[0]},  // 0 ==>    d_w_id
+                                       {1, req.input_[1]},  // 1 ==>    d_id
+                                   });
+  output_size_[1] = 6;
+  p_types_[1] = TPCC_PAYMENT_1;
+  payment_shard(TPCC_TB_DISTRICT, req.input_, sharding_[1]);
+  status_[1] = READY;
+
+  // piece 2, W district
+  inputs_[2] = map<int32_t, Value>({
+                                       {0, req.input_[0]},
+                                       // 0 ==>    d_w_id
+                                       {1, req.input_[1]},
+                                       // 1 ==>    d_id
+                                       {2, req.input_[5]}
+                                       // 2 ==>    h_amount
+                                   });
+  output_size_[2] = 0;
+  p_types_[2] = TPCC_PAYMENT_2;
+  payment_shard(TPCC_TB_DISTRICT, req.input_, sharding_[2]);
+  status_[2] = READY;
+
+  // query by c_last
+  if (req.input_[2].get_kind() == mdb::Value::STR) {
+    // piece 3, R customer, c_last -> c_id
+    inputs_[3] = map<int32_t, Value>({
+                                         {0, req.input_[2]},  // 0 ==>    c_last
+                                         {1, req.input_[3]},  // 1 ==>    c_w_id
+                                         {2, req.input_[4]},  // 2 ==>    c_d_id
+                                     });
+    output_size_[3] = 1;
+    p_types_[3] = TPCC_PAYMENT_3;
+    payment_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[3]);
+    status_[3] = READY;
+    // piece 4, set it to waiting
+    status_[4] = WAITING;
+
+    payment_dep_.piece_last2id = false;
+    payment_dep_.piece_ori_last2id = false;
+  }
+    // query by c_id, invalidate piece 2
+  else {
+    Log_debug("payment transaction lookup by customer name");
+//    verify(0);
+    // piece 3, R customer, set it to finish
+    status_[3] = FINISHED;
+    // piece 4, set it to ready
+    status_[4] = READY;
+    n_pieces_out_ = 1;
+
+    payment_dep_.piece_last2id = true;
+    payment_dep_.piece_ori_last2id = true;
+  }
+
+  // piece 4, R & W customer
+  inputs_[4] = map<int32_t, Value>({
+                                       {0, req.input_[2]},  // 0 ==>    c_id
+                                       {1, req.input_[3]},  // 1 ==>    c_w_id
+                                       {2, req.input_[4]},  // 2 ==>    c_d_id
+                                       {3, req.input_[5]},  // 3 ==>    h_amount
+                                       {4, req.input_[0]},  // 4 ==>    w_id
+                                       {5, req.input_[1]}   // 5 ==>    d_id
+                                   });
+  output_size_[4] = 15;
+  p_types_[4] = TPCC_PAYMENT_4;
+  payment_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[4]);
+
+  // piece 5, W history (insert), depends on piece 0, 1
+  inputs_[5] = map<int32_t, Value>({
+                                       {0, req.input_[6]},  // 0 ==>    h_key
+                                       {1, Value()},        // 1 ==>    w_name depends on piece 0
+                                       {2, Value()},        // 2 ==>    d_name depends on piece 1
+                                       {3, req.input_[0]},  // 3 ==>    w_id
+                                       {4, req.input_[1]},  // 4 ==>    d_id
+                                       {5, req.input_[2]},  // 5 ==>    c_id depends on piece 2 if querying by c_last
+                                       {6, req.input_[3]},  // 6 ==>    c_w_id
+                                       {7, req.input_[4]},  // 7 ==>    c_d_id
+                                       {8, req.input_[5]}   // 8 ==>    h_amount
+                                   });
+  output_size_[5] = 0;
+  p_types_[5] = TPCC_PAYMENT_5;
+  payment_shard(TPCC_TB_HISTORY, req.input_, sharding_[5]);
+  status_[5] = WAITING;
+}
+
+
+void TpccChopper::payment_shard(const char *tb,
+                                const std::vector<mdb::Value> &input,
+                                uint32_t &site) {
+  MultiValue mv;
+  if (tb == TPCC_TB_WAREHOUSE
+      || tb == TPCC_TB_DISTRICT)
+    mv = MultiValue(input[0]);
+  else if (tb == TPCC_TB_CUSTOMER)
+    mv = MultiValue(input[3]);
+  else if (tb == TPCC_TB_HISTORY)
+    mv = MultiValue(input[6]);
+  else
+    verify(0);
+  int ret = sss_->get_site_id_from_tb(tb, mv, site);
+  verify(ret == 0);
+}
+
+
+void TpccChopper::payment_retry() {
+  status_[0] = READY;
+  status_[1] = READY;
+  status_[2] = READY;
+  // query by c_id
+  if (payment_dep_.piece_ori_last2id) {
+    status_[3] = FINISHED;
+    status_[4] = READY;
+    n_pieces_out_ = 1;
+  }
+    // query by c_last
+  else {
+    status_[3] = READY;
+    status_[4] = WAITING;
+  }
+  status_[5] = WAITING;
+  payment_dep_.piece_warehouse = false;
+  payment_dep_.piece_district = false;
+  payment_dep_.piece_last2id = payment_dep_.piece_ori_last2id;
+}
+
 void TpccPiece::reg_payment() {
   BEGIN_PIE(TPCC_PAYMENT,      // txn
           TPCC_PAYMENT_0,    // piece 0, Ri & W warehouse

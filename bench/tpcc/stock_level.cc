@@ -2,6 +2,97 @@
 
 namespace rococo {
 
+
+void TpccChopper::stock_level_init(TxnRequest &req) {
+  /**
+   * req.input_
+   *  0       ==> w_id
+   *  1       ==> d_id
+   *  2       ==> threshold
+   **/
+  n_pieces_all_ = 2;
+//  inputs_.resize(n_pieces_all_);
+  output_size_.resize(n_pieces_all_);
+  p_types_.resize(n_pieces_all_);
+  sharding_.resize(n_pieces_all_);
+  status_.resize(n_pieces_all_);
+
+  stock_level_dep_.w_id = req.input_[0].get_i32();
+  stock_level_dep_.threshold = req.input_[2].get_i32();
+
+  // piece 0, R district
+  inputs_[0] = map<int32_t, Value>({
+                                       {0, req.input_[0]},  // 0    ==> w_id
+                                       {1, req.input_[1]}   // 1    ==> d_id
+                                   });
+  output_size_[0] = 1;
+  p_types_[0] = TPCC_STOCK_LEVEL_0;
+  stock_level_shard(TPCC_TB_DISTRICT, req.input_, sharding_[0]);
+  status_[0] = READY;
+
+  // piece 1, R order_line
+  inputs_[1] = map<int32_t, Value>({
+                                       {0, Value()},        // 0    ==> d_next_o_id, depends on piece 0
+                                       {1, req.input_[0]},  // 1    ==> ol_w_id
+                                       {2, req.input_[1]}   // 2    ==> ol_d_id
+                                   });
+  output_size_[1] = 20 * 15; // 20 orders * 15 order_line per order at most
+  p_types_[1] = TPCC_STOCK_LEVEL_1;
+  stock_level_shard(TPCC_TB_ORDER_LINE, req.input_, sharding_[1]);
+  status_[1] = WAITING;
+
+  // piece 2 - n, R stock init in stock_level_callback
+}
+
+
+void TpccChopper::stock_level_shard(
+    const char *tb,
+    const std::vector<mdb::Value> &input,
+    uint32_t &site) {
+  MultiValue mv;
+  if (tb == TPCC_TB_DISTRICT
+      || tb == TPCC_TB_ORDER_LINE)
+    // based on w_id
+    mv = MultiValue(input[0]);
+  else if (tb == TPCC_TB_STOCK)
+    // based on s_w_id
+    mv = MultiValue(input[1]);
+  else
+    verify(0);
+  int ret = sss_->get_site_id_from_tb(tb, mv, site);
+  verify(ret == 0);
+}
+
+void TpccChopper::stock_level_shard(
+    const char *tb,
+    const map<int32_t, Value> &input,
+    uint32_t &site) {
+  MultiValue mv;
+  if (tb == TPCC_TB_DISTRICT
+      || tb == TPCC_TB_ORDER_LINE)
+    // based on w_id
+    mv = MultiValue(input.at(0));
+  else if (tb == TPCC_TB_STOCK)
+    // based on s_w_id
+    mv = MultiValue(input.at(1));
+  else
+    verify(0);
+  int ret = sss_->get_site_id_from_tb(tb, mv, site);
+  verify(ret == 0);
+}
+
+void TpccChopper::stock_level_retry() {
+  n_pieces_all_ = 2;
+//  inputs_.resize(n_pieces_all_);
+  output_size_.resize(n_pieces_all_);
+  p_types_.resize(n_pieces_all_);
+  sharding_.resize(n_pieces_all_);
+  status_.resize(n_pieces_all_);
+  status_[0] = READY;
+  status_[1] = WAITING;
+}
+
+
 void TpccPiece::reg_stock_level() {
   BEGIN_PIE(TPCC_STOCK_LEVEL,
           TPCC_STOCK_LEVEL_0, // Ri district

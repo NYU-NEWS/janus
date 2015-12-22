@@ -4,6 +4,128 @@
 
 namespace rococo {
 
+
+void TpccChopper::order_status_init(TxnRequest &req) {
+  order_status_dep_.piece_order = false;
+  /**
+   * req.input_
+   *  0       ==> w_id
+   *  1       ==> d_id
+   *  2       ==> c_id or last_name
+   **/
+
+  n_pieces_all_ = 4;
+//  inputs_.resize(n_pieces_all_);
+  output_size_.resize(n_pieces_all_);
+  p_types_.resize(n_pieces_all_);
+  sharding_.resize(n_pieces_all_);
+  status_.resize(n_pieces_all_);
+
+  if (req.input_[2].get_kind() == Value::I32) { // query by c_id
+    status_[0] = FINISHED; // piece 0 not needed
+    status_[1] = READY; // piece 1 ready
+    status_[2] = READY; // piece 2 ready
+
+    order_status_dep_.piece_last2id = true;
+    order_status_dep_.piece_ori_last2id = true;
+
+    n_pieces_out_ = 1; // since piece 0 not needed, set it as one started piece
+  }
+  else { // query by c_last
+
+    // piece 0, R customer, c_last --> c_id
+    inputs_[0] = map<int32_t, Value>({
+                                         {0, req.input_[2]},  // 0 ==>    c_last
+                                         {1, req.input_[0]},  // 1 ==>    c_w_id
+                                         {2, req.input_[1]}   // 2 ==>    c_d_id
+                                     });
+    output_size_[0] = 1; // return c_id only
+    p_types_[0] = TPCC_ORDER_STATUS_0;
+    order_status_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[0]);
+
+    status_[0] = READY;  // piece 0 ready
+
+    order_status_dep_.piece_last2id = false;
+    order_status_dep_.piece_ori_last2id = false;
+
+    status_[1] = WAITING; // piece 1 waiting for piece 0
+    status_[2] = WAITING; // piece 2 waiting for piece 0
+  }
+
+  // piece 1, R customer, depends on piece 0 if using c_last instead of c_id
+  inputs_[1] = map<int32_t, Value>({
+                                       {0, req.input_[0]},  // 0 ==>    c_w_id
+                                       {1, req.input_[1]},  // 1 ==>    c_d_id
+                                       {2, req.input_[2]}   // 2 ==>    c_id, may depends on piece 0
+                                   });
+  output_size_[1] = 4;
+  p_types_[1] = TPCC_ORDER_STATUS_1;
+  order_status_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[1]);
+
+  // piece 2, R order, depends on piece 0 if using c_last instead of c_id
+  inputs_[2] = map<int32_t, Value>({
+                                       {0, req.input_[0]},
+                                       // 0 ==>    o_w_id
+                                       {1, req.input_[1]},
+                                       // 1 ==>    o_d_id
+                                       {2, req.input_[2]}
+                                       // 2 ==>    o_c_id, may depends on piece 0
+                                   });
+  output_size_[2] = 3;
+  p_types_[2] = TPCC_ORDER_STATUS_2;
+  order_status_shard(TPCC_TB_ORDER, req.input_, sharding_[2]);
+
+  // piece 3, R order_line, depends on piece 2
+  inputs_[3] = map<int32_t, Value>({
+                                       {0, req.input_[0]},
+                                       // 0 ==>    ol_w_id
+                                       {1, req.input_[1]},
+                                       // 1 ==>    ol_d_id
+                                       {2, Value()}
+                                       // 2 ==>    ol_o_id, depends on piece 2
+                                   });
+  output_size_[3] = 15 * 5;
+  p_types_[3] = TPCC_ORDER_STATUS_3;
+  order_status_shard(TPCC_TB_ORDER_LINE, req.input_, sharding_[3]);
+  status_[3] = WAITING;
+
+}
+
+
+void TpccChopper::order_status_shard(const char *tb,
+                                     const std::vector<mdb::Value> &input,
+                                     uint32_t &site) {
+  MultiValue mv;
+  if (tb == TPCC_TB_CUSTOMER
+      || tb == TPCC_TB_ORDER
+      || tb == TPCC_TB_ORDER_LINE) {
+    mv = MultiValue(input[0]);
+  }
+  else
+    verify(0);
+  int ret = sss_->get_site_id_from_tb(tb, mv, site);
+  verify(ret == 0);
+}
+
+
+void TpccChopper::order_status_retry() {
+  order_status_dep_.piece_last2id = order_status_dep_.piece_ori_last2id;
+  order_status_dep_.piece_order = false;
+  if (order_status_dep_.piece_last2id) {
+    status_[0] = FINISHED;
+    status_[1] = READY;
+    status_[2] = READY;
+    n_pieces_out_ = 1;
+  }
+  else {
+    status_[0] = READY;
+    status_[1] = WAITING;
+    status_[2] = WAITING;
+  }
+  status_[3] = WAITING;
+}
+
+
 void TpccPiece::reg_order_status() {
   BEGIN_PIE(TPCC_ORDER_STATUS, // RO
           TPCC_ORDER_STATUS_0, // piece 0, R customer secondary index, c_last -> c_id
