@@ -50,7 +50,8 @@ void TpccChopper::new_order_init(TxnRequest &req) {
                                    });
   output_size_[1] = 1;
   p_types_[1] = TPCC_NEW_ORDER_1;
-  new_order_shard(TPCC_TB_WAREHOUSE, req.input_,  // sharding based on w_id
+  new_order_shard(TPCC_TB_WAREHOUSE,
+                  req.input_,  // sharding based on w_id
                   sharding_[1]);
   status_[1] = READY;
 
@@ -97,8 +98,10 @@ void TpccChopper::new_order_init(TxnRequest &req) {
                             });
     output_size_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)] = 2;
     p_types_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)] = TPCC_NEW_ORDER_6;
-    new_order_shard(TPCC_TB_STOCK, req.input_,
-                    sharding_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)], i);
+    new_order_shard(TPCC_TB_STOCK,
+                    req.input_,
+                    sharding_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)],
+                    i);
     status_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)] = READY;
 
     // piece 7 + 4 * i, W stock
@@ -114,8 +117,10 @@ void TpccChopper::new_order_init(TxnRequest &req) {
                             });
     output_size_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)] = 0;
     p_types_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)] = TPCC_NEW_ORDER_7;
-    new_order_shard(TPCC_TB_STOCK, req.input_,
-                    sharding_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)], i);
+    new_order_shard(TPCC_TB_STOCK,
+                    req.input_,
+                    sharding_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)],
+                    i);
     status_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)] = READY;
 
     // piece 8 + 4 * i, W order_line, depends on piece 0 & 5+3*i & 6+3*i
@@ -134,7 +139,8 @@ void TpccChopper::new_order_init(TxnRequest &req) {
                             });
     output_size_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)] = 0;
     p_types_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)] = TPCC_NEW_ORDER_8;
-    new_order_shard(TPCC_TB_ORDER_LINE, req.input_,// sharding based on ol_w_id
+    new_order_shard(TPCC_TB_ORDER_LINE,
+                    req.input_,// sharding based on ol_w_id
                     sharding_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)]);
     status_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)] = WAITING;
   }
@@ -159,7 +165,8 @@ void TpccChopper::new_order_init(TxnRequest &req) {
                           });
   output_size_[3] = 0;
   p_types_[3] = TPCC_NEW_ORDER_3;
-  new_order_shard(TPCC_TB_ORDER, req.input_, // sharding based on o_w_id
+  new_order_shard(TPCC_TB_ORDER,
+                  req.input_, // sharding based on o_w_id
                   sharding_[3]);
   status_[3] = WAITING;
 
@@ -171,7 +178,8 @@ void TpccChopper::new_order_init(TxnRequest &req) {
                                    });
   output_size_[4] = 0;
   p_types_[4] = TPCC_NEW_ORDER_4;
-  new_order_shard(TPCC_TB_NEW_ORDER, req.input_, // sharding based on no_w_id
+  new_order_shard(TPCC_TB_NEW_ORDER,
+                  req.input_, // sharding based on no_w_id
                   sharding_[4]);
   status_[4] = WAITING;
 }
@@ -201,7 +209,6 @@ void TpccChopper::new_order_shard(const char *tb,
   int ret = sss_->get_site_id_from_tb(tb, mv, site);
   verify(ret == 0);
 }
-
 
 void TpccChopper::new_order_retry() {
   status_[0] = READY;

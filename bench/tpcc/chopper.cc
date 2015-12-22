@@ -51,16 +51,9 @@ void TpccChopper::init(TxnRequest &req) {
   }
 }
 
-
-
 bool TpccChopper::start_callback(int pi,
                                  int res,
                                  map<int32_t, Value> &output_map) {
-  vector<Value> output;
-  for (auto &kv : output_map) {
-    output.push_back(kv.second);
-  }
-
   PieceCallbackHandler handler;
   auto it = txn_reg_->callbacks_.find(std::make_pair(txn_type_, pi));
   if (it != txn_reg_->callbacks_.end()) {
@@ -71,9 +64,6 @@ bool TpccChopper::start_callback(int pi,
   }
   return handler(this, output_map);
 }
-
-
-
 
 void TpccChopper::retry() {
   partitions_.clear();
