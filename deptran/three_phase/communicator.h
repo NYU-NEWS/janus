@@ -16,7 +16,7 @@ class ThreePhaseCommunicator {
                          RequestHeader &header,
                          map<int32_t, Value> &input,
                          int32_t output_size,
-                         std::function<void(Future *fu)> &callback) = 0;
+                         std::function<void(Future *)> &callback) = 0;
   virtual void SendStart(parid_t par_id,
                          StartRequest &req,
                          Coordinator *coo,
