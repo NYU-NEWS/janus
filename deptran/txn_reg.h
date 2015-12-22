@@ -1,5 +1,6 @@
 #pragma once
 #include "__dep__.h"
+#include "constants.h"
 namespace rococo {
 
 class RequestHeader;
@@ -10,14 +11,14 @@ typedef std::map<
     mdb::Row *> row_map_t;
 
 class DTxn;
+class TxnChopper;
 
-typedef std::function<void(
-    Executor* exec,
-    DTxn *dtxn,
-    const RequestHeader &header,
-    map<int32_t, Value> &input,
-    rrr::i32 *res,
-    map<int32_t, Value> &output //,
+typedef std::function<void(Executor* exec,
+                           DTxn *dtxn,
+                           const RequestHeader &header,
+                           map<int32_t, Value> &input,
+                           rrr::i32 *res,
+                           map<int32_t, Value> &output //,
 //    rrr::i32 *output_size//,
 //    row_map_t *row_map
 )> TxnHandler;
@@ -32,6 +33,8 @@ typedef struct {
   TxnHandler txn_handler;
   defer_t defer;
 } txn_handler_defer_pair_t;
+
+typedef std::function<bool(TxnChopper*, map<int32_t, Value>&)> PieceCallbackHandler;
 
 /**
 * This class holds all the hard-coded transactions pieces.
@@ -56,10 +59,11 @@ class TxnRegistry {
   }
   txn_handler_defer_pair_t get(const RequestHeader &req_hdr);
 
- private:
+ public:
   // prevent instance creation
 //  TxnRegistry() { }
-  map<std::pair<base::i32, base::i32>, txn_handler_defer_pair_t> all_;
+  map<std::pair<base::i32, base::i32>, txn_handler_defer_pair_t> all_ = {};
+  map<std::pair<txntype_t, innid_t>, PieceCallbackHandler> callbacks_ = {};
 //    static map<std::pair<base::i32, base::i32>, LockSetOracle> lck_oracle_;
 
 };

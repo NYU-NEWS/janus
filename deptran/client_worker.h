@@ -25,6 +25,7 @@ class ClientWorker {
   std::atomic<uint32_t> num_txn, success, num_try;
   TxnRequestFactory* txn_req_factory_;
   Timer *timer_;
+  TxnRegistry* txn_reg_ = nullptr;
  public:
   ClientWorker() = default;
   ~ClientWorker();

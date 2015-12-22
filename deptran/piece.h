@@ -31,6 +31,11 @@ class Piece {
 // \
 //                row_map_t *row_map)
 #define END_PIE );
+#define BEGIN_CB(txn_type, inn_id) \
+txn_reg_->callbacks_[std::make_pair(txn_type, inn_id)] = \
+[] (TxnChopper *ch, std::map<int32_t, Value> output) -> bool {
+
+#define END_CB  };
 
 //std::vector<mdb::column_lock_t>(__VA_ARGS__),
 //verify(((TPLDTxn*)dtxn)->locking_ == (output_size == nullptr));

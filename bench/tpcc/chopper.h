@@ -12,7 +12,7 @@ class TxnRequest;
 class BatchStartArgsHelper;
 
 class TpccChopper: public TxnChopper {
- protected:
+ public:
   typedef struct {
     size_t ol_cnt;
     bool piece_0_dist;

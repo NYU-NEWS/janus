@@ -7,6 +7,7 @@
 #include "rcc/graph.h"
 #include "rcc/graph_marshaler.h"
 #include "rcc_rpc.h"
+#include "txn_reg.h"
 
 namespace rococo {
 
@@ -67,11 +68,12 @@ class TxnChopper : public Command {
 
   bool early_return_;
 
-protected:
+ public:
   txnid_t txn_id_; // TODO obsolete
 
  public:
   txntype_t txn_type_;
+  TxnRegistry *txn_reg_ = nullptr;
 
   Graph<TxnInfo> gra_;
 

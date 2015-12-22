@@ -26,6 +26,14 @@ void TpccPiece::reg_stock_level() {
     *res = SUCCESS;
   } END_PIE
 
+  BEGIN_CB(TPCC_STOCK_LEVEL, 0)
+    TpccChopper *tpcc_ch = (TpccChopper*) ch;
+    verify(output.size() == 1);
+    tpcc_ch->inputs_[1][0] = output[0];
+    tpcc_ch->status_[1] = READY;
+    return true;
+  END_CB
+
   BEGIN_PIE(TPCC_STOCK_LEVEL,
           TPCC_STOCK_LEVEL_1, // Ri order_line
           DF_NO) {
@@ -76,6 +84,40 @@ void TpccPiece::reg_stock_level() {
     *res = SUCCESS;
   } END_PIE
 
+  BEGIN_CB(TPCC_STOCK_LEVEL, 1)
+    TpccChopper *tpcc_ch = (TpccChopper*) ch;
+    Log_debug("tid %llx: stock_level: outptu_size: %u",
+              tpcc_ch->txn_id_, output.size());
+    //verify(output_size >= 20 * 5);
+//    verify(output_size <= 20 * 15); // TODO fix this verification
+    std::unordered_set<i32> s_i_ids;
+    for (int i = 0; i < output.size(); i++)
+      s_i_ids.insert(output[i].get_i32());
+    tpcc_ch->n_pieces_all_ += s_i_ids.size();
+//    inputs_.resize(n_pieces_all_);
+    tpcc_ch->output_size_.resize(tpcc_ch->n_pieces_all_);
+    tpcc_ch->p_types_.resize(tpcc_ch->n_pieces_all_);
+    tpcc_ch->sharding_.resize(tpcc_ch->n_pieces_all_);
+    tpcc_ch->status_.resize(tpcc_ch->n_pieces_all_);
+    int i = 0;
+    for (std::unordered_set<i32>::iterator s_i_ids_it = s_i_ids.begin();
+         s_i_ids_it != s_i_ids.end(); s_i_ids_it++) {
+      tpcc_ch->inputs_[2 + i] = map<int32_t, Value>({
+                                               {0, Value(*s_i_ids_it)},                      // 0 ==> s_i_id
+                                               {1, Value((i32) tpcc_ch->stock_level_dep_.w_id)},      // 1 ==> s_w_id
+                                               {2, Value((i32) tpcc_ch->stock_level_dep_.threshold)}  // 2 ==> threshold
+                                           });
+      tpcc_ch->output_size_[2 + i] = 1;
+      tpcc_ch->p_types_[2 + i] = TPCC_STOCK_LEVEL_2;
+      tpcc_ch->stock_level_shard(TPCC_TB_STOCK,
+                                 tpcc_ch->inputs_[2 + i],
+                                 tpcc_ch->sharding_[2 + i]);
+      tpcc_ch->status_[2 + i] = READY;
+      i++;
+    }
+    return true;
+  END_CB
+
   BEGIN_PIE(TPCC_STOCK_LEVEL,
           TPCC_STOCK_LEVEL_2, // R stock
           DF_NO) {
@@ -98,6 +140,10 @@ void TpccPiece::reg_stock_level() {
 
     *res = SUCCESS;
   } END_PIE
+
+  BEGIN_CB(TPCC_STOCK_LEVEL, 2)
+    return false;
+  END_CB
 }
 
 } // namespace rococo

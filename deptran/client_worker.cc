@@ -37,8 +37,13 @@ void ClientWorker::callback2(TxnReply &txn_reply) {
 
 void ClientWorker::work() {
   verify(coo_ == nullptr);
+  txn_reg_ = new TxnRegistry();
+  Piece *piece = Piece::get_piece(benchmark);
+  piece->txn_reg_ = txn_reg_;
+  piece->reg_all();
   coo_ = Frame().CreateCoord(coo_id, *servers, benchmark,
                              mode, ccsi, id, batch_start);
+  coo_->txn_reg_ = txn_reg_;
   if (ccsi) ccsi->wait_for_start(id);
 
   timer_ = new Timer();

@@ -76,39 +76,73 @@ void TpccPiece::reg_delivery() {
     return;
   } END_PIE
 
+  BEGIN_CB(TPCC_DELIVERY, 0)
+    TpccChopper *tpcc_ch = (TpccChopper*) ch;
+    verify(output.size() == 1);
+    verify(!tpcc_ch->delivery_dep_.piece_new_orders);
+    if (output[0].get_i32() == (i32) -1) { // new_order not found
+      tpcc_ch->status_[1] = FINISHED;
+      tpcc_ch->status_[2] = FINISHED;
+      tpcc_ch->status_[3] = FINISHED;
+      tpcc_ch->n_pieces_out_ += 3;
+      Log::info("TPCC DELIVERY: no more new order for w_id: %d, d_id: %d",
+                tpcc_ch->inputs_[0][0].get_i32(),
+                tpcc_ch->inputs_[0][1].get_i32());
+      return false;
+    } else {
+      tpcc_ch->inputs_[1][0] = output[0];
+      tpcc_ch->inputs_[2][0] = output[0];
+      tpcc_ch->status_[1] = READY;
+      tpcc_ch->status_[2] = READY;
+      tpcc_ch->delivery_dep_.piece_new_orders = true;
+      return true;
+    }
+  END_CB
+
   BEGIN_PIE(TPCC_DELIVERY,
           TPCC_DELIVERY_1, // Ri & W order
           DF_NO) {
 
-      Log::debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_1);
-      verify(input.size() == 4);
-      i32 oi = 0;
-      Value buf;
+    Log::debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_1);
+    verify(input.size() == 4);
+    i32 oi = 0;
+    Value buf;
 //        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
-                       mdb::Txn *txn = dtxn->mdb_txn_;
-      mdb::MultiBlob mb(3);
-      //cell_locator_t cl(TPCC_TB_ORDER, 3);
-      mb[0] = input[2].get_blob();
-      mb[1] = input[1].get_blob();
-      mb[2] = input[0].get_blob();
-      //Log::debug("Delivery: o_d_id: %d, o_w_id: %d, o_id: %d, hash: %u", input[2].get_i32(), input[1].get_i32(), input[0].get_i32(), mdb::MultiBlob::hash()(cl.primary_key));
+                     mdb::Txn *txn = dtxn->mdb_txn_;
+    mdb::MultiBlob mb(3);
+    //cell_locator_t cl(TPCC_TB_ORDER, 3);
+    mb[0] = input[2].get_blob();
+    mb[1] = input[1].get_blob();
+    mb[2] = input[0].get_blob();
+    //Log::debug("Delivery: o_d_id: %d, o_w_id: %d, o_id: %d, hash: %u", input[2].get_i32(), input[1].get_i32(), input[0].get_i32(), mdb::MultiBlob::hash()(cl.primary_key));
 
-      mdb::Row *r = dtxn->Query(txn->get_table(TPCC_TB_ORDER),
-                                mb,
-                                ROW_ORDER);
+    mdb::Row *r = dtxn->Query(txn->get_table(TPCC_TB_ORDER),
+                              mb,
+                              ROW_ORDER);
 
-      dtxn->ReadColumn(r, 3, &output[oi++], TXN_BYPASS); // read o_c_id
-      dtxn->WriteColumn(r, 5, input[3], TXN_SAFE, TXN_INSTANT); // write o_carrier_id
+    dtxn->ReadColumn(r, 3, &output[oi++], TXN_BYPASS); // read o_c_id
+    dtxn->WriteColumn(r, 5, input[3], TXN_SAFE, TXN_INSTANT); // write o_carrier_id
 
-      // ##############################################
+    // ##############################################
 //      verify(*output_size >= oi);
 //      *output_size = oi;
 //      Log::debug("TPCC_DELIVERY, piece: %d end", TPCC_DELIVERY_1);
-      // ##############################################
-      *res = SUCCESS;
-      return;
+    // ##############################################
+    *res = SUCCESS;
+    return;
   } END_PIE
 
+  BEGIN_CB(TPCC_DELIVERY, 1)
+    TpccChopper *tpcc_ch = (TpccChopper*) ch;
+    verify(output.size() == 1);
+    tpcc_ch->inputs_[3][0] = output[0];
+    tpcc_ch->delivery_dep_.piece_orders = true;
+    if (tpcc_ch->delivery_dep_.piece_order_lines) {
+      tpcc_ch->status_[3] = READY;
+      return true;
+    } else
+      return false;
+  END_CB
 
   BEGIN_PIE(TPCC_DELIVERY,
           TPCC_DELIVERY_2, // Ri & W order_line
@@ -164,6 +198,18 @@ void TpccPiece::reg_delivery() {
     *res = SUCCESS;
   } END_PIE
 
+  BEGIN_CB(TPCC_DELIVERY, 2)
+    TpccChopper *tpcc_ch = (TpccChopper*) ch;
+    verify(output.size() == 1);
+    tpcc_ch->inputs_[3][3] = output[0];
+    tpcc_ch->delivery_dep_.piece_order_lines = true;
+    if (tpcc_ch->delivery_dep_.piece_orders) {
+      tpcc_ch->status_[3] = READY;
+      return true;
+    } else
+      return false;
+  END_CB
+
   BEGIN_PIE(TPCC_DELIVERY,
           TPCC_DELIVERY_3, // W customer
           DF_REAL) {
@@ -194,6 +240,10 @@ void TpccPiece::reg_delivery() {
 
     *res = SUCCESS;
   } END_PIE
+
+  BEGIN_CB(TPCC_DELIVERY, 3)
+    return false;
+  END_CB
 }
 
 } // namespace rococo

@@ -8,50 +8,81 @@ void TpccPiece::reg_payment() {
   BEGIN_PIE(TPCC_PAYMENT,      // txn
           TPCC_PAYMENT_0,    // piece 0, Ri & W warehouse
           DF_NO) { // immediately read
-      // ############################################################
-      verify(input.size() == 2);
-      Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_0);
-      i32 oi = 0;
-      // ############################################################
-      mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_WAREHOUSE),
-                                input[0].get_blob(),
-                                ROW_WAREHOUSE);
-      // R warehouse
-      dtxn->ReadColumn(r, 1, &output[oi++]);  // 0 ==> w_name
-      dtxn->ReadColumn(r, 2, &output[oi++]);  // 1 ==> w_street_1
-      dtxn->ReadColumn(r, 3, &output[oi++]);  // 2 ==> w_street_2
-      dtxn->ReadColumn(r, 4, &output[oi++]);  // 3 ==> w_city
-      dtxn->ReadColumn(r, 5, &output[oi++]);  // 4 ==> w_state
-      dtxn->ReadColumn(r, 6, &output[oi++]);  // 5 ==> w_zip
-      *res = SUCCESS;
+    // ############################################################
+    verify(input.size() == 2);
+    Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_0);
+    i32 oi = 0;
+    // ############################################################
+    mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_WAREHOUSE),
+                              input[0].get_blob(),
+                              ROW_WAREHOUSE);
+    // R warehouse
+    dtxn->ReadColumn(r, 1, &output[oi++]);  // 0 ==> w_name
+    dtxn->ReadColumn(r, 2, &output[oi++]);  // 1 ==> w_street_1
+    dtxn->ReadColumn(r, 3, &output[oi++]);  // 2 ==> w_street_2
+    dtxn->ReadColumn(r, 4, &output[oi++]);  // 3 ==> w_city
+    dtxn->ReadColumn(r, 5, &output[oi++]);  // 4 ==> w_state
+    dtxn->ReadColumn(r, 6, &output[oi++]);  // 5 ==> w_zip
+    *res = SUCCESS;
   } END_PIE
+
+  BEGIN_CB(TPCC_PAYMENT, 0)
+    TpccChopper *tpcc_ch = (TpccChopper*)ch;
+    verify(!tpcc_ch->payment_dep_.piece_warehouse);
+    verify(output.size() == 6);
+    tpcc_ch->payment_dep_.piece_warehouse = true;
+    tpcc_ch->inputs_[5][1] = output[0];
+    if (tpcc_ch->payment_dep_.piece_district &&
+        tpcc_ch->payment_dep_.piece_last2id) {
+      Log_debug("warehouse: d_name c_id ready");
+      tpcc_ch->status_[5] = READY;
+      return true;
+    }
+    Log_debug("warehouse: d_name c_id not ready");
+    return false;
+  END_CB
 
   BEGIN_PIE(TPCC_PAYMENT,      // txn
           TPCC_PAYMENT_1,    // piece 1, Ri district
           DF_NO) { // immediately read
-      // ############################################################
-      verify(input.size() == 2);
-      Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_1);
-      // ############################################################
-      i32 oi = 0;
-      Value buf;
-      mdb::MultiBlob mb(2);
-      mb[0] = input[1].get_blob();
-      mb[1] = input[0].get_blob();
-      mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT),
-                                mb,
-                                ROW_DISTRICT);
-      // R district
-      dtxn->ReadColumn(r, 2, &output[oi++]); // output[0] ==> d_name
-      dtxn->ReadColumn(r, 3, &output[oi++]); // 1 ==> d_street_1
-      dtxn->ReadColumn(r, 4, &output[oi++]); // 2 ==> d_street_2
-      dtxn->ReadColumn(r, 5, &output[oi++]); // 3 ==> d_city
-      dtxn->ReadColumn(r, 6, &output[oi++]); // 4 ==> d_state
-      dtxn->ReadColumn(r, 7, &output[oi++]); // 5 ==> d_zip
+    // ############################################################
+    verify(input.size() == 2);
+    Log::debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_1);
+    // ############################################################
+    i32 oi = 0;
+    Value buf;
+    mdb::MultiBlob mb(2);
+    mb[0] = input[1].get_blob();
+    mb[1] = input[0].get_blob();
+    mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT),
+                              mb,
+                              ROW_DISTRICT);
+    // R district
+    dtxn->ReadColumn(r, 2, &output[oi++]); // output[0] ==> d_name
+    dtxn->ReadColumn(r, 3, &output[oi++]); // 1 ==> d_street_1
+    dtxn->ReadColumn(r, 4, &output[oi++]); // 2 ==> d_street_2
+    dtxn->ReadColumn(r, 5, &output[oi++]); // 3 ==> d_city
+    dtxn->ReadColumn(r, 6, &output[oi++]); // 4 ==> d_state
+    dtxn->ReadColumn(r, 7, &output[oi++]); // 5 ==> d_zip
 
-      *res = SUCCESS;
+    *res = SUCCESS;
   } END_PIE
 
+  BEGIN_CB(TPCC_PAYMENT, 1)
+    TpccChopper *tpcc_ch = (TpccChopper*)ch;
+    verify(!tpcc_ch->payment_dep_.piece_district);
+    verify(output.size() == 6);
+    tpcc_ch->payment_dep_.piece_district = true;
+    tpcc_ch->inputs_[5][2] = output[0];
+    if (tpcc_ch->payment_dep_.piece_warehouse &&
+        tpcc_ch->payment_dep_.piece_last2id) {
+      Log_debug("warehouse: w_name c_id ready");
+      tpcc_ch->status_[5] = READY;
+      return true;
+    }
+    Log_debug("warehouse: w_name c_id not ready");
+    return false;
+  END_CB
 
   BEGIN_PIE(TPCC_PAYMENT,      // txn
           TPCC_PAYMENT_2,    // piece 1, Ri & W district
@@ -79,6 +110,9 @@ void TpccPiece::reg_payment() {
     *res = SUCCESS;
   } END_PIE
 
+  BEGIN_CB(TPCC_PAYMENT, 2)
+    return false;
+  END_CB
 
   BEGIN_PIE(TPCC_PAYMENT,      // txn
           TPCC_PAYMENT_3,    // piece 2, R customer secondary index, c_last -> c_id
@@ -119,12 +153,32 @@ void TpccPiece::reg_payment() {
             it_mid = it;
         }
     }
-    Log_debug("w_id: %d, d_id: %d, c_last: %s, num customer: %d", input[1].get_i32(), input[2].get_i32(), input[0].get_str().c_str(), n_c);
+    Log_debug("w_id: %d, d_id: %d, c_last: %s, num customer: %d",
+              input[1].get_i32(), input[2].get_i32(),
+              input[0].get_str().c_str(), n_c);
     verify(mid_set);
     output[output_index++] = Value(it_mid->second);
 
     *res = SUCCESS;
   } END_PIE
+
+  BEGIN_CB(TPCC_PAYMENT, 3)
+    TpccChopper *tpcc_ch = (TpccChopper*)ch;
+    verify(!tpcc_ch->payment_dep_.piece_last2id);
+    verify(output.size() == 1);
+    tpcc_ch->payment_dep_.piece_last2id = true;
+    // set piece 4 ready
+    tpcc_ch->inputs_[4][0] = output[0];
+    tpcc_ch->status_[4] = READY;
+
+    tpcc_ch->inputs_[5][5] = output[0];
+    if (tpcc_ch->payment_dep_.piece_warehouse &&
+        tpcc_ch->payment_dep_.piece_district) {
+      tpcc_ch->status_[5] = READY;
+      Log_debug("customer: w_name c_id not ready");
+    }
+    return true;
+  END_CB
 
   BEGIN_PIE(TPCC_PAYMENT,      // txn
           TPCC_PAYMENT_4,    // piece 4, R & W customer
@@ -227,6 +281,15 @@ void TpccPiece::reg_payment() {
     *res = SUCCESS;
   } END_PIE
 
+  BEGIN_CB(TPCC_PAYMENT, 4)
+    TpccChopper *tpcc_ch = (TpccChopper*)ch;
+    verify(output.size() == 15);
+    if (!tpcc_ch->payment_dep_.piece_ori_last2id) {
+      verify(output[3].get_str() == tpcc_ch->inputs_[3][0].get_str());
+    }
+    return false;
+  END_CB
+
   BEGIN_PIE(TPCC_PAYMENT,      // txn
           TPCC_PAYMENT_5,    // piece 4, W histroy
           DF_REAL) {
@@ -260,6 +323,10 @@ void TpccPiece::reg_payment() {
     txn->insert_row(tbl, r);
     *res = SUCCESS;
   } END_PIE
+
+  BEGIN_CB(TPCC_PAYMENT, 5)
+    return false;
+  END_CB
 }
 
 } // namespace rococo

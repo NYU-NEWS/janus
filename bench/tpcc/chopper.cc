@@ -315,17 +315,27 @@ bool TpccChopper::start_callback(int pi,
     output.push_back(kv.second);
   }
 
+  PieceCallbackHandler handler;
+  auto it = txn_reg_->callbacks_.find(std::make_pair(txn_type_, pi));
+  if (it != txn_reg_->callbacks_.end()) {
+    handler = it->second;
+  } else {
+    handler = [] (TxnChopper* ch,
+                  map<int32_t, Value>& output) -> bool { return false; };
+  }
+
   switch (txn_type_) {
     case TPCC_NEW_ORDER:
       return new_order_callback(pi, res, output.data(), output.size());
-    case TPCC_PAYMENT:
-      return payment_callback(pi, res, output.data(), output.size());
+    case TPCC_STOCK_LEVEL:
+    case TPCC_DELIVERY:
+    case TPCC_PAYMENT: {
+      return handler(this, output_map);
+    }
     case TPCC_ORDER_STATUS:
       return order_status_callback(pi, res, output.data(), output.size());
-    case TPCC_DELIVERY:
-      return delivery_callback(pi, res, output.data(), output.size());
-    case TPCC_STOCK_LEVEL:
-      return stock_level_callback(pi, res, output.data(), output.size());
+//      return delivery_callback(pi, res, output.data(), output.size());
+//      return stock_level_callback(pi, res, output.data(), output.size());
     default:
       verify(0);
   }
@@ -335,37 +345,38 @@ bool TpccChopper::start_callback(int pi,
 bool TpccChopper::start_callback(const std::vector<int> &pi,
                                  int res,
                                  BatchStartArgsHelper &bsah) {
-  bool (TpccChopper::*callback_func)(int, int, const Value *, uint32_t);
-  switch (txn_type_) {
-    case TPCC_NEW_ORDER:
-      callback_func = &TpccChopper::new_order_callback;
-      break;
-    case TPCC_PAYMENT:
-      callback_func = &TpccChopper::payment_callback;
-      break;
-    case TPCC_ORDER_STATUS:
-      callback_func = &TpccChopper::order_status_callback;
-      break;
-    case TPCC_DELIVERY:
-      callback_func = &TpccChopper::delivery_callback;
-      break;
-    case TPCC_STOCK_LEVEL:
-      callback_func = &TpccChopper::stock_level_callback;
-      break;
-    default:
-      verify(0);
-  }
-
-  rrr::i32 res_buf;
-  const Value *output;
-  uint32_t output_size;
+  verify(0);
   bool ret = false;
-  int i = 0;
-  while (0 == bsah.get_next_output_client(&res_buf, &output, &output_size)) {
-    if ((this->*callback_func)(pi[i], res_buf, output, output_size))
-      ret = true;
-    i++;
-  }
+//  bool (TpccChopper::*callback_func)(int, int, const Value *, uint32_t);
+//  switch (txn_type_) {
+//    case TPCC_NEW_ORDER:
+//      callback_func = &TpccChopper::new_order_callback;
+//      break;
+//    case TPCC_PAYMENT:
+//      callback_func = &TpccChopper::payment_callback;
+//      break;
+//    case TPCC_ORDER_STATUS:
+//      callback_func = &TpccChopper::order_status_callback;
+//      break;
+//    case TPCC_DELIVERY:
+//      callback_func = &TpccChopper::delivery_callback;
+//      break;
+//    case TPCC_STOCK_LEVEL:
+//      callback_func = &TpccChopper::stock_level_callback;
+//      break;
+//    default:
+//      verify(0);
+//  }
+//
+//  rrr::i32 res_buf;
+//  const Value *output;
+//  uint32_t output_size;
+//  int i = 0;
+//  while (0 == bsah.get_next_output_client(&res_buf, &output, &output_size)) {
+//    if ((this->*callback_func)(pi[i], res_buf, output, output_size))
+//      ret = true;
+//    i++;
+//  }
 
   return ret;
 }
@@ -526,63 +537,58 @@ bool TpccChopper::payment_callback(int pi,
                                    int res,
                                    const Value *output,
                                    uint32_t output_size) {
-  Log_debug("pi: %d", pi);
-  if (pi == 0) {
-    verify(!payment_dep_.piece_warehouse);
-    verify(output_size == 6);
-    payment_dep_.piece_warehouse = true;
-    inputs_[5][1] = output[0];
-    if (payment_dep_.piece_district && payment_dep_.piece_last2id) {
-      Log_debug("warehouse: d_name c_id ready");
-      status_[5] = READY;
-      return true;
-    }
-    Log_debug("warehouse: d_name c_id not ready");
-    return false;
-  }
-  else if (pi == 1) {
-    verify(!payment_dep_.piece_district);
-    verify(output_size == 6);
-    payment_dep_.piece_district = true;
-    inputs_[5][2] = output[0];
-    if (payment_dep_.piece_warehouse && payment_dep_.piece_last2id) {
-      Log_debug("warehouse: w_name c_id ready");
-      status_[5] = READY;
-      return true;
-    }
-    Log_debug("warehouse: w_name c_id not ready");
-    return false;
-  }
-  else if (pi == 2) {
-    return false;
-  }
-  else if (pi == 3) {
-    verify(!payment_dep_.piece_last2id);
-    verify(output_size == 1);
-    payment_dep_.piece_last2id = true;
-    // set piece 4 ready
-    inputs_[4][0] = output[0];
-    status_[4] = READY;
-
-    inputs_[5][5] = output[0];
-    if (payment_dep_.piece_warehouse && payment_dep_.piece_district) {
-      status_[5] = READY;
-      Log_debug("customer: w_name c_id not ready");
-    }
-    return true;
-  }
-  else if (pi == 4) {
-    verify(output_size == 15);
-    if (!payment_dep_.piece_ori_last2id) {
-      verify(output[3].get_str() == inputs_[3][0].get_str());
-    }
-    return false;
-  }
-  else if (pi == 5) {
-    return false;
-  }
-  else
-    verify(0);
+  verify(0);
+//  Log_debug("pi: %d", pi);
+//  if (pi == 0) {
+//    verify(!payment_dep_.piece_warehouse);
+//    verify(output_size == 6);
+//    payment_dep_.piece_warehouse = true;
+//    inputs_[5][1] = output[0];
+//    if (payment_dep_.piece_district && payment_dep_.piece_last2id) {
+//      Log_debug("warehouse: d_name c_id ready");
+//      status_[5] = READY;
+//      return true;
+//    }
+//    Log_debug("warehouse: d_name c_id not ready");
+//    return false;
+//  } else if (pi == 1) {
+//    verify(!payment_dep_.piece_district);
+//    verify(output_size == 6);
+//    payment_dep_.piece_district = true;
+//    inputs_[5][2] = output[0];
+//    if (payment_dep_.piece_warehouse && payment_dep_.piece_last2id) {
+//      Log_debug("warehouse: w_name c_id ready");
+//      status_[5] = READY;
+//      return true;
+//    }
+//    Log_debug("warehouse: w_name c_id not ready");
+//    return false;
+//  } else if (pi == 2) {
+//    return false;
+//  } else if (pi == 3) {
+//    verify(!payment_dep_.piece_last2id);
+//    verify(output_size == 1);
+//    payment_dep_.piece_last2id = true;
+//    // set piece 4 ready
+//    inputs_[4][0] = output[0];
+//    status_[4] = READY;
+//
+//    inputs_[5][5] = output[0];
+//    if (payment_dep_.piece_warehouse && payment_dep_.piece_district) {
+//      status_[5] = READY;
+//      Log_debug("customer: w_name c_id not ready");
+//    }
+//    return true;
+//  } else if (pi == 4) {
+//    verify(output_size == 15);
+//    if (!payment_dep_.piece_ori_last2id) {
+//      verify(output[3].get_str() == inputs_[3][0].get_str());
+//    }
+//    return false;
+//  } else if (pi == 5) {
+//    return false;
+//  } else
+//    verify(0);
 }
 
 void TpccChopper::payment_retry() {
@@ -971,54 +977,54 @@ bool TpccChopper::delivery_callback(int pi,
                                     int res,
                                     const Value *output,
                                     uint32_t output_size) {
-  if (pi == 0) {
-    verify(output_size == 1);
-    verify(!delivery_dep_.piece_new_orders);
-    if (output[0].get_i32() == (i32) -1) { // new_order not found
-      status_[1] = FINISHED;
-      status_[2] = FINISHED;
-      status_[3] = FINISHED;
-      n_pieces_out_ += 3;
-      Log::info("TPCC DELIVERY: no more new order for w_id: %d, d_id: %d",
-                inputs_[pi][0].get_i32(),
-                inputs_[pi][1].get_i32());
-      return false;
-    }
-    else {
-      inputs_[1][0] = output[0];
-      inputs_[2][0] = output[0];
-      status_[1] = READY;
-      status_[2] = READY;
-      delivery_dep_.piece_new_orders = true;
-      return true;
-    }
-  }
-  else if (pi == 1) {
-    verify(output_size == 1);
-    inputs_[3][0] = output[0];
-    delivery_dep_.piece_orders = true;
-    if (delivery_dep_.piece_order_lines) {
-      status_[3] = READY;
-      return true;
-    }
-    else
-      return false;
-  }
-  else if (pi == 2) {
-    verify(output_size == 1);
-    inputs_[3][3] = output[0];
-    delivery_dep_.piece_order_lines = true;
-    if (delivery_dep_.piece_orders) {
-      status_[3] = READY;
-      return true;
-    }
-    else
-      return false;
-  }
-  else if (pi == 3) {
-    return false;
-  }
-  else
+//  if (pi == 0) {
+//    verify(output_size == 1);
+//    verify(!delivery_dep_.piece_new_orders);
+//    if (output[0].get_i32() == (i32) -1) { // new_order not found
+//      status_[1] = FINISHED;
+//      status_[2] = FINISHED;
+//      status_[3] = FINISHED;
+//      n_pieces_out_ += 3;
+//      Log::info("TPCC DELIVERY: no more new order for w_id: %d, d_id: %d",
+//                inputs_[pi][0].get_i32(),
+//                inputs_[pi][1].get_i32());
+//      return false;
+//    }
+//    else {
+//      inputs_[1][0] = output[0];
+//      inputs_[2][0] = output[0];
+//      status_[1] = READY;
+//      status_[2] = READY;
+//      delivery_dep_.piece_new_orders = true;
+//      return true;
+//    }
+//  }
+//  else if (pi == 1) {
+//    verify(output_size == 1);
+//    inputs_[3][0] = output[0];
+//    delivery_dep_.piece_orders = true;
+//    if (delivery_dep_.piece_order_lines) {
+//      status_[3] = READY;
+//      return true;
+//    }
+//    else
+//      return false;
+//  }
+//  else if (pi == 2) {
+//    verify(output_size == 1);
+//    inputs_[3][3] = output[0];
+//    delivery_dep_.piece_order_lines = true;
+//    if (delivery_dep_.piece_orders) {
+//      status_[3] = READY;
+//      return true;
+//    }
+//    else
+//      return false;
+//  }
+//  else if (pi == 3) {
+//    return false;
+//  }
+//  else
     verify(0);
 }
 
@@ -1126,40 +1132,11 @@ bool TpccChopper::stock_level_callback(
     int res,
     const Value *output,
     uint32_t output_size) {
+  verify(0);
   if (pi == 0) {
-    verify(output_size == 1);
-    inputs_[1][0] = output[0];
-    status_[1] = READY;
-    return true;
-  }
-  else if (pi == 1) {
-    Log_debug("tid %llx: stock_level: outptu_size: %u", txn_id_, output_size);
-    //verify(output_size >= 20 * 5);
-//    verify(output_size <= 20 * 15); // TODO fix this verification
-    std::unordered_set<i32> s_i_ids;
-    for (int i = 0; i < output_size; i++)
-      s_i_ids.insert(output[i].get_i32());
-    n_pieces_all_ += s_i_ids.size();
-//    inputs_.resize(n_pieces_all_);
-    output_size_.resize(n_pieces_all_);
-    p_types_.resize(n_pieces_all_);
-    sharding_.resize(n_pieces_all_);
-    status_.resize(n_pieces_all_);
-    int i = 0;
-    for (std::unordered_set<i32>::iterator s_i_ids_it = s_i_ids.begin();
-         s_i_ids_it != s_i_ids.end(); s_i_ids_it++) {
-      inputs_[2 + i] = map<int32_t, Value>({
-          {0, Value(*s_i_ids_it)},                      // 0 ==> s_i_id
-          {1, Value((i32) stock_level_dep_.w_id)},      // 1 ==> s_w_id
-          {2, Value((i32) stock_level_dep_.threshold)}  // 2 ==> threshold
-                                           });
-      output_size_[2 + i] = 1;
-      p_types_[2 + i] = TPCC_STOCK_LEVEL_2;
-      stock_level_shard(TPCC_TB_STOCK, inputs_[2 + i], sharding_[2 + i]);
-      status_[2 + i] = READY;
-      i++;
-    }
-    return true;
+
+  } else if (pi == 1) {
+
   }
   else
     return false;
