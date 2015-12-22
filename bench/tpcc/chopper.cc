@@ -277,8 +277,7 @@ bool TpccChopper::new_order_callback(int pi,
     }
 
     return true;
-  }
-  else if (TPCC_NEW_ORDER_IS_ITEM_INDEX(pi)) { // piece 5+4i started, set piece 8+4i.8
+  } else if (TPCC_NEW_ORDER_IS_ITEM_INDEX(pi)) { // piece 5+4i started, set piece 8+4i.8
     inputs_[TPCC_NEW_ORDER_INDEX_ITEM_TO_ORDER_LINE(pi)][8]
         = Value((double) (output[1].get_double()
         * inputs_[TPCC_NEW_ORDER_INDEX_ITEM_TO_DEFER_STOCK(pi)][2].get_i32()));
@@ -290,8 +289,7 @@ bool TpccChopper::new_order_callback(int pi,
     }
     else
       return false;
-  }
-  else if (TPCC_NEW_ORDER_IS_IM_STOCK_INDEX(pi)) { // piece 6+4i started, set piece 8+4i.9
+  } else if (TPCC_NEW_ORDER_IS_IM_STOCK_INDEX(pi)) { // piece 6+4i started, set piece 8+4i.9
     inputs_[TPCC_NEW_ORDER_INDEX_IM_STOCK_TO_ORDER_LINE(pi)][9] = output[0];
     new_order_dep_.piece_stocks[TPCC_NEW_ORDER_INDEX_IM_STOCK_TO_CNT(pi)] =
         true;
@@ -302,8 +300,7 @@ bool TpccChopper::new_order_callback(int pi,
     }
     else
       return false;
-  }
-  else
+  } else
     return false;
 }
 
@@ -329,11 +326,11 @@ bool TpccChopper::start_callback(int pi,
       return new_order_callback(pi, res, output.data(), output.size());
     case TPCC_STOCK_LEVEL:
     case TPCC_DELIVERY:
+    case TPCC_ORDER_STATUS:
     case TPCC_PAYMENT: {
       return handler(this, output_map);
     }
-    case TPCC_ORDER_STATUS:
-      return order_status_callback(pi, res, output.data(), output.size());
+//      return order_status_callback(pi, res, output.data(), output.size());
 //      return delivery_callback(pi, res, output.data(), output.size());
 //      return stock_level_callback(pi, res, output.data(), output.size());
     default:
@@ -717,32 +714,33 @@ bool TpccChopper::order_status_callback(int pi,
                                         int res,
                                         const Value *output,
                                         uint32_t output_size) {
-  if (pi == 0) {
-    verify(!order_status_dep_.piece_last2id);
-    order_status_dep_.piece_last2id = true;
-    inputs_[1][2] = output[0];
-    status_[1] = READY;
-    inputs_[2][2] = output[0];
-    status_[2] = READY;
-
-    return true;
-  }
-  else if (pi == 1) {
-    return false;
-  }
-  else if (pi == 2) {
-    verify(output_size == 3);
-    verify(!order_status_dep_.piece_order);
-    order_status_dep_.piece_order = true;
-    inputs_[3][2] = output[0];
-    status_[3] = READY;
-    return true;
-  }
-  else if (pi == 3) {
-    return false;
-  }
-  else
-    verify(0);
+  verify(0);
+//  if (pi == 0) {
+//    verify(!order_status_dep_.piece_last2id);
+//    order_status_dep_.piece_last2id = true;
+//    inputs_[1][2] = output[0];
+//    status_[1] = READY;
+//    inputs_[2][2] = output[0];
+//    status_[2] = READY;
+//
+//    return true;
+//  }
+//  else if (pi == 1) {
+//    return false;
+//  }
+//  else if (pi == 2) {
+//    verify(output_size == 3);
+//    verify(!order_status_dep_.piece_order);
+//    order_status_dep_.piece_order = true;
+//    inputs_[3][2] = output[0];
+//    status_[3] = READY;
+//    return true;
+//  }
+//  else if (pi == 3) {
+//    return false;
+//  }
+//  else
+//    verify(0);
 }
 
 void TpccChopper::order_status_retry() {

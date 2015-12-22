@@ -53,6 +53,18 @@ void TpccPiece::reg_order_status() {
     *res = SUCCESS;
   } END_PIE
 
+  BEGIN_CB(TPCC_ORDER_STATUS, 0)
+    TpccChopper* tpcc_ch = (TpccChopper*)ch;
+    verify(!tpcc_ch->order_status_dep_.piece_last2id);
+    tpcc_ch->order_status_dep_.piece_last2id = true;
+    tpcc_ch->inputs_[1][2] = output[0];
+    tpcc_ch->status_[1] = READY;
+    tpcc_ch->inputs_[2][2] = output[0];
+    tpcc_ch->status_[2] = READY;
+
+    return true;
+  END_CB
+
   BEGIN_PIE(TPCC_ORDER_STATUS, // RO
           TPCC_ORDER_STATUS_1, // Ri customer
           DF_NO) {
@@ -111,6 +123,15 @@ void TpccPiece::reg_order_status() {
     *res = SUCCESS;
   } END_PIE
 
+  BEGIN_CB(TPCC_ORDER_STATUS, 2)
+    TpccChopper* tpcc_ch = (TpccChopper*)ch;
+    verify(output.size() == 3);
+    verify(!tpcc_ch->order_status_dep_.piece_order);
+    tpcc_ch->order_status_dep_.piece_order = true;
+    tpcc_ch->inputs_[3][2] = output[0];
+    tpcc_ch->status_[3] = READY;
+    return true;
+  END_CB
 
   BEGIN_PIE(TPCC_ORDER_STATUS, // RO
           TPCC_ORDER_STATUS_3, // R order_line
