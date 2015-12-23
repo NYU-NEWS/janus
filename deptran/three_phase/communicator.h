@@ -30,6 +30,7 @@ class ThreePhaseCommunicator {
                           std::function<void(Future *fu)> &callback) = 0;
   virtual void SendAbort(parid_t pid, txnid_t tid,
                          std::function<void(Future *fu)> &callback) = 0;
+  virtual ~ThreePhaseCommunicator() {}
 };
 
 }
