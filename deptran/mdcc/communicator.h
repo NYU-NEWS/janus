@@ -22,6 +22,10 @@ class MdccCommunicator: public ThreePhaseCommunicator {
     }
   }
 
+  virtual ~MdccCommunicator() {
+    delete poll_;
+  }
+
   void SendStart(groupid_t gid,
                  RequestHeader &header,
                  map<int32_t, Value> &input,
