@@ -111,7 +111,8 @@ void TpccPiece::reg_stock_level() {
                               ROW_DISTRICT);
 
     i32 oi = 0;
-    dtxn->ReadColumn(r, TPCC_COL_DISTRICT_D_NEXT_O_ID, &output[oi++], TXN_SAFE, TXN_DEFERRED);
+    dtxn->ReadColumn(r, TPCC_COL_DISTRICT_D_NEXT_O_ID,
+                     &output[oi++], TXN_DEFERRED);
 
     *res = SUCCESS;
   } END_PIE
@@ -192,11 +193,11 @@ void TpccPiece::reg_stock_level() {
     int i = 0;
     for (std::unordered_set<i32>::iterator s_i_ids_it = s_i_ids.begin();
          s_i_ids_it != s_i_ids.end(); s_i_ids_it++) {
-      tpcc_ch->inputs_[2 + i] = map<int32_t, Value>({
-                                               {0, Value(*s_i_ids_it)},                      // 0 ==> s_i_id
-                                               {1, Value((i32) tpcc_ch->stock_level_dep_.w_id)},      // 1 ==> s_w_id
-                                               {2, Value((i32) tpcc_ch->stock_level_dep_.threshold)}  // 2 ==> threshold
-                                           });
+      tpcc_ch->inputs_[2 + i] = {
+          {0, Value(*s_i_ids_it)},                      // 0 ==> s_i_id
+          {1, Value((i32) tpcc_ch->stock_level_dep_.w_id)},      // 1 ==> s_w_id
+          {2, Value((i32) tpcc_ch->stock_level_dep_.threshold)}  // 2 ==> threshold
+      };
       tpcc_ch->output_size_[2 + i] = 1;
       tpcc_ch->p_types_[2 + i] = TPCC_STOCK_LEVEL_2;
       tpcc_ch->stock_level_shard(TPCC_TB_STOCK,
@@ -221,7 +222,7 @@ void TpccPiece::reg_stock_level() {
 
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_STOCK), mb,
                               ROW_STOCK);
-    dtxn->ReadColumn(r, TPCC_COL_STOCK_S_QUANTITY, &buf, TXN_SAFE, TXN_DEFERRED);
+    dtxn->ReadColumn(r, TPCC_COL_STOCK_S_QUANTITY, &buf, TXN_DEFERRED);
 
     if (buf.get_i32() < input[2].get_i32())
         output[output_index++] = Value((i32) 1);

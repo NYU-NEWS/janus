@@ -28,7 +28,7 @@ void TpcaPiece::reg_pieces() {
     r = dtxn->Query(txn->get_table(TPCA_CUSTOMER), mb);
     dtxn->ReadColumn(r, 1, &buf, TXN_BYPASS);
     buf.set_i64(buf.get_i64() + 1/*input[1].get_i64()*/);
-    dtxn->WriteColumn(r, 1, buf, TXN_SAFE, TXN_DEFERRED);
+    dtxn->WriteColumn(r, 1, buf, TXN_DEFERRED);
 
     output[output_index++] = buf;
     *res = SUCCESS;
@@ -52,7 +52,7 @@ void TpcaPiece::reg_pieces() {
 
         dtxn->ReadColumn(r, 1, &buf, TXN_BYPASS);
         buf.set_i64(buf.get_i64() + 1/*input[1].get_i64()*/);
-        dtxn->WriteColumn(r, 1, buf, TXN_SAFE, TXN_DEFERRED);
+        dtxn->WriteColumn(r, 1, buf, TXN_DEFERRED);
 
         *res = SUCCESS;
     } END_PIE
@@ -74,7 +74,7 @@ void TpcaPiece::reg_pieces() {
 
         dtxn->ReadColumn(r, 1, &buf, TXN_BYPASS);
         buf.set_i64(buf.get_i64() + 1/*input[1].get_i64()*/);
-        dtxn->WriteColumn(r, 1, buf, TXN_SAFE, TXN_DEFERRED);
+        dtxn->WriteColumn(r, 1, buf, TXN_DEFERRED);
 
         //output[output_index++] = buf;
 //        verify(*output_size >= output_index);

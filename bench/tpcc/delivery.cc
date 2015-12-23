@@ -221,7 +221,7 @@ void TpccPiece::reg_delivery() {
     dtxn->ReadColumn(r, TPCC_COL_ORDER_O_C_ID,
                      &output[oi++], TXN_BYPASS); // read o_c_id
     dtxn->WriteColumn(r, TPCC_COL_ORDER_O_CARRIER_ID,
-                      input[3], TXN_SAFE, TXN_INSTANT); // write o_carrier_id
+                      input[3], TXN_INSTANT); // write o_carrier_id
 
     *res = SUCCESS;
     return;
@@ -285,11 +285,11 @@ void TpccPiece::reg_delivery() {
       r = row_list[i++];
       Value buf(0.0);
       dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_AMOUNT,
-                       &buf, TXN_SAFE, TXN_INSTANT); // read ol_amount
+                       &buf, TXN_INSTANT); // read ol_amount
       ol_amount_buf += buf.get_double();
       dtxn->WriteColumn(r, TPCC_COL_ORDER_LINE_OL_DELIVERY_D,
                         Value(std::to_string(time(NULL))),
-                        TXN_SAFE, TXN_INSTANT);
+                        TXN_INSTANT);
     }
     output[oi++] = Value(ol_amount_buf);
 
@@ -331,12 +331,12 @@ void TpccPiece::reg_delivery() {
     dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_BALANCE, &buf);
     buf.set_double(buf.get_double() + input[3].get_double());
     dtxn->WriteColumn(r, TPCC_COL_CUSTOMER_C_BALANCE,
-                      buf, TXN_SAFE, TXN_DEFERRED);
+                      buf, TXN_DEFERRED);
     dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_DELIVERY_CNT,
                      &buf, TXN_BYPASS);
     buf.set_i32(buf.get_i32() + (i32) 1);
     dtxn->WriteColumn(r, TPCC_COL_CUSTOMER_C_DELIVERY_CNT,
-                      buf, TXN_SAFE, TXN_DEFERRED);
+                      buf, TXN_DEFERRED);
     *res = SUCCESS;
   } END_PIE
 }

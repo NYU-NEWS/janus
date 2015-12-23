@@ -13,9 +13,8 @@ TPLDTxn::TPLDTxn(i64 tid, Scheduler *mgr) : DTxn(tid, mgr) {
 bool TPLDTxn::ReadColumn(mdb::Row *row,
                          mdb::column_id_t col_id,
                          Value *value,
-                         bool bypass,
-                         bool deferred) {
-  if (locking_ && !bypass) {
+                         int hint_flag) {
+  if (locking_ && hint_flag != TXN_BYPASS) {
 //    verify(0);
     locks_.push_back(mdb::column_lock_t(row, col_id, ALock::RLOCK));
   } else {
@@ -29,9 +28,8 @@ bool TPLDTxn::ReadColumn(mdb::Row *row,
 bool TPLDTxn::ReadColumns(Row *row,
                           const std::vector<column_id_t> &col_ids,
                           std::vector<Value> *values,
-                          bool bypass,
-                          bool deferred) {
-  if (locking_ && !bypass) {
+                          int hint_flag) {
+  if (locking_ && hint_flag != TXN_BYPASS) {
 //    verify(0);
     for (auto col_id : col_ids) {
       locks_.push_back(mdb::column_lock_t(row, col_id, ALock::RLOCK));
@@ -48,9 +46,8 @@ bool TPLDTxn::ReadColumns(Row *row,
 bool TPLDTxn::WriteColumn(Row *row,
                           column_id_t col_id,
                           const Value &value,
-                          bool bypass,
-                          bool deferred) {
-  if (locking_  && !bypass) {
+                          int hint_flag) {
+  if (locking_  && hint_flag != TXN_BYPASS) {
 //    verify(0);
     locks_.push_back(mdb::column_lock_t(row, col_id, ALock::WLOCK));
   } else {
@@ -64,10 +61,9 @@ bool TPLDTxn::WriteColumn(Row *row,
 bool TPLDTxn::WriteColumns(Row *row,
                            const std::vector<column_id_t> &col_ids,
                            const std::vector<Value> &values,
-                           bool bypass,
-                           bool deferred) {
+                           int hint_flag) {
 
-  if (locking_  && !bypass) {
+  if (locking_  && hint_flag != TXN_BYPASS) {
 //    verify(0);
     for (auto col_id : col_ids) {
       locks_.push_back(mdb::column_lock_t(row, col_id, ALock::WLOCK));

@@ -207,7 +207,7 @@ void TpccPiece::reg_order_status() {
     dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_FIRST,   &output[oi++], TXN_BYPASS);// read c_first
     dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_MIDDLE,  &output[oi++], TXN_BYPASS);// read c_middle
     dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_LAST,    &output[oi++], TXN_BYPASS);// read c_last
-    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_BALANCE, &output[oi++], TXN_SAFE, TXN_DEFERRED);// read c_balance
+    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_BALANCE, &output[oi++], TXN_DEFERRED);// read c_balance
 
     *res = SUCCESS;
   } END_PIE
@@ -237,7 +237,7 @@ void TpccPiece::reg_order_status() {
     i32 oi = 0;
     dtxn->ReadColumn(r, TPCC_COL_ORDER_O_ID, &output[oi++], TXN_BYPASS); // output[0] ==> o_id
     dtxn->ReadColumn(r, TPCC_COL_ORDER_O_ENTRY_D, &output[oi++], TXN_BYPASS); // output[1] ==> o_entry_d
-    dtxn->ReadColumn(r, TPCC_COL_ORDER_O_CARRIER_ID, &output[oi++], TXN_SAFE, TXN_DEFERRED); // output[2] ==> o_carrier_id
+    dtxn->ReadColumn(r, TPCC_COL_ORDER_O_CARRIER_ID, &output[oi++], TXN_DEFERRED); // output[2] ==> o_carrier_id
 //        Log::debug("piece: %d, o_id: %d", TPCC_ORDER_STATUS_2, output[0].get_i32());
     *res = SUCCESS;
   } END_PIE
@@ -301,7 +301,7 @@ void TpccPiece::reg_order_status() {
       r = row_list[i++];
       dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_I_ID, &output[oi++], TXN_BYPASS); // output[0] ==> ol_i_id
       dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_SUPPLY_W_ID, &output[oi++], TXN_BYPASS); // output[1] ==> ol_supply_w_id
-      dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_DELIVERY_D, &output[oi++], TXN_SAFE, TXN_DEFERRED); // output[2] ==> ol_delivery_d
+      dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_DELIVERY_D, &output[oi++], TXN_DEFERRED); // output[2] ==> ol_delivery_d
       dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_QUANTITY, &output[oi++], TXN_BYPASS); // output[3] ==> ol_quantity
       dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_AMOUNT, &output[oi++], TXN_BYPASS); // output[4] ==> ol_amount
     }

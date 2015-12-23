@@ -255,10 +255,12 @@ void TpccPiece::reg_payment() {
                     mb,
                     ROW_DISTRICT_TEMP);
     verify(r->schema_ != nullptr);
-    dtxn->ReadColumn(r, TPCC_COL_DISTRICT_D_YTD, &buf, TXN_BYPASS);
+    dtxn->ReadColumn(r, TPCC_COL_DISTRICT_D_YTD,
+                     &buf, TXN_BYPASS);
     // W district
     buf.set_double(buf.get_double() + input[2].get_double());
-    dtxn->WriteColumn(r, TPCC_COL_DISTRICT_D_YTD, buf, TXN_SAFE, TXN_DEFERRED);
+    dtxn->WriteColumn(r, TPCC_COL_DISTRICT_D_YTD,
+                      buf, TXN_DEFERRED);
     *res = SUCCESS;
   } END_PIE
 
@@ -364,9 +366,9 @@ void TpccPiece::reg_payment() {
     dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_CREDIT     , &buf[10], TXN_BYPASS );
     dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_CREDIT_LIM , &buf[11], TXN_BYPASS );
     dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_DISCOUNT   , &buf[12], TXN_BYPASS );
-    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_BALANCE    , &buf[13], TXN_SAFE, TXN_DEFERRED);
-    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_YTD_PAYMENT, &buf[14], TXN_SAFE, TXN_DEFERRED);
-    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_DATA       , &buf[15], TXN_SAFE, TXN_DEFERRED);
+    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_BALANCE    , &buf[13], TXN_DEFERRED);
+    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_YTD_PAYMENT, &buf[14], TXN_DEFERRED);
+    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_DATA       , &buf[15], TXN_DEFERRED);
 
     // if c_credit == "BC" (bad) 10%
     // here we use c_id to pick up 10% instead of c_credit

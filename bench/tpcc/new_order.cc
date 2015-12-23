@@ -248,7 +248,7 @@ void TpccPiece::reg_new_order() {
     // read d_next_o_id, increment by 1
     buf.set_i32((i32)(buf.get_i32() + 1));
     dtxn->WriteColumn(r, TPCC_COL_DISTRICT_D_NEXT_O_ID,
-                      buf, TXN_SAFE, TXN_INSTANT);
+                      buf, TXN_INSTANT);
     return;
   } END_PIE
 
