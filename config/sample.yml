@@ -21,11 +21,6 @@ site:
 # site - process map
 process:
   s101: localhost
-#  s102: localhost
-#  s201: localhost
-#  s202: localhost
-#  s301: localhost
-#  s302: localhost
   c1: localhost
   c2: localhost
   c3: localhost

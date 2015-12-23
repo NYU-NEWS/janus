@@ -68,7 +68,6 @@ void client_launch_workers() {
   for (auto &th: client_threads) {
     th.join();
   }
-
 }
 
 

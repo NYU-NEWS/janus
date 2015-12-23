@@ -440,7 +440,6 @@ int TPCCDSharding::PopulateTable(uint32_t sid) {
 
   while (number2populate > 0) {
     uint32_t pre_num2populate = number2populate;
-//    std::map<std::string, tb_info_t>::iterator tb_it = tb_info_.begin();
 
     for (auto tb_it = tb_infos_.begin(); tb_it != tb_infos_.end(); tb_it++) {
       tb_info_t *tb_info = &(tb_it->second);

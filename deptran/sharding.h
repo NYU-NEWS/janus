@@ -83,8 +83,6 @@ class Sharding {
              bool _is_foreign,
              string ftbl_name,
              string fcol_name
-//             tb_info_t *_foreign_tb,
-//             column_t *_foreign
     ) : type(_type), name(_name), is_primary(_is_primary), values(NULL),
         is_foreign(_is_foreign),
         foreign_tbl_name(ftbl_name),
@@ -127,25 +125,15 @@ class Sharding {
       else sharding_method = MODULUS;
     }
 
-//    tb_info_t(const tb_info_t& tbl)
-//        : num_site(tbl.num_site), site_id(tbl.site_id),
-//          num_records(tbl.num_records), symbol(tbl.symbol),
-//          sharding_method(tbl.sharding_method), populated(tbl.populated),
-//          columns(tbl.columns), tb_name(tbl.tb_name) {
-//      // TODO
-//    }
-
     method_t sharding_method;
     uint32_t num_site;
     uint32_t *site_id;
     uint64_t num_records;
-//    bool populated;
     map<uint32_t, bool> populated;
 
     std::vector<column_t> columns;
     mdb::symbol_t symbol;
     std::string tb_name;
-
   };
 
   std::map<std::string, tb_info_t> tb_infos_;
@@ -190,7 +178,7 @@ class Sharding {
   void release_foreign_values();
 
   uint32_t site_from_key(const MultiValue &key,
-                                    const tb_info_t *tb_info);
+                         const tb_info_t *tb_info);
 
   uint32_t modulus(const MultiValue &key,
                    unsigned int num_site,
@@ -200,14 +188,10 @@ class Sharding {
                        unsigned int num_site,
                        const unsigned int *site_id);
 
-
-//  static Sharding *sharding_s;
-
   Sharding();
   Sharding(const Sharding& sharding);
 
  public:
-
   int init_schema(const std::string &tb_name,
                          mdb::Schema *schema,
                          mdb::symbol_t *symbol);

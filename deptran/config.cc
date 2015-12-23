@@ -484,7 +484,7 @@ void Config::LoadBenchYML(YAML::Node config) {
   txn_weight_.push_back(txn_weights_["order_status"]);
   txn_weight_.push_back(txn_weights_["delivery"]);
   txn_weight_.push_back(txn_weights_["stock_level"]);
-//  this->InitTPCCD();
+
   sharding_ = Frame().CreateSharding();
   auto populations = config["population"];
   auto &tb_infos = sharding_->tb_infos_;
@@ -584,15 +584,13 @@ void Config::LoadShardingYML(YAML::Node config) {
     string method = it->second.as<string>();
 
     tbl_info.num_site = get_num_site();
-    tbl_info.site_id  =
-        (uint32_t *)malloc(sizeof(uint32_t) * get_num_site());
+    tbl_info.site_id  = (uint32_t *)malloc(sizeof(uint32_t) * get_num_site());
     verify(tbl_info.site_id != NULL);
 
     for (int i = 0; i < get_num_site(); i++) {
       tbl_info.site_id[i] = i;
     }
     verify(tbl_info.num_site > 0 && tbl_info.num_site <= get_num_site());
-    // set tb_info.symbol TBL_SORTED or TBL_UNSORTED or TBL_SNAPSHOT
     tbl_info.symbol = tbl_types_map_["sorted"];
   }
 }

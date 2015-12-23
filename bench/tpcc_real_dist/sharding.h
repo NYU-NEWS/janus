@@ -20,15 +20,14 @@ class TPCCDSharding: public Sharding {
              uint32_t &self_primary_col,
              bool &self_primary_col_find,
              map<uint32_t,
-                 std::pair<uint32_t, uint32_t> > &prim_foreign_index);
+             std::pair<uint32_t, uint32_t> > &prim_foreign_index);
   void temp2(tb_info_t *tb_info,
              uint32_t &sid,
              uint32_t &col_index,
              std::vector<uint32_t> &bound_foreign_index,
              uint64_t &num_self_primary,
              map<uint32_t,
-                 std::pair<uint32_t,
-                           uint32_t> > &prim_foreign_index,
+             std::pair<uint32_t, uint32_t> > &prim_foreign_index,
              std::vector<Value> &row_data,
              Value &key_value,
              const mdb::Schema *schema,
