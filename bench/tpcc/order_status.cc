@@ -32,13 +32,12 @@ void TpccChopper::order_status_init(TxnRequest &req) {
     n_pieces_out_ = 1; // since piece 0 not needed, set it as one started piece
   }
   else { // query by c_last
-
     // piece 0, R customer, c_last --> c_id
-    inputs_[0] = map<int32_t, Value>({
-                                         {0, req.input_[2]},  // 0 ==>    c_last
-                                         {1, req.input_[0]},  // 1 ==>    c_w_id
-                                         {2, req.input_[1]}   // 2 ==>    c_d_id
-                                     });
+    inputs_[0] = {
+        {TPCC_VAR_C_LAST, req.input_[2]},  // 0 ==>    c_last
+        {TPCC_VAR_W_ID, req.input_[0]},    // 1 ==>    c_w_id
+        {TPCC_VAR_D_ID, req.input_[1]}     // 2 ==>    c_d_id
+    };
     output_size_[0] = 1; // return c_id only
     p_types_[0] = TPCC_ORDER_STATUS_0;
     order_status_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[0]);
@@ -54,9 +53,9 @@ void TpccChopper::order_status_init(TxnRequest &req) {
 
   // piece 1, R customer, depends on piece 0 if using c_last instead of c_id
   inputs_[1] = {
-      {0, req.input_[0]},  // 0 ==> c_w_id
-      {1, req.input_[1]},  // 1 ==> c_d_id
-      {2, req.input_[2]}   // 2 ==> c_id, may depends on piece 0
+      {TPCC_VAR_W_ID, req.input_[0]},  // 0 ==> c_w_id
+      {TPCC_VAR_D_ID, req.input_[1]},  // 1 ==> c_d_id
+      {TPCC_VAR_C_ID, req.input_[2]}   // 2 ==> c_id, may depends on piece 0
   };
   output_size_[1] = 4;
   p_types_[1] = TPCC_ORDER_STATUS_1;
@@ -64,12 +63,9 @@ void TpccChopper::order_status_init(TxnRequest &req) {
 
   // piece 2, R order, depends on piece 0 if using c_last instead of c_id
   inputs_[2] = {
-      {0, req.input_[0]},
-      // 0 ==>    o_w_id
-      {1, req.input_[1]},
-      // 1 ==>    o_d_id
-      {2, req.input_[2]}
-      // 2 ==>    o_c_id, may depends on piece 0
+      {TPCC_VAR_W_ID, req.input_[0]}, // 0 ==>    o_w_id
+      {TPCC_VAR_D_ID, req.input_[1]}, // 1 ==>    o_d_id
+      {TPCC_VAR_C_ID, req.input_[2]}  // 2 ==>    o_c_id, may depends on piece 0
   };
   output_size_[2] = 3;
   p_types_[2] = TPCC_ORDER_STATUS_2;
@@ -77,12 +73,9 @@ void TpccChopper::order_status_init(TxnRequest &req) {
 
   // piece 3, R order_line, depends on piece 2
   inputs_[3] = {
-      {0, req.input_[0]},
-      // 0 ==>    ol_w_id
-      {1, req.input_[1]},
-      // 1 ==>    ol_d_id
-      {2, Value()}
-      // 2 ==>    ol_o_id, depends on piece 2
+      {TPCC_VAR_W_ID, req.input_[0]}, // 0 ==>    ol_w_id
+      {TPCC_VAR_D_ID, req.input_[1]}, // 1 ==>    ol_d_id
+      {TPCC_VAR_O_ID, Value()}        // 2 ==>    ol_o_id, depends on piece 2
   };
   output_size_[3] = 15 * 5;
   p_types_[3] = TPCC_ORDER_STATUS_3;
@@ -136,17 +129,17 @@ void TpccPiece::reg_order_status() {
     // #################################################################
 
     mdb::MultiBlob mbl(3), mbh(3);
-    mbl[0] = input[2].get_blob();
-    mbh[0] = input[2].get_blob();
-    mbl[1] = input[1].get_blob();
-    mbh[1] = input[1].get_blob();
+    mbl[0] = input[TPCC_VAR_D_ID].get_blob();
+    mbh[0] = input[TPCC_VAR_D_ID].get_blob();
+    mbl[1] = input[TPCC_VAR_W_ID].get_blob();
+    mbh[1] = input[TPCC_VAR_W_ID].get_blob();
     Value c_id_low(std::numeric_limits<i32>::min());
     Value c_id_high(std::numeric_limits<i32>::max());
 
     mbl[2] = c_id_low.get_blob();
     mbh[2] = c_id_high.get_blob();
-    c_last_id_t key_low(input[0].get_str(), mbl, &(C_LAST_SCHEMA));
-    c_last_id_t key_high(input[0].get_str(), mbh, &(C_LAST_SCHEMA));
+    c_last_id_t key_low(input[TPCC_VAR_C_LAST].get_str(), mbl, &(C_LAST_SCHEMA));
+    c_last_id_t key_high(input[TPCC_VAR_C_LAST].get_str(), mbh, &(C_LAST_SCHEMA));
     std::multimap<c_last_id_t, rrr::i32>::iterator it, it_low, it_high, it_mid;
     bool inc = false, mid_set = false;
     it_low = C_LAST2ID.lower_bound(key_low);
@@ -166,8 +159,10 @@ void TpccPiece::reg_order_status() {
         }
     }
     Log_debug("w_id: %d, d_id: %d, c_last: %s, num customer: %d",
-            input[1].get_i32(), input[2].get_i32(),
-            input[0].get_str().c_str(), n_c);
+              input[TPCC_VAR_W_ID].get_i32(),
+              input[TPCC_VAR_D_ID].get_i32(),
+              input[TPCC_VAR_C_LAST].get_str().c_str(),
+              n_c);
     verify(mid_set);
     i32 oi = 0;
     output[oi++] = Value(it_mid->second);
@@ -179,11 +174,10 @@ void TpccPiece::reg_order_status() {
     TpccChopper* tpcc_ch = (TpccChopper*)ch;
     verify(!tpcc_ch->order_status_dep_.piece_last2id);
     tpcc_ch->order_status_dep_.piece_last2id = true;
-    tpcc_ch->inputs_[1][2] = output[0];
+    tpcc_ch->inputs_[1][TPCC_VAR_C_ID] = output[0];
     tpcc_ch->status_[1] = READY;
-    tpcc_ch->inputs_[2][2] = output[0];
+    tpcc_ch->inputs_[2][TPCC_VAR_C_ID] = output[0];
     tpcc_ch->status_[2] = READY;
-
     return true;
   END_CB
 
@@ -197,10 +191,9 @@ void TpccPiece::reg_order_status() {
     // R customer
     Value buf;
     mdb::MultiBlob mb(3);
-    //cell_locator_t cl(TPCC_TB_CUSTOMER, 3);
-    mb[0] = input[2].get_blob();
-    mb[1] = input[1].get_blob();
-    mb[2] = input[0].get_blob();
+    mb[0] = input[TPCC_VAR_C_ID].get_blob();
+    mb[1] = input[TPCC_VAR_D_ID].get_blob();
+    mb[2] = input[TPCC_VAR_W_ID].get_blob();
     mdb::Row *r = dtxn->Query(tbl, mb, ROW_CUSTOMER);
 
     i32 oi = 0;
@@ -219,16 +212,16 @@ void TpccPiece::reg_order_status() {
     verify(input.size() == 3);
 
     mdb::MultiBlob mb_0(3);
-    mb_0[0] = input[1].get_blob();
-    mb_0[1] = input[0].get_blob();
-    mb_0[2] = input[2].get_blob();
+    mb_0[0] = input[TPCC_VAR_D_ID].get_blob();
+    mb_0[1] = input[TPCC_VAR_W_ID].get_blob();
+    mb_0[2] = input[TPCC_VAR_C_ID].get_blob();
     mdb::Row *r_0 = dtxn->Query(dtxn->GetTable(TPCC_TB_ORDER_C_ID_SECONDARY),
                                 mb_0,
                                 ROW_ORDER_SEC);
 
     mdb::MultiBlob mb(3);
-    mb[0] = input[1].get_blob();
-    mb[1] = input[0].get_blob();
+    mb[0] = input[TPCC_VAR_D_ID].get_blob();
+    mb[1] = input[TPCC_VAR_W_ID].get_blob();
     mb[2] = r_0->get_blob(3); // FIXME add lock before reading
 
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_ORDER),
@@ -247,7 +240,7 @@ void TpccPiece::reg_order_status() {
     verify(output.size() == 3);
     verify(!tpcc_ch->order_status_dep_.piece_order);
     tpcc_ch->order_status_dep_.piece_order = true;
-    tpcc_ch->inputs_[3][2] = output[0];
+    tpcc_ch->inputs_[3][TPCC_VAR_O_ID] = output[0];
     tpcc_ch->status_[3] = READY;
     return true;
   END_CB
@@ -259,13 +252,15 @@ void TpccPiece::reg_order_status() {
     verify(input.size() == 3);
     mdb::MultiBlob mbl(4), mbh(4);
     Log_debug("ol_d_id: %d, ol_w_id: %d, ol_o_id: %d",
-            input[2].get_i32(), input[1].get_i32(), input[0].get_i32());
-    mbl[0] = input[1].get_blob();
-    mbh[0] = input[1].get_blob();
-    mbl[1] = input[0].get_blob();
-    mbh[1] = input[0].get_blob();
-    mbl[2] = input[2].get_blob();
-    mbh[2] = input[2].get_blob();
+              input[TPCC_VAR_O_ID].get_i32(),
+              input[TPCC_VAR_D_ID].get_i32(),
+              input[TPCC_VAR_W_ID].get_i32());
+    mbl[0] = input[TPCC_VAR_D_ID].get_blob();
+    mbh[0] = input[TPCC_VAR_D_ID].get_blob();
+    mbl[1] = input[TPCC_VAR_W_ID].get_blob();
+    mbh[1] = input[TPCC_VAR_W_ID].get_blob();
+    mbl[2] = input[TPCC_VAR_O_ID].get_blob();
+    mbh[2] = input[TPCC_VAR_O_ID].get_blob();
     Value ol_number_low(std::numeric_limits<i32>::min()),
             ol_number_high(std::numeric_limits<i32>::max());
     mbl[3] = ol_number_low.get_blob();

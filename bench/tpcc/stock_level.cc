@@ -21,21 +21,21 @@ void TpccChopper::stock_level_init(TxnRequest &req) {
   stock_level_dep_.threshold = req.input_[2].get_i32();
 
   // piece 0, R district
-  inputs_[0] = map<int32_t, Value>({
-                                       {0, req.input_[0]},  // 0    ==> w_id
-                                       {1, req.input_[1]}   // 1    ==> d_id
-                                   });
+  inputs_[0] = {
+      {TPCC_VAR_W_ID, req.input_[0]},  // 0    ==> w_id
+      {TPCC_VAR_D_ID, req.input_[1]}   // 1    ==> d_id
+  };
   output_size_[0] = 1;
   p_types_[0] = TPCC_STOCK_LEVEL_0;
   stock_level_shard(TPCC_TB_DISTRICT, req.input_, sharding_[0]);
   status_[0] = READY;
 
   // piece 1, R order_line
-  inputs_[1] = map<int32_t, Value>({
-                                       {0, Value()},        // 0    ==> d_next_o_id, depends on piece 0
-                                       {1, req.input_[0]},  // 1    ==> ol_w_id
-                                       {2, req.input_[1]}   // 2    ==> ol_d_id
-                                   });
+  inputs_[1] = {
+      {TPCC_VAR_D_NEXT_O_ID, Value()},        // 0    ==> d_next_o_id, depends on piece 0
+      {TPCC_VAR_W_ID, req.input_[0]},         // 1    ==> ol_w_id
+      {TPCC_VAR_D_ID, req.input_[1]}          // 2    ==> ol_d_id
+  };
   output_size_[1] = 20 * 15; // 20 orders * 15 order_line per order at most
   p_types_[1] = TPCC_STOCK_LEVEL_1;
   stock_level_shard(TPCC_TB_ORDER_LINE, req.input_, sharding_[1]);
@@ -97,14 +97,12 @@ void TpccPiece::reg_stock_level() {
   BEGIN_PIE(TPCC_STOCK_LEVEL,
           TPCC_STOCK_LEVEL_0, // Ri district
           DF_NO) {
-    // ###################################################
     verify(dtxn != nullptr);
     verify(input.size() == 2);
-    // ###################################################
     mdb::MultiBlob mb(2);
     //cell_locator_t cl(TPCC_TB_DISTRICT, 2);
-    mb[0] = input.at(1).get_blob();
-    mb[1] = input.at(0).get_blob();
+    mb[0] = input[TPCC_VAR_D_ID].get_blob();
+    mb[1] = input[TPCC_VAR_W_ID].get_blob();
 
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT),
                               mb,
@@ -120,7 +118,7 @@ void TpccPiece::reg_stock_level() {
   BEGIN_CB(TPCC_STOCK_LEVEL, 0)
     TpccChopper *tpcc_ch = (TpccChopper*) ch;
     verify(output.size() == 1);
-    tpcc_ch->inputs_[1][0] = output[0];
+    tpcc_ch->inputs_[1][TPCC_VAR_D_NEXT_O_ID] = output[0];
     tpcc_ch->status_[1] = READY;
     return true;
   END_CB
@@ -129,15 +127,14 @@ void TpccPiece::reg_stock_level() {
           TPCC_STOCK_LEVEL_1, // Ri order_line
           DF_NO) {
     verify(input.size() == 3);
-
     mdb::MultiBlob mbl(4), mbh(4);
-    mbl[0] = input.at(2).get_blob();
-    mbh[0] = input.at(2).get_blob();
-    mbl[1] = input.at(1).get_blob();
-    mbh[1] = input.at(1).get_blob();
-    Value ol_o_id_low(input[0].get_i32() - (i32) 21);
+    mbl[0] = input[TPCC_VAR_D_ID].get_blob();
+    mbh[0] = input[TPCC_VAR_D_ID].get_blob();
+    mbl[1] = input[TPCC_VAR_W_ID].get_blob();
+    mbh[1] = input[TPCC_VAR_W_ID].get_blob();
+    Value ol_o_id_low(input[TPCC_VAR_D_NEXT_O_ID].get_i32() - (i32) 21);
     mbl[2] = ol_o_id_low.get_blob();
-    mbh[2] = input[0].get_blob();
+    mbh[2] = input[TPCC_VAR_D_NEXT_O_ID].get_blob();
     Value ol_number_low(std::numeric_limits<i32>::max()),
             ol_number_high(std::numeric_limits<i32>::min());
     mbl[3] = ol_number_low.get_blob();
@@ -150,7 +147,10 @@ void TpccPiece::reg_stock_level() {
                                       header.pid);
 
     Log_debug("tid: %llx, stock_level: piece 1: d_next_o_id: %d, ol_w_id: %d, ol_d_id: %d",
-            header.tid, input[0].get_i32(), input[1].get_i32(), input[2].get_i32());
+              header.tid,
+              input[TPCC_VAR_D_NEXT_O_ID].get_i32(),
+              input[TPCC_VAR_W_ID].get_i32(),
+              input[TPCC_VAR_D_ID].get_i32());
 
     std::vector<mdb::Row *> row_list;
     row_list.reserve(20);
@@ -160,7 +160,6 @@ void TpccPiece::reg_stock_level() {
     }
 
     verify(row_list.size() != 0);
-
 
     std::vector<mdb::column_lock_t> column_locks;
     column_locks.reserve(row_list.size());
@@ -191,8 +190,9 @@ void TpccPiece::reg_stock_level() {
     tpcc_ch->sharding_.resize(tpcc_ch->n_pieces_all_);
     tpcc_ch->status_.resize(tpcc_ch->n_pieces_all_);
     int i = 0;
-    for (std::unordered_set<i32>::iterator s_i_ids_it = s_i_ids.begin();
-         s_i_ids_it != s_i_ids.end(); s_i_ids_it++) {
+    for (auto s_i_ids_it = s_i_ids.begin();
+         s_i_ids_it != s_i_ids.end();
+         s_i_ids_it++) {
       tpcc_ch->inputs_[2 + i] = {
           {0, Value(*s_i_ids_it)},                      // 0 ==> s_i_id
           {1, Value((i32) tpcc_ch->stock_level_dep_.w_id)},      // 1 ==> s_w_id
@@ -210,8 +210,8 @@ void TpccPiece::reg_stock_level() {
   END_CB
 
   BEGIN_PIE(TPCC_STOCK_LEVEL,
-          TPCC_STOCK_LEVEL_2, // R stock
-          DF_NO) {
+            TPCC_STOCK_LEVEL_2, // R stock
+            DF_NO) {
     verify(input.size() == 3);
     i32 output_index = 0;
     Value buf(0);
