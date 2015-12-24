@@ -296,12 +296,9 @@ void TpccPiece::reg_new_order() {
   BEGIN_PIE(TPCC_NEW_ORDER,
             TPCC_NEW_ORDER_3, // W order
             DF_REAL) {
-    // ############################################################
     verify(input.size() == 7);
     Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_3);
     i32 oi = 0;
-    // ############################################################
-
     mdb::Table *tbl = dtxn->GetTable(TPCC_TB_ORDER);
 
     mdb::MultiBlob mb(3);
@@ -347,7 +344,7 @@ void TpccPiece::reg_new_order() {
     r = dtxn->Query(dtxn->GetTable(TPCC_TB_ORDER_C_ID_SECONDARY),
                     mb,
                     ROW_ORDER_SEC);
-    dtxn->WriteColumn(r, 3, input[0]);
+    dtxn->WriteColumn(r, 3, input[TPCC_VAR_W_ID]);
     return;
   } END_PIE
 
