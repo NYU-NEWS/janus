@@ -144,6 +144,7 @@ namespace rococo {
 #define TPCC_VAR_H_KEY                         (1008)
 #define TPCC_VAR_O_ID                          (1011)
 #define TPCC_VAR_O_CARRIER_ID                  (1012)
+#define TPCC_VAR_O_ENTRY_D                     (1035)
 #define TPCC_VAR_OL_AMOUNT                     (1013)
 #define TPCC_VAR_D_NEXT_O_ID                   (1014)
 #define TPCC_VAR_OL_CNT                        (1015)

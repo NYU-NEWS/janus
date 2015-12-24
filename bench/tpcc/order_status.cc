@@ -165,7 +165,7 @@ void TpccPiece::reg_order_status() {
               n_c);
     verify(mid_set);
     i32 oi = 0;
-    output[oi++] = Value(it_mid->second);
+    output[TPCC_VAR_C_ID] = Value(it_mid->second);
 
     *res = SUCCESS;
   } END_PIE
@@ -174,9 +174,9 @@ void TpccPiece::reg_order_status() {
     TpccChopper* tpcc_ch = (TpccChopper*)ch;
     verify(!tpcc_ch->order_status_dep_.piece_last2id);
     tpcc_ch->order_status_dep_.piece_last2id = true;
-    tpcc_ch->inputs_[1][TPCC_VAR_C_ID] = output[0];
+    tpcc_ch->inputs_[1][TPCC_VAR_C_ID] = output[TPCC_VAR_C_ID];
     tpcc_ch->status_[1] = READY;
-    tpcc_ch->inputs_[2][TPCC_VAR_C_ID] = output[0];
+    tpcc_ch->inputs_[2][TPCC_VAR_C_ID] = output[TPCC_VAR_C_ID];
     tpcc_ch->status_[2] = READY;
     return true;
   END_CB
@@ -197,10 +197,22 @@ void TpccPiece::reg_order_status() {
     mdb::Row *r = dtxn->Query(tbl, mb, ROW_CUSTOMER);
 
     i32 oi = 0;
-    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_FIRST,   &output[oi++], TXN_BYPASS);// read c_first
-    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_MIDDLE,  &output[oi++], TXN_BYPASS);// read c_middle
-    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_LAST,    &output[oi++], TXN_BYPASS);// read c_last
-    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_BALANCE, &output[oi++], TXN_DEFERRED);// read c_balance
+    dtxn->ReadColumn(r,
+                     TPCC_COL_CUSTOMER_C_FIRST,
+                     &output[TPCC_VAR_C_FIRST],
+                     TXN_BYPASS);// read c_first
+    dtxn->ReadColumn(r,
+                     TPCC_COL_CUSTOMER_C_MIDDLE,
+                     &output[TPCC_VAR_C_MIDDLE],
+                     TXN_BYPASS);// read c_middle
+    dtxn->ReadColumn(r,
+                     TPCC_COL_CUSTOMER_C_LAST,
+                     &output[TPCC_VAR_C_LAST],
+                     TXN_BYPASS);// read c_last
+    dtxn->ReadColumn(r,
+                     TPCC_COL_CUSTOMER_C_BALANCE,
+                     &output[TPCC_VAR_C_BALANCE],
+                     TXN_DEFERRED);// read c_balance
 
     *res = SUCCESS;
   } END_PIE
@@ -227,10 +239,18 @@ void TpccPiece::reg_order_status() {
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_ORDER),
                               mb,
                               ROW_ORDER);
-    i32 oi = 0;
-    dtxn->ReadColumn(r, TPCC_COL_ORDER_O_ID, &output[oi++], TXN_BYPASS); // output[0] ==> o_id
-    dtxn->ReadColumn(r, TPCC_COL_ORDER_O_ENTRY_D, &output[oi++], TXN_BYPASS); // output[1] ==> o_entry_d
-    dtxn->ReadColumn(r, TPCC_COL_ORDER_O_CARRIER_ID, &output[oi++], TXN_DEFERRED); // output[2] ==> o_carrier_id
+    dtxn->ReadColumn(r,
+                     TPCC_COL_ORDER_O_ID,
+                     &output[TPCC_VAR_O_ID],
+                     TXN_BYPASS); // output[0] ==> o_id
+    dtxn->ReadColumn(r,
+                     TPCC_COL_ORDER_O_ENTRY_D,
+                     &output[TPCC_VAR_O_ENTRY_D],
+                     TXN_BYPASS); // output[1] ==> o_entry_d
+    dtxn->ReadColumn(r,
+                     TPCC_COL_ORDER_O_CARRIER_ID,
+                     &output[TPCC_VAR_O_CARRIER_ID],
+                     TXN_DEFERRED); // output[2] ==> o_carrier_id
 //        Log::debug("piece: %d, o_id: %d", TPCC_ORDER_STATUS_2, output[0].get_i32());
     *res = SUCCESS;
   } END_PIE
@@ -240,7 +260,7 @@ void TpccPiece::reg_order_status() {
     verify(output.size() == 3);
     verify(!tpcc_ch->order_status_dep_.piece_order);
     tpcc_ch->order_status_dep_.piece_order = true;
-    tpcc_ch->inputs_[3][TPCC_VAR_O_ID] = output[0];
+    tpcc_ch->inputs_[3][TPCC_VAR_O_ID] = output[TPCC_VAR_O_ID];
     tpcc_ch->status_[3] = READY;
     return true;
   END_CB

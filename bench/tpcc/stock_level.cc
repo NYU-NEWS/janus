@@ -108,9 +108,8 @@ void TpccPiece::reg_stock_level() {
                               mb,
                               ROW_DISTRICT);
 
-    i32 oi = 0;
     dtxn->ReadColumn(r, TPCC_COL_DISTRICT_D_NEXT_O_ID,
-                     &output[oi++], TXN_DEFERRED);
+                     &output[TPCC_VAR_D_NEXT_O_ID], TXN_DEFERRED);
 
     *res = SUCCESS;
   } END_PIE
@@ -118,7 +117,7 @@ void TpccPiece::reg_stock_level() {
   BEGIN_CB(TPCC_STOCK_LEVEL, 0)
     TpccChopper *tpcc_ch = (TpccChopper*) ch;
     verify(output.size() == 1);
-    tpcc_ch->inputs_[1][TPCC_VAR_D_NEXT_O_ID] = output[0];
+    tpcc_ch->inputs_[1][TPCC_VAR_D_NEXT_O_ID] = output[TPCC_VAR_D_NEXT_O_ID];
     tpcc_ch->status_[1] = READY;
     return true;
   END_CB

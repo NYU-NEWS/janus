@@ -115,7 +115,6 @@ void TpccPiece::reg_delivery() {
 
     Log::debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_0);
     verify(input.size() == 2);
-    i32 oi = 0;
     Value buf;
     mdb::Txn *txn = dtxn->mdb_txn_;
     //cell_locator_t cl(TPCC_TB_NEW_ORDER, 3);
@@ -141,10 +140,10 @@ void TpccPiece::reg_delivery() {
       r = rs.next();
       TPL_KISS_ROW(r);
       dtxn->ReadColumn(r, TPCC_COL_NEW_ORDER_NO_W_ID, &buf);
-      output[oi++] = buf;
+      output[TPCC_VAR_O_ID] = buf;
     } else {
       TPL_KISS_NONE;
-      output[oi++] = Value((i32) -1);
+      output[TPCC_VAR_O_ID] = Value((i32) -1);
     }
     if (r) {
       txn->remove_row(tbl, r);
@@ -191,8 +190,8 @@ void TpccPiece::reg_delivery() {
                 tpcc_ch->inputs_[0][TPCC_VAR_D_ID].get_i32());
       return false;
     } else {
-      tpcc_ch->inputs_[1][TPCC_VAR_O_ID] = output[0];
-      tpcc_ch->inputs_[2][TPCC_VAR_O_ID] = output[0];
+      tpcc_ch->inputs_[1][TPCC_VAR_O_ID] = output[TPCC_VAR_O_ID];
+      tpcc_ch->inputs_[2][TPCC_VAR_O_ID] = output[TPCC_VAR_O_ID];
       tpcc_ch->status_[1] = READY;
       tpcc_ch->status_[2] = READY;
       tpcc_ch->delivery_dep_.piece_new_orders = true;
@@ -218,10 +217,14 @@ void TpccPiece::reg_delivery() {
     mdb::Row *r = dtxn->Query(txn->get_table(TPCC_TB_ORDER),
                               mb,
                               ROW_ORDER);
-    dtxn->ReadColumn(r, TPCC_COL_ORDER_O_C_ID,
-                     &output[oi++], TXN_BYPASS); // read o_c_id
-    dtxn->WriteColumn(r, TPCC_COL_ORDER_O_CARRIER_ID,
-                      input[TPCC_VAR_O_CARRIER_ID], TXN_INSTANT); // write o_carrier_id
+    dtxn->ReadColumn(r,
+                     TPCC_COL_ORDER_O_C_ID,
+                     &output[TPCC_VAR_C_ID],
+                     TXN_BYPASS); // read o_c_id
+    dtxn->WriteColumn(r,
+                      TPCC_COL_ORDER_O_CARRIER_ID,
+                      input[TPCC_VAR_O_CARRIER_ID],
+                      TXN_INSTANT); // write o_carrier_id
 
     *res = SUCCESS;
     return;
@@ -230,7 +233,7 @@ void TpccPiece::reg_delivery() {
   BEGIN_CB(TPCC_DELIVERY, 1)
     TpccChopper *tpcc_ch = (TpccChopper*) ch;
     verify(output.size() == 1);
-    tpcc_ch->inputs_[3][TPCC_VAR_C_ID] = output[0];
+    tpcc_ch->inputs_[3][TPCC_VAR_C_ID] = output[TPCC_VAR_C_ID];
     tpcc_ch->delivery_dep_.piece_orders = true;
     if (tpcc_ch->delivery_dep_.piece_order_lines) {
       tpcc_ch->status_[3] = READY;
@@ -245,7 +248,6 @@ void TpccPiece::reg_delivery() {
           DF_NO) {
     Log::debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_2);
     verify(input.size() == 3);
-    i32 oi = 0;
     //        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
     mdb::MultiBlob mbl(4), mbh(4);
     mbl[0] = input[TPCC_VAR_D_ID].get_blob();
@@ -291,7 +293,7 @@ void TpccPiece::reg_delivery() {
                         Value(std::to_string(time(NULL))),
                         TXN_INSTANT);
     }
-    output[oi++] = Value(ol_amount_buf);
+    output[TPCC_VAR_OL_AMOUNT] = Value(ol_amount_buf);
 
     *res = SUCCESS;
   } END_PIE
@@ -299,7 +301,7 @@ void TpccPiece::reg_delivery() {
   BEGIN_CB(TPCC_DELIVERY, 2)
     TpccChopper *tpcc_ch = (TpccChopper*) ch;
     verify(output.size() == 1);
-    tpcc_ch->inputs_[3][TPCC_VAR_OL_AMOUNT] = output[0];
+    tpcc_ch->inputs_[3][TPCC_VAR_OL_AMOUNT] = output[TPCC_VAR_OL_AMOUNT];
     tpcc_ch->delivery_dep_.piece_order_lines = true;
     if (tpcc_ch->delivery_dep_.piece_orders) {
       tpcc_ch->status_[3] = READY;
@@ -314,7 +316,6 @@ void TpccPiece::reg_delivery() {
           DF_REAL) {
     Log::debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_3);
     verify(input.size() == 4);
-    i32 oi = 0;
 //        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
                        mdb::Txn *txn = dtxn->mdb_txn_;
     mdb::Row *r = NULL;
@@ -324,7 +325,7 @@ void TpccPiece::reg_delivery() {
     mb[1] = input[TPCC_VAR_D_ID].get_blob();
     mb[2] = input[TPCC_VAR_W_ID].get_blob();
 
-    r = dtxn->Query(txn->get_table(TPCC_TB_CUSTOMER),
+    r = dtxn->Query(dtxn->GetTable(TPCC_TB_CUSTOMER),
                     mb,
                     ROW_CUSTOMER);
     Value buf(0.0);
