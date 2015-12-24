@@ -275,10 +275,6 @@ Config::Config(char           *ctrl_hostname,
 
 void Config::Load() {
   for (auto &name: config_paths_) {
-    // XML configurations are deprecated
-//    if (boost::algorithm::ends_with(name, "xml")) {
-//      LoadXML(name);
-//    }
     if (boost::algorithm::ends_with(name, "yml")) {
       LoadYML(name);
     } else {
@@ -291,12 +287,7 @@ void Config::Load() {
 }
 
 void Config::LoadYML(std::string &filename) {
-//  YAML::Node config = YAML::LoadFile(name);
-
   YAML::Node config = YAML::LoadFile(filename);
-
-//  verify(Sharding::sharding_s);
-//  Sharding::sharding_s = new Sharding();
 
   if (config["site"]) {
     LoadSiteYML(config["site"]);
