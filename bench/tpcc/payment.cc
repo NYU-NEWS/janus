@@ -125,8 +125,7 @@ void TpccChopper::payment_shard(const char *tb,
                                 const std::vector<mdb::Value> &input,
                                 uint32_t &site) {
   MultiValue mv;
-  if (tb == TPCC_TB_WAREHOUSE
-      || tb == TPCC_TB_DISTRICT)
+  if (tb == TPCC_TB_WAREHOUSE || tb == TPCC_TB_DISTRICT)
     mv = MultiValue(input[0]);
   else if (tb == TPCC_TB_CUSTOMER)
     mv = MultiValue(input[3]);
@@ -171,12 +170,24 @@ void TpccPiece::reg_payment() {
                               input[TPCC_VAR_W_ID].get_blob(),
                               ROW_WAREHOUSE);
     // R warehouse
-    dtxn->ReadColumn(r, TPCC_COL_WAREHOUSE_W_NAME,     &output[oi++]);  // 0 ==> w_name
-    dtxn->ReadColumn(r, TPCC_COL_WAREHOUSE_W_STREET_1, &output[oi++]);  // 1 ==> w_street_1
-    dtxn->ReadColumn(r, TPCC_COL_WAREHOUSE_W_STREET_2, &output[oi++]);  // 2 ==> w_street_2
-    dtxn->ReadColumn(r, TPCC_COL_WAREHOUSE_W_CITY,     &output[oi++]);  // 3 ==> w_city
-    dtxn->ReadColumn(r, TPCC_COL_WAREHOUSE_W_STATE,    &output[oi++]);  // 4 ==> w_state
-    dtxn->ReadColumn(r, TPCC_COL_WAREHOUSE_W_ZIP,      &output[oi++]);  // 5 ==> w_zip
+    dtxn->ReadColumn(r,
+                     TPCC_COL_WAREHOUSE_W_NAME,
+                     &output[TPCC_VAR_W_NAME]);
+    dtxn->ReadColumn(r,
+                     TPCC_COL_WAREHOUSE_W_STREET_1,
+                     &output[TPCC_VAR_W_STREET_1]);
+    dtxn->ReadColumn(r,
+                     TPCC_COL_WAREHOUSE_W_STREET_2,
+                     &output[TPCC_VAR_W_STREET_2]);
+    dtxn->ReadColumn(r,
+                     TPCC_COL_WAREHOUSE_W_CITY,
+                     &output[TPCC_VAR_W_CITY]);
+    dtxn->ReadColumn(r,
+                     TPCC_COL_WAREHOUSE_W_STATE,
+                     &output[TPCC_VAR_W_STATE]);
+    dtxn->ReadColumn(r,
+                     TPCC_COL_WAREHOUSE_W_ZIP,
+                     &output[TPCC_VAR_W_ZIP]);
     *res = SUCCESS;
   } END_PIE
 
@@ -185,7 +196,7 @@ void TpccPiece::reg_payment() {
     verify(!tpcc_ch->payment_dep_.piece_warehouse);
     verify(output.size() == 6);
     tpcc_ch->payment_dep_.piece_warehouse = true;
-    tpcc_ch->inputs_[5][TPCC_VAR_W_NAME] = output[0];
+    tpcc_ch->inputs_[5][TPCC_VAR_W_NAME] = output[TPCC_VAR_W_NAME];
     if (tpcc_ch->payment_dep_.piece_district &&
         tpcc_ch->payment_dep_.piece_last2id) {
       Log_debug("warehouse: d_name c_id ready");
@@ -201,7 +212,6 @@ void TpccPiece::reg_payment() {
           DF_NO) { // immediately read
     verify(input.size() == 2);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_1);
-    i32 oi = 0;
     Value buf;
     mdb::MultiBlob mb(2);
     mb[0] = input[TPCC_VAR_D_ID].get_blob();
@@ -210,12 +220,24 @@ void TpccPiece::reg_payment() {
                               mb,
                               ROW_DISTRICT);
     // R district
-    dtxn->ReadColumn(r, TPCC_COL_DISTRICT_D_NAME,     &output[oi++]); // output[0] ==> d_name
-    dtxn->ReadColumn(r, TPCC_COL_DISTRICT_D_STREET_1, &output[oi++]); // 1 ==> d_street_1
-    dtxn->ReadColumn(r, TPCC_COL_DISTRICT_D_STREET_2, &output[oi++]); // 2 ==> d_street_2
-    dtxn->ReadColumn(r, TPCC_COL_DISTRICT_D_CITY,     &output[oi++]); // 3 ==> d_city
-    dtxn->ReadColumn(r, TPCC_COL_DISTRICT_D_STATE,    &output[oi++]); // 4 ==> d_state
-    dtxn->ReadColumn(r, TPCC_COL_DISTRICT_D_ZIP,      &output[oi++]); // 5 ==> d_zip
+    dtxn->ReadColumn(r,
+                     TPCC_COL_DISTRICT_D_NAME,
+                     &output[TPCC_VAR_D_NAME]);
+    dtxn->ReadColumn(r,
+                     TPCC_COL_DISTRICT_D_STREET_1,
+                     &output[TPCC_VAR_D_STREET_1]);
+    dtxn->ReadColumn(r,
+                     TPCC_COL_DISTRICT_D_STREET_2,
+                     &output[TPCC_VAR_D_STREET_2]);
+    dtxn->ReadColumn(r,
+                     TPCC_COL_DISTRICT_D_CITY,
+                     &output[TPCC_VAR_D_CITY]);
+    dtxn->ReadColumn(r,
+                     TPCC_COL_DISTRICT_D_STATE,
+                     &output[TPCC_VAR_D_STATE]);
+    dtxn->ReadColumn(r,
+                     TPCC_COL_DISTRICT_D_ZIP,
+                     &output[TPCC_VAR_D_ZIP]);
 
     *res = SUCCESS;
   } END_PIE
@@ -225,7 +247,7 @@ void TpccPiece::reg_payment() {
     verify(!tpcc_ch->payment_dep_.piece_district);
     verify(output.size() == 6);
     tpcc_ch->payment_dep_.piece_district = true;
-    tpcc_ch->inputs_[5][TPCC_VAR_D_NAME] = output[0];
+    tpcc_ch->inputs_[5][TPCC_VAR_D_NAME] = output[TPCC_VAR_D_NAME];
     if (tpcc_ch->payment_dep_.piece_warehouse &&
         tpcc_ch->payment_dep_.piece_last2id) {
       Log_debug("warehouse: w_name c_id ready");
@@ -248,16 +270,12 @@ void TpccPiece::reg_payment() {
     //cell_locator_t cl(TPCC_TB_DISTRICT, 2);
     mb[0] = input[TPCC_VAR_D_ID].get_blob();
     mb[1] = input[TPCC_VAR_W_ID].get_blob();
-    r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT),
-                    mb,
-                    ROW_DISTRICT_TEMP);
+    r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT), mb, ROW_DISTRICT_TEMP);
     verify(r->schema_ != nullptr);
-    dtxn->ReadColumn(r, TPCC_COL_DISTRICT_D_YTD,
-                     &buf, TXN_BYPASS);
+    dtxn->ReadColumn(r, TPCC_COL_DISTRICT_D_YTD, &buf, TXN_BYPASS);
     // W district
     buf.set_double(buf.get_double() + input[TPCC_VAR_H_AMOUNT].get_double());
-    dtxn->WriteColumn(r, TPCC_COL_DISTRICT_D_YTD,
-                      buf, TXN_DEFERRED);
+    dtxn->WriteColumn(r, TPCC_COL_DISTRICT_D_YTD, buf, TXN_DEFERRED);
     *res = SUCCESS;
   } END_PIE
 
@@ -267,7 +285,6 @@ void TpccPiece::reg_payment() {
     verify(input.size() == 3);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_3);
 
-    i32 output_index = 0;
     mdb::MultiBlob mbl(3), mbh(3);
     mbl[0] = input[TPCC_VAR_C_D_ID].get_blob();
     mbh[0] = input[TPCC_VAR_C_D_ID].get_blob();
@@ -304,7 +321,7 @@ void TpccPiece::reg_payment() {
               input[TPCC_VAR_C_LAST].get_str().c_str(),
               n_c);
     verify(mid_set);
-    output[output_index++] = Value(it_mid->second);
+    output[TPCC_VAR_C_ID] = Value(it_mid->second);
 
     *res = SUCCESS;
   } END_PIE
@@ -315,10 +332,10 @@ void TpccPiece::reg_payment() {
     verify(output.size() == 1);
     tpcc_ch->payment_dep_.piece_last2id = true;
     // set piece 4 ready
-    tpcc_ch->inputs_[4][TPCC_VAR_C_ID] = output[0];
+    tpcc_ch->inputs_[4][TPCC_VAR_C_ID] = output[TPCC_VAR_C_ID];
     tpcc_ch->status_[4] = READY;
 
-    tpcc_ch->inputs_[5][TPCC_VAR_C_ID] = output[0];
+    tpcc_ch->inputs_[5][TPCC_VAR_C_ID] = output[TPCC_VAR_C_ID];
     if (tpcc_ch->payment_dep_.piece_warehouse &&
         tpcc_ch->payment_dep_.piece_district) {
       tpcc_ch->status_[5] = READY;
@@ -339,9 +356,7 @@ void TpccPiece::reg_payment() {
     mb[1] = input[TPCC_VAR_C_D_ID].get_blob();
     mb[2] = input[TPCC_VAR_C_W_ID].get_blob();
     // R customer
-    r = dtxn->Query(dtxn->GetTable(TPCC_TB_CUSTOMER),
-                    mb,
-                    ROW_CUSTOMER);
+    r = dtxn->Query(dtxn->GetTable(TPCC_TB_CUSTOMER), mb, ROW_CUSTOMER);
     ALock::type_t lock_20_type = ALock::RLOCK;
     if (input[TPCC_VAR_C_ID].get_i32() % 10 == 0)
         lock_20_type = ALock::WLOCK;
@@ -405,22 +420,23 @@ void TpccPiece::reg_payment() {
       dtxn->WriteColumns(r, col_ids, col_data);
     }
 
-    int32_t output_index = 0;
-    output[output_index++] = input[TPCC_VAR_D_ID];  // output[0]  =>  c_id
-    output[output_index++] = buf[0];    // output[1]  =>  c_first
-    output[output_index++] = buf[1];    // output[2]  =>  c_middle
-    output[output_index++] = buf[2];    // output[3]  =>  c_last
-    output[output_index++] = buf[3];    // output[4]  =>  c_street_1
-    output[output_index++] = buf[4];    // output[5]  =>  c_street_2
-    output[output_index++] = buf[5];    // output[6]  =>  c_city
-    output[output_index++] = buf[6];    // output[7]  =>  c_state
-    output[output_index++] = buf[7];    // output[8]  =>  c_zip
-    output[output_index++] = buf[8];    // output[9]  =>  c_phone
-    output[output_index++] = buf[9];    // output[10] =>  c_since
-    output[output_index++] = buf[10];   // output[11] =>  c_credit
-    output[output_index++] = buf[11];   // output[12] =>  c_credit_lim
-    output[output_index++] = buf[12];   // output[13] =>  c_discount
-    output[output_index++] = Value(buf[13].get_double() - input[TPCC_VAR_H_AMOUNT].get_double()); // output[14] =>  c_balance
+    output[TPCC_VAR_C_ID] = input[TPCC_VAR_D_ID];  // output[0]  =>  c_id
+    output[TPCC_VAR_C_FIRST] = buf[0];    // output[1]  =>  c_first
+    output[TPCC_VAR_C_MIDDLE] = buf[1];    // output[2]  =>  c_middle
+    output[TPCC_VAR_C_LAST] = buf[2];    // output[3]  =>  c_last
+    output[TPCC_VAR_C_STREET_1] = buf[3];    // output[4]  =>  c_street_1
+    output[TPCC_VAR_C_STREET_2] = buf[4];    // output[5]  =>  c_street_2
+    output[TPCC_VAR_C_CITY] = buf[5];    // output[6]  =>  c_city
+    output[TPCC_VAR_C_STATE] = buf[6];    // output[7]  =>  c_state
+    output[TPCC_VAR_C_ZIP] = buf[7];    // output[8]  =>  c_zip
+    output[TPCC_VAR_C_PHONE] = buf[8];    // output[9]  =>  c_phone
+    output[TPCC_VAR_C_SINCE] = buf[9];    // output[10] =>  c_since
+    output[TPCC_VAR_C_CREDIT] = buf[10];   // output[11] =>  c_credit
+    output[TPCC_VAR_C_CREDIT_LIM] = buf[11];   // output[12] =>  c_credit_lim
+    output[TPCC_VAR_C_DISCOUNT] = buf[12];   // output[13] =>  c_discount
+    output[TPCC_VAR_C_BALANCE] = Value(buf[13].get_double() -
+        input[TPCC_VAR_H_AMOUNT]
+        .get_double()); // output[14] =>  c_balance
 
     *res = SUCCESS;
   } END_PIE
@@ -429,7 +445,8 @@ void TpccPiece::reg_payment() {
     TpccChopper *tpcc_ch = (TpccChopper*)ch;
     verify(output.size() == 15);
     if (!tpcc_ch->payment_dep_.piece_ori_last2id) {
-      verify(output[3].get_str() == tpcc_ch->inputs_[3][TPCC_VAR_C_LAST].get_str());
+      verify(output[TPCC_VAR_C_LAST].get_str() ==
+          tpcc_ch->inputs_[3][TPCC_VAR_C_LAST].get_str());
     }
     return false;
   END_CB
@@ -440,7 +457,6 @@ void TpccPiece::reg_payment() {
     verify(input.size() == 9);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_5);
 
-    i32 output_index = 0;
     mdb::Txn *txn = dtxn->mdb_txn_;
     mdb::Table *tbl = txn->get_table(TPCC_TB_HISTORY);
 
