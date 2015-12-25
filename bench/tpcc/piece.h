@@ -14,10 +14,11 @@ namespace rococo {
 #define TPCC_NEW_ORDER_2            102
 #define TPCC_NEW_ORDER_3            103
 #define TPCC_NEW_ORDER_4            104
-#define TPCC_NEW_ORDER_5            105
-#define TPCC_NEW_ORDER_6            106
-#define TPCC_NEW_ORDER_7            107
-#define TPCC_NEW_ORDER_8            108
+//#define TPCC_NEW_ORDER_5            105
+#define TPCC_NEW_ORDER_RI(i)           (15000+i)
+#define TPCC_NEW_ORDER_RS(i)           (16000+i)
+#define TPCC_NEW_ORDER_WS(i)           (17000+i)
+#define TPCC_NEW_ORDER_WOL(i)          (18000+i)
 
 // ======== Payment txn ========
 #define TPCC_PAYMENT                20
@@ -69,10 +70,12 @@ namespace rococo {
 #define TPCC_COL_WAREHOUSE_W_CITY              (4)
 #define TPCC_COL_WAREHOUSE_W_STATE             (5)
 #define TPCC_COL_WAREHOUSE_W_ZIP               (6)
+#define TPCC_COL_WAREHOUSE_W_TAX               (7)
   
 #define TPCC_COL_NEW_ORDER_NO_O_ID             (0)
 #define TPCC_COL_NEW_ORDER_NO_D_ID             (1)
 #define TPCC_COL_NEW_ORDER_NO_W_ID             (2)
+
 
 #define TPCC_COL_DISTRICT_D_NAME               (2)
 #define TPCC_COL_DISTRICT_D_STREET_1           (3)
@@ -140,6 +143,7 @@ namespace rococo {
 #define TPCC_VAR_W_STATE                       (1021)
 #define TPCC_VAR_W_ZIP                         (1022)
 #define TPCC_VAR_H_AMOUNT                      (1002)
+#define TPCC_VAR_W_TAX                         (1038)
 
 #define TPCC_VAR_H_KEY                         (1008)
 #define TPCC_VAR_O_ID                          (1011)
@@ -157,6 +161,7 @@ namespace rococo {
 #define TPCC_VAR_D_CITY                        (1032)
 #define TPCC_VAR_D_STATE                       (1033)
 #define TPCC_VAR_D_ZIP                         (1034)
+#define TPCC_VAR_D_TAX                         (1037)
 
 #define TPCC_VAR_C_LAST                        (1004)
 #define TPCC_VAR_C_W_ID                        (1005)
@@ -176,6 +181,24 @@ namespace rococo {
 #define TPCC_VAR_C_FIRST                       (1051)
 #define TPCC_VAR_C_MIDDLE                      (1052)
 
+
+#define TPCC_VAR_I_ID(I)                       (100000 + I)
+#define TPCC_VAR_I_NAME(I)                     (101000 + I)
+#define TPCC_VAR_I_PRICE(I)                    (102000 + I)
+#define TPCC_VAR_I_DATA(I)                     (103000 + I)
+#define TPCC_VAR_S_DIST_XX(I)                  (104000 + I)
+#define TPCC_VAR_S_DATA(I)                     (105000 + I)
+#define TPCC_VAR_S_W_ID(I)                     (106000 + I)
+#define TPCC_VAR_S_D_ID(I)                     (107000 + I)
+#define TPCC_VAR_OL_QUANTITY(I)                (108000 + I)
+#define TPCC_VAR_S_REMOTE_CNT(I)               (109000 + I)
+#define TPCC_VAR_OL_D_ID(I)                    (110000 + I)
+#define TPCC_VAR_OL_W_ID(I)                    (111000 + I)
+#define TPCC_VAR_OL_O_ID(I)                    (112000 + I)
+#define TPCC_VAR_OL_NUMBER(I)                  (113000 + I)
+#define TPCC_VAR_OL_DELIVER_D(I)               (114000 + I)
+#define TPCC_VAR_OL_AMOUNTS(I)                 (115000 + I)
+#define TPCC_VAR_OL_DIST_INFO(I)               (116000 + I)
 
 
 #define TPCC_NEW_ORDER_Ith_INDEX_ITEM(i)        (5 + 4 * i)

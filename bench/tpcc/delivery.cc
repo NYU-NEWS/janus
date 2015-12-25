@@ -180,7 +180,7 @@ void TpccPiece::reg_delivery() {
     TpccChopper *tpcc_ch = (TpccChopper*) ch;
     verify(output.size() == 1);
     verify(!tpcc_ch->delivery_dep_.piece_new_orders);
-    if (output[0].get_i32() == (i32) -1) { // new_order not found
+    if (output[TPCC_VAR_O_ID].get_i32() == (i32) -1) { // new_order not found
       tpcc_ch->status_[1] = FINISHED;
       tpcc_ch->status_[2] = FINISHED;
       tpcc_ch->status_[3] = FINISHED;
@@ -214,9 +214,7 @@ void TpccPiece::reg_delivery() {
     mb[1] = input[TPCC_VAR_W_ID].get_blob();
     mb[2] = input[TPCC_VAR_O_ID].get_blob();
     //Log::debug("Delivery: o_d_id: %d, o_w_id: %d, o_id: %d, hash: %u", input[2].get_i32(), input[1].get_i32(), input[0].get_i32(), mdb::MultiBlob::hash()(cl.primary_key));
-    mdb::Row *r = dtxn->Query(txn->get_table(TPCC_TB_ORDER),
-                              mb,
-                              ROW_ORDER);
+    mdb::Row *r = dtxn->Query(txn->get_table(TPCC_TB_ORDER), mb, ROW_ORDER);
     dtxn->ReadColumn(r,
                      TPCC_COL_ORDER_O_C_ID,
                      &output[TPCC_VAR_C_ID],
@@ -316,8 +314,6 @@ void TpccPiece::reg_delivery() {
           DF_REAL) {
     Log::debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_3);
     verify(input.size() == 4);
-//        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
-                       mdb::Txn *txn = dtxn->mdb_txn_;
     mdb::Row *r = NULL;
     mdb::MultiBlob mb(3);
     //cell_locator_t cl(TPCC_TB_CUSTOMER, 3);

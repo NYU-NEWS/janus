@@ -420,24 +420,22 @@ void TpccPiece::reg_payment() {
       dtxn->WriteColumns(r, col_ids, col_data);
     }
 
-    output[TPCC_VAR_C_ID] = input[TPCC_VAR_D_ID];  // output[0]  =>  c_id
-    output[TPCC_VAR_C_FIRST] = buf[0];    // output[1]  =>  c_first
-    output[TPCC_VAR_C_MIDDLE] = buf[1];    // output[2]  =>  c_middle
-    output[TPCC_VAR_C_LAST] = buf[2];    // output[3]  =>  c_last
-    output[TPCC_VAR_C_STREET_1] = buf[3];    // output[4]  =>  c_street_1
-    output[TPCC_VAR_C_STREET_2] = buf[4];    // output[5]  =>  c_street_2
-    output[TPCC_VAR_C_CITY] = buf[5];    // output[6]  =>  c_city
-    output[TPCC_VAR_C_STATE] = buf[6];    // output[7]  =>  c_state
-    output[TPCC_VAR_C_ZIP] = buf[7];    // output[8]  =>  c_zip
-    output[TPCC_VAR_C_PHONE] = buf[8];    // output[9]  =>  c_phone
-    output[TPCC_VAR_C_SINCE] = buf[9];    // output[10] =>  c_since
-    output[TPCC_VAR_C_CREDIT] = buf[10];   // output[11] =>  c_credit
-    output[TPCC_VAR_C_CREDIT_LIM] = buf[11];   // output[12] =>  c_credit_lim
-    output[TPCC_VAR_C_DISCOUNT] = buf[12];   // output[13] =>  c_discount
+    output[TPCC_VAR_C_ID] =     input[TPCC_VAR_D_ID];
+    output[TPCC_VAR_C_FIRST] =  buf[0];
+    output[TPCC_VAR_C_MIDDLE] = buf[1];
+    output[TPCC_VAR_C_LAST] =   buf[2];
+    output[TPCC_VAR_C_STREET_1] = buf[3];
+    output[TPCC_VAR_C_STREET_2] = buf[4];
+    output[TPCC_VAR_C_CITY] =   buf[5];
+    output[TPCC_VAR_C_STATE] =  buf[6];
+    output[TPCC_VAR_C_ZIP] =    buf[7];
+    output[TPCC_VAR_C_PHONE] =  buf[8];
+    output[TPCC_VAR_C_SINCE] =  buf[9];
+    output[TPCC_VAR_C_CREDIT] = buf[10];
+    output[TPCC_VAR_C_CREDIT_LIM] = buf[11];
+    output[TPCC_VAR_C_DISCOUNT] =   buf[12];
     output[TPCC_VAR_C_BALANCE] = Value(buf[13].get_double() -
-        input[TPCC_VAR_H_AMOUNT]
-        .get_double()); // output[14] =>  c_balance
-
+        input[TPCC_VAR_H_AMOUNT].get_double());
     *res = SUCCESS;
   } END_PIE
 
@@ -451,9 +449,7 @@ void TpccPiece::reg_payment() {
     return false;
   END_CB
 
-  BEGIN_PIE(TPCC_PAYMENT,      // txn
-          TPCC_PAYMENT_5,    // piece 4, W histroy
-          DF_REAL) {
+  BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_5, DF_REAL) {
     verify(input.size() == 9);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_5);
 

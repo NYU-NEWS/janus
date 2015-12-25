@@ -77,10 +77,10 @@ void TpccChopper::new_order_init(TxnRequest &req) {
     }
     // piece 5 + 4 * i, Ri item
     inputs_[TPCC_NEW_ORDER_Ith_INDEX_ITEM(i)] = {
-        {0, req.input_[4 + 3 * i]}   // 0 ==> i_id
+        {TPCC_VAR_I_ID(i), req.input_[4 + 3 * i]}   // 0 ==> i_id
     };
     output_size_[TPCC_NEW_ORDER_Ith_INDEX_ITEM(i)] = 3;
-    p_types_[TPCC_NEW_ORDER_Ith_INDEX_ITEM(i)] = TPCC_NEW_ORDER_5;
+    p_types_[TPCC_NEW_ORDER_Ith_INDEX_ITEM(i)] = TPCC_NEW_ORDER_RI(i);
     new_order_shard(TPCC_TB_ITEM,
                     req.input_,
                     sharding_[TPCC_NEW_ORDER_Ith_INDEX_ITEM(i)],
@@ -89,12 +89,12 @@ void TpccChopper::new_order_init(TxnRequest &req) {
 
     // piece 6 + 4 * i, Ri stock
     inputs_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)] = {
-        {0, req.input_[4 + 3 * i]},  // 0 ==> s_i_id
-        {1, req.input_[5 + 3 * i]},  // 1 ==> ol_supply_w_id / s_w_id
-        {2, req.input_[1]}           // 2 ==> d_id
+        {TPCC_VAR_I_ID(i), req.input_[4 + 3 * i]},  // 0 ==> s_i_id
+        {TPCC_VAR_S_W_ID(i), req.input_[5 + 3 * i]},  // 1 ==> ol_supply_w_id / s_w_id
+        {TPCC_VAR_S_D_ID(i), req.input_[1]}           // 2 ==> d_id
     };
     output_size_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)] = 2;
-    p_types_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)] = TPCC_NEW_ORDER_6;
+    p_types_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)] = TPCC_NEW_ORDER_RS(i);
     new_order_shard(TPCC_TB_STOCK,
                     req.input_,
                     sharding_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)],
@@ -103,13 +103,13 @@ void TpccChopper::new_order_init(TxnRequest &req) {
 
     // piece 7 + 4 * i, W stock
     inputs_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)] = {
-        {0, req.input_[4 + 3 * i]},  // 0 ==> s_i_id
-        {1, req.input_[5 + 3 * i]},  // 1 ==> ol_supply_w_id / s_w_id
-        {2, req.input_[6 + 3 * i]},  // 2 ==> ol_quantity
-        {3, is_remote}               // 3 ==> increase delta s_remote_cnt
+        {TPCC_VAR_I_ID(i), req.input_[4 + 3 * i]},  // 0 ==> s_i_id
+        {TPCC_VAR_S_W_ID(i), req.input_[5 + 3 * i]},  // 1 ==> ol_supply_w_id / s_w_id
+        {TPCC_VAR_OL_QUANTITY(i), req.input_[6 + 3 * i]},  // 2 ==> ol_quantity
+        {TPCC_VAR_S_REMOTE_CNT(i), is_remote}               // 3 ==> increase delta s_remote_cnt
     };
     output_size_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)] = 0;
-    p_types_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)] = TPCC_NEW_ORDER_7;
+    p_types_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)] = TPCC_NEW_ORDER_WS(i);
     new_order_shard(TPCC_TB_STOCK,
                     req.input_,
                     sharding_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)],
@@ -118,19 +118,19 @@ void TpccChopper::new_order_init(TxnRequest &req) {
 
     // piece 8 + 4 * i, W order_line, depends on piece 0 & 5+3*i & 6+3*i
     inputs_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)] = {
-        {0, req.input_[1]},           // 0 ==> ol_d_id
-        {1, req.input_[0]},           // 1 ==> ol_w_id
-        {2, Value((i32) 0)},          // 2 ==> ol_o_id    depends on piece 0
-        {3, Value((i32) i)},          // 3 ==> ol_number
-        {4, req.input_[4 + 3 * i]},   // 4 ==> ol_i_id
-        {5, req.input_[5 + 3 * i]},   // 5 ==> ol_supply_w_id
-        {6, Value(std::string())},    // 6 ==> ol_deliver_d
-        {7, req.input_[6 + 3 * i]},   // 7 ==> ol_quantity
-        {8, Value((double) 0.0)},     // 8 ==> ol_amount  depends on piece 5+3*i
-        {9, Value(std::string())},    // 9 ==> ol_dist_info depends on piece 6+3*i
+        {TPCC_VAR_OL_D_ID(i),         req.input_[1]},           // 0 ==> ol_d_id
+        {TPCC_VAR_OL_W_ID(i),         req.input_[0]},           // 1 ==> ol_w_id
+        {TPCC_VAR_OL_O_ID(i),         Value((i32) 0)},          // 2 ==> ol_o_id    depends on piece 0
+        {TPCC_VAR_OL_NUMBER(i),       Value((i32) i)},          // 3 ==> ol_number
+        {TPCC_VAR_I_ID(i),            req.input_[4 + 3 * i]},   // 4 ==> ol_i_id
+        {TPCC_VAR_S_W_ID(i),          req.input_[5 + 3 * i]},   // 5 ==> ol_supply_w_id
+        {TPCC_VAR_OL_DELIVER_D(i),    Value(std::string())},    // 6 ==> ol_deliver_d
+        {TPCC_VAR_OL_QUANTITY(i),     req.input_[6 + 3 * i]},   // 7 ==> ol_quantity
+        {TPCC_VAR_OL_AMOUNTS(i),      Value((double) 0.0)},     // 8 ==> ol_amount  depends on piece 5+3*i
+        {TPCC_VAR_OL_DIST_INFO(i),    Value(std::string())},    // 9 ==> ol_dist_info depends on piece 6+3*i
     };
     output_size_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)] = 0;
-    p_types_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)] = TPCC_NEW_ORDER_8;
+    p_types_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)] = TPCC_NEW_ORDER_WOL(i);
     new_order_shard(TPCC_TB_ORDER_LINE,
                     req.input_,// sharding based on ol_w_id
                     sharding_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)]);
@@ -220,34 +220,41 @@ void TpccPiece::reg_new_order() {
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT),
                               mb,
                               ROW_DISTRICT);
-    i32 oi = 0;
     Value buf(0);
     // R district
-    dtxn->ReadColumn(r, TPCC_COL_DISTRICT_D_TAX, &output[oi++], TXN_BYPASS); // read d_tax
-    dtxn->ReadColumn(r, TPCC_COL_DISTRICT_D_NEXT_O_ID, &buf, TXN_BYPASS); // read d_next_o_id
-    output[oi++] = buf;
-
+    dtxn->ReadColumn(r,
+                     TPCC_COL_DISTRICT_D_TAX,
+                     &output[TPCC_VAR_D_TAX],
+                     TXN_BYPASS);
+    dtxn->ReadColumn(r,
+                     TPCC_COL_DISTRICT_D_NEXT_O_ID,
+                     &buf,
+                     TXN_BYPASS); // read d_next_o_id
+    output[TPCC_VAR_D_NEXT_O_ID] = buf;
     // read d_next_o_id, increment by 1
     buf.set_i32((i32)(buf.get_i32() + 1));
-    dtxn->WriteColumn(r, TPCC_COL_DISTRICT_D_NEXT_O_ID,
-                      buf, TXN_INSTANT);
+    dtxn->WriteColumn(r,
+                      TPCC_COL_DISTRICT_D_NEXT_O_ID,
+                      buf,
+                      TXN_INSTANT);
     return;
   } END_PIE
 
   BEGIN_CB(TPCC_NEW_ORDER, 0)
     TpccChopper* tpcc_ch = (TpccChopper*) ch;
     tpcc_ch->new_order_dep_.piece_0_dist = true;
-    Value o_id = output[1];
+    Value o_id = output[TPCC_VAR_D_NEXT_O_ID];
     tpcc_ch->inputs_[3][TPCC_VAR_O_ID] = o_id;
-    tpcc_ch->status_[3] = READY;
     tpcc_ch->inputs_[4][TPCC_VAR_O_ID] = o_id;
+    tpcc_ch->status_[3] = READY;
     tpcc_ch->status_[4] = READY;
 
     for (size_t i = 0; i < tpcc_ch->new_order_dep_.ol_cnt; i++) {
-      tpcc_ch->inputs_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)][2] = o_id;
+      auto pi = TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i);
+      tpcc_ch->inputs_[pi][TPCC_VAR_OL_O_ID(i)] = o_id;
       if (tpcc_ch->new_order_dep_.piece_items[i] &&
           tpcc_ch->new_order_dep_.piece_stocks[i])
-        tpcc_ch->status_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)] = READY;
+        tpcc_ch->status_[pi] = READY;
     }
 
     return true;
@@ -258,14 +265,12 @@ void TpccPiece::reg_new_order() {
             DF_NO) {
     verify(input.size() == 1);
     Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_1);
-
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_WAREHOUSE),
                               input[TPCC_VAR_W_ID].get_blob(),
                               ROW_WAREHOUSE);
-    i32 oi = 0;
     // R warehouse
-    dtxn->ReadColumn(r, TPCC_COL_DISTRICT_D_ZIP,
-                     &output[oi++], TXN_BYPASS); // read w_tax
+    dtxn->ReadColumn(r, TPCC_COL_WAREHOUSE_W_TAX,
+                     &output[TPCC_VAR_W_TAX], TXN_BYPASS); // read w_tax
     return;
   } END_PIE
 
@@ -275,20 +280,20 @@ void TpccPiece::reg_new_order() {
   ) {
     verify(input.size() == 3);
     Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_2);
-    i32 oi = 0;
 
     mdb::MultiBlob mb(3);
     mb[0] = input[TPCC_VAR_C_ID].get_blob();
     mb[1] = input[TPCC_VAR_D_ID].get_blob();
     mb[2] = input[TPCC_VAR_W_ID].get_blob();
     auto table = dtxn->GetTable(TPCC_TB_CUSTOMER);
-    mdb::Row *r = dtxn->Query(table,
-                              mb,
-                              ROW_CUSTOMER);
+    mdb::Row *r = dtxn->Query(table, mb, ROW_CUSTOMER);
     // R customer
-    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_LAST,     &output[oi++], TXN_BYPASS);
-    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_CREDIT,   &output[oi++], TXN_BYPASS);
-    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_DISCOUNT, &output[oi++], TXN_BYPASS);
+    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_LAST,
+                     &output[TPCC_VAR_C_LAST], TXN_BYPASS);
+    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_CREDIT,
+                     &output[TPCC_VAR_C_CREDIT], TXN_BYPASS);
+    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_DISCOUNT,
+                     &output[TPCC_VAR_C_DISCOUNT], TXN_BYPASS);
 
     return;
   } END_PIE
@@ -313,16 +318,16 @@ void TpccPiece::reg_new_order() {
     verify(r->schema_);
 
     // W order
-    std::vector<Value> row_data({
-                  input[TPCC_VAR_D_ID],   // o_d_id
-                  input[TPCC_VAR_W_ID],   // o_w_id
-                  input[TPCC_VAR_O_ID],   // o_id
-                  input[TPCC_VAR_C_ID],   // o_c_id
-                  Value(std::to_string(time(NULL))),  // o_entry_d
-                  input[TPCC_VAR_O_CARRIER_ID],   // o_carrier_id
-                  input[TPCC_VAR_OL_CNT],   // o_ol_cnt
-                  input[TPCC_VAR_O_ALL_LOCAL]    // o_all_local
-    });
+    std::vector<Value> row_data= {
+        input[TPCC_VAR_D_ID],
+        input[TPCC_VAR_W_ID],
+        input[TPCC_VAR_O_ID],
+        input[TPCC_VAR_C_ID],
+        Value(std::to_string(time(NULL))),  // o_entry_d
+        input[TPCC_VAR_O_CARRIER_ID],
+        input[TPCC_VAR_OL_CNT],
+        input[TPCC_VAR_O_ALL_LOCAL]
+    };
     CREATE_ROW(tbl->schema(), row_data);
 //    verify(r->schema_);
 //    RCC_KISS(r, 0, false);
@@ -354,7 +359,6 @@ void TpccPiece::reg_new_order() {
     verify(input.size() == 3);
     Log_debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_4);
 
-    i32 oi = 0;
     mdb::Table *tbl = dtxn->GetTable(TPCC_TB_NEW_ORDER);
     mdb::Row *r = NULL;
 
@@ -376,36 +380,46 @@ void TpccPiece::reg_new_order() {
     return;
   } END_PIE
 
-  BEGIN_PIE(TPCC_NEW_ORDER,
-          TPCC_NEW_ORDER_5, // Ri item
-          DF_NO) {
+  BEGIN_LOOP_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RI(0), 1000, DF_NO)
     verify(input.size() == 1);
-    Log_debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_5);
+    Log_debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_RI(I));
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_ITEM),
-                              input[0].get_blob(),
+                              input[TPCC_VAR_I_ID(I)].get_blob(),
                               ROW_ITEM);
-    i32 oi = 0;
     // Ri item
-    dtxn->ReadColumn(r, TPCC_COL_ITEM_I_NAME,  &output[oi++], TXN_BYPASS);
-    dtxn->ReadColumn(r, TPCC_COL_ITEM_I_PRICE, &output[oi++], TXN_BYPASS);
-    dtxn->ReadColumn(r, TPCC_COL_ITEM_I_DATA,  &output[oi++], TXN_BYPASS);
+    dtxn->ReadColumn(r,
+                     TPCC_COL_ITEM_I_NAME,
+                     &output[TPCC_VAR_I_NAME(I)],
+                     TXN_BYPASS);
+    dtxn->ReadColumn(r,
+                     TPCC_COL_ITEM_I_PRICE,
+                     &output[TPCC_VAR_I_PRICE(I)],
+                     TXN_BYPASS);
+    dtxn->ReadColumn(r,
+                     TPCC_COL_ITEM_I_DATA,
+                     &output[TPCC_VAR_I_DATA(I)],
+                     TXN_BYPASS);
 
     *res = SUCCESS;
     return;
-  } END_PIE
+  END_LOOP_PIE
+
 
   for (int i = 0; i < 1000; i++) { // 1000 is a magical number?
     if (TPCC_NEW_ORDER_IS_ITEM_INDEX(i)) {
       txn_reg_->callbacks_[std::make_pair(TPCC_NEW_ORDER, i)] = \
         [i](TxnChopper *ch, std::map<int32_t, Value> output) -> bool {
         TpccChopper *tpcc_ch = (TpccChopper*) ch;
-        tpcc_ch->inputs_[TPCC_NEW_ORDER_INDEX_ITEM_TO_ORDER_LINE(i)][8]
-            = Value((double) (output[1].get_double()
-            * tpcc_ch->inputs_[TPCC_NEW_ORDER_INDEX_ITEM_TO_DEFER_STOCK(i)][2].get_i32()));
-        tpcc_ch->new_order_dep_.piece_items[TPCC_NEW_ORDER_INDEX_ITEM_TO_CNT(i)] = true;
+        auto ol_pi = TPCC_NEW_ORDER_INDEX_ITEM_TO_ORDER_LINE(i);
+        auto ol_i = TPCC_NEW_ORDER_INDEX_ITEM_TO_CNT(i);
+        auto s_pi = TPCC_NEW_ORDER_INDEX_ITEM_TO_DEFER_STOCK(i);
+        tpcc_ch->inputs_[ol_pi][TPCC_VAR_OL_AMOUNTS(ol_i)] =
+            Value((double) (output[TPCC_VAR_I_PRICE(ol_i)].get_double()
+            * tpcc_ch->inputs_[s_pi][TPCC_VAR_OL_QUANTITY(ol_i)].get_i32()));
+        tpcc_ch->new_order_dep_.piece_items[ol_i] = true;
         if (tpcc_ch->new_order_dep_.piece_0_dist
-            && tpcc_ch->new_order_dep_.piece_stocks[TPCC_NEW_ORDER_INDEX_ITEM_TO_CNT(i)]) {
-          tpcc_ch->status_[TPCC_NEW_ORDER_INDEX_ITEM_TO_ORDER_LINE(i)] = READY;
+            && tpcc_ch->new_order_dep_.piece_stocks[ol_i]) {
+          tpcc_ch->status_[ol_pi] = READY;
           return true;
         } else {
           return false;
@@ -414,17 +428,12 @@ void TpccPiece::reg_new_order() {
     }
   }
 
-  BEGIN_PIE(TPCC_NEW_ORDER,
-          TPCC_NEW_ORDER_6, // Ri stock
-          DF_NO) {
+  BEGIN_LOOP_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RS(0), 1000, DF_NO)
     verify(input.size() == 3);
-    Log_debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_6);
-
-    i32 oi = 0;
-    Value buf;
+    Log_debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_RS(I));
     mdb::MultiBlob mb(2);
-    mb[0] = input[0].get_blob();
-    mb[1] = input[1].get_blob();
+    mb[0] = input[TPCC_VAR_I_ID(I)].get_blob();
+    mb[1] = input[TPCC_VAR_S_W_ID(I)].get_blob();
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_STOCK),
                               mb,
                               ROW_STOCK);
@@ -432,24 +441,27 @@ void TpccPiece::reg_new_order() {
     //i32 s_dist_col = 3 + input[2].get_i32();
     // Ri stock
     // FIXME compress all s_dist_xx into one column
-    dtxn->ReadColumn(r, TPCC_COL_STOCK_S_DIST_XX, &output[oi++], TXN_BYPASS); // 0 ==> s_dist_xx
-    dtxn->ReadColumn(r, TPCC_COL_STOCK_S_DATA, &output[oi++], TXN_BYPASS); // 1 ==> s_data
+    dtxn->ReadColumn(r, TPCC_COL_STOCK_S_DIST_XX,
+                     &output[TPCC_VAR_S_DIST_XX(I)], TXN_BYPASS); // 0 ==> s_dist_xx
+    dtxn->ReadColumn(r, TPCC_COL_STOCK_S_DATA,
+                     &output[TPCC_VAR_S_DATA(I)], TXN_BYPASS); // 1 ==> s_data
     *res = SUCCESS;
     return;
-  } END_PIE
+  END_LOOP_PIE
 
   for (int i = 0; i < 1000; i++) { // 1000 is a magical number?
     if (TPCC_NEW_ORDER_IS_IM_STOCK_INDEX(i)) {
       txn_reg_->callbacks_[std::make_pair(TPCC_NEW_ORDER, i)] = \
-        [i](TxnChopper *ch,
-            std::map<int32_t, Value> output) -> bool {
+        [i](TxnChopper *ch, std::map<int32_t, Value> output) -> bool {
         TpccChopper *tpcc_ch = (TpccChopper*) ch;
-        tpcc_ch->inputs_[TPCC_NEW_ORDER_INDEX_IM_STOCK_TO_ORDER_LINE(i)][9] = output[0];
-        tpcc_ch->new_order_dep_.piece_stocks[TPCC_NEW_ORDER_INDEX_IM_STOCK_TO_CNT(i)] =
-            true;
+        auto ol_pi = TPCC_NEW_ORDER_INDEX_IM_STOCK_TO_ORDER_LINE(i);
+        auto ol_i = TPCC_NEW_ORDER_INDEX_IM_STOCK_TO_CNT(i);
+        tpcc_ch->inputs_[ol_pi][TPCC_VAR_OL_DIST_INFO(ol_i)] =
+            output[TPCC_VAR_S_DIST_XX(ol_i)];
+        tpcc_ch->new_order_dep_.piece_stocks[ol_i] = true;
         if (tpcc_ch->new_order_dep_.piece_0_dist &&
-            tpcc_ch->new_order_dep_.piece_items[TPCC_NEW_ORDER_INDEX_IM_STOCK_TO_CNT(i)]) {
-          tpcc_ch->status_[TPCC_NEW_ORDER_INDEX_IM_STOCK_TO_ORDER_LINE(i)] = READY;
+            tpcc_ch->new_order_dep_.piece_items[ol_i]) {
+          tpcc_ch->status_[ol_pi] = READY;
           return true;
         } else {
           return false;
@@ -458,20 +470,15 @@ void TpccPiece::reg_new_order() {
     }
   }
 
-  BEGIN_PIE(TPCC_NEW_ORDER,
-          TPCC_NEW_ORDER_7, // W stock
-          DF_REAL) {
+  BEGIN_LOOP_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_WS(0), 1000, DF_REAL)
     verify(input.size() == 4);
-    Log_debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_7);
-    i32 oi = 0;
+    Log_debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_WS(I));
     mdb::Row *r = NULL;
     mdb::MultiBlob mb(2);
-    mb[0] = input[0].get_blob();
-    mb[1] = input[1].get_blob();
+    mb[0] = input[TPCC_VAR_I_ID(I)].get_blob();
+    mb[1] = input[TPCC_VAR_S_W_ID(I)].get_blob();
 
-    r = dtxn->Query(dtxn->GetTable(TPCC_TB_STOCK),
-                  mb,
-                  ROW_STOCK_TEMP);
+    r = dtxn->Query(dtxn->GetTable(TPCC_TB_STOCK), mb, ROW_STOCK_TEMP);
     verify(r->schema_);
 
 //    RCC_KISS(r, 2, false);
@@ -485,16 +492,19 @@ void TpccPiece::reg_new_order() {
     // Ri stock
     Value buf(0);
     dtxn->ReadColumn(r, TPCC_COL_STOCK_S_QUANTITY, &buf);
-    int32_t new_ol_quantity = buf.get_i32() - input[2].get_i32();
+    int32_t new_ol_quantity = buf.get_i32() -
+        input[TPCC_VAR_OL_QUANTITY(I)].get_i32();
 
     dtxn->ReadColumn(r, TPCC_COL_STOCK_S_YTD, &buf);
-    Value new_s_ytd(buf.get_i32() + input[2].get_i32());
+    Value new_s_ytd(buf.get_i32() +
+        input[TPCC_VAR_OL_QUANTITY(I)].get_i32());
 
     dtxn->ReadColumn(r, TPCC_COL_STOCK_S_ORDER_CNT, &buf);
     Value new_s_order_cnt((i32)(buf.get_i32() + 1));
 
     dtxn->ReadColumn(r, TPCC_COL_STOCK_S_REMOTE_CNT, &buf);
-    Value new_s_remote_cnt(buf.get_i32() + input[3].get_i32());
+    Value new_s_remote_cnt(buf.get_i32() +
+        input[TPCC_VAR_S_REMOTE_CNT(I)].get_i32());
 
     if (new_ol_quantity < 10)
       new_ol_quantity += 91;
@@ -515,22 +525,28 @@ void TpccPiece::reg_new_order() {
                        });
     *res = SUCCESS;
     return;
-  } END_PIE
+  END_LOOP_PIE
 
-  BEGIN_PIE(TPCC_NEW_ORDER,
-            TPCC_NEW_ORDER_8, // W order_line
-            DF_REAL) {
+  BEGIN_LOOP_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_WOL(0), 1000, DF_REAL) {
     verify(input.size() == 10);
-    Log_debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_8);
+    Log_debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_WOL(I));
 
     mdb::Table *tbl = dtxn->GetTable(TPCC_TB_ORDER_LINE);
     mdb::Row *r = NULL;
 
-    std::vector<Value> input_buf(input.size());
-    for (auto it : input) {
-      input_buf[it.first] = it.second;
-    }
-    CREATE_ROW(tbl->schema(), input_buf);
+    CREATE_ROW(tbl->schema(), vector<Value>({
+      input[TPCC_VAR_OL_D_ID(I)],
+      input[TPCC_VAR_OL_W_ID(I)],
+      input[TPCC_VAR_OL_O_ID(I)],
+      input[TPCC_VAR_OL_NUMBER(I)],
+      input[TPCC_VAR_I_ID(I)],
+      input[TPCC_VAR_S_W_ID(I)],
+      input[TPCC_VAR_OL_DELIVER_D(I)],
+      input[TPCC_VAR_OL_QUANTITY(I)],
+      input[TPCC_VAR_OL_AMOUNTS(I)],
+      input[TPCC_VAR_OL_DIST_INFO(I)]
+    }));
+
 
 //    RCC_KISS(r, 0, false);
 //    RCC_KISS(r, 1, false);
@@ -543,10 +559,9 @@ void TpccPiece::reg_new_order() {
 //    RCC_PHASE1_RET;
 //    RCC_LOAD_ROW(r, TPCC_NEW_ORDER_8);
         
-    i32 oi = 0;
     dtxn->InsertRow(tbl, r);
     *res = SUCCESS;
     return;
-  } END_PIE
+  } END_LOOP_PIE
 }
 } // namespace rococo
