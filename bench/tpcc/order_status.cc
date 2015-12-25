@@ -175,8 +175,8 @@ void TpccPiece::reg_order_status() {
     verify(!tpcc_ch->order_status_dep_.piece_last2id);
     tpcc_ch->order_status_dep_.piece_last2id = true;
     tpcc_ch->inputs_[1][TPCC_VAR_C_ID] = output[TPCC_VAR_C_ID];
-    tpcc_ch->status_[1] = READY;
     tpcc_ch->inputs_[2][TPCC_VAR_C_ID] = output[TPCC_VAR_C_ID];
+    tpcc_ch->status_[1] = READY;
     tpcc_ch->status_[2] = READY;
     return true;
   END_CB
@@ -308,17 +308,22 @@ void TpccPiece::reg_order_status() {
     column_locks.reserve(5 * row_list.size());
 
     int i = 0;
-    Log::debug("row_list size: %u", row_list.size());
+    Log_debug("row_list size: %u", row_list.size());
 
     i = 0;
     i32 oi = 0;
     while (i < row_list.size()) {
       r = row_list[i++];
-      dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_I_ID, &output[oi++], TXN_BYPASS); // output[0] ==> ol_i_id
-      dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_SUPPLY_W_ID, &output[oi++], TXN_BYPASS); // output[1] ==> ol_supply_w_id
-      dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_DELIVERY_D, &output[oi++], TXN_DEFERRED); // output[2] ==> ol_delivery_d
-      dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_QUANTITY, &output[oi++], TXN_BYPASS); // output[3] ==> ol_quantity
-      dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_AMOUNT, &output[oi++], TXN_BYPASS); // output[4] ==> ol_amount
+      dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_I_ID,
+                       &output[TPCC_VAR_OL_I_ID(i)], TXN_BYPASS);
+      dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_SUPPLY_W_ID,
+                       &output[TPCC_VAR_OL_W_ID(i)], TXN_BYPASS);
+      dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_DELIVERY_D,
+                       &output[TPCC_VAR_OL_DELIVER_D(i)], TXN_DEFERRED);
+      dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_QUANTITY,
+                       &output[TPCC_VAR_OL_QUANTITY(i)], TXN_BYPASS);
+      dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_AMOUNT,
+                       &output[TPCC_VAR_OL_AMOUNTS(i)], TXN_BYPASS);
     }
 
     *res = SUCCESS;

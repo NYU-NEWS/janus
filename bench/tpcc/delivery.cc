@@ -205,8 +205,6 @@ void TpccPiece::reg_delivery() {
 
     Log_debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_1);
     verify(input.size() == 4);
-    i32 oi = 0;
-    Value buf;
     mdb::Txn *txn = dtxn->mdb_txn_;
     mdb::MultiBlob mb(3);
     //cell_locator_t cl(TPCC_TB_ORDER, 3);
@@ -264,7 +262,6 @@ void TpccPiece::reg_delivery() {
                                     mbh,
                                     mdb::ORD_ASC,
                                     header.pid);
-    double ol_amount_buf = 0.0;
     mdb::Row *r = NULL;
     //                cell_locator_t cl(TPCC_TB_ORDER_LINE, 4);
     //                cl.primary_key[0] = input[2].get_blob();
@@ -281,6 +278,8 @@ void TpccPiece::reg_delivery() {
     column_locks.reserve(2 * row_list.size());
 
     int i = 0;
+    double ol_amount_buf = 0.0;
+
     while (i < row_list.size()) {
       r = row_list[i++];
       Value buf(0.0);
@@ -321,9 +320,7 @@ void TpccPiece::reg_delivery() {
     mb[1] = input[TPCC_VAR_D_ID].get_blob();
     mb[2] = input[TPCC_VAR_W_ID].get_blob();
 
-    r = dtxn->Query(dtxn->GetTable(TPCC_TB_CUSTOMER),
-                    mb,
-                    ROW_CUSTOMER);
+    r = dtxn->Query(dtxn->GetTable(TPCC_TB_CUSTOMER), mb, ROW_CUSTOMER);
     Value buf(0.0);
     dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_BALANCE, &buf);
     buf.set_double(buf.get_double() + input[TPCC_VAR_OL_AMOUNT].get_double());

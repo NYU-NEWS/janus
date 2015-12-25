@@ -74,7 +74,7 @@ void TpccChopper::stock_level_shard(
     mv = MultiValue(input.at(0));
   else if (tb == TPCC_TB_STOCK)
     // based on s_w_id
-    mv = MultiValue(input.at(1));
+    mv = MultiValue(input.at(TPCC_VAR_W_ID));
   else
     verify(0);
   int ret = sss_->get_site_id_from_tb(tb, mv, site);
@@ -165,9 +165,10 @@ void TpccPiece::reg_stock_level() {
 
     int i = 0;
     i32 oi = 0;
-    while (i < row_list.size()) {
-        mdb::Row *r = row_list[i++];
-        dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_I_ID, &output[oi++]);
+    for (int i = 0; i < row_list.size(); i++) {
+      dtxn->ReadColumn(row_list[i],
+                       TPCC_COL_ORDER_LINE_OL_I_ID,
+                       &output[TPCC_VAR_OL_I_ID(i)]);
     }
 //    verify(output_size <= 300);
     *res = SUCCESS;
@@ -180,8 +181,9 @@ void TpccPiece::reg_stock_level() {
     //verify(output_size >= 20 * 5);
 //    verify(output_size <= 20 * 15); // TODO fix this verification
     std::unordered_set<i32> s_i_ids;
-    for (int i = 0; i < output.size(); i++)
-      s_i_ids.insert(output[i].get_i32());
+    for (int i = 0; i < output.size(); i++) {
+      s_i_ids.insert(output[TPCC_VAR_OL_I_ID(i)].get_i32());
+    }
     tpcc_ch->n_pieces_all_ += s_i_ids.size();
 //    inputs_.resize(n_pieces_all_);
     tpcc_ch->output_size_.resize(tpcc_ch->n_pieces_all_);
@@ -193,12 +195,15 @@ void TpccPiece::reg_stock_level() {
          s_i_ids_it != s_i_ids.end();
          s_i_ids_it++) {
       tpcc_ch->inputs_[2 + i] = {
-          {0, Value(*s_i_ids_it)},                      // 0 ==> s_i_id
-          {1, Value((i32) tpcc_ch->stock_level_dep_.w_id)},      // 1 ==> s_w_id
-          {2, Value((i32) tpcc_ch->stock_level_dep_.threshold)}  // 2 ==> threshold
+          {TPCC_VAR_OL_I_ID(i), Value(*s_i_ids_it)},                      // 0
+              // ==> s_i_id
+          {TPCC_VAR_W_ID, Value((i32) tpcc_ch->stock_level_dep_.w_id)},
+          // 1 ==> s_w_id
+          {TPCC_VAR_THRESHOLD, Value((i32) tpcc_ch->stock_level_dep_
+              .threshold)}  // 2 ==> threshold
       };
       tpcc_ch->output_size_[2 + i] = 1;
-      tpcc_ch->p_types_[2 + i] = TPCC_STOCK_LEVEL_2;
+      tpcc_ch->p_types_[2 + i] = TPCC_STOCK_LEVEL_RS(i);
       tpcc_ch->stock_level_shard(TPCC_TB_STOCK,
                                  tpcc_ch->inputs_[2 + i],
                                  tpcc_ch->sharding_[2 + i]);
@@ -208,28 +213,24 @@ void TpccPiece::reg_stock_level() {
     return true;
   END_CB
 
-  BEGIN_PIE(TPCC_STOCK_LEVEL,
-            TPCC_STOCK_LEVEL_2, // R stock
-            DF_NO) {
+  BEGIN_LOOP_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_RS(0), 1000, DF_NO)
     verify(input.size() == 3);
-    i32 output_index = 0;
     Value buf(0);
     mdb::MultiBlob mb(2);
     //cell_locator_t cl(TPCC_TB_STOCK, 2);
-    mb[0] = input[0].get_blob();
-    mb[1] = input[1].get_blob();
+    mb[0] = input[TPCC_VAR_OL_I_ID(I)].get_blob();
+    mb[1] = input[TPCC_VAR_W_ID].get_blob();
 
-    mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_STOCK), mb,
-                              ROW_STOCK);
+    mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_STOCK), mb, ROW_STOCK);
     dtxn->ReadColumn(r, TPCC_COL_STOCK_S_QUANTITY, &buf, TXN_DEFERRED);
 
-    if (buf.get_i32() < input[2].get_i32())
-        output[output_index++] = Value((i32) 1);
+    if (buf.get_i32() < input[TPCC_VAR_THRESHOLD].get_i32())
+        output[TPCC_VAR_UNKOWN] = Value((i32) 1);
     else
-        output[output_index++] = Value((i32) 0);
+        output[TPCC_VAR_UNKOWN] = Value((i32) 0);
 
     *res = SUCCESS;
-  } END_PIE
+  END_LOOP_PIE
 }
 
 } // namespace rococo

@@ -51,7 +51,7 @@ namespace rococo {
 #define TPCC_STOCK_LEVEL_NAME       "STOCK LEVEL"
 #define TPCC_STOCK_LEVEL_0          500
 #define TPCC_STOCK_LEVEL_1          501
-#define TPCC_STOCK_LEVEL_2          502
+#define TPCC_STOCK_LEVEL_RS(i)          (52000+i)
 
 // context id
 #define ROW_DISTRICT          __LINE__
@@ -181,6 +181,8 @@ namespace rococo {
 #define TPCC_VAR_C_FIRST                       (1051)
 #define TPCC_VAR_C_MIDDLE                      (1052)
 
+#define TPCC_VAR_THRESHOLD  (1060)
+#define TPCC_VAR_UNKOWN (1061)
 
 #define TPCC_VAR_I_ID(I)                       (100000 + I)
 #define TPCC_VAR_I_NAME(I)                     (101000 + I)
@@ -199,6 +201,7 @@ namespace rococo {
 #define TPCC_VAR_OL_DELIVER_D(I)               (114000 + I)
 #define TPCC_VAR_OL_AMOUNTS(I)                 (115000 + I)
 #define TPCC_VAR_OL_DIST_INFO(I)               (116000 + I)
+#define TPCC_VAR_OL_I_ID(I)                    (500000 + I)
 
 
 #define TPCC_NEW_ORDER_Ith_INDEX_ITEM(i)        (5 + 4 * i)
