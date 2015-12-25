@@ -52,7 +52,7 @@ void client_launch_workers() {
   vector<ClientWorker> workers(infos.size());
   for (uint32_t thread_index = 0; thread_index < infos.size(); thread_index++) {
     auto &worker = workers[thread_index];
-    worker.txn_req_factory_ = new TxnRequestFactory(Config::GetConfig()->sharding_);
+    worker.txn_req_factory_ = Frame().CreateTxnGenerator();
     workers[thread_index].servers = &servers;
     workers[thread_index].coo_id = infos[thread_index]->id;
     workers[thread_index].benchmark = benchmark;

@@ -5,6 +5,7 @@
 namespace rococo {
 
 
+
 void TpccChopper::order_status_init(TxnRequest &req) {
   order_status_dep_.piece_order = false;
   /**
@@ -21,7 +22,7 @@ void TpccChopper::order_status_init(TxnRequest &req) {
   sharding_.resize(n_pieces_all_);
   status_.resize(n_pieces_all_);
 
-  if (req.input_[2].get_kind() == Value::I32) { // query by c_id
+  if (req.input_[TPCC_VAR_C_ID_LAST].get_kind() == Value::I32) { // query by c_id
     status_[0] = FINISHED; // piece 0 not needed
     status_[1] = READY; // piece 1 ready
     status_[2] = READY; // piece 2 ready
@@ -30,13 +31,12 @@ void TpccChopper::order_status_init(TxnRequest &req) {
     order_status_dep_.piece_ori_last2id = true;
 
     n_pieces_out_ = 1; // since piece 0 not needed, set it as one started piece
-  }
-  else { // query by c_last
+  } else { // query by c_last
     // piece 0, R customer, c_last --> c_id
     inputs_[0] = {
-        {TPCC_VAR_C_LAST, req.input_[2]},  // 0 ==>    c_last
-        {TPCC_VAR_W_ID, req.input_[0]},    // 1 ==>    c_w_id
-        {TPCC_VAR_D_ID, req.input_[1]}     // 2 ==>    c_d_id
+        {TPCC_VAR_C_LAST, req.input_[TPCC_VAR_C_ID_LAST]},  // 0 ==>    c_last
+        {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},    // 1 ==>    c_w_id
+        {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}     // 2 ==>    c_d_id
     };
     output_size_[0] = 1; // return c_id only
     p_types_[0] = TPCC_ORDER_STATUS_0;
@@ -53,9 +53,9 @@ void TpccChopper::order_status_init(TxnRequest &req) {
 
   // piece 1, R customer, depends on piece 0 if using c_last instead of c_id
   inputs_[1] = {
-      {TPCC_VAR_W_ID, req.input_[0]},  // 0 ==> c_w_id
-      {TPCC_VAR_D_ID, req.input_[1]},  // 1 ==> c_d_id
-      {TPCC_VAR_C_ID, req.input_[2]}   // 2 ==> c_id, may depends on piece 0
+      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},  // 0 ==> c_w_id
+      {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]},  // 1 ==> c_d_id
+      {TPCC_VAR_C_ID, req.input_[TPCC_VAR_C_ID_LAST]}   // 2 ==> c_id, may depends on piece 0
   };
   output_size_[1] = 4;
   p_types_[1] = TPCC_ORDER_STATUS_1;
@@ -63,9 +63,9 @@ void TpccChopper::order_status_init(TxnRequest &req) {
 
   // piece 2, R order, depends on piece 0 if using c_last instead of c_id
   inputs_[2] = {
-      {TPCC_VAR_W_ID, req.input_[0]}, // 0 ==>    o_w_id
-      {TPCC_VAR_D_ID, req.input_[1]}, // 1 ==>    o_d_id
-      {TPCC_VAR_C_ID, req.input_[2]}  // 2 ==>    o_c_id, may depends on piece 0
+      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]}, // 0 ==>    o_w_id
+      {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}, // 1 ==>    o_d_id
+      {TPCC_VAR_C_ID, req.input_[TPCC_VAR_C_ID_LAST]}  // 2 ==>    o_c_id, may depends on piece 0
   };
   output_size_[2] = 3;
   p_types_[2] = TPCC_ORDER_STATUS_2;
@@ -73,8 +73,8 @@ void TpccChopper::order_status_init(TxnRequest &req) {
 
   // piece 3, R order_line, depends on piece 2
   inputs_[3] = {
-      {TPCC_VAR_W_ID, req.input_[0]}, // 0 ==>    ol_w_id
-      {TPCC_VAR_D_ID, req.input_[1]}, // 1 ==>    ol_d_id
+      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]}, // 0 ==>    ol_w_id
+      {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}, // 1 ==>    ol_d_id
       {TPCC_VAR_O_ID, Value()}        // 2 ==>    ol_o_id, depends on piece 2
   };
   output_size_[3] = 15 * 5;
@@ -86,13 +86,13 @@ void TpccChopper::order_status_init(TxnRequest &req) {
 
 
 void TpccChopper::order_status_shard(const char *tb,
-                                     const std::vector<mdb::Value> &input,
+                                     map<int32_t, Value> &input,
                                      uint32_t &site) {
   MultiValue mv;
   if (tb == TPCC_TB_CUSTOMER ||
       tb == TPCC_TB_ORDER ||
       tb == TPCC_TB_ORDER_LINE) {
-    mv = MultiValue(input[0]);
+    mv = MultiValue(input[TPCC_VAR_W_ID]);
   } else {
     verify(0);
   }

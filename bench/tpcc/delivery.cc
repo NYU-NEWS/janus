@@ -10,7 +10,7 @@ void TpccChopper::delivery_init(TxnRequest &req) {
    *  1       ==> o_carrier_id
    *  2       ==> d_id
    **/
-  int d_id = req.input_[2].get_i32();
+  int d_id = req.input_[TPCC_VAR_D_ID].get_i32();
   n_pieces_all_ = 4;
 //  inputs_.resize(n_pieces_all_);
   output_size_.resize(n_pieces_all_);
@@ -31,8 +31,8 @@ void TpccChopper::delivery_init(TxnRequest &req) {
 
   // piece 0, Ri & W new_order
   inputs_[0] = {
-      {TPCC_VAR_W_ID, req.input_[0]},  // 0 ==>    no_w_id
-      {TPCC_VAR_D_ID, req.input_[2]}  //  1 ==>    no_d_id
+      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},  // 0 ==>    no_w_id
+      {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}  //  1 ==>    no_d_id
   };
   output_size_[0] = 1;
   p_types_[0] = TPCC_DELIVERY_0;
@@ -42,9 +42,9 @@ void TpccChopper::delivery_init(TxnRequest &req) {
   // piece 1, Ri & W order
   inputs_[1] = {
       {TPCC_VAR_O_ID,         Value()},        // 0 ==>    o_id,   depends on piece 0
-      {TPCC_VAR_W_ID,         req.input_[0]},  // 1 ==>    o_w_id
-      {TPCC_VAR_D_ID,         req.input_[2]},  // 2 ==>    o_d_id
-      {TPCC_VAR_O_CARRIER_ID, req.input_[1]}   // 3 ==>    o_carrier_id
+      {TPCC_VAR_W_ID,         req.input_[TPCC_VAR_W_ID]},  // 1 ==>    o_w_id
+      {TPCC_VAR_D_ID,         req.input_[TPCC_VAR_D_ID]},  // 2 ==>    o_d_id
+      {TPCC_VAR_O_CARRIER_ID, req.input_[TPCC_VAR_O_CARRIER_ID]}   // 3 ==>    o_carrier_id
   };
   output_size_[1] = 1;
   p_types_[1] = TPCC_DELIVERY_1;
@@ -54,8 +54,8 @@ void TpccChopper::delivery_init(TxnRequest &req) {
   // piece 2, Ri & W order_line
   inputs_[2] = {
       {TPCC_VAR_O_ID, Value()},        // 0 ==>    ol_o_id,   depends on piece 0
-      {TPCC_VAR_W_ID, req.input_[0]},  // 1 ==>    ol_w_id
-      {TPCC_VAR_D_ID, req.input_[2]}   // 2 ==>    ol_d_id
+      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},  // 1 ==>    ol_w_id
+      {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}   // 2 ==>    ol_d_id
   };
   output_size_[2] = 1;
   p_types_[2] = TPCC_DELIVERY_2;
@@ -65,8 +65,8 @@ void TpccChopper::delivery_init(TxnRequest &req) {
   // piece 3, W customer
   inputs_[3] = {
       {TPCC_VAR_C_ID, Value()},        // 0 ==>    c_id,   depends on piece 1
-      {TPCC_VAR_W_ID, req.input_[0]},  // 1 ==>    c_w_id
-      {TPCC_VAR_D_ID, req.input_[2]},  // 2 ==>    c_d_id
+      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},  // 1 ==>    c_w_id
+      {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]},  // 2 ==>    c_d_id
       {TPCC_VAR_OL_AMOUNT, Value()}    // 3 ==>    ol_amount, depends on piece 2
   };
   output_size_[3] = 0;
@@ -77,16 +77,14 @@ void TpccChopper::delivery_init(TxnRequest &req) {
 
 
 void TpccChopper::delivery_shard(const char *tb,
-                                 const std::vector<mdb::Value> &input,
+                                 map<int32_t, Value> &input,
                                  uint32_t &site,
                                  int cnt) {
   MultiValue mv;
-  if (tb == TPCC_TB_NEW_ORDER
-      || tb == TPCC_TB_ORDER
-      || tb == TPCC_TB_ORDER_LINE
-      || tb == TPCC_TB_CUSTOMER)
+  if (tb == TPCC_TB_NEW_ORDER || tb == TPCC_TB_ORDER ||
+      tb == TPCC_TB_ORDER_LINE || tb == TPCC_TB_CUSTOMER)
     // based on w_id
-    mv = MultiValue(input[0]);
+    mv = MultiValue(input[TPCC_VAR_W_ID]);
   else
     verify(0);
   int ret = sss_->get_site_id_from_tb(tb, mv, site);

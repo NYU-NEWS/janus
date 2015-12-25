@@ -1,6 +1,7 @@
 #pragma once
 //#include "__dep__.h"
 #include "constants.h"
+#include "txn_req_factory.h"
 
 namespace rococo {
 
@@ -27,6 +28,7 @@ class Frame {
   DTxn* CreateDTxn(txnid_t txn_id, bool ro, Scheduler *sch);
   Executor* CreateExecutor(cmdid_t cmd_id, Scheduler *sch);
   Scheduler *CreateScheduler();
+  TxnGenerator * CreateTxnGenerator();
 };
 
 

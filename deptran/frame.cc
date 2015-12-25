@@ -2,7 +2,6 @@
 #include "__dep__.h"
 #include "frame.h"
 #include "config.h"
-#include "bench/tpcc_real_dist/sharding.h"
 #include "rcc/rcc_row.h"
 #include "ro6/ro6_row.h"
 #include "marshal-value.h"
@@ -15,6 +14,9 @@
 #include "tpl/coord.h"
 #include "occ/coord.h"
 #include "tpl/exec.h"
+
+#include "bench/tpcc_real_dist/sharding.h"
+#include "bench/tpcc/generator.h"
 
 
 // for tpca benchmark
@@ -252,7 +254,7 @@ Executor* Frame::CreateExecutor(cmdid_t cmd_id, Scheduler* sched) {
   return exec;
 }
 
-Scheduler * Frame::CreateScheduler() {
+Scheduler* Frame::CreateScheduler() {
   auto mode = Config::GetConfig()->mode_;
   Scheduler *sch = nullptr;
   switch(mode) {
@@ -271,6 +273,28 @@ Scheduler * Frame::CreateScheduler() {
       sch = new Scheduler(mode);
   }
   return sch;
+}
+
+TxnGenerator * Frame::CreateTxnGenerator() {
+  auto benchmark = Config::config_s->benchmark_;
+  TxnGenerator * gen = nullptr;
+
+  switch (benchmark) {
+
+    case TPCC:
+    case TPCC_DIST_PART:
+    case TPCC_REAL_DIST_PART:
+      gen = new TpccTxnGenerator(Config::GetConfig()->sharding_);
+      break;
+    case TPCA:
+    case RW_BENCHMARK:
+    case MICRO_BENCH:
+    default:
+      gen = new TxnGenerator(Config::GetConfig()->sharding_);
+//      verify(0);
+  }
+  return gen;
+
 }
 
 } // namespace rococo;

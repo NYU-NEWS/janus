@@ -6,7 +6,7 @@
 namespace rococo {
 
 class ClientControlServiceImpl;
-class TxnRequestFactory;
+class TxnGenerator;
 
 class ClientWorker {
  public:
@@ -23,7 +23,7 @@ class ClientWorker {
   rrr::CondVar finish_cond;
   Coordinator *coo_;
   std::atomic<uint32_t> num_txn, success, num_try;
-  TxnRequestFactory* txn_req_factory_;
+  TxnGenerator * txn_req_factory_;
   Timer *timer_;
   TxnRegistry* txn_reg_ = nullptr;
  public:

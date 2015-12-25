@@ -32,10 +32,10 @@ void TpccChopper::init(TxnRequest &req) {
 
   switch (txn_type_) {
     case TPCC_NEW_ORDER:
-      new_order_init(req);
+      NewOrderInit(req);
       break;
     case TPCC_PAYMENT:
-      payment_init(req);
+      PaymentInit(req);
       break;
     case TPCC_ORDER_STATUS:
       order_status_init(req);

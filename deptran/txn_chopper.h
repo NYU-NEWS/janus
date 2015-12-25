@@ -28,7 +28,7 @@ class TxnReply {
 class TxnRequest {
  public:
   uint32_t txn_type_;
-  std::vector<mdb::Value> input_;    // the inputs for the transactions.
+  map<int32_t, Value> input_;    // the inputs for the transactions.
   int n_try_ = 1;
   std::function<void(TxnReply &)> callback_;
 
@@ -106,15 +106,6 @@ class TxnChopper : public Command {
   TxnChopper();
 
   virtual cmdtype_t type() {return txn_type_;};
-
-  /** this is even a better than better way to write hard coded coordinator.*/
-  //virtual int next_piece(std::vector<std::vector<mdb::Value> > &input, int32_t &server_id, std::vector<int> &pi, std::vector<int> &p_type);
-
-  virtual int batch_next_piece(BatchRequestHeader *batch_header,
-                               std::vector<mdb::Value> &input,
-                               int32_t &server_id,
-                               std::vector<int> &pi,
-                               Coordinator *coo);
 
   virtual int next_piece(map<int32_t, Value>* &input,
                          int &output_size,

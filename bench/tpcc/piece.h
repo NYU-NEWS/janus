@@ -180,6 +180,7 @@ namespace rococo {
 #define TPCC_VAR_C_BALANCE                     (1050)
 #define TPCC_VAR_C_FIRST                       (1051)
 #define TPCC_VAR_C_MIDDLE                      (1052)
+#define TPCC_VAR_C_ID_LAST                     (1053)
 
 #define TPCC_VAR_THRESHOLD  (1060)
 #define TPCC_VAR_UNKOWN (1061)

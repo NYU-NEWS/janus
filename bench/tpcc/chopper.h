@@ -60,26 +60,22 @@ class TpccChopper: public TxnChopper {
 
   // new order
   virtual void new_order_shard(const char *tb,
-                               const std::vector<mdb::Value> &input,
-                               uint32_t &site, int cnt = 0);
+                               map<int32_t, Value> &input,
+                               uint32_t &site,
+                               int cnt = 0);
 
-  virtual void new_order_init(TxnRequest &req);
+  virtual void NewOrderInit(TxnRequest &req);
 
   virtual void new_order_retry();
 
   // payment
   virtual void payment_shard(const char *tb,
-                             const std::vector<mdb::Value> &input,
+                             map<int32_t, Value> &input,
                              uint32_t &site);
 
-  virtual void payment_init(TxnRequest &req);
+  virtual void PaymentInit(TxnRequest &req);
 
   virtual void payment_retry();
-
-  // stock level
-  virtual void stock_level_shard(const char *tb,
-                                 const std::vector<mdb::Value> &input,
-                                 uint32_t &site);
 
   virtual void stock_level_shard(const char *tb,
                                  const map<int32_t, mdb::Value> &input,
@@ -91,7 +87,7 @@ class TpccChopper: public TxnChopper {
 
   // delivery
   virtual void delivery_shard(const char *tb,
-                              const std::vector<mdb::Value> &input,
+                              map<int32_t, Value> &input,
                               uint32_t &site, int cnt);
 
   virtual void delivery_init(TxnRequest &req);
@@ -100,7 +96,7 @@ class TpccChopper: public TxnChopper {
 
   // order status
   virtual void order_status_shard(const char *tb,
-                                  const std::vector<mdb::Value> &input,
+                                  map<int32_t, Value> &input,
                                   uint32_t &site);
 
   virtual void order_status_init(TxnRequest &req);

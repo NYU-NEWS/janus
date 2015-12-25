@@ -100,12 +100,6 @@ int TxnChopper::next_piece(
   }
 }
 
-int TxnChopper::batch_next_piece(BatchRequestHeader *batch_header,
-                                 std::vector<mdb::Value> &input,
-                                 int32_t &server_id, std::vector<int> &pi,
-                                 Coordinator *coo) {
-  verify(0);
-}
 
 void TxnChopper::Merge(Command &cmd) {
   auto simple_cmd = (SimpleCommand *) &cmd;

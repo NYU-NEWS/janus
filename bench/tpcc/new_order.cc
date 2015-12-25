@@ -1,10 +1,14 @@
 #include "all.h"
+#include "generator.h"
 
 namespace rococo {
 
 static uint32_t TXN_TYPE = TPCC_NEW_ORDER;
 
-void TpccChopper::new_order_init(TxnRequest &req) {
+
+
+
+void TpccChopper::NewOrderInit(TxnRequest &req) {
   new_order_dep_ = new_order_dep_t();
   /**
    * req.input_
@@ -16,7 +20,7 @@ void TpccChopper::new_order_init(TxnRequest &req) {
    *  5 + 3*i ==> ol_supply_w_id
    *  6 + 3*i ==> ol_quantity
    **/
-  int32_t ol_cnt = req.input_[3].get_i32();
+  int32_t ol_cnt = req.input_[TPCC_VAR_OL_CNT].get_i32();
 
   new_order_dep_.piece_0_dist = false;
   new_order_dep_.ol_cnt = (size_t) ol_cnt;
@@ -34,19 +38,17 @@ void TpccChopper::new_order_init(TxnRequest &req) {
 
   // piece 0, Ri&W district
   inputs_[0] = {
-      {TPCC_VAR_W_ID, req.input_[0]},  // 0 ==> d_w_id
-      {TPCC_VAR_D_ID, req.input_[1]}   // 1 ==> d_id
+      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},
+      {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}
   };
   output_size_[0] = 2;
   p_types_[0] = TPCC_NEW_ORDER_0;
-  new_order_shard(TPCC_TB_DISTRICT,
-                  req.input_,  // sharding based on d_w_id
-                  sharding_[0]);
+  new_order_shard(TPCC_TB_DISTRICT, req.input_, sharding_[0]);
   status_[0] = READY;
 
   // piece 1, R warehouse
   inputs_[1] = {
-      {TPCC_VAR_W_ID, req.input_[0]}   // 0 ==> w_id
+      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]}
   };
   output_size_[1] = 1;
   p_types_[1] = TPCC_NEW_ORDER_1;
@@ -57,21 +59,19 @@ void TpccChopper::new_order_init(TxnRequest &req) {
 
   // piece 2, R customer
   inputs_[2] = {
-      {TPCC_VAR_W_ID, req.input_[0]},  // 0 ==> c_w_id
-      {TPCC_VAR_D_ID, req.input_[1]},  // 1 ==> c_d_id
-      {TPCC_VAR_C_ID, req.input_[2]}   // 2 ==> c_id
+      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},
+      {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]},
+      {TPCC_VAR_C_ID, req.input_[TPCC_VAR_C_ID]}
   };
   output_size_[2] = 3;
   p_types_[2] = TPCC_NEW_ORDER_2;
-  new_order_shard(TPCC_TB_CUSTOMER,
-                  req.input_,  // sharding based on c_w_id
-                  sharding_[2]);
+  new_order_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[2]);
   status_[2] = READY;
 
   bool all_local = true;
   for (int i = 0; i < ol_cnt; i++) {
     Value is_remote((i32) 0);
-    if (req.input_[5 + 3 * i] != req.input_[0]) {
+    if (req.input_[5 + 3 * i] != req.input_[TPCC_VAR_W_ID]) {
       all_local = false;
       is_remote.set_i32((i32) 1);
     }
@@ -91,7 +91,7 @@ void TpccChopper::new_order_init(TxnRequest &req) {
     inputs_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)] = {
         {TPCC_VAR_I_ID(i), req.input_[4 + 3 * i]},  // 0 ==> s_i_id
         {TPCC_VAR_S_W_ID(i), req.input_[5 + 3 * i]},  // 1 ==> ol_supply_w_id / s_w_id
-        {TPCC_VAR_S_D_ID(i), req.input_[1]}           // 2 ==> d_id
+        {TPCC_VAR_S_D_ID(i), req.input_[TPCC_VAR_D_ID]}           // 2 ==> d_id
     };
     output_size_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)] = 2;
     p_types_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)] = TPCC_NEW_ORDER_RS(i);
@@ -118,8 +118,8 @@ void TpccChopper::new_order_init(TxnRequest &req) {
 
     // piece 8 + 4 * i, W order_line, depends on piece 0 & 5+3*i & 6+3*i
     inputs_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)] = {
-        {TPCC_VAR_OL_D_ID(i),         req.input_[1]},           // 0 ==> ol_d_id
-        {TPCC_VAR_OL_W_ID(i),         req.input_[0]},           // 1 ==> ol_w_id
+        {TPCC_VAR_OL_D_ID(i),         req.input_[TPCC_VAR_D_ID]},           // 0 ==> ol_d_id
+        {TPCC_VAR_OL_W_ID(i),         req.input_[TPCC_VAR_W_ID]},           // 1 ==> ol_w_id
         {TPCC_VAR_OL_O_ID(i),         Value((i32) 0)},          // 2 ==> ol_o_id    depends on piece 0
         {TPCC_VAR_OL_NUMBER(i),       Value((i32) i)},          // 3 ==> ol_number
         {TPCC_VAR_I_ID(i),            req.input_[4 + 3 * i]},   // 4 ==> ol_i_id
@@ -139,11 +139,11 @@ void TpccChopper::new_order_init(TxnRequest &req) {
   // piece 3, W order, depends on piece 0
   inputs_[3] = {
       {TPCC_VAR_O_ID, Value((i32) 0)}, // 0 ==> // o_id   depends on piece 0
-      {TPCC_VAR_D_ID, req.input_[1]},  // 1 ==> // o_d_id
-      {TPCC_VAR_W_ID, req.input_[0]},  // 2 ==> // o_w_id
-      {TPCC_VAR_C_ID, req.input_[2]},  // 3 ==> // o_c_id
+      {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]},  // 1 ==> // o_d_id
+      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},  // 2 ==> // o_w_id
+      {TPCC_VAR_C_ID, req.input_[TPCC_VAR_C_ID]},  // 3 ==> // o_c_id
       {TPCC_VAR_O_CARRIER_ID, Value((i32) 0)}, // 4 ==> // o_carrier_id
-      {TPCC_VAR_OL_CNT, req.input_[3]},  // 5 ==> // o_ol_cnt
+      {TPCC_VAR_OL_CNT, req.input_[TPCC_VAR_OL_CNT]},  // 5 ==> // o_ol_cnt
       {TPCC_VAR_O_ALL_LOCAL, all_local ? Value((i32) 1) : Value((i32) 0) }// 6 ==> // o_all_local
   };
   output_size_[3] = 0;
@@ -156,8 +156,8 @@ void TpccChopper::new_order_init(TxnRequest &req) {
   // piece 4, W new_order, depends on piece 0
   inputs_[4] = {
       {TPCC_VAR_O_ID, Value((i32) 0)},         // 0 ==> no_id   depends on piece 0
-      {TPCC_VAR_D_ID, req.input_[1]},          // 1 ==> no_d_id
-      {TPCC_VAR_W_ID, req.input_[0]},          // 2 ==> no_w_id
+      {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]},          // 1 ==> no_d_id
+      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},          // 2 ==> no_w_id
   };
   output_size_[4] = 0;
   p_types_[4] = TPCC_NEW_ORDER_4;
@@ -168,7 +168,7 @@ void TpccChopper::new_order_init(TxnRequest &req) {
 }
 
 void TpccChopper::new_order_shard(const char *tb,
-                                  const std::vector<Value> &input,
+                                  map<int32_t, Value> &input,
                                   uint32_t &site,
                                   int cnt) {
   // partition based on w_id
@@ -179,7 +179,7 @@ void TpccChopper::new_order_shard(const char *tb,
       tb == TPCC_TB_ORDER     ||
       tb == TPCC_TB_NEW_ORDER ||
       tb == TPCC_TB_ORDER_LINE)
-    mv = MultiValue(input[0]);
+    mv = MultiValue(input[TPCC_VAR_W_ID]);
   else if (tb == TPCC_TB_ITEM)
     // based on i_id
     mv = MultiValue(input[4 + 3 * cnt]);

@@ -35,8 +35,7 @@ void TpccRealDistChopper::payment_shard(const char *tb, const std::vector<Value>
         // use the same server as district
         tb = TPCC_TB_DISTRICT;
         mv = MultiValue(std::vector<Value>({input[1], input[0]}));
-    }
-    else if (tb == TPCC_TB_DISTRICT)
+    } else if (tb == TPCC_TB_DISTRICT)
         // based on d_id && w_id
         mv = MultiValue(std::vector<Value>({input[1], input[0]}));
     else if (tb == TPCC_TB_CUSTOMER)
