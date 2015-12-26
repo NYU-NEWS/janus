@@ -12,34 +12,34 @@ void TpccChopper::stock_level_init(TxnRequest &req) {
    **/
   n_pieces_all_ = 2;
 //  inputs_.resize(n_pieces_all_);
-  output_size_.resize(n_pieces_all_);
-  p_types_.resize(n_pieces_all_);
-  sharding_.resize(n_pieces_all_);
-  status_.resize(n_pieces_all_);
+//  output_size_.resize(n_pieces_all_);
+//  p_types_.resize(n_pieces_all_);
+//  sharding_.resize(n_pieces_all_);
+//  status_.resize(n_pieces_all_);
 
   stock_level_dep_.w_id = req.input_[TPCC_VAR_W_ID].get_i32();
   stock_level_dep_.threshold = req.input_[TPCC_VAR_THRESHOLD].get_i32();
 
   // piece 0, R district
-  inputs_[0] = {
+  inputs_[TPCC_STOCK_LEVEL_0] = {
       {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},  // 0    ==> w_id
       {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}   // 1    ==> d_id
   };
-  output_size_[0] = 1;
-  p_types_[0] = TPCC_STOCK_LEVEL_0;
-  stock_level_shard(TPCC_TB_DISTRICT, req.input_, sharding_[0]);
-  status_[0] = READY;
+  output_size_[TPCC_STOCK_LEVEL_0] = 1;
+  p_types_[TPCC_STOCK_LEVEL_0] = TPCC_STOCK_LEVEL_0;
+  stock_level_shard(TPCC_TB_DISTRICT, req.input_, sharding_[TPCC_STOCK_LEVEL_0]);
+  status_[TPCC_STOCK_LEVEL_0] = READY;
 
   // piece 1, R order_line
-  inputs_[1] = {
+  inputs_[TPCC_STOCK_LEVEL_1] = {
       {TPCC_VAR_D_NEXT_O_ID, Value()},        // 0    ==> d_next_o_id, depends on piece 0
       {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},         // 1    ==> ol_w_id
       {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}          // 2    ==> ol_d_id
   };
-  output_size_[1] = 20 * 15; // 20 orders * 15 order_line per order at most
-  p_types_[1] = TPCC_STOCK_LEVEL_1;
-  stock_level_shard(TPCC_TB_ORDER_LINE, req.input_, sharding_[1]);
-  status_[1] = WAITING;
+  output_size_[TPCC_STOCK_LEVEL_1] = 20 * 15; // 20 orders * 15 order_line per order at most
+  p_types_[TPCC_STOCK_LEVEL_1] = TPCC_STOCK_LEVEL_1;
+  stock_level_shard(TPCC_TB_ORDER_LINE, req.input_, sharding_[TPCC_STOCK_LEVEL_1]);
+  status_[TPCC_STOCK_LEVEL_1] = WAITING;
 
   // piece 2 - n, R stock init in stock_level_callback
 }
@@ -63,12 +63,12 @@ void TpccChopper::stock_level_shard(
 void TpccChopper::stock_level_retry() {
   n_pieces_all_ = 2;
 //  inputs_.resize(n_pieces_all_);
-  output_size_.resize(n_pieces_all_);
-  p_types_.resize(n_pieces_all_);
-  sharding_.resize(n_pieces_all_);
-  status_.resize(n_pieces_all_);
-  status_[0] = READY;
-  status_[1] = WAITING;
+//  output_size_.resize(n_pieces_all_);
+//  p_types_.resize(n_pieces_all_);
+//  sharding_.resize(n_pieces_all_);
+//  status_.resize(n_pieces_all_);
+  status_[TPCC_STOCK_LEVEL_0] = READY;
+  status_[TPCC_STOCK_LEVEL_1] = WAITING;
 }
 
 
@@ -86,18 +86,16 @@ void TpccPiece::reg_stock_level() {
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT),
                               mb,
                               ROW_DISTRICT);
-
     dtxn->ReadColumn(r, TPCC_COL_DISTRICT_D_NEXT_O_ID,
                      &output[TPCC_VAR_D_NEXT_O_ID], TXN_DEFERRED);
-
     *res = SUCCESS;
   } END_PIE
 
-  BEGIN_CB(TPCC_STOCK_LEVEL, 0)
+  BEGIN_CB(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_0)
     TpccChopper *tpcc_ch = (TpccChopper*) ch;
     verify(output.size() == 1);
-    tpcc_ch->inputs_[1][TPCC_VAR_D_NEXT_O_ID] = output[TPCC_VAR_D_NEXT_O_ID];
-    tpcc_ch->status_[1] = READY;
+    tpcc_ch->inputs_[TPCC_STOCK_LEVEL_1][TPCC_VAR_D_NEXT_O_ID] = output[TPCC_VAR_D_NEXT_O_ID];
+    tpcc_ch->status_[TPCC_STOCK_LEVEL_1] = READY;
     return true;
   END_CB
 
@@ -123,7 +121,6 @@ void TpccPiece::reg_stock_level() {
                                       mbh,
                                       mdb::ORD_ASC,
                                       header.pid);
-
     Log_debug("tid: %llx, stock_level: piece 1: d_next_o_id: %d, ol_w_id: %d, ol_d_id: %d",
               header.tid,
               input[TPCC_VAR_D_NEXT_O_ID].get_i32(),
@@ -142,8 +139,6 @@ void TpccPiece::reg_stock_level() {
     std::vector<mdb::column_lock_t> column_locks;
     column_locks.reserve(row_list.size());
 
-    int i = 0;
-    i32 oi = 0;
     for (int i = 0; i < row_list.size(); i++) {
       dtxn->ReadColumn(row_list[i],
                        TPCC_COL_ORDER_LINE_OL_I_ID,
@@ -153,7 +148,7 @@ void TpccPiece::reg_stock_level() {
     *res = SUCCESS;
   } END_PIE
 
-  BEGIN_CB(TPCC_STOCK_LEVEL, 1)
+  BEGIN_CB(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_1)
     TpccChopper *tpcc_ch = (TpccChopper*) ch;
     Log_debug("tid %llx: stock_level: outptu_size: %u",
               tpcc_ch->txn_id_, output.size());
@@ -165,28 +160,26 @@ void TpccPiece::reg_stock_level() {
     }
     tpcc_ch->n_pieces_all_ += s_i_ids.size();
 //    inputs_.resize(n_pieces_all_);
-    tpcc_ch->output_size_.resize(tpcc_ch->n_pieces_all_);
-    tpcc_ch->p_types_.resize(tpcc_ch->n_pieces_all_);
-    tpcc_ch->sharding_.resize(tpcc_ch->n_pieces_all_);
-    tpcc_ch->status_.resize(tpcc_ch->n_pieces_all_);
+//    tpcc_ch->output_size_.resize(tpcc_ch->n_pieces_all_);
+//    tpcc_ch->p_types_.resize(tpcc_ch->n_pieces_all_);
+//    tpcc_ch->sharding_.resize(tpcc_ch->n_pieces_all_);
+//    tpcc_ch->status_.resize(tpcc_ch->n_pieces_all_);
     int i = 0;
     for (auto s_i_ids_it = s_i_ids.begin();
          s_i_ids_it != s_i_ids.end();
          s_i_ids_it++) {
-      tpcc_ch->inputs_[2 + i] = {
-          {TPCC_VAR_OL_I_ID(i), Value(*s_i_ids_it)},                      // 0
-              // ==> s_i_id
+      auto pi = 2 + i;
+      tpcc_ch->inputs_[pi] = {
+          {TPCC_VAR_OL_I_ID(i), Value(*s_i_ids_it)},
           {TPCC_VAR_W_ID, Value((i32) tpcc_ch->stock_level_dep_.w_id)},
-          // 1 ==> s_w_id
-          {TPCC_VAR_THRESHOLD, Value((i32) tpcc_ch->stock_level_dep_
-              .threshold)}  // 2 ==> threshold
+          {TPCC_VAR_THRESHOLD, Value((i32) tpcc_ch->stock_level_dep_.threshold)}
       };
-      tpcc_ch->output_size_[2 + i] = 1;
-      tpcc_ch->p_types_[2 + i] = TPCC_STOCK_LEVEL_RS(i);
+      tpcc_ch->output_size_[pi] = 1;
+      tpcc_ch->p_types_[pi] = TPCC_STOCK_LEVEL_RS(i);
       tpcc_ch->stock_level_shard(TPCC_TB_STOCK,
-                                 tpcc_ch->inputs_[2 + i],
-                                 tpcc_ch->sharding_[2 + i]);
-      tpcc_ch->status_[2 + i] = READY;
+                                 tpcc_ch->inputs_[pi],
+                                 tpcc_ch->sharding_[pi]);
+      tpcc_ch->status_[pi] = READY;
       i++;
     }
     return true;

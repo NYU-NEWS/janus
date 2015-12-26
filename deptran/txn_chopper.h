@@ -61,7 +61,7 @@ class TxnChopper : public Command {
         return false;
     return true;
   }
-  std::vector<map<int32_t, Value> > outputs_;
+  map<int32_t, map<int32_t, Value> > outputs_;
   bool read_only_failed_;
 
   double pre_time_;
@@ -79,13 +79,13 @@ class TxnChopper : public Command {
 
   map<int32_t, map<int32_t, Value> > inputs_;  // input of each piece.
   //std::vector<std::vector<mdb::Value> > outputs_; // output of each piece.
-  std::vector<int32_t> output_size_;
-  std::vector<int32_t> p_types_;                  // types of each piece.
+  map<int32_t, int32_t> output_size_;
+  map<int32_t, int32_t> p_types_;                  // types of each piece.
+  map<int32_t, uint32_t> sharding_;
   std::atomic<bool> commit_;
-  std::vector<uint32_t> sharding_;
   /** which server to which piece */
-  std::vector<CommandStatus> status_; // -1 waiting; 0 ready; 1 ongoing; 2 finished;
-  std::vector<Command*> cmd_vec_;
+  map<int32_t, CommandStatus> status_; // -1 waiting; 0 ready; 1 ongoing; 2 finished;
+  map<int32_t, Command*> cmd_vec_;
   std::set<parid_t> partitions_;
   /** server involved*/
 

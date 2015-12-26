@@ -2,7 +2,6 @@
 
 namespace rococo {
 
-
 void TpccChopper::delivery_init(TxnRequest &req) {
   /**
    * req.input_
@@ -13,10 +12,10 @@ void TpccChopper::delivery_init(TxnRequest &req) {
   int d_id = req.input_[TPCC_VAR_D_ID].get_i32();
   n_pieces_all_ = 4;
 //  inputs_.resize(n_pieces_all_);
-  output_size_.resize(n_pieces_all_);
-  p_types_.resize(n_pieces_all_);
-  sharding_.resize(n_pieces_all_);
-  status_.resize(n_pieces_all_);
+//  output_size_.resize(n_pieces_all_);
+//  p_types_.resize(n_pieces_all_);
+//  sharding_.resize(n_pieces_all_);
+//  status_.resize(n_pieces_all_);
 
   delivery_dep_.piece_new_orders = false;
   delivery_dep_.piece_orders = false;
@@ -30,49 +29,49 @@ void TpccChopper::delivery_init(TxnRequest &req) {
   //memset(delivery_dep_.piece_order_lines, false, sizeof(bool) * d_cnt);
 
   // piece 0, Ri & W new_order
-  inputs_[0] = {
+  inputs_[TPCC_DELIVERY_0] = {
       {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},  // 0 ==>    no_w_id
       {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}  //  1 ==>    no_d_id
   };
-  output_size_[0] = 1;
-  p_types_[0] = TPCC_DELIVERY_0;
-  delivery_shard(TPCC_TB_NEW_ORDER, req.input_, sharding_[0], d_id);
-  status_[0] = READY;
+  output_size_[TPCC_DELIVERY_0] = 1;
+  p_types_[TPCC_DELIVERY_0] = TPCC_DELIVERY_0;
+  delivery_shard(TPCC_TB_NEW_ORDER, req.input_, sharding_[TPCC_DELIVERY_0], d_id);
+  status_[TPCC_DELIVERY_0] = READY;
 
   // piece 1, Ri & W order
-  inputs_[1] = {
+  inputs_[TPCC_DELIVERY_1] = {
       {TPCC_VAR_O_ID,         Value()},        // 0 ==>    o_id,   depends on piece 0
       {TPCC_VAR_W_ID,         req.input_[TPCC_VAR_W_ID]},  // 1 ==>    o_w_id
       {TPCC_VAR_D_ID,         req.input_[TPCC_VAR_D_ID]},  // 2 ==>    o_d_id
       {TPCC_VAR_O_CARRIER_ID, req.input_[TPCC_VAR_O_CARRIER_ID]}   // 3 ==>    o_carrier_id
   };
-  output_size_[1] = 1;
-  p_types_[1] = TPCC_DELIVERY_1;
-  delivery_shard(TPCC_TB_ORDER, req.input_, sharding_[1], d_id);
-  status_[1] = WAITING;
+  output_size_[TPCC_DELIVERY_1] = 1;
+  p_types_[TPCC_DELIVERY_1] = TPCC_DELIVERY_1;
+  delivery_shard(TPCC_TB_ORDER, req.input_, sharding_[TPCC_DELIVERY_1], d_id);
+  status_[TPCC_DELIVERY_1] = WAITING;
 
   // piece 2, Ri & W order_line
-  inputs_[2] = {
+  inputs_[TPCC_DELIVERY_2] = {
       {TPCC_VAR_O_ID, Value()},        // 0 ==>    ol_o_id,   depends on piece 0
       {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},  // 1 ==>    ol_w_id
       {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}   // 2 ==>    ol_d_id
   };
-  output_size_[2] = 1;
-  p_types_[2] = TPCC_DELIVERY_2;
-  delivery_shard(TPCC_TB_ORDER_LINE, req.input_, sharding_[2], d_id);
-  status_[2] = WAITING;
+  output_size_[TPCC_DELIVERY_2] = 1;
+  p_types_[TPCC_DELIVERY_2] = TPCC_DELIVERY_2;
+  delivery_shard(TPCC_TB_ORDER_LINE, req.input_, sharding_[TPCC_DELIVERY_2], d_id);
+  status_[TPCC_DELIVERY_2] = WAITING;
 
   // piece 3, W customer
-  inputs_[3] = {
+  inputs_[TPCC_DELIVERY_3] = {
       {TPCC_VAR_C_ID, Value()},        // 0 ==>    c_id,   depends on piece 1
       {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},  // 1 ==>    c_w_id
       {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]},  // 2 ==>    c_d_id
       {TPCC_VAR_OL_AMOUNT, Value()}    // 3 ==>    ol_amount, depends on piece 2
   };
-  output_size_[3] = 0;
-  p_types_[3] = TPCC_DELIVERY_3;
-  delivery_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[3], d_id);
-  status_[3] = WAITING;
+  output_size_[TPCC_DELIVERY_3] = 0;
+  p_types_[TPCC_DELIVERY_3] = TPCC_DELIVERY_3;
+  delivery_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[TPCC_DELIVERY_3], d_id);
+  status_[TPCC_DELIVERY_3] = WAITING;
 }
 
 
@@ -174,24 +173,24 @@ void TpccPiece::reg_delivery() {
     return;
   } END_PIE
 
-  BEGIN_CB(TPCC_DELIVERY, 0)
+  BEGIN_CB(TPCC_DELIVERY, TPCC_DELIVERY_0)
     TpccChopper *tpcc_ch = (TpccChopper*) ch;
     verify(output.size() == 1);
     verify(!tpcc_ch->delivery_dep_.piece_new_orders);
     if (output[TPCC_VAR_O_ID].get_i32() == (i32) -1) { // new_order not found
-      tpcc_ch->status_[1] = FINISHED;
-      tpcc_ch->status_[2] = FINISHED;
-      tpcc_ch->status_[3] = FINISHED;
+      tpcc_ch->status_[TPCC_DELIVERY_1] = FINISHED;
+      tpcc_ch->status_[TPCC_DELIVERY_2] = FINISHED;
+      tpcc_ch->status_[TPCC_DELIVERY_3] = FINISHED;
       tpcc_ch->n_pieces_out_ += 3;
       Log::info("TPCC DELIVERY: no more new order for w_id: %d, d_id: %d",
-                tpcc_ch->inputs_[0][TPCC_VAR_W_ID].get_i32(),
-                tpcc_ch->inputs_[0][TPCC_VAR_D_ID].get_i32());
+                tpcc_ch->inputs_[TPCC_DELIVERY_0][TPCC_VAR_W_ID].get_i32(),
+                tpcc_ch->inputs_[TPCC_DELIVERY_0][TPCC_VAR_D_ID].get_i32());
       return false;
     } else {
-      tpcc_ch->inputs_[1][TPCC_VAR_O_ID] = output[TPCC_VAR_O_ID];
-      tpcc_ch->inputs_[2][TPCC_VAR_O_ID] = output[TPCC_VAR_O_ID];
-      tpcc_ch->status_[1] = READY;
-      tpcc_ch->status_[2] = READY;
+      tpcc_ch->inputs_[TPCC_DELIVERY_1][TPCC_VAR_O_ID] = output[TPCC_VAR_O_ID];
+      tpcc_ch->inputs_[TPCC_DELIVERY_2][TPCC_VAR_O_ID] = output[TPCC_VAR_O_ID];
+      tpcc_ch->status_[TPCC_DELIVERY_1] = READY;
+      tpcc_ch->status_[TPCC_DELIVERY_2] = READY;
       tpcc_ch->delivery_dep_.piece_new_orders = true;
       return true;
     }
@@ -224,13 +223,13 @@ void TpccPiece::reg_delivery() {
     return;
   } END_PIE
 
-  BEGIN_CB(TPCC_DELIVERY, 1)
+  BEGIN_CB(TPCC_DELIVERY, TPCC_DELIVERY_1)
     TpccChopper *tpcc_ch = (TpccChopper*) ch;
     verify(output.size() == 1);
-    tpcc_ch->inputs_[3][TPCC_VAR_C_ID] = output[TPCC_VAR_C_ID];
+    tpcc_ch->inputs_[TPCC_DELIVERY_3][TPCC_VAR_C_ID] = output[TPCC_VAR_C_ID];
     tpcc_ch->delivery_dep_.piece_orders = true;
     if (tpcc_ch->delivery_dep_.piece_order_lines) {
-      tpcc_ch->status_[3] = READY;
+      tpcc_ch->status_[TPCC_DELIVERY_3] = READY;
       return true;
     } else {
       return false;
@@ -293,13 +292,13 @@ void TpccPiece::reg_delivery() {
     *res = SUCCESS;
   } END_PIE
 
-  BEGIN_CB(TPCC_DELIVERY, 2)
+  BEGIN_CB(TPCC_DELIVERY, TPCC_DELIVERY_2)
     TpccChopper *tpcc_ch = (TpccChopper*) ch;
     verify(output.size() == 1);
-    tpcc_ch->inputs_[3][TPCC_VAR_OL_AMOUNT] = output[TPCC_VAR_OL_AMOUNT];
+    tpcc_ch->inputs_[TPCC_DELIVERY_3][TPCC_VAR_OL_AMOUNT] = output[TPCC_VAR_OL_AMOUNT];
     tpcc_ch->delivery_dep_.piece_order_lines = true;
     if (tpcc_ch->delivery_dep_.piece_orders) {
-      tpcc_ch->status_[3] = READY;
+      tpcc_ch->status_[TPCC_DELIVERY_3] = READY;
       return true;
     } else {
       return false;

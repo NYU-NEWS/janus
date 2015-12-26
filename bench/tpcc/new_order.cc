@@ -5,9 +5,6 @@ namespace rococo {
 
 static uint32_t TXN_TYPE = TPCC_NEW_ORDER;
 
-
-
-
 void TpccChopper::NewOrderInit(TxnRequest &req) {
   new_order_dep_ = new_order_dep_t();
   /**
@@ -31,42 +28,42 @@ void TpccChopper::NewOrderInit(TxnRequest &req) {
 
   n_pieces_all_ = 5 + 4 * ol_cnt;
 //  inputs_.resize(n_pieces_all_);
-  output_size_.resize(n_pieces_all_);
-  p_types_.resize(n_pieces_all_);
-  sharding_.resize(n_pieces_all_);
-  status_.resize(n_pieces_all_);
+//  output_size_.resize(n_pieces_all_);
+//  p_types_.resize(n_pieces_all_);
+//  sharding_.resize(n_pieces_all_);
+//  status_.resize(n_pieces_all_);
 
   // piece 0, Ri&W district
-  inputs_[0] = {
+  inputs_[TPCC_NEW_ORDER_0] = {
       {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},
       {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}
   };
-  output_size_[0] = 2;
-  p_types_[0] = TPCC_NEW_ORDER_0;
-  new_order_shard(TPCC_TB_DISTRICT, req.input_, sharding_[0]);
-  status_[0] = READY;
+  output_size_[TPCC_NEW_ORDER_0] = 2;
+  p_types_[TPCC_NEW_ORDER_0] = TPCC_NEW_ORDER_0;
+  new_order_shard(TPCC_TB_DISTRICT, req.input_, sharding_[TPCC_NEW_ORDER_0]);
+  status_[TPCC_NEW_ORDER_0] = READY;
 
   // piece 1, R warehouse
-  inputs_[1] = {
+  inputs_[TPCC_NEW_ORDER_1] = {
       {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]}
   };
-  output_size_[1] = 1;
-  p_types_[1] = TPCC_NEW_ORDER_1;
+  output_size_[TPCC_NEW_ORDER_1] = 1;
+  p_types_[TPCC_NEW_ORDER_1] = TPCC_NEW_ORDER_1;
   new_order_shard(TPCC_TB_WAREHOUSE,
                   req.input_,  // sharding based on w_id
-                  sharding_[1]);
-  status_[1] = READY;
+                  sharding_[TPCC_NEW_ORDER_1]);
+  status_[TPCC_NEW_ORDER_1] = READY;
 
   // piece 2, R customer
-  inputs_[2] = {
+  inputs_[TPCC_NEW_ORDER_2] = {
       {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},
       {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]},
       {TPCC_VAR_C_ID, req.input_[TPCC_VAR_C_ID]}
   };
-  output_size_[2] = 3;
-  p_types_[2] = TPCC_NEW_ORDER_2;
-  new_order_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[2]);
-  status_[2] = READY;
+  output_size_[TPCC_NEW_ORDER_2] = 3;
+  p_types_[TPCC_NEW_ORDER_2] = TPCC_NEW_ORDER_2;
+  new_order_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[TPCC_NEW_ORDER_2]);
+  status_[TPCC_NEW_ORDER_2] = READY;
 
   bool all_local = true;
   for (int i = 0; i < ol_cnt; i++) {
@@ -76,48 +73,52 @@ void TpccChopper::NewOrderInit(TxnRequest &req) {
       is_remote.set_i32((i32) 1);
     }
     // piece 5 + 4 * i, Ri item
-    inputs_[TPCC_NEW_ORDER_Ith_INDEX_ITEM(i)] = {
+    auto pi_ri = TPCC_NEW_ORDER_Ith_INDEX_ITEM(i);
+    inputs_[pi_ri] = {
         {TPCC_VAR_I_ID(i), req.input_[4 + 3 * i]}   // 0 ==> i_id
     };
-    output_size_[TPCC_NEW_ORDER_Ith_INDEX_ITEM(i)] = 3;
-    p_types_[TPCC_NEW_ORDER_Ith_INDEX_ITEM(i)] = TPCC_NEW_ORDER_RI(i);
+    output_size_[pi_ri] = 3;
+    p_types_[pi_ri] = TPCC_NEW_ORDER_RI(i);
     new_order_shard(TPCC_TB_ITEM,
                     req.input_,
-                    sharding_[TPCC_NEW_ORDER_Ith_INDEX_ITEM(i)],
+                    sharding_[pi_ri],
                     i);
-    status_[TPCC_NEW_ORDER_Ith_INDEX_ITEM(i)] = READY;
+    status_[pi_ri] = READY;
 
     // piece 6 + 4 * i, Ri stock
-    inputs_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)] = {
+    auto pi_rs = TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i);
+    inputs_[pi_rs] = {
         {TPCC_VAR_I_ID(i), req.input_[4 + 3 * i]},  // 0 ==> s_i_id
         {TPCC_VAR_S_W_ID(i), req.input_[5 + 3 * i]},  // 1 ==> ol_supply_w_id / s_w_id
         {TPCC_VAR_S_D_ID(i), req.input_[TPCC_VAR_D_ID]}           // 2 ==> d_id
     };
-    output_size_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)] = 2;
-    p_types_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)] = TPCC_NEW_ORDER_RS(i);
+    output_size_[pi_rs] = 2;
+    p_types_[pi_rs] = TPCC_NEW_ORDER_RS(i);
     new_order_shard(TPCC_TB_STOCK,
                     req.input_,
-                    sharding_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)],
+                    sharding_[pi_rs],
                     i);
-    status_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)] = READY;
+    status_[pi_rs] = READY;
 
     // piece 7 + 4 * i, W stock
-    inputs_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)] = {
+    auto pi_ws = TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i);
+    inputs_[pi_ws] = {
         {TPCC_VAR_I_ID(i), req.input_[4 + 3 * i]},  // 0 ==> s_i_id
         {TPCC_VAR_S_W_ID(i), req.input_[5 + 3 * i]},  // 1 ==> ol_supply_w_id / s_w_id
         {TPCC_VAR_OL_QUANTITY(i), req.input_[6 + 3 * i]},  // 2 ==> ol_quantity
         {TPCC_VAR_S_REMOTE_CNT(i), is_remote}               // 3 ==> increase delta s_remote_cnt
     };
-    output_size_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)] = 0;
-    p_types_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)] = TPCC_NEW_ORDER_WS(i);
+    output_size_[pi_ws] = 0;
+    p_types_[pi_ws] = TPCC_NEW_ORDER_WS(i);
     new_order_shard(TPCC_TB_STOCK,
                     req.input_,
-                    sharding_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)],
+                    sharding_[pi_ws],
                     i);
-    status_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)] = READY;
+    status_[pi_ws] = READY;
 
     // piece 8 + 4 * i, W order_line, depends on piece 0 & 5+3*i & 6+3*i
-    inputs_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)] = {
+    auto pi_wol = TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i);
+    inputs_[pi_wol] = {
         {TPCC_VAR_OL_D_ID(i),         req.input_[TPCC_VAR_D_ID]},           // 0 ==> ol_d_id
         {TPCC_VAR_OL_W_ID(i),         req.input_[TPCC_VAR_W_ID]},           // 1 ==> ol_w_id
         {TPCC_VAR_OL_O_ID(i),         Value((i32) 0)},          // 2 ==> ol_o_id    depends on piece 0
@@ -129,15 +130,15 @@ void TpccChopper::NewOrderInit(TxnRequest &req) {
         {TPCC_VAR_OL_AMOUNTS(i),      Value((double) 0.0)},     // 8 ==> ol_amount  depends on piece 5+3*i
         {TPCC_VAR_OL_DIST_INFO(i),    Value(std::string())},    // 9 ==> ol_dist_info depends on piece 6+3*i
     };
-    output_size_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)] = 0;
-    p_types_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)] = TPCC_NEW_ORDER_WOL(i);
+    output_size_[pi_wol] = 0;
+    p_types_[pi_wol] = TPCC_NEW_ORDER_WOL(i);
     new_order_shard(TPCC_TB_ORDER_LINE,
                     req.input_,// sharding based on ol_w_id
-                    sharding_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)]);
-    status_[TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i)] = WAITING;
+                    sharding_[pi_wol]);
+    status_[pi_wol] = WAITING;
   }
   // piece 3, W order, depends on piece 0
-  inputs_[3] = {
+  inputs_[TPCC_NEW_ORDER_3] = {
       {TPCC_VAR_O_ID, Value((i32) 0)}, // 0 ==> // o_id   depends on piece 0
       {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]},  // 1 ==> // o_d_id
       {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},  // 2 ==> // o_w_id
@@ -146,25 +147,25 @@ void TpccChopper::NewOrderInit(TxnRequest &req) {
       {TPCC_VAR_OL_CNT, req.input_[TPCC_VAR_OL_CNT]},  // 5 ==> // o_ol_cnt
       {TPCC_VAR_O_ALL_LOCAL, all_local ? Value((i32) 1) : Value((i32) 0) }// 6 ==> // o_all_local
   };
-  output_size_[3] = 0;
-  p_types_[3] = TPCC_NEW_ORDER_3;
+  output_size_[TPCC_NEW_ORDER_3] = 0;
+  p_types_[TPCC_NEW_ORDER_3] = TPCC_NEW_ORDER_3;
   new_order_shard(TPCC_TB_ORDER,
                   req.input_, // sharding based on o_w_id
-                  sharding_[3]);
-  status_[3] = WAITING;
+                  sharding_[TPCC_NEW_ORDER_3]);
+  status_[TPCC_NEW_ORDER_3] = WAITING;
 
   // piece 4, W new_order, depends on piece 0
-  inputs_[4] = {
+  inputs_[TPCC_NEW_ORDER_4] = {
       {TPCC_VAR_O_ID, Value((i32) 0)},         // 0 ==> no_id   depends on piece 0
       {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]},          // 1 ==> no_d_id
       {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},          // 2 ==> no_w_id
   };
-  output_size_[4] = 0;
-  p_types_[4] = TPCC_NEW_ORDER_4;
+  output_size_[TPCC_NEW_ORDER_4] = 0;
+  p_types_[TPCC_NEW_ORDER_4] = TPCC_NEW_ORDER_4;
   new_order_shard(TPCC_TB_NEW_ORDER,
                   req.input_, // sharding based on no_w_id
-                  sharding_[4]);
-  status_[4] = WAITING;
+                  sharding_[TPCC_NEW_ORDER_4]);
+  status_[TPCC_NEW_ORDER_4] = WAITING;
 }
 
 void TpccChopper::new_order_shard(const char *tb,
@@ -193,11 +194,11 @@ void TpccChopper::new_order_shard(const char *tb,
 }
 
 void TpccChopper::new_order_retry() {
-  status_[0] = READY;
-  status_[1] = READY;
-  status_[2] = READY;
-  status_[3] = WAITING;
-  status_[4] = WAITING;
+  status_[TPCC_NEW_ORDER_0] = READY;
+  status_[TPCC_NEW_ORDER_1] = READY;
+  status_[TPCC_NEW_ORDER_2] = READY;
+  status_[TPCC_NEW_ORDER_3] = WAITING;
+  status_[TPCC_NEW_ORDER_4] = WAITING;
   new_order_dep_.piece_0_dist = false;
   for (size_t i = 0; i < new_order_dep_.ol_cnt; i++) {
     new_order_dep_.piece_items[i] = false;
@@ -240,14 +241,14 @@ void TpccPiece::reg_new_order() {
     return;
   } END_PIE
 
-  BEGIN_CB(TPCC_NEW_ORDER, 0)
+  BEGIN_CB(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0)
     TpccChopper* tpcc_ch = (TpccChopper*) ch;
     tpcc_ch->new_order_dep_.piece_0_dist = true;
     Value o_id = output[TPCC_VAR_D_NEXT_O_ID];
-    tpcc_ch->inputs_[3][TPCC_VAR_O_ID] = o_id;
-    tpcc_ch->inputs_[4][TPCC_VAR_O_ID] = o_id;
-    tpcc_ch->status_[3] = READY;
-    tpcc_ch->status_[4] = READY;
+    tpcc_ch->inputs_[TPCC_NEW_ORDER_3][TPCC_VAR_O_ID] = o_id;
+    tpcc_ch->inputs_[TPCC_NEW_ORDER_4][TPCC_VAR_O_ID] = o_id;
+    tpcc_ch->status_[TPCC_NEW_ORDER_3] = READY;
+    tpcc_ch->status_[TPCC_NEW_ORDER_4] = READY;
 
     for (size_t i = 0; i < tpcc_ch->new_order_dep_.ol_cnt; i++) {
       auto pi = TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i);
@@ -434,17 +435,17 @@ void TpccPiece::reg_new_order() {
     mdb::MultiBlob mb(2);
     mb[0] = input[TPCC_VAR_I_ID(I)].get_blob();
     mb[1] = input[TPCC_VAR_S_W_ID(I)].get_blob();
-    mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_STOCK),
-                              mb,
-                              ROW_STOCK);
+    mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_STOCK), mb, ROW_STOCK);
     verify(r->schema_);
     //i32 s_dist_col = 3 + input[2].get_i32();
     // Ri stock
     // FIXME compress all s_dist_xx into one column
     dtxn->ReadColumn(r, TPCC_COL_STOCK_S_DIST_XX,
-                     &output[TPCC_VAR_S_DIST_XX(I)], TXN_BYPASS); // 0 ==> s_dist_xx
+                     &output[TPCC_VAR_S_DIST_XX(I)],
+                     TXN_BYPASS); // 0 ==> s_dist_xx
     dtxn->ReadColumn(r, TPCC_COL_STOCK_S_DATA,
-                     &output[TPCC_VAR_S_DATA(I)], TXN_BYPASS); // 1 ==> s_data
+                     &output[TPCC_VAR_S_DATA(I)],
+                     TXN_BYPASS); // 1 ==> s_data
     *res = SUCCESS;
     return;
   END_LOOP_PIE

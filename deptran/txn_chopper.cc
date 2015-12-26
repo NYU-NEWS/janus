@@ -29,36 +29,65 @@ Command *TxnChopper::GetNextSubCmd() {
 
   auto sz = status_.size();
   verify(sz > 0);
-  if (cmd_vec_.size() < sz) {
-    cmd_vec_.resize(sz);
-  }
+//  if (cmd_vec_.size() < sz) {
+//    cmd_vec_.resize(sz);
+//  }
 
-  for (int i = 0; i < sz; i++) {
+  for (auto &kv : status_) {
+    auto pi = kv.first;
+    auto &status = kv.second;
 
-    if (status_[i] == READY) {
-      status_[i] = INIT;
+    if (status == READY) {
+      status = INIT;
       cmd = new SimpleCommand();
-      cmd->inn_id_ = i;
-      cmd->par_id = sharding_[i];
-      cmd->type_ = p_types_[i];
-      cmd->input = inputs_[i];
-      cmd->output_size = output_size_[i];
+      cmd->inn_id_ = pi;
+      cmd->par_id = sharding_[pi];
+      cmd->type_ = p_types_[pi];
+      cmd->input = inputs_[pi];
+      cmd->output_size = output_size_[pi];
       cmd->root_ = this;
-      cmd_vec_[i] = cmd;
+      cmd_vec_[pi] = cmd;
 
-      partitions_.insert(sharding_[i]);
+      partitions_.insert(sharding_[pi]);
 
       Log_debug("getting subcmd i: %d, thread id: %x",
-                i, std::this_thread::get_id());
+                pi, std::this_thread::get_id());
 
-      verify(status_[i] == INIT);
-      status_[i] = ONGOING;
+      verify(status_[pi] == INIT);
+      status_[pi] = ONGOING;
 
       verify(cmd->type_ != 0);
       n_pieces_out_++;
       return cmd;
     }
   }
+
+//  for (int i = 0; i < sz; i++) {
+//
+//    if (status_[i] == READY) {
+//      status_[i] = INIT;
+//      cmd = new SimpleCommand();
+//      cmd->inn_id_ = i;
+//      cmd->par_id = sharding_[i];
+//      cmd->type_ = p_types_[i];
+//      cmd->input = inputs_[i];
+//      cmd->output_size = output_size_[i];
+//      cmd->root_ = this;
+//      cmd_vec_[i] = cmd;
+//
+//      partitions_.insert(sharding_[i]);
+//
+//      Log_debug("getting subcmd i: %d, thread id: %x",
+//                i, std::this_thread::get_id());
+//
+//      verify(status_[i] == INIT);
+//      status_[i] = ONGOING;
+//
+//      verify(cmd->type_ != 0);
+//      n_pieces_out_++;
+//      return cmd;
+//    }
+//  }
   return cmd;
 }
 
@@ -149,7 +178,7 @@ bool TxnChopper::read_only_start_callback(int pi,
                                           map<int32_t, mdb::Value> &output) {
   verify(pi < n_pieces_all_);
   if (res == NULL) { // phase one, store outputs only
-    outputs_.resize(n_pieces_all_);
+//    outputs_.resize(n_pieces_all_);
     outputs_[pi] = output;
   }
   else { // phase two, check if this try not failed yet
@@ -157,12 +186,12 @@ bool TxnChopper::read_only_start_callback(int pi,
     // store current outputs
     if (read_only_failed_) {
       *res = REJECT;
-      if (n_pieces_all_ != outputs_.size())
-        outputs_.resize(n_pieces_all_);
+//      if (n_pieces_all_ != outputs_.size())
+//        outputs_.resize(n_pieces_all_);
     }
     else if (pi >= outputs_.size()) {
       *res = REJECT;
-      outputs_.resize(n_pieces_all_);
+//      outputs_.resize(n_pieces_all_);
       read_only_failed_ = true;
     }
     else if (is_consistent(outputs_[pi], output))

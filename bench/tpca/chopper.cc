@@ -18,12 +18,24 @@ void TpcaPaymentChopper::init(TxnRequest &req) {
   inputs_[1] = {{0, tel}/*, inc*/};
   inputs_[2] = {{0, bra}/*, inc*/};
 
-  output_size_.assign({0, 0, 0});
+  output_size_ = {
+      {0, 0},
+      {1, 0},
+      {2, 0}
+  };
 
-  this->p_types_ = {TPCA_PAYMENT_1, TPCA_PAYMENT_2, TPCA_PAYMENT_3};
+  this->p_types_ = {
+      {0, TPCA_PAYMENT_1},
+      {1, TPCA_PAYMENT_2},
+      {2, TPCA_PAYMENT_3}
+  };
 
   // get sharding info
-  sharding_ = {0, 0, 0};
+  sharding_ = {
+      {0, 0},
+      {1, 0},
+      {2, 0}
+  };
   sss_->get_site_id_from_tb(TPCA_CUSTOMER, cus, sharding_[0]);
   sss_->get_site_id_from_tb(TPCA_TELLER, tel, sharding_[1]);
   sss_->get_site_id_from_tb(TPCA_BRANCH, bra, sharding_[2]);
@@ -35,7 +47,11 @@ void TpcaPaymentChopper::init(TxnRequest &req) {
   n_try_ = 1;
 
 
-  status_ = std::vector<CommandStatus>(3, READY);
+  status_ = {
+      {0, READY},
+      {1, READY},
+      {2, READY}
+  };
   commit_.store(true);
 
 }

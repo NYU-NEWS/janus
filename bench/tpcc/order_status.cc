@@ -17,15 +17,15 @@ void TpccChopper::order_status_init(TxnRequest &req) {
 
   n_pieces_all_ = 4;
 //  inputs_.resize(n_pieces_all_);
-  output_size_.resize(n_pieces_all_);
-  p_types_.resize(n_pieces_all_);
-  sharding_.resize(n_pieces_all_);
-  status_.resize(n_pieces_all_);
+//  output_size_.resize(n_pieces_all_);
+//  p_types_.resize(n_pieces_all_);
+//  sharding_.resize(n_pieces_all_);
+//  status_.resize(n_pieces_all_);
 
   if (req.input_[TPCC_VAR_C_ID_LAST].get_kind() == Value::I32) { // query by c_id
-    status_[0] = FINISHED; // piece 0 not needed
-    status_[1] = READY; // piece 1 ready
-    status_[2] = READY; // piece 2 ready
+    status_[TPCC_ORDER_STATUS_0] = FINISHED; // piece 0 not needed
+    status_[TPCC_ORDER_STATUS_1] = READY; // piece 1 ready
+    status_[TPCC_ORDER_STATUS_2] = READY; // piece 2 ready
 
     order_status_dep_.piece_last2id = true;
     order_status_dep_.piece_ori_last2id = true;
@@ -33,54 +33,54 @@ void TpccChopper::order_status_init(TxnRequest &req) {
     n_pieces_out_ = 1; // since piece 0 not needed, set it as one started piece
   } else { // query by c_last
     // piece 0, R customer, c_last --> c_id
-    inputs_[0] = {
+    inputs_[TPCC_ORDER_STATUS_0] = {
         {TPCC_VAR_C_LAST, req.input_[TPCC_VAR_C_ID_LAST]},  // 0 ==>    c_last
         {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},    // 1 ==>    c_w_id
         {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}     // 2 ==>    c_d_id
     };
-    output_size_[0] = 1; // return c_id only
-    p_types_[0] = TPCC_ORDER_STATUS_0;
-    order_status_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[0]);
+    output_size_[TPCC_ORDER_STATUS_0] = 1; // return c_id only
+    p_types_[TPCC_ORDER_STATUS_0] = TPCC_ORDER_STATUS_0;
+    order_status_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[TPCC_ORDER_STATUS_0]);
 
-    status_[0] = READY;  // piece 0 ready
+    status_[TPCC_ORDER_STATUS_0] = READY;  // piece 0 ready
 
     order_status_dep_.piece_last2id = false;
     order_status_dep_.piece_ori_last2id = false;
 
-    status_[1] = WAITING; // piece 1 waiting for piece 0
-    status_[2] = WAITING; // piece 2 waiting for piece 0
+    status_[TPCC_ORDER_STATUS_1] = WAITING; // piece 1 waiting for piece 0
+    status_[TPCC_ORDER_STATUS_2] = WAITING; // piece 2 waiting for piece 0
   }
 
   // piece 1, R customer, depends on piece 0 if using c_last instead of c_id
-  inputs_[1] = {
+  inputs_[TPCC_ORDER_STATUS_1] = {
       {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},  // 0 ==> c_w_id
       {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]},  // 1 ==> c_d_id
       {TPCC_VAR_C_ID, req.input_[TPCC_VAR_C_ID_LAST]}   // 2 ==> c_id, may depends on piece 0
   };
-  output_size_[1] = 4;
-  p_types_[1] = TPCC_ORDER_STATUS_1;
-  order_status_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[1]);
+  output_size_[TPCC_ORDER_STATUS_1] = 4;
+  p_types_[TPCC_ORDER_STATUS_1] = TPCC_ORDER_STATUS_1;
+  order_status_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[TPCC_ORDER_STATUS_1]);
 
   // piece 2, R order, depends on piece 0 if using c_last instead of c_id
-  inputs_[2] = {
+  inputs_[TPCC_ORDER_STATUS_2] = {
       {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]}, // 0 ==>    o_w_id
       {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}, // 1 ==>    o_d_id
       {TPCC_VAR_C_ID, req.input_[TPCC_VAR_C_ID_LAST]}  // 2 ==>    o_c_id, may depends on piece 0
   };
-  output_size_[2] = 3;
-  p_types_[2] = TPCC_ORDER_STATUS_2;
-  order_status_shard(TPCC_TB_ORDER, req.input_, sharding_[2]);
+  output_size_[TPCC_ORDER_STATUS_2] = 3;
+  p_types_[TPCC_ORDER_STATUS_2] = TPCC_ORDER_STATUS_2;
+  order_status_shard(TPCC_TB_ORDER, req.input_, sharding_[TPCC_ORDER_STATUS_2]);
 
   // piece 3, R order_line, depends on piece 2
-  inputs_[3] = {
+  inputs_[TPCC_ORDER_STATUS_3] = {
       {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]}, // 0 ==>    ol_w_id
       {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}, // 1 ==>    ol_d_id
       {TPCC_VAR_O_ID, Value()}        // 2 ==>    ol_o_id, depends on piece 2
   };
-  output_size_[3] = 15 * 5;
-  p_types_[3] = TPCC_ORDER_STATUS_3;
-  order_status_shard(TPCC_TB_ORDER_LINE, req.input_, sharding_[3]);
-  status_[3] = WAITING;
+  output_size_[TPCC_ORDER_STATUS_3] = 15 * 5;
+  p_types_[TPCC_ORDER_STATUS_3] = TPCC_ORDER_STATUS_3;
+  order_status_shard(TPCC_TB_ORDER_LINE, req.input_, sharding_[TPCC_ORDER_STATUS_3]);
+  status_[TPCC_ORDER_STATUS_3] = WAITING;
 
 }
 
@@ -105,17 +105,17 @@ void TpccChopper::order_status_retry() {
   order_status_dep_.piece_last2id = order_status_dep_.piece_ori_last2id;
   order_status_dep_.piece_order = false;
   if (order_status_dep_.piece_last2id) {
-    status_[0] = FINISHED;
-    status_[1] = READY;
-    status_[2] = READY;
+    status_[TPCC_ORDER_STATUS_0] = FINISHED;
+    status_[TPCC_ORDER_STATUS_1] = READY;
+    status_[TPCC_ORDER_STATUS_2] = READY;
     n_pieces_out_ = 1;
   }
   else {
-    status_[0] = READY;
-    status_[1] = WAITING;
-    status_[2] = WAITING;
+    status_[TPCC_ORDER_STATUS_0] = READY;
+    status_[TPCC_ORDER_STATUS_1] = WAITING;
+    status_[TPCC_ORDER_STATUS_2] = WAITING;
   }
-  status_[3] = WAITING;
+  status_[TPCC_ORDER_STATUS_3] = WAITING;
 }
 
 
@@ -170,14 +170,14 @@ void TpccPiece::reg_order_status() {
     *res = SUCCESS;
   } END_PIE
 
-  BEGIN_CB(TPCC_ORDER_STATUS, 0)
+  BEGIN_CB(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_0)
     TpccChopper* tpcc_ch = (TpccChopper*)ch;
     verify(!tpcc_ch->order_status_dep_.piece_last2id);
     tpcc_ch->order_status_dep_.piece_last2id = true;
-    tpcc_ch->inputs_[1][TPCC_VAR_C_ID] = output[TPCC_VAR_C_ID];
-    tpcc_ch->inputs_[2][TPCC_VAR_C_ID] = output[TPCC_VAR_C_ID];
-    tpcc_ch->status_[1] = READY;
-    tpcc_ch->status_[2] = READY;
+    tpcc_ch->inputs_[TPCC_ORDER_STATUS_1][TPCC_VAR_C_ID] = output[TPCC_VAR_C_ID];
+    tpcc_ch->inputs_[TPCC_ORDER_STATUS_2][TPCC_VAR_C_ID] = output[TPCC_VAR_C_ID];
+    tpcc_ch->status_[TPCC_ORDER_STATUS_1] = READY;
+    tpcc_ch->status_[TPCC_ORDER_STATUS_2] = READY;
     return true;
   END_CB
 
@@ -255,13 +255,13 @@ void TpccPiece::reg_order_status() {
     *res = SUCCESS;
   } END_PIE
 
-  BEGIN_CB(TPCC_ORDER_STATUS, 2)
+  BEGIN_CB(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_2)
     TpccChopper* tpcc_ch = (TpccChopper*)ch;
     verify(output.size() == 3);
     verify(!tpcc_ch->order_status_dep_.piece_order);
     tpcc_ch->order_status_dep_.piece_order = true;
-    tpcc_ch->inputs_[3][TPCC_VAR_O_ID] = output[TPCC_VAR_O_ID];
-    tpcc_ch->status_[3] = READY;
+    tpcc_ch->inputs_[TPCC_ORDER_STATUS_3][TPCC_VAR_O_ID] = output[TPCC_VAR_O_ID];
+    tpcc_ch->status_[TPCC_ORDER_STATUS_3] = READY;
     return true;
   END_CB
 

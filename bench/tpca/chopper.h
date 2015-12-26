@@ -28,7 +28,11 @@ class TpcaPaymentChopper: public TxnChopper {
 
   virtual void retry() {
     n_pieces_out_ = 0;
-    status_ = std::vector<CommandStatus>(3, READY);
+    status_ = {
+        {0, READY},
+        {1, READY},
+        {2, READY}
+    };
     commit_.store(true);
     partitions_.clear();
     n_try_++;

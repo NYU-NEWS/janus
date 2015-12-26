@@ -9,11 +9,11 @@ namespace rococo {
 // ======= New order txn =======
 #define TPCC_NEW_ORDER              10
 #define TPCC_NEW_ORDER_NAME         "NEW ORDER"
-#define TPCC_NEW_ORDER_0            100
-#define TPCC_NEW_ORDER_1            101
-#define TPCC_NEW_ORDER_2            102
-#define TPCC_NEW_ORDER_3            103
-#define TPCC_NEW_ORDER_4            104
+#define TPCC_NEW_ORDER_0            1000
+#define TPCC_NEW_ORDER_1            1001
+#define TPCC_NEW_ORDER_2            1002
+#define TPCC_NEW_ORDER_3            1003
+#define TPCC_NEW_ORDER_4            1004
 //#define TPCC_NEW_ORDER_5            105
 #define TPCC_NEW_ORDER_RI(i)           (15000+i)
 #define TPCC_NEW_ORDER_RS(i)           (16000+i)

@@ -5,13 +5,11 @@ namespace deptran {
 void RWChopper::W_txn_init(TxnRequest &req) {
   inputs_.clear();
   inputs_[0] = map<int32_t, Value>({{0, req.input_[0]}});
-  output_size_.assign({
-                          0
-                      });
-  p_types_ = {RW_BENCHMARK_W_TXN_0};
-  sharding_.resize(1);
+  output_size_ = {{0,0}};
+  p_types_ = {{0,RW_BENCHMARK_W_TXN_0}};
+//  sharding_.resize(1);
   sss_->get_site_id_from_tb(RW_BENCHMARK_TABLE, req.input_[0], sharding_[0]);
-  status_ = {READY};
+  status_ = {{0, READY}};
   n_pieces_all_ = 1;
 }
 
@@ -19,13 +17,10 @@ void RWChopper::R_txn_init(TxnRequest &req) {
   inputs_.clear();
   inputs_[0] = map<int32_t, Value>({{0, req.input_[0]}});
 
-  output_size_.assign({
-                          1
-                      });
-  p_types_ = {RW_BENCHMARK_R_TXN_0};
-  sharding_.resize(1);
+  output_size_= {{0, 1}};
+  p_types_ = {{0, RW_BENCHMARK_R_TXN_0}};
   sss_->get_site_id_from_tb(RW_BENCHMARK_TABLE, req.input_[0], sharding_[0]);
-  status_ = {READY};
+  status_ = {{0, READY}};
   n_pieces_all_ = 1;
 }
 
@@ -71,7 +66,7 @@ bool RWChopper::is_read_only() {
 }
 
 void RWChopper::retry() {
-  status_ = {READY};
+  status_ = {{0,READY}};
   commit_.store(true);
   partitions_.clear();
   n_pieces_out_ = 0;
