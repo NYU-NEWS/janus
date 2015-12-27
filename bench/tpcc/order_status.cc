@@ -117,8 +117,8 @@ void TpccChopper::order_status_retry() {
 
 void TpccPiece::reg_order_status() {
   // piece 0, R customer secondary index, c_last -> c_id
-  SHARDING_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_0,
-               TPCC_TB_CUSTOMER, TPCC_VAR_W_ID);
+  SHARD_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_0,
+            TPCC_TB_CUSTOMER, TPCC_VAR_W_ID);
   BEGIN_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_0, DF_NO) {
 
     verify(input.size() == 3);
@@ -178,8 +178,8 @@ void TpccPiece::reg_order_status() {
   END_CB
 
   // Ri customer
-  SHARDING_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_1,
-               TPCC_TB_CUSTOMER, TPCC_VAR_W_ID)
+  SHARD_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_1,
+            TPCC_TB_CUSTOMER, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_1, DF_NO) {
     Log_debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_1);
     verify(input.size() == 3);
@@ -215,8 +215,8 @@ void TpccPiece::reg_order_status() {
   } END_PIE
 
   // Ri order
-  SHARDING_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_2,
-               TPCC_TB_ORDER, TPCC_VAR_W_ID)
+  SHARD_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_2,
+            TPCC_TB_ORDER, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_2, DF_NO) {
     Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_2);
     verify(input.size() == 3);
@@ -264,8 +264,8 @@ void TpccPiece::reg_order_status() {
   END_CB
 
   // R order_line
-  SHARDING_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_3,
-               TPCC_TB_ORDER_LINE, TPCC_VAR_W_ID)
+  SHARD_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_3,
+            TPCC_TB_ORDER_LINE, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_3, DF_NO) {
     Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_3);
     verify(input.size() == 3);

@@ -51,7 +51,7 @@ void TpccChopper::stock_level_retry() {
 
 void TpccPiece::reg_stock_level() {
   // Ri district
-  SHARDING_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_0, TPCC_TB_DISTRICT, TPCC_VAR_W_ID)
+  SHARD_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_0, TPCC_TB_DISTRICT, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_0, DF_NO) {
     verify(dtxn != nullptr);
     verify(input.size() == 2);
@@ -77,8 +77,8 @@ void TpccPiece::reg_stock_level() {
   END_CB
 
   // Ri order_line
-  SHARDING_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_1,
-               TPCC_TB_ORDER_LINE, TPCC_VAR_W_ID)
+  SHARD_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_1,
+            TPCC_TB_ORDER_LINE, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_1, DF_NO) {
     verify(input.size() == 3);
     mdb::MultiBlob mbl(4), mbh(4);
@@ -162,8 +162,8 @@ void TpccPiece::reg_stock_level() {
 
   for (int i = TPCC_STOCK_LEVEL_RS(0); i < TPCC_STOCK_LEVEL_RS(1000); i++) {
     // 1000 is a magical number?
-    SHARDING_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_RS(i),
-                 TPCC_TB_STOCK, TPCC_VAR_W_ID)
+    SHARD_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_RS(i),
+              TPCC_TB_STOCK, TPCC_VAR_W_ID)
   }
   BEGIN_LOOP_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_RS(0), 1000, DF_NO)
     verify(input.size() == 3);

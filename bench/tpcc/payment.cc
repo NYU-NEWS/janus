@@ -158,7 +158,7 @@ void TpccChopper::payment_retry() {
 
 void TpccPiece::reg_payment() {
 
-  SHARDING_PIE(TPCC_PAYMENT, TPCC_PAYMENT_0, TPCC_TB_WAREHOUSE, TPCC_VAR_W_ID);
+  SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_0, TPCC_TB_WAREHOUSE, TPCC_VAR_W_ID);
   // piece 0, Ri & W warehouse
   BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_0, DF_NO) {
     verify(input.size() == 2);
@@ -206,7 +206,7 @@ void TpccPiece::reg_payment() {
   END_CB
 
   // piece 1, Ri district
-  SHARDING_PIE(TPCC_PAYMENT, TPCC_PAYMENT_1, TPCC_TB_DISTRICT, TPCC_VAR_W_ID);
+  SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_1, TPCC_TB_DISTRICT, TPCC_VAR_W_ID);
   BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_1, DF_NO) {
     verify(input.size() == 2);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_1);
@@ -257,7 +257,7 @@ void TpccPiece::reg_payment() {
   END_CB
 
   // piece 1, Ri & W district
-  SHARDING_PIE(TPCC_PAYMENT, TPCC_PAYMENT_2, TPCC_TB_DISTRICT, TPCC_VAR_W_ID);
+  SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_2, TPCC_TB_DISTRICT, TPCC_VAR_W_ID);
   BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_2, DF_REAL) {
     verify(input.size() == 3);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_2);
@@ -277,7 +277,7 @@ void TpccPiece::reg_payment() {
     *res = SUCCESS;
   } END_PIE
 
-  SHARDING_PIE(TPCC_PAYMENT, TPCC_PAYMENT_3, TPCC_TB_CUSTOMER, TPCC_VAR_C_W_ID);
+  SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_3, TPCC_TB_CUSTOMER, TPCC_VAR_C_W_ID);
   BEGIN_PIE(TPCC_PAYMENT,      // txn
           TPCC_PAYMENT_3,    // piece 2, R customer secondary index, c_last -> c_id
           DF_NO) {
@@ -344,7 +344,7 @@ void TpccPiece::reg_payment() {
   END_CB
 
   // piece 4, R & W customer
-  SHARDING_PIE(TPCC_PAYMENT, TPCC_PAYMENT_4, TPCC_TB_CUSTOMER, TPCC_VAR_C_W_ID);
+  SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_4, TPCC_TB_CUSTOMER, TPCC_VAR_C_W_ID);
   BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_4, DF_REAL) {
     verify(input.size() == 6);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_4);
@@ -448,7 +448,7 @@ void TpccPiece::reg_payment() {
     return false;
   END_CB
 
-  SHARDING_PIE(TPCC_PAYMENT, TPCC_PAYMENT_5, TPCC_TB_HISTORY, TPCC_VAR_H_KEY);
+  SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_5, TPCC_TB_HISTORY, TPCC_VAR_H_KEY);
   BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_5, DF_REAL) {
     verify(input.size() == 9);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_5);

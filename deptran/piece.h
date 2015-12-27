@@ -50,7 +50,7 @@ txn_reg_->callbacks_[std::make_pair(txn_type, inn_id)] = \
 
 #define END_CB  };
 
-#define SHARDING_PIE(txn, pie, tb, var) \
+#define SHARD_PIE(txn, pie, tb, var) \
 txn_reg_->sharding_input_[std::make_pair(txn, pie)] = std::make_pair(tb, var);
 
 //std::vector<mdb::column_lock_t>(__VA_ARGS__),

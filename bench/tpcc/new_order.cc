@@ -153,7 +153,7 @@ void TpccChopper::new_order_retry() {
 
 void TpccPiece::reg_new_order() {
   // Ri & W district
-  SHARDING_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0, TPCC_TB_DISTRICT, TPCC_VAR_W_ID)
+  SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0, TPCC_TB_DISTRICT, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0, DF_NO) {
     verify(input.size() == 2);
     mdb::MultiBlob mb(2);
@@ -203,7 +203,7 @@ void TpccPiece::reg_new_order() {
   END_CB
 
   // R warehouse
-  SHARDING_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_1, TPCC_TB_WAREHOUSE, TPCC_VAR_W_ID)
+  SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_1, TPCC_TB_WAREHOUSE, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_1, DF_NO) {
     verify(input.size() == 1);
     Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_1);
@@ -217,7 +217,7 @@ void TpccPiece::reg_new_order() {
   } END_PIE
 
   // R customer //XXX either i or d is ok
-  SHARDING_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_2, TPCC_TB_CUSTOMER, TPCC_VAR_W_ID)
+  SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_2, TPCC_TB_CUSTOMER, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_2, DF_NO) {
     verify(input.size() == 3);
     Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_2);
@@ -240,7 +240,7 @@ void TpccPiece::reg_new_order() {
   } END_PIE
 
   // W order
-  SHARDING_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_3, TPCC_TB_ORDER, TPCC_VAR_W_ID)
+  SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_3, TPCC_TB_ORDER, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_3, DF_REAL) {
     verify(input.size() == 7);
     Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_3);
@@ -295,7 +295,7 @@ void TpccPiece::reg_new_order() {
   } END_PIE
 
   // W new_order
-  SHARDING_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_4, TPCC_TB_NEW_ORDER, TPCC_VAR_W_ID)
+  SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_4, TPCC_TB_NEW_ORDER, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_4, DF_REAL) {
     verify(input.size() == 3);
     Log_debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_4);
@@ -323,8 +323,8 @@ void TpccPiece::reg_new_order() {
 
   for (int i = TPCC_NEW_ORDER_RI(0); i < TPCC_NEW_ORDER_RI(1000); i++) {
     // 1000 is a magical number?
-    SHARDING_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RI(i),
-                 TPCC_TB_ITEM, TPCC_VAR_I_ID(i))
+    SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RI(i),
+              TPCC_TB_ITEM, TPCC_VAR_I_ID(i))
   }
 
   BEGIN_LOOP_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RI(0), 1000, DF_NO)
@@ -376,8 +376,8 @@ void TpccPiece::reg_new_order() {
 
   for (int i = TPCC_NEW_ORDER_RS(0); i < TPCC_NEW_ORDER_RS(1000); i++) {
     // 1000 is a magical number?
-    SHARDING_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RS(i),
-                 TPCC_TB_STOCK, TPCC_VAR_S_W_ID(i))
+    SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RS(i),
+              TPCC_TB_STOCK, TPCC_VAR_S_W_ID(i))
   }
 
   BEGIN_LOOP_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RS(0), 1000, DF_NO)
@@ -424,8 +424,8 @@ void TpccPiece::reg_new_order() {
 
   for (int i = TPCC_NEW_ORDER_WS(0); i < TPCC_NEW_ORDER_WS(1000); i++) {
     // 1000 is a magical number?
-    SHARDING_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_WS(i),
-                 TPCC_TB_STOCK, TPCC_VAR_S_W_ID(i))
+    SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_WS(i),
+              TPCC_TB_STOCK, TPCC_VAR_S_W_ID(i))
   }
 
   BEGIN_LOOP_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_WS(0), 1000, DF_REAL)
@@ -487,8 +487,8 @@ void TpccPiece::reg_new_order() {
 
   for (int i = TPCC_NEW_ORDER_WOL(0); i < TPCC_NEW_ORDER_WOL(1000); i++) {
     // 1000 is a magical number?
-    SHARDING_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_WOL(i),
-                 TPCC_TB_ORDER_LINE, TPCC_VAR_W_ID)
+    SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_WOL(i),
+              TPCC_TB_ORDER_LINE, TPCC_VAR_W_ID)
   }
 
   BEGIN_LOOP_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_WOL(0), 1000, DF_REAL) {
