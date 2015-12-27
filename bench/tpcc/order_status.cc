@@ -40,7 +40,6 @@ void TpccChopper::order_status_init(TxnRequest &req) {
     };
     output_size_[TPCC_ORDER_STATUS_0] = 1; // return c_id only
     p_types_[TPCC_ORDER_STATUS_0] = TPCC_ORDER_STATUS_0;
-    order_status_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[TPCC_ORDER_STATUS_0]);
 
     status_[TPCC_ORDER_STATUS_0] = READY;  // piece 0 ready
 
@@ -59,7 +58,6 @@ void TpccChopper::order_status_init(TxnRequest &req) {
   };
   output_size_[TPCC_ORDER_STATUS_1] = 4;
   p_types_[TPCC_ORDER_STATUS_1] = TPCC_ORDER_STATUS_1;
-  order_status_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[TPCC_ORDER_STATUS_1]);
 
   // piece 2, R order, depends on piece 0 if using c_last instead of c_id
   inputs_[TPCC_ORDER_STATUS_2] = {
@@ -69,7 +67,6 @@ void TpccChopper::order_status_init(TxnRequest &req) {
   };
   output_size_[TPCC_ORDER_STATUS_2] = 3;
   p_types_[TPCC_ORDER_STATUS_2] = TPCC_ORDER_STATUS_2;
-  order_status_shard(TPCC_TB_ORDER, req.input_, sharding_[TPCC_ORDER_STATUS_2]);
 
   // piece 3, R order_line, depends on piece 2
   inputs_[TPCC_ORDER_STATUS_3] = {
@@ -79,26 +76,25 @@ void TpccChopper::order_status_init(TxnRequest &req) {
   };
   output_size_[TPCC_ORDER_STATUS_3] = 15 * 5;
   p_types_[TPCC_ORDER_STATUS_3] = TPCC_ORDER_STATUS_3;
-  order_status_shard(TPCC_TB_ORDER_LINE, req.input_, sharding_[TPCC_ORDER_STATUS_3]);
   status_[TPCC_ORDER_STATUS_3] = WAITING;
 
 }
 
-
-void TpccChopper::order_status_shard(const char *tb,
-                                     map<int32_t, Value> &input,
-                                     uint32_t &site) {
-  MultiValue mv;
-  if (tb == TPCC_TB_CUSTOMER ||
-      tb == TPCC_TB_ORDER ||
-      tb == TPCC_TB_ORDER_LINE) {
-    mv = MultiValue(input[TPCC_VAR_W_ID]);
-  } else {
-    verify(0);
-  }
-  int ret = sss_->get_site_id_from_tb(tb, mv, site);
-  verify(ret == 0);
-}
+//
+//void TpccChopper::order_status_shard(const char *tb,
+//                                     map<int32_t, Value> &input,
+//                                     uint32_t &site) {
+//  MultiValue mv;
+//  if (tb == TPCC_TB_CUSTOMER ||
+//      tb == TPCC_TB_ORDER ||
+//      tb == TPCC_TB_ORDER_LINE) {
+//    mv = MultiValue(input[TPCC_VAR_W_ID]);
+//  } else {
+//    verify(0);
+//  }
+//  int ret = sss_->get_site_id_from_tb(tb, mv, site);
+//  verify(ret == 0);
+//}
 
 
 void TpccChopper::order_status_retry() {
@@ -120,13 +116,13 @@ void TpccChopper::order_status_retry() {
 
 
 void TpccPiece::reg_order_status() {
-  BEGIN_PIE(TPCC_ORDER_STATUS, // RO
-          TPCC_ORDER_STATUS_0, // piece 0, R customer secondary index, c_last -> c_id
-          DF_NO) {
-    // #################################################################
+  // piece 0, R customer secondary index, c_last -> c_id
+  SHARDING_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_0,
+               TPCC_TB_CUSTOMER, TPCC_VAR_W_ID);
+  BEGIN_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_0, DF_NO) {
+
     verify(input.size() == 3);
     Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_0);
-    // #################################################################
 
     mdb::MultiBlob mbl(3), mbh(3);
     mbl[0] = input[TPCC_VAR_D_ID].get_blob();
@@ -181,9 +177,10 @@ void TpccPiece::reg_order_status() {
     return true;
   END_CB
 
-  BEGIN_PIE(TPCC_ORDER_STATUS, // RO
-          TPCC_ORDER_STATUS_1, // Ri customer
-          DF_NO) {
+  // Ri customer
+  SHARDING_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_1,
+               TPCC_TB_CUSTOMER, TPCC_VAR_W_ID)
+  BEGIN_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_1, DF_NO) {
     Log_debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_1);
     verify(input.size() == 3);
 
@@ -217,9 +214,10 @@ void TpccPiece::reg_order_status() {
     *res = SUCCESS;
   } END_PIE
 
-  BEGIN_PIE(TPCC_ORDER_STATUS, // RO
-          TPCC_ORDER_STATUS_2, // Ri order
-          DF_NO) {
+  // Ri order
+  SHARDING_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_2,
+               TPCC_TB_ORDER, TPCC_VAR_W_ID)
+  BEGIN_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_2, DF_NO) {
     Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_2);
     verify(input.size() == 3);
 
@@ -265,9 +263,10 @@ void TpccPiece::reg_order_status() {
     return true;
   END_CB
 
-  BEGIN_PIE(TPCC_ORDER_STATUS, // RO
-          TPCC_ORDER_STATUS_3, // R order_line
-          DF_NO) {
+  // R order_line
+  SHARDING_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_3,
+               TPCC_TB_ORDER_LINE, TPCC_VAR_W_ID)
+  BEGIN_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_3, DF_NO) {
     Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_3);
     verify(input.size() == 3);
     mdb::MultiBlob mbl(4), mbh(4);

@@ -30,64 +30,44 @@ void TpccChopper::delivery_init(TxnRequest &req) {
 
   // piece 0, Ri & W new_order
   inputs_[TPCC_DELIVERY_0] = {
-      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},  // 0 ==>    no_w_id
-      {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}  //  1 ==>    no_d_id
+      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},
+      {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}
   };
   output_size_[TPCC_DELIVERY_0] = 1;
   p_types_[TPCC_DELIVERY_0] = TPCC_DELIVERY_0;
-  delivery_shard(TPCC_TB_NEW_ORDER, req.input_, sharding_[TPCC_DELIVERY_0], d_id);
   status_[TPCC_DELIVERY_0] = READY;
 
   // piece 1, Ri & W order
   inputs_[TPCC_DELIVERY_1] = {
-      {TPCC_VAR_O_ID,         Value()},        // 0 ==>    o_id,   depends on piece 0
-      {TPCC_VAR_W_ID,         req.input_[TPCC_VAR_W_ID]},  // 1 ==>    o_w_id
-      {TPCC_VAR_D_ID,         req.input_[TPCC_VAR_D_ID]},  // 2 ==>    o_d_id
-      {TPCC_VAR_O_CARRIER_ID, req.input_[TPCC_VAR_O_CARRIER_ID]}   // 3 ==>    o_carrier_id
+      {TPCC_VAR_O_ID,         Value()},
+      {TPCC_VAR_W_ID,         req.input_[TPCC_VAR_W_ID]},
+      {TPCC_VAR_D_ID,         req.input_[TPCC_VAR_D_ID]},
+      {TPCC_VAR_O_CARRIER_ID, req.input_[TPCC_VAR_O_CARRIER_ID]}
   };
   output_size_[TPCC_DELIVERY_1] = 1;
   p_types_[TPCC_DELIVERY_1] = TPCC_DELIVERY_1;
-  delivery_shard(TPCC_TB_ORDER, req.input_, sharding_[TPCC_DELIVERY_1], d_id);
   status_[TPCC_DELIVERY_1] = WAITING;
 
   // piece 2, Ri & W order_line
   inputs_[TPCC_DELIVERY_2] = {
-      {TPCC_VAR_O_ID, Value()},        // 0 ==>    ol_o_id,   depends on piece 0
-      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},  // 1 ==>    ol_w_id
-      {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}   // 2 ==>    ol_d_id
+      {TPCC_VAR_O_ID, Value()},
+      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},
+      {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}
   };
   output_size_[TPCC_DELIVERY_2] = 1;
   p_types_[TPCC_DELIVERY_2] = TPCC_DELIVERY_2;
-  delivery_shard(TPCC_TB_ORDER_LINE, req.input_, sharding_[TPCC_DELIVERY_2], d_id);
   status_[TPCC_DELIVERY_2] = WAITING;
 
   // piece 3, W customer
   inputs_[TPCC_DELIVERY_3] = {
-      {TPCC_VAR_C_ID, Value()},        // 0 ==>    c_id,   depends on piece 1
-      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},  // 1 ==>    c_w_id
-      {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]},  // 2 ==>    c_d_id
-      {TPCC_VAR_OL_AMOUNT, Value()}    // 3 ==>    ol_amount, depends on piece 2
+      {TPCC_VAR_C_ID, Value()},
+      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},
+      {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]},
+      {TPCC_VAR_OL_AMOUNT, Value()}
   };
   output_size_[TPCC_DELIVERY_3] = 0;
   p_types_[TPCC_DELIVERY_3] = TPCC_DELIVERY_3;
-  delivery_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[TPCC_DELIVERY_3], d_id);
   status_[TPCC_DELIVERY_3] = WAITING;
-}
-
-
-void TpccChopper::delivery_shard(const char *tb,
-                                 map<int32_t, Value> &input,
-                                 uint32_t &site,
-                                 int cnt) {
-  MultiValue mv;
-  if (tb == TPCC_TB_NEW_ORDER || tb == TPCC_TB_ORDER ||
-      tb == TPCC_TB_ORDER_LINE || tb == TPCC_TB_CUSTOMER)
-    // based on w_id
-    mv = MultiValue(input[TPCC_VAR_W_ID]);
-  else
-    verify(0);
-  int ret = sss_->get_site_id_from_tb(tb, mv, site);
-  verify(ret == 0);
 }
 
 void TpccChopper::delivery_retry() {
@@ -102,9 +82,9 @@ void TpccChopper::delivery_retry() {
 
 
 void TpccPiece::reg_delivery() {
-  BEGIN_PIE(TPCC_DELIVERY,
-          TPCC_DELIVERY_0, // Ri & W new_order
-          DF_FAKE) {
+  // Ri & W new_order
+  SHARDING_PIE(TPCC_DELIVERY, TPCC_DELIVERY_0, TPCC_TB_NEW_ORDER, TPCC_VAR_W_ID)
+  BEGIN_PIE(TPCC_DELIVERY, TPCC_DELIVERY_0, DF_FAKE) {
     // this is a little bit tricky, the first half will do most of the job,
     // removing the row from the table, but it won't actually release the
     // resource. And the bottom half is in charge of release the resource,
@@ -196,10 +176,9 @@ void TpccPiece::reg_delivery() {
     }
   END_CB
 
-  BEGIN_PIE(TPCC_DELIVERY,
-          TPCC_DELIVERY_1, // Ri & W order
-          DF_NO) {
-
+  // Ri & W order
+  SHARDING_PIE(TPCC_DELIVERY, TPCC_DELIVERY_1, TPCC_TB_ORDER, TPCC_VAR_W_ID)
+  BEGIN_PIE(TPCC_DELIVERY, TPCC_DELIVERY_1, DF_NO) {
     Log_debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_1);
     verify(input.size() == 4);
     mdb::Txn *txn = dtxn->mdb_txn_;
@@ -236,9 +215,9 @@ void TpccPiece::reg_delivery() {
     }
   END_CB
 
-  BEGIN_PIE(TPCC_DELIVERY,
-          TPCC_DELIVERY_2, // Ri & W order_line
-          DF_NO) {
+  // Ri & W order_line
+  SHARDING_PIE(TPCC_DELIVERY, TPCC_DELIVERY_2, TPCC_TB_ORDER_LINE, TPCC_VAR_W_ID)
+  BEGIN_PIE(TPCC_DELIVERY, TPCC_DELIVERY_2, DF_NO) {
     Log::debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_2);
     verify(input.size() == 3);
     //        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
@@ -305,9 +284,9 @@ void TpccPiece::reg_delivery() {
     }
   END_CB
 
-  BEGIN_PIE(TPCC_DELIVERY,
-          TPCC_DELIVERY_3, // W customer
-          DF_REAL) {
+  // W customer
+  SHARDING_PIE(TPCC_DELIVERY, TPCC_DELIVERY_3, TPCC_TB_CUSTOMER, TPCC_VAR_W_ID)
+  BEGIN_PIE(TPCC_DELIVERY, TPCC_DELIVERY_3, DF_REAL) {
     Log::debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_3);
     verify(input.size() == 4);
     mdb::Row *r = NULL;

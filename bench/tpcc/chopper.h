@@ -86,18 +86,14 @@ class TpccChopper: public TxnChopper {
   virtual void stock_level_retry();
 
   // delivery
-  virtual void delivery_shard(const char *tb,
-                              map<int32_t, Value> &input,
-                              uint32_t &site, int cnt);
-
   virtual void delivery_init(TxnRequest &req);
 
   virtual void delivery_retry();
 
   // order status
-  virtual void order_status_shard(const char *tb,
-                                  map<int32_t, Value> &input,
-                                  uint32_t &site);
+//  virtual void order_status_shard(const char *tb,
+//                                  map<int32_t, Value> &input,
+//                                  uint32_t &site);
 
   virtual void order_status_init(TxnRequest &req);
 
