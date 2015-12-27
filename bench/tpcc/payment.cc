@@ -36,7 +36,6 @@ void TpccChopper::PaymentInit(TxnRequest &req) {
   };
   output_size_[pi] = 6;
   p_types_[pi] = TPCC_PAYMENT_0;
-  payment_shard(TPCC_TB_WAREHOUSE, req.input_, sharding_[TPCC_PAYMENT_0]);
   status_[pi] = READY;
 
   // piece 1, Ri district
@@ -46,7 +45,6 @@ void TpccChopper::PaymentInit(TxnRequest &req) {
   };
   output_size_[TPCC_PAYMENT_1] = 6;
   p_types_[TPCC_PAYMENT_1] = TPCC_PAYMENT_1;
-  payment_shard(TPCC_TB_DISTRICT, req.input_, sharding_[TPCC_PAYMENT_1]);
   status_[TPCC_PAYMENT_1] = READY;
 
   // piece 2, W district
@@ -57,7 +55,6 @@ void TpccChopper::PaymentInit(TxnRequest &req) {
   };
   output_size_[TPCC_PAYMENT_2] = 0;
   p_types_[TPCC_PAYMENT_2] = TPCC_PAYMENT_2;
-  payment_shard(TPCC_TB_DISTRICT, req.input_, sharding_[TPCC_PAYMENT_2]);
   status_[TPCC_PAYMENT_2] = READY;
 
   // query by c_last
@@ -70,7 +67,6 @@ void TpccChopper::PaymentInit(TxnRequest &req) {
     };
     output_size_[TPCC_PAYMENT_3] = 1;
     p_types_[TPCC_PAYMENT_3] = TPCC_PAYMENT_3;
-    payment_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[TPCC_PAYMENT_3]);
     status_[TPCC_PAYMENT_3] = READY;
     // piece 4, set it to waiting
     status_[TPCC_PAYMENT_4] = WAITING;
@@ -94,51 +90,49 @@ void TpccChopper::PaymentInit(TxnRequest &req) {
 
   // piece 4, R & W customer
   inputs_[TPCC_PAYMENT_4] = {
-      {TPCC_VAR_C_ID,     req.input_[TPCC_VAR_C_ID_LAST]},  // 0 ==>    c_id
-      {TPCC_VAR_C_W_ID,   req.input_[TPCC_VAR_C_W_ID]},  // 1 ==>    c_w_id
-      {TPCC_VAR_C_D_ID,   req.input_[TPCC_VAR_C_D_ID]},  // 2 ==>    c_d_id
-      {TPCC_VAR_H_AMOUNT, req.input_[TPCC_VAR_H_AMOUNT]},  // 3 ==>    h_amount
-      {TPCC_VAR_W_ID,     req.input_[TPCC_VAR_W_ID]},  // 4 ==>    w_id
-      {TPCC_VAR_D_ID,     req.input_[TPCC_VAR_D_ID]}   // 5 ==>    d_id
+      {TPCC_VAR_C_ID,     req.input_[TPCC_VAR_C_ID_LAST]},
+      {TPCC_VAR_C_W_ID,   req.input_[TPCC_VAR_C_W_ID]},
+      {TPCC_VAR_C_D_ID,   req.input_[TPCC_VAR_C_D_ID]},
+      {TPCC_VAR_H_AMOUNT, req.input_[TPCC_VAR_H_AMOUNT]},
+      {TPCC_VAR_W_ID,     req.input_[TPCC_VAR_W_ID]},
+      {TPCC_VAR_D_ID,     req.input_[TPCC_VAR_D_ID]}
   };
   output_size_[TPCC_PAYMENT_4] = 15;
   p_types_[TPCC_PAYMENT_4] = TPCC_PAYMENT_4;
-  payment_shard(TPCC_TB_CUSTOMER, req.input_, sharding_[TPCC_PAYMENT_4]);
 
   // piece 5, W history (insert), depends on piece 0, 1
   inputs_[TPCC_PAYMENT_5] = {
-      {TPCC_VAR_H_KEY,    req.input_[TPCC_VAR_H_KEY]},  // 0 ==>    h_key
-      {TPCC_VAR_W_NAME,   Value()},        // 1 ==>    w_name depends on piece 0
-      {TPCC_VAR_D_NAME,   Value()},        // 2 ==>    d_name depends on piece 1
-      {TPCC_VAR_W_ID,     req.input_[TPCC_VAR_W_ID]},  // 3 ==>    w_id
-      {TPCC_VAR_D_ID,     req.input_[TPCC_VAR_D_ID]},  // 4 ==>    d_id
-      {TPCC_VAR_C_ID,     req.input_[TPCC_VAR_C_ID_LAST]},  // 5 ==>    c_id depends on piece 2 if querying by c_last
-      {TPCC_VAR_C_W_ID,   req.input_[TPCC_VAR_C_W_ID]},  // 6 ==>    c_w_id
-      {TPCC_VAR_C_D_ID,   req.input_[TPCC_VAR_C_D_ID]},  // 7 ==>    c_d_id
-      {TPCC_VAR_H_AMOUNT, req.input_[TPCC_VAR_H_AMOUNT]}   // 8 ==>    h_amount
+      {TPCC_VAR_H_KEY,    req.input_[TPCC_VAR_H_KEY]},
+      {TPCC_VAR_W_NAME,   Value()},
+      {TPCC_VAR_D_NAME,   Value()},
+      {TPCC_VAR_W_ID,     req.input_[TPCC_VAR_W_ID]},
+      {TPCC_VAR_D_ID,     req.input_[TPCC_VAR_D_ID]},
+      {TPCC_VAR_C_ID,     req.input_[TPCC_VAR_C_ID_LAST]},
+      {TPCC_VAR_C_W_ID,   req.input_[TPCC_VAR_C_W_ID]},
+      {TPCC_VAR_C_D_ID,   req.input_[TPCC_VAR_C_D_ID]},
+      {TPCC_VAR_H_AMOUNT, req.input_[TPCC_VAR_H_AMOUNT]}
   };
   output_size_[TPCC_PAYMENT_5] = 0;
   p_types_[TPCC_PAYMENT_5] = TPCC_PAYMENT_5;
-  payment_shard(TPCC_TB_HISTORY, req.input_, sharding_[TPCC_PAYMENT_5]);
   status_[TPCC_PAYMENT_5] = WAITING;
 }
 
-
-void TpccChopper::payment_shard(const char *tb,
-                                map<int32_t, Value> &input,
-                                uint32_t &site) {
-  MultiValue mv;
-  if (tb == TPCC_TB_WAREHOUSE || tb == TPCC_TB_DISTRICT)
-    mv = MultiValue(input[TPCC_VAR_W_ID]);
-  else if (tb == TPCC_TB_CUSTOMER)
-    mv = MultiValue(input[TPCC_VAR_C_W_ID]);
-  else if (tb == TPCC_TB_HISTORY)
-    mv = MultiValue(input[TPCC_VAR_H_KEY]);
-  else
-    verify(0);
-  int ret = sss_->get_site_id_from_tb(tb, mv, site);
-  verify(ret == 0);
-}
+//
+//void TpccChopper::payment_shard(const char *tb,
+//                                map<int32_t, Value> &input,
+//                                uint32_t &site) {
+//  MultiValue mv;
+//  if (tb == TPCC_TB_WAREHOUSE || tb == TPCC_TB_DISTRICT)
+//    mv = MultiValue(input[TPCC_VAR_W_ID]);
+//  else if (tb == TPCC_TB_CUSTOMER)
+//    mv = MultiValue(input[TPCC_VAR_C_W_ID]);
+//  else if (tb == TPCC_TB_HISTORY)
+//    mv = MultiValue(input[TPCC_VAR_H_KEY]);
+//  else
+//    verify(0);
+//  int ret = sss_->get_site_id_from_tb(tb, mv, site);
+//  verify(ret == 0);
+//}
 
 
 void TpccChopper::payment_retry() {
@@ -163,9 +157,10 @@ void TpccChopper::payment_retry() {
 }
 
 void TpccPiece::reg_payment() {
-  BEGIN_PIE(TPCC_PAYMENT,      // txn
-          TPCC_PAYMENT_0,    // piece 0, Ri & W warehouse
-          DF_NO) { // immediately read
+
+  SHARDING_PIE(TPCC_PAYMENT, TPCC_PAYMENT_0, TPCC_TB_WAREHOUSE, TPCC_VAR_W_ID);
+  // piece 0, Ri & W warehouse
+  BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_0, DF_NO) {
     verify(input.size() == 2);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_0);
     i32 oi = 0;
@@ -210,9 +205,9 @@ void TpccPiece::reg_payment() {
     return false;
   END_CB
 
-  BEGIN_PIE(TPCC_PAYMENT,      // txn
-          TPCC_PAYMENT_1,    // piece 1, Ri district
-          DF_NO) { // immediately read
+  // piece 1, Ri district
+  SHARDING_PIE(TPCC_PAYMENT, TPCC_PAYMENT_1, TPCC_TB_DISTRICT, TPCC_VAR_W_ID);
+  BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_1, DF_NO) {
     verify(input.size() == 2);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_1);
     Value buf;
@@ -261,9 +256,9 @@ void TpccPiece::reg_payment() {
     return false;
   END_CB
 
-  BEGIN_PIE(TPCC_PAYMENT,      // txn
-          TPCC_PAYMENT_2,    // piece 1, Ri & W district
-          DF_REAL) {
+  // piece 1, Ri & W district
+  SHARDING_PIE(TPCC_PAYMENT, TPCC_PAYMENT_2, TPCC_TB_DISTRICT, TPCC_VAR_W_ID);
+  BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_2, DF_REAL) {
     verify(input.size() == 3);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_2);
 
@@ -282,6 +277,7 @@ void TpccPiece::reg_payment() {
     *res = SUCCESS;
   } END_PIE
 
+  SHARDING_PIE(TPCC_PAYMENT, TPCC_PAYMENT_3, TPCC_TB_CUSTOMER, TPCC_VAR_C_W_ID);
   BEGIN_PIE(TPCC_PAYMENT,      // txn
           TPCC_PAYMENT_3,    // piece 2, R customer secondary index, c_last -> c_id
           DF_NO) {
@@ -347,9 +343,9 @@ void TpccPiece::reg_payment() {
     return true;
   END_CB
 
-  BEGIN_PIE(TPCC_PAYMENT,      // txn
-          TPCC_PAYMENT_4,    // piece 4, R & W customer
-          DF_REAL) {
+  // piece 4, R & W customer
+  SHARDING_PIE(TPCC_PAYMENT, TPCC_PAYMENT_4, TPCC_TB_CUSTOMER, TPCC_VAR_C_W_ID);
+  BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_4, DF_REAL) {
     verify(input.size() == 6);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_4);
     mdb::Row *r = NULL;
@@ -452,6 +448,7 @@ void TpccPiece::reg_payment() {
     return false;
   END_CB
 
+  SHARDING_PIE(TPCC_PAYMENT, TPCC_PAYMENT_5, TPCC_TB_HISTORY, TPCC_VAR_H_KEY);
   BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_5, DF_REAL) {
     verify(input.size() == 9);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_5);

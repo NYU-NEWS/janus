@@ -108,6 +108,23 @@ bool TpccChopper::is_read_only() {
   }
 }
 
+parid_t TpccChopper::GetPiecePar(innid_t inn_id) {
+  parid_t par;
+  int32_t var;
+  auto it = txn_reg_->sharding_input_.find(std::make_pair(txn_type_, inn_id));
+  if (it != txn_reg_->sharding_input_.end()) {
+    auto &pair = it->second;
+    auto tb = pair.first;
+    var = pair.second;
+//    auto cmd = (SimpleCommand*) inputs_[inn_id];
+    MultiValue mv = MultiValue(inputs_[inn_id][TPCC_VAR_W_ID]);
+    sss_->get_site_id_from_tb(tb, mv, par);
+  } else {
+    par = sharding_[inn_id];
+  }
+  return par;
+}
+
 TpccChopper::~TpccChopper() {
   if (txn_type_ == TPCC_NEW_ORDER) {
     free(new_order_dep_.piece_items);

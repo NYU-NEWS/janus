@@ -261,9 +261,8 @@ void TpccPiece::reg_new_order() {
     return true;
   END_CB
 
-  BEGIN_PIE(TPCC_NEW_ORDER,
-            TPCC_NEW_ORDER_1, // R warehouse
-            DF_NO) {
+  // R warehouse
+  BEGIN_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_1, DF_NO) {
     verify(input.size() == 1);
     Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_1);
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_WAREHOUSE),
@@ -275,10 +274,8 @@ void TpccPiece::reg_new_order() {
     return;
   } END_PIE
 
-  BEGIN_PIE(TPCC_NEW_ORDER,
-            TPCC_NEW_ORDER_2, // R customer
-            DF_NO //XXX either i or d is ok
-  ) {
+  // R customer //XXX either i or d is ok
+  BEGIN_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_2, DF_NO) {
     verify(input.size() == 3);
     Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_2);
 
@@ -299,9 +296,8 @@ void TpccPiece::reg_new_order() {
     return;
   } END_PIE
 
-  BEGIN_PIE(TPCC_NEW_ORDER,
-            TPCC_NEW_ORDER_3, // W order
-            DF_REAL) {
+  // W order
+  BEGIN_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_3, DF_REAL) {
     verify(input.size() == 7);
     Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_3);
     i32 oi = 0;

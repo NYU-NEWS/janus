@@ -46,9 +46,9 @@ Command *TxnChopper::GetNextSubCmd() {
       cmd->input = inputs_[pi];
       cmd->output_size = output_size_[pi];
       cmd->root_ = this;
-      cmd_vec_[pi] = cmd;
+      cmd_[pi] = cmd;
 
-      partitions_.insert(sharding_[pi]);
+      partitions_.insert(cmd->par_id);
 
       Log_debug("getting subcmd i: %d, thread id: %x",
                 pi, std::this_thread::get_id());
@@ -97,36 +97,37 @@ int TxnChopper::next_piece(
     int32_t &server_id,
     int32_t &pi,
     int32_t &p_type) {
-
-  if (n_pieces_out_ == n_pieces_all_) {
-    return 2;
-  }
-
-  int status = 1;
-  for (int i = 0; i < status_.size(); i++) {
-    if (status_[i] == READY) {
-      server_id = sharding_[i];
-      partitions_.insert(server_id);
-      pi = i;
-      p_type = p_types_[i];
-      input = &inputs_[i];
-      verify(status_[i] == READY);
-      status_[i] = ONGOING;
-      output_size = output_size_[i];
-      return 0;
-    } else if (status_[i] == ONGOING) {
-    } else if (status_[i] == WAITING) {
-      status = -1;
-    }
-  }
-
-  if (status == ONGOING) {
-    return 1;   // all pieces are ongoing.
-  } else if (status == WAITING) {
-    return -1;  // some pieces are not ready.
-  } else {
-    verify(0);
-  }
+  verify(0);
+//
+//  if (n_pieces_out_ == n_pieces_all_) {
+//    return 2;
+//  }
+//
+//  int status = 1;
+//  for (int i = 0; i < status_.size(); i++) {
+//    if (status_[i] == READY) {
+//      server_id = sharding_[i];
+//      partitions_.insert(server_id);
+//      pi = i;
+//      p_type = p_types_[i];
+//      input = &inputs_[i];
+//      verify(status_[i] == READY);
+//      status_[i] = ONGOING;
+//      output_size = output_size_[i];
+//      return 0;
+//    } else if (status_[i] == ONGOING) {
+//    } else if (status_[i] == WAITING) {
+//      status = -1;
+//    }
+//  }
+//
+//  if (status == ONGOING) {
+//    return 1;   // all pieces are ongoing.
+//  } else if (status == WAITING) {
+//    return -1;  // some pieces are not ready.
+//  } else {
+//    verify(0);
+//  }
 }
 
 

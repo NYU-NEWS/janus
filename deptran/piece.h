@@ -33,7 +33,6 @@ map<int32_t, Value> &output) \
 
 #define END_LOOP_PIE });}
 
-
 #define BEGIN_PIE(txn, pie, iod) \
   txn_reg_->reg(txn, pie, iod, \
         [this] (Executor* exec, \
@@ -50,6 +49,9 @@ txn_reg_->callbacks_[std::make_pair(txn_type, inn_id)] = \
 [] (TxnChopper *ch, std::map<int32_t, Value> output) -> bool {
 
 #define END_CB  };
+
+#define SHARDING_PIE(txn, pie, tb, var) \
+txn_reg_->sharding_input_[std::make_pair(txn, pie)] = std::make_pair(tb, var);
 
 //std::vector<mdb::column_lock_t>(__VA_ARGS__),
 //verify(((TPLDTxn*)dtxn)->locking_ == (output_size == nullptr));

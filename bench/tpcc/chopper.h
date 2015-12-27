@@ -68,10 +68,10 @@ class TpccChopper: public TxnChopper {
 
   virtual void new_order_retry();
 
-  // payment
-  virtual void payment_shard(const char *tb,
-                             map<int32_t, Value> &input,
-                             uint32_t &site);
+//  // payment
+//  virtual void payment_shard(const char *tb,
+//                             map<int32_t, Value> &input,
+//                             uint32_t &site);
 
   virtual void PaymentInit(TxnRequest &req);
 
@@ -105,6 +105,8 @@ class TpccChopper: public TxnChopper {
 
  public:
   TpccChopper();
+
+  virtual parid_t GetPiecePar(innid_t inn_id);
 
   virtual void init(TxnRequest &req);
   virtual bool start_callback(int pi,

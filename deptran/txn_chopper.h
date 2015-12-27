@@ -41,7 +41,7 @@ public:
   map<int32_t, Value> input;
   map<int32_t, Value> output;
   int output_size;
-  int par_id;
+  parid_t par_id;
   SimpleCommand() = default;
   virtual parid_t GetPar() {return par_id;}
   virtual Command* GetRootCmd() {return root_;}
@@ -77,15 +77,16 @@ class TxnChopper : public Command {
 
   Graph<TxnInfo> gra_;
 
+  map<int32_t, Value> ws_ = {}; // workspace.
   map<int32_t, map<int32_t, Value> > inputs_;  // input of each piece.
   //std::vector<std::vector<mdb::Value> > outputs_; // output of each piece.
   map<int32_t, int32_t> output_size_;
-  map<int32_t, int32_t> p_types_;                  // types of each piece.
+  map<int32_t, cmdtype_t> p_types_;                  // types of each piece.
   map<int32_t, uint32_t> sharding_;
   std::atomic<bool> commit_;
   /** which server to which piece */
   map<int32_t, CommandStatus> status_; // -1 waiting; 0 ready; 1 ongoing; 2 finished;
-  map<int32_t, Command*> cmd_vec_;
+  map<int32_t, Command*> cmd_;
   std::set<parid_t> partitions_;
   /** server involved*/
 
@@ -138,6 +139,10 @@ class TxnChopper : public Command {
   virtual bool HasMoreSubCmd();
   virtual Command* GetNextSubCmd();
   virtual set<parid_t> GetPars();
+  virtual parid_t GetPiecePar(innid_t inn_id) {
+    verify(sharding_.find(inn_id) != sharding_.end());
+    return sharding_[inn_id];
+  }
 
   inline bool can_retry() {
     return (max_try_ == 0 || n_try_ < max_try_);
