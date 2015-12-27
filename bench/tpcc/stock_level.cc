@@ -11,11 +11,6 @@ void TpccChopper::stock_level_init(TxnRequest &req) {
    *  2       ==> threshold
    **/
   n_pieces_all_ = 2;
-//  inputs_.resize(n_pieces_all_);
-//  output_size_.resize(n_pieces_all_);
-//  p_types_.resize(n_pieces_all_);
-//  sharding_.resize(n_pieces_all_);
-//  status_.resize(n_pieces_all_);
 
   stock_level_dep_.w_id = req.input_[TPCC_VAR_W_ID].get_i32();
   stock_level_dep_.threshold = req.input_[TPCC_VAR_THRESHOLD].get_i32();
@@ -27,7 +22,6 @@ void TpccChopper::stock_level_init(TxnRequest &req) {
   };
   output_size_[TPCC_STOCK_LEVEL_0] = 1;
   p_types_[TPCC_STOCK_LEVEL_0] = TPCC_STOCK_LEVEL_0;
-  stock_level_shard(TPCC_TB_DISTRICT, req.input_, sharding_[TPCC_STOCK_LEVEL_0]);
   status_[TPCC_STOCK_LEVEL_0] = READY;
 
   // piece 1, R order_line
@@ -38,26 +32,9 @@ void TpccChopper::stock_level_init(TxnRequest &req) {
   };
   output_size_[TPCC_STOCK_LEVEL_1] = 20 * 15; // 20 orders * 15 order_line per order at most
   p_types_[TPCC_STOCK_LEVEL_1] = TPCC_STOCK_LEVEL_1;
-  stock_level_shard(TPCC_TB_ORDER_LINE, req.input_, sharding_[TPCC_STOCK_LEVEL_1]);
   status_[TPCC_STOCK_LEVEL_1] = WAITING;
 
   // piece 2 - n, R stock init in stock_level_callback
-}
-
-void TpccChopper::stock_level_shard(
-    const char *tb,
-    const map<int32_t, Value> &input,
-    uint32_t &site) {
-  MultiValue mv;
-  if (tb == TPCC_TB_DISTRICT ||
-      tb == TPCC_TB_ORDER_LINE ||
-      tb == TPCC_TB_STOCK)
-    // based on w_id
-    mv = MultiValue(input.at(TPCC_VAR_W_ID));
-  else
-    verify(0);
-  int ret = sss_->get_site_id_from_tb(tb, mv, site);
-  verify(ret == 0);
 }
 
 void TpccChopper::stock_level_retry() {
@@ -73,9 +50,9 @@ void TpccChopper::stock_level_retry() {
 
 
 void TpccPiece::reg_stock_level() {
-  BEGIN_PIE(TPCC_STOCK_LEVEL,
-          TPCC_STOCK_LEVEL_0, // Ri district
-          DF_NO) {
+  // Ri district
+  SHARDING_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_0, TPCC_TB_DISTRICT, TPCC_VAR_W_ID)
+  BEGIN_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_0, DF_NO) {
     verify(dtxn != nullptr);
     verify(input.size() == 2);
     mdb::MultiBlob mb(2);
@@ -99,9 +76,10 @@ void TpccPiece::reg_stock_level() {
     return true;
   END_CB
 
-  BEGIN_PIE(TPCC_STOCK_LEVEL,
-          TPCC_STOCK_LEVEL_1, // Ri order_line
-          DF_NO) {
+  // Ri order_line
+  SHARDING_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_1,
+               TPCC_TB_ORDER_LINE, TPCC_VAR_W_ID)
+  BEGIN_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_1, DF_NO) {
     verify(input.size() == 3);
     mdb::MultiBlob mbl(4), mbh(4);
     mbl[0] = input[TPCC_VAR_D_ID].get_blob();
@@ -168,7 +146,7 @@ void TpccPiece::reg_stock_level() {
     for (auto s_i_ids_it = s_i_ids.begin();
          s_i_ids_it != s_i_ids.end();
          s_i_ids_it++) {
-      auto pi = 2 + i;
+      auto pi =  TPCC_STOCK_LEVEL_RS(i);
       tpcc_ch->inputs_[pi] = {
           {TPCC_VAR_OL_I_ID(i), Value(*s_i_ids_it)},
           {TPCC_VAR_W_ID, Value((i32) tpcc_ch->stock_level_dep_.w_id)},
@@ -176,15 +154,17 @@ void TpccPiece::reg_stock_level() {
       };
       tpcc_ch->output_size_[pi] = 1;
       tpcc_ch->p_types_[pi] = TPCC_STOCK_LEVEL_RS(i);
-      tpcc_ch->stock_level_shard(TPCC_TB_STOCK,
-                                 tpcc_ch->inputs_[pi],
-                                 tpcc_ch->sharding_[pi]);
       tpcc_ch->status_[pi] = READY;
       i++;
     }
     return true;
   END_CB
 
+  for (int i = TPCC_STOCK_LEVEL_RS(0); i < TPCC_STOCK_LEVEL_RS(1000); i++) {
+    // 1000 is a magical number?
+    SHARDING_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_RS(i),
+                 TPCC_TB_STOCK, TPCC_VAR_W_ID)
+  }
   BEGIN_LOOP_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_RS(0), 1000, DF_NO)
     verify(input.size() == 3);
     Value buf(0);
