@@ -185,6 +185,9 @@ namespace rococo {
 #define TPCC_VAR_THRESHOLD  (1060)
 #define TPCC_VAR_UNKOWN (1061)
 
+#define TPCC_VAR_PIECE_WAREHOUSE (1071)
+#define TPCC_VAR_PIECE_DISTRICT (1072)
+
 #define TPCC_VAR_I_ID(I)                       (100000 + I)
 #define TPCC_VAR_I_NAME(I)                     (101000 + I)
 #define TPCC_VAR_I_PRICE(I)                    (102000 + I)

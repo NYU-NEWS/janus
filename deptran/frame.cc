@@ -180,7 +180,7 @@ void Frame::GetTxnTypes(std::map<int32_t, std::string> &txn_types) {
   }
 }
 
-TxnChopper* Frame::CreateChopper(TxnRequest &req) {
+TxnChopper* Frame::CreateChopper(TxnRequest &req, TxnRegistry* reg) {
   auto benchmark = Config::config_s->benchmark_;
   TxnChopper *ch = NULL;
   switch (benchmark) {
@@ -207,6 +207,7 @@ TxnChopper* Frame::CreateChopper(TxnRequest &req) {
       verify(0);
   }
   verify(ch != NULL);
+  ch->txn_reg_ = reg;
   ch->sss_ = Config::GetConfig()->sharding_;
   ch->init(req);
   return ch;

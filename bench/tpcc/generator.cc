@@ -118,18 +118,20 @@ void TpccTxnGenerator::get_tpcc_payment_txn_req(
   //Value d_id((i32)RandomGenerator::rand(0, tpcc_para_.n_d_id_ - 1));
   Value d_id((i32) (cid / tpcc_para_.n_w_id_) % tpcc_para_.n_d_id_);
   Value c_id_or_last;
-  if (RandomGenerator::percentage_true(60)) //XXX query by last name 60%
+  if (RandomGenerator::percentage_true(60)) { //XXX query by last name 60%
     c_id_or_last = Value(RandomGenerator::int2str_n(RandomGenerator::nu_rand(255, 0, 999), 3));
-  else
+    req->input_[TPCC_VAR_C_LAST] = c_id_or_last;
+  } else {
     c_id_or_last = Value((i32) RandomGenerator::nu_rand(1022, 0, tpcc_para_.n_c_id_ - 1));
+    req->input_[TPCC_VAR_C_ID] = c_id_or_last;
+  }
   if (tpcc_para_.n_w_id_ > 1 && // warehouse more than one, can do remote
       RandomGenerator::percentage_true(15)) { //XXX 15% pay through remote warehouse, 85 home REMOTE_RATIO
     int c_w_id_int = RandomGenerator::rand(0, tpcc_para_.n_w_id_ - 2);
     c_w_id_int = c_w_id_int >= home_w_id ? c_w_id_int + 1 : c_w_id_int;
     c_w_id = Value((i32) c_w_id_int);
     c_d_id = Value((i32) RandomGenerator::rand(0, tpcc_para_.n_d_id_ - 1));
-  }
-  else {
+  } else {
     c_w_id = w_id;
     c_d_id = d_id;
   }
@@ -137,11 +139,13 @@ void TpccTxnGenerator::get_tpcc_payment_txn_req(
 //  req->input_.resize(7);
   req->input_[TPCC_VAR_W_ID] = w_id;
   req->input_[TPCC_VAR_D_ID] = d_id;
-  req->input_[TPCC_VAR_C_ID_LAST] = c_id_or_last;
+//  req->input_[TPCC_VAR_C_ID_LAST] = c_id_or_last;
   req->input_[TPCC_VAR_C_W_ID] = c_w_id;
   req->input_[TPCC_VAR_C_D_ID] = c_d_id;
   req->input_[TPCC_VAR_H_AMOUNT] = h_amount;
   req->input_[TPCC_VAR_H_KEY] = Value((i32) RandomGenerator::rand()); // h_key
+//  req->input_[TPCC_VAR_W_NAME] = Value();
+//  req->input_[TPCC_VAR_D_NAME] = Value();
 }
 
 void TpccTxnGenerator::get_tpcc_stock_level_txn_req(

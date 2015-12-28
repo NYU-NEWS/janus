@@ -83,6 +83,8 @@ void TpccChopper::delivery_retry() {
 
 void TpccPiece::reg_delivery() {
   // Ri & W new_order
+  INPUT_PIE(TPCC_DELIVERY, TPCC_DELIVERY_1,
+            TPCC_VAR_W_ID, TPCC_VAR_D_ID)
   SHARD_PIE(TPCC_DELIVERY, TPCC_DELIVERY_0, TPCC_TB_NEW_ORDER, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_DELIVERY, TPCC_DELIVERY_0, DF_FAKE) {
     // this is a little bit tricky, the first half will do most of the job,
@@ -177,6 +179,8 @@ void TpccPiece::reg_delivery() {
   END_CB
 
   // Ri & W order
+  INPUT_PIE(TPCC_DELIVERY, TPCC_DELIVERY_1,
+            TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_O_ID, TPCC_VAR_O_CARRIER_ID)
   SHARD_PIE(TPCC_DELIVERY, TPCC_DELIVERY_1, TPCC_TB_ORDER, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_DELIVERY, TPCC_DELIVERY_1, DF_NO) {
     Log_debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_1);
@@ -216,6 +220,8 @@ void TpccPiece::reg_delivery() {
   END_CB
 
   // Ri & W order_line
+  INPUT_PIE(TPCC_DELIVERY, TPCC_DELIVERY_2,
+            TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_O_ID)
   SHARD_PIE(TPCC_DELIVERY, TPCC_DELIVERY_2, TPCC_TB_ORDER_LINE, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_DELIVERY, TPCC_DELIVERY_2, DF_NO) {
     Log::debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_2);
@@ -285,6 +291,8 @@ void TpccPiece::reg_delivery() {
   END_CB
 
   // W customer
+  INPUT_PIE(TPCC_DELIVERY, TPCC_DELIVERY_3,
+            TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_C_ID, TPCC_VAR_OL_AMOUNT)
   SHARD_PIE(TPCC_DELIVERY, TPCC_DELIVERY_3, TPCC_TB_CUSTOMER, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_DELIVERY, TPCC_DELIVERY_3, DF_REAL) {
     Log::debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_3);

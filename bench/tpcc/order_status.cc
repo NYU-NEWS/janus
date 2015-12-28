@@ -16,11 +16,6 @@ void TpccChopper::order_status_init(TxnRequest &req) {
    **/
 
   n_pieces_all_ = 4;
-//  inputs_.resize(n_pieces_all_);
-//  output_size_.resize(n_pieces_all_);
-//  p_types_.resize(n_pieces_all_);
-//  sharding_.resize(n_pieces_all_);
-//  status_.resize(n_pieces_all_);
 
   if (req.input_[TPCC_VAR_C_ID_LAST].get_kind() == Value::I32) { // query by c_id
     status_[TPCC_ORDER_STATUS_0] = FINISHED; // piece 0 not needed
@@ -117,6 +112,8 @@ void TpccChopper::order_status_retry() {
 
 void TpccPiece::reg_order_status() {
   // piece 0, R customer secondary index, c_last -> c_id
+  INPUT_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_0,
+            TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_C_LAST)
   SHARD_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_0,
             TPCC_TB_CUSTOMER, TPCC_VAR_W_ID);
   BEGIN_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_0, DF_NO) {
@@ -166,18 +163,9 @@ void TpccPiece::reg_order_status() {
     *res = SUCCESS;
   } END_PIE
 
-  BEGIN_CB(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_0)
-    TpccChopper* tpcc_ch = (TpccChopper*)ch;
-    verify(!tpcc_ch->order_status_dep_.piece_last2id);
-    tpcc_ch->order_status_dep_.piece_last2id = true;
-    tpcc_ch->inputs_[TPCC_ORDER_STATUS_1][TPCC_VAR_C_ID] = output[TPCC_VAR_C_ID];
-    tpcc_ch->inputs_[TPCC_ORDER_STATUS_2][TPCC_VAR_C_ID] = output[TPCC_VAR_C_ID];
-    tpcc_ch->status_[TPCC_ORDER_STATUS_1] = READY;
-    tpcc_ch->status_[TPCC_ORDER_STATUS_2] = READY;
-    return true;
-  END_CB
-
   // Ri customer
+  INPUT_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_1,
+            TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_C_ID)
   SHARD_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_1,
             TPCC_TB_CUSTOMER, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_1, DF_NO) {
@@ -215,6 +203,8 @@ void TpccPiece::reg_order_status() {
   } END_PIE
 
   // Ri order
+  INPUT_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_2,
+            TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_C_ID)
   SHARD_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_2,
             TPCC_TB_ORDER, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_2, DF_NO) {
@@ -253,17 +243,9 @@ void TpccPiece::reg_order_status() {
     *res = SUCCESS;
   } END_PIE
 
-  BEGIN_CB(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_2)
-    TpccChopper* tpcc_ch = (TpccChopper*)ch;
-    verify(output.size() == 3);
-    verify(!tpcc_ch->order_status_dep_.piece_order);
-    tpcc_ch->order_status_dep_.piece_order = true;
-    tpcc_ch->inputs_[TPCC_ORDER_STATUS_3][TPCC_VAR_O_ID] = output[TPCC_VAR_O_ID];
-    tpcc_ch->status_[TPCC_ORDER_STATUS_3] = READY;
-    return true;
-  END_CB
-
   // R order_line
+  INPUT_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_3,
+            TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_O_ID)
   SHARD_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_3,
             TPCC_TB_ORDER_LINE, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_3, DF_NO) {

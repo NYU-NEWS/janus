@@ -78,6 +78,7 @@ class TxnChopper : public Command {
   Graph<TxnInfo> gra_;
 
   map<int32_t, Value> ws_ = {}; // workspace.
+  map<int32_t, Value> ws_init_ = {};
   map<int32_t, map<int32_t, Value> > inputs_;  // input of each piece.
   //std::vector<std::vector<mdb::Value> > outputs_; // output of each piece.
   map<int32_t, int32_t> output_size_;

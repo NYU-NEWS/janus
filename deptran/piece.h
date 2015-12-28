@@ -53,6 +53,8 @@ txn_reg_->callbacks_[std::make_pair(txn_type, inn_id)] = \
 #define SHARD_PIE(txn, pie, tb, var) \
 txn_reg_->sharding_input_[std::make_pair(txn, pie)] = std::make_pair(tb, var);
 
+#define INPUT_PIE(txn, pie, ...) \
+txn_reg_->input_vars_[std::make_pair(txn, pie)] = {__VA_ARGS__};
 //std::vector<mdb::column_lock_t>(__VA_ARGS__),
 //verify(((TPLDTxn*)dtxn)->locking_ == (output_size == nullptr));
 //#define TPL_KISS(...) \

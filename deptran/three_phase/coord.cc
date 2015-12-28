@@ -31,8 +31,7 @@ RequestHeader ThreePhaseCoordinator::gen_header(TxnChopper *ch) {
 void ThreePhaseCoordinator::do_one(TxnRequest &req) {
   // pre-process
   std::lock_guard<std::mutex> lock(this->mtx_);
-  TxnChopper *ch = Frame().CreateChopper(req);
-  ch->txn_reg_ = txn_reg_;
+  TxnChopper *ch = Frame().CreateChopper(req, txn_reg_);
   verify(txn_reg_ != nullptr);
   cmd_ = ch;
   cmd_id_ = this->next_txn_id();

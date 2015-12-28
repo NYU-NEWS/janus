@@ -24,6 +24,8 @@ TpccChopper::TpccChopper() {
 }
 
 void TpccChopper::init(TxnRequest &req) {
+  ws_init_ = req.input_;
+  ws_ = ws_init_;
   txn_type_ = req.txn_type_;
   callback_ = req.callback_;
   max_try_ = req.n_try_;
@@ -51,9 +53,46 @@ void TpccChopper::init(TxnRequest &req) {
   }
 }
 
+// This is sort of silly. We should have a better way.
+bool TpccChopper::CheckReady() {
+  bool ret = false;
+  for (auto &kv : txn_reg_->input_vars_) {
+    auto type = kv.first.first;
+    auto pi = kv.first.second;
+    auto &var_set = kv.second;
+    if (type == txn_type_) {
+      bool all_found = true;
+      for (auto &var : var_set) {
+        if (ws_.find(var) == ws_.end()) {
+          // not found. input not all ready.
+          all_found = false;
+          break;
+        }
+      }
+      // all found.
+      if (all_found && status_[pi] == WAITING) {
+        status_[pi] = READY;
+        ret = true;
+        for (auto &var : var_set) {
+          inputs_[pi][var] = ws_[var];
+          verify(ws_[var].get_kind() != 0);
+        }
+      }
+    }
+  }
+  return ret;
+}
+
 bool TpccChopper::start_callback(int pi,
                                  int res,
                                  map<int32_t, Value> &output_map) {
+  if (txn_type_ == TPCC_PAYMENT ||
+      txn_type_ == TPCC_ORDER_STATUS ||
+//      txn_type_ == TPCC_DELIVERY ||
+      0) {
+    ws_.insert(output_map.begin(), output_map.end());
+    return CheckReady();
+  }
   PieceCallbackHandler handler;
   auto it = txn_reg_->callbacks_.find(std::make_pair(txn_type_, pi));
   if (it != txn_reg_->callbacks_.end()) {
@@ -66,6 +105,7 @@ bool TpccChopper::start_callback(int pi,
 }
 
 void TpccChopper::retry() {
+  ws_ = ws_init_;
   partitions_.clear();
   n_pieces_out_ = 0;
   n_try_++;

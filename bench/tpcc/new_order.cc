@@ -7,16 +7,6 @@ static uint32_t TXN_TYPE = TPCC_NEW_ORDER;
 
 void TpccChopper::NewOrderInit(TxnRequest &req) {
   new_order_dep_ = new_order_dep_t();
-  /**
-   * req.input_
-   *  0       ==> w_id, d_w_id, c_w_id
-   *  1       ==> d_id, c_d_id
-   *  2       ==> c_id
-   *  3       ==> ol_cnt
-   *  4 + 3*i ==> s_i_id, ol_i_id, i_id
-   *  5 + 3*i ==> ol_supply_w_id
-   *  6 + 3*i ==> ol_quantity
-   **/
   int32_t ol_cnt = req.input_[TPCC_VAR_OL_CNT].get_i32();
 
   new_order_dep_.piece_0_dist = false;
@@ -83,9 +73,9 @@ void TpccChopper::NewOrderInit(TxnRequest &req) {
 
     auto pi_ws = TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i);
     inputs_[pi_ws] = {
-        {TPCC_VAR_I_ID(i),        req.input_[TPCC_VAR_I_ID(i)]},
-        {TPCC_VAR_S_W_ID(i),      req.input_[TPCC_VAR_S_W_ID(i)]},
-        {TPCC_VAR_OL_QUANTITY(i), req.input_[TPCC_VAR_OL_QUANTITY(i)]},
+        {TPCC_VAR_I_ID(i),         req.input_[TPCC_VAR_I_ID(i)]},
+        {TPCC_VAR_S_W_ID(i),       req.input_[TPCC_VAR_S_W_ID(i)]},
+        {TPCC_VAR_OL_QUANTITY(i),  req.input_[TPCC_VAR_OL_QUANTITY(i)]},
         {TPCC_VAR_S_REMOTE_CNT(i), is_remote}
     };
     output_size_[pi_ws] = 0;
@@ -240,6 +230,9 @@ void TpccPiece::reg_new_order() {
   } END_PIE
 
   // W order
+  INPUT_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_3,
+            TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_O_ID, TPCC_VAR_C_ID,
+            TPCC_VAR_O_CARRIER_ID, TPCC_VAR_OL_CNT, TPCC_VAR_O_ALL_LOCAL)
   SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_3, TPCC_TB_ORDER, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_3, DF_REAL) {
     verify(input.size() == 7);

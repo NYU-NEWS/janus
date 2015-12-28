@@ -2,6 +2,7 @@
 //#include "__dep__.h"
 #include "constants.h"
 #include "txn_req_factory.h"
+#include "txn_reg.h"
 
 namespace rococo {
 
@@ -13,7 +14,7 @@ class DTxn;
 class Executor;
 class Scheduler;
 class ClientControlServiceImpl;
-
+class TxnRegistry;
 class Frame {
  public:
   Sharding* CreateSharding();
@@ -24,7 +25,7 @@ class Frame {
                            ClientControlServiceImpl *ccsi,
                            uint32_t id, bool batch_start);
   void GetTxnTypes(std::map<int32_t, std::string> &txn_types);
-  TxnChopper* CreateChopper(TxnRequest &req);
+  TxnChopper* CreateChopper(TxnRequest &req, TxnRegistry *reg);
   DTxn* CreateDTxn(txnid_t txn_id, bool ro, Scheduler *sch);
   Executor* CreateExecutor(cmdid_t cmd_id, Scheduler *sch);
   Scheduler *CreateScheduler();

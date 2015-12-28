@@ -102,6 +102,8 @@ class TpccChopper: public TxnChopper {
 
   virtual void retry();
 
+  virtual bool CheckReady();
+
   virtual ~TpccChopper();
 };
 
