@@ -69,6 +69,8 @@ void TpccTxnGenerator::get_tpcc_new_order_txn_req(
   //}
   req->input_[TPCC_VAR_C_ID] = c_id;
   req->input_[TPCC_VAR_OL_CNT] = Value((i32) ol_cnt);
+  req->input_[TPCC_VAR_O_CARRIER_ID] = Value((int32_t)0);
+  bool all_local = true;
   for (int i = 0; i < ol_cnt; i++) {
     //req->input_[4 + 3 * i] = Value((i32)RandomGenerator::nu_rand(8191, 0, tpcc_para_.n_i_id_ - 1)); XXX nurand is the standard
     rrr::i32 tmp_i_id = (i32) RandomGenerator::rand(0, tpcc_para_.n_i_id_ - 1 - i);
@@ -87,17 +89,25 @@ void TpccTxnGenerator::get_tpcc_new_order_txn_req(
 
     i_id_buf[i] = tmp_i_id;
     req->input_[TPCC_VAR_I_ID(i)] = Value(tmp_i_id);
+    req->input_[TPCC_VAR_OL_NUMBER(i)] = i;
+    req->input_[TPCC_VAR_OL_DELIVER_D(i)] = std::string();
+    req->input_[TPCC_VAR_OL_DIST_INFO(i)] = std::string();
 
     if (tpcc_para_.n_w_id_ > 1 && // warehouse more than one, can do remote
         RandomGenerator::percentage_true(1)) { //XXX 1% REMOTE_RATIO
       int remote_w_id = RandomGenerator::rand(0, tpcc_para_.n_w_id_ - 2);
       remote_w_id = remote_w_id >= home_w_id ? remote_w_id + 1 : remote_w_id;
       req->input_[TPCC_VAR_S_W_ID(i)] = Value((i32) remote_w_id);
-    }
-    else
+      req->input_[TPCC_VAR_S_REMOTE_CNT(i)] = Value((i32)1);
+      all_local = false;
+    } else {
       req->input_[TPCC_VAR_S_W_ID(i)] = req->input_[TPCC_VAR_W_ID];
+      req->input_[TPCC_VAR_S_REMOTE_CNT(i)] = Value((i32)0);
+    }
     req->input_[TPCC_VAR_OL_QUANTITY(i)] = Value((i32) RandomGenerator::rand(0, 10));
   }
+  req->input_[TPCC_VAR_O_ALL_LOCAL] = all_local ? Value((i32)1) : Value ((i32)0);
+
 
   //for (i = 0; i < ol_cnt; i++) {
   //    verify(i_id_buf[i] < tpcc_para_.n_i_id_ && i_id_buf[i] >= 0);

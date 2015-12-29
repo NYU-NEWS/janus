@@ -87,17 +87,20 @@ bool TpccChopper::CheckReady() {
 //        }
     }
   }
+
+
   return ret;
 }
 
 bool TpccChopper::start_callback(int pi,
                                  int res,
                                  map<int32_t, Value> &output_map) {
+  bool ret;
   ws_.insert(output_map.begin(), output_map.end());
   if (txn_type_ == TPCC_PAYMENT ||
       txn_type_ == TPCC_ORDER_STATUS ||
 //      txn_type_ == TPCC_DELIVERY ||
-//        txn_type_ == TPCC_NEW_ORDER ||
+        txn_type_ == TPCC_NEW_ORDER ||
       0) {
     return CheckReady();
   }
@@ -105,12 +108,45 @@ bool TpccChopper::start_callback(int pi,
   auto it = txn_reg_->callbacks_.find(std::make_pair(txn_type_, pi));
   if (it != txn_reg_->callbacks_.end()) {
     handler = it->second;
+    ret = handler(this, output_map);
+
   } else {
 //    ws_.insert(output_map.begin(), output_map.end());
-    return CheckReady();
-    handler = [] (TxnChopper* ch,
-                  map<int32_t, Value>& output) -> bool { return false; };
+    bool ret = CheckReady();
+//
+//    handler = [] (TxnChopper* ch,
+//                  map<int32_t, Value>& output) -> bool { return false; };
   }
+
+  // below is for debug
+//  if (txn_type_ == TPCC_NEW_ORDER && pi == TPCC_NEW_ORDER_0) {
+//    verify(ws_.find(TPCC_VAR_O_ID) != ws_.end());
+//    verify(inputs_[TPCC_NEW_ORDER_3].count(TPCC_VAR_O_ID) > 0);
+//    verify(inputs_[TPCC_NEW_ORDER_4].count(TPCC_VAR_O_ID) > 0);
+//
+//
+//    auto &vars = txn_reg_->input_vars_[TPCC_NEW_ORDER][TPCC_NEW_ORDER_3];
+//    for (auto v : vars) {
+//      verify(ws_.count(v) > 0);
+//    }
+//
+//    verify(status_[TPCC_NEW_ORDER_3] == READY);
+//    verify(status_[TPCC_NEW_ORDER_4] == READY);
+//
+//    for (size_t i = 0; i < new_order_dep_.ol_cnt; i++) {
+//      auto pi = TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i);
+//      verify(inputs_[pi].count(TPCC_VAR_O_ID) > 0);
+//      bool b2 = (ws_.find(TPCC_VAR_I_PRICE(i)) != ws_.end());
+//      bool b3 = (ws_.find(TPCC_VAR_OL_DIST_INFO(i)) != ws_.end());
+////      verify(b2 == tpcc_ch->new_order_dep_.piece_items[i]);
+////      verify(b3 == tpcc_ch->new_order_dep_.piece_stocks[i]);
+//      if (b2 && b3)
+//        verify(status_[pi] == READY);
+//    }
+//  }
+  return ret;
+
+
   return handler(this, output_map);
 }
 
