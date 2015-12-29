@@ -130,7 +130,7 @@ void ThreePhaseCoordinator::Start() {
 
   StartRequest req;
   req.cmd_id = cmd_id_;
-  Command *subcmd;
+  SimpleCommand *subcmd;
 
   auto phase = phase_;
   std::function<void(StartReply &)> callback = [this, phase](StartReply &reply) {
@@ -139,7 +139,7 @@ void ThreePhaseCoordinator::Start() {
   };
 
   int cnt = 0;
-  while ((subcmd = cmd_->GetNextSubCmd()) != nullptr) {
+  while ((subcmd = (SimpleCommand*)cmd_->GetNextSubCmd()) != nullptr) {
     req.pie_id = next_pie_id();
     n_start_++;
     cnt++;

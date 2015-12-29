@@ -86,7 +86,7 @@ class TxnRegistry {
   map<std::pair<txntype_t, innid_t>, PieceCallbackHandler> callbacks_ = {};
   map<std::pair<txntype_t, innid_t>,
       std::pair<string, int32_t>> sharding_input_ = {};
-  map<std::pair<txntype_t, innid_t>, set<int32_t>> input_vars_ = {};
+  map<txntype_t, map<innid_t, set<int32_t>>> input_vars_ = {};
   map<txntype_t, std::function<void(TxnChopper* ch, TxnRequest& req)> > init_ = {};
   map<txntype_t, std::function<void(TxnChopper* ch)>> retry_ = {};
 

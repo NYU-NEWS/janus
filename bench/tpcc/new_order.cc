@@ -86,13 +86,13 @@ void TpccChopper::NewOrderInit(TxnRequest &req) {
     inputs_[pi_wol] = {
         {TPCC_VAR_OL_D_ID(i),         req.input_[TPCC_VAR_D_ID]},
         {TPCC_VAR_OL_W_ID(i),         req.input_[TPCC_VAR_W_ID]},
-        {TPCC_VAR_OL_O_ID(i),         Value((i32) 0)},
+//        {TPCC_VAR_O_ID,               Value((i32) 0)},
         {TPCC_VAR_OL_NUMBER(i),       Value((i32) i)},
         {TPCC_VAR_I_ID(i),            req.input_[TPCC_VAR_I_ID(i)]},
         {TPCC_VAR_S_W_ID(i),          req.input_[TPCC_VAR_S_W_ID(i)]},
         {TPCC_VAR_OL_DELIVER_D(i),    Value(std::string())},
         {TPCC_VAR_OL_QUANTITY(i),     req.input_[TPCC_VAR_OL_QUANTITY(i)]},
-        {TPCC_VAR_OL_AMOUNTS(i),      Value((double) 0.0)},
+//        {TPCC_VAR_OL_AMOUNTS(i),      Value((double) 0.0)},
         {TPCC_VAR_OL_DIST_INFO(i),    Value(std::string())},
     };
     output_size_[pi_wol] = 0;
@@ -101,7 +101,7 @@ void TpccChopper::NewOrderInit(TxnRequest &req) {
   }
   // piece 3, W order, depends on piece 0
   inputs_[TPCC_NEW_ORDER_3] = {
-      {TPCC_VAR_O_ID, Value((i32) 0)},
+//      {TPCC_VAR_O_ID, Value((i32) 0)},
       {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]},
       {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},
       {TPCC_VAR_C_ID, req.input_[TPCC_VAR_C_ID]},
@@ -115,7 +115,7 @@ void TpccChopper::NewOrderInit(TxnRequest &req) {
 
   // piece 4, W new_order, depends on piece 0
   inputs_[TPCC_NEW_ORDER_4] = {
-      {TPCC_VAR_O_ID, Value((i32) 0)},
+//      {TPCC_VAR_O_ID, Value((i32) 0)},
       {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]},
       {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},
   };
@@ -143,6 +143,7 @@ void TpccChopper::new_order_retry() {
 
 void TpccPiece::reg_new_order() {
   // Ri & W district
+  INPUT_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0, TPCC_VAR_W_ID, TPCC_VAR_D_ID)
   SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0, TPCC_TB_DISTRICT, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0, DF_NO) {
     verify(input.size() == 2);
@@ -162,7 +163,7 @@ void TpccPiece::reg_new_order() {
                      TPCC_COL_DISTRICT_D_NEXT_O_ID,
                      &buf,
                      TXN_BYPASS); // read d_next_o_id
-    output[TPCC_VAR_D_NEXT_O_ID] = buf;
+    output[TPCC_VAR_O_ID] = buf;
     // read d_next_o_id, increment by 1
     buf.set_i32((i32)(buf.get_i32() + 1));
     dtxn->WriteColumn(r,
@@ -174,8 +175,7 @@ void TpccPiece::reg_new_order() {
 
   BEGIN_CB(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0)
     TpccChopper* tpcc_ch = (TpccChopper*) ch;
-    tpcc_ch->new_order_dep_.piece_0_dist = true;
-    Value o_id = output[TPCC_VAR_D_NEXT_O_ID];
+    Value o_id = output[TPCC_VAR_O_ID];
     tpcc_ch->inputs_[TPCC_NEW_ORDER_3][TPCC_VAR_O_ID] = o_id;
     tpcc_ch->inputs_[TPCC_NEW_ORDER_4][TPCC_VAR_O_ID] = o_id;
     tpcc_ch->status_[TPCC_NEW_ORDER_3] = READY;
@@ -183,9 +183,12 @@ void TpccPiece::reg_new_order() {
 
     for (size_t i = 0; i < tpcc_ch->new_order_dep_.ol_cnt; i++) {
       auto pi = TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i);
-      tpcc_ch->inputs_[pi][TPCC_VAR_OL_O_ID(i)] = o_id;
-      if (tpcc_ch->new_order_dep_.piece_items[i] &&
-          tpcc_ch->new_order_dep_.piece_stocks[i])
+      tpcc_ch->inputs_[pi][TPCC_VAR_O_ID] = o_id;
+      bool b2 = (tpcc_ch->ws_.find(TPCC_VAR_I_PRICE(i)) != tpcc_ch->ws_.end());
+      bool b3 = (tpcc_ch->ws_.find(TPCC_VAR_OL_DIST_INFO(i)) != tpcc_ch->ws_.end());
+//      verify(b2 == tpcc_ch->new_order_dep_.piece_items[i]);
+//      verify(b3 == tpcc_ch->new_order_dep_.piece_stocks[i]);
+      if (b2 && b3)
         tpcc_ch->status_[pi] = READY;
     }
 
@@ -193,6 +196,7 @@ void TpccPiece::reg_new_order() {
   END_CB
 
   // R warehouse
+  INPUT_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_1, TPCC_VAR_W_ID)
   SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_1, TPCC_TB_WAREHOUSE, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_1, DF_NO) {
     verify(input.size() == 1);
@@ -207,6 +211,8 @@ void TpccPiece::reg_new_order() {
   } END_PIE
 
   // R customer //XXX either i or d is ok
+  INPUT_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_2,
+            TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_C_ID)
   SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_2, TPCC_TB_CUSTOMER, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_2, DF_NO) {
     verify(input.size() == 3);
@@ -288,6 +294,8 @@ void TpccPiece::reg_new_order() {
   } END_PIE
 
   // W new_order
+  INPUT_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_4,
+            TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_O_ID)
   SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_4, TPCC_TB_NEW_ORDER, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_4, DF_REAL) {
     verify(input.size() == 3);
@@ -314,10 +322,11 @@ void TpccPiece::reg_new_order() {
     return;
   } END_PIE
 
-  for (int i = TPCC_NEW_ORDER_RI(0); i < TPCC_NEW_ORDER_RI(1000); i++) {
+  for (int i = (0); i < (1000); i++) {
     // 1000 is a magical number?
     SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RI(i),
               TPCC_TB_ITEM, TPCC_VAR_I_ID(i))
+    INPUT_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RI(i), TPCC_VAR_I_ID(i))
   }
 
   BEGIN_LOOP_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RI(0), 1000, DF_NO)
@@ -353,12 +362,16 @@ void TpccPiece::reg_new_order() {
       auto ol_pi = TPCC_NEW_ORDER_INDEX_ITEM_TO_ORDER_LINE(i);
       auto ol_i = TPCC_NEW_ORDER_INDEX_ITEM_TO_CNT(i);
       auto s_pi = TPCC_NEW_ORDER_INDEX_ITEM_TO_DEFER_STOCK(i);
-      tpcc_ch->inputs_[ol_pi][TPCC_VAR_OL_AMOUNTS(ol_i)] =
-          Value((double) (output[TPCC_VAR_I_PRICE(ol_i)].get_double()
-          * tpcc_ch->inputs_[s_pi][TPCC_VAR_OL_QUANTITY(ol_i)].get_i32()));
+      tpcc_ch->inputs_[ol_pi][TPCC_VAR_I_PRICE(ol_i)] =
+          output[TPCC_VAR_I_PRICE(ol_i)];
+      tpcc_ch->inputs_[ol_pi][TPCC_VAR_OL_QUANTITY(ol_i)] =
+          tpcc_ch->inputs_[s_pi][TPCC_VAR_OL_QUANTITY(ol_i)];
       tpcc_ch->new_order_dep_.piece_items[ol_i] = true;
-      if (tpcc_ch->new_order_dep_.piece_0_dist
-          && tpcc_ch->new_order_dep_.piece_stocks[ol_i]) {
+      bool b1 = (tpcc_ch->ws_.find(TPCC_VAR_O_ID) != tpcc_ch->ws_.end());
+//      verify(b1 == tpcc_ch->new_order_dep_.piece_0_dist);
+      bool b3 = (tpcc_ch->ws_.find(TPCC_VAR_OL_DIST_INFO(ol_i)) != tpcc_ch->ws_.end());
+//      verify(b3 == tpcc_ch->new_order_dep_.piece_stocks[ol_i]);
+      if (b1 && b3) {
         tpcc_ch->status_[ol_pi] = READY;
         return true;
       } else {
@@ -367,10 +380,12 @@ void TpccPiece::reg_new_order() {
     };
   }
 
-  for (int i = TPCC_NEW_ORDER_RS(0); i < TPCC_NEW_ORDER_RS(1000); i++) {
+  for (int i = (0); i < (1000); i++) {
     // 1000 is a magical number?
     SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RS(i),
               TPCC_TB_STOCK, TPCC_VAR_S_W_ID(i))
+    INPUT_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RS(i),
+              TPCC_VAR_I_ID(i), TPCC_VAR_S_W_ID(i), TPCC_VAR_S_D_ID(i))
   }
 
   BEGIN_LOOP_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RS(0), 1000, DF_NO)
@@ -385,7 +400,7 @@ void TpccPiece::reg_new_order() {
     // Ri stock
     // FIXME compress all s_dist_xx into one column
     dtxn->ReadColumn(r, TPCC_COL_STOCK_S_DIST_XX,
-                     &output[TPCC_VAR_S_DIST_XX(I)],
+                     &output[TPCC_VAR_OL_DIST_INFO(I)],
                      TXN_BYPASS); // 0 ==> s_dist_xx
     dtxn->ReadColumn(r, TPCC_COL_STOCK_S_DATA,
                      &output[TPCC_VAR_S_DATA(I)],
@@ -402,10 +417,13 @@ void TpccPiece::reg_new_order() {
       auto ol_pi = TPCC_NEW_ORDER_INDEX_IM_STOCK_TO_ORDER_LINE(i);
       auto ol_i = TPCC_NEW_ORDER_INDEX_IM_STOCK_TO_CNT(i);
       tpcc_ch->inputs_[ol_pi][TPCC_VAR_OL_DIST_INFO(ol_i)] =
-          output[TPCC_VAR_S_DIST_XX(ol_i)];
+          output[TPCC_VAR_OL_DIST_INFO(ol_i)];
       tpcc_ch->new_order_dep_.piece_stocks[ol_i] = true;
-      if (tpcc_ch->new_order_dep_.piece_0_dist &&
-          tpcc_ch->new_order_dep_.piece_items[ol_i]) {
+      bool b1 = (tpcc_ch->ws_.find(TPCC_VAR_O_ID) != tpcc_ch->ws_.end());
+//      verify(b1 == tpcc_ch->new_order_dep_.piece_0_dist);
+      bool b2 = (tpcc_ch->ws_.find(TPCC_VAR_I_PRICE(ol_i)) != tpcc_ch->ws_.end());
+//      verify(b2 == tpcc_ch->new_order_dep_.piece_items[ol_i]);
+      if (b1 && b2) {
         tpcc_ch->status_[ol_pi] = READY;
         return true;
       } else {
@@ -415,10 +433,13 @@ void TpccPiece::reg_new_order() {
   }
 
 
-  for (int i = TPCC_NEW_ORDER_WS(0); i < TPCC_NEW_ORDER_WS(1000); i++) {
+  for (int i = 0; i < (1000); i++) {
     // 1000 is a magical number?
     SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_WS(i),
               TPCC_TB_STOCK, TPCC_VAR_S_W_ID(i))
+    INPUT_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_WS(i),
+              TPCC_VAR_I_ID(i), TPCC_VAR_S_W_ID(i),
+              TPCC_VAR_OL_QUANTITY(i), TPCC_VAR_S_REMOTE_CNT(i))
   }
 
   BEGIN_LOOP_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_WS(0), 1000, DF_REAL)
@@ -478,10 +499,16 @@ void TpccPiece::reg_new_order() {
     return;
   END_LOOP_PIE
 
-  for (int i = TPCC_NEW_ORDER_WOL(0); i < TPCC_NEW_ORDER_WOL(1000); i++) {
+  for (int i = 0; i < 1000; i++) {
     // 1000 is a magical number?
     SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_WOL(i),
               TPCC_TB_ORDER_LINE, TPCC_VAR_W_ID)
+    INPUT_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_WOL(i),
+              TPCC_VAR_I_ID(i), TPCC_VAR_I_PRICE(i),
+              TPCC_VAR_O_ID, TPCC_VAR_S_W_ID(i),
+              TPCC_VAR_OL_W_ID(i), TPCC_VAR_OL_D_ID(i),
+              TPCC_VAR_OL_DIST_INFO(i), TPCC_VAR_OL_QUANTITY(i),
+              TPCC_VAR_OL_NUMBER(i), TPCC_VAR_OL_DELIVER_D(i))
   }
 
   BEGIN_LOOP_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_WOL(0), 1000, DF_REAL) {
@@ -491,16 +518,19 @@ void TpccPiece::reg_new_order() {
     mdb::Table *tbl = dtxn->GetTable(TPCC_TB_ORDER_LINE);
     mdb::Row *r = NULL;
 
+    Value amount = Value((double) (input[TPCC_VAR_I_PRICE(I)].get_double() *
+              input[TPCC_VAR_OL_QUANTITY(I)].get_i32()));
+
     CREATE_ROW(tbl->schema(), vector<Value>({
       input[TPCC_VAR_OL_D_ID(I)],
       input[TPCC_VAR_OL_W_ID(I)],
-      input[TPCC_VAR_OL_O_ID(I)],
+      input[TPCC_VAR_O_ID],
       input[TPCC_VAR_OL_NUMBER(I)],
       input[TPCC_VAR_I_ID(I)],
       input[TPCC_VAR_S_W_ID(I)],
       input[TPCC_VAR_OL_DELIVER_D(I)],
       input[TPCC_VAR_OL_QUANTITY(I)],
-      input[TPCC_VAR_OL_AMOUNTS(I)],
+      amount,
       input[TPCC_VAR_OL_DIST_INFO(I)]
     }));
 

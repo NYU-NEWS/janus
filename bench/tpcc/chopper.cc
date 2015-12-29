@@ -56,28 +56,35 @@ void TpccChopper::init(TxnRequest &req) {
 // This is sort of silly. We should have a better way.
 bool TpccChopper::CheckReady() {
   bool ret = false;
-  for (auto &kv : txn_reg_->input_vars_) {
-    auto type = kv.first.first;
-    auto pi = kv.first.second;
+
+  auto &map = txn_reg_->input_vars_[txn_type_];
+
+  for (auto &kv : map) {
+    auto pi = kv.first;
     auto &var_set = kv.second;
-    if (type == txn_type_) {
-      bool all_found = true;
-      for (auto &var : var_set) {
-        if (ws_.find(var) == ws_.end()) {
-          // not found. input not all ready.
-          all_found = false;
-          break;
-        }
+
+    if (status_.find(pi) == status_.end()) {
+      continue;
+    }
+    bool all_found = true;
+    for (auto &var : var_set) {
+      if (ws_.find(var) == ws_.end()) {
+        // not found. input not all ready.
+        all_found = false;
+        break;
+      } else {
+        inputs_[pi][var] = ws_[var];
+        verify(ws_[var].get_kind() != 0);
       }
-      // all found.
-      if (all_found && status_[pi] == WAITING) {
-        status_[pi] = READY;
-        ret = true;
-        for (auto &var : var_set) {
-          inputs_[pi][var] = ws_[var];
-          verify(ws_[var].get_kind() != 0);
-        }
-      }
+    }
+    // all found.
+    if (all_found && status_[pi] == WAITING) {
+      status_[pi] = READY;
+      ret = true;
+//        for (auto &var : var_set) {
+//          inputs_[pi][var] = ws_[var];
+//          verify(ws_[var].get_kind() != 0);
+//        }
     }
   }
   return ret;
@@ -86,11 +93,12 @@ bool TpccChopper::CheckReady() {
 bool TpccChopper::start_callback(int pi,
                                  int res,
                                  map<int32_t, Value> &output_map) {
+  ws_.insert(output_map.begin(), output_map.end());
   if (txn_type_ == TPCC_PAYMENT ||
       txn_type_ == TPCC_ORDER_STATUS ||
 //      txn_type_ == TPCC_DELIVERY ||
+//        txn_type_ == TPCC_NEW_ORDER ||
       0) {
-    ws_.insert(output_map.begin(), output_map.end());
     return CheckReady();
   }
   PieceCallbackHandler handler;
@@ -98,6 +106,8 @@ bool TpccChopper::start_callback(int pi,
   if (it != txn_reg_->callbacks_.end()) {
     handler = it->second;
   } else {
+//    ws_.insert(output_map.begin(), output_map.end());
+    return CheckReady();
     handler = [] (TxnChopper* ch,
                   map<int32_t, Value>& output) -> bool { return false; };
   }
