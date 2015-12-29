@@ -231,10 +231,6 @@ int TpccChopper::GetNPieceAll() {
 }
 
 TpccChopper::~TpccChopper() {
-  if (txn_type_ == TPCC_NEW_ORDER) {
-    free(new_order_dep_.piece_items);
-    free(new_order_dep_.piece_stocks);
-  }
   //else if (txn_type_ == TPCC_DELIVERY) {
   //    free(delivery_dep_.piece_new_orders);
   //    free(delivery_dep_.piece_orders);

@@ -12,8 +12,8 @@ void TpccChopper::stock_level_init(TxnRequest &req) {
 
   // piece 0, R district
   inputs_[TPCC_STOCK_LEVEL_0] = {
-      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},  // 0    ==> w_id
-      {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}   // 1    ==> d_id
+      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},
+      {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}
   };
   output_size_[TPCC_STOCK_LEVEL_0] = 1;
   p_types_[TPCC_STOCK_LEVEL_0] = TPCC_STOCK_LEVEL_0;

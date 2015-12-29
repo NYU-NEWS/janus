@@ -6,55 +6,14 @@ namespace rococo {
 static uint32_t TXN_TYPE = TPCC_NEW_ORDER;
 
 void TpccChopper::NewOrderInit(TxnRequest &req) {
-  new_order_dep_ = new_order_dep_t();
-  int32_t ol_cnt = req.input_[TPCC_VAR_OL_CNT].get_i32();
-
-  new_order_dep_.piece_0_dist = false;
-  new_order_dep_.ol_cnt = (size_t) ol_cnt;
-  new_order_dep_.piece_items = (bool *) malloc(sizeof(bool) * ol_cnt);
-  new_order_dep_.piece_stocks = (bool *) malloc(sizeof(bool) * ol_cnt);
-  memset(new_order_dep_.piece_items, false, sizeof(bool) * ol_cnt);
-  memset(new_order_dep_.piece_stocks, false, sizeof(bool) * ol_cnt);
-
-  n_pieces_all_ = 5 + 4 * ol_cnt;
-
-  // piece 0, Ri&W district
-  output_size_[TPCC_NEW_ORDER_0] = 2;
-  p_types_[TPCC_NEW_ORDER_0] = TPCC_NEW_ORDER_0;
-
-  // piece 1, R warehouse
-  output_size_[TPCC_NEW_ORDER_1] = 1;
-  p_types_[TPCC_NEW_ORDER_1] = TPCC_NEW_ORDER_1;
-
-  // piece 2, R customer
-  output_size_[TPCC_NEW_ORDER_2] = 3;
-  p_types_[TPCC_NEW_ORDER_2] = TPCC_NEW_ORDER_2;
-
-  // piece 3, W order, depends on piece 0
-  output_size_[TPCC_NEW_ORDER_3] = 0;
-  p_types_[TPCC_NEW_ORDER_3] = TPCC_NEW_ORDER_3;
-
-  // piece 4, W new_order, depends on piece 0
-  output_size_[TPCC_NEW_ORDER_4] = 0;
-  p_types_[TPCC_NEW_ORDER_4] = TPCC_NEW_ORDER_4;
-
   status_[TPCC_NEW_ORDER_0] = WAITING;
   status_[TPCC_NEW_ORDER_1] = WAITING;
   status_[TPCC_NEW_ORDER_2] = WAITING;
   status_[TPCC_NEW_ORDER_3] = WAITING;
   status_[TPCC_NEW_ORDER_4] = WAITING;
-
+  int32_t ol_cnt = req.input_[TPCC_VAR_OL_CNT].get_i32();
+  n_pieces_all_ = 5 + 4 * ol_cnt;
   for (int i = 0; i < ol_cnt; i++) {
-    output_size_[TPCC_NEW_ORDER_RI(i)] = 3;
-    output_size_[TPCC_NEW_ORDER_RS(i)] = 2;
-    output_size_[TPCC_NEW_ORDER_WS(i)] = 0;
-    output_size_[TPCC_NEW_ORDER_WOL(i)] = 0;
-
-    p_types_[TPCC_NEW_ORDER_RI(i)] = TPCC_NEW_ORDER_RI(i);
-    p_types_[TPCC_NEW_ORDER_RS(i)] = TPCC_NEW_ORDER_RS(i);
-    p_types_[TPCC_NEW_ORDER_WS(i)] = TPCC_NEW_ORDER_WS(i);
-    p_types_[TPCC_NEW_ORDER_WOL(i)] = TPCC_NEW_ORDER_WOL(i);
-
     status_[TPCC_NEW_ORDER_RI(i)] = WAITING;
     status_[TPCC_NEW_ORDER_RS(i)] = WAITING;
     status_[TPCC_NEW_ORDER_WS(i)] = WAITING;
@@ -70,10 +29,8 @@ void TpccChopper::new_order_retry() {
   status_[TPCC_NEW_ORDER_2] = WAITING;
   status_[TPCC_NEW_ORDER_3] = WAITING;
   status_[TPCC_NEW_ORDER_4] = WAITING;
-  new_order_dep_.piece_0_dist = false;
-  for (size_t i = 0; i < new_order_dep_.ol_cnt; i++) {
-    new_order_dep_.piece_items[i] = false;
-    new_order_dep_.piece_stocks[i] = false;
+  int32_t ol_cnt = ws_[TPCC_VAR_OL_CNT].get_i32();
+  for (size_t i = 0; i < ol_cnt; i++) {
     status_[TPCC_NEW_ORDER_Ith_INDEX_ITEM(i)] = WAITING;
     status_[TPCC_NEW_ORDER_Ith_INDEX_IM_STOCK(i)] = WAITING;
     status_[TPCC_NEW_ORDER_Ith_INDEX_DEFER_STOCK(i)] = WAITING;
