@@ -3,87 +3,42 @@
 namespace rococo {
 
 void TpccChopper::delivery_init(TxnRequest &req) {
-  /**
-   * req.input_
-   *  0       ==> w_id
-   *  1       ==> o_carrier_id
-   *  2       ==> d_id
-   **/
-  int d_id = req.input_[TPCC_VAR_D_ID].get_i32();
   n_pieces_all_ = 4;
-//  inputs_.resize(n_pieces_all_);
-//  output_size_.resize(n_pieces_all_);
-//  p_types_.resize(n_pieces_all_);
-//  sharding_.resize(n_pieces_all_);
-//  status_.resize(n_pieces_all_);
 
-  delivery_dep_.piece_new_orders = false;
-  delivery_dep_.piece_orders = false;
-  delivery_dep_.piece_order_lines = false;
-  //delivery_dep_.d_cnt = (size_t)d_cnt;
-  //delivery_dep_.piece_new_orders = (bool *)malloc(sizeof(bool) * d_cnt);
-  //delivery_dep_.piece_orders = (bool *)malloc(sizeof(bool) * d_cnt);
-  //delivery_dep_.piece_order_lines = (bool *)malloc(sizeof(bool) * d_cnt);
-  //memset(delivery_dep_.piece_new_orders, false, sizeof(bool) * d_cnt);
-  //memset(delivery_dep_.piece_orders, false, sizeof(bool) * d_cnt);
-  //memset(delivery_dep_.piece_order_lines, false, sizeof(bool) * d_cnt);
 
   // piece 0, Ri & W new_order
-  inputs_[TPCC_DELIVERY_0] = {
-      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},
-      {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}
-  };
   output_size_[TPCC_DELIVERY_0] = 1;
-  p_types_[TPCC_DELIVERY_0] = TPCC_DELIVERY_0;
-  status_[TPCC_DELIVERY_0] = READY;
-
   // piece 1, Ri & W order
-  inputs_[TPCC_DELIVERY_1] = {
-      {TPCC_VAR_O_ID,         Value()},
-      {TPCC_VAR_W_ID,         req.input_[TPCC_VAR_W_ID]},
-      {TPCC_VAR_D_ID,         req.input_[TPCC_VAR_D_ID]},
-      {TPCC_VAR_O_CARRIER_ID, req.input_[TPCC_VAR_O_CARRIER_ID]}
-  };
   output_size_[TPCC_DELIVERY_1] = 1;
-  p_types_[TPCC_DELIVERY_1] = TPCC_DELIVERY_1;
-  status_[TPCC_DELIVERY_1] = WAITING;
-
   // piece 2, Ri & W order_line
-  inputs_[TPCC_DELIVERY_2] = {
-      {TPCC_VAR_O_ID, Value()},
-      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},
-      {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}
-  };
   output_size_[TPCC_DELIVERY_2] = 1;
-  p_types_[TPCC_DELIVERY_2] = TPCC_DELIVERY_2;
-  status_[TPCC_DELIVERY_2] = WAITING;
-
   // piece 3, W customer
-  inputs_[TPCC_DELIVERY_3] = {
-      {TPCC_VAR_C_ID, Value()},
-      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},
-      {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]},
-      {TPCC_VAR_OL_AMOUNT, Value()}
-  };
   output_size_[TPCC_DELIVERY_3] = 0;
+
+  p_types_[TPCC_DELIVERY_0] = TPCC_DELIVERY_0;
+  p_types_[TPCC_DELIVERY_1] = TPCC_DELIVERY_1;
+  p_types_[TPCC_DELIVERY_2] = TPCC_DELIVERY_2;
   p_types_[TPCC_DELIVERY_3] = TPCC_DELIVERY_3;
+
+  status_[TPCC_DELIVERY_0] = WAITING;
+  status_[TPCC_DELIVERY_1] = WAITING;
+  status_[TPCC_DELIVERY_2] = WAITING;
   status_[TPCC_DELIVERY_3] = WAITING;
+  CheckReady();
 }
 
 void TpccChopper::delivery_retry() {
-  status_[0] = READY;
-  status_[1] = WAITING;
-  status_[2] = WAITING;
-  status_[3] = WAITING;
-  delivery_dep_.piece_new_orders = false;
-  delivery_dep_.piece_orders = false;
-  delivery_dep_.piece_order_lines = false;
+  status_[TPCC_DELIVERY_0] = WAITING;
+  status_[TPCC_DELIVERY_1] = WAITING;
+  status_[TPCC_DELIVERY_2] = WAITING;
+  status_[TPCC_DELIVERY_3] = WAITING;
+  CheckReady();
 }
 
 
 void TpccPiece::reg_delivery() {
   // Ri & W new_order
-  INPUT_PIE(TPCC_DELIVERY, TPCC_DELIVERY_1,
+  INPUT_PIE(TPCC_DELIVERY, TPCC_DELIVERY_0,
             TPCC_VAR_W_ID, TPCC_VAR_D_ID)
   SHARD_PIE(TPCC_DELIVERY, TPCC_DELIVERY_0, TPCC_TB_NEW_ORDER, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_DELIVERY, TPCC_DELIVERY_0, DF_FAKE) {
@@ -92,7 +47,7 @@ void TpccPiece::reg_delivery() {
     // resource. And the bottom half is in charge of release the resource,
     // including the vertex entry
 
-    Log::debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_0);
+    Log_debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_0);
     verify(input.size() == 2);
     Value buf;
     mdb::Txn *txn = dtxn->mdb_txn_;
@@ -121,6 +76,7 @@ void TpccPiece::reg_delivery() {
       dtxn->ReadColumn(r, TPCC_COL_NEW_ORDER_NO_W_ID, &buf);
       output[TPCC_VAR_O_ID] = buf;
     } else {
+      verify(0);
       TPL_KISS_NONE;
       output[TPCC_VAR_O_ID] = Value((i32) -1);
     }
@@ -155,28 +111,26 @@ void TpccPiece::reg_delivery() {
     return;
   } END_PIE
 
-  BEGIN_CB(TPCC_DELIVERY, TPCC_DELIVERY_0)
-    TpccChopper *tpcc_ch = (TpccChopper*) ch;
-    verify(output.size() == 1);
-    verify(!tpcc_ch->delivery_dep_.piece_new_orders);
-    if (output[TPCC_VAR_O_ID].get_i32() == (i32) -1) { // new_order not found
-      tpcc_ch->status_[TPCC_DELIVERY_1] = FINISHED;
-      tpcc_ch->status_[TPCC_DELIVERY_2] = FINISHED;
-      tpcc_ch->status_[TPCC_DELIVERY_3] = FINISHED;
-      tpcc_ch->n_pieces_out_ += 3;
-      Log::info("TPCC DELIVERY: no more new order for w_id: %d, d_id: %d",
-                tpcc_ch->inputs_[TPCC_DELIVERY_0][TPCC_VAR_W_ID].get_i32(),
-                tpcc_ch->inputs_[TPCC_DELIVERY_0][TPCC_VAR_D_ID].get_i32());
-      return false;
-    } else {
-      tpcc_ch->inputs_[TPCC_DELIVERY_1][TPCC_VAR_O_ID] = output[TPCC_VAR_O_ID];
-      tpcc_ch->inputs_[TPCC_DELIVERY_2][TPCC_VAR_O_ID] = output[TPCC_VAR_O_ID];
-      tpcc_ch->status_[TPCC_DELIVERY_1] = READY;
-      tpcc_ch->status_[TPCC_DELIVERY_2] = READY;
-      tpcc_ch->delivery_dep_.piece_new_orders = true;
-      return true;
-    }
-  END_CB
+//  BEGIN_CB(TPCC_DELIVERY, TPCC_DELIVERY_0)
+//    TpccChopper *tpcc_ch = (TpccChopper*) ch;
+//    verify(output.size() == 1);
+//    if (output[TPCC_VAR_O_ID].get_i32() == (i32) -1) { // new_order not found
+//      tpcc_ch->status_[TPCC_DELIVERY_1] = FINISHED;
+//      tpcc_ch->status_[TPCC_DELIVERY_2] = FINISHED;
+//      tpcc_ch->status_[TPCC_DELIVERY_3] = FINISHED;
+//      tpcc_ch->n_pieces_out_ += 3;
+//      Log_info("TPCC DELIVERY: no more new order for w_id: %d, d_id: %d",
+//                tpcc_ch->inputs_[TPCC_DELIVERY_0][TPCC_VAR_W_ID].get_i32(),
+//                tpcc_ch->inputs_[TPCC_DELIVERY_0][TPCC_VAR_D_ID].get_i32());
+//      return false;
+//    } else {
+//      tpcc_ch->inputs_[TPCC_DELIVERY_1][TPCC_VAR_O_ID] = output[TPCC_VAR_O_ID];
+//      tpcc_ch->inputs_[TPCC_DELIVERY_2][TPCC_VAR_O_ID] = output[TPCC_VAR_O_ID];
+//      tpcc_ch->status_[TPCC_DELIVERY_1] = READY;
+//      tpcc_ch->status_[TPCC_DELIVERY_2] = READY;
+//      return true;
+//    }
+//  END_CB
 
   // Ri & W order
   INPUT_PIE(TPCC_DELIVERY, TPCC_DELIVERY_1,
@@ -206,25 +160,25 @@ void TpccPiece::reg_delivery() {
     return;
   } END_PIE
 
-  BEGIN_CB(TPCC_DELIVERY, TPCC_DELIVERY_1)
-    TpccChopper *tpcc_ch = (TpccChopper*) ch;
-    verify(output.size() == 1);
-    tpcc_ch->inputs_[TPCC_DELIVERY_3][TPCC_VAR_C_ID] = output[TPCC_VAR_C_ID];
-    tpcc_ch->delivery_dep_.piece_orders = true;
-    if (tpcc_ch->delivery_dep_.piece_order_lines) {
-      tpcc_ch->status_[TPCC_DELIVERY_3] = READY;
-      return true;
-    } else {
-      return false;
-    }
-  END_CB
+//  BEGIN_CB(TPCC_DELIVERY, TPCC_DELIVERY_1)
+//    TpccChopper *tpcc_ch = (TpccChopper*) ch;
+//    verify(output.size() == 1);
+//    tpcc_ch->inputs_[TPCC_DELIVERY_3][TPCC_VAR_C_ID] = output[TPCC_VAR_C_ID];
+//    bool b = tpcc_ch->ws_.count(TPCC_VAR_OL_AMOUNT) > 0;
+//    if (b) {
+//      tpcc_ch->status_[TPCC_DELIVERY_3] = READY;
+//      return true;
+//    } else {
+//      return false;
+//    }
+//  END_CB
 
   // Ri & W order_line
   INPUT_PIE(TPCC_DELIVERY, TPCC_DELIVERY_2,
             TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_O_ID)
   SHARD_PIE(TPCC_DELIVERY, TPCC_DELIVERY_2, TPCC_TB_ORDER_LINE, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_DELIVERY, TPCC_DELIVERY_2, DF_NO) {
-    Log::debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_2);
+    Log_debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_2);
     verify(input.size() == 3);
     //        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
     mdb::MultiBlob mbl(4), mbh(4);
@@ -277,25 +231,25 @@ void TpccPiece::reg_delivery() {
     *res = SUCCESS;
   } END_PIE
 
-  BEGIN_CB(TPCC_DELIVERY, TPCC_DELIVERY_2)
-    TpccChopper *tpcc_ch = (TpccChopper*) ch;
-    verify(output.size() == 1);
-    tpcc_ch->inputs_[TPCC_DELIVERY_3][TPCC_VAR_OL_AMOUNT] = output[TPCC_VAR_OL_AMOUNT];
-    tpcc_ch->delivery_dep_.piece_order_lines = true;
-    if (tpcc_ch->delivery_dep_.piece_orders) {
-      tpcc_ch->status_[TPCC_DELIVERY_3] = READY;
-      return true;
-    } else {
-      return false;
-    }
-  END_CB
+//  BEGIN_CB(TPCC_DELIVERY, TPCC_DELIVERY_2)
+//    TpccChopper *tpcc_ch = (TpccChopper*) ch;
+//    verify(output.size() == 1);
+//    tpcc_ch->inputs_[TPCC_DELIVERY_3][TPCC_VAR_OL_AMOUNT] = output[TPCC_VAR_OL_AMOUNT];
+//    bool b = tpcc_ch->ws_.count(TPCC_VAR_C_ID) > 0;
+//    if (b) {
+//      tpcc_ch->status_[TPCC_DELIVERY_3] = READY;
+//      return true;
+//    } else {
+//      return false;
+//    }
+//  END_CB
 
   // W customer
   INPUT_PIE(TPCC_DELIVERY, TPCC_DELIVERY_3,
             TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_C_ID, TPCC_VAR_OL_AMOUNT)
   SHARD_PIE(TPCC_DELIVERY, TPCC_DELIVERY_3, TPCC_TB_CUSTOMER, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_DELIVERY, TPCC_DELIVERY_3, DF_REAL) {
-    Log::debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_3);
+    Log_debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_3);
     verify(input.size() == 4);
     mdb::Row *r = NULL;
     mdb::MultiBlob mb(3);

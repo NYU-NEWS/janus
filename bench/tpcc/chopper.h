@@ -104,6 +104,8 @@ class TpccChopper: public TxnChopper {
 
   virtual bool CheckReady();
 
+  virtual int GetNPieceAll();
+
   virtual ~TpccChopper();
 };
 

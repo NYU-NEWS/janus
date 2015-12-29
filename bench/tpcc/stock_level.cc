@@ -30,7 +30,7 @@ void TpccChopper::stock_level_init(TxnRequest &req) {
       {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},         // 1    ==> ol_w_id
       {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}          // 2    ==> ol_d_id
   };
-  output_size_[TPCC_STOCK_LEVEL_1] = 20 * 15; // 20 orders * 15 order_line per order at most
+  output_size_[TPCC_STOCK_LEVEL_1] = 20 * 15 + 1; // 20 orders * 15 order_line per order at most
   p_types_[TPCC_STOCK_LEVEL_1] = TPCC_STOCK_LEVEL_1;
   status_[TPCC_STOCK_LEVEL_1] = WAITING;
 
@@ -127,6 +127,7 @@ void TpccPiece::reg_stock_level() {
                        TPCC_COL_ORDER_LINE_OL_I_ID,
                        &output[TPCC_VAR_OL_I_ID(i)]);
     }
+    output[TPCC_VAR_OL_AMOUNT] = Value((int32_t)row_list.size());
 //    verify(output_size <= 300);
     *res = SUCCESS;
   } END_PIE
@@ -138,24 +139,20 @@ void TpccPiece::reg_stock_level() {
     //verify(output_size >= 20 * 5);
 //    verify(output_size <= 20 * 15); // TODO fix this verification
     std::unordered_set<i32> s_i_ids;
-    for (int i = 0; i < output.size(); i++) {
+    for (int i = 0; i < output.size() - 1; i++) {
       s_i_ids.insert(output[TPCC_VAR_OL_I_ID(i)].get_i32());
     }
     tpcc_ch->n_pieces_all_ += s_i_ids.size();
-//    inputs_.resize(n_pieces_all_);
-//    tpcc_ch->output_size_.resize(tpcc_ch->n_pieces_all_);
-//    tpcc_ch->p_types_.resize(tpcc_ch->n_pieces_all_);
-//    tpcc_ch->sharding_.resize(tpcc_ch->n_pieces_all_);
-//    tpcc_ch->status_.resize(tpcc_ch->n_pieces_all_);
+
     int i = 0;
     for (auto s_i_ids_it = s_i_ids.begin();
          s_i_ids_it != s_i_ids.end();
          s_i_ids_it++) {
       auto pi =  TPCC_STOCK_LEVEL_RS(i);
       tpcc_ch->inputs_[pi] = {
-          {TPCC_VAR_OL_I_ID(i), Value(*s_i_ids_it)},
-          {TPCC_VAR_W_ID, Value((i32) tpcc_ch->stock_level_dep_.w_id)},
-          {TPCC_VAR_THRESHOLD, Value((i32) tpcc_ch->stock_level_dep_.threshold)}
+          {TPCC_VAR_OL_I_ID(i), tpcc_ch->ws_[TPCC_VAR_OL_I_ID(i)]},
+          {TPCC_VAR_W_ID,       tpcc_ch->ws_[TPCC_VAR_W_ID]},
+          {TPCC_VAR_THRESHOLD,  tpcc_ch->ws_[TPCC_VAR_THRESHOLD]}
       };
       tpcc_ch->output_size_[pi] = 1;
       tpcc_ch->p_types_[pi] = TPCC_STOCK_LEVEL_RS(i);
@@ -166,7 +163,7 @@ void TpccPiece::reg_stock_level() {
   END_CB
 
 
-  for (int i = TPCC_STOCK_LEVEL_RS(0); i < TPCC_STOCK_LEVEL_RS(1000); i++) {
+  for (int i = (0); i < (1000); i++) {
     // 1000 is a magical number?
     INPUT_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_RS(i),
               TPCC_VAR_W_ID, TPCC_VAR_OL_I_ID(i), TPCC_VAR_THRESHOLD)

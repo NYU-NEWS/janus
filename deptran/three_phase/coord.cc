@@ -187,7 +187,7 @@ void ThreePhaseCoordinator::StartAck(StartReply &reply, phase_t phase) {
     if (cmd_->HasMoreSubCmd()) {
       Log_debug("command has more sub-cmd, cmd_id: %lx,"
                     " n_started_: %d, n_pieces: %d",
-                cmd_id_, ch->n_pieces_out_, ch->n_pieces_all_);
+                cmd_id_, ch->n_pieces_out_, ch->GetNPieceAll());
       Start();
     } else if (AllStartAckCollected()) {
       Log_debug("receive all start acks, txn_id: %ld; START PREPARE", cmd_id_);

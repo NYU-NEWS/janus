@@ -61,7 +61,7 @@ void RO6Coord::deptran_start(TxnChopper *ch) {
         ch->n_pieces_out_++;
 
         if (ch->start_callback(pi, res)) this->deptran_start(ch);
-        else if (ch->n_pieces_out_ == ch->n_pieces_all_) {
+        else if (ch->n_pieces_out_ == ch->GetNPieceAll()) {
           this->deptran_finish(ch);
 
           if (ch->do_early_return()) {
@@ -200,7 +200,7 @@ void RO6Coord::ro6_start_ro(TxnChopper *ch) {
 
         if (ch->read_only_start_callback(pi, NULL, res)) {
           this->ro6_start_ro(ch);
-        } else if (ch->n_pieces_out_ == ch->n_pieces_all_) {
+        } else if (ch->n_pieces_out_ == ch->GetNPieceAll()) {
           // job finish here.
           ch->reply_.res_ = SUCCESS;
 

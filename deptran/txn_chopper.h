@@ -134,7 +134,9 @@ class TxnChopper : public Command {
   virtual bool read_only_start_callback(int pi,
                                         int *res,
                                         map<int32_t, Value> &output);
-
+  virtual int GetNPieceAll() {
+    return n_pieces_all_;
+  }
   virtual bool IsFinished(){verify(0);}
   virtual void Merge(Command&);
   virtual bool HasMoreSubCmd();

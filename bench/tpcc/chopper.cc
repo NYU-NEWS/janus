@@ -211,6 +211,18 @@ parid_t TpccChopper::GetPiecePar(innid_t inn_id) {
   return par;
 }
 
+int TpccChopper::GetNPieceAll() {
+  if (txn_type_ == TPCC_STOCK_LEVEL) {
+    if (ws_.count(TPCC_VAR_OL_AMOUNT) > 0) {
+      return n_pieces_all_;
+      return n_pieces_all_ + ws_[TPCC_VAR_OL_AMOUNT].get_i32();
+    } else {
+      return n_pieces_all_;
+    }
+  }
+  return n_pieces_all_;
+}
+
 TpccChopper::~TpccChopper() {
   if (txn_type_ == TPCC_NEW_ORDER) {
     free(new_order_dep_.piece_items);

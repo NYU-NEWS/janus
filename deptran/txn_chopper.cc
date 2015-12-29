@@ -22,7 +22,7 @@ set<parid_t> TxnChopper::GetPars() {
 
 
 Command *TxnChopper::GetNextSubCmd() {
-  if (n_pieces_out_ == n_pieces_all_) {
+  if (n_pieces_out_ == GetNPieceAll()) {
     return nullptr;
   }
   SimpleCommand *cmd = nullptr;
@@ -140,7 +140,7 @@ void TxnChopper::Merge(Command &cmd) {
 
 bool TxnChopper::HasMoreSubCmd() {
 
-  if (n_pieces_all_ == n_pieces_out_)
+  if (GetNPieceAll() == n_pieces_out_)
     return false;
   else
     return true;
@@ -177,7 +177,7 @@ void TxnChopper::read_only_reset() {
 bool TxnChopper::read_only_start_callback(int pi,
                                           int *res,
                                           map<int32_t, mdb::Value> &output) {
-  verify(pi < n_pieces_all_);
+  verify(pi < GetNPieceAll());
   if (res == NULL) { // phase one, store outputs only
 //    outputs_.resize(n_pieces_all_);
     outputs_[pi] = output;

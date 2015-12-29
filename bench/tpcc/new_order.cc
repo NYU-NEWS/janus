@@ -21,43 +21,43 @@ void TpccChopper::NewOrderInit(TxnRequest &req) {
   // piece 0, Ri&W district
   output_size_[TPCC_NEW_ORDER_0] = 2;
   p_types_[TPCC_NEW_ORDER_0] = TPCC_NEW_ORDER_0;
-  status_[TPCC_NEW_ORDER_0] = WAITING;
 
   // piece 1, R warehouse
   output_size_[TPCC_NEW_ORDER_1] = 1;
   p_types_[TPCC_NEW_ORDER_1] = TPCC_NEW_ORDER_1;
-  status_[TPCC_NEW_ORDER_1] = WAITING;
 
   // piece 2, R customer
   output_size_[TPCC_NEW_ORDER_2] = 3;
   p_types_[TPCC_NEW_ORDER_2] = TPCC_NEW_ORDER_2;
-  status_[TPCC_NEW_ORDER_2] = WAITING;
 
   // piece 3, W order, depends on piece 0
   output_size_[TPCC_NEW_ORDER_3] = 0;
   p_types_[TPCC_NEW_ORDER_3] = TPCC_NEW_ORDER_3;
-  status_[TPCC_NEW_ORDER_3] = WAITING;
 
   // piece 4, W new_order, depends on piece 0
   output_size_[TPCC_NEW_ORDER_4] = 0;
   p_types_[TPCC_NEW_ORDER_4] = TPCC_NEW_ORDER_4;
+
+  status_[TPCC_NEW_ORDER_0] = WAITING;
+  status_[TPCC_NEW_ORDER_1] = WAITING;
+  status_[TPCC_NEW_ORDER_2] = WAITING;
+  status_[TPCC_NEW_ORDER_3] = WAITING;
   status_[TPCC_NEW_ORDER_4] = WAITING;
 
   for (int i = 0; i < ol_cnt; i++) {
     output_size_[TPCC_NEW_ORDER_RI(i)] = 3;
-    p_types_[TPCC_NEW_ORDER_RI(i)] = TPCC_NEW_ORDER_RI(i);
-    status_[TPCC_NEW_ORDER_RI(i)] = WAITING;
-
     output_size_[TPCC_NEW_ORDER_RS(i)] = 2;
-    p_types_[TPCC_NEW_ORDER_RS(i)] = TPCC_NEW_ORDER_RS(i);
-    status_[TPCC_NEW_ORDER_RS(i)] = WAITING;
-
     output_size_[TPCC_NEW_ORDER_WS(i)] = 0;
-    p_types_[TPCC_NEW_ORDER_WS(i)] = TPCC_NEW_ORDER_WS(i);
-    status_[TPCC_NEW_ORDER_WS(i)] = WAITING;
-
     output_size_[TPCC_NEW_ORDER_WOL(i)] = 0;
+
+    p_types_[TPCC_NEW_ORDER_RI(i)] = TPCC_NEW_ORDER_RI(i);
+    p_types_[TPCC_NEW_ORDER_RS(i)] = TPCC_NEW_ORDER_RS(i);
+    p_types_[TPCC_NEW_ORDER_WS(i)] = TPCC_NEW_ORDER_WS(i);
     p_types_[TPCC_NEW_ORDER_WOL(i)] = TPCC_NEW_ORDER_WOL(i);
+
+    status_[TPCC_NEW_ORDER_RI(i)] = WAITING;
+    status_[TPCC_NEW_ORDER_RS(i)] = WAITING;
+    status_[TPCC_NEW_ORDER_WS(i)] = WAITING;
     status_[TPCC_NEW_ORDER_WOL(i)] = WAITING;
   }
 

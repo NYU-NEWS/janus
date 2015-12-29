@@ -75,7 +75,7 @@ void RCCCoord::deptran_batch_start(TxnChopper *ch) {
           this->deptran_batch_start(ch);
         }
 
-        else if (ch->n_pieces_out_ == ch->n_pieces_all_) {
+        else if (ch->n_pieces_out_ == ch->GetNPieceAll()) {
           this->deptran_finish(ch);
 
           if (ch->do_early_return()) {
@@ -155,7 +155,7 @@ void RCCCoord::deptran_start(TxnChopper *ch) {
         ch->n_pieces_out_++;
 
         if (ch->start_callback(pi, res)) this->deptran_start(ch);
-        else if (ch->n_pieces_out_ == ch->n_pieces_all_) {
+        else if (ch->n_pieces_out_ == ch->GetNPieceAll()) {
           this->deptran_finish(ch);
 
           if (ch->do_early_return()) {
@@ -288,7 +288,7 @@ void RCCCoord::deptran_start_ro(TxnChopper *ch) {
 
         if (ch->read_only_start_callback(pi, NULL, output)) {
           this->deptran_start_ro(ch);
-        } else if (ch->n_pieces_out_ == ch->n_pieces_all_) {
+        } else if (ch->n_pieces_out_ == ch->GetNPieceAll()) {
           ch->read_only_reset();
           this->deptran_finish_ro(ch);
         }
@@ -339,7 +339,7 @@ void RCCCoord::deptran_finish_ro(TxnChopper *ch) {
         bool do_next_piece = ch->read_only_start_callback(pi, &res, output);
 
         if (do_next_piece) deptran_finish_ro(ch);
-        else if (ch->n_pieces_out_ == ch->n_pieces_all_) {
+        else if (ch->n_pieces_out_ == ch->GetNPieceAll()) {
           if (res == SUCCESS) {
             ch->reply_.res_ = SUCCESS;
             callback        = true;
