@@ -35,10 +35,6 @@ Sharding::Sharding(const Sharding &sharding)
 }
 
 Sharding::~Sharding() {
-  std::map<std::string, tb_info_t>::iterator it;
-
-  for (it = tb_infos_.begin(); it != tb_infos_.end(); it++)
-    if (it->second.site_id) free(it->second.site_id);
 }
 
 void Sharding::BuildTableInfoPtr() {
@@ -105,7 +101,7 @@ uint32_t Sharding::site_from_key(const MultiValue &key,
 
 uint32_t Sharding::modulus(const MultiValue &key,
                            uint32_t num_site,
-                           const uint32_t *site_id) {
+                           const std::vector<uint32_t>& site_id) {
   uint32_t index = 0;
   long long int buf;
   int i = 0;
@@ -154,7 +150,7 @@ uint32_t Sharding::modulus(const MultiValue &key,
 
 uint32_t Sharding::int_modulus(const MultiValue &key,
                                uint32_t num_site,
-                               const uint32_t *site_id) {
+                               const std::vector<uint32_t>& site_id) {
   uint32_t index = 0;
   long long int buf;
   int i = 0;
@@ -233,7 +229,7 @@ int Sharding::get_site_id_from_tb(const std::string &tb_name,
                                   uint32_t &site_id) {
   std::map<std::string, tb_info_t>::iterator it = tb_infos_.find(tb_name);
   if (it == tb_infos_.end()) return -1;
-  if ((it->second.num_site == 0) || (it->second.site_id == NULL)) return -2;
+  if (it->second.site_id.size() == 0) return -2;
   site_id = site_from_key(key, &(it->second));
   return 0;
 }
@@ -242,12 +238,10 @@ int Sharding::get_site_id_from_tb(const std::string &tb_name,
                                   std::vector<uint32_t> &site_id) {
   std::map<std::string, tb_info_t>::iterator it = tb_infos_.find(tb_name);
   if (it == tb_infos_.end()) return -1;
-  if ((it->second.num_site == 0) || (it->second.site_id == NULL)) return -2;
+  if (it->second.site_id.size() == 0) return -2;
 
   site_id.clear();
-  uint32_t i = 0;
-
-  for (; i < it->second.num_site; i++) site_id.push_back(it->second.site_id[i]);
+  site_id.insert(site_id.end(), it->second.site_id.begin(), it->second.site_id.end());
   return 0;
 }
 
@@ -375,8 +369,7 @@ int index_reverse_increase(std::map<uint32_t, std::pair<uint32_t,
   return ret;
 }
 
-int index_increase(std::map<uint32_t, std::pair<uint32_t,
-                                                uint32_t> > &index,
+int index_increase(std::map<uint32_t, std::pair<uint32_t, uint32_t> > &index,
                    const std::vector<uint32_t> &bound_index) {
   if (bound_index.size() <= 1) return index_increase(index);
 

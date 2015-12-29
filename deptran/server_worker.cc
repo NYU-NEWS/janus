@@ -37,7 +37,7 @@ void ServerWorker::PopTable() {
   // get all tables
   std::vector<std::string> table_names;
 
-  ret = sharding_->get_table_names(site_info_->par_id, table_names);
+  ret = sharding_->get_table_names(site_info_->id, table_names);
   verify(ret > 0);
 
   std::vector<std::string>::iterator table_it = table_names.begin();
@@ -46,7 +46,9 @@ void ServerWorker::PopTable() {
     mdb::Schema *schema = new mdb::Schema();
     mdb::symbol_t symbol;
     sharding_->init_schema(*table_it, schema, &symbol);
-    mdb::Table *tb;std::vector<std::string> table_names;
+    mdb::Table *tb;
+    std::vector<std::string> table_names;
+
     switch (symbol) {
       case mdb::TBL_SORTED:
         tb = new mdb::SortedTable(schema);
@@ -78,8 +80,8 @@ void ServerWorker::RegPiece() {
   piece->txn_reg_ = txn_reg_;
   piece->reg_all();
   // TODO fix the memory leak without hurting sharding.
-//    delete piece;
-//    piece = NULL;
+  //  delete piece;
+  //  piece = NULL;
 }
 
 

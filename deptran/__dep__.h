@@ -1,7 +1,5 @@
 #pragma once
 
-
-
 //C++ standard library
 #include <map>
 #include <unordered_map>

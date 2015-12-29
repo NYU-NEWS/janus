@@ -50,6 +50,8 @@
 
 #include "coordinator.h"
 
+#include "bench/simple/SimpleBenchSharding.h"
+#include "bench/simple/SimpleBenchChopper.h"
 
 namespace rococo {
 
@@ -60,6 +62,9 @@ Sharding* Frame::CreateSharding() {
   switch (bench) {
     case TPCC_REAL_DIST_PART:
       ret = new TPCCDSharding();
+      break;
+    case SIMPLE_BENCH:
+      ret = new SimpleBenchSharding();
       break;
     default:
       verify(0);
@@ -203,6 +208,8 @@ TxnChopper* Frame::CreateChopper(TxnRequest &req, TxnRegistry* reg) {
     case MICRO_BENCH:
       ch = new MicroBenchChopper();
       break;
+    case SIMPLE_BENCH:
+      ch = new SimpleBenchChopper();
     default:
       verify(0);
   }

@@ -1,3 +1,4 @@
+#include <bench/simple/SimpleBenchPiece.h>
 #include "all.h"
 
 namespace deptran {
@@ -16,6 +17,8 @@ Piece *Piece::get_piece(int benchmark) {
       return new RWPiece();
     case MICRO_BENCH:
       return new MicroBenchPiece();
+    case SIMPLE_BENCH:
+      return new SimpleBenchPiece();
     default:
       verify(0);
       return NULL;

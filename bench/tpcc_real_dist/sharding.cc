@@ -275,8 +275,8 @@ void TPCCDSharding::temp1(tb_info_t *tb_info,
                           uint32_t &self_primary_col,
                           bool &self_primary_col_find,
                           map<uint32_t,
-                              std::pair<uint32_t,
-                                        uint32_t> > &prim_foreign_index) {
+                          std::pair<uint32_t,
+                          uint32_t> > &prim_foreign_index) {
   if (tb_info->columns[col_index].is_primary) {
     verify(col_it->indexed);
 
@@ -333,9 +333,8 @@ void TPCCDSharding::temp1(tb_info_t *tb_info,
                 || (foreign_column->name.substr(foreign_col_name_size -
                     4) == "d_id"))) {
           if (!bound_foreign_index.empty())
-            verify(
-                tmp_index_base ==
-                    prim_foreign_index[bound_foreign_index[0]].second);
+            verify(tmp_index_base ==
+                   prim_foreign_index[bound_foreign_index[0]].second);
           bound_foreign_index.push_back(col_index);
         }
 
@@ -365,7 +364,6 @@ void TPCCDSharding::temp1(tb_info_t *tb_info,
       }
     }
   }
-
 }
 
 void TPCCDSharding::PopulateTable(tb_info_t *tb_info, uint32_t sid) {
@@ -387,8 +385,7 @@ void TPCCDSharding::PopulateTable(tb_info_t *tb_info, uint32_t sid) {
   uint64_t num_self_primary = 0;
   uint32_t self_primary_col = 0;
   bool self_primary_col_find = false;
-  std::map<uint32_t,
-           std::pair<uint32_t, uint32_t> > prim_foreign_index;
+  std::map<uint32_t, std::pair<uint32_t, uint32_t> > prim_foreign_index;
   std::vector<uint32_t> bound_foreign_index;
   mdb::Schema::iterator col_it = schema->begin();
   uint32_t col_index = 0;
@@ -421,16 +418,12 @@ void TPCCDSharding::PopulateTable(tb_info_t *tb_info, uint32_t sid) {
   std::vector<Value> row_data;
   row_data.reserve(tb_info->columns.size());
 
-  // log
-  // Log_debug("begin:%s", tb_it->first.c_str());
   for (; key_value < max_key || num_self_primary == 0; ++key_value) {
     init_index(prim_foreign_index);
     temp2(tb_info, sid, col_index, bound_foreign_index,
           num_self_primary, prim_foreign_index, row_data,
           key_value, schema, table_ptr, tbl_sec_ptr);
   }
-  // log
-  // Log_debug("end:%s", tb_it->first.c_str());
   tb_info->populated[sid] = true;
 }
 
