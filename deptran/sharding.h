@@ -120,6 +120,9 @@ class Sharding {
               mdb::symbol_t _symbol = mdb::TBL_UNSORTED
     ) : num_site(ns), num_records(_num_records),
         symbol(_symbol) {
+      if (sid) {
+        site_id = std::vector<uint32_t>(*sid);
+      }
       if (method == "modulus") sharding_method = MODULUS;
       else if (method == "int_modulus") sharding_method = INT_MODULUS;
       else sharding_method = MODULUS;
@@ -185,11 +188,11 @@ class Sharding {
 
   uint32_t modulus(const MultiValue &key,
                    unsigned int num_site,
-                   const std::vector<uint32_t> &site_id);
+                   const std::vector<uint32_t>& site_id);
 
   uint32_t int_modulus(const MultiValue &key,
                        unsigned int num_site,
-                       const std::vector<uint32_t> &site_id);
+                       const std::vector<uint32_t>& site_id);
 
   Sharding();
   Sharding(const Sharding& sharding);
