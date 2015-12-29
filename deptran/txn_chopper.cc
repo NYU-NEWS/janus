@@ -42,7 +42,7 @@ Command *TxnChopper::GetNextSubCmd() {
       cmd = new SimpleCommand();
       cmd->inn_id_ = pi;
       cmd->par_id = sharding_[pi];
-      cmd->type_ = p_types_[pi];
+      cmd->type_ = pi;
       cmd->input = inputs_[pi];
       cmd->output_size = output_size_[pi];
       cmd->root_ = this;

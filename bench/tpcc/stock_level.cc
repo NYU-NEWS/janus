@@ -4,12 +4,7 @@ namespace rococo {
 
 
 void TpccChopper::stock_level_init(TxnRequest &req) {
-  /**
-   * req.input_
-   *  0       ==> w_id
-   *  1       ==> d_id
-   *  2       ==> threshold
-   **/
+
   n_pieces_all_ = 2;
 
   stock_level_dep_.w_id = req.input_[TPCC_VAR_W_ID].get_i32();
@@ -70,15 +65,6 @@ void TpccPiece::reg_stock_level() {
     *res = SUCCESS;
   } END_PIE
 
-  BEGIN_CB(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_0)
-    TpccChopper *tpcc_ch = (TpccChopper*) ch;
-    verify(output.size() == 1);
-    tpcc_ch->inputs_[TPCC_STOCK_LEVEL_1][TPCC_VAR_D_NEXT_O_ID] =
-        output[TPCC_VAR_D_NEXT_O_ID];
-    tpcc_ch->status_[TPCC_STOCK_LEVEL_1] = READY;
-    return true;
-  END_CB
-
   // Ri order_line
   INPUT_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_1,
             TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_D_NEXT_O_ID)
@@ -138,26 +124,18 @@ void TpccPiece::reg_stock_level() {
               tpcc_ch->txn_id_, output.size());
     //verify(output_size >= 20 * 5);
 //    verify(output_size <= 20 * 15); // TODO fix this verification
-    std::unordered_set<i32> s_i_ids;
-    for (int i = 0; i < output.size() - 1; i++) {
-      s_i_ids.insert(output[TPCC_VAR_OL_I_ID(i)].get_i32());
-    }
-    tpcc_ch->n_pieces_all_ += s_i_ids.size();
+    verify(output.size() == (output[TPCC_VAR_OL_AMOUNT].get_i32() + 1));
+    tpcc_ch->n_pieces_all_ += output[TPCC_VAR_OL_AMOUNT].get_i32();
+    tpcc_ch->ws_[TPCC_VAR_N_PIECE_ALL] = Value((int32_t)tpcc_ch->n_pieces_all_);
 
-    int i = 0;
-    for (auto s_i_ids_it = s_i_ids.begin();
-         s_i_ids_it != s_i_ids.end();
-         s_i_ids_it++) {
+    for (int i = 0; i < output[TPCC_VAR_OL_AMOUNT].get_i32(); i++) {
       auto pi =  TPCC_STOCK_LEVEL_RS(i);
       tpcc_ch->inputs_[pi] = {
           {TPCC_VAR_OL_I_ID(i), tpcc_ch->ws_[TPCC_VAR_OL_I_ID(i)]},
           {TPCC_VAR_W_ID,       tpcc_ch->ws_[TPCC_VAR_W_ID]},
           {TPCC_VAR_THRESHOLD,  tpcc_ch->ws_[TPCC_VAR_THRESHOLD]}
       };
-      tpcc_ch->output_size_[pi] = 1;
-      tpcc_ch->p_types_[pi] = TPCC_STOCK_LEVEL_RS(i);
       tpcc_ch->status_[pi] = READY;
-      i++;
     }
     return true;
   END_CB

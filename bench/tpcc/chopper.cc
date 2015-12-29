@@ -99,7 +99,7 @@ bool TpccChopper::start_callback(int pi,
   ws_.insert(output_map.begin(), output_map.end());
   if (txn_type_ == TPCC_PAYMENT ||
       txn_type_ == TPCC_ORDER_STATUS ||
-//      txn_type_ == TPCC_DELIVERY ||
+      txn_type_ == TPCC_DELIVERY ||
         txn_type_ == TPCC_NEW_ORDER ||
       0) {
     return CheckReady();
@@ -119,6 +119,11 @@ bool TpccChopper::start_callback(int pi,
   }
 
   // below is for debug
+  if (txn_type_ == TPCC_STOCK_LEVEL && pi == TPCC_STOCK_LEVEL_0) {
+    verify(ws_.count(TPCC_VAR_D_NEXT_O_ID) > 0);
+    verify(inputs_[TPCC_STOCK_LEVEL_1].count(TPCC_VAR_D_NEXT_O_ID) > 0);
+    verify(status_[TPCC_STOCK_LEVEL_1] == READY);
+  }
 //  if (txn_type_ == TPCC_NEW_ORDER && pi == TPCC_NEW_ORDER_0) {
 //    verify(ws_.find(TPCC_VAR_O_ID) != ws_.end());
 //    verify(inputs_[TPCC_NEW_ORDER_3].count(TPCC_VAR_O_ID) > 0);
@@ -213,7 +218,9 @@ parid_t TpccChopper::GetPiecePar(innid_t inn_id) {
 
 int TpccChopper::GetNPieceAll() {
   if (txn_type_ == TPCC_STOCK_LEVEL) {
+    verify(ws_.count(TPCC_VAR_OL_AMOUNT) > 0 == ws_.count(TPCC_VAR_N_PIECE_ALL) > 0);
     if (ws_.count(TPCC_VAR_OL_AMOUNT) > 0) {
+      verify(ws_[TPCC_VAR_N_PIECE_ALL].get_i32() == n_pieces_all_);
       return n_pieces_all_;
       return n_pieces_all_ + ws_[TPCC_VAR_OL_AMOUNT].get_i32();
     } else {
