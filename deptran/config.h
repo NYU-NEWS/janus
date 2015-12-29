@@ -81,9 +81,8 @@ class Config {
   uint32_t num_coordinator_threads_;
   uint32_t sid_;
   uint32_t cid_;
-  uint32_t server_or_client_;
-
-
+  
+  enum SiteInfoType { CLIENT, SERVER };
   struct SiteInfo {
     uint32_t id;
     string name;
@@ -92,9 +91,8 @@ class Config {
     string host;
     uint32_t port;
     uint32_t n_thread;   // should be 1 for now
-    int32_t server_or_client_; // 0 for server, 1 for client
+    SiteInfoType type_; 
     string proc_name;
-    parid_t par_id;
 
     SiteInfo() = delete;
     SiteInfo(uint32_t id) {
@@ -126,11 +124,15 @@ class Config {
     }
   };
 
+  struct ReplicaGroup {
+    parid_t partition_id;
+    std::vector<SiteInfo> replicas;
+    ReplicaGroup(parid_t id) : partition_id(id) {}
+  };
 
   uint32_t next_site_id_;
-  map<string, SiteInfo*> site_infos_;
-  vector<vector<string>> par_servers_;
-  vector<vector<string>> par_clients_;
+  vector<ReplicaGroup> replica_groups_;
+  vector<SiteInfo> par_clients_;
   map<string, string> proc_host_map_;
 
   Sharding* sharding_;
@@ -143,13 +145,10 @@ class Config {
          uint32_t ctrl_port,
          uint32_t ctrl_timeout,
          char *ctrl_key,
-         char *ctrl_init
-
-      /*, char *ctrl_run*/,
+         char *ctrl_init,
          uint32_t duration,
          bool heart_beat,
          single_server_t single_server,
-         int server_or_client,
          string logging_path
   );
 
@@ -162,15 +161,6 @@ class Config {
   void InitTPCCD();
 
   void Load();
-
-  void LoadXML(std::string &filename);
-  void LoadTopoXML(boost::property_tree::ptree &pt);
-  void LoadModeXML(boost::property_tree::ptree &pt);
-  void LoadSchemeXML(boost::property_tree::ptree &pt);
-  void LoadSchemaTableXML(boost::property_tree::ptree::value_type const & value);
-  void LoadSchemaTableColumnXML(Sharding::tb_info_t &tb_info,
-                                boost::property_tree::ptree::value_type const & column);
-  void LoadBenchXML(boost::property_tree::ptree &pt);
 
   void LoadYML(std::string &);
   void LoadSiteYML(YAML::Node config);
@@ -187,26 +177,36 @@ class Config {
 //  void LoadSchemeYML();
 //  void LoadWorkloadYML();
 
-  vector<SiteInfo*> GetMyServers() {
-    vector<SiteInfo*> ret;
-    for (auto &pair : site_infos_) {
-      auto info = pair.second;
-      if (info->server_or_client_ == 0) {
-        ret.push_back(info);
-      }
+  vector<SiteInfo> GetMyServers() {
+    vector<SiteInfo> ret;
+    for (auto& group : replica_groups_) {
+      auto& replicas = group.replicas;
+      ret.insert(ret.end(), replicas.begin(), replicas.end());
     }
     return ret;
   }
 
-  vector<SiteInfo*> GetMyClients() {
-    vector<SiteInfo*> ret;
-    for (auto &pair : site_infos_) {
-      auto info = pair.second;
-      if (info->server_or_client_ == 1) {
-        ret.push_back(info);
+  vector<SiteInfo> GetMyClients() {
+    vector<SiteInfo> ret;
+    ret.insert(ret.end(), par_clients_.begin(), par_clients_.end());
+    return ret;
+  }
+
+  SiteInfo* SiteByName(std::string name) {
+    for (auto& group : replica_groups_) {
+      auto& replicas = group.replicas;
+      for (SiteInfo& replica : replicas) {
+        if (replica.name == name) {
+          return &replica;
+        }
       }
     }
-    return ret;
+    for (auto& client : par_clients_) {
+      if (client.name == name) {
+        return &client;
+      }
+    }
+    return nullptr;
   }
 
   void init_mode(std::string &);
@@ -253,7 +253,8 @@ class Config {
   std::vector<double> &get_txn_weight();
 
   ~Config();
-};
+
+  };
 }
 
 #endif // ifndef CONFIG_H_

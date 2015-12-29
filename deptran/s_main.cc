@@ -47,14 +47,14 @@ void client_launch_workers() {
   uint32_t concurrent_txn = Config::GetConfig()->get_concurrent_txn();
   bool batch_start = Config::GetConfig()->get_batch_start();
   // start client workers in new threads.
-  vector<Config::SiteInfo*> infos = Config::GetConfig()->GetMyClients();
+  vector<Config::SiteInfo> infos = Config::GetConfig()->GetMyClients();
   vector<std::thread> client_threads;
   vector<ClientWorker> workers(infos.size());
   for (uint32_t thread_index = 0; thread_index < infos.size(); thread_index++) {
     auto &worker = workers[thread_index];
     worker.txn_req_factory_ = Frame().CreateTxnGenerator();
     workers[thread_index].servers = &servers;
-    workers[thread_index].coo_id = infos[thread_index]->id;
+    workers[thread_index].coo_id = infos[thread_index].id;
     workers[thread_index].benchmark = benchmark;
     workers[thread_index].mode = mode;
     workers[thread_index].batch_start = batch_start;
@@ -72,17 +72,17 @@ void client_launch_workers() {
 
 
 void server_launch_worker() {
-  vector<Config::SiteInfo*> infos = Config::GetConfig()->GetMyServers();
+  vector<Config::SiteInfo> infos = Config::GetConfig()->GetMyServers();
   svr_workers = new vector<ServerWorker>(infos.size());
 
   for (uint32_t index = 0; index < infos.size(); index++) {
-    Log_info("launching server, site: %x", infos[index]->id);
+    Log_info("launching server, site: %x", infos[index].id);
     auto &worker = (*svr_workers)[index];
     worker.sharding_ = Frame().CreateSharding(Config::GetConfig()->sharding_);
     worker.sharding_->BuildTableInfoPtr();
     // register txn piece logic
     worker.RegPiece();
-    worker.site_info_ = infos[index];
+    worker.site_info_ = &infos[index];
     // setup communication between controller script
     worker.SetupHeartbeat();
     // populate table according to benchmarks
@@ -114,7 +114,7 @@ int main(int argc, char *argv[]) {
     return ret;
   }
 
-  vector<Config::SiteInfo*> infos = Config::GetConfig()->GetMyServers();
+  vector<Config::SiteInfo> infos = Config::GetConfig()->GetMyServers();
   if (infos.size() > 0) {
     Log_info("server enabled, number of sites: %d", infos.size());
 
