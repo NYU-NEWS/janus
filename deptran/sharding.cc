@@ -285,9 +285,7 @@ int Sharding::get_table_names(uint32_t sid,
 }
 
 bool Sharding::Ready2Populate(tb_info_t *tb_info) {
-
   auto &columns = tb_info->columns;
-
   for (auto c_it = columns.begin(); c_it != columns.end(); c_it++)
     if ((c_it->foreign != NULL) && (c_it->foreign->values != NULL) &&
         (c_it->foreign->values->size() == 0))
@@ -295,30 +293,16 @@ bool Sharding::Ready2Populate(tb_info_t *tb_info) {
       // foreign table has some mysterious values
       // those values have not been put in
       return false;
-
   return true;
 }
 
 // TODO this should be moved to per benchmark class
-int Sharding::PopulateTable(uint32_t sid) {
+int Sharding::PopulateTable(uint32_t partition_id) {
+  fprintf(stderr, "%s not implemented\n", __FUNCTION__);
   verify(0);
-  switch (Config::GetConfig()->get_benchmark()) {
-    case TPCC:
-//      return sharding_s->do_tpcc_populate_table(sid);
-    case TPCC_DIST_PART:
-//      return sharding_s->do_tpcc_dist_partition_populate_table(table_map, sid);
-//    case TPCC_REAL_DIST_PART:
-//      return sharding_s->do_tpcc_real_dist_partition_populate_table(table_map,
-//                                                                    sid);
-    case TPCA:
-    default:
-//      return sharding_s->do_populate_table(table_map, sid);
-      verify(0);
-  }
 }
 
 int Sharding::get_number_rows(std::map<std::string, uint64_t> &table_map) {
-
   for (auto it = tb_infos_.begin(); it != tb_infos_.end(); it++)
     table_map[it->first] = (uint64_t) (it->second.num_records);
   return 0;
@@ -408,12 +392,10 @@ int index_reverse_increase(std::map<uint32_t, std::pair<uint32_t,
   return 0;
 }
 
-int index_increase(std::map<uint32_t, std::pair<uint32_t,
-                                                uint32_t> > &index) {
+int index_increase(std::map<uint32_t, std::pair<uint32_t, uint32_t> > &index) {
   if (index.size() == 0) return -1;
 
-  std::map<uint32_t,
-           std::pair<uint32_t, uint32_t> >::iterator it = index.begin();
+  std::map<uint32_t, std::pair<uint32_t, uint32_t> >::iterator it = index.begin();
   it->second.first++;
 
   while (it->second.first >= it->second.second) {
@@ -442,8 +424,7 @@ Value random_value(Value::kind k) {
       return Value(RandomGenerator::rand_double());
 
     case Value::STR:
-      return Value(RandomGenerator::int2str_n(RandomGenerator::rand(0, 999),
-                                              3));
+      return Value(RandomGenerator::int2str_n(RandomGenerator::rand(0, 999), 3));
 
     case Value::UNKNOWN:
     default:
@@ -464,7 +445,6 @@ Value value_get_zero(Value::kind k) {
       return Value((double) 0.0);
 
     case Value::STR:
-
       // TODO (ycui) str zero
       verify(0);
       return Value(std::string(""));
