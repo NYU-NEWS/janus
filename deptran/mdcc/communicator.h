@@ -18,7 +18,8 @@ class MdccCommunicator: public ThreePhaseCommunicator {
     verify(addrs.size() > 0);
     poll_ = new PollMgr(1);
     for (auto& addr : addrs) {
-      proxies_.push_back(SiteProxy(addr, poll_));
+      auto proxy = new SiteProxy(addr, poll_);
+      proxies_.push_back(proxy);
     }
   }
 
@@ -50,13 +51,15 @@ class MdccCommunicator: public ThreePhaseCommunicator {
     rrr::Client* client;
     MdccLeaderProxy* leader;
     MdccAcceptorProxy* acceptor;
-
+    SiteProxy() = delete;
     SiteProxy(const string &addr, rrr::PollMgr* poll)
       : address(addr) {
       client = new rrr::Client(poll);
       Log::info("connect to site: %s", addr.c_str());
       auto ret = client->connect(addr.c_str());
-      verify(ret == 0);
+      if (ret) {
+        Log::fatal("connect to %s failed.\n", addr.c_str());
+      }
       leader = new MdccLeaderProxy(client);
       acceptor = new MdccAcceptorProxy(client);
     }
@@ -69,8 +72,7 @@ class MdccCommunicator: public ThreePhaseCommunicator {
   };
 
   PollMgr* poll_;
-  std::vector<SiteProxy> proxies_;
-
+  std::vector<SiteProxy*> proxies_;
 };
 }
 

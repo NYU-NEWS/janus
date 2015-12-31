@@ -38,6 +38,7 @@
 // rw benchmark
 #include "bench/rw_benchmark/piece.h"
 #include "bench/rw_benchmark/chopper.h"
+#include "bench/rw_benchmark/sharding.h"
 
 // micro bench
 #include "bench/micro/piece.h"
@@ -59,7 +60,7 @@ Sharding* Frame::CreateSharding() {
       ret = new TPCCDSharding();
       break;
     case RW_BENCHMARK:
-      ret = new Sharding();
+      ret = new RWBenchmarkSharding();
       break;
     default:
       verify(0);
@@ -293,7 +294,6 @@ TxnGenerator * Frame::CreateTxnGenerator() {
     case MICRO_BENCH:
     default:
       gen = new TxnGenerator(Config::GetConfig()->sharding_);
-//      verify(0);
   }
   return gen;
 

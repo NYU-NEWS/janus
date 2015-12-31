@@ -5,8 +5,8 @@
 
 namespace mdcc {
 
-void MdccCoordinator::do_one(TxnRequest &) {
-  printf("MdccCoord::do_one");
+void MdccCoordinator::do_one(TxnRequest &req) {
+  Log_info("MdccCoord::do_one: type=%d", req.txn_type_);
 }
 
 void MdccCoordinator::deptran_start(TxnChopper *ch) {
