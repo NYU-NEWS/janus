@@ -30,7 +30,7 @@ class ClientWorker {
   ClientWorker() = default;
   ~ClientWorker();
 
-  void callback2(TxnReply &txn_reply);
+  void RequestDone(TxnReply &txn_reply);
 
   void work();
 };

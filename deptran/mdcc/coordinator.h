@@ -11,7 +11,8 @@
 namespace mdcc {
 using namespace rococo;
 class MdccCoordinator: public ThreePhaseCoordinator {
- public:
+protected:
+public:
   MdccCoordinator(uint32_t coo_id,
                   vector<string> &addrs,
                   int benchmark,
@@ -28,8 +29,6 @@ class MdccCoordinator: public ThreePhaseCoordinator {
     this->commo_ = new MdccCommunicator(addrs);
   }
   virtual void do_one(TxnRequest&);
-  virtual void deptran_start(TxnChopper *ch);
-  virtual void deptran_finish(TxnChopper *ch);
 };
 }
 #endif //ROCOCO_MDCC_COORD_H

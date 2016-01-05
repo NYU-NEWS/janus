@@ -9,12 +9,12 @@ ClientWorker::~ClientWorker() {
   }
 }
 
-void ClientWorker::callback2(TxnReply &txn_reply) {
+void ClientWorker::RequestDone(TxnReply &txn_reply) {
   verify(coo_ != nullptr);
   if (timer_->elapsed() < duration) {
     TxnRequest req;
     txn_req_factory_->get_txn_req(&req, coo_id);
-    req.callback_ = std::bind(&ClientWorker::callback2, this,
+    req.callback_ = std::bind(&ClientWorker::RequestDone, this,
                               std::placeholders::_1);
     coo_->do_one(req);
   } else {
@@ -48,7 +48,7 @@ void ClientWorker::work() {
   for (uint32_t n_txn = 0; n_txn < n_outstanding_; n_txn++) {
     TxnRequest req;
     txn_req_factory_->get_txn_req(&req, coo_id);
-    req.callback_ = std::bind(&ClientWorker::callback2, this,
+    req.callback_ = std::bind(&ClientWorker::RequestDone, this,
                               std::placeholders::_1);
     coo_->do_one(req);
   }

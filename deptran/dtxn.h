@@ -40,19 +40,6 @@ struct entry_t {
   }
 };
 
-
-//typedef std::unordered_map<
-//    char *, 
-//    std::unordered_map<
-//        mdb::MultiBlob, 
-//        mdb::Row *, 
-//        mdb::MultiBlob::hash> > row_map_t;
-//typedef std::unordered_map<cell_locator_t, entry_t *, cell_locator_t_hash> cell_entry_map_t;
-// in charge of storing the pre-defined procedures
-//
-
-
-
 class Scheduler;
 
 class DTxn {
