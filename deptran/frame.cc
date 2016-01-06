@@ -111,7 +111,7 @@ CoordinatorBase* Frame::CreateCoord(cooid_t coo_id,
                                 ClientControlServiceImpl *ccsi,
                                 uint32_t id,
                                 bool batch_start, TxnRegistry* txn_reg) {
-//   TODO
+  // TODO: clean this up; make Coordinator subclasses assign txn_reg_
   CoordinatorBase *coo;
   auto attr = this;
   switch (mode) {

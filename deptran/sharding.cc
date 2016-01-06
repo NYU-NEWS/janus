@@ -298,7 +298,7 @@ bool Sharding::Ready2Populate(tb_info_t *tb_info) {
 
 // TODO this should be moved to per benchmark class
 int Sharding::PopulateTable(uint32_t partition_id) {
-  fprintf(stderr, "%s not implemented\n", __FUNCTION__);
+  fprintf(stderr, "%s -- implement in subclass\n", __FUNCTION__);
   verify(0);
 }
 

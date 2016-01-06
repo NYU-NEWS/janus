@@ -339,10 +339,6 @@ struct query_buf_t {
   }
 };
 
-
-
-
-
 // for helping locating in inserts set
 class KeyOnlySearchRow: public Row {
   const MultiBlob *mb_;

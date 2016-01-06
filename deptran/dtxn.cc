@@ -15,7 +15,6 @@ namespace rococo {
 //}
 
 DTxn::~DTxn() {
-
 }
 
 //mdb::ResultSet DTxn::query_in(Table *tbl,

@@ -325,13 +325,17 @@ void Config::LoadSiteYML(YAML::Node config) {
   auto clients = config["client"];
   for (auto client_it = clients.begin(); client_it != clients.end(); client_it++) {
     auto group = *client_it;
-    vector<string> v;
+    int locale_id = 0;
     for (auto group_it = group.begin(); group_it != group.end(); group_it++) {
       auto site_name = group_it->as<string>();
       SiteInfo info(site_id++);
       info.name = site_name;
       info.type_ = CLIENT;
+      // TODO: add ability to assign clients to a locale;
+      // for now default to the position in the config array.
+      info.locale_id = locale_id;
       par_clients_.push_back(info);
+      locale_id++;
     }
   }
 }
@@ -405,8 +409,6 @@ void Config::init_bench(std::string& bench_str) {
     benchmark_ = RW_BENCHMARK;
   } else if (bench_str == "micro_bench") {
     benchmark_ = MICRO_BENCH;
-  } else if (bench_str == "simple_bench") {
-    benchmark_ = SIMPLE_BENCH;
   } else {
     Log_error("No implementation for benchmark: %s", bench_str.c_str());
     verify(0);
