@@ -20,7 +20,7 @@ class ThreePhaseCommunicator {
   virtual void SendStart(parid_t par_id,
                          StartRequest &req,
                          Coordinator *coo,
-                         std::function<void(StartReply&)> &callback) = 0;
+                         std::function<void(rococo::StartReply&)> &callback) = 0;
   virtual void SendPrepare(parid_t gid,
                            txnid_t tid,
                            std::vector<int32_t> &sids,

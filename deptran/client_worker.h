@@ -7,11 +7,11 @@ namespace rococo {
 
 class ClientControlServiceImpl;
 class TxnGenerator;
+class CoordinatorBase;
 
 class ClientWorker {
  public:
   uint32_t coo_id;
-  std::vector<std::string> *servers;
   int32_t benchmark;
   int32_t mode;
   bool batch_start;
@@ -21,13 +21,17 @@ class ClientWorker {
   uint32_t n_outstanding_;
   rrr::Mutex finish_mutex;
   rrr::CondVar finish_cond;
-  Coordinator *coo_;
+  CoordinatorBase *coo_=nullptr;
   std::atomic<uint32_t> num_txn, success, num_try;
   TxnGenerator * txn_req_factory_;
   Timer *timer_;
   TxnRegistry* txn_reg_ = nullptr;
+  Config* config;
+  Config::SiteInfo& my_site_;
+  vector<string> servers;
  public:
-  ClientWorker() = default;
+  ClientWorker(uint32_t id, Config::SiteInfo &site_info, Config *config, ClientControlServiceImpl *ccsi);
+  ClientWorker() = delete;
   ~ClientWorker();
 
   void RequestDone(TxnReply &txn_reply);

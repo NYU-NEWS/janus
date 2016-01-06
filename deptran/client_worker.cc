@@ -37,9 +37,8 @@ void ClientWorker::work() {
   Piece *piece = Piece::get_piece(benchmark);
   piece->txn_reg_ = txn_reg_;
   piece->reg_all();
-  coo_ = Frame().CreateCoord(coo_id, *servers, benchmark,
-                             mode, ccsi, id, batch_start);
-  coo_->txn_reg_ = txn_reg_;
+  coo_ = Frame().CreateCoord(coo_id, servers, config, benchmark,
+                             mode, ccsi, id, batch_start, txn_reg_);
   if (ccsi) ccsi->wait_for_start(id);
 
   timer_ = new Timer();
@@ -69,6 +68,23 @@ void ClientWorker::work() {
   return;
 }
 
+  ClientWorker::ClientWorker(uint32_t id, Config::SiteInfo &site_info, Config *config, ClientControlServiceImpl *ccsi) :
+    id(id),
+    my_site_(site_info),
+    config(config),
+    coo_id(site_info.id),
+    benchmark(config->get_benchmark()),
+    mode(config->get_mode()),
+    batch_start(config->get_batch_start()),
+    duration(config->get_duration()),
+    ccsi(ccsi),
+    n_outstanding_(config->get_concurrent_txn()),
+    txn_req_factory_(Frame().CreateTxnGenerator()) {
+    config->get_all_site_addr(servers);
+    num_txn.store(0);
+    success.store(0);
+    num_try.store(0);
+  }
 } // namespace rococo
 
 

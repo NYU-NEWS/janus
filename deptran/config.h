@@ -84,7 +84,8 @@ class Config {
   
   enum SiteInfoType { CLIENT, SERVER };
   struct SiteInfo {
-    uint32_t id;
+    uint32_t id; // unique site id
+    uint32_t locale_id; // represents a group of servers, such as those located in same datacenter
     string name;
     string addr;
     string proc;
@@ -124,6 +125,29 @@ class Config {
       return ret;
     }
   };
+
+  std::vector<SiteInfo> SitesByPartitionId(parid_t partition_id) {
+    std::vector<SiteInfo> result;
+    auto it = find_if(replica_groups_.begin(), replica_groups_.end(),
+                      [partition_id](const ReplicaGroup& g) {return g.partition_id==partition_id;});
+    if (it != replica_groups_.end()) {
+      result.insert(result.end(), (*it).replicas.begin(), (*it).replicas.end());
+    }
+    return result;
+  }
+
+  std::vector<SiteInfo> SitesByLocaleId(uint32_t locale_id) {
+    std::vector<SiteInfo> result;
+    for (auto& group : replica_groups_) {
+      std::for_each(group.replicas.begin(), group.replicas.end(),
+                    [locale_id, result](SiteInfo& site) mutable {
+                      if (site.locale_id==locale_id) result.push_back(site);
+                    });
+    }
+    return result;
+  }
+
+
 
   struct ReplicaGroup {
     parid_t partition_id;
@@ -173,10 +197,6 @@ class Config {
   void LoadSchemaYML(YAML::Node config);
   void LoadSchemaTableColumnYML(Sharding::tb_info_t &tb_info,
                                 YAML::Node column);
-//
-//  void LoadModeYML();
-//  void LoadSchemeYML();
-//  void LoadWorkloadYML();
 
   vector<SiteInfo> GetMyServers() {
     vector<SiteInfo> ret;

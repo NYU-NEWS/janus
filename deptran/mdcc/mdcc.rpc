@@ -30,7 +30,9 @@ struct ProposalNum {
 };
 
 struct StartRequest {
-    i64 tid;
+    i64 txn_id;
+    i32 txn_type;
+    map<i32, Value> inputs;
 };
 
 struct StartResponse {

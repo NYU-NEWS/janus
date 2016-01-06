@@ -29,9 +29,6 @@ Command *TxnChopper::GetNextSubCmd() {
 
   auto sz = status_.size();
   verify(sz > 0);
-//  if (cmd_vec_.size() < sz) {
-//    cmd_vec_.resize(sz);
-//  }
 
   for (auto &kv : status_) {
     auto pi = kv.first;
@@ -62,32 +59,6 @@ Command *TxnChopper::GetNextSubCmd() {
     }
   }
 
-//  for (int i = 0; i < sz; i++) {
-//
-//    if (status_[i] == READY) {
-//      status_[i] = INIT;
-//      cmd = new SimpleCommand();
-//      cmd->inn_id_ = i;
-//      cmd->par_id = sharding_[i];
-//      cmd->type_ = p_types_[i];
-//      cmd->input = inputs_[i];
-//      cmd->output_size = output_size_[i];
-//      cmd->root_ = this;
-//      cmd_vec_[i] = cmd;
-//
-//      partitions_.insert(sharding_[i]);
-//
-//      Log_debug("getting subcmd i: %d, thread id: %x",
-//                i, std::this_thread::get_id());
-//
-//      verify(status_[i] == INIT);
-//      status_[i] = ONGOING;
-//
-//      verify(cmd->type_ != 0);
-//      n_pieces_out_++;
-//      return cmd;
-//    }
-//  }
   return cmd;
 }
 
@@ -98,36 +69,6 @@ int TxnChopper::next_piece(
     int32_t &pi,
     int32_t &p_type) {
   verify(0);
-//
-//  if (n_pieces_out_ == n_pieces_all_) {
-//    return 2;
-//  }
-//
-//  int status = 1;
-//  for (int i = 0; i < status_.size(); i++) {
-//    if (status_[i] == READY) {
-//      server_id = sharding_[i];
-//      partitions_.insert(server_id);
-//      pi = i;
-//      p_type = p_types_[i];
-//      input = &inputs_[i];
-//      verify(status_[i] == READY);
-//      status_[i] = ONGOING;
-//      output_size = output_size_[i];
-//      return 0;
-//    } else if (status_[i] == ONGOING) {
-//    } else if (status_[i] == WAITING) {
-//      status = -1;
-//    }
-//  }
-//
-//  if (status == ONGOING) {
-//    return 1;   // all pieces are ongoing.
-//  } else if (status == WAITING) {
-//    return -1;  // some pieces are not ready.
-//  } else {
-//    verify(0);
-//  }
 }
 
 

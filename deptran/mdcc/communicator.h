@@ -7,43 +7,30 @@
 #include "./mdcc.h"
 
 namespace mdcc {
-using rococo::ThreePhaseCommunicator;
-using rococo::Coordinator;
-using rococo::StartReply;
-using rococo::RequestHeader;
+using rococo::Config;
 
-class MdccCommunicator: public ThreePhaseCommunicator {
+class MdccCommunicator {
  public:
-  MdccCommunicator(vector<string> &addrs) {
-    verify(addrs.size() > 0);
+  MdccCommunicator(Config* config) {
     poll_ = new PollMgr(1);
-    for (auto& addr : addrs) {
-      auto proxy = new SiteProxy(addr, poll_);
-      proxies_.push_back(proxy);
+    // todo move somewhere else
+    auto& replica_groups = config->replica_groups_;
+    for (auto& group : replica_groups) {
+      auto partition_id = group.partition_id;
+      proxy_by_partition_id.push_back(std::vector<SiteProxy*>());
+      int datacenter_id = 0;
+      for (auto& replica : group.replicas) {
+        proxy_by_datacenter.push_back(std::vector<SiteProxy*>());
+        auto proxy = new SiteProxy(replica.GetHostAddr(), poll_);
+        proxy_by_datacenter[datacenter_id].push_back(proxy);
+        proxy_by_partition_id[partition_id].push_back(proxy);
+        datacenter_id++;
+      }
     }
   }
 
-  void SendStart(groupid_t gid,
-                 RequestHeader &header,
-                 map<int32_t, Value> &input,
-                 int32_t output_size,
-                 std::function<void(Future *fu)> &callback) override;
-
-  void SendStart(parid_t par_id,
-                 rococo::StartRequest &req,
-                 Coordinator *coo,
-                 std::function<void(rococo::StartReply&)> &callback) override;
-
-  void SendPrepare(parid_t gid,
-                   txnid_t tid,
-                   std::vector<int32_t> &sids,
-                   std::function<void(Future *fu)> &callback) override;
-
-  void SendCommit(parid_t pid, txnid_t tid,
-                  std::function<void(Future *fu)> &callback) override;
-
-  void SendAbort(parid_t pid, txnid_t tid,
-                 std::function<void(Future *fu)> &callback) override;
+  void SendStart(StartRequest& req,
+                 std::function<void(StartResponse &)>& callback);
 
  protected:
   struct SiteProxy {
@@ -72,7 +59,9 @@ class MdccCommunicator: public ThreePhaseCommunicator {
   };
 
   PollMgr* poll_;
-  std::vector<SiteProxy*> proxies_;
+
+  std::vector<vector<SiteProxy*>> proxy_by_partition_id;
+  std::vector<vector<SiteProxy*>> proxy_by_datacenter;
 };
 }
 

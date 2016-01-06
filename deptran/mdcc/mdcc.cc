@@ -1,6 +1,7 @@
 //
 // Created by lamont on 12/17/15.
 //
+#include "marshal-value.h"
 #include "mdcc.h"
 
 namespace mdcc {

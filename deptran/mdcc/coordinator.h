@@ -10,25 +10,26 @@
 
 namespace mdcc {
 using namespace rococo;
-class MdccCoordinator: public ThreePhaseCoordinator {
+class MdccCoordinator: public CoordinatorBase {
 protected:
+  MdccCommunicator* communicator_ = nullptr;
+
 public:
   MdccCoordinator(uint32_t coo_id,
-                  vector<string> &addrs,
+                  Config* config,
                   int benchmark,
                   int32_t mode,
                   ClientControlServiceImpl *ccsi,
                   uint32_t thread_id,
-                  bool batch_optimal) : ThreePhaseCoordinator(coo_id,
-                        addrs,
-                        benchmark,
-                        mode,
-                        ccsi,
-                        thread_id,
-                        batch_optimal) {
-    this->commo_ = new MdccCommunicator(addrs);
+                  bool batch_optimal) {
+    this->communicator_ = new MdccCommunicator(config);
   }
+  virtual ~MdccCoordinator() { delete communicator_; }
   virtual void do_one(TxnRequest&);
+  void cleanup() override {}
+  void restart(TxnChopper *ch) override {}
+
+  i64 NextTxnId();
 };
 }
 #endif //ROCOCO_MDCC_COORD_H

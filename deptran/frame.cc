@@ -103,45 +103,51 @@ mdb::Row* Frame::CreateRow(const mdb::Schema *schema,
   return r;
 }
 
-Coordinator* Frame::CreateCoord(cooid_t coo_id,
+CoordinatorBase* Frame::CreateCoord(cooid_t coo_id,
                                 vector<std::string>& servers,
+                                Config* config,
                                 int benchmark,
                                 int mode,
                                 ClientControlServiceImpl *ccsi,
                                 uint32_t id,
-                                bool batch_start) {
+                                bool batch_start, TxnRegistry* txn_reg) {
 //   TODO
-  Coordinator *coo;
+  CoordinatorBase *coo;
   auto attr = this;
   switch (mode) {
     case MODE_2PL:
       coo = new TPLCoord(coo_id, servers, benchmark,
                          mode, ccsi, id, batch_start);
+      ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
     case MODE_OCC:
     case MODE_RPC_NULL:
       coo = new OCCCoord(coo_id, servers,
                              benchmark, mode,
                              ccsi, id, batch_start);
+      ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
     case MODE_RCC:
       coo = new RCCCoord(coo_id, servers,
                           benchmark, mode,
                           ccsi, id, batch_start);
+      ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
     case MODE_RO6:
       coo = new RO6Coord(coo_id, servers,
                           benchmark, mode,
                           ccsi, id, batch_start);
+      ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
     case MODE_NONE:
       coo = new NoneCoord(coo_id, servers,
                            benchmark, mode,
                            ccsi, id,
                            batch_start);
+      ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
     case MODE_MDCC:
-      coo = new mdcc::MdccCoordinator(coo_id, servers,
+      coo = new mdcc::MdccCoordinator(coo_id, config,
                                       benchmark, mode,
                                       ccsi, id, batch_start);
       break;

@@ -14,7 +14,16 @@ class ClientControlServiceImpl;
 
 enum CoordinatorStage { START, PREPARE, FINISH };
 
-class Coordinator {
+class CoordinatorBase {
+public:
+  std::mutex mtx_;
+  uint32_t n_start_ = 0;
+  virtual void do_one(TxnRequest &) = 0;
+  virtual void cleanup() = 0;
+  virtual void restart(TxnChopper *ch) = 0;
+};
+
+class Coordinator : public CoordinatorBase {
  public:
   uint32_t coo_id_;
   int benchmark_;

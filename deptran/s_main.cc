@@ -35,38 +35,23 @@ void client_setup_heartbeat() {
 }
 
 void client_launch_workers() {
-  uint32_t duration = Config::GetConfig()->get_duration();
-  if (duration == 0)
-    verify(0);
-
-  std::vector<std::string> servers;
-  Config::GetConfig()->get_all_site_addr(servers);
   // load some common configuration
-  int benchmark = Config::GetConfig()->get_benchmark();
-  int mode = Config::GetConfig()->get_mode();
-  uint32_t concurrent_txn = Config::GetConfig()->get_concurrent_txn();
-  bool batch_start = Config::GetConfig()->get_batch_start();
   // start client workers in new threads.
-  vector<Config::SiteInfo> infos = Config::GetConfig()->GetMyClients();
+  vector<Config::SiteInfo> client_sites = Config::GetConfig()->GetMyClients();
   vector<std::thread> client_threads;
-  vector<ClientWorker> workers(infos.size());
-  for (uint32_t thread_index = 0; thread_index < infos.size(); thread_index++) {
-    auto &worker = workers[thread_index];
-    worker.txn_req_factory_ = Frame().CreateTxnGenerator();
-    workers[thread_index].servers = &servers;
-    workers[thread_index].coo_id = infos[thread_index].id;
-    workers[thread_index].benchmark = benchmark;
-    workers[thread_index].mode = mode;
-    workers[thread_index].batch_start = batch_start;
-    workers[thread_index].id = thread_index;
-    workers[thread_index].duration = duration;
-    workers[thread_index].ccsi = ccsi_g;
-    workers[thread_index].n_outstanding_ = concurrent_txn;
+  vector<ClientWorker*> workers;
+  for (uint32_t client_id = 0; client_id < client_sites.size(); client_id++) {
+    ClientWorker* worker = new ClientWorker(client_id, client_sites[client_id],
+                                   Config::GetConfig(), ccsi_g);
+    workers.push_back(worker);
     client_threads.push_back(std::thread(&ClientWorker::work,
-                                         &workers[thread_index]));
+                                         worker));
   }
   for (auto &th: client_threads) {
     th.join();
+  }
+  for (auto worker : workers) {
+    delete worker;
   }
 }
 

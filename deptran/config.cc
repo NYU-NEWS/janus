@@ -304,15 +304,19 @@ void Config::LoadSiteYML(YAML::Node config) {
   auto servers = config["server"];
   int partition_id = 0;
   int site_id = 0;
+  int locale_id = 0;
   for (auto server_it = servers.begin(); server_it != servers.end(); server_it++) {
     auto group = *server_it;
+    locale_id=0;
     ReplicaGroup replica_group(partition_id);
     for (auto group_it = group.begin(); group_it != group.end(); group_it++) {
       auto site_addr = group_it->as<string>();
       SiteInfo info(site_id++, site_addr);
       info.partition_id_ = replica_group.partition_id;
+      info.locale_id = locale_id;
       info.type_ = SERVER;
       replica_group.replicas.push_back(info);
+      locale_id++;
     }
     replica_groups_.push_back(replica_group);
     partition_id++;
@@ -429,6 +433,7 @@ std::string Config::site2host_name(std::string& sitename) {
     return sitename;
   }
 }
+
 
 void Config::LoadModeYML(YAML::Node config) {
   auto mode_str = config["cc"].as<string>();
@@ -656,10 +661,6 @@ const char * Config::get_ctrl_init() {
   return ctrl_init_;
 }
 
-// const char *Config::get_ctrl_run() {
-//    return ctrl_run_;
-// }
-//
 // TODO obsolete
 int Config::get_all_site_addr(std::vector<std::string>& servers) {
   for (auto& site : GetMyServers()) {
@@ -681,19 +682,6 @@ int Config::get_site_addr(unsigned int sid, std::string& server) {
   server.assign(siteaddr);
   return 0;
 }
-
-//int Config::get_my_addr(std::string& server) {
-//  if (site_.size() == 0) verify(0);
-//
-//  if (sid_ >= num_site_) verify(0);
-//
-//  server.assign("0.0.0.0:");
-//  uint32_t len = site_[sid_].length(), p_start = 0;
-//  uint32_t port_pos = site_[sid_].find_first_of(':') + 1;
-//  verify(p_start < len && p_start > 0);
-//  server.append(site_[sid_].substr(port_pos));
-//  return 0;
-//}
 
 int Config::get_threads(unsigned int& threads) {
   verify(0);
