@@ -209,8 +209,6 @@ TxnChopper* Frame::CreateChopper(TxnRequest &req, TxnRegistry* reg) {
     case MICRO_BENCH:
       ch = new MicroBenchChopper();
       break;
-    case SIMPLE_BENCH:
-      ch = new SimpleBenchChopper();
     default:
       verify(0);
   }

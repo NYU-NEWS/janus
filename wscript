@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 APPNAME="rococo"
 VERSION="0.0"
 
@@ -12,7 +11,6 @@ pargs = ['--cflags', '--libs']
 
 def options(opt):
     opt.load("compiler_cxx unittest_gtest")
-    #opt.load("eclipse")
     opt.add_option('-g', '--use-gxx', dest='cxx',
                    default=False, action='store_true')
     opt.add_option('-c', '--use-clang', dest='clang',
@@ -177,7 +175,7 @@ def _choose_compiler(conf):
         conf.env.append_value("CXXFLAGS", "-stdlib=libc++")
         conf.env.append_value("LINKFLAGS", "-stdlib=libc++")
     else:
-	Logs.pprint("PINK", "use system default compiler")
+        Logs.pprint("PINK", "use system default compiler")
 
 def _enable_rpc_s(conf):
     if Options.options.rpc_s:
@@ -266,3 +264,4 @@ def _depend(target, source, action):
 def _run_cmd(cmd):
     Logs.pprint('PINK', cmd)
     os.system(cmd)
+
