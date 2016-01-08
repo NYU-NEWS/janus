@@ -21,3 +21,4 @@ benchmark*.log
 log*
 .idea
 *.orig
+deptran/mdcc/mdcc.h
