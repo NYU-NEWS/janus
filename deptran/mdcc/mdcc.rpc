@@ -5,7 +5,7 @@ service MdccLearner {
 };
 
 service MdccClient {
-    Start(StartRequest req | StartResponse res);
+    defer Start(StartRequest req | StartResponse res);
 };
 
 service MdccLeader {

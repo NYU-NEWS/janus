@@ -126,7 +126,9 @@ class RococoServiceImpl: public RococoService {
       DeferredReply *reply);
 
   uint64_t n_asking_ = 0;
-};
+  protected:
+    void RegisterStats();
+  };
 
 } // namespace rcc
 

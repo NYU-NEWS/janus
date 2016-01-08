@@ -97,11 +97,9 @@ class Config {
     uint32_t partition_id_=0;
 
     SiteInfo() = delete;
-    SiteInfo(uint32_t id) {
-      this->id = id;
-    }
-    SiteInfo(uint32_t id, std::string &site_addr) {
-      this->id = id;
+    SiteInfo(uint32_t id) : id(id) {}
+    SiteInfo(uint32_t id, std::string &site_addr) :
+      id(id) {
       auto pos = site_addr.find(':');
       verify(pos != std::string::npos);
       name = site_addr.substr(0, pos);
@@ -116,39 +114,17 @@ class Config {
     }
 
     string GetHostAddr() {
-      if (proc.empty())
-        proc = name;
+      if (proc_name.empty())
+        proc_name = name;
       if (host.empty())
-        host = proc;
+        host = proc_name;
       string ret;
       ret = ret.append(host).append(":").append(std::to_string(port));
       return ret;
     }
   };
 
-  std::vector<SiteInfo> SitesByPartitionId(parid_t partition_id) {
-    std::vector<SiteInfo> result;
-    auto it = find_if(replica_groups_.begin(), replica_groups_.end(),
-                      [partition_id](const ReplicaGroup& g) {return g.partition_id==partition_id;});
-    if (it != replica_groups_.end()) {
-      result.insert(result.end(), (*it).replicas.begin(), (*it).replicas.end());
-    }
-    return result;
-  }
-
-  std::vector<SiteInfo> SitesByLocaleId(uint32_t locale_id) {
-    std::vector<SiteInfo> result;
-    for (auto& group : replica_groups_) {
-      std::for_each(group.replicas.begin(), group.replicas.end(),
-                    [locale_id, result](SiteInfo& site) mutable {
-                      if (site.locale_id==locale_id) result.push_back(site);
-                    });
-    }
-    return result;
-  }
-
-
-
+  
   struct ReplicaGroup {
     parid_t partition_id;
     std::vector<SiteInfo> replicas;
@@ -157,6 +133,7 @@ class Config {
 
   uint32_t next_site_id_;
   vector<ReplicaGroup> replica_groups_;
+  vector<SiteInfo> sites_;
   vector<SiteInfo> par_clients_;
   map<string, string> proc_host_map_;
 
@@ -198,37 +175,6 @@ class Config {
   void LoadSchemaTableColumnYML(Sharding::tb_info_t &tb_info,
                                 YAML::Node column);
 
-  vector<SiteInfo> GetMyServers() {
-    vector<SiteInfo> ret;
-    for (auto& group : replica_groups_) {
-      auto& replicas = group.replicas;
-      ret.insert(ret.end(), replicas.begin(), replicas.end());
-    }
-    return ret;
-  }
-
-  vector<SiteInfo> GetMyClients() {
-    vector<SiteInfo> ret;
-    ret.insert(ret.end(), par_clients_.begin(), par_clients_.end());
-    return ret;
-  }
-
-  SiteInfo* SiteByName(std::string name) {
-    for (auto& group : replica_groups_) {
-      auto& replicas = group.replicas;
-      for (SiteInfo& replica : replicas) {
-        if (replica.name == name) {
-          return &replica;
-        }
-      }
-    }
-    for (auto& client : par_clients_) {
-      if (client.name == name) {
-        return &client;
-      }
-    }
-    return nullptr;
-  }
 
   void init_mode(std::string &);
   void init_bench(std::string &);
@@ -247,6 +193,13 @@ class Config {
   int32_t get_all_site_addr(std::vector<std::string> &servers);
   int32_t get_site_addr(uint32_t sid,
                         std::string &server);
+  const SiteInfo& SiteById(uint32_t id); 
+  const std::vector<SiteInfo>& SitesByPartitionId(parid_t partition_id);
+  std::vector<SiteInfo> SitesByLocaleId(uint32_t locale_id, SiteInfoType type=SERVER);
+  SiteInfo* SiteByName(std::string name);
+  vector<SiteInfo> GetMyServers() { return sites_; }
+  vector<SiteInfo> GetMyClients() { return par_clients_; }
+
 //  int32_t get_my_addr(std::string &server);
   int32_t get_threads(uint32_t &threads);
   int32_t get_mode();

@@ -13,19 +13,26 @@ using namespace rococo;
 class MdccCoordinator: public CoordinatorBase {
 protected:
   MdccCommunicator* communicator_ = nullptr;
+  uint32_t site_id_;
+  uint32_t thread_id_;
+  Config* config_;
+  ClientControlServiceImpl* ccsi_;
 
 public:
-  MdccCoordinator(uint32_t coo_id,
-                  Config* config,
-                  int benchmark,
-                  int32_t mode,
-                  ClientControlServiceImpl *ccsi,
+  MdccCoordinator() = delete;
+  MdccCoordinator(uint32_t site_id,
                   uint32_t thread_id,
-                  bool batch_optimal) {
-    this->communicator_ = new MdccCommunicator(config);
+                  Config* config,
+                  ClientControlServiceImpl *ccsi) :
+    communicator_(new MdccCommunicator(config, site_id)),
+    site_id_(site_id),
+    thread_id_(thread_id),
+    config_(config),
+    ccsi_(ccsi) {
   }
+
   virtual ~MdccCoordinator() { delete communicator_; }
-  virtual void do_one(TxnRequest&);
+  virtual void do_one(TxnRequest&) override;
   void cleanup() override {}
   void restart(TxnChopper *ch) override {}
 

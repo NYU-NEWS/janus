@@ -316,6 +316,7 @@ void Config::LoadSiteYML(YAML::Node config) {
       info.locale_id = locale_id;
       info.type_ = SERVER;
       replica_group.replicas.push_back(info);
+      sites_.push_back(info);
       locale_id++;
     }
     replica_groups_.push_back(replica_group);
@@ -672,17 +673,60 @@ int Config::get_all_site_addr(std::vector<std::string>& servers) {
 }
 
 int Config::get_site_addr(unsigned int sid, std::string& server) {
-  // TODO
+  auto site = SiteById(sid);
+  server.assign(site.GetHostAddr());
+  return 1;
+}
+
+const Config::SiteInfo& Config::SiteById(uint32_t id) {
+  verify(id >= 0);
+  Config::SiteInfo* s;
+  if (id<sites_.size()) {
+    s = &sites_[id];
+  } else {
+    verify((id-sites_.size()) < par_clients_.size());
+    s = &par_clients_[id-sites_.size()];
+  }
+  verify(s->id==id);
+  return *s;
+}
+
+const std::vector<Config::SiteInfo>& Config::SitesByPartitionId(parid_t partition_id) {
+  auto it = find_if(replica_groups_.begin(), replica_groups_.end(),
+                    [partition_id](const ReplicaGroup& g) {return g.partition_id==partition_id;});
+  if (it != replica_groups_.end()) {
+    return (*it).replicas;
+  }
   verify(0);
-  if (site_.size() == 0) verify(0);
+}
 
-  if (sid >= num_site_) verify(0);
+std::vector<Config::SiteInfo> Config::SitesByLocaleId(uint32_t locale_id, SiteInfoType type) {
+  std::vector<SiteInfo> result;
+  std::vector<SiteInfo>* searching;
+  if (type==SERVER) {
+    searching = &sites_;
+  } else {
+    searching = &par_clients_;
+  }
+  std::for_each(searching->begin(), searching->end(),
+                [locale_id, result](SiteInfo& site) mutable {
+                  if (site.locale_id==locale_id) result.push_back(site);
+                });
+  return result;
+}
 
-  std::string siteaddr(site_[sid]);
-
-  //    std::string hostaddr = site2host_addr(siteaddr);
-  server.assign(siteaddr);
-  return 0;
+Config::SiteInfo* Config::SiteByName(std::string name) {
+  for (SiteInfo& site : sites_) {
+    if (site.name == name) {
+      return &site;
+    }
+  }
+  for (auto& client : par_clients_) {
+    if (client.name == name) {
+      return &client;
+    }
+  }
+  return nullptr;
 }
 
 int Config::get_threads(unsigned int& threads) {

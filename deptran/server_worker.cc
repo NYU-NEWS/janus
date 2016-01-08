@@ -104,22 +104,6 @@ void ServerWorker::SetupService() {
     svr_poll_mgr_g->add(recorder);
   }
 
-  if (scsi_g) {
-    scsi_g->set_recorder(recorder);
-    scsi_g->set_stat(ServerControlServiceImpl::STAT_SZ_SCC,
-                     &rsi_g->stat_sz_scc_);
-    scsi_g->set_stat(ServerControlServiceImpl::STAT_SZ_GRAPH_START,
-                     &rsi_g->stat_sz_gra_start_);
-    scsi_g->set_stat(ServerControlServiceImpl::STAT_SZ_GRAPH_COMMIT,
-                     &ServerWorker::rsi_g->stat_sz_gra_commit_);
-    scsi_g->set_stat(ServerControlServiceImpl::STAT_SZ_GRAPH_ASK,
-                     &rsi_g->stat_sz_gra_ask_);
-    scsi_g->set_stat(ServerControlServiceImpl::STAT_N_ASK,
-                     &rsi_g->stat_n_ask_);
-    scsi_g->set_stat(ServerControlServiceImpl::STAT_RO6_SZ_VECTOR,
-                     &rsi_g->stat_ro6_sz_vector_);
-  }
-
   // init base::ThreadPool
   uint32_t num_threads = 1;
   thread_pool_g = new base::ThreadPool(num_threads);

@@ -6,7 +6,10 @@
 
 namespace mdcc {
 
-void MdccClientService::Start(const StartRequest &req, StartResponse *res) {
+void MdccClientService::Start(const StartRequest& req, StartResponse* res, rrr::DeferredReply* defer) {
+  Log_info("in %s", __FUNCTION__);
+  res->result = -1;
+  defer->reply();
 }
 
 void MdccLearnerService::Learn(const Result& r) {

@@ -147,9 +147,7 @@ CoordinatorBase* Frame::CreateCoord(cooid_t coo_id,
       ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
     case MODE_MDCC:
-      coo = new mdcc::MdccCoordinator(coo_id, config,
-                                      benchmark, mode,
-                                      ccsi, id, batch_start);
+      coo = new mdcc::MdccCoordinator(coo_id, id, config, ccsi);
       break;
     default:
       verify(0);

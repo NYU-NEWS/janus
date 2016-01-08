@@ -23,6 +23,9 @@ RococoServiceImpl::RococoServiceImpl(
     // TODO free this
     recorder_ = new Recorder(path);
   }
+
+  this->RegisterStats();
+
 }
 
 // TODO deprecated
@@ -325,4 +328,21 @@ void RococoServiceImpl::rpc_null(rrr::DeferredReply *defer) {
   defer->reply();
 }
 
+void RococoServiceImpl::RegisterStats() {
+  if (scsi_) {
+    scsi_->set_recorder(recorder_);
+    scsi_->set_stat(ServerControlServiceImpl::STAT_SZ_SCC,
+                     &stat_sz_scc_);
+    scsi_->set_stat(ServerControlServiceImpl::STAT_SZ_GRAPH_START,
+                     &stat_sz_gra_start_);
+    scsi_->set_stat(ServerControlServiceImpl::STAT_SZ_GRAPH_COMMIT,
+                     &stat_sz_gra_commit_);
+    scsi_->set_stat(ServerControlServiceImpl::STAT_SZ_GRAPH_ASK,
+                     &stat_sz_gra_ask_);
+    scsi_->set_stat(ServerControlServiceImpl::STAT_N_ASK,
+                     &stat_n_ask_);
+    scsi_->set_stat(ServerControlServiceImpl::STAT_RO6_SZ_VECTOR,
+                     &stat_ro6_sz_vector_);
+  }
+}
 } // namespace rcc
