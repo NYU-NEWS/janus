@@ -13,7 +13,7 @@
 namespace rococo {
 
 
-DTxn*Scheduler::CreateDTxn(i64 tid, bool ro) {
+DTxn* Scheduler::CreateDTxn(i64 tid, bool ro) {
   Log_debug("create tid %ld\n", tid);
   verify(dtxns_.find(tid) == dtxns_.end());
   DTxn* dtxn = Frame().CreateDTxn(tid, ro, this);
@@ -24,7 +24,7 @@ DTxn*Scheduler::CreateDTxn(i64 tid, bool ro) {
   return dtxn;
 }
 
-DTxn*Scheduler::GetOrCreateDTxn(i64 tid, bool ro) {
+DTxn* Scheduler::GetOrCreateDTxn(i64 tid, bool ro) {
   auto it = dtxns_.find(tid);
   if (it == dtxns_.end()) {
     return CreateDTxn(tid, ro);
@@ -41,7 +41,7 @@ void Scheduler::DestroyDTxn(i64 tid) {
   dtxns_.erase(it);
 }
 
-DTxn*Scheduler::GetDTxn(i64 tid) {
+DTxn* Scheduler::GetDTxn(i64 tid) {
   //Log_debug("DTxnMgr::get(%ld)\n", tid);
   auto it = dtxns_.find(tid);
   verify(it != dtxns_.end());
@@ -59,7 +59,7 @@ mdb::Txn* Scheduler::GetMTxn(const i64 tid) {
   return txn;
 }
 
-mdb::Txn *Scheduler::RemoveMTxn(const i64 tid) {
+mdb::Txn* Scheduler::RemoveMTxn(const i64 tid) {
   mdb::Txn *txn = nullptr;
   std::map<i64, mdb::Txn *>::iterator it = mdb_txns_.find(tid);
   verify(it != mdb_txns_.end());
@@ -68,7 +68,7 @@ mdb::Txn *Scheduler::RemoveMTxn(const i64 tid) {
   return txn;
 }
 
-mdb::Txn *Scheduler::GetOrCreateMTxn(const i64 tid) {
+mdb::Txn* Scheduler::GetOrCreateMTxn(const i64 tid) {
   mdb::Txn *txn = nullptr;
   auto it = mdb_txns_.find(tid);
   if (it == mdb_txns_.end()) {
@@ -96,7 +96,7 @@ mdb::Txn *Scheduler::GetOrCreateMTxn(const i64 tid) {
   return txn;
 }
 
-mdb::Txn *Scheduler::get_mdb_txn(const RequestHeader &header) {
+mdb::Txn* Scheduler::get_mdb_txn(const RequestHeader &header) {
   mdb::Txn *txn = nullptr;
   if (mode_ == MODE_NONE
       || mode_ == MODE_RCC
@@ -261,6 +261,5 @@ Executor* Scheduler::GetExecutor(cmdid_t cmd_id) {
   verify(it != executors_.end());
   return it->second;
 }
-
 
 } // namespace rococo

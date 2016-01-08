@@ -4,7 +4,6 @@
 
 namespace rococo {
 
-
 RococoServiceImpl::RococoServiceImpl(
     Scheduler *dtxn_mgr,
     rrr::PollMgr* poll_mgr,
