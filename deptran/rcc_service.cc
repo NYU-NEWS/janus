@@ -7,6 +7,7 @@ namespace rococo {
 
 RococoServiceImpl::RococoServiceImpl(
     Scheduler *dtxn_mgr,
+    rrr::PollMgr* poll_mgr,
     ServerControlServiceImpl *scsi
 ) : scsi_(scsi), dtxn_sched_(dtxn_mgr) {
 
@@ -15,17 +16,14 @@ RococoServiceImpl::RococoServiceImpl(
   piece_count_prepare_fail_ = 0;
   piece_count_prepare_success_ = 0;
 #endif
-//  verify(RCCDTxn::dep_s == NULL);
-//  RCCDTxn::dep_s = new DepGraph();
 
   if (Config::GetConfig()->do_logging()) {
     auto path = Config::GetConfig()->log_path();
-    // TODO free this
     recorder_ = new Recorder(path);
+    poll_mgr->add(recorder_);
   }
 
   this->RegisterStats();
-
 }
 
 // TODO deprecated

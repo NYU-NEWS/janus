@@ -18,6 +18,7 @@ void MdccLearnerService::Learn(const Result& r) {
 void MdccLeaderService::Propose(const ProposeRequest &req, ProposeResponse *res,
                                 rrr::DeferredReply *defer) {
 }
+void MdccLeaderService::Recover() { }
 
 void MdccAcceptorService::Propose(const ProposeRequest &req,
                                   ProposeResponse *res, rrr::DeferredReply *defer) {

@@ -87,32 +87,26 @@ void ServerWorker::SetupService() {
   // set running mode and initialize transaction manager.
   std::string bind_addr = site_info_->GetBindAddress();
 
-  // init service implement
-  rsi_g = new RococoServiceImpl(txn_mgr_, scsi_g);
-
   // init rrr::PollMgr 1 threads
   int n_io_threads = 1;
   svr_poll_mgr_g = new rrr::PollMgr(n_io_threads);
 
+  // init service implementation
+  services_ = Frame().CreateRpcServices(Config::GetConfig(), txn_mgr_, svr_poll_mgr_g, scsi_g);
+
   auto &alarm = TimeoutALock::get_alarm_s();
   ServerWorker::svr_poll_mgr_g->add(&alarm);
 
-  // TODO replace below with set_stat
-  auto &recorder = ((RococoServiceImpl *) ServerWorker::rsi_g)->recorder_;
-
-  if (recorder != NULL) {
-    svr_poll_mgr_g->add(recorder);
-  }
-
-  // init base::ThreadPool
   uint32_t num_threads = 1;
   thread_pool_g = new base::ThreadPool(num_threads);
 
   // init rrr::Server
   svr_server_g = new rrr::Server(svr_poll_mgr_g, thread_pool_g);
 
-  // reg service
-  svr_server_g->reg(rsi_g);
+  // reg services
+  for (auto service : services_) {
+    svr_server_g->reg(service);
+  }
 
   // start rpc server
   ret = svr_server_g->start(bind_addr.c_str());
@@ -137,30 +131,32 @@ void ServerWorker::SetupService() {
     svr_hb_poll_mgr_g->release();
     hb_thread_pool_g->release();
 
-    auto &recorder = ((DepTranServiceImpl *) rsi_g)->recorder_;
-    if (recorder) {
-      auto n_flush_avg_ = recorder->stat_cnt_.peek().avg_;
-      auto sz_flush_avg_ = recorder->stat_sz_.peek().avg_;
-      Log::info("Log to disk, average log per flush: %lld,"
-                    " average size per flush: %lld",
-                n_flush_avg_, sz_flush_avg_);
+    for (auto service : services_) {
+      if (DepTranServiceImpl* s = dynamic_cast<DepTranServiceImpl*>(service)) {
+        auto &recorder = s->recorder_;
+        if (recorder) {
+          auto n_flush_avg_ = recorder->stat_cnt_.peek().avg_;
+          auto sz_flush_avg_ = recorder->stat_sz_.peek().avg_;
+          Log::info("Log to disk, average log per flush: %lld,"
+                        " average size per flush: %lld",
+                    n_flush_avg_, sz_flush_avg_);
+        }
+        Log::info("asking other server finish request count: %d", s->n_asking_);
+      }
     }
 #ifdef CPU_PROFILE
-
     // stop profiling
     ProfilerStop();
 #endif // ifdef CPU_PROFILE
   }
-
-  Log::info("asking other server finish request count: %d",
-            ((DepTranServiceImpl *) rsi_g)->n_asking_);
-
 }
 
 void ServerWorker::ShutDown() {
   // TODO
   delete svr_server_g;
-  delete rsi_g;
+  for (auto service : services_) {
+    delete service;
+  }
   thread_pool_g->release();
   svr_poll_mgr_g->release();
 //  delete DTxnMgr::get_sole_mgr();

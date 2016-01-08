@@ -15,7 +15,7 @@ namespace rococo {
 class ServerWorker {
  public:
   rrr::PollMgr *svr_poll_mgr_g;
-  RococoServiceImpl *rsi_g;
+  vector<rrr::Service*> services_;
   rrr::Server *svr_server_g;
   base::ThreadPool *thread_pool_g;
 

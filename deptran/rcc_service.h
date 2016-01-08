@@ -95,7 +95,7 @@ class RococoServiceImpl: public RococoService {
 
   RococoServiceImpl() = delete;
 
-  RococoServiceImpl(Scheduler *dtxn_mgr, ServerControlServiceImpl *scsi = NULL);
+  RococoServiceImpl(Scheduler *dtxn_mgr, rrr::PollMgr* poll_mgr, ServerControlServiceImpl *scsi = NULL);
 
   void rcc_batch_start_pie(
       const std::vector<RequestHeader> &headers,

@@ -14,6 +14,7 @@ class DTxn;
 class Executor;
 class Scheduler;
 class ClientControlServiceImpl;
+class ServerControlServiceImpl;
 class TxnRegistry;
 class Frame {
  public:
@@ -30,6 +31,12 @@ class Frame {
   Executor* CreateExecutor(cmdid_t cmd_id, Scheduler *sch);
   Scheduler *CreateScheduler();
   TxnGenerator * CreateTxnGenerator();
+
+  vector<rrr::Service*> CreateRpcServices(
+      Config* config,
+      Scheduler *dtxn_mgr,
+      rrr::PollMgr* poll_mgr,
+      ServerControlServiceImpl *scsi);
 };
 
 

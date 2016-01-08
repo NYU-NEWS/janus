@@ -301,4 +301,21 @@ TxnGenerator * Frame::CreateTxnGenerator() {
 
 }
 
+
+  vector<rrr::Service *> Frame::CreateRpcServices(Config *config, Scheduler *dtxn_mgr, rrr::PollMgr *poll_mgr,
+                                                  ServerControlServiceImpl *scsi) {
+    auto result = std::vector<Service *>();
+    switch(config->get_mode()) {
+      case MODE_MDCC:
+        result.push_back(new mdcc::MdccClientService());
+        result.push_back(new mdcc::MdccAcceptorService());
+        result.push_back(new mdcc::MdccLearnerService());
+        result.push_back(new mdcc::MdccLeaderService());
+        break;
+      default:
+        result.push_back(new RococoServiceImpl(dtxn_mgr, poll_mgr, scsi));
+        break;
+    }
+    return result;
+  }
 } // namespace rococo;
