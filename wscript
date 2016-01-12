@@ -85,9 +85,9 @@ def build(bld):
             "deptran/rcc_rpc.rpc",
             "bin/rpcgen --python --cpp deptran/rcc_rpc.rpc")
 
-    _depend("deptran/mdcc/mdcc.h",
-            "deptran/mdcc/mdcc.rpc",
-            "bin/rpcgen --cpp deptran/mdcc/mdcc.rpc")
+    _depend("deptran/mdcc/mdcc_rpc.h",
+            "deptran/mdcc/mdcc_rpc.rpc",
+            "bin/rpcgen --cpp deptran/mdcc/mdcc_rpc.rpc")
 
     _depend("old-test/benchmark_service.h", "old-test/benchmark_service.rpc",
             "bin/rpcgen --cpp old-test/benchmark_service.rpc")
@@ -226,7 +226,7 @@ def _enable_cxx11(conf):
     if sys.platform == "darwin":
         conf.env.append_value("CXXFLAGS", "-stdlib=libc++")
         conf.env.append_value("LINKFLAGS", "-stdlib=libc++")
-    conf.env.append_value("CXXFLAGS", "-std=c++0x")
+    conf.env.append_value("CXXFLAGS", "-std=c++11")
 
 def _enable_profile(conf):
     if Options.options.prof:
