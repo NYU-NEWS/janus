@@ -709,8 +709,25 @@ std::vector<Config::SiteInfo> Config::SitesByLocaleId(uint32_t locale_id, SiteIn
     searching = &par_clients_;
   }
   std::for_each(searching->begin(), searching->end(),
-                [locale_id, result](SiteInfo& site) mutable {
+                [locale_id, &result](SiteInfo& site) mutable {
                   if (site.locale_id==locale_id) result.push_back(site);
+                });
+  return result;
+}
+
+vector<Config::SiteInfo> Config::SitesByProcessName(string proc_name, Config::SiteInfoType type) {
+  std::vector<SiteInfo> result;
+  std::vector<SiteInfo>* searching;
+  if (type==SERVER) {
+    searching = &sites_;
+  } else {
+    searching = &par_clients_;
+  }
+  std::for_each(searching->begin(), searching->end(),
+                [proc_name, &result](SiteInfo& site) mutable {
+                  if (site.proc_name==proc_name) {
+                    result.push_back(site);
+                  }
                 });
   return result;
 }
@@ -813,4 +830,6 @@ const char * Config::log_path() {
 bool Config::retry_wait() {
   return retry_wait_;
 }
+
+
 }

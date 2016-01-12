@@ -4,7 +4,7 @@
 #pragma once
 #include "msg.h"
 #include "deptran/coordinator.h"
-#include "./mdcc.h"
+#include "mdcc_rpc.h"
 
 namespace mdcc {
 using rococo::Config;

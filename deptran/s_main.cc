@@ -14,7 +14,7 @@ static ClientControlServiceImpl *ccsi_g = nullptr;
 static rrr::PollMgr *cli_poll_mgr_g = nullptr;
 static rrr::Server *cli_hb_server_g = nullptr;
 
-static vector<ServerWorker>*svr_workers = nullptr;
+static vector<ServerWorker> svr_workers;
 
 void client_setup_heartbeat() {
   std::map<int32_t, std::string> txn_types;
@@ -58,28 +58,28 @@ void client_launch_workers() {
 
 void server_launch_worker() {
   Config* cfg = Config::GetConfig();
-  for (auto& replica_group : cfg->replica_groups_) {
-    for (auto& site_info : replica_group.replicas) {
-        Log_info("launching site: %x, bind address %s", site_info.id, site_info.GetBindAddress().c_str());
-        auto worker = new ServerWorker();
-        worker->sharding_ = Frame().CreateSharding(Config::GetConfig()->sharding_);
-        worker->sharding_->BuildTableInfoPtr();
-        // register txn piece logic
-        worker->RegPiece();
-        worker->site_info_ = &site_info;
-        // setup communication between controller script
-        worker->SetupHeartbeat();
-        // populate table according to benchmarks
-        worker->PopTable();
-        // start server service
-        worker->SetupService();
-    }
+  auto site_infos = cfg->GetMyServers();
+  svr_workers.reserve(site_infos.size());
+  int i=0;
+  for (auto& site_info : site_infos) {
+    Log_info("launching site: %x, bind address %s", site_info.id, site_info.GetBindAddress().c_str());
+    auto& worker = svr_workers[i++];
+    worker.sharding_ = Frame().CreateSharding(Config::GetConfig()->sharding_);
+    worker.sharding_->BuildTableInfoPtr();
+    // register txn piece logic
+    worker.RegPiece();
+    worker.site_info_ = &site_info;
+    // setup communication between controller script
+    worker.SetupHeartbeat();
+    // populate table according to benchmarks
+    worker.PopTable();
+    // start server service
+    worker.SetupService();
   }
 }
 
 void server_shutdown() {
-  // TODO
-  for (auto &worker : *svr_workers) {
+  for (auto &worker : svr_workers) {
     worker.ShutDown();
   }
 }

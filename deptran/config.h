@@ -196,9 +196,11 @@ class Config {
   const SiteInfo& SiteById(uint32_t id); 
   const std::vector<SiteInfo>& SitesByPartitionId(parid_t partition_id);
   std::vector<SiteInfo> SitesByLocaleId(uint32_t locale_id, SiteInfoType type=SERVER);
+  std::vector<SiteInfo> SitesByProcessName(string proc_name, SiteInfoType type=SERVER);
   SiteInfo* SiteByName(std::string name);
-  vector<SiteInfo> GetMyServers() { return sites_; }
-  vector<SiteInfo> GetMyClients() { return par_clients_; }
+
+  vector<SiteInfo> GetMyServers() { return SitesByProcessName(this->proc_name_, SERVER); }
+  vector<SiteInfo> GetMyClients() { return SitesByProcessName(this->proc_name_, CLIENT); }
 
 //  int32_t get_my_addr(std::string &server);
   int32_t get_threads(uint32_t &threads);
