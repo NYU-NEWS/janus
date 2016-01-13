@@ -14,21 +14,21 @@ namespace rococo {
 
 class ServerWorker {
  public:
-  rrr::PollMgr *svr_poll_mgr_g;
-  vector<rrr::Service*> services_;
-  rrr::Server *svr_server_g;
-  base::ThreadPool *thread_pool_g;
+  rrr::PollMgr *svr_poll_mgr_g = nullptr;
+  vector<rrr::Service*> services_ = {};
+  rrr::Server *svr_server_g = nullptr;
+  base::ThreadPool *thread_pool_g = nullptr;
 
 
-  rrr::PollMgr *svr_hb_poll_mgr_g;
-  ServerControlServiceImpl *scsi_g;
-  rrr::Server *svr_hb_server_g;
-  base::ThreadPool *hb_thread_pool_g;
+  rrr::PollMgr *svr_hb_poll_mgr_g = nullptr;
+  ServerControlServiceImpl *scsi_g = nullptr;
+  rrr::Server *svr_hb_server_g = nullptr;
+  base::ThreadPool *hb_thread_pool_g = nullptr;
 
-  Config::SiteInfo *site_info_;
-  Sharding *sharding_;
-  Scheduler * txn_mgr_;
-  TxnRegistry *txn_reg_;
+  Config::SiteInfo *site_info_ = nullptr;
+  Sharding *sharding_ = nullptr;
+  Scheduler * txn_mgr_ = nullptr;
+  TxnRegistry *txn_reg_ = nullptr;
 
   void SetupHeartbeat();
   void PopTable();
