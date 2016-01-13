@@ -59,7 +59,7 @@ void client_launch_workers() {
 void server_launch_worker() {
   Config* cfg = Config::GetConfig();
   auto site_infos = cfg->GetMyServers();
-  svr_workers.reserve(site_infos.size());
+  svr_workers.resize(site_infos.size(), ServerWorker());
   int i=0;
   for (auto& site_info : site_infos) {
     Log_info("launching site: %x, bind address %s", site_info.id, site_info.GetBindAddress().c_str());
