@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 if [ ! -f run.py ]; then
 	echo "run from root of project!"
 	exit 1
