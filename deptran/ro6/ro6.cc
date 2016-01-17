@@ -108,38 +108,35 @@ void RO6DTxn::kiss(mdb::Row *r, int col, bool immediate) {
   }
 }
 
-void RO6DTxn::start_ro(const RequestHeader &header,
-                       const map<int32_t, Value> &input,
+void RO6DTxn::start_ro(const SimpleCommand &cmd,
                        map<int32_t, Value> &output,
                        rrr::DeferredReply *defer) {
 //    RCCDTxn::start_ro(header, input, output, defer);
 
   conflict_txns_.clear();
-  auto txn_handler_pair = txn_reg_->get(header.t_type, header.p_type);
+  auto txn_handler_pair = txn_reg_->get(cmd.root_type_, cmd.type_);
   int output_size = 300;
   int res;
   phase_ = 1;
   // TODO fix
   txn_handler_pair.txn_handler(nullptr,
                                this,
-                               header,
-                               const_cast<map<int32_t, Value>&>(input),
+                               const_cast<SimpleCommand&>(cmd),
                                &res,
                                output);
   // get conflicting transactions
   std::vector<TxnInfo *> &conflict_txns = conflict_txns_;
 
   // TODO callback: read the value and return.
-  std::function<void(void)> cb = [&header, &input, &output, defer, this]() {
+  std::function<void(void)> cb = [&cmd, &output, defer, this]() {
     int res;
     int output_size = 0;
     this->phase_ = 2;
-    auto txn_handler_pair = txn_reg_->get(header.t_type, header.p_type);
+    auto txn_handler_pair = txn_reg_->get(cmd.root_type_, cmd.type_);
     // TODO fix
     txn_handler_pair.txn_handler(nullptr,
                                  this,
-                                 header,
-                                 const_cast<map<int32_t, Value>&>(input),
+                                 const_cast<SimpleCommand&>(cmd),
                                  &res,
                                  output);
     defer->reply();

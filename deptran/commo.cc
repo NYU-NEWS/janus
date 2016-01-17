@@ -19,48 +19,35 @@ RococoCommunicator::RococoCommunicator(std::vector<std::string> &addrs)
   }
 }
 
-void RococoCommunicator::SendStart(parid_t par_id,
-                                   StartRequest &req,
+void RococoCommunicator::SendStart(SimpleCommand &cmd,
                                    Coordinator *coo,
                                    std::function<void(StartReply&)> &callback) {
   rrr::FutureAttr fuattr;
-  RequestHeader header;
-  header.cid = coo->coo_id_;
-  header.tid = req.cmd_id;
-  header.pid = req.pie_id;
-  header.t_type = req.cmd->GetRootCmd()->type();
-  header.p_type = req.cmd->type(); // TODO
-  verify(header.t_type);
-  verify(header.p_type);
-  SimpleCommand *cmd  = (SimpleCommand*)req.cmd;
-  RococoProxy *proxy = vec_rpc_proxy_[par_id];
+  RococoProxy *proxy = vec_rpc_proxy_[cmd.GetPar()];
   std::function<void(Future*)> cb =
-      [coo, this, callback, cmd, par_id] (Future *fu) {
+      [coo, this, callback, &cmd] (Future *fu) {
     StartReply reply;
-    Log_debug("SendStart callback for %ld from %ld", par_id, coo->coo_id_);
-    reply.cmd = cmd;
+    Log_debug("SendStart callback for %ld from %ld", cmd.GetPar(), coo->coo_id_);
+    reply.cmd = &cmd;
     Marshal &m = fu->get_reply();
-    m >> reply.res >> cmd->output;
+    m >> reply.res >> cmd.output;
     callback(reply);
   };
   fuattr.callback = cb;
-  Log_debug("SendStart to %ld from %ld", par_id, coo->coo_id_);
-  Future::safe_release(proxy->async_start_pie(header,
-                                              cmd->input,
-                                              cmd->output_size,
-                                              fuattr));
+  Log_debug("SendStart to %ld from %ld", cmd.GetPar(), coo->coo_id_);
+  verify(cmd.type_ > 0);
+  verify(cmd.root_type_ > 0);
+  Future::safe_release(proxy->async_StartTxn(cmd, fuattr));
 }
 
-void RococoCommunicator::SendStart(parid_t par_id,
-                                   RequestHeader &header,
-                                   map<int32_t, Value> &input,
+void RococoCommunicator::SendStart(SimpleCommand &cmd,
                                    int32_t output_size,
                                    std::function<void(Future *fu)> &callback) {
   rrr::FutureAttr fuattr;
   fuattr.callback = callback;
-  RococoProxy *proxy = vec_rpc_proxy_[par_id];
-  Log_debug("SendStart to %ld\n", par_id);
-  Future::safe_release(proxy->async_start_pie(header, input, output_size, fuattr));
+  RococoProxy *proxy = vec_rpc_proxy_[cmd.GetPar()];
+  Log_debug("SendStart to %ld\n", cmd.GetPar());
+  Future::safe_release(proxy->async_StartTxn(cmd, fuattr));
 }
 
 void RococoCommunicator::SendPrepare(groupid_t gid, txnid_t tid,

@@ -47,7 +47,7 @@ class Coordinator : public CoordinatorBase {
   std::mutex start_mtx_;
   Recorder *recorder_;
   Command *cmd_; 
-  cmdid_t cmd_id_;
+//  cmdid_t cmd_id_;
   CoordinatorStage stage_ = START;
   phase_t phase_ = 0;
   map<innid_t, bool> start_ack_map_;

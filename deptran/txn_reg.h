@@ -1,6 +1,7 @@
 #pragma once
 #include "__dep__.h"
 #include "constants.h"
+#include "command.h"
 namespace rococo {
 
 class RequestHeader;
@@ -17,12 +18,9 @@ class TxnRequest;
 
 typedef std::function<void(Executor* exec,
                            DTxn *dtxn,
-                           const RequestHeader &header,
-                           map<int32_t, Value> &input,
+                           SimpleCommand& cmd,
                            rrr::i32 *res,
-                           map<int32_t, Value> &output //,
-//    rrr::i32 *output_size//,
-//    row_map_t *row_map
+                           map<int32_t, Value> &output
 )> TxnHandler;
 
 typedef enum {
@@ -77,7 +75,7 @@ class TxnRegistry {
     verify(it != all_.end());
     return it->second;
   }
-  txn_handler_defer_pair_t get(const RequestHeader &req_hdr);
+  txn_handler_defer_pair_t get(const SimpleCommand &);
 
  public:
   // prevent instance creation

@@ -49,12 +49,10 @@ class RococoServiceImpl: public RococoService {
       std::vector<vector<Value>> *output,
       DeferredReply *defer);
 
-  void start_pie(const RequestHeader &header,
-                 const map<int32_t, Value> &input,
-                 const i32 &output_size,
-                 i32 *res,
-                 map<int32_t, Value> *output,
-                 DeferredReply *defer);
+  void StartTxn(const SimpleCommand &cmd,
+                int32_t *res,
+                map<int32_t, Value> *output,
+                DeferredReply *defer_reply);
 
   void prepare_txn(const i64 &tid,
                    const std::vector<i32> &sids,
@@ -103,27 +101,21 @@ class RococoServiceImpl: public RococoService {
       BatchChopStartResponse *res,
       DeferredReply *defer);
 
-  void rcc_start_pie(
-      const RequestHeader &header,
-      const map<int32_t, Value> &input,
-      ChopStartResponse *res,
-      DeferredReply *defer);
+  void rcc_start_pie(const SimpleCommand& cmd,
+                     ChopStartResponse *res,
+                     DeferredReply *defer);
 
-  void rcc_finish_txn(
-      const ChopFinishRequest &req,
-      ChopFinishResponse *res,
-      DeferredReply *);
+  void rcc_finish_txn(const ChopFinishRequest &req,
+                      ChopFinishResponse *res,
+                      DeferredReply *);
 
-  void rcc_ask_txn(
-      const i64 &tid,
-      CollectFinishResponse *res,
-      DeferredReply *);
+  void rcc_ask_txn(const i64 &tid,
+                   CollectFinishResponse *res,
+                   DeferredReply *);
 
-  void rcc_ro_start_pie(
-      const RequestHeader &header,
-      const map<int32_t, Value> &input,
-      map<int32_t, Value> *output,
-      DeferredReply *reply);
+  void rcc_ro_start_pie(const SimpleCommand& cmd,
+                        map<int32_t, Value> *output,
+                        DeferredReply *reply);
 
   uint64_t n_asking_ = 0;
   protected:

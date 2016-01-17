@@ -5,6 +5,8 @@
 #include "graph_marshaler.h"
 #include "txn-info.h"
 #include "marshal-value.h"
+#include "command.h"
+#include "command_marshaler.h"
 #include "rcc_rpc.h"
 
 /**

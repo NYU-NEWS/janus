@@ -132,14 +132,11 @@ void RococoServiceImpl::naive_batch_start_pie(
 //  Log::debug("still fine");
 }
 
-void RococoServiceImpl::start_pie(
-    const RequestHeader &header,
-    const map<int32_t, Value> &input,
-    const rrr::i32 &output_size,
-    rrr::i32 *res,
-    map<int32_t, Value> *output,
-    rrr::DeferredReply *defer
-) {
+
+void RococoServiceImpl::StartTxn(const SimpleCommand &cmd,
+                                 rrr::i32 *res,
+                                 map<int32_t, Value> *output,
+                                 rrr::DeferredReply *defer) {
   std::lock_guard<std::mutex> guard(mtx_);
 
 #ifdef PIECE_COUNT
@@ -159,7 +156,7 @@ void RococoServiceImpl::start_pie(
   // find stored procedure, and run it
   *res = SUCCESS;
   ((ThreePhaseSched*)dtxn_sched_)->
-      OnPhaseOneRequest(header, input, output_size, res, output, defer);
+      OnPhaseOneRequest(cmd, res, output, defer);
 }
 
 void RococoServiceImpl::prepare_txn(
@@ -261,19 +258,17 @@ void RococoServiceImpl::rcc_batch_start_pie(
 //    }
 }
 
-void RococoServiceImpl::rcc_start_pie(
-    const RequestHeader &header,
-    const map<int32_t, Value> &input,
-    ChopStartResponse *res,
-    rrr::DeferredReply *defer
+void RococoServiceImpl::rcc_start_pie(const SimpleCommand& cmd,
+                                      ChopStartResponse *res,
+                                      rrr::DeferredReply *defer
 ) {
 //    Log::debug("receive start request. txn_id: %llx, pie_id: %llx", header.tid, header.pid);
   verify(IS_MODE_RCC || IS_MODE_RO6);
   verify(defer);
 
   std::lock_guard<std::mutex> guard(this->mtx_);
-  RCCDTxn *dtxn = (RCCDTxn *) dtxn_sched_->GetOrCreateDTxn(header.tid);
-  dtxn->StartLaunch(header, input, res, defer);
+  RCCDTxn *dtxn = (RCCDTxn *) dtxn_sched_->GetOrCreateDTxn(cmd.root_id_);
+  dtxn->StartLaunch(cmd, res, defer);
 
   // TODO remove the stat from here.
 //    auto sz_sub_gra = RCCDTxn::dep_s->sub_txn_graph(header.tid, res->gra_m);
@@ -311,14 +306,12 @@ void RococoServiceImpl::rcc_ask_txn(
   dtxn->inquire(res, defer);
 }
 
-void RococoServiceImpl::rcc_ro_start_pie(
-    const RequestHeader &header,
-    const map<int32_t, Value> &input,
-    map<int32_t, Value> *output,
-    rrr::DeferredReply *defer) {
+void RococoServiceImpl::rcc_ro_start_pie(const SimpleCommand& cmd,
+                                         map<int32_t, Value> *output,
+                                         rrr::DeferredReply *defer) {
   std::lock_guard<std::mutex> guard(mtx_);
-  RCCDTxn *dtxn = (RCCDTxn *) dtxn_sched_->GetOrCreateDTxn(header.tid, true);
-  dtxn->start_ro(header, input, *output, defer);
+  RCCDTxn *dtxn = (RCCDTxn *) dtxn_sched_->GetOrCreateDTxn(cmd.root_id_, true);
+  dtxn->start_ro(cmd, *output, defer);
 }
 
 void RococoServiceImpl::rpc_null(rrr::DeferredReply *defer) {

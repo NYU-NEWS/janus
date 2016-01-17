@@ -8,6 +8,7 @@
 
 namespace rococo {
 
+class SimpleCommand;
 class ThreePhaseExecutor: public Executor {
   using Executor::Executor;
  public:
@@ -15,9 +16,7 @@ class ThreePhaseExecutor: public Executor {
 
   virtual ~ThreePhaseExecutor();
 
-  virtual int StartLaunch(const RequestHeader &header,
-                          const map<int32_t, Value> &input,
-                          const rrr::i32 &output_size,
+  virtual int StartLaunch(const SimpleCommand &cmd,
                           rrr::i32 *res,
                           map<int32_t, Value> &output,
                           rrr::DeferredReply *defer);
@@ -44,13 +43,11 @@ class ThreePhaseExecutor: public Executor {
 
   virtual int abort();
 
-  void execute(const RequestHeader &header,
-               const map<int32_t, Value> &input,
+  void execute(const SimpleCommand& cmd,
                rrr::i32 *res,
                map<int32_t, Value> &output);
 
-  void execute(const RequestHeader &header,
-               const map<int32_t, Value> &input,
+  void execute(const SimpleCommand& cmd,
                rrr::i32 *res,
                map<int32_t, Value> &output,
                rrr::i32 *output_size);

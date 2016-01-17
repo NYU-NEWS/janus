@@ -20,17 +20,12 @@ TPLSched::TPLSched() : ThreePhaseSched() {
   mdb_txn_mgr_ = new mdb::TxnMgr2PL();
 }
 
-int TPLSched::OnPhaseOneRequest(
-    const RequestHeader &header,
-    const map<int32_t, Value> &input,
-    const rrr::i32 &output_size,
-    rrr::i32 *res,
-    map<int32_t, Value> *output,
-    rrr::DeferredReply *defer) {
-  TPLExecutor* exec = (TPLExecutor*) GetOrCreateExecutor(header.tid);
-  exec->StartLaunch(header,
-                    input,
-                    output_size,
+int TPLSched::OnPhaseOneRequest(const SimpleCommand& cmd,
+                                rrr::i32 *res,
+                                map<int32_t, Value> *output,
+                                rrr::DeferredReply *defer) {
+  TPLExecutor* exec = (TPLExecutor*) GetOrCreateExecutor(cmd.root_id_);
+  exec->StartLaunch(cmd,
                     res,
                     output,
                     defer);

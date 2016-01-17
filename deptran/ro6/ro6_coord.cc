@@ -19,15 +19,14 @@ void RO6Coord::deptran_start(TxnChopper *ch) {
   int     res;
   int     output_size;
 
-  while ((res =
-            ch->next_piece(input, output_size, server_id, pi,
-                           header.p_type)) == 0) {
+  SimpleCommand *subcmd = nullptr;
+  while ((subcmd = (SimpleCommand*)cmd_->GetNextSubCmd()) != nullptr) {
     header.pid = next_pie_id();
 
     rrr::FutureAttr fuattr;
 
     // remember this a asynchronous call! variable funtional range is important!
-    fuattr.callback = [ch, pi, this, header](Future * fu) {
+    fuattr.callback = [ch, pi, this, header, subcmd](Future * fu) {
       bool early_return = false;
       {
         //     Log::debug("try locking at start response, tid: %llx, pid: %llx",
@@ -50,10 +49,10 @@ void RO6Coord::deptran_start(TxnChopper *ch) {
         verify(gra.size() > 0);
         ch->gra_.Aggregate(gra);
 
-        Log::debug(
+        Log_debug(
           "receive deptran start response, tid: %llx, pid: %llx, graph size: %d",
-          header.tid,
-          header.pid,
+          subcmd->root_id_,
+          subcmd->id_,
           gra.size());
 
         if (gra.size() > 1) ch->disable_early_return();
@@ -85,16 +84,16 @@ void RO6Coord::deptran_start(TxnChopper *ch) {
 
     RococoProxy *proxy = comm()->vec_rpc_proxy_[server_id];
     Log::debug("send deptran start request, tid: %llx, pid: %llx",
-               cmd_id_,
+               cmd_->id_,
                header.pid);
         verify(input != nullptr);
-    Future::safe_release(proxy->async_rcc_start_pie(header, *input, fuattr));
+    Future::safe_release(proxy->async_rcc_start_pie(*subcmd, fuattr));
   }
 }
 
 /** caller should be thread safe */
 void RO6Coord::deptran_finish(TxnChopper *ch) {
-  Log::debug("deptran finish, %llx", cmd_id_);
+  Log::debug("deptran finish, %llx", cmd_->id_);
 
   // commit or abort piece
   rrr::FutureAttr fuattr;
@@ -109,7 +108,7 @@ void RO6Coord::deptran_finish(TxnChopper *ch) {
 
       ChopFinishResponse res;
 
-      Log::debug("receive finish response. tid: %llx", cmd_id_);
+      Log::debug("receive finish response. tid: %llx", cmd_->id_);
 
       fu->get_reply() >> res;
 
@@ -121,7 +120,7 @@ void RO6Coord::deptran_finish(TxnChopper *ch) {
 
     if (callback) {
       // generate a reply and callback.
-      Log::debug("deptran callback, %llx", cmd_id_);
+      Log::debug("deptran callback, %llx", cmd_->id_);
 
       if (!ch->do_early_return()) {
         ch->reply_.res_ = SUCCESS;
@@ -138,16 +137,16 @@ void RO6Coord::deptran_finish(TxnChopper *ch) {
     }
   };
 
-  Log::debug(
+  Log_debug(
     "send deptran finish requests to %d servers, tid: %llx, graph size: %d",
     (int)ch->partitions_.size(),
-    cmd_id_,
+    cmd_->id_,
     ch->gra_.size());
   verify(ch->partitions_.size() == ch->gra_.FindV(
-           cmd_id_)->data_->servers_.size());
+           cmd_->id_)->data_->servers_.size());
 
   ChopFinishRequest req;
-  req.txn_id = cmd_id_;
+  req.txn_id = cmd_->id_;
   req.gra    = ch->gra_;
 
   if (IS_MODE_RO6) {
@@ -177,9 +176,8 @@ void RO6Coord::ro6_start_ro(TxnChopper *ch) {
   int     res;
   int     output_size;
 
-  while ((res =
-            ch->next_piece(input, output_size, server_id, pi,
-                           header.p_type)) == 0) {
+  SimpleCommand *subcmd = nullptr;
+  while ((subcmd = (SimpleCommand*)cmd_->GetNextSubCmd()) != nullptr) {
     header.pid = next_pie_id();
 
     rrr::FutureAttr fuattr;
@@ -205,7 +203,7 @@ void RO6Coord::ro6_start_ro(TxnChopper *ch) {
           ch->reply_.res_ = SUCCESS;
 
           // generate a reply and callback.
-          Log::debug("ro6 RO callback, %llx", cmd_id_);
+          Log::debug("ro6 RO callback, %llx", cmd_->id_);
           TxnReply& txn_reply_buf = ch->get_reply();
           double    last_latency  = ch->last_attempt_latency();
           this->report(txn_reply_buf, last_latency
@@ -225,10 +223,10 @@ void RO6Coord::ro6_start_ro(TxnChopper *ch) {
 
     RococoProxy *proxy = comm()->vec_rpc_proxy_[server_id];
     Log::debug("send deptran RO start request, tid: %llx, pid: %llx",
-               cmd_id_,
+               cmd_->id_,
                header.pid);
     verify(input != nullptr);
-    Future::safe_release(proxy->async_rcc_ro_start_pie(header, *input, fuattr));
+    Future::safe_release(proxy->async_rcc_ro_start_pie(*subcmd, fuattr));
   }
 }
 
@@ -237,17 +235,17 @@ void RO6Coord::do_one(TxnRequest & req) {
   std::lock_guard<std::mutex> lock(this->mtx_);
 
   TxnChopper *ch = Frame().CreateChopper(req, txn_reg_);
-  cmd_id_ = this->next_txn_id();
+  cmd_->id_ = this->next_txn_id();
 
   Log::debug("do one request");
 
-  if (ccsi_) ccsi_->txn_start_one(thread_id_, ch->txn_type_);
+  if (ccsi_) ccsi_->txn_start_one(thread_id_, ch->type_);
 
   verify(!batch_optimal_);
 
   if (recorder_) {
     std::string log_s;
-    req.get_log(cmd_id_, log_s);
+    req.get_log(cmd_->id_, log_s);
     std::function<void(void)> start_func = [this, ch]() {
       if (ch->is_read_only()) ro6_start_ro(ch);
       else {

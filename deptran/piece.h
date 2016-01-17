@@ -25,8 +25,7 @@ txn_reg_->reg(txn, pie + I, iod, \
 [this, I] ( \
 Executor* exec, \
 DTxn *dtxn, \
-const RequestHeader &header, \
-map<int32_t, Value> &input, \
+SimpleCommand& cmd, \
 i32 *res, \
 map<int32_t, Value> &output) \
 {
@@ -37,8 +36,7 @@ map<int32_t, Value> &output) \
   txn_reg_->reg(txn, pie, iod, \
         [this] (Executor* exec, \
                 DTxn *dtxn, \
-                const RequestHeader &header, \
-                map<int32_t, Value> &input, \
+                SimpleCommand &cmd, \
                 i32 *res, \
                 map<int32_t, Value> &output)
 

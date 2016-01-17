@@ -19,11 +19,11 @@ namespace rococo {
 
 // TODO obsolete
 RequestHeader ThreePhaseCoordinator::gen_header(TxnChopper *ch) {
+//  verify(0);
   RequestHeader header;
-
   header.cid = coo_id_;
-  header.tid = cmd_id_;
-  header.t_type = ch->txn_type_;
+  header.tid = cmd_->id_;
+  header.t_type = ch->type_;
   return header;
 }
 
@@ -34,12 +34,13 @@ void ThreePhaseCoordinator::do_one(TxnRequest &req) {
   TxnChopper *ch = Frame().CreateChopper(req, txn_reg_);
   verify(txn_reg_ != nullptr);
   cmd_ = ch;
-  cmd_id_ = this->next_txn_id();
+  cmd_->root_id_ = this->next_txn_id();
+  cmd_->id_ = cmd_->root_id_;
   cleanup(); // In case of reuse.
 
-  Log::debug("do one request txn_id: %ld\n", cmd_id_);
+  Log::debug("do one request txn_id: %ld\n", cmd_->id_);
 
-  if (ccsi_) ccsi_->txn_start_one(thread_id_, ch->txn_type_);
+  if (ccsi_) ccsi_->txn_start_one(thread_id_, ch->type_);
 
   switch (mode_) {
     case MODE_OCC:
@@ -116,7 +117,7 @@ void ThreePhaseCoordinator::restart(TxnChopper *ch) {
 
   double last_latency = ch->last_attempt_latency();
 
-  if (ccsi_) ccsi_->txn_retry_one(this->thread_id_, ch->txn_type_, last_latency);
+  if (ccsi_) ccsi_->txn_retry_one(this->thread_id_, ch->type_, last_latency);
   Start();
 }
 
@@ -128,28 +129,26 @@ void ThreePhaseCoordinator::Start() {
     IncrementPhaseAndChangeStage(START);
   }
 
-  StartRequest req;
-  req.cmd_id = cmd_id_;
-  SimpleCommand *subcmd;
+//  StartRequest req;
+//  req.cmd_id = cmd_id_;
 
   auto phase = phase_;
   std::function<void(StartReply &)> callback = [this, phase](StartReply &reply) {
     this->StartAck(reply, phase);
     //delete reply.cmd;
   };
-
   int cnt = 0;
-  while ((subcmd = (SimpleCommand*)cmd_->GetNextSubCmd()) != nullptr) {
-    req.pie_id = next_pie_id();
+  while (cmd_->HasMoreSubCmdReadyNotOut()) {
+    auto subcmd = (SimpleCommand*)cmd_->GetNextSubCmd();
+    subcmd->id_ = next_pie_id();
+    verify(subcmd->root_id_ == cmd_->id_);
     n_start_++;
     cnt++;
     Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
-              n_start_, cmd_id_, subcmd->inn_id_, req.pie_id);
-    req.cmd = subcmd;
+              n_start_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
     start_ack_map_[subcmd->inn_id()] = false;
-    commo_->SendStart(subcmd->GetPar(), req, this, callback);
+    commo_->SendStart(*subcmd, this, callback);
   }
-
   Log_debug("sent %d SubCmds\n", cnt);
 }
 
@@ -171,10 +170,11 @@ void ThreePhaseCoordinator::StartAck(StartReply &reply, phase_t phase) {
   start_ack_map_[reply.cmd->inn_id_] = true;
 
   Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
-            n_start_ack_, n_start_, cmd_id_, reply.cmd->inn_id_);
+            n_start_ack_, n_start_, cmd_->id_, reply.cmd->inn_id_);
 
   if (reply.res == REJECT) {
-    Log::debug("got REJECT reply for cmd_id: %lx, inn_id: %d; NOT COMMITING", cmd_id_,reply.cmd->inn_id());
+    Log::debug("got REJECT reply for cmd_id: %lx, inn_id: %d; NOT COMMITING",
+               cmd_->id_,reply.cmd->inn_id());
     ch->commit_.store(false);
   }
   if (!ch->commit_.load()) {
@@ -184,13 +184,13 @@ void ThreePhaseCoordinator::StartAck(StartReply &reply, phase_t phase) {
     }
   } else {
     cmd_->Merge(*reply.cmd);
-    if (cmd_->HasMoreSubCmd()) {
+    if (cmd_->HasMoreSubCmdReadyNotOut()) {
       Log_debug("command has more sub-cmd, cmd_id: %lx,"
                     " n_started_: %d, n_pieces: %d",
-                cmd_id_, ch->n_pieces_out_, ch->GetNPieceAll());
+                cmd_->id_, ch->n_pieces_out_, ch->GetNPieceAll());
       Start();
     } else if (AllStartAckCollected()) {
-      Log_debug("receive all start acks, txn_id: %ld; START PREPARE", cmd_id_);
+      Log_debug("receive all start acks, txn_id: %ld; START PREPARE", cmd_->id_);
       Prepare();
     }
   }
@@ -256,11 +256,11 @@ void ThreePhaseCoordinator::PrepareAck(TxnChopper *ch, phase_t phase, Future *fu
 /** caller should be thread safe */
 void ThreePhaseCoordinator::Finish() {
   IncrementPhaseAndChangeStage(FINISH);
-  ___TestPhaseThree(cmd_id_);
+  ___TestPhaseThree(cmd_->id_);
   TxnChopper *ch = (TxnChopper *) cmd_;
   verify(mode_ == MODE_OCC || mode_ == MODE_2PL);
   n_finish_req_++;
-  Log_debug("send out finish request, cmd_id: %lx, %ld", cmd_id_, n_finish_req_);
+  Log_debug("send out finish request, cmd_id: %lx, %ld", cmd_->id_, n_finish_req_);
 
   // commit or abort piece
   auto phase = phase_;
@@ -273,14 +273,14 @@ void ThreePhaseCoordinator::Finish() {
     ch->reply_.res_ = SUCCESS;
     for (auto &rp : ch->partitions_) {
       Log_debug("send commit for txn_id %ld to %ld\n", header.tid, rp);
-      commo_->SendCommit(rp, cmd_id_, callback);
+      commo_->SendCommit(rp, cmd_->id_, callback);
       site_commit_[rp]++;
     }
   } else {
     ch->reply_.res_ = REJECT;
     for (auto &rp : ch->partitions_) {
       Log_debug("send abort for txn_id %ld to %ld\n", header.tid, rp);
-      commo_->SendAbort(rp, cmd_id_, callback);
+      commo_->SendAbort(rp, cmd_->id_, callback);
       site_abort_[rp]++;
     }
   }
@@ -297,8 +297,8 @@ void ThreePhaseCoordinator::FinishAck(TxnChopper *ch, phase_t phase, Future *fu)
     }
 
     n_finish_ack_++;
-    Log::debug("finish cmd_id_: %ld; n_finish_ack_: %ld; n_finish_req_: %ld",
-               cmd_id_, n_finish_ack_, n_finish_req_);
+    Log_debug("finish cmd_id_: %ld; n_finish_ack_: %ld; n_finish_req_: %ld",
+               cmd_->id_, n_finish_ack_, n_finish_req_);
     verify(ch->GetPars().size() == n_finish_req_);
     if (n_finish_ack_ == ch->GetPars().size()) {
       if ((ch->reply_.res_ == REJECT) && ch->can_retry()) {

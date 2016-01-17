@@ -6,12 +6,12 @@
 
 namespace rococo {
 
-PieceStatus::PieceStatus(const RequestHeader &header,
+PieceStatus::PieceStatus(const SimpleCommand& cmd,
                          rrr::DeferredReply *defer,
                          std::map <int32_t, mdb::Value> *output,
                          const std::function<int(void)> &wound_callback,
                          TPLExecutor *exec)
-    : pid_(header.pid),
+    : pid_(cmd.id_),
       num_waiting_(1),
       num_acquired_(0),
       rej_(false),
@@ -20,12 +20,12 @@ PieceStatus::PieceStatus(const RequestHeader &header,
       output_(output),
       finish_(false),
       rw_succ_(false),
-      rw_lock_group_(swap_bits(header.tid), wound_callback),
+      rw_lock_group_(swap_bits(cmd.root_id_), wound_callback),
       rm_succ_(false),
-      rm_lock_group_(swap_bits(header.tid), wound_callback),
+      rm_lock_group_(swap_bits(cmd.root_id_), wound_callback),
       is_rw_(false),
       exec_(exec) {
-  handler_ = exec_->txn_reg_->get(header).txn_handler;
+  handler_ = exec_->txn_reg_->get(cmd).txn_handler;
 }
 
 void PieceStatus::start_yes_callback() {

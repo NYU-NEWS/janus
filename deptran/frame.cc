@@ -214,6 +214,7 @@ TxnChopper* Frame::CreateChopper(TxnRequest &req, TxnRegistry* reg) {
   ch->txn_reg_ = reg;
   ch->sss_ = Config::GetConfig()->sharding_;
   ch->init(req);
+  verify(ch->n_pieces_input_ready_ > 0);
   return ch;
 }
 
@@ -302,20 +303,22 @@ TxnGenerator * Frame::CreateTxnGenerator() {
 }
 
 
-  vector<rrr::Service *> Frame::CreateRpcServices(Config *config, Scheduler *dtxn_mgr, rrr::PollMgr *poll_mgr,
-                                                  ServerControlServiceImpl *scsi) {
-    auto result = std::vector<Service *>();
-    switch(config->get_mode()) {
-      case MODE_MDCC:
+vector<rrr::Service *> Frame::CreateRpcServices(Config *config,
+                                                Scheduler *dtxn_mgr,
+                                                rrr::PollMgr *poll_mgr,
+                                                ServerControlServiceImpl *scsi) {
+  auto result = std::vector<Service *>();
+  switch(config->get_mode()) {
+    case MODE_MDCC:
 //        result.push_back(new mdcc::MdccClientService());
 //        result.push_back(new mdcc::MdccAcceptorService());
 //        result.push_back(new mdcc::MdccLearnerService());
 //        result.push_back(new mdcc::MdccLeaderService());
-        break;
-      default:
-        result.push_back(new RococoServiceImpl(dtxn_mgr, poll_mgr, scsi));
-        break;
-    }
-    return result;
+      break;
+    default:
+      result.push_back(new RococoServiceImpl(dtxn_mgr, poll_mgr, scsi));
+      break;
   }
+  return result;
+}
 } // namespace rococo;

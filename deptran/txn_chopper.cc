@@ -22,9 +22,8 @@ set<parid_t> TxnChopper::GetPars() {
 
 
 Command *TxnChopper::GetNextSubCmd() {
-  if (n_pieces_out_ == GetNPieceAll()) {
-    return nullptr;
-  }
+  verify(n_pieces_out_ < n_pieces_input_ready_);
+  verify(n_pieces_out_ < n_pieces_all_);
   SimpleCommand *cmd = nullptr;
 
   auto sz = status_.size();
@@ -40,6 +39,8 @@ Command *TxnChopper::GetNextSubCmd() {
       cmd->inn_id_ = pi;
       cmd->par_id = sharding_[pi];
       cmd->type_ = pi;
+      cmd->root_id_ = id_;
+      cmd->root_type_ = type_;
       cmd->input = inputs_[pi];
       cmd->output_size = output_size_[pi];
       cmd->root_ = this;
@@ -54,11 +55,15 @@ Command *TxnChopper::GetNextSubCmd() {
       status_[pi] = ONGOING;
 
       verify(cmd->type_ != 0);
+      verify(type_ == type());
+      verify(cmd->root_type_ == type());
+      verify(cmd->root_type_ > 0);
       n_pieces_out_++;
       return cmd;
     }
   }
 
+  verify(cmd);
   return cmd;
 }
 
@@ -73,18 +78,28 @@ int TxnChopper::next_piece(
 
 
 void TxnChopper::Merge(Command &cmd) {
+  n_pieces_replied_++;
+  verify(n_pieces_all_ >= n_pieces_input_ready_);
+  verify(n_pieces_input_ready_ >= n_pieces_out_);
+  verify(n_pieces_out_ >= n_pieces_replied_);
   auto simple_cmd = (SimpleCommand *) &cmd;
   auto pi = cmd.inn_id();
   auto &output = simple_cmd->output;
   this->start_callback(pi, SUCCESS, output);
 }
 
-bool TxnChopper::HasMoreSubCmd() {
-
-  if (GetNPieceAll() == n_pieces_out_)
+bool TxnChopper::HasMoreSubCmdReadyNotOut() {
+  verify(n_pieces_all_ >= n_pieces_input_ready_);
+  verify(n_pieces_input_ready_ >= n_pieces_out_);
+  verify(n_pieces_out_ >= n_pieces_replied_);
+  if (n_pieces_input_ready_ == n_pieces_out_) {
+    verify(n_pieces_all_ == n_pieces_out_ ||
+           n_pieces_replied_ < n_pieces_out_);
     return false;
-  else
+  } else {
+    verify(n_pieces_input_ready_ > n_pieces_out_);
     return true;
+  }
 }
 
 bool TxnChopper::start_callback(int pi,
@@ -161,7 +176,7 @@ TxnReply &TxnChopper::get_reply() {
   struct timespec t_buf;
   clock_gettime(&t_buf);
   reply_.time_ = timespec2ms(t_buf) - timespec2ms(start_time_);
-  reply_.txn_type_ = (int32_t) txn_type_;
+  reply_.txn_type_ = (int32_t) type_;
   return reply_;
 }
 

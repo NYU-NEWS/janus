@@ -7,7 +7,7 @@ MicroBenchChopper::MicroBenchChopper() {
 
 void MicroBenchChopper::init_W(TxnRequest &req) {
   verify(req.txn_type_ == MICRO_BENCH_W);
-  txn_type_ = MICRO_BENCH_W;
+  type_ = MICRO_BENCH_W;
   inputs_.clear();
   inputs_[0] = {
       {0, req.input_[0]},
@@ -78,7 +78,7 @@ void MicroBenchChopper::init(TxnRequest &req) {
 
 void MicroBenchChopper::init_R(TxnRequest &req) {
   verify(req.txn_type_ == MICRO_BENCH_R);
-  txn_type_ = MICRO_BENCH_R;
+  type_ = MICRO_BENCH_R;
   inputs_[0] = {{0, req.input_[0]}};
   inputs_[1] = {{1, req.input_[1]}};
   inputs_[2] = {{2, req.input_[2]}};

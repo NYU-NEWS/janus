@@ -11,16 +11,12 @@ namespace rococo {
 ThreePhaseExecutor::~ThreePhaseExecutor() {
 }
 
-int ThreePhaseExecutor::StartLaunch(
-    const RequestHeader &header,
-    const map<int32_t, Value> &input,
-    const rrr::i32 &output_size,
-    rrr::i32 *res,
-    map<int32_t, Value> &output,
-    rrr::DeferredReply *defer) {
+int ThreePhaseExecutor::StartLaunch(const SimpleCommand &cmd,
+                                    rrr::i32 *res,
+                                    map<int32_t, Value> &output,
+                                    rrr::DeferredReply *defer) {
   verify(0);
 }
-
 
 int ThreePhaseExecutor::prepare_launch(
     const std::vector<i32> &sids,
@@ -98,32 +94,26 @@ int ThreePhaseExecutor::commit() {
   verify(0);
 }
 
-void ThreePhaseExecutor::execute(const RequestHeader &header,
-                                 const map<int32_t, Value> &input,
+void ThreePhaseExecutor::execute(const SimpleCommand &cmd,
                                  rrr::i32 *res,
                                  map<int32_t, Value> &output,
                                  rrr::i32 *output_size) {
-  txn_reg_->get(header).txn_handler(this,
-                                    dtxn_,
-                                    header,
-                                    const_cast<map<int32_t, Value>&>(input),
-                                    res,
-                                    output);
+  txn_reg_->get(cmd).txn_handler(this,
+                                 dtxn_,
+                                 const_cast<SimpleCommand&>(cmd),
+                                 res,
+                                 output);
 }
 
-void ThreePhaseExecutor::execute(
-    const RequestHeader &header,
-    const map<int32_t, Value> &input,
-    rrr::i32 *res,
-    map<int32_t, Value> &output
-) {
+void ThreePhaseExecutor::execute(const SimpleCommand &cmd,
+                                 rrr::i32 *res,
+                                 map<int32_t, Value> &output) {
   rrr::i32 output_size = 0;
-  txn_reg_->get(header).txn_handler(this,
-                                    dtxn_,
-                                    header,
-                                    const_cast<map<int32_t, Value>&>(input),
-                                    res,
-                                    output);
+  txn_reg_->get(cmd).txn_handler(this,
+                                 dtxn_,
+                                 const_cast<SimpleCommand&>(cmd),
+                                 res,
+                                 output);
 }
 
 } // namespace rococo;

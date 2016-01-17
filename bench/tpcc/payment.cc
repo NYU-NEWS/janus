@@ -30,6 +30,9 @@ void TpccChopper::PaymentInit(TxnRequest &req) {
   // piece 2, W district
   output_size_[TPCC_PAYMENT_2] = 0;
 
+  n_pieces_input_ready_ = 0;
+  n_pieces_replied_ = 0;
+  n_pieces_out_ = 0;
   // query by c_last
   if (ws_.find(TPCC_VAR_C_LAST) != ws_.end()) {
     Log_debug("payment transaction lookup by customer name");
@@ -44,7 +47,9 @@ void TpccChopper::PaymentInit(TxnRequest &req) {
     // piece 3, R customer, set it to finish
     status_[TPCC_PAYMENT_3] = FINISHED;
     // piece 4, set it to ready
-    n_pieces_out_ = 1;
+    n_pieces_input_ready_++;
+    n_pieces_out_++;
+    n_pieces_replied_++;
   }
 
   // piece 4, R & W customer
@@ -62,8 +67,14 @@ void TpccChopper::payment_retry() {
   status_[TPCC_PAYMENT_4] = WAITING;
   status_[TPCC_PAYMENT_5] = WAITING;
 
+  n_pieces_input_ready_ = 0;
+  n_pieces_replied_ = 0;
+  n_pieces_out_ = 0;
   if (ws_.find(TPCC_VAR_C_LAST) != ws_.end()) {
   } else {
+    n_pieces_input_ready_++;
+    n_pieces_out_++;
+    n_pieces_replied_++;
     status_[TPCC_PAYMENT_3] = FINISHED;
   }
   CheckReady();
@@ -75,11 +86,11 @@ void TpccPiece::reg_payment() {
   INPUT_PIE(TPCC_PAYMENT, TPCC_PAYMENT_0, TPCC_VAR_W_ID, TPCC_VAR_H_AMOUNT)
   SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_0, TPCC_TB_WAREHOUSE, TPCC_VAR_W_ID);
   BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_0, DF_NO) {
-    verify(input.size() == 2);
+//    verify(input.size() == 2);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_0);
     i32 oi = 0;
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_WAREHOUSE),
-                              input[TPCC_VAR_W_ID].get_blob(),
+                              cmd.input[TPCC_VAR_W_ID].get_blob(),
                               ROW_WAREHOUSE);
     // R warehouse
     dtxn->ReadColumn(r,
@@ -107,12 +118,12 @@ void TpccPiece::reg_payment() {
   INPUT_PIE(TPCC_PAYMENT, TPCC_PAYMENT_1, TPCC_VAR_W_ID, TPCC_VAR_D_ID)
   SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_1, TPCC_TB_DISTRICT, TPCC_VAR_W_ID);
   BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_1, DF_NO) {
-    verify(input.size() == 2);
+//    verify(input.size() == 2);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_1);
     Value buf;
     mdb::MultiBlob mb(2);
-    mb[0] = input[TPCC_VAR_D_ID].get_blob();
-    mb[1] = input[TPCC_VAR_W_ID].get_blob();
+    mb[0] = cmd.input[TPCC_VAR_D_ID].get_blob();
+    mb[1] = cmd.input[TPCC_VAR_W_ID].get_blob();
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT),
                               mb,
                               ROW_DISTRICT);
@@ -144,20 +155,20 @@ void TpccPiece::reg_payment() {
             TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_H_AMOUNT)
   SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_2, TPCC_TB_DISTRICT, TPCC_VAR_W_ID);
   BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_2, DF_REAL) {
-    verify(input.size() == 3);
+    verify(cmd.input.size() == 3);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_2);
 
     Value buf(0.0);
     mdb::Row *r = NULL;
     mdb::MultiBlob mb(2);
     //cell_locator_t cl(TPCC_TB_DISTRICT, 2);
-    mb[0] = input[TPCC_VAR_D_ID].get_blob();
-    mb[1] = input[TPCC_VAR_W_ID].get_blob();
+    mb[0] = cmd.input[TPCC_VAR_D_ID].get_blob();
+    mb[1] = cmd.input[TPCC_VAR_W_ID].get_blob();
     r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT), mb, ROW_DISTRICT_TEMP);
     verify(r->schema_ != nullptr);
     dtxn->ReadColumn(r, TPCC_COL_DISTRICT_D_YTD, &buf, TXN_BYPASS);
     // W district
-    buf.set_double(buf.get_double() + input[TPCC_VAR_H_AMOUNT].get_double());
+    buf.set_double(buf.get_double() + cmd.input[TPCC_VAR_H_AMOUNT].get_double());
     dtxn->WriteColumn(r, TPCC_COL_DISTRICT_D_YTD, buf, TXN_DEFERRED);
     *res = SUCCESS;
   } END_PIE
@@ -167,21 +178,21 @@ void TpccPiece::reg_payment() {
             TPCC_VAR_C_W_ID, TPCC_VAR_C_D_ID, TPCC_VAR_C_LAST)
   SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_3, TPCC_TB_CUSTOMER, TPCC_VAR_C_W_ID);
   BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_3, DF_NO) {
-    verify(input.size() == 3);
+    verify(cmd.input.size() == 3);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_3);
 
     mdb::MultiBlob mbl(3), mbh(3);
-    mbl[0] = input[TPCC_VAR_C_D_ID].get_blob();
-    mbh[0] = input[TPCC_VAR_C_D_ID].get_blob();
-    mbl[1] = input[TPCC_VAR_C_W_ID].get_blob();
-    mbh[1] = input[TPCC_VAR_C_W_ID].get_blob();
+    mbl[0] = cmd.input[TPCC_VAR_C_D_ID].get_blob();
+    mbh[0] = cmd.input[TPCC_VAR_C_D_ID].get_blob();
+    mbl[1] = cmd.input[TPCC_VAR_C_W_ID].get_blob();
+    mbh[1] = cmd.input[TPCC_VAR_C_W_ID].get_blob();
     Value c_id_low(std::numeric_limits<i32>::min());
     Value c_id_high(std::numeric_limits<i32>::max());
     mbl[2] = c_id_low.get_blob();
     mbh[2] = c_id_high.get_blob();
 
-    c_last_id_t key_low(input[TPCC_VAR_C_LAST].get_str(), mbl, &C_LAST_SCHEMA);
-    c_last_id_t key_high(input[TPCC_VAR_C_LAST].get_str(), mbh, &C_LAST_SCHEMA);
+    c_last_id_t key_low(cmd.input[TPCC_VAR_C_LAST].get_str(), mbl, &C_LAST_SCHEMA);
+    c_last_id_t key_high(cmd.input[TPCC_VAR_C_LAST].get_str(), mbh, &C_LAST_SCHEMA);
     std::multimap<c_last_id_t, rrr::i32>::iterator it, it_low, it_high, it_mid;
     bool inc = false, mid_set = false;
     it_low = C_LAST2ID.lower_bound(key_low);
@@ -201,9 +212,9 @@ void TpccPiece::reg_payment() {
       }
     }
     Log_debug("w_id: %d, d_id: %d, c_last: %s, num customer: %d",
-              input[TPCC_VAR_C_W_ID].get_i32(),
-              input[TPCC_VAR_C_D_ID].get_i32(),
-              input[TPCC_VAR_C_LAST].get_str().c_str(),
+              cmd.input[TPCC_VAR_C_W_ID].get_i32(),
+              cmd.input[TPCC_VAR_C_D_ID].get_i32(),
+              cmd.input[TPCC_VAR_C_LAST].get_str().c_str(),
               n_c);
     verify(mid_set);
     output[TPCC_VAR_C_ID] = Value(it_mid->second);
@@ -217,18 +228,18 @@ void TpccPiece::reg_payment() {
             TPCC_VAR_C_ID, TPCC_VAR_C_W_ID, TPCC_VAR_C_D_ID)
   SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_4, TPCC_TB_CUSTOMER, TPCC_VAR_C_W_ID);
   BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_4, DF_REAL) {
-    verify(input.size() == 6);
+    verify(cmd.input.size() == 6);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_4);
     mdb::Row *r = NULL;
     mdb::MultiBlob mb(3);
     //cell_locator_t cl(TPCC_TB_CUSTOMER, 3);
-    mb[0] = input[TPCC_VAR_C_ID].get_blob();
-    mb[1] = input[TPCC_VAR_C_D_ID].get_blob();
-    mb[2] = input[TPCC_VAR_C_W_ID].get_blob();
+    mb[0] = cmd.input[TPCC_VAR_C_ID].get_blob();
+    mb[1] = cmd.input[TPCC_VAR_C_D_ID].get_blob();
+    mb[2] = cmd.input[TPCC_VAR_C_W_ID].get_blob();
     // R customer
     r = dtxn->Query(dtxn->GetTable(TPCC_TB_CUSTOMER), mb, ROW_CUSTOMER);
     ALock::type_t lock_20_type = ALock::RLOCK;
-    if (input[TPCC_VAR_C_ID].get_i32() % 10 == 0)
+    if (cmd.input[TPCC_VAR_C_ID].get_i32() % 10 == 0)
         lock_20_type = ALock::WLOCK;
 
     vector<Value> buf({
@@ -257,14 +268,14 @@ void TpccPiece::reg_payment() {
 
     // if c_credit == "BC" (bad) 10%
     // here we use c_id to pick up 10% instead of c_credit
-    if (input[TPCC_VAR_C_ID].get_i32() % 10 == 0) {
+    if (cmd.input[TPCC_VAR_C_ID].get_i32() % 10 == 0) {
       Value c_data((
-              to_string(input[TPCC_VAR_C_ID])
-                      + to_string(input[TPCC_VAR_C_D_ID])
-                      + to_string(input[TPCC_VAR_C_W_ID])
-                      + to_string(input[TPCC_VAR_D_ID])
-                      + to_string(input[TPCC_VAR_W_ID])
-                      + to_string(input[TPCC_VAR_H_AMOUNT])
+              to_string(cmd.input[TPCC_VAR_C_ID])
+                      + to_string(cmd.input[TPCC_VAR_C_D_ID])
+                      + to_string(cmd.input[TPCC_VAR_C_W_ID])
+                      + to_string(cmd.input[TPCC_VAR_D_ID])
+                      + to_string(cmd.input[TPCC_VAR_W_ID])
+                      + to_string(cmd.input[TPCC_VAR_H_AMOUNT])
                       + buf[15].get_str()
       ).substr(0, 500));
       std::vector<mdb::column_id_t> col_ids = {
@@ -273,8 +284,8 @@ void TpccPiece::reg_payment() {
           TPCC_COL_CUSTOMER_C_DATA
       };
       std::vector<Value> col_data({
-              Value(buf[13].get_double() - input[TPCC_VAR_H_AMOUNT].get_double()),
-              Value(buf[14].get_double() + input[TPCC_VAR_H_AMOUNT].get_double()),
+              Value(buf[13].get_double() - cmd.input[TPCC_VAR_H_AMOUNT].get_double()),
+              Value(buf[14].get_double() + cmd.input[TPCC_VAR_H_AMOUNT].get_double()),
               c_data
       });
       dtxn->WriteColumns(r, col_ids, col_data);
@@ -284,13 +295,13 @@ void TpccPiece::reg_payment() {
               TPCC_COL_CUSTOMER_C_YTD_PAYMENT
       });
       std::vector<Value> col_data({
-              Value(buf[13].get_double() - input[TPCC_VAR_H_AMOUNT].get_double()),
-              Value(buf[14].get_double() + input[TPCC_VAR_H_AMOUNT].get_double())
+              Value(buf[13].get_double() - cmd.input[TPCC_VAR_H_AMOUNT].get_double()),
+              Value(buf[14].get_double() + cmd.input[TPCC_VAR_H_AMOUNT].get_double())
       });
       dtxn->WriteColumns(r, col_ids, col_data);
     }
 
-    output[TPCC_VAR_C_ID] =     input[TPCC_VAR_D_ID];
+    output[TPCC_VAR_C_ID] =     cmd.input[TPCC_VAR_D_ID];
     output[TPCC_VAR_C_FIRST] =  buf[0];
     output[TPCC_VAR_C_MIDDLE] = buf[1];
     output[TPCC_VAR_C_LAST] =   buf[2];
@@ -305,7 +316,7 @@ void TpccPiece::reg_payment() {
     output[TPCC_VAR_C_CREDIT_LIM] = buf[11];
     output[TPCC_VAR_C_DISCOUNT] =   buf[12];
     output[TPCC_VAR_C_BALANCE] = Value(buf[13].get_double() -
-        input[TPCC_VAR_H_AMOUNT].get_double());
+        cmd.input[TPCC_VAR_H_AMOUNT].get_double());
     *res = SUCCESS;
   } END_PIE
 
@@ -315,7 +326,7 @@ void TpccPiece::reg_payment() {
             TPCC_VAR_H_KEY, TPCC_VAR_H_AMOUNT)
   SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_5, TPCC_TB_HISTORY, TPCC_VAR_H_KEY);
   BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_5, DF_REAL) {
-    verify(input.size() == 9);
+    verify(cmd.input.size() == 9);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_5);
 
     mdb::Txn *txn = dtxn->mdb_txn_;
@@ -325,17 +336,17 @@ void TpccPiece::reg_payment() {
     mdb::Row *r = NULL;
 
     std::vector<Value> row_data(9);
-    row_data[0] = input[TPCC_VAR_H_KEY];              // h_key
-    row_data[1] = input[TPCC_VAR_C_ID];               // h_c_id   =>  c_id
-    row_data[2] = input[TPCC_VAR_C_D_ID];             // h_c_d_id =>  c_d_id
-    row_data[3] = input[TPCC_VAR_C_W_ID];             // h_c_w_id =>  c_w_id
-    row_data[4] = input[TPCC_VAR_D_ID];             // h_d_id   =>  d_id
-    row_data[5] = input[TPCC_VAR_W_ID];               // h_d_w_id =>  d_w_id
+    row_data[0] = cmd.input[TPCC_VAR_H_KEY];              // h_key
+    row_data[1] = cmd.input[TPCC_VAR_C_ID];               // h_c_id   =>  c_id
+    row_data[2] = cmd.input[TPCC_VAR_C_D_ID];             // h_c_d_id =>  c_d_id
+    row_data[3] = cmd.input[TPCC_VAR_C_W_ID];             // h_c_w_id =>  c_w_id
+    row_data[4] = cmd.input[TPCC_VAR_D_ID];             // h_d_id   =>  d_id
+    row_data[5] = cmd.input[TPCC_VAR_W_ID];               // h_d_w_id =>  d_w_id
     row_data[6] = Value(std::to_string(time(NULL)));  // h_date
-    row_data[7] = input[TPCC_VAR_H_AMOUNT];           // h_amount =>  h_amount
-    row_data[8] = Value(input[TPCC_VAR_W_NAME].get_str() +
+    row_data[7] = cmd.input[TPCC_VAR_H_AMOUNT];           // h_amount =>  h_amount
+    row_data[8] = Value(cmd.input[TPCC_VAR_W_NAME].get_str() +
                         "    " +
-                        input[TPCC_VAR_D_NAME].get_str()); // d_data => w_name + 4spaces + d_name
+                        cmd.input[TPCC_VAR_D_NAME].get_str()); // d_data => w_name + 4spaces + d_name
 
     CREATE_ROW(tbl->schema(), row_data);
 

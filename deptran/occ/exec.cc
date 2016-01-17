@@ -7,15 +7,11 @@
 
 namespace rococo {
 
-int OCCExecutor::StartLaunch(
-    const RequestHeader &header,
-    const map<int32_t, Value> &input,
-    const rrr::i32 &output_size,
-    rrr::i32 *res,
-    map<int32_t, Value> &output,
-    rrr::DeferredReply *defer) {
-
-  this->execute(header, input, res, output);
+int OCCExecutor::StartLaunch(const SimpleCommand& cmd,
+                             rrr::i32 *res,
+                             map<int32_t, Value> &output,
+                             rrr::DeferredReply *defer) {
+  this->execute(cmd, res, output);
   defer->reply();
 
   return 0;

@@ -12,13 +12,10 @@ class Coordinator;
 
 class ThreePhaseCommunicator {
  public:
-  virtual void SendStart(groupid_t gid,
-                         RequestHeader &header,
-                         map<int32_t, Value> &input,
+  virtual void SendStart(SimpleCommand& cmd,
                          int32_t output_size,
                          std::function<void(Future *)> &callback) = 0;
-  virtual void SendStart(parid_t par_id,
-                         StartRequest &req,
+  virtual void SendStart(SimpleCommand& cmd,
                          Coordinator *coo,
                          std::function<void(rococo::StartReply&)> &callback) = 0;
   virtual void SendPrepare(parid_t gid,

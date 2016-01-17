@@ -4,6 +4,8 @@
 #include "marshal-value.h"
 #include "rcc/graph.h"
 #include "rcc/graph_marshaler.h"
+#include "command.h"
+#include "command_marshaler.h"
 #include "rcc_rpc.h"
 #include "rcc_service.h"
 #include "sharding.h"

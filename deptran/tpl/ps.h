@@ -50,7 +50,7 @@ class PieceStatus {
 
  public:
 
-  PieceStatus(const RequestHeader &header,
+  PieceStatus(const SimpleCommand& cmd,
               rrr::DeferredReply *defer,
               std::map <int32_t, mdb::Value> *output,
               const std::function<int(void)> &wound_callback,

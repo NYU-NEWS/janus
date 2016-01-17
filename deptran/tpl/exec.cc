@@ -9,13 +9,10 @@
 #include "tpl.h"
 
 namespace rococo {
-int TPLExecutor::StartLaunch(
-    const RequestHeader &header,
-    const map<int32_t, Value> &input,
-    const rrr::i32 &output_size,
-    rrr::i32 *res,
-    map<int32_t, Value> *output,
-    rrr::DeferredReply *defer) {
+int TPLExecutor::StartLaunch(const SimpleCommand& cmd,
+                             rrr::i32 *res,
+                             map<int32_t, Value> *output,
+                             rrr::DeferredReply *defer) {
   verify(mdb_txn_ != nullptr);
   verify(mdb_txn_->rtti() == mdb::symbol_t::TXN_2PL);
   verify(phase_ <= 1);
@@ -28,13 +25,11 @@ int TPLExecutor::StartLaunch(
     *res = REJECT;
     defer->reply();
   } else {
-    InitPieceStatus(header,
-                    defer,
-                    output);
+    InitPieceStatus(cmd, defer, output);
 
     Log_debug("get txn handler and start reg lock, txn_id: %lx, pie_id: %lx",
-              header.tid, header.pid);
-    auto entry = txn_reg_->get(header);
+              cmd.root_id_, cmd.id_);
+    auto entry = txn_reg_->get(cmd);
     map<int32_t, Value> no_use;
 
 
@@ -45,20 +40,19 @@ int TPLExecutor::StartLaunch(
     dtxn->locking_ = true;
     entry.txn_handler(this,
                       dtxn_,
-                      header,
-                      const_cast<map<int32_t, Value>&>(input),
+                      const_cast<SimpleCommand&>(cmd),
                       res,
                       no_use/*output*/);
     // try to require all the locks.
     dtxn->locking_ = false;
-    PieceStatus *ps = get_piece_status(header.pid);
+    PieceStatus *ps = get_piece_status(cmd.id_);
     verify(ps_cache_ == ps);
-    auto succ_callback = get_2pl_succ_callback(header, input, res, ps);
+    auto succ_callback = get_2pl_succ_callback(cmd, res, ps);
     if (dtxn->locks_.size() > 0) {
-      auto fail_callback = get_2pl_fail_callback(header, res, ps);
+      auto fail_callback = get_2pl_fail_callback(cmd, res, ps);
       ps->reg_rw_lock(dtxn->locks_, succ_callback, fail_callback);
     } else if (dtxn->row_lock_ != nullptr) {
-      auto fail_callback = get_2pl_fail_callback(header, res, ps);
+      auto fail_callback = get_2pl_fail_callback(cmd, res, ps);
       ps->reg_rm_lock(dtxn->row_lock_, succ_callback, fail_callback);
     } else {
       succ_callback();
@@ -73,18 +67,17 @@ int TPLExecutor::StartLaunch(
 //}
 
 std::function<void(void)> TPLExecutor::get_2pl_succ_callback(
-    const RequestHeader &header,
-    const map<int32_t, Value> &input,
+    const SimpleCommand& cmd,
     rrr::i32 *res,
     PieceStatus *ps) {
-  return [header, input, res, ps, this]() {
+  return [&cmd, res, ps, this]() {
     Log_debug("lock acquired call back, txn_id: %lx, pie_id: %lx, p_type: %d, ",
-              header.tid, header.pid, header.p_type);
+              cmd.root_id_, cmd.id_, cmd.type_);
     Log_debug("succ 1 callback: PS: %p", ps);
     verify(ps != NULL);
     ps->start_yes_callback();
     Log_debug("tid: %lx, pid: %lx, p_type: %d, get lock",
-              header.tid, header.pid, header.p_type);
+              cmd.root_id_, cmd.id_, cmd.type_);
     Log::debug("proceed");
     ((TPLDTxn*)dtxn_)->locking_ = false;
     if (ps->is_rejected()) {
@@ -97,13 +90,11 @@ std::function<void(void)> TPLExecutor::get_2pl_succ_callback(
       rrr::i32 *output_size;
       ps->get_output(&output, &output_value, &output_size);
       output->clear();
-      txn_reg_->get(header).txn_handler(this,
-                                        dtxn_,
-                                        header,
-                                        const_cast<map<int32_t, Value>&>
-                                        (input),
-                                        res,
-                                        *output);
+      txn_reg_->get(cmd).txn_handler(this,
+                                     dtxn_,
+                                     const_cast<SimpleCommand&>(cmd),
+                                     res,
+                                     *output);
       verify(*res == SUCCESS);
       // ____debug purpose
       for (auto &kv : *output) {
@@ -113,25 +104,25 @@ std::function<void(void)> TPLExecutor::get_2pl_succ_callback(
                    || k == Value::STR || k == Value::DOUBLE) {
 
         } else {
-          Log_fatal("xxx: %d", header.p_type);
+          Log_fatal("xxx: %d", cmd.type_);
           verify(0);
         }
       }
     }
 
-    Log_debug("set finish on tid %ld\n", header.tid);
+    Log_debug("set finish on tid %ld\n", cmd.root_id_);
     ps->set_finish();
     ps->defer_->reply();
   };
 }
 
 std::function<void(void)> TPLExecutor::get_2pl_fail_callback(
-    const RequestHeader &header,
+    const SimpleCommand& cmd,
     rrr::i32 *res,
     PieceStatus *ps) {
-  return [header, res, ps, this]() {
+  return [cmd, res, ps, this]() {
     Log_debug("tid: %ld, pid: %ld, p_type: %d, lock timeout call back",
-              header.tid, header.pid, header.p_type);
+              cmd.root_id_, cmd.id_, cmd.type_);
     //PieceStatus *ps = TPL::get_piece_status(header);
     Log::debug("fail callback: PS: %p", ps);
     verify(ps != NULL); //FIXME
@@ -219,12 +210,12 @@ PieceStatus* TPLExecutor::get_piece_status(i64 pid) {
   return ps;
 }
 
-void TPLExecutor::InitPieceStatus(const RequestHeader &header,
+void TPLExecutor::InitPieceStatus(const SimpleCommand &cmd,
                                   rrr::DeferredReply* defer,
                                   std::map<int32_t, Value> *output) {
 
-  auto tid = header.tid;
-  auto pid = header.pid;
+  auto tid = cmd.root_id_;
+  auto pid = cmd.id_;
   std::function<int(void)> wound_callback =
       [this, tid, pid]() -> int {
         if (this->prepared_) {
@@ -236,7 +227,7 @@ void TPLExecutor::InitPieceStatus(const RequestHeader &header,
         }
       };
   PieceStatus *ps =
-      new PieceStatus(header,
+      new PieceStatus(cmd,
                       defer,
                       output,
 //                      &this->wounded_,

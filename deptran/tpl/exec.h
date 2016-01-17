@@ -20,15 +20,13 @@ class TPLExecutor: public ThreePhaseExecutor {
   void SetPsCache(PieceStatus*);
   PieceStatus *get_piece_status(i64 pid);
   void release_piece_map(bool commit);
-  void InitPieceStatus(const RequestHeader &header,
+  void InitPieceStatus(const SimpleCommand &cmd,
                        rrr::DeferredReply *defer,
                        std::map<int32_t, Value> *output);
 
   virtual ~TPLExecutor(){};
 
-  virtual int StartLaunch(const RequestHeader &header,
-                          const map<int32_t, Value> &input,
-                          const rrr::i32 &output_size,
+  virtual int StartLaunch(const SimpleCommand &cmd,
                           rrr::i32 *res,
                           map<int32_t, Value> *output,
                           rrr::DeferredReply *defer);
@@ -36,14 +34,13 @@ class TPLExecutor: public ThreePhaseExecutor {
   // Below are merged from TxnRegistry.
 
   std::function<void(void)> get_2pl_fail_callback(
-      const RequestHeader &header,
+      const SimpleCommand& cmd,
       rrr::i32 *res,
       PieceStatus *ps
   );
 
   std::function<void(void)> get_2pl_succ_callback(
-      const RequestHeader &req,
-      const map<int32_t, Value> &input,
+      const SimpleCommand& cmd,
       rrr::i32 *res,
       PieceStatus *ps
   );

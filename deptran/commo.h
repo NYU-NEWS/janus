@@ -4,6 +4,8 @@
 #include "constants.h"
 #include "rcc/graph.h"
 #include "rcc/graph_marshaler.h"
+#include "command.h"
+#include "command_marshaler.h"
 #include "rcc_rpc.h"
 #include "msg.h"
 #include "deptran/three_phase/communicator.h"
@@ -21,13 +23,10 @@ class RococoCommunicator : public ThreePhaseCommunicator {
 
   RococoCommunicator(std::vector<std::string> &addrs);
 
-  void SendStart(groupid_t gid,
-                 RequestHeader &header,
-                 map<int32_t, Value> &input,
+  void SendStart(SimpleCommand& cmd,
                  int32_t output_size,
                  std::function<void(Future *fu)> &callback) override;
-  void SendStart(parid_t par_id,
-                 StartRequest &req,
+  void SendStart(SimpleCommand& cmd,
                  Coordinator *coo,
                  std::function<void(StartReply&)> &callback) override;
   void SendPrepare(parid_t gid,

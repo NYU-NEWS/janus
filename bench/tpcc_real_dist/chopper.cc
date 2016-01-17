@@ -15,7 +15,7 @@ void TpccRealDistChopper::new_order_shard(const char *tb, const std::vector<Valu
         // based on d_id && w_id
         mv = MultiValue(std::vector<Value>({input[1], input[0]}));
     else if (tb == TPCC_TB_WAREHOUSE) {
-        // use the same server as district
+        // use the same server as districti
         tb = TPCC_TB_DISTRICT;
         mv = MultiValue(std::vector<Value>({input[1], input[0]}));
     }

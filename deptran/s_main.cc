@@ -62,7 +62,8 @@ void server_launch_worker() {
   svr_workers.resize(site_infos.size(), ServerWorker());
   int i=0;
   for (auto& site_info : site_infos) {
-    Log_info("launching site: %x, bind address %s", site_info.id, site_info.GetBindAddress().c_str());
+    Log_info("launching site: %x, bind address %s", site_info.id,
+             site_info.GetBindAddress().c_str());
     auto& worker = svr_workers[i++];
     worker.sharding_ = Frame().CreateSharding(Config::GetConfig()->sharding_);
     worker.sharding_->BuildTableInfoPtr();

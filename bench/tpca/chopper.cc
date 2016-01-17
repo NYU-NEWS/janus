@@ -6,7 +6,7 @@ namespace rococo {
 
 void TpcaPaymentChopper::init(TxnRequest &req) {
   verify(req.txn_type_ == TPCA_PAYMENT);
-  txn_type_ = TPCA_PAYMENT;
+  type_ = TPCA_PAYMENT;
 
   Value& cus = req.input_[0];
   Value& tel = req.input_[1];

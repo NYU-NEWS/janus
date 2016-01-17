@@ -59,10 +59,10 @@ namespace rococo {
 #define ROW_WAREHOUSE         __LINE__
 #define ROW_CUSTOMER          __LINE__
 #define ROW_ORDER             __LINE__
-#define ROW_ORDER_SEC         (header.pid)
-#define ROW_ITEM              (header.pid)
-#define ROW_STOCK             (header.pid)
-#define ROW_STOCK_TEMP        (header.pid)
+#define ROW_ORDER_SEC         (cmd.id_)
+#define ROW_ITEM              (cmd.id_)
+#define ROW_STOCK             (cmd.id_)
+#define ROW_STOCK_TEMP        (cmd.id_)
 
 #define TPCC_COL_WAREHOUSE_W_NAME              (1)
 #define TPCC_COL_WAREHOUSE_W_STREET_1          (2)
@@ -181,13 +181,11 @@ namespace rococo {
 #define TPCC_VAR_C_FIRST                       (1051)
 #define TPCC_VAR_C_MIDDLE                      (1052)
 #define TPCC_VAR_C_ID_LAST                     (1053)
-
-#define TPCC_VAR_THRESHOLD  (1060)
-#define TPCC_VAR_UNKOWN (1061)
-#define TPCC_VAR_N_PIECE_ALL (1080)
-
-#define TPCC_VAR_PIECE_WAREHOUSE (1071)
-#define TPCC_VAR_PIECE_DISTRICT (1072)
+#define TPCC_VAR_THRESHOLD                     (1060)
+#define TPCC_VAR_UNKOWN                        (1061)
+#define TPCC_VAR_N_PIECE_ALL                   (1080)
+#define TPCC_VAR_PIECE_WAREHOUSE               (1071)
+#define TPCC_VAR_PIECE_DISTRICT                (1072)
 
 #define TPCC_VAR_I_ID(I)                       (100000 + I)
 #define TPCC_VAR_I_NAME(I)                     (101000 + I)

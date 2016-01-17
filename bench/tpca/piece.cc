@@ -18,12 +18,12 @@ void TpcaPiece::reg_pieces() {
 //        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
     mdb::Txn *txn = dtxn->mdb_txn_;
     Value buf;
-    verify(input.size() == 1);
+    verify(cmd.input.size() == 1);
     i32 output_index = 0;
 
     mdb::Row *r = NULL;
     mdb::MultiBlob mb(1);
-    mb[0] = input.at(0).get_blob();
+    mb[0] = cmd.input.at(0).get_blob();
 
     r = dtxn->Query(txn->get_table(TPCA_CUSTOMER), mb);
     dtxn->ReadColumn(r, 1, &buf, TXN_BYPASS);
@@ -37,12 +37,12 @@ void TpcaPiece::reg_pieces() {
     BEGIN_PIE(TPCA_PAYMENT, TPCA_PAYMENT_2, DF_REAL) {
         mdb::Txn *txn = dtxn->mdb_txn_;
         Value buf;
-        verify(input.size() == 1);
+        verify(cmd.input.size() == 1);
         i32 output_index = 0;
 
         mdb::Row *r = NULL;
         mdb::MultiBlob mb(1);
-        mb[0] = input.at(0).get_blob();
+        mb[0] = cmd.input.at(0).get_blob();
 
         r = dtxn->Query(txn->get_table(TPCA_TELLER), mb);
         dtxn->ReadColumn(r, 1, &buf, TXN_BYPASS);
@@ -55,12 +55,12 @@ void TpcaPiece::reg_pieces() {
     BEGIN_PIE(TPCA_PAYMENT, TPCA_PAYMENT_3, DF_REAL) {
         mdb::Txn *txn = dtxn->mdb_txn_;
         Value buf;
-        verify(input.size() == 1);
+        verify(cmd.input.size() == 1);
         i32 output_index = 0;
 
         mdb::Row *r = NULL;
         mdb::MultiBlob mb(1);
-        mb[0] = input.at(0).get_blob();
+        mb[0] = cmd.input.at(0).get_blob();
 
         r = dtxn->Query(txn->get_table(TPCA_BRANCH), mb);
         dtxn->ReadColumn(r, 1, &buf, TXN_BYPASS);

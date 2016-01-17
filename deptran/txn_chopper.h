@@ -6,6 +6,7 @@
 #include "rcc/txn-info.h"
 #include "rcc/graph.h"
 #include "rcc/graph_marshaler.h"
+#include "command_marshaler.h"
 #include "rcc_rpc.h"
 #include "txn_reg.h"
 
@@ -35,18 +36,6 @@ class TxnRequest {
   void get_log(i64 tid, std::string &log);
 };
 
-class SimpleCommand: public Command {
-public:
-  Command* root_;
-  map<int32_t, Value> input;
-  map<int32_t, Value> output;
-  int output_size;
-  parid_t par_id;
-  SimpleCommand() = default;
-  virtual parid_t GetPar() {return par_id;}
-  virtual Command* GetRootCmd() {return root_;}
-};
-
 
 enum CommandStatus {WAITING=-1, READY, ONGOING, FINISHED, INIT};
 
@@ -72,7 +61,7 @@ class TxnChopper : public Command {
   txnid_t txn_id_; // TODO obsolete
 
  public:
-  txntype_t txn_type_;
+//  txntype_t txn_type_;
   TxnRegistry *txn_reg_ = nullptr;
 
   Graph<TxnInfo> gra_;
@@ -92,6 +81,8 @@ class TxnChopper : public Command {
   /** server involved*/
 
   int n_pieces_all_ = 0;
+  int n_pieces_input_ready_ = 0;
+  int n_pieces_replied_ = 0;
   int n_pieces_out_ = 0;
   /** finished pieces counting */
   int n_finished_ = 0;
@@ -107,7 +98,7 @@ class TxnChopper : public Command {
 
   TxnChopper();
 
-  virtual cmdtype_t type() {return txn_type_;};
+//  virtual cmdtype_t type() {return txn_type_;};
 
   virtual int next_piece(map<int32_t, Value>* &input,
                          int &output_size,
@@ -139,7 +130,7 @@ class TxnChopper : public Command {
   }
   virtual bool IsFinished(){verify(0);}
   virtual void Merge(Command&);
-  virtual bool HasMoreSubCmd();
+  virtual bool HasMoreSubCmdReadyNotOut();
   virtual Command* GetNextSubCmd();
   virtual set<parid_t> GetPars();
   virtual parid_t GetPiecePar(innid_t inn_id) {

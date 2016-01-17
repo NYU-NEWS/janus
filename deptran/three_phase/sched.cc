@@ -7,17 +7,12 @@
 
 namespace rococo {
 
-int ThreePhaseSched::OnPhaseOneRequest(
-    const RequestHeader &header,
-    const map<int32_t, Value> &input,
-    const rrr::i32 &output_size,
-    rrr::i32 *res,
-    map<int32_t, Value> *output,
-    rrr::DeferredReply *defer) {
-  auto exec = (ThreePhaseExecutor*) GetOrCreateExecutor(header.tid);
-  exec->StartLaunch(header,
-                    const_cast<map<int32_t, Value> &>(input),
-                    output_size,
+int ThreePhaseSched::OnPhaseOneRequest(const SimpleCommand &cmd,
+                                       rrr::i32 *res,
+                                       map<int32_t, Value> *output,
+                                       rrr::DeferredReply *defer) {
+  auto exec = (ThreePhaseExecutor*) GetOrCreateExecutor(cmd.root_id_);
+  exec->StartLaunch(cmd,
                     res,
                     *output,
                     defer);

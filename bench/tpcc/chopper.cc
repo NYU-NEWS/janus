@@ -26,13 +26,13 @@ TpccChopper::TpccChopper() {
 void TpccChopper::init(TxnRequest &req) {
   ws_init_ = req.input_;
   ws_ = ws_init_;
-  txn_type_ = req.txn_type_;
+  type_ = req.txn_type_;
   callback_ = req.callback_;
   max_try_ = req.n_try_;
   n_try_ = 1;
   commit_.store(true);
 
-  switch (txn_type_) {
+  switch (type_) {
     case TPCC_NEW_ORDER:
       NewOrderInit(req);
       break;
@@ -40,24 +40,25 @@ void TpccChopper::init(TxnRequest &req) {
       PaymentInit(req);
       break;
     case TPCC_ORDER_STATUS:
-      order_status_init(req);
+      OrderStatusInit(req);
       break;
     case TPCC_DELIVERY:
-      delivery_init(req);
+      DeliveryInit(req);
       break;
     case TPCC_STOCK_LEVEL:
-      stock_level_init(req);
+      StockLevelInit(req);
       break;
     default:
       verify(0);
   }
+  verify(n_pieces_input_ready_ > 0);
 }
 
 // This is sort of silly. We should have a better way.
 bool TpccChopper::CheckReady() {
   bool ret = false;
 
-  auto &map = txn_reg_->input_vars_[txn_type_];
+  auto &map = txn_reg_->input_vars_[type_];
 
   for (auto &kv : map) {
     auto pi = kv.first;
@@ -80,6 +81,7 @@ bool TpccChopper::CheckReady() {
     // all found.
     if (all_found && status_[pi] == WAITING) {
       status_[pi] = READY;
+      n_pieces_input_ready_++;
       ret = true;
 //        for (auto &var : var_set) {
 //          inputs_[pi][var] = ws_[var];
@@ -97,15 +99,15 @@ bool TpccChopper::start_callback(int pi,
                                  map<int32_t, Value> &output_map) {
   bool ret;
   ws_.insert(output_map.begin(), output_map.end());
-  if (txn_type_ == TPCC_PAYMENT ||
-      txn_type_ == TPCC_ORDER_STATUS ||
-      txn_type_ == TPCC_DELIVERY ||
-        txn_type_ == TPCC_NEW_ORDER ||
+  if (type_ == TPCC_PAYMENT ||
+      type_ == TPCC_ORDER_STATUS ||
+      type_ == TPCC_DELIVERY ||
+      type_ == TPCC_NEW_ORDER ||
       0) {
     return CheckReady();
   }
   PieceCallbackHandler handler;
-  auto it = txn_reg_->callbacks_.find(std::make_pair(txn_type_, pi));
+  auto it = txn_reg_->callbacks_.find(std::make_pair(type_, pi));
   if (it != txn_reg_->callbacks_.end()) {
     handler = it->second;
     ret = handler(this, output_map);
@@ -119,7 +121,7 @@ bool TpccChopper::start_callback(int pi,
   }
 
   // below is for debug
-  if (txn_type_ == TPCC_STOCK_LEVEL && pi == TPCC_STOCK_LEVEL_0) {
+  if (type_ == TPCC_STOCK_LEVEL && pi == TPCC_STOCK_LEVEL_0) {
     verify(ws_.count(TPCC_VAR_D_NEXT_O_ID) > 0);
     verify(inputs_[TPCC_STOCK_LEVEL_1].count(TPCC_VAR_D_NEXT_O_ID) > 0);
     verify(status_[TPCC_STOCK_LEVEL_1] == READY);
@@ -158,21 +160,23 @@ bool TpccChopper::start_callback(int pi,
 void TpccChopper::retry() {
   ws_ = ws_init_;
   partitions_.clear();
-  n_pieces_out_ = 0;
   n_try_++;
   commit_.store(true);
-  switch (txn_type_) {
+  n_pieces_input_ready_ = 0;
+  n_pieces_replied_ = 0;
+  n_pieces_out_ = 0;
+  switch (type_) {
     case TPCC_NEW_ORDER:
-      new_order_retry();
+      NewOrderRetry();
       break;
     case TPCC_PAYMENT:
       payment_retry();
       break;
     case TPCC_ORDER_STATUS:
-      order_status_retry();
+      OrderStatusRetry();
       break;
     case TPCC_DELIVERY:
-      delivery_retry();
+      DeliveryRetry();
       break;
     case TPCC_STOCK_LEVEL:
       stock_level_retry();
@@ -183,7 +187,7 @@ void TpccChopper::retry() {
 }
 
 bool TpccChopper::is_read_only() {
-  switch (txn_type_) {
+  switch (type_) {
     case TPCC_NEW_ORDER:
       return false;
     case TPCC_PAYMENT:
@@ -202,7 +206,7 @@ bool TpccChopper::is_read_only() {
 parid_t TpccChopper::GetPiecePar(innid_t inn_id) {
   parid_t par;
   int32_t var;
-  auto it = txn_reg_->sharding_input_.find(std::make_pair(txn_type_, inn_id));
+  auto it = txn_reg_->sharding_input_.find(std::make_pair(type_, inn_id));
   if (it != txn_reg_->sharding_input_.end()) {
     auto &pair = it->second;
     auto tb = pair.first;
@@ -217,7 +221,7 @@ parid_t TpccChopper::GetPiecePar(innid_t inn_id) {
 }
 
 int TpccChopper::GetNPieceAll() {
-  if (txn_type_ == TPCC_STOCK_LEVEL) {
+  if (type_ == TPCC_STOCK_LEVEL) {
     verify(ws_.count(TPCC_VAR_OL_AMOUNT) > 0 == ws_.count(TPCC_VAR_N_PIECE_ALL) > 0);
     if (ws_.count(TPCC_VAR_OL_AMOUNT) > 0) {
       verify(ws_[TPCC_VAR_N_PIECE_ALL].get_i32() == n_pieces_all_);

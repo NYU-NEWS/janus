@@ -28,6 +28,8 @@ public:
 
   virtual void deptran_start(TxnChopper *ch);
 
+  virtual void StartAck();
+
   void         deptran_batch_start(TxnChopper *ch);
 
   virtual void deptran_finish(TxnChopper *ch);

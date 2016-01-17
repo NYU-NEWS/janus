@@ -3,9 +3,10 @@
 namespace rococo {
 
 
-void TpccChopper::stock_level_init(TxnRequest &req) {
+void TpccChopper::StockLevelInit(TxnRequest &req) {
 
   n_pieces_all_ = 2;
+  n_pieces_input_ready_ = 1;
 
   stock_level_dep_.w_id = req.input_[TPCC_VAR_W_ID].get_i32();
   stock_level_dep_.threshold = req.input_[TPCC_VAR_THRESHOLD].get_i32();
@@ -28,12 +29,12 @@ void TpccChopper::stock_level_init(TxnRequest &req) {
   output_size_[TPCC_STOCK_LEVEL_1] = 20 * 15 + 1; // 20 orders * 15 order_line per order at most
   p_types_[TPCC_STOCK_LEVEL_1] = TPCC_STOCK_LEVEL_1;
   status_[TPCC_STOCK_LEVEL_1] = WAITING;
-
   // piece 2 - n, R stock init in stock_level_callback
 }
 
 void TpccChopper::stock_level_retry() {
   n_pieces_all_ = 2;
+  n_pieces_input_ready_ = 1;
 //  inputs_.resize(n_pieces_all_);
 //  output_size_.resize(n_pieces_all_);
 //  p_types_.resize(n_pieces_all_);
@@ -51,11 +52,11 @@ void TpccPiece::reg_stock_level() {
             TPCC_TB_DISTRICT, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_0, DF_NO) {
     verify(dtxn != nullptr);
-    verify(input.size() == 2);
+//    verify(input.size() == 2);
     mdb::MultiBlob mb(2);
     //cell_locator_t cl(TPCC_TB_DISTRICT, 2);
-    mb[0] = input[TPCC_VAR_D_ID].get_blob();
-    mb[1] = input[TPCC_VAR_W_ID].get_blob();
+    mb[0] = cmd.input[TPCC_VAR_D_ID].get_blob();
+    mb[1] = cmd.input[TPCC_VAR_W_ID].get_blob();
 
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT),
                               mb,
@@ -71,15 +72,15 @@ void TpccPiece::reg_stock_level() {
   SHARD_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_1,
             TPCC_TB_ORDER_LINE, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_1, DF_NO) {
-    verify(input.size() == 3);
+//    verify(input.size() == 3);
     mdb::MultiBlob mbl(4), mbh(4);
-    mbl[0] = input[TPCC_VAR_D_ID].get_blob();
-    mbh[0] = input[TPCC_VAR_D_ID].get_blob();
-    mbl[1] = input[TPCC_VAR_W_ID].get_blob();
-    mbh[1] = input[TPCC_VAR_W_ID].get_blob();
-    Value ol_o_id_low(input[TPCC_VAR_D_NEXT_O_ID].get_i32() - (i32) 21);
+    mbl[0] = cmd.input[TPCC_VAR_D_ID].get_blob();
+    mbh[0] = cmd.input[TPCC_VAR_D_ID].get_blob();
+    mbl[1] = cmd.input[TPCC_VAR_W_ID].get_blob();
+    mbh[1] = cmd.input[TPCC_VAR_W_ID].get_blob();
+    Value ol_o_id_low(cmd.input[TPCC_VAR_D_NEXT_O_ID].get_i32() - (i32) 21);
     mbl[2] = ol_o_id_low.get_blob();
-    mbh[2] = input[TPCC_VAR_D_NEXT_O_ID].get_blob();
+    mbh[2] = cmd.input[TPCC_VAR_D_NEXT_O_ID].get_blob();
     Value ol_number_low(std::numeric_limits<i32>::max()),
             ol_number_high(std::numeric_limits<i32>::min());
     mbl[3] = ol_number_low.get_blob();
@@ -89,12 +90,12 @@ void TpccPiece::reg_stock_level() {
                                       mbl,
                                       mbh,
                                       mdb::ORD_ASC,
-                                      header.pid);
+                                      cmd.id_);
     Log_debug("tid: %llx, stock_level: piece 1: d_next_o_id: %d, ol_w_id: %d, ol_d_id: %d",
-              header.tid,
-              input[TPCC_VAR_D_NEXT_O_ID].get_i32(),
-              input[TPCC_VAR_W_ID].get_i32(),
-              input[TPCC_VAR_D_ID].get_i32());
+              cmd.root_id_,
+              cmd.input[TPCC_VAR_D_NEXT_O_ID].get_i32(),
+              cmd.input[TPCC_VAR_W_ID].get_i32(),
+              cmd.input[TPCC_VAR_D_ID].get_i32());
 
     std::vector<mdb::Row *> row_list;
     row_list.reserve(20);
@@ -136,6 +137,7 @@ void TpccPiece::reg_stock_level() {
           {TPCC_VAR_THRESHOLD,  tpcc_ch->ws_[TPCC_VAR_THRESHOLD]}
       };
       tpcc_ch->status_[pi] = READY;
+      tpcc_ch->n_pieces_input_ready_++;
     }
     return true;
   END_CB
@@ -149,17 +151,17 @@ void TpccPiece::reg_stock_level() {
               TPCC_TB_STOCK, TPCC_VAR_W_ID)
   }
   BEGIN_LOOP_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_RS(0), 1000, DF_NO)
-    verify(input.size() == 3);
+//    verify(input.size() == 3);
     Value buf(0);
     mdb::MultiBlob mb(2);
     //cell_locator_t cl(TPCC_TB_STOCK, 2);
-    mb[0] = input[TPCC_VAR_OL_I_ID(I)].get_blob();
-    mb[1] = input[TPCC_VAR_W_ID].get_blob();
+    mb[0] = cmd.input[TPCC_VAR_OL_I_ID(I)].get_blob();
+    mb[1] = cmd.input[TPCC_VAR_W_ID].get_blob();
 
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_STOCK), mb, ROW_STOCK);
     dtxn->ReadColumn(r, TPCC_COL_STOCK_S_QUANTITY, &buf, TXN_DEFERRED);
 
-    if (buf.get_i32() < input[TPCC_VAR_THRESHOLD].get_i32())
+    if (buf.get_i32() < cmd.input[TPCC_VAR_THRESHOLD].get_i32())
         output[TPCC_VAR_UNKOWN] = Value((i32) 1);
     else
         output[TPCC_VAR_UNKOWN] = Value((i32) 0);

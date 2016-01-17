@@ -8,15 +8,9 @@ namespace rococo {
 class RCCDTxn: public DTxn {
  public:
 
-  typedef struct {
-    RequestHeader header;
-    map<int32_t, Value> inputs;
-    row_map_t row_map;
-  } DeferredRequest;
-
   DepGraph *dep_s;
 
-  std::vector <DeferredRequest> dreqs_;
+  vector<SimpleCommand> dreqs_;
   Vertex <TxnInfo> *tv_;
 
   std::vector<TxnInfo *> conflict_txns_; // This is read-only transaction
@@ -30,24 +24,20 @@ class RCCDTxn: public DTxn {
   );
 
   virtual void StartLaunch(
-      const RequestHeader &header,
-      const map<int32_t, Value> &input,
+      const SimpleCommand& cmd,
       ChopStartResponse *res,
       rrr::DeferredReply *defer
   );
 
-  virtual void StartAfterLog(
-      const RequestHeader &header,
-      const map<int32_t, Value> &input,
-      ChopStartResponse *res,
-      rrr::DeferredReply *defer
+  virtual void StartAfterLog(const SimpleCommand& cmd,
+                             ChopStartResponse *res,
+                             rrr::DeferredReply *defer
   );
 
   virtual bool start_exe_itfr(
       defer_t defer,
       TxnHandler &handler,
-      const RequestHeader &header,
-      const map<int32_t, Value> &input,
+      const SimpleCommand& cmd,
       map<int32_t, Value> *output
   );
 
@@ -59,12 +49,9 @@ class RCCDTxn: public DTxn {
       ChopStartResponse *res
   );
 
-  virtual void start_ro(
-      const RequestHeader &header,
-      const map<int32_t, Value> &input,
-      map<int32_t, Value> &output,
-      rrr::DeferredReply *defer
-  );
+  virtual void start_ro(const SimpleCommand&,
+                        map<int32_t, Value> &output,
+                        rrr::DeferredReply *defer);
 
   virtual void commit(
       const ChopFinishRequest &req,

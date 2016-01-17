@@ -28,12 +28,9 @@ class RO6DTxn: public RCCDTxn {
       ChopStartResponse *res
   );
 
-  virtual void start_ro(
-      const RequestHeader &header,
-      const map<int32_t, Value> &input,
-      std::map<int32_t, mdb::Value> &output,
-      rrr::DeferredReply *defer
-  );
+  virtual void start_ro(const SimpleCommand &cmd,
+                        std::map<int32_t, mdb::Value> &output,
+                        rrr::DeferredReply *defer);
 
   // the start function above and this commit function only for general(write) transactions
   virtual void commit(

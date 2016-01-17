@@ -11,11 +11,11 @@ namespace deptran {
     BEGIN_PIE(RW_BENCHMARK_R_TXN, RW_BENCHMARK_R_TXN_0, DF_NO) {
       mdb::Txn *txn = dtxn->mdb_txn_;
       Value buf;
-      verify(input.size() == 1);
+      verify(cmd.input.size() == 1);
       i32 output_index = 0;
 
       mdb::Row *r = txn->query(txn->get_table(RW_BENCHMARK_TABLE),
-                               input.at(0)).next();
+                               cmd.input.at(0)).next();
       if (!txn->read_column(r, 1, &buf)) {
           *res = REJECT;
           return;
@@ -27,10 +27,11 @@ namespace deptran {
 
     BEGIN_PIE(RW_BENCHMARK_W_TXN, RW_BENCHMARK_W_TXN_0, DF_REAL) {
       mdb::Txn *txn = dtxn->mdb_txn_;
-      verify(input.size() == 1);
+      verify(cmd.input.size() == 1);
       i32 output_index = 0;
       Value buf;
-      mdb::Row *r = txn->query(txn->get_table(RW_BENCHMARK_TABLE), input[0]).next();
+      mdb::Row *r = txn->query(txn->get_table(RW_BENCHMARK_TABLE),
+                               cmd.input[0]).next();
       if (!txn->read_column(r, 1, &buf)) {
         *res = REJECT;
         return;
