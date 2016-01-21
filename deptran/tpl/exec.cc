@@ -141,10 +141,9 @@ std::function<void(void)> TPLExecutor::get_2pl_fail_callback(
 }
 
 
-int TPLExecutor::prepare() {
+int TPLExecutor::Prepare() {
   auto txn = (mdb::Txn2PL *) mdb_txn_;
   verify(txn != NULL);
-//  verify(Config::config_s->mode_ == MODE_2PL);
 
   prepared_ = true;
   if (!wounded_) {

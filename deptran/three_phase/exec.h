@@ -21,13 +21,11 @@ class ThreePhaseExecutor: public Executor {
                           map<int32_t, Value> &output,
                           rrr::DeferredReply *defer);
 
-  int prepare_launch(
-      const std::vector <i32> &sids,
-      rrr::i32 *res,
-      rrr::DeferredReply *defer
-  );
+  int PrepareLaunch(const std::vector<i32> &sids,
+                    int32_t *res,
+                    rrr::DeferredReply *defer);
 
-  virtual int prepare();
+  virtual int Prepare();
 
   int commit_launch(
       rrr::i32 *res,

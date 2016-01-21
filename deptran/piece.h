@@ -129,7 +129,7 @@ txn_reg_->input_vars_[txn][pie] = {__VA_ARGS__};
   }
 
 #define CREATE_ROW(schema, row_data) \
-    switch (Config::config_s->mode_) { \
+    switch (Config::config_s->cc_mode_) { \
     case MODE_2PL: \
         r = mdb::FineLockedRow::create(schema, row_data); \
         break; \

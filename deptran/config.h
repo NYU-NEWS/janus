@@ -33,6 +33,12 @@ class Config {
       {"mdcc", MODE_MDCC}
   };
 
+  const map<string, int> AB_MODES_ = {
+      {"multi_paxos",   MODE_MULTI_PAXOS},
+      {"epaxos",        MODE_NOT_READY},
+      {"rep_commit",       MODE_NOT_READY}
+  };
+
   std::map<string, mdb::symbol_t> tbl_types_map_ = {
       {"sorted", mdb::TBL_SORTED},
       {"unsorted", mdb::TBL_UNSORTED},
@@ -58,7 +64,8 @@ class Config {
 
   // common configuration
 
-  int32_t mode_;
+  int32_t cc_mode_ = 0;
+  int32_t ab_mode_ = 0;
   uint32_t proc_id_;
   int32_t benchmark_; // workload
   uint32_t scale_factor_ = 1; // currently disabled
@@ -176,8 +183,8 @@ class Config {
                                 YAML::Node column);
 
 
-  void init_mode(std::string &);
-  void init_bench(std::string &);
+  void InitMode(std::string& cc, string& ab);
+  void InitBench(std::string &);
 
   uint32_t get_site_id();
   uint32_t get_client_id();
@@ -221,6 +228,7 @@ class Config {
 #endif // ifdef CPU_PROFILE
 
   bool do_logging();
+  bool IsReplicated();
 
   const char *log_path();
 

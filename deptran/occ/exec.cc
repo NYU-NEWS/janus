@@ -19,7 +19,7 @@ int OCCExecutor::StartLaunch(const SimpleCommand& cmd,
 
 
 int OCCExecutor::prepare() {
-  verify(Config::config_s->mode_ == MODE_OCC);
+  verify(Config::config_s->cc_mode_ == MODE_OCC);
   auto txn = (mdb::TxnOCC *)mdb_txn_;
   verify(txn != NULL);
 

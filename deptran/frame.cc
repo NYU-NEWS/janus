@@ -14,6 +14,7 @@
 #include "tpl/coord.h"
 #include "occ/coord.h"
 #include "tpl/exec.h"
+#include "multi_paxos/coord.h"
 
 #include "bench/tpcc_real_dist/sharding.h"
 #include "bench/tpcc/generator.h"
@@ -76,7 +77,7 @@ Sharding* Frame::CreateSharding(Sharding *sd) {
 
 mdb::Row* Frame::CreateRow(const mdb::Schema *schema,
                            vector<Value> &row_data) {
-  auto mode = Config::GetConfig()->mode_;
+  auto mode = Config::GetConfig()->cc_mode_;
   mdb::Row* r = nullptr;
   switch (mode) {
     case MODE_2PL:
@@ -103,14 +104,42 @@ mdb::Row* Frame::CreateRow(const mdb::Schema *schema,
   return r;
 }
 
+CoordinatorBase* Frame::CreateRepCoord(cooid_t coo_id,
+                                       vector<std::string>& servers,
+                                       Config* config,
+                                       int benchmark,
+                                       int mode,
+                                       ClientControlServiceImpl *ccsi,
+                                       uint32_t id,
+                                       bool batch_start,
+                                       TxnRegistry* txn_reg) {
+  CoordinatorBase *coo;
+  switch(mode) {
+    case MODE_MULTI_PAXOS:
+      coo = new MultiPaxosCoord(coo_id,
+                                servers,
+                                benchmark,
+                                mode,
+                                ccsi,
+                                id,
+                                batch_start);
+      break;
+    case MODE_NOT_READY:
+      Log_fatal("this atomic broadcast protocol is currently not supported.");
+  }
+
+  return coo;
+}
+
 CoordinatorBase* Frame::CreateCoord(cooid_t coo_id,
-                                vector<std::string>& servers,
-                                Config* config,
-                                int benchmark,
-                                int mode,
-                                ClientControlServiceImpl *ccsi,
-                                uint32_t id,
-                                bool batch_start, TxnRegistry* txn_reg) {
+                                    vector<std::string>& servers,
+                                    Config* config,
+                                    int benchmark,
+                                    int mode,
+                                    ClientControlServiceImpl *ccsi,
+                                    uint32_t id,
+                                    bool batch_start,
+                                    TxnRegistry* txn_reg) {
   // TODO: clean this up; make Coordinator subclasses assign txn_reg_
   CoordinatorBase *coo;
   auto attr = this;
@@ -123,27 +152,27 @@ CoordinatorBase* Frame::CreateCoord(cooid_t coo_id,
     case MODE_OCC:
     case MODE_RPC_NULL:
       coo = new OCCCoord(coo_id, servers,
-                             benchmark, mode,
-                             ccsi, id, batch_start);
+                         benchmark, mode,
+                         ccsi, id, batch_start);
       ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
     case MODE_RCC:
       coo = new RCCCoord(coo_id, servers,
-                          benchmark, mode,
-                          ccsi, id, batch_start);
+                         benchmark, mode,
+                         ccsi, id, batch_start);
       ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
     case MODE_RO6:
       coo = new RO6Coord(coo_id, servers,
-                          benchmark, mode,
-                          ccsi, id, batch_start);
+                         benchmark, mode,
+                         ccsi, id, batch_start);
       ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
     case MODE_NONE:
       coo = new NoneCoord(coo_id, servers,
-                           benchmark, mode,
-                           ccsi, id,
-                           batch_start);
+                          benchmark, mode,
+                          ccsi, id,
+                          batch_start);
       ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
     case MODE_MDCC:
@@ -221,7 +250,7 @@ TxnChopper* Frame::CreateChopper(TxnRequest &req, TxnRegistry* reg) {
 
 DTxn* Frame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {
   DTxn *ret = nullptr;
-  auto mode_ = Config::GetConfig()->mode_;
+  auto mode_ = Config::GetConfig()->cc_mode_;
 
   switch (mode_) {
     case MODE_2PL:
@@ -249,7 +278,7 @@ DTxn* Frame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {
 Executor* Frame::CreateExecutor(cmdid_t cmd_id, Scheduler* sched) {
 //  verify(0);
   Executor* exec = nullptr;
-  auto mode = Config::GetConfig()->mode_;
+  auto mode = Config::GetConfig()->cc_mode_;
   switch (mode) {
     case MODE_2PL:
       exec = new TPLExecutor(cmd_id, sched);
@@ -261,7 +290,7 @@ Executor* Frame::CreateExecutor(cmdid_t cmd_id, Scheduler* sched) {
 }
 
 Scheduler* Frame::CreateScheduler() {
-  auto mode = Config::GetConfig()->mode_;
+  auto mode = Config::GetConfig()->cc_mode_;
   Scheduler *sch = nullptr;
   switch(mode) {
     case MODE_2PL:

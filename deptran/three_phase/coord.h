@@ -11,7 +11,7 @@ class ClientControlServiceImpl;
 
 class ThreePhaseCoordinator : public Coordinator {
  protected:
-  ThreePhaseCommunicator *commo_=nullptr;
+  ThreePhaseCommunicator *commo_ = nullptr;
  public:
   ThreePhaseCoordinator(uint32_t coo_id, vector<string> &addrs, int benchmark, int32_t mode, ClientControlServiceImpl *ccsi,
                         uint32_t thread_id, bool batch_optimal) : Coordinator(coo_id, addrs, benchmark, mode, ccsi, thread_id,

@@ -18,30 +18,31 @@ int ThreePhaseExecutor::StartLaunch(const SimpleCommand &cmd,
   verify(0);
 }
 
-int ThreePhaseExecutor::prepare_launch(
-    const std::vector<i32> &sids,
-    rrr::i32 *res,
-    rrr::DeferredReply *defer
-) {
+int ThreePhaseExecutor::PrepareLaunch(const std::vector<i32> &sids,
+                                      rrr::i32 *res,
+                                      rrr::DeferredReply *defer) {
   verify(phase_ < 2);
   phase_ = 2;
+
   if (Config::GetConfig()->do_logging()) {
     string log_s;
     sched_->get_prepare_log(cmd_id_, sids, &log_s);
-    *res = this->prepare();
 
     if (*res == SUCCESS)
-      recorder_->submit(log_s, [defer]() { defer->reply(); });
+      recorder_->submit(log_s, [this, res, defer]() {
+        *res = this->Prepare();
+        defer->reply();
+      });
     else
       defer->reply();
   } else {
-    *res = this->prepare();
+    *res = this->Prepare();
     defer->reply();
   }
   return 0;
 }
 
-int ThreePhaseExecutor::prepare() {
+int ThreePhaseExecutor::Prepare() {
   verify(0);
 }
 

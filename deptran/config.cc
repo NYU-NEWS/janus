@@ -234,7 +234,7 @@ Config::Config(char           *ctrl_hostname,
   ctrl_init_(ctrl_init),
   duration_(duration),
   config_paths_(vector<string>()),
-  mode_(0),
+  cc_mode_(0),
   proc_id_(0),
   benchmark_(0),
   scale_factor_(1),
@@ -371,11 +371,10 @@ void Config::LoadHostYML(YAML::Node config) {
   }
 }
 
-void Config::init_mode(std::string& mode_str) {
+void Config::InitMode(std::string &mode_str, string& ab) {
   auto it = modes_map_.find(mode_str);
-
   if (it != modes_map_.end()) {
-    mode_ = it->second;
+    cc_mode_ = it->second;
   } else {
     verify(0);
   }
@@ -392,10 +391,12 @@ void Config::init_mode(std::string& mode_str) {
     mdb::FineLockedRow::set_wait_die();
   } else if ((mode_str == "2pl_ww") || (mode_str == "2pl_wound_die")) {
     mdb::FineLockedRow::set_wound_die();
-  } 
+  }
+
+  ab_mode_ = AB_MODES_.at(ab);
 }
 
-void Config::init_bench(std::string& bench_str) {
+void Config::InitBench(std::string &bench_str) {
   if (bench_str == "tpca") {
     benchmark_ = TPCA;
   } else if (bench_str == "tpcc") {
@@ -441,15 +442,18 @@ std::string Config::site2host_name(std::string& sitename) {
 void Config::LoadModeYML(YAML::Node config) {
   auto mode_str = config["cc"].as<string>();
   boost::algorithm::to_lower(mode_str);
-  this->init_mode(mode_str);
+  auto ab_str = config["ab"].as<string>();
+  boost::algorithm::to_lower(ab_str);
+  this->InitMode(mode_str, ab_str);
   max_retry_ = config["retry"].as<int>();
   concurrent_txn_ = config["ongoing"].as<int>();
   batch_start_ = config["batch"].as<bool>();
+
 }
 
 void Config::LoadBenchYML(YAML::Node config) {
   std::string bench_str = config["workload"].as<string>();
-  this->init_bench(bench_str);
+  this->InitBench(bench_str);
   scale_factor_ = config["scale"].as<int>();
   auto weights = config["weight"];
   for (auto it = weights.begin(); it != weights.end(); it++) {
@@ -764,7 +768,7 @@ bool Config::do_heart_beat() {
 }
 
 int Config::get_mode() {
-  return mode_;
+  return cc_mode_;
 }
 
 unsigned int Config::get_num_threads() {
@@ -821,6 +825,11 @@ bool Config::do_early_return() {
 
 bool Config::do_logging() {
   return logging_path_.empty();
+}
+
+bool Config::IsReplicated() {
+  // TODO
+  return true;
 }
 
 const char * Config::log_path() {

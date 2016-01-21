@@ -26,7 +26,7 @@ int ThreePhaseSched::OnPhaseTwoRequest(
     rrr::i32 *res,
     rrr::DeferredReply *defer) {
   auto exec = (ThreePhaseExecutor*)GetExecutor(cmd_id);
-  exec->prepare_launch(sids, res, defer);
+  exec->PrepareLaunch(sids, res, defer);
   return 0;
 }
 

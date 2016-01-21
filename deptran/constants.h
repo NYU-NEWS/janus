@@ -53,6 +53,12 @@ namespace rococo {
     // deprecated.
 #define MODE_DEPTRAN (4)
 
+#define MODE_MULTI_PAXOS   (0x40)
+#define MODE_EPAXOS        (0x80)
+#define MODE_TAPIR         (0x100)
+#define MODE_MENCIUS       (0x200)
+#define MODE_NOT_READY     (0x00)
+
 #define OP_IR   (0x1)
 #define OP_DR   (0x2)
 #define OP_R    (0x3)
