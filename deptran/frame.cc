@@ -1,4 +1,3 @@
-#include <deptran/mdcc/coordinator.h>
 #include "__dep__.h"
 #include "frame.h"
 #include "config.h"
@@ -49,7 +48,11 @@
 
 #include "tpl/sched.h"
 #include "occ/sched.h"
+
 #include "deptran/mdcc/coordinator.h"
+#include "deptran/mdcc/executor.h"
+#include "deptran/mdcc/services.h"
+#include "deptran/mdcc/MdccDTxn.h"
 
 namespace rococo {
 
@@ -251,11 +254,14 @@ TxnChopper* Frame::CreateChopper(TxnRequest &req, TxnRegistry* reg) {
 DTxn* Frame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {
   DTxn *ret = nullptr;
   auto mode_ = Config::GetConfig()->cc_mode_;
-
+  
   switch (mode_) {
     case MODE_2PL:
       ret = new TPLDTxn(tid, mgr);
       verify(ret->mdb_txn_->rtti() == mdb::symbol_t::TXN_2PL);
+      break;
+    case MODE_MDCC:
+      ret = new mdcc::MdccDTxn(tid, mgr);
       break;
     case MODE_OCC:
       ret = new TPLDTxn(tid, mgr);
@@ -269,6 +275,9 @@ DTxn* Frame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {
     case MODE_RO6:
       ret = new RO6DTxn(tid, mgr, ro);
       break;
+//case MODE_MDCC:
+//      ret = new mdcc::MdccTxn(tid, mgr);
+//      break;
     default:
       verify(0);
   }
@@ -276,12 +285,14 @@ DTxn* Frame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {
 }
 
 Executor* Frame::CreateExecutor(cmdid_t cmd_id, Scheduler* sched) {
-//  verify(0);
   Executor* exec = nullptr;
   auto mode = Config::GetConfig()->cc_mode_;
   switch (mode) {
     case MODE_2PL:
       exec = new TPLExecutor(cmd_id, sched);
+      break;
+    case MODE_MDCC:
+      exec = new mdcc::MdccExecutor(cmd_id, sched);
       break;
     default:
       verify(0);
@@ -299,6 +310,9 @@ Scheduler* Frame::CreateScheduler() {
     case MODE_OCC:
       sch = new OCCSched();
       break;
+    case MODE_MDCC:
+      sch = new mdcc::MdccScheduler();
+      break;
     case MODE_NONE:
     case MODE_RPC_NULL:
     case MODE_RCC:
@@ -313,9 +327,7 @@ Scheduler* Frame::CreateScheduler() {
 TxnGenerator * Frame::CreateTxnGenerator() {
   auto benchmark = Config::config_s->benchmark_;
   TxnGenerator * gen = nullptr;
-
   switch (benchmark) {
-
     case TPCC:
     case TPCC_DIST_PART:
     case TPCC_REAL_DIST_PART:
@@ -328,26 +340,23 @@ TxnGenerator * Frame::CreateTxnGenerator() {
       gen = new TxnGenerator(Config::GetConfig()->sharding_);
   }
   return gen;
-
 }
 
 
-vector<rrr::Service *> Frame::CreateRpcServices(Config *config,
-                                                Scheduler *dtxn_mgr,
-                                                rrr::PollMgr *poll_mgr,
-                                                ServerControlServiceImpl *scsi) {
-  auto result = std::vector<Service *>();
-  switch(config->get_mode()) {
-    case MODE_MDCC:
-//        result.push_back(new mdcc::MdccClientService());
-//        result.push_back(new mdcc::MdccAcceptorService());
-//        result.push_back(new mdcc::MdccLearnerService());
-//        result.push_back(new mdcc::MdccLeaderService());
-      break;
-    default:
-      result.push_back(new RococoServiceImpl(dtxn_mgr, poll_mgr, scsi));
-      break;
+  vector<rrr::Service *> Frame::CreateRpcServices(Config *config, uint32_t site_id, Scheduler *dtxn_mgr, rrr::PollMgr *poll_mgr,
+                                                  ServerControlServiceImpl *scsi) {
+    auto result = std::vector<Service *>();
+    switch(config->get_mode()) {
+      case MODE_MDCC:
+        result.push_back(new mdcc::MdccClientServiceImpl(config, site_id, dtxn_mgr));
+        result.push_back(new mdcc::MdccAcceptorService());
+        result.push_back(new mdcc::MdccLearnerService());
+        result.push_back(new mdcc::MdccLeaderService());
+        break;
+      default:
+        result.push_back(new RococoServiceImpl(dtxn_mgr, poll_mgr, scsi));
+        break;
+    }
+    return result;
   }
-  return result;
-}
 } // namespace rococo;

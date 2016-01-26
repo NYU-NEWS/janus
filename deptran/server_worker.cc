@@ -76,9 +76,6 @@ void ServerWorker::RegPiece() {
   piece->sss_ = sharding_;
   piece->txn_reg_ = txn_reg_;
   piece->reg_all();
-  // TODO fix the memory leak without hurting sharding.
-  //  delete piece;
-  //  piece = NULL;
 }
 
 
@@ -92,7 +89,7 @@ void ServerWorker::SetupService() {
   svr_poll_mgr_g = new rrr::PollMgr(n_io_threads);
 
   // init service implementation
-  services_ = Frame().CreateRpcServices(Config::GetConfig(), txn_mgr_, svr_poll_mgr_g, scsi_g);
+  services_ = Frame().CreateRpcServices(Config::GetConfig(), site_info_->id, txn_mgr_, svr_poll_mgr_g, scsi_g);
 
   auto &alarm = TimeoutALock::get_alarm_s();
   ServerWorker::svr_poll_mgr_g->add(&alarm);

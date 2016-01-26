@@ -18,7 +18,7 @@ class Executor {
   cmdid_t cmd_id_ = 0;
   int phase_ = -1;
 
-  Executor(cmdid_t cmd_id, Scheduler* sched);
+  Executor(txnid_t txn_id, Scheduler* sched);
   virtual ~Executor();
 };
 

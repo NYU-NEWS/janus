@@ -3,7 +3,6 @@
 #include "./bench/tpca/chopper.h"
 
 namespace rococo {
-
 void TpcaPaymentChopper::init(TxnRequest &req) {
   verify(req.txn_type_ == TPCA_PAYMENT);
   type_ = TPCA_PAYMENT;
@@ -36,6 +35,7 @@ void TpcaPaymentChopper::init(TxnRequest &req) {
       {1, 0},
       {2, 0}
   };
+
   sss_->get_site_id_from_tb(TPCA_CUSTOMER, cus, sharding_[0]);
   sss_->get_site_id_from_tb(TPCA_TELLER, tel, sharding_[1]);
   sss_->get_site_id_from_tb(TPCA_BRANCH, bra, sharding_[2]);
@@ -46,14 +46,11 @@ void TpcaPaymentChopper::init(TxnRequest &req) {
   max_try_ = req.n_try_;
   n_try_ = 1;
 
-
   status_ = {
       {0, READY},
       {1, READY},
       {2, READY}
   };
   commit_.store(true);
-
 }
-
 } // namespace rococo

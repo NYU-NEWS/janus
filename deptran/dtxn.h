@@ -6,7 +6,7 @@
 #include "ro6/ro6_row.h"
 #include "multi_value.h"
 #include "txn_reg.h"
-
+#include "deptran/scheduler.h"
 namespace rococo {
 
 using mdb::Row;
@@ -58,9 +58,8 @@ class DTxn {
   DTxn() = delete;
 
   DTxn(i64 tid, Scheduler *mgr)
-      : tid_(tid), mgr_(mgr),
-        phase_(0), mdb_txn_(nullptr),
-        context_row_(), context_value_(), context_rs_() { }
+      : tid_(tid), mgr_(mgr), phase_(0), context_row_(), context_value_(),
+        context_rs_(), mdb_txn_(mgr->GetOrCreateMTxn(tid)) {}
 
   virtual mdb::Row *create(const mdb::Schema *schema,
                            const std::vector<mdb::Value> &values) = 0;
@@ -134,7 +133,7 @@ class DTxn {
                                  mdb::symbol_t order = mdb::symbol_t::ORD_ASC,
                                  int rs_context_id = 0);
 
-  mdb::Table *GetTable(const std::string &tbl_name) const;
+  virtual mdb::Table *GetTable(const std::string &tbl_name) const;
 
   virtual ~DTxn();
 };

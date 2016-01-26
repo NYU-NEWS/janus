@@ -47,6 +47,4 @@ int ThreePhaseSched::OnPhaseThreeRequest(cmdid_t cmd_id,
   DestroyExecutor(cmd_id);
   return 0;
 }
-
-
 } // namespace rococo

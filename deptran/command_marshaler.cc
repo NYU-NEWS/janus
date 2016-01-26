@@ -14,7 +14,7 @@ rrr::Marshal &operator<<(rrr::Marshal &m, const SimpleCommand &cmd) {
   m << cmd.input;
   m << cmd.output;
   m << cmd.output_size;
-  m << cmd.par_id;
+  m << cmd.site_id_;
   return m;
 }
 
@@ -27,7 +27,7 @@ rrr::Marshal &operator>>(rrr::Marshal &m, SimpleCommand &cmd) {
   m >> cmd.input;
   m >> cmd.output;
   m >> cmd.output_size;
-  m >> cmd.par_id;
+  m >> cmd.site_id_;
   return m;
 }
 

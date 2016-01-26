@@ -4,8 +4,9 @@ service MdccLearner {
     Learn(Result r);
 };
 
-service MdccClient {
+abstract service MdccClient {
     defer Start(StartRequest req | StartResponse res);
+    defer StartPiece(rococo::SimpleCommand cmd | StartPieceResponse res);
 };
 
 service MdccLeader {
@@ -35,8 +36,20 @@ struct StartRequest {
     map<i32, Value> inputs;
 };
 
+struct StartPieceRequest {
+    i64 txn_id;
+    i32 txn_type;
+    i32 piece_id;
+    rococo::SimpleCommand command;
+    map<i32, Value> inputs;
+};
+
 struct StartResponse {
     i8 result; // 1 = accept; 0 = reject
+};
+
+struct StartPieceResponse {
+    i32 result; // 1 = accept; 0 = reject
 };
 
 // Phase1a

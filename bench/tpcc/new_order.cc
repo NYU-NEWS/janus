@@ -34,6 +34,7 @@ void TpccPiece::reg_new_order() {
   INPUT_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0, TPCC_VAR_W_ID, TPCC_VAR_D_ID)
   SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0, TPCC_TB_DISTRICT, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0, DF_NO) {
+    Log_info("input size: %ld", cmd.input.size());
     verify(cmd.input.size() == 2);
     mdb::MultiBlob mb(2);
     mb[0] = cmd.input[TPCC_VAR_D_ID].get_blob();

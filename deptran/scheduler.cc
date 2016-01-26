@@ -12,7 +12,6 @@
 
 namespace rococo {
 
-
 DTxn* Scheduler::CreateDTxn(i64 tid, bool ro) {
   Log_debug("create tid %ld\n", tid);
   verify(dtxns_.find(tid) == dtxns_.end());
@@ -114,7 +113,6 @@ mdb::Txn* Scheduler::get_mdb_txn(const RequestHeader &header) {
   return txn;
 }
 
-
 // TODO move this to the dtxn class
 void Scheduler::get_prepare_log(i64 txn_id,
                                 const std::vector<i32> &sids,
@@ -157,7 +155,6 @@ void Scheduler::get_prepare_log(i64 txn_id,
   }
 }
 
-
 Scheduler::Scheduler() : executors_() {
   //  verify(DTxnMgr::txn_mgr_s == NULL);
 //  DTxnMgr::txn_mgr_s = this;
@@ -172,23 +169,20 @@ Scheduler::Scheduler() : executors_() {
 Scheduler::Scheduler(int mode) : Scheduler() {
   mode_ = mode;
   switch (mode) {
-    case MODE_NONE:
-    case MODE_RPC_NULL:
-      mdb_txn_mgr_ = new mdb::TxnMgrUnsafe();
-      break;
     case MODE_OCC:
       mdb_txn_mgr_ = new mdb::TxnMgrOCC();
       break;
-    case MODE_MDCC:
+    case MODE_NONE:
+    case MODE_RPC_NULL:
     case MODE_RCC:
     case MODE_RO6:
+    case MODE_MDCC:
       mdb_txn_mgr_ = new mdb::TxnMgrUnsafe(); //XXX is it OK to use unsafe for deptran
       break;
     default:
       verify(0);
   }
 }
-
 
 Scheduler::~Scheduler() {
   map<i64, mdb::Txn *>::iterator it = mdb_txns_.begin();
@@ -222,25 +216,23 @@ void Scheduler::reg_table(const std::string &name,
   }
 }
 
-
-Executor* Scheduler::CreateExecutor(cmdid_t cmd_id) {
-  verify(executors_.find(cmd_id) == executors_.end());
-  Log_debug("create tid %ld\n", cmd_id);
-//  DTxn* dtxn = Frame().CreateDTxn(tid, ro, this);
-  Executor *exec = Frame().CreateExecutor(cmd_id, this);
-  DTxn* dtxn = CreateDTxn(cmd_id);
+Executor* Scheduler::CreateExecutor(cmdid_t txn_id) {
+  verify(executors_.find(txn_id) == executors_.end());
+  Log_debug("create tid %ld\n", txn_id);
+  Executor *exec = Frame().CreateExecutor(txn_id, this);
+  DTxn* dtxn = CreateDTxn(txn_id);
   exec->dtxn_ = dtxn;
-  executors_[cmd_id] = exec;
+  executors_[txn_id] = exec;
   exec->recorder_ = this->recorder_;
   exec->txn_reg_ = txn_reg_;
   verify(txn_reg_);
   return exec;
 }
 
-Executor* Scheduler::GetOrCreateExecutor(cmdid_t cmd_id) {
-  auto it = executors_.find(cmd_id);
+Executor* Scheduler::GetOrCreateExecutor(cmdid_t txn_id) {
+  auto it = executors_.find(txn_id);
   if (it == executors_.end()) {
-    return CreateExecutor(cmd_id);
+    return CreateExecutor(txn_id);
   } else {
     return it->second;
   }

@@ -14,7 +14,7 @@ class MdccCommunicator {
   MdccCommunicator() = delete;
   MdccCommunicator(Config* config, uint32_t site_id) :
     config_(config), poll_(new PollMgr(1)), site_info_(config->SiteById(site_id)) {
-    for (auto& site_info : config->GetMyServers()) {
+    for (auto& site_info : config->sites_) {
       this->site_proxies_.push_back(new SiteProxy(site_info, poll_));
     }
   }
@@ -28,7 +28,10 @@ class MdccCommunicator {
   void SendStart(StartRequest& req,
                  std::function<void(StartResponse &)>& callback);
 
+  void SendStartPiece(const rococo::SimpleCommand& cmd,
+                      std::function<void(StartPieceResponse&)>& callback);
  protected:
+  std::mutex mtx_;
   struct SiteProxy {
     const Config::SiteInfo& site_info;
     rrr::Client* rpc_client;
@@ -36,6 +39,7 @@ class MdccCommunicator {
     MdccAcceptorProxy* acceptor;
     MdccClientProxy* client;
     SiteProxy() = delete;
+
     SiteProxy(Config::SiteInfo& site_info, rrr::PollMgr* poll) : site_info(site_info) {
       std::string addr = site_info.GetHostAddr();
       rpc_client = new rrr::Client(poll);
@@ -58,11 +62,12 @@ class MdccCommunicator {
 
   Config* config_;
   PollMgr* poll_;
-  const Config::SiteInfo& site_info_; // my site_id
+  const Config::SiteInfo& site_info_;
   std::vector<SiteProxy*> site_proxies_;
 
 private:
-  const Config::SiteInfo* ChooseRandomSite(const vector<Config::SiteInfo>& sites);
+  MdccCommunicator::SiteProxy*RandomSite(const vector<Config::SiteInfo> &sites);
+  MdccCommunicator::SiteProxy* ClosestSiteInPartition(uint32_t partition_id) const;
 };
 }
 

@@ -34,10 +34,10 @@ void client_setup_heartbeat() {
   }
 }
 
-void client_launch_workers() {
+void client_launch_workers(vector<Config::SiteInfo>& client_sites) {
   // load some common configuration
   // start client workers in new threads.
-  vector<Config::SiteInfo> client_sites = Config::GetConfig()->GetMyClients();
+  Log_info("client enabled, number of sites: %d", client_sites.size());
   vector<std::thread> client_threads;
   vector<ClientWorker*> workers;
   for (uint32_t client_id = 0; client_id < client_sites.size(); client_id++) {
@@ -55,15 +55,12 @@ void client_launch_workers() {
   }
 }
 
-
-void server_launch_worker() {
-  Config* cfg = Config::GetConfig();
-  auto site_infos = cfg->GetMyServers();
-  svr_workers.resize(site_infos.size(), ServerWorker());
+void server_launch_worker(vector<Config::SiteInfo>&server_sites) {
+  Log_info("server enabled, number of sites: %d", server_sites.size());
+  svr_workers.resize(server_sites.size(), ServerWorker());
   int i=0;
-  for (auto& site_info : site_infos) {
-    Log_info("launching site: %x, bind address %s", site_info.id,
-             site_info.GetBindAddress().c_str());
+  for (auto& site_info : server_sites) {
+    Log_info("launching site: %x, bind address %s", site_info.id, site_info.GetBindAddress().c_str());
     auto& worker = svr_workers[i++];
     worker.sharding_ = Frame().CreateSharding(Config::GetConfig()->sharding_);
     worker.sharding_->BuildTableInfoPtr();
@@ -91,29 +88,24 @@ void check_current_path() {
 }
 
 int main(int argc, char *argv[]) {
-  int ret;
   check_current_path();
 
   // read configuration
-  if (0 != (ret = Config::CreateConfig(argc, argv))) {
+  int ret = Config::CreateConfig(argc, argv);
+  if (ret != SUCCESS) {
     Log_fatal("Read config failed");
     return ret;
   }
 
-  vector<Config::SiteInfo> infos = Config::GetConfig()->GetMyServers();
-  if (infos.size() > 0) {
-    Log_info("server enabled, number of sites: %d", infos.size());
-
-    // start server service
-    server_launch_worker();
+  auto server_infos = Config::GetConfig()->GetMyServers();
+  if (server_infos.size() > 0) {
+    server_launch_worker(server_infos);
   }
 
-  infos = Config::GetConfig()->GetMyClients();
-  if (infos.size() > 0) {
-    Log_info("client enabled, number of sites: %d", infos.size());
+  auto client_infos = Config::GetConfig()->GetMyClients();
+  if (server_infos.size() > 0) {
     client_setup_heartbeat();
-    client_launch_workers();
-    // TODO shutdown servers.
+    client_launch_workers(client_infos);
     server_shutdown();
   } else {
     Log_info("No clients running in this process, just sleep and wait.");

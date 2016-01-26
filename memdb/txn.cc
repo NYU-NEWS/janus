@@ -13,6 +13,7 @@ using namespace std;
 namespace mdb {
 
 Table *Txn::get_table(const std::string &tbl_name) const {
+  assert(this != nullptr);
   return mgr_->get_table(tbl_name);
 }
 

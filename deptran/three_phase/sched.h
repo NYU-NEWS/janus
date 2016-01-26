@@ -8,7 +8,7 @@
 namespace rococo {
 
 class ThreePhaseSched: public NoneSched {
-  using NoneSched::NoneSched;
+ using NoneSched::NoneSched;
  public:
 
   virtual int OnPhaseOneRequest(const SimpleCommand &cmd,

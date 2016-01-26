@@ -60,7 +60,7 @@ int ThreePhaseExecutor::abort_launch(
     recorder_->submit(log_s);
   }
   // TODO optimize
-//  sched_->Destroy(cmd_id_);
+  //  sched_->Destroy(cmd_id_);
   defer->reply();
   Log::debug("abort finish");
   return 0;

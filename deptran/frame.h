@@ -16,6 +16,7 @@ class Scheduler;
 class ClientControlServiceImpl;
 class ServerControlServiceImpl;
 class TxnRegistry;
+class Config;
 class Frame {
  public:
   Sharding* CreateSharding();
@@ -46,6 +47,7 @@ class Frame {
 
   vector<rrr::Service*> CreateRpcServices(
       Config* config,
+      uint32_t site_id,
       Scheduler *dtxn_mgr,
       rrr::PollMgr* poll_mgr,
       ServerControlServiceImpl *scsi);

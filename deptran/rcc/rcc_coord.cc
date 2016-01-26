@@ -207,7 +207,7 @@ void RCCCoord::deptran_finish(TxnChopper *ch) {
 
       fu->get_reply() >> res;
 
-      if (n_finish_ack_ == ch->GetPars().size()) {
+      if (n_finish_ack_ == ch->GetSiteIds().size()) {
         ch->finish_callback(res);
         callback = true;
       }

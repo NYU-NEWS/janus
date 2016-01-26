@@ -6,23 +6,31 @@
 
 namespace mdcc {
   void MdccCoordinator::do_one(TxnRequest &req) {
-    //std::lock_guard<std::mutex> lock(this->mtx_);
     Log_info("MdccCoord::do_one: type=%d", req.txn_type_);
 
     mdcc::StartRequest request;
+    request.txn_type = req.txn_type_;
+    request.txn_id = NextTxnId();
+    request.inputs = req.input_;
+
     std::function<void(StartResponse&)> callback = [this, request](StartResponse& reply) {
-      Log_debug("finished executing request %ld", request.txn_id);
+      if (reply.result==SUCCESS) {
+        Log_debug("transaction %ld success!", request.txn_id);
+        // TODO: report success
+      } else {
+        Log_debug("transaction %ld failed: %d", request.txn_id, reply.result);
+        // TODO: report failure
+      }
     };
 
-    request.txn_type = req.txn_type_;
-    request.txn_id = this->NextTxnId();
-    request.inputs = req.input_;
+    n_start_++;
     Log_debug("send out start request %ld, cmd_id: %lx",
               n_start_, request.txn_id);
-    this->communicator_->SendStart(request, callback);
+    communicator_->SendStart(request, callback);
   }
 
-  i64 MdccCoordinator::NextTxnId() {
-      return 0;
+  uint64_t MdccCoordinator::NextTxnId() {
+    auto id = txn_id_counter_.fetch_add(1);
+    return ((uint64_t)site_id_ << 32) | id;
   }
 }

@@ -54,7 +54,6 @@ int Config::CreateConfig(int argc, char **argv) {
   vector<string> config_paths;
   std::string proc_name = "localhost"; // default as "localhost"
   std::string logging_path = "./disk_log/";
-  unsigned int sid = 0, cid = 0;
   char *end_ptr    = NULL;
 
   char *hostspath               = NULL;
@@ -95,7 +94,6 @@ int Config::CreateConfig(int argc, char **argv) {
         break;
       case 'c': // client id
         // TODO remove
-        cid = strtoul(optarg, &end_ptr, 10);
         if ((end_ptr == NULL) || (*end_ptr != '\0'))
           return -4;
         if (server_or_client != -1)
@@ -138,8 +136,6 @@ int Config::CreateConfig(int argc, char **argv) {
       //    break;
       case 's': // site id
         // TODO remove
-        sid = strtoul(optarg, &end_ptr, 10);
-
         if ((end_ptr == NULL) || (*end_ptr != '\0')) return -4;
 
         if (server_or_client != -1) return -4;
@@ -205,7 +201,7 @@ int Config::CreateConfig(int argc, char **argv) {
   config_s->proc_name_ = proc_name;
   config_s->config_paths_ = config_paths;
   config_s->Load();
-  return 0;
+  return SUCCESS;
 }
 
 void Config::DestroyConfig() {

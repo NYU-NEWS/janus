@@ -8,7 +8,7 @@
 namespace rococo {
 
 class NoneSched: public Scheduler {
-  using Scheduler::Scheduler;
+ using Scheduler::Scheduler;
  public:
   virtual int OnPhaseOneRequest(const SimpleCommand& cmd,
                                 rrr::i32 *res,

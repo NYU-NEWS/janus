@@ -16,7 +16,7 @@ TxnChopper::TxnChopper() {
 }
 
 
-set<parid_t> TxnChopper::GetPars() {
+set<parid_t> TxnChopper::GetSiteIds() {
   return partitions_;
 }
 
@@ -37,7 +37,7 @@ Command *TxnChopper::GetNextSubCmd() {
       status = INIT;
       cmd = new SimpleCommand();
       cmd->inn_id_ = pi;
-      cmd->par_id = sharding_[pi];
+      cmd->site_id_ = sharding_[pi];
       cmd->type_ = pi;
       cmd->root_id_ = id_;
       cmd->root_type_ = type_;
@@ -46,15 +46,14 @@ Command *TxnChopper::GetNextSubCmd() {
       cmd->root_ = this;
       cmd_[pi] = cmd;
 
-      partitions_.insert(cmd->par_id);
+      partitions_.insert(cmd->site_id_);
 
       Log_debug("getting subcmd i: %d, thread id: %x",
                 pi, std::this_thread::get_id());
-
       verify(status_[pi] == INIT);
       status_[pi] = ONGOING;
 
-      verify(cmd->type_ != 0);
+      //verify(cmd->type_ != 0); // not sure why this should be true???
       verify(type_ == type());
       verify(cmd->root_type_ == type());
       verify(cmd->root_type_ > 0);

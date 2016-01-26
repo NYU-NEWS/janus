@@ -12,8 +12,6 @@ class SimpleCommand;
 class ThreePhaseExecutor: public Executor {
   using Executor::Executor;
  public:
-
-
   virtual ~ThreePhaseExecutor();
 
   virtual int StartLaunch(const SimpleCommand &cmd,

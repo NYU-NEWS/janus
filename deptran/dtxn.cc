@@ -48,7 +48,6 @@ mdb::ResultSet DTxn::QueryIn(Table *tbl,
   } else {
     verify(0);
   }
-
 }
 
 
@@ -81,7 +80,8 @@ mdb::Row* DTxn::Query(mdb::Table *tbl,
     if (it != row_map.end()) {
       ret_row = it->second;
     } else {
-      ret_row = mdb_txn_->query(tbl, mb).next();
+      auto rs = mdb_txn_->query(tbl, mb);
+      ret_row = rs.next();
       row_map[row_context_id] = ret_row;
     }
   } else {

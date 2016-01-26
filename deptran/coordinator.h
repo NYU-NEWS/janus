@@ -18,6 +18,7 @@ class CoordinatorBase {
 public:
   std::mutex mtx_;
   uint32_t n_start_ = 0;
+  virtual ~CoordinatorBase() = default;
   virtual void do_one(TxnRequest &) = 0;
   virtual void cleanup() = 0;
   virtual void restart(TxnChopper *ch) = 0;

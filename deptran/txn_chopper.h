@@ -32,10 +32,8 @@ class TxnRequest {
   map<int32_t, Value> input_;    // the inputs for the transactions.
   int n_try_ = 1;
   std::function<void(TxnReply &)> callback_;
-
   void get_log(i64 tid, std::string &log);
 };
-
 
 enum CommandStatus {WAITING=-1, READY, ONGOING, FINISHED, INIT};
 
@@ -61,7 +59,6 @@ class TxnChopper : public Command {
   txnid_t txn_id_; // TODO obsolete
 
  public:
-//  txntype_t txn_type_;
   TxnRegistry *txn_reg_ = nullptr;
 
   Graph<TxnInfo> gra_;
@@ -69,15 +66,14 @@ class TxnChopper : public Command {
   map<int32_t, Value> ws_ = {}; // workspace.
   map<int32_t, Value> ws_init_ = {};
   map<int32_t, map<int32_t, Value> > inputs_;  // input of each piece.
-  //std::vector<std::vector<mdb::Value> > outputs_; // output of each piece.
   map<int32_t, int32_t> output_size_;
   map<int32_t, cmdtype_t> p_types_;                  // types of each piece.
   map<int32_t, uint32_t> sharding_;
   std::atomic<bool> commit_;
-  /** which server to which piece */
   map<int32_t, CommandStatus> status_; // -1 waiting; 0 ready; 1 ongoing; 2 finished;
   map<int32_t, Command*> cmd_;
   std::set<parid_t> partitions_;
+
   /** server involved*/
 
   int n_pieces_all_ = 0;
@@ -132,7 +128,7 @@ class TxnChopper : public Command {
   virtual void Merge(Command&);
   virtual bool HasMoreSubCmdReadyNotOut();
   virtual Command* GetNextSubCmd();
-  virtual set<parid_t> GetPars();
+  virtual set<parid_t> GetSiteIds();
   virtual parid_t GetPiecePar(innid_t inn_id) {
     verify(sharding_.find(inn_id) != sharding_.end());
     return sharding_[inn_id];

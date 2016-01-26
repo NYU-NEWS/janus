@@ -1,43 +1,43 @@
 #include "all.h"
 
 namespace deptran {
-  char RW_BENCHMARK_TABLE[] = "customer";
+  char RW_BENCHMARK_TABLE[] = "history";
 
   void RWPiece::reg_all() {
       reg_pieces();
   }
 
   void RWPiece::reg_pieces() {
+    SHARD_PIE(RW_BENCHMARK_R_TXN, RW_BENCHMARK_R_TXN_0, TPCC_TB_HISTORY, TPCC_VAR_H_KEY)
     BEGIN_PIE(RW_BENCHMARK_R_TXN, RW_BENCHMARK_R_TXN_0, DF_NO) {
-      mdb::Txn *txn = dtxn->mdb_txn_;
-      Value buf;
-      verify(cmd.input.size() == 1);
-      i32 output_index = 0;
-
-      mdb::Row *r = txn->query(txn->get_table(RW_BENCHMARK_TABLE),
-                               cmd.input.at(0)).next();
-      if (!txn->read_column(r, 1, &buf)) {
+      mdb::MultiBlob buf(1);
+      Value result;
+      verify(cmd.input.size()==1);
+      auto id = cmd.input[0].get_i64();
+      buf[0] = cmd.input[0].get_blob();
+      auto row = dtxn->Query(dtxn->GetTable(RW_BENCHMARK_TABLE), buf, id);
+      if (!dtxn->ReadColumn(row, 1, &result)) {
           *res = REJECT;
           return;
       }
-      output[output_index++] = buf;
+      output[0] = result;
       *res = SUCCESS;
       return;
     } END_PIE
 
+    SHARD_PIE(RW_BENCHMARK_W_TXN, RW_BENCHMARK_W_TXN_0, TPCC_TB_HISTORY, TPCC_VAR_H_KEY)
     BEGIN_PIE(RW_BENCHMARK_W_TXN, RW_BENCHMARK_W_TXN_0, DF_REAL) {
-      mdb::Txn *txn = dtxn->mdb_txn_;
+      mdb::MultiBlob buf;
+      Value result;
       verify(cmd.input.size() == 1);
-      i32 output_index = 0;
-      Value buf;
-      mdb::Row *r = txn->query(txn->get_table(RW_BENCHMARK_TABLE),
-                               cmd.input[0]).next();
-      if (!txn->read_column(r, 1, &buf)) {
+      auto id = cmd.input[0].get_i64();
+      auto row = dtxn->Query(dtxn->GetTable(RW_BENCHMARK_TABLE), buf, id);
+      if (!dtxn->ReadColumn(row, 1, &result)) {
         *res = REJECT;
         return;
       }
-      buf.set_i64(buf.get_i64() + 1);
-      if (!txn->write_column(r, 1, /*input[1]*/buf)) {
+      result.set_i64(result.get_i64()+1);
+      if (!dtxn->WriteColumn(row, 1, result)) {
         *res = REJECT;
         return;
       }

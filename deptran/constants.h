@@ -8,7 +8,6 @@ namespace rococo {
 #define cmdid_t uint64_t // txnid and cmdid are the same thing
 #define innid_t uint32_t
 #define parid_t uint32_t
-#define cliid_t uint32_t
 #define svrid_t uint32_t
 #define phase_t uint32_t
 #define status_t uint32_t

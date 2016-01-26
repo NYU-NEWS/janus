@@ -35,11 +35,11 @@ void TpccChopper::StockLevelInit(TxnRequest &req) {
 void TpccChopper::stock_level_retry() {
   n_pieces_all_ = 2;
   n_pieces_input_ready_ = 1;
-//  inputs_.resize(n_pieces_all_);
-//  output_size_.resize(n_pieces_all_);
-//  p_types_.resize(n_pieces_all_);
-//  sharding_.resize(n_pieces_all_);
-//  status_.resize(n_pieces_all_);
+  // inputs_.resize(n_pieces_all_);
+  // output_size_.resize(n_pieces_all_);
+  // p_types_.resize(n_pieces_all_);
+  // sharding_.resize(n_pieces_all_);
+  //  status_.resize(n_pieces_all_);
   status_[TPCC_STOCK_LEVEL_0] = READY;
   status_[TPCC_STOCK_LEVEL_1] = WAITING;
 }
@@ -48,8 +48,7 @@ void TpccChopper::stock_level_retry() {
 void TpccPiece::reg_stock_level() {
   // Ri district
   INPUT_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_0, TPCC_VAR_W_ID, TPCC_VAR_D_ID)
-  SHARD_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_0,
-            TPCC_TB_DISTRICT, TPCC_VAR_W_ID)
+  SHARD_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_0, TPCC_TB_DISTRICT, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_0, DF_NO) {
     verify(dtxn != nullptr);
 //    verify(input.size() == 2);
@@ -123,8 +122,8 @@ void TpccPiece::reg_stock_level() {
     TpccChopper *tpcc_ch = (TpccChopper*) ch;
     Log_debug("tid %llx: stock_level: outptu_size: %u",
               tpcc_ch->txn_id_, output.size());
-    //verify(output_size >= 20 * 5);
-//    verify(output_size <= 20 * 15); // TODO fix this verification
+    // verify(output_size >= 20 * 5);
+    // verify(output_size <= 20 * 15); // TODO fix this verification
     verify(output.size() == (output[TPCC_VAR_OL_AMOUNT].get_i32() + 1));
     tpcc_ch->n_pieces_all_ += output[TPCC_VAR_OL_AMOUNT].get_i32();
     tpcc_ch->ws_[TPCC_VAR_N_PIECE_ALL] = Value((int32_t)tpcc_ch->n_pieces_all_);

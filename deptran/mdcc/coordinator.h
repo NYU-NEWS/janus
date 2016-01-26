@@ -17,6 +17,7 @@ protected:
   uint32_t thread_id_;
   Config* config_;
   ClientControlServiceImpl* ccsi_;
+  std::atomic<uint32_t> txn_id_counter_;
 
 public:
   MdccCoordinator() = delete;
@@ -28,7 +29,8 @@ public:
     site_id_(site_id),
     thread_id_(thread_id),
     config_(config),
-    ccsi_(ccsi) {
+    ccsi_(ccsi),
+    txn_id_counter_(0) {
   }
 
   virtual ~MdccCoordinator() { delete communicator_; }
@@ -36,7 +38,7 @@ public:
   void cleanup() override {}
   void restart(TxnChopper *ch) override {}
 
-  i64 NextTxnId();
+  uint64_t NextTxnId();
 };
 }
 #endif //ROCOCO_MDCC_COORD_H

@@ -209,7 +209,7 @@ class Sharding {
 
   virtual int PopulateTable(uint32_t sid);
 
-  ~Sharding();
+  virtual ~Sharding();
 
   friend class Config;
 };

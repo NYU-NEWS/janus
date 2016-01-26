@@ -50,6 +50,7 @@ void ClientWorker::work() {
     req.callback_ = std::bind(&ClientWorker::RequestDone, this,
                               std::placeholders::_1);
     coo_->do_one(req);
+    Log_info("done one request! %ld", req.n_try_);
   }
   finish_mutex.lock();
   while (n_outstanding_ > 0) {

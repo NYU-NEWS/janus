@@ -299,8 +299,8 @@ void ThreePhaseCoordinator::FinishAck(TxnChopper *ch, phase_t phase, Future *fu)
     n_finish_ack_++;
     Log_debug("finish cmd_id_: %ld; n_finish_ack_: %ld; n_finish_req_: %ld",
                cmd_->id_, n_finish_ack_, n_finish_req_);
-    verify(ch->GetPars().size() == n_finish_req_);
-    if (n_finish_ack_ == ch->GetPars().size()) {
+    verify(ch->GetSiteIds().size() == n_finish_req_);
+    if (n_finish_ack_ == ch->GetSiteIds().size()) {
       if ((ch->reply_.res_ == REJECT) && ch->can_retry()) {
         retry = true;
       } else {

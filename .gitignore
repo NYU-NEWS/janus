@@ -21,5 +21,8 @@ benchmark*.log
 log*
 .idea
 *.orig
-deptran/mdcc/mdcc.h
 docs/
+deptran/mdcc/mdcc_rpc.h
+.python-version
+.ycm_extra_conf.py
+.unittest-gtest/

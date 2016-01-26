@@ -114,8 +114,13 @@ public:
     }
 
     i64 get_i64() const {
-        verify(k_ == I64);
-        return i64_;
+        verify(k_ == I64 || k_ == I32);
+        switch (k_) {
+            case I64:
+                return i64_;
+            case I32:
+                return static_cast<i64>(i32_);
+        }
     }
 
     double get_double() const {

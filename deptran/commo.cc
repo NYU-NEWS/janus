@@ -23,18 +23,18 @@ void RococoCommunicator::SendStart(SimpleCommand &cmd,
                                    Coordinator *coo,
                                    std::function<void(StartReply&)> &callback) {
   rrr::FutureAttr fuattr;
-  RococoProxy *proxy = vec_rpc_proxy_[cmd.GetPar()];
+  RococoProxy *proxy = vec_rpc_proxy_[cmd.GetSiteId()];
   std::function<void(Future*)> cb =
       [coo, this, callback, &cmd] (Future *fu) {
     StartReply reply;
-    Log_debug("SendStart callback for %ld from %ld", cmd.GetPar(), coo->coo_id_);
+    Log_debug("SendStart callback for %ld from %ld", cmd.GetSiteId(), coo->coo_id_);
     reply.cmd = &cmd;
     Marshal &m = fu->get_reply();
     m >> reply.res >> cmd.output;
     callback(reply);
   };
   fuattr.callback = cb;
-  Log_debug("SendStart to %ld from %ld", cmd.GetPar(), coo->coo_id_);
+  Log_debug("SendStart to %ld from %ld", cmd.GetSiteId(), coo->coo_id_);
   verify(cmd.type_ > 0);
   verify(cmd.root_type_ > 0);
   Future::safe_release(proxy->async_StartTxn(cmd, fuattr));
@@ -45,8 +45,8 @@ void RococoCommunicator::SendStart(SimpleCommand &cmd,
                                    std::function<void(Future *fu)> &callback) {
   rrr::FutureAttr fuattr;
   fuattr.callback = callback;
-  RococoProxy *proxy = vec_rpc_proxy_[cmd.GetPar()];
-  Log_debug("SendStart to %ld\n", cmd.GetPar());
+  RococoProxy *proxy = vec_rpc_proxy_[cmd.GetSiteId()];
+  Log_debug("SendStart to %ld\n", cmd.GetSiteId());
   Future::safe_release(proxy->async_StartTxn(cmd, fuattr));
 }
 

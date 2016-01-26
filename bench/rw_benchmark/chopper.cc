@@ -4,22 +4,25 @@ namespace deptran {
 
 void RWChopper::W_txn_init(TxnRequest &req) {
   inputs_.clear();
-  inputs_[0] = map<int32_t, Value>({{0, req.input_[0]}});
+  inputs_[RW_BENCHMARK_W_TXN_0] = map<int32_t, Value>({{0, req.input_[0]}});
+  n_pieces_input_ready_ = 1;
+
   output_size_ = {{0,0}};
   p_types_ = {{0,RW_BENCHMARK_W_TXN_0}};
   sss_->get_site_id_from_tb(RW_BENCHMARK_TABLE, req.input_[0], sharding_[0]);
-  status_ = {{0, READY}};
+  status_ = {{RW_BENCHMARK_W_TXN_0, READY}};
   n_pieces_all_ = 1;
 }
 
 void RWChopper::R_txn_init(TxnRequest &req) {
   inputs_.clear();
-  inputs_[0] = map<int32_t, Value>({{0, req.input_[0]}});
+  inputs_[RW_BENCHMARK_R_TXN_0] = map<int32_t, Value>({{0, req.input_[0]}});
+  n_pieces_input_ready_ = 1;
 
   output_size_= {{0, 1}};
   p_types_ = {{0, RW_BENCHMARK_R_TXN_0}};
   sss_->get_site_id_from_tb(RW_BENCHMARK_TABLE, req.input_[0], sharding_[0]);
-  status_ = {{0, READY}};
+  status_ = {{RW_BENCHMARK_R_TXN_0, READY}};
   n_pieces_all_ = 1;
 }
 
