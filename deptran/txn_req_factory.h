@@ -5,6 +5,7 @@ namespace rococo {
 
 class TxnRequest;
 class Sharding;
+class Config;
 
 class TxnGenerator {
  public:
@@ -36,11 +37,12 @@ class TxnGenerator {
   int n_try_;
   int single_server_;
   int fix_id_;
-  std::vector<double> &txn_weight_;
+  std::vector<double>& txn_weight_;
+  std::map<string, double>& txn_weights_;
   Sharding* sharding_;
 
  public:
-  TxnGenerator(Sharding* sd);
+  TxnGenerator(Config* config);
 
   virtual void get_txn_req(TxnRequest *req, uint32_t cid) const;
 

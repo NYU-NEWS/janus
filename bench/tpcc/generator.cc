@@ -5,8 +5,8 @@
 
 namespace rococo {
 
-TpccTxnGenerator::TpccTxnGenerator(Sharding *sh)
-    : TxnGenerator(sh) {
+TpccTxnGenerator::TpccTxnGenerator(Config* config)
+    : TxnGenerator(config) {
   std::map<std::string, uint64_t> table_num_rows;
   sharding_->get_number_rows(table_num_rows);
 

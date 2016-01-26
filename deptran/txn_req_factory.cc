@@ -33,9 +33,10 @@ namespace rococo {
 
 //TxnGenerator *TxnGenerator::txn_req_factory_s = NULL;
 
-TxnGenerator::TxnGenerator(Sharding* sd)
-    : txn_weight_(Config::GetConfig()->get_txn_weight()),
-      sharding_(sd){
+TxnGenerator::TxnGenerator(Config* config)
+    : txn_weight_(config->get_txn_weight()),
+      txn_weights_(config->get_txn_weights()),
+      sharding_(config->sharding_) {
   benchmark_ = Config::GetConfig()->get_benchmark();
   n_try_ = Config::GetConfig()->get_max_retry();
   single_server_ = Config::GetConfig()->get_single_server();
@@ -151,19 +152,17 @@ void TxnGenerator::get_rw_benchmark_r_txn_req(
 void TxnGenerator::get_rw_benchmark_txn_req(
     TxnRequest *req, uint32_t cid) const {
   req->n_try_ = n_try_;
-  if (txn_weight_.size() != 2)
-    get_rw_benchmark_r_txn_req(req, cid);
-  else
-    switch (RandomGenerator::weighted_select(txn_weight_)) {
-      case 0: // read
-        get_rw_benchmark_r_txn_req(req, cid);
-        break;
-      case 1: // write
-        get_rw_benchmark_w_txn_req(req, cid);
-        break;
-      default:
-        verify(0);
-    }
+  std::vector<double> weights = { txn_weights_["read"], txn_weights_["write"] };
+  switch (RandomGenerator::weighted_select(weights)) {
+    case 0: // read
+      get_rw_benchmark_r_txn_req(req, cid);
+      break;
+    case 1: // write
+      get_rw_benchmark_w_txn_req(req, cid);
+      break;
+    default:
+      verify(0);
+  }
 }
 
 void TxnGenerator::get_tpca_txn_req(

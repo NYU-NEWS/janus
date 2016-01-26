@@ -807,6 +807,10 @@ std::vector<double>& Config::get_txn_weight() {
   return txn_weight_;
 }
 
+std::map<string, double>& Config::get_txn_weights() {
+  return txn_weights_;
+};
+
 #ifdef CPU_PROFILE
 int Config::get_prof_filename(char *prof_file) {
   if (prof_file == NULL) return -1;

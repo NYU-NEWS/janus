@@ -164,7 +164,7 @@ class Config {
  public:
   static int CreateConfig(int argc,
                           char **argv);
-  static Config *GetConfig();
+  static Config* GetConfig();
   static void DestroyConfig();
 
   void InitTPCCD();
@@ -238,6 +238,7 @@ class Config {
 
   ~Config();
 
+    map<string, double> &get_txn_weights();
   };
 }
 

@@ -331,13 +331,13 @@ TxnGenerator * Frame::CreateTxnGenerator() {
     case TPCC:
     case TPCC_DIST_PART:
     case TPCC_REAL_DIST_PART:
-      gen = new TpccTxnGenerator(Config::GetConfig()->sharding_);
+      gen = new TpccTxnGenerator(Config::GetConfig());
       break;
     case TPCA:
     case RW_BENCHMARK:
     case MICRO_BENCH:
     default:
-      gen = new TxnGenerator(Config::GetConfig()->sharding_);
+      gen = new TxnGenerator(Config::GetConfig());
   }
   return gen;
 }
