@@ -218,7 +218,6 @@ void Scheduler::reg_table(const std::string &name,
 
 Executor* Scheduler::CreateExecutor(cmdid_t txn_id) {
   verify(executors_.find(txn_id) == executors_.end());
-  Log_debug("create tid %ld\n", txn_id);
   Executor *exec = Frame().CreateExecutor(txn_id, this);
   DTxn* dtxn = CreateDTxn(txn_id);
   exec->dtxn_ = dtxn;
