@@ -18,18 +18,18 @@ namespace mdb {
 // Tables are NoCopy, because they might maintain a pointer to schema, which should not be shared
 class Table: public NoCopy {
 protected:
+    std::string name_;
     const Schema* schema_;
 
 public:
-    Table(const Schema* schema): schema_(schema) {
+    Table(std::string name, const Schema* schema): name_(name), schema_(schema) {
         // prevent further changes
         const_cast<Schema*>(schema_)->freeze();
     }
     virtual ~Table() {}
 
-    const Schema* schema() const {
-        return schema_;
-    }
+    const Schema* schema() const { return schema_; }
+    const std::string Name() const { return name_; }
 
     virtual void insert(Row* row) = 0;
     virtual void remove(Row* row, bool do_free = true) = 0;
@@ -171,7 +171,7 @@ public:
         }
     };
 
-    SortedTable(const Schema* schema): Table(schema) {}
+    SortedTable(std::string name, const Schema* schema): Table(name, schema) {}
 
     ~SortedTable();
 
@@ -311,7 +311,7 @@ public:
         }
     };
 
-    UnsortedTable(const Schema* schema): Table(schema) {}
+    UnsortedTable(std::string name, const Schema* schema): Table(name, schema) {}
 
     ~UnsortedTable();
 
@@ -433,14 +433,14 @@ public:
         }
     };
 
-    SnapshotTable(const Schema* sch): Table(sch) {}
+    SnapshotTable(std::string name, const Schema* sch): Table(name, sch) {}
 
     virtual symbol_t rtti() const {
         return TBL_SNAPSHOT;
     }
 
     SnapshotTable* snapshot() const {
-        SnapshotTable* copy = new SnapshotTable(schema_);
+        SnapshotTable* copy = new SnapshotTable(name_, schema_);
         copy->rows_ = rows_.snapshot();
         return copy;
     }
@@ -660,7 +660,7 @@ class IndexedTable: public SortedTable {
     Row* make_index_row(Row* base, int idx_id, master_index* master_idx);
 
 public:
-    IndexedTable(const IndexedSchema* schema);
+    IndexedTable(std::string name, const IndexedSchema* schema);
     ~IndexedTable();
 
     void insert(Row* row);

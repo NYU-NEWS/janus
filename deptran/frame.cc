@@ -349,9 +349,9 @@ TxnGenerator * Frame::CreateTxnGenerator() {
     switch(config->get_mode()) {
       case MODE_MDCC:
         result.push_back(new mdcc::MdccClientServiceImpl(config, site_id, dtxn_mgr));
+        result.push_back(new mdcc::MdccLeaderServiceImpl(config, site_id, dtxn_mgr));
         result.push_back(new mdcc::MdccAcceptorService());
         result.push_back(new mdcc::MdccLearnerService());
-        result.push_back(new mdcc::MdccLeaderService());
         break;
       default:
         result.push_back(new RococoServiceImpl(dtxn_mgr, poll_mgr, scsi));

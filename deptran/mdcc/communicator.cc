@@ -3,11 +3,13 @@
 //
 
 #include "communicator.h"
+#include "option.h"
+#include "deptran/multi_value.h"
 
 namespace mdcc {
   // initiate a mdcc transaction
   void MdccCommunicator::SendStart(StartRequest& req,
-                                   std::function<void(StartResponse&)>& callback) {
+                                   Callback<StartResponse>& callback) {
     std::lock_guard<std::mutex> lock(this->mtx_);
     auto local_sites = config_->SitesByLocaleId(site_info_.locale_id);
     auto proxy = (local_sites.size()>0) ? RandomSite(local_sites) : RandomSite(config_->sites_);
@@ -28,7 +30,7 @@ namespace mdcc {
 
   // start a transaction piece on a partition
   void MdccCommunicator::SendStartPiece(const rococo::SimpleCommand& cmd,
-                      std::function<void(StartPieceResponse&)>& callback) {
+                                        Callback<StartPieceResponse>& callback) {
     std::lock_guard<std::mutex> lock(this->mtx_);
     auto& site = config_->SiteById(cmd.GetSiteId());
     auto proxy = ClosestSiteInPartition(site.partition_id_);
@@ -45,6 +47,36 @@ namespace mdcc {
     Future::safe_release(proxy->client->async_StartPiece(cmd, future));
   }
 
+
+
+  void MdccCommunicator::SendProposal(BallotType ballotType, txnid_t txn_id,
+                                      const rococo::SimpleCommand &cmd,
+                                      OptionSet* options,
+                                      Callback<OptionSet>& callback) {
+    auto partition_id = config_->SiteById(cmd.GetSiteId()).partition_id_;
+    auto partition_sites = config_->SitesByPartitionId(partition_id);
+
+    if (ballotType == BallotType::FAST) {
+      auto proxy = this->LeaderForUpdate(options, partition_sites);
+      Log_debug("send %d options to site %d", options->Options().size(), proxy->site_info.id);
+
+      ProposeRequest req;
+      req.updates = *options;
+      rrr::FutureAttr future;
+      future.callback = [options, callback](rrr::Future* future) {
+        auto& m = future->get_reply();
+        ProposeResponse res;
+        m >> res;
+        if (res.accepted) options->Accept();
+        callback(*options);
+      };
+      proxy->leader->async_Propose(req, future);
+    } else {
+      Log_debug("implement slow path");
+      verify(0);
+    }
+  }
+
   MdccCommunicator::SiteProxy* MdccCommunicator::ClosestSiteInPartition(uint32_t partition_id) const {
     auto& partition_sites = config_->SitesByPartitionId(partition_id);
     assert(partition_sites.size()>0);
@@ -56,7 +88,14 @@ namespace mdcc {
     return site_proxies_[site_id];
   }
 
-  MdccCommunicator::SiteProxy* MdccCommunicator::RandomSite(const vector<Config::SiteInfo> &sites) {
+  MdccCommunicator::SiteProxy* MdccCommunicator::RandomSite(const vector<Config::SiteInfo>& sites) {
     return site_proxies_[sites[RandomGenerator::rand(0, sites.size()-1)].id];
+  }
+  MdccCommunicator::SiteProxy* MdccCommunicator::LeaderForUpdate(
+      OptionSet *option_set, std::vector<Config::SiteInfo> &sites) {
+    std::size_t hname = std::hash<std::string>()(option_set->Table());
+    std::size_t hkey = rococo::multi_value_hasher()(option_set->Key());
+    int index = (hname ^ hkey) % sites.size();
+    return site_proxies_[sites[index].id];
   }
 }

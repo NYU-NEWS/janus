@@ -48,13 +48,13 @@ void ServerWorker::PopTable() {
 
     switch (symbol) {
       case mdb::TBL_SORTED:
-        tb = new mdb::SortedTable(schema);
+        tb = new mdb::SortedTable(table_name, schema);
         break;
       case mdb::TBL_UNSORTED:
-        tb = new mdb::UnsortedTable(schema);
+        tb = new mdb::UnsortedTable(table_name, schema);
         break;
       case mdb::TBL_SNAPSHOT:
-        tb = new mdb::SnapshotTable(schema);
+        tb = new mdb::SnapshotTable(table_name, schema);
         break;
       default:
         verify(0);

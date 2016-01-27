@@ -4,10 +4,15 @@
 #pragma once
 #include "msg.h"
 #include "deptran/coordinator.h"
+#include "deptran/mdcc/Ballot.h"
+#include "option.h"
 #include "mdcc_rpc.h"
 
 namespace mdcc {
 using rococo::Config;
+
+template<class T>
+using Callback = std::function<void(const T&)>;
 
 class MdccCommunicator {
  public:
@@ -26,11 +31,13 @@ class MdccCommunicator {
   }
 
   void SendStart(StartRequest& req,
-                 std::function<void(StartResponse &)>& callback);
+                 Callback<StartResponse>& callback);
 
   void SendStartPiece(const rococo::SimpleCommand& cmd,
-                      std::function<void(StartPieceResponse&)>& callback);
- protected:
+                      Callback<StartPieceResponse>& callback);
+  void SendProposal(BallotType ballotType, txnid_t txn_id, const rococo::SimpleCommand &cmd,
+                    OptionSet* options, Callback<OptionSet>& cb);
+protected:
   std::mutex mtx_;
   struct SiteProxy {
     const Config::SiteInfo& site_info;
@@ -66,8 +73,9 @@ class MdccCommunicator {
   std::vector<SiteProxy*> site_proxies_;
 
 private:
-  MdccCommunicator::SiteProxy*RandomSite(const vector<Config::SiteInfo> &sites);
+  MdccCommunicator::SiteProxy* RandomSite(const vector<Config::SiteInfo> &sites);
   MdccCommunicator::SiteProxy* ClosestSiteInPartition(uint32_t partition_id) const;
+  MdccCommunicator::SiteProxy* LeaderForUpdate(OptionSet *option_set, std::vector<Config::SiteInfo> &sites);
 };
 }
 

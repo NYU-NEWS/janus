@@ -245,7 +245,7 @@ Row* IndexedTable::make_index_row(Row* base, int idx_id, master_index* master_id
 }
 
 
-IndexedTable::IndexedTable(const IndexedSchema* schema): SortedTable(schema) {
+IndexedTable::IndexedTable(std::string name, const IndexedSchema* schema): SortedTable(name, schema) {
     for (auto idx = schema->index_begin(); idx != schema->index_end(); ++idx) {
         Schema* idx_schema = new Schema;
         for (auto& col_id : *idx) {
@@ -253,7 +253,7 @@ IndexedTable::IndexedTable(const IndexedSchema* schema): SortedTable(schema) {
             idx_schema->add_key_column(col_info->name.c_str(), col_info->type);
         }
         verify(idx_schema->add_column(".hidden", Value::I64) >= 0);
-        SortedTable* idx_tbl = new SortedTable(idx_schema);
+        SortedTable* idx_tbl = new SortedTable(name, idx_schema);
         index_schemas_.push_back(idx_schema);
         indices_.push_back(idx_tbl);
     }

@@ -1,5 +1,5 @@
 #pragma once
-
+#include <stdint.h>
 namespace rococo {
 
 #define ballot_t uint64_t
@@ -36,6 +36,7 @@ namespace rococo {
 #define TXN_ABT (0x10)  // aborted
 
 #define SUCCESS     (0)
+#define FAILURE     (-1)
 #define CONTENTION  (-1)
 #define REJECT      (-10)
 #define DELAYED     (1)

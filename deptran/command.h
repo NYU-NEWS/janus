@@ -16,7 +16,7 @@ public:
   cmdtype_t root_type_ = 0;
 
  public:
-  virtual innid_t inn_id() {return inn_id_;}
+  virtual innid_t inn_id() const {return inn_id_;}
   virtual cmdtype_t type() {return type_;};
   virtual parid_t GetSiteId() {verify(0);};
   virtual void Arrest() {verify(0);};

@@ -4,6 +4,9 @@
 #pragma once
 #include "deptran/dtxn.h"
 #include "deptran/scheduler.h"
+#include "deptran/mdcc/MdccScheduler.h"
+#include "option.h"
+
 using namespace mdb;
 using namespace rococo;
 
@@ -13,26 +16,30 @@ namespace mdcc {
 
   class MdccDTxn: public DTxn {
   protected:
+    MdccScheduler* mgr_;
+
+    // maps <Table, Key> -> Options
+    RecordOptionMap update_options_;
+
   public:
     MdccDTxn() = delete;
-    MdccDTxn(txnid_t tid, Scheduler* mgr) : DTxn(tid, mgr) {}
+    MdccDTxn(txnid_t tid, Scheduler* mgr) :
+        DTxn(tid, mgr), mgr_(static_cast<MdccScheduler*>(mgr)) {}
+    ~MdccDTxn() { ClearOptions(); }
 
-    virtual bool ReadColumn(Row *row, column_id_t col_id, Value *value,
-                            int hint_flag) override;
-    virtual bool ReadColumns(Row *row, const vector<column_id_t> &col_ids,
-                             std::vector<Value> *values, int hint_flag) override;
-    virtual bool WriteColumn(Row *row, column_id_t col_id, const Value &value,
-                             int hint_flag) override;
-    virtual bool WriteColumns (Row *row, const vector<column_id_t> &col_ids,
-                               const std::vector<Value> &values, int hint_flag) override;
-    virtual bool InsertRow(Table *tbl, Row *row) override;
-    virtual Row *Query(Table *tbl, const MultiBlob &mb, int64_t row_context_id) override;
-    virtual ResultSet QueryIn (Table *tbl, const MultiBlob &low,
-                               const MultiBlob &high, symbol_t order,
-                               int rs_context_id) override;
-    virtual Table *GetTable(const std::string &tbl_name) const override;
-    virtual Row* create(const Schema *schema, const std::vector<Value> &values) {
-      verify(0);
+    void ClearOptions() {
+      for (auto& pair : update_options_) {
+        delete pair.second;
+      }
+      update_options_.clear();
     }
+
+    virtual Row* create(const Schema *schema, const std::vector<Value> &values) {
+      Log_fatal("implement %s!!", __FUNCTION__);
+    }
+
+    virtual bool WriteColumn(Row *row, column_id_t col_id, const Value &value, int hint_flag) override;
+    OptionSet* CreateUpdateOption(VersionedRow *row, column_id_t col_id, const Value &value);
+    const RecordOptionMap& UpdateOptions() const { return update_options_; };
   };
 }

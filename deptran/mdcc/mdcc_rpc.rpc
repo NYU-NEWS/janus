@@ -9,9 +9,8 @@ abstract service MdccClient {
     defer StartPiece(rococo::SimpleCommand cmd | StartPieceResponse res);
 };
 
-service MdccLeader {
+abstract service MdccLeader {
     defer Propose(ProposeRequest req | ProposeResponse res);
-    Recover();
 };
 
 service MdccAcceptor {
@@ -54,16 +53,14 @@ struct StartPieceResponse {
 
 // Phase1a
 struct ProposeRequest {
-    i64 start;
-    i64 end;
-    ProposalNum m
+    OptionSet updates
 };
 
 // Phase1b
 struct ProposeResponse {
-    i64 start;
-    i64 end;
-    ProposalNum m;
+    string table;
+    i64 key;
+    i8 accepted;
 };
 
 // Phase2a

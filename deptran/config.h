@@ -34,9 +34,9 @@ class Config {
   };
 
   const map<string, int> AB_MODES_ = {
-      {"multi_paxos",   MODE_MULTI_PAXOS},
-      {"epaxos",        MODE_NOT_READY},
-      {"rep_commit",       MODE_NOT_READY}
+      {"multi_paxos", MODE_MULTI_PAXOS},
+      {"epaxos",      MODE_NOT_READY},
+      {"rep_commit",  MODE_NOT_READY}
   };
 
   std::map<string, mdb::symbol_t> tbl_types_map_ = {

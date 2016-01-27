@@ -13,7 +13,7 @@ namespace mdcc {
     request.txn_id = NextTxnId();
     request.inputs = req.input_;
 
-    std::function<void(StartResponse&)> callback = [this, request](StartResponse& reply) {
+    Callback<StartResponse> callback = [this, request](const StartResponse& reply) {
       if (reply.result==SUCCESS) {
         Log_debug("transaction %ld success!", request.txn_id);
         // TODO: report success

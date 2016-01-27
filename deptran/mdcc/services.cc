@@ -23,10 +23,12 @@ void MdccClientServiceImpl::StartPiece(const SimpleCommand& cmd, StartPieceRespo
 void MdccLearnerService::Learn(const Result& r) {
 }
 
-void MdccLeaderService::Propose(const ProposeRequest &req, ProposeResponse *res,
+void MdccLeaderServiceImpl::Propose(const ProposeRequest &req, ProposeResponse *res,
                                 rrr::DeferredReply *defer) {
+  Log_info("Leader: %s site %d", __FUNCTION__, my_site_info_.id);
+  res->accepted = false;
+  defer->reply();
 }
-void MdccLeaderService::Recover() { }
 
 void MdccAcceptorService::Propose(const ProposeRequest &req,
                                   ProposeResponse *res, rrr::DeferredReply *defer) {

@@ -2,8 +2,10 @@
 #include "__dep__.h"
 
 namespace rococo {
+using mdb::Value;
 
 class MultiValue {
+ friend std::ostream& operator<< (std::ostream& o, const MultiValue& v);
  public:
   MultiValue() : v_(NULL), n_(0) {
   }
@@ -12,21 +14,32 @@ class MultiValue {
     v_ = new Value[n_];
     v_[0] = v;
   }
+
   MultiValue(const vector<Value> &vs) : n_(vs.size()) {
     v_ = new Value[n_];
     for (int i = 0; i < n_; i++) {
       v_[i] = vs[i];
     }
   }
+
   MultiValue(int n) : n_(n) {
     v_ = new Value[n_];
   }
+
   MultiValue(const MultiValue &mv) : n_(mv.n_) {
     v_ = new Value[n_];
     for (int i = 0; i < n_; i++) {
       v_[i] = mv.v_[i];
     }
   }
+
+  MultiValue(const mdb::MultiBlob& mb) : n_(mb.count()), v_(new Value[mb.count()]) {
+    for (int i = 0; i < mb.count(); i++) {
+      Value v(std::string(mb[i].data, mb[i].len));
+      v_[i] = v;
+    }
+  }
+
   inline const MultiValue &operator=(const MultiValue &mv) {
     if (&mv != this) {
       if (v_) {
@@ -80,6 +93,24 @@ inline bool operator<(const MultiValue &mv1, const MultiValue &mv2) {
   return mv1.compare(mv2) == -1;
 }
 
+inline Marshal& operator << (Marshal& m, const MultiValue& mv) {
+  m << mv.size();
+  for (int i=0; i<mv.size(); i++) {
+    m << mv[i];
+  }
+  return m;
+}
+
+inline Marshal& operator >> (Marshal& m, MultiValue& mv) {
+  int size;
+  m >> size;
+  MultiValue result(size);
+  for (int i=0; i<size; i++) {
+    m >> result[i];
+  }
+  mv = result;
+  return m;
+}
 
 struct cell_locator {
   std::string tbl_name;

@@ -49,7 +49,6 @@ class Txn2PL: public Txn {
   Txn2PL(const TxnMgr *mgr, txn_id_t txnid);
   ~Txn2PL();
 
-
   query_buf_t& GetQueryBuf(int64_t);
   virtual bool commit_prepare() {
 //    prepared_ = true;

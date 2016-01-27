@@ -3,37 +3,33 @@
 //
 
 #include "MdccDTxn.h"
-bool mdcc::MdccDTxn::ReadColumn(mdb::Row *row, mdb::column_id_t col_id, Value *value, int hint_flag) {
-  return DTxn::ReadColumn(row, col_id, value, hint_flag);
-}
-bool mdcc::MdccDTxn::ReadColumns(mdb::Row *row,
-                                 const vector<mdb::column_id_t> &col_ids,
-                                 std::vector<Value> *values,
-                                 int hint_flag) {
-  return DTxn::ReadColumns(row, col_ids, values, hint_flag);
-}
-bool mdcc::MdccDTxn::WriteColumn(mdb::Row *row, mdb::column_id_t col_id, const Value &value, int hint_flag) {
-  return DTxn::WriteColumn(row, col_id, value, hint_flag);
-}
-bool mdcc::MdccDTxn::WriteColumns(mdb::Row *row,
-                                  const vector<mdb::column_id_t> &col_ids,
-                                  const std::vector<Value> &values,
-                                  int hint_flag) {
-  return DTxn::WriteColumns(row, col_ids, values, hint_flag);
-}
-bool mdcc::MdccDTxn::InsertRow(mdb::Table *tbl, mdb::Row *row) {
-  return DTxn::InsertRow(tbl, row);
-}
-mdb::Row *mdcc::MdccDTxn::Query(mdb::Table *tbl, const mdb::MultiBlob &mb, int64_t row_context_id) {
-  return DTxn::Query(tbl, mb, row_context_id);
-}
-mdb::ResultSet mdcc::MdccDTxn::QueryIn(mdb::Table *tbl,
-                                       const mdb::MultiBlob &low,
-                                       const mdb::MultiBlob &high,
-                                       mdb::symbol_t order,
-                                       int rs_context_id) {
-  return DTxn::QueryIn(tbl, low, high, order, rs_context_id);
-}
-mdb::Table *mdcc::MdccDTxn::GetTable(const std::string &tbl_name) const {
-  return DTxn::GetTable(tbl_name);
+#include "option.h"
+#include "deptran/multi_value.h"
+
+namespace mdcc {
+  OptionSet* mdcc::MdccDTxn::CreateUpdateOption(VersionedRow *row, column_id_t col_id, const Value &value) {
+    auto locator = std::pair<string, size_t>(row->get_table()->Name(), MultiBlob::hash()(row->get_key()));
+    OptionSet* option_set;
+    auto it = update_options_.find(locator);
+    if (it != update_options_.end()) {
+      option_set = it->second;
+    } else {
+      option_set = new OptionSet(row->get_table()->Name(), row->get_key());
+      update_options_.insert(std::pair<std::pair<string, size_t>, OptionSet*>(locator, option_set));
+    }
+    option_set->Add(Option(col_id, value, row->get_column_ver(col_id)));
+    return option_set;
+  }
+
+  bool MdccDTxn::WriteColumn(Row *row, column_id_t col_id, const Value &value, int hint_flag) {
+    auto versioned_row = dynamic_cast<VersionedRow*>(row);
+    assert(versioned_row);
+    if (DTxn::WriteColumn(row, col_id, value, hint_flag)) {
+      auto option_set = CreateUpdateOption(versioned_row, col_id, value);
+      Log_debug("%d updates to key %zu in %s table", option_set->Options().size(), multi_value_hasher()(option_set->Key()), option_set->Table().c_str());
+      return true;
+    } else {
+      return false;
+    }
+  }
 }

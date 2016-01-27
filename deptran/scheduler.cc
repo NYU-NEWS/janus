@@ -13,7 +13,7 @@
 namespace rococo {
 
 DTxn* Scheduler::CreateDTxn(i64 tid, bool ro) {
-  Log_debug("create tid %ld\n", tid);
+  Log_debug("create tid %ld", tid);
   verify(dtxns_.find(tid) == dtxns_.end());
   DTxn* dtxn = Frame().CreateDTxn(tid, ro, this);
   dtxns_[tid] = dtxn;
@@ -169,6 +169,7 @@ Scheduler::Scheduler() : executors_() {
 Scheduler::Scheduler(int mode) : Scheduler() {
   mode_ = mode;
   switch (mode) {
+    case MODE_MDCC:
     case MODE_OCC:
       mdb_txn_mgr_ = new mdb::TxnMgrOCC();
       break;
@@ -176,7 +177,6 @@ Scheduler::Scheduler(int mode) : Scheduler() {
     case MODE_RPC_NULL:
     case MODE_RCC:
     case MODE_RO6:
-    case MODE_MDCC:
       mdb_txn_mgr_ = new mdb::TxnMgrUnsafe(); //XXX is it OK to use unsafe for deptran
       break;
     default:
@@ -212,7 +212,7 @@ void Scheduler::reg_table(const std::string &name,
     schema->add_column("o_c_id", Value::I32, true);
     schema->add_column("o_id", Value::I32, false);
     mdb_txn_mgr_->reg_table(TPCC_TB_ORDER_C_ID_SECONDARY,
-                            new mdb::SortedTable(schema));
+                            new mdb::SortedTable(name, schema));
   }
 }
 
