@@ -107,16 +107,16 @@ mdb::Row* Frame::CreateRow(const mdb::Schema *schema,
   return r;
 }
 
-CoordinatorBase* Frame::CreateRepCoord(cooid_t coo_id,
-                                       vector<std::string>& servers,
-                                       Config* config,
-                                       int benchmark,
-                                       int mode,
-                                       ClientControlServiceImpl *ccsi,
-                                       uint32_t id,
-                                       bool batch_start,
-                                       TxnRegistry* txn_reg) {
-  CoordinatorBase *coo;
+Coordinator* Frame::CreateRepCoord(cooid_t coo_id,
+                                   vector<std::string>& servers,
+                                   Config* config,
+                                   int benchmark,
+                                   int mode,
+                                   ClientControlServiceImpl *ccsi,
+                                   uint32_t id,
+                                   bool batch_start,
+                                   TxnRegistry* txn_reg) {
+  Coordinator *coo;
   switch(mode) {
     case MODE_MULTI_PAXOS:
       coo = new MultiPaxosCoord(coo_id,
@@ -216,38 +216,42 @@ void Frame::GetTxnTypes(std::map<int32_t, std::string> &txn_types) {
   }
 }
 
-TxnChopper* Frame::CreateChopper(TxnRequest &req, TxnRegistry* reg) {
+TxnCommand* Frame::CreateTxnCommand(TxnRequest& req, TxnRegistry* reg) {
   auto benchmark = Config::config_s->benchmark_;
-  TxnChopper *ch = NULL;
+  TxnCommand *cmd = NULL;
   switch (benchmark) {
     case TPCA:
       verify(req.txn_type_ == TPCA_PAYMENT);
-      ch = new TpcaPaymentChopper();
+      cmd = new TpcaPaymentChopper();
       break;
     case TPCC:
-      ch = new TpccChopper();
+      cmd = new TpccChopper();
       break;
     case TPCC_DIST_PART:
-      ch = new TpccDistChopper();
+      cmd = new TpccDistChopper();
       break;
     case TPCC_REAL_DIST_PART:
-      ch = new TpccRealDistChopper();
+      cmd = new TpccRealDistChopper();
       break;
     case RW_BENCHMARK:
-      ch = new RWChopper();
+      cmd = new RWChopper();
       break;
     case MICRO_BENCH:
-      ch = new MicroBenchChopper();
+      cmd = new MicroBenchChopper();
       break;
     default:
       verify(0);
   }
-  verify(ch != NULL);
-  ch->txn_reg_ = reg;
-  ch->sss_ = Config::GetConfig()->sharding_;
-  ch->init(req);
-  verify(ch->n_pieces_input_ready_ > 0);
-  return ch;
+  verify(cmd != NULL);
+  cmd->txn_reg_ = reg;
+  cmd->sss_ = Config::GetConfig()->sharding_;
+  cmd->init(req);
+  verify(cmd->n_pieces_input_ready_ > 0);
+  return cmd;
+}
+
+TxnCommand * Frame::CreateChopper(TxnRequest &req, TxnRegistry* reg) {
+  return CreateTxnCommand(req, reg);
 }
 
 

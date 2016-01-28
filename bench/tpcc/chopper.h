@@ -7,11 +7,11 @@
 
 namespace rococo {
 
-class TxnChopper;
+class TxnCommand;
 class TxnRequest;
 class BatchStartArgsHelper;
 
-class TpccChopper: public TxnChopper {
+class TpccChopper: public TxnCommand {
  public:
   typedef struct {
     size_t ol_cnt;

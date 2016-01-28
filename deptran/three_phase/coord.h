@@ -76,14 +76,14 @@ class ThreePhaseCoordinator : public Coordinator {
   /** do it asynchronously, thread safe. */
   virtual void do_one(TxnRequest &);
   virtual void cleanup();
-  void restart(TxnChopper *ch);
+  void restart(TxnCommand *ch);
 
   void Start();
   void StartAck(StartReply &reply, phase_t phase);
   void Prepare();
-  void PrepareAck(TxnChopper *ch, phase_t phase, Future *fu);
+  void PrepareAck(TxnCommand *ch, phase_t phase, Future *fu);
   void Finish();
-  void FinishAck(TxnChopper *ch, phase_t phase, Future *fu);
+  void FinishAck(TxnCommand *ch, phase_t phase, Future *fu);
   void Abort() {
     verify(0);
   }
@@ -92,7 +92,7 @@ class ThreePhaseCoordinator : public Coordinator {
   void IncrementPhaseAndChangeStage(CoordinatorStage stage);
   bool AllStartAckCollected();
 
-  RequestHeader gen_header(TxnChopper *ch);
+  RequestHeader gen_header(TxnCommand *ch);
 
   void report(TxnReply &txn_reply,
               double last_latency

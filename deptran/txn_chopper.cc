@@ -8,7 +8,7 @@
 
 namespace rococo {
 
-TxnChopper::TxnChopper() {
+TxnCommand::TxnCommand() {
   clock_gettime(&start_time_);
   read_only_failed_ = false;
   pre_time_ = timespec2ms(start_time_);
@@ -21,7 +21,7 @@ set<parid_t> TxnChopper::GetSiteIds() {
 }
 
 
-Command *TxnChopper::GetNextSubCmd() {
+Command *TxnCommand::GetNextSubCmd() {
   verify(n_pieces_out_ < n_pieces_input_ready_);
   verify(n_pieces_out_ < n_pieces_all_);
   SimpleCommand *cmd = nullptr;
@@ -66,7 +66,7 @@ Command *TxnChopper::GetNextSubCmd() {
   return cmd;
 }
 
-int TxnChopper::next_piece(
+int TxnCommand::next_piece(
     map<int32_t, Value>* &input,
     int &output_size,
     int32_t &server_id,
@@ -76,7 +76,7 @@ int TxnChopper::next_piece(
 }
 
 
-void TxnChopper::Merge(Command &cmd) {
+void TxnCommand::Merge(Command &cmd) {
   n_pieces_replied_++;
   verify(n_pieces_all_ >= n_pieces_input_ready_);
   verify(n_pieces_input_ready_ >= n_pieces_out_);
@@ -87,7 +87,7 @@ void TxnChopper::Merge(Command &cmd) {
   this->start_callback(pi, SUCCESS, output);
 }
 
-bool TxnChopper::HasMoreSubCmdReadyNotOut() {
+bool TxnCommand::HasMoreSubCmdReadyNotOut() {
   verify(n_pieces_all_ >= n_pieces_input_ready_);
   verify(n_pieces_input_ready_ >= n_pieces_out_);
   verify(n_pieces_out_ >= n_pieces_replied_);
@@ -101,7 +101,7 @@ bool TxnChopper::HasMoreSubCmdReadyNotOut() {
   }
 }
 
-bool TxnChopper::start_callback(int pi,
+bool TxnCommand::start_callback(int pi,
                                 map<int32_t, mdb::Value> &output,
                                 bool is_defer) {
   verify(0);
@@ -113,7 +113,7 @@ bool TxnChopper::start_callback(int pi,
     return start_callback(pi, SUCCESS, output);
 }
 
-bool TxnChopper::start_callback(int pi,
+bool TxnCommand::start_callback(int pi,
                                 ChopStartResponse &res) {
   verify(0);
   if (res.is_defered && output_size_[pi] != 0)
@@ -124,12 +124,12 @@ bool TxnChopper::start_callback(int pi,
     return start_callback(pi, SUCCESS, res.output);
 }
 
-void TxnChopper::read_only_reset() {
+void TxnCommand::read_only_reset() {
   read_only_failed_ = false;
   retry();
 }
 
-bool TxnChopper::read_only_start_callback(int pi,
+bool TxnCommand::read_only_start_callback(int pi,
                                           int *res,
                                           map<int32_t, mdb::Value> &output) {
   verify(pi < GetNPieceAll());
@@ -161,7 +161,7 @@ bool TxnChopper::read_only_start_callback(int pi,
   return start_callback(pi, SUCCESS, output);
 }
 
-double TxnChopper::last_attempt_latency() {
+double TxnCommand::last_attempt_latency() {
   double tmp = pre_time_;
   struct timespec t_buf;
   clock_gettime(&t_buf);
@@ -169,7 +169,7 @@ double TxnChopper::last_attempt_latency() {
   return pre_time_ - tmp;
 }
 
-TxnReply &TxnChopper::get_reply() {
+TxnReply &TxnCommand::get_reply() {
   reply_.start_time_ = start_time_;
   reply_.n_try_ = n_try_;
   struct timespec t_buf;

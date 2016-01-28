@@ -829,7 +829,7 @@ bool Config::do_logging() {
 
 bool Config::IsReplicated() {
   // TODO
-  return true;
+  return false;
 }
 
 const char * Config::log_path() {

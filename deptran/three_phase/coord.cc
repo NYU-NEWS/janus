@@ -18,7 +18,7 @@
 namespace rococo {
 
 // TODO obsolete
-RequestHeader ThreePhaseCoordinator::gen_header(TxnChopper *ch) {
+RequestHeader ThreePhaseCoordinator::gen_header(TxnCommand *ch) {
 //  verify(0);
   RequestHeader header;
   header.cid = coo_id_;
@@ -31,16 +31,16 @@ RequestHeader ThreePhaseCoordinator::gen_header(TxnChopper *ch) {
 void ThreePhaseCoordinator::do_one(TxnRequest &req) {
   // pre-process
   std::lock_guard<std::mutex> lock(this->mtx_);
-  TxnChopper *ch = Frame().CreateChopper(req, txn_reg_);
+  TxnCommand *cmd = Frame().CreateTxnCommand(req, txn_reg_);
   verify(txn_reg_ != nullptr);
-  cmd_ = ch;
+  cmd_ = cmd;
   cmd_->root_id_ = this->next_txn_id();
   cmd_->id_ = cmd_->root_id_;
   cleanup(); // In case of reuse.
 
   Log::debug("do one request txn_id: %ld\n", cmd_->id_);
 
-  if (ccsi_) ccsi_->txn_start_one(thread_id_, ch->type_);
+  if (ccsi_) ccsi_->txn_start_one(thread_id_, cmd->type_);
 
   switch (mode_) {
     case MODE_OCC:
@@ -107,10 +107,10 @@ void ThreePhaseCoordinator::cleanup() {
   n_finish_ack_ = 0;
   start_ack_map_.clear();
   IncrementPhaseAndChangeStage(START);
-  TxnChopper *ch = (TxnChopper *) cmd_;
+//  TxnCommand *ch = (TxnCommand *) cmd_;
 }
 
-void ThreePhaseCoordinator::restart(TxnChopper *ch) {
+void ThreePhaseCoordinator::restart(TxnCommand *ch) {
   std::lock_guard<std::mutex> lock(this->mtx_);
   cleanup();
   ch->retry();
@@ -166,7 +166,7 @@ void ThreePhaseCoordinator::StartAck(StartReply &reply, phase_t phase) {
     return;
   }
   n_start_ack_++;
-  TxnChopper *ch = (TxnChopper *) cmd_;
+  TxnCommand *ch = (TxnCommand *) cmd_;
   start_ack_map_[reply.cmd->inn_id_] = true;
 
   Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
@@ -199,7 +199,7 @@ void ThreePhaseCoordinator::StartAck(StartReply &reply, phase_t phase) {
 /** caller should be thread_safe */
 void ThreePhaseCoordinator::Prepare() {
   IncrementPhaseAndChangeStage(PREPARE);
-  TxnChopper *ch = (TxnChopper *) cmd_;
+  TxnCommand *ch = (TxnCommand *) cmd_;
   verify(mode_ == MODE_OCC || mode_ == MODE_2PL);
   // prepare piece, currently only useful for OCC
 
@@ -221,7 +221,7 @@ void ThreePhaseCoordinator::Prepare() {
   }
 }
 
-void ThreePhaseCoordinator::PrepareAck(TxnChopper *ch, phase_t phase, Future *fu) {
+void ThreePhaseCoordinator::PrepareAck(TxnCommand *ch, phase_t phase, Future *fu) {
   std::lock_guard<std::mutex> lock(this->mtx_);
   if (IsPhaseOrStageStale(phase, PREPARE)) {
     Log_debug("ignore stale prepareack\n");
@@ -257,7 +257,7 @@ void ThreePhaseCoordinator::PrepareAck(TxnChopper *ch, phase_t phase, Future *fu
 void ThreePhaseCoordinator::Finish() {
   IncrementPhaseAndChangeStage(FINISH);
   ___TestPhaseThree(cmd_->id_);
-  TxnChopper *ch = (TxnChopper *) cmd_;
+  TxnCommand *ch = (TxnCommand *) cmd_;
   verify(mode_ == MODE_OCC || mode_ == MODE_2PL);
   n_finish_req_++;
   Log_debug("send out finish request, cmd_id: %lx, %ld", cmd_->id_, n_finish_req_);
@@ -286,7 +286,7 @@ void ThreePhaseCoordinator::Finish() {
   }
 }
 
-void ThreePhaseCoordinator::FinishAck(TxnChopper *ch, phase_t phase, Future *fu) {
+void ThreePhaseCoordinator::FinishAck(TxnCommand *ch, phase_t phase, Future *fu) {
   bool callback = false;
   bool retry = false;
   {

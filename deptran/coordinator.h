@@ -19,9 +19,10 @@ public:
   std::mutex mtx_;
   uint32_t n_start_ = 0;
   virtual ~CoordinatorBase() = default;
+  // TODO do_one should be replaced with Submit.
   virtual void do_one(TxnRequest &) = 0;
   virtual void cleanup() = 0;
-  virtual void restart(TxnChopper *ch) = 0;
+  virtual void restart(TxnCommand *ch) = 0;
 };
 
 class Coordinator : public CoordinatorBase {
@@ -115,7 +116,10 @@ class Coordinator : public CoordinatorBase {
   }
 
   virtual void do_one(TxnRequest &) = 0;
+  virtual void Submit(SimpleCommand &, std::function<void()>) {
+    verify(0);
+  }
   virtual void cleanup() = 0;
-  virtual void restart(TxnChopper *ch) = 0;
+  virtual void restart(TxnCommand *ch) = 0;
 };
 }

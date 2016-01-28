@@ -9,13 +9,14 @@ class MultiPaxosCoord : public Coordinator {
  public:
   using Coordinator::Coordinator;
   void do_one(TxnRequest &req) override {}
+  void Submit(SimpleCommand& cmd, std::function<void()> func) override;
 
   void Prepare() {}
   void Accept() {}
   void Decide() {}
 
   void cleanup() override {}
-  void restart(TxnChopper* ch) override {}
+  void restart(TxnCommand * ch) override {}
 };
 
 } //namespace rococo

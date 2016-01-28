@@ -26,16 +26,16 @@ public:
 
   virtual void do_one(TxnRequest&);
 
-  virtual void deptran_start(TxnChopper *ch);
+  virtual void deptran_start(TxnCommand *ch);
 
   virtual void StartAck();
 
-  void         deptran_batch_start(TxnChopper *ch);
+  void         deptran_batch_start(TxnCommand *ch);
 
-  virtual void deptran_finish(TxnChopper *ch);
+  virtual void deptran_finish(TxnCommand *ch);
 
-  void         deptran_start_ro(TxnChopper *ch);
+  void         deptran_start_ro(TxnCommand *ch);
 
-  void         deptran_finish_ro(TxnChopper *ch);
+  void         deptran_finish_ro(TxnCommand *ch);
 };
 } // namespace rococo

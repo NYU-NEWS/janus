@@ -1,6 +1,8 @@
 
 #include "../constants.h"
 #include "../dtxn.h"
+#include "../txn_chopper.h"
+#include "../coordinator.h"
 #include "sched.h"
 #include "../tpl/tpl.h"
 #include "exec.h"
@@ -26,7 +28,21 @@ int ThreePhaseSched::OnPhaseTwoRequest(
     rrr::i32 *res,
     rrr::DeferredReply *defer) {
   auto exec = (ThreePhaseExecutor*)GetExecutor(cmd_id);
-  exec->PrepareLaunch(sids, res, defer);
+  string log;
+  auto func = [exec, res, defer] () -> void {
+    *res = exec->Prepare();
+    defer->reply();
+  };
+  if (Config::GetConfig()->IsReplicated()) {
+    SimpleCommand cmd; // TODO
+    verify(rep_coo_ != nullptr);
+    rep_coo_->Submit(cmd, func);
+  } else if (Config::GetConfig()->do_logging()) {
+    this->get_prepare_log(cmd_id, sids, &log);
+    recorder_->submit(log, func);
+  } else {
+    func();
+  }
   return 0;
 }
 
