@@ -19,8 +19,8 @@ class Scheduler {
   mdb::TxnMgr *mdb_txn_mgr_;
   int mode_;
   Recorder *recorder_;
-  Coordinator *rep_coo_;
-  TxnRegistry *txn_reg_;
+  Coordinator* rep_coord_;
+  TxnRegistry* txn_reg_;
 
   Scheduler();
   Scheduler(int mode);

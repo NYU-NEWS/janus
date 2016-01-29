@@ -29,7 +29,6 @@ class Coordinator : public CoordinatorBase {
  public:
   uint32_t coo_id_;
   int benchmark_;
-  int32_t mode_;
   ClientControlServiceImpl *ccsi_;
   uint32_t thread_id_;
   bool batch_optimal_;
@@ -98,7 +97,6 @@ class Coordinator : public CoordinatorBase {
   Coordinator(uint32_t coo_id,
               std::vector<std::string> &addrs,
               int benchmark,
-              int32_t mode = MODE_OCC,
               ClientControlServiceImpl *ccsi = NULL,
               uint32_t thread_id = 0,
               bool batch_optimal = false);

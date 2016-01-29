@@ -17,6 +17,23 @@
 
 namespace rococo {
 
+ThreePhaseCoordinator::ThreePhaseCoordinator(uint32_t coo_id,
+                                             vector<string> &addrs,
+                                             int benchmark,
+                                             ClientControlServiceImpl *ccsi,
+                                             uint32_t thread_id,
+                                             bool batch_optimal)
+    : Coordinator(coo_id,
+                  addrs,
+                  benchmark,
+                  ccsi,
+                  thread_id,
+                  batch_optimal) {
+  // TODO: doesn't belong here;
+  // it is currently here so that subclasses such as RCCCoord and OCCoord don't break
+  commo_ = new RococoCommunicator(addrs);
+}
+
 // TODO obsolete
 RequestHeader ThreePhaseCoordinator::gen_header(TxnCommand *ch) {
 //  verify(0);
@@ -42,7 +59,8 @@ void ThreePhaseCoordinator::do_one(TxnRequest &req) {
 
   if (ccsi_) ccsi_->txn_start_one(thread_id_, cmd->type_);
 
-  switch (mode_) {
+  auto mode = Config::GetConfig()->cc_mode_;
+  switch (mode) {
     case MODE_OCC:
     case MODE_2PL:
       Start();
@@ -200,7 +218,8 @@ void ThreePhaseCoordinator::StartAck(StartReply &reply, phase_t phase) {
 void ThreePhaseCoordinator::Prepare() {
   IncrementPhaseAndChangeStage(PREPARE);
   TxnCommand *ch = (TxnCommand *) cmd_;
-  verify(mode_ == MODE_OCC || mode_ == MODE_2PL);
+  auto mode = Config::GetConfig()->cc_mode_;
+  verify(mode == MODE_OCC || mode == MODE_2PL);
   // prepare piece, currently only useful for OCC
 
   auto phase = phase_;
@@ -258,7 +277,8 @@ void ThreePhaseCoordinator::Finish() {
   IncrementPhaseAndChangeStage(FINISH);
   ___TestPhaseThree(cmd_->id_);
   TxnCommand *ch = (TxnCommand *) cmd_;
-  verify(mode_ == MODE_OCC || mode_ == MODE_2PL);
+  auto mode = Config::GetConfig()->cc_mode_;
+  verify(mode == MODE_OCC || mode == MODE_2PL);
   n_finish_req_++;
   Log_debug("send out finish request, cmd_id: %lx, %ld", cmd_->id_, n_finish_req_);
 

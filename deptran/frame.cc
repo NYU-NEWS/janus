@@ -111,22 +111,22 @@ Coordinator* Frame::CreateRepCoord(cooid_t coo_id,
                                    vector<std::string>& servers,
                                    Config* config,
                                    int benchmark,
-                                   int mode,
                                    ClientControlServiceImpl *ccsi,
                                    uint32_t id,
                                    bool batch_start,
                                    TxnRegistry* txn_reg) {
   Coordinator *coo;
+  auto mode = Config::GetConfig()->ab_mode_;
   switch(mode) {
     case MODE_MULTI_PAXOS:
       coo = new MultiPaxosCoord(coo_id,
                                 servers,
                                 benchmark,
-                                mode,
                                 ccsi,
                                 id,
                                 batch_start);
       break;
+    case MODE_EPAXOS:
     case MODE_NOT_READY:
       Log_fatal("this atomic broadcast protocol is currently not supported.");
   }
@@ -138,7 +138,6 @@ CoordinatorBase* Frame::CreateCoord(cooid_t coo_id,
                                     vector<std::string>& servers,
                                     Config* config,
                                     int benchmark,
-                                    int mode,
                                     ClientControlServiceImpl *ccsi,
                                     uint32_t id,
                                     bool batch_start,
@@ -146,35 +145,51 @@ CoordinatorBase* Frame::CreateCoord(cooid_t coo_id,
   // TODO: clean this up; make Coordinator subclasses assign txn_reg_
   CoordinatorBase *coo;
   auto attr = this;
+  auto mode = Config::GetConfig()->cc_mode_;
   switch (mode) {
     case MODE_2PL:
-      coo = new TPLCoord(coo_id, servers, benchmark,
-                         mode, ccsi, id, batch_start);
+      coo = new TPLCoord(coo_id,
+                         servers,
+                         benchmark,
+                         ccsi,
+                         id,
+                         batch_start);
       ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
     case MODE_OCC:
     case MODE_RPC_NULL:
-      coo = new OCCCoord(coo_id, servers,
-                         benchmark, mode,
-                         ccsi, id, batch_start);
+      coo = new OCCCoord(coo_id,
+                         servers,
+                         benchmark,
+                         ccsi,
+                         id,
+                         batch_start);
       ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
     case MODE_RCC:
-      coo = new RCCCoord(coo_id, servers,
-                         benchmark, mode,
-                         ccsi, id, batch_start);
+      coo = new RCCCoord(coo_id,
+                         servers,
+                         benchmark,
+                         ccsi,
+                         id,
+                         batch_start);
       ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
     case MODE_RO6:
-      coo = new RO6Coord(coo_id, servers,
-                         benchmark, mode,
-                         ccsi, id, batch_start);
+      coo = new RO6Coord(coo_id,
+                         servers,
+                         benchmark,
+                         ccsi,
+                         id,
+                         batch_start);
       ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
     case MODE_NONE:
-      coo = new NoneCoord(coo_id, servers,
-                          benchmark, mode,
-                          ccsi, id,
+      coo = new NoneCoord(coo_id,
+                          servers,
+                          benchmark,
+                          ccsi,
+                          id,
                           batch_start);
       ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
