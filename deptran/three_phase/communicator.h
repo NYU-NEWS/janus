@@ -17,16 +17,17 @@ class ThreePhaseCommunicator {
                          std::function<void(Future *)> &callback) = 0;
   virtual void SendStart(SimpleCommand& cmd,
                          Coordinator *coo,
-                         std::function<void(rococo::StartReply&)> &callback) = 0;
+                         const std::function<void(rococo::StartReply&)> &) = 0;
   virtual void SendPrepare(parid_t gid,
                            txnid_t tid,
                            std::vector<int32_t> &sids,
-                           std::function<void(Future *fu)> &callback) = 0;
-
-  virtual void SendCommit(parid_t pid, txnid_t tid,
-                          std::function<void(Future *fu)> &callback) = 0;
-  virtual void SendAbort(parid_t pid, txnid_t tid,
-                         std::function<void(Future *fu)> &callback) = 0;
+                           const std::function<void(Future *fu)> &callback) = 0;
+  virtual void SendCommit(parid_t pid,
+                          txnid_t tid,
+                          const std::function<void(Future *fu)> &callback) = 0;
+  virtual void SendAbort(parid_t pid,
+                         txnid_t tid,
+                         const std::function<void(Future *fu)> &callback) = 0;
   virtual ~ThreePhaseCommunicator() {}
 };
 

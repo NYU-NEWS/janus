@@ -53,7 +53,8 @@ void ClientWorker::work() {
   for (uint32_t n_txn = 0; n_txn < n_outstanding_; n_txn++) {
     TxnRequest req;
     txn_req_factory_->get_txn_req(&req, coo_id);
-    req.callback_ = std::bind(&ClientWorker::RequestDone, this,
+    req.callback_ = std::bind(&ClientWorker::RequestDone,
+                              this,
                               std::placeholders::_1);
     coo_->do_one(req);
   }
@@ -74,26 +75,27 @@ void ClientWorker::work() {
   return;
 }
 
-  ClientWorker::ClientWorker(uint32_t id,
-                             Config::SiteInfo &site_info,
-                             Config *config,
-                             ClientControlServiceImpl *ccsi) :
-    id(id),
-    my_site_(site_info),
-    config(config),
-    coo_id(site_info.id),
-    benchmark(config->get_benchmark()),
-    mode(config->get_mode()),
-    batch_start(config->get_batch_start()),
-    duration(config->get_duration()),
-    ccsi(ccsi),
-    n_outstanding_(config->get_concurrent_txn()),
-    txn_req_factory_(Frame().CreateTxnGenerator()) {
-    config->get_all_site_addr(servers_);
-    num_txn.store(0);
-    success.store(0);
-    num_try.store(0);
-  }
+ClientWorker::ClientWorker(uint32_t id,
+                           Config::SiteInfo &site_info,
+                           Config *config,
+                           ClientControlServiceImpl *ccsi) :
+  id(id),
+  my_site_(site_info),
+  config(config),
+  coo_id(site_info.id),
+  benchmark(config->get_benchmark()),
+  mode(config->get_mode()),
+  batch_start(config->get_batch_start()),
+  duration(config->get_duration()),
+  ccsi(ccsi),
+  n_outstanding_(config->get_concurrent_txn()),
+  txn_req_factory_(Frame().CreateTxnGenerator()) {
+  config->get_all_site_addr(servers_);
+  num_txn.store(0);
+  success.store(0);
+  num_try.store(0);
+}
+
 } // namespace rococo
 
 

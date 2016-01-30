@@ -28,15 +28,17 @@ class RococoCommunicator : public ThreePhaseCommunicator {
                  std::function<void(Future *fu)> &callback) override;
   void SendStart(SimpleCommand& cmd,
                  Coordinator *coo,
-                 std::function<void(StartReply&)> &callback) override;
+                 const std::function<void(StartReply&)> &) override;
   void SendPrepare(parid_t gid,
                    txnid_t tid, 
                    std::vector<int32_t> &sids, 
-                   std::function<void(Future *fu)> &callback) override;
-  void SendCommit(parid_t pid, txnid_t tid,
-                  std::function<void(Future *fu)> &callback) override;
-  void SendAbort(parid_t pid, txnid_t tid,
-                 std::function<void(Future *fu)> &callback) override;
+                   const std::function<void(Future *fu)> &callback) override;
+  void SendCommit(parid_t pid,
+                  txnid_t tid,
+                  const std::function<void(Future *fu)> &callback) override;
+  void SendAbort(parid_t pid,
+                 txnid_t tid,
+                 const std::function<void(Future *fu)> &callback) override;
 
   // for debug
   set<std::pair<txnid_t, parid_t>> phase_three_sent_;

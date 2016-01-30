@@ -80,9 +80,9 @@ class ThreePhaseCoordinator : public Coordinator {
   void Start();
   void StartAck(StartReply &reply, phase_t phase);
   void Prepare();
-  void PrepareAck(TxnCommand *ch, phase_t phase, Future *fu);
+  void PrepareAck(phase_t phase, Future *fu);
   void Finish();
-  void FinishAck(TxnCommand *ch, phase_t phase, Future *fu);
+  void FinishAck(phase_t phase, Future *fu);
   void Abort() {
     verify(0);
   }

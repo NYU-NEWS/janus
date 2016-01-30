@@ -21,7 +21,7 @@ RococoCommunicator::RococoCommunicator(std::vector<std::string> &addrs)
 
 void RococoCommunicator::SendStart(SimpleCommand &cmd,
                                    Coordinator *coo,
-                                   std::function<void(StartReply&)> &callback) {
+                                   const std::function<void(StartReply&)> &callback) {
   rrr::FutureAttr fuattr;
   RococoProxy *proxy = vec_rpc_proxy_[cmd.GetSiteId()];
   std::function<void(Future*)> cb =
@@ -50,9 +50,10 @@ void RococoCommunicator::SendStart(SimpleCommand &cmd,
   Future::safe_release(proxy->async_StartTxn(cmd, fuattr));
 }
 
-void RococoCommunicator::SendPrepare(groupid_t gid, txnid_t tid,
+void RococoCommunicator::SendPrepare(groupid_t gid,
+                                     txnid_t tid,
                                      std::vector<int32_t> &sids,
-                                     std::function<void(Future *fu)> &callback) {
+                                     const std::function<void(Future *fu)> &callback) {
   FutureAttr fuattr;
   fuattr.callback = callback;
   RococoProxy *proxy = vec_rpc_proxy_[gid];
@@ -67,8 +68,9 @@ void RococoCommunicator::___LogSent(parid_t pid, txnid_t tid) {
   phase_three_sent_.insert(std::make_pair(pid, tid));
 }
 
-void RococoCommunicator::SendCommit(parid_t pid, txnid_t tid,
-                                    std::function<void(Future *fu)> &callback) {
+void RococoCommunicator::SendCommit(parid_t pid,
+                                    txnid_t tid,
+                                    const std::function<void(Future *fu)> &callback) {
   ___LogSent(pid, tid);
 
   FutureAttr fuattr;
@@ -79,7 +81,7 @@ void RococoCommunicator::SendCommit(parid_t pid, txnid_t tid,
 }
 
 void RococoCommunicator::SendAbort(parid_t pid, txnid_t tid,
-                                   std::function<void(Future *fu)> &callback) {
+                                   const std::function<void(Future *fu)> &callback) {
 //  ___LogSent(pid, tid);
   FutureAttr fuattr;
   fuattr.callback = callback;
