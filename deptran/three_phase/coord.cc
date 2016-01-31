@@ -53,7 +53,7 @@ void ThreePhaseCoordinator::do_one(TxnRequest &req) {
   cmd_ = cmd;
   cmd_->root_id_ = this->next_txn_id();
   cmd_->id_ = cmd_->root_id_;
-  cleanup(); // In case of reuse.
+  Reset(); // In case of reuse.
 
   Log::debug("do one request txn_id: %ld\n", cmd_->id_);
 
@@ -133,7 +133,7 @@ void ThreePhaseCoordinator::cleanup() {
 
 void ThreePhaseCoordinator::restart(TxnCommand *ch) {
   std::lock_guard<std::mutex> lock(this->mtx_);
-  cleanup();
+  Reset();
   ch->retry();
 
   double last_latency = ch->last_attempt_latency();
@@ -255,23 +255,25 @@ void ThreePhaseCoordinator::PrepareAck(phase_t phase, Future *fu) {
 
   if (e != 0) {
     cmd->commit_.store(false);
-    Log_debug("2PL prepare failed due to error");
-  } else {
-    int res;
-    RequestHeader header = gen_header(cmd);
-    fu->get_reply() >> res;
-    Log::debug("tid %ld; prepare result %d", header.tid, res);
+    Log_fatal("2PL prepare failed due to error");
+  }
 
-    if (res == REJECT) {
-      Log::debug("Prepare rejected for %ld by %ld\n", header.tid, cmd->inn_id());
-      cmd->commit_.store(false);
-    }
+  int res;
+  fu->get_reply() >> res;
+  Log::debug("tid %ld; prepare result %d", cmd_->root_id_, res);
+
+  if (res == REJECT) {
+    Log::debug("Prepare rejected for %ld by %ld\n",
+               cmd_->root_id_,
+               cmd->inn_id());
+    cmd->commit_.store(false);
   }
 
   if (n_prepare_ack_ == cmd->partitions_.size()) {
-    RequestHeader header = gen_header(cmd);
-    Log_debug("2PL prepare finished for %ld", header.tid);
+    Log_debug("2PL prepare finished for %ld", cmd->root_id_);
     this->Finish();
+  } else {
+    // Do nothing.
   }
 }
 

@@ -21,7 +21,7 @@ public:
   virtual ~CoordinatorBase() = default;
   // TODO do_one should be replaced with Submit.
   virtual void do_one(TxnRequest &) = 0;
-  virtual void cleanup() = 0;
+  virtual void Reset() = 0;
   virtual void restart(TxnCommand *ch) = 0;
 };
 
@@ -43,6 +43,8 @@ class Coordinator : public CoordinatorBase {
 
   std::atomic<uint64_t> next_pie_id_;
   std::atomic<uint64_t> next_txn_id_;
+
+  std::function<void()> callback_;
 
   std::mutex mtx_;
   std::mutex start_mtx_;
@@ -117,7 +119,14 @@ class Coordinator : public CoordinatorBase {
   virtual void Submit(SimpleCommand &, std::function<void()>) {
     verify(0);
   }
-  virtual void cleanup() = 0;
+  virtual void Reset() {
+    n_start_ = 0;
+    n_start_ack_ = 0;
+    n_prepare_req_ = 0;
+    n_prepare_ack_ = 0;
+    n_finish_req_ = 0;
+    n_finish_ack_ = 0;
+  }
   virtual void restart(TxnCommand *ch) = 0;
 };
 }

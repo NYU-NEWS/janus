@@ -9,6 +9,7 @@
 #include "rcc_rpc.h"
 #include "msg.h"
 #include "deptran/three_phase/communicator.h"
+#include "txn_chopper.h"
 
 namespace rococo {
 
@@ -39,6 +40,24 @@ class RococoCommunicator : public ThreePhaseCommunicator {
   void SendAbort(parid_t pid,
                  txnid_t tid,
                  const std::function<void(Future *fu)> &callback) override;
+
+  void BroadcastPrepare(parid_t par_id,
+                        ballot_t ballot,
+                        const std::function<void(Future *fu)> &callback) {
+    verify(0);
+  }
+
+  void BroadcastAccept(parid_t par_id,
+                       ballot_t ballot,
+                       TxnCommand& cmd,
+                       const std::function<void(Future*)> &callback) {
+    verify(0);
+  }
+  void BroadcastDecide(parid_t par_id,
+                       ballot_t ballot,
+                       TxnCommand& cmd) {
+    verify(0);
+  }
 
   // for debug
   set<std::pair<txnid_t, parid_t>> phase_three_sent_;

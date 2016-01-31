@@ -8,15 +8,23 @@ namespace rococo {
 class MultiPaxosCoord : public Coordinator {
  public:
   using Coordinator::Coordinator;
+  ballot_t curr_ballot_ = 0; // TODO
+  ballot_t n_replica_ = 0;   // TODO
+  parid_t par_id_ = 0; // belong to a partition
+  RococoCommunicator* commo_ = nullptr;
+
   void do_one(TxnRequest &req) override {}
   void Submit(SimpleCommand& cmd, std::function<void()> func) override;
 
-  void Prepare() {}
-  void Accept() {}
-  void Decide() {}
+  ballot_t PickBallot();
+  void Prepare();
+  void PrepareAck(phase_t phase, Future *fu);
+  void Accept();
+  void AcceptAck(phase_t phase, Future *fu);
+  void Decide();
 
-  void cleanup() override {}
-  void restart(TxnCommand * ch) override {}
+  void Reset() override {}
+  void restart(TxnCommand *) override {}
 };
 
 } //namespace rococo
