@@ -3,15 +3,22 @@
 //
 #pragma once
 
-#include "deptran/__dep__.h"
+#include "__dep__.h"
 #include "constants.h"
 #include "msg.h"
 
 namespace rococo {
 class Coordinator;
+class RococoProxy;
 
-class ThreePhaseCommunicator {
+class Communicator {
  public:
+  rrr::PollMgr *rpc_poll_ = nullptr;
+  std::vector<rrr::Client *> vec_rpc_cli_ = {};
+  std::vector<RococoProxy *> vec_rpc_proxy_ = {};
+
+  Communicator(std::vector<std::string> &addrs);
+
   virtual void SendStart(SimpleCommand& cmd,
                          int32_t output_size,
                          std::function<void(Future *)> &callback) = 0;
@@ -28,7 +35,7 @@ class ThreePhaseCommunicator {
   virtual void SendAbort(parid_t pid,
                          txnid_t tid,
                          const std::function<void(Future *fu)> &callback) = 0;
-  virtual ~ThreePhaseCommunicator() {}
+  virtual ~Communicator() {}
 };
 
-}
+} // namespace rococo

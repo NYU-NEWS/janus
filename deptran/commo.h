@@ -8,22 +8,18 @@
 #include "command_marshaler.h"
 #include "rcc_rpc.h"
 #include "msg.h"
-#include "deptran/three_phase/communicator.h"
 #include "txn_chopper.h"
+#include "communicator.h"
+
 
 namespace rococo {
 
 class Coordinator;
 
 
-class RococoCommunicator : public ThreePhaseCommunicator {
+class RococoCommunicator : public Communicator {
  public:
-  rrr::PollMgr *rpc_poll_ = nullptr;
-  std::vector<rrr::Client *> vec_rpc_cli_;
-  std::vector<RococoProxy *> vec_rpc_proxy_;
-
-  RococoCommunicator(std::vector<std::string> &addrs);
-
+  using Communicator::Communicator;
   void SendStart(SimpleCommand& cmd,
                  int32_t output_size,
                  std::function<void(Future *fu)> &callback) override;
@@ -60,7 +56,7 @@ class RococoCommunicator : public ThreePhaseCommunicator {
   }
 
   // for debug
-  set<std::pair<txnid_t, parid_t>> phase_three_sent_;
+  set<std::pair<txnid_t, parid_t>> phase_three_sent_ = {};
 
   void ___LogSent(parid_t pid, txnid_t tid);
 };

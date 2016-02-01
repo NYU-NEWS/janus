@@ -4,21 +4,6 @@
 
 namespace rococo {
 
-RococoCommunicator::RococoCommunicator(std::vector<std::string> &addrs)
-    : vec_rpc_cli_(), vec_rpc_proxy_(), phase_three_sent_() {
-  verify(addrs.size() > 0);
-  rpc_poll_ = new PollMgr(1);
-  for (auto &addr : addrs) {
-    rrr::Client *rpc_cli = new rrr::Client(rpc_poll_);
-    Log::info("connect to site: %s", addr.c_str());
-    auto ret = rpc_cli->connect(addr.c_str());
-    verify(ret == 0);
-    RococoProxy *rpc_proxy = new RococoProxy(rpc_cli);
-    vec_rpc_cli_.push_back(rpc_cli);
-    vec_rpc_proxy_.push_back(rpc_proxy);
-  }
-}
-
 void RococoCommunicator::SendStart(SimpleCommand &cmd,
                                    Coordinator *coo,
                                    const std::function<void(StartReply&)> &callback) {

@@ -11,7 +11,7 @@ class ClientControlServiceImpl;
 
 class ThreePhaseCoordinator : public Coordinator {
  protected:
-  ThreePhaseCommunicator *commo_ = nullptr;
+  RococoCommunicator *commo_ = nullptr;
  public:
   ThreePhaseCoordinator(uint32_t coo_id,
                         vector<string> &addrs,
