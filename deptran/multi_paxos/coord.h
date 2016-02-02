@@ -2,6 +2,7 @@
 
 #include "../__dep__.h"
 #include "../coordinator.h"
+#include "../frame.h"
 
 namespace rococo {
 
@@ -9,6 +10,10 @@ class MultiPaxosCommo;
 class MultiPaxosCoord : public Coordinator {
  private:
   MultiPaxosCommo* commo() {
+    // TODO fix this.
+    if (commo_ == nullptr) {
+      commo_ = Frame().CreateCommo();
+    }
     return (MultiPaxosCommo*) commo_;
   }
  public:

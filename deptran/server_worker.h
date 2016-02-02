@@ -14,13 +14,13 @@
 
 namespace rococo {
 
+class Communicator;
 class ServerWorker {
  public:
   rrr::PollMgr *svr_poll_mgr_g = nullptr;
   vector<rrr::Service*> services_ = {};
   rrr::Server *svr_server_g = nullptr;
   base::ThreadPool *thread_pool_g = nullptr;
-
 
   rrr::PollMgr *svr_hb_poll_mgr_g = nullptr;
   ServerControlServiceImpl *scsi_g = nullptr;
@@ -32,9 +32,12 @@ class ServerWorker {
   Scheduler * txn_mgr_ = nullptr;
   TxnRegistry *txn_reg_ = nullptr;
 
+  Communicator *commo_ = nullptr;
+
   void SetupHeartbeat();
   void PopTable();
   void SetupService();
+  void SetupCommo();
   void RegPiece();
   void ShutDown();
 };

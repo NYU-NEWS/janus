@@ -78,6 +78,9 @@ void ServerWorker::RegPiece() {
   piece->reg_all();
 }
 
+void ServerWorker::SetupCommo() {
+  commo_ = Frame().CreateCommo();
+}
 
 void ServerWorker::SetupService() {
   int ret;
@@ -89,7 +92,11 @@ void ServerWorker::SetupService() {
   svr_poll_mgr_g = new rrr::PollMgr(n_io_threads);
 
   // init service implementation
-  services_ = Frame().CreateRpcServices(Config::GetConfig(), site_info_->id, txn_mgr_, svr_poll_mgr_g, scsi_g);
+  services_ = Frame().CreateRpcServices(Config::GetConfig(),
+                                        site_info_->id,
+                                        txn_mgr_,
+                                        svr_poll_mgr_g,
+                                        scsi_g);
 
   auto &alarm = TimeoutALock::get_alarm_s();
   ServerWorker::svr_poll_mgr_g->add(&alarm);

@@ -48,7 +48,7 @@ Coordinator::Coordinator(uint32_t coo_id,
   site_abort_.resize(addrs.size(), 0);
   site_piece_.resize(addrs.size(), 0);
 
-  commo_ = Frame().CreateCommo();
+//  commo_ = Frame().CreateCommo();
 }
 
 Coordinator::~Coordinator() {

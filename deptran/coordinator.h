@@ -56,7 +56,7 @@ class Coordinator : public CoordinatorBase {
   map<innid_t, bool> start_ack_map_;
   Sharding* sharding_ = nullptr;
   TxnRegistry *txn_reg_ = nullptr;
-  Communicator* commo_;
+  Communicator* commo_ = nullptr;
 
   std::vector<int> site_prepare_;
   std::vector<int> site_commit_;

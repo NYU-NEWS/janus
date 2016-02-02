@@ -31,7 +31,10 @@ class ClientWorker {
   Config::SiteInfo& my_site_;
   vector<string> servers_;
  public:
-  ClientWorker(uint32_t id, Config::SiteInfo &site_info, Config *config, ClientControlServiceImpl *ccsi);
+  ClientWorker(uint32_t id,
+               Config::SiteInfo &site_info,
+               Config *config,
+               ClientControlServiceImpl *ccsi);
   ClientWorker() = delete;
   ~ClientWorker();
 

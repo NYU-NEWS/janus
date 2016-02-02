@@ -14,9 +14,10 @@ void MultiPaxosCommo::BroadcastPrepare(parid_t par_id,
                                        ballot_t ballot,
                                        const function<void(Future*)> &cb) {
 
-  auto proxies = (vector<MultiPaxosProxy*>)(rpc_par_proxies_[par_id]);
+  auto proxies = rpc_par_proxies_[par_id];
   vector<Future*> fus;
-  for (auto &proxy : proxies) {
+  for (auto &p : proxies) {
+    auto proxy = (MultiPaxosProxy*) p;
     FutureAttr fuattr;
     fuattr.callback = cb;
     Future::safe_release(proxy->async_Prepare(slot_id, ballot, fuattr));

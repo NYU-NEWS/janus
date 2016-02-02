@@ -14,7 +14,6 @@ Communicator::Communicator() {
   vector<string> addrs;
   rpc_poll_ = new PollMgr(1);
   auto config = Config::GetConfig();
-  config->get_all_site_addr(addrs);
   vector<parid_t> partitions = config->GetAllPartitionIds();
   for (auto &par_id : partitions) {
     auto site_infos = config->SitesByPartitionId(par_id);
@@ -33,10 +32,6 @@ Communicator::Communicator() {
     rpc_par_proxies_.insert(std::make_pair(par_id, proxies));
   }
 
-  verify(addrs.size() > 0);
-  for (auto &addr : addrs) {
-  }
 }
-
 
 } // namespace rococo

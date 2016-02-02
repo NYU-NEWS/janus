@@ -112,7 +112,6 @@ mdb::Row* Frame::CreateRow(const mdb::Schema *schema,
 }
 
 Coordinator* Frame::CreateRepCoord(cooid_t coo_id,
-                                   vector<std::string>& servers,
                                    Config* config,
                                    int benchmark,
                                    ClientControlServiceImpl *ccsi,

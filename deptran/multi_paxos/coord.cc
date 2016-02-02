@@ -10,6 +10,7 @@ void MultiPaxosCoord::Submit(SimpleCommand& cmd, std::function<void()> func) {
   cmd_ = new SimpleCommand();
   *cmd_ = cmd;
   callback_ = func;
+  Prepare();
 }
 
 ballot_t MultiPaxosCoord::PickBallot() {

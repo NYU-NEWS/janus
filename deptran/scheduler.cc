@@ -172,7 +172,6 @@ Scheduler::Scheduler() : executors_() {
   id_t id;
   if (Config::GetConfig()->IsReplicated()) {
     rep_coord_ = Frame().CreateRepCoord(cid,
-                                        servers,
                                         Config::GetConfig(),
                                         benchmark,
                                         nullptr,

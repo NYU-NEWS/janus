@@ -73,6 +73,8 @@ void server_launch_worker(vector<Config::SiteInfo>&server_sites) {
     worker.PopTable();
     // start server service
     worker.SetupService();
+    // start communicator
+    worker.SetupCommo();
   }
 }
 

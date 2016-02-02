@@ -33,7 +33,6 @@ class Frame {
                                bool batch_start,
                                TxnRegistry* txn_reg);
   Coordinator* CreateRepCoord(cooid_t coo_id,
-                              vector<std::string>& servers,
                               Config* config,
                               int benchmark,
                               ClientControlServiceImpl *ccsi,
