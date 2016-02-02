@@ -311,8 +311,8 @@ void Config::LoadSiteYML(YAML::Node config) {
       info.partition_id_ = replica_group.partition_id;
       info.locale_id = locale_id;
       info.type_ = SERVER;
-      replica_group.replicas.push_back(info);
       sites_.push_back(info);
+      replica_group.replicas.push_back(&sites_.back());
       locale_id++;
     }
     replica_groups_.push_back(replica_group);
@@ -354,8 +354,8 @@ void Config::LoadHostYML(YAML::Node config) {
     proc_host_map_[proc_name] = host_name;
     for (auto& group : replica_groups_) {
       for (auto& server : group.replicas) {
-        if (server.proc_name == proc_name) {
-          server.host = host_name;
+        if (server->proc_name == proc_name) {
+          server->host = host_name;
         }
       }
     }
@@ -570,8 +570,8 @@ void Config::LoadShardingYML(YAML::Node config) {
       for (auto replica_it = replica_group.replicas.begin();
            replica_it != replica_group.replicas.end();
            replica_it++) {
-        const auto& replica = *replica_it;
-        tbl_info.site_id.push_back(replica.id);
+        const auto& site_info = *replica_it;
+        tbl_info.site_id.push_back(site_info->id);
       }
 
       verify(tbl_info.num_site > 0 && tbl_info.num_site <= get_num_site());
@@ -691,11 +691,18 @@ const Config::SiteInfo& Config::SiteById(uint32_t id) {
   return *s;
 }
 
-const std::vector<Config::SiteInfo>& Config::SitesByPartitionId(parid_t partition_id) {
+const std::vector<Config::SiteInfo>& Config::SitesByPartitionId(
+    parid_t partition_id) {
+  std::vector<SiteInfo> result;
   auto it = find_if(replica_groups_.begin(), replica_groups_.end(),
-                    [partition_id](const ReplicaGroup& g) {return g.partition_id==partition_id;});
+                    [partition_id](const ReplicaGroup& g) {
+                      return g.partition_id == partition_id;
+                    });
   if (it != replica_groups_.end()) {
-    return (*it).replicas;
+    for (auto si : it->replicas) {
+      result.push_back(*si);
+    }
+    return result;
   }
   verify(0);
 }

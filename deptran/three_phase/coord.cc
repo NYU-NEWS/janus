@@ -18,20 +18,19 @@
 namespace rococo {
 
 ThreePhaseCoordinator::ThreePhaseCoordinator(uint32_t coo_id,
-                                             vector<string> &addrs,
                                              int benchmark,
                                              ClientControlServiceImpl *ccsi,
                                              uint32_t thread_id,
                                              bool batch_optimal)
     : Coordinator(coo_id,
-                  addrs,
                   benchmark,
                   ccsi,
                   thread_id,
                   batch_optimal) {
   // TODO: doesn't belong here;
   // it is currently here so that subclasses such as RCCCoord and OCCoord don't break
-  commo_ = new RococoCommunicator(addrs);
+  verify(commo_ == nullptr);
+  commo_ = new RococoCommunicator();
 }
 
 // TODO obsolete

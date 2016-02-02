@@ -13,7 +13,10 @@
 #include "tpl/coord.h"
 #include "occ/coord.h"
 #include "tpl/exec.h"
+
+// multi_paxos
 #include "multi_paxos/coord.h"
+#include "multi_paxos/commo.h"
 
 #include "bench/tpcc_real_dist/sharding.h"
 #include "bench/tpcc/generator.h"
@@ -53,6 +56,7 @@
 #include "deptran/mdcc/executor.h"
 #include "deptran/mdcc/services.h"
 #include "deptran/mdcc/MdccDTxn.h"
+
 
 namespace rococo {
 
@@ -120,7 +124,6 @@ Coordinator* Frame::CreateRepCoord(cooid_t coo_id,
   switch(mode) {
     case MODE_MULTI_PAXOS:
       coo = new MultiPaxosCoord(coo_id,
-                                servers,
                                 benchmark,
                                 ccsi,
                                 id,
@@ -149,7 +152,6 @@ CoordinatorBase* Frame::CreateCoord(cooid_t coo_id,
   switch (mode) {
     case MODE_2PL:
       coo = new TPLCoord(coo_id,
-                         servers,
                          benchmark,
                          ccsi,
                          id,
@@ -159,7 +161,6 @@ CoordinatorBase* Frame::CreateCoord(cooid_t coo_id,
     case MODE_OCC:
     case MODE_RPC_NULL:
       coo = new OCCCoord(coo_id,
-                         servers,
                          benchmark,
                          ccsi,
                          id,
@@ -168,7 +169,6 @@ CoordinatorBase* Frame::CreateCoord(cooid_t coo_id,
       break;
     case MODE_RCC:
       coo = new RCCCoord(coo_id,
-                         servers,
                          benchmark,
                          ccsi,
                          id,
@@ -177,7 +177,6 @@ CoordinatorBase* Frame::CreateCoord(cooid_t coo_id,
       break;
     case MODE_RO6:
       coo = new RO6Coord(coo_id,
-                         servers,
                          benchmark,
                          ccsi,
                          id,
@@ -186,7 +185,6 @@ CoordinatorBase* Frame::CreateCoord(cooid_t coo_id,
       break;
     case MODE_NONE:
       coo = new NoneCoord(coo_id,
-                          servers,
                           benchmark,
                           ccsi,
                           id,
@@ -269,6 +267,18 @@ TxnCommand * Frame::CreateChopper(TxnRequest &req, TxnRegistry* reg) {
   return CreateTxnCommand(req, reg);
 }
 
+Communicator* Frame::CreateCommo() {
+  auto mode = Config::GetConfig()->ab_mode_;
+  Communicator* commo = nullptr;
+  switch (mode) {
+    case MODE_MULTI_PAXOS:
+      commo = new MultiPaxosCommo();
+      break;
+    default:
+      break;
+  }
+  return commo;
+}
 
 DTxn* Frame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {
   DTxn *ret = nullptr;

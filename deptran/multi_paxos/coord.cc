@@ -1,7 +1,8 @@
 
-#include "__dep__.h"
-#include "constants.h"
+#include "../__dep__.h"
+#include "../constants.h"
 #include "coord.h"
+#include "commo.h"
 
 namespace rococo {
 
@@ -19,12 +20,13 @@ ballot_t MultiPaxosCoord::PickBallot() {
 void MultiPaxosCoord::Prepare() {
   TxnCommand* cmd = (TxnCommand*) cmd_;
   curr_ballot_ = PickBallot();
-  commo_->BroadcastPrepare(par_id_,
-                           curr_ballot_,
-                           std::bind(&MultiPaxosCoord::PrepareAck,
-                                     this,
-                                     phase_,
-                                     std::placeholders::_1));
+  commo()->BroadcastPrepare(par_id_,
+                            slot_id_,
+                            curr_ballot_,
+                            std::bind(&MultiPaxosCoord::PrepareAck,
+                                      this,
+                                      phase_,
+                                      std::placeholders::_1));
 }
 
 void MultiPaxosCoord::PrepareAck(phase_t phase, Future *fu) {
@@ -48,7 +50,8 @@ void MultiPaxosCoord::PrepareAck(phase_t phase, Future *fu) {
 void MultiPaxosCoord::Accept() {
   phase_++;
   TxnCommand* cmd = (TxnCommand*) cmd_;
-  commo_->BroadcastAccept(par_id_,
+  commo()->BroadcastAccept(par_id_,
+                          slot_id_,
                           curr_ballot_,
                           *cmd,
                           std::bind(&MultiPaxosCoord::AcceptAck,
@@ -78,7 +81,7 @@ void MultiPaxosCoord::AcceptAck(phase_t phase, Future *fu) {
 void MultiPaxosCoord::Decide() {
   phase_++;
   auto cmd = (TxnCommand*) cmd_;
-  commo_->BroadcastDecide(par_id_, curr_ballot_, *cmd);
+  commo()->BroadcastDecide(par_id_, curr_ballot_, *cmd);
 }
 
 } // namespace rococo

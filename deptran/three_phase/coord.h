@@ -14,7 +14,6 @@ class ThreePhaseCoordinator : public Coordinator {
   RococoCommunicator *commo_ = nullptr;
  public:
   ThreePhaseCoordinator(uint32_t coo_id,
-                        vector<string> &addrs,
                         int benchmark,
                         ClientControlServiceImpl *ccsi,
                         uint32_t thread_id,

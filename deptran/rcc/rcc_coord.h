@@ -12,13 +12,11 @@ protected:
 
 public:
   RCCCoord(uint32_t coo_id,
-           vector<string> &addrs,
            int benchmark,
            ClientControlServiceImpl *ccsi,
            uint32_t thread_id,
            bool batch_optimal)
       : ThreePhaseCoordinator(coo_id,
-                              addrs,
                               benchmark,
                               ccsi,
                               thread_id,

@@ -56,6 +56,7 @@ class Coordinator : public CoordinatorBase {
   map<innid_t, bool> start_ack_map_;
   Sharding* sharding_ = nullptr;
   TxnRegistry *txn_reg_ = nullptr;
+  Communicator* commo_;
 
   std::vector<int> site_prepare_;
   std::vector<int> site_commit_;
@@ -97,7 +98,6 @@ class Coordinator : public CoordinatorBase {
   std::unordered_map<int32_t, txn_stat_t> txn_stats_;
 #endif /* ifdef TXN_STAT */
   Coordinator(uint32_t coo_id,
-              std::vector<std::string> &addrs,
               int benchmark,
               ClientControlServiceImpl *ccsi = NULL,
               uint32_t thread_id = 0,

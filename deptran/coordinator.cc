@@ -22,7 +22,6 @@
 
 namespace rococo {
 Coordinator::Coordinator(uint32_t coo_id,
-                         std::vector<std::string> &addrs,
                          int32_t benchmark,
                          ClientControlServiceImpl *ccsi,
                          uint32_t thread_id,
@@ -31,10 +30,6 @@ Coordinator::Coordinator(uint32_t coo_id,
                                                ccsi_(ccsi),
                                                thread_id_(thread_id),
                                                batch_optimal_(batch_optimal),
-                                               site_prepare_(addrs.size(), 0),
-                                               site_commit_(addrs.size(), 0),
-                                               site_abort_(addrs.size(), 0),
-                                               site_piece_(addrs.size(), 0),
                                                mtx_(),
                                                start_mtx_() {
   uint64_t k = coo_id_;
@@ -44,6 +39,16 @@ Coordinator::Coordinator(uint32_t coo_id,
   this->next_txn_id_.store(k);
   recorder_ = NULL;
   retry_wait_ = Config::GetConfig()->retry_wait();
+
+  // TODO this would be slow.
+  vector<string> addrs;
+  Config::GetConfig()->get_all_site_addr(addrs);
+  site_prepare_.resize(addrs.size(), 0);
+  site_commit_.resize(addrs.size(), 0);
+  site_abort_.resize(addrs.size(), 0);
+  site_piece_.resize(addrs.size(), 0);
+
+  commo_ = Frame().CreateCommo();
 }
 
 Coordinator::~Coordinator() {

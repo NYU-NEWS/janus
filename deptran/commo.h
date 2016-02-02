@@ -22,38 +22,20 @@ class RococoCommunicator : public Communicator {
   using Communicator::Communicator;
   void SendStart(SimpleCommand& cmd,
                  int32_t output_size,
-                 std::function<void(Future *fu)> &callback) override;
+                 std::function<void(Future *fu)> &callback);
   void SendStart(SimpleCommand& cmd,
                  Coordinator *coo,
-                 const std::function<void(StartReply&)> &) override;
+                 const std::function<void(StartReply&)> &) ;
   void SendPrepare(parid_t gid,
                    txnid_t tid, 
                    std::vector<int32_t> &sids, 
-                   const std::function<void(Future *fu)> &callback) override;
+                   const std::function<void(Future *fu)> &callback) ;
   void SendCommit(parid_t pid,
                   txnid_t tid,
-                  const std::function<void(Future *fu)> &callback) override;
+                  const std::function<void(Future *fu)> &callback) ;
   void SendAbort(parid_t pid,
                  txnid_t tid,
-                 const std::function<void(Future *fu)> &callback) override;
-
-  void BroadcastPrepare(parid_t par_id,
-                        ballot_t ballot,
-                        const std::function<void(Future *fu)> &callback) {
-    verify(0);
-  }
-
-  void BroadcastAccept(parid_t par_id,
-                       ballot_t ballot,
-                       TxnCommand& cmd,
-                       const std::function<void(Future*)> &callback) {
-    verify(0);
-  }
-  void BroadcastDecide(parid_t par_id,
-                       ballot_t ballot,
-                       TxnCommand& cmd) {
-    verify(0);
-  }
+                 const std::function<void(Future *fu)> &callback) ;
 
   // for debug
   set<std::pair<txnid_t, parid_t>> phase_three_sent_ = {};

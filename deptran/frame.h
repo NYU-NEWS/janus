@@ -18,6 +18,7 @@ class ClientControlServiceImpl;
 class ServerControlServiceImpl;
 class TxnRegistry;
 class Config;
+class Communicator;
 class Frame {
  public:
   Sharding* CreateSharding();
@@ -46,6 +47,7 @@ class Frame {
   Executor* CreateExecutor(cmdid_t cmd_id, Scheduler *sch);
   Scheduler *CreateScheduler();
   TxnGenerator * CreateTxnGenerator();
+  Communicator* CreateCommo();
 
   vector<rrr::Service*> CreateRpcServices(
       Config* config,

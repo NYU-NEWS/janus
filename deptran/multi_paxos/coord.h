@@ -5,13 +5,18 @@
 
 namespace rococo {
 
+class MultiPaxosCommo;
 class MultiPaxosCoord : public Coordinator {
+ private:
+  MultiPaxosCommo* commo() {
+    return (MultiPaxosCommo*) commo_;
+  }
  public:
   using Coordinator::Coordinator;
   ballot_t curr_ballot_ = 0; // TODO
   ballot_t n_replica_ = 0;   // TODO
   parid_t par_id_ = 0; // belong to a partition
-  RococoCommunicator* commo_ = nullptr;
+  slotid_t slot_id_ = 0;
 
   void do_one(TxnRequest &req) override {}
   void Submit(SimpleCommand& cmd, std::function<void()> func) override;

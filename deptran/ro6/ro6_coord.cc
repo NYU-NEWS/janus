@@ -82,7 +82,7 @@ void RO6Coord::deptran_start(TxnCommand *ch) {
       }
     };
 
-    RococoProxy *proxy = comm()->vec_rpc_proxy_[server_id];
+    RococoProxy *proxy = comm()->rpc_proxies_[server_id];
     Log::debug("send deptran start request, tid: %llx, pid: %llx",
                cmd_->id_,
                header.pid);
@@ -160,7 +160,7 @@ void RO6Coord::deptran_finish(TxnCommand *ch) {
   verify(req.gra.size() > 0);
 
   for (auto& rp : ch->partitions_) {
-    RococoProxy *proxy = comm()->vec_rpc_proxy_[rp];
+    RococoProxy *proxy = comm()->rpc_proxies_[rp];
     Future::safe_release(proxy->async_rcc_finish_txn(req, fuattr));
   }
 }
@@ -221,7 +221,7 @@ void RO6Coord::ro6_start_ro(TxnCommand *ch) {
       }
     };
 
-    RococoProxy *proxy = comm()->vec_rpc_proxy_[server_id];
+    RococoProxy *proxy = comm()->rpc_proxies_[server_id];
     Log::debug("send deptran RO start request, tid: %llx, pid: %llx",
                cmd_->id_,
                header.pid);
