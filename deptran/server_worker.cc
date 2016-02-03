@@ -92,8 +92,7 @@ void ServerWorker::SetupService() {
   svr_poll_mgr_g = new rrr::PollMgr(n_io_threads);
 
   // init service implementation
-  services_ = Frame().CreateRpcServices(Config::GetConfig(),
-                                        site_info_->id,
+  services_ = Frame().CreateRpcServices(site_info_->id,
                                         txn_mgr_,
                                         svr_poll_mgr_g,
                                         scsi_g);

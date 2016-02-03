@@ -17,6 +17,7 @@
 // multi_paxos
 #include "multi_paxos/coord.h"
 #include "multi_paxos/commo.h"
+#include "multi_paxos/service.cc"
 
 #include "bench/tpcc_real_dist/sharding.h"
 #include "bench/tpcc/generator.h"
@@ -370,21 +371,29 @@ TxnGenerator * Frame::CreateTxnGenerator() {
   return gen;
 }
 
-
-  vector<rrr::Service *> Frame::CreateRpcServices(Config *config, uint32_t site_id, Scheduler *dtxn_mgr, rrr::PollMgr *poll_mgr,
-                                                  ServerControlServiceImpl *scsi) {
-    auto result = std::vector<Service *>();
-    switch(config->get_mode()) {
-      case MODE_MDCC:
-        result.push_back(new mdcc::MdccClientServiceImpl(config, site_id, dtxn_mgr));
-        result.push_back(new mdcc::MdccAcceptorService());
-        result.push_back(new mdcc::MdccLearnerService());
-        result.push_back(new mdcc::MdccLeaderService());
-        break;
-      default:
-        result.push_back(new RococoServiceImpl(dtxn_mgr, poll_mgr, scsi));
-        break;
-    }
-    return result;
+vector<rrr::Service *> Frame::CreateRpcServices(uint32_t site_id,
+                                                Scheduler *dtxn_mgr,
+                                                rrr::PollMgr *poll_mgr,
+                                                ServerControlServiceImpl *scsi) {
+  auto config = Config::GetConfig();
+  auto result = std::vector<Service *>();
+  switch(config->cc_mode_) {
+    case MODE_MDCC:
+      result.push_back(new mdcc::MdccClientServiceImpl(config, site_id, dtxn_mgr));
+      result.push_back(new mdcc::MdccAcceptorService());
+      result.push_back(new mdcc::MdccLearnerService());
+      result.push_back(new mdcc::MdccLeaderService());
+      break;
+    default:
+      result.push_back(new RococoServiceImpl(dtxn_mgr, poll_mgr, scsi));
+      break;
   }
+  switch(config->ab_mode_) {
+    case MODE_MULTI_PAXOS:
+      result.push_back(new MultiPaxosServiceImpl());
+    default:
+      break;
+  }
+  return result;
+}
 } // namespace rococo;

@@ -48,12 +48,10 @@ class Frame {
   TxnGenerator * CreateTxnGenerator();
   Communicator* CreateCommo();
 
-  vector<rrr::Service*> CreateRpcServices(
-      Config* config,
-      uint32_t site_id,
-      Scheduler *dtxn_mgr,
-      rrr::PollMgr* poll_mgr,
-      ServerControlServiceImpl *scsi);
+  vector<rrr::Service*> CreateRpcServices(uint32_t site_id,
+                                          Scheduler *dtxn_mgr,
+                                          rrr::PollMgr* poll_mgr,
+                                          ServerControlServiceImpl *scsi);
 };
 
 
