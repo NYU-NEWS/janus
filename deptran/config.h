@@ -93,14 +93,14 @@ class Config {
   struct SiteInfo {
     uint32_t id; // unique site id
     uint32_t locale_id; // represents a group of servers, such as those located in same datacenter
-    string name;
-    string addr;
-    string proc;
+    string name;        // site name
+    string addr;        // addr with port
+    string proc;        // proc name?
     string host;
-    uint32_t port;
+    uint32_t port = 0;
     uint32_t n_thread;   // should be 1 for now
     SiteInfoType type_; 
-    string proc_name;
+    string proc_name;   // proc name
     uint32_t partition_id_=0;
 
     SiteInfo() = delete;
@@ -133,8 +133,8 @@ class Config {
 
   
   struct ReplicaGroup {
-    parid_t partition_id;
-    std::vector<SiteInfo> replicas;
+    parid_t partition_id = 0;
+    std::vector<SiteInfo*> replicas = {};
     ReplicaGroup(parid_t id) : partition_id(id) {}
   };
 
@@ -208,6 +208,14 @@ class Config {
 
   vector<SiteInfo> GetMyServers() { return SitesByProcessName(this->proc_name_, SERVER); }
   vector<SiteInfo> GetMyClients() { return SitesByProcessName(this->proc_name_, CLIENT); }
+
+  vector<parid_t> GetAllPartitionIds() {
+    vector<parid_t> ret;
+    for(int i = 0; i < replica_groups_.size(); i++) {
+      ret.push_back(i);
+    }
+    return ret;
+  }
 
 //  int32_t get_my_addr(std::string &server);
   int32_t get_threads(uint32_t &threads);

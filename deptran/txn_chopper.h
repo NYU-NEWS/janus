@@ -37,7 +37,7 @@ class TxnRequest {
 
 enum CommandStatus {WAITING=-1, READY, ONGOING, FINISHED, INIT};
 
-class TxnChopper : public Command {
+class TxnCommand: public Command {
  private:
   static inline bool is_consistent(map<int32_t, Value> &previous,
                                    map<int32_t, Value> &current) {
@@ -58,7 +58,6 @@ class TxnChopper : public Command {
  public:
   txnid_t txn_id_; // TODO obsolete
 
- public:
   TxnRegistry *txn_reg_ = nullptr;
 
   Graph<TxnInfo> gra_;
@@ -92,7 +91,7 @@ class TxnChopper : public Command {
   TxnReply reply_;
   struct timespec start_time_;
 
-  TxnChopper();
+  TxnCommand();
 
 //  virtual cmdtype_t type() {return txn_type_;};
 
@@ -153,9 +152,13 @@ class TxnChopper : public Command {
   /** for retry */
   virtual void retry() = 0;
 
-  virtual ~TxnChopper() { }
+  virtual ~TxnCommand() { }
 
 };
+
+// TODO Deprecated, tries to be compatible with old naming.
+typedef TxnCommand TxnChopper;
+
 
 } // namespace rcc
 

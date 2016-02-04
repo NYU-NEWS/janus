@@ -8,6 +8,7 @@ class DTxn;
 class RequestHeader;
 class TxnRegistry;
 class Executor;
+class Coordinator;
 
 class Scheduler {
  public:
@@ -18,7 +19,8 @@ class Scheduler {
   mdb::TxnMgr *mdb_txn_mgr_;
   int mode_;
   Recorder *recorder_;
-  TxnRegistry *txn_reg_;
+  Coordinator* rep_coord_;
+  TxnRegistry* txn_reg_;
 
   Scheduler();
   Scheduler(int mode);

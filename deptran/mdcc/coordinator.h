@@ -35,8 +35,8 @@ public:
 
   virtual ~MdccCoordinator() { delete communicator_; }
   virtual void do_one(TxnRequest&) override;
-  void cleanup() override {}
-  void restart(TxnChopper *ch) override {}
+  void Reset() override {}
+  void restart(TxnCommand *ch) override {}
 
   uint64_t NextTxnId();
 };

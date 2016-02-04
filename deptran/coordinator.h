@@ -19,16 +19,16 @@ public:
   std::mutex mtx_;
   uint32_t n_start_ = 0;
   virtual ~CoordinatorBase() = default;
+  // TODO do_one should be replaced with Submit.
   virtual void do_one(TxnRequest &) = 0;
-  virtual void cleanup() = 0;
-  virtual void restart(TxnChopper *ch) = 0;
+  virtual void Reset() = 0;
+  virtual void restart(TxnCommand *ch) = 0;
 };
 
 class Coordinator : public CoordinatorBase {
  public:
   uint32_t coo_id_;
   int benchmark_;
-  int32_t mode_;
   ClientControlServiceImpl *ccsi_;
   uint32_t thread_id_;
   bool batch_optimal_;
@@ -44,6 +44,8 @@ class Coordinator : public CoordinatorBase {
   std::atomic<uint64_t> next_pie_id_;
   std::atomic<uint64_t> next_txn_id_;
 
+  std::function<void()> callback_;
+
   std::mutex mtx_;
   std::mutex start_mtx_;
   Recorder *recorder_;
@@ -54,6 +56,7 @@ class Coordinator : public CoordinatorBase {
   map<innid_t, bool> start_ack_map_;
   Sharding* sharding_ = nullptr;
   TxnRegistry *txn_reg_ = nullptr;
+  Communicator* commo_ = nullptr;
 
   std::vector<int> site_prepare_;
   std::vector<int> site_commit_;
@@ -95,9 +98,7 @@ class Coordinator : public CoordinatorBase {
   std::unordered_map<int32_t, txn_stat_t> txn_stats_;
 #endif /* ifdef TXN_STAT */
   Coordinator(uint32_t coo_id,
-              std::vector<std::string> &addrs,
               int benchmark,
-              int32_t mode = MODE_OCC,
               ClientControlServiceImpl *ccsi = NULL,
               uint32_t thread_id = 0,
               bool batch_optimal = false);
@@ -115,7 +116,17 @@ class Coordinator : public CoordinatorBase {
   }
 
   virtual void do_one(TxnRequest &) = 0;
-  virtual void cleanup() = 0;
-  virtual void restart(TxnChopper *ch) = 0;
+  virtual void Submit(SimpleCommand &, std::function<void()>) {
+    verify(0);
+  }
+  virtual void Reset() {
+    n_start_ = 0;
+    n_start_ack_ = 0;
+    n_prepare_req_ = 0;
+    n_prepare_ack_ = 0;
+    n_finish_req_ = 0;
+    n_finish_ack_ = 0;
+  }
+  virtual void restart(TxnCommand *ch) = 0;
 };
 }

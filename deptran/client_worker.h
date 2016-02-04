@@ -21,16 +21,20 @@ class ClientWorker {
   uint32_t n_outstanding_;
   rrr::Mutex finish_mutex;
   rrr::CondVar finish_cond;
-  CoordinatorBase *coo_=nullptr;
+  CoordinatorBase* coo_ = nullptr;
+  Coordinator* rep_coord_ = nullptr;
   std::atomic<uint32_t> num_txn, success, num_try;
   TxnGenerator * txn_req_factory_;
   Timer *timer_;
   TxnRegistry* txn_reg_ = nullptr;
   Config* config;
   Config::SiteInfo& my_site_;
-  vector<string> servers;
+  vector<string> servers_;
  public:
-  ClientWorker(uint32_t id, Config::SiteInfo &site_info, Config *config, ClientControlServiceImpl *ccsi);
+  ClientWorker(uint32_t id,
+               Config::SiteInfo &site_info,
+               Config *config,
+               ClientControlServiceImpl *ccsi);
   ClientWorker() = delete;
   ~ClientWorker();
 

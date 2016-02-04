@@ -8,7 +8,7 @@
 
 namespace rococo {
 
-void RO6Coord::deptran_start(TxnChopper *ch) {
+void RO6Coord::deptran_start(TxnCommand *ch) {
   // new txn id for every new and retry.
   RequestHeader header = gen_header(ch);
 
@@ -82,7 +82,7 @@ void RO6Coord::deptran_start(TxnChopper *ch) {
       }
     };
 
-    RococoProxy *proxy = comm()->vec_rpc_proxy_[server_id];
+    RococoProxy *proxy = comm()->rpc_proxies_[server_id];
     Log::debug("send deptran start request, tid: %llx, pid: %llx",
                cmd_->id_,
                header.pid);
@@ -92,7 +92,7 @@ void RO6Coord::deptran_start(TxnChopper *ch) {
 }
 
 /** caller should be thread safe */
-void RO6Coord::deptran_finish(TxnChopper *ch) {
+void RO6Coord::deptran_finish(TxnCommand *ch) {
   Log::debug("deptran finish, %llx", cmd_->id_);
 
   // commit or abort piece
@@ -160,12 +160,12 @@ void RO6Coord::deptran_finish(TxnChopper *ch) {
   verify(req.gra.size() > 0);
 
   for (auto& rp : ch->partitions_) {
-    RococoProxy *proxy = comm()->vec_rpc_proxy_[rp];
+    RococoProxy *proxy = comm()->rpc_proxies_[rp];
     Future::safe_release(proxy->async_rcc_finish_txn(req, fuattr));
   }
 }
 
-void RO6Coord::ro6_start_ro(TxnChopper *ch) {
+void RO6Coord::ro6_start_ro(TxnCommand *ch) {
   // new txn id for every new and retry.
   RequestHeader header = gen_header(ch);
 
@@ -221,7 +221,7 @@ void RO6Coord::ro6_start_ro(TxnChopper *ch) {
       }
     };
 
-    RococoProxy *proxy = comm()->vec_rpc_proxy_[server_id];
+    RococoProxy *proxy = comm()->rpc_proxies_[server_id];
     Log::debug("send deptran RO start request, tid: %llx, pid: %llx",
                cmd_->id_,
                header.pid);
@@ -234,7 +234,7 @@ void RO6Coord::do_one(TxnRequest & req) {
   // pre-process
   std::lock_guard<std::mutex> lock(this->mtx_);
 
-  TxnChopper *ch = Frame().CreateChopper(req, txn_reg_);
+  TxnCommand *ch = Frame().CreateChopper(req, txn_reg_);
   cmd_->id_ = this->next_txn_id();
 
   Log::debug("do one request");

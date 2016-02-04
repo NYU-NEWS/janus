@@ -58,8 +58,13 @@ class DTxn {
   DTxn() = delete;
 
   DTxn(i64 tid, Scheduler *mgr)
-      : tid_(tid), mgr_(mgr), phase_(0), context_row_(), context_value_(),
-        context_rs_(), mdb_txn_(mgr->GetOrCreateMTxn(tid)) {}
+      : tid_(tid),
+        mgr_(mgr),
+        phase_(0),
+        context_row_(),
+        context_value_(),
+        context_rs_(),
+        mdb_txn_(nullptr) {}
 
   virtual mdb::Row *create(const mdb::Schema *schema,
                            const std::vector<mdb::Value> &values) = 0;

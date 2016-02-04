@@ -78,7 +78,7 @@ namespace mdcc {
   }
 
   MdccCommunicator::SiteProxy* MdccCommunicator::ClosestSiteInPartition(uint32_t partition_id) const {
-    auto& partition_sites = config_->SitesByPartitionId(partition_id);
+    auto partition_sites = config_->SitesByPartitionId(partition_id);
     assert(partition_sites.size()>0);
     auto it = find_if(partition_sites.begin(), partition_sites.end(),
                       [this](const Config::SiteInfo& si) {return si.locale_id==this->site_info_.locale_id;});

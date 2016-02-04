@@ -21,6 +21,7 @@ using std::string;
 using std::vector;
 using std::set;
 using std::pair;
+using std::function;
 
 // system library
 #include <sys/types.h>

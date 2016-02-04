@@ -12,7 +12,7 @@ typedef std::map<
     mdb::Row *> row_map_t;
 
 class DTxn;
-class TxnChopper;
+class TxnCommand;
 class TxnRequest;
 
 typedef std::function<void(Executor* exec,
@@ -33,7 +33,7 @@ typedef struct {
   defer_t defer;
 } txn_handler_defer_pair_t;
 
-typedef std::function<bool(TxnChopper*,
+typedef std::function<bool(TxnCommand *,
                            map<int32_t, Value>&)>
     PieceCallbackHandler;
 
@@ -83,8 +83,8 @@ class TxnRegistry {
   map<std::pair<txntype_t, innid_t>,
   std::pair<string, int32_t>> sharding_input_ = {};
   map<txntype_t, map<innid_t, set<int32_t>>> input_vars_ = {};
-  map<txntype_t, std::function<void(TxnChopper* ch, TxnRequest& req)> > init_ = {};
-  map<txntype_t, std::function<void(TxnChopper* ch)>> retry_ = {};
+  map<txntype_t, std::function<void(TxnCommand * ch, TxnRequest& req)> > init_ = {};
+  map<txntype_t, std::function<void(TxnCommand * ch)>> retry_ = {};
 
   // PieceCallbackMap callbacks_;
   // static map<std::pair<base::i32, base::i32>, LockSetOracle> lck_oracle_;

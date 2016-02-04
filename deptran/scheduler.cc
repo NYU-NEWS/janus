@@ -164,6 +164,21 @@ Scheduler::Scheduler() : executors_() {
     // TODO free this
     recorder_ = new Recorder(path);
   }
+
+  // TODO
+  cooid_t cid = 0;
+  vector<string> servers;
+  int32_t benchmark = 0;
+  id_t id;
+  if (Config::GetConfig()->IsReplicated()) {
+    rep_coord_ = Frame().CreateRepCoord(cid,
+                                        Config::GetConfig(),
+                                        benchmark,
+                                        nullptr,
+                                        id,
+                                        true,
+                                        txn_reg_);
+  }
 }
 
 Scheduler::Scheduler(int mode) : Scheduler() {

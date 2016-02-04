@@ -5,7 +5,7 @@
 
 namespace deptran {
 
-class MicroBenchChopper : public TxnChopper {
+class MicroBenchChopper : public TxnCommand {
 
 public:
 

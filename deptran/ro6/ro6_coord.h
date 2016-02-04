@@ -17,10 +17,10 @@ public:
 
   virtual void do_one(TxnRequest&);
 
-  void         deptran_start(TxnChopper *ch);
+  void         deptran_start(TxnCommand *ch);
 
-  void         deptran_finish(TxnChopper *ch);
+  void         deptran_finish(TxnCommand *ch);
 
-  void         ro6_start_ro(TxnChopper *ch);
+  void         ro6_start_ro(TxnCommand *ch);
 };
 } // namespace rococo

@@ -13,7 +13,11 @@
 #include "tpl/coord.h"
 #include "occ/coord.h"
 #include "tpl/exec.h"
+
+// multi_paxos
 #include "multi_paxos/coord.h"
+#include "multi_paxos/commo.h"
+#include "multi_paxos/service.cc"
 
 #include "bench/tpcc_real_dist/sharding.h"
 #include "bench/tpcc/generator.h"
@@ -53,6 +57,7 @@
 #include "deptran/mdcc/executor.h"
 #include "deptran/mdcc/services.h"
 #include "deptran/mdcc/MdccDTxn.h"
+
 
 namespace rococo {
 
@@ -107,26 +112,24 @@ mdb::Row* Frame::CreateRow(const mdb::Schema *schema,
   return r;
 }
 
-CoordinatorBase* Frame::CreateRepCoord(cooid_t coo_id,
-                                       vector<std::string>& servers,
-                                       Config* config,
-                                       int benchmark,
-                                       int mode,
-                                       ClientControlServiceImpl *ccsi,
-                                       uint32_t id,
-                                       bool batch_start,
-                                       TxnRegistry* txn_reg) {
-  CoordinatorBase *coo;
+Coordinator* Frame::CreateRepCoord(cooid_t coo_id,
+                                   Config* config,
+                                   int benchmark,
+                                   ClientControlServiceImpl *ccsi,
+                                   uint32_t id,
+                                   bool batch_start,
+                                   TxnRegistry* txn_reg) {
+  Coordinator *coo;
+  auto mode = Config::GetConfig()->ab_mode_;
   switch(mode) {
     case MODE_MULTI_PAXOS:
       coo = new MultiPaxosCoord(coo_id,
-                                servers,
                                 benchmark,
-                                mode,
                                 ccsi,
                                 id,
                                 batch_start);
       break;
+    case MODE_EPAXOS:
     case MODE_NOT_READY:
       Log_fatal("this atomic broadcast protocol is currently not supported.");
   }
@@ -138,7 +141,6 @@ CoordinatorBase* Frame::CreateCoord(cooid_t coo_id,
                                     vector<std::string>& servers,
                                     Config* config,
                                     int benchmark,
-                                    int mode,
                                     ClientControlServiceImpl *ccsi,
                                     uint32_t id,
                                     bool batch_start,
@@ -146,35 +148,46 @@ CoordinatorBase* Frame::CreateCoord(cooid_t coo_id,
   // TODO: clean this up; make Coordinator subclasses assign txn_reg_
   CoordinatorBase *coo;
   auto attr = this;
+  auto mode = Config::GetConfig()->cc_mode_;
   switch (mode) {
     case MODE_2PL:
-      coo = new TPLCoord(coo_id, servers, benchmark,
-                         mode, ccsi, id, batch_start);
+      coo = new TPLCoord(coo_id,
+                         benchmark,
+                         ccsi,
+                         id,
+                         batch_start);
       ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
     case MODE_OCC:
     case MODE_RPC_NULL:
-      coo = new OCCCoord(coo_id, servers,
-                         benchmark, mode,
-                         ccsi, id, batch_start);
+      coo = new OCCCoord(coo_id,
+                         benchmark,
+                         ccsi,
+                         id,
+                         batch_start);
       ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
     case MODE_RCC:
-      coo = new RCCCoord(coo_id, servers,
-                         benchmark, mode,
-                         ccsi, id, batch_start);
+      coo = new RCCCoord(coo_id,
+                         benchmark,
+                         ccsi,
+                         id,
+                         batch_start);
       ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
     case MODE_RO6:
-      coo = new RO6Coord(coo_id, servers,
-                         benchmark, mode,
-                         ccsi, id, batch_start);
+      coo = new RO6Coord(coo_id,
+                         benchmark,
+                         ccsi,
+                         id,
+                         batch_start);
       ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
     case MODE_NONE:
-      coo = new NoneCoord(coo_id, servers,
-                          benchmark, mode,
-                          ccsi, id,
+      coo = new NoneCoord(coo_id,
+                          benchmark,
+                          ccsi,
+                          id,
                           batch_start);
       ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
@@ -216,40 +229,56 @@ void Frame::GetTxnTypes(std::map<int32_t, std::string> &txn_types) {
   }
 }
 
-TxnChopper* Frame::CreateChopper(TxnRequest &req, TxnRegistry* reg) {
+TxnCommand* Frame::CreateTxnCommand(TxnRequest& req, TxnRegistry* reg) {
   auto benchmark = Config::config_s->benchmark_;
-  TxnChopper *ch = NULL;
+  TxnCommand *cmd = NULL;
   switch (benchmark) {
     case TPCA:
       verify(req.txn_type_ == TPCA_PAYMENT);
-      ch = new TpcaPaymentChopper();
+      cmd = new TpcaPaymentChopper();
       break;
     case TPCC:
-      ch = new TpccChopper();
+      cmd = new TpccChopper();
       break;
     case TPCC_DIST_PART:
-      ch = new TpccDistChopper();
+      cmd = new TpccDistChopper();
       break;
     case TPCC_REAL_DIST_PART:
-      ch = new TpccRealDistChopper();
+      cmd = new TpccRealDistChopper();
       break;
     case RW_BENCHMARK:
-      ch = new RWChopper();
+      cmd = new RWChopper();
       break;
     case MICRO_BENCH:
-      ch = new MicroBenchChopper();
+      cmd = new MicroBenchChopper();
       break;
     default:
       verify(0);
   }
-  verify(ch != NULL);
-  ch->txn_reg_ = reg;
-  ch->sss_ = Config::GetConfig()->sharding_;
-  ch->init(req);
-  verify(ch->n_pieces_input_ready_ > 0);
-  return ch;
+  verify(cmd != NULL);
+  cmd->txn_reg_ = reg;
+  cmd->sss_ = Config::GetConfig()->sharding_;
+  cmd->init(req);
+  verify(cmd->n_pieces_input_ready_ > 0);
+  return cmd;
 }
 
+TxnCommand * Frame::CreateChopper(TxnRequest &req, TxnRegistry* reg) {
+  return CreateTxnCommand(req, reg);
+}
+
+Communicator* Frame::CreateCommo() {
+  auto mode = Config::GetConfig()->ab_mode_;
+  Communicator* commo = nullptr;
+  switch (mode) {
+    case MODE_MULTI_PAXOS:
+      commo = new MultiPaxosCommo();
+      break;
+    default:
+      break;
+  }
+  return commo;
+}
 
 DTxn* Frame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {
   DTxn *ret = nullptr;
@@ -342,21 +371,29 @@ TxnGenerator * Frame::CreateTxnGenerator() {
   return gen;
 }
 
-
-  vector<rrr::Service *> Frame::CreateRpcServices(Config *config, uint32_t site_id, Scheduler *dtxn_mgr, rrr::PollMgr *poll_mgr,
-                                                  ServerControlServiceImpl *scsi) {
-    auto result = std::vector<Service *>();
-    switch(config->get_mode()) {
-      case MODE_MDCC:
-        result.push_back(new mdcc::MdccClientServiceImpl(config, site_id, dtxn_mgr));
-        result.push_back(new mdcc::MdccLeaderServiceImpl(config, site_id, dtxn_mgr));
-        result.push_back(new mdcc::MdccAcceptorService());
-        result.push_back(new mdcc::MdccLearnerService());
-        break;
-      default:
-        result.push_back(new RococoServiceImpl(dtxn_mgr, poll_mgr, scsi));
-        break;
-    }
-    return result;
+vector<rrr::Service *> Frame::CreateRpcServices(uint32_t site_id,
+                                                Scheduler *dtxn_mgr,
+                                                rrr::PollMgr *poll_mgr,
+                                                ServerControlServiceImpl *scsi) {
+  auto config = Config::GetConfig();
+  auto result = std::vector<Service *>();
+  switch(config->cc_mode_) {
+    case MODE_MDCC:
+      result.push_back(new mdcc::MdccClientServiceImpl(config, site_id, dtxn_mgr));
+      result.push_back(new mdcc::MdccLeaderServiceImpl(config, site_id, dtxn_mgr));
+      result.push_back(new mdcc::MdccAcceptorService());
+      result.push_back(new mdcc::MdccLearnerService());
+      break;
+    default:
+      result.push_back(new RococoServiceImpl(dtxn_mgr, poll_mgr, scsi));
+      break;
   }
+  switch(config->ab_mode_) {
+    case MODE_MULTI_PAXOS:
+      result.push_back(new MultiPaxosServiceImpl());
+    default:
+      break;
+  }
+  return result;
+}
 } // namespace rococo;

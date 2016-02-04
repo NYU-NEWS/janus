@@ -12,7 +12,7 @@ void MultiPaxosServiceImpl::Prepare(const uint64_t& slot,
                                     const ballot_t& ballot,
                                     uint64_t* max_ballot,
                                     rrr::DeferredReply* defer) {
-
+  verify(0);
 
 }
 
