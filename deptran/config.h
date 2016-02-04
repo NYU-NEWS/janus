@@ -201,7 +201,7 @@ class Config {
   int32_t get_site_addr(uint32_t sid,
                         std::string &server);
   const SiteInfo& SiteById(uint32_t id); 
-  const std::vector<SiteInfo>& SitesByPartitionId(parid_t partition_id);
+  std::vector<SiteInfo> SitesByPartitionId(parid_t partition_id);
   std::vector<SiteInfo> SitesByLocaleId(uint32_t locale_id, SiteInfoType type=SERVER);
   std::vector<SiteInfo> SitesByProcessName(string proc_name, SiteInfoType type=SERVER);
   SiteInfo* SiteByName(std::string name);

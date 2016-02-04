@@ -24,7 +24,9 @@ namespace mdcc {
   public:
     MdccDTxn() = delete;
     MdccDTxn(txnid_t tid, Scheduler* mgr) :
-        DTxn(tid, mgr), mgr_(static_cast<MdccScheduler*>(mgr)) {}
+        DTxn(tid, mgr), mgr_(static_cast<MdccScheduler*>(mgr)) {
+      mdb_txn_ = mgr_->GetOrCreateMTxn(tid);
+    }
     ~MdccDTxn() { ClearOptions(); }
 
     void ClearOptions() {
