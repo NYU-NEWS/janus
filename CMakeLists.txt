@@ -91,20 +91,33 @@ file(GLOB DEPTRAN_SRC
     "deptran/*/*.h"
 )
 
+add_library(RRR
+    ${RRR_SRC})
+
+add_library(MEMDB
+    ${MEMDB_SRC})
+
 add_library(ROCOCO
-    ${RRR_SRC}
-    ${MEMDB_SRC}
+#    ${RRR_SRC}
+#    ${MEMDB_SRC}
     ${BENCH_SRC}
     ${DEPTRAN_SRC})
 
 add_executable(ROCOCO_SERVER
-    deptran/s_main.cc
-    ${RRR_SRC}
-    )
+    deptran/s_main.cc)
 #add_executable(ROCOCO_CLIENT deptran/c_main.cc)
+
+target_link_libraries(MEMDB
+    RRR)
+
+target_link_libraries(ROCOCO
+    RRR
+    MEMDB)
 
 target_link_libraries(
     ROCOCO_SERVER
+    RRR
+    MEMDB
     ROCOCO
     ${CMAKE_THREAD_LIBS_INIT}
     ${YAML_CPP_LIBRARIES}
