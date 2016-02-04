@@ -145,7 +145,7 @@ class Sharding {
   std::map<std::string, tb_info_t> tb_infos_;
   std::map<MultiValue, MultiValue> dist2sid_;
   std::map<MultiValue, MultiValue> stock2sid_;
-  Scheduler * dtxn_mgr_;
+  Scheduler *dtxn_sched_;
 
   void BuildTableInfoPtr();
 

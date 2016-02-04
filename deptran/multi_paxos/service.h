@@ -11,9 +11,10 @@
 class SimpleCommand;
 namespace rococo {
 
+class MultiPaxosSched;
 class MultiPaxosServiceImpl : public MultiPaxosService {
  public:
-
+  MultiPaxosSched* sched_;
   void Forward(const SimpleCommand& cmd, rrr::DeferredReply* defer) override;
 
   void Prepare(const uint64_t& slot,

@@ -244,12 +244,14 @@ Executor* Scheduler::CreateExecutor(cmdid_t txn_id) {
 }
 
 Executor* Scheduler::GetOrCreateExecutor(cmdid_t txn_id) {
+  Executor* exec = nullptr;
   auto it = executors_.find(txn_id);
   if (it == executors_.end()) {
-    return CreateExecutor(txn_id);
+    exec = CreateExecutor(txn_id);
   } else {
-    return it->second;
+    exec = it->second;
   }
+  return exec;
 }
 
 void Scheduler::DestroyExecutor(cmdid_t cmd_id) {

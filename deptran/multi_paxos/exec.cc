@@ -9,6 +9,7 @@ ballot_t MultiPaxosExecutor::Prepare(ballot_t ballot) {
     max_ballot_seen_ = ballot;
   } else {
     // TODO if accepted anything, return;
+    verify(0);
   }
   return max_ballot_seen_;
 }

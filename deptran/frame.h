@@ -49,7 +49,7 @@ class Frame {
   Communicator* CreateCommo();
 
   vector<rrr::Service*> CreateRpcServices(uint32_t site_id,
-                                          Scheduler *dtxn_mgr,
+                                          Scheduler *dtxn_sched,
                                           rrr::PollMgr* poll_mgr,
                                           ServerControlServiceImpl *scsi);
 };

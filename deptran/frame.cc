@@ -372,7 +372,7 @@ TxnGenerator * Frame::CreateTxnGenerator() {
 }
 
 vector<rrr::Service *> Frame::CreateRpcServices(uint32_t site_id,
-                                                Scheduler *dtxn_mgr,
+                                                Scheduler *dtxn_sched,
                                                 rrr::PollMgr *poll_mgr,
                                                 ServerControlServiceImpl *scsi) {
   auto config = Config::GetConfig();
@@ -385,7 +385,7 @@ vector<rrr::Service *> Frame::CreateRpcServices(uint32_t site_id,
       result.push_back(new mdcc::MdccLearnerService());
       break;
     default:
-      result.push_back(new RococoServiceImpl(dtxn_mgr, poll_mgr, scsi));
+      result.push_back(new RococoServiceImpl(dtxn_sched, poll_mgr, scsi));
       break;
   }
   switch(config->ab_mode_) {

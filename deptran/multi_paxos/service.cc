@@ -1,5 +1,6 @@
 
 #include "service.h"
+#include "sched.h"
 
 namespace rococo {
 
@@ -12,8 +13,11 @@ void MultiPaxosServiceImpl::Prepare(const uint64_t& slot,
                                     const ballot_t& ballot,
                                     uint64_t* max_ballot,
                                     rrr::DeferredReply* defer) {
-  verify(0);
-
+  verify(sched_ != nullptr);
+  sched_->OnPrepareRequest(slot,
+                          ballot,
+                          max_ballot,
+                          std::bind(&rrr::DeferredReply::reply, defer));
 }
 
 void MultiPaxosServiceImpl::Accept(const uint64_t& slot,
@@ -21,7 +25,6 @@ void MultiPaxosServiceImpl::Accept(const uint64_t& slot,
                                    const SimpleCommand& cmd,
                                    uint64_t* max_ballot,
                                    rrr::DeferredReply* defer) {
-
 }
 
 void MultiPaxosServiceImpl::Decide(const uint64_t& slot,

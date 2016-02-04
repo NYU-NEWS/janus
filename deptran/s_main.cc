@@ -62,9 +62,9 @@ void server_launch_worker(vector<Config::SiteInfo>&server_sites) {
   for (auto& site_info : server_sites) {
     Log_info("launching site: %x, bind address %s", site_info.id, site_info.GetBindAddress().c_str());
     auto& worker = svr_workers[i++];
-    worker.sharding_ = Frame().CreateSharding(Config::GetConfig()->sharding_);
-    worker.sharding_->BuildTableInfoPtr();
+
     // register txn piece logic
+    worker.SetupBase();
     worker.RegPiece();
     worker.site_info_ = &site_info;
     // setup communication between controller script

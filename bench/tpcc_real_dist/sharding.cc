@@ -329,12 +329,12 @@ void TPCCDSharding::PreparePrimaryColumn(tb_info_t *tb_info,
 
 void TPCCDSharding::PopulateTable(tb_info_t *tb_info, uint32_t sid) {
   // find table and secondary table
-  mdb::Table *const table_ptr = dtxn_mgr_->get_table(tb_info->tb_name);
+  mdb::Table *const table_ptr = dtxn_sched_->get_table(tb_info->tb_name);
   const mdb::Schema *schema = table_ptr->schema();
   mdb::SortedTable *tbl_sec_ptr = nullptr;
 
   if (tb_info->tb_name == TPCC_TB_ORDER) {
-    tbl_sec_ptr = (mdb::SortedTable *) dtxn_mgr_->get_table(
+    tbl_sec_ptr = (mdb::SortedTable *) dtxn_sched_->get_table(
             TPCC_TB_ORDER_C_ID_SECONDARY);
   }
   verify(schema->columns_count() == tb_info->columns.size());

@@ -24,16 +24,21 @@ void ServerWorker::SetupHeartbeat() {
   svr_hb_server_g->start(addr_port.c_str());
 }
 
-void ServerWorker::PopTable() {
-  // TODO this needs to be done before poping table
-  verify(txn_reg_);
-  txn_mgr_ = Frame().CreateScheduler();
-  txn_mgr_->txn_reg_ = txn_reg_;
-  sharding_->dtxn_mgr_ = txn_mgr_;
+void ServerWorker::SetupBase() {
+  // this needs to be done before poping table
+  sharding_ = Frame().CreateSharding(Config::GetConfig()->sharding_);
+  sharding_->BuildTableInfoPtr();
+  verify(txn_reg_ == nullptr);
+  txn_reg_ = new TxnRegistry();
+  dtxn_sched_ = Frame().CreateScheduler();
+  dtxn_sched_->txn_reg_ = txn_reg_;
+  rep_sched_ = Frame().CreateScheduler();
+  sharding_->dtxn_sched_ = dtxn_sched_;
+}
 
+void ServerWorker::PopTable() {
   // populate table
   int ret = 0;
-
   // get all tables
   std::vector<std::string> table_names;
 
@@ -59,7 +64,7 @@ void ServerWorker::PopTable() {
       default:
         verify(0);
     }
-    txn_mgr_->reg_table(table_name, tb);
+    dtxn_sched_->reg_table(table_name, tb);
   }
   verify(sharding_);
   sharding_->PopulateTable(site_info_->partition_id_);
@@ -70,9 +75,8 @@ void ServerWorker::PopTable() {
 void ServerWorker::RegPiece() {
   auto benchmark = Config::GetConfig()->get_benchmark();
   Piece *piece = Piece::get_piece(benchmark);
-  verify(!txn_reg_);
-  txn_reg_ = new TxnRegistry();
-  verify(sharding_);
+  verify(txn_reg_ != nullptr);
+  verify(sharding_ != nullptr);
   piece->sss_ = sharding_;
   piece->txn_reg_ = txn_reg_;
   piece->reg_all();
@@ -93,7 +97,7 @@ void ServerWorker::SetupService() {
 
   // init service implementation
   services_ = Frame().CreateRpcServices(site_info_->id,
-                                        txn_mgr_,
+                                        dtxn_sched_,
                                         svr_poll_mgr_g,
                                         scsi_g);
 

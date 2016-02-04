@@ -29,13 +29,15 @@ class ServerWorker {
 
   Config::SiteInfo *site_info_ = nullptr;
   Sharding *sharding_ = nullptr;
-  Scheduler * txn_mgr_ = nullptr;
+  Scheduler *dtxn_sched_ = nullptr;
+  Scheduler *rep_sched_ = nullptr;
   TxnRegistry *txn_reg_ = nullptr;
 
   Communicator *commo_ = nullptr;
 
   void SetupHeartbeat();
   void PopTable();
+  void SetupBase();
   void SetupService();
   void SetupCommo();
   void RegPiece();
