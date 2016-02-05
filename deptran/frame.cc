@@ -379,8 +379,8 @@ vector<rrr::Service *> Frame::CreateRpcServices(uint32_t site_id,
   auto result = std::vector<Service *>();
   switch(config->cc_mode_) {
     case MODE_MDCC:
-      result.push_back(new mdcc::MdccClientServiceImpl(config, site_id, dtxn_mgr));
-      result.push_back(new mdcc::MdccLeaderServiceImpl(config, site_id, dtxn_mgr));
+      result.push_back(new mdcc::MdccClientServiceImpl(config, site_id, dtxn_sched));
+      result.push_back(new mdcc::MdccLeaderServiceImpl(config, site_id, dtxn_sched));
       result.push_back(new mdcc::MdccAcceptorService());
       result.push_back(new mdcc::MdccLearnerService());
       break;
