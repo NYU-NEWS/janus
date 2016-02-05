@@ -14,7 +14,7 @@ namespace mdcc {
     if (it != update_options_.end()) {
       option_set = it->second;
     } else {
-      option_set = new OptionSet(row->get_table()->Name(), row->get_key());
+      option_set = new OptionSet(tid_, row->get_table()->Name(), row->get_key());
       update_options_.insert(std::pair<std::pair<string, size_t>, OptionSet*>(locator, option_set));
     }
     option_set->Add(Option(col_id, value, row->get_column_ver(col_id)));

@@ -20,30 +20,15 @@ void MdccClientServiceImpl::StartPiece(const SimpleCommand& cmd, StartPieceRespo
   dtxn_mgr_->StartPiece(cmd, &res->result, defer);
 }
 
-void MdccLearnerService::Learn(const Result& r) {
-}
-
 void MdccLeaderServiceImpl::Propose(const ProposeRequest &req, ProposeResponse *res,
-                                rrr::DeferredReply *defer) {
+                                    rrr::DeferredReply *defer) {
   Log_info("Leader: %s site %d", __FUNCTION__, my_site_info_.id);
-  res->accepted = false;
-  defer->reply();
+  dtxn_mgr_->Phase2aClassic(req.updates, res, defer);
 }
 
-void MdccAcceptorService::Propose(const ProposeRequest &req,
-                                  ProposeResponse *res, rrr::DeferredReply *defer) {
-}
-
-void MdccAcceptorService::ProposeFast(const ProposeRequest &req,
-                                      ProposeResponse *res, rrr::DeferredReply *defer) {
-}
-
-void MdccAcceptorService::Decide(const Result &result,
-                                 rrr::DeferredReply *defer) {
-}
-
-void MdccAcceptorService::Accept(const AcceptRequest &req, AcceptResponse *res,
-                                 rrr::DeferredReply *defer) {
+void MdccAcceptorServiceImpl::Phase2a(const Phase2aRequest& req, Phase2aResponse* res,
+                                  rrr::DeferredReply* defer) {
+  Log_info("Accpetor: %s size %d", __FUNCTION__, my_site_info_.id);
 }
 
 }

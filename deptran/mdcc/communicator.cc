@@ -5,6 +5,7 @@
 #include "communicator.h"
 #include "option.h"
 #include "deptran/multi_value.h"
+#include "MdccScheduler.h"
 
 namespace mdcc {
   // initiate a mdcc transaction
@@ -56,7 +57,7 @@ namespace mdcc {
     auto partition_id = config_->SiteById(cmd.GetSiteId()).partition_id_;
     auto partition_sites = config_->SitesByPartitionId(partition_id);
 
-    if (ballotType == BallotType::FAST) {
+    if (ballotType == BallotType::CLASSIC) {
       auto proxy = this->LeaderForUpdate(options, partition_sites);
       Log_debug("send %d options to site %d", options->Options().size(), proxy->site_info.id);
 
@@ -72,8 +73,7 @@ namespace mdcc {
       };
       proxy->leader->async_Propose(req, future);
     } else {
-      Log_debug("implement slow path");
-      verify(0);
+      Log_fatal("implement fast path");
     }
   }
 
@@ -91,11 +91,16 @@ namespace mdcc {
   MdccCommunicator::SiteProxy* MdccCommunicator::RandomSite(const vector<Config::SiteInfo>& sites) {
     return site_proxies_[sites[RandomGenerator::rand(0, sites.size()-1)].id];
   }
+
   MdccCommunicator::SiteProxy* MdccCommunicator::LeaderForUpdate(
       OptionSet *option_set, std::vector<Config::SiteInfo> &sites) {
     std::size_t hname = std::hash<std::string>()(option_set->Table());
     std::size_t hkey = rococo::multi_value_hasher()(option_set->Key());
     int index = (hname ^ hkey) % sites.size();
     return site_proxies_[sites[index].id];
+  }
+
+  void MdccCommunicator::SendPhase2a(Phase2aRequest req, Callback<Phase2aResponse>& cb) {
+    Log_debug("Site %d: %s", this->site_info_.id, __FUNCTION__);
   }
 }

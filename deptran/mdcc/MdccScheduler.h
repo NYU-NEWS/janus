@@ -2,6 +2,7 @@
 // Created by lamont on 1/11/16.
 //
 #pragma once
+#include <memory>
 #include "deptran/scheduler.h"
 #include "deptran/executor.h"
 #include "deptran/txn_chopper.h"
@@ -14,12 +15,28 @@ namespace mdcc {
   using rococo::TxnChopper;
   using rococo::SimpleCommand;
 
-  struct TxnOptionResult {
-    int num_option_sets=0;
-    int num_success=0;
-    int num_fail=0;
-    TxnOptionResult() {};
-    TxnOptionResult(int num_option_sets) : num_option_sets(num_option_sets) {}
+  class TxnOptionResult {
+  protected:
+    int num_option_sets;
+    int success_cnt;
+
+  public:
+    TxnOptionResult() : TxnOptionResult(0) {};
+    TxnOptionResult(int num_option_sets) : num_option_sets(num_option_sets),
+                                           success_cnt(0) {
+    }
+
+    enum Status {S_SUCCESS, S_ONGOING};
+    Status Success() {
+      int cnt = ++success_cnt;
+      return (cnt < num_option_sets) ?
+        Status::S_ONGOING : Status::S_SUCCESS;
+    }
+  };
+
+  struct LeaderContext {
+    Ballot ballot;
+    std::vector<unique_ptr<OptionSet>> max_tried_;
   };
 
   class MdccScheduler : public Scheduler {
@@ -29,8 +46,8 @@ namespace mdcc {
    Config* config_ = nullptr;
    uint32_t site_id_ = -1;
 
-   std::map<txnid_t, TxnOptionResult> option_results_;
-
+   std::map<txnid_t, unique_ptr<TxnOptionResult>> option_results_;
+   LeaderContext leader_context_;
   public:
    MdccScheduler() : Scheduler(MODE_MDCC) {}
    virtual ~MdccScheduler() {
@@ -56,5 +73,6 @@ namespace mdcc {
    void StartPiece(const rococo::SimpleCommand& cmd, int32_t* result, DeferredReply *defer);
    bool LaunchNextPiece(uint64_t txn_id, TxnChopper *chopper);
    void SendUpdateProposal(txnid_t txn_id, const SimpleCommand &cmd, int32_t* result, rrr::DeferredReply* defer);
+   void Phase2aClassic(OptionSet option_set, ProposeResponse *response, DeferredReply *reply);
   };
 }

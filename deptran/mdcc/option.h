@@ -25,15 +25,16 @@ namespace mdcc {
 
   class OptionSet {
   protected:
+    txnid_t txn_id_;
     std::string table_;
     MultiValue key_;
     std::vector<Option> options_;
     bool accepted_ = false;
   public:
-    OptionSet(string& table, MultiValue& key, bool accepted) :
-        table_(table), key_(key), accepted_(accepted) {}
-    OptionSet(std::string table, MultiValue key) : OptionSet(table, key, false) {}
-    OptionSet() : OptionSet("", MultiValue()) {}
+    OptionSet(txnid_t txn_id, string& table, MultiValue& key, bool accepted) :
+        txn_id_(txn_id), table_(table), key_(key), accepted_(accepted) {}
+    OptionSet(txnid_t txn_id, std::string table, MultiValue key) : OptionSet(txn_id, table, key, false) {}
+    OptionSet() : OptionSet(0, "", MultiValue()) {}
 
     void Add(const Option& o) { options_.push_back(o); }
     std::string Table() const { return table_; }
@@ -41,6 +42,7 @@ namespace mdcc {
     const std::vector<Option>& Options() const { return options_; }
     bool Accepted() const { return accepted_ == true; }
     void Accept() { accepted_ = true; }
+    txnid_t TxnId() const { return txn_id_; }
 
     friend rrr::Marshal& operator <<(rrr::Marshal& m, const OptionSet& o);
     friend rrr::Marshal& operator >>(rrr::Marshal& m, OptionSet& o);
@@ -71,6 +73,7 @@ namespace mdcc {
   }
 
   inline rrr::Marshal& operator <<(rrr::Marshal& m, const OptionSet& o) {
+    m << o.txn_id_;
     m << o.table_;
     m << o.options_;
     m << (o.accepted_ ? 1 : 0);
@@ -79,6 +82,7 @@ namespace mdcc {
   }
 
   inline rrr::Marshal& operator >>(rrr::Marshal& m, OptionSet& o) {
+    m >> o.txn_id_;
     m >> o.table_;
     m >> o.options_;
     int i;

@@ -21,7 +21,7 @@ namespace mdcc {
     MdccClientServiceImpl(Config* config, uint32_t my_site_id, Scheduler* dtxn_mgr) :
         my_site_info_(config->SiteById(my_site_id)),
         config_(config),
-        dtxn_mgr_(dynamic_cast<MdccScheduler*>(dtxn_mgr)) {
+        dtxn_mgr_(static_cast<MdccScheduler*>(dtxn_mgr)) {
       dtxn_mgr_->init(config, my_site_id);
     }
 
@@ -44,5 +44,22 @@ namespace mdcc {
     }
 
     void Propose(const ProposeRequest& req, ProposeResponse* res, rrr::DeferredReply* defer) override;
+  };
+
+  class MdccAcceptorServiceImpl : public MdccAcceptorService {
+  protected:
+    const Config::SiteInfo& my_site_info_;
+    Config* const config_;
+    MdccScheduler* const dtxn_mgr_;
+  public:
+    MdccAcceptorServiceImpl() = delete;
+    MdccAcceptorServiceImpl(Config* config, uint32_t my_site_id,
+                            Scheduler* dtxn_mgr) :
+        my_site_info_(config->SiteById(my_site_id)),
+        config_(config),
+        dtxn_mgr_(dynamic_cast<MdccScheduler*>(dtxn_mgr)) {
+      dtxn_mgr_->init(config, my_site_id);
+    }
+    void Phase2a(const Phase2aRequest& req, Phase2aResponse* res, rrr::DeferredReply* defer) override;
   };
 }

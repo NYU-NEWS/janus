@@ -1,7 +1,6 @@
 namespace mdcc;
 
 service MdccLearner {
-    Learn(Result r);
 };
 
 abstract service MdccClient {
@@ -13,20 +12,8 @@ abstract service MdccLeader {
     defer Propose(ProposeRequest req | ProposeResponse res);
 };
 
-service MdccAcceptor {
-    defer Propose(ProposeRequest req | ProposeResponse res);
-    defer ProposeFast(ProposeRequest req | ProposeResponse res);
-    defer Accept(AcceptRequest req | AcceptResponse res);
-    defer Decide(Result result);
-};
-
-struct ConsensusValue {
-    // TODO define; need list of options as defined in the paper
-};
-
-struct ProposalNum {
-    i64 num;
-    i64 server;
+abstract service MdccAcceptor {
+    defer Phase2a(Phase2aRequest req | Phase2aResponse res);
 };
 
 struct StartRequest {
@@ -51,32 +38,21 @@ struct StartPieceResponse {
     i32 result; // 1 = accept; 0 = reject
 };
 
-// Phase1a
 struct ProposeRequest {
     OptionSet updates
 };
 
-// Phase1b
 struct ProposeResponse {
     string table;
     i64 key;
     i8 accepted;
 };
 
-// Phase2a
-struct AcceptRequest {
-    ProposalNum m;
-    ConsensusValue v;
+struct Phase2aRequest {
+    i32 site_id;
+    Ballot ballot;
+    std::vector<OptionSet> values;
 };
 
-// Phase2b
-struct AcceptResponse {
-    ProposalNum m;
-    ConsensusValue v;
-};
-
-// called 'Visibility' in the paper
-struct Result {
-    i8 result; // 1 = accept; 0 = reject
-    ConsensusValue v;
+struct Phase2aResponse {
 };

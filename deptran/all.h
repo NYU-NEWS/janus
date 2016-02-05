@@ -7,7 +7,7 @@
 
 
 // rpc library
-
+#define LOG_LEVEL_AS_DEBUG
 class dummy_class {
  public:
   dummy_class() {

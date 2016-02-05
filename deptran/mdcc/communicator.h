@@ -37,16 +37,18 @@ class MdccCommunicator {
                       Callback<StartPieceResponse>& callback);
   void SendProposal(BallotType ballotType, txnid_t txn_id, const rococo::SimpleCommand &cmd,
                     OptionSet* options, Callback<OptionSet>& cb);
-protected:
+  void SendPhase2a(Phase2aRequest req, Callback<Phase2aResponse>& cb);
+ protected:
   std::mutex mtx_;
+
   struct SiteProxy {
     const Config::SiteInfo& site_info;
     rrr::Client* rpc_client;
     MdccLeaderProxy* leader;
     MdccAcceptorProxy* acceptor;
     MdccClientProxy* client;
-    SiteProxy() = delete;
 
+    SiteProxy() = delete;
     SiteProxy(Config::SiteInfo& site_info, rrr::PollMgr* poll) : site_info(site_info) {
       std::string addr = site_info.GetHostAddr();
       rpc_client = new rrr::Client(poll);

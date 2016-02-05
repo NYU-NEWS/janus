@@ -43,8 +43,10 @@ namespace mdcc {
     req.txn_type_ = txn_type;
     req.input_ = inputs;
     req.n_try_ = 0;
-    req.callback_ = [] (TxnReply& reply) {
-      Log_info("TxnReq callback!!!!!! %d", reply.n_try_);
+    req.callback_ = [txn_id, result, defer] (TxnReply& reply) {
+      Log_info("TxnRequest callback %ld %d %d", txn_id, reply.res_, reply.n_try_);
+      *result = reply.res_;
+      defer->reply();
     };
 
     auto chopper = Frame().CreateChopper(req, txn_reg_);
@@ -65,37 +67,62 @@ namespace mdcc {
   }
 
   void MdccScheduler::SendUpdateProposal(txnid_t txn_id, const SimpleCommand &cmd, int32_t* result, rrr::DeferredReply* defer) {
-    auto dtxn = dynamic_cast<MdccDTxn*>(this->GetDTxn(txn_id));
+    std::lock_guard<std::mutex> l(mtx_);
+    auto dtxn = dynamic_cast<MdccDTxn*>(GetDTxn(txn_id));
     assert(dtxn);
-    auto mdb_txn = dynamic_cast<Txn2PL*>(this->GetMTxn(txn_id));
+    auto mdb_txn = dynamic_cast<Txn2PL*>(GetMTxn(txn_id));
     assert(mdb_txn);
 
-    int num_sent = dtxn->UpdateOptions().size();
-    option_results_[txn_id] = TxnOptionResult(num_sent);
-
     Callback<OptionSet> cb = [this, mdb_txn, txn_id, result, defer](const OptionSet& optionSet) {
-      auto& option_result = this->option_results_[txn_id];
-      if (!optionSet.Accepted()) {
-        Log_info("OptionSet not accepted -- abort: txn %ld, table %s, key %zu", txn_id, optionSet.Table().c_str(), multi_value_hasher()(
-            optionSet.Key()));
-        option_result.num_fail++;
-        mdb_txn->abort();
-        *result = FAILURE;
-        defer->reply();
-      } else {
-        Log_info("OptionSet accepted: txn %ld, table %s, key %ld", txn_id, optionSet.Table().c_str(), multi_value_hasher()(
-            optionSet.Key()));
-        option_result.num_success++;
-        if (option_result.num_success == option_result.num_option_sets) {
-          *result = SUCCESS;
+      std::lock_guard<std::mutex> l(this->mtx_);
+      auto it = this->option_results_.find(txn_id);
+      if (it != this->option_results_.end()) {
+        auto& option_result = (*it).second;
+        if (!optionSet.Accepted()) {
+          Log_info("OptionSet not accepted -- abort: txn %ld, table %s, key %zu", txn_id, optionSet.Table().c_str(), multi_value_hasher()(
+              optionSet.Key()));
+          mdb_txn->abort();
+          *result = FAILURE;
+          this->option_results_.erase(it);
           defer->reply();
+        } else {
+          Log_info("OptionSet accepted: txn %ld, table %s, key %ld", txn_id, optionSet.Table().c_str(), multi_value_hasher()(
+              optionSet.Key()));
+          auto status = option_result->Success();
+          if (status == TxnOptionResult::S_SUCCESS) {
+            *result = SUCCESS;
+            this->option_results_.erase(it);
+            defer->reply();
+          }
         }
       }
     };
 
+    option_results_[txn_id] = std::unique_ptr<TxnOptionResult>(new TxnOptionResult(dtxn->UpdateOptions().size()));
     for (auto option_pair : dtxn->UpdateOptions()) {
       auto& option_set = option_pair.second;
-      this->communicator_->SendProposal(BallotType::FAST, txn_id, cmd, option_set, cb);
+      communicator_->SendProposal(BallotType::CLASSIC, txn_id, cmd, option_set, cb);
     }
+  }
+
+  void MdccScheduler::Phase2aClassic(OptionSet option_set, ProposeResponse *response, DeferredReply *reply) {
+    std::lock_guard<std::mutex> l(mtx_);
+    auto txn_id = option_set.TxnId();
+    auto& options = option_set.Options();
+    Log_info("%s txn_id %ld options %ld", __FUNCTION__, txn_id, options.size());
+
+    auto ptr = std::unique_ptr<OptionSet>(new OptionSet(std::move(option_set)));
+    leader_context_.max_tried_.push_back(std::move(ptr));
+
+    Callback<Phase2aResponse> cb;
+    Phase2aRequest req;
+    req.site_id = site_id_; // this is really for debug
+    req.ballot = leader_context_.ballot;
+    // TODO: eliminate the copies
+    for (auto& update : leader_context_.max_tried_) {
+      req.values.push_back(*update);
+    }
+
+    communicator_->SendPhase2a(req, cb);
   }
 }
