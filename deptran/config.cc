@@ -836,7 +836,7 @@ bool Config::do_logging() {
 
 bool Config::IsReplicated() {
   // TODO
-  return false;
+//  return false;
   return true;
 }
 

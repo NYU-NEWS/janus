@@ -17,6 +17,13 @@ namespace rococo {
 DTxn::~DTxn() {
 }
 
+mdb::Txn* DTxn::mdb_txn() {
+  if (mdb_txn_) return mdb_txn_;
+  mdb_txn_ = sched_->GetOrCreateMTxn(tid_);
+  verify(mdb_txn_ != nullptr);
+  return mdb_txn_;
+}
+
 //mdb::ResultSet DTxn::query_in(Table *tbl,
 //                              const mdb::SortedMultiKey &low,
 //                              const mdb::SortedMultiKey &high,
@@ -72,7 +79,7 @@ mdb::ResultSet DTxn::QueryIn(Table *tbl,
 mdb::Row* DTxn::Query(mdb::Table *tbl,
                       const mdb::MultiBlob &mb,
                       int64_t row_context_id) {
-  verify(mdb_txn_ != nullptr);
+  verify(mdb_txn() != nullptr);
   mdb::Row* ret_row;
   auto &row_map = context_row_;
   if (row_context_id > 0) {
@@ -80,7 +87,7 @@ mdb::Row* DTxn::Query(mdb::Table *tbl,
     if (it != row_map.end()) {
       ret_row = it->second;
     } else {
-      auto rs = mdb_txn_->query(tbl, mb);
+      auto rs = mdb_txn()->query(tbl, mb);
       ret_row = rs.next();
       row_map[row_context_id] = ret_row;
     }
@@ -168,7 +175,7 @@ bool DTxn::InsertRow(Table *tbl, Row *row) {
 
 // TODO remove
 mdb::Table *DTxn::GetTable(const std::string &tbl_name) const {
-  return mgr_->get_table(tbl_name);
+  return sched_->get_table(tbl_name);
 }
 
 } // namespace rococo

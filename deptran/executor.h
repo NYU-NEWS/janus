@@ -20,6 +20,7 @@ class Executor {
 
   Executor(txnid_t txn_id, Scheduler* sched);
   virtual ~Executor();
+  mdb::Txn* mdb_txn();
 };
 
 } // namespace rococo

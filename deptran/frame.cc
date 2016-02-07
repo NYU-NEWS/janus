@@ -224,6 +224,7 @@ Coordinator* Frame::CreateCoord(cooid_t coo_id,
     default:
       verify(0);
   }
+  coo->frame_ = this;
   return coo;
 }
 
@@ -301,36 +302,38 @@ Communicator* Frame::CreateCommo() {
 }
 
 DTxn* Frame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {
-  DTxn *ret = nullptr;
-  auto mode_ = Config::GetConfig()->cc_mode_;
+  DTxn *dtxn = nullptr;
+//  auto mode_ = Config::GetConfig()->cc_mode_;
   
   switch (mode_) {
     case MODE_2PL:
-      ret = new TPLDTxn(tid, mgr);
-      verify(ret->mdb_txn_->rtti() == mdb::symbol_t::TXN_2PL);
+      dtxn = new TPLDTxn(tid, mgr);
+//      verify(dtxn->mdb_txn()->rtti() == mdb::symbol_t::TXN_2PL);
       break;
     case MODE_MDCC:
-      ret = new mdcc::MdccDTxn(tid, mgr);
+      dtxn = new mdcc::MdccDTxn(tid, mgr);
       break;
     case MODE_OCC:
-      ret = new TPLDTxn(tid, mgr);
+      dtxn = new TPLDTxn(tid, mgr);
       break;
     case MODE_NONE:
-      ret = new TPLDTxn(tid, mgr);
+      dtxn = new TPLDTxn(tid, mgr);
       break;
     case MODE_RCC:
-      ret = new RCCDTxn(tid, mgr, ro);
+      dtxn = new RCCDTxn(tid, mgr, ro);
       break;
     case MODE_RO6:
-      ret = new RO6DTxn(tid, mgr, ro);
+      dtxn = new RO6DTxn(tid, mgr, ro);
       break;
 //case MODE_MDCC:
 //      ret = new mdcc::MdccTxn(tid, mgr);
 //      break;
+    case MODE_MULTI_PAXOS:
+      break;
     default:
       verify(0);
   }
-  return ret;
+  return dtxn;
 }
 
 Executor* Frame::CreateExecutor(cmdid_t cmd_id, Scheduler* sched) {

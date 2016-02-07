@@ -13,10 +13,9 @@ int TPLExecutor::StartLaunch(const SimpleCommand& cmd,
                              rrr::i32 *res,
                              map<int32_t, Value> *output,
                              rrr::DeferredReply *defer) {
-  verify(mdb_txn_ != nullptr);
+  verify(mdb_txn() != nullptr);
   verify(mdb_txn_->rtti() == mdb::symbol_t::TXN_2PL);
   verify(phase_ <= 1);
-
 
   mdb::Txn2PL *txn = (mdb::Txn2PL *) mdb_txn_;
   verify(mdb_txn_ != nullptr);

@@ -3,12 +3,9 @@
 
 namespace rococo {
 
-TPLDTxn::TPLDTxn(i64 tid, Scheduler *mgr) : DTxn(tid, mgr) {
-  verify(mdb_txn_ == nullptr);
-  mdb_txn_ = mgr->GetOrCreateMTxn(tid_);
-  verify(mdb_txn_ != nullptr);
-}
+TPLDTxn::TPLDTxn(i64 tid, Scheduler *sched) : DTxn(tid, sched) {
 
+}
 
 bool TPLDTxn::ReadColumn(mdb::Row *row,
                          mdb::column_id_t col_id,
@@ -18,8 +15,7 @@ bool TPLDTxn::ReadColumn(mdb::Row *row,
 //    verify(0);
     locks_.push_back(mdb::column_lock_t(row, col_id, ALock::RLOCK));
   } else {
-    verify(mdb_txn_ != nullptr);
-    auto ret = mdb_txn_->read_column(row, col_id, value);
+    auto ret = mdb_txn()->read_column(row, col_id, value);
     verify(ret == true);
   }
   return true;
@@ -36,8 +32,7 @@ bool TPLDTxn::ReadColumns(Row *row,
     }
   } else {
     values->clear();
-    verify(mdb_txn_ != nullptr);
-    auto ret = mdb_txn_->read_columns(row, col_ids, values);
+    auto ret = mdb_txn()->read_columns(row, col_ids, values);
     verify(ret == true);
   }
   return true;
@@ -51,8 +46,7 @@ bool TPLDTxn::WriteColumn(Row *row,
 //    verify(0);
     locks_.push_back(mdb::column_lock_t(row, col_id, ALock::WLOCK));
   } else {
-    verify(mdb_txn_ != nullptr);
-    auto ret = mdb_txn_->write_column(row, col_id, value);
+    auto ret = mdb_txn()->write_column(row, col_id, value);
     verify(ret == true);
   }
   return true;
@@ -69,8 +63,7 @@ bool TPLDTxn::WriteColumns(Row *row,
       locks_.push_back(mdb::column_lock_t(row, col_id, ALock::WLOCK));
     }
   } else {
-    verify(mdb_txn_ != nullptr);
-    auto ret = mdb_txn_->write_columns(row, col_ids, values);
+    auto ret = mdb_txn()->write_columns(row, col_ids, values);
     verify(ret == true);
   }
   return true;
@@ -80,8 +73,7 @@ bool TPLDTxn::InsertRow(Table *tbl, Row *row) {
   if (locking_) {
 
   } else {
-    verify(mdb_txn_ != nullptr);
-    mdb_txn_->insert_row(tbl, row);
+    mdb_txn()->insert_row(tbl, row);
   }
   return true;
 }

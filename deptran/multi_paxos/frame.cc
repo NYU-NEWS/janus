@@ -32,6 +32,7 @@ Coordinator* MultiPaxosFrame::CreateCoord(cooid_t coo_id,
                             ccsi,
                             id,
                             batch_start);
+  coo->frame_ = this;
   return coo;
 }
 

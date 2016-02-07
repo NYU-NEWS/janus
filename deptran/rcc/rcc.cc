@@ -237,9 +237,9 @@ void RCCDTxn::commit_scc_anc_commit(
 
         // this res may not be mine !!!!
         if (vv->data_->res != nullptr) {
-          auto txn = (RCCDTxn *) mgr_->GetDTxn(vv->data_->id());
+          auto txn = (RCCDTxn *) sched_->GetDTxn(vv->data_->id());
           txn->exe_deferred(vv->data_->res->outputs);
-          mgr_->DestroyDTxn(vv->data_->id());
+          sched_->DestroyDTxn(vv->data_->id());
         }
 
         Log::debug("txn commit. tid:%llx", vv->data_->id());

@@ -7,13 +7,12 @@ namespace rococo {
 class PieceStatus;
 class TPLDTxn: public DTxn {
  public:
-
   vector<mdb::column_lock_t> locks_ = {};
   mdb::Row* row_lock_ = nullptr;
   // true for requiring locks only. false for real execution.
   bool locking_ = false;
 
-  TPLDTxn(i64 tid, Scheduler *mgr);
+  TPLDTxn(i64 tid, Scheduler *);
 
 //  int start_launch(
 //      const RequestHeader &header,

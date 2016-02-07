@@ -41,6 +41,8 @@ void ServerWorker::SetupBase() {
   if (config->IsReplicated()) {
     rep_frame_ = Frame::GetFrame(config->ab_mode_);
     rep_sched_ = rep_frame_->CreateScheduler();
+    rep_sched_->txn_reg_ = txn_reg_;
+    dtxn_sched_->rep_frame_ = rep_frame_;
   }
 }
 

@@ -6,9 +6,7 @@ namespace rococo {
 
 Executor::Executor(txnid_t txn_id, Scheduler *sched)
     : cmd_id_(txn_id), sched_(sched) {
-  mdb::Txn *txn = sched->GetOrCreateMTxn(txn_id);
-  verify(txn != nullptr);
-  mdb_txn_ = txn;
+
 }
 
 Executor::~Executor(){
@@ -16,6 +14,14 @@ Executor::~Executor(){
   verify(dtxn_ != nullptr);
   sched_->DestroyDTxn(cmd_id_);
   dtxn_ = nullptr;
+}
+
+mdb::Txn* Executor::mdb_txn() {
+  if (mdb_txn_) return mdb_txn_;
+  mdb::Txn *txn = sched_->GetOrCreateMTxn(cmd_id_);
+  verify(txn != nullptr);
+  mdb_txn_ = txn;
+  return mdb_txn_;
 }
 
 } // namespace rococo

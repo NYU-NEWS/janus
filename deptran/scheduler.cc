@@ -16,10 +16,12 @@ DTxn* Scheduler::CreateDTxn(i64 tid, bool ro) {
   Log_debug("create tid %ld", tid);
   verify(dtxns_.find(tid) == dtxns_.end());
   DTxn* dtxn = frame_->CreateDTxn(tid, ro, this);
-  dtxns_[tid] = dtxn;
-  dtxn->recorder_ = this->recorder_;
-  verify(txn_reg_);
-  dtxn->txn_reg_ = txn_reg_;
+  if (dtxn != nullptr) {
+    dtxns_[tid] = dtxn;
+    dtxn->recorder_ = this->recorder_;
+    verify(txn_reg_);
+    dtxn->txn_reg_ = txn_reg_;
+  }
   return dtxn;
 }
 
@@ -164,21 +166,23 @@ Scheduler::Scheduler() : executors_() {
     // TODO free this
     recorder_ = new Recorder(path);
   }
+}
 
+Coordinator* Scheduler::GetRepCoord() {
+  if (rep_coord_) return rep_coord_;
   // TODO
   cooid_t cid = 0;
-  vector<string> servers;
   int32_t benchmark = 0;
   id_t id;
-  if (rep_frame_ != nullptr) {
-    rep_coord_ = rep_frame_->CreateCoord(cid,
-                                        Config::GetConfig(),
-                                        benchmark,
-                                        nullptr,
-                                        id,
-                                        true,
-                                        txn_reg_);
-  }
+  verify(rep_frame_ != nullptr);
+  rep_coord_ = rep_frame_->CreateCoord(cid,
+                                       Config::GetConfig(),
+                                       benchmark,
+                                       nullptr,
+                                       id,
+                                       true,
+                                       txn_reg_);
+  return rep_coord_;
 }
 
 Scheduler::Scheduler(int mode) : Scheduler() {

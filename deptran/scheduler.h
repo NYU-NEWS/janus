@@ -28,6 +28,7 @@ class Scheduler {
   Scheduler(int mode);
   ~Scheduler();
 
+  Coordinator* GetRepCoord();
   DTxn *GetDTxn(i64 tid);
   DTxn *CreateDTxn(i64 tid, bool ro = false);
   DTxn *GetOrCreateDTxn(i64 tid, bool ro = false);
