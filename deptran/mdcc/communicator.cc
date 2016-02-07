@@ -13,7 +13,7 @@ namespace mdcc {
                                    Callback<StartResponse>& callback) {
     std::lock_guard<std::mutex> lock(this->mtx_);
     auto local_sites = config_->SitesByLocaleId(site_info_.locale_id);
-    auto proxy = (local_sites.size()>0) ? RandomSite(local_sites) : RandomSite(config_->sites_);
+    auto proxy = (local_sites.size()>0) ? RandomSiteProxy(local_sites) : RandomSiteProxy(config_->sites_);
 
     Log::info("%s txn %ld from site %d to site %d", __FUNCTION__, req.txn_id, site_info_.id, proxy->site_info.id);
 
@@ -34,7 +34,7 @@ namespace mdcc {
                                         Callback<StartPieceResponse>& callback) {
     std::lock_guard<std::mutex> lock(this->mtx_);
     auto& site = config_->SiteById(cmd.GetSiteId());
-    auto proxy = ClosestSiteInPartition(site.partition_id_);
+    auto proxy = ClosestSiteProxy(site.partition_id_);
 
     rrr::FutureAttr future;
     future.callback = [cmd, callback, proxy] (Future *fu) {
@@ -58,7 +58,7 @@ namespace mdcc {
     auto partition_sites = config_->SitesByPartitionId(partition_id);
 
     if (ballotType == BallotType::CLASSIC) {
-      auto proxy = LeaderForUpdate(options, partition_sites);
+      auto proxy = LeaderSiteProxy(options, partition_sites);
       Log_debug("send %d options to site %d", options->Options().size(), proxy->site_info.id);
 
       ProposeRequest req;
@@ -77,7 +77,15 @@ namespace mdcc {
     }
   }
 
-  MdccCommunicator::SiteProxy* MdccCommunicator::ClosestSiteInPartition(uint32_t partition_id) const {
+  void MdccCommunicator::SendPhase2a(Phase2aRequest req, Callback<Phase2aResponse>& cb) {
+    Log_debug("Site %d: %s", this->site_info_.id, __FUNCTION__);
+    assert(req.site_id == site_info_.id);
+    auto partition_id = site_info_.partition_id_;
+    auto proxies = AllSiteProxies(partition_id);
+    // TODO: stopped here; send the message already!
+  }
+
+  MdccCommunicator::SiteProxy* MdccCommunicator::ClosestSiteProxy(uint32_t partition_id) const {
     auto partition_sites = config_->SitesByPartitionId(partition_id);
     assert(partition_sites.size()>0);
     auto it = find_if(partition_sites.begin(), partition_sites.end(),
@@ -88,21 +96,21 @@ namespace mdcc {
     return site_proxies_[site_id];
   }
 
-  std::vector<MdccCommunicator::SiteProxy*> MdccCommunicator::AllSitesInPartition(parid_t partition_id) const {
-    std::vector<MdccCommunicator::SiteProxy*> results;
+  std::vector<MdccCommunicator::SiteProxy*> MdccCommunicator::AllSiteProxies(parid_t partition_id) const {
     auto partition_sites = config_->SitesByPartitionId(partition_id);
+    std::vector<MdccCommunicator::SiteProxy*> results(partition_sites.size());
     assert(partition_sites.size()>0);
-    for (auto& site : partition_sites) {
-      results.push_back(site_proxies_[site.id]);
+    for (int i=0; i<partition_sites.size(); i++) {
+      results[i] = site_proxies_[partition_sites[i].id];
     }
     return results;
   }
 
-  MdccCommunicator::SiteProxy* MdccCommunicator::RandomSite(const vector<Config::SiteInfo>& sites) {
+  MdccCommunicator::SiteProxy* MdccCommunicator::RandomSiteProxy(const vector<Config::SiteInfo> &sites) {
     return site_proxies_[sites[RandomGenerator::rand(0, sites.size()-1)].id];
   }
 
-  MdccCommunicator::SiteProxy* MdccCommunicator::LeaderForUpdate(
+  MdccCommunicator::SiteProxy* MdccCommunicator::LeaderSiteProxy(
       OptionSet *option_set, std::vector<Config::SiteInfo> &sites) {
     std::size_t hname = std::hash<std::string>()(option_set->Table());
     std::size_t hkey = rococo::multi_value_hasher()(option_set->Key());
@@ -110,11 +118,4 @@ namespace mdcc {
     return site_proxies_[sites[index].id];
   }
 
-  void MdccCommunicator::SendPhase2a(Phase2aRequest req, Callback<Phase2aResponse>& cb) {
-    Log_debug("Site %d: %s", this->site_info_.id, __FUNCTION__);
-    assert(req.site_id == site_info_.id);
-    auto partition_id = site_info_.partition_id_;
-    auto proxies = AllSitesInPartition(partition_id);
-    // TODO: stopped here; send the message already!
-  }
 }
