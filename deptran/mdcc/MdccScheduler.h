@@ -73,6 +73,6 @@ namespace mdcc {
    void StartPiece(const rococo::SimpleCommand& cmd, int32_t* result, DeferredReply *defer);
    bool LaunchNextPiece(uint64_t txn_id, TxnChopper *chopper);
    void SendUpdateProposal(txnid_t txn_id, const SimpleCommand &cmd, int32_t* result, rrr::DeferredReply* defer);
-   void Phase2aClassic(OptionSet option_set, ProposeResponse *response, DeferredReply *reply);
+   void Phase2aClassic(OptionSet option_set);
   };
 }

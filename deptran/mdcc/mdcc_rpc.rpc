@@ -9,11 +9,11 @@ abstract service MdccClient {
 };
 
 abstract service MdccLeader {
-    defer Propose(ProposeRequest req | ProposeResponse res);
+    defer Propose(ProposeRequest req);
 };
 
 abstract service MdccAcceptor {
-    defer Phase2a(Phase2aRequest req | Phase2aResponse res);
+    defer Phase2a(Phase2aRequest req);
 };
 
 struct StartRequest {

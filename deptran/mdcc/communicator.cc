@@ -48,8 +48,6 @@ namespace mdcc {
     Future::safe_release(proxy->client->async_StartPiece(cmd, future));
   }
 
-
-
   void MdccCommunicator::SendProposal(BallotType ballotType, txnid_t txn_id,
                                       const rococo::SimpleCommand &cmd,
                                       OptionSet* options,
@@ -71,18 +69,20 @@ namespace mdcc {
         if (res.accepted) options->Accept();
         callback(*options);
       };
-      proxy->leader->async_Propose(req, future);
+      Future::safe_release(proxy->leader->async_Propose(req, future));
     } else {
       Log_fatal("implement fast path");
     }
   }
 
-  void MdccCommunicator::SendPhase2a(Phase2aRequest req, Callback<Phase2aResponse>& cb) {
+  void MdccCommunicator::SendPhase2a(Phase2aRequest req) {
     Log_debug("Site %d: %s", this->site_info_.id, __FUNCTION__);
     assert(req.site_id == site_info_.id);
     auto partition_id = site_info_.partition_id_;
     auto proxies = AllSiteProxies(partition_id);
-    // TODO: stopped here; send the message already!
+    for (auto proxy : proxies) {
+      Future::safe_release(proxy->acceptor->async_Phase2a(req));
+    }
   }
 
   MdccCommunicator::SiteProxy* MdccCommunicator::ClosestSiteProxy(uint32_t partition_id) const {
@@ -106,16 +106,15 @@ namespace mdcc {
     return results;
   }
 
-  MdccCommunicator::SiteProxy* MdccCommunicator::RandomSiteProxy(const vector<Config::SiteInfo> &sites) {
+  MdccCommunicator::SiteProxy* MdccCommunicator::RandomSiteProxy(const vector<Config::SiteInfo> &sites) const {
     return site_proxies_[sites[RandomGenerator::rand(0, sites.size()-1)].id];
   }
 
   MdccCommunicator::SiteProxy* MdccCommunicator::LeaderSiteProxy(
-      OptionSet *option_set, std::vector<Config::SiteInfo> &sites) {
+      OptionSet *option_set, std::vector<Config::SiteInfo> &sites) const {
     std::size_t hname = std::hash<std::string>()(option_set->Table());
     std::size_t hkey = rococo::multi_value_hasher()(option_set->Key());
     int index = (hname ^ hkey) % sites.size();
     return site_proxies_[sites[index].id];
   }
-
 }

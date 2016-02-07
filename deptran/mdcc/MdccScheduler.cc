@@ -105,7 +105,7 @@ namespace mdcc {
     }
   }
 
-  void MdccScheduler::Phase2aClassic(OptionSet option_set, ProposeResponse *response, DeferredReply *reply) {
+  void MdccScheduler::Phase2aClassic(OptionSet option_set) {
     std::lock_guard<std::mutex> l(mtx_);
     auto txn_id = option_set.TxnId();
     auto& options = option_set.Options();
@@ -114,15 +114,13 @@ namespace mdcc {
     auto ptr = std::unique_ptr<OptionSet>(new OptionSet(std::move(option_set)));
     leader_context_.max_tried_.push_back(std::move(ptr));
 
-    Callback<Phase2aResponse> cb;
     Phase2aRequest req;
     req.site_id = site_id_; // this is really for debug
     req.ballot = leader_context_.ballot;
-    // TODO: eliminate the copies
+    // TODO: make this more efficient
     for (auto& update : leader_context_.max_tried_) {
       req.values.push_back(*update);
     }
-
-    communicator_->SendPhase2a(req, cb);
+    communicator_->SendPhase2a(req);
   }
 }
