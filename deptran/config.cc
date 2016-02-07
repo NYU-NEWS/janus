@@ -464,7 +464,7 @@ void Config::LoadBenchYML(YAML::Node config) {
   txn_weight_.push_back(txn_weights_["delivery"]);
   txn_weight_.push_back(txn_weights_["stock_level"]);
 
-  sharding_ = Frame().CreateSharding();
+  sharding_ = Frame(MODE_NONE).CreateSharding();
   auto populations = config["population"];
   auto &tb_infos = sharding_->tb_infos_;
   for (auto it = populations.begin(); it != populations.end(); it++) {
@@ -836,6 +836,7 @@ bool Config::do_logging() {
 
 bool Config::IsReplicated() {
   // TODO
+  return false;
   return true;
 }
 

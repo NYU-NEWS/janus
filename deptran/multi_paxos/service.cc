@@ -4,6 +4,11 @@
 
 namespace rococo {
 
+MultiPaxosServiceImpl::MultiPaxosServiceImpl(Scheduler *sched)
+    : sched_((MultiPaxosSched*)sched) {
+
+}
+
 void MultiPaxosServiceImpl::Forward(const SimpleCommand& cmd,
                                     rrr::DeferredReply* defer) {
 

@@ -49,7 +49,7 @@ namespace mdcc {
       defer->reply();
     };
 
-    auto chopper = Frame().CreateChopper(req, txn_reg_);
+    auto chopper = frame_->CreateChopper(req, txn_reg_);
     Log_debug("chopper num pieces %d", chopper->GetNPieceAll());
     do {} while(LaunchNextPiece(txn_id, chopper));
     Log_debug("exit %s", __FUNCTION__);

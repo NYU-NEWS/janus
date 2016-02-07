@@ -234,7 +234,7 @@ void RO6Coord::do_one(TxnRequest & req) {
   // pre-process
   std::lock_guard<std::mutex> lock(this->mtx_);
 
-  TxnCommand *ch = Frame().CreateChopper(req, txn_reg_);
+  TxnCommand *ch = frame_->CreateChopper(req, txn_reg_);
   cmd_->id_ = this->next_txn_id();
 
   Log::debug("do one request");

@@ -15,7 +15,7 @@ namespace rococo {
 DTxn* Scheduler::CreateDTxn(i64 tid, bool ro) {
   Log_debug("create tid %ld", tid);
   verify(dtxns_.find(tid) == dtxns_.end());
-  DTxn* dtxn = Frame().CreateDTxn(tid, ro, this);
+  DTxn* dtxn = frame_->CreateDTxn(tid, ro, this);
   dtxns_[tid] = dtxn;
   dtxn->recorder_ = this->recorder_;
   verify(txn_reg_);
@@ -170,8 +170,8 @@ Scheduler::Scheduler() : executors_() {
   vector<string> servers;
   int32_t benchmark = 0;
   id_t id;
-  if (Config::GetConfig()->IsReplicated()) {
-    rep_coord_ = Frame().CreateRepCoord(cid,
+  if (rep_frame_ != nullptr) {
+    rep_coord_ = rep_frame_->CreateCoord(cid,
                                         Config::GetConfig(),
                                         benchmark,
                                         nullptr,
@@ -233,7 +233,7 @@ void Scheduler::reg_table(const std::string &name,
 
 Executor* Scheduler::CreateExecutor(cmdid_t txn_id) {
   verify(executors_.find(txn_id) == executors_.end());
-  Executor *exec = Frame().CreateExecutor(txn_id, this);
+  Executor *exec = frame_->CreateExecutor(txn_id, this);
   DTxn* dtxn = CreateDTxn(txn_id);
   exec->dtxn_ = dtxn;
   executors_[txn_id] = exec;

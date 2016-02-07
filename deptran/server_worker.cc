@@ -25,15 +25,23 @@ void ServerWorker::SetupHeartbeat() {
 }
 
 void ServerWorker::SetupBase() {
+  auto config = Config::GetConfig();
+  dtxn_frame_ = Frame::GetFrame(config->cc_mode_);
+
   // this needs to be done before poping table
-  sharding_ = Frame().CreateSharding(Config::GetConfig()->sharding_);
+  sharding_ = dtxn_frame_->CreateSharding(Config::GetConfig()->sharding_);
   sharding_->BuildTableInfoPtr();
+
   verify(txn_reg_ == nullptr);
   txn_reg_ = new TxnRegistry();
-  dtxn_sched_ = Frame().CreateScheduler();
+  dtxn_sched_ = dtxn_frame_->CreateScheduler();
   dtxn_sched_->txn_reg_ = txn_reg_;
-  rep_sched_ = Frame().CreateScheduler();
   sharding_->dtxn_sched_ = dtxn_sched_;
+
+  if (config->IsReplicated()) {
+    rep_frame_ = Frame::GetFrame(config->ab_mode_);
+    rep_sched_ = rep_frame_->CreateScheduler();
+  }
 }
 
 void ServerWorker::PopTable() {
@@ -82,10 +90,6 @@ void ServerWorker::RegPiece() {
   piece->reg_all();
 }
 
-void ServerWorker::SetupCommo() {
-  commo_ = Frame().CreateCommo();
-}
-
 void ServerWorker::SetupService() {
   int ret;
   // set running mode and initialize transaction manager.
@@ -96,10 +100,22 @@ void ServerWorker::SetupService() {
   svr_poll_mgr_g = new rrr::PollMgr(n_io_threads);
 
   // init service implementation
-  services_ = Frame().CreateRpcServices(site_info_->id,
-                                        dtxn_sched_,
-                                        svr_poll_mgr_g,
-                                        scsi_g);
+
+  if (dtxn_frame_ != nullptr) {
+    services_ = dtxn_frame_->CreateRpcServices(site_info_->id,
+                                               dtxn_sched_,
+                                               svr_poll_mgr_g,
+                                               scsi_g);
+  }
+
+  if (rep_frame_ != nullptr) {
+    auto s2 = rep_frame_->CreateRpcServices(site_info_->id,
+                                            rep_sched_,
+                                            svr_poll_mgr_g,
+                                            scsi_g);
+
+    services_.insert(services_.end(), s2.begin(), s2.end());
+  }
 
   auto &alarm = TimeoutALock::get_alarm_s();
   ServerWorker::svr_poll_mgr_g->add(&alarm);
@@ -155,6 +171,15 @@ void ServerWorker::SetupService() {
     // stop profiling
     ProfilerStop();
 #endif // ifdef CPU_PROFILE
+  }
+}
+
+void ServerWorker::SetupCommo() {
+  if (dtxn_frame_) {
+    dtxn_commo_ = dtxn_frame_->CreateCommo();
+  }
+  if (rep_frame_) {
+    rep_commo_ = rep_frame_->CreateCommo();
   }
 }
 

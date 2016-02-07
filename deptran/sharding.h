@@ -1,6 +1,4 @@
-#ifndef SHARDING_H_
-#define SHARDING_H_
-
+#pragma once
 #include "__dep__.h"
 #include "multi_value.h"
 
@@ -65,7 +63,7 @@ typedef struct c_last_id_t {
 } c_last_id_t;
 
 class Scheduler;
-
+class Frame;
 class Sharding {
  public:
 
@@ -146,6 +144,7 @@ class Sharding {
   std::map<MultiValue, MultiValue> dist2sid_;
   std::map<MultiValue, MultiValue> stock2sid_;
   Scheduler *dtxn_sched_;
+  Frame* frame_;
 
   void BuildTableInfoPtr();
 
@@ -216,5 +215,3 @@ class Sharding {
 
 
 } // namespace rococo
-
-#endif // ifndef SHARDING_H_

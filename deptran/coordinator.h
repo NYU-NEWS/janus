@@ -57,6 +57,7 @@ class Coordinator : public CoordinatorBase {
   Sharding* sharding_ = nullptr;
   TxnRegistry *txn_reg_ = nullptr;
   Communicator* commo_ = nullptr;
+  Frame* frame_ = nullptr;
 
   std::vector<int> site_prepare_;
   std::vector<int> site_commit_;

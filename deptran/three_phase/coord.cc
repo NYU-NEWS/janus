@@ -47,7 +47,7 @@ RequestHeader ThreePhaseCoordinator::gen_header(TxnCommand *ch) {
 void ThreePhaseCoordinator::do_one(TxnRequest &req) {
   // pre-process
   std::lock_guard<std::mutex> lock(this->mtx_);
-  TxnCommand *cmd = Frame().CreateTxnCommand(req, txn_reg_);
+  TxnCommand *cmd = frame_->CreateTxnCommand(req, txn_reg_);
   verify(txn_reg_ != nullptr);
   cmd_ = cmd;
   cmd_->root_id_ = this->next_txn_id();
@@ -115,9 +115,9 @@ bool ThreePhaseCoordinator::IsPhaseOrStageStale(phase_t phase, CoordinatorStage 
   return result;
 }
 
-void ThreePhaseCoordinator::cleanup() {
-  for (auto& x : site_prepare_) {
-    x = 0;
+void ThreePhaseCoordinator::Reset() {
+  for (int i = 0; i < site_prepare_.size(); i++) {
+    site_prepare_[i] = 0;
   }
   n_start_ = 0;
   n_start_ack_ = 0;
@@ -162,10 +162,12 @@ void ThreePhaseCoordinator::Start() {
     Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
               n_start_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
     start_ack_map_[subcmd->inn_id()] = false;
-    commo_->SendStart(*subcmd, this, std::bind(&ThreePhaseCoordinator::StartAck,
-                                               this,
-                                               std::placeholders::_1,
-                                               phase_));
+    commo()->SendStart(*subcmd,
+                       this,
+                       std::bind(&ThreePhaseCoordinator::StartAck,
+                                 this,
+                                 std::placeholders::_1,
+                                 phase_));
   }
   Log_debug("sent %d SubCmds\n", cnt);
 }

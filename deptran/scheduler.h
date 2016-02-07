@@ -9,7 +9,7 @@ class RequestHeader;
 class TxnRegistry;
 class Executor;
 class Coordinator;
-
+class Frame;
 class Scheduler {
  public:
   std::map<i64, DTxn *> dtxns_;
@@ -18,9 +18,11 @@ class Scheduler {
 
   mdb::TxnMgr *mdb_txn_mgr_;
   int mode_;
-  Recorder *recorder_;
-  Coordinator* rep_coord_;
-  TxnRegistry* txn_reg_;
+  Recorder *recorder_ = nullptr;
+  Frame *frame_ = nullptr;
+  Frame *rep_frame_ = nullptr;
+  Coordinator* rep_coord_ = nullptr;
+  TxnRegistry* txn_reg_ = nullptr;
 
   Scheduler();
   Scheduler(int mode);

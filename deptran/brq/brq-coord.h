@@ -37,27 +37,44 @@ public:
 
   virtual ~BRQCoordinator() {}
 
-  void restart();
+  void restart() {verify(0);};
   // functions needed in the fast accept phase.
   void FastAccept();
   void fast_accept_ack(groupid_t, FastAcceptReply*, phase_t);
-  bool check_fastpath_possible();
-  bool check_fastpath();
-  bool check_slowpath_possible();
-  bool check_slowpath();
+  bool check_fastpath_possible() {verify(0);};
+  bool check_fastpath() {verify(0);};
+  bool check_slowpath_possible() {
+    verify(0);
+    return false;
+  };
+  bool check_slowpath() {
+    verify(0);
+    return false;
+  };
 
   void prepare();
   // functions needed in the accept phase.
   void accept();
   void accept_ack(groupid_t, AcceptReply*, phase_t);
-  bool check_accept_possible();
-  bool check_accept();
+  bool check_accept_possible() {
+    verify(0);
+    return false;
+  };
+  bool check_accept() {
+    verify(0);
+    return false;
+  };
 
   void commit();
   void commit_ack(groupid_t, CommitReply*, phase_t);
-  bool check_commit();
+  bool check_commit() {
+    verify(0);
+    return false;
+  };
 
-  void reset(); // reuse for next cmd.
+  void reset() {
+    verify(0);
+  }; // reuse for next cmd.
 
   void launch(Command &cmd);
   void launch_recovery(cmdid_t cmd_id);

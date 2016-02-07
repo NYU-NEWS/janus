@@ -15,9 +15,9 @@
 #include "tpl/exec.h"
 
 // multi_paxos
-#include "multi_paxos/coord.h"
-#include "multi_paxos/commo.h"
-#include "multi_paxos/service.cc"
+//#include "multi_paxos/coord.h"
+//#include "multi_paxos/commo.h"
+//#include "multi_paxos/service.cc"
 
 #include "bench/tpcc_real_dist/sharding.h"
 #include "bench/tpcc/generator.h"
@@ -61,6 +61,30 @@
 
 namespace rococo {
 
+map<int, Frame*> Frame::frame_s_ = {};
+
+Frame* Frame::RegFrame(int mode, Frame *frame) {
+  auto it = Frame::frame_s_.find(mode);
+  verify(it == frame_s_.end());
+  frame_s_[mode] = frame;
+  return frame;
+}
+
+Frame* Frame::GetFrame(int mode) {
+  Frame *frame = nullptr;
+  // some built-in mode
+  switch (mode) {
+    case MODE_2PL:
+    case MODE_OCC:
+      return new Frame(mode);
+    default:
+      break;
+  }
+  auto it = Frame::frame_s_.find(mode);
+  verify(it != frame_s_.end());
+  return it->second;
+}
+
 Sharding* Frame::CreateSharding() {
   Sharding* ret;
   auto bench = Config::config_s->benchmark_;
@@ -80,12 +104,14 @@ Sharding* Frame::CreateSharding() {
 Sharding* Frame::CreateSharding(Sharding *sd) {
   Sharding* ret = CreateSharding();
   *ret = *sd;
+  ret->frame_ = this;
   return ret;
 }
 
 mdb::Row* Frame::CreateRow(const mdb::Schema *schema,
                            vector<Value> &row_data) {
-  auto mode = Config::GetConfig()->cc_mode_;
+//  auto mode = Config::GetConfig()->cc_mode_;
+  auto mode = mode_;
   mdb::Row* r = nullptr;
   switch (mode) {
     case MODE_2PL:
@@ -111,44 +137,44 @@ mdb::Row* Frame::CreateRow(const mdb::Schema *schema,
   }
   return r;
 }
+//
+//Coordinator* Frame::CreateRepCoord(cooid_t coo_id,
+//                                   Config* config,
+//                                   int benchmark,
+//                                   ClientControlServiceImpl *ccsi,
+//                                   uint32_t id,
+//                                   bool batch_start,
+//                                   TxnRegistry* txn_reg) {
+//  Coordinator *coo;
+//  auto mode = Config::GetConfig()->ab_mode_;
+//  switch(mode) {
+//    case MODE_MULTI_PAXOS:
+//      coo = new MultiPaxosCoord(coo_id,
+//                                benchmark,
+//                                ccsi,
+//                                id,
+//                                batch_start);
+//      break;
+//    case MODE_EPAXOS:
+//    case MODE_NOT_READY:
+//      Log_fatal("this atomic broadcast protocol is currently not supported.");
+//  }
+//
+//  return coo;
+//}
 
-Coordinator* Frame::CreateRepCoord(cooid_t coo_id,
-                                   Config* config,
-                                   int benchmark,
-                                   ClientControlServiceImpl *ccsi,
-                                   uint32_t id,
-                                   bool batch_start,
-                                   TxnRegistry* txn_reg) {
-  Coordinator *coo;
-  auto mode = Config::GetConfig()->ab_mode_;
-  switch(mode) {
-    case MODE_MULTI_PAXOS:
-      coo = new MultiPaxosCoord(coo_id,
-                                benchmark,
-                                ccsi,
-                                id,
-                                batch_start);
-      break;
-    case MODE_EPAXOS:
-    case MODE_NOT_READY:
-      Log_fatal("this atomic broadcast protocol is currently not supported.");
-  }
-
-  return coo;
-}
-
-CoordinatorBase* Frame::CreateCoord(cooid_t coo_id,
-                                    vector<std::string>& servers,
-                                    Config* config,
-                                    int benchmark,
-                                    ClientControlServiceImpl *ccsi,
-                                    uint32_t id,
-                                    bool batch_start,
-                                    TxnRegistry* txn_reg) {
+Coordinator* Frame::CreateCoord(cooid_t coo_id,
+                                Config* config,
+                                int benchmark,
+                                ClientControlServiceImpl *ccsi,
+                                uint32_t id,
+                                bool batch_start,
+                                TxnRegistry* txn_reg) {
   // TODO: clean this up; make Coordinator subclasses assign txn_reg_
-  CoordinatorBase *coo;
+  Coordinator *coo;
   auto attr = this;
-  auto mode = Config::GetConfig()->cc_mode_;
+//  auto mode = Config::GetConfig()->cc_mode_;
+  auto mode = mode_;
   switch (mode) {
     case MODE_2PL:
       coo = new TPLCoord(coo_id,
@@ -192,7 +218,7 @@ CoordinatorBase* Frame::CreateCoord(cooid_t coo_id,
       ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
     case MODE_MDCC:
-      coo = new mdcc::MdccCoordinator(coo_id, id, config, ccsi);
+      coo = (Coordinator*)new mdcc::MdccCoordinator(coo_id, id, config, ccsi);
       break;
     default:
       verify(0);
@@ -268,15 +294,8 @@ TxnCommand * Frame::CreateChopper(TxnRequest &req, TxnRegistry* reg) {
 }
 
 Communicator* Frame::CreateCommo() {
-  auto mode = Config::GetConfig()->ab_mode_;
+  // Default: return null;
   Communicator* commo = nullptr;
-  switch (mode) {
-    case MODE_MULTI_PAXOS:
-      commo = new MultiPaxosCommo();
-      break;
-    default:
-      break;
-  }
   return commo;
 }
 
@@ -350,8 +369,22 @@ Scheduler* Frame::CreateScheduler() {
     default:
       sch = new Scheduler(mode);
   }
+  sch->frame_ = this;
   return sch;
 }
+//
+//Scheduler* Frame::CreateRepSched() {
+//  auto mode = Config::GetConfig()->ab_mode_;
+//  Scheduler *sch = nullptr;
+//  switch(mode) {
+//    case MODE_MULTI_PAXOS:
+//      sch = new MultiPaxosSched();
+//      break;
+//    default:
+//      verify(0);
+//  }
+//  return sch;
+//}
 
 TxnGenerator * Frame::CreateTxnGenerator() {
   auto benchmark = Config::config_s->benchmark_;
@@ -377,22 +410,25 @@ vector<rrr::Service *> Frame::CreateRpcServices(uint32_t site_id,
                                                 ServerControlServiceImpl *scsi) {
   auto config = Config::GetConfig();
   auto result = std::vector<Service *>();
-  switch(config->cc_mode_) {
+  switch(mode_) {
     case MODE_MDCC:
-      result.push_back(new mdcc::MdccClientServiceImpl(config, site_id, dtxn_sched));
-      result.push_back(new mdcc::MdccLeaderServiceImpl(config, site_id, dtxn_sched));
-      result.push_back(new mdcc::MdccAcceptorServiceImpl(config, site_id, dtxn_sched));
+      result.push_back(new mdcc::MdccClientServiceImpl(config,
+                                                       site_id,
+                                                       dtxn_sched));
+      result.push_back(new mdcc::MdccLeaderServiceImpl(config,
+                                                       site_id,
+                                                       dtxn_sched));
+      result.push_back(new mdcc::MdccAcceptorServiceImpl(config, 
+                                                         site_id, 
+                                                         dtxn_sched));
       result.push_back(new mdcc::MdccLearnerService());
       break;
-    default:
+    case MODE_2PL:
+    case MODE_OCC:
       result.push_back(new RococoServiceImpl(dtxn_sched, poll_mgr, scsi));
       break;
-  }
-  switch(config->ab_mode_) {
-    case MODE_MULTI_PAXOS:
-      result.push_back(new MultiPaxosServiceImpl());
     default:
-      break;
+      verify(0);
   }
   return result;
 }

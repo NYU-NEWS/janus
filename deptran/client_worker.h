@@ -8,9 +8,10 @@ namespace rococo {
 class ClientControlServiceImpl;
 class TxnGenerator;
 class CoordinatorBase;
-
+class Frame;
 class ClientWorker {
  public:
+  Frame* frame_;
   uint32_t coo_id;
   int32_t benchmark;
   int32_t mode;

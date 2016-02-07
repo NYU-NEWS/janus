@@ -12,7 +12,9 @@ void RococoCommunicator::SendStart(SimpleCommand &cmd,
   std::function<void(Future*)> cb =
       [coo, this, callback, &cmd] (Future *fu) {
     StartReply reply;
-    Log_debug("SendStart callback for %ld from %ld", cmd.GetSiteId(), coo->coo_id_);
+    Log_debug("SendStart callback for %ld from %ld",
+              cmd.GetSiteId(),
+              coo->coo_id_);
     reply.cmd = &cmd;
     Marshal &m = fu->get_reply();
     m >> reply.res >> cmd.output;

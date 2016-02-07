@@ -97,28 +97,30 @@ add_library(RRR
 add_library(MEMDB
     ${MEMDB_SRC})
 
-add_library(ROCOCO
-#    ${RRR_SRC}
-#    ${MEMDB_SRC}
-    ${BENCH_SRC}
-    ${DEPTRAN_SRC})
+#add_library(ROCOCO
+##    ${RRR_SRC}
+##    ${MEMDB_SRC}
+#    ${BENCH_SRC}
+#    ${DEPTRAN_SRC})
 
 add_executable(ROCOCO_SERVER
-    deptran/s_main.cc)
+#        deptran/s_main.cc
+        ${DEPTRAN_SRC}
+        ${BENCH_SRC})
 #add_executable(ROCOCO_CLIENT deptran/c_main.cc)
 
 target_link_libraries(MEMDB
     RRR)
 
-target_link_libraries(ROCOCO
-    RRR
-    MEMDB)
+#target_link_libraries(ROCOCO
+#    RRR
+#    MEMDB)
 
 target_link_libraries(
     ROCOCO_SERVER
     RRR
     MEMDB
-    ROCOCO
+#    ROCOCO
     ${CMAKE_THREAD_LIBS_INIT}
     ${YAML_CPP_LIBRARIES}
     ${Boost_LIBRARIES}

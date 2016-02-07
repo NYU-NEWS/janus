@@ -18,7 +18,7 @@ static vector<ServerWorker> svr_workers;
 
 void client_setup_heartbeat() {
   std::map<int32_t, std::string> txn_types;
-  Frame().GetTxnTypes(txn_types);
+  Frame(MODE_NONE).GetTxnTypes(txn_types);
   unsigned int num_threads = Config::GetConfig()->get_num_threads(); // func
   bool hb = Config::GetConfig()->do_heart_beat();
   if (hb) {
@@ -60,7 +60,9 @@ void server_launch_worker(vector<Config::SiteInfo>&server_sites) {
   svr_workers.resize(server_sites.size(), ServerWorker());
   int i=0;
   for (auto& site_info : server_sites) {
-    Log_info("launching site: %x, bind address %s", site_info.id, site_info.GetBindAddress().c_str());
+    Log_info("launching site: %x, bind address %s",
+             site_info.id,
+             site_info.GetBindAddress().c_str());
     auto& worker = svr_workers[i++];
 
     // register txn piece logic

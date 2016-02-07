@@ -24,6 +24,7 @@ int TPLSched::OnPhaseOneRequest(const SimpleCommand& cmd,
                                 rrr::i32 *res,
                                 map<int32_t, Value> *output,
                                 rrr::DeferredReply *defer) {
+  verify(frame_ != nullptr);
   TPLExecutor* exec = (TPLExecutor*) GetOrCreateExecutor(cmd.root_id_);
   exec->StartLaunch(cmd, res, output, defer);
   return 0;

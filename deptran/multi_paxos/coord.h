@@ -12,7 +12,7 @@ class MultiPaxosCoord : public Coordinator {
   MultiPaxosCommo* commo() {
     // TODO fix this.
     if (commo_ == nullptr) {
-      commo_ = Frame().CreateCommo();
+      commo_ = frame_->CreateCommo();
     }
     return (MultiPaxosCommo*) commo_;
   }

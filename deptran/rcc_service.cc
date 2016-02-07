@@ -5,10 +5,10 @@
 namespace rococo {
 
 RococoServiceImpl::RococoServiceImpl(
-    Scheduler *dtxn_mgr,
+    Scheduler *sched,
     rrr::PollMgr* poll_mgr,
     ServerControlServiceImpl *scsi
-) : scsi_(scsi), dtxn_sched_(dtxn_mgr) {
+) : scsi_(scsi), dtxn_sched_(sched) {
 
 #ifdef PIECE_COUNT
   piece_count_timer_.start();

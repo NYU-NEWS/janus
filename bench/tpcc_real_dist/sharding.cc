@@ -16,6 +16,7 @@ void TPCCDSharding::InsertRowData(tb_info_t *tb_info,
                                   mdb::Table *const table_ptr,
                                   mdb::SortedTable *tbl_sec_ptr,
                                   vector<Value> &row_data) {
+  verify(frame_ != nullptr);
   if (tb_info->tb_name == TPCC_TB_STOCK) {
     size_t key_size = schema->key_columns_id().size();
     MultiValue mv(key_size);
@@ -26,7 +27,7 @@ void TPCCDSharding::InsertRowData(tb_info_t *tb_info,
 
     if (sid == site_from_key(mv, tb_info)) {
       n_row_inserted_++;
-      auto r = Frame().CreateRow(schema, row_data);
+      auto r = frame_->CreateRow(schema, row_data);
       table_ptr->insert(r);
     }
   } else if (tb_info->tb_name == TPCC_TB_DISTRICT) {
@@ -39,7 +40,7 @@ void TPCCDSharding::InsertRowData(tb_info_t *tb_info,
 
     if (sid == site_from_key(mv, tb_info)) {
       n_row_inserted_++;
-      auto r = Frame().CreateRow(schema, row_data);
+      auto r = frame_->CreateRow(schema, row_data);
       table_ptr->insert(r);
 
       for (int i = 0; i < key_size; i++) {
@@ -48,7 +49,7 @@ void TPCCDSharding::InsertRowData(tb_info_t *tb_info,
     }
   } else {
     n_row_inserted_++;
-    auto r = Frame().CreateRow(schema, row_data);
+    auto r = frame_->CreateRow(schema, row_data);
     table_ptr->insert(r);
 
     // XXX order (o_d_id, o_w_id, o_c_id) --> maximum o_id
@@ -81,7 +82,7 @@ void TPCCDSharding::InsertRowData(tb_info_t *tb_info,
              col_info_it++) {
           sec_row_data_buf.push_back(r->get_column(col_info_it->name));
         }
-        auto r = Frame().CreateRow(sch_buf, sec_row_data_buf);
+        auto r = frame_->CreateRow(sch_buf, sec_row_data_buf);
         tbl_sec_ptr->insert(r);
       }
     }

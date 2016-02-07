@@ -37,8 +37,7 @@ void ClientWorker::work() {
   Piece *piece = Piece::get_piece(benchmark);
   piece->txn_reg_ = txn_reg_;
   piece->reg_all();
-  coo_ = Frame().CreateCoord(coo_id,
-                             servers_,
+  coo_ = frame_->CreateCoord(coo_id,
                              config,
                              benchmark,
                              ccsi,
@@ -88,8 +87,9 @@ ClientWorker::ClientWorker(uint32_t id,
       batch_start(config->get_batch_start()),
       duration(config->get_duration()),
       ccsi(ccsi),
-      n_outstanding_(config->get_concurrent_txn()),
-      txn_req_factory_(Frame().CreateTxnGenerator()) {
+      n_outstanding_(config->get_concurrent_txn()) {
+  frame_ = new Frame(config->cc_mode_);
+  txn_req_factory_ = frame_->CreateTxnGenerator();
   config->get_all_site_addr(servers_);
   num_txn.store(0);
   success.store(0);

@@ -2,7 +2,6 @@
 // Created by shuai on 11/25/15.
 //
 #pragma once
-#pragma once
 
 #include "../coordinator.h"
 
@@ -23,6 +22,11 @@ class ThreePhaseCoordinator : public Coordinator {
     if (commo_) {
       delete commo_;
     }
+  }
+
+  RococoCommunicator* commo() {
+    verify(commo_ != nullptr);
+    return (RococoCommunicator*) commo_;
   }
 
 #ifdef TXN_STAT
@@ -73,7 +77,7 @@ class ThreePhaseCoordinator : public Coordinator {
 
   /** do it asynchronously, thread safe. */
   virtual void do_one(TxnRequest &);
-  virtual void cleanup();
+  virtual void Reset() override;
   void restart(TxnCommand *ch);
 
   void Start();
