@@ -75,9 +75,10 @@ class MdccCommunicator {
   std::vector<SiteProxy*> site_proxies_;
 
 private:
-  MdccCommunicator::SiteProxy* RandomSite(const vector<Config::SiteInfo> &sites);
-  MdccCommunicator::SiteProxy* ClosestSiteInPartition(uint32_t partition_id) const;
-  MdccCommunicator::SiteProxy* LeaderForUpdate(OptionSet *option_set, std::vector<Config::SiteInfo> &sites);
+  SiteProxy* RandomSite(const vector<Config::SiteInfo> &sites);
+  SiteProxy* ClosestSiteInPartition(uint32_t partition_id) const;
+  std::vector<SiteProxy*> AllSitesInPartition(parid_t partition_id) const;
+  SiteProxy* LeaderForUpdate(OptionSet *option_set, std::vector<Config::SiteInfo> &sites);
 };
 }
 

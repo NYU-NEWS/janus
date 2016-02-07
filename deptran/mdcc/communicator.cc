@@ -58,7 +58,7 @@ namespace mdcc {
     auto partition_sites = config_->SitesByPartitionId(partition_id);
 
     if (ballotType == BallotType::CLASSIC) {
-      auto proxy = this->LeaderForUpdate(options, partition_sites);
+      auto proxy = LeaderForUpdate(options, partition_sites);
       Log_debug("send %d options to site %d", options->Options().size(), proxy->site_info.id);
 
       ProposeRequest req;
@@ -88,6 +88,16 @@ namespace mdcc {
     return site_proxies_[site_id];
   }
 
+  std::vector<MdccCommunicator::SiteProxy*> MdccCommunicator::AllSitesInPartition(parid_t partition_id) const {
+    std::vector<MdccCommunicator::SiteProxy*> results;
+    auto partition_sites = config_->SitesByPartitionId(partition_id);
+    assert(partition_sites.size()>0);
+    for (auto& site : partition_sites) {
+      results.push_back(site_proxies_[site.id]);
+    }
+    return results;
+  }
+
   MdccCommunicator::SiteProxy* MdccCommunicator::RandomSite(const vector<Config::SiteInfo>& sites) {
     return site_proxies_[sites[RandomGenerator::rand(0, sites.size()-1)].id];
   }
@@ -102,5 +112,9 @@ namespace mdcc {
 
   void MdccCommunicator::SendPhase2a(Phase2aRequest req, Callback<Phase2aResponse>& cb) {
     Log_debug("Site %d: %s", this->site_info_.id, __FUNCTION__);
+    assert(req.site_id == site_info_.id);
+    auto partition_id = site_info_.partition_id_;
+    auto proxies = AllSitesInPartition(partition_id);
+    // TODO: stopped here; send the message already!
   }
 }
