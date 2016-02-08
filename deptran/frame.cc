@@ -74,6 +74,7 @@ Frame* Frame::GetFrame(int mode) {
   Frame *frame = nullptr;
   // some built-in mode
   switch (mode) {
+    case MODE_MDCC:
     case MODE_2PL:
     case MODE_OCC:
       return new Frame(mode);
