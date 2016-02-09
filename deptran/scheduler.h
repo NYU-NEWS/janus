@@ -21,6 +21,7 @@ class Scheduler {
   Recorder *recorder_ = nullptr;
   Frame *frame_ = nullptr;
   Frame *rep_frame_ = nullptr;
+  Scheduler* rep_sched_ = nullptr;
   Coordinator* rep_coord_ = nullptr;
   TxnRegistry* txn_reg_ = nullptr;
 

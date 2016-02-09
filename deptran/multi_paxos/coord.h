@@ -8,6 +8,8 @@ namespace rococo {
 
 class MultiPaxosCommo;
 class MultiPaxosCoord : public Coordinator {
+ public:
+  static ballot_t next_slot_s;
  private:
   MultiPaxosCommo* commo() {
     // TODO fix this.
@@ -17,7 +19,12 @@ class MultiPaxosCoord : public Coordinator {
     return (MultiPaxosCommo*) commo_;
   }
  public:
-  using Coordinator::Coordinator;
+//  using Coordinator::Coordinator;
+  MultiPaxosCoord(uint32_t coo_id,
+                  int32_t benchmark,
+                  ClientControlServiceImpl *ccsi,
+                  uint32_t thread_id,
+                  bool batch_optimal);
   ballot_t curr_ballot_ = 0; // TODO
   ballot_t n_replica_ = 0;   // TODO
   parid_t par_id_ = 0; // belong to a partition

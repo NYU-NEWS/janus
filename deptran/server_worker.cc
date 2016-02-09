@@ -43,6 +43,7 @@ void ServerWorker::SetupBase() {
     rep_sched_ = rep_frame_->CreateScheduler();
     rep_sched_->txn_reg_ = txn_reg_;
     dtxn_sched_->rep_frame_ = rep_frame_;
+    dtxn_sched_->rep_sched_ = rep_sched_;
   }
 }
 

@@ -6,6 +6,18 @@
 
 namespace rococo {
 
+ballot_t MultiPaxosCoord::next_slot_s = 1;
+
+MultiPaxosCoord::MultiPaxosCoord(uint32_t coo_id,
+                                 int32_t benchmark,
+                                 ClientControlServiceImpl *ccsi,
+                                 uint32_t thread_id,
+                                 bool batch_optimal)
+    : Coordinator(coo_id, benchmark, ccsi, thread_id, batch_optimal) {
+  slot_id_ = next_slot_s++;
+}
+
+
 void MultiPaxosCoord::Submit(SimpleCommand& cmd, std::function<void()> func) {
   cmd_ = new SimpleCommand();
   *cmd_ = cmd;
@@ -21,6 +33,7 @@ ballot_t MultiPaxosCoord::PickBallot() {
 void MultiPaxosCoord::Prepare() {
   TxnCommand* cmd = (TxnCommand*) cmd_;
   curr_ballot_ = PickBallot();
+  verify(slot_id_ > 0);
   commo()->BroadcastPrepare(par_id_,
                             slot_id_,
                             curr_ballot_,

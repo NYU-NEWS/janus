@@ -37,9 +37,7 @@ mdb::ResultSet DTxn::QueryIn(Table *tbl,
                              const mdb::MultiBlob &high,
                              mdb::symbol_t order,
                              int rs_context_id) {
-  verify(mdb_txn_ != nullptr);
-
-  verify(mdb_txn_ != nullptr);
+  verify(mdb_txn() != nullptr);
   auto &rs_map = context_rs_;
   if (rs_context_id > 0) {
     auto it = rs_map.find(rs_context_id);
@@ -48,7 +46,7 @@ mdb::ResultSet DTxn::QueryIn(Table *tbl,
       ret_rs.reset();
       return ret_rs;
     } else {
-      mdb::ResultSet ret_rs = mdb_txn_->query_in(tbl, low, high, order);
+      mdb::ResultSet ret_rs = mdb_txn()->query_in(tbl, low, high, order);
       rs_map.insert(std::make_pair(rs_context_id, ret_rs));
       return ret_rs;
     }
@@ -102,8 +100,8 @@ bool DTxn::ReadColumn(mdb::Row *row,
                       mdb::column_id_t col_id,
                       Value *value,
                       int hint_flag) {
-  verify(mdb_txn_ != nullptr);
-  auto ret = mdb_txn_->read_column(row, col_id, value);
+  verify(mdb_txn() != nullptr);
+  auto ret = mdb_txn()->read_column(row, col_id, value);
   verify(ret == true);
   return true;
 }
@@ -112,8 +110,8 @@ bool DTxn::ReadColumns(Row *row,
                        const std::vector<column_id_t> &col_ids,
                        std::vector<Value> *values,
                        int hint_flag) {
-  verify(mdb_txn_ != nullptr);
-  auto ret = mdb_txn_->read_columns(row, col_ids, values);
+  verify(mdb_txn() != nullptr);
+  auto ret = mdb_txn()->read_columns(row, col_ids, values);
   verify(ret == true);
   return true;
 }
@@ -122,8 +120,8 @@ bool DTxn::WriteColumn(Row *row,
                        column_id_t col_id,
                        const Value &value,
                        int hint_flag) {
-  verify(mdb_txn_ != nullptr);
-  auto ret = mdb_txn_->write_column(row, col_id, value);
+  verify(mdb_txn() != nullptr);
+  auto ret = mdb_txn()->write_column(row, col_id, value);
   verify(ret == true);
   return true;
 }
@@ -132,8 +130,8 @@ bool DTxn::WriteColumns(Row *row,
                         const std::vector<column_id_t> &col_ids,
                         const std::vector<Value> &values,
                         int hint_flag) {
-  verify(mdb_txn_ != nullptr);
-  auto ret = mdb_txn_->write_columns(row, col_ids, values);
+  verify(mdb_txn() != nullptr);
+  auto ret = mdb_txn()->write_columns(row, col_ids, values);
   verify(ret == true);
   return true;
 }
@@ -165,8 +163,8 @@ bool DTxn::WriteColumns(Row *row,
 
 
 bool DTxn::InsertRow(Table *tbl, Row *row) {
-  verify(mdb_txn_ != nullptr);
-  return mdb_txn_->insert_row(tbl, row);
+  verify(mdb_txn() != nullptr);
+  return mdb_txn()->insert_row(tbl, row);
 }
 //bool DTxn::remove_row(Table *tbl, Row *row) {
 //  verify(mdb_txn_ != nullptr);
