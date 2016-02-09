@@ -18,7 +18,9 @@ MultiPaxosCoord::MultiPaxosCoord(uint32_t coo_id,
 }
 
 
-void MultiPaxosCoord::Submit(SimpleCommand& cmd, std::function<void()> func) {
+void MultiPaxosCoord::Submit(SimpleCommand& cmd,
+                             const function<void()>& func) {
+  verify(cmd_ == nullptr);
   cmd_ = new SimpleCommand();
   *cmd_ = cmd;
   callback_ = func;
@@ -53,7 +55,7 @@ void MultiPaxosCoord::PrepareAck(phase_t phase, Future *fu) {
   } else {
     verify(0);
   }
-  if (n_prepare_ack_ >= n_replica_ / 2 + 1) {
+  if (n_prepare_ack_ >= GetQuorum()) {
     Accept();
   } else {
     // TODO what if receive majority of rejects.
@@ -84,7 +86,8 @@ void MultiPaxosCoord::AcceptAck(phase_t phase, Future *fu) {
   } else {
     verify(0);
   }
-  if (n_finish_ack_ >= n_replica_ / 2 + 1) {
+  if (n_finish_ack_ >= GetQuorum()) {
+    callback_();
     Decide();
   } else {
     // TODO
@@ -95,7 +98,7 @@ void MultiPaxosCoord::AcceptAck(phase_t phase, Future *fu) {
 void MultiPaxosCoord::Decide() {
   phase_++;
   auto cmd = (TxnCommand*) cmd_;
-  commo()->BroadcastDecide(par_id_, curr_ballot_, *cmd);
+  commo()->BroadcastDecide(par_id_, slot_id_, curr_ballot_, *cmd);
 }
 
 } // namespace rococo

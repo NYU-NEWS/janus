@@ -46,7 +46,7 @@ struct CollectFinishResponse {
 
 abstract service MultiPaxos {
 
-  defer Forward(SimpleCommand cmd);
+  defer Forward(Command cmd);
 
   defer Prepare(uint64_t slot,
                 uint64_t ballot |
@@ -54,12 +54,12 @@ abstract service MultiPaxos {
 
   defer Accept(uint64_t slot,
                uint64_t ballot,
-               SimpleCommand cmd |
+               Command cmd |
                uint64_t max_ballot);
 
   defer Decide(uint64_t slot,
                uint64_t ballot,
-               SimpleCommand cmd);
+               Command cmd);
 }
 
 abstract service EPaxos {

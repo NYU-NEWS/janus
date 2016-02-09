@@ -22,14 +22,14 @@ class Scheduler {
   Frame *frame_ = nullptr;
   Frame *rep_frame_ = nullptr;
   Scheduler* rep_sched_ = nullptr;
-  Coordinator* rep_coord_ = nullptr;
+//  Coordinator* rep_coord_ = nullptr;
   TxnRegistry* txn_reg_ = nullptr;
 
   Scheduler();
   Scheduler(int mode);
   ~Scheduler();
 
-  Coordinator* GetRepCoord();
+  Coordinator*CreateRepCoord();
   DTxn *GetDTxn(i64 tid);
   DTxn *CreateDTxn(i64 tid, bool ro = false);
   DTxn *GetOrCreateDTxn(i64 tid, bool ro = false);

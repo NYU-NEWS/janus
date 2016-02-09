@@ -3,12 +3,14 @@
 #include <deptran/communicator.h>
 #include "../frame.h"
 #include "../constants.h"
+#include "commo.h"
 
 namespace rococo {
 
 class MultiPaxosFrame : public Frame {
  public:
   using Frame::Frame;
+  MultiPaxosCommo* commo_ = nullptr;
   Executor* CreateExecutor(cmdid_t cmd_id, Scheduler* sched) override;
   Coordinator* CreateCoord(cooid_t coo_id,
                            Config* config,

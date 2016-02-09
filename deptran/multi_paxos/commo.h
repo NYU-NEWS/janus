@@ -17,13 +17,12 @@ class MultiPaxosCommo : public Communicator {
   void BroadcastAccept(parid_t par_id,
                        slotid_t slot_id,
                        ballot_t ballot,
-                       TxnCommand& cmd,
+                       Command& cmd,
                        const function<void(Future*)> &callback);
-  void BroadcastDecide(parid_t par_id,
-                       ballot_t ballot,
-                       TxnCommand& cmd) {
-    verify(0);
-  }
+  void BroadcastDecide(const parid_t par_id,
+                       const slotid_t slot_id,
+                       const ballot_t ballot,
+                       const Command& cmd);
 };
 
 } // namespace rococo

@@ -49,7 +49,7 @@ class Coordinator : public CoordinatorBase {
   std::mutex mtx_;
   std::mutex start_mtx_;
   Recorder *recorder_;
-  Command *cmd_; 
+  Command *cmd_ = nullptr;
 //  cmdid_t cmd_id_;
   CoordinatorStage stage_ = START;
   phase_t phase_ = 0;
@@ -117,7 +117,8 @@ class Coordinator : public CoordinatorBase {
   }
 
   virtual void do_one(TxnRequest &) = 0;
-  virtual void Submit(SimpleCommand &, std::function<void()>) {
+  virtual void Submit(SimpleCommand &,
+                      const std::function<void()>&) {
     verify(0);
   }
   virtual void Reset() {

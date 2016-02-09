@@ -31,7 +31,6 @@ Communicator::Communicator() {
     }
     rpc_par_proxies_.insert(std::make_pair(par_id, proxies));
   }
-
 }
 
 } // namespace rococo

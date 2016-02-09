@@ -12,15 +12,15 @@ class MultiPaxosExecutor: public Executor {
 
   ballot_t max_ballot_seen_ = 0;
   ballot_t max_ballot_accepted_ = 0;
-  SimpleCommand cmd_;
+  Command* cmd_;
   /**
    * return max_ballot
    */
-  ballot_t Prepare(ballot_t ballot);
+  ballot_t Prepare(const ballot_t ballot);
 
-  ballot_t Accept(ballot_t ballot, SimpleCommand& cmd);
+  ballot_t Accept(const ballot_t ballot, const Command& cmd);
 
-  ballot_t Decide(ballot_t ballot, SimpleCommand& cmd);
+  ballot_t Decide(ballot_t ballot, Command& cmd);
 };
 
 } // namespace rococo

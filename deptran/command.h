@@ -30,6 +30,7 @@ public:
   virtual Command* GetNextSubCmd(){verify(0);};
   virtual Command* GetRootCmd() {return this;};
   virtual void Reset() {verify(0);};
+  virtual Command* Clone() const {return nullptr;}
 };
 
 class SequentialCommand {
@@ -59,6 +60,11 @@ class SimpleCommand: public Command {
   SimpleCommand() = default;
   virtual parid_t GetSiteId() const {return site_id_;}
   virtual Command* GetRootCmd() const {return root_;}
+  virtual Command* Clone() const override {
+    SimpleCommand* cmd = new SimpleCommand();
+    *cmd = *this;
+    return cmd;
+  }
 };
 
 

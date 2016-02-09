@@ -13,9 +13,7 @@ class MultiPaxosCoord : public Coordinator {
  private:
   MultiPaxosCommo* commo() {
     // TODO fix this.
-    if (commo_ == nullptr) {
-      commo_ = frame_->CreateCommo();
-    }
+    verify(commo_ != nullptr);
     return (MultiPaxosCommo*) commo_;
   }
  public:
@@ -26,12 +24,22 @@ class MultiPaxosCoord : public Coordinator {
                   uint32_t thread_id,
                   bool batch_optimal);
   ballot_t curr_ballot_ = 0; // TODO
-  ballot_t n_replica_ = 0;   // TODO
+  uint32_t n_replica_ = 0;   // TODO
   parid_t par_id_ = 0; // belong to a partition
   slotid_t slot_id_ = 0;
 
+  uint32_t n_replica() {
+    verify(n_replica_ > 0);
+    return n_replica_;
+  }
+
+  uint32_t GetQuorum() {
+    return 0;
+    return n_replica() / 2 + 1;
+  }
+
   void do_one(TxnRequest &req) override {}
-  void Submit(SimpleCommand& cmd, std::function<void()> func) override;
+  void Submit(SimpleCommand& cmd, const std::function<void()>& func) override;
 
   ballot_t PickBallot();
   void Prepare();

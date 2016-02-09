@@ -35,7 +35,7 @@ int ThreePhaseSched::OnPhaseTwoRequest(
   };
   if (Config::GetConfig()->IsReplicated()) {
     SimpleCommand cmd; // TODO
-    GetRepCoord()->Submit(cmd, func);
+    CreateRepCoord()->Submit(cmd, func);
   } else if (Config::GetConfig()->do_logging()) {
     this->get_prepare_log(cmd_id, sids, &log);
     recorder_->submit(log, func);

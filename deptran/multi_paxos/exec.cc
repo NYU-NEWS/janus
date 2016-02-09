@@ -3,7 +3,7 @@
 namespace rococo {
 
 
-ballot_t MultiPaxosExecutor::Prepare(ballot_t ballot) {
+ballot_t MultiPaxosExecutor::Prepare(const ballot_t ballot) {
   verify(ballot != max_ballot_seen_);
   if (max_ballot_seen_ < ballot) {
     max_ballot_seen_ = ballot;
@@ -14,23 +14,25 @@ ballot_t MultiPaxosExecutor::Prepare(ballot_t ballot) {
   return max_ballot_seen_;
 }
 
-ballot_t MultiPaxosExecutor::Accept(ballot_t ballot, SimpleCommand& cmd) {
+ballot_t MultiPaxosExecutor::Accept(const ballot_t ballot,
+                                    const Command& cmd) {
   verify(max_ballot_accepted_ < ballot);
   if (max_ballot_seen_ <= ballot) {
     max_ballot_seen_ = ballot;
     max_ballot_accepted_ = ballot;
-    cmd_ = cmd;
+    cmd_ = cmd.Clone();
   } else {
     // TODO
+    verify(0);
   }
   return max_ballot_seen_;
 }
 
-ballot_t MultiPaxosExecutor::Decide(ballot_t ballot, SimpleCommand& cmd) {
+ballot_t MultiPaxosExecutor::Decide(ballot_t ballot, Command& cmd) {
   verify(max_ballot_seen_ <= ballot);
   max_ballot_seen_ = ballot;
   max_ballot_accepted_ = ballot;
-  cmd_ = cmd;
+  cmd_ = cmd.Clone();
 }
 
 } // namespace rococo

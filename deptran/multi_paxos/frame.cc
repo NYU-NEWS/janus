@@ -33,6 +33,7 @@ Coordinator* MultiPaxosFrame::CreateCoord(cooid_t coo_id,
                             id,
                             batch_start);
   coo->frame_ = this;
+  coo->commo_ = commo_;
   return coo;
 }
 
@@ -44,7 +45,9 @@ Scheduler* MultiPaxosFrame::CreateScheduler() {
 }
 
 Communicator* MultiPaxosFrame::CreateCommo() {
-  return new MultiPaxosCommo();
+  verify(commo_ == nullptr);
+  commo_ = new MultiPaxosCommo();
+  return commo_;
 }
 
 
