@@ -27,6 +27,19 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DLOG_LEVEL_AS_DEBUG")
 #  SET(LINK_TO_DMALLOC 1)
 #ENDIF(DMALLOC_LIBRARY)
 
+add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/deptran/mdcc/mdcc_rpc.h
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/bin/rpcgen --cpp deptran/mdcc/mdcc_rpc.rpc
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/deptran/mdcc/mdcc_rpc.rpc
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/deptran/rcc_rpc.h ${CMAKE_CURRENT_SOURCE_DIR}/deptran/rcc_rpc.py
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/bin/rpcgen --cpp --python deptran/rcc_rpc.rpc
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/deptran/rcc_rpc.rpc
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_custom_target (
+    gen-rpc
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/deptran/mdcc/mdcc_rpc.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/deptran/rcc_rpc.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/deptran/rcc_rpc.py)
 
 include_directories(
     ${PYTHON2_INCLUDE_DIRS}
@@ -85,6 +98,7 @@ file(GLOB BENCH_SRC
 )
 
 file(GLOB DEPTRAN_SRC
+
     "deptran/*.h"
     "deptran/*.cc"
     "deptran/*/*.cc"
@@ -105,9 +119,12 @@ add_library(MEMDB
 
 add_executable(ROCOCO_SERVER
 #        deptran/s_main.cc
+#        "deptran/mdcc/mdcc_rpc.h"
+#        "deptran/rcc_rpc.h"
         ${DEPTRAN_SRC}
         ${BENCH_SRC})
 #add_executable(ROCOCO_CLIENT deptran/c_main.cc)
+add_dependencies(ROCOCO_SERVER gen-rpc)
 
 target_link_libraries(MEMDB
     RRR)
