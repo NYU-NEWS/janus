@@ -119,8 +119,6 @@ add_library(MEMDB
 
 add_executable(ROCOCO_SERVER
 #        deptran/s_main.cc
-#        "deptran/mdcc/mdcc_rpc.h"
-#        "deptran/rcc_rpc.h"
         ${DEPTRAN_SRC}
         ${BENCH_SRC})
 #add_executable(ROCOCO_CLIENT deptran/c_main.cc)
