@@ -306,7 +306,7 @@ void Config::LoadSiteYML(YAML::Node config) {
   // to avoid invalidating the pointers
   int num_sites=0;
   for (auto partition = servers.begin(); partition != servers.end(); partition++) {
-    for (auto site = (*partition).begin(); site != (*partition).end(); site++) { num_sites++; }
+    num_sites += (*partition).size();
   }
   sites_.reserve(num_sites);
 
