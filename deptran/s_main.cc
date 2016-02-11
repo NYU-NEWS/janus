@@ -56,6 +56,7 @@ void client_launch_workers(vector<Config::SiteInfo>& client_sites) {
 }
 
 void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
+  auto config = Config::GetConfig();
   Log_info("server enabled, number of sites: %d", server_sites.size());
   svr_workers.resize(server_sites.size(), ServerWorker());
   int i=0;
@@ -64,7 +65,7 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
              site_info.id,
              site_info.GetBindAddress().c_str());
     auto& worker = svr_workers[i++];
-    worker.site_info_ = &site_info;
+    worker.site_info_ = const_cast<Config::SiteInfo*>(&config->SiteById(site_info.id));
     worker.SetupBase();
     // register txn piece logic
     worker.RegPiece();
@@ -74,7 +75,10 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
     worker.PopTable();
     // start server service
     worker.SetupService();
-    // start communicator
+  }
+
+  for (ServerWorker& worker : svr_workers) {
+    // start communicator after all servers are running
     worker.SetupCommo();
   }
 }
@@ -106,7 +110,7 @@ int main(int argc, char *argv[]) {
   }
 
   auto client_infos = Config::GetConfig()->GetMyClients();
-  if (server_infos.size() > 0) {
+  if (client_infos.size() > 0) {
     client_setup_heartbeat();
     client_launch_workers(client_infos);
     server_shutdown();

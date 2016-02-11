@@ -301,6 +301,15 @@ void Config::LoadSiteYML(YAML::Node config) {
   int partition_id = 0;
   int site_id = 0;
   int locale_id = 0;
+
+  // count the sites so that we can reserve storage up front
+  // to avoid invalidating the pointers
+  int num_sites=0;
+  for (auto partition = servers.begin(); partition != servers.end(); partition++) {
+    for (auto site = (*partition).begin(); site != (*partition).end(); site++) { num_sites++; }
+  }
+  sites_.reserve(num_sites);
+
   for (auto server_it = servers.begin(); server_it != servers.end(); server_it++) {
     auto group = *server_it;
     locale_id=0;

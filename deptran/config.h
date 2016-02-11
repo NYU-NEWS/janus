@@ -134,7 +134,7 @@ class Config {
   
   struct ReplicaGroup {
     parid_t partition_id = 0;
-    std::vector<SiteInfo*> replicas = {};
+    std::vector<SiteInfo*> replicas;
     ReplicaGroup(parid_t id) : partition_id(id) {}
   };
 
