@@ -6,13 +6,19 @@
 #include "sched.h"
 #include "service.h"
 #include "commo.h"
+#include "config.h"
 
 namespace rococo {
 
-static Frame* mpf = Frame::RegFrame(MODE_MULTI_PAXOS, new MultiPaxosFrame(MODE_MULTI_PAXOS));
+static Frame* mpf = Frame::RegFrame(MODE_MULTI_PAXOS,
+                                    new MultiPaxosFrame(MODE_MULTI_PAXOS));
 
 //MultiPaxosDummy* MultiPaxosDummy::mpd_s = new MultiPaxosDummy();
 //static const MultiPaxosDummy mpd_g;
+
+MultiPaxosFrame::MultiPaxosFrame(int mode) : Frame(mode) {
+
+}
 
 Executor* MultiPaxosFrame::CreateExecutor(cmdid_t cmd_id, Scheduler* sched) {
   Executor* exec = new MultiPaxosExecutor(cmd_id, sched);
@@ -24,16 +30,19 @@ Coordinator* MultiPaxosFrame::CreateCoord(cooid_t coo_id,
                                           int benchmark,
                                           ClientControlServiceImpl *ccsi,
                                           uint32_t id,
-                                          bool batch_start,
                                           TxnRegistry* txn_reg) {
-  Coordinator *coo;
+  verify(config != nullptr);
+  MultiPaxosCoord* coo;
   coo = new MultiPaxosCoord(coo_id,
                             benchmark,
                             ccsi,
-                            id,
-                            batch_start);
+                            id);
   coo->frame_ = this;
   coo->commo_ = commo_;
+  coo->slot_hint_ = &slot_hint_;
+  coo->slot_id_ = slot_hint_++;
+  coo->n_replica_ = config->GetPartitionSize(site_info_->partition_id_);
+  verify(coo->n_replica_ != 0); // TODO
   return coo;
 }
 

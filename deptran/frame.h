@@ -3,6 +3,7 @@
 #include "constants.h"
 #include "txn_req_factory.h"
 #include "txn_reg.h"
+#include "config.h"
 
 namespace rococo {
 
@@ -17,7 +18,6 @@ class Scheduler;
 class ClientControlServiceImpl;
 class ServerControlServiceImpl;
 class TxnRegistry;
-class Config;
 class Communicator;
 class Frame {
  public:
@@ -27,6 +27,7 @@ class Frame {
   static Frame* RegFrame(int mode, Frame* frame);
 
   int mode_;
+  Config::SiteInfo* site_info_ = nullptr;
   Frame(int mode) : mode_(mode) {};
   // for both dtxn and rep
   virtual Coordinator* CreateCoord(cooid_t coo_id,
@@ -34,7 +35,6 @@ class Frame {
                            int benchmark,
                            ClientControlServiceImpl *ccsi,
                            uint32_t id,
-                           bool batch_start,
                            TxnRegistry* txn_reg);
   virtual Executor* CreateExecutor(cmdid_t cmd_id, Scheduler *sch);
   virtual Scheduler *CreateScheduler();

@@ -15,8 +15,7 @@ class ThreePhaseCoordinator : public Coordinator {
   ThreePhaseCoordinator(uint32_t coo_id,
                         int benchmark,
                         ClientControlServiceImpl *ccsi,
-                        uint32_t thread_id,
-                        bool batch_optimal);
+                        uint32_t thread_id);
 
   virtual ~ThreePhaseCoordinator() {
     if (commo_) {

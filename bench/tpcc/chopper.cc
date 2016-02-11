@@ -57,9 +57,7 @@ void TpccChopper::init(TxnRequest &req) {
 // This is sort of silly. We should have a better way.
 bool TpccChopper::CheckReady() {
   bool ret = false;
-
   auto &map = txn_reg_->input_vars_[type_];
-
   for (auto &kv : map) {
     auto pi = kv.first;
     auto &var_set = kv.second;
@@ -89,8 +87,6 @@ bool TpccChopper::CheckReady() {
 //        }
     }
   }
-
-
   return ret;
 }
 

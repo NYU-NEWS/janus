@@ -181,7 +181,6 @@ Coordinator* Scheduler::CreateRepCoord() {
                                   benchmark,
                                   nullptr,
                                   id,
-                                  true,
                                   txn_reg_);
   return coord;
 }

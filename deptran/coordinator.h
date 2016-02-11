@@ -31,7 +31,7 @@ class Coordinator : public CoordinatorBase {
   int benchmark_;
   ClientControlServiceImpl *ccsi_;
   uint32_t thread_id_;
-  bool batch_optimal_;
+  bool batch_optimal_ = false;
   bool retry_wait_;
 
   uint32_t n_start_ = 0;
@@ -101,8 +101,7 @@ class Coordinator : public CoordinatorBase {
   Coordinator(uint32_t coo_id,
               int benchmark,
               ClientControlServiceImpl *ccsi = NULL,
-              uint32_t thread_id = 0,
-              bool batch_optimal = false);
+              uint32_t thread_id = 0);
 
   virtual ~Coordinator();
 

@@ -8,8 +8,11 @@
 namespace rococo {
 
 class MultiPaxosFrame : public Frame {
+ private:
+  slotid_t slot_hint_ = 1;
  public:
-  using Frame::Frame;
+//  using Frame::Frame;
+  MultiPaxosFrame(int mode);
   MultiPaxosCommo* commo_ = nullptr;
   Executor* CreateExecutor(cmdid_t cmd_id, Scheduler* sched) override;
   Coordinator* CreateCoord(cooid_t coo_id,
@@ -17,7 +20,6 @@ class MultiPaxosFrame : public Frame {
                            int benchmark,
                            ClientControlServiceImpl *ccsi,
                            uint32_t id,
-                           bool batch_start,
                            TxnRegistry* txn_reg) override;
   Scheduler* CreateScheduler() override;
   Communicator* CreateCommo() override;

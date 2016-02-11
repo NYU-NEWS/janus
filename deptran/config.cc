@@ -707,6 +707,17 @@ std::vector<Config::SiteInfo> Config::SitesByPartitionId(
   verify(0);
 }
 
+int Config::GetPartitionSize(parid_t partition_id) {
+  auto it = find_if(replica_groups_.begin(), replica_groups_.end(),
+                    [partition_id](const ReplicaGroup& g) {
+                      return g.partition_id == partition_id;
+                    });
+  if (it != replica_groups_.end()) {
+    return it->replicas.size();
+  }
+  verify(0);
+}
+
 std::vector<Config::SiteInfo> Config::SitesByLocaleId(uint32_t locale_id, SiteInfoType type) {
   std::vector<SiteInfo> result;
   std::vector<SiteInfo>* searching;

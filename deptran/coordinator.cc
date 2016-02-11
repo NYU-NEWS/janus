@@ -24,12 +24,10 @@ namespace rococo {
 Coordinator::Coordinator(uint32_t coo_id,
                          int32_t benchmark,
                          ClientControlServiceImpl *ccsi,
-                         uint32_t thread_id,
-                         bool batch_optimal) : coo_id_(coo_id),
+                         uint32_t thread_id) : coo_id_(coo_id),
                                                benchmark_(benchmark),
                                                ccsi_(ccsi),
                                                thread_id_(thread_id),
-                                               batch_optimal_(batch_optimal),
                                                mtx_(),
                                                start_mtx_() {
   uint64_t k = coo_id_;

@@ -55,7 +55,7 @@ void client_launch_workers(vector<Config::SiteInfo>& client_sites) {
   }
 }
 
-void server_launch_worker(vector<Config::SiteInfo>&server_sites) {
+void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
   Log_info("server enabled, number of sites: %d", server_sites.size());
   svr_workers.resize(server_sites.size(), ServerWorker());
   int i=0;
@@ -64,11 +64,10 @@ void server_launch_worker(vector<Config::SiteInfo>&server_sites) {
              site_info.id,
              site_info.GetBindAddress().c_str());
     auto& worker = svr_workers[i++];
-
-    // register txn piece logic
-    worker.SetupBase();
-    worker.RegPiece();
     worker.site_info_ = &site_info;
+    worker.SetupBase();
+    // register txn piece logic
+    worker.RegPiece();
     // setup communication between controller script
     worker.SetupHeartbeat();
     // populate table according to benchmarks

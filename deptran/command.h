@@ -30,7 +30,10 @@ public:
   virtual Command* GetNextSubCmd(){verify(0);};
   virtual Command* GetRootCmd() {return this;};
   virtual void Reset() {verify(0);};
-  virtual Command* Clone() const {return nullptr;}
+  virtual Command* Clone() const  {
+    return new Command(*this);
+//    verify(0);
+  };
 };
 
 class SequentialCommand {

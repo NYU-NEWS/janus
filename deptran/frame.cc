@@ -169,7 +169,6 @@ Coordinator* Frame::CreateCoord(cooid_t coo_id,
                                 int benchmark,
                                 ClientControlServiceImpl *ccsi,
                                 uint32_t id,
-                                bool batch_start,
                                 TxnRegistry* txn_reg) {
   // TODO: clean this up; make Coordinator subclasses assign txn_reg_
   Coordinator *coo;
@@ -181,8 +180,7 @@ Coordinator* Frame::CreateCoord(cooid_t coo_id,
       coo = new TPLCoord(coo_id,
                          benchmark,
                          ccsi,
-                         id,
-                         batch_start);
+                         id);
       ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
     case MODE_OCC:
@@ -190,32 +188,28 @@ Coordinator* Frame::CreateCoord(cooid_t coo_id,
       coo = new OCCCoord(coo_id,
                          benchmark,
                          ccsi,
-                         id,
-                         batch_start);
+                         id);
       ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
     case MODE_RCC:
       coo = new RCCCoord(coo_id,
                          benchmark,
                          ccsi,
-                         id,
-                         batch_start);
+                         id);
       ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
     case MODE_RO6:
       coo = new RO6Coord(coo_id,
                          benchmark,
                          ccsi,
-                         id,
-                         batch_start);
+                         id);
       ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
     case MODE_NONE:
       coo = new NoneCoord(coo_id,
                           benchmark,
                           ccsi,
-                          id,
-                          batch_start);
+                          id);
       ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
     case MODE_MDCC:

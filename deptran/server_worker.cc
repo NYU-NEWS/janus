@@ -27,6 +27,7 @@ void ServerWorker::SetupHeartbeat() {
 void ServerWorker::SetupBase() {
   auto config = Config::GetConfig();
   dtxn_frame_ = Frame::GetFrame(config->cc_mode_);
+  dtxn_frame_->site_info_ = site_info_;
 
   // this needs to be done before poping table
   sharding_ = dtxn_frame_->CreateSharding(Config::GetConfig()->sharding_);
@@ -40,6 +41,7 @@ void ServerWorker::SetupBase() {
 
   if (config->IsReplicated()) {
     rep_frame_ = Frame::GetFrame(config->ab_mode_);
+    rep_frame_->site_info_ = site_info_;
     rep_sched_ = rep_frame_->CreateScheduler();
     rep_sched_->txn_reg_ = txn_reg_;
     dtxn_sched_->rep_frame_ = rep_frame_;

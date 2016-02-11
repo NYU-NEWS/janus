@@ -42,7 +42,6 @@ void ClientWorker::work() {
                              benchmark,
                              ccsi,
                              id,
-                             batch_start,
                              txn_reg_);
   if (ccsi) ccsi->wait_for_start(id);
 

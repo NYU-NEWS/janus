@@ -20,13 +20,11 @@ namespace rococo {
 ThreePhaseCoordinator::ThreePhaseCoordinator(uint32_t coo_id,
                                              int benchmark,
                                              ClientControlServiceImpl *ccsi,
-                                             uint32_t thread_id,
-                                             bool batch_optimal)
+                                             uint32_t thread_id)
     : Coordinator(coo_id,
                   benchmark,
                   ccsi,
-                  thread_id,
-                  batch_optimal) {
+                  thread_id) {
   // TODO: doesn't belong here;
   // it is currently here so that subclasses such as RCCCoord and OCCoord don't break
   verify(commo_ == nullptr);

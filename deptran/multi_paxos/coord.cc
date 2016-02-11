@@ -6,15 +6,12 @@
 
 namespace rococo {
 
-ballot_t MultiPaxosCoord::next_slot_s = 1;
 
 MultiPaxosCoord::MultiPaxosCoord(uint32_t coo_id,
                                  int32_t benchmark,
                                  ClientControlServiceImpl *ccsi,
-                                 uint32_t thread_id,
-                                 bool batch_optimal)
-    : Coordinator(coo_id, benchmark, ccsi, thread_id, batch_optimal) {
-  slot_id_ = next_slot_s++;
+                                 uint32_t thread_id)
+    : Coordinator(coo_id, benchmark, ccsi, thread_id) {
 }
 
 
