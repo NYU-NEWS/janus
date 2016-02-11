@@ -305,8 +305,8 @@ void Config::LoadSiteYML(YAML::Node config) {
   // count the sites so that we can reserve storage up front
   // to avoid invalidating the pointers
   int num_sites=0;
-  for (auto partition = servers.begin(); partition != servers.end(); partition++) {
-    num_sites += partition->size();
+  for (auto& partition : servers) {
+    num_sites += partition.size();
   }
   sites_.reserve(num_sites);
 
