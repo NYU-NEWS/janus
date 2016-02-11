@@ -17,7 +17,7 @@ Executor::~Executor(){
 }
 
 mdb::Txn* Executor::mdb_txn() {
-  if (mdb_txn_) return mdb_txn_;
+  if (mdb_txn_ != nullptr) return mdb_txn_;
   mdb::Txn *txn = sched_->GetOrCreateMTxn(cmd_id_);
   verify(txn != nullptr);
   mdb_txn_ = txn;

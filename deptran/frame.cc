@@ -11,13 +11,9 @@
 #include "rcc/rcc_coord.h"
 #include "ro6/ro6_coord.h"
 #include "tpl/coord.h"
-#include "occ/coord.h"
 #include "tpl/exec.h"
-
-// multi_paxos
-//#include "multi_paxos/coord.h"
-//#include "multi_paxos/commo.h"
-//#include "multi_paxos/service.cc"
+#include "occ/coord.h"
+#include "occ/exec.h"
 
 #include "bench/tpcc_real_dist/sharding.h"
 #include "bench/tpcc/generator.h"
@@ -336,6 +332,9 @@ Executor* Frame::CreateExecutor(cmdid_t cmd_id, Scheduler* sched) {
   switch (mode) {
     case MODE_2PL:
       exec = new TPLExecutor(cmd_id, sched);
+      break;
+    case MODE_OCC:
+      exec = new OCCExecutor(cmd_id, sched);
       break;
     case MODE_MDCC:
       exec = new mdcc::MdccExecutor(cmd_id, sched);

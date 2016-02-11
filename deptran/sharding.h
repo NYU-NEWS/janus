@@ -201,8 +201,8 @@ class Sharding {
                          mdb::Schema *schema,
                          mdb::symbol_t *symbol);
 
-  int get_table_names(uint32_t sid,
-                      std::vector<std::string> &tables);
+  int GetTableNames(uint32_t sid,
+                    vector<string> &tables);
 
   int get_number_rows(std::map<std::string, uint64_t> &table_map);
 

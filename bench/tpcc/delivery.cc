@@ -50,7 +50,6 @@ void TpccPiece::reg_delivery() {
     Log_debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_0);
     verify(cmd.input.size() == 2);
     Value buf;
-    mdb::Txn *txn = dtxn->mdb_txn_;
     //cell_locator_t cl(TPCC_TB_NEW_ORDER, 3);
     mdb::Row *r = NULL;
     mdb::Table *tbl = dtxn->GetTable(TPCC_TB_NEW_ORDER);
@@ -81,6 +80,7 @@ void TpccPiece::reg_delivery() {
       output[TPCC_VAR_O_ID] = Value((i32) -1);
     }
     if (r) {
+      mdb::Txn *txn = dtxn->mdb_txn();
       txn->remove_row(tbl, r);
     }
 

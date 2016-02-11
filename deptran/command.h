@@ -24,9 +24,18 @@ public:
   virtual void Merge(Command&){verify(0);};;
   virtual bool IsFinished(){verify(0);};
 
-  virtual set<parid_t> GetSiteIds() {verify(0); return set<parid_t>();};
-  virtual bool IsSinglePar(){verify(0); return false;};
-  virtual bool HasMoreSubCmdReadyNotOut(){verify(0); return false;};
+  virtual set<parid_t> GetSiteIds() {
+    verify(0);
+    return set<parid_t>();
+  }
+  virtual bool IsSinglePar() {
+    verify(0);
+    return false;
+  }
+  virtual bool HasMoreSubCmdReadyNotOut() {
+    verify(0);
+    return false;
+  }
   virtual Command* GetNextSubCmd(){verify(0);};
   virtual Command* GetRootCmd() {return this;};
   virtual void Reset() {verify(0);};

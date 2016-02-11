@@ -55,7 +55,7 @@ void ServerWorker::PopTable() {
   // get all tables
   std::vector<std::string> table_names;
 
-  ret = sharding_->get_table_names(site_info_->id, table_names);
+  ret = sharding_->GetTableNames(site_info_->id, table_names);
   verify(ret > 0);
 
   for (auto table_name : table_names) {

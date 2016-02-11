@@ -18,7 +18,6 @@ int ThreePhaseSched::OnPhaseOneRequest(const SimpleCommand &cmd,
                     res,
                     *output,
                     defer);
-  defer->reply();
   return 0;
 }
 

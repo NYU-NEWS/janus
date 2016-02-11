@@ -265,22 +265,21 @@ int Sharding::init_schema(const std::string &tb_name,
   return schema->columns_count();
 }
 
-int Sharding::get_table_names(uint32_t sid,
-                              std::vector<std::string> &tables) {
-  tables.clear();
-  std::map<std::string, tb_info_t>::iterator it = tb_infos_.begin();
-  uint32_t i;
-
-  for (; it != tb_infos_.end(); it++) {
-    auto &tb_info = it->second;
-    for (i = 0; i < tb_info.num_site; i++) {
-      if (tb_info.site_id[i] == sid) {
-        tables.push_back(it->first);
+int Sharding::GetTableNames(uint32_t sid,
+                            vector<string> &tables) {
+//  tables.clear();
+  verify(tables.size() == 0);
+  for (auto it = tb_infos_.begin(); it != tb_infos_.end(); it++) {
+    auto &tbl_name = it->first;
+    auto &tbl_info = it->second;
+    for (int i = 0; i < tbl_info.num_site; i++) {
+      if (tbl_info.site_id[i] == sid) {
+        tables.push_back(tbl_name);
         break;
       }
     }
   }
-
+  verify(tables.size() > 0);
   return tables.size();
 }
 
