@@ -24,8 +24,8 @@ class TPCCDSharding: public Sharding {
   int n_row_inserted_ = 0;
   bool record_key = true; // ?
 
-  void PopulateTable(tb_info_t *tb_info, uint32_t);
-  int PopulateTable(unsigned int sid);
+  void PopulateTable(tb_info_t *tb_info, parid_t);
+  int PopulateTable(parid_t par_id);
   void PreparePrimaryColumn(tb_info_t *tb_info,
                             uint32_t col_index,
                             mdb::Schema::iterator &col_it);

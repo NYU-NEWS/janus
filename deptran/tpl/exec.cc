@@ -13,11 +13,9 @@ int TPLExecutor::StartLaunch(const SimpleCommand& cmd,
                              rrr::i32 *res,
                              map<int32_t, Value> *output,
                              rrr::DeferredReply *defer) {
-  verify(mdb_txn() != nullptr);
-  verify(mdb_txn_->rtti() == mdb::symbol_t::TXN_2PL);
+  verify(mdb_txn()->rtti() == mdb::symbol_t::TXN_2PL);
   verify(phase_ <= 1);
-
-  mdb::Txn2PL *txn = (mdb::Txn2PL *) mdb_txn_;
+  mdb::Txn2PL *txn = (mdb::Txn2PL *) mdb_txn();
   verify(mdb_txn_ != nullptr);
   if (wounded_) {
     // other pieces have already been wounded. so cannot proceed.
@@ -25,13 +23,10 @@ int TPLExecutor::StartLaunch(const SimpleCommand& cmd,
     defer->reply();
   } else {
     InitPieceStatus(cmd, defer, output);
-
     Log_debug("get txn handler and start reg lock, txn_id: %lx, pie_id: %lx",
               cmd.root_id_, cmd.id_);
     auto entry = txn_reg_->get(cmd);
     map<int32_t, Value> no_use;
-
-
     // pre execute to establish interference.
     TPLDTxn *dtxn = (TPLDTxn*) dtxn_;
     dtxn->locks_.clear();

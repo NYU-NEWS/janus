@@ -37,7 +37,8 @@ Command *TxnCommand::GetNextSubCmd() {
       status = INIT;
       cmd = new SimpleCommand();
       cmd->inn_id_ = pi;
-      cmd->site_id_ = sharding_[pi];
+      cmd->par_id_ = GetPiecePar(pi);
+      verify(cmd->par_id_ == 0);
       cmd->type_ = pi;
       cmd->root_id_ = id_;
       cmd->root_type_ = type_;
@@ -46,7 +47,7 @@ Command *TxnCommand::GetNextSubCmd() {
       cmd->root_ = this;
       cmd_[pi] = cmd;
 
-      partitions_.insert(cmd->site_id_);
+      partitions_.insert(cmd->par_id_);
 
       Log_debug("getting subcmd i: %d, thread id: %x",
                 pi, std::this_thread::get_id());

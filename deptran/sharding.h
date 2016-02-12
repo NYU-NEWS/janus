@@ -133,7 +133,7 @@ class Sharding {
     uint32_t num_site;
     std::vector<uint32_t> site_id;
     uint64_t num_records;
-    map<uint32_t, bool> populated;
+    map<parid_t, bool> populated; // partition_id -> populated
 
     std::vector<column_t> columns;
     mdb::symbol_t symbol;

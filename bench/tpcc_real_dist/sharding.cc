@@ -328,7 +328,7 @@ void TPCCDSharding::PreparePrimaryColumn(tb_info_t *tb_info,
   }
 }
 
-void TPCCDSharding::PopulateTable(tb_info_t *tb_info, uint32_t sid) {
+void TPCCDSharding::PopulateTable(tb_info_t *tb_info, parid_t par_id) {
   // find table and secondary table
   mdb::Table *const table_ptr = dtxn_sched_->get_table(tb_info->tb_name);
   const mdb::Schema *schema = table_ptr->schema();
@@ -355,7 +355,6 @@ void TPCCDSharding::PopulateTable(tb_info_t *tb_info, uint32_t sid) {
     col_it++;
   }
 
-
   if (tb_info->tb_name == TPCC_TB_CUSTOMER) { // XXX
     g_c_last_schema.add_column("c_id", mdb::Value::I32, true);
   }                                       // XXX
@@ -378,11 +377,11 @@ void TPCCDSharding::PopulateTable(tb_info_t *tb_info, uint32_t sid) {
                               num_self_primary);
   for (; key_value < max_key || num_self_primary == 0; ++key_value) {
     init_index(prim_foreign_index);
-    InsertRow(tb_info, sid, key_value, schema, table_ptr, tbl_sec_ptr);
+    InsertRow(tb_info, par_id, key_value, schema, table_ptr, tbl_sec_ptr);
   }
 }
 
-int TPCCDSharding::PopulateTable(uint32_t sid) {
+int TPCCDSharding::PopulateTable(parid_t par_id) {
   auto n_left = tb_infos_.size();
   verify(n_left > 0);
 
@@ -393,14 +392,14 @@ int TPCCDSharding::PopulateTable(uint32_t sid) {
       verify(tb_it->first == tb_info->tb_name);
 
       // TODO is this unnecessary?
-      auto it = tb_info->populated.find(sid);
+      auto it = tb_info->populated.find(par_id);
       if (it == tb_info->populated.end()) {
-        tb_info->populated[sid] = false;
+        tb_info->populated[par_id] = false;
       }
 
-      if (!tb_info->populated[sid] && Ready2Populate(tb_info)) {
-        PopulateTable(tb_info, sid);
-        tb_info->populated[sid] = true;
+      if (!tb_info->populated[par_id] && Ready2Populate(tb_info)) {
+        PopulateTable(tb_info, par_id);
+        tb_info->populated[par_id] = true;
         // finish populate one table
         n_left--;
         populated = true;

@@ -55,7 +55,6 @@ mdb::ResultSet DTxn::QueryIn(Table *tbl,
   }
 }
 
-
 //mdb::ResultSet DTxn::query(Table *tbl, const mdb::Value &kv) {
 //  verify(mdb_txn_ != nullptr);
 //  return mdb_txn_->query(tbl, kv);
@@ -86,6 +85,7 @@ mdb::Row* DTxn::Query(mdb::Table *tbl,
       ret_row = it->second;
     } else {
       auto rs = mdb_txn()->query(tbl, mb);
+      verify(rs.has_next());
       ret_row = rs.next();
       row_map[row_context_id] = ret_row;
     }

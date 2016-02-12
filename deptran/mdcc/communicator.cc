@@ -33,7 +33,7 @@ namespace mdcc {
   void MdccCommunicator::SendStartPiece(const rococo::SimpleCommand& cmd,
                                         Callback<StartPieceResponse>& callback) {
     std::lock_guard<std::mutex> lock(this->mtx_);
-    auto& site = config_->SiteById(cmd.GetSiteId());
+    auto& site = config_->SiteById(cmd.GetParId());
     auto proxy = ClosestSiteProxy(site.partition_id_);
 
     rrr::FutureAttr future;
@@ -52,7 +52,7 @@ namespace mdcc {
                                       const rococo::SimpleCommand &cmd,
                                       OptionSet* options,
                                       Callback<OptionSet>& callback) {
-    auto partition_id = config_->SiteById(cmd.GetSiteId()).partition_id_;
+    auto partition_id = config_->SiteById(cmd.GetParId()).partition_id_;
     auto partition_sites = config_->SitesByPartitionId(partition_id);
 
     if (ballotType == BallotType::CLASSIC) {

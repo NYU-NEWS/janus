@@ -38,6 +38,9 @@ void TpccPiece::reg_new_order() {
     mdb::MultiBlob mb(2);
     mb[0] = cmd.input[TPCC_VAR_D_ID].get_blob();
     mb[1] = cmd.input[TPCC_VAR_W_ID].get_blob();
+    Log_debug("new order d_id: %x w_id: %x",
+              cmd.input[TPCC_VAR_D_ID].get_i32(),
+              cmd.input[TPCC_VAR_W_ID].get_i32());
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT),
                               mb,
                               ROW_DISTRICT);
@@ -234,6 +237,9 @@ void TpccPiece::reg_new_order() {
     mdb::MultiBlob mb(2);
     mb[0] = cmd.input[TPCC_VAR_I_ID(I)].get_blob();
     mb[1] = cmd.input[TPCC_VAR_S_W_ID(I)].get_blob();
+    Log_debug("new order read stock. item_id: %x, s_w_id: %x",
+              cmd.input[TPCC_VAR_I_ID(I)].get_i32(),
+              cmd.input[TPCC_VAR_S_W_ID(I)].get_i32());
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_STOCK), mb, ROW_STOCK);
     verify(r->schema_);
     //i32 s_dist_col = 3 + input[2].get_i32();

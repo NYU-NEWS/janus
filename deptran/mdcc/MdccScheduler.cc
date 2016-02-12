@@ -16,7 +16,8 @@ namespace mdcc {
     if (chopper->HasMoreSubCmdReadyNotOut()) {
       auto cmd = static_cast<rococo::SimpleCommand*>(chopper->GetNextSubCmd());
       cmd->id_ = txn_id;
-      Log_info("Start sub-command: command site_id is %d %d %d", cmd->GetSiteId(), cmd->type_, cmd->inn_id_);
+      Log_info("Start sub-command: command site_id is %d %d %d",
+               cmd->GetParId(), cmd->type_, cmd->inn_id_);
       Callback<StartPieceResponse> cb =
           [this, txn_id, chopper, cmd] (const StartPieceResponse& response) {
             if (response.result!=SUCCESS) {
