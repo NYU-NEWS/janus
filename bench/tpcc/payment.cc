@@ -329,7 +329,7 @@ void TpccPiece::reg_payment() {
     verify(cmd.input.size() == 9);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_5);
 
-    mdb::Txn *txn = dtxn->mdb_txn_;
+    mdb::Txn *txn = dtxn->mdb_txn();
     mdb::Table *tbl = txn->get_table(TPCC_TB_HISTORY);
 
     // insert history

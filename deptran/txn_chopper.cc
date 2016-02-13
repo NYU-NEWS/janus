@@ -38,7 +38,6 @@ Command *TxnCommand::GetNextSubCmd() {
       cmd = new SimpleCommand();
       cmd->inn_id_ = pi;
       cmd->par_id_ = GetPiecePar(pi);
-      verify(cmd->par_id_ == 0);
       cmd->type_ = pi;
       cmd->root_id_ = id_;
       cmd->root_type_ = type_;

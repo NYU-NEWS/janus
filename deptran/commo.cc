@@ -9,7 +9,6 @@ void RococoCommunicator::SendStart(SimpleCommand &cmd,
                                    const function<void(StartReply&)> &callback) {
   rrr::FutureAttr fuattr;
   RococoProxy *proxy = rpc_proxies_[cmd.GetParId()];
-  verify(cmd.GetParId() == 0); // used as debug
   std::function<void(Future*)> cb =
       [coo, this, callback, &cmd] (Future *fu) {
     StartReply reply;

@@ -208,7 +208,9 @@ parid_t TpccChopper::GetPiecePar(innid_t inn_id) {
     auto tb = pair.first;
     var = pair.second;
 //    auto cmd = (SimpleCommand*) inputs_[inn_id];
-    MultiValue mv = MultiValue(inputs_[inn_id][TPCC_VAR_W_ID]);
+    verify(inputs_.find(inn_id) != inputs_.end());
+    verify(inputs_[inn_id].find(var) != inputs_[inn_id].end());
+    MultiValue mv = MultiValue(inputs_[inn_id][var]);
     sss_->get_site_id_from_tb(tb, mv, par);
   } else {
     par = sharding_[inn_id];

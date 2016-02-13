@@ -5,22 +5,34 @@ namespace deptran {
 
 class TpccChopper;
 
-class TpccDistChopper : public TpccChopper {
-protected:
-    virtual void new_order_shard(const char *tb, const std::vector<mdb::Value> &input, uint32_t &site, int cnt = 0);
+class TpccDistChopper: public TpccChopper {
+ protected:
+  virtual void new_order_shard(const char *tb,
+                               const std::vector<mdb::Value> &input,
+                               uint32_t &site,
+                               int cnt = 0);
 
-    virtual void payment_shard(const char *tb, const std::vector<mdb::Value> &input, uint32_t &site);
+  virtual void payment_shard(const char *tb,
+                             const vector<mdb::Value> &input,
+                             uint32_t &site);
 
-    virtual void order_status_shard(const char *tb, const std::vector<mdb::Value> &input, uint32_t &site);
+  virtual void order_status_shard(const char *tb,
+                                  const vector<mdb::Value> &input,
+                                  uint32_t &site);
 
-    virtual void delivery_shard(const char *tb, const std::vector<mdb::Value> &input, uint32_t &site, int cnt);
+  virtual void delivery_shard(const char *tb,
+                              const vector<mdb::Value> &input,
+                              uint32_t &site,
+                              int cnt);
 
-    virtual void stock_level_shard(const char *tb, const std::vector<mdb::Value> &input, uint32_t &site);
+  virtual void stock_level_shard(const char *tb,
+                                 const vector<mdb::Value> &input,
+                                 uint32_t &site);
 
-public:
-    TpccDistChopper();
+ public:
+  TpccDistChopper();
 
-    virtual ~TpccDistChopper();
+  virtual ~TpccDistChopper();
 };
 
 }
