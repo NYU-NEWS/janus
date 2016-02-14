@@ -7,6 +7,9 @@ class TpccChopper;
 
 class TpccRealDistChopper: public TpccChopper {
  protected:
+
+  virtual parid_t GetPiecePar(innid_t inn_id);
+
   virtual void new_order_shard(const char *tb,
                                const std::vector<mdb::Value> &input,
                                uint32_t &site,

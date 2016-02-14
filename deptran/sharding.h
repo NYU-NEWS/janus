@@ -156,9 +156,9 @@ class Sharding {
 
   MultiValue &stock_mapping(const MultiValue &mv);
 
-  int get_site_id_from_tb(const std::string &tb_name,
-                          const MultiValue &key,
-                          unsigned int &site_id);
+  int GetPartition(const std::string &tb_name,
+                   const MultiValue &key,
+                   unsigned int &site_id);
 
   int get_site_id_from_tb(const std::string &tb_name,
                           std::vector<unsigned int> &site_id);

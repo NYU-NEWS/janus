@@ -224,13 +224,13 @@ MultiValue &Sharding::stock_mapping(const MultiValue &mv) {
   return stock2sid_[mv];
 }
 
-int Sharding::get_site_id_from_tb(const std::string &tb_name,
-                                  const MultiValue &key,
-                                  uint32_t &site_id) {
+int Sharding::GetPartition(const std::string &tb_name,
+                           const MultiValue &key,
+                           parid_t& par_id) {
   std::map<std::string, tb_info_t>::iterator it = tb_infos_.find(tb_name);
   if (it == tb_infos_.end()) return -1;
   if (it->second.site_id.size() == 0) return -2;
-  site_id = site_from_key(key, &(it->second));
+  par_id = site_from_key(key, &(it->second));
   return 0;
 }
 

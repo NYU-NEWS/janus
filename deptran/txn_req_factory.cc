@@ -65,9 +65,9 @@ TxnGenerator::TxnGenerator(Config* config)
                      && tpca_para_.n_branch_ == tpca_para_.n_customer_);
           fix_id_ = RandomGenerator::rand(0, tpca_para_.n_branch_ - 1);
           unsigned int b, t, c;
-          sharding_->get_site_id_from_tb(TPCA_BRANCH, Value(fix_id_), b);
-          sharding_->get_site_id_from_tb(TPCA_TELLER, Value(fix_id_), t);
-          sharding_->get_site_id_from_tb(TPCA_CUSTOMER, Value(fix_id_), c);
+          sharding_->GetPartition(TPCA_BRANCH, Value(fix_id_), b);
+          sharding_->GetPartition(TPCA_TELLER, Value(fix_id_), t);
+          sharding_->GetPartition(TPCA_CUSTOMER, Value(fix_id_), c);
           verify(b == c && c == t);
           break;
         }

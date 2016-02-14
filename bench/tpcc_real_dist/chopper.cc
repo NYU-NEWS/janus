@@ -5,6 +5,13 @@ namespace deptran {
 TpccRealDistChopper::TpccRealDistChopper() {
 }
 
+parid_t TpccRealDistChopper::GetPiecePar(innid_t inn_id) {
+  parid_t par_id;
+  verify(0);
+  return par_id;
+}
+
+
 void TpccRealDistChopper::new_order_shard(const char *tb,
                                           const std::vector<Value> &input,
                                           uint32_t &site,
@@ -29,7 +36,7 @@ void TpccRealDistChopper::new_order_shard(const char *tb,
                                         input[5 + 3 * cnt]}));
   else
     verify(0);
-  int ret = sss_->get_site_id_from_tb(tb, mv, site);
+  int ret = sss_->GetPartition(tb, mv, site);
   verify(ret == 0);
 }
 
@@ -52,7 +59,7 @@ void TpccRealDistChopper::payment_shard(const char *tb,
     mv = MultiValue(input[6]);
   else
     verify(0);
-  int ret = sss_->get_site_id_from_tb(tb, mv, site);
+  int ret = sss_->GetPartition(tb, mv, site);
   verify(ret == 0);
 }
 
@@ -67,7 +74,7 @@ void TpccRealDistChopper::order_status_shard(const char *tb,
     mv = MultiValue(std::vector<Value>({input[1], input[0]}));
   else
     verify(0);
-  int ret = sss_->get_site_id_from_tb(tb, mv, site);
+  int ret = sss_->GetPartition(tb, mv, site);
   verify(ret == 0);
 }
 
@@ -84,7 +91,7 @@ void TpccRealDistChopper::delivery_shard(const char *tb,
     mv = MultiValue(std::vector<Value>({Value((i32) cnt), input[0]}));
   else
     verify(0);
-  int ret = sss_->get_site_id_from_tb(tb, mv, site);
+  int ret = sss_->GetPartition(tb, mv, site);
   verify(ret == 0);
 }
 
@@ -101,7 +108,7 @@ void TpccRealDistChopper::stock_level_shard(const char *tb,
     mv = MultiValue(std::vector<Value>({input[0], input[1]}));
   else
     verify(0);
-  int ret = sss_->get_site_id_from_tb(tb, mv, site);
+  int ret = sss_->GetPartition(tb, mv, site);
   verify(ret == 0);
 }
 
