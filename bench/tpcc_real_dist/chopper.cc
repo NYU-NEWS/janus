@@ -7,7 +7,9 @@ TpccRealDistChopper::TpccRealDistChopper() {
 
 parid_t TpccRealDistChopper::GetPiecePar(innid_t inn_id) {
   parid_t par_id;
-  if (type_ != TPCC_PAYMENT) {
+  if (type_ == TPCC_NEW_ORDER ||
+      type_ == TPCC_PAYMENT) {
+  } else {
     verify(0);
   }
   par_id = TpccChopper::GetPiecePar(inn_id);

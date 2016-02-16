@@ -251,7 +251,7 @@ extern char TPCC_TB_ORDER_C_ID_SECONDARY[];
 class TpccPiece: public Piece {
  protected:
   // new order
-  virtual void reg_new_order();
+  virtual void RegNewOrder();
 
   // payment
   virtual void RegPayment();
