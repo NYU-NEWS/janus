@@ -39,6 +39,11 @@ namespace mdcc {
     std::vector<unique_ptr<OptionSet>> max_tried_;
   };
 
+  struct AcceptorContext {
+    Ballot ballot;
+    vector<OptionSet> values;
+  };
+
   class MdccScheduler : public Scheduler {
   protected:
    std::mutex mtx_;
@@ -48,6 +53,7 @@ namespace mdcc {
 
    std::map<txnid_t, unique_ptr<TxnOptionResult>> option_results_;
    LeaderContext leader_context_;
+   AcceptorContext acceptor_context_;
   public:
    MdccScheduler() : Scheduler(MODE_MDCC) {}
    virtual ~MdccScheduler() {
@@ -74,5 +80,8 @@ namespace mdcc {
    bool LaunchNextPiece(uint64_t txn_id, TxnChopper *chopper);
    void SendUpdateProposal(txnid_t txn_id, const SimpleCommand &cmd, int32_t* result, rrr::DeferredReply* defer);
    void Phase2aClassic(OptionSet option_set);
+   void Phase2bClassic(const Ballot ballot, const std::vector<OptionSet>& values);
+
+    void SetCompatible(const std::vector<OptionSet> &old_options, std::vector<OptionSet> &current_options);
   };
 }

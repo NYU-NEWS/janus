@@ -4,54 +4,59 @@ service MdccLearner {
 };
 
 abstract service MdccClient {
-    defer Start(StartRequest req | StartResponse res);
-    defer StartPiece(rococo::SimpleCommand cmd | StartPieceResponse res);
+  defer Start(StartRequest req | StartResponse res);
+  defer StartPiece(rococo::SimpleCommand cmd | StartPieceResponse res);
 };
 
 abstract service MdccLeader {
-    defer Propose(ProposeRequest req);
+  defer Propose(ProposeRequest req);
 };
 
 abstract service MdccAcceptor {
-    defer Phase2a(Phase2aRequest req);
+  defer Phase2a(Phase2aRequest req);
 };
 
 struct StartRequest {
-    i64 txn_id;
-    i32 txn_type;
-    map<i32, Value> inputs;
+  i64 txn_id;
+  i32 txn_type;
+  map<i32, Value> inputs;
 };
 
 struct StartPieceRequest {
-    i64 txn_id;
-    i32 txn_type;
-    i32 piece_id;
-    rococo::SimpleCommand command;
-    map<i32, Value> inputs;
+  i64 txn_id;
+  i32 txn_type;
+  i32 piece_id;
+  rococo::SimpleCommand command;
+  map<i32, Value> inputs;
 };
 
 struct StartResponse {
-    i8 result; // 1 = accept; 0 = reject
+  i8 result; // 1 = accept; 0 = reject
 };
 
 struct StartPieceResponse {
-    i32 result; // 1 = accept; 0 = reject
+  i32 result; // 1 = accept; 0 = reject
 };
 
 struct ProposeRequest {
-    OptionSet updates
+  OptionSet updates
 };
 
 struct ProposeResponse {
-    string table;
-    i64 key;
-    i8 accepted;
+  string table;
+  i64 key;
+  i8 accepted;
 };
 
 struct Phase2aRequest {
-    i32 site_id;
-    Ballot ballot;
-    std::vector<OptionSet> values;
+  i32 site_id;
+  Ballot ballot;
+  std::vector<OptionSet> values;
+};
+
+struct Phase1bRequest {
+  Ballot ballot;
+  std::vector<OptionSet> values;
 };
 
 struct Phase2aResponse {

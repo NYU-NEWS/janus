@@ -28,7 +28,8 @@ void MdccLeaderServiceImpl::Propose(const ProposeRequest &req,
 
 void MdccAcceptorServiceImpl::Phase2a(const Phase2aRequest& req,
                                       rrr::DeferredReply* defer) {
-  Log_info("Site %d: Accpetor: %s", my_site_info_.id, __FUNCTION__);
+  Log_info("Site %d: Accpetor: %s from %d", my_site_info_.id, __FUNCTION__, req.site_id);
+  dtxn_mgr_->Phase2bClassic(req.ballot, req.values);
 }
 
 }

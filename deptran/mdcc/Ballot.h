@@ -20,6 +20,11 @@ namespace mdcc {
     bool operator> (const Ballot& other) const { return other.ToTuple() < ToTuple(); }
     bool operator<=(const Ballot& other) const { return !(other > *this); }
     bool operator>=(const Ballot& other) const { return !(*this < other); }
+    std::string string() const {
+      std::ostringstream ss;
+      ss << "[ballot " << number << "; type " << type << "]";
+      return ss.str();
+    }
   };
 
   inline rrr::Marshal& operator <<(rrr::Marshal& m, const Ballot& b) {
