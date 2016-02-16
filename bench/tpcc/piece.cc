@@ -17,11 +17,11 @@ char TPCC_TB_ORDER_LINE[] =   "order_line";
 char TPCC_TB_ORDER_C_ID_SECONDARY[] = "order_secondary";
 
 void TpccPiece::reg_all() {
-    reg_new_order();
+    RegNewOrder();
     RegPayment();
-    reg_order_status();
-    reg_delivery();
-    reg_stock_level();
+    RegOrderStatus();
+    RegDelivery();
+    RegStockLevel();
 }
 
 TpccPiece::TpccPiece() {}

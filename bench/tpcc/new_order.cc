@@ -29,7 +29,7 @@ void TpccChopper::NewOrderRetry() {
   CheckReady();
 }
 
-void TpccPiece::reg_new_order() {
+void TpccPiece::RegNewOrder() {
   // Ri & W district
   INPUT_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0, TPCC_VAR_W_ID, TPCC_VAR_D_ID)
   SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0, TPCC_TB_DISTRICT, TPCC_VAR_W_ID)
