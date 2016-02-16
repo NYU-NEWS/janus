@@ -45,7 +45,7 @@ void TpccChopper::stock_level_retry() {
 }
 
 
-void TpccPiece::reg_stock_level() {
+void TpccPiece::RegStockLevel() {
   // Ri district
   INPUT_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_0, TPCC_VAR_W_ID, TPCC_VAR_D_ID)
   SHARD_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_0, TPCC_TB_DISTRICT, TPCC_VAR_W_ID)

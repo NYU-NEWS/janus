@@ -116,7 +116,7 @@ void TpccChopper::OrderStatusRetry() {
 }
 
 
-void TpccPiece::reg_order_status() {
+void TpccPiece::RegOrderStatus() {
   // piece 0, R customer secondary index, c_last -> c_id
   INPUT_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_0,
             TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_C_LAST)

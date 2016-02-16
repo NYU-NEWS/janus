@@ -16,6 +16,7 @@ site:
 #    - ["s103:8200", "s203:8201", "s303:8202"]
     - ["s101:8101"]
     - ["s102:8102"]
+    - ["s103:8103"]
   client: # each line is a partition
     - ["c1", "c2"]
     - ["c3", "c4"]
@@ -24,6 +25,7 @@ site:
 process:
   s101: localhost
   s102: localhost
+  s103: localhost
   c1: localhost
   c2: localhost
   c3: localhost
@@ -48,9 +50,9 @@ bench:
   weight:
     new_order: 44
     payment : 44
-    delivery: 0
-    order_status: 0
-    stock_level:  0
+    delivery: 4
+    order_status: 4
+    stock_level:  4
 #        new_order: 44
 #        payment : 44
 #        delivery: 4

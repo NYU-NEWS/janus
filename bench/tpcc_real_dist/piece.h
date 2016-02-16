@@ -9,6 +9,9 @@ class TpccRealDistPiece: public TpccPiece {
   using TpccPiece::TpccPiece;
   void RegNewOrder() override;
   void RegPayment() override;
+  void RegDelivery() override;
+  void RegOrderStatus() override;
+  void RegStockLevel() override;
   virtual ~TpccRealDistPiece() { }
 };
 

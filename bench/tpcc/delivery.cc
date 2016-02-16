@@ -36,7 +36,7 @@ void TpccChopper::DeliveryRetry() {
 }
 
 
-void TpccPiece::reg_delivery() {
+void TpccPiece::RegDelivery() {
   // Ri & W new_order
   INPUT_PIE(TPCC_DELIVERY, TPCC_DELIVERY_0,
             TPCC_VAR_W_ID, TPCC_VAR_D_ID)
