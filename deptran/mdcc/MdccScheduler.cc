@@ -129,10 +129,12 @@ namespace mdcc {
     Log_debug("%s at site %d", __FUNCTION__, site_id_);
     if (acceptor_context_.ballot <= ballot) {
       Log_info("%s: higher ballot received %s at site %d", __FUNCTION__, ballot.string().c_str(), site_id_);
-      acceptor_context_.ballot.number = ballot.number;
+      acceptor_context_.ballot = ballot;
       auto old_options = acceptor_context_.values;
       acceptor_context_.values = values;
+
       SetCompatible(old_options, acceptor_context_.values);
+
       Phase1bRequest req;
       req.ballot = acceptor_context_.ballot;
       req.values = acceptor_context_.values;
@@ -144,6 +146,5 @@ namespace mdcc {
                                     std::vector<OptionSet> &current_options) {
     Log_debug("%s at site %d", __FUNCTION__, site_id_);
     std::vector<OptionSet*> new_options;
-    
   }
 }
