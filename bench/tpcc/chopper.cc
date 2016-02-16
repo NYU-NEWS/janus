@@ -201,7 +201,7 @@ bool TpccChopper::is_read_only() {
 
 parid_t TpccChopper::GetPiecePar(innid_t inn_id) {
   parid_t par;
-    auto it = txn_reg_->sharding_input_.find(std::make_pair(type_, inn_id));
+  auto it = txn_reg_->sharding_input_.find(std::make_pair(type_, inn_id));
   if (it != txn_reg_->sharding_input_.end()) {
     auto &pair = it->second;
     auto tb = pair.first;

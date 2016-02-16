@@ -27,16 +27,18 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DLOG_LEVEL_AS_DEBUG")
 #  SET(LINK_TO_DMALLOC 1)
 #ENDIF(DMALLOC_LIBRARY)
 
-add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/deptran/mdcc/mdcc_rpc.h
-        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/bin/rpcgen --cpp deptran/mdcc/mdcc_rpc.rpc
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/deptran/mdcc/mdcc_rpc.rpc
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/deptran/rcc_rpc.h ${CMAKE_CURRENT_SOURCE_DIR}/deptran/rcc_rpc.py
-        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/bin/rpcgen --cpp --python deptran/rcc_rpc.rpc
-        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/deptran/rcc_rpc.rpc
-        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
-add_custom_target (
-    gen-rpc
+add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/deptran/mdcc/mdcc_rpc.h
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/bin/rpcgen --cpp deptran/mdcc/mdcc_rpc.rpc
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/deptran/mdcc/mdcc_rpc.rpc
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_custom_command(
+    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/deptran/rcc_rpc.h
+           ${CMAKE_CURRENT_SOURCE_DIR}/deptran/rcc_rpc.py
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/bin/rpcgen --cpp --python deptran/rcc_rpc.rpc
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/deptran/rcc_rpc.rpc
+    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+add_custom_target (gen-rpc
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/deptran/mdcc/mdcc_rpc.h
             ${CMAKE_CURRENT_SOURCE_DIR}/deptran/rcc_rpc.h
             ${CMAKE_CURRENT_SOURCE_DIR}/deptran/rcc_rpc.py)

@@ -8,7 +8,8 @@ void RWChopper::W_txn_init(TxnRequest &req) {
   n_pieces_input_ready_ = 1;
 
   output_size_ = {{0,0}};
-  p_types_ = {{0,RW_BENCHMARK_W_TXN_0}};
+  p_types_ = {{RW_BENCHMARK_W_TXN_0, RW_BENCHMARK_W_TXN_0}};
+  sharding_ = { {RW_BENCHMARK_W_TXN_0, 0} };
   sss_->GetPartition(RW_BENCHMARK_TABLE, req.input_[0], sharding_[0]);
   status_ = {{RW_BENCHMARK_W_TXN_0, READY}};
   n_pieces_all_ = 1;
@@ -20,7 +21,8 @@ void RWChopper::R_txn_init(TxnRequest &req) {
   n_pieces_input_ready_ = 1;
 
   output_size_= {{0, 1}};
-  p_types_ = {{0, RW_BENCHMARK_R_TXN_0}};
+  p_types_ = {{RW_BENCHMARK_R_TXN_0, RW_BENCHMARK_R_TXN_0}};
+  sharding_ = { {RW_BENCHMARK_W_TXN_0, 0} };
   sss_->GetPartition(RW_BENCHMARK_TABLE, req.input_[0], sharding_[0]);
   status_ = {{RW_BENCHMARK_R_TXN_0, READY}};
   n_pieces_all_ = 1;
