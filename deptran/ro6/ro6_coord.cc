@@ -112,7 +112,7 @@ void RO6Coord::deptran_finish(TxnCommand *ch) {
 
       fu->get_reply() >> res;
 
-      if (n_finish_ack_ == ch->GetSiteIds().size()) {
+      if (n_finish_ack_ == ch->GetPartitionIds().size()) {
         ch->finish_callback(res);
         callback = true;
       }

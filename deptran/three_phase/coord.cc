@@ -283,15 +283,15 @@ void ThreePhaseCoordinator::Finish() {
   TxnCommand *cmd = (TxnCommand *) cmd_;
   auto mode = Config::GetConfig()->cc_mode_;
   verify(mode == MODE_OCC || mode == MODE_2PL);
-  n_finish_req_++;
-  Log_debug("send out finish request, cmd_id: %lx, %ld", cmd_->id_, n_finish_req_);
+  Log_debug("send out finish request, cmd_id: %lx, %ld", cmd->id_, n_finish_req_);
 
   // commit or abort piece
-  RequestHeader header = gen_header(cmd);
+//  RequestHeader header = gen_header(cmd);
   if (cmd->commit_.load()) {
     cmd->reply_.res_ = SUCCESS;
     for (auto &rp : cmd->partitions_) {
-      Log_debug("send commit for txn_id %ld to %ld\n", header.tid, rp);
+      n_finish_req_ ++;
+      Log_debug("send commit for txn_id %ld to %ld\n", cmd->id_, rp);
       commo_->SendCommit(rp,
                          cmd_->id_,
                          std::bind(&ThreePhaseCoordinator::FinishAck,
@@ -303,7 +303,7 @@ void ThreePhaseCoordinator::Finish() {
   } else {
     cmd->reply_.res_ = REJECT;
     for (auto &rp : cmd->partitions_) {
-      Log_debug("send abort for txn_id %ld to %ld\n", header.tid, rp);
+      Log_debug("send abort for txn_id %ld to %ld\n", cmd->id_, rp);
       commo_->SendAbort(rp,
                         cmd_->id_,
                         std::bind(&ThreePhaseCoordinator::FinishAck,
@@ -329,8 +329,8 @@ void ThreePhaseCoordinator::FinishAck(phase_t phase, Future *fu) {
     n_finish_ack_++;
     Log_debug("finish cmd_id_: %ld; n_finish_ack_: %ld; n_finish_req_: %ld",
                cmd_->id_, n_finish_ack_, n_finish_req_);
-    verify(cmd->GetSiteIds().size() == n_finish_req_);
-    if (n_finish_ack_ == cmd->GetSiteIds().size()) {
+    verify(cmd->GetPartitionIds().size() == n_finish_req_);
+    if (n_finish_ack_ == cmd->GetPartitionIds().size()) {
       if ((cmd->reply_.res_ == REJECT) && cmd->can_retry()) {
         retry = true;
       } else {

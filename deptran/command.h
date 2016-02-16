@@ -24,7 +24,7 @@ public:
   virtual void Merge(Command&){verify(0);};;
   virtual bool IsFinished(){verify(0);};
 
-  virtual set<parid_t> GetSiteIds() {
+  virtual set<parid_t> GetPartitionIds() {
     verify(0);
     return set<parid_t>();
   }

@@ -80,13 +80,13 @@ void TpccChopper::payment_retry() {
   CheckReady();
 }
 
-void TpccPiece::reg_payment() {
+void TpccPiece::RegPayment() {
 
   // piece 0, Ri & W warehouse
   INPUT_PIE(TPCC_PAYMENT, TPCC_PAYMENT_0, TPCC_VAR_W_ID, TPCC_VAR_H_AMOUNT)
   SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_0, TPCC_TB_WAREHOUSE, TPCC_VAR_W_ID);
   BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_0, DF_NO) {
-//    verify(input.size() == 2);
+    verify(cmd.input.size() == 2);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_0);
     i32 oi = 0;
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_WAREHOUSE),

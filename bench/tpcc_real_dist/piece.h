@@ -1,18 +1,15 @@
-#ifndef TPCC_REAL_DIST_PIECE_H_
-#define TPCC_REAL_DIST_PIECE_H_
+#pragma once
 
-namespace deptran {
+#include "../tpcc/piece.h"
 
-class TpccPiece;
+namespace rococo {
 
-class TpccRealDistPiece : public TpccPiece {
-public:
-    TpccRealDistPiece() {}
-
-    virtual ~TpccRealDistPiece() {}
-
+class TpccRealDistPiece: public TpccPiece {
+ public:
+  using TpccPiece::TpccPiece;
+  void RegPayment() override;
+  virtual ~TpccRealDistPiece() { }
 };
 
-}
+} // namespace rococo
 
-#endif

@@ -16,7 +16,7 @@ TxnCommand::TxnCommand() {
 }
 
 
-set<parid_t> TxnChopper::GetSiteIds() {
+set<parid_t> TxnChopper::GetPartitionIds() {
   return partitions_;
 }
 

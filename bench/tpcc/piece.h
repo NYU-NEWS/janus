@@ -254,7 +254,7 @@ class TpccPiece: public Piece {
   virtual void reg_new_order();
 
   // payment
-  virtual void reg_payment();
+  virtual void RegPayment();
 
   //void reg_payment_remote();
   //void reg_payment_remote_case1();

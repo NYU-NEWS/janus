@@ -201,16 +201,19 @@ bool TpccChopper::is_read_only() {
 
 parid_t TpccChopper::GetPiecePar(innid_t inn_id) {
   parid_t par;
-  int32_t var;
-  auto it = txn_reg_->sharding_input_.find(std::make_pair(type_, inn_id));
+    auto it = txn_reg_->sharding_input_.find(std::make_pair(type_, inn_id));
   if (it != txn_reg_->sharding_input_.end()) {
     auto &pair = it->second;
     auto tb = pair.first;
-    var = pair.second;
+    auto& var_ids = pair.second;
 //    auto cmd = (SimpleCommand*) inputs_[inn_id];
-    verify(inputs_.find(inn_id) != inputs_.end());
-    verify(inputs_[inn_id].find(var) != inputs_[inn_id].end());
-    MultiValue mv = MultiValue(inputs_[inn_id][var]);
+//    verify(inputs_.find(inn_id) != inputs_.end());
+    vector<Value> vars;
+    for (auto var_id : var_ids) {
+      verify(ws_.find(var_id) != ws_.end());
+      vars.push_back(ws_.at(var_id));
+    }
+    MultiValue mv = MultiValue(vars);
     sss_->GetPartition(tb, mv, par);
   } else {
     verify(0);

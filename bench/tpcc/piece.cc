@@ -18,7 +18,7 @@ char TPCC_TB_ORDER_C_ID_SECONDARY[] = "order_secondary";
 
 void TpccPiece::reg_all() {
     reg_new_order();
-    reg_payment();
+    RegPayment();
     reg_order_status();
     reg_delivery();
     reg_stock_level();

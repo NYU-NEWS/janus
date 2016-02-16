@@ -48,8 +48,9 @@ txn_reg_->callbacks_[std::make_pair(txn_type, inn_id)] = \
 
 #define END_CB  };
 
-#define SHARD_PIE(txn, pie, tb, var) \
-txn_reg_->sharding_input_[std::make_pair(txn, pie)] = std::make_pair(tb, var);
+#define SHARD_PIE(txn, pie, tb, ...) \
+txn_reg_->sharding_input_[std::make_pair(txn, pie)] \
+= std::make_pair(tb, vector<int32_t>({__VA_ARGS__}));
 
 #define INPUT_PIE(txn, pie, ...) \
 txn_reg_->input_vars_[txn][pie] = {__VA_ARGS__};

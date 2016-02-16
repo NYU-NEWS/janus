@@ -127,7 +127,7 @@ class TxnCommand: public Command {
   virtual void Merge(Command&);
   virtual bool HasMoreSubCmdReadyNotOut();
   virtual Command* GetNextSubCmd();
-  virtual set<parid_t> GetSiteIds();
+  virtual set<parid_t> GetPartitionIds();
   virtual parid_t GetPiecePar(innid_t inn_id) {
     verify(sharding_.find(inn_id) != sharding_.end());
     return sharding_[inn_id];
