@@ -42,14 +42,15 @@ TapirFrame::CreateRpcServices(uint32_t site_id,
                               Scheduler *dtxn_sched,
                               rrr::PollMgr *poll_mgr,
                               ServerControlServiceImpl* scsi) {
+  verify(0);
   return {};
 }
 
 mdb::Row* TapirFrame::CreateRow(const mdb::Schema *schema,
                                 vector<Value>& row_data) {
 
-  verify(0);
-  return nullptr;
+  mdb::Row* r = mdb::VersionedRow::create(schema, row_data);
+  return r;
 }
 
 } // namespace rococo
