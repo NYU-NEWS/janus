@@ -16,29 +16,6 @@ class Config {
     SS_PROCESS_SINGLE
   } single_server_t;
 
-  std::map<string, int> modes_map_ = {
-      {"none", MODE_NONE},
-      {"2pl", MODE_2PL},
-      {"occ", MODE_OCC},
-      {"rcc", MODE_RCC},
-      {"ro6", MODE_RO6},
-      {"brq", MODE_BRQ},
-      {"rpc_null", MODE_RPC_NULL},
-      {"deptran", MODE_DEPTRAN},
-      {"deptran_er", MODE_DEPTRAN},
-      {"2pl_w", MODE_2PL},
-      {"2pl_wait_die", MODE_2PL},
-      {"2pl_ww", MODE_2PL},
-      {"2pl_wound_die", MODE_2PL},
-      {"mdcc", MODE_MDCC}
-  };
-
-  const map<string, int> AB_MODES_ = {
-      {"multi_paxos", MODE_MULTI_PAXOS},
-      {"epaxos",      MODE_NOT_READY},
-      {"rep_commit",  MODE_NOT_READY}
-  };
-
   std::map<string, mdb::symbol_t> tbl_types_map_ = {
       {"sorted", mdb::TBL_SORTED},
       {"unsorted", mdb::TBL_UNSORTED},
@@ -183,7 +160,7 @@ class Config {
                                 YAML::Node column);
 
 
-  void InitMode(std::string& cc, string& ab);
+  void InitMode(std::string&cc_name, string&ab_name);
   void InitBench(std::string &);
 
   uint32_t get_site_id();

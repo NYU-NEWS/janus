@@ -157,10 +157,10 @@ void Scheduler::get_prepare_log(i64 txn_id,
   }
 }
 
-Scheduler::Scheduler() : executors_() {
+Scheduler::Scheduler() {
   //  verify(DTxnMgr::txn_mgr_s == NULL);
 //  DTxnMgr::txn_mgr_s = this;
-
+  mdb_txn_mgr_ = new mdb::TxnMgrUnsafe();
   if (Config::GetConfig()->do_logging()) {
     auto path = Config::GetConfig()->log_path();
     // TODO free this

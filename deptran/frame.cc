@@ -58,6 +58,25 @@
 namespace rococo {
 
 map<int, Frame*> Frame::frame_s_ = {};
+map<string, int> Frame::frame_name_mode_s = {
+    {"none",          MODE_NONE},
+    {"2pl", MODE_2PL},
+    {"occ", MODE_OCC},
+    {"rcc", MODE_RCC},
+    {"ro6", MODE_RO6},
+    {"brq", MODE_BRQ},
+    {"rpc_null",      MODE_RPC_NULL},
+    {"deptran",       MODE_DEPTRAN},
+    {"deptran_er",    MODE_DEPTRAN},
+    {"2pl_w",         MODE_2PL},
+    {"2pl_wait_die",  MODE_2PL},
+    {"2pl_ww",        MODE_2PL},
+    {"2pl_wound_die", MODE_2PL},
+    {"mdcc",          MODE_MDCC},
+    {"multi_paxos",   MODE_MULTI_PAXOS},
+    {"epaxos",        MODE_NOT_READY},
+    {"rep_commit",    MODE_NOT_READY}
+};
 
 Frame* Frame::RegFrame(int mode, Frame *frame) {
   auto it = Frame::frame_s_.find(mode);
@@ -80,6 +99,23 @@ Frame* Frame::GetFrame(int mode) {
   auto it = Frame::frame_s_.find(mode);
   verify(it != frame_s_.end());
   return it->second;
+}
+
+int Frame::Name2Mode(string name) {
+  auto &m = frame_name_mode_s;
+  return m.at(name);
+}
+
+Frame* Frame::GetFrame(string name) {
+  return GetFrame(Name2Mode(name));
+}
+
+Frame* Frame::RegFrame(int mode, vector<string> names, Frame* frame) {
+  for (auto name: names) {
+    verify(frame_name_mode_s.find(name) == frame_name_mode_s.end());
+    frame_name_mode_s[name] = mode;
+  }
+  RegFrame(mode, frame);
 }
 
 Sharding* Frame::CreateSharding() {

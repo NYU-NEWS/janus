@@ -1,5 +1,6 @@
-#ifndef TXN_REQ_FACTORY_H_
-#define TXN_REQ_FACTORY_H_
+#pragma once
+
+#include "__dep__.h"
 
 namespace rococo {
 
@@ -66,4 +67,3 @@ class TxnGenerator {
 
 } // namespace rcc
 
-#endif

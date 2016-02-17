@@ -14,7 +14,7 @@ class Scheduler {
  public:
   std::map<i64, DTxn *> dtxns_;
   std::map<i64, mdb::Txn *> mdb_txns_;
-  map<cmdid_t, Executor*> executors_;
+  map<cmdid_t, Executor*> executors_ = {};
 
   mdb::TxnMgr *mdb_txn_mgr_;
   int mode_;

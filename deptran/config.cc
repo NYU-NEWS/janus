@@ -376,29 +376,24 @@ void Config::LoadHostYML(YAML::Node config) {
   }
 }
 
-void Config::InitMode(std::string &mode_str, string& ab) {
-  auto it = modes_map_.find(mode_str);
-  if (it != modes_map_.end()) {
-    cc_mode_ = it->second;
-  } else {
-    verify(0);
-  }
+void Config::InitMode(string &cc_name, string& ab_name) {
+  cc_mode_ = Frame::Name2Mode(cc_name);
 
-  if ((mode_str == "rcc") || (mode_str == "deptran")) {
+  if ((cc_name == "rcc") || (cc_name == "deptran")) {
     // deprecated
     early_return_ = false;
-  } else if (mode_str == "deptran_er") {
+  } else if (cc_name == "deptran_er") {
     // deprecated
     early_return_ = true;
-  } else if (mode_str == "2pl_w") {
+  } else if (cc_name == "2pl_w") {
     retry_wait_ = true;
-  } else if (mode_str == "2pl_wait_die") {
+  } else if (cc_name == "2pl_wait_die") {
     mdb::FineLockedRow::set_wait_die();
-  } else if ((mode_str == "2pl_ww") || (mode_str == "2pl_wound_die")) {
+  } else if ((cc_name == "2pl_ww") || (cc_name == "2pl_wound_die")) {
     mdb::FineLockedRow::set_wound_die();
   }
 
-  ab_mode_ = AB_MODES_.at(ab);
+  ab_mode_ = Frame::Name2Mode(ab_name);
 }
 
 void Config::InitBench(std::string &bench_str) {

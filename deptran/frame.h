@@ -23,8 +23,12 @@ class Frame {
  public:
   // static variables to hold frames
   static map<int, Frame*> frame_s_;
+  static map<string, int> frame_name_mode_s;
+  static int Name2Mode(string name);
   static Frame* GetFrame(int mode);
-  static Frame* RegFrame(int mode, Frame* frame);
+  static Frame* GetFrame(string name);
+  static Frame* RegFrame(int mode, Frame* frame); // deprecated.
+  static Frame* RegFrame(int mode, vector<string> names, Frame* frame);
 
   int mode_;
   Config::SiteInfo* site_info_ = nullptr;
@@ -42,7 +46,8 @@ class Frame {
   // for only dtxn
   Sharding* CreateSharding();
   Sharding* CreateSharding(Sharding* sd);
-  mdb::Row* CreateRow(const mdb::Schema *schema, std::vector<Value> &row_data);
+  virtual mdb::Row* CreateRow(const mdb::Schema *schema,
+                              std::vector<Value> &row_data);
   void GetTxnTypes(std::map<int32_t, std::string> &txn_types);
   TxnCommand* CreateTxnCommand(TxnRequest& req, TxnRegistry* reg);
   TxnCommand * CreateChopper(TxnRequest &req, TxnRegistry *reg);
