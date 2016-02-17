@@ -39,7 +39,7 @@ void ServerWorker::SetupBase() {
   dtxn_sched_->txn_reg_ = txn_reg_;
   sharding_->dtxn_sched_ = dtxn_sched_;
 
-  if (config->IsReplicated()) {
+  if (config->IsReplicated() && config->ab_mode_ != config->cc_mode_) {
     rep_frame_ = Frame::GetFrame(config->ab_mode_);
     rep_frame_->site_info_ = site_info_;
     rep_sched_ = rep_frame_->CreateScheduler();

@@ -4,6 +4,7 @@ VERSION="0.0"
 
 import os
 import sys
+import glob
 from waflib import Logs
 from waflib import Options
 
@@ -85,9 +86,7 @@ def build(bld):
             "deptran/rcc_rpc.rpc",
             "bin/rpcgen --python --cpp deptran/rcc_rpc.rpc")
 
-    _depend("deptran/mdcc/mdcc_rpc.h",
-            "deptran/mdcc/mdcc_rpc.rpc",
-            "bin/rpcgen --cpp deptran/mdcc/mdcc_rpc.rpc")
+    _gen_srpc_headers()
 
     _depend("old-test/benchmark_service.h", "old-test/benchmark_service.rpc",
             "bin/rpcgen --cpp old-test/benchmark_service.rpc")
@@ -247,6 +246,14 @@ def _properly_split(args):
         return []
     else:
         return args.split()
+
+def _gen_srpc_headers():
+    for srpc in glob.glob("deptran/*/*.rpc"):
+        target = os.path.splitext(srpc)[0]+'.h' 
+        _depend(target,
+                srpc,
+                "bin/rpcgen --cpp " + srpc)    
+    pass  
 
 def _depend(target, source, action):
     target = _properly_split(target)

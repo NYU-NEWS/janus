@@ -27,3 +27,4 @@ deptran/mdcc/mdcc_rpc.h
 .ycm_extra_conf.py
 .unittest-gtest/
 *.yml
+*rpc.h
