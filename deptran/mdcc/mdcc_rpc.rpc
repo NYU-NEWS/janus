@@ -1,6 +1,7 @@
 namespace mdcc;
 
-service MdccLearner {
+abstract service MdccLearner {
+  defer Phase2b(Phase2bRequest req);
 };
 
 abstract service MdccClient {

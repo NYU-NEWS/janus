@@ -49,6 +49,7 @@ protected:
     MdccLeaderProxy* leader;
     MdccAcceptorProxy* acceptor;
     MdccClientProxy* client;
+    MdccLearnerProxy* learner;
 
     SiteProxy() = delete;
     SiteProxy(Config::SiteInfo& site_info, rrr::PollMgr* poll) : site_info(site_info) {
@@ -62,11 +63,13 @@ protected:
       leader = new MdccLeaderProxy(rpc_client);
       acceptor = new MdccAcceptorProxy(rpc_client);
       client = new MdccClientProxy(rpc_client);
+      learner = new MdccLearnerProxy(rpc_client);
     }
 
     virtual ~SiteProxy() {
       delete leader;
       delete acceptor;
+      delete learner;
       rpc_client->close_and_release();
     }
   };

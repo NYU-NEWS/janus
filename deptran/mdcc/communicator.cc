@@ -85,6 +85,13 @@ namespace mdcc {
     }
   }
 
+  void MdccCommunicator::SendPhase2b(const Phase2bRequest &req) {
+    Log_debug("%s at site %d", __FUNCTION__, site_info_.id);
+    for (auto proxy : site_proxies_) {
+      Future::safe_release(proxy->learner->async_Phase2b(req));
+    }
+  }
+
   MdccCommunicator::SiteProxy* MdccCommunicator::ClosestSiteProxy(uint32_t partition_id) const {
     auto partition_sites = config_->SitesByPartitionId(partition_id);
     assert(partition_sites.size()>0);
@@ -118,7 +125,4 @@ namespace mdcc {
     return site_proxies_[sites[index].id];
   }
 
-  void MdccCommunicator::SendPhase2b(const Phase2bRequest &req) {
-    Log_debug("%s", __FUNCTION__);
-  }
 }

@@ -454,7 +454,9 @@ vector<rrr::Service *> Frame::CreateRpcServices(uint32_t site_id,
       result.push_back(new mdcc::MdccAcceptorServiceImpl(config, 
                                                          site_id, 
                                                          dtxn_sched));
-      result.push_back(new mdcc::MdccLearnerService());
+      result.push_back(new mdcc::MdccLearnerServiceImpl(config,
+                                                        site_id,
+                                                        dtxn_sched));
       break;
     case MODE_2PL:
     case MODE_OCC:
