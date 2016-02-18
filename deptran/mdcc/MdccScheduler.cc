@@ -135,16 +135,35 @@ namespace mdcc {
 
       SetCompatible(old_options, acceptor_context_.values);
 
-      Phase1bRequest req;
+      Phase2bRequest req;
       req.ballot = acceptor_context_.ballot;
       req.values = acceptor_context_.values;
-      communicator_->SendPhase1b(req);
+      communicator_->SendPhase2b(req);
     }
   }
 
   void MdccScheduler::SetCompatible(const std::vector<OptionSet> &old_options,
                                     std::vector<OptionSet> &current_options) {
     Log_debug("%s at site %d", __FUNCTION__, site_id_);
-    std::vector<OptionSet*> new_options;
+    for (auto& option : current_options) {
+      auto it = std::find_if(old_options.begin(), old_options.end(), [&option] (const OptionSet& s) {
+        return option.TxnId() == s.TxnId();
+      });
+      if (it == old_options.end()) {
+        // not doing commutative updates for now
+        auto executor = static_cast<MdccExecutor*>(this->GetOrCreateExecutor(option.TxnId()));
+        auto is_valid_read = executor->ValidRead(option);
+        auto is_valid_single = std::find_if(old_options.begin(), old_options.end(), [&option] (const OptionSet& s) {
+          return option.Table() == s.Table() && option.Key() == s.Key();
+        }) == old_options.end();
+
+        if (is_valid_read && is_valid_single) {
+          Log_debug("%s at site %d: option accepted for txn %ld, %s", __FUNCTION__, site_id_, option.TxnId(), option.Table().c_str());
+          option.Accept();
+        } else {
+          Log_debug("%s at site %d: option rejected for txn %ld, %s", __FUNCTION__, site_id_, option.TxnId(), option.Table().c_str());
+        }
+      }
+    }
   }
 }

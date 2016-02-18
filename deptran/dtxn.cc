@@ -90,7 +90,7 @@ mdb::Row* DTxn::Query(mdb::Table *tbl,
       row_map[row_context_id] = ret_row;
     }
   } else {
-    verify(0);
+    ret_row = mdb_txn_->query(tbl, mb).next();
 //    ret_row = mdb_txn_->query(tbl, mb, retrieve, pid).next();
   }
   return ret_row;

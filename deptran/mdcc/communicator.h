@@ -38,7 +38,7 @@ class MdccCommunicator {
   void SendProposal(BallotType ballotType, txnid_t txn_id, const rococo::SimpleCommand &cmd,
                     OptionSet* options, Callback<OptionSet>& cb);
   void SendPhase2a(Phase2aRequest req);
-  void SendPhase1b(const Phase1bRequest& req);
+  void SendPhase2b(const Phase2bRequest &req);
 
 protected:
   std::mutex mtx_;

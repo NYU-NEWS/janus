@@ -54,7 +54,7 @@ struct Phase2aRequest {
   std::vector<OptionSet> values;
 };
 
-struct Phase1bRequest {
+struct Phase2bRequest {
   Ballot ballot;
   std::vector<OptionSet> values;
 };

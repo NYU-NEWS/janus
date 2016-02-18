@@ -118,7 +118,7 @@ namespace mdcc {
     return site_proxies_[sites[index].id];
   }
 
-  void MdccCommunicator::SendPhase1b(const Phase1bRequest& req) {
+  void MdccCommunicator::SendPhase2b(const Phase2bRequest &req) {
     Log_debug("%s", __FUNCTION__);
   }
 }

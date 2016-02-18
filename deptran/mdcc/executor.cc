@@ -6,6 +6,7 @@
 #include "deptran/txn_chopper.h"
 #include "deptran/frame.h"
 #include "executor.h"
+#include "memdb/row.h"
 
 namespace mdcc {
   using rococo::TxnRequest;
@@ -23,5 +24,19 @@ namespace mdcc {
     auto& c = const_cast<SimpleCommand&>(cmd);
     handler_pair.txn_handler(this, dtxn_, c, result, c.output);
     sched_->SendUpdateProposal(cmd_id_, cmd, result, defer);
+  }
+
+  bool MdccExecutor::ValidRead(OptionSet &option) {
+    auto table = this->dtxn_->GetTable(option.Table());
+    MultiBlob mb(option.Key().size());
+    for (int i=0; i<mb.count(); i++) {
+      mb[i] = option.Key()[i].get_blob();
+    }
+    auto row = static_cast<mdb::VersionedRow*>(this->dtxn_->Query(table, mb));
+    for (auto& update : option.Options()) {
+      if (update.version != row->get_column_ver(update.col_id))
+        return false;
+    }
+    return true;
   }
 }
