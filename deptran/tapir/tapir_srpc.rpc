@@ -1,0 +1,12 @@
+namespace rococo;
+
+abstract service Tapir {
+  defer Prepare();
+  defer Accept();
+  // works as 2PC prepare on a paxos fast-accept
+  defer FastAccept(SimpleCommand cmd | 
+                   i32 res,
+                   map<i32, Value> output);
+  // works as a 2PC commit/abort with a paxos decision
+  defer Decide(i64 cmd_id, i32 commit);
+}

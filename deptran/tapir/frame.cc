@@ -5,6 +5,7 @@
 #include "sched.h"
 #include "commo.h"
 #include "config.h"
+#include "service.h"
 
 namespace rococo {
 
@@ -27,6 +28,7 @@ Coordinator* TapirFrame::CreateCoord(cooid_t coo_id,
                                      benchmark,
                                      ccsi,
                                      id);
+  coord->txn_reg_ = txn_reg;
   coord->frame_ = this;
   return coord;
 }
@@ -39,11 +41,15 @@ Scheduler* TapirFrame::CreateScheduler() {
 
 vector<rrr::Service *>
 TapirFrame::CreateRpcServices(uint32_t site_id,
-                              Scheduler *dtxn_sched,
+                              Scheduler *sched,
                               rrr::PollMgr *poll_mgr,
                               ServerControlServiceImpl* scsi) {
-  verify(0);
-  return {};
+  auto config = Config::GetConfig();
+  auto result = std::vector<Service *>();
+  verify(config->ab_mode_ == config->cc_mode_ &&
+      config->ab_mode_ == MODE_TAPIR);
+  result.push_back(new TapirServiceImpl(sched));
+  return result;
 }
 
 mdb::Row* TapirFrame::CreateRow(const mdb::Schema *schema,

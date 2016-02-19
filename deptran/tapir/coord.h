@@ -11,13 +11,10 @@ class TapirCoord : public Coordinator {
 
   void do_one(TxnRequest &) override;
 
-  TapirCommo* commo() {
-    verify(0);
-    return nullptr;
-  };
+  TapirCommo* commo();
 
   void FastAccept();
-  void FastAcceptAck();
+  void FastAcceptAck(phase_t phase, parid_t par_id, Future *fu);
 
   // either commit or abort.
   void Decide();
