@@ -227,10 +227,9 @@ void ThreePhaseCoordinator::Prepare() {
   }
 
   for (auto &site : cmd->partitions_) {
-    RequestHeader header = gen_header(cmd);
-    Log::debug("send prepare tid: %ld", header.tid);
+    Log_debug("send prepare tid: %ld", cmd_->id_);
     commo_->SendPrepare(site,
-                        header.tid,
+                        cmd_->id_,
                         sids,
                         std::bind(&ThreePhaseCoordinator::PrepareAck,
                                   this,

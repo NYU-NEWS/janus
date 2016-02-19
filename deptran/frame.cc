@@ -92,13 +92,15 @@ Frame* Frame::GetFrame(int mode) {
     case MODE_MDCC:
     case MODE_2PL:
     case MODE_OCC:
-      return new Frame(mode);
-    default:
+      frame = new Frame(mode);
       break;
+    default:
+      auto it = Frame::frame_s_.find(mode);
+      verify(it != frame_s_.end());
+      frame = it->second;
   }
-  auto it = Frame::frame_s_.find(mode);
-  verify(it != frame_s_.end());
-  return it->second;
+
+  return frame;
 }
 
 int Frame::Name2Mode(string name) {

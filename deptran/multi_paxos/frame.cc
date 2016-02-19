@@ -55,7 +55,7 @@ Scheduler* MultiPaxosFrame::CreateScheduler() {
 
 Communicator* MultiPaxosFrame::CreateCommo() {
   // We only have 1 instance of MultiPaxosFrame object that is returned from
-  // GetFrame method. MultiPaxosCommo currently seems ok to share among the
+  // GetFrame method. MultiPaxosC2ommo currently seems ok to share among the
   // clients of this method.
   if (commo_ == nullptr) {
     commo_ = new MultiPaxosCommo();

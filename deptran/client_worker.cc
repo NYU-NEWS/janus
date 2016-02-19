@@ -14,7 +14,8 @@ void ClientWorker::RequestDone(TxnReply &txn_reply) {
   if (timer_->elapsed() < duration) {
     TxnRequest req;
     txn_req_factory_->get_txn_req(&req, coo_id);
-    req.callback_ = std::bind(&ClientWorker::RequestDone, this,
+    req.callback_ = std::bind(&ClientWorker::RequestDone,
+                              this,
                               std::placeholders::_1);
     coo_->do_one(req);
   } else {
@@ -87,7 +88,7 @@ ClientWorker::ClientWorker(uint32_t id,
       duration(config->get_duration()),
       ccsi(ccsi),
       n_outstanding_(config->get_concurrent_txn()) {
-  frame_ = new Frame(config->cc_mode_);
+  frame_ = Frame::GetFrame(config->cc_mode_);
   txn_req_factory_ = frame_->CreateTxnGenerator();
   config->get_all_site_addr(servers_);
   num_txn.store(0);
