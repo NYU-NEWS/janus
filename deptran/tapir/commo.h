@@ -8,8 +8,9 @@ class TapirCommo : public Communicator {
  public:
   using Communicator::Communicator;
   void BroadcastFastAccept(SimpleCommand& cmd,
-                           Coordinator* coord,
                            const function<void(Future* fu)>& callback);
+
+  void BroadcastDecide(parid_t, cmdid_t cmd_id, int decision);
 };
 
 }
