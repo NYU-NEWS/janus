@@ -19,6 +19,16 @@ parid_t TpccRealDistChopper::GetPiecePar(innid_t inn_id) {
   return par_id;
 }
 
+bool TpccRealDistChopper::IsOneRound() {
+  switch (type_) {
+    case TPCC_NEW_ORDER:
+    case TPCC_PAYMENT:
+    case TPCC_DELIVERY:
+    case TPCC_ORDER_STATUS:
+    case TPCC_STOCK_LEVEL:
+      return false;
+  }
+}
 
 TpccRealDistChopper::~TpccRealDistChopper() {
 }

@@ -20,6 +20,9 @@ set<parid_t> TxnChopper::GetPartitionIds() {
   return partitions_;
 }
 
+bool TxnCommand::IsOneRound() {
+  return false;
+}
 
 Command *TxnCommand::GetNextSubCmd() {
   verify(n_pieces_out_ < n_pieces_input_ready_);

@@ -10,6 +10,7 @@ class TpccRealDistChopper: public TpccChopper {
 
  public:
   TpccRealDistChopper();
+  bool IsOneRound() override;
   virtual ~TpccRealDistChopper();
 };
 

@@ -851,7 +851,7 @@ bool Config::do_logging() {
 
 bool Config::IsReplicated() {
   // TODO
-//  return false;
+  return (ab_mode_ != MODE_NONE);
   return true;
 }
 

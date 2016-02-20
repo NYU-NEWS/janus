@@ -44,7 +44,7 @@ RequestHeader ThreePhaseCoordinator::gen_header(TxnCommand *ch) {
 /** thread safe */
 void ThreePhaseCoordinator::do_one(TxnRequest &req) {
   // pre-process
-  std::lock_guard<std::mutex> lock(this->mtx_);
+  std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   TxnCommand *cmd = frame_->CreateTxnCommand(req, txn_reg_);
   verify(txn_reg_ != nullptr);
   cmd_ = cmd;
@@ -52,7 +52,7 @@ void ThreePhaseCoordinator::do_one(TxnRequest &req) {
   cmd_->id_ = cmd_->root_id_;
   Reset(); // In case of reuse.
 
-  Log::debug("do one request txn_id: %ld\n", cmd_->id_);
+  Log_debug("do one request txn_id: %ld\n", cmd_->id_);
 
   if (ccsi_) ccsi_->txn_start_one(thread_id_, cmd->type_);
 
@@ -129,7 +129,7 @@ void ThreePhaseCoordinator::Reset() {
 }
 
 void ThreePhaseCoordinator::restart(TxnCommand *ch) {
-  std::lock_guard<std::mutex> lock(this->mtx_);
+  std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   Reset();
   ch->retry();
 
@@ -140,7 +140,7 @@ void ThreePhaseCoordinator::restart(TxnCommand *ch) {
 }
 
 void ThreePhaseCoordinator::Start() {
-  std::lock_guard<std::mutex> lock(start_mtx_);
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
   //  ___TestPhaseOne(cmd_id_);
 
   if (stage_ != START) {
@@ -177,7 +177,7 @@ bool ThreePhaseCoordinator::AllStartAckCollected() {
 }
 
 void ThreePhaseCoordinator::StartAck(StartReply &reply, phase_t phase) {
-  std::lock_guard<std::mutex> lock(this->mtx_);
+  std::lock_guard<std::recursive_mutex> lock(this->mtx_);
 
   if (IsPhaseOrStageStale(phase, START)) {
     Log_debug("ignore stale startack\n");
@@ -191,14 +191,15 @@ void ThreePhaseCoordinator::StartAck(StartReply &reply, phase_t phase) {
             n_start_ack_, n_start_, cmd_->id_, reply.cmd->inn_id_);
 
   if (reply.res == REJECT) {
-    Log::debug("got REJECT reply for cmd_id: %lx, inn_id: %d; NOT COMMITING",
+    Log_debug("got REJECT reply for cmd_id: %lx, inn_id: %d; NOT COMMITING",
                cmd_->id_,reply.cmd->inn_id());
     ch->commit_.store(false);
   }
   if (!ch->commit_.load()) {
     if (n_start_ack_ == n_start_) {
-      Log::debug("received all start acks (at least one is REJECT); calling Finish()");
-      this->Finish();
+      Log_debug("received all start acks (at least one is REJECT); calling "
+                    "Finish()");
+      this->Decide();
     }
   } else {
     cmd_->Merge(*reply.cmd);
@@ -242,7 +243,7 @@ void ThreePhaseCoordinator::Prepare() {
 }
 
 void ThreePhaseCoordinator::PrepareAck(phase_t phase, Future *fu) {
-  std::lock_guard<std::mutex> lock(this->mtx_);
+  std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   if (IsPhaseOrStageStale(phase, PREPARE)) {
     Log_debug("ignore stale prepareack\n");
     return;
@@ -258,10 +259,10 @@ void ThreePhaseCoordinator::PrepareAck(phase_t phase, Future *fu) {
 
   int res;
   fu->get_reply() >> res;
-  Log::debug("tid %ld; prepare result %d", cmd_->root_id_, res);
+  Log_debug("tid %ld; prepare result %d", cmd_->root_id_, res);
 
   if (res == REJECT) {
-    Log::debug("Prepare rejected for %ld by %ld\n",
+    Log_debug("Prepare rejected for %ld by %ld\n",
                cmd_->root_id_,
                cmd->inn_id());
     cmd->commit_.store(false);
@@ -269,14 +270,14 @@ void ThreePhaseCoordinator::PrepareAck(phase_t phase, Future *fu) {
 
   if (n_prepare_ack_ == cmd->partitions_.size()) {
     Log_debug("2PL prepare finished for %ld", cmd->root_id_);
-    this->Finish();
+    this->Decide();
   } else {
     // Do nothing.
   }
 }
 
-/** caller should be thread safe */
-void ThreePhaseCoordinator::Finish() {
+void ThreePhaseCoordinator::Decide() {
+  std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   IncrementPhaseAndChangeStage(FINISH);
   ___TestPhaseThree(cmd_->id_);
   TxnCommand *cmd = (TxnCommand *) cmd_;
@@ -302,6 +303,7 @@ void ThreePhaseCoordinator::Finish() {
   } else {
     cmd->reply_.res_ = REJECT;
     for (auto &rp : cmd->partitions_) {
+      n_finish_req_ ++;
       Log_debug("send abort for txn_id %ld to %ld\n", cmd->id_, rp);
       commo_->SendAbort(rp,
                         cmd_->id_,
@@ -319,7 +321,7 @@ void ThreePhaseCoordinator::FinishAck(phase_t phase, Future *fu) {
   bool callback = false;
   bool retry = false;
   {
-    std::lock_guard<std::mutex> lock(this->mtx_);
+    std::lock_guard<std::recursive_mutex> lock(this->mtx_);
     if (IsPhaseOrStageStale(phase, FINISH)) {
       Log_debug("ignore stale finish ack\n");
       return;
@@ -337,7 +339,7 @@ void ThreePhaseCoordinator::FinishAck(phase_t phase, Future *fu) {
       }
     }
   }
-  Log::debug("callback: %s, retry: %s",
+  Log_debug("callback: %s, retry: %s",
              callback ? "True" : "False",
              retry ? "True" : "False");
 

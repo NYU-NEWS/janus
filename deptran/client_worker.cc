@@ -12,6 +12,7 @@ ClientWorker::~ClientWorker() {
 void ClientWorker::RequestDone(TxnReply &txn_reply) {
   verify(coo_ != nullptr);
   if (timer_->elapsed() < duration) {
+    Log_debug("there is still time to issue another request. continue.");
     TxnRequest req;
     txn_req_factory_->get_txn_req(&req, coo_id);
     req.callback_ = std::bind(&ClientWorker::RequestDone,
@@ -19,7 +20,7 @@ void ClientWorker::RequestDone(TxnReply &txn_reply) {
                               std::placeholders::_1);
     coo_->do_one(req);
   } else {
-    Log::debug("time up. stop.");
+    Log_debug("client worker times up. stop.");
     finish_mutex.lock();
     n_outstanding_--;
     if (n_outstanding_ == 0)

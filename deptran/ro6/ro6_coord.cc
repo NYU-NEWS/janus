@@ -31,7 +31,7 @@ void RO6Coord::deptran_start(TxnCommand *ch) {
       {
         //     Log::debug("try locking at start response, tid: %llx, pid: %llx",
         // header.tid, header.pid);
-        std::lock_guard<std::mutex> lock(this->mtx_);
+        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
 
         ChopStartResponse  res;
         fu->get_reply() >> res;
@@ -103,7 +103,7 @@ void RO6Coord::deptran_finish(TxnCommand *ch) {
 
     bool callback = false;
     {
-      std::lock_guard<std::mutex> lock(this->mtx_);
+      std::lock_guard<std::recursive_mutex> lock(this->mtx_);
       n_finish_ack_++;
 
       ChopFinishResponse res;
@@ -185,7 +185,7 @@ void RO6Coord::ro6_start_ro(TxnCommand *ch) {
     // remember this a asynchronous call! variable funtional range is important!
     fuattr.callback = [ch, pi, this, header](Future * fu) {
       {
-        std::lock_guard<std::mutex> lock(this->mtx_);
+        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
 
         map<int32_t, Value> res;
         fu->get_reply() >> res;
@@ -232,7 +232,7 @@ void RO6Coord::ro6_start_ro(TxnCommand *ch) {
 
 void RO6Coord::do_one(TxnRequest & req) {
   // pre-process
-  std::lock_guard<std::mutex> lock(this->mtx_);
+  std::lock_guard<std::recursive_mutex> lock(this->mtx_);
 
   TxnCommand *ch = frame_->CreateChopper(req, txn_reg_);
   cmd_->id_ = this->next_txn_id();

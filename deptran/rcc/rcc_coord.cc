@@ -45,8 +45,8 @@ void RCCCoord::deptran_batch_start(TxnCommand *ch) {
     it->second.fuattr.callback = [ch, pis, this, headers](Future * fu) {
       bool early_return = false;
       {
-        Log::debug("Batch back");
-        std::lock_guard<std::mutex> lock(this->mtx_);
+        Log_debug("Batch back");
+        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
 
         BatchChopStartResponse res;
         fu->get_reply() >>     res;
@@ -129,7 +129,7 @@ void RCCCoord::deptran_start(TxnCommand *ch) {
       {
         //     Log::debug("try locking at start response, tid: %llx, pid: %llx",
         // header.tid, header.pid);
-        std::lock_guard<std::mutex> lock(this->mtx_);
+        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
 
         ChopStartResponse  res;
         fu->get_reply() >> res;
@@ -198,7 +198,7 @@ void RCCCoord::deptran_finish(TxnCommand *ch) {
 
     bool callback = false;
     {
-      std::lock_guard<std::mutex> lock(this->mtx_);
+      std::lock_guard<std::recursive_mutex> lock(this->mtx_);
       n_finish_ack_++;
 
       ChopFinishResponse res;
@@ -273,7 +273,7 @@ void RCCCoord::deptran_start_ro(TxnCommand *ch) {
     // remember this a asynchronous call! variable funtional range is important!
     fuattr.callback = [ch, pi, this, header](Future * fu) {
       {
-        std::lock_guard<std::mutex> lock(this->mtx_);
+        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
 
         map<int32_t, Value> output;
         fu->get_reply() >> output;
@@ -321,7 +321,7 @@ void RCCCoord::deptran_finish_ro(TxnCommand *ch) {
     fuattr.callback = [ch, pi, this, header](Future * fu) {
       bool callback = false;
       {
-        std::lock_guard<std::mutex> lock(this->mtx_);
+        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
 
         int res;
         map<int32_t, Value> output;
@@ -384,7 +384,7 @@ void RCCCoord::deptran_finish_ro(TxnCommand *ch) {
 
 void RCCCoord::do_one(TxnRequest& req) {
   // pre-process
-  std::lock_guard<std::mutex> lock(this->mtx_);
+  std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   TxnCommand *ch = frame_->CreateChopper(req, txn_reg_);
   cmd_->id_ = this->next_txn_id();
 

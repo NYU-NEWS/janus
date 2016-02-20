@@ -23,10 +23,8 @@ int OCCExecutor::Prepare() {
   auto txn = (mdb::TxnOCC *)mdb_txn();
   verify(txn != NULL);
 
-  if (txn->commit_prepare())
-    return SUCCESS;
-  else
-    return REJECT;
+  int ret = txn->commit_prepare() ? SUCCESS : REJECT;
+  return ret;
 }
 
 

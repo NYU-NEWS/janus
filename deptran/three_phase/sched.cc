@@ -26,10 +26,11 @@ int ThreePhaseSched::OnPhaseTwoRequest(
     const std::vector <i32> &sids,
     rrr::i32 *res,
     rrr::DeferredReply *defer) {
-  auto exec = (ThreePhaseExecutor*)GetExecutor(cmd_id);
+  auto exec = dynamic_cast<ThreePhaseExecutor*>(GetExecutor(cmd_id));
   string log;
   auto func = [exec, res, defer] () -> void {
     *res = exec->Prepare();
+    verify(*res == SUCCESS);
     defer->reply();
   };
   if (Config::GetConfig()->IsReplicated()) {

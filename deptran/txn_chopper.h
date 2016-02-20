@@ -132,7 +132,7 @@ class TxnCommand: public Command {
     verify(sharding_.find(inn_id) != sharding_.end());
     return sharding_[inn_id];
   }
-
+  virtual bool IsOneRound();
   inline bool can_retry() {
     return (max_try_ == 0 || n_try_ < max_try_);
   }

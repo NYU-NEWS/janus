@@ -28,8 +28,7 @@ Coordinator::Coordinator(uint32_t coo_id,
                                                benchmark_(benchmark),
                                                ccsi_(ccsi),
                                                thread_id_(thread_id),
-                                               mtx_(),
-                                               start_mtx_() {
+                                               mtx_() {
   uint64_t k = coo_id_;
   k <<= 32;
   k++;

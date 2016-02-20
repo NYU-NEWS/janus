@@ -46,8 +46,7 @@ class Coordinator : public CoordinatorBase {
 
   std::function<void()> callback_;
 
-  std::mutex mtx_;
-  std::mutex start_mtx_;
+  std::recursive_mutex mtx_;
   Recorder *recorder_;
   Command *cmd_ = nullptr;
 //  cmdid_t cmd_id_;

@@ -48,7 +48,8 @@ bool TxnOCC::version_check(const std::unordered_map<row_column_pair,
     version_t ver = it.second;
     verify(row->rtti() == ROW_VERSIONED);
     VersionedRow *v_row = (VersionedRow *) row;
-    if (v_row->get_column_ver(col_id) != ver) {
+    auto curr_ver = v_row->get_column_ver(col_id);
+    if (curr_ver != ver) {
 #ifdef CONFLICT_COUNT
       const Table *tbl = v_row->get_table();
       auto cc_it = TxnMgr::vc_conflict_count_.find(tbl);
