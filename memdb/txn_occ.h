@@ -49,6 +49,9 @@ class TxnOCC: public Txn2PL {
     return symbol_t::TXN_OCC;
   }
 
+  bool __DebugVersionCheck();
+  bool __DebugCheckReadVersion(row_column_pair row_col, version_t v);
+
   bool is_readonly() const {
     return !snapshot_tables_.empty();
   }

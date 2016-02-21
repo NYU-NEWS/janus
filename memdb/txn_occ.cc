@@ -36,7 +36,27 @@ bool TxnOCC::version_check() {
   if (is_readonly()) {
     return true;
   }
+  __DebugVersionCheck();
   return version_check(ver_check_read_) && version_check(ver_check_write_);
+}
+
+bool TxnOCC::__DebugVersionCheck() {
+  for (auto& pair: ver_check_read_) {
+    auto& row_col = pair.first;
+    auto& version = pair.second;
+    auto it = ver_check_write_.find(row_col);
+    if (it != ver_check_write_.end()) {
+      auto& v2 = it->second;
+      if (version < v2) {
+        Row* r = row_col.row;
+        int c = row_col.col_id;
+        uint64_t iii = id();
+        Log_debug("Txnid %lx, Table Name %s, col_id %d",
+                  iii, r->get_table()->Name().c_str(), c);
+        verify(version >= v2);
+      }
+    }
+  }
 }
 
 bool TxnOCC::version_check(const std::unordered_map<row_column_pair,
@@ -291,6 +311,14 @@ bool TxnOCC::read_column(Row *row, column_id_t col_id, Value *value) {
   return true;
 }
 
+bool TxnOCC::__DebugCheckReadVersion(row_column_pair row_col, version_t v) {
+  auto it = ver_check_read_.find(row_col);
+  if (it != ver_check_read_.end()) {
+    auto v2 = it->second;
+    verify(v2 >= v);
+  }
+}
+
 bool TxnOCC::write_column(Row *row, column_id_t col_id, const Value &value) {
   verify(!is_readonly());
   assert(debug_check_row_valid(row));
@@ -316,9 +344,11 @@ bool TxnOCC::write_column(Row *row, column_id_t col_id, const Value &value) {
     if (policy_ == symbol_t::OCC_EAGER) {
       v_row->incr_column_ver(col_id);
     }
-    insert_into_map(ver_check_write_,
-                    row_column_pair(v_row, col_id),
-                    v_row->get_column_ver(col_id));
+
+    auto row_col = row_column_pair(v_row, col_id);
+    version_t v = v_row->get_column_ver(col_id);
+    __DebugCheckReadVersion(row_col, v);
+    insert_into_map(ver_check_write_, row_col, v);
     // increase row reference count because later we are going to check its version
     incr_row_refcount(row);
 
