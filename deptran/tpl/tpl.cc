@@ -12,7 +12,7 @@ bool TPLDTxn::ReadColumn(mdb::Row *row,
                          Value *value,
                          int hint_flag) {
   if (locking_ && hint_flag != TXN_BYPASS) {
-//    verify(0);
+    //verify(0);
     locks_.push_back(mdb::column_lock_t(row, col_id, ALock::RLOCK));
   } else {
     auto ret = mdb_txn()->read_column(row, col_id, value);

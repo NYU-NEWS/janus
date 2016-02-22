@@ -15,7 +15,7 @@ namespace deptran {
       verify(cmd.input.size()==1);
       auto id = cmd.input[0].get_i64();
       buf[0] = cmd.input[0].get_blob();
-      auto row = dtxn->Query(dtxn->GetTable(RW_BENCHMARK_TABLE), buf, id);
+      auto row = dtxn->Query(dtxn->GetTable(RW_BENCHMARK_TABLE), buf);
       if (!dtxn->ReadColumn(row, 1, &result)) {
           *res = REJECT;
           return;
@@ -32,7 +32,7 @@ namespace deptran {
       verify(cmd.input.size() == 1);
       auto id = cmd.input[0].get_i64();
       buf[0] = cmd.input[0].get_blob();
-      auto row = dtxn->Query(dtxn->GetTable(RW_BENCHMARK_TABLE), buf, id);
+      auto row = dtxn->Query(dtxn->GetTable(RW_BENCHMARK_TABLE), buf);
       if (!dtxn->ReadColumn(row, 1, &result)) {
         *res = REJECT;
         return;
