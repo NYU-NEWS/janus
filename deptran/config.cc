@@ -39,7 +39,7 @@
 
 
 namespace rococo {
-Config *Config::config_s = NULL;
+Config *Config::config_s = nullptr;
 
 
 Config * Config::GetConfig() {

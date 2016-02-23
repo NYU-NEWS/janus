@@ -79,7 +79,7 @@ namespace mdcc {
     void init(Config *config, uint32_t site_id);
     void StartPiece(const rococo::SimpleCommand& cmd, int32_t* result, DeferredReply *defer);
     bool LaunchNextPiece(uint64_t txn_id, TxnChopper *chopper);
-    void SendUpdateProposal(txnid_t txn_id, const SimpleCommand &cmd, int32_t* result, rrr::DeferredReply* defer);
+    void SendUpdateProposal(txnid_t txn_id, const SimpleCommand &cmd, int32_t* result);
     void Phase2aClassic(OptionSet option_set);
     void Phase2bClassic(const Ballot ballot, const std::vector<OptionSet>& values);
     void SetCompatible(const std::vector<OptionSet> &old_options, std::vector<OptionSet> &current_options);

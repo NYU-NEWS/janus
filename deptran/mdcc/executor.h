@@ -18,7 +18,7 @@ namespace mdcc {
   public:
     MdccExecutor() = delete;
     MdccExecutor(txnid_t txn_id, Scheduler* sched);
-    void StartPiece(const rococo::SimpleCommand& cmd, int* result, DeferredReply *defer);
+    void StartPiece(const rococo::SimpleCommand& cmd, int* result);
 
     bool ValidRead(OptionSet &option);
   };

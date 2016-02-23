@@ -85,13 +85,13 @@ mdb::Row* DTxn::Query(mdb::Table *tbl,
       ret_row = it->second;
     } else {
       auto rs = mdb_txn()->query(tbl, mb);
-//      verify(rs.has_next());
+//    verify(rs.has_next());
       ret_row = rs.next();
       row_map[row_context_id] = ret_row;
     }
   } else {
     ret_row = mdb_txn_->query(tbl, mb).next();
-//    ret_row = mdb_txn_->query(tbl, mb, retrieve, pid).next();
+//  ret_row = mdb_txn_->query(tbl, mb, retrieve, pid).next();
   }
   return ret_row;
 }

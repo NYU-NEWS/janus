@@ -33,10 +33,9 @@ class MdccCommunicator {
   void SendStart(StartRequest& req,
                  Callback<StartResponse>& callback);
 
-  void SendStartPiece(const rococo::SimpleCommand& cmd,
-                      Callback<StartPieceResponse>& callback);
+  void SendStartPiece(const rococo::SimpleCommand& cmd);
   void SendProposal(BallotType ballotType, txnid_t txn_id, const rococo::SimpleCommand &cmd,
-                    OptionSet* options, Callback<OptionSet>& cb);
+                    OptionSet* options);
   void SendPhase2a(Phase2aRequest req);
   void SendPhase2b(const Phase2bRequest &req);
 
@@ -74,8 +73,8 @@ protected:
     }
   };
 
-  Config* config_;
-  PollMgr* poll_;
+  Config* config_ = nullptr;
+  PollMgr* poll_ = nullptr;
   const Config::SiteInfo& site_info_;
   std::vector<SiteProxy*> site_proxies_;
 

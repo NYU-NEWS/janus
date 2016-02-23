@@ -143,6 +143,6 @@ class DTxn {
   virtual mdb::Table *GetTable(const std::string &tbl_name) const;
 
   virtual ~DTxn();
-};
+  };
 
 } // namespace rococo

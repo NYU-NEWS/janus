@@ -30,46 +30,23 @@ namespace mdcc {
   }
 
   // start a transaction piece on a partition
-  void MdccCommunicator::SendStartPiece(const rococo::SimpleCommand& cmd,
-                                        Callback<StartPieceResponse>& callback) {
-    std::lock_guard<std::mutex> lock(this->mtx_);
-    auto& site = config_->SiteById(cmd.GetParId());
-    auto proxy = ClosestSiteProxy(site.partition_id_);
-
-    rrr::FutureAttr future;
-    future.callback = [cmd, callback, proxy] (Future *fu) {
-      StartPieceResponse res;
-      Log_debug("SendStartPiece callback for %ld from %ld", cmd.id_, proxy->site_info.id);
-      auto& marshall = fu->get_reply();
-      marshall >> res;
-      callback(res);
-    };
-
-    Future::safe_release(proxy->client->async_StartPiece(cmd, future));
+  void MdccCommunicator::SendStartPiece(const rococo::SimpleCommand& cmd) {
+    auto proxy = site_proxies_[cmd.GetParId()];
+    Future::safe_release(proxy->client->async_StartPiece(cmd));
   }
 
   void MdccCommunicator::SendProposal(BallotType ballotType, txnid_t txn_id,
                                       const rococo::SimpleCommand &cmd,
-                                      OptionSet* options,
-                                      Callback<OptionSet>& callback) {
+                                      OptionSet* options) {
     auto partition_id = config_->SiteById(cmd.GetParId()).partition_id_;
     auto partition_sites = config_->SitesByPartitionId(partition_id);
 
     if (ballotType == BallotType::CLASSIC) {
       auto proxy = LeaderSiteProxy(options, partition_sites);
       Log_debug("send %d options to site %d", options->Options().size(), proxy->site_info.id);
-
       ProposeRequest req;
       req.updates = *options;
-      rrr::FutureAttr future;
-      future.callback = [options, callback](rrr::Future* future) {
-        auto& m = future->get_reply();
-        ProposeResponse res;
-        m >> res;
-        if (res.accepted) options->Accept();
-        callback(*options);
-      };
-      Future::safe_release(proxy->leader->async_Propose(req, future));
+      Future::safe_release(proxy->leader->async_Propose(req));
     } else {
       Log_fatal("implement fast path");
     }

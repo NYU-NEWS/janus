@@ -91,7 +91,6 @@ protected:
 
     // indexed by key values
     std::multimap<SortedMultiKey, Row*> rows_;
-
 public:
 
     class Cursor: public Enumerator<const Row*> {
