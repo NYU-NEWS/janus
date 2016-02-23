@@ -31,10 +31,9 @@ namespace mdcc {
     std::vector<Option> options_;
     bool accepted_ = false;
   public:
-    OptionSet(txnid_t txn_id, string& table, MultiValue& key, bool accepted) :
+    OptionSet(txnid_t txn_id, string table, MultiValue key, bool accepted=false) :
         txn_id_(txn_id), table_(table), key_(key), accepted_(accepted) {}
-    OptionSet(txnid_t txn_id, std::string table, MultiValue key) : OptionSet(txn_id, table, key, false) {}
-    OptionSet() : OptionSet(0, "", MultiValue()) {}
+    OptionSet() : OptionSet(-1, "", MultiValue(), false) {}
 
     void Add(const Option& o) { options_.push_back(o); }
     std::string Table() const { return table_; }

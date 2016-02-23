@@ -83,5 +83,6 @@ namespace mdcc {
     void Phase2aClassic(OptionSet option_set);
     void Phase2bClassic(const Ballot ballot, const std::vector<OptionSet>& values);
     void SetCompatible(const std::vector<OptionSet> &old_options, std::vector<OptionSet> &current_options);
+    void Learn(const Ballot& ballot, const vector<OptionSet>& values);
   };
 }

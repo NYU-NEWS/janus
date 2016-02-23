@@ -54,8 +54,7 @@ namespace mdcc {
 
   void MdccScheduler::SendUpdateProposal(txnid_t txn_id, const SimpleCommand &cmd, int32_t* result) {
     std::lock_guard<std::mutex> l(mtx_);
-    auto dtxn = dynamic_cast<MdccDTxn*>(GetDTxn(txn_id));
-    assert(dtxn);
+    auto dtxn = static_cast<MdccDTxn*>(GetDTxn(txn_id));
     auto mdb_txn = dynamic_cast<Txn2PL*>(GetMTxn(txn_id));
     assert(mdb_txn);
 
@@ -78,7 +77,6 @@ namespace mdcc {
     Phase2aRequest req;
     req.site_id = site_id_; // this is really for debug
     req.ballot = leader_context_.ballot;
-    // TODO: make this more efficient
     for (auto& update : leader_context_.max_tried_) {
       req.values.push_back(*update);
     }
@@ -104,6 +102,7 @@ namespace mdcc {
 
   void MdccScheduler::SetCompatible(const std::vector<OptionSet> &old_options,
                                     std::vector<OptionSet> &current_options) {
+    // not sure if this is correct
     Log_debug("%s at site %d", __FUNCTION__, site_id_);
     for (auto& option : current_options) {
       auto it = std::find_if(old_options.begin(), old_options.end(), [&option] (const OptionSet& s) {
@@ -125,5 +124,9 @@ namespace mdcc {
         }
       }
     }
+  }
+
+  void MdccScheduler::Learn(const Ballot& ballot, const vector<OptionSet>& values) {
+    Log_debug("%s at site %d, %ld values", __FUNCTION__, site_id_, values.size());
   }
 }

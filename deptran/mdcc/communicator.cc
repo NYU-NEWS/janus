@@ -32,6 +32,7 @@ namespace mdcc {
   // start a transaction piece on a partition
   void MdccCommunicator::SendStartPiece(const rococo::SimpleCommand& cmd) {
     auto proxy = site_proxies_[cmd.GetParId()];
+    Log_debug("%s: at site %d to site %d", __FUNCTION__, site_info_.id, proxy->site_info.id);
     Future::safe_release(proxy->client->async_StartPiece(cmd));
   }
 
@@ -43,7 +44,7 @@ namespace mdcc {
 
     if (ballotType == BallotType::CLASSIC) {
       auto proxy = LeaderSiteProxy(options, partition_sites);
-      Log_debug("send %d options to site %d", options->Options().size(), proxy->site_info.id);
+      Log_debug("send %d options from %d to %d", options->Options().size(), site_info_.id, proxy->site_info.id);
       ProposeRequest req;
       req.updates = *options;
       Future::safe_release(proxy->leader->async_Propose(req));
@@ -53,18 +54,19 @@ namespace mdcc {
   }
 
   void MdccCommunicator::SendPhase2a(Phase2aRequest req) {
-    Log_debug("Site %d: %s", this->site_info_.id, __FUNCTION__);
     assert(req.site_id == site_info_.id);
     auto partition_id = site_info_.partition_id_;
+    Log_debug("%s: to partition %d", __FUNCTION__, partition_id);
     auto proxies = AllSiteProxies(partition_id);
     for (auto proxy : proxies) {
+      Log_debug("%s: from site %d to %d", __FUNCTION__, site_info_.id, proxy->site_info.id);
       Future::safe_release(proxy->acceptor->async_Phase2a(req));
     }
   }
 
   void MdccCommunicator::SendPhase2b(const Phase2bRequest &req) {
-    Log_debug("%s at site %d", __FUNCTION__, site_info_.id);
     for (auto proxy : site_proxies_) {
+      Log_debug("%s: from site %d to %d", __FUNCTION__, site_info_.id, proxy->site_info.id);
       Future::safe_release(proxy->learner->async_Phase2b(req));
     }
   }
