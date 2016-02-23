@@ -76,7 +76,7 @@ mdb::Txn* Scheduler::GetOrCreateMTxn(const i64 tid) {
     //verify(IS_MODE_2PL);
     txn = mdb_txn_mgr_->start(tid);
     //XXX using occ lazy mode: increment version at commit time
-    if (mode_ == MODE_OCC) {
+    if (mode_ == MODE_OCC || mode_ == MODE_MDCC) {
       ((mdb::TxnOCC *) txn)->set_policy(mdb::OCC_LAZY);
     }
     std::pair<std::map<i64, mdb::Txn *>::iterator, bool> ret
