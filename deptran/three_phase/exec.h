@@ -23,14 +23,14 @@ class ThreePhaseExecutor: public Executor {
                     int32_t *res,
                     rrr::DeferredReply *defer);
 
-  virtual int Prepare();
+  virtual bool Prepare();
 
   int commit_launch(
       rrr::i32 *res,
       rrr::DeferredReply *defer
   );
 
-  virtual int commit();
+  virtual int Commit();
 
   int abort_launch(
       rrr::i32 *res,

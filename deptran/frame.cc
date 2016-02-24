@@ -12,6 +12,7 @@
 #include "ro6/ro6_coord.h"
 #include "tpl/coord.h"
 #include "tpl/exec.h"
+#include "occ/dtxn.h"
 #include "occ/coord.h"
 #include "occ/exec.h"
 
@@ -342,7 +343,7 @@ DTxn* Frame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {
       dtxn = new mdcc::MdccDTxn(tid, mgr);
       break;
     case MODE_OCC:
-      dtxn = new TPLDTxn(tid, mgr);
+      dtxn = new OccDTxn(tid, mgr);
       break;
     case MODE_NONE:
       dtxn = new TPLDTxn(tid, mgr);

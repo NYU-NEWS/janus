@@ -42,7 +42,7 @@ int ThreePhaseExecutor::PrepareLaunch(const std::vector<i32> &sids,
 //  return 0;
 }
 
-int ThreePhaseExecutor::Prepare() {
+bool ThreePhaseExecutor::Prepare() {
   verify(0);
 }
 
@@ -78,7 +78,7 @@ int ThreePhaseExecutor::abort() {
 
 int ThreePhaseExecutor::commit_launch(rrr::i32 *res,
                                       rrr::DeferredReply *defer) {
-  *res = this->commit();
+  *res = this->Commit();
   if (Config::GetConfig()->do_logging()) {
     const char commit_tag = 'c';
     std::string log_s;
@@ -91,7 +91,7 @@ int ThreePhaseExecutor::commit_launch(rrr::i32 *res,
   return 0;
 }
 
-int ThreePhaseExecutor::commit() {
+int ThreePhaseExecutor::Commit() {
   verify(0);
 }
 

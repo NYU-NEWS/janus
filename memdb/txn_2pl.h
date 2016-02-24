@@ -7,7 +7,7 @@ class Txn2PL: public Txn {
  private:
   void release_resource();
 
- protected:
+ public:
   symbol_t outcome_;
   std::multimap<Row *, column_id_t> reads_;
   std::multimap<Row *, std::pair<column_id_t, Value>> updates_;

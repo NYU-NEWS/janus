@@ -89,9 +89,9 @@ class RCCDTxn: public DTxn {
       rrr::DeferredReply *defer
   );
 
-  virtual mdb::Row *create(
+  virtual mdb::Row *CreateRow(
       const mdb::Schema *schema,
-      const std::vector <mdb::Value> &values) {
+      const std::vector<mdb::Value> &values) {
     return RCCRow::create(schema, values);
   }
 

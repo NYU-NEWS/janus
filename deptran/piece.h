@@ -139,10 +139,10 @@ txn_reg_->input_vars_[txn][pie] = {__VA_ARGS__};
         r = mdb::VersionedRow::create(schema, row_data); \
         break; \
     case MODE_RCC: \
-        r = dtxn->create(schema, row_data); \
+        r = dtxn->CreateRow(schema, row_data); \
         break; \
     case MODE_RO6: \
-        r = dtxn->create(schema, row_data); \
+        r = dtxn->CreateRow(schema, row_data); \
         break; \
     default: \
         verify(0); \

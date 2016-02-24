@@ -12,8 +12,8 @@ class OCCExecutor: public ThreePhaseExecutor {
                           map<int32_t, Value> &output,
                           rrr::DeferredReply *defer);
 
-  virtual int Prepare();
-  virtual int commit();
+  virtual bool Prepare() override;
+  virtual int Commit() override;
 
 };
 

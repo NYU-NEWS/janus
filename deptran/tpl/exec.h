@@ -45,8 +45,8 @@ class TPLExecutor: public ThreePhaseExecutor {
       PieceStatus *ps
   );
 
-  virtual int Prepare() override;
-  virtual int commit() override;
+  virtual bool Prepare() override;
+  virtual int Commit() override;
   virtual int abort() override;
 
 };

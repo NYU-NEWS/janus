@@ -6,6 +6,7 @@ namespace mdb {
 
 
 class TxnOCC: public Txn2PL {
+ public:
   // when ever a read/write is performed, record its version
   // check at commit time if all version values are not changed
   std::unordered_multimap<Row *, column_id_t> locks_;
