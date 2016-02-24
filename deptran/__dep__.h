@@ -90,3 +90,9 @@ using rrr::Marshal;
 #include "memdb/row.h"
 #include "deptran/marshal-value.h"
 using mdb::Value;
+using mdb::Row;
+using mdb::VersionedRow;
+using mdb::symbol_t;
+using mdb::Table;
+using mdb::column_id_t;
+using mdb::SnapshotTable;

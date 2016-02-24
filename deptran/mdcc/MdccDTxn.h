@@ -36,7 +36,8 @@ namespace mdcc {
       update_options_.clear();
     }
 
-    virtual Row* create(const Schema *schema, const std::vector<Value> &values) {
+    virtual Row* CreateRow(const Schema *schema, const std::vector<Value>
+    &values) {
       Log_fatal("implement %s!!", __FUNCTION__);
     }
 

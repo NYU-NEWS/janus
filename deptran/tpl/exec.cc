@@ -135,20 +135,16 @@ std::function<void(void)> TPLExecutor::get_2pl_fail_callback(
 }
 
 
-int TPLExecutor::Prepare() {
+bool TPLExecutor::Prepare() {
   auto txn = (mdb::Txn2PL *) mdb_txn_;
   verify(txn != NULL);
 
   prepared_ = true;
-  if (!wounded_) {
-    return SUCCESS;
-  } else {
-    return REJECT;
-  }
+  return !wounded_;
 }
 
 
-int TPLExecutor::commit() {
+int TPLExecutor::Commit() {
   verify(mdb_txn_ != nullptr);
   verify(mdb_txn_ == sched_->RemoveMTxn(cmd_id_));
   mdb_txn_->commit();
