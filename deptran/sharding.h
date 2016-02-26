@@ -182,8 +182,8 @@ class Sharding {
 
   void release_foreign_values();
 
-  uint32_t site_from_key(const MultiValue &key,
-                         const tb_info_t *tb_info);
+  uint32_t partition_id_from_key(const MultiValue &key,
+                                 const tb_info_t *tb_info);
 
   uint32_t modulus(const MultiValue &key,
                    unsigned int num_site,

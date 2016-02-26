@@ -10,7 +10,7 @@
 namespace rococo {
 
 void TPCCDSharding::InsertRowData(tb_info_t *tb_info,
-                                  uint32_t &sid,
+                                  uint32_t &partition_id,
                                   Value &key_value,
                                   const mdb::Schema *schema,
                                   mdb::Table *const table_ptr,
@@ -25,7 +25,7 @@ void TPCCDSharding::InsertRowData(tb_info_t *tb_info,
       mv[i] = row_data[schema->key_columns_id()[i]];
     }
 
-    if (sid == site_from_key(mv, tb_info)) {
+    if (partition_id == partition_id_from_key(mv, tb_info)) {
       n_row_inserted_++;
       auto r = frame_->CreateRow(schema, row_data);
       table_ptr->insert(r);
@@ -38,7 +38,7 @@ void TPCCDSharding::InsertRowData(tb_info_t *tb_info,
       mv[i] = row_data[schema->key_columns_id()[i]];
     }
 
-    if (sid == site_from_key(mv, tb_info)) {
+    if (partition_id == partition_id_from_key(mv, tb_info)) {
       n_row_inserted_++;
       auto r = frame_->CreateRow(schema, row_data);
       table_ptr->insert(r);
@@ -120,7 +120,7 @@ bool TPCCDSharding::GenerateRowData(tb_info_t *tb_info,
         // primary key, and no column is foreign key.
         if ((tb_info->tb_name != TPCC_TB_WAREHOUSE) &&
             (tb_info->tb_name != TPCC_TB_ITEM) &&
-            (sid != site_from_key(key_value, tb_info))) {
+            (sid != partition_id_from_key(key_value, tb_info))) {
           // the key does not belong to this site.
           break;
         }
@@ -206,7 +206,7 @@ bool TPCCDSharding::GenerateRowData(tb_info_t *tb_info,
 }
 
 void TPCCDSharding::InsertRow(tb_info_t *tb_info,
-                              uint32_t &sid,
+                              uint32_t &partition_id,
                               Value &key_value,
                               const mdb::Schema *schema,
                               mdb::Table *const table_ptr,
@@ -218,10 +218,10 @@ void TPCCDSharding::InsertRow(tb_info_t *tb_info,
   while (true) {
     row_data.clear();
     // generate row data
-    auto ret = GenerateRowData(tb_info, sid, key_value, row_data);
+    auto ret = GenerateRowData(tb_info, partition_id, key_value, row_data);
     if (ret) {
       // if the row_data is successfully generated.
-      InsertRowData(tb_info, sid, key_value, schema,
+      InsertRowData(tb_info, partition_id, key_value, schema,
                     table_ptr, tbl_sec_ptr, row_data);
       if ((num_self_primary == 0) && (n_row_inserted_ >= tb_info->num_records)) {
         // enough records have been inserted, give the caller the hint.
@@ -328,7 +328,7 @@ void TPCCDSharding::PreparePrimaryColumn(tb_info_t *tb_info,
   }
 }
 
-void TPCCDSharding::PopulateTable(tb_info_t *tb_info, parid_t par_id) {
+void TPCCDSharding::PopulateTable(tb_info_t *tb_info, parid_t partition_id) {
   // find table and secondary table
   mdb::Table *const table_ptr = dtxn_sched_->get_table(tb_info->tb_name);
   const mdb::Schema *schema = table_ptr->schema();
@@ -377,11 +377,11 @@ void TPCCDSharding::PopulateTable(tb_info_t *tb_info, parid_t par_id) {
                               num_self_primary);
   for (; key_value < max_key || num_self_primary == 0; ++key_value) {
     init_index(prim_foreign_index);
-    InsertRow(tb_info, par_id, key_value, schema, table_ptr, tbl_sec_ptr);
+    InsertRow(tb_info, partition_id, key_value, schema, table_ptr, tbl_sec_ptr);
   }
 }
 
-int TPCCDSharding::PopulateTable(parid_t par_id) {
+int TPCCDSharding::PopulateTable(parid_t partition_id) {
   auto n_left = tb_infos_.size();
   verify(n_left > 0);
 
@@ -392,14 +392,14 @@ int TPCCDSharding::PopulateTable(parid_t par_id) {
       verify(tb_it->first == tb_info->tb_name);
 
       // TODO is this unnecessary?
-      auto it = tb_info->populated.find(par_id);
+      auto it = tb_info->populated.find(partition_id);
       if (it == tb_info->populated.end()) {
-        tb_info->populated[par_id] = false;
+        tb_info->populated[partition_id] = false;
       }
 
-      if (!tb_info->populated[par_id] && Ready2Populate(tb_info)) {
-        PopulateTable(tb_info, par_id);
-        tb_info->populated[par_id] = true;
+      if (!tb_info->populated[partition_id] && Ready2Populate(tb_info)) {
+        PopulateTable(tb_info, partition_id);
+        tb_info->populated[partition_id] = true;
         // finish populate one table
         n_left--;
         populated = true;

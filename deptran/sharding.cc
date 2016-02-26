@@ -70,8 +70,8 @@ void Sharding::BuildTableInfoPtr() {
 
 }
 
-uint32_t Sharding::site_from_key(const MultiValue &key,
-                                 const tb_info_t *tb_info) {
+uint32_t Sharding::partition_id_from_key(const MultiValue &key,
+                                         const tb_info_t *tb_info) {
   const MultiValue &key_buf =
       Config::GetConfig()->get_benchmark() != TPCC_REAL_DIST_PART ?
       key :
@@ -230,7 +230,7 @@ int Sharding::GetPartition(const std::string &tb_name,
   std::map<std::string, tb_info_t>::iterator it = tb_infos_.find(tb_name);
   if (it == tb_infos_.end()) return -1;
   if (it->second.site_id.size() == 0) return -2;
-  par_id = site_from_key(key, &(it->second));
+  par_id = partition_id_from_key(key, &(it->second));
   return 0;
 }
 

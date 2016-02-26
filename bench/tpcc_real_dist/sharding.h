@@ -25,12 +25,12 @@ class TPCCDSharding: public Sharding {
   bool record_key = true; // ?
 
   void PopulateTable(tb_info_t *tb_info, parid_t);
-  int PopulateTable(parid_t par_id);
+  int PopulateTable(parid_t partition_id);
   void PreparePrimaryColumn(tb_info_t *tb_info,
                             uint32_t col_index,
                             mdb::Schema::iterator &col_it);
   void InsertRow(tb_info_t *tb_info,
-                 uint32_t &sid,
+                 uint32_t &partition_id,
                  Value &key_value,
                  const mdb::Schema *schema,
                  mdb::Table *const table_ptr,
@@ -42,7 +42,7 @@ class TPCCDSharding: public Sharding {
                        vector<Value> &row_data);
 
   void InsertRowData(tb_info_t *tb_info,
-                     uint32_t &sid,
+                     uint32_t &partition_id,
                      Value &key_value,
                      const mdb::Schema *schema,
                      mdb::Table *const table_ptr,
