@@ -23,9 +23,9 @@ public:
   virtual void Merge(Command&){verify(0);};;
   virtual bool IsFinished(){verify(0);};
 
-  virtual set<parid_t> GetSiteIds() {
+  virtual set<siteid_t> GetSiteIds() {
     verify(0);
-    return set<parid_t>();
+    return set<siteid_t>();
   }
   virtual bool HasMoreSubCmdReadyNotOut() {
     verify(0);

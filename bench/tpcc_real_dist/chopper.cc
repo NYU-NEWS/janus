@@ -5,8 +5,8 @@ namespace deptran {
 TpccRealDistChopper::TpccRealDistChopper() {
 }
 
-parid_t TpccRealDistChopper::GetPiecePar(innid_t inn_id) {
-  parid_t par_id;
+siteid_t TpccRealDistChopper::GetPiecePar(innid_t inn_id) {
+  siteid_t site_id;
   if (type_ == TPCC_NEW_ORDER ||
       type_ == TPCC_PAYMENT ||
       type_ == TPCC_DELIVERY ||
@@ -15,8 +15,8 @@ parid_t TpccRealDistChopper::GetPiecePar(innid_t inn_id) {
   } else {
     verify(0);
   }
-  par_id = TpccChopper::GetPieceSiteId(inn_id);
-  return par_id;
+  site_id = TpccChopper::GetPieceSiteId(inn_id);
+  return site_id;
 }
 
 bool TpccRealDistChopper::IsOneRound() {

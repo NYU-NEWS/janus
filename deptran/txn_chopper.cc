@@ -16,7 +16,7 @@ TxnCommand::TxnCommand() {
 }
 
 
-set<parid_t> TxnChopper::GetSiteIds() {
+set<siteid_t> TxnChopper::GetSiteIds() {
   return site_ids_;
 }
 

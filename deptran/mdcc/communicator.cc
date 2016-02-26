@@ -103,5 +103,4 @@ namespace mdcc {
     int index = (hname ^ hkey) % sites.size();
     return site_proxies_[sites[index].id];
   }
-
 }
