@@ -31,7 +31,7 @@ namespace mdcc {
 
   // start a transaction piece on a partition
   void MdccCommunicator::SendStartPiece(const rococo::SimpleCommand& cmd) {
-    auto proxy = site_proxies_[cmd.GetParId()];
+    auto proxy = site_proxies_[cmd.SiteId()];
     Log_debug("%s: at site %d to site %d", __FUNCTION__, site_info_.id, proxy->site_info.id);
     Future::safe_release(proxy->client->async_StartPiece(cmd));
   }
@@ -39,7 +39,7 @@ namespace mdcc {
   void MdccCommunicator::SendProposal(BallotType ballotType, txnid_t txn_id,
                                       const rococo::SimpleCommand &cmd,
                                       OptionSet* options) {
-    auto partition_id = config_->SiteById(cmd.GetParId()).partition_id_;
+    auto partition_id = config_->SiteById(cmd.SiteId()).partition_id_;
     auto partition_sites = config_->SitesByPartitionId(partition_id);
 
     if (ballotType == BallotType::CLASSIC) {

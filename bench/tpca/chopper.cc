@@ -10,7 +10,6 @@ void TpcaPaymentChopper::init(TxnRequest &req) {
   Value& cus = req.input_[0];
   Value& tel = req.input_[1];
   Value& bra = req.input_[2];
-  //Value& inc = req.input_[3];
 
   inputs_.clear();
   inputs_[0] = {{0, cus}/*, inc*/};
@@ -29,16 +28,9 @@ void TpcaPaymentChopper::init(TxnRequest &req) {
       {2, TPCA_PAYMENT_3}
   };
 
-  // get sharding info
-  sharding_ = {
-      {0, 0},
-      {1, 0},
-      {2, 0}
-  };
-
-  sss_->GetPartition(TPCA_CUSTOMER, cus, sharding_[0]);
-  sss_->GetPartition(TPCA_TELLER, tel, sharding_[1]);
-  sss_->GetPartition(TPCA_BRANCH, bra, sharding_[2]);
+  sharding_[TPCA_PAYMENT_1] = ChooseRandom(sss_->SiteIdsForKey(TPCA_CUSTOMER, cus));
+  sharding_[TPCA_PAYMENT_2] = ChooseRandom(sss_->SiteIdsForKey(TPCA_TELLER, tel));
+  sharding_[TPCA_PAYMENT_3] = ChooseRandom(sss_->SiteIdsForKey(TPCA_BRANCH, bra));
 
   // all pieces are ready
   n_pieces_all_ = 3;
@@ -47,9 +39,9 @@ void TpcaPaymentChopper::init(TxnRequest &req) {
   n_try_ = 1;
 
   status_ = {
-      {0, READY},
-      {1, READY},
-      {2, READY}
+      {TPCA_PAYMENT_1, READY},
+      {TPCA_PAYMENT_2, READY},
+      {TPCA_PAYMENT_3, READY}
   };
   commit_.store(true);
 }

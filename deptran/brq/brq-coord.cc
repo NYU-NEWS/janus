@@ -41,7 +41,7 @@ void BRQCoordinator::FastAccept() {
     this->fast_accept_ack(g, reply, phase);
   };
   // broadcast
-  for (auto g : cmd_.GetPartitionIds()) {
+  for (auto g : cmd_.GetSiteIds()) {
     // TODO
     commo_->broadcast_fast_accept(g, request, callback);
   }
@@ -141,7 +141,7 @@ void BRQCoordinator::commit() {
     this->commit_ack(g, reply, phase);
   };
   // broadcast
-  for (auto g : cmd_.GetPartitionIds()) {
+  for (auto g : cmd_.GetSiteIds()) {
     // TODO
     commo_->broadcast_commit(g, request, callback);
   }

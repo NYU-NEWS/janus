@@ -18,19 +18,14 @@ public:
  public:
   virtual innid_t inn_id() const {return inn_id_;}
   virtual cmdtype_t type() {return type_;};
-  virtual parid_t GetSiteId() {verify(0);};
   virtual void Arrest() {verify(0);};
   virtual Command& Execute() {verify(0);};
   virtual void Merge(Command&){verify(0);};;
   virtual bool IsFinished(){verify(0);};
 
-  virtual set<parid_t> GetPartitionIds() {
+  virtual set<parid_t> GetSiteIds() {
     verify(0);
     return set<parid_t>();
-  }
-  virtual bool IsSinglePar() {
-    verify(0);
-    return false;
   }
   virtual bool HasMoreSubCmdReadyNotOut() {
     verify(0);
@@ -68,13 +63,13 @@ class SimpleCommand: public Command {
   map<int32_t, Value> input = {};
   map<int32_t, Value> output = {};
   int output_size = 0;
-  parid_t par_id_ = 0xFFFFFFFF;
+  parid_t site_id_ = 0xFFFFFFFF;
   SimpleCommand() = default;
-  virtual parid_t GetParId() const {
-    verify(par_id_ != 0xFFFFFFFF);
-    return par_id_;
+  virtual parid_t SiteId() const {
+    verify(site_id_ != 0xFFFFFFFF);
+    return site_id_;
   }
-  virtual Command* GetRootCmd() const {return root_;}
+  virtual Command* RootCmd() const {return root_;}
   virtual Command* Clone() const override {
     SimpleCommand* cmd = new SimpleCommand();
     *cmd = *this;

@@ -81,27 +81,26 @@ uint32_t Sharding::partition_id_from_key(const MultiValue &key,
        (tb_info->tb_name != TPCC_TB_HISTORY ?
         dist_mapping(key) : key));
 
+  const int num_partitions = Config::GetConfig()->replica_groups_.size();
   uint32_t ret;
 
   switch (tb_info->sharding_method) {
     case MODULUS:
-      ret = modulus(key_buf, tb_info->num_site, tb_info->site_id);
+      ret = modulus(key_buf, num_partitions);
       break;
 
     case INT_MODULUS:
-      ret = int_modulus(key_buf, tb_info->num_site, tb_info->site_id);
+      ret = int_modulus(key_buf, num_partitions);
       break;
 
     default:
-      ret = modulus(key_buf, tb_info->num_site, tb_info->site_id);
+      ret = modulus(key_buf, num_partitions);
       break;
   }
   return ret;
 }
 
-uint32_t Sharding::modulus(const MultiValue &key,
-                           uint32_t num_site,
-                           const std::vector<uint32_t>& site_id) {
+uint32_t Sharding::modulus(const MultiValue &key, uint32_t num_partitions) {
   uint32_t index = 0;
   long long int buf;
   int i = 0;
@@ -109,17 +108,17 @@ uint32_t Sharding::modulus(const MultiValue &key,
   while (i < key.size()) {
     switch (key[i].get_kind()) {
       case Value::I32:
-        buf = key[i].get_i32() % num_site;
+        buf = key[i].get_i32() % num_partitions;
         index += buf > 0 ? (uint32_t) buf : (uint32_t) (-buf);
         break;
 
       case Value::I64:
-        buf = key[i].get_i64() % num_site;
+        buf = key[i].get_i64() % num_partitions;
         index += buf > 0 ? (uint32_t) buf : (uint32_t) (-buf);
         break;
 
       case Value::DOUBLE:
-        buf = ((long long int) floor(key[i].get_double())) % num_site;
+        buf = ((long long int) floor(key[i].get_double())) % num_partitions;
         index += buf > 0 ? (uint32_t) buf : (uint32_t) (-buf);
         break;
 
@@ -129,7 +128,7 @@ uint32_t Sharding::modulus(const MultiValue &key,
         size_t i = 0;
 
         for (; i < str_buf.size(); i++) sum += (uint32_t) str_buf[i];
-        index += sum % num_site;
+        index += sum % num_partitions;
       }
 
       case Value::UNKNOWN:
@@ -143,14 +142,12 @@ uint32_t Sharding::modulus(const MultiValue &key,
         break;
     }
     i++;
-    index %= num_site;
+    index %= num_partitions;
   }
-  return site_id[index % num_site];
+  return index % num_partitions;
 }
 
-uint32_t Sharding::int_modulus(const MultiValue &key,
-                               uint32_t num_site,
-                               const std::vector<uint32_t>& site_id) {
+uint32_t Sharding::int_modulus(const MultiValue &key, uint32_t num_partitions) {
   uint32_t index = 0;
   long long int buf;
   int i = 0;
@@ -158,17 +155,17 @@ uint32_t Sharding::int_modulus(const MultiValue &key,
   while (i < key.size()) {
     switch (key[i].get_kind()) {
       case Value::I32:
-        buf = key[i].get_i32() % num_site;
+        buf = key[i].get_i32() % num_partitions;
         index += buf > 0 ? (uint32_t) buf : (uint32_t) (-buf);
         break;
 
       case Value::I64:
-        buf = key[i].get_i64() % num_site;
+        buf = key[i].get_i64() % num_partitions;
         index += buf > 0 ? (uint32_t) buf : (uint32_t) (-buf);
         break;
 
       case Value::DOUBLE:
-        buf = ((long long int) floor(key[i].get_double())) % num_site;
+        buf = ((long long int) floor(key[i].get_double())) % num_partitions;
         index += buf > 0 ? (uint32_t) buf : (uint32_t) (-buf);
         break;
 
@@ -180,11 +177,11 @@ uint32_t Sharding::int_modulus(const MultiValue &key,
 
         for (; rit != str_buf.rend(); rit++) {
           sum += mod * (uint32_t) (*rit);
-          sum %= num_site;
+          sum %= num_partitions;
           mod *= 127;
-          mod %= num_site;
+          mod %= num_partitions;
         }
-        index += sum % num_site;
+        index += sum % num_partitions;
       }
 
       case Value::UNKNOWN:
@@ -199,9 +196,9 @@ uint32_t Sharding::int_modulus(const MultiValue &key,
     }
 
     i++;
-    index %= num_site;
+    index %= num_partitions;
   }
-  return site_id[index % num_site];
+  return index % num_partitions;
 }
 
 void Sharding::insert_dist_mapping(const MultiValue &mv) {
@@ -232,6 +229,20 @@ int Sharding::GetPartition(const std::string &tb_name,
   if (it->second.site_id.size() == 0) return -2;
   par_id = partition_id_from_key(key, &(it->second));
   return 0;
+}
+
+std::vector<siteid_t> Sharding::SiteIdsForKey(const std::string &tb_name,
+                                              const MultiValue &key) {
+  std::map<std::string, tb_info_t>::iterator tb_info_it = tb_infos_.find(tb_name);
+  verify(tb_info_it != tb_infos_.end());
+
+  parid_t partition_id = partition_id_from_key(key, &(tb_info_it->second));
+  auto sites = Config::GetConfig()->SitesByPartitionId(partition_id);
+  std::vector<siteid_t> result;
+  std::for_each(sites.begin(), sites.end(), [&result](const Config::SiteInfo& site) {
+    result.push_back(site.id);
+  });
+  return result;
 }
 
 int Sharding::get_site_id_from_tb(const std::string &tb_name,

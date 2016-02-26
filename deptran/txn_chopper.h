@@ -54,7 +54,11 @@ class TxnCommand: public Command {
   double pre_time_;
 
   bool early_return_;
-
+ protected:
+  template<class T>
+  T ChooseRandom(const std::vector<T>& v) {
+    return v[rrr::RandomGenerator::rand(0,v.size()-1)];
+  }
  public:
   txnid_t txn_id_; // TODO obsolete
 
@@ -67,11 +71,11 @@ class TxnCommand: public Command {
   map<int32_t, map<int32_t, Value> > inputs_;  // input of each piece.
   map<int32_t, int32_t> output_size_;
   map<int32_t, cmdtype_t> p_types_;                  // types of each piece.
-  map<int32_t, uint32_t> sharding_;
+  map<int32_t, siteid_t> sharding_;
   std::atomic<bool> commit_;
   map<int32_t, CommandStatus> status_; // -1 waiting; 0 ready; 1 ongoing; 2 finished;
   map<int32_t, Command*> cmd_;
-  std::set<parid_t> partitions_;
+  std::set<parid_t> site_ids_;
 
   /** server involved*/
 
@@ -127,8 +131,10 @@ class TxnCommand: public Command {
   virtual void Merge(Command&);
   virtual bool HasMoreSubCmdReadyNotOut();
   virtual Command* GetNextSubCmd();
-  virtual set<parid_t> GetPartitionIds();
-  virtual parid_t GetPiecePar(innid_t inn_id) {
+  virtual set<parid_t> GetSiteIds();
+
+
+  virtual parid_t GetPieceSiteId(innid_t inn_id) {
     verify(sharding_.find(inn_id) != sharding_.end());
     return sharding_[inn_id];
   }

@@ -9,8 +9,7 @@ void RWChopper::W_txn_init(TxnRequest &req) {
 
   output_size_ = {{0,0}};
   p_types_ = {{RW_BENCHMARK_W_TXN_0, RW_BENCHMARK_W_TXN_0}};
-  sharding_ = { {RW_BENCHMARK_W_TXN_0, 0} };
-  sss_->GetPartition(RW_BENCHMARK_TABLE, req.input_[0], sharding_[RW_BENCHMARK_W_TXN_0]);
+  sharding_[RW_BENCHMARK_W_TXN_0] = ChooseRandom(sss_->SiteIdsForKey(RW_BENCHMARK_TABLE, req.input_[0]));
   status_ = {{RW_BENCHMARK_W_TXN_0, READY}};
   n_pieces_all_ = 1;
 }
@@ -22,8 +21,7 @@ void RWChopper::R_txn_init(TxnRequest &req) {
 
   output_size_= {{0, 1}};
   p_types_ = {{RW_BENCHMARK_R_TXN_0, RW_BENCHMARK_R_TXN_0}};
-  sharding_ = { {RW_BENCHMARK_R_TXN_0, 0} };
-  sss_->GetPartition(RW_BENCHMARK_TABLE, req.input_[0], sharding_[RW_BENCHMARK_R_TXN_0]);
+  sharding_[RW_BENCHMARK_R_TXN_0] = ChooseRandom(sss_->SiteIdsForKey(RW_BENCHMARK_TABLE, req.input_[0]));
   status_ = {{RW_BENCHMARK_R_TXN_0, READY}};
   n_pieces_all_ = 1;
 }
@@ -72,7 +70,7 @@ bool RWChopper::is_read_only() {
 void RWChopper::retry() {
   status_ = {{0,READY}};
   commit_.store(true);
-  partitions_.clear();
+  site_ids_.clear();
   n_pieces_out_ = 0;
   n_try_++;
 }

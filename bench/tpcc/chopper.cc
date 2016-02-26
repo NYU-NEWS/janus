@@ -155,7 +155,7 @@ bool TpccChopper::start_callback(int pi,
 
 void TpccChopper::retry() {
   ws_ = ws_init_;
-  partitions_.clear();
+  site_ids_.clear();
   n_try_++;
   commit_.store(true);
   n_pieces_input_ready_ = 0;
@@ -199,7 +199,7 @@ bool TpccChopper::is_read_only() {
   }
 }
 
-parid_t TpccChopper::GetPiecePar(innid_t inn_id) {
+parid_t TpccChopper::GetPieceSiteId(innid_t inn_id) {
   parid_t par;
   auto it = txn_reg_->sharding_input_.find(std::make_pair(type_, inn_id));
   if (it != txn_reg_->sharding_input_.end()) {
@@ -214,7 +214,7 @@ parid_t TpccChopper::GetPiecePar(innid_t inn_id) {
       vars.push_back(ws_.at(var_id));
     }
     MultiValue mv = MultiValue(vars);
-    sss_->GetPartition(tb, mv, par);
+    par = ChooseRandom(sss_->SiteIdsForKey(tb, mv));
   } else {
     verify(0);
     par = sharding_[inn_id];

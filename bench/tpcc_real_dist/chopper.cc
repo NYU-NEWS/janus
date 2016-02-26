@@ -15,7 +15,7 @@ parid_t TpccRealDistChopper::GetPiecePar(innid_t inn_id) {
   } else {
     verify(0);
   }
-  par_id = TpccChopper::GetPiecePar(inn_id);
+  par_id = TpccChopper::GetPieceSiteId(inn_id);
   return par_id;
 }
 

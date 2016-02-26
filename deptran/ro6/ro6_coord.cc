@@ -112,7 +112,7 @@ void RO6Coord::deptran_finish(TxnCommand *ch) {
 
       fu->get_reply() >> res;
 
-      if (n_finish_ack_ == ch->GetPartitionIds().size()) {
+      if (n_finish_ack_ == ch->GetSiteIds().size()) {
         ch->finish_callback(res);
         callback = true;
       }
@@ -139,10 +139,10 @@ void RO6Coord::deptran_finish(TxnCommand *ch) {
 
   Log_debug(
     "send deptran finish requests to %d servers, tid: %llx, graph size: %d",
-    (int)ch->partitions_.size(),
+    (int)ch->site_ids_.size(),
     cmd_->id_,
     ch->gra_.size());
-  verify(ch->partitions_.size() == ch->gra_.FindV(
+  verify(ch->site_ids_.size() == ch->gra_.FindV(
            cmd_->id_)->data_->servers_.size());
 
   ChopFinishRequest req;
@@ -159,7 +159,7 @@ void RO6Coord::deptran_finish(TxnCommand *ch) {
   verify(ch->gra_.size() > 0);
   verify(req.gra.size() > 0);
 
-  for (auto& rp : ch->partitions_) {
+  for (auto& rp : ch->site_ids_) {
     RococoProxy *proxy = comm()->rpc_proxies_[rp];
     Future::safe_release(proxy->async_rcc_finish_txn(req, fuattr));
   }

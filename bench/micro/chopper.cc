@@ -69,11 +69,10 @@ void MicroBenchChopper::init(TxnRequest &req) {
   };
   commit_.store(true);
 
-  sss_->GetPartition(MICRO_BENCH_TABLE_A, req.input_[0], sharding_[0]);
-  sss_->GetPartition(MICRO_BENCH_TABLE_B, req.input_[1], sharding_[1]);
-  sss_->GetPartition(MICRO_BENCH_TABLE_C, req.input_[2], sharding_[2]);
-  sss_->GetPartition(MICRO_BENCH_TABLE_D, req.input_[3], sharding_[3]);
-
+  sharding_[0] = ChooseRandom(sss_->SiteIdsForKey(MICRO_BENCH_TABLE_A, req.input_[0]));
+  sharding_[1] = ChooseRandom(sss_->SiteIdsForKey(MICRO_BENCH_TABLE_B, req.input_[1]));
+  sharding_[2] = ChooseRandom(sss_->SiteIdsForKey(MICRO_BENCH_TABLE_C, req.input_[2]));
+  sharding_[3] = ChooseRandom(sss_->SiteIdsForKey(MICRO_BENCH_TABLE_D, req.input_[3]));
 }
 
 void MicroBenchChopper::init_R(TxnRequest &req) {
@@ -126,7 +125,7 @@ void MicroBenchChopper::retry() {
       {3, READY}
   };
   commit_.store(true);
-  partitions_.clear();
+  site_ids_.clear();
   n_try_++;
 }
 

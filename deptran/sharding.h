@@ -160,6 +160,9 @@ class Sharding {
                    const MultiValue &key,
                    unsigned int &site_id);
 
+  std::vector<siteid_t> SiteIdsForKey(const std::string &tb_name,
+                                      const MultiValue &key);
+
   int get_site_id_from_tb(const std::string &tb_name,
                           std::vector<unsigned int> &site_id);
 
@@ -185,13 +188,9 @@ class Sharding {
   uint32_t partition_id_from_key(const MultiValue &key,
                                  const tb_info_t *tb_info);
 
-  uint32_t modulus(const MultiValue &key,
-                   unsigned int num_site,
-                   const std::vector<uint32_t> &site_id);
+  uint32_t modulus(const MultiValue &key, uint32_t num_partitions);
 
-  uint32_t int_modulus(const MultiValue &key,
-                       unsigned int num_site,
-                       const std::vector<uint32_t> &site_id);
+  uint32_t int_modulus(const MultiValue &key, uint32_t num_partitions);
 
   Sharding();
   Sharding(const Sharding& sharding);

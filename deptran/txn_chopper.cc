@@ -16,8 +16,8 @@ TxnCommand::TxnCommand() {
 }
 
 
-set<parid_t> TxnChopper::GetPartitionIds() {
-  return partitions_;
+set<parid_t> TxnChopper::GetSiteIds() {
+  return site_ids_;
 }
 
 bool TxnCommand::IsOneRound() {
@@ -40,7 +40,7 @@ Command *TxnCommand::GetNextSubCmd() {
       status = INIT;
       cmd = new SimpleCommand();
       cmd->inn_id_ = pi;
-      cmd->par_id_ = GetPiecePar(pi);
+      cmd->site_id_ = GetPieceSiteId(pi);
       cmd->type_ = pi;
       cmd->root_id_ = id_;
       cmd->root_type_ = type_;
@@ -49,7 +49,7 @@ Command *TxnCommand::GetNextSubCmd() {
       cmd->root_ = this;
       cmd_[pi] = cmd;
 
-      partitions_.insert(cmd->par_id_);
+      site_ids_.insert(cmd->site_id_);
 
       Log_debug("getting subcmd i: %d, thread id: %x",
                 pi, std::this_thread::get_id());
