@@ -17,31 +17,45 @@ namespace mdcc {
 
   class TxnOptionResult {
   protected:
-    int num_option_sets;
-    int success_cnt;
-
+    uint32_t quorum_size_;
+    std::map<RowId, uint32_t> accept_counts_;
   public:
-    TxnOptionResult() : TxnOptionResult(0) {};
-    TxnOptionResult(int num_option_sets) : num_option_sets(num_option_sets),
-                                           success_cnt(0) {
+    TxnOptionResult(const RecordOptionMap& options, uint32_t quorum_size) :
+        quorum_size_(quorum_size) {
+      for (auto pair : options) {
+        RowId id = pair.first;
+        accept_counts_[id] = 0;
+      }
     }
 
-    enum Status {S_SUCCESS, S_ONGOING};
-    Status Success() {
-      int cnt = ++success_cnt;
-      return (cnt < num_option_sets) ?
-        Status::S_ONGOING : Status::S_SUCCESS;
-    }
+    uint32_t AcceptCount(RowId id) { return accept_counts_[id]; }
   };
 
   struct LeaderContext {
     Ballot ballot;
     std::vector<unique_ptr<OptionSet>> max_tried_;
+    unique_ptr<TxnOptionResult> option_results_;
+
+    LeaderContext(LeaderContext&& other) {
+      option_results_ = std::move(other.option_results_);
+      max_tried_ = std::move(other.max_tried_);
+      ballot = other.ballot;
+    }
+
+    LeaderContext() {
+      // todo: delete once fast path implemented
+      ballot.type = CLASSIC;
+    }
   };
 
   struct AcceptorContext {
     Ballot ballot;
     vector<OptionSet> values;
+
+    AcceptorContext() {
+      // todo: delete once fast path implemented
+      ballot.type = CLASSIC;
+    }
   };
 
   class MdccScheduler : public Scheduler {
@@ -51,8 +65,7 @@ namespace mdcc {
     Config* config_ = nullptr;
     uint32_t site_id_ = -1;
 
-    std::map<txnid_t, unique_ptr<TxnOptionResult>> option_results_;
-    LeaderContext leader_context_;
+    std::map<txnid_t, LeaderContext*> leader_contexts_;
     AcceptorContext acceptor_context_;
   public:
     MdccScheduler() : Scheduler(MODE_MDCC) {}
@@ -69,6 +82,8 @@ namespace mdcc {
       return communicator_;
     }
 
+    LeaderContext* GetOrCreateLeaderContext(txnid_t txn_id);
+
     void StartTransaction(
       txnid_t txn_id,
       txntype_t txn_type,
@@ -84,5 +99,7 @@ namespace mdcc {
     void Phase2bClassic(const Ballot ballot, const std::vector<OptionSet>& values);
     void SetCompatible(const std::vector<OptionSet> &old_options, std::vector<OptionSet> &current_options);
     void Learn(const Ballot& ballot, const vector<OptionSet>& values);
+
+    uint32_t PartitionQourumSize(BallotType type, uint32_t partition_id);
   };
 }

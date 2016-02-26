@@ -56,6 +56,7 @@ struct Phase2aRequest {
 };
 
 struct Phase2bRequest {
+  i32 site_id;
   Ballot ballot;
   std::vector<OptionSet> values;
 };

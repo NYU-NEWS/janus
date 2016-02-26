@@ -13,6 +13,10 @@ namespace mdcc {
   using mdb::version_t;
   using rococo::MultiValue;
 
+  class OptionSet;
+  typedef std::pair<string, size_t> RowId; // table, key
+  typedef std::map<RowId, OptionSet*> RecordOptionMap;
+
   struct Option {
     mdb::column_id_t col_id=-1;
     mdb::Value value;
@@ -30,9 +34,13 @@ namespace mdcc {
     MultiValue key_;
     std::vector<Option> options_;
     bool accepted_ = false;
+    RowId row_id_;
   public:
     OptionSet(txnid_t txn_id, string table, MultiValue key, bool accepted=false) :
-        txn_id_(txn_id), table_(table), key_(key), accepted_(accepted) {}
+        txn_id_(txn_id), table_(table), key_(key), accepted_(accepted) {
+      row_id_ = RowId(table_, rococo::multi_value_hasher()(key_));
+    }
+
     OptionSet() : OptionSet(-1, "", MultiValue(), false) {}
 
     void Add(const Option& o) { options_.push_back(o); }
@@ -42,12 +50,12 @@ namespace mdcc {
     bool Accepted() const { return accepted_ == true; }
     void Accept() { accepted_ = true; }
     txnid_t TxnId() const { return txn_id_; }
+    RowId GetRowId() const { return row_id_; }
 
     friend rrr::Marshal& operator <<(rrr::Marshal& m, const OptionSet& o);
     friend rrr::Marshal& operator >>(rrr::Marshal& m, OptionSet& o);
   };
 
-  typedef std::map<std::pair<string, size_t>, OptionSet*> RecordOptionMap;
 
   inline rrr::Marshal& operator <<(rrr::Marshal& m, const Option& o) {
     m << o.col_id;
@@ -77,6 +85,7 @@ namespace mdcc {
     m << o.options_;
     m << (o.accepted_ ? 1 : 0);
     m << o.key_;
+    m << o.row_id_.second;
     return m;
   }
 
@@ -88,6 +97,9 @@ namespace mdcc {
     m >> i;
     o.accepted_ = (i) ? true : false;
     m >> o.key_;
+    size_t key_hash;
+    m >> key_hash;
+    o.row_id_ = RowId(o.table_, key_hash);
     return m;
   }
 }

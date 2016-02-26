@@ -7,10 +7,21 @@
 #include "Ballot.h"
 
 namespace mdcc {
- using rococo::TxnRequest;
- using rococo::TxnReply;
- using rococo::Frame;
+  using rococo::TxnRequest;
+  using rococo::TxnReply;
+  using rococo::Frame;
 
+  LeaderContext* MdccScheduler::GetOrCreateLeaderContext(txnid_t txn_id) {
+    auto it = leader_contexts_.find(txn_id);
+    if (it == leader_contexts_.end()) {
+      LeaderContext* leaderContext = new LeaderContext();
+      leader_contexts_[txn_id] = leaderContext;
+      return leaderContext;
+    } else {
+      return it->second;
+    }
+  }
+  
   bool MdccScheduler::LaunchNextPiece(txnid_t txn_id, rococo::TxnChopper *chopper) {
     std::lock_guard<std::mutex> lock(mtx_);
     if (chopper->HasMoreSubCmdReadyNotOut()) {
@@ -52,16 +63,31 @@ namespace mdcc {
     executor->StartPiece(cmd, result);
   }
 
+  uint32_t MdccScheduler::PartitionQourumSize(BallotType type, parid_t partition_id) {
+    int partition_size = config_->GetPartitionSize(partition_id);
+    if (type == BallotType::CLASSIC) {
+      return static_cast<int>(std::floor(partition_size / 2.0) + 1);
+    } else {
+      return static_cast<int>(std::floor(3 * partition_size / 4.0) + 1);
+    }
+  }
+
   void MdccScheduler::SendUpdateProposal(txnid_t txn_id, const SimpleCommand &cmd, int32_t* result) {
     std::lock_guard<std::mutex> l(mtx_);
     auto dtxn = static_cast<MdccDTxn*>(GetDTxn(txn_id));
     auto mdb_txn = dynamic_cast<Txn2PL*>(GetMTxn(txn_id));
     assert(mdb_txn);
 
-    option_results_[txn_id] = std::unique_ptr<TxnOptionResult>(new TxnOptionResult(dtxn->UpdateOptions().size()));
+    auto update_options = dtxn->UpdateOptions();
+    auto leader_context = GetOrCreateLeaderContext(txn_id);
+    auto partition_id = config_->SiteById(site_id_).partition_id_;
+    const auto ballot_type = leader_context->ballot.type;
+    auto quorum_size = PartitionQourumSize(ballot_type, partition_id);
+    leader_context->option_results_ = std::unique_ptr<TxnOptionResult>(new TxnOptionResult(update_options, quorum_size));
+
     for (auto option_pair : dtxn->UpdateOptions()) {
       auto& option_set = option_pair.second;
-      GetOrCreateCommunicator()->SendProposal(BallotType::CLASSIC, txn_id, cmd, option_set);
+      GetOrCreateCommunicator()->SendProposal(ballot_type, txn_id, cmd, option_set);
     }
   }
 
@@ -72,12 +98,13 @@ namespace mdcc {
     Log_info("%s txn_id %ld options %ld", __FUNCTION__, txn_id, options.size());
 
     auto ptr = std::unique_ptr<OptionSet>(new OptionSet(std::move(option_set)));
-    leader_context_.max_tried_.push_back(std::move(ptr));
+    auto leader_context = GetOrCreateLeaderContext(txn_id);
+    leader_context->max_tried_.push_back(std::move(ptr));
 
     Phase2aRequest req;
     req.site_id = site_id_; // this is really for debug
-    req.ballot = leader_context_.ballot;
-    for (auto& update : leader_context_.max_tried_) {
+    req.ballot = leader_context->ballot;
+    for (auto& update : leader_context->max_tried_) {
       req.values.push_back(*update);
     }
     GetOrCreateCommunicator()->SendPhase2a(req);
@@ -85,6 +112,7 @@ namespace mdcc {
 
   void MdccScheduler::Phase2bClassic(const Ballot ballot, const std::vector<OptionSet> &values) {
     Log_debug("%s at site %d", __FUNCTION__, site_id_);
+
     if (acceptor_context_.ballot <= ballot) {
       Log_info("%s: higher ballot received %s at site %d", __FUNCTION__, ballot.string().c_str(), site_id_);
       acceptor_context_.ballot = ballot;
@@ -94,6 +122,7 @@ namespace mdcc {
       SetCompatible(old_options, acceptor_context_.values);
 
       Phase2bRequest req;
+      req.site_id = site_id_;
       req.ballot = acceptor_context_.ballot;
       req.values = acceptor_context_.values;
       GetOrCreateCommunicator()->SendPhase2b(req);
@@ -128,5 +157,7 @@ namespace mdcc {
 
   void MdccScheduler::Learn(const Ballot& ballot, const vector<OptionSet>& values) {
     Log_debug("%s at site %d, %ld values", __FUNCTION__, site_id_, values.size());
+
   }
+
 }
