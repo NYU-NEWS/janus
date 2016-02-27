@@ -117,14 +117,14 @@ namespace mdcc {
       Log_info("%s: higher ballot received %s at site %d", __FUNCTION__, ballot.string().c_str(), site_id_);
       acceptor_context_.ballot = ballot;
 
-      std::vector<OptionSet> old_options;
+      std::vector<OptionSet>* old_options = nullptr;
       if (high_ballot) {
-        old_options = acceptor_context_.values[*high_ballot];
+        old_options = &acceptor_context_.values[*high_ballot];
       }
       acceptor_context_.values[ballot] = values;
       auto& ballot_values = acceptor_context_.values[ballot];
 
-      SetCompatible(old_options, ballot_values);
+      SetCompatible((old_options == nullptr) ? std::vector<OptionSet>() : *old_options, ballot_values);
 
       Phase2bRequest req;
       req.values = ballot_values;
