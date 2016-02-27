@@ -65,7 +65,7 @@ class SimpleCommand: public Command {
   int output_size = 0;
   parid_t partition_id_ = 0xFFFFFFFF;
   SimpleCommand() = default;
-  virtual parid_t SiteId() const {
+  virtual parid_t PartitionId() const {
     verify(partition_id_ != 0xFFFFFFFF);
     return partition_id_;
   }
