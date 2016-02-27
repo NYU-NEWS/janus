@@ -63,11 +63,11 @@ class SimpleCommand: public Command {
   map<int32_t, Value> input = {};
   map<int32_t, Value> output = {};
   int output_size = 0;
-  parid_t site_id_ = 0xFFFFFFFF;
+  parid_t partition_id_ = 0xFFFFFFFF;
   SimpleCommand() = default;
   virtual parid_t SiteId() const {
-    verify(site_id_ != 0xFFFFFFFF);
-    return site_id_;
+    verify(partition_id_ != 0xFFFFFFFF);
+    return partition_id_;
   }
   virtual Command* RootCmd() const {return root_;}
   virtual Command* Clone() const override {

@@ -28,9 +28,9 @@ void TpcaPaymentChopper::init(TxnRequest &req) {
       {2, TPCA_PAYMENT_3}
   };
 
-  sharding_[TPCA_PAYMENT_1] = ChooseRandom(sss_->SiteIdsForKey(TPCA_CUSTOMER, cus));
-  sharding_[TPCA_PAYMENT_2] = ChooseRandom(sss_->SiteIdsForKey(TPCA_TELLER, tel));
-  sharding_[TPCA_PAYMENT_3] = ChooseRandom(sss_->SiteIdsForKey(TPCA_BRANCH, bra));
+  sss_->GetPartition(TPCA_CUSTOMER, cus, sharding_[TPCA_PAYMENT_1]);
+  sss_->GetPartition(TPCA_CUSTOMER, tel, sharding_[TPCA_PAYMENT_2]);
+  sss_->GetPartition(TPCA_CUSTOMER, bra, sharding_[TPCA_PAYMENT_3]);
 
   // all pieces are ready
   n_pieces_all_ = 3;

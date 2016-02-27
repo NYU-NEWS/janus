@@ -6,7 +6,7 @@ TpccRealDistChopper::TpccRealDistChopper() {
 }
 
 siteid_t TpccRealDistChopper::GetPiecePar(innid_t inn_id) {
-  siteid_t site_id;
+  parid_t partition_id;
   if (type_ == TPCC_NEW_ORDER ||
       type_ == TPCC_PAYMENT ||
       type_ == TPCC_DELIVERY ||
@@ -15,8 +15,8 @@ siteid_t TpccRealDistChopper::GetPiecePar(innid_t inn_id) {
   } else {
     verify(0);
   }
-  site_id = TpccChopper::GetPieceSiteId(inn_id);
-  return site_id;
+  partition_id = TpccChopper::GetPiecePartitionId(inn_id);
+  return partition_id;
 }
 
 bool TpccRealDistChopper::IsOneRound() {

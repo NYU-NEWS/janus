@@ -40,7 +40,7 @@ Command *TxnCommand::GetNextSubCmd() {
       status = INIT;
       cmd = new SimpleCommand();
       cmd->inn_id_ = pi;
-      cmd->site_id_ = GetPieceSiteId(pi);
+      cmd->partition_id_ = GetPiecePartitionId(pi);
       cmd->type_ = pi;
       cmd->root_id_ = id_;
       cmd->root_type_ = type_;
@@ -49,7 +49,10 @@ Command *TxnCommand::GetNextSubCmd() {
       cmd->root_ = this;
       cmd_[pi] = cmd;
 
-      site_ids_.insert(cmd->site_id_);
+      auto partition_sites = Config::GetConfig()->SitesByPartitionId(cmd->partition_id_);
+      for (auto& site : partition_sites) {
+        site_ids_.insert(site.id);
+      }
 
       Log_debug("getting subcmd i: %d, thread id: %x",
                 pi, std::this_thread::get_id());
