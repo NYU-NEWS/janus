@@ -50,12 +50,14 @@ namespace mdcc {
 
   struct AcceptorContext {
     Ballot ballot;
-    vector<OptionSet> values;
+    std::map<Ballot, vector<OptionSet>> values;
 
     AcceptorContext() {
       // todo: delete once fast path implemented
       ballot.type = CLASSIC;
     }
+
+    const Ballot * HighestBallotWithValue();
   };
 
   class MdccScheduler : public Scheduler {

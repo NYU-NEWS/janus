@@ -80,9 +80,9 @@ namespace mdcc {
 
     auto update_options = dtxn->UpdateOptions();
     auto leader_context = GetOrCreateLeaderContext(txn_id);
-    auto partition_id = config_->SiteById(site_id_).partition_id_;
+    const auto partition_id = config_->SiteById(site_id_).partition_id_;
     const auto ballot_type = leader_context->ballot.type;
-    auto quorum_size = PartitionQourumSize(ballot_type, partition_id);
+    const uint32_t quorum_size = PartitionQourumSize(ballot_type, partition_id);
     leader_context->option_results_ = std::unique_ptr<TxnOptionResult>(new TxnOptionResult(update_options, quorum_size));
 
     for (auto option_pair : dtxn->UpdateOptions()) {
@@ -112,19 +112,24 @@ namespace mdcc {
 
   void MdccScheduler::Phase2bClassic(const Ballot ballot, const std::vector<OptionSet> &values) {
     Log_debug("%s at site %d", __FUNCTION__, site_id_);
-
-    if (acceptor_context_.ballot <= ballot) {
+    auto high_ballot = acceptor_context_.HighestBallotWithValue();
+    if (high_ballot == nullptr || *high_ballot <= ballot) {
       Log_info("%s: higher ballot received %s at site %d", __FUNCTION__, ballot.string().c_str(), site_id_);
       acceptor_context_.ballot = ballot;
-      auto old_options = acceptor_context_.values;
-      acceptor_context_.values = values;
 
-      SetCompatible(old_options, acceptor_context_.values);
+      std::vector<OptionSet> old_options;
+      if (high_ballot) {
+        old_options = acceptor_context_.values[*high_ballot];
+      }
+      acceptor_context_.values[ballot] = values;
+      auto& ballot_values = acceptor_context_.values[ballot];
+
+      SetCompatible(old_options, ballot_values);
 
       Phase2bRequest req;
+      req.values = ballot_values;
       req.site_id = site_id_;
       req.ballot = acceptor_context_.ballot;
-      req.values = acceptor_context_.values;
       GetOrCreateCommunicator()->SendPhase2b(req);
     }
   }
@@ -160,4 +165,14 @@ namespace mdcc {
 
   }
 
+  const Ballot* AcceptorContext::HighestBallotWithValue() {
+    auto it = this->values.rbegin();
+    for (auto it = values.rbegin(); it != values.rend(); it++) {
+      auto values = it->second;
+      if (values.size() > 0) {
+        return &it->first;
+      }
+    }
+    return nullptr;
+  }
 }
