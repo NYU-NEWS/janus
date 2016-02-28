@@ -16,7 +16,7 @@ class Communicator {
   rrr::PollMgr *rpc_poll_ = nullptr;
   map<siteid_t, rrr::Client *> rpc_clients_ = {};
   map<siteid_t, RococoProxy *> rpc_proxies_ = {};
-  map<parid_t, vector<RococoProxy*>> rpc_par_proxies_ = {};
+  map<parid_t, vector<std::pair<siteid_t, RococoProxy*>>> rpc_par_proxies_ = {};
 
 //  vector<rrr::Client*> rpc_clients_ = {};
 //  vector<RococoProxy*> rpc_proxies_ = {};
@@ -40,6 +40,8 @@ class Communicator {
 //                         txnid_t tid,
 //                         const std::function<void(Future *fu)> &callback) = 0;
   virtual ~Communicator() {}
+
+  std::pair<siteid_t, RococoProxy*> RandomProxyForPartition(parid_t partition_id) const;
 };
 
 } // namespace rococo

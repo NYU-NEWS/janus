@@ -17,7 +17,7 @@ void MultiPaxosCommo::BroadcastPrepare(parid_t par_id,
   auto proxies = rpc_par_proxies_[par_id];
   vector<Future*> fus;
   for (auto &p : proxies) {
-    auto proxy = (MultiPaxosProxy*) p;
+    auto proxy = (MultiPaxosProxy*) p.second;
     FutureAttr fuattr;
     fuattr.callback = cb;
     Future::safe_release(proxy->async_Prepare(slot_id, ballot, fuattr));
@@ -32,7 +32,7 @@ void MultiPaxosCommo::BroadcastAccept(parid_t par_id,
   auto proxies = rpc_par_proxies_[par_id];
   vector<Future*> fus;
   for (auto &p : proxies) {
-    auto proxy = (MultiPaxosProxy*) p;
+    auto proxy = (MultiPaxosProxy*) p.second;
     FutureAttr fuattr;
     fuattr.callback = cb;
     Future::safe_release(proxy->async_Accept(slot_id,
@@ -50,7 +50,7 @@ void MultiPaxosCommo::BroadcastDecide(const parid_t par_id,
   auto proxies = rpc_par_proxies_[par_id];
   vector<Future*> fus;
   for (auto &p : proxies) {
-    auto proxy = (MultiPaxosProxy*) p;
+    auto proxy = (MultiPaxosProxy*) p.second;
     FutureAttr fuattr;
     fuattr.callback = [](Future* fu) {};
     Future::safe_release(proxy->async_Decide(slot_id,

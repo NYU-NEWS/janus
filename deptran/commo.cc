@@ -8,7 +8,6 @@ void RococoCommunicator::SendStart(SimpleCommand &cmd,
                                    Coordinator *coo,
                                    const function<void(StartReply&)> &callback) {
   rrr::FutureAttr fuattr;
-  RococoProxy *proxy = rpc_proxies_[cmd.PartitionId()];
   std::function<void(Future*)> cb =
       [coo, this, callback, &cmd] (Future *fu) {
     StartReply reply;
@@ -21,10 +20,11 @@ void RococoCommunicator::SendStart(SimpleCommand &cmd,
     callback(reply);
   };
   fuattr.callback = cb;
-  Log_debug("SendStart to %ld from %ld", cmd.PartitionId(), coo->coo_id_);
+  std::pair<siteid_t, RococoProxy*> proxy = RandomProxyForPartition(cmd.PartitionId());
+  Log_debug("SendStart to %ld from %ld", proxy.first, coo->coo_id_);
   verify(cmd.type_ > 0);
   verify(cmd.root_type_ > 0);
-  Future::safe_release(proxy->async_StartTxn(cmd, fuattr));
+  Future::safe_release(proxy.second->async_StartTxn(cmd, fuattr));
 }
 
 void RococoCommunicator::SendStart(SimpleCommand &cmd,
@@ -32,9 +32,9 @@ void RococoCommunicator::SendStart(SimpleCommand &cmd,
                                    std::function<void(Future *fu)> &callback) {
   rrr::FutureAttr fuattr;
   fuattr.callback = callback;
-  RococoProxy *proxy = rpc_proxies_[cmd.PartitionId()];
-  Log_debug("SendStart to %ld\n", cmd.PartitionId());
-  Future::safe_release(proxy->async_StartTxn(cmd, fuattr));
+  std::pair<siteid_t, RococoProxy*> proxy = RandomProxyForPartition(cmd.PartitionId());
+  Log_debug("SendStart to %ld\n", proxy.first);
+  Future::safe_release(proxy.second->async_StartTxn(cmd, fuattr));
 }
 
 void RococoCommunicator::SendPrepare(groupid_t gid,
