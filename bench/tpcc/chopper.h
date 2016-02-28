@@ -92,7 +92,7 @@ class TpccChopper: public TxnCommand {
  public:
   TpccChopper();
 
-  virtual siteid_t GetPieceSiteId(innid_t inn_id);
+  virtual parid_t GetPiecePartitionId(innid_t inn_id);
 
   virtual void init(TxnRequest &req);
   virtual bool start_callback(int pi,
