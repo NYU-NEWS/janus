@@ -17,7 +17,7 @@ namespace mdcc {
       auto cmd = static_cast<rococo::SimpleCommand*>(chopper->GetNextSubCmd());
       cmd->id_ = txn_id;
       Log_info("Start sub-command: command site_id is %d %d %d",
-               cmd->SiteId(), cmd->type_, cmd->inn_id_);
+               cmd->PartitionId(), cmd->type_, cmd->inn_id_);
       GetOrCreateCommunicator()->SendStartPiece(*cmd);
       return true;
     } else {
