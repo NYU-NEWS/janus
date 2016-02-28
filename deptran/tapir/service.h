@@ -13,7 +13,10 @@ class TapirServiceImpl: public TapirService {
   TapirSched* sched_;
   TapirServiceImpl(Scheduler* sched);
   void Prepare(rrr::DeferredReply* defer) override;
-  void Accept(rrr::DeferredReply* defer) override;
+  void Accept(const cmdid_t& cmd_id,
+              const ballot_t& ballot,
+              const int32_t& decision,
+              rrr::DeferredReply* defer) override;
   void FastAccept(const SimpleCommand& cmd,
                   rrr::i32* res,
                   std::map<rrr::i32, Value>* output,

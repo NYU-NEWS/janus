@@ -11,7 +11,10 @@ void TapirServiceImpl::Prepare(rrr::DeferredReply* defer) {
   verify(0);
 }
 
-void TapirServiceImpl::Accept(rrr::DeferredReply* defer) {
+void TapirServiceImpl::Accept(const cmdid_t& cmd_id,
+                              const ballot_t& ballot,
+                              const int32_t& decision,
+                              rrr::DeferredReply* defer) {
   verify(0);
 }
 

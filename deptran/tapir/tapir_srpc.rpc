@@ -2,7 +2,9 @@ namespace rococo;
 
 abstract service Tapir {
   defer Prepare();
-  defer Accept();
+  defer Accept(uint64_t cmd_id,
+               uint64_t ballot,
+	       int32_t decision);
   // works as 2PC prepare on a paxos fast-accept
   defer FastAccept(SimpleCommand cmd | 
                    i32 res,
