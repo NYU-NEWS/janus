@@ -9,12 +9,12 @@
 
 namespace rococo {
 
-int NoneSched::OnPhaseOneRequest(const SimpleCommand& cmd,
+int NoneSched::OnExchangeRequest(const SimpleCommand &cmd,
                                  rrr::i32 *res,
                                  map<int32_t, Value> *output,
                                  rrr::DeferredReply *defer) {
   TPLExecutor *exec = (TPLExecutor*) GetOrCreateExecutor(cmd.root_id_);
-  exec->execute(cmd, res, *output);
+  exec->Execute(cmd, res, *output);
   defer->reply();
   return 0;
 }

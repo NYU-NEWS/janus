@@ -10,7 +10,7 @@ namespace rococo {
 class NoneSched: public Scheduler {
  using Scheduler::Scheduler;
  public:
-  virtual int OnPhaseOneRequest(const SimpleCommand& cmd,
+  virtual int OnExchangeRequest(const SimpleCommand &cmd,
                                 rrr::i32 *res,
                                 map<int32_t, Value> *output,
                                 rrr::DeferredReply *defer);

@@ -39,7 +39,7 @@ class ThreePhaseExecutor: public Executor {
 
   virtual int abort();
 
-  void execute(const SimpleCommand& cmd,
+  void Execute(const SimpleCommand &cmd,
                rrr::i32 *res,
                map<int32_t, Value> &output);
 

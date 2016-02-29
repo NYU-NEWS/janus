@@ -23,7 +23,7 @@ public:
   virtual void Merge(Command&){verify(0);};;
   virtual bool IsFinished(){verify(0);};
 
-  virtual set<siteid_t> GetSiteIds() {
+  virtual set<siteid_t> GetPartitionIds() {
     verify(0);
     return set<siteid_t>();
   }

@@ -8,6 +8,7 @@ namespace rococo {
 class TxnRegistry;
 class Scheduler;
 class DTxn;
+class SimpleCommand;
 class Executor {
  public:
   Recorder* recorder_ = nullptr;
@@ -19,6 +20,10 @@ class Executor {
   int phase_ = -1;
 
   Executor(txnid_t txn_id, Scheduler* sched);
+  virtual void Execute(const SimpleCommand &cmd,
+               rrr::i32 *res,
+               map<int32_t, Value> &output);
+
   virtual ~Executor();
   mdb::Txn* mdb_txn();
 };

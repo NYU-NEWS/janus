@@ -155,7 +155,7 @@ void RococoServiceImpl::StartTxn(const SimpleCommand &cmd,
 //  output->resize(output_size);
   // find stored procedure, and run it
   *res = SUCCESS;
-  ((ThreePhaseSched*)dtxn_sched_)->OnPhaseOneRequest(cmd, res, output, defer);
+  ((ThreePhaseSched *) dtxn_sched_)->OnExchangeRequest(cmd, res, output, defer);
 }
 
 void RococoServiceImpl::prepare_txn(
