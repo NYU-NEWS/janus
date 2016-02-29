@@ -39,7 +39,7 @@ std::pair<siteid_t, RococoProxy*> Communicator::RandomProxyForPartition(parid_t 
   auto& partition_proxies = it->second;
   int index = rrr::RandomGenerator::rand(0, partition_proxies.size()-1);
   auto site_id = partition_proxies[index].first;
-  auto& proxy = partition_proxies[index].second;
+  auto proxy = partition_proxies[index].second;
   return std::make_pair(site_id, proxy);
 }
 
