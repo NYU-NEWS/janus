@@ -330,8 +330,8 @@ void ThreePhaseCoordinator::FinishAck(phase_t phase, Future *fu) {
     n_finish_ack_++;
     Log_debug("finish cmd_id_: %ld; n_finish_ack_: %ld; n_finish_req_: %ld",
                cmd_->id_, n_finish_ack_, n_finish_req_);
-    verify(cmd->GetSiteIds().size() == n_finish_req_);
-    if (n_finish_ack_ == cmd->GetSiteIds().size()) {
+    verify(cmd->GetPartitionIds().size() == n_finish_req_);
+    if (n_finish_ack_ == cmd->GetPartitionIds().size()) {
       if ((cmd->reply_.res_ == REJECT) && cmd->can_retry()) {
         retry = true;
       } else {

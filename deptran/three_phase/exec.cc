@@ -106,10 +106,9 @@ void ThreePhaseExecutor::execute(const SimpleCommand &cmd,
                                  output);
 }
 
-void ThreePhaseExecutor::execute(const SimpleCommand &cmd,
+void ThreePhaseExecutor::Execute(const SimpleCommand &cmd,
                                  rrr::i32 *res,
                                  map<int32_t, Value> &output) {
-  rrr::i32 output_size = 0;
   txn_reg_->get(cmd).txn_handler(this,
                                  dtxn_,
                                  const_cast<SimpleCommand&>(cmd),

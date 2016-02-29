@@ -9,7 +9,7 @@
 
 namespace rococo {
 
-int ThreePhaseSched::OnPhaseOneRequest(const SimpleCommand &cmd,
+int ThreePhaseSched::OnExchangeRequest(const SimpleCommand &cmd,
                                        rrr::i32 *res,
                                        map<int32_t, Value> *output,
                                        rrr::DeferredReply *defer) {

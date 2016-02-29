@@ -131,7 +131,7 @@ class TxnCommand: public Command {
   virtual void Merge(Command&);
   virtual bool HasMoreSubCmdReadyNotOut();
   virtual Command* GetNextSubCmd();
-  virtual set<siteid_t> GetSiteIds();
+  virtual set<siteid_t> GetPartitionIds();
 
 
   virtual parid_t GetPiecePartitionId(innid_t inn_id) {

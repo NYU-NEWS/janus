@@ -1,6 +1,7 @@
 
 #include "executor.h"
 #include "scheduler.h"
+#include "txn_reg.h"
 
 namespace rococo {
 
@@ -14,6 +15,16 @@ Executor::~Executor(){
   verify(dtxn_ != nullptr);
   sched_->DestroyDTxn(cmd_id_);
   dtxn_ = nullptr;
+}
+
+void Executor::Execute(const SimpleCommand &cmd,
+                       rrr::i32 *res,
+                       map<int32_t, Value> &output) {
+  txn_reg_->get(cmd).txn_handler(this,
+                                 dtxn_,
+                                 const_cast<SimpleCommand&>(cmd),
+                                 res,
+                                 output);
 }
 
 mdb::Txn* Executor::mdb_txn() {
