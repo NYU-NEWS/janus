@@ -24,5 +24,8 @@ class TapirFrame : public Frame {
       override;
   mdb::Row *CreateRow(const mdb::Schema *schema,
                       vector<Value> &row_data) override;
+
+  DTxn* CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) override;
+
 };
 } // namespace rococo

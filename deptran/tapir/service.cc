@@ -15,6 +15,7 @@ void TapirServiceImpl::Accept(const cmdid_t& cmd_id,
                               const ballot_t& ballot,
                               const int32_t& decision,
                               rrr::DeferredReply* defer) {
+
   verify(0);
 }
 
@@ -23,8 +24,8 @@ void TapirServiceImpl::FastAccept(const SimpleCommand& cmd,
                                   std::map<rrr::i32, Value>* output,
                                   rrr::DeferredReply* defer) {
   // TODO
-  *res = SUCCESS;
-  defer->reply();
+  sched_->OnExchangeRequest(cmd, res, output, [] () {});
+  sched_->OnFastAccept(cmd.root_id_, res, [defer] () {defer->reply();});
 //  verify(0);
 }
 
@@ -33,7 +34,7 @@ void TapirServiceImpl::Decide(const rrr::i64& cmd_id,
                               rrr::DeferredReply* defer) {
   // TODO
   defer->reply();
-//  verify(0);
+  verify(0);
 }
 
 } // namespace rococo

@@ -49,7 +49,7 @@ void TapirCoord::FastAccept() {
                                  std::bind(&TapirCoord::FastAcceptAck,
                                            this,
                                            phase_,
-                                           subcmd->GetPartitionId(),
+                                           subcmd->PartitionId(),
                                            std::placeholders::_1));
   }
 }
@@ -88,7 +88,7 @@ void TapirCoord::Accept() {
   phase_++;
   ballot_t ballot = MAGIC_SACCEPT_BALLOT;
   auto decision = ABORT;
-  for (auto par_id : cmd_->GePartitionIds()) {
+  for (auto par_id : cmd_->GetPartitionIds()) {
     commo()->BroadcastAccept(par_id,
                              cmd_->id_,
                              ballot,
@@ -127,7 +127,7 @@ int TapirCoord::GetSlowQuorum(parid_t par_id) {
 bool TapirCoord::AllSlowQuorumReached() {
   // verify(0);
   // currently the
-  auto pars = cmd_->GePartitionIds();
+  auto pars = cmd_->GetPartitionIds();
   bool all_slow_quorum_reached = true;
   for (auto& par_id : pars) {
     if (n_fast_accept_oks_[par_id] < GetSlowQuorum(par_id)) {
@@ -142,7 +142,7 @@ bool TapirCoord::AllSlowQuorumReached() {
 bool TapirCoord::AllFastQuorumReached() {
   // verify(0);
   // currently the
-  auto pars = cmd_->GePartitionIds();
+  auto pars = cmd_->GetPartitionIds();
   bool all_fast_quorum_reached = true;
   for (auto& par_id : pars) {
     if (n_fast_accept_oks_[par_id] < GetFastQuorum(par_id)) {
@@ -156,7 +156,7 @@ bool TapirCoord::AllFastQuorumReached() {
 void TapirCoord::Decide() {
   phase_++;
   verify(decision_ != UNKNOWN);
-  auto pars = cmd_->GePartitionIds();
+  auto pars = cmd_->GetPartitionIds();
   Log_debug("send out decide request, cmd_id: %lx, ", cmd_->id_);
   for (auto par_id : pars) {
     commo()->BroadcastDecide(par_id, cmd_->id_, decision_);

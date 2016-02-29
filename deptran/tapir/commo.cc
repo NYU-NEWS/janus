@@ -8,7 +8,7 @@ namespace rococo {
 
 void TapirCommo::BroadcastFastAccept(SimpleCommand& cmd,
                                      const function<void(Future* fu)>& cb) {
-  parid_t par_id = cmd.GetPartitionId();
+  parid_t par_id = cmd.PartitionId();
   auto proxies = rpc_par_proxies_[par_id];
   for (auto &p : proxies) {
     auto proxy = (TapirProxy*) p;
@@ -18,7 +18,9 @@ void TapirCommo::BroadcastFastAccept(SimpleCommand& cmd,
   }
 }
 
-void TapirCommo::BroadcastDecide(parid_t par_id, cmdid_t cmd_id, int decision) {
+void TapirCommo::BroadcastDecide(parid_t par_id,
+                                 cmdid_t cmd_id,
+                                 int decision) {
   auto proxies = rpc_par_proxies_[par_id];
   for (auto &p : proxies) {
     auto proxy = (TapirProxy*) p;

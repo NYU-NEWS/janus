@@ -3,6 +3,7 @@
 #include "exec.h"
 #include "coord.h"
 #include "sched.h"
+#include "dtxn.h"
 #include "commo.h"
 #include "config.h"
 #include "service.h"
@@ -35,7 +36,7 @@ Coordinator* TapirFrame::CreateCoord(cooid_t coo_id,
 
 Scheduler* TapirFrame::CreateScheduler() {
   Scheduler* sched = new TapirSched();
-
+  sched->frame_ = this;
   return sched;
 }
 
@@ -57,6 +58,11 @@ mdb::Row* TapirFrame::CreateRow(const mdb::Schema *schema,
 
   mdb::Row* r = mdb::VersionedRow::create(schema, row_data);
   return r;
+}
+
+DTxn* TapirFrame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {
+  auto dtxn = new TapirDTxn(tid, mgr);
+  return dtxn;
 }
 
 } // namespace rococo
