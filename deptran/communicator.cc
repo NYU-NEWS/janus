@@ -38,9 +38,7 @@ std::pair<siteid_t, RococoProxy*> Communicator::RandomProxyForPartition(parid_t 
   verify(it != rpc_par_proxies_.end());
   auto& partition_proxies = it->second;
   int index = rrr::RandomGenerator::rand(0, partition_proxies.size()-1);
-  auto site_id = partition_proxies[index].first;
-  auto proxy = partition_proxies[index].second;
-  return std::make_pair(site_id, proxy);
+  return partition_proxies[index];
 }
 
 } // namespace rococo
