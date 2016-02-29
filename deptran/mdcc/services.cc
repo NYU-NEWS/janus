@@ -23,7 +23,14 @@ namespace mdcc {
   void MdccLeaderServiceImpl::Propose(const ProposeRequest &req,
                                       rrr::DeferredReply *defer) {
     Log_debug("Recieved %s: at site %d", __FUNCTION__, my_site_info_.id);
-    dtxn_mgr_->Phase2aClassic(req.updates);
+    verify(req.ballot.type == CLASSIC);
+    dtxn_mgr_->Phase2aClassic(req.ballot, req.updates);
+  }
+
+  void MdccAcceptorServiceImpl::Propose(const ProposeRequest &req, rrr::DeferredReply *defer) {
+    Log_debug("Recieved %s: at site %d", __FUNCTION__, my_site_info_.id);
+    verify(req.ballot.type == FAST);
+    dtxn_mgr_->Phase2bFast(req.ballot, req.updates);
   }
 
   void MdccAcceptorServiceImpl::Phase2a(const Phase2aRequest& req,

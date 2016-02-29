@@ -5,13 +5,15 @@
 namespace mdcc {
   enum BallotType { FAST, CLASSIC };
   struct Ballot {
+    siteid_t site_id;
     ballot_t number;
     BallotType type;
-    Ballot(ballot_t number, BallotType type) : number(number), type(type) {}
-    Ballot() : Ballot(0, FAST) {}
+    Ballot(siteid_t site_id, ballot_t number, BallotType type) :
+        number(number), type(type), site_id(site_id) {}
+    Ballot() : Ballot(-1, 0, FAST) {}
   protected:
-    std::tuple<const ballot_t&, const BallotType&> ToTuple() const {
-      return std::tie(this->number, this->type);
+    std::tuple<const ballot_t&, const siteid_t&, const BallotType&> ToTuple() const {
+      return std::tie(number, site_id, type);
     };
   public:
     bool operator==(const Ballot& other) const { return ToTuple() == other.ToTuple(); }
@@ -22,7 +24,7 @@ namespace mdcc {
     bool operator>=(const Ballot& other) const { return !(*this < other); }
     std::string string() const {
       std::ostringstream ss;
-      ss << "[ballot " << number << "; type " << type << "]";
+      ss << "[ballot site " << site_id << "; number" << number << "; type " << type << "]";
       return ss.str();
     }
   };

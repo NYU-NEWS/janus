@@ -34,8 +34,8 @@ class MdccCommunicator {
                  Callback<StartResponse>& callback);
 
   void SendStartPiece(const rococo::SimpleCommand& cmd);
-  void SendProposal(BallotType ballotType, txnid_t txn_id, const rococo::SimpleCommand &cmd,
-                    OptionSet* options);
+  void SendProposal(Ballot ballot, txnid_t txn_id, const rococo::SimpleCommand &cmd,
+                    OptionSet *options);
   void SendPhase2a(Phase2aRequest req);
   void SendPhase2b(const Phase2bRequest &req);
 
@@ -82,7 +82,7 @@ private:
   SiteProxy* RandomSiteProxy(const vector<Config::SiteInfo> &sites) const;
   SiteProxy* ClosestSiteProxy(uint32_t partition_id) const;
   std::vector<SiteProxy*> AllSiteProxies(parid_t partition_id) const;
-  SiteProxy* LeaderSiteProxy(OptionSet *option_set, std::vector<Config::SiteInfo> &sites) const;
+  SiteProxy* LeaderSiteProxy(OptionSet *option_set, parid_t partition_id) const;
 };
 }
 

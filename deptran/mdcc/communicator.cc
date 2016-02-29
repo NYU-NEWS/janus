@@ -31,29 +31,39 @@ namespace mdcc {
 
   // start a transaction piece on a partition
   void MdccCommunicator::SendStartPiece(const rococo::SimpleCommand& cmd) {
-    auto sites = config_->SitesByPartitionId(cmd.partition_id_);
+    std::lock_guard<std::mutex> lock(this->mtx_);
+    auto sites = config_->SitesByPartitionId(cmd.PartitionId());
     auto proxy = RandomSiteProxy(sites);
     Log_debug("%s: at site %d to site %d", __FUNCTION__, site_info_.id, proxy->site_info.id);
     Future::safe_release(proxy->client->async_StartPiece(cmd));
   }
 
-  void MdccCommunicator::SendProposal(BallotType ballotType, txnid_t txn_id,
+  void MdccCommunicator::SendProposal(Ballot ballot, txnid_t txn_id,
                                       const rococo::SimpleCommand &cmd,
-                                      OptionSet* options) {
-    auto partition_sites = config_->SitesByPartitionId(cmd.partition_id_);
+                                      OptionSet *options) {
+    std::lock_guard<std::mutex> lock(this->mtx_);
 
-    if (ballotType == BallotType::CLASSIC) {
-      auto proxy = LeaderSiteProxy(options, partition_sites);
+    if (ballot.type == BallotType::CLASSIC) {
+      auto proxy = LeaderSiteProxy(options, cmd.PartitionId());
       Log_debug("send %d options from %d to %d", options->Options().size(), site_info_.id, proxy->site_info.id);
       ProposeRequest req;
       req.updates = *options;
+      req.ballot = ballot;
       Future::safe_release(proxy->leader->async_Propose(req));
     } else {
-      Log_fatal("implement fast path");
+      auto proxies = AllSiteProxies(cmd.PartitionId());
+      for (auto proxy : proxies) {
+        Log_debug("send %d options from %d to %d", options->Options().size(), site_info_.id, proxy->site_info.id);
+        ProposeRequest req;
+        req.updates = *options;
+        req.ballot = ballot;
+        Future::safe_release(proxy->acceptor->async_Propose(req));
+      }
     }
   }
 
   void MdccCommunicator::SendPhase2a(Phase2aRequest req) {
+    std::lock_guard<std::mutex> lock(this->mtx_);
     assert(req.site_id == site_info_.id);
     auto partition_id = site_info_.partition_id_;
     Log_debug("%s: to partition %d", __FUNCTION__, partition_id);
@@ -65,6 +75,7 @@ namespace mdcc {
   }
 
   void MdccCommunicator::SendPhase2b(const Phase2bRequest &req) {
+    std::lock_guard<std::mutex> lock(this->mtx_);
     for (auto proxy : site_proxies_) {
       Log_debug("%s: from site %d to %d", __FUNCTION__, site_info_.id, proxy->site_info.id);
       Future::safe_release(proxy->learner->async_Phase2b(req));
@@ -97,7 +108,8 @@ namespace mdcc {
   }
 
   MdccCommunicator::SiteProxy* MdccCommunicator::LeaderSiteProxy(
-      OptionSet *option_set, std::vector<Config::SiteInfo> &sites) const {
+      OptionSet *option_set, parid_t partition_id) const {
+    auto sites = config_->SitesByPartitionId(partition_id);
     std::size_t hname = std::hash<std::string>()(option_set->Table());
     std::size_t hkey = rococo::multi_value_hasher()(option_set->Key());
     int index = (hname ^ hkey) % sites.size();

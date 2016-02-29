@@ -49,11 +49,6 @@ Command *TxnCommand::GetNextReadySubCmd() {
       cmd->root_ = this;
       cmd_[pi] = cmd;
 
-      auto partition_sites = Config::GetConfig()->SitesByPartitionId(cmd->partition_id_);
-      for (auto& site : partition_sites) {
-        site_ids_.insert(site.id);
-      }
-
       Log_debug("getting subcmd i: %d, thread id: %x",
                 pi, std::this_thread::get_id());
       verify(status_[pi] == INIT);

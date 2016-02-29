@@ -18,17 +18,20 @@ namespace mdcc {
   class TxnOptionResult {
   protected:
     uint32_t quorum_size_;
-    std::map<RowId, uint32_t> accept_counts_;
+    uint32_t num_accepted_;
+    RecordOptionMap values_;
   public:
     TxnOptionResult(const RecordOptionMap& options, uint32_t quorum_size) :
-        quorum_size_(quorum_size) {
-      for (auto pair : options) {
-        RowId id = pair.first;
-        accept_counts_[id] = 0;
-      }
+        quorum_size_(quorum_size), num_accepted_(0), values_(options) {
     }
 
-    uint32_t AcceptCount(RowId id) { return accept_counts_[id]; }
+    void Accept() {
+      num_accepted_++;
+    }
+
+    bool HasQourum() {
+      return num_accepted_ >= quorum_size_;
+    }
   };
 
   struct LeaderContext {
@@ -42,9 +45,7 @@ namespace mdcc {
       ballot = other.ballot;
     }
 
-    LeaderContext() {
-      // todo: delete once fast path implemented
-      ballot.type = CLASSIC;
+    LeaderContext(siteid_t site_id) : ballot(site_id, 0, FAST){
     }
   };
 
@@ -52,9 +53,7 @@ namespace mdcc {
     Ballot ballot;
     std::map<Ballot, vector<OptionSet>> values;
 
-    AcceptorContext() {
-      // todo: delete once fast path implemented
-      ballot.type = CLASSIC;
+    AcceptorContext(siteid_t site_id) : ballot(site_id, 0, FAST) {
     }
 
     const Ballot * HighestBallotWithValue();
@@ -70,7 +69,7 @@ namespace mdcc {
     std::map<txnid_t, LeaderContext*> leader_contexts_;
     AcceptorContext acceptor_context_;
   public:
-    MdccScheduler() : Scheduler(MODE_MDCC) {}
+    MdccScheduler() : Scheduler(MODE_MDCC), acceptor_context_(-1) {}
     virtual ~MdccScheduler() {
       if (communicator_) {
         delete communicator_;
@@ -84,6 +83,7 @@ namespace mdcc {
       return communicator_;
     }
 
+    LeaderContext* GetLeaderContext(txnid_t txn_id);
     LeaderContext* GetOrCreateLeaderContext(txnid_t txn_id);
 
     void StartTransaction(
@@ -97,11 +97,12 @@ namespace mdcc {
     void StartPiece(const rococo::SimpleCommand& cmd, int32_t* result, DeferredReply *defer);
     bool LaunchNextPiece(uint64_t txn_id, TxnChopper *chopper);
     void SendUpdateProposal(txnid_t txn_id, const SimpleCommand &cmd, int32_t* result);
-    void Phase2aClassic(OptionSet option_set);
+    void Phase2aClassic(const Ballot ballot, OptionSet option_set);
     void Phase2bClassic(const Ballot ballot, const std::vector<OptionSet>& values);
-    void SetCompatible(const std::vector<OptionSet> &old_options, std::vector<OptionSet> &current_options);
+    void SetCompatible(int new_position, std::vector<OptionSet> &options);
     void Learn(const Ballot& ballot, const vector<OptionSet>& values);
 
     uint32_t PartitionQourumSize(BallotType type, uint32_t partition_id);
+    void Phase2bFast(Ballot ballot, const OptionSet &option_set);
   };
 }

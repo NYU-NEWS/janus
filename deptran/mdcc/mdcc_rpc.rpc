@@ -14,6 +14,7 @@ abstract service MdccLeader {
 };
 
 abstract service MdccAcceptor {
+  defer Propose(ProposeRequest req);
   defer Phase2a(Phase2aRequest req);
 };
 
@@ -40,7 +41,8 @@ struct StartPieceResponse {
 };
 
 struct ProposeRequest {
-  OptionSet updates
+  Ballot ballot;
+  OptionSet updates;
 };
 
 struct ProposeResponse {

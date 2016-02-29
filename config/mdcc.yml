@@ -52,14 +52,14 @@ bench:
     write: 1
   population: # intial number of records in each table
     warehouse: 1
-    district: 10
-    customer: 3000 #30000
+    district: 1
+    customer: 1 #30000
     history: 3000 #30000
-    order: 3000 #30000
-    new_order: 900 #9000
-    item: 10000 #100000
-    stock: 10000 #100000
-    order_line: 30000 #300000
+    order: 1 #30000
+    new_order: 1 #9000
+    item: 1 #100000
+    stock: 1 #100000
+    order_line: 1 #300000
 
 schema: # table information
   - name: warehouse

@@ -60,6 +60,7 @@ namespace mdcc {
         dtxn_mgr_(dynamic_cast<MdccScheduler*>(dtxn_mgr)) {
       dtxn_mgr_->init(config, my_site_id);
     }
+    void Propose(const ProposeRequest& req, rrr::DeferredReply* defer) override;
     void Phase2a(const Phase2aRequest& req, rrr::DeferredReply* defer) override;
   };
 
