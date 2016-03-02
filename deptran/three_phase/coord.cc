@@ -60,7 +60,7 @@ void ThreePhaseCoordinator::do_one(TxnRequest &req) {
   switch (mode) {
     case MODE_OCC:
     case MODE_2PL:
-      Start();
+      Handout();
       break;
     case MODE_RPC_NULL:
 //      rpc_null_start(ch);
@@ -117,14 +117,14 @@ void ThreePhaseCoordinator::Reset() {
   for (int i = 0; i < site_prepare_.size(); i++) {
     site_prepare_[i] = 0;
   }
-  n_start_ = 0;
-  n_start_ack_ = 0;
+  n_handout_ = 0;
+  n_handout_ack_ = 0;
   n_prepare_req_ = 0;
   n_prepare_ack_ = 0;
   n_finish_req_ = 0;
   n_finish_ack_ = 0;
-  start_ack_map_.clear();
-  IncrementPhaseAndChangeStage(START);
+  handout_acks_.clear();
+  IncrementPhaseAndChangeStage(HANDOUT);
 //  TxnCommand *ch = (TxnCommand *) cmd_;
 }
 
@@ -136,15 +136,15 @@ void ThreePhaseCoordinator::restart(TxnCommand *ch) {
   double last_latency = ch->last_attempt_latency();
 
   if (ccsi_) ccsi_->txn_retry_one(this->thread_id_, ch->type_, last_latency);
-  Start();
+  Handout();
 }
 
-void ThreePhaseCoordinator::Start() {
+void ThreePhaseCoordinator::Handout() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   //  ___TestPhaseOne(cmd_id_);
 
-  if (stage_ != START) {
-    IncrementPhaseAndChangeStage(START);
+  if (stage_ != HANDOUT) {
+    IncrementPhaseAndChangeStage(HANDOUT);
   }
 
 //  StartRequest req;
@@ -152,63 +152,64 @@ void ThreePhaseCoordinator::Start() {
 
   int cnt = 0;
   while (cmd_->HasMoreSubCmdReadyNotOut()) {
-    auto subcmd = (SimpleCommand*)cmd_->GetNextSubCmd();
+    auto subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd();
     subcmd->id_ = next_pie_id();
     verify(subcmd->root_id_ == cmd_->id_);
-    n_start_++;
+    n_handout_++;
     cnt++;
     Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
-              n_start_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
-    start_ack_map_[subcmd->inn_id()] = false;
-    commo()->SendStart(*subcmd,
-                       this,
-                       std::bind(&ThreePhaseCoordinator::StartAck,
-                                 this,
-                                 std::placeholders::_1,
-                                 phase_));
+              n_handout_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
+    handout_acks_[subcmd->inn_id()] = false;
+    commo()->SendHandout(*subcmd,
+                         this,
+                         std::bind(&ThreePhaseCoordinator::HandoutAck,
+                                   this,
+                                   phase_,
+                                   std::placeholders::_1,
+                                   std::placeholders::_2));
   }
   Log_debug("sent %d SubCmds\n", cnt);
 }
 
-bool ThreePhaseCoordinator::AllStartAckCollected() {
-  return std::all_of(start_ack_map_.begin(),
-                     start_ack_map_.end(),
+bool ThreePhaseCoordinator::AllHandoutAckReceived() {
+  return std::all_of(handout_acks_.begin(),
+                     handout_acks_.end(),
                      [](std::pair<innid_t, bool> pair){ return pair.second; });
 }
 
-void ThreePhaseCoordinator::StartAck(StartReply &reply, phase_t phase) {
+void ThreePhaseCoordinator::HandoutAck(phase_t phase, int res, Command& cmd) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
 
-  if (IsPhaseOrStageStale(phase, START)) {
+  if (IsPhaseOrStageStale(phase, HANDOUT)) {
     Log_debug("ignore stale startack\n");
     return;
   }
-  n_start_ack_++;
+  n_handout_ack_++;
   TxnCommand *ch = (TxnCommand *) cmd_;
-  start_ack_map_[reply.cmd->inn_id_] = true;
+  handout_acks_[cmd.inn_id_] = true;
 
   Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
-            n_start_ack_, n_start_, cmd_->id_, reply.cmd->inn_id_);
+            n_handout_ack_, n_handout_, cmd_->id_, cmd.inn_id_);
 
-  if (reply.res == REJECT) {
+  if (res == REJECT) {
     Log_debug("got REJECT reply for cmd_id: %lx, inn_id: %d; NOT COMMITING",
-               cmd_->id_,reply.cmd->inn_id());
+               cmd.root_id_, cmd.inn_id());
     ch->commit_.store(false);
   }
   if (!ch->commit_.load()) {
-    if (n_start_ack_ == n_start_) {
+    if (n_handout_ack_ == n_handout_) {
       Log_debug("received all start acks (at least one is REJECT); calling "
                     "Finish()");
       this->Decide();
     }
   } else {
-    cmd_->Merge(*reply.cmd);
+    cmd_->Merge(cmd);
     if (cmd_->HasMoreSubCmdReadyNotOut()) {
       Log_debug("command has more sub-cmd, cmd_id: %lx,"
                     " n_started_: %d, n_pieces: %d",
                 cmd_->id_, ch->n_pieces_out_, ch->GetNPieceAll());
-      Start();
-    } else if (AllStartAckCollected()) {
+      Handout();
+    } else if (AllHandoutAckReceived()) {
       Log_debug("receive all start acks, txn_id: %ld; START PREPARE", cmd_->id_);
       Prepare();
     }
@@ -229,7 +230,7 @@ void ThreePhaseCoordinator::Prepare() {
 
   for (auto &site : cmd->site_ids_) {
     Log_debug("send prepare tid: %ld", cmd_->id_);
-    commo_->SendPrepare(site,
+    commo()->SendPrepare(site,
                         cmd_->id_,
                         sids,
                         std::bind(&ThreePhaseCoordinator::PrepareAck,
@@ -292,7 +293,7 @@ void ThreePhaseCoordinator::Decide() {
     for (auto &rp : cmd->site_ids_) {
       n_finish_req_ ++;
       Log_debug("send commit for txn_id %ld to %ld\n", cmd->id_, rp);
-      commo_->SendCommit(rp,
+      commo()->SendCommit(rp,
                          cmd_->id_,
                          std::bind(&ThreePhaseCoordinator::FinishAck,
                                    this,
@@ -305,7 +306,7 @@ void ThreePhaseCoordinator::Decide() {
     for (auto &rp : cmd->site_ids_) {
       n_finish_req_ ++;
       Log_debug("send abort for txn_id %ld to %ld\n", cmd->id_, rp);
-      commo_->SendAbort(rp,
+      commo()->SendAbort(rp,
                         cmd_->id_,
                         std::bind(&ThreePhaseCoordinator::FinishAck,
                                   this,

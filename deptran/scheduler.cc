@@ -238,6 +238,7 @@ void Scheduler::reg_table(const std::string &name,
 Executor* Scheduler::CreateExecutor(cmdid_t txn_id) {
   verify(executors_.find(txn_id) == executors_.end());
   Executor *exec = frame_->CreateExecutor(txn_id, this);
+  verify(exec->sched_);
   DTxn* dtxn = CreateDTxn(txn_id);
   exec->dtxn_ = dtxn;
   executors_[txn_id] = exec;
@@ -254,6 +255,7 @@ Executor* Scheduler::GetOrCreateExecutor(cmdid_t txn_id) {
     exec = CreateExecutor(txn_id);
   } else {
     exec = it->second;
+    verify(exec->sched_ != nullptr);
   }
   return exec;
 }

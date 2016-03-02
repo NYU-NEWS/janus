@@ -11,10 +11,10 @@ class ThreePhaseSched: public NoneSched {
  using NoneSched::NoneSched;
  public:
 
-  virtual int OnExchangeRequest(const SimpleCommand &cmd,
-                                rrr::i32 *res,
-                                map<int32_t, Value> *output,
-                                rrr::DeferredReply *defer);
+  virtual int OnHandoutRequest(const SimpleCommand &cmd,
+                               rrr::i32 *res,
+                               map<int32_t, Value> *output,
+                               rrr::DeferredReply *defer);
   // PrepareRequest
   virtual int OnPhaseTwoRequest(cmdid_t cmd_id,
                         const std::vector <i32> &sids,

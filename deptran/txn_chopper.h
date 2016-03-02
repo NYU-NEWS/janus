@@ -130,7 +130,7 @@ class TxnCommand: public Command {
   virtual bool IsFinished(){verify(0);}
   virtual void Merge(Command&);
   virtual bool HasMoreSubCmdReadyNotOut();
-  virtual Command* GetNextSubCmd();
+  virtual Command*GetNextReadySubCmd();
   virtual set<siteid_t> GetPartitionIds();
 
 

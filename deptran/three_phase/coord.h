@@ -9,8 +9,6 @@ namespace rococo {
 class ClientControlServiceImpl;
 
 class ThreePhaseCoordinator : public Coordinator {
- protected:
-  RococoCommunicator *commo_ = nullptr;
  public:
   ThreePhaseCoordinator(uint32_t coo_id,
                         int benchmark,
@@ -79,8 +77,8 @@ class ThreePhaseCoordinator : public Coordinator {
   virtual void Reset() override;
   void restart(TxnCommand *ch);
 
-  void Start();
-  void StartAck(StartReply &reply, phase_t phase);
+  virtual void Handout();
+  virtual void HandoutAck(phase_t phase, int res, Command& cmd);
   void Prepare();
   void PrepareAck(phase_t phase, Future *fu);
   void Decide();
@@ -91,7 +89,7 @@ class ThreePhaseCoordinator : public Coordinator {
 
   bool IsPhaseOrStageStale(phase_t phase, CoordinatorStage stage);
   void IncrementPhaseAndChangeStage(CoordinatorStage stage);
-  bool AllStartAckCollected();
+  bool AllHandoutAckReceived();
 
   RequestHeader gen_header(TxnCommand *ch);
 

@@ -4,27 +4,28 @@
 
 namespace rococo {
 
-void RococoCommunicator::SendStart(SimpleCommand &cmd,
-                                   Coordinator *coo,
-                                   const function<void(StartReply&)> &callback) {
+void RococoCommunicator::SendHandout(SimpleCommand &cmd,
+                                     Coordinator *coo,
+                                     const function<void(int,
+                                                         Command&)> &callback) {
   rrr::FutureAttr fuattr;
   std::function<void(Future*)> cb =
       [coo, this, callback, &cmd] (Future *fu) {
-    StartReply reply;
-    Log_debug("SendStart callback for %ld from %ld",
+        Log_debug("SendStart callback for %ld from %ld",
               cmd.PartitionId(),
               coo->coo_id_);
-    reply.cmd = &cmd;
-    Marshal &m = fu->get_reply();
-    m >> reply.res >> cmd.output;
-    callback(reply);
+
+        int res;
+        Marshal &m = fu->get_reply();
+        m >> res >> cmd.output;
+        callback(res, cmd);
   };
   fuattr.callback = cb;
   std::pair<siteid_t, RococoProxy*> proxy = RandomProxyForPartition(cmd.PartitionId());
   Log_debug("SendStart to %ld from %ld", proxy.first, coo->coo_id_);
   verify(cmd.type_ > 0);
   verify(cmd.root_type_ > 0);
-  Future::safe_release(proxy.second->async_StartTxn(cmd, fuattr));
+  Future::safe_release(proxy->async_Handout(cmd, fuattr));
 }
 
 void RococoCommunicator::SendStart(SimpleCommand &cmd,
@@ -34,7 +35,7 @@ void RococoCommunicator::SendStart(SimpleCommand &cmd,
   fuattr.callback = callback;
   std::pair<siteid_t, RococoProxy*> proxy = RandomProxyForPartition(cmd.PartitionId());
   Log_debug("SendStart to %ld\n", proxy.first);
-  Future::safe_release(proxy.second->async_StartTxn(cmd, fuattr));
+  Future::safe_release(proxy->async_Handout(cmd, fuattr));
 }
 
 void RococoCommunicator::SendPrepare(groupid_t gid,

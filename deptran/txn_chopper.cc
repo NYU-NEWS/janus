@@ -24,7 +24,7 @@ bool TxnCommand::IsOneRound() {
   return false;
 }
 
-Command *TxnCommand::GetNextSubCmd() {
+Command *TxnCommand::GetNextReadySubCmd() {
   verify(n_pieces_out_ < n_pieces_input_ready_);
   verify(n_pieces_out_ < n_pieces_all_);
   SimpleCommand *cmd = nullptr;

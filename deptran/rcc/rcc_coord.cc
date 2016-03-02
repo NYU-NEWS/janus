@@ -118,7 +118,7 @@ void RCCCoord::deptran_start(TxnCommand *ch) {
   int     output_size;
 
   SimpleCommand *subcmd = nullptr;
-  while ((subcmd = (SimpleCommand*)cmd_->GetNextSubCmd()) != nullptr) {
+  while ((subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd()) != nullptr) {
     header.pid = next_pie_id();
 
     rrr::FutureAttr fuattr;
@@ -265,7 +265,7 @@ void RCCCoord::deptran_start_ro(TxnCommand *ch) {
   int     output_size;
 
   SimpleCommand *subcmd;
-  while ((subcmd = (SimpleCommand*)cmd_->GetNextSubCmd()) != nullptr) {
+  while ((subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd()) != nullptr) {
     header.pid = next_pie_id();
 
     rrr::FutureAttr fuattr;
@@ -312,7 +312,7 @@ void RCCCoord::deptran_finish_ro(TxnCommand *ch) {
   int     output_size;
 
   SimpleCommand *subcmd = nullptr;
-  while ((subcmd = (SimpleCommand*)cmd_->GetNextSubCmd()) != nullptr) {
+  while ((subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd()) != nullptr) {
     header.pid = next_pie_id();
 
     rrr::FutureAttr fuattr;

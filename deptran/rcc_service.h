@@ -49,23 +49,23 @@ class RococoServiceImpl: public RococoService {
       std::vector<vector<Value>> *output,
       DeferredReply *defer);
 
-  void StartTxn(const SimpleCommand &cmd,
-                int32_t *res,
-                map<int32_t, Value> *output,
-                DeferredReply *defer_reply);
+  void Handout(const SimpleCommand &cmd,
+               int32_t *res,
+               map<int32_t, Value> *output,
+               DeferredReply *defer_reply) override;
 
   void prepare_txn(const i64 &tid,
                    const std::vector<i32> &sids,
                    i32 *res,
-                   DeferredReply *defer);
+                   DeferredReply *defer) override;
 
   void commit_txn(const i64 &tid,
                   i32 *res,
-                  DeferredReply *defer);
+                  DeferredReply *defer) override;
 
   void abort_txn(const i64 &tid,
                  i32 *res,
-                 DeferredReply *defer);
+                 DeferredReply *defer) override;
 
 #ifdef PIECE_COUNT
   typedef struct piece_count_key_t{

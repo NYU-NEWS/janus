@@ -9,10 +9,10 @@
 
 namespace rococo {
 
-int ThreePhaseSched::OnExchangeRequest(const SimpleCommand &cmd,
-                                       rrr::i32 *res,
-                                       map<int32_t, Value> *output,
-                                       rrr::DeferredReply *defer) {
+int ThreePhaseSched::OnHandoutRequest(const SimpleCommand &cmd,
+                                      rrr::i32 *res,
+                                      map<int32_t, Value> *output,
+                                      rrr::DeferredReply *defer) {
   auto exec = (ThreePhaseExecutor*) GetOrCreateExecutor(cmd.root_id_);
   exec->StartLaunch(cmd,
                     res,

@@ -25,7 +25,7 @@ namespace mdcc {
   bool MdccScheduler::LaunchNextPiece(txnid_t txn_id, rococo::TxnChopper *chopper) {
     std::lock_guard<std::mutex> lock(mtx_);
     if (chopper->HasMoreSubCmdReadyNotOut()) {
-      auto cmd = static_cast<rococo::SimpleCommand*>(chopper->GetNextSubCmd());
+      auto cmd = static_cast<rococo::SimpleCommand*>(chopper->GetNextReadySubCmd());
       cmd->id_ = txn_id;
       Log_info("Start sub-command: command site_id is %d %d %d",
                cmd->PartitionId(), cmd->type_, cmd->inn_id_);

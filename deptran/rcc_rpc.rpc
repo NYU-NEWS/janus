@@ -78,9 +78,9 @@ abstract service Rococo {
 
     // below is for 2PL and OCC
 
-    defer StartTxn(SimpleCommand cmd |
-                   i32 res,
-                   map<i32, Value> output);
+    defer Handout(SimpleCommand cmd |
+                  i32 res,
+                  map<i32, Value> output);
 
     defer prepare_txn (i64 tid, 
                        vector<i32> sids | 

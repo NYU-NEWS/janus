@@ -12,7 +12,7 @@
 namespace rococo {
 class ClientControlServiceImpl;
 
-enum CoordinatorStage { START, PREPARE, FINISH };
+enum CoordinatorStage { HANDOUT, PREPARE, FINISH };
 
 class CoordinatorBase {
 public:
@@ -34,8 +34,8 @@ class Coordinator : public CoordinatorBase {
   bool batch_optimal_ = false;
   bool retry_wait_;
 
-  uint32_t n_start_ = 0;
-  uint32_t n_start_ack_ = 0;
+  uint32_t n_handout_ = 0;
+  uint32_t n_handout_ack_ = 0;
   uint32_t n_prepare_req_ = 0;
   uint32_t n_prepare_ack_ = 0;
   uint32_t n_finish_req_ = 0;
@@ -50,9 +50,10 @@ class Coordinator : public CoordinatorBase {
   Recorder *recorder_;
   Command *cmd_ = nullptr;
 //  cmdid_t cmd_id_;
-  CoordinatorStage stage_ = START;
+  CoordinatorStage stage_ = HANDOUT;
   phase_t phase_ = 0;
-  map<innid_t, bool> start_ack_map_;
+  map<innid_t, bool> handout_acks_ = {};
+  map<innid_t, bool> handout_outs_ = {};
   Sharding* sharding_ = nullptr;
   TxnRegistry *txn_reg_ = nullptr;
   Communicator* commo_ = nullptr;
@@ -120,8 +121,8 @@ class Coordinator : public CoordinatorBase {
     verify(0);
   }
   virtual void Reset() {
-    n_start_ = 0;
-    n_start_ack_ = 0;
+    n_handout_ = 0;
+    n_handout_ack_ = 0;
     n_prepare_req_ = 0;
     n_prepare_ack_ = 0;
     n_finish_req_ = 0;

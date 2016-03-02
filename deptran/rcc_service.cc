@@ -133,10 +133,10 @@ void RococoServiceImpl::naive_batch_start_pie(
 }
 
 
-void RococoServiceImpl::StartTxn(const SimpleCommand &cmd,
-                                 rrr::i32 *res,
-                                 map<int32_t, Value> *output,
-                                 rrr::DeferredReply *defer) {
+void RococoServiceImpl::Handout(const SimpleCommand &cmd,
+                                rrr::i32 *res,
+                                map<int32_t, Value> *output,
+                                rrr::DeferredReply *defer) {
   std::lock_guard<std::mutex> guard(mtx_);
 
 #ifdef PIECE_COUNT
@@ -155,7 +155,7 @@ void RococoServiceImpl::StartTxn(const SimpleCommand &cmd,
 //  output->resize(output_size);
   // find stored procedure, and run it
   *res = SUCCESS;
-  ((ThreePhaseSched *) dtxn_sched_)->OnExchangeRequest(cmd, res, output, defer);
+  ((ThreePhaseSched *) dtxn_sched_)->OnHandoutRequest(cmd, res, output, defer);
 }
 
 void RococoServiceImpl::prepare_txn(
