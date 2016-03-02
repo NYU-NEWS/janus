@@ -1,6 +1,10 @@
 namespace rococo;
 
 abstract service Tapir {
+
+  defer Handout(SimpleCommand cmd |
+                i32 res,
+                map<i32, Value> output);
   defer Prepare();
   defer Accept(uint64_t cmd_id,
                uint64_t ballot,
