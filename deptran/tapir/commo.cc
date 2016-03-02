@@ -3,8 +3,34 @@
 #include "command_marshaler.h"3
 #include "tapir_srpc.h"
 #include "commo.h"
+#include "../coordinator.h"
 
 namespace rococo {
+
+void TapirCommo::SendHandout(SimpleCommand &cmd,
+                             Coordinator *coo,
+                             const function<void(int,
+                                                 Command&)> &callback) {
+  rrr::FutureAttr fuattr;
+  parid_t par_id = cmd.PartitionId();
+  auto proxy = (TapirProxy*) rpc_par_proxies_[par_id][0];
+  std::function<void(Future*)> cb =
+      [coo, this, callback, &cmd] (Future *fu) {
+        Log_debug("SendStart callback for %ld from %ld",
+                  cmd.PartitionId(),
+                  coo->coo_id_);
+
+        int res;
+        Marshal &m = fu->get_reply();
+        m >> res >> cmd.output;
+        callback(res, cmd);
+      };
+  fuattr.callback = cb;
+  Log_debug("SendStart to %ld from %ld", cmd.PartitionId(), coo->coo_id_);
+  verify(cmd.type_ > 0);
+  verify(cmd.root_type_ > 0);
+  Future::safe_release(proxy->async_Handout(cmd, fuattr));
+}
 
 void TapirCommo::BroadcastFastAccept(SimpleCommand& cmd,
                                      const function<void(Future* fu)>& cb) {

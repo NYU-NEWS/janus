@@ -1,12 +1,18 @@
 #pragma once
 
+#include "../__dep__.h"
 #include "../communicator.h"
 
 namespace rococo {
 
+class Simplecommand;
 class TapirCommo : public Communicator {
  public:
   using Communicator::Communicator;
+
+  void SendHandout(SimpleCommand &cmd,
+                   Coordinator *coo,
+                   const function<void(int, Command&)> &callback);
   void BroadcastFastAccept(SimpleCommand& cmd,
                            const function<void(Future* fu)>& callback);
   void BroadcastDecide(parid_t,

@@ -1,7 +1,7 @@
 #include "../__dep__.h"
-#include "commo.h"
 #include "coord.h"
 #include "frame.h"
+#include "commo.h"
 
 namespace rococo {
 
@@ -13,18 +13,54 @@ TapirCommo* TapirCoord::commo() {
   return (TapirCommo*)commo_;
 }
 
-void TapirCoord::do_one(TxnRequest& req) {
+
+void TapirCoord::Handout() {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
+  phase_++;
+
+  int cnt = 0;
+  while (cmd_->HasMoreSubCmdReadyNotOut()) {
+    auto subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd();
+    subcmd->id_ = next_pie_id();
+    verify(subcmd->root_id_ == cmd_->id_);
+    n_handout_++;
+    cnt++;
+    Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
+              n_handout_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
+    handout_acks_[subcmd->inn_id()] = false;
+    commo()->SendHandout(*subcmd,
+                         this,
+                         std::bind(&ThreePhaseCoordinator::HandoutAck,
+                                   this,
+                                   phase_,
+                                   std::placeholders::_1,
+                                   std::placeholders::_2));
+  }
+  Log_debug("sent %d SubCmds\n", cnt);
+}
+
+
+void TapirCoord::HandoutAck(phase_t phase, int res, Command& cmd) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-  verify(txn_reg_);
-  TxnCommand *cmd = frame_->CreateTxnCommand(req, txn_reg_);
-  verify(txn_reg_ != nullptr);
-  cmd_ = cmd;
-  cmd_->root_id_ = this->next_txn_id();
-  cmd_->id_ = cmd_->root_id_;
-  Reset(); // In case of reuse.
-  Log_debug("do one request txn_id: %lx\n", cmd_->id_);
-  if (ccsi_) ccsi_->txn_start_one(thread_id_, cmd->type_);
-  FastAccept();
+  verify(phase == phase_);
+  n_handout_ack_++;
+  TxnCommand *ch = (TxnCommand *) cmd_;
+  handout_acks_[cmd.inn_id_] = true;
+
+  Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
+            n_handout_ack_, n_handout_, cmd_->id_, cmd.inn_id_);
+  verify(res == SUCCESS);
+  cmd_->Merge(cmd);
+  if (cmd_->HasMoreSubCmdReadyNotOut()) {
+    Log_debug("command has more sub-cmd, cmd_id: %lx,"
+                  " n_started_: %d, n_pieces: %d",
+              cmd_->id_, ch->n_pieces_out_, ch->GetNPieceAll());
+    Handout();
+  } else if (AllHandoutAckReceived()) {
+    Log_debug("receive all handout acks, txn_id: %ld; START PREPARE",
+              cmd_->id_);
+    verify(0);
+  }
 }
 
 void TapirCoord::Reset() {
@@ -36,15 +72,19 @@ void TapirCoord::Reset() {
 void TapirCoord::FastAccept() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   phase_++;
+  for (auto par : cmd_->GetPartitionIds()) {
+
+  }
+
   while (cmd_->HasMoreSubCmdReadyNotOut()) {
-    auto subcmd = (SimpleCommand*)cmd_->GetNextSubCmd();
+    auto subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd();
     subcmd->id_ = next_pie_id();
     verify(subcmd->root_id_ == cmd_->id_);
-    n_start_++;
+    n_handout_++;
     Log_debug("send out fast accept request %ld, cmd_id: %lx, "
                   "inn_id: %d, pie_id: %lx",
-              n_start_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
-    start_ack_map_[subcmd->inn_id()] = false;
+              n_handout_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
+    handout_acks_[subcmd->inn_id()] = false;
     commo()->BroadcastFastAccept(*subcmd,
                                  std::bind(&TapirCoord::FastAcceptAck,
                                            this,

@@ -16,6 +16,7 @@ static Frame* tapir_frame_s = Frame::RegFrame(MODE_TAPIR,
 
 Executor* TapirFrame::CreateExecutor(cmdid_t cmd_id, Scheduler* sched) {
   Executor* exec = new TapirExecutor(cmd_id, sched);
+  return exec;
 }
 
 Coordinator* TapirFrame::CreateCoord(cooid_t coo_id,

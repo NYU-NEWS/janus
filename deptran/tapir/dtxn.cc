@@ -19,6 +19,7 @@ bool TapirDTxn::ReadColumn(mdb::Row *row,
   auto c = r->get_column(col_id);
   auto ver_id = r->get_column_ver(col_id);
   read_vers_[row][col_id] = ver_id;
+  *value = c;
   return true;
 }
 

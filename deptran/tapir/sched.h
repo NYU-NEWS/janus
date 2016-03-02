@@ -9,10 +9,10 @@ class TapirSched : public Scheduler {
  public:
   using Scheduler::Scheduler;
 
-  int OnExchangeRequest(const SimpleCommand& cmd,
-                        int* res,
-                        map<int32_t, Value>* output,
-                        const function<void()>& callback);
+  int OnHandoutRequest(const SimpleCommand &cmd,
+                       int *res,
+                       map<int32_t, Value> *output,
+                       const function<void()> &callback);
 
   int OnFastAccept(cmdid_t cmd_id,
                    int* res,

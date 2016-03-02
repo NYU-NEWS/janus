@@ -5,11 +5,14 @@
 
 namespace rococo {
 
-int TapirSched::OnExchangeRequest(const SimpleCommand& cmd,
-                                  int* res,
-                                  map<int32_t, Value>* output,
-                                  const function<void()>& callback) {
-  TapirExecutor *exec = (TapirExecutor*) GetOrCreateExecutor(cmd.root_id_);
+int TapirSched::OnHandoutRequest(const SimpleCommand &cmd,
+                                 int *res,
+                                 map<int32_t, Value> *output,
+                                 const function<void()> &callback) {
+//  auto exec = (TapirExecutor*) GetOrCreateExecutor(cmd.root_id_);
+  auto exec = GetOrCreateExecutor(cmd.root_id_);
+//  verify(0);
+  exec->mdb_txn();
   exec->Execute(cmd, res, *output);
   callback();
   return 0;

@@ -1,24 +1,27 @@
 #pragma once
 
-#include "../coordinator.h"
+#include "../none/coord.h"
 
-class TapirCommo;
 namespace rococo {
 
 #define MAGIC_FACCEPT_BALLOT 1;
 #define MAGIC_SACCEPT_BALLOT 2;
 
-class TapirCoord : public Coordinator {
+class TapirCommo;
+class TapirCoord : public NoneCoord {
  public:
   enum Decision { UNKNOWN, COMMIT, ABORT };
   Decision decision_ = UNKNOWN;
   map<parid_t, int> n_accept_oks_ = {};
   map<parid_t, int> n_fast_accept_oks_ = {};
-  using Coordinator::Coordinator;
+  using NoneCoord::NoneCoord;
 
-  void do_one(TxnRequest &) override;
+//  void do_one(TxnRequest &) override;
   void Reset() override;
-  TapirCommo *commo();
+  TapirCommo* commo();
+
+  void Handout() override;
+  void HandoutAck(phase_t, int res, Command& cmd) override;
 
   void FastAccept();
   void FastAcceptAck(phase_t phase, parid_t par_id, Future *fu);
