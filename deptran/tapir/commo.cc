@@ -13,7 +13,7 @@ void TapirCommo::SendHandout(SimpleCommand &cmd,
                                                  Command&)> &callback) {
   rrr::FutureAttr fuattr;
   parid_t par_id = cmd.PartitionId();
-  auto proxy = (TapirProxy*) rpc_par_proxies_[par_id][0];
+  auto proxy = (TapirProxy*) rpc_par_proxies_[par_id][0].second;
   std::function<void(Future*)> cb =
       [coo, this, callback, &cmd] (Future *fu) {
         Log_debug("SendStart callback for %ld from %ld",
@@ -37,7 +37,7 @@ void TapirCommo::BroadcastFastAccept(SimpleCommand& cmd,
   parid_t par_id = cmd.PartitionId();
   auto proxies = rpc_par_proxies_[par_id];
   for (auto &p : proxies) {
-    auto proxy = (TapirProxy*) p;
+    auto proxy = (TapirProxy*) p.second;
     FutureAttr fuattr;
     fuattr.callback = cb;
     Future::safe_release(proxy->async_FastAccept(cmd, fuattr));
@@ -49,7 +49,7 @@ void TapirCommo::BroadcastDecide(parid_t par_id,
                                  int decision) {
   auto proxies = rpc_par_proxies_[par_id];
   for (auto &p : proxies) {
-    auto proxy = (TapirProxy*) p;
+    auto proxy = (TapirProxy*) p.second;
     FutureAttr fuattr;
     fuattr.callback = [] (Future* fu) {} ;
     Future::safe_release(proxy->async_Decide(cmd_id, decision, fuattr));
@@ -63,7 +63,7 @@ void TapirCommo::BroadcastAccept(parid_t par_id,
                                  const function<void(Future*)>& callback) {
   auto proxies = rpc_par_proxies_[par_id];
   for (auto &p: proxies) {
-    auto proxy = (TapirProxy*) p;
+    auto proxy = (TapirProxy*) p.second;
     FutureAttr fuattr;
     fuattr.callback = callback;
     Future::safe_release(proxy->async_Accept(cmd_id,
