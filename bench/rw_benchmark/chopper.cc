@@ -70,7 +70,7 @@ bool RWChopper::is_read_only() {
 void RWChopper::retry() {
   status_ = {{0,READY}};
   commit_.store(true);
-  site_ids_.clear();
+  partition_ids_.clear();
   n_pieces_out_ = 0;
   n_try_++;
 }

@@ -224,11 +224,11 @@ void ThreePhaseCoordinator::Prepare() {
   verify(mode == MODE_OCC || mode == MODE_2PL);
 
   std::vector<i32> sids;
-  for (auto &site : cmd->site_ids_) {
+  for (auto &site : cmd->partition_ids_) {
     sids.push_back(site);
   }
 
-  for (auto &site : cmd->site_ids_) {
+  for (auto &site : cmd->partition_ids_) {
     Log_debug("send prepare tid: %ld", cmd_->id_);
     commo()->SendPrepare(site,
                         cmd_->id_,
@@ -269,7 +269,7 @@ void ThreePhaseCoordinator::PrepareAck(phase_t phase, Future *fu) {
     cmd->commit_.store(false);
   }
 
-  if (n_prepare_ack_ == cmd->site_ids_.size()) {
+  if (n_prepare_ack_ == cmd->partition_ids_.size()) {
     Log_debug("2PL prepare finished for %ld", cmd->root_id_);
     this->Decide();
   } else {
@@ -290,7 +290,7 @@ void ThreePhaseCoordinator::Decide() {
 //  RequestHeader header = gen_header(cmd);
   if (cmd->commit_.load()) {
     cmd->reply_.res_ = SUCCESS;
-    for (auto &rp : cmd->site_ids_) {
+    for (auto &rp : cmd->partition_ids_) {
       n_finish_req_ ++;
       Log_debug("send commit for txn_id %ld to %ld\n", cmd->id_, rp);
       commo()->SendCommit(rp,
@@ -303,7 +303,7 @@ void ThreePhaseCoordinator::Decide() {
     }
   } else {
     cmd->reply_.res_ = REJECT;
-    for (auto &rp : cmd->site_ids_) {
+    for (auto &rp : cmd->partition_ids_) {
       n_finish_req_ ++;
       Log_debug("send abort for txn_id %ld to %ld\n", cmd->id_, rp);
       commo()->SendAbort(rp,

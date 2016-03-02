@@ -125,7 +125,7 @@ void MicroBenchChopper::retry() {
       {3, READY}
   };
   commit_.store(true);
-  site_ids_.clear();
+  partition_ids_.clear();
   n_try_++;
 }
 

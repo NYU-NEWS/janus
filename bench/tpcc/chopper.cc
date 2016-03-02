@@ -155,7 +155,7 @@ bool TpccChopper::start_callback(int pi,
 
 void TpccChopper::retry() {
   ws_ = ws_init_;
-  site_ids_.clear();
+  partition_ids_.clear();
   n_try_++;
   commit_.store(true);
   n_pieces_input_ready_ = 0;

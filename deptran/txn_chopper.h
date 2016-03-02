@@ -75,7 +75,7 @@ class TxnCommand: public Command {
   std::atomic<bool> commit_;
   map<int32_t, CommandStatus> status_; // -1 waiting; 0 ready; 1 ongoing; 2 finished;
   map<int32_t, Command*> cmd_;
-  std::set<siteid_t> site_ids_;
+  std::set<parid_t> partition_ids_;
 
   /** server involved*/
 

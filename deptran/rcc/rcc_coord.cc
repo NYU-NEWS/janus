@@ -234,10 +234,10 @@ void RCCCoord::deptran_finish(TxnCommand *ch) {
 
   Log_debug(
     "send deptran finish requests to %d servers, tid: %llx, graph size: %d",
-    (int)ch->site_ids_.size(),
+    (int)ch->partition_ids_.size(),
     cmd_->id_,
     ch->gra_.size());
-  verify(ch->site_ids_.size() == ch->gra_.FindV(
+  verify(ch->partition_ids_.size() == ch->gra_.FindV(
            cmd_->id_)->data_->servers_.size());
 
   ChopFinishRequest req;
@@ -247,7 +247,7 @@ void RCCCoord::deptran_finish(TxnCommand *ch) {
   verify(ch->gra_.size() > 0);
   verify(req.gra.size() > 0);
 
-  for (auto& rp : ch->site_ids_) {
+  for (auto& rp : ch->partition_ids_) {
     RococoProxy *proxy = comm()->rpc_proxies_[rp];
     Future::safe_release(proxy->async_rcc_finish_txn(req, fuattr));
   }

@@ -17,7 +17,7 @@ TxnCommand::TxnCommand() {
 
 
 set<siteid_t> TxnChopper::GetPartitionIds() {
-  return site_ids_;
+  return partition_ids_;
 }
 
 bool TxnCommand::IsOneRound() {
@@ -48,6 +48,7 @@ Command *TxnCommand::GetNextReadySubCmd() {
       cmd->output_size = output_size_[pi];
       cmd->root_ = this;
       cmd_[pi] = cmd;
+      partition_ids_.insert(cmd->partition_id_);
 
       Log_debug("getting subcmd i: %d, thread id: %x",
                 pi, std::this_thread::get_id());
