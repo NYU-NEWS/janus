@@ -32,15 +32,15 @@ void TapirCommo::SendHandout(SimpleCommand &cmd,
   Future::safe_release(proxy->async_Handout(cmd, fuattr));
 }
 
-void TapirCommo::BroadcastFastAccept(SimpleCommand& cmd,
+void TapirCommo::BroadcastFastAccept(parid_t par_id,
+                                     cmdid_t cmd_id,
                                      const function<void(Future* fu)>& cb) {
-  parid_t par_id = cmd.PartitionId();
   auto proxies = rpc_par_proxies_[par_id];
   for (auto &p : proxies) {
     auto proxy = (TapirProxy*) p.second;
     FutureAttr fuattr;
     fuattr.callback = cb;
-    Future::safe_release(proxy->async_FastAccept(cmd, fuattr));
+    Future::safe_release(proxy->async_FastAccept(cmd_id, fuattr));
   }
 }
 

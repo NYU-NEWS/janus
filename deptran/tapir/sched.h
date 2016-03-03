@@ -17,6 +17,8 @@ class TapirSched : public Scheduler {
   int OnFastAccept(cmdid_t cmd_id,
                    int* res,
                    const function<void()>& callback);
+
+  int OnDecide(cmdid_t cmd_id, int decision, const function<void()>& callback);
 };
 
 } // namespace rococo

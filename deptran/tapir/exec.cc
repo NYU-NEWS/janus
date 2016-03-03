@@ -18,9 +18,10 @@ void TapirExecutor::FastAccept(int* res) {
         // grab read lock.
         if (!row->rlock_row_by(this->cmd_id_)) {
           *res = REJECT;
+          verify(0);
         } else {
-          // remember locks?
-          // TODO
+          // remember locks.
+          locked_rows_.insert(row);
         }
 
       };
@@ -34,11 +35,34 @@ void TapirExecutor::FastAccept(int* res) {
       if (!row->wlock_row_by(cmd_id_)) {
         *res = REJECT;
       } else {
-        // remember locks. TODO
+        // remember locks.
+        locked_rows_.insert(row);
       }
     }
   }
   *res = SUCCESS;
+}
+
+void TapirExecutor::Commit() {
+  // merge write buffers into database.
+  for (auto& pair1 : dtxn()->write_bufs_) {
+    auto row = (mdb::VersionedRow*)pair1.first;
+    for (auto& pair2: pair1.second) {
+      auto& col_id = pair2.first;
+      auto& value = pair2.second;
+      row->update(col_id, value);
+    }
+  }
+  // release all the locks.
+  for (auto row : locked_rows_) {
+    row->unlock_row_by(cmd_id_);
+  }
+}
+
+void TapirExecutor::Abort() {
+  for (auto row : locked_rows_) {
+    row->unlock_row_by(cmd_id_);
+  }
 }
 
 TapirDTxn* TapirExecutor::dtxn() {

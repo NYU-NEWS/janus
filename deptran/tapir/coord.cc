@@ -16,7 +16,7 @@ TapirCommo* TapirCoord::commo() {
 
 void TapirCoord::Handout() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  phase_++;
+//  phase_++;
 
   int cnt = 0;
   while (cmd_->HasMoreSubCmdReadyNotOut()) {
@@ -42,7 +42,7 @@ void TapirCoord::Handout() {
 
 void TapirCoord::HandoutAck(phase_t phase, int res, Command& cmd) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-  verify(phase == phase_);
+//  verify(phase == phase_);
   n_handout_ack_++;
   TxnCommand *ch = (TxnCommand *) cmd_;
   handout_acks_[cmd.inn_id_] = true;
@@ -59,7 +59,7 @@ void TapirCoord::HandoutAck(phase_t phase, int res, Command& cmd) {
   } else if (AllHandoutAckReceived()) {
     Log_debug("receive all handout acks, txn_id: %ld; START PREPARE",
               cmd_->id_);
-    verify(0);
+    FastAccept();
   }
 }
 
@@ -72,26 +72,27 @@ void TapirCoord::Reset() {
 void TapirCoord::FastAccept() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   phase_++;
-  for (auto par : cmd_->GetPartitionIds()) {
-
-  }
-
-  while (cmd_->HasMoreSubCmdReadyNotOut()) {
-    auto subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd();
-    subcmd->id_ = next_pie_id();
-    verify(subcmd->root_id_ == cmd_->id_);
-    n_handout_++;
-    Log_debug("send out fast accept request %ld, cmd_id: %lx, "
-                  "inn_id: %d, pie_id: %lx",
-              n_handout_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
-    handout_acks_[subcmd->inn_id()] = false;
-    commo()->BroadcastFastAccept(*subcmd,
+  for (auto par_id : cmd_->GetPartitionIds()) {
+    commo()->BroadcastFastAccept(par_id,
+                                 cmd_->id_,
                                  std::bind(&TapirCoord::FastAcceptAck,
                                            this,
                                            phase_,
-                                           subcmd->PartitionId(),
+                                           par_id,
                                            std::placeholders::_1));
   }
+//
+//  while (cmd_->HasMoreSubCmdReadyNotOut()) {
+//    auto subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd();
+//    subcmd->id_ = next_pie_id();
+//    verify(subcmd->root_id_ == cmd_->id_);
+//    n_handout_++;
+//    Log_debug("send out fast accept request %ld, cmd_id: %lx, "
+//                  "inn_id: %d, pie_id: %lx",
+//              n_handout_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
+//    handout_acks_[subcmd->inn_id()] = false;
+//
+//  }
 }
 
 void TapirCoord::FastAcceptAck(phase_t phase, parid_t par_id, Future *fu) {

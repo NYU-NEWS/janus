@@ -21,11 +21,10 @@ class TapirServiceImpl: public TapirService {
               const ballot_t& ballot,
               const int32_t& decision,
               rrr::DeferredReply* defer) override;
-  void FastAccept(const SimpleCommand& cmd,
+  void FastAccept(const cmdid_t& cmd_id,
                   rrr::i32* res,
-                  std::map<rrr::i32, Value>* output,
                   rrr::DeferredReply* defer) override;
-  void Decide(const rrr::i64& cmd_id,
+  void Decide(const cmdid_t& cmd_id,
               const rrr::i32& decision,
               rrr::DeferredReply* defer) override;
 };

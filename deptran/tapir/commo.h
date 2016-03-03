@@ -13,7 +13,8 @@ class TapirCommo : public Communicator {
   void SendHandout(SimpleCommand &cmd,
                    Coordinator *coo,
                    const function<void(int, Command&)> &callback);
-  void BroadcastFastAccept(SimpleCommand& cmd,
+  void BroadcastFastAccept(parid_t par_id,
+                           cmdid_t cmd_id,
                            const function<void(Future* fu)>& callback);
   void BroadcastDecide(parid_t,
                        cmdid_t cmd_id,

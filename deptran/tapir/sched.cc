@@ -2,6 +2,7 @@
 #include "../command.h"
 #include "sched.h"
 #include "exec.h"
+#include "coord.h"
 
 namespace rococo {
 
@@ -26,6 +27,19 @@ int TapirSched::OnFastAccept(cmdid_t cmd_id,
   exec->FastAccept(res);
   callback();
   return 0;
+}
+
+int TapirSched::OnDecide(cmdid_t cmd_id,
+                         int decision,
+                         const function<void()>& callback) {
+  auto exec = (TapirExecutor*) GetOrCreateExecutor(cmd_id);
+  if (decision == TapirCoord::COMMIT) {
+    exec->Commit();
+  } else if (decision == TapirCoord::ABORT) {
+    exec->Abort();
+  } else {
+    verify(0);
+  }
 }
 
 } // namespace rococo
