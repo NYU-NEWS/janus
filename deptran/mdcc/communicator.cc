@@ -30,12 +30,12 @@ namespace mdcc {
   }
 
   // start a transaction piece on a partition
-  void MdccCommunicator::SendStartPiece(const rococo::SimpleCommand& cmd) {
+  void MdccCommunicator::SendStartPiece(const rococo::SimpleCommand &cmd, rrr::FutureAttr *future) {
     std::lock_guard<std::mutex> lock(this->mtx_);
     auto sites = config_->SitesByPartitionId(cmd.PartitionId());
     auto proxy = RandomSiteProxy(sites);
     Log_debug("%s: at site %d to site %d", __FUNCTION__, site_info_.id, proxy->site_info.id);
-    Future::safe_release(proxy->client->async_StartPiece(cmd));
+    Future::safe_release(proxy->client->async_StartPiece(cmd, *future));
   }
 
   void MdccCommunicator::SendProposal(Ballot ballot, txnid_t txn_id,

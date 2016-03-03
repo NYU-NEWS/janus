@@ -25,6 +25,8 @@ namespace mdcc {
     Option(const Option&) = default;
     Option(mdb::column_id_t col_id, const mdb::Value& value, version_t version) :
         col_id(col_id), value(value), version(version) {}
+
+    friend bool operator==(const Option& l, const Option& r);
   };
 
   class OptionSet {
@@ -54,8 +56,21 @@ namespace mdcc {
 
     friend rrr::Marshal& operator <<(rrr::Marshal& m, const OptionSet& o);
     friend rrr::Marshal& operator >>(rrr::Marshal& m, OptionSet& o);
+    friend bool operator==(const OptionSet& l, const OptionSet& r);
   };
 
+  inline bool operator==(const Option& l, const Option& r) {
+    return l.col_id == r.col_id &&
+           l.value == r.value &&
+           l.version == r.version;
+  }
+
+  inline bool operator==(const OptionSet& l, const OptionSet& r) {
+    return l.txn_id_ == r.txn_id_ &&
+           l.row_id_ == r.row_id_ &&
+           l.accepted_ == r.accepted_ &&
+           l.options_ == r.options_;
+  }
 
   inline rrr::Marshal& operator <<(rrr::Marshal& m, const Option& o) {
     m << o.col_id;

@@ -19,18 +19,67 @@ namespace mdcc {
   protected:
     uint32_t quorum_size_;
     uint32_t num_accepted_;
-    RecordOptionMap values_;
+    size_t min_size_;
+    size_t max_size_;
+    std::map<const Ballot, std::vector<OptionSet>> quorum_results;
+    std::vector<OptionSet*> learned_;
+    Callback<std::vector<OptionSet*>> learn_callback_;
   public:
     TxnOptionResult(const RecordOptionMap& options, uint32_t quorum_size) :
-        quorum_size_(quorum_size), num_accepted_(0), values_(options) {
+        quorum_size_(quorum_size), num_accepted_(0),
+        min_size_(std::numeric_limits<std::size_t>::max()), max_size_(0) {
     }
 
-    void Accept() {
+    void Accept(const Ballot& ballot, const std::vector<OptionSet>& values) {
       num_accepted_++;
+      quorum_results[ballot] = std::move(values);
+      auto sz = values.size();
+      if (sz < min_size_) {
+        min_size_ = sz;
+      }
+      if (sz > max_size_) {
+        max_size_ = sz;
+      }
     }
 
     bool HasQourum() {
       return num_accepted_ >= quorum_size_;
+    }
+
+    bool HasUnlearnedOptionSet() {
+      return max_size_ != learned_.size();
+    }
+
+    const vector<OptionSet*>& ComputeLearned() {
+      // determine the longest common prefix among the option sets
+      bool done = false;
+      for (size_t p=0; p<min_size_; p++) {
+        OptionSet* first = nullptr;
+        for (auto it = quorum_results.begin(); it != quorum_results.end(); it++) {
+          auto& current_result = (*it).second;
+          if (it == quorum_results.begin()) {
+            first = &current_result[p];
+          }
+          if ( !(*first == current_result[p]) ) {
+            done = true;
+            break;
+          }
+        }
+
+        if (!done) {
+          // all OptionSets have equivalent values at position p -- learn
+          learned_.push_back(first);
+        }
+      }
+      return learned_;
+    }
+
+    void SetCallback(Callback<std::vector<OptionSet*>> cb) {
+      learn_callback_ = cb;
+    }
+
+    void TriggerCallback(const std::vector<OptionSet*>& options) {
+      learn_callback_(options);
     }
   };
 
@@ -95,14 +144,17 @@ namespace mdcc {
 
     void init(Config *config, uint32_t site_id);
     void StartPiece(const rococo::SimpleCommand& cmd, int32_t* result, DeferredReply *defer);
-    bool LaunchNextPiece(uint64_t txn_id, TxnChopper *chopper);
-    void SendUpdateProposal(txnid_t txn_id, const SimpleCommand &cmd, int32_t* result);
+
+    bool LaunchNextPiece(txnid_t txn_id, rococo::TxnChopper *chopper, i8 *result, rrr::DeferredReply *defer);
+    void SendUpdateProposal(txnid_t txn_id, const SimpleCommand &cmd, int32_t *result, DeferredReply *defer);
     void Phase2aClassic(const Ballot ballot, OptionSet option_set);
     void Phase2bClassic(const Ballot ballot, const std::vector<OptionSet>& values);
     void SetCompatible(int new_position, std::vector<OptionSet> &options);
-    void Learn(const Ballot& ballot, const vector<OptionSet>& values);
+    void Learn(const Ballot &ballot, const vector<OptionSet> &values);
 
     uint32_t PartitionQourumSize(BallotType type, uint32_t partition_id);
     void Phase2bFast(Ballot ballot, const OptionSet &option_set);
+
+    vector<OptionSet> ComputeLearned(const unique_ptr<TxnOptionResult>& option_results);
   };
 }

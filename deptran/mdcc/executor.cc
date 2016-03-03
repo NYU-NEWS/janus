@@ -18,12 +18,12 @@ namespace mdcc {
     Log_debug("mdcc executor created for txn_id %ld\n", txn_id);
   }
 
-  void MdccExecutor::StartPiece(const SimpleCommand& cmd, int32_t* result) {
+  void MdccExecutor::StartPiece(const rococo::SimpleCommand &cmd, int *result, DeferredReply *defer) {
     Log_info("%s type: %d; piece_id: %d;", __FUNCTION__, cmd.type_, cmd.inn_id_);
     auto handler_pair = this->txn_reg_->get(cmd);
     auto& c = const_cast<SimpleCommand&>(cmd);
     handler_pair.txn_handler(this, dtxn_, c, result, c.output);
-    sched_->SendUpdateProposal(cmd_id_, cmd, result);
+    sched_->SendUpdateProposal(cmd_id_, cmd, result, defer);
   }
 
   bool MdccExecutor::ValidRead(OptionSet &option) {

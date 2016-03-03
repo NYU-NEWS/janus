@@ -33,7 +33,7 @@ class MdccCommunicator {
   void SendStart(StartRequest& req,
                  Callback<StartResponse>& callback);
 
-  void SendStartPiece(const rococo::SimpleCommand& cmd);
+  void SendStartPiece(const rococo::SimpleCommand &cmd, rrr::FutureAttr *future);
   void SendProposal(Ballot ballot, txnid_t txn_id, const rococo::SimpleCommand &cmd,
                     OptionSet *options);
   void SendPhase2a(Phase2aRequest req);

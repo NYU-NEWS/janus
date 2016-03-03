@@ -9,7 +9,6 @@ class Coordinator;
 class RWChopper : public TxnCommand {
 private:
     void W_txn_init(TxnRequest &req);
-
     void R_txn_init(TxnRequest &req);
 
 public:

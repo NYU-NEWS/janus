@@ -12,8 +12,8 @@ namespace mdcc {
         number(number), type(type), site_id(site_id) {}
     Ballot() : Ballot(-1, 0, FAST) {}
   protected:
-    std::tuple<const ballot_t&, const siteid_t&, const BallotType&> ToTuple() const {
-      return std::tie(number, site_id, type);
+    std::tuple<const BallotType&, const ballot_t&, const siteid_t&> ToTuple() const {
+      return std::tie(type, number, site_id);
     };
   public:
     bool operator==(const Ballot& other) const { return ToTuple() == other.ToTuple(); }
@@ -24,12 +24,13 @@ namespace mdcc {
     bool operator>=(const Ballot& other) const { return !(*this < other); }
     std::string string() const {
       std::ostringstream ss;
-      ss << "[ballot site " << site_id << "; number" << number << "; type " << type << "]";
+      ss << "[ballot site " << site_id << "; number " << number << "; type " << type << "]";
       return ss.str();
     }
   };
 
   inline rrr::Marshal& operator <<(rrr::Marshal& m, const Ballot& b) {
+    m << b.site_id;
     m << b.number;
     m << static_cast<int>(b.type);
     return m;
@@ -37,6 +38,7 @@ namespace mdcc {
 
   inline rrr::Marshal& operator >>(rrr::Marshal& m, Ballot& b) {
     int tval;
+    m >> b.site_id;
     m >> b.number;
     m >> tval;
     b.type = static_cast<BallotType>(tval);
