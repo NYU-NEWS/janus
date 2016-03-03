@@ -13,7 +13,7 @@ ThreePhaseExecutor::~ThreePhaseExecutor() {
 
 int ThreePhaseExecutor::StartLaunch(const SimpleCommand &cmd,
                                     rrr::i32 *res,
-                                    map<int32_t, Value> &output,
+                                    map<int32_t, Value>* output,
                                     rrr::DeferredReply *defer) {
   verify(0);
 }

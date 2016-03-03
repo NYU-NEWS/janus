@@ -33,6 +33,13 @@ Communicator::Communicator() {
   }
 }
 
+Communicator::~Communicator() {
+  for (auto &pair : rpc_clients_) {
+    rrr::Client *rpc_cli = pair.second;
+    rpc_cli->close_and_release();
+  }
+}
+
 std::pair<siteid_t, RococoProxy*> Communicator::RandomProxyForPartition(parid_t partition_id) const {
   auto it = rpc_par_proxies_.find(partition_id);
   verify(it != rpc_par_proxies_.end());

@@ -39,7 +39,7 @@ class Communicator {
 //  virtual void SendAbort(parid_t pid,
 //                         txnid_t tid,
 //                         const std::function<void(Future *fu)> &callback) = 0;
-  virtual ~Communicator() {}
+  virtual ~Communicator();
 
   std::pair<siteid_t, RococoProxy*> RandomProxyForPartition(parid_t partition_id) const;
 };

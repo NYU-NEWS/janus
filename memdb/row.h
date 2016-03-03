@@ -22,7 +22,7 @@ class Table;
 class Row: public RefCounted {
   // fixed size part
   char *fixed_part_;
-
+  int n_columns_ = 0;
   enum {
     DENSE,
     SPARSE,
@@ -508,24 +508,27 @@ class FineLockedRow: public Row {
 
 // inherit from CoarseLockedRow since we need locking on commit phase, when doing 2 phase commit
 class VersionedRow: public CoarseLockedRow {
-  version_t *ver_;
+//  version_t *ver_ = nullptr;
+  std::vector<version_t> ver_ = {};
   void init_ver(int n_columns) {
-    ver_ = new version_t[n_columns];
-    memset(ver_, 0, sizeof(version_t) * n_columns);
+//    ver_ = new version_t[n_columns];
+//    memset(ver_, 0, sizeof(version_t) * n_columns);
+    ver_.resize(n_columns);
   }
 
  protected:
 
   // protected dtor as required by RefCounted
   ~VersionedRow() {
-    delete[] ver_;
+//    delete[] ver_;
   }
 
   void copy_into(VersionedRow *row) const {
     this->CoarseLockedRow::copy_into((CoarseLockedRow *) row);
     int n_columns = schema_->columns_count();
     row->init_ver(n_columns);
-    memcpy(row->ver_, this->ver_, n_columns * sizeof(version_t));
+//    memcpy(row->ver_, this->ver_, n_columns * sizeof(version_t));
+    row->ver_ = this->ver_;
   }
 
  public:
@@ -535,11 +538,12 @@ class VersionedRow: public CoarseLockedRow {
   }
 
   version_t get_column_ver(column_id_t column_id) const {
+    verify(column_id < ver_.size());
     return ver_[column_id];
   }
 
-  void incr_column_ver(column_id_t column_id) const {
-    ver_[column_id]++;
+  void incr_column_ver(column_id_t column_id) {
+    ver_[column_id] ++;
   }
 
   virtual Row *copy() const {

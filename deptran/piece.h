@@ -145,7 +145,8 @@ txn_reg_->input_vars_[txn][pie] = {__VA_ARGS__};
         r = dtxn->CreateRow(schema, row_data); \
         break; \
     default: \
-        verify(0); \
+        r = dtxn->CreateRow(schema, row_data); \
+        break; \
     }
 
 

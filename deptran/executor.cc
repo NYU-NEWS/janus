@@ -21,6 +21,7 @@ void Executor::Execute(const SimpleCommand &cmd,
                        rrr::i32 *res,
                        map<int32_t, Value> &output) {
   verify(output.size() == 0);
+  *res = SUCCESS;
   txn_reg_->get(cmd).txn_handler(this,
                                  dtxn_,
                                  const_cast<SimpleCommand&>(cmd),

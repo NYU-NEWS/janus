@@ -16,7 +16,7 @@ int ThreePhaseSched::OnHandoutRequest(const SimpleCommand &cmd,
   auto exec = (ThreePhaseExecutor*) GetOrCreateExecutor(cmd.root_id_);
   exec->StartLaunch(cmd,
                     res,
-                    *output,
+                    output,
                     defer);
   return 0;
 }

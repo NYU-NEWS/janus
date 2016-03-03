@@ -26,10 +26,10 @@ class TPLExecutor: public ThreePhaseExecutor {
 
   virtual ~TPLExecutor(){};
 
-  virtual int StartLaunch(const SimpleCommand &cmd,
-                          rrr::i32 *res,
-                          map<int32_t, Value> *output,
-                          rrr::DeferredReply *defer);
+  int StartLaunch(const SimpleCommand &cmd,
+                  rrr::i32 *res,
+                  map<int32_t, Value> *output,
+                  rrr::DeferredReply *defer) override;
 
   // Below are merged from TxnRegistry.
 
