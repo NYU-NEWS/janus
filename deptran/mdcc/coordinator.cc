@@ -13,12 +13,16 @@ namespace mdcc {
     request.txn_id = NextTxnId();
     request.inputs = req.input_;
 
-    Callback<StartResponse> callback = [this, request](const StartResponse& reply) {
+    Callback<StartResponse> callback = [this, request, req](const StartResponse& reply) {
+      TxnReply txn_reply;
+      txn_reply.res_ = reply.result;
       if (reply.result==SUCCESS) {
         Log_debug("transaction %ld success!", request.txn_id);
+        req.callback_(txn_reply);
         // TODO: report success
       } else {
         Log_debug("transaction %ld failed: %d", request.txn_id, reply.result);
+        req.callback_(txn_reply);
         // TODO: report failure
       }
     };

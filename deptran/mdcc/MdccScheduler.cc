@@ -38,27 +38,32 @@ namespace mdcc {
       cmd->id_ = txn_id;
       Log_info("Start sub-command: command site_id is %d %d %d",
                cmd->PartitionId(), cmd->type_, cmd->inn_id_);
+      MdccCommunicator* communicator = GetOrCreateCommunicator();
       rrr::FutureAttr* future = new rrr::FutureAttr();
-      future->callback = [this, txn_id, chopper, result, defer](Future* future) {
+      future->callback = [this, txn_id, chopper, result, defer, cmd, communicator](Future* future) {
         // TODO: still working on this
         std::lock_guard<std::mutex> l(mtx_);
         auto& m = future->get_reply();
         StartPieceResponse response;
         m >> response;
         if (response.result != SUCCESS) {
+          Log_debug("%s: txn %ld piece %d failed", __FUNCTION__, txn_id, cmd->inn_id_);
+          communicator->SendVisibility(txn_id, false);
           *result = FAILURE;
           defer->reply();
         } else {
           if (chopper->HasMoreSubCmdReadyNotOut()) {
             Log_debug("%s: launching next piece", __FUNCTION__);
-            this->LaunchNextPiece(txn_id, chopper, nullptr, defer);
+            this->LaunchNextPiece(txn_id, chopper, result, defer);
           } else {
             Log_debug("%s: no more pieces", __FUNCTION__);
+            communicator->SendVisibility(txn_id, true);
+            *result = SUCCESS;
             defer->reply();
           }
         }
       };
-      GetOrCreateCommunicator()->SendStartPiece(*cmd, future);
+      communicator->SendStartPiece(*cmd, future);
       return true;
     } else {
       Log_debug("no more subcommands or no sub-commands ready.");
@@ -78,8 +83,8 @@ namespace mdcc {
     auto chopper = frame_->CreateChopper(req, txn_reg_);
     Log_debug("chopper num pieces %d", chopper->GetNPieceAll());
     do {} while(LaunchNextPiece(txn_id, chopper, result, defer));
-    Log_debug("exit %s", __FUNCTION__);
   }
+
 
   void MdccScheduler::init(Config *config, uint32_t site_id) {
     // TODO: get rid of this; move to constructor; also init communicator in constructor

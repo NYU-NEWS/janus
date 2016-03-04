@@ -82,6 +82,11 @@ namespace mdcc {
     }
   }
 
+  void MdccCommunicator::SendVisibility(txnid_t txn_id, bool accept) {
+    Log_debug("%s: txn_id %ld: accept %d", __FUNCTION__, txn_id, accept);
+    // TODO
+  }
+
   MdccCommunicator::SiteProxy* MdccCommunicator::ClosestSiteProxy(uint32_t partition_id) const {
     auto partition_sites = config_->SitesByPartitionId(partition_id);
     assert(partition_sites.size()>0);
@@ -115,4 +120,5 @@ namespace mdcc {
     int index = (hname ^ hkey) % sites.size();
     return site_proxies_[sites[index].id];
   }
+
 }

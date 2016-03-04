@@ -39,6 +39,8 @@ class MdccCommunicator {
   void SendPhase2a(Phase2aRequest req);
   void SendPhase2b(const Phase2bRequest &req);
 
+  void SendVisibility(txnid_t txn_id, bool accept);
+
 protected:
   std::mutex mtx_;
 
