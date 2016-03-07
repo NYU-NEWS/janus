@@ -1,9 +1,9 @@
 #pragma once
 
-#include "rcc/rcc.h"
+#include "rcc/dtxn.h"
 namespace rococo {
 
-class RO6DTxn: public RCCDTxn {
+class RO6DTxn: public RccDTxn {
  private:
   i64 txnId = tid_;
   std::set <i64> ro_;
@@ -12,7 +12,7 @@ class RO6DTxn: public RCCDTxn {
   // for haonan, I think it should be like this?
   std::set <std::pair<mdb::Row *, int>> row_col_map;
  public:
-  RO6DTxn(i64 tid, Scheduler *mgr, bool ro) : RCCDTxn(tid, mgr, ro) {
+  RO6DTxn(i64 tid, Scheduler *mgr, bool ro) : RccDTxn(tid, mgr, ro) {
   }
 
   // Implementing create method

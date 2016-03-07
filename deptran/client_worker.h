@@ -1,7 +1,7 @@
 #pragma once
 
-#include "all.h"
-
+#include "__dep__.h"
+#include "config.h"
 
 namespace rococo {
 
@@ -9,6 +9,10 @@ class ClientControlServiceImpl;
 class TxnGenerator;
 class CoordinatorBase;
 class Frame;
+class Coordinator;
+class TxnRegistry;
+class TxnReply;
+
 class ClientWorker {
  public:
   Frame* frame_;

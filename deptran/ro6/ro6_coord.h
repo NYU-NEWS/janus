@@ -2,8 +2,8 @@
 #include "../rcc/rcc_coord.h"
 
 namespace rococo {
-class RO6Coord : public RCCCoord {
-  using RCCCoord::RCCCoord;
+class RO6Coord : public RccCoord {
+  using RccCoord::RccCoord;
 public:
 
   struct deptran_batch_start_t {

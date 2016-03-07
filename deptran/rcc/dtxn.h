@@ -1,11 +1,11 @@
 #pragma once
-#include "dtxn.h"
+#include "../dtxn.h"
 
 #define PHASE_RCC_START (1)
 #define PHASE_RCC_COMMIT (2)
 
 namespace rococo {
-class RCCDTxn: public DTxn {
+class RccDTxn: public DTxn {
  public:
 
   DepGraph *dep_s;
@@ -17,7 +17,7 @@ class RCCDTxn: public DTxn {
 
   bool read_only_;
 
-  RCCDTxn(
+  RccDTxn(
       i64 tid,
       Scheduler *mgr,
       bool ro

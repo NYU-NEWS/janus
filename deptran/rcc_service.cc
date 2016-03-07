@@ -1,14 +1,18 @@
-#include "all.h"
+#include "__dep__.h"
+#include "config.h"
 #include "scheduler.h"
+#include "command.h"
+#include "command_marshaler.h"
+#include "rcc_service.h"
 #include "three_phase/sched.h"
+#include "benchmark_control_rpc.h"
 
 namespace rococo {
 
-RococoServiceImpl::RococoServiceImpl(
-    Scheduler *sched,
-    rrr::PollMgr* poll_mgr,
-    ServerControlServiceImpl *scsi
-) : scsi_(scsi), dtxn_sched_(sched) {
+ClassicServiceImpl::ClassicServiceImpl(Scheduler *sched,
+                                       rrr::PollMgr* poll_mgr,
+                                       ServerControlServiceImpl *scsi)
+    : scsi_(scsi), dtxn_sched_(sched) {
 
 #ifdef PIECE_COUNT
   piece_count_timer_.start();
@@ -26,14 +30,14 @@ RococoServiceImpl::RococoServiceImpl(
 }
 
 // TODO deprecated
-void RococoServiceImpl::do_start_pie(
-    const RequestHeader &header,
-    const Value *input,
-    i32 input_size,
-    rrr::i32 *res,
-    Value *output,
-    i32 *output_size) {
-  verify(0);
+//void ClassicServiceImpl::do_start_pie(
+//    const RequestHeader &header,
+//    const Value *input,
+//    i32 input_size,
+//    rrr::i32 *res,
+//    Value *output,
+//    i32 *output_size) {
+//  verify(0);
 //  TPLDTxn *dtxn = (TPLDTxn *) dtxn_sched_->GetOrCreateDTxn(header.tid);
 //  *res = SUCCESS;
 //  if (IS_MODE_2PL) {
@@ -51,56 +55,57 @@ void RococoServiceImpl::do_start_pie(
 //  else {
 //    verify(0);
 //  }
-}
+//}
 
 // TODO
-void RococoServiceImpl::batch_start_pie(
-    const BatchRequestHeader &batch_header,
-    const std::vector<Value> &input,
-    rrr::i32 *res,
-    std::vector<Value> *output) {
+//void ClasicServiceImpl::batch_start_pie(
+//    verify(0);
+//    const BatchRequestHeader &batch_header,
+//    const std::vector<Value> &input,
+//    rrr::i32 *res,
+//    std::vector<Value> *output) {
+//
+//  verify(0);
+//  RequestHeader header;
+//  header.t_type = batch_header.t_type;
+//  header.cid = batch_header.cid;
+//  header.tid = batch_header.tid;
+//  BatchStartArgsHelper bsah_input, bsah_output;
+//  int ret;
+//  ret = bsah_input.init_input(&input, batch_header.num_piece);
+//  verify(ret == 0);
+//  ret = bsah_output.init_output(output, batch_header.num_piece,
+//                                batch_header.expected_output_size);
+//  verify(ret == 0);
+//  Value const *piece_input;
+//  i32 input_size;
+//  i32 output_size;
+//  *res = SUCCESS;
+//  while (0 == bsah_input.get_next_input(&header.p_type, &header.pid,
+//                                        &piece_input, &input_size,
+//                                        &output_size)) {
+//    i32 res_buf;
+//    do_start_pie(header, piece_input, input_size, &res_buf,
+//                 bsah_output.get_output_ptr(), &output_size);
+//    ret = bsah_output.put_next_output(res_buf, output_size);
+//    verify(ret == 0);
+//    if (res_buf != SUCCESS)
+//      *res = REJECT;
+//  }
+//
+//  bsah_output.done_output();
+//}
 
-  verify(0);
-  RequestHeader header;
-  header.t_type = batch_header.t_type;
-  header.cid = batch_header.cid;
-  header.tid = batch_header.tid;
-  BatchStartArgsHelper bsah_input, bsah_output;
-  int ret;
-  ret = bsah_input.init_input(&input, batch_header.num_piece);
-  verify(ret == 0);
-  ret = bsah_output.init_output(output, batch_header.num_piece,
-                                batch_header.expected_output_size);
-  verify(ret == 0);
-  Value const *piece_input;
-  i32 input_size;
-  i32 output_size;
-  *res = SUCCESS;
-  while (0 == bsah_input.get_next_input(&header.p_type, &header.pid,
-                                        &piece_input, &input_size,
-                                        &output_size)) {
-    i32 res_buf;
-    do_start_pie(header, piece_input, input_size, &res_buf,
-                 bsah_output.get_output_ptr(), &output_size);
-    ret = bsah_output.put_next_output(res_buf, output_size);
-    verify(ret == 0);
-    if (res_buf != SUCCESS)
-      *res = REJECT;
-  }
-
-  bsah_output.done_output();
-}
-
-void RococoServiceImpl::naive_batch_start_pie(
-    const std::vector<RequestHeader> &headers,
-    const std::vector<vector<Value>> &inputs,
-    const std::vector<i32> &output_sizes,
-    std::vector<i32> *results,
-    std::vector<vector<Value>> *outputs,
-    rrr::DeferredReply *defer) {
-  std::lock_guard<std::mutex> guard(mtx_);
-
-  verify(0);
+//void ClassicServiceImpl::naive_batch_start_pie(
+//    const std::vector<RequestHeader> &headers,
+//    const std::vector<vector<Value>> &inputs,
+//    const std::vector<i32> &output_sizes,
+//    std::vector<i32> *results,
+//    std::vector<vector<Value>> *outputs,
+//    rrr::DeferredReply *defer) {
+//  std::lock_guard<std::mutex> guard(mtx_);
+//
+//  verify(0);
 //
 //  DragonBall *defer_reply_db = NULL;
 //  if (IS_MODE_2PL) {
@@ -130,13 +135,13 @@ void RococoServiceImpl::naive_batch_start_pie(
 //  if (!defer_reply_db)
 //    defer->reply();
 //  Log::debug("still fine");
-}
+//}
 
 
-void RococoServiceImpl::Handout(const SimpleCommand &cmd,
-                                rrr::i32 *res,
-                                map<int32_t, Value> *output,
-                                rrr::DeferredReply *defer) {
+void ClassicServiceImpl::Handout(const SimpleCommand &cmd,
+                                 rrr::i32 *res,
+                                 map<int32_t, Value> *output,
+                                 rrr::DeferredReply *defer) {
   std::lock_guard<std::mutex> guard(mtx_);
 
 #ifdef PIECE_COUNT
@@ -158,7 +163,7 @@ void RococoServiceImpl::Handout(const SimpleCommand &cmd,
   ((ThreePhaseSched *) dtxn_sched_)->OnHandoutRequest(cmd, res, output, defer);
 }
 
-void RococoServiceImpl::prepare_txn(
+void ClassicServiceImpl::prepare_txn(
     const rrr::i64 &tid,
     const std::vector<i32> &sids,
     rrr::i32 *res,
@@ -188,7 +193,7 @@ void RococoServiceImpl::prepare_txn(
 #endif
 }
 
-void RococoServiceImpl::commit_txn(
+void ClassicServiceImpl::commit_txn(
     const rrr::i64 &tid,
     rrr::i32 *res,
     rrr::DeferredReply *defer
@@ -198,7 +203,7 @@ void RococoServiceImpl::commit_txn(
   sched->OnPhaseThreeRequest(tid, SUCCESS, res, defer);
 }
 
-void RococoServiceImpl::abort_txn(
+void ClassicServiceImpl::abort_txn(
     const rrr::i64 &tid,
     rrr::i32 *res,
     rrr::DeferredReply *defer
@@ -208,130 +213,15 @@ void RococoServiceImpl::abort_txn(
   sched->OnPhaseThreeRequest(tid, REJECT, res, defer);
 }
 
-// TODO find a better way to define batch
-void RococoServiceImpl::rcc_batch_start_pie(
-    const std::vector<RequestHeader> &headers,
-    const std::vector<map<int32_t, Value>> &inputs,
-    BatchChopStartResponse *res,
-    rrr::DeferredReply *defer) {
 
-  verify(false);
-//    verify(IS_MODE_RCC || IS_MODE_RO6);
-//    auto txn = (RCCDTxn*) txn_mgr_->get_or_create(headers[0].tid);
-//
-//    res->is_defers.resize(headers.size());
-//    res->outputs.resize(headers.size());
-//
-//    auto job = [&headers, &inputs, res, defer, this, txn] () {
-//        std::lock_guard<std::mutex> guard(mtx_);
-//
-//        Log::debug("batch req, headers size:%u", headers.size());
-//        auto &tid = headers[0].tid;
-////    Vertex<TxnInfo> *tv = RCC::dep_s->start_pie_txn(tid);
-//
-//        for (int i = 0; i < headers.size(); i++) {
-//            auto &header = headers[i];
-//            auto &input = inputs[i];
-//            auto &output = res->outputs[i];
-//
-//            //    Log::debug("receive start request. txn_id: %llx, pie_id: %llx", header.tid, header.pid);
-//
-//            bool deferred;
-////            txn->start(header, input, &deferred, &output); FIXME this is missing !!!
-//            res->is_defers[i] = deferred ? 1 : 0;
-//
-//        }
-//        RCCDTxn::dep_s->sub_txn_graph(tid, res->gra_m);
-//        defer->reply();
-//
-//    };
-//    static bool do_record = Config::get_config()->do_logging();
-//
-//    if (do_record) {
-//        rrr::Marshal m;
-//        m << headers << inputs;
-//
-//        recorder_->submit(m, job);
-//    } else {
-//        job();
-//    }
-}
-
-void RococoServiceImpl::rcc_start_pie(const SimpleCommand& cmd,
-                                      ChopStartResponse *res,
-                                      rrr::DeferredReply *defer
-) {
-//    Log::debug("receive start request. txn_id: %llx, pie_id: %llx", header.tid, header.pid);
-  verify(IS_MODE_RCC || IS_MODE_RO6);
-  verify(defer);
-
-  std::lock_guard<std::mutex> guard(this->mtx_);
-  RCCDTxn *dtxn = (RCCDTxn *) dtxn_sched_->GetOrCreateDTxn(cmd.root_id_);
-  dtxn->StartLaunch(cmd, res, defer);
-
-  // TODO remove the stat from here.
-//    auto sz_sub_gra = RCCDTxn::dep_s->sub_txn_graph(header.tid, res->gra_m);
-//    stat_sz_gra_start_.sample(sz_sub_gra);
-//    if (IS_MODE_RO6) {
-//        stat_ro6_sz_vector_.sample(res->read_only.size());
-//    }
-}
-
-// equivalent to commit phrase
-void RococoServiceImpl::rcc_finish_txn(
-    const ChopFinishRequest &req,
-    ChopFinishResponse *res,
-    rrr::DeferredReply *defer) {
-  //Log::debug("receive finish request. txn_id: %llx, graph size: %d", req.txn_id, req.gra.size());
-  verify(IS_MODE_RCC || IS_MODE_RO6);
-  verify(defer);
-  verify(req.gra.size() > 0);
-
-  std::lock_guard<std::mutex> guard(mtx_);
-  RCCDTxn *txn = (RCCDTxn *) dtxn_sched_->GetDTxn(req.txn_id);
-  txn->commit(req, res, defer);
-
-  stat_sz_gra_commit_.sample(req.gra.size());
-}
-
-void RococoServiceImpl::rcc_ask_txn(
-    const rrr::i64 &tid,
-    CollectFinishResponse *res,
-    rrr::DeferredReply *defer
-) {
-  verify(IS_MODE_RCC || IS_MODE_RO6);
-  std::lock_guard<std::mutex> guard(mtx_);
-  RCCDTxn *dtxn = (RCCDTxn *) dtxn_sched_->GetDTxn(tid);
-  dtxn->inquire(res, defer);
-}
-
-void RococoServiceImpl::rcc_ro_start_pie(const SimpleCommand& cmd,
-                                         map<int32_t, Value> *output,
-                                         rrr::DeferredReply *defer) {
-  std::lock_guard<std::mutex> guard(mtx_);
-  RCCDTxn *dtxn = (RCCDTxn *) dtxn_sched_->GetOrCreateDTxn(cmd.root_id_, true);
-  dtxn->start_ro(cmd, *output, defer);
-}
-
-void RococoServiceImpl::rpc_null(rrr::DeferredReply *defer) {
+void ClassicServiceImpl::rpc_null(rrr::DeferredReply *defer) {
   defer->reply();
 }
 
-void RococoServiceImpl::RegisterStats() {
+
+void ClassicServiceImpl::RegisterStats() {
   if (scsi_) {
     scsi_->set_recorder(recorder_);
-    scsi_->set_stat(ServerControlServiceImpl::STAT_SZ_SCC,
-                     &stat_sz_scc_);
-    scsi_->set_stat(ServerControlServiceImpl::STAT_SZ_GRAPH_START,
-                     &stat_sz_gra_start_);
-    scsi_->set_stat(ServerControlServiceImpl::STAT_SZ_GRAPH_COMMIT,
-                     &stat_sz_gra_commit_);
-    scsi_->set_stat(ServerControlServiceImpl::STAT_SZ_GRAPH_ASK,
-                     &stat_sz_gra_ask_);
-    scsi_->set_stat(ServerControlServiceImpl::STAT_N_ASK,
-                     &stat_n_ask_);
-    scsi_->set_stat(ServerControlServiceImpl::STAT_RO6_SZ_VECTOR,
-                     &stat_ro6_sz_vector_);
   }
 }
 } // namespace rcc

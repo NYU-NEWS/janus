@@ -16,12 +16,12 @@ void ServerWorker::SetupHeartbeat() {
   int n_io_threads = 1;
   svr_hb_poll_mgr_g = new rrr::PollMgr(n_io_threads);
   hb_thread_pool_g = new rrr::ThreadPool(1);
-  svr_hb_server_g = new rrr::Server(svr_hb_poll_mgr_g, hb_thread_pool_g);
-  svr_hb_server_g->reg(scsi_g);
+  hb_rpc_server_ = new rrr::Server(svr_hb_poll_mgr_g, hb_thread_pool_g);
+  hb_rpc_server_->reg(scsi_g);
   auto port = Config::GetConfig()->get_ctrl_port();
   std::string addr_port = std::string("0.0.0.0:") +
       std::to_string(port);
-  svr_hb_server_g->start(addr_port.c_str());
+  hb_rpc_server_->start(addr_port.c_str());
 }
 
 void ServerWorker::SetupBase() {
@@ -130,22 +130,22 @@ void ServerWorker::SetupService() {
   thread_pool_g = new base::ThreadPool(num_threads);
 
   // init rrr::Server
-  svr_server_g = new rrr::Server(svr_poll_mgr_g, thread_pool_g);
+  rpc_server_ = new rrr::Server(svr_poll_mgr_g, thread_pool_g);
 
   // reg services
   for (auto service : services_) {
-    svr_server_g->reg(service);
+    rpc_server_->reg(service);
   }
 
   // start rpc server
-  ret = svr_server_g->start(bind_addr.c_str());
+  ret = rpc_server_->start(bind_addr.c_str());
   if (ret != 0) {
     Log_fatal("server launch failed.");
   }
 
   Log_info("Server ready");
 
-  if (svr_hb_server_g != nullptr) {
+  if (hb_rpc_server_ != nullptr) {
 #ifdef CPU_PROFILE
     char prof_file[1024];
     verify(0 < Config::get_config()->get_prof_filename(prof_file));
@@ -155,7 +155,7 @@ void ServerWorker::SetupService() {
 #endif // ifdef CPU_PROFILE
     scsi_g->set_ready();
     scsi_g->wait_for_shutdown();
-    delete svr_hb_server_g;
+    delete hb_rpc_server_;
     delete scsi_g;
     svr_hb_poll_mgr_g->release();
     hb_thread_pool_g->release();
@@ -170,7 +170,7 @@ void ServerWorker::SetupService() {
                         " average size per flush: %lld",
                     n_flush_avg_, sz_flush_avg_);
         }
-        Log::info("asking other server finish request count: %d", s->n_asking_);
+//        Log::info("asking other server finish request count: %d", s->n_asking_);
       }
     }
 #ifdef CPU_PROFILE
@@ -190,8 +190,9 @@ void ServerWorker::SetupCommo() {
 }
 
 void ServerWorker::ShutDown() {
-  // TODO
-  delete svr_server_g;
+  // TODO server would not delete?
+  Log_debug("deleting services, num: %d", services_.size());
+  delete rpc_server_;
   for (auto service : services_) {
     delete service;
   }

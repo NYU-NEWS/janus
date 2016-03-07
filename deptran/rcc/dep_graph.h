@@ -7,7 +7,7 @@
 #include "marshal-value.h"
 #include "command.h"
 #include "command_marshaler.h"
-#include "rcc_rpc.h"
+#include "rcc_srpc.h"
 
 /**
  * This is NOT thread safe!!!

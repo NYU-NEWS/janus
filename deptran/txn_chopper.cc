@@ -4,7 +4,10 @@
 #include "txn_chopper.h"
 #include "benchmark_control_rpc.h"
 #include "batch_start_args_helper.h"
-//#include "all.h"
+
+// deprecated below
+#include "rcc/rcc_srpc.h"
+// deprecate above
 
 namespace rococo {
 

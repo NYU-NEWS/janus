@@ -1,19 +1,20 @@
-#include "all.h"
-#include "scheduler.h"
+#include "../__dep__.h"
+#include "../scheduler.h"
+#include "dtxn.h"
+#include "bench/tpcc/piece.h"
 
 namespace rococo {
 
-RCCDTxn::RCCDTxn(
+RccDTxn::RccDTxn(
     i64 tid,
     Scheduler *mgr,
-    bool ro
-) : DTxn(tid, mgr) {
+    bool ro) : DTxn(tid, mgr) {
   tv_ = nullptr;
   read_only_ = ro;
   mdb_txn_ = mgr->GetOrCreateMTxn(tid_);
 }
 
-void RCCDTxn::StartLaunch(const SimpleCommand& cmd,
+void RccDTxn::StartLaunch(const SimpleCommand& cmd,
                           ChopStartResponse *res,
                           rrr::DeferredReply *defer) {
   verify(defer);
@@ -30,12 +31,12 @@ void RCCDTxn::StartLaunch(const SimpleCommand& cmd,
   }
 }
 
-void RCCDTxn::StartAfterLog(const SimpleCommand& cmd,
+void RccDTxn::StartAfterLog(const SimpleCommand& cmd,
                             ChopStartResponse *res,
                             rrr::DeferredReply *defer) {
   verify(phase_ <= PHASE_RCC_START);
   Vertex<TxnInfo> *tv = NULL;
-  RCCDTxn::dep_s->start_pie(cmd.root_id_, &tv);
+  RccDTxn::dep_s->start_pie(cmd.root_id_, &tv);
   if (tv_) verify(tv_ == tv); else tv_ = tv;
   phase_ = PHASE_RCC_START;
   // execute the IR actions.
@@ -46,7 +47,7 @@ void RCCDTxn::StartAfterLog(const SimpleCommand& cmd,
                                  &res->output);
   // Reply
   res->is_defered = deferred ? 1 : 0;
-  auto sz_sub_gra = RCCDTxn::dep_s->sub_txn_graph(cmd.id_, res->gra_m);
+  auto sz_sub_gra = RccDTxn::dep_s->sub_txn_graph(cmd.id_, res->gra_m);
   if (defer) defer->reply();
   // TODO fix stat
   //stat_sz_gra_start_.sample(sz_sub_gra);
@@ -57,7 +58,7 @@ void RCCDTxn::StartAfterLog(const SimpleCommand& cmd,
 //    Log::debug("reply to start request. txn_id: %llx, pie_id: %llx, graph size: %d", header.tid, header.pid, (int)res->gra.size());
 }
 
-bool RCCDTxn::start_exe_itfr(defer_t defer_type,
+bool RccDTxn::start_exe_itfr(defer_t defer_type,
                              TxnHandler &handler,
                              const SimpleCommand& cmd,
                              map<int32_t, Value> *output) {
@@ -104,7 +105,7 @@ bool RCCDTxn::start_exe_itfr(defer_t defer_type,
   return deferred;
 }
 
-void RCCDTxn::start(
+void RccDTxn::start(
     const RequestHeader &header,
     const std::vector<mdb::Value> &input,
     bool *deferred,
@@ -113,7 +114,7 @@ void RCCDTxn::start(
   // TODO Remove
 }
 
-void RCCDTxn::start_ro(const SimpleCommand& cmd,
+void RccDTxn::start_ro(const SimpleCommand& cmd,
                        map<int32_t, Value> &output,
                        DeferredReply *defer) {
 
@@ -145,14 +146,14 @@ void RCCDTxn::start_ro(const SimpleCommand& cmd,
   ball->trigger();
 }
 
-void RCCDTxn::commit(
+void RccDTxn::commit(
     const ChopFinishRequest &req,
     ChopFinishResponse *res,
     rrr::DeferredReply *defer) {
   // union the graph into dep graph
   verify(tv_ != nullptr);
-  RCCDTxn::dep_s->txn_gra_.Aggregate(req.gra, true);
-  Graph<TxnInfo> &txn_gra_ = RCCDTxn::dep_s->txn_gra_;
+  RccDTxn::dep_s->txn_gra_.Aggregate(req.gra, true);
+  Graph<TxnInfo> &txn_gra_ = RccDTxn::dep_s->txn_gra_;
 
   tv_->data_->res = res;
   tv_->data_->union_status(TXN_CMT);
@@ -160,7 +161,7 @@ void RCCDTxn::commit(
   to_decide(tv_, defer);
 }
 
-void RCCDTxn::to_decide(
+void RccDTxn::to_decide(
     Vertex<TxnInfo> *v,
     rrr::DeferredReply *defer
 ) {
@@ -172,7 +173,7 @@ void RCCDTxn::to_decide(
     tinfo.during_commit = true;
   }
   std::unordered_set<Vertex<TxnInfo> *> anc;
-  RCCDTxn::dep_s->find_txn_anc_opt(v, anc);
+  RccDTxn::dep_s->find_txn_anc_opt(v, anc);
   std::function<void(void)> anc_finish_cb =
       [this, v, defer]() {
         this->commit_anc_finish(v, defer);
@@ -187,7 +188,7 @@ void RCCDTxn::to_decide(
   wait_finish_ball->trigger();
 }
 
-void RCCDTxn::commit_anc_finish(
+void RccDTxn::commit_anc_finish(
     Vertex<TxnInfo> *v,
     rrr::DeferredReply *defer
 ) {
@@ -198,7 +199,7 @@ void RCCDTxn::commit_anc_finish(
   // after all ancestors become COMMITTING
   // wait for all ancestors of scc become DECIDED
   std::set<Vertex<TxnInfo> *> scc_anc;
-  RCCDTxn::dep_s->find_txn_scc_nearest_anc(v, scc_anc);
+  RccDTxn::dep_s->find_txn_scc_nearest_anc(v, scc_anc);
 
   DragonBall *wait_commit_ball = new DragonBall(scc_anc.size() + 1,
                                                 scc_anc_commit_cb);
@@ -211,11 +212,11 @@ void RCCDTxn::commit_anc_finish(
   wait_commit_ball->trigger();
 }
 
-void RCCDTxn::commit_scc_anc_commit(
+void RccDTxn::commit_scc_anc_commit(
     Vertex<TxnInfo> *v,
     rrr::DeferredReply *defer
 ) {
-  Graph<TxnInfo> &txn_gra = RCCDTxn::dep_s->txn_gra_;
+  Graph<TxnInfo> &txn_gra = RccDTxn::dep_s->txn_gra_;
   uint64_t txn_id = v->data_->id();
   Log::debug("all scc ancestors have committed for txn id: %llx", txn_id);
   // after all scc ancestors become DECIDED
@@ -237,7 +238,7 @@ void RCCDTxn::commit_scc_anc_commit(
 
         // this res may not be mine !!!!
         if (vv->data_->res != nullptr) {
-          auto txn = (RCCDTxn *) sched_->GetDTxn(vv->data_->id());
+          auto txn = (RccDTxn *) sched_->GetDTxn(vv->data_->id());
           txn->exe_deferred(vv->data_->res->outputs);
           sched_->DestroyDTxn(vv->data_->id());
         }
@@ -265,8 +266,8 @@ void RCCDTxn::commit_scc_anc_commit(
   }
 }
 
-void RCCDTxn::send_ask_req(Vertex<TxnInfo> *av) {
-  Graph<TxnInfo> &txn_gra = RCCDTxn::dep_s->txn_gra_;
+void RccDTxn::send_ask_req(Vertex<TxnInfo> *av) {
+  Graph<TxnInfo> &txn_gra = RccDTxn::dep_s->txn_gra_;
   TxnInfo &tinfo = *(av->data_);
   if (!tinfo.is_involved()) {
 
@@ -281,7 +282,7 @@ void RCCDTxn::send_ask_req(Vertex<TxnInfo> *av) {
     } else {
       static int64_t sample = 0;
       int32_t sid = tinfo.random_server();
-      RococoProxy *proxy = RCCDTxn::dep_s->get_server_proxy(sid);
+      RococoProxy *proxy = RccDTxn::dep_s->get_server_proxy(sid);
 
       rrr::FutureAttr fuattr;
       fuattr.callback = [this, av, &txn_gra](Future *fu) {
@@ -321,26 +322,26 @@ void RCCDTxn::send_ask_req(Vertex<TxnInfo> *av) {
 
 }
 
-void RCCDTxn::inquire(
+void RccDTxn::inquire(
     CollectFinishResponse *res,
     rrr::DeferredReply *defer
 ) {
   std::function<void(void)> callback = [this, res, defer]() {
     // not the entire graph!!!!!
     // should only return a part of the graph.
-    RCCDTxn::dep_s->sub_txn_graph(this->tid_, res->gra_m);
+    RccDTxn::dep_s->sub_txn_graph(this->tid_, res->gra_m);
     defer->reply();
   };
   DragonBall *ball = new DragonBall(2, callback);
   // TODO Optimize this.
-  Vertex<TxnInfo> *v = RCCDTxn::dep_s->txn_gra_.FindV(tid_);
+  Vertex<TxnInfo> *v = RccDTxn::dep_s->txn_gra_.FindV(tid_);
   //register an event, triggered when the status >= COMMITTING;
   verify (v->data_->is_involved());
   v->data_->register_event(TXN_CMT, ball);
   ball->trigger();
 }
 
-void RCCDTxn::exe_deferred(
+void RccDTxn::exe_deferred(
     std::vector<std::pair<RequestHeader,
                           map<int32_t, Value> > > &outputs) {
 
@@ -377,7 +378,7 @@ void RCCDTxn::exe_deferred(
 }
 
 
-void RCCDTxn::kiss(mdb::Row *r, int col, bool immediate) {
+void RccDTxn::kiss(mdb::Row *r, int col, bool immediate) {
 
   entry_t *entry = ((RCCRow *) r)->get_dep_entry(col);
 

@@ -1,0 +1,74 @@
+
+namespace rococo;
+
+struct RequestHeader  {
+    i32 t_type;     // transaction type
+    i32 p_type;     // piece type
+    i32 cid;        // coordinator id
+    i64 tid;        // transaction id
+    i64 pid;        // piece id;
+}
+
+struct BatchRequestHeader {
+    i32 t_type;
+    i32 cid;
+    i64 tid;
+    i32 num_piece;
+    i32 expected_output_size;
+}
+
+struct BatchChopStartResponse {
+    vector<i8> is_defers;
+    vector<map<int32_t, Value>> outputs;
+    GraphMarshaler gra_m;
+}
+
+struct ChopStartResponse {
+    i8 is_defered;
+    map<i32, Value> output;
+    GraphMarshaler gra_m;
+    string read_only; // for ro6
+}
+
+struct ChopFinishRequest {
+    i64 txn_id;
+    Graph<TxnInfo> gra;
+    string read_only; // for ro6
+}
+
+struct ChopFinishResponse {
+    i32 res;
+    vector<pair<RequestHeader, map<i32, Value>>> outputs;
+}
+
+struct CollectFinishResponse {
+    GraphMarshaler gra_m;
+}
+
+abstract service Rococo {
+    // input: contains many pieces, each piece consist of
+    // | <i32 p_type> <i64 pid> <i32 input_size> <i32 max_output_size>
+    // <input_0> <input_1> ... |
+    // output: contains many pieces, each piece consist of
+    // | <i32 res> <i32 output_size> <output_0> <output_1> ... |
+
+
+    // Below is for rococo only
+
+    defer rcc_start_pie(SimpleCommand cmd |
+                        ChopStartResponse res);
+
+    defer rcc_finish_txn(ChopFinishRequest req |
+                         ChopFinishResponse res);
+
+    defer rcc_ask_txn(i64 txn_id |
+                      CollectFinishResponse res);
+
+    defer rcc_ro_start_pie(SimpleCommand cmd |
+                           map<i32, Value> output);
+
+    defer rcc_batch_start_pie(vector<RequestHeader> headers,
+                              vector<map<i32, Value>> inputs |
+                              BatchChopStartResponse res);
+
+}

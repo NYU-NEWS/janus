@@ -14,6 +14,7 @@
 
 #include "coord.h"
 #include "../frame.h"
+#include "../benchmark_control_rpc.h"
 
 namespace rococo {
 
@@ -31,15 +32,6 @@ ThreePhaseCoordinator::ThreePhaseCoordinator(uint32_t coo_id,
   commo_ = new RococoCommunicator();
 }
 
-// TODO obsolete
-RequestHeader ThreePhaseCoordinator::gen_header(TxnCommand *ch) {
-//  verify(0);
-  RequestHeader header;
-  header.cid = coo_id_;
-  header.tid = cmd_->id_;
-  header.t_type = ch->type_;
-  return header;
-}
 
 /** thread safe */
 void ThreePhaseCoordinator::do_one(TxnRequest &req) {

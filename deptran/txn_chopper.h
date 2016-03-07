@@ -15,6 +15,7 @@ namespace rococo {
 class BatchStartArgsHelper;
 class Coordinator;
 class Sharding;
+class ChopStartResponse;
 
 class TxnReply {
  public:

@@ -3,7 +3,7 @@
 #include "../three_phase/coord.h"
 
 namespace rococo {
-class RCCCoord : public ThreePhaseCoordinator {
+class RccCoord: public ThreePhaseCoordinator {
 
 protected:
   inline RococoCommunicator* comm() {
@@ -11,7 +11,7 @@ protected:
   }
 
 public:
-  RCCCoord(uint32_t coo_id,
+  RccCoord(uint32_t coo_id,
            int benchmark,
            ClientControlServiceImpl *ccsi,
            uint32_t thread_id)
@@ -30,6 +30,8 @@ public:
   };
 
   virtual void do_one(TxnRequest&);
+
+  RequestHeader gen_header(TxnCommand *ch);
 
   virtual void deptran_start(TxnCommand *ch);
 

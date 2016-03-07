@@ -76,7 +76,7 @@ void RO6DTxn::start(
     const std::vector<mdb::Value> &input,
     bool *deferred,
     ChopStartResponse *res) {
-  RCCDTxn::start(header, input, deferred, res);
+  RccDTxn::start(header, input, deferred, res);
 
   std::vector<i64> ro;
   ro.insert(ro.end(), ro_.begin(), ro_.end());
@@ -90,7 +90,7 @@ void RO6DTxn::start(
 }
 
 void RO6DTxn::kiss(mdb::Row *r, int col, bool immediate) {
-  RCCDTxn::kiss(r, col, immediate);
+  RccDTxn::kiss(r, col, immediate);
 
   if (!read_only_) {
     // We only query cell's rxn table for non-read txns
@@ -181,7 +181,7 @@ void RO6DTxn::commit(
   }
   // We need to commit this txn after updating the table, because we need to know what the
   // old version number was before committing current version.
-  RCCDTxn::commit(req, res, defer);
+  RccDTxn::commit(req, res, defer);
 }
 
 bool RO6DTxn::read_column(mdb::Row *r, mdb::column_id_t col_id, Value *value) {

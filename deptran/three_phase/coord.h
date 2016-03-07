@@ -91,7 +91,6 @@ class ThreePhaseCoordinator : public Coordinator {
   void IncrementPhaseAndChangeStage(CoordinatorStage stage);
   bool AllHandoutAckReceived();
 
-  RequestHeader gen_header(TxnCommand *ch);
 
   void report(TxnReply &txn_reply,
               double last_latency

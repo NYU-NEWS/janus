@@ -3,51 +3,46 @@
 #include "__dep__.h"
 #include "rcc_rpc.h"
 
-#define DepTranServiceImpl RococoServiceImpl
+#define DepTranServiceImpl ClassicServiceImpl
 
 namespace rococo {
 
 class ServerControlServiceImpl;
 class Scheduler;
-class RococoServiceImpl: public RococoService {
+class SimpleCommand;
+
+class ClassicServiceImpl: public ClassicService {
 
  public:
-  // For statistics
-  AvgStat stat_sz_gra_start_;
-  AvgStat stat_sz_gra_commit_;
-  AvgStat stat_sz_gra_ask_;
-  AvgStat stat_sz_scc_;
-  AvgStat stat_n_ask_;
-  AvgStat stat_ro6_sz_vector_;
 
   std::mutex mtx_;
   Recorder *recorder_ = NULL;
   ServerControlServiceImpl *scsi_; // for statistics;
   Scheduler *dtxn_sched_;
 
-  void do_start_pie(const RequestHeader &header,
-                    const Value *input,
-                    int32_t input_size,
-                    int32_t *res,
-                    Value *output,
-                    int32_t *outupt_size);
+//  void do_start_pie(const RequestHeader &header,
+//                    const Value *input,
+//                    int32_t input_size,
+//                    int32_t *res,
+//                    Value *output,
+//                    int32_t *outupt_size);
 
 
  public:
   void rpc_null(DeferredReply *defer);
-
-  void batch_start_pie(const BatchRequestHeader &batch_header,
-                       const std::vector<Value> &input,
-                       i32 *res,
-                       std::vector<Value> *output);
-
-  void naive_batch_start_pie(
-      const std::vector<RequestHeader> &header,
-      const std::vector<vector<Value>> &input,
-      const std::vector<i32> &output_size,
-      std::vector<i32> *res,
-      std::vector<vector<Value>> *output,
-      DeferredReply *defer);
+//
+//  void batch_start_pie(const BatchRequestHeader &batch_header,
+//                       const std::vector<Value> &input,
+//                       i32 *res,
+//                       std::vector<Value> *output);
+//
+//  void naive_batch_start_pie(
+//      const std::vector<RequestHeader> &header,
+//      const std::vector<vector<Value>> &input,
+//      const std::vector<i32> &output_size,
+//      std::vector<i32> *res,
+//      std::vector<vector<Value>> *output,
+//      DeferredReply *defer);
 
   void Handout(const SimpleCommand &cmd,
                int32_t *res,
@@ -91,33 +86,12 @@ class RococoServiceImpl: public RococoService {
 
  public:
 
-  RococoServiceImpl() = delete;
+  ClassicServiceImpl() = delete;
 
-  RococoServiceImpl(Scheduler *dtxn_mgr, rrr::PollMgr* poll_mgr, ServerControlServiceImpl *scsi = NULL);
+  ClassicServiceImpl(Scheduler *sched,
+                     rrr::PollMgr* poll_mgr,
+                     ServerControlServiceImpl *scsi = NULL);
 
-  void rcc_batch_start_pie(
-      const std::vector<RequestHeader> &headers,
-      const std::vector<map<int32_t, Value>> &inputs,
-      BatchChopStartResponse *res,
-      DeferredReply *defer);
-
-  void rcc_start_pie(const SimpleCommand& cmd,
-                     ChopStartResponse *res,
-                     DeferredReply *defer);
-
-  void rcc_finish_txn(const ChopFinishRequest &req,
-                      ChopFinishResponse *res,
-                      DeferredReply *);
-
-  void rcc_ask_txn(const i64 &tid,
-                   CollectFinishResponse *res,
-                   DeferredReply *);
-
-  void rcc_ro_start_pie(const SimpleCommand& cmd,
-                        map<int32_t, Value> *output,
-                        DeferredReply *reply);
-
-  uint64_t n_asking_ = 0;
   protected:
     void RegisterStats();
   };

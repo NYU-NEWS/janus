@@ -6,7 +6,7 @@
 #include "benchmark_control_rpc.h"
 
 namespace rococo {
-void RCCCoord::deptran_batch_start(TxnCommand *ch) {
+void RccCoord::deptran_batch_start(TxnCommand *ch) {
   // new txn id for every new and retry.
   RequestHeader header = gen_header(ch);
 
@@ -97,7 +97,7 @@ void RCCCoord::deptran_batch_start(TxnCommand *ch) {
       }
     };
 
-    RococoProxy *proxy = comm()->rpc_proxies_[it->first];
+    RococoProxy *proxy = (RococoProxy*)comm()->rpc_proxies_[it->first];
     Future::safe_release(proxy->async_rcc_batch_start_pie(
                            it->second.headers,
                            it->second.inputs,
@@ -106,7 +106,17 @@ void RCCCoord::deptran_batch_start(TxnCommand *ch) {
   }
 }
 
-void RCCCoord::deptran_start(TxnCommand *ch) {
+// TODO obsolete
+RequestHeader RccCoord::gen_header(TxnCommand *ch) {
+//  verify(0);
+  RequestHeader header;
+  header.cid = coo_id_;
+  header.tid = cmd_->id_;
+  header.t_type = ch->type_;
+  return header;
+}
+
+void RccCoord::deptran_start(TxnCommand *ch) {
   // new txn id for every new and retry.
   RequestHeader header = gen_header(ch);
 
@@ -173,7 +183,7 @@ void RCCCoord::deptran_start(TxnCommand *ch) {
       }
     };
 
-    RococoProxy *proxy = comm()->rpc_proxies_[server_id];
+    RococoProxy *proxy = (RococoProxy*)comm()->rpc_proxies_[server_id];
     Log::debug("send deptran start request, tid: %llx, pid: %llx",
                cmd_->id_, header.pid);
         verify(input != nullptr);
@@ -181,12 +191,12 @@ void RCCCoord::deptran_start(TxnCommand *ch) {
   }
 }
 
-void RCCCoord::StartAck() {
+void RccCoord::StartAck() {
 
 }
 
 /** caller should be thread safe */
-void RCCCoord::deptran_finish(TxnCommand *ch) {
+void RccCoord::deptran_finish(TxnCommand *ch) {
         verify(IS_MODE_RCC || IS_MODE_RO6);
   Log::debug("deptran finish, %llx", cmd_->id_);
 
@@ -248,12 +258,12 @@ void RCCCoord::deptran_finish(TxnCommand *ch) {
   verify(req.gra.size() > 0);
 
   for (auto& rp : ch->partition_ids_) {
-    RococoProxy *proxy = comm()->rpc_proxies_[rp];
+    RococoProxy *proxy = (RococoProxy*)comm()->rpc_proxies_[rp];
     Future::safe_release(proxy->async_rcc_finish_txn(req, fuattr));
   }
 }
 
-void RCCCoord::deptran_start_ro(TxnCommand *ch) {
+void RccCoord::deptran_start_ro(TxnCommand *ch) {
   // new txn id for every new and retry.
   RequestHeader header = gen_header(ch);
 
@@ -293,7 +303,7 @@ void RCCCoord::deptran_start_ro(TxnCommand *ch) {
       }
     };
 
-    RococoProxy *proxy = comm()->rpc_proxies_[server_id];
+    RococoProxy *proxy = (RococoProxy*)comm()->rpc_proxies_[server_id];
     Log::debug("send deptran RO start request, tid: %llx, pid: %llx",
                cmd_->id_,
                header.pid);
@@ -302,7 +312,7 @@ void RCCCoord::deptran_start_ro(TxnCommand *ch) {
   }
 }
 
-void RCCCoord::deptran_finish_ro(TxnCommand *ch) {
+void RccCoord::deptran_finish_ro(TxnCommand *ch) {
   RequestHeader header = gen_header(ch);
   int pi;
 
@@ -373,7 +383,7 @@ void RCCCoord::deptran_finish_ro(TxnCommand *ch) {
       }
     };
 
-    RococoProxy *proxy = comm()->rpc_proxies_[server_id];
+    RococoProxy *proxy = (RococoProxy*)comm()->rpc_proxies_[server_id];
     Log::debug("send deptran RO start request (phase 2), tid: %llx, pid: %llx",
                cmd_->id_,
                header.pid);
@@ -382,7 +392,7 @@ void RCCCoord::deptran_finish_ro(TxnCommand *ch) {
   }
 }
 
-void RCCCoord::do_one(TxnRequest& req) {
+void RccCoord::do_one(TxnRequest& req) {
   // pre-process
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   TxnCommand *ch = frame_->CreateChopper(req, txn_reg_);

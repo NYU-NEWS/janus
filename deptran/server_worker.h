@@ -20,12 +20,12 @@ class ServerWorker {
  public:
   rrr::PollMgr *svr_poll_mgr_g = nullptr;
   vector<rrr::Service*> services_ = {};
-  rrr::Server *svr_server_g = nullptr;
+  rrr::Server *rpc_server_ = nullptr;
   base::ThreadPool *thread_pool_g = nullptr;
 
   rrr::PollMgr *svr_hb_poll_mgr_g = nullptr;
   ServerControlServiceImpl *scsi_g = nullptr;
-  rrr::Server *svr_hb_server_g = nullptr;
+  rrr::Server *hb_rpc_server_ = nullptr;
   base::ThreadPool *hb_thread_pool_g = nullptr;
 
   Frame* dtxn_frame_ = nullptr;

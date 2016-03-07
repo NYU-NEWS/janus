@@ -63,7 +63,6 @@ map<string, int> Frame::frame_name_mode_s = {
     {"none",          MODE_NONE},
     {"2pl", MODE_2PL},
     {"occ", MODE_OCC},
-    {"rcc", MODE_RCC},
     {"ro6", MODE_RO6},
     {"brq", MODE_BRQ},
     {"rpc_null",      MODE_RPC_NULL},
@@ -227,7 +226,7 @@ Coordinator* Frame::CreateCoord(cooid_t coo_id,
       ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
     case MODE_RCC:
-      coo = new RCCCoord(coo_id,
+      coo = new RccCoord(coo_id,
                          benchmark,
                          ccsi,
                          id);
@@ -349,7 +348,7 @@ DTxn* Frame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {
       dtxn = new TPLDTxn(tid, mgr);
       break;
     case MODE_RCC:
-      dtxn = new RCCDTxn(tid, mgr, ro);
+      dtxn = new RccDTxn(tid, mgr, ro);
       break;
     case MODE_RO6:
       dtxn = new RO6DTxn(tid, mgr, ro);
@@ -463,7 +462,7 @@ vector<rrr::Service *> Frame::CreateRpcServices(uint32_t site_id,
       break;
     case MODE_2PL:
     case MODE_OCC:
-      result.push_back(new RococoServiceImpl(dtxn_sched, poll_mgr, scsi));
+      result.push_back(new ClassicServiceImpl(dtxn_sched, poll_mgr, scsi));
       break;
     default:
       verify(0);

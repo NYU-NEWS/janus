@@ -17,14 +17,14 @@ Communicator::Communicator() {
   vector<parid_t> partitions = config->GetAllPartitionIds();
   for (auto &par_id : partitions) {
     auto site_infos = config->SitesByPartitionId(par_id);
-    vector<std::pair<siteid_t, RococoProxy*>> proxies;
+    vector<std::pair<siteid_t, ClassicProxy*>> proxies;
     for (auto &si : site_infos) {
       string addr = si.GetHostAddr();
       rrr::Client *rpc_cli = new rrr::Client(rpc_poll_);
       Log::info("connect to site: %s", addr.c_str());
       auto ret = rpc_cli->connect(addr.c_str());
       verify(ret == 0);
-      RococoProxy *rpc_proxy = new RococoProxy(rpc_cli);
+      ClassicProxy *rpc_proxy = new ClassicProxy(rpc_cli);
       rpc_clients_.insert(std::make_pair(si.id, rpc_cli));
       rpc_proxies_.insert(std::make_pair(si.id, rpc_proxy));
       proxies.push_back(std::make_pair(si.id, rpc_proxy));
@@ -36,11 +36,12 @@ Communicator::Communicator() {
 Communicator::~Communicator() {
   for (auto &pair : rpc_clients_) {
     rrr::Client *rpc_cli = pair.second;
-    rpc_cli->close_and_release();
+//    rpc_cli->close_and_release();
   }
 }
 
-std::pair<siteid_t, RococoProxy*> Communicator::RandomProxyForPartition(parid_t partition_id) const {
+std::pair<siteid_t, ClassicProxy*> Communicator::RandomProxyForPartition(
+    parid_t partition_id) const {
   auto it = rpc_par_proxies_.find(partition_id);
   verify(it != rpc_par_proxies_.end());
   auto& partition_proxies = it->second;

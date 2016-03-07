@@ -36,7 +36,7 @@ static dummy_class dummy___;
 #include "txn_chopper.h"
 #include "rcc/dep_graph.h"
 #include "dtxn.h"
-#include "rcc/rcc.h"
+#include "rcc/dtxn.h"
 #include "rcc_service.h"
 #include "coordinator.h"
 #include "sharding.h"
