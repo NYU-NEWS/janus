@@ -2,6 +2,7 @@
 #include "coord.h"
 #include "frame.h"
 #include "commo.h"
+#include "benchmark_control_rpc.h"
 
 namespace rococo {
 
@@ -102,26 +103,38 @@ void TapirCoord::FastAcceptAck(phase_t phase, parid_t par_id, Future *fu) {
   // do not consider anything else for now.
   int res;
   fu->get_reply() >> res;
-  verify(res == SUCCESS); // TODO
-  n_fast_accept_oks_[par_id]++;
+//  verify(res == SUCCESS); // TODO
+  if (res == SUCCESS) {
+    n_fast_accept_oks_[par_id]++;
+  } else if (res == REJECT) {
+    n_fast_accept_rejects_[par_id]++;
+  } else {
+    verify(0);
+  }
   if (FastQuorumPossible()) {
     if (AllFastQuorumReached()) {
       decision_ = COMMIT;
       Decide();
     } else {
-      // wait/
+      // do nothing and wait for future ack.
     }  
   } else {
-    if (AllSlowQuorumReached()) {
       decision_ = ABORT;
-      Accept();
-    }
+      Decide();
   }
 }
 
 bool TapirCoord::FastQuorumPossible() {
-  return true;
-  verify(0);
+  auto pars = cmd_->GetPartitionIds();
+  bool all_fast_quorum_possible = true;
+  for (auto& par_id : pars) {
+    if (n_fast_accept_rejects_[par_id] >
+        Config::GetConfig()->GetPartitionSize(par_id)-GetFastQuorum(par_id)) {
+      all_fast_quorum_possible = false;
+      break;
+    }
+  }
+  return all_fast_quorum_possible;
 }
 
 void TapirCoord::Accept() {
@@ -152,6 +165,17 @@ void TapirCoord::AcceptAck(phase_t phase, parid_t pid, Future* fu) {
   } else {
     // TODO keep waiting.
   }
+}
+
+void TapirCoord::restart(TxnCommand* cmd) {
+  std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+  Reset();
+  cmd->retry();
+  double last_latency = cmd->last_attempt_latency();
+  if (ccsi_) ccsi_->txn_retry_one(this->thread_id_, cmd->type_, last_latency);
+  cmd_->root_id_ = this->next_txn_id();
+  cmd_->id_ = cmd_->root_id_;
+  Handout();
 }
 
 int TapirCoord::GetFastQuorum(parid_t par_id) {
@@ -214,7 +238,6 @@ void TapirCoord::Decide() {
     TxnCommand* cmd = (TxnCommand*)cmd_;
     cmd->retry();
     this->restart(cmd);
-    verify(0);
   } else {
     verify(0);
   }

@@ -40,6 +40,7 @@ int TapirSched::OnDecide(cmdid_t cmd_id,
   } else {
     verify(0);
   }
+  DestroyExecutor(cmd_id);
   callback();
 }
 

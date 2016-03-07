@@ -5,6 +5,7 @@ namespace rococo {
 
 void TapirExecutor::FastAccept(int* res) {
   // validate read versions and
+  *res = SUCCESS;
   for (auto& pair1 : dtxn()->read_vers_) {
     auto row = (mdb::VersionedRow*)pair1.first;
     for (auto& pair2: pair1.second) {
@@ -40,7 +41,8 @@ void TapirExecutor::FastAccept(int* res) {
       }
     }
   }
-  *res = SUCCESS;
+  verify(*res == SUCCESS || *res == REJECT);
+//  *res = SUCCESS;
 }
 
 void TapirExecutor::Commit() {
