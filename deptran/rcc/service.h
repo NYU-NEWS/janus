@@ -2,10 +2,10 @@
 
 #pragma once
 
-#include <deptran/rcc_service.h>
 #include "../__dep__.h"
 #include "graph.h"
 #include "graph_marshaler.h"
+#include "service.h"
 #include "rcc_srpc.h"
 
 
@@ -13,6 +13,9 @@ namespace rococo {
 
 class ServerControlServiceImpl;
 class Scheduler;
+class RccSched;
+class RccGraph;
+
 class RococoServiceImpl: public RococoService {
 
  public:
@@ -66,6 +69,12 @@ class RococoServiceImpl: public RococoService {
       BatchChopStartResponse *res,
       DeferredReply *defer);
 
+  void Handout(const SimpleCommand& cmd,
+               int32_t* res,
+               map<int32_t, Value>* output,
+               RccGraph* graph,
+               DeferredReply* defer) override;
+
   void rcc_start_pie(const SimpleCommand& cmd,
                      ChopStartResponse *res,
                      DeferredReply *defer);
@@ -82,8 +91,10 @@ class RococoServiceImpl: public RococoService {
                         map<int32_t, Value> *output,
                         DeferredReply *reply);
 
-
   void RegisterStats();
+
+ private:
+  RccSched* dtxn_sched();
 };
 
 } // namespace rcc

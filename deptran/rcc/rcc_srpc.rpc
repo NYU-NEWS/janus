@@ -55,20 +55,25 @@ abstract service Rococo {
 
     // Below is for rococo only
 
-    defer rcc_start_pie(SimpleCommand cmd |
-                        ChopStartResponse res);
+  defer Handout(SimpleCommand cmd |
+                i32 res,
+                map<i32, Value> output,
+                RccGraph graph);
 
-    defer rcc_finish_txn(ChopFinishRequest req |
-                         ChopFinishResponse res);
+  defer rcc_start_pie(SimpleCommand cmd |
+                      ChopStartResponse res);
 
-    defer rcc_ask_txn(i64 txn_id |
-                      CollectFinishResponse res);
+  defer rcc_finish_txn(ChopFinishRequest req |
+                       ChopFinishResponse res);
 
-    defer rcc_ro_start_pie(SimpleCommand cmd |
-                           map<i32, Value> output);
+  defer rcc_ask_txn(i64 txn_id |
+                    CollectFinishResponse res);
 
-    defer rcc_batch_start_pie(vector<RequestHeader> headers,
-                              vector<map<i32, Value>> inputs |
-                              BatchChopStartResponse res);
+  defer rcc_ro_start_pie(SimpleCommand cmd |
+                         map<i32, Value> output);
+
+  defer rcc_batch_start_pie(vector<RequestHeader> headers,
+                            vector<map<i32, Value>> inputs |
+                            BatchChopStartResponse res);
 
 }

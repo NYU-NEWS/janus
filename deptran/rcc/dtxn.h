@@ -7,9 +7,7 @@
 namespace rococo {
 class RccDTxn: public DTxn {
  public:
-
-  DepGraph *dep_s;
-
+  
   vector<SimpleCommand> dreqs_;
   Vertex <TxnInfo> *tv_;
 
@@ -17,22 +15,11 @@ class RccDTxn: public DTxn {
 
   bool read_only_;
 
-  RccDTxn(
-      i64 tid,
-      Scheduler *mgr,
-      bool ro
-  );
-
-  virtual void StartLaunch(
-      const SimpleCommand& cmd,
-      ChopStartResponse *res,
-      rrr::DeferredReply *defer
-  );
+  RccDTxn(txnid_t tid, Scheduler *mgr, bool ro);
 
   virtual void StartAfterLog(const SimpleCommand& cmd,
-                             ChopStartResponse *res,
-                             rrr::DeferredReply *defer
-  );
+                             int* res,
+                             map<int32_t, Value>* output);
 
   virtual bool start_exe_itfr(
       defer_t defer,

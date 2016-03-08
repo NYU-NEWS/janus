@@ -2,9 +2,11 @@
 #include "../__dep__.h"
 #include "../command.h"
 #include "../command_marshaler.h"
+#include "../benchmark_control_rpc.h"
+#include "../config.h"
 #include "service.h"
 #include "dtxn.h"
-#include "benchmark_control_rpc.h"
+#include "sched.h"
 
 namespace rococo {
 
@@ -77,17 +79,32 @@ void RococoServiceImpl::rcc_batch_start_pie(
 //    }
 }
 
+
+void RococoServiceImpl::Handout(const SimpleCommand& cmd,
+                                int32_t* res,
+                                map<int32_t, Value>* output,
+                                RccGraph* graph,
+                                DeferredReply* defer) {
+  std::lock_guard <std::mutex> guard(this->mtx_);
+  dtxn_sched()->OnHandoutRequest(cmd,
+                                 res,
+                                 output,
+                                 graph,
+                                 [] () {defer->reply();});
+}
+
 void RococoServiceImpl::rcc_start_pie(const SimpleCommand &cmd,
                                       ChopStartResponse *res,
                                       rrr::DeferredReply *defer
 ) {
 //    Log::debug("receive start request. txn_id: %llx, pie_id: %llx", header.tid, header.pid);
-  verify(IS_MODE_RCC || IS_MODE_RO6);
-  verify(defer);
-
-  std::lock_guard <std::mutex> guard(this->mtx_);
-  RccDTxn *dtxn = (RccDTxn *) dtxn_sched_->GetOrCreateDTxn(cmd.root_id_);
-  dtxn->StartLaunch(cmd, res, defer);
+  verify(0);
+//  verify(IS_MODE_RCC || IS_MODE_RO6);
+//  verify(defer);
+//
+//  std::lock_guard <std::mutex> guard(this->mtx_);
+//  RccDTxn *dtxn = (RccDTxn *) dtxn_sched_->GetOrCreateDTxn(cmd.root_id_);
+//  dtxn->StartLaunch(cmd, res, defer);
 
   // TODO remove the stat from here.
 //    auto sz_sub_gra = RCCDTxn::dep_s->sub_txn_graph(header.tid, res->gra_m);
@@ -153,5 +170,10 @@ void RococoServiceImpl::RegisterStats() {
                     &stat_ro6_sz_vector_);
   }
 }
+
+RccSched* RococoServiceImpl::dtxn_sched() {
+  return (RccSched*)dtxn_sched_;
+}
+
 
 } // namespace rococo

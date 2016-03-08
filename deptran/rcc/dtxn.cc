@@ -1,3 +1,4 @@
+#include <deptran/txn_reg.h>
 #include "../__dep__.h"
 #include "../scheduler.h"
 #include "dtxn.h"
@@ -5,104 +6,83 @@
 
 namespace rococo {
 
-RccDTxn::RccDTxn(
-    i64 tid,
-    Scheduler *mgr,
-    bool ro) : DTxn(tid, mgr) {
+RccDTxn::RccDTxn(txnid_t tid,
+                 Scheduler *mgr,
+                 bool ro) : DTxn(tid, mgr) {
   tv_ = nullptr;
   read_only_ = ro;
   mdb_txn_ = mgr->GetOrCreateMTxn(tid_);
 }
 
-void RccDTxn::StartLaunch(const SimpleCommand& cmd,
-                          ChopStartResponse *res,
-                          rrr::DeferredReply *defer) {
-  verify(defer);
-  static bool do_record = Config::GetConfig()->do_logging();
-  if (do_record) {
-    Marshal m;
-    m << cmd;
-    auto job = [&cmd, res, defer, this]() {
-      this->StartAfterLog(cmd, res, defer);
-    };
-    recorder_->submit(m, job);
-  } else {
-    this->StartAfterLog(cmd, res, defer);
-  }
-}
-
 void RccDTxn::StartAfterLog(const SimpleCommand& cmd,
-                            ChopStartResponse *res,
-                            rrr::DeferredReply *defer) {
+                            int32_t *res,
+                            map<int32_t, Value>* output) {
   verify(phase_ <= PHASE_RCC_START);
   Vertex<TxnInfo> *tv = NULL;
   RccDTxn::dep_s->start_pie(cmd.root_id_, &tv);
   if (tv_) verify(tv_ == tv); else tv_ = tv;
   phase_ = PHASE_RCC_START;
   // execute the IR actions.
-  auto pair = txn_reg_->get(cmd.root_type_, cmd.type_);
-  bool deferred = start_exe_itfr(pair.defer,
-                                 pair.txn_handler,
-                                 cmd,
-                                 &res->output);
-  // Reply
-  res->is_defered = deferred ? 1 : 0;
-  auto sz_sub_gra = RccDTxn::dep_s->sub_txn_graph(cmd.id_, res->gra_m);
-  if (defer) defer->reply();
-  // TODO fix stat
-  //stat_sz_gra_start_.sample(sz_sub_gra);
-  //if (IS_MODE_RO6) {
-  //    stat_ro6_sz_vector_.sample(res->read_only.size());
-  //}
-
-//    Log::debug("reply to start request. txn_id: %llx, pie_id: %llx, graph size: %d", header.tid, header.pid, (int)res->gra.size());
+  auto pair = txn_reg_->get(cmd);
+  // To tolerate deprecated codes
+  int xxx, *yyy;
+  yyy = (pair.defer == DF_REAL) ? nullptr : &xxx;
+  if (pair.defer == DF_REAL) dreqs_.push_back(cmd);
+  verify(pair.defer != DF_FAKE);
+  pair.txn_handler(nullptr,
+                   this,
+                   const_cast<SimpleCommand&>(cmd),
+                   yyy,
+                   *output);
+  *res = pair.defer;
 }
 
 bool RccDTxn::start_exe_itfr(defer_t defer_type,
                              TxnHandler &handler,
                              const SimpleCommand& cmd,
                              map<int32_t, Value> *output) {
-  bool deferred;
-  switch (defer_type) {
-    case DF_NO: { // immediate
-      int res;
-      // TODO fix
-      handler(nullptr,
-              this,
-              const_cast<SimpleCommand&>(cmd),
-              &res,
-              *output);
-      deferred = false;
-      break;
-    }
-    case DF_REAL: { // defer
-      dreqs_.push_back(cmd);
-      map<int32_t, Value> no_use;
-      handler(nullptr,
-              this,
-              const_cast<SimpleCommand&>(cmd),
-              NULL,
-              no_use);
-      deferred = true;
-      break;
-    }
-    case DF_FAKE: //TODO
-    {
-      dreqs_.push_back(cmd);
-      int output_size = 300; //XXX
-      int res;
-      handler(nullptr,
-              this,
-              const_cast<SimpleCommand&>(cmd),
-              &res,
-              *output);
-      deferred = false;
-      break;
-    }
-    default:
-      verify(0);
-  }
-  return deferred;
+  verify(0);
+//  bool deferred;
+//  switch (defer_type) {
+//    case DF_NO: { // immediate
+//      int res;
+//      // TODO fix
+//      handler(nullptr,
+//              this,
+//              const_cast<SimpleCommand&>(cmd),
+//              &res,
+//              *output);
+//      deferred = false;
+//      break;
+//    }
+//    case DF_REAL: { // defer
+//      dreqs_.push_back(cmd);
+//      map<int32_t, Value> no_use;
+//      handler(nullptr,
+//              this,
+//              const_cast<SimpleCommand&>(cmd),
+//              NULL,
+//              no_use);
+//      deferred = true;
+//      break;
+//    }
+//    case DF_FAKE: //TODO
+//    {
+//      dreqs_.push_back(cmd);
+//      int output_size = 300; //XXX
+//      int res;
+//      handler(nullptr,
+//              this,
+//              const_cast<SimpleCommand&>(cmd),
+//              &res,
+//              *output);
+//      deferred = false;
+//      break;
+//    }
+//    default:
+//      verify(0);
+//  }
+//  return deferred;
 }
 
 void RccDTxn::start(
@@ -112,6 +92,7 @@ void RccDTxn::start(
     ChopStartResponse *res
 ) {
   // TODO Remove
+  verify(0);
 }
 
 void RccDTxn::start_ro(const SimpleCommand& cmd,

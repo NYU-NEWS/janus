@@ -14,7 +14,7 @@
  */
 namespace rococo {
 
-class DepGraph {
+class RccGraph {
  public:
 //    Graph<PieInfo> pie_gra_;
   Graph <TxnInfo> txn_gra_;
@@ -24,14 +24,14 @@ class DepGraph {
   std::vector<std::string> server_addrs_;
 
 
-  DepGraph() {
+  RccGraph() {
     // TODO remove this out
     Config::GetConfig()->get_all_site_addr(server_addrs_);
     rpc_clients_ = std::vector<rrr::Client *>(server_addrs_.size(), nullptr);
     rpc_proxies_ = std::vector<RococoProxy *>(server_addrs_.size(), nullptr);
   }
 
-  ~DepGraph() {
+  ~RccGraph() {
     // XXX hopefully some memory leak here does not hurt. :(
   }
 
