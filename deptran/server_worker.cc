@@ -8,6 +8,7 @@
 
 namespace rococo {
 
+
 void ServerWorker::SetupHeartbeat() {
   bool hb = Config::GetConfig()->do_heart_beat();
   if (!hb) return;
@@ -18,10 +19,12 @@ void ServerWorker::SetupHeartbeat() {
   hb_thread_pool_g = new rrr::ThreadPool(1);
   hb_rpc_server_ = new rrr::Server(svr_hb_poll_mgr_g, hb_thread_pool_g);
   hb_rpc_server_->reg(scsi_g);
-  auto port = Config::GetConfig()->get_ctrl_port();
+
+  auto port = this->site_info_->port + ServerWorker::CtrlPortDelta;
   std::string addr_port = std::string("0.0.0.0:") +
       std::to_string(port);
   hb_rpc_server_->start(addr_port.c_str());
+  Log_debug("heartbeat setup for %s on %s", this->site_info_->name.c_str(), addr_port.c_str());
 }
 
 void ServerWorker::SetupBase() {
@@ -56,6 +59,7 @@ void ServerWorker::PopTable() {
   // get all tables
   std::vector<std::string> table_names;
 
+  Log_info("start data population for Site %d", site_info_->id);
   ret = sharding_->GetTableNames(site_info_->id, table_names);
   verify(ret > 0);
 
@@ -97,6 +101,7 @@ void ServerWorker::RegPiece() {
 }
 
 void ServerWorker::SetupService() {
+  Log_info("enter %s for %s @ %s", __FUNCTION__, this->site_info_->name.c_str(), site_info_->GetBindAddress().c_str());
   int ret;
   // set running mode and initialize transaction manager.
   std::string bind_addr = site_info_->GetBindAddress();
@@ -138,12 +143,13 @@ void ServerWorker::SetupService() {
   }
 
   // start rpc server
+  Log_debug("starting server at %s", bind_addr.c_str());
   ret = rpc_server_->start(bind_addr.c_str());
   if (ret != 0) {
     Log_fatal("server launch failed.");
   }
 
-  Log_info("Server ready");
+  Log_info("Server %s ready at %s", this->site_info_->name.c_str(), bind_addr.c_str());
 
   if (hb_rpc_server_ != nullptr) {
 #ifdef CPU_PROFILE
@@ -153,7 +159,14 @@ void ServerWorker::SetupService() {
     // start to profile
     ProfilerStart(prof_file);
 #endif // ifdef CPU_PROFILE
+    Log_debug("notify ready to control script");
     scsi_g->set_ready();
+  }
+}
+
+void ServerWorker::WaitForShutdown() {
+  Log_debug("%s", __FUNCTION__);
+  if (hb_rpc_server_ != nullptr) {
     scsi_g->wait_for_shutdown();
     delete hb_rpc_server_;
     delete scsi_g;
@@ -161,7 +174,7 @@ void ServerWorker::SetupService() {
     hb_thread_pool_g->release();
 
     for (auto service : services_) {
-      if (DepTranServiceImpl* s = dynamic_cast<DepTranServiceImpl*>(service)) {
+      if (DepTranServiceImpl *s = dynamic_cast<DepTranServiceImpl*>(service)) {
         auto &recorder = s->recorder_;
         if (recorder) {
           auto n_flush_avg_ = recorder->stat_cnt_.peek().avg_;
@@ -170,7 +183,6 @@ void ServerWorker::SetupService() {
                         " average size per flush: %lld",
                     n_flush_avg_, sz_flush_avg_);
         }
-//        Log::info("asking other server finish request count: %d", s->n_asking_);
       }
     }
 #ifdef CPU_PROFILE
@@ -178,6 +190,7 @@ void ServerWorker::SetupService() {
     ProfilerStop();
 #endif // ifdef CPU_PROFILE
   }
+  Log_debug("exit %s", __FUNCTION__);
 }
 
 void ServerWorker::SetupCommo() {
@@ -190,7 +203,6 @@ void ServerWorker::SetupCommo() {
 }
 
 void ServerWorker::ShutDown() {
-  // TODO server would not delete?
   Log_debug("deleting services, num: %d", services_.size());
   delete rpc_server_;
   for (auto service : services_) {
@@ -198,8 +210,5 @@ void ServerWorker::ShutDown() {
   }
   thread_pool_g->release();
   svr_poll_mgr_g->release();
-//  delete DTxnMgr::get_sole_mgr();
-//  RandomGenerator::destroy();
-//  Config::DestroyConfig();
 }
 } // namespace rococo

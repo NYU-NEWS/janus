@@ -108,7 +108,7 @@ class Sharding {
 
   struct tb_info_t {
     tb_info_t()
-        : sharding_method(MODULUS), num_site(0),
+        : sharding_method(MODULUS),
           num_records(0) { }
 
     tb_info_t(std::string method,
@@ -116,7 +116,7 @@ class Sharding {
               std::vector<uint32_t>* sid = nullptr,
               uint64_t _num_records = 0,
               mdb::symbol_t _symbol = mdb::TBL_UNSORTED
-    ) : num_site(ns), num_records(_num_records),
+    ) : num_records(_num_records),
         symbol(_symbol) {
       if (sid) {
         site_id = std::vector<uint32_t>(*sid);
@@ -124,13 +124,9 @@ class Sharding {
       if (method == "modulus") sharding_method = MODULUS;
       else if (method == "int_modulus") sharding_method = INT_MODULUS;
       else sharding_method = MODULUS;
-      if (sid != nullptr) {
-        site_id.insert(site_id.begin(), (*sid).begin(), (*sid).end());
-      }
     }
 
     method_t sharding_method;
-    uint32_t num_site;
     std::vector<uint32_t> site_id;
     uint64_t num_records;
     map<parid_t, bool> populated; // partition_id -> populated

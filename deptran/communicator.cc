@@ -10,6 +10,8 @@
 
 namespace rococo {
 
+using namespace std::chrono;
+
 Communicator::Communicator() {
   vector<string> addrs;
   rpc_poll_ = new PollMgr(1);
@@ -19,15 +21,9 @@ Communicator::Communicator() {
     auto site_infos = config->SitesByPartitionId(par_id);
     vector<std::pair<siteid_t, ClassicProxy*>> proxies;
     for (auto &si : site_infos) {
-      string addr = si.GetHostAddr();
-      rrr::Client *rpc_cli = new rrr::Client(rpc_poll_);
-      Log::info("connect to site: %s", addr.c_str());
-      auto ret = rpc_cli->connect(addr.c_str());
-      verify(ret == 0);
-      ClassicProxy *rpc_proxy = new ClassicProxy(rpc_cli);
-      rpc_clients_.insert(std::make_pair(si.id, rpc_cli));
-      rpc_proxies_.insert(std::make_pair(si.id, rpc_proxy));
-      proxies.push_back(std::make_pair(si.id, rpc_proxy));
+      auto result = this->ConnectToSite(si, milliseconds(Communicator::CONNECT_TIMEOUT_MS));
+      verify(result.first == SUCCESS);
+      proxies.push_back(std::make_pair(si.id, result.second));
     }
     rpc_par_proxies_.insert(std::make_pair(par_id, proxies));
   }
@@ -47,6 +43,33 @@ std::pair<siteid_t, ClassicProxy*> Communicator::RandomProxyForPartition(
   auto& partition_proxies = it->second;
   int index = rrr::RandomGenerator::rand(0, partition_proxies.size()-1);
   return partition_proxies[index];
+}
+
+std::pair<int, ClassicProxy*> Communicator::ConnectToSite(Config::SiteInfo &site,
+                                                          milliseconds timeout) {
+  string addr = site.GetHostAddr();
+  auto start = steady_clock::now();
+  rrr::Client *rpc_cli = new rrr::Client(rpc_poll_);
+  int connect_result;
+  double elapsed;
+  int attempt = 0;
+  do {
+    Log::debug("connect to site: %s (attempt %d)", addr.c_str(), attempt++);
+    auto connect_result = rpc_cli->connect(addr.c_str());
+    if (connect_result == 0) {
+      ClassicProxy *rpc_proxy = new ClassicProxy(rpc_cli);
+      rpc_clients_.insert(std::make_pair(site.id, rpc_cli));
+      rpc_proxies_.insert(std::make_pair(site.id, rpc_proxy));
+      Log::info("connect to site: %s success!", addr.c_str());
+      return std::make_pair(SUCCESS, rpc_proxy);
+    } else {
+      std::this_thread::sleep_for(milliseconds(CONNECT_TIMEOUT_MS / 20));
+    }
+    auto end = steady_clock::now();
+    elapsed = duration_cast<milliseconds>(end - start).count();
+  } while(elapsed < timeout.count());
+  Log_info("timeout connecting to %s", addr.c_str());
+  return std::make_pair(connect_result, nullptr);
 }
 
 } // namespace rococo

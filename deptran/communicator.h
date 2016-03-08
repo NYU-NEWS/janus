@@ -3,16 +3,20 @@
 //
 #pragma once
 
+#include <chrono>
 #include "__dep__.h"
 #include "constants.h"
 #include "msg.h"
+#include "config.h"
 
 namespace rococo {
+
 class Coordinator;
 class ClassicProxy;
 
 class Communicator {
  public:
+  const int CONNECT_TIMEOUT_MS = 2000;
   rrr::PollMgr *rpc_poll_ = nullptr;
   map<siteid_t, rrr::Client *> rpc_clients_ = {};
   map<siteid_t, ClassicProxy *> rpc_proxies_ = {};
@@ -44,6 +48,8 @@ class Communicator {
 
   std::pair<siteid_t, ClassicProxy*> RandomProxyForPartition(parid_t
                                                              partition_id) const;
+  std::pair<int, ClassicProxy*> ConnectToSite(rococo::Config::SiteInfo &site,
+                                              std::chrono::milliseconds timeout_ms);
 };
 
 } // namespace rococo

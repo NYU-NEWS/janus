@@ -38,6 +38,7 @@ void ClientWorker::RequestDone(TxnReply &txn_reply) {
 }
 
 void ClientWorker::work() {
+  Log_debug("%s", __FUNCTION__);
   verify(coo_ == nullptr);
   txn_reg_ = new TxnRegistry();
   Piece *piece = Piece::get_piece(benchmark);
@@ -49,7 +50,9 @@ void ClientWorker::work() {
                              ccsi,
                              id,
                              txn_reg_);
+  Log_debug("after create coo");
   if (ccsi) ccsi->wait_for_start(id);
+  Log_debug("after wait for start");
 
   timer_ = new Timer();
   timer_->start();
@@ -74,6 +77,7 @@ void ClientWorker::work() {
            Config::GetConfig()->get_duration());
 
   delete coo_;
+  Log_info("%s: wait_for_shutdown at client %d", this->coo_id);
   if (ccsi) ccsi->wait_for_shutdown();
   delete timer_;
   return;

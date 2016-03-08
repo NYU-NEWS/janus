@@ -129,11 +129,6 @@ int Config::CreateConfig(int argc, char **argv) {
         ctrl_port = strtoul(optarg, &end_ptr, 10);
         if ((end_ptr == NULL) || (*end_ptr != '\0')) return -4;
         break;
-
-      // case 'r':
-      //    ctrl_run = (char *)malloc((strlen(optarg) + 1) * sizeof(char));
-      //    strcpy(ctrl_run, optarg);
-      //    break;
       case 's': // site id
         // TODO remove
         if ((end_ptr == NULL) || (*end_ptr != '\0')) return -4;
@@ -566,11 +561,11 @@ void Config::LoadShardingYML(YAML::Node config) {
     auto &tbl_info = info_it->second;
     string method = it->second.as<string>();
 
-    tbl_info.num_site = get_num_site();
     for (auto replica_group_it = this->replica_groups_.begin();
          replica_group_it != this->replica_groups_.end();
          replica_group_it++) {
       auto &replica_group = *replica_group_it;
+
       for (auto replica_it = replica_group.replicas.begin();
            replica_it != replica_group.replicas.end();
            replica_it++) {
@@ -578,9 +573,10 @@ void Config::LoadShardingYML(YAML::Node config) {
         tbl_info.site_id.push_back(site_info->id);
       }
 
-      verify(tbl_info.num_site > 0 && tbl_info.num_site <= get_num_site());
       tbl_info.symbol = tbl_types_map_["sorted"];
     }
+
+    verify(tbl_info.site_id.size() > 0);
   }
 }
 
@@ -745,6 +741,7 @@ vector<Config::SiteInfo> Config::SitesByProcessName(string proc_name, Config::Si
   } else {
     searching = &par_clients_;
   }
+
   std::for_each(searching->begin(), searching->end(),
                 [proc_name, &result](SiteInfo& site) mutable {
                   if (site.proc_name==proc_name) {

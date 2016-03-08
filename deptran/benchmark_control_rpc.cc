@@ -9,11 +9,6 @@ const char S_RES_KEY_N_ASK[] = "ask";
 const char S_RES_KEY_START_GRAPH[] = "start_graph";
 const char S_RES_KEY_COMMIT_GRAPH[] = "commit_graph";
 const char S_RES_KEY_ASK_GRAPH[] = "ask_graph";
-//const char S_RES_KEY_CPU[]          =   "cpu";
-//
-//
-
-
 
 const std::string ServerControlServiceImpl::STAT_SZ_SCC = "scc";
 const std::string ServerControlServiceImpl::STAT_N_ASK = "ask";
@@ -39,30 +34,24 @@ void ServerControlServiceImpl::set_sig_handler() {
 }
 
 void ServerControlServiceImpl::server_shutdown() {
-  //pthread_mutex_lock(&status_mutex_);
   status_mutex_.lock();
   status_ = SCS_STOP;
-  //pthread_cond_broadcast(&status_cond_);
   status_cond_.bcast();
-  //pthread_mutex_unlock(&status_mutex_);
   status_mutex_.unlock();
 }
 
 void ServerControlServiceImpl::server_ready(rrr::i32 *res) {
-  //pthread_mutex_lock(&status_mutex_);
   status_mutex_.lock();
   if (SCS_RUN == status_)
     *res = 1;
   else
     *res = 0;
-  //pthread_mutex_unlock(&status_mutex_);
   status_mutex_.unlock();
 }
 
 void ServerControlServiceImpl::do_statistics(const char *key,
                                              int64_t value_delta) {
   std::unordered_map<const char *, ValueTimesPair>::iterator it;
-  //pthread_mutex_lock(&stat_m_);
   stat_m_.lock();
   it = statistics_.find(key);
   if (it == statistics_.end())
@@ -72,7 +61,6 @@ void ServerControlServiceImpl::do_statistics(const char *key,
     it->second.times++;
   }
   stat_m_.unlock();
-  //pthread_mutex_unlock(&stat_m_);
 }
 
 void ServerControlServiceImpl::server_heart_beat() {
@@ -101,7 +89,6 @@ void ServerControlServiceImpl::server_heart_beat_with_data(ServerResponse *res) 
   if (!sig_handler_set_)
     set_sig_handler();
   alarm(timeout_);
-  //pthread_mutex_lock(&stat_m_);
   stat_m_.lock();
   std::unordered_map<const char *, ValueTimesPair>::iterator it;
   for (it = statistics_.begin(); it != statistics_.end(); it++) {
@@ -120,7 +107,6 @@ void ServerControlServiceImpl::server_heart_beat_with_data(ServerResponse *res) 
     res->statistics[name].times = ss.n_stat_;
   }
 
-  //pthread_mutex_unlock(&stat_m_);
   stat_m_.unlock();
 }
 
@@ -131,35 +117,26 @@ ServerControlServiceImpl::ServerControlServiceImpl(unsigned int timeout,
     timeout_(timeout),
     sig_handler_set_(false) {
 
-  //pthread_mutex_init(&stat_m_, NULL);
-  //pthread_mutex_init(&status_mutex_, NULL);
-  //pthread_cond_init(&status_cond_, NULL);
   scsi_s = this;
 }
 
 ServerControlServiceImpl::~ServerControlServiceImpl() {
-  //pthread_mutex_destroy(&stat_m_);
-  //pthread_mutex_destroy(&status_mutex_);
-  //pthread_cond_destroy(&status_cond_);
 }
 
 void ServerControlServiceImpl::set_ready() {
-  //pthread_mutex_lock(&status_mutex_);
   status_mutex_.lock();
   status_ = SCS_RUN;
   rrr::CPUInfo::cpu_stat();
-  //pthread_mutex_unlock(&status_mutex_);
   status_mutex_.unlock();
 }
 
 void ServerControlServiceImpl::wait_for_shutdown() {
-  //pthread_mutex_lock(&status_mutex_);
+  Log_debug("%s", __FUNCTION__);
   status_mutex_.lock();
   while (SCS_STOP != status_)
-    //pthread_cond_wait(&status_cond_, &status_mutex_);
     status_cond_.wait(status_mutex_);
-  //pthread_mutex_unlock(&status_mutex_);
   status_mutex_.unlock();
+  Log_debug("exit %s", __FUNCTION__);
 }
 
 bool operator<(const struct timespec &lhs, const struct timespec &rhs) {
@@ -192,12 +169,9 @@ double timespec2ms(struct timespec time) {
 }
 
 void ClientControlServiceImpl::client_shutdown() {
-  //pthread_mutex_lock(&status_mutex_);
   status_mutex_.lock();
   status_ = CCS_STOP;
-  //pthread_cond_broadcast(&status_cond_);
   status_cond_.bcast();
-  //pthread_mutex_unlock(&status_mutex_);
   status_mutex_.unlock();
 }
 
@@ -209,13 +183,11 @@ void ClientControlServiceImpl::client_force_stop() {
 }
 
 void ClientControlServiceImpl::client_response(ClientResponse *res) {
-  //pthread_mutex_lock(&status_mutex_);
   status_mutex_.lock();
   if (CCS_FINISH == status_)
     res->is_finish = (rrr::i32) 1;
   else
     res->is_finish = (rrr::i32) 0;
-  //pthread_mutex_unlock(&status_mutex_);
   status_mutex_.unlock();
 
   pthread_rwlock_wrlock(&collect_lock_);
@@ -289,37 +261,25 @@ void ClientControlServiceImpl::client_ready_block(rrr::i32 *res,
 }
 
 void ClientControlServiceImpl::client_ready(rrr::i32 *res) {
-  //pthread_mutex_lock(&status_mutex_);
   status_mutex_.lock();
   if (CCS_READY == status_)
     *res = 1;
   else
     *res = 0;
-  //pthread_mutex_unlock(&status_mutex_);
   status_mutex_.unlock();
 }
 
 void ClientControlServiceImpl::client_start() {
-  //pthread_mutex_lock(&status_mutex_);
   status_mutex_.lock();
   status_ = CCS_RUN;
-  //pthread_cond_broadcast(&status_cond_);
   status_cond_.bcast();
   clock_gettime(&start_time_);
   last_time_ = start_time_;
   before_last_time_ = start_time_;
-  //pthread_mutex_unlock(&status_mutex_);
   status_mutex_.unlock();
 }
 
-//void ClientControlServiceImpl::set_ready() {
-//    pthread_mutex_lock(&status_mutex_);
-//    status_ = CCS_READY;
-//    pthread_mutex_unlock(&status_mutex_);
-//}
-
 void ClientControlServiceImpl::wait_for_start(unsigned int id) {
-  //pthread_mutex_lock(&status_mutex_);
   status_mutex_.lock();
   coo_threads_[id] = (pthread_t *) malloc(sizeof(pthread_t));
   *(coo_threads_[id]) = pthread_self();
@@ -331,23 +291,18 @@ void ClientControlServiceImpl::wait_for_start(unsigned int id) {
     ready_block_defers_.clear();
   }
   while (CCS_RUN != status_ && CCS_STOP != status_)
-    //pthread_cond_wait(&status_cond_, &status_mutex_);
     status_cond_.wait(status_mutex_);
-  //pthread_mutex_unlock(&status_mutex_);
   status_mutex_.unlock();
 }
 
 void ClientControlServiceImpl::wait_for_shutdown() {
-  //pthread_mutex_lock(&status_mutex_);
   status_mutex_.lock();
   if (status_ != CCS_STOP) {
     if (++num_finish_ == num_threads_)
       status_ = CCS_FINISH;
     while (CCS_STOP != status_)
-      //pthread_cond_wait(&status_cond_, &status_mutex_);
       status_cond_.wait(status_mutex_);
   }
-  //pthread_mutex_unlock(&status_mutex_);
   status_mutex_.unlock();
 }
 
@@ -359,8 +314,6 @@ ClientControlServiceImpl::ClientControlServiceImpl(unsigned int num_threads,
                                                    const std::map<int32_t, std::string> &txn_types)
     : status_(CCS_INIT), txn_info_(NULL), num_threads_(num_threads), num_ready_(0), num_finish_(0) {
   pthread_rwlock_init(&collect_lock_, NULL);
-  //pthread_mutex_init(&status_mutex_, NULL);
-  //pthread_cond_init(&status_cond_, NULL);
   coo_threads_ = (pthread_t **) malloc(sizeof(pthread_t *) * num_threads_);
   txn_info_ = new std::map<int32_t, txn_info_t>[num_threads_];
   txn_info_switch_ = true;
@@ -374,8 +327,6 @@ ClientControlServiceImpl::ClientControlServiceImpl(unsigned int num_threads,
 
 ClientControlServiceImpl::~ClientControlServiceImpl() {
   pthread_rwlock_destroy(&collect_lock_);
-  //pthread_mutex_destroy(&status_mutex_);
-  //pthread_cond_destroy(&status_cond_);
   int i = 0;
   for (; i < num_threads_; i++) {
     for (std::map<int32_t, txn_info_t>::iterator it = txn_info_[i].begin();

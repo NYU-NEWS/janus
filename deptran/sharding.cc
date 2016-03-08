@@ -283,8 +283,8 @@ int Sharding::GetTableNames(uint32_t sid,
   for (auto it = tb_infos_.begin(); it != tb_infos_.end(); it++) {
     auto &tbl_name = it->first;
     auto &tbl_info = it->second;
-    for (int i = 0; i < tbl_info.num_site; i++) {
-      if (tbl_info.site_id[i] == sid) {
+    for (auto site_id : tbl_info.site_id) {
+      if (site_id == sid) {
         tables.push_back(tbl_name);
         break;
       }

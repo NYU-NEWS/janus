@@ -71,13 +71,11 @@ class Config {
     uint32_t id; // unique site id
     uint32_t locale_id; // represents a group of servers, such as those located in same datacenter
     string name;        // site name
-    string addr;        // addr with port
-    string proc;        // proc name?
+    string proc_name;   // proc name
     string host;
     uint32_t port = 0;
     uint32_t n_thread;   // should be 1 for now
     SiteInfoType type_; 
-    string proc_name;   // proc name
     uint32_t partition_id_=0;
 
     SiteInfo() = delete;

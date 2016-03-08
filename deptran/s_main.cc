@@ -15,8 +15,11 @@ static rrr::PollMgr *cli_poll_mgr_g = nullptr;
 static rrr::Server *cli_hb_server_g = nullptr;
 
 static vector<ServerWorker> svr_workers;
+static vector<ClientWorker*> client_workers;
+static std::vector<std::thread> client_threads;
 
 void client_setup_heartbeat() {
+  Log_info("%s", __FUNCTION__);
   std::map<int32_t, std::string> txn_types;
   Frame(MODE_NONE).GetTxnTypes(txn_types);
   unsigned int num_threads = Config::GetConfig()->get_num_threads(); // func
@@ -29,16 +32,17 @@ void client_setup_heartbeat() {
     base::ThreadPool *thread_pool = new base::ThreadPool(1);
     cli_hb_server_g = new rrr::Server(cli_poll_mgr_g, thread_pool);
     cli_hb_server_g->reg(ccsi_g);
-    cli_hb_server_g->start(std::string("0.0.0.0:").append(
-        std::to_string(Config::GetConfig()->get_ctrl_port())).c_str());
+    auto ctrl_port = std::to_string(Config::GetConfig()->get_ctrl_port());
+    std::string server_address = std::string("0.0.0.0:").append(ctrl_port);
+    Log_info("Start control server on port %s", ctrl_port.c_str());
+    cli_hb_server_g->start(server_address.c_str());
   }
 }
 
-void client_launch_workers(vector<Config::SiteInfo>& client_sites) {
+void client_launch_workers(vector<Config::SiteInfo> &client_sites) {
   // load some common configuration
   // start client workers in new threads.
   Log_info("client enabled, number of sites: %d", client_sites.size());
-  vector<std::thread> client_threads;
   vector<ClientWorker*> workers;
   for (uint32_t client_id = 0; client_id < client_sites.size(); client_id++) {
     ClientWorker* worker = new ClientWorker(client_id, client_sites[client_id],
@@ -46,12 +50,7 @@ void client_launch_workers(vector<Config::SiteInfo>& client_sites) {
     workers.push_back(worker);
     client_threads.push_back(std::thread(&ClientWorker::work,
                                          worker));
-  }
-  for (auto &th: client_threads) {
-    th.join();
-  }
-  for (auto worker : workers) {
-    delete worker;
+    client_workers.push_back(worker);
   }
 }
 
@@ -75,12 +74,14 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
     worker.PopTable();
     // start server service
     worker.SetupService();
+    Log_info("site %d launched!", site_info.id);
   }
 
   for (ServerWorker& worker : svr_workers) {
     // start communicator after all servers are running
     worker.SetupCommo();
   }
+  Log_info("server workers' communicators setup");
 }
 
 void server_shutdown() {
@@ -92,6 +93,16 @@ void server_shutdown() {
 void check_current_path() {
   auto path = boost::filesystem::current_path();
   Log_info("PWD : ", path.string().c_str());
+}
+
+void wait_for_clients() {
+  Log_info("%s: wait for client threads to exit.", __FUNCTION__);
+  for (auto &th: client_threads) {
+    th.join();
+  }
+  for (auto worker : client_workers) {
+    delete worker;
+  }
 }
 
 int main(int argc, char *argv[]) {
@@ -113,16 +124,19 @@ int main(int argc, char *argv[]) {
   if (client_infos.size() > 0) {
     client_setup_heartbeat();
     client_launch_workers(client_infos);
-    server_shutdown();
-  } else {
-    Log_info("No clients running in this process, just sleep and wait.");
-    while (1) {
-      sleep(1000);
-    }
+    wait_for_clients();
   }
+
+  for (auto& worker : svr_workers) {
+    worker.WaitForShutdown();
+  }
+
+  server_shutdown();
 
   RandomGenerator::destroy();
   Config::DestroyConfig();
-
+  Log_debug("exit process.");
+  fflush(stderr);
+  fflush(stdout);
   return 0;
 }

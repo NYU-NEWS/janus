@@ -1,0 +1,6 @@
+ecdsa==0.13
+Fabric==1.10.2
+paramiko==1.16.0
+pycrypto==2.6.1
+PyYAML==3.11
+tabulate==0.7.5

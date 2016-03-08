@@ -46,6 +46,9 @@ class ServerWorker {
   void SetupCommo();
   void RegPiece();
   void ShutDown();
+
+  static const uint32_t CtrlPortDelta = 10000;
+  void WaitForShutdown();
 };
 
 
