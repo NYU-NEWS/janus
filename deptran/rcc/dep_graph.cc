@@ -32,9 +32,8 @@ RococoProxy *RccGraph::get_server_proxy(uint32_t id) {
 }
 
 /** on start_req */
-void RccGraph::start_pie(
-    txnid_t txn_id,
-    Vertex<TxnInfo> **tv) {
+void RccGraph::start_pie(txnid_t txn_id,
+                         Vertex<TxnInfo> **tv) {
   verify(tv != NULL);
   *tv = txn_gra_.FindOrCreateV(txn_id);
   static auto id = Config::GetConfig()->get_site_id();

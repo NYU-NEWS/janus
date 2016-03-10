@@ -97,8 +97,8 @@ void RococoServiceImpl::rcc_start_pie(const SimpleCommand &cmd,
                                       ChopStartResponse *res,
                                       rrr::DeferredReply *defer
 ) {
-//    Log::debug("receive start request. txn_id: %llx, pie_id: %llx", header.tid, header.pid);
   verify(0);
+//    Log::debug("receive start request. txn_id: %llx, pie_id: %llx", header.tid, header.pid);
 //  verify(IS_MODE_RCC || IS_MODE_RO6);
 //  verify(defer);
 //

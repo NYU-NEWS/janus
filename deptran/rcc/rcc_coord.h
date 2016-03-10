@@ -1,8 +1,11 @@
 #pragma once
 
-#include "../three_phase/coord.h"
+#include "../classic/coord.h"
 
 namespace rococo {
+
+class RccGraph;
+
 class RccCoord: public ThreePhaseCoordinator {
 
 protected:
@@ -21,28 +24,16 @@ public:
                               thread_id) {
   }
 
-  struct deptran_batch_start_t {
-    std::vector<RequestHeader>      headers;
-    std::vector<map<int32_t, Value> >inputs;
-    std::vector<int>                output_sizes;
-    std::vector<int>                pis;
-    rrr::FutureAttr                 fuattr;
-  };
+  void do_one(TxnRequest&) override;
 
-  virtual void do_one(TxnRequest&);
+  void Handout();
+  void HandoutAck(phase_t phase,
+                          int res,
+                          Command& cmd,
+                          RccGraph& graph);
+  void Finish();
+  void FinishAck(phase_t phase, int res);
 
-  RequestHeader gen_header(TxnCommand *ch);
-
-  virtual void deptran_start(TxnCommand *ch);
-
-  virtual void StartAck();
-
-  void         deptran_batch_start(TxnCommand *ch);
-
-  virtual void deptran_finish(TxnCommand *ch);
-
-  void         deptran_start_ro(TxnCommand *ch);
-
-  void         deptran_finish_ro(TxnCommand *ch);
+  void FinishRo();
 };
 } // namespace rococo
