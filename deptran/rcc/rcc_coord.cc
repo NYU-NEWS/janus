@@ -2,8 +2,10 @@
 #include "rcc_coord.h"
 #include "frame.h"
 #include "dtxn.h"
-#include "txn-chopper-factory.h"
-#include "benchmark_control_rpc.h"
+#include "dep_graph.h"
+#include "../txn-chopper-factory.h"
+#include "../benchmark_control_rpc.h"
+
 
 namespace rococo {
 
@@ -43,12 +45,12 @@ void RccCoord::Handout() {
 
 void RccCoord::HandoutAck(phase_t phase,
                           int res,
-                          Command& cmd,
+                          SimpleCommand& cmd,
                           RccGraph& graph) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(phase == phase_);
   n_handout_ack_++;
-  TxnCommand *txn = (TxnCommand *) cmd_;
+  TxnCommand *ch = (TxnCommand *) cmd_;
   handout_acks_[cmd.inn_id_] = true;
 
   Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
@@ -57,18 +59,18 @@ void RccCoord::HandoutAck(phase_t phase,
   bool early_return = false;
 
   // where should I store this graph?
-  Log::debug("start response graph size: %d", (int)graph.size());
+  Log_debug("start response graph size: %d", (int)graph.size());
   verify(graph.size() > 0);
   graph_.Aggregate(graph);
 
-  Log_debug(
-      "receive deptran start response, tid: %llx, pid: %llx, graph size: %d",
-      subcmd->root_id_,
-      subcmd->id_,
-      gra.size());
+//  Log_debug(
+//      "receive deptran start response, tid: %llx, pid: %llx, graph size: %d",
+//      cmd.root_id_,
+//      cmd->id_,
+//      gra.size());
 
   // TODO?
-  if (graph.size() > 1) txn->disable_early_return();
+  if (graph.size() > 1) ch->disable_early_return();
 
   ch->n_pieces_out_++;
   cmd_->Merge(cmd);
@@ -102,7 +104,7 @@ void RccCoord::HandoutAck(phase_t phase,
 
 /** caller should be thread safe */
 void RccCoord::Finish() {
-        verify(IS_MODE_RCC || IS_MODE_RO6);
+  verify(IS_MODE_RCC || IS_MODE_RO6);
   Log::debug("deptran finish, %llx", cmd_->id_);
   TxnCommand *ch = (TxnCommand*) cmd_;
   // commit or abort piece
@@ -129,21 +131,18 @@ void RccCoord::Finish() {
   }
 }
 
-void RccCoord::FinishAck(phase_t phase, int res) {
+void RccCoord::FinishAck(phase_t phase,
+                         int res,
+                         map<int, map<Value>>& output) {
   TxnCommand* ch = (TxnCommand*) cmd_;
   verify(phase_ == phase);
-  bool callback = false;
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   n_finish_ack_++;
 
-  Log::debug("receive finish response. tid: %llx", cmd_->id_);
+  Log_debug("receive finish response. tid: %llx", cmd_->id_);
+  ch->outputs_.insert(output);
 
   if (n_finish_ack_ == ch->GetPartitionIds().size()) {
-    ch->finish_callback(res);
-    callback = true;
-  }
-
-  if (callback) {
     // generate a reply and callback.
     Log_debug("deptran callback, %llx", cmd_->id_);
 
@@ -163,7 +162,11 @@ void RccCoord::FinishAck(phase_t phase, int res) {
 }
 
 void RccCoord::HandoutRo() {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
+  phase_++;
   // new txn id for every new and retry.
+//  RequestHeader header = gen_header(ch);
+
   int pi;
 
   map<int32_t, Value> *input = nullptr;
@@ -171,126 +174,135 @@ void RccCoord::HandoutRo() {
   int     res;
   int     output_size;
 
-  SimpleCommand *subcmd;
-  while ((subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd()) != nullptr) {
-    header.pid = next_pie_id();
-
-    rrr::FutureAttr fuattr;
-
-    // remember this a asynchronous call! variable funtional range is important!
-    fuattr.callback = [ch, pi, this, header](Future * fu) {
-      {
-
-      }
-    };
-
-    RococoProxy *proxy = (RococoProxy*)comm()->rpc_proxies_[server_id];
-    Log::debug("send deptran RO start request, tid: %llx, pid: %llx",
-               cmd_->id_,
-               header.pid);
-    verify(input != nullptr);
-    Future::safe_release(proxy->async_rcc_ro_start_pie(*subcmd, fuattr));
+  int cnt;
+  while (cmd_->HasMoreSubCmdReadyNotOut()) {
+    auto subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd();
+    subcmd->id_ = next_pie_id();
+    verify(subcmd->root_id_ == cmd_->id_);
+    n_handout_++;
+    cnt++;
+    Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
+              n_handout_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
+    handout_acks_[subcmd->inn_id()] = false;
+    commo()->SendHandout(*subcmd,
+                         this,
+                         std::bind(&ThreePhaseCoordinator::HandoutAck,
+                                   this,
+                                   phase_,
+                                   std::placeholders::_1,
+                                   std::placeholders::_2,
+                                   std::placeholders::_3));
   }
 }
 
-void RccCoord::HandoutRoAck() {
+void RccCoord::HandoutRoAck(phase_t phase,
+                            int res,
+                            SimpleCommand& cmd,
+                            map<int, mdb::version_t> vers) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+  verify(phase == phase_);
 
-  map<int32_t, Value> output;
-  fu->get_reply() >> output;
+  auto ch = (TxnCommand*) cmd_;
+  cmd_->Merge(cmd);
+  curr_vers_.insert(vers.begin(), vers.end());
 
-  Log::debug("receive deptran RO start response, tid: %llx, pid: %llx, ",
-             header.tid,
-             header.pid);
+  Log_debug("receive deptran RO start response, tid: %llx, pid: %llx, ",
+             cmd_->id_,
+             cmd.inn_id_);
 
   ch->n_pieces_out_++;
-
-  if (ch->read_only_start_callback(pi, NULL, output)) {
-    this->deptran_start_ro(ch);
+  if (cmd_->HasMoreSubCmdReadyNotOut()) {
+    HandoutRo();
   } else if (ch->n_pieces_out_ == ch->GetNPieceAll()) {
-    ch->read_only_reset();
-    this->deptran_finish_ro(ch);
+    if (last_vers_ == curr_vers_) {
+      // TODO
+    } else {
+      ch->read_only_reset();
+      last_vers_ = curr_vers_;
+      curr_vers_.clear();
+      this->Handout();
+    }
   }
 }
 
-void RccCoord::deptran_finish_ro(TxnCommand *ch) {
-  int pi;
-
-  map<int32_t, Value> *input = nullptr;
-  int32_t server_id;
-  int     res;
-  int     output_size;
-
-  SimpleCommand *subcmd = nullptr;
-  while ((subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd()) != nullptr) {
-    header.pid = next_pie_id();
-
-    rrr::FutureAttr fuattr;
-
-    // remember this a asynchronous call! variable funtional range is important!
-    fuattr.callback = [ch, pi, this, header](Future * fu) {
-      bool callback = false;
-      {
-        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-
-        int res;
-        map<int32_t, Value> output;
-        fu->get_reply() >> output;
-
-        Log::debug(
-          "receive deptran RO start response (phase 2), tid: %llx, pid: %llx, ",
-          header.tid,
-          header.pid);
-
-        ch->n_pieces_out_++;
-        bool do_next_piece = ch->read_only_start_callback(pi, &res, output);
-
-        if (do_next_piece) deptran_finish_ro(ch);
-        else if (ch->n_pieces_out_ == ch->GetNPieceAll()) {
-          if (res == SUCCESS) {
-            ch->reply_.res_ = SUCCESS;
-            callback        = true;
-          }
-          else if (ch->can_retry()) {
-            ch->read_only_reset();
-            double last_latency = ch->last_attempt_latency();
-
-            if (ccsi_) ccsi_->txn_retry_one(this->thread_id_,
-                                            ch->type_,
-                                            last_latency);
-            this->deptran_finish_ro(ch);
-            callback = false;
-          }
-          else {
-            ch->reply_.res_ = REJECT;
-            callback        = true;
-          }
-        }
-      }
-
-      if (callback) {
-        // generate a reply and callback.
-        Log::debug("deptran RO callback, %llx", cmd_->id_);
-        TxnReply& txn_reply_buf = ch->get_reply();
-        double    last_latency  = ch->last_attempt_latency();
-        this->report(txn_reply_buf, last_latency
-#ifdef TXN_STAT
-                     , ch
-#endif // ifdef TXN_STAT
-                     );
-        ch->callback_(txn_reply_buf);
-        delete ch;
-      }
-    };
-
-    RococoProxy *proxy = (RococoProxy*)comm()->rpc_proxies_[server_id];
-    Log::debug("send deptran RO start request (phase 2), tid: %llx, pid: %llx",
-               cmd_->id_,
-               header.pid);
-    verify(input != nullptr);
-    Future::safe_release(proxy->async_rcc_ro_start_pie(*subcmd, fuattr));
-  }
-}
+//void RccCoord::deptran_finish_ro(TxnCommand *ch) {
+//  int pi;
+//
+//  map<int32_t, Value> *input = nullptr;
+//  int32_t server_id;
+//  int     res;
+//  int     output_size;
+//
+//  SimpleCommand *subcmd = nullptr;
+//  while ((subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd()) != nullptr) {
+//    header.pid = next_pie_id();
+//
+//    rrr::FutureAttr fuattr;
+//
+//    // remember this a asynchronous call! variable funtional range is important!
+//    fuattr.callback = [ch, pi, this, header](Future * fu) {
+//      bool callback = false;
+//      {
+//        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+//
+//        int res;
+//        map<int32_t, Value> output;
+//        fu->get_reply() >> output;
+//
+//        Log::debug(
+//          "receive deptran RO start response (phase 2), tid: %llx, pid: %llx, ",
+//          header.tid,
+//          header.pid);
+//
+//        ch->n_pieces_out_++;
+//        bool do_next_piece = ch->read_only_start_callback(pi, &res, output);
+//
+//        if (do_next_piece) deptran_finish_ro(ch);
+//        else if (ch->n_pieces_out_ == ch->GetNPieceAll()) {
+//          if (res == SUCCESS) {
+//            ch->reply_.res_ = SUCCESS;
+//            callback        = true;
+//          }
+//          else if (ch->can_retry()) {
+//            ch->read_only_reset();
+//            double last_latency = ch->last_attempt_latency();
+//
+//            if (ccsi_) ccsi_->txn_retry_one(this->thread_id_,
+//                                            ch->type_,
+//                                            last_latency);
+//            this->deptran_finish_ro(ch);
+//            callback = false;
+//          }
+//          else {
+//            ch->reply_.res_ = REJECT;
+//            callback        = true;
+//          }
+//        }
+//      }
+//
+//      if (callback) {
+//        // generate a reply and callback.
+//        Log::debug("deptran RO callback, %llx", cmd_->id_);
+//        TxnReply& txn_reply_buf = ch->get_reply();
+//        double    last_latency  = ch->last_attempt_latency();
+//        this->report(txn_reply_buf, last_latency
+//#ifdef TXN_STAT
+//                     , ch
+//#endif // ifdef TXN_STAT
+//                     );
+//        ch->callback_(txn_reply_buf);
+//        delete ch;
+//      }
+//    };
+//
+//    RococoProxy *proxy = (RococoProxy*)comm()->rpc_proxies_[server_id];
+//    Log::debug("send deptran RO start request (phase 2), tid: %llx, pid: %llx",
+//               cmd_->id_,
+//               header.pid);
+//    verify(input != nullptr);
+//    Future::safe_release(proxy->async_rcc_ro_start_pie(*subcmd, fuattr));
+//  }
+//}
 
 void RccCoord::do_one(TxnRequest& req) {
   // pre-process
@@ -305,18 +317,16 @@ void RccCoord::do_one(TxnRequest& req) {
 
   if (ccsi_) ccsi_->txn_start_one(thread_id_, cmd_->type_);
 
+  verify(ro_state_ == BEGIN);
+  auto handout = ch->is_read_only() ?
+                 std::bind(RccCoord::HandoutRo, this) :
+                 std::bind(RccCoord::Handout, this);
   if (recorder_) {
     std::string log_s;
     req.get_log(cmd_->id_, log_s);
-    std::function<void(void)> start_func = [this, ch]() {
-      if (ch->is_read_only())
-        HandoutRo(ch);
-      else
-        Handout(ch);
-    };
-    recorder_->submit(log_s, start_func);
+    recorder_->submit(log_s, handout);
   } else {
-    if (ch->is_read_only()) HandoutRo(ch);
+    handout();
   }
 }
 } // namespace rococo

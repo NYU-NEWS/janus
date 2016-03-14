@@ -1,19 +1,27 @@
 #pragma once
 
+#include "dep_graph.h"
 #include "../classic/coord.h"
 
 namespace rococo {
 
-class RccGraph;
+class RccCommo;
 
 class RccCoord: public ThreePhaseCoordinator {
 
 protected:
-  inline RococoCommunicator* comm() {
-    return static_cast<RococoCommunicator*>(commo_);
+  inline RccCommo* comm() {
+    return static_cast<RccCommo*>(commo_);
   }
 
 public:
+  RccGraph graph_;
+  enum RoState {BEGIN, FIRST, SECOND, DONE};
+
+  RoState ro_state_ = BEGIN;
+  map<int32_t, mdb::version_t> last_vers_;
+  map<int32_t, mdb::version_t> curr_vers_;
+
   RccCoord(uint32_t coo_id,
            int benchmark,
            ClientControlServiceImpl *ccsi,
@@ -21,19 +29,26 @@ public:
       : ThreePhaseCoordinator(coo_id,
                               benchmark,
                               ccsi,
-                              thread_id) {
+                              thread_id), graph_() {
   }
 
   void do_one(TxnRequest&) override;
 
   void Handout();
   void HandoutAck(phase_t phase,
-                          int res,
-                          Command& cmd,
-                          RccGraph& graph);
+                  int res,
+                  SimpleCommand& cmd,
+                  RccGraph& graph);
   void Finish();
-  void FinishAck(phase_t phase, int res);
+  void FinishAck(phase_t phase,
+                 int res,
+                 map<int, map<Value>>& output);
 
+  void HandoutRo();
+  void HandoutRoAck(phase_t phase,
+                    int res,
+                    SimpleCommand& cmd,
+                    map<int, mdb::version_t> vers);
   void FinishRo();
 };
 } // namespace rococo

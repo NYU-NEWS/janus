@@ -49,6 +49,7 @@ class TxnCommand: public Command {
         return false;
     return true;
   }
+ public:
   map<int32_t, map<int32_t, Value> > outputs_;
   bool read_only_failed_;
 

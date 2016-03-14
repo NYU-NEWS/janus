@@ -63,11 +63,11 @@ class RococoServiceImpl: public RococoService {
                     rrr::PollMgr* poll_mgr,
                     ServerControlServiceImpl *scsi = NULL);
 
-  void rcc_batch_start_pie(
-      const std::vector<RequestHeader> &headers,
-      const std::vector<map<int32_t, Value>> &inputs,
-      BatchChopStartResponse *res,
-      DeferredReply *defer);
+//  void rcc_batch_start_pie(
+//      const std::vector<RequestHeader> &headers,
+//      const std::vector<map<int32_t, Value>> &inputs,
+//      BatchChopStartResponse *res,
+//      DeferredReply *defer);
 
   void Handout(const SimpleCommand& cmd,
                int32_t* res,
@@ -75,17 +75,24 @@ class RococoServiceImpl: public RococoService {
                RccGraph* graph,
                DeferredReply* defer) override;
 
-  void rcc_start_pie(const SimpleCommand& cmd,
-                     ChopStartResponse *res,
-                     DeferredReply *defer);
+  void Finish(const cmdid_t& cmd_id,
+              const RccGraph& graph,
+              map<int32_t, Value>* output,
+              DeferredReply* defer) override;
 
-  void rcc_finish_txn(const ChopFinishRequest &req,
-                      ChopFinishResponse *res,
-                      DeferredReply *);
 
-  void rcc_ask_txn(const i64 &tid,
-                   CollectFinishResponse *res,
-                   DeferredReply *);
+  void Inquire(const cmdid_t &tid,
+               RccGraph* graph,
+               DeferredReply *) override;
+
+//
+//  void rcc_start_pie(const SimpleCommand& cmd,
+//                     ChopStartResponse *res,
+//                     DeferredReply *defer) override;
+//
+//  void rcc_finish_txn(const ChopFinishRequest &req,
+//                      ChopFinishResponse *res,
+//                      DeferredReply *) override;
 
   void rcc_ro_start_pie(const SimpleCommand& cmd,
                         map<int32_t, Value> *output,

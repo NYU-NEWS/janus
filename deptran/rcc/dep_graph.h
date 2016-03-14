@@ -7,7 +7,7 @@
 #include "marshal-value.h"
 #include "command.h"
 #include "command_marshaler.h"
-#include "rcc_srpc.h"
+//#include "rcc_srpc.h"
 
 /**
  * This is NOT thread safe!!!
@@ -19,29 +19,31 @@ class RccGraph {
 //    Graph<PieInfo> pie_gra_;
   Graph <TxnInfo> txn_gra_;
 
-  std::vector<rrr::Client *> rpc_clients_;
-  std::vector<RococoProxy *> rpc_proxies_;
-  std::vector<std::string> server_addrs_;
+//  std::vector<rrr::Client *> rpc_clients_;
+//  std::vector<RococoProxy *> rpc_proxies_;
+//  std::vector<std::string> server_addrs_;
 
 
   RccGraph() {
-    // TODO remove this out
-    Config::GetConfig()->get_all_site_addr(server_addrs_);
-    rpc_clients_ = std::vector<rrr::Client *>(server_addrs_.size(), nullptr);
-    rpc_proxies_ = std::vector<RococoProxy *>(server_addrs_.size(), nullptr);
+    // TODO remove this out, use commo instead.
+//    Config::GetConfig()->get_all_site_addr(server_addrs_);
+//    rpc_clients_ = std::vector<rrr::Client *>(server_addrs_.size(), nullptr);
+//    rpc_proxies_ = std::vector<RococoProxy *>(server_addrs_.size(), nullptr);
   }
 
   ~RccGraph() {
     // XXX hopefully some memory leak here does not hurt. :(
   }
 
-  RococoProxy *get_server_proxy(uint32_t id);
+//  RococoProxy *get_server_proxy(uint32_t id);
 
   /** on start_req */
   void start_pie(
       txnid_t txn_id,
       Vertex <TxnInfo> **tv
   );
+
+  void Aggregate(RccGraph& graph);
 
   void union_txn_graph(Graph <TxnInfo> &gra) {
     txn_gra_.Aggregate(gra, true);
@@ -92,6 +94,9 @@ class RccGraph {
     //}
   }
 
+  int size() const {
+    return txn_gra_.size();
+  };
 
   void find_txn_scc_anc_opt(
       uint64_t txn_id,
@@ -99,9 +104,9 @@ class RccGraph {
   > &ret_set
   );
 
-  uint64_t sub_txn_graph(
+  uint64_t MinItfrGraph(
       uint64_t tid,
-      GraphMarshaler &gra_m
+      RccGraph &gra_m
   );
 };
 } // namespace rcc

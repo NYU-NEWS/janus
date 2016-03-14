@@ -14,9 +14,9 @@ RccDTxn::RccDTxn(txnid_t tid,
   mdb_txn_ = mgr->GetOrCreateMTxn(tid_);
 }
 
-void RccDTxn::StartAfterLog(const SimpleCommand& cmd,
-                            int32_t *res,
-                            map<int32_t, Value>* output) {
+void RccDTxn::Execute(const SimpleCommand &cmd,
+                      int32_t *res,
+                      map<int32_t, Value> *output) {
   verify(phase_ <= PHASE_RCC_START);
   Vertex<TxnInfo> *tv = NULL;
   RccDTxn::dep_s->start_pie(cmd.root_id_, &tv);
@@ -85,15 +85,15 @@ bool RccDTxn::start_exe_itfr(defer_t defer_type,
 //  return deferred;
 }
 
-void RccDTxn::start(
-    const RequestHeader &header,
-    const std::vector<mdb::Value> &input,
-    bool *deferred,
-    ChopStartResponse *res
-) {
-  // TODO Remove
-  verify(0);
-}
+//void RccDTxn::start(
+//    const RequestHeader &header,
+//    const std::vector<mdb::Value> &input,
+//    bool *deferred,
+//    ChopStartResponse *res
+//) {
+//  // TODO Remove
+//  verify(0);
+//}
 
 void RccDTxn::start_ro(const SimpleCommand& cmd,
                        map<int32_t, Value> &output,
@@ -127,46 +127,10 @@ void RccDTxn::start_ro(const SimpleCommand& cmd,
   ball->trigger();
 }
 
-void RccDTxn::commit(
-    const ChopFinishRequest &req,
-    ChopFinishResponse *res,
-    rrr::DeferredReply *defer) {
-  // union the graph into dep graph
-  verify(tv_ != nullptr);
-  RccDTxn::dep_s->txn_gra_.Aggregate(req.gra, true);
-  Graph<TxnInfo> &txn_gra_ = RccDTxn::dep_s->txn_gra_;
-
-  tv_->data_->res = res;
-  tv_->data_->union_status(TXN_CMT);
-
-  to_decide(tv_, defer);
-}
-
-void RccDTxn::to_decide(
-    Vertex<TxnInfo> *v,
-    rrr::DeferredReply *defer
-) {
-  TxnInfo &tinfo = *(v->data_);
-  if (tinfo.during_commit) {
-    Log::debug("this txn is already during commit! tid: %llx", tinfo.id());
-    return;
-  } else {
-    tinfo.during_commit = true;
-  }
-  std::unordered_set<Vertex<TxnInfo> *> anc;
-  RccDTxn::dep_s->find_txn_anc_opt(v, anc);
-  std::function<void(void)> anc_finish_cb =
-      [this, v, defer]() {
-        this->commit_anc_finish(v, defer);
-      };
-  DragonBall *wait_finish_ball =
-      new DragonBall(anc.size() + 1, anc_finish_cb);
-  for (auto &av: anc) {
-    Log::debug("\t ancestor id: %llx", av->data_->id());
-    av->data_->register_event(TXN_CMT, wait_finish_ball);
-    send_ask_req(av);
-  }
-  wait_finish_ball->trigger();
+void RccDTxn::commit(const ChopFinishRequest &req,
+                     ChopFinishResponse *res,
+                     rrr::DeferredReply *defer) {
+  verify(0);
 }
 
 void RccDTxn::commit_anc_finish(
@@ -247,80 +211,6 @@ void RccDTxn::commit_scc_anc_commit(
   }
 }
 
-void RccDTxn::send_ask_req(Vertex<TxnInfo> *av) {
-  Graph<TxnInfo> &txn_gra = RccDTxn::dep_s->txn_gra_;
-  TxnInfo &tinfo = *(av->data_);
-  if (!tinfo.is_involved()) {
-
-    if (tinfo.is_commit()) {
-      Log::debug("observed commited unrelated txn, id: %llx", tinfo.id());
-    } else if (tinfo.is_finish()) {
-      Log::debug("observed finished unrelated txn, id: %llx", tinfo.id());
-      to_decide(av, nullptr);
-    } else if (tinfo.during_asking) {
-      // don't have to ask twice
-      Log::debug("observed in-asking unrealted txn, id: %llx", tinfo.id());
-    } else {
-      static int64_t sample = 0;
-      int32_t sid = tinfo.random_server();
-      RococoProxy *proxy = RccDTxn::dep_s->get_server_proxy(sid);
-
-      rrr::FutureAttr fuattr;
-      fuattr.callback = [this, av, &txn_gra](Future *fu) {
-        // std::lock_guard<std::mutex> guard(this->mtx_);
-        int e = fu->get_error_code();
-        if (e != 0) {
-          Log::info("connection failed: e: %d =%s", e, strerror(e));
-          verify(0);
-        }
-        Log::debug("got finish request for this txn, it is not related"
-                       " to this server tid: %llx.", av->data_->id());
-
-        CollectFinishResponse res;
-        fu->get_reply() >> res;
-
-        //stat_sz_gra_ask_.sample(res.gra_m.gra->size());
-        // Be careful! this one could bring more evil than we want.
-        txn_gra.Aggregate(*(res.gra_m.gra), true);
-        // for every transaction it unions,  handle this transaction
-        // like normal finish workflow.
-        // FIXME is there problem here?
-        to_decide(av, nullptr);
-      };
-      Log::debug("observed uncommitted unrelated txn, tid: %llx, related"
-                     " server id: %x", tinfo.id(), sid);
-      tinfo.during_asking = true;
-      //stat_n_ask_.sample();
-      Future *f1 = proxy->async_rcc_ask_txn(tinfo.txn_id_, fuattr);
-      verify(f1 != nullptr);
-      Future::safe_release(f1);
-      // verify(av->data_.is_involved());
-      // n_asking_ ++;
-    }
-  } else {
-    // This txn belongs to me, sooner or later I'll receive the finish request.
-  }
-
-}
-
-void RccDTxn::inquire(
-    CollectFinishResponse *res,
-    rrr::DeferredReply *defer
-) {
-  std::function<void(void)> callback = [this, res, defer]() {
-    // not the entire graph!!!!!
-    // should only return a part of the graph.
-    RccDTxn::dep_s->sub_txn_graph(this->tid_, res->gra_m);
-    defer->reply();
-  };
-  DragonBall *ball = new DragonBall(2, callback);
-  // TODO Optimize this.
-  Vertex<TxnInfo> *v = RccDTxn::dep_s->txn_gra_.FindV(tid_);
-  //register an event, triggered when the status >= COMMITTING;
-  verify (v->data_->is_involved());
-  v->data_->register_event(TXN_CMT, ball);
-  ball->trigger();
-}
 
 void RccDTxn::exe_deferred(
     std::vector<std::pair<RequestHeader,

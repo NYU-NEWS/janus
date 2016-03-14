@@ -60,14 +60,12 @@ abstract service Rococo {
                 map<i32, Value> output,
                 RccGraph graph);
 
-  defer rcc_start_pie(SimpleCommand cmd |
-                      ChopStartResponse res);
+  defer Finish(cmdid_t id,
+               RccGraph |
+               map<i32, Value> output);
 
-  defer rcc_finish_txn(ChopFinishRequest req |
-                       ChopFinishResponse res);
-
-  defer rcc_ask_txn(i64 txn_id |
-                    CollectFinishResponse res);
+  defer Inquire(cmdid_t txn_id |
+                RccGraph res);
 
   defer rcc_ro_start_pie(SimpleCommand cmd |
                          map<i32, Value> output);

@@ -42,8 +42,8 @@ void RccGraph::start_pie(txnid_t txn_id,
   txn_info->servers_.insert(id);
 }
 
-uint64_t RccGraph::sub_txn_graph(uint64_t tid,
-                                 GraphMarshaler &gra_m) {
+uint64_t RccGraph::MinItfrGraph(uint64_t tid,
+                                RccGraph &gra_m) {
   gra_m.gra = &txn_gra_;
 
   Vertex<TxnInfo> *source = txn_gra_.FindV(tid);
