@@ -1,6 +1,13 @@
+boto3==1.2.6
+botocore==1.4.3
+docutils==0.12
 ecdsa==0.13
 Fabric==1.10.2
+futures==3.0.5
+jmespath==0.9.0
 paramiko==1.16.0
 pycrypto==2.6.1
+python-dateutil==2.5.0
 PyYAML==3.11
+six==1.10.0
 tabulate==0.7.5

@@ -50,13 +50,12 @@ std::pair<int, ClassicProxy*> Communicator::ConnectToSite(Config::SiteInfo &site
   string addr = site.GetHostAddr();
   auto start = steady_clock::now();
   rrr::Client* rpc_cli = new rrr::Client(rpc_poll_);
-  int connect_result;
   double elapsed;
   int attempt = 0;
   do {
     Log::debug("connect to site: %s (attempt %d)", addr.c_str(), attempt++);
     auto connect_result = rpc_cli->connect(addr.c_str());
-    if (connect_result == 0) {
+    if (connect_result == SUCCESS) {
       ClassicProxy *rpc_proxy = new ClassicProxy(rpc_cli);
       rpc_clients_.insert(std::make_pair(site.id, rpc_cli));
       rpc_proxies_.insert(std::make_pair(site.id, rpc_proxy));
@@ -69,8 +68,8 @@ std::pair<int, ClassicProxy*> Communicator::ConnectToSite(Config::SiteInfo &site
     elapsed = duration_cast<milliseconds>(end - start).count();
   } while(elapsed < timeout.count());
   Log_info("timeout connecting to %s", addr.c_str());
-  delete rpc_cli;
-  return std::make_pair(connect_result, nullptr);
+  rpc_cli->close_and_release();
+  return std::make_pair(FAILURE, nullptr);
 }
 
 } // namespace rococo
