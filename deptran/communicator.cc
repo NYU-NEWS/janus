@@ -49,7 +49,7 @@ std::pair<int, ClassicProxy*> Communicator::ConnectToSite(Config::SiteInfo &site
                                                           milliseconds timeout) {
   string addr = site.GetHostAddr();
   auto start = steady_clock::now();
-  rrr::Client *rpc_cli = new rrr::Client(rpc_poll_);
+  rrr::Client* rpc_cli = new rrr::Client(rpc_poll_);
   int connect_result;
   double elapsed;
   int attempt = 0;
@@ -69,6 +69,7 @@ std::pair<int, ClassicProxy*> Communicator::ConnectToSite(Config::SiteInfo &site
     elapsed = duration_cast<milliseconds>(end - start).count();
   } while(elapsed < timeout.count());
   Log_info("timeout connecting to %s", addr.c_str());
+  delete rpc_cli;
   return std::make_pair(connect_result, nullptr);
 }
 
