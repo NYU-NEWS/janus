@@ -25,10 +25,10 @@ site:
 # site_name - process_name map
 process:
   s101: localhost
-  s201: localhost
+  s201: localhost2
 #  s102: localhost
 #  s103: localhost
-  c1: localhost
+  c1: localhost3
 #  c2: localhost
 #  c3: localhost
 #  c4: localhost
@@ -36,6 +36,8 @@ process:
 # process_name - host_addr map
 host:
   localhost: 127.0.0.1
+  localhost2: 127.0.0.1
+  localhost3: 127.0.0.1
 
 mode:
   cc: 2pl_ww # concurrency control
