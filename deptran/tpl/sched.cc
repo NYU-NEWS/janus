@@ -63,11 +63,11 @@ mdb::Txn* TPLSched::get_mdb_txn(const i64 tid) {
   return txn;
 }
 
-mdb::Txn* TPLSched::get_mdb_txn(const RequestHeader &header) {
-  mdb::Txn *txn = nullptr;
-  txn = get_mdb_txn(header.tid);
-  return txn;
-}
+//mdb::Txn* TPLSched::get_mdb_txn(const RequestHeader &header) {
+//  mdb::Txn *txn = nullptr;
+//  txn = get_mdb_txn(header.tid);
+//  return txn;
+//}
 
 
 } // namespace rococo

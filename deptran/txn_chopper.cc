@@ -6,7 +6,7 @@
 #include "batch_start_args_helper.h"
 
 // deprecated below
-#include "rcc/rcc_srpc.h"
+//#include "rcc/rcc_srpc.h"
 // deprecate above
 
 namespace rococo {
@@ -106,28 +106,28 @@ bool TxnCommand::HasMoreSubCmdReadyNotOut() {
   }
 }
 
-bool TxnCommand::start_callback(int pi,
-                                map<int32_t, mdb::Value> &output,
-                                bool is_defer) {
-  verify(0);
-  if (is_defer && output_size_[pi] != 0)
-    early_return_ = false;
-  if (is_defer)
-    return false;
-  else
-    return start_callback(pi, SUCCESS, output);
-}
-
-bool TxnCommand::start_callback(int pi,
-                                ChopStartResponse &res) {
-  verify(0);
-  if (res.is_defered && output_size_[pi] != 0)
-    early_return_ = false;
-  if (res.is_defered)
-    return false;
-  else
-    return start_callback(pi, SUCCESS, res.output);
-}
+//bool TxnCommand::start_callback(int pi,
+//                                map<int32_t, mdb::Value> &output,
+//                                bool is_defer) {
+//  verify(0);
+//  if (is_defer && output_size_[pi] != 0)
+//    early_return_ = false;
+//  if (is_defer)
+//    return false;
+//  else
+//    return start_callback(pi, SUCCESS, output);
+//}
+//
+//bool TxnCommand::start_callback(int pi,
+//                                ChopStartResponse &res) {
+//  verify(0);
+//  if (res.is_defered && output_size_[pi] != 0)
+//    early_return_ = false;
+//  if (res.is_defered)
+//    return false;
+//  else
+//    return start_callback(pi, SUCCESS, res.output);
+//}
 
 void TxnCommand::read_only_reset() {
   read_only_failed_ = false;

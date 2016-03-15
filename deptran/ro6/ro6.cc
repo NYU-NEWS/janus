@@ -70,24 +70,24 @@ void commit(
 }
 
 */
-
-void RO6DTxn::start(
-    const RequestHeader &header,
-    const std::vector<mdb::Value> &input,
-    bool *deferred,
-    ChopStartResponse *res) {
-  RccDTxn::start(header, input, deferred, res);
-
-  std::vector<i64> ro;
-  ro.insert(ro.end(), ro_.begin(), ro_.end());
-  Compressor::vector_to_string(ro, &res->read_only);
-//    auto& ro_list = res->ro_list;
-
-//    ro_list.insert(ro_list.end(), ro_.begin(), ro_.end());
-
-//    ro_list.resize(1);
-//    Log::debug("read only tx list size %d carried in start_ack.", ro_.size());
-}
+//
+//void RO6DTxn::start(
+//    const RequestHeader &header,
+//    const std::vector<mdb::Value> &input,
+//    bool *deferred,
+//    ChopStartResponse *res) {
+////  RccDTxn::start(header, input, deferred, res);
+//
+//  std::vector<i64> ro;
+//  ro.insert(ro.end(), ro_.begin(), ro_.end());
+////  Compressor::vector_to_string(ro, &res->read_only);
+////    auto& ro_list = res->ro_list;
+//
+////    ro_list.insert(ro_list.end(), ro_.begin(), ro_.end());
+//
+////    ro_list.resize(1);
+////    Log::debug("read only tx list size %d carried in start_ack.", ro_.size());
+//}
 
 void RO6DTxn::kiss(mdb::Row *r, int col, bool immediate) {
   RccDTxn::kiss(r, col, immediate);
@@ -161,28 +161,28 @@ void RO6DTxn::start_ro(const SimpleCommand &cmd,
   /*Value result = do_ro(txn_id, &row, col_id);*/
 }
 
-void RO6DTxn::commit(
-    const ChopFinishRequest &req,
-    ChopFinishResponse *res,
-    rrr::DeferredReply *defer) {
-  std::vector<i64> ids;
-  Compressor::string_to_vector(req.read_only, &ids);
-
-  // handle ro list, put ro ids into table
-  // I assume one txn may query multiple rows on this node?
-  for (auto &pair : row_col_map) {
-    auto row = (RO6Row *) pair.first;
-    int col_id = pair.second;
-    // get current version of the cell this txn is going to update
-    version_t current_version = row->getCurrentVersion(col_id);
-    for (i64 &ro_id : ids) {
-      row->rtxn_tracker.checkIfTxnIdBeenRecorded(col_id, ro_id, true, current_version);
-    }
-  }
-  // We need to commit this txn after updating the table, because we need to know what the
-  // old version number was before committing current version.
-  RccDTxn::commit(req, res, defer);
-}
+//void RO6DTxn::commit(
+//    const ChopFinishRequest &req,
+//    ChopFinishResponse *res,
+//    rrr::DeferredReply *defer) {
+//  std::vector<i64> ids;
+//  Compressor::string_to_vector(req.read_only, &ids);
+//
+//  // handle ro list, put ro ids into table
+//  // I assume one txn may query multiple rows on this node?
+//  for (auto &pair : row_col_map) {
+//    auto row = (RO6Row *) pair.first;
+//    int col_id = pair.second;
+//    // get current version of the cell this txn is going to update
+//    version_t current_version = row->getCurrentVersion(col_id);
+//    for (i64 &ro_id : ids) {
+//      row->rtxn_tracker.checkIfTxnIdBeenRecorded(col_id, ro_id, true, current_version);
+//    }
+//  }
+//  // We need to commit this txn after updating the table, because we need to know what the
+//  // old version number was before committing current version.
+//  RccDTxn::commit(req, res, defer);
+//}
 
 bool RO6DTxn::read_column(mdb::Row *r, mdb::column_id_t col_id, Value *value) {
 

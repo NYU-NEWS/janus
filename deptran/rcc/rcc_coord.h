@@ -10,8 +10,8 @@ class RccCommo;
 class RccCoord: public ThreePhaseCoordinator {
 
 protected:
-  inline RccCommo* comm() {
-    return static_cast<RccCommo*>(commo_);
+  inline RccCommo* commo() {
+    return (RccCommo*)(commo_);
   }
 
 public:
@@ -42,7 +42,7 @@ public:
   void Finish();
   void FinishAck(phase_t phase,
                  int res,
-                 map<int, map<Value>>& output);
+                 map<int, map<int32_t, Value>>& output);
 
   void HandoutRo();
   void HandoutRoAck(phase_t phase,

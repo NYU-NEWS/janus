@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../three_phase/sched.h"
+#include "../classic/sched.h"
 
 namespace rococo {
 
@@ -19,7 +19,7 @@ class TPLSched: public ThreePhaseSched {
                                 rrr::DeferredReply *defer);
 
   virtual mdb::Txn *get_mdb_txn(const i64 tid);
-  virtual mdb::Txn *get_mdb_txn(const RequestHeader &req);
+//  virtual mdb::Txn *get_mdb_txn(const RequestHeader &req);
   virtual mdb::Txn *del_mdb_txn(const i64 tid);
 
 };

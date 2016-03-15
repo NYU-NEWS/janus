@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../three_phase/coord.h"
+#include "../classic/coord.h"
 
 namespace rococo {
 

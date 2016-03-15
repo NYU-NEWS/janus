@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../three_phase/sched.h"
+#include "../classic/sched.h"
 
 namespace rococo {
 

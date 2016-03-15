@@ -21,23 +21,23 @@ class RO6DTxn: public RccDTxn {
   }
 
 
-  virtual void start(
-      const RequestHeader &header,
-      const std::vector <mdb::Value> &input,
-      bool *deferred,
-      ChopStartResponse *res
-  );
+//  virtual void start(
+//      const RequestHeader &header,
+//      const std::vector <mdb::Value> &input,
+//      bool *deferred,
+//      ChopStartResponse *res
+//  );
 
   virtual void start_ro(const SimpleCommand &cmd,
                         std::map<int32_t, mdb::Value> &output,
                         rrr::DeferredReply *defer);
 
   // the start function above and this commit function only for general(write) transactions
-  virtual void commit(
-      const ChopFinishRequest &req,
-      ChopFinishResponse *res,
-      rrr::DeferredReply *defer
-  );
+//  virtual void commit(
+//      const ChopFinishRequest &req,
+//      ChopFinishResponse *res,
+//      rrr::DeferredReply *defer
+//  );
 
   // This is not called by a read-only-transaction's start phase,
   virtual void kiss(

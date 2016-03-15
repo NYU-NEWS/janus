@@ -3,7 +3,7 @@
 //
 #pragma once
 
-#include "deptran/three_phase/exec.h"
+#include "deptran/classic/exec.h"
 #include "deptran/scheduler.h"
 #include "deptran/executor.h"
 #include "MdccScheduler.h"

@@ -3,6 +3,8 @@
 
 #include "../__dep__.h"
 #include "../scheduler.h"
+#include "graph.h"
+#include "dep_graph.h"
 
 namespace rococo {
 
@@ -10,12 +12,14 @@ class SimpleCommand;
 class RccGraph;
 class RccCommo;
 class TxnInfo;
-class Vertex;
+
 
 class RccSched : public Scheduler {
  public:
-  RccGraph *dep_graph_;
-  RccCommo* commo_;
+  RccGraph *dep_graph_ = nullptr;
+  RccCommo* commo_ = nullptr;
+  list<Vertex<TxnInfo>*> waitlist_ = {};
+//  Vertex<TxnInfo> *v : wait_list_
 
   int OnHandoutRequest(const SimpleCommand &cmd,
                        rrr::i32 *res,
@@ -32,10 +36,22 @@ class RccSched : public Scheduler {
                        RccGraph* graph,
                        const function<void()>& callback);
 
-  void to_decide(Vertex<TxnInfo> *v,
-                 rrr::DeferredReply *defer);
+//  void to_decide(Vertex<TxnInfo> *v,
+//                 rrr::DeferredReply *defer);
 
-  void send_ask_req(Vertex <TxnInfo> *av);
+  void InquireAbout(Vertex<TxnInfo> *av);
+
+  void CheckWaitlist();
+
+  void InquireAck(RccGraph& graph);
+
+  bool AllAncCmt(RccVertex *v);
+  void Decide(RccScc);
+  RccScc FindScc(RccVertex *v);
+
+  bool AllAncFns(RccScc);
+  void Execute(RccScc);
+
 
   RccCommo* commo();
 };

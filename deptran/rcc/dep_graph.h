@@ -2,7 +2,6 @@
 
 //#include "all.h"
 #include "graph.h"
-#include "graph_marshaler.h"
 #include "txn-info.h"
 #include "marshal-value.h"
 #include "command.h"
@@ -14,6 +13,8 @@
  */
 namespace rococo {
 
+typedef Vertex<TxnInfo> RccVertex;
+typedef vector<RccVertex> RccScc;
 class RccGraph {
  public:
 //    Graph<PieInfo> pie_gra_;
@@ -40,7 +41,7 @@ class RccGraph {
   /** on start_req */
   void start_pie(
       txnid_t txn_id,
-      Vertex <TxnInfo> **tv
+      RccVertex **tv
   );
 
   void Aggregate(RccGraph& graph);
@@ -53,23 +54,14 @@ class RccGraph {
     return txn_gra_.FindSCC(ti.id());
   }
 
-  void find_txn_anc_opt(
-      Vertex <TxnInfo> *source,
-      std::unordered_set<Vertex < TxnInfo> *
-  > &ret_set
-  );
+  void find_txn_anc_opt(Vertex <TxnInfo> *source,
+                        std::unordered_set<Vertex <TxnInfo> *> &ret_set);
 
-  void find_txn_anc_opt(
-      uint64_t txn_id,
-      std::unordered_set<Vertex < TxnInfo> *
-  > &ret_set
-  );
+  void find_txn_anc_opt(uint64_t txn_id,
+                        std::unordered_set<Vertex <TxnInfo> *> &ret_set);
 
-  void find_txn_nearest_anc(
-      Vertex <TxnInfo> *v,
-      std::set<Vertex < TxnInfo> *
-  > &ret_set
-  ) {
+  void find_txn_nearest_anc(Vertex <TxnInfo> *v,
+                            std::set<Vertex <TxnInfo> *> &ret_set) {
     for (auto &kv: v->incoming_) {
       ret_set.insert(kv.first);
     }
@@ -108,5 +100,15 @@ class RccGraph {
       uint64_t tid,
       RccGraph &gra_m
   );
+
+  void write_to_marshal(rrr::Marshal &m) const;
+
+  void marshal_help_1(rrr::Marshal &m,
+                      const std::unordered_set<Vertex<TxnInfo> *> &ret_set,
+                      Vertex<TxnInfo> *old_sv) const;
+
+  void marshal_help_2(rrr::Marshal &m,
+                      const std::unordered_set<Vertex<TxnInfo> *> &ret_set,
+                      Vertex<TxnInfo> *old_sv) const;
 };
 } // namespace rcc

@@ -115,11 +115,11 @@ class TxnCommand: public Command {
   virtual bool start_callback(int pi,
                               int res,
                               map<int32_t, Value> &output) = 0;
-  virtual bool start_callback(int pi,
-                              ChopStartResponse &res);
-  virtual bool start_callback(int pi,
-                              map<int32_t, mdb::Value> &output,
-                              bool is_defer);
+//  virtual bool start_callback(int pi,
+//                              ChopStartResponse &res);
+//  virtual bool start_callback(int pi,
+//                              map<int32_t, mdb::Value> &output,
+//                              bool is_defer);
   virtual bool finish_callback(ChopFinishResponse &res) { return false; }
   virtual bool is_read_only() = 0;
   virtual void read_only_reset();

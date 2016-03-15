@@ -5,7 +5,7 @@
 #define ROCOCO_MDCC_COORD_H
 
 #include "deptran/txn_chopper.h"
-#include "deptran/three_phase/coord.h"
+#include "deptran/classic/coord.h"
 #include "./communicator.h"
 
 namespace mdcc {

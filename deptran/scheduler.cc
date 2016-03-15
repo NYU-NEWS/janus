@@ -97,23 +97,23 @@ mdb::Txn* Scheduler::GetOrCreateMTxn(const i64 tid) {
   return txn;
 }
 
-mdb::Txn* Scheduler::get_mdb_txn(const RequestHeader &header) {
-  mdb::Txn *txn = nullptr;
-  if (mode_ == MODE_NONE
-      || mode_ == MODE_RCC
-      || mode_ == MODE_RO6) {
-    if (mdb_txns_.empty()) {
-      txn = mdb_txn_mgr_->start(0);
-      mdb_txns_[0] = txn;
-    } else {
-      txn = mdb_txns_.begin()->second;
-    }
-  } else {
-    txn = GetOrCreateMTxn(header.tid);
-  }
-  verify(txn != nullptr);
-  return txn;
-}
+//mdb::Txn* Scheduler::get_mdb_txn(const RequestHeader &header) {
+//  mdb::Txn *txn = nullptr;
+//  if (mode_ == MODE_NONE
+//      || mode_ == MODE_RCC
+//      || mode_ == MODE_RO6) {
+//    if (mdb_txns_.empty()) {
+//      txn = mdb_txn_mgr_->start(0);
+//      mdb_txns_[0] = txn;
+//    } else {
+//      txn = mdb_txns_.begin()->second;
+//    }
+//  } else {
+//    txn = GetOrCreateMTxn(header.tid);
+//  }
+//  verify(txn != nullptr);
+//  return txn;
+//}
 
 // TODO move this to the dtxn class
 void Scheduler::get_prepare_log(i64 txn_id,

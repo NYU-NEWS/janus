@@ -6,15 +6,21 @@ namespace rococo {
 
 class RccGraph;
 class RccCommo : public Communicator {
+ public:
   void SendHandout(SimpleCommand &cmd,
                    Coordinator *coo,
-                   const std::function<void(phase_t,
-                                            int res,
-                                            Command& cmd,
-                                            RccGraph& graph)>&) ;
+                   const function<void(phase_t phase,
+                                       int res,
+                                       SimpleCommand& cmd,
+                                       RccGraph& graph)>&) ;
   void SendFinish(parid_t pid,
                   txnid_t tid,
-                  const std::function<void(Future *fu)> &callback) ;
+                  RccGraph& graph,
+                  const function<void(Future *fu)> &callback) ;
+
+  void SendInquire(parid_t pid,
+                   txnid_t tid,
+                   const function<void(RccGraph& graph)>&);
 };
 
 } // namespace rococo

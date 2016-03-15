@@ -34,7 +34,7 @@ void RccCoord::Handout() {
     handout_acks_[subcmd->inn_id()] = false;
     commo()->SendHandout(*subcmd,
                          this,
-                         std::bind(&ThreePhaseCoordinator::HandoutAck,
+                         std::bind(RccCoord::HandoutAck,
                                    this,
                                    phase_,
                                    std::placeholders::_1,
@@ -118,29 +118,34 @@ void RccCoord::Finish() {
   verify(ch->partition_ids_.size() == ch->gra_.FindV(
            cmd_->id_)->data_->servers_.size());
 
-  ChopFinishRequest req;
-  req.txn_id = cmd_->id_;
-  req.gra    = ch->gra_;
+//  ChopFinishRequest req;
+//  req.txn_id = cmd_->id_;
+//  req.gra    = ch->gra_;
 
   verify(ch->gra_.size() > 0);
-  verify(req.gra.size() > 0);
+//  verify(req.gra.size() > 0);
 
   for (auto& rp : ch->partition_ids_) {
-    RococoProxy *proxy = (RococoProxy*)comm()->rpc_proxies_[rp];
-    Future::safe_release(proxy->async_rcc_finish_txn(req, fuattr));
+    commo()->SendFinish(rp,
+                        std::bind(RccCoord::FinishAck,
+                                  this,
+                                  phase_,
+                                  std::placeholders::_1,
+                                  std::placeholders::_2));
+//    Future::safe_release(proxy->async_rcc_finish_txn(req, fuattr));
   }
 }
 
 void RccCoord::FinishAck(phase_t phase,
                          int res,
-                         map<int, map<Value>>& output) {
+                         map<int, map<int32_t, Value>>& output) {
   TxnCommand* ch = (TxnCommand*) cmd_;
   verify(phase_ == phase);
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   n_finish_ack_++;
 
   Log_debug("receive finish response. tid: %llx", cmd_->id_);
-  ch->outputs_.insert(output);
+  ch->outputs_.insert(output.begin(), output.end());
 
   if (n_finish_ack_ == ch->GetPartitionIds().size()) {
     // generate a reply and callback.

@@ -4,6 +4,9 @@
 #include "../command_marshaler.h"
 #include "../benchmark_control_rpc.h"
 #include "../config.h"
+#include "graph.h"
+#include "graph_marshaler.h"
+#include "dep_graph.h"
 #include "service.h"
 #include "dtxn.h"
 #include "sched.h"
@@ -90,7 +93,7 @@ void RococoServiceImpl::Handout(const SimpleCommand& cmd,
                                  res,
                                  output,
                                  graph,
-                                 [] () {defer->reply();});
+                                 [defer] () {defer->reply();});
 }
 
 //void RococoServiceImpl::rcc_start_pie(const SimpleCommand &cmd,
@@ -120,7 +123,10 @@ void RococoServiceImpl::Finish(const cmdid_t& cmd_id,
                                DeferredReply* defer) {
   verify(graph.size() > 0);
   std::lock_guard <std::mutex> guard(mtx_);
-  dtxn_sched()->OnFinishRequest(cmd_id, graph, output, [] () {defer->reply();});
+  dtxn_sched()->OnFinishRequest(cmd_id,
+                                graph,
+                                output,
+                                [defer] () {defer->reply();});
 //  RccDTxn *txn = (RccDTxn *) dtxn_sched_->GetDTxn(req.txn_id);
 //  txn->commit(req, res, defer);
 
@@ -149,7 +155,7 @@ void RococoServiceImpl::Inquire(const cmdid_t &tid,
                                 rrr::DeferredReply *defer) {
   verify(IS_MODE_RCC || IS_MODE_RO6);
   std::lock_guard <std::mutex> guard(mtx_);
-  dtxn_sched()->OnInquiryRequest(tid, graph, [] () {defer->reply();});
+  dtxn_sched()->OnInquiryRequest(tid, graph, [defer] () {defer->reply();});
 //  RccDTxn *dtxn = (RccDTxn *) dtxn_sched_->GetDTxn(tid);
 //  dtxn->inquire(res, defer);
 }

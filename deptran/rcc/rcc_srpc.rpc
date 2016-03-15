@@ -17,18 +17,18 @@ struct BatchRequestHeader {
     i32 expected_output_size;
 }
 
-struct BatchChopStartResponse {
-    vector<i8> is_defers;
-    vector<map<int32_t, Value>> outputs;
-    GraphMarshaler gra_m;
-}
+// struct BatchChopStartResponse {
+//    vector<i8> is_defers;
+//    vector<map<int32_t, Value>> outputs;
+//    GraphMarshaler gra_m;
+// }
 
-struct ChopStartResponse {
-    i8 is_defered;
-    map<i32, Value> output;
-    GraphMarshaler gra_m;
-    string read_only; // for ro6
-}
+// struct ChopStartResponse {
+//     i8 is_defered;
+//     map<i32, Value> output;
+//     GraphMarshaler gra_m;
+//    string read_only; // for ro6
+// }
 
 struct ChopFinishRequest {
     i64 txn_id;
@@ -41,9 +41,9 @@ struct ChopFinishResponse {
     vector<pair<RequestHeader, map<i32, Value>>> outputs;
 }
 
-struct CollectFinishResponse {
-    GraphMarshaler gra_m;
-}
+// struct CollectFinishResponse {
+//    GraphMarshaler gra_m;
+//}
 
 abstract service Rococo {
     // input: contains many pieces, each piece consist of
@@ -69,9 +69,5 @@ abstract service Rococo {
 
   defer rcc_ro_start_pie(SimpleCommand cmd |
                          map<i32, Value> output);
-
-  defer rcc_batch_start_pie(vector<RequestHeader> headers,
-                            vector<map<i32, Value>> inputs |
-                            BatchChopStartResponse res);
 
 }
