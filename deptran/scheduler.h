@@ -11,8 +11,8 @@ class Coordinator;
 class Frame;
 class Scheduler {
  public:
-  std::map<i64, DTxn *> dtxns_;
-  std::map<i64, mdb::Txn *> mdb_txns_;
+  map<i64, DTxn *> dtxns_;
+  map<i64, mdb::Txn *> mdb_txns_;
   map<cmdid_t, Executor*> executors_ = {};
 
   mdb::TxnMgr *mdb_txn_mgr_;

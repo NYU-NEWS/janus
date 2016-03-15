@@ -13,7 +13,6 @@ class RccGraph;
 class RccCommo;
 class TxnInfo;
 
-
 class RccSched : public Scheduler {
  public:
   RccGraph *dep_graph_ = nullptr;
