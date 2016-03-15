@@ -5,15 +5,14 @@
 namespace rococo {
 
 class DTxn;
-class RequestHeader;
 class TxnRegistry;
 class Executor;
 class Coordinator;
 class Frame;
 class Scheduler {
  public:
-  std::map<i64, DTxn *> dtxns_;
-  std::map<i64, mdb::Txn *> mdb_txns_;
+  map<i64, DTxn *> dtxns_;
+  map<i64, mdb::Txn *> mdb_txns_;
   map<cmdid_t, Executor*> executors_ = {};
 
   mdb::TxnMgr *mdb_txn_mgr_;
@@ -52,7 +51,7 @@ class Scheduler {
 
   virtual mdb::Txn* GetMTxn(const i64 tid);
   virtual mdb::Txn *GetOrCreateMTxn(const i64 tid);
-  virtual mdb::Txn *get_mdb_txn(const RequestHeader &req);
+//  virtual mdb::Txn *get_mdb_txn(const RequestHeader &req);
   virtual mdb::Txn *RemoveMTxn(const i64 tid);
 
   void get_prepare_log(i64 txn_id,

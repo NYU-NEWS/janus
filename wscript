@@ -124,17 +124,14 @@ def build(bld):
     bld.program(source=bld.path.ant_glob("test/*.cc"),
                 target="run_tests",
                 features="gtest",
-                includes=". rrr deptran deptran/ro6 "
-                         "deptran/rcc "
-                         "deptran/brq "
+                includes=". rrr deptran  "
                          "test memdb",
                 uselib="BOOST BOOST_SYSTEM YAML-CPP",
                 use="PTHREAD rrr memdb deptran")
 
     bld.program(source=bld.path.ant_glob("deptran/s_main.cc"),
                 target="deptran_server",
-                includes=". rrr deptran "
-                         "deptran/ro6 deptran/rcc deptran/brq",
+                includes=". rrr deptran ",
                 uselib="BOOST BOOST_SYSTEM",
                 use="rrr memdb deptran YAML-CPP PTHREAD PROFILER RT")
 

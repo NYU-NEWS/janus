@@ -1,16 +1,27 @@
 #pragma once
 
-#include "../three_phase/coord.h"
+#include "dep_graph.h"
+#include "../classic/coord.h"
 
 namespace rococo {
+
+class RccCommo;
+
 class RccCoord: public ThreePhaseCoordinator {
 
-protected:
-  inline RococoCommunicator* comm() {
-    return static_cast<RococoCommunicator*>(commo_);
+public:
+  RccCommo* commo() {
+    return (RccCommo*)(commo_);
   }
 
 public:
+  RccGraph graph_;
+  enum RoState {BEGIN, FIRST, SECOND, DONE};
+
+  RoState ro_state_ = BEGIN;
+  map<int32_t, mdb::version_t> last_vers_;
+  map<int32_t, mdb::version_t> curr_vers_;
+
   RccCoord(uint32_t coo_id,
            int benchmark,
            ClientControlServiceImpl *ccsi,
@@ -18,31 +29,26 @@ public:
       : ThreePhaseCoordinator(coo_id,
                               benchmark,
                               ccsi,
-                              thread_id) {
+                              thread_id), graph_() {
   }
 
-  struct deptran_batch_start_t {
-    std::vector<RequestHeader>      headers;
-    std::vector<map<int32_t, Value> >inputs;
-    std::vector<int>                output_sizes;
-    std::vector<int>                pis;
-    rrr::FutureAttr                 fuattr;
-  };
+  void do_one(TxnRequest&) override;
 
-  virtual void do_one(TxnRequest&);
+  void Handout();
+  void HandoutAck(phase_t phase,
+                  int res,
+                  SimpleCommand& cmd,
+                  RccGraph& graph);
+  void Finish();
+  void FinishAck(phase_t phase,
+                 int res,
+                 map<int, map<int32_t, Value>>& output);
 
-  RequestHeader gen_header(TxnCommand *ch);
-
-  virtual void deptran_start(TxnCommand *ch);
-
-  virtual void StartAck();
-
-  void         deptran_batch_start(TxnCommand *ch);
-
-  virtual void deptran_finish(TxnCommand *ch);
-
-  void         deptran_start_ro(TxnCommand *ch);
-
-  void         deptran_finish_ro(TxnCommand *ch);
+  void HandoutRo();
+  void HandoutRoAck(phase_t phase,
+                    int res,
+                    SimpleCommand& cmd,
+                    map<int, mdb::version_t>& vers);
+  void FinishRo() {verify(0);};
 };
 } // namespace rococo

@@ -2,9 +2,14 @@
 #include "../__dep__.h"
 #include "../command.h"
 #include "../command_marshaler.h"
+#include "../benchmark_control_rpc.h"
+#include "../config.h"
+#include "graph.h"
+#include "graph_marshaler.h"
+#include "dep_graph.h"
 #include "service.h"
 #include "dtxn.h"
-#include "benchmark_control_rpc.h"
+#include "sched.h"
 
 namespace rococo {
 
@@ -29,13 +34,13 @@ RococoServiceImpl::RococoServiceImpl(Scheduler *sched,
 }
 
 // TODO find a better way to define batch
-void RococoServiceImpl::rcc_batch_start_pie(
-    const std::vector <RequestHeader> &headers,
-    const std::vector <map<int32_t, Value>> &inputs,
-    BatchChopStartResponse *res,
-    rrr::DeferredReply *defer) {
-
-  verify(false);
+//void RococoServiceImpl::rcc_batch_start_pie(
+//    const std::vector <RequestHeader> &headers,
+//    const std::vector <map<int32_t, Value>> &inputs,
+//    BatchChopStartResponse *res,
+//    rrr::DeferredReply *defer) {
+//
+//  verify(false);
 //    verify(IS_MODE_RCC || IS_MODE_RO6);
 //    auto txn = (RCCDTxn*) txn_mgr_->get_or_create(headers[0].tid);
 //
@@ -75,19 +80,34 @@ void RococoServiceImpl::rcc_batch_start_pie(
 //    } else {
 //        job();
 //    }
+//}
+
+
+void RococoServiceImpl::Handout(const SimpleCommand& cmd,
+                                int32_t* res,
+                                map<int32_t, Value>* output,
+                                RccGraph* graph,
+                                DeferredReply* defer) {
+  std::lock_guard <std::mutex> guard(this->mtx_);
+  dtxn_sched()->OnHandoutRequest(cmd,
+                                 res,
+                                 output,
+                                 graph,
+                                 [defer] () {defer->reply();});
 }
 
-void RococoServiceImpl::rcc_start_pie(const SimpleCommand &cmd,
-                                      ChopStartResponse *res,
-                                      rrr::DeferredReply *defer
-) {
+//void RococoServiceImpl::rcc_start_pie(const SimpleCommand &cmd,
+//                                      ChopStartResponse *res,
+//                                      rrr::DeferredReply *defer
+//) {
+//  verify(0);
 //    Log::debug("receive start request. txn_id: %llx, pie_id: %llx", header.tid, header.pid);
-  verify(IS_MODE_RCC || IS_MODE_RO6);
-  verify(defer);
-
-  std::lock_guard <std::mutex> guard(this->mtx_);
-  RccDTxn *dtxn = (RccDTxn *) dtxn_sched_->GetOrCreateDTxn(cmd.root_id_);
-  dtxn->StartLaunch(cmd, res, defer);
+//  verify(IS_MODE_RCC || IS_MODE_RO6);
+//  verify(defer);
+//
+//  std::lock_guard <std::mutex> guard(this->mtx_);
+//  RccDTxn *dtxn = (RccDTxn *) dtxn_sched_->GetOrCreateDTxn(cmd.root_id_);
+//  dtxn->StartLaunch(cmd, res, defer);
 
   // TODO remove the stat from here.
 //    auto sz_sub_gra = RCCDTxn::dep_s->sub_txn_graph(header.tid, res->gra_m);
@@ -95,40 +115,56 @@ void RococoServiceImpl::rcc_start_pie(const SimpleCommand &cmd,
 //    if (IS_MODE_RO6) {
 //        stat_ro6_sz_vector_.sample(res->read_only.size());
 //    }
+//}
+
+void RococoServiceImpl::Finish(const cmdid_t& cmd_id,
+                               const RccGraph& graph,
+                               map<int32_t, Value>* output,
+                               DeferredReply* defer) {
+  verify(graph.size() > 0);
+  std::lock_guard <std::mutex> guard(mtx_);
+  dtxn_sched()->OnFinishRequest(cmd_id,
+                                graph,
+                                output,
+                                [defer] () {defer->reply();});
+//  RccDTxn *txn = (RccDTxn *) dtxn_sched_->GetDTxn(req.txn_id);
+//  txn->commit(req, res, defer);
+
+  stat_sz_gra_commit_.sample(graph.size());
 }
 
 // equivalent to commit phrase
-void RococoServiceImpl::rcc_finish_txn(
-    const ChopFinishRequest &req,
-    ChopFinishResponse *res,
-    rrr::DeferredReply *defer) {
-  //Log::debug("receive finish request. txn_id: %llx, graph size: %d", req.txn_id, req.gra.size());
-  verify(IS_MODE_RCC || IS_MODE_RO6);
-  verify(defer);
-  verify(req.gra.size() > 0);
+//void RococoServiceImpl::rcc_finish_txn(
+//    const ChopFinishRequest &req,
+//    ChopFinishResponse *res,
+//    rrr::DeferredReply *defer) {
+//  Log::debug("receive finish request. txn_id: %llx, graph size: %d", req.txn_id, req.gra.size());
+//  verify(IS_MODE_RCC || IS_MODE_RO6);
+//  verify(defer);
+//  verify(req.gra.size() > 0);
+//
+//  std::lock_guard <std::mutex> guard(mtx_);
+//  RccDTxn *txn = (RccDTxn *) dtxn_sched_->GetDTxn(req.txn_id);
+//  txn->commit(req, res, defer);
+//
+//  stat_sz_gra_commit_.sample(req.gra.size());
+//}
 
-  std::lock_guard <std::mutex> guard(mtx_);
-  RccDTxn *txn = (RccDTxn *) dtxn_sched_->GetDTxn(req.txn_id);
-  txn->commit(req, res, defer);
-
-  stat_sz_gra_commit_.sample(req.gra.size());
-}
-
-void RococoServiceImpl::rcc_ask_txn(
-    const rrr::i64 &tid,
-    CollectFinishResponse *res,
-    rrr::DeferredReply *defer
-) {
+void RococoServiceImpl::Inquire(const cmdid_t &tid,
+                                RccGraph *graph,
+                                rrr::DeferredReply *defer) {
   verify(IS_MODE_RCC || IS_MODE_RO6);
   std::lock_guard <std::mutex> guard(mtx_);
-  RccDTxn *dtxn = (RccDTxn *) dtxn_sched_->GetDTxn(tid);
-  dtxn->inquire(res, defer);
+  dtxn_sched()->OnInquiryRequest(tid, graph, [defer] () {defer->reply();});
+//  RccDTxn *dtxn = (RccDTxn *) dtxn_sched_->GetDTxn(tid);
+//  dtxn->inquire(res, defer);
 }
 
 void RococoServiceImpl::rcc_ro_start_pie(const SimpleCommand &cmd,
                                          map <int32_t, Value> *output,
                                          rrr::DeferredReply *defer) {
   std::lock_guard <std::mutex> guard(mtx_);
+  verify(0);
   RccDTxn *dtxn = (RccDTxn *) dtxn_sched_->GetOrCreateDTxn(cmd.root_id_, true);
   dtxn->start_ro(cmd, *output, defer);
 }
@@ -153,5 +189,10 @@ void RococoServiceImpl::RegisterStats() {
                     &stat_ro6_sz_vector_);
   }
 }
+
+RccSched* RococoServiceImpl::dtxn_sched() {
+  return (RccSched*)dtxn_sched_;
+}
+
 
 } // namespace rococo

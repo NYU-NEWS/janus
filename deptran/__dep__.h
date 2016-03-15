@@ -6,6 +6,7 @@
 #include <mutex>
 #include <string>
 #include <vector>
+#include <list>
 #include <chrono>
 #include <thread>
 #include <iostream>
@@ -19,6 +20,7 @@ using std::map;
 using std::unordered_map;
 using std::string;
 using std::vector;
+using std::list;
 using std::set;
 using std::pair;
 using std::function;

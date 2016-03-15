@@ -1,7 +1,8 @@
 #pragma once
-#include "__dep__.h"
+#include "../__dep__.h"
 #include "graph.h"
 #include "txn-info.h"
+#include "dep_graph.h"
 
 namespace rococo {
 template<typename T>
@@ -94,46 +95,41 @@ rrr::Marshal &operator>>(rrr::Marshal &m, Graph<T> &gra) {
   verify(gra.size() > 0);
   return m;
 }
+//
+//struct GraphMarshaler {
+//  Graph<TxnInfo> *gra = nullptr;
+//
+//  // std::set<Vertex<TxnInfo>*> ret_set;
+//  std::unordered_set<Vertex<TxnInfo> *> ret_set;
+//
+//  bool self_create = false;
+//
+//  ~GraphMarshaler() {
+//    if (self_create) {
+//      verify(gra);
+//      delete gra;
+//    }
+//  }
+//
+//  void write_to_marshal(rrr::Marshal &m) const;
+//
+//  void marshal_help_1(rrr::Marshal &m,
+//                      const std::unordered_set<Vertex<TxnInfo> *> &ret_set,
+//                      Vertex<TxnInfo> *old_sv) const;
+//
+//  void marshal_help_2(rrr::Marshal &m,
+//                      const std::unordered_set<Vertex<TxnInfo> *> &ret_set,
+//                      Vertex<TxnInfo> *old_sv) const;
+//};
 
-struct GraphMarshaler {
-  Graph<TxnInfo> *gra = nullptr;
-
-  // std::set<Vertex<TxnInfo>*> ret_set;
-  std::unordered_set<Vertex<TxnInfo> *> ret_set;
-
-  bool self_create = false;
-
-  ~GraphMarshaler() {
-    if (self_create) {
-      verify(gra);
-      delete gra;
-    }
-  }
-
-  void write_to_marshal(rrr::Marshal &m) const;
-
-  void marshal_help_1(rrr::Marshal &m,
-                      const std::unordered_set<Vertex<TxnInfo> *> &ret_set,
-                      Vertex<TxnInfo> *old_sv) const;
-
-  void marshal_help_2(rrr::Marshal &m,
-                      const std::unordered_set<Vertex<TxnInfo> *> &ret_set,
-                      Vertex<TxnInfo> *old_sv) const;
-};
-
-inline rrr::Marshal &operator>>(rrr::Marshal &m, GraphMarshaler &gra_m) {
-  verify(gra_m.gra == nullptr);
-
-  gra_m.gra = new Graph<TxnInfo>();
-
-  m >> *(gra_m.gra);
-
-  gra_m.self_create = true;
+inline rrr::Marshal &operator>>(rrr::Marshal &m, RccGraph &graph) {
+  verify(graph.txn_gra_.size() == 0);
+  m >> graph.txn_gra_;
   return m;
 }
 
-inline rrr::Marshal &operator<<(rrr::Marshal &m, const GraphMarshaler &gra_m) {
-  gra_m.write_to_marshal(m);
+inline rrr::Marshal &operator<<(rrr::Marshal &m, const RccGraph &graph) {
+  graph.write_to_marshal(m);
   return m;
 }
 

@@ -120,7 +120,11 @@ public:
                 return i64_;
             case I32:
                 return static_cast<i64>(i32_);
+            default:
+                verify(0);
         }
+        verify(0);
+        return 0;
     }
 
     double get_double() const {

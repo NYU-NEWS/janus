@@ -513,7 +513,7 @@ class VersionedRow: public CoarseLockedRow {
   void init_ver(int n_columns) {
 //    ver_ = new version_t[n_columns];
 //    memset(ver_, 0, sizeof(version_t) * n_columns);
-    ver_.resize(n_columns);
+    ver_.resize(n_columns, 0);
   }
 
  protected:

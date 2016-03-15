@@ -2,46 +2,49 @@
 
 //#include "all.h"
 #include "graph.h"
-#include "graph_marshaler.h"
 #include "txn-info.h"
 #include "marshal-value.h"
 #include "command.h"
 #include "command_marshaler.h"
-#include "rcc_srpc.h"
+//#include "rcc_srpc.h"
 
 /**
  * This is NOT thread safe!!!
  */
 namespace rococo {
 
-class DepGraph {
+typedef Vertex<TxnInfo> RccVertex;
+typedef vector<RccVertex> RccScc;
+class RccGraph {
  public:
 //    Graph<PieInfo> pie_gra_;
   Graph <TxnInfo> txn_gra_;
 
-  std::vector<rrr::Client *> rpc_clients_;
-  std::vector<RococoProxy *> rpc_proxies_;
-  std::vector<std::string> server_addrs_;
+//  std::vector<rrr::Client *> rpc_clients_;
+//  std::vector<RococoProxy *> rpc_proxies_;
+//  std::vector<std::string> server_addrs_;
 
 
-  DepGraph() {
-    // TODO remove this out
-    Config::GetConfig()->get_all_site_addr(server_addrs_);
-    rpc_clients_ = std::vector<rrr::Client *>(server_addrs_.size(), nullptr);
-    rpc_proxies_ = std::vector<RococoProxy *>(server_addrs_.size(), nullptr);
+  RccGraph() {
+    // TODO remove this out, use commo instead.
+//    Config::GetConfig()->get_all_site_addr(server_addrs_);
+//    rpc_clients_ = std::vector<rrr::Client *>(server_addrs_.size(), nullptr);
+//    rpc_proxies_ = std::vector<RococoProxy *>(server_addrs_.size(), nullptr);
   }
 
-  ~DepGraph() {
+  ~RccGraph() {
     // XXX hopefully some memory leak here does not hurt. :(
   }
 
-  RococoProxy *get_server_proxy(uint32_t id);
+//  RococoProxy *get_server_proxy(uint32_t id);
 
   /** on start_req */
   void start_pie(
       txnid_t txn_id,
-      Vertex <TxnInfo> **tv
+      RccVertex **tv
   );
+
+  void Aggregate(RccGraph& graph) {{verify(0);}};
 
   void union_txn_graph(Graph <TxnInfo> &gra) {
     txn_gra_.Aggregate(gra, true);
@@ -51,23 +54,14 @@ class DepGraph {
     return txn_gra_.FindSCC(ti.id());
   }
 
-  void find_txn_anc_opt(
-      Vertex <TxnInfo> *source,
-      std::unordered_set<Vertex < TxnInfo> *
-  > &ret_set
-  );
+  void find_txn_anc_opt(Vertex <TxnInfo> *source,
+                        std::unordered_set<Vertex <TxnInfo> *> &ret_set);
 
-  void find_txn_anc_opt(
-      uint64_t txn_id,
-      std::unordered_set<Vertex < TxnInfo> *
-  > &ret_set
-  );
+  void find_txn_anc_opt(uint64_t txn_id,
+                        std::unordered_set<Vertex <TxnInfo> *> &ret_set);
 
-  void find_txn_nearest_anc(
-      Vertex <TxnInfo> *v,
-      std::set<Vertex < TxnInfo> *
-  > &ret_set
-  ) {
+  void find_txn_nearest_anc(Vertex <TxnInfo> *v,
+                            std::set<Vertex <TxnInfo> *> &ret_set) {
     for (auto &kv: v->incoming_) {
       ret_set.insert(kv.first);
     }
@@ -92,6 +86,9 @@ class DepGraph {
     //}
   }
 
+  int size() const {
+    return txn_gra_.size();
+  };
 
   void find_txn_scc_anc_opt(
       uint64_t txn_id,
@@ -99,9 +96,19 @@ class DepGraph {
   > &ret_set
   );
 
-  uint64_t sub_txn_graph(
+  uint64_t MinItfrGraph(
       uint64_t tid,
-      GraphMarshaler &gra_m
+      RccGraph &gra_m
   );
+
+  void write_to_marshal(rrr::Marshal &m) const;
+
+  void marshal_help_1(rrr::Marshal &m,
+                      const std::unordered_set<Vertex<TxnInfo> *> &ret_set,
+                      Vertex<TxnInfo> *old_sv) const;
+
+  void marshal_help_2(rrr::Marshal &m,
+                      const std::unordered_set<Vertex<TxnInfo> *> &ret_set,
+                      Vertex<TxnInfo> *old_sv) const;
 };
 } // namespace rcc

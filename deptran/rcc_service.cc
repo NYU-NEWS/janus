@@ -4,7 +4,7 @@
 #include "command.h"
 #include "command_marshaler.h"
 #include "rcc_service.h"
-#include "three_phase/sched.h"
+#include "classic/sched.h"
 #include "benchmark_control_rpc.h"
 
 namespace rococo {

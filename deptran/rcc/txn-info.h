@@ -13,7 +13,7 @@ class TxnInfo {
   int8_t status_ = TXN_UKN;
 
  public:
-  uint64_t txn_id_;
+  txnid_t txn_id_;
   std::set<uint32_t> servers_;
   std::vector<uint64_t> pieces_;
 

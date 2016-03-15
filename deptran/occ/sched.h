@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../three_phase/sched.h"
+#include "../classic/sched.h"
 
 namespace rococo {
 
@@ -12,7 +12,7 @@ class OCCSched: public ThreePhaseSched {
  public:
   OCCSched();
   virtual mdb::Txn *get_mdb_txn(const i64 tid);
-  virtual mdb::Txn *get_mdb_txn(const RequestHeader &req);
+//  virtual mdb::Txn *get_mdb_txn(const RequestHeader &req);
 };
 
 } // namespace rococo
