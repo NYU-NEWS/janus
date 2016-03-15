@@ -44,7 +44,7 @@ class RccGraph {
       RccVertex **tv
   );
 
-  void Aggregate(RccGraph& graph);
+  void Aggregate(RccGraph& graph) {{verify(0);}};
 
   void union_txn_graph(Graph <TxnInfo> &gra) {
     txn_gra_.Aggregate(gra, true);

@@ -9,8 +9,8 @@ class RccCommo;
 
 class RccCoord: public ThreePhaseCoordinator {
 
-protected:
-  inline RccCommo* commo() {
+public:
+  RccCommo* commo() {
     return (RccCommo*)(commo_);
   }
 
@@ -48,7 +48,7 @@ public:
   void HandoutRoAck(phase_t phase,
                     int res,
                     SimpleCommand& cmd,
-                    map<int, mdb::version_t> vers);
-  void FinishRo();
+                    map<int, mdb::version_t>& vers);
+  void FinishRo() {verify(0);};
 };
 } // namespace rococo

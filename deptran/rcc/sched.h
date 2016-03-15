@@ -45,15 +45,17 @@ class RccSched : public Scheduler {
 
   void InquireAck(RccGraph& graph);
 
-  bool AllAncCmt(RccVertex *v);
-  void Decide(RccScc);
-  RccScc FindScc(RccVertex *v);
+  bool AllAncCmt(RccVertex *v) {verify(0);};
+  void Decide(RccScc){verify(0);};
+  RccScc FindScc(RccVertex *v){verify(0);};
 
-  bool AllAncFns(RccScc);
-  void Execute(RccScc);
+  bool AllAncFns(RccScc){verify(0);};
+  void Execute(RccScc){verify(0);};
 
 
-  RccCommo* commo();
+  RccCommo* commo() {
+    return commo_;
+  }
 };
 
 } // namespace rococo

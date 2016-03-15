@@ -8,15 +8,19 @@ class RccGraph;
 class RccCommo : public Communicator {
  public:
   void SendHandout(SimpleCommand &cmd,
-                   Coordinator *coo,
-                   const function<void(phase_t phase,
-                                       int res,
+                   const function<void(int res,
                                        SimpleCommand& cmd,
                                        RccGraph& graph)>&) ;
+  void SendHandoutRo(SimpleCommand &cmd,
+                     const function<void(int res,
+                                         SimpleCommand& cmd,
+                                         map<int, mdb::version_t>& vers)>&) ;
+
   void SendFinish(parid_t pid,
                   txnid_t tid,
                   RccGraph& graph,
-                  const function<void(Future *fu)> &callback) ;
+                  const function<void(int res, map<int, map<int32_t, Value>>&
+                  output)> &callback) ;
 
   void SendInquire(parid_t pid,
                    txnid_t tid,

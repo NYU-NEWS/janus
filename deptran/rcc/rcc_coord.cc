@@ -6,7 +6,6 @@
 #include "../txn-chopper-factory.h"
 #include "../benchmark_control_rpc.h"
 
-
 namespace rococo {
 
 void RccCoord::Handout() {
@@ -33,8 +32,7 @@ void RccCoord::Handout() {
               n_handout_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
     handout_acks_[subcmd->inn_id()] = false;
     commo()->SendHandout(*subcmd,
-                         this,
-                         std::bind(RccCoord::HandoutAck,
+                         std::bind(&RccCoord::HandoutAck,
                                    this,
                                    phase_,
                                    std::placeholders::_1,
@@ -127,7 +125,9 @@ void RccCoord::Finish() {
 
   for (auto& rp : ch->partition_ids_) {
     commo()->SendFinish(rp,
-                        std::bind(RccCoord::FinishAck,
+                        cmd_->id_,
+                        graph_,
+                        std::bind(&RccCoord::FinishAck,
                                   this,
                                   phase_,
                                   std::placeholders::_1,
@@ -189,21 +189,20 @@ void RccCoord::HandoutRo() {
     Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
               n_handout_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
     handout_acks_[subcmd->inn_id()] = false;
-    commo()->SendHandout(*subcmd,
-                         this,
-                         std::bind(&ThreePhaseCoordinator::HandoutAck,
-                                   this,
-                                   phase_,
-                                   std::placeholders::_1,
-                                   std::placeholders::_2,
-                                   std::placeholders::_3));
+    commo()->SendHandoutRo(*subcmd,
+                           std::bind(&RccCoord::HandoutRoAck,
+                                     this,
+                                     phase_,
+                                     std::placeholders::_1,
+                                     std::placeholders::_2,
+                                     std::placeholders::_3));
   }
 }
 
 void RccCoord::HandoutRoAck(phase_t phase,
                             int res,
                             SimpleCommand& cmd,
-                            map<int, mdb::version_t> vers) {
+                            map<int, mdb::version_t>& vers) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(phase == phase_);
 
@@ -324,8 +323,8 @@ void RccCoord::do_one(TxnRequest& req) {
 
   verify(ro_state_ == BEGIN);
   auto handout = ch->is_read_only() ?
-                 std::bind(RccCoord::HandoutRo, this) :
-                 std::bind(RccCoord::Handout, this);
+                 std::bind(&RccCoord::HandoutRo, this) :
+                 std::bind(&RccCoord::Handout, this);
   if (recorder_) {
     std::string log_s;
     req.get_log(cmd_->id_, log_s);
