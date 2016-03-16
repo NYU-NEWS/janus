@@ -126,16 +126,19 @@ int main(int argc, char *argv[]) {
     client_setup_heartbeat();
     client_launch_workers(client_infos);
     wait_for_clients();
+    Log_info("done waiting for clients.");
   }
 
   for (auto& worker : svr_workers) {
     worker.WaitForShutdown();
   }
+  Log_info("done waiting for server workers.");
 
   server_shutdown();
 
   RandomGenerator::destroy();
   Config::DestroyConfig();
+
   Log_debug("exit process.");
   fflush(stderr);
   fflush(stdout);

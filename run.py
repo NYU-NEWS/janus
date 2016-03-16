@@ -137,7 +137,9 @@ class TxnInfo(object):
         min_latency = g_max_latency
         max_latency = g_max_latency
         latencies_size = len(self.last_latencies)
+        interval_latencies = [g_max_latency for x in g_att_latencies_percentage]
         interval_attempt_latencies = [g_max_latency for x in g_att_latencies_percentage]
+        int_n_try = [g_max_try for x in g_n_try_percentage]
 
         interval_tps = int(round((self.commit_txn - self.pre_commit_txn) / interval_time))
 
@@ -336,11 +338,13 @@ class ClientController(object):
         for future in futures:
             future.wait()
 
+        logging.info("client start send successfully.")
+
         self.start_time = time.time()
 
     def benchmark_record(self, do_sample, do_sample_lock):
         sites = ProcessInfo.get_sites(self.process_infos, 
-                    SiteInfo.SiteType.Client)
+                                      SiteInfo.SiteType.Client)
         rpc_proxy = set()
         for site in sites:
             rpc_proxy.add(site.process.client_rpc_proxy)
@@ -359,7 +363,9 @@ class ClientController(object):
             i = 0
             futures = []
             while (i < len(rpc_proxy)):
-                futures.append(rpc_proxy[i].async_client_response())
+                logging.debug("%s", rpc_proxy[i].__dict__)
+                future = rpc_proxy[i].async_client_response()
+                futures.append(future)
                 i += 1
 
             i = 0
@@ -386,8 +392,13 @@ class ClientController(object):
                 break
 
     def print_stage_result(self, do_sample, do_sample_lock):
-        interval_time = (self.run_sec - self.pre_run_sec + (self.run_nsec - self.pre_run_nsec) / 1000000000.0) / len(self.c_info)
-        total_time = (self.run_sec + self.run_nsec / 1000000000.0) / len(self.c_info)
+        sites = ProcessInfo.get_sites(self.process_infos, 
+                                      SiteInfo.SiteType.Client)
+
+        interval_time = (self.run_sec - self.pre_run_sec \
+                        + (self.run_nsec - self.pre_run_nsec) / 1000000000.0) \
+                        / len(sites)
+        total_time = (self.run_sec + self.run_nsec / 1000000000.0) / len(sites)
         progress = int(round(100 * total_time / self.duration))
 
         if (self.print_max):
