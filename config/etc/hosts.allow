@@ -1,0 +1,1 @@
+rpcbind mountd nfsd statd lockd rquotad : 127.0.0.1 172.16.0.0/12 $ip_list
