@@ -559,7 +559,7 @@ class ServerController(object):
             cond.wait()
         if s_init_finish.value == 5:
             logging.error("Waiting for server init ... FAIL")
-            return False
+            return None 
         cond.release()
         logging.info("Waiting for server init ... Done")
         
@@ -966,7 +966,8 @@ def main():
 
         client_controller = ClientController(config, process_infos)
         process = server_controller.setup_heartbeat(client_controller)
-        process.join()
+        if process is not None:
+            process.join()
         
     except Exception:
         traceback.print_exc()

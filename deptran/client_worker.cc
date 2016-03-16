@@ -77,8 +77,10 @@ void ClientWorker::work() {
            Config::GetConfig()->get_duration());
 
   delete coo_;
-  Log_info("%s: wait_for_shutdown at client %d", this->coo_id);
-  if (ccsi) ccsi->wait_for_shutdown();
+  if (ccsi) {
+    Log_info("%s: wait_for_shutdown at client %d", __FUNCTION__, this->coo_id);
+    ccsi->wait_for_shutdown();
+  }
   delete timer_;
   return;
 }
