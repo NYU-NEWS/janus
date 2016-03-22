@@ -56,10 +56,10 @@ void BRQGraph::CheckStatusChange(std::map<txnid_t, BRQVertex*>& dtxn_map) {
 
 void BRQGraph::TestExecute(BRQVertex* vertex) {
   auto dtxn = vertex->data_;
-  if (dtxn->is_finished_ || dtxn->status_ < BRQDTxn::CMT) {
+  if (dtxn->is_finished_ || dtxn->status_ < BrqDTxn::CMT) {
     return;
   }
-  if (dtxn->status_ == BRQDTxn::CMT && !CheckPredCMT(vertex)) {
+  if (dtxn->status_ == BrqDTxn::CMT && !CheckPredCMT(vertex)) {
     return;
   }
   auto scc = FindSCC(vertex);
@@ -80,7 +80,7 @@ void BRQGraph::TestExecute(BRQVertex* vertex) {
 bool BRQGraph::CheckPredCMT(BRQVertex* vertex) {
   std::set<BRQVertex*> walked;
   std::function<bool(BRQVertex*)> func = [] (BRQVertex* v) {
-    if (v->data_->status_ >= BRQDTxn::CMT) {
+    if (v->data_->status_ >= BrqDTxn::CMT) {
       return true;
     } else {
       // TODO trigger inquiry

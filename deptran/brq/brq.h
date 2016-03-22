@@ -15,7 +15,7 @@ public:
 };
 
 class BRQGraph;
-class BRQDTxn {
+class BrqDTxn {
 public:
 
   ballot_t   ballot_cmd_seen_; // initialized as (0,cmd_id.COO_ID)
@@ -47,8 +47,8 @@ public:
   BRQGraph *graph_;
   //
   std::set<txnid_t> deps_;
-  std::set<BRQDTxn*> to_; 
-  std::set<BRQDTxn*> from_;
+  std::set<BrqDTxn *> to_;
+  std::set<BrqDTxn *> from_;
   // helper for saving stack context of asynchronous calls
   struct CommitStack {
     CommitReply *reply; 
@@ -56,7 +56,7 @@ public:
   };
   CommitStack commit_stack_; 
 
-  BRQDTxn(txnid_t txn_id, BRQGraph* graph);
+  BrqDTxn(txnid_t txn_id, BRQGraph* graph);
 
   // fast-accept/start
   void FastAccept(FastAcceptRequest &req, FastAcceptReply *rep, rrr::DeferredReply *defer);

@@ -35,7 +35,7 @@ public:
   void do_one(TxnRequest&) override;
 
   void Handout();
-  void HandoutAck(phase_t phase,
+  virtual void HandoutAck(phase_t phase,
                   int res,
                   SimpleCommand& cmd,
                   RccGraph& graph);

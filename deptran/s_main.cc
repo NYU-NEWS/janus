@@ -6,10 +6,9 @@
 #include "client_worker.h"
 #include "command_marshaler.h"
 #include "benchmark_control_rpc.h"
+#include "server_worker.h"
 
 using namespace rococo;
-
-#include "server_worker.h"
 
 static ClientControlServiceImpl *ccsi_g = nullptr;
 static rrr::PollMgr *cli_poll_mgr_g = nullptr;
@@ -22,7 +21,7 @@ static std::vector<std::thread> client_threads;
 void client_setup_heartbeat() {
   Log_info("%s", __FUNCTION__);
   std::map<int32_t, std::string> txn_types;
-  Frame(MODE_NONE).GetTxnTypes(txn_types);
+  Frame::GetFrame(Config::GetConfig()->cc_mode_)->GetTxnTypes(txn_types);
   unsigned int num_threads = Config::GetConfig()->get_num_threads(); // func
   bool hb = Config::GetConfig()->do_heart_beat();
   if (hb) {

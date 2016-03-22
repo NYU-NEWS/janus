@@ -48,11 +48,11 @@ void RccCoord::HandoutAck(phase_t phase,
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(phase == phase_);
   n_handout_ack_++;
-  TxnCommand *ch = (TxnCommand *) cmd_;
+  TxnCommand *txn = (TxnCommand *) cmd_;
   handout_acks_[cmd.inn_id_] = true;
 
   Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
-            n_handout_ack_, n_handout_, cmd_->id_, cmd.inn_id_);
+            n_handout_ack_, n_handout_, txn->id_, cmd.inn_id_);
 
   bool early_return = false;
 
@@ -68,34 +68,34 @@ void RccCoord::HandoutAck(phase_t phase,
 //      gra.size());
 
   // TODO?
-  if (graph.size() > 1) ch->disable_early_return();
+  if (graph.size() > 1) txn->disable_early_return();
 
-  ch->n_pieces_out_++;
-  cmd_->Merge(cmd);
+  txn->n_pieces_out_++;
+  txn->Merge(cmd);
 
-  if (cmd_->HasMoreSubCmdReadyNotOut()) {
+  if (txn->HasMoreSubCmdReadyNotOut()) {
     Log_debug("command has more sub-cmd, cmd_id: %lx,"
                   " n_started_: %d, n_pieces: %d",
-              cmd_->id_, ch->n_pieces_out_, ch->GetNPieceAll());
+              txn->id_, txn->n_pieces_out_, txn->GetNPieceAll());
     Handout();
   } else if (AllHandoutAckReceived()) {
     Log_debug("receive all start acks, txn_id: %ld; START PREPARE", cmd_->id_);
     Finish();
     // TODO?
-    if (ch->do_early_return()) {
+    if (txn->do_early_return()) {
       early_return = true;
     }
     //
     if (early_return) {
-      ch->reply_.res_ = SUCCESS;
-      TxnReply& txn_reply_buf = ch->get_reply();
-      double    last_latency  = ch->last_attempt_latency();
+      txn->reply_.res_ = SUCCESS;
+      TxnReply& txn_reply_buf = txn->get_reply();
+      double    last_latency  = txn->last_attempt_latency();
       this->report(txn_reply_buf, last_latency
       #ifdef TXN_STAT
           , ch
       #endif // ifdef TXN_STAT
       );
-      ch->callback_(txn_reply_buf);
+      txn->callback_(txn_reply_buf);
     }
   }
 }

@@ -1,35 +1,25 @@
-#include "../constants.h"
+
+#include "../__dep__.h"
 #include "frame.h"
-//#include "exec.h"
-//#include "coord.h"
-#include "rcc_coord.h"
+#include "brq-coord.h"
 #include "sched.h"
-#include "dtxn.h"
-#include "commo.h"
-#include "config.h"
 #include "service.h"
 
 namespace rococo {
 
-static Frame* rcc_frame_s = Frame::RegFrame(MODE_RCC,
-                                            {"rcc", "rococo"},
-                                            new RccFrame());
+static Frame* brq_frame_s = Frame::RegFrame(MODE_BRQ,
+                                            {"brq", "baroque", "janus"},
+                                            new BrqFrame());
 
-Executor* RccFrame::CreateExecutor(cmdid_t cmd_id, Scheduler* sched) {
-  verify(0);
-  Executor* exec = nullptr;
-//  Executor* exec = new TapirExecutor(cmd_id, sched);
-  return exec;
-}
 
-Coordinator* RccFrame::CreateCoord(cooid_t coo_id,
+Coordinator* BrqFrame::CreateCoord(cooid_t coo_id,
                                    Config* config,
                                    int benchmark,
                                    ClientControlServiceImpl *ccsi,
                                    uint32_t id,
                                    TxnRegistry* txn_reg) {
   verify(config != nullptr);
-  RccCoord* coord = new RccCoord(coo_id,
+  BrqCoord* coord = new BrqCoord(coo_id,
                                  benchmark,
                                  ccsi,
                                  id);
@@ -38,7 +28,9 @@ Coordinator* RccFrame::CreateCoord(cooid_t coo_id,
   return coord;
 }
 
-Scheduler* RccFrame::CreateScheduler() {
+
+
+Scheduler* BrqFrame::CreateScheduler() {
   verify(0);
 //  Scheduler *sched = nullptr;
   Scheduler* sched = new RccSched();
@@ -47,26 +39,27 @@ Scheduler* RccFrame::CreateScheduler() {
 }
 
 vector<rrr::Service *>
-RccFrame::CreateRpcServices(uint32_t site_id,
+BrqFrame::CreateRpcServices(uint32_t site_id,
                             Scheduler *sched,
                             rrr::PollMgr *poll_mgr,
                             ServerControlServiceImpl* scsi) {
   auto config = Config::GetConfig();
-  auto result = std::vector<Service *>();
-  auto s = new RococoServiceImpl(sched, poll_mgr, scsi);
+  auto result = vector<Service *>();
+  auto s = new BrqServiceImpl(sched, poll_mgr, scsi);
   result.push_back(s);
   return result;
 }
 
-mdb::Row* RccFrame::CreateRow(const mdb::Schema *schema,
+mdb::Row* BrqFrame::CreateRow(const mdb::Schema *schema,
                               vector<Value>& row_data) {
+
   mdb::Row* r = mdb::VersionedRow::create(schema, row_data);
   return r;
 }
 
-DTxn* RccFrame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {
+DTxn* BrqFrame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {
   auto dtxn = new RccDTxn(tid, mgr, ro);
   return dtxn;
 }
 
-} // namespace rococo
+}

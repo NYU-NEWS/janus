@@ -3,11 +3,11 @@
 
 namespace rococo {
 
-BRQDTxn::BRQDTxn(txnid_t txn_id, BRQGraph *graph)
+BrqDTxn::BrqDTxn(txnid_t txn_id, BRQGraph *graph)
   : txn_id_(txn_id), graph_(graph) {
 }
 
-void BRQDTxn::FastAccept(FastAcceptRequest &req, FastAcceptReply *rep, rrr::DeferredReply *defer) {
+void BrqDTxn::FastAccept(FastAcceptRequest &req, FastAcceptReply *rep, rrr::DeferredReply *defer) {
   ballot_t ballot = req.ballot;
   if (ballot_cmd_seen_ <= ballot &&
         ballot_deps_seen_ <= ballot) {
@@ -38,7 +38,7 @@ void BRQDTxn::FastAccept(FastAcceptRequest &req, FastAcceptReply *rep, rrr::Defe
     defer->reply();
 }
 
-void BRQDTxn::Commit(CommitRequest &req, CommitReply *rep, rrr::DeferredReply *defer) {
+void BrqDTxn::Commit(CommitRequest &req, CommitReply *rep, rrr::DeferredReply *defer) {
   // save stack context
   commit_stack_.reply = rep;
   commit_stack_.defer = defer;
@@ -47,7 +47,7 @@ void BRQDTxn::Commit(CommitRequest &req, CommitReply *rep, rrr::DeferredReply *d
   graph_->Aggregate(req.subgraph);
 }
 
-void BRQDTxn::commit_exec() {
+void BrqDTxn::commit_exec() {
   // all predecessors have become COMMITTING
   commit_stack_.reply->output = cmd_.Execute();
   commit_stack_.defer->reply();
@@ -57,7 +57,7 @@ void BRQDTxn::commit_exec() {
 //  // all predecessors
 //}
 
-void BRQDTxn::Prepare(PrepareReqeust &req, PrepareReply *rep, rrr::DeferredReply *reply) {
+void BrqDTxn::Prepare(PrepareReqeust &req, PrepareReply *rep, rrr::DeferredReply *reply) {
   // TODO
   ballot_t ballot = req.ballot;
   if (ballot_cmd_seen_ < ballot &&
@@ -74,7 +74,7 @@ void BRQDTxn::Prepare(PrepareReqeust &req, PrepareReply *rep, rrr::DeferredReply
   }
 }
 
-void BRQDTxn::accept(AcceptRequest& req, AcceptReply *rep, rrr::DeferredReply *defer) {
+void BrqDTxn::accept(AcceptRequest& req, AcceptReply *rep, rrr::DeferredReply *defer) {
   if (ballot_cmd_seen_ <= req.ballot &&
         ballot_deps_seen_ <= req.ballot) {
     ballot_cmd_seen_ = req.ballot;
@@ -86,14 +86,14 @@ void BRQDTxn::accept(AcceptRequest& req, AcceptReply *rep, rrr::DeferredReply *d
   }
 }
 
-void BRQDTxn::inquire(InquiryReply *rep, rrr::DeferredReply *defer) {
+void BrqDTxn::inquire(InquiryReply *rep, rrr::DeferredReply *defer) {
   // TODO
   //graph_->wait(this, CMT, [rep](){this->inquire_dcpd(req, defer);});
 }
 
-void BRQDTxn::inquire_dcpd(InquiryReply *rep, rrr::DeferredReply *defer) {
+void BrqDTxn::inquire_dcpd(InquiryReply *rep, rrr::DeferredReply *defer) {
   //
-  if (status_ != BRQDTxn::DCD) {
+  if (status_ != BrqDTxn::DCD) {
     //SubGraph* deps = new SubGraph(this, BRQGraph::OPT); TODO
     // rep->deps = deps; // TODO only return those not DECIDED
   } else {

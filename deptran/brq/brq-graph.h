@@ -4,12 +4,12 @@
 #include "all.h"
 
 namespace rococo {
-class BRQDTxn;
+class BrqDTxn;
 class CommitReply;
 
-typedef Vertex<BRQDTxn> BRQVertex;
+typedef Vertex<BrqDTxn> BRQVertex;
 
-class BRQGraph : public Graph<BRQDTxn> {
+class BRQGraph : public Graph<BrqDTxn> {
 public:
   enum subgraph_t {
     OPT,
