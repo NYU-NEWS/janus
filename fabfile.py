@@ -4,7 +4,7 @@ import traceback
 
 
 from fabric.api import env, task, run, local, hosts
-from fabric.api import execute, cd, runs_once
+from fabric.api import execute, cd, runs_once, sudo
 from fabric.contrib.files import exists
 from fabric.decorators import roles
 from fabric.context_managers import prefix
