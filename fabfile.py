@@ -45,6 +45,13 @@ def environment():
 @runs_once
 @hosts('localhost')
 def deploy_all(regions='us-west-2', servers_per_region=3, instance_type='t2.small'):
+    """
+    keyword arguments:
+        regions (string) - semi-colon separated list of regions to deploy to;
+        default 'us-west-2'
+        servers_per_region (int) - default 3
+        instance_type - the ec2 instance type; default 't2.small'
+    """
     try:
         regions = regions.split(';')
         for region in regions:

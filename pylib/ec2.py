@@ -15,24 +15,26 @@ EC2_REGIONS = {
     'eu-west-1': {
         'location': 'Ireland',
         'endpoint': 'ec2.eu-west-1.amazonaws.com',
-        'ami_image': None,
+        'ami_image': 'ami-22b53151',
     },
     'ap-northeast-2': {
         'location': 'Seoul',
         'endpoint': 'ec2.ap-northeast-2.amazonaws.com',
-        'ami_image': None,
+        'ami_image': 'ami-6fa66f01',
     },
     'us-west-2': {
         'location': 'Oregon',
         'endpoint': 'ec2.us-west-2.amazonaws.com',
         'ami_image': 'ami-63d03903',
     },
-#    'ap-southeast-1': 'ec2.ap-southeast-1.amazonaws.com',
-#    'ap-southeast-2': 'ec2.ap-southeast-2.amazonaws.com',
-#    'ap-northeast-1': 'ec2.ap-northeast-1.amazonaws.com',
-#    'us-east-1': 'ec2.us-east-1.amazonaws.com',
-#    'sa-east-1': 'ec2.sa-east-1.amazonaws.com',
-#    'us-west-1': 'ec2.us-west-1.amazonaws.com',
+    
+    # these regions are not used
+    'ap-southeast-1': {}
+    'ap-southeast-2': {}
+    'ap-northeast-1': {}
+    'us-east-1': {}
+    'sa-east-1': {}
+    'us-west-1': {}
 }
 
 INSTANCE_TYPE = 't2.micro'
