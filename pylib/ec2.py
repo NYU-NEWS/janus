@@ -3,6 +3,8 @@ import time
 import pickle
 import os.path
 import sys
+import socket
+import traceback
 
 import boto3
 from fabric.api import env, task, run, local, execute
@@ -83,8 +85,6 @@ def create(region, num=1, instance_type=INSTANCE_TYPE):
         created_instances[region].append(instance)
 
     persist_instances()
-
-
 
 
 @task
@@ -177,10 +177,12 @@ def instance_data_fn():
 
 
 @task
+@hosts('localhost')
 def rm_instances_data():
     fn = instance_data_fn()
     if os.path.exists(fn): 
         os.remove(instance_data_fn())
+    create_instances = {}
 
 
 @task
@@ -194,9 +196,54 @@ def terminate_instances():
         logging.info("terminate {}".format(ids))
         ec2.instances.filter(InstanceIds=ids).terminate()
 
+    execute('ec2.rm_instances_data')
+
+STATE_RUNNING = 16
+@task
+@hosts('localhost')
+def wait_for_all_servers(timeout=300):
+    n = 0 
+    start = time.time()
+    done = False
+    while not done:
+        done = True
+        for region, instances in created_instances.iteritems():
+            ec2 = boto3.resource('ec2', region_name=region)
+            ids = [instance.id for instance in instances]
+            instances = ec2.instances.filter(InstanceIds=ids)
+            for instance in instances:
+                state = instance.state
+                if state['Code'] != STATE_RUNNING:
+                    done = False
+                else:
+                    res = ec2.meta.client.describe_instance_status(InstanceIds=[ instance.id ])
+                    logging.info(res)
+                    if res is not None:
+                        sys_status = res['InstanceStatuses'][0]['SystemStatus']['Status']
+                        inst_status = res['InstanceStatuses'][0]['InstanceStatus']['Status']
+                        if  sys_status != 'ok' or inst_status != 'ok':
+                            done = False
+                    else:
+                        done = False
+
+
+        if time.time() - start > timeout:
+            raise TimeoutError("timeout waiting for servers to become ready.") 
+        if not done:
+            d = 1.5 ** n
+            logging.info("wait servers to become ready..\n" + \
+                         "sleep for {d}, timeout {t}".format(d=d,t=timeout))
+            time.sleep(d)
+            n=n+1
+    logging.info("done waiting for servers to become ready.")
+
+
+
+
+
+
 
 def persist_instances():
-    execute('ec2.load_instances')
     fn = instance_data_fn()
     with open(fn, 'wb') as f:
         pickler = pickle.Pickler(f)

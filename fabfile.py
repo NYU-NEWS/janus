@@ -1,8 +1,9 @@
 import logging
 import os
+import traceback
 
 
-from fabric.api import env, task, run, local
+from fabric.api import env, task, run, local, hosts
 from fabric.api import execute, cd, runs_once
 from fabric.contrib.files import exists
 from fabric.decorators import roles
@@ -38,6 +39,28 @@ def environment():
         env.setdefault('git_revision', "origin/master")
         env.setdefault("py_virtual_env",
                        "{home}/py_venv".format(home=env.nfs_home))
+
+
+@task
+@runs_once
+@hosts('localhost')
+def deploy_all(regions='us-west-2', servers_per_region=3, instance_type='t2.small'):
+    try:
+        regions = regions.split(';')
+        for region in regions:
+            execute('ec2.create', region=region, num=servers_per_region, instance_type=instance_type)
+
+        execute('ec2.set_instance_roles')
+        ec2.wait_for_all_servers()
+        execute('cluster.config_nfs_server')
+        execute('cluster.config_nfs_client')  
+        execute('retrieve_code')
+        execute('build')
+    except Exception as e:
+        traceback.print_exc()
+        logging.info("Terminating ec2 instances...")
+        ec2.terminate_instances()
+
 
 
 @task
