@@ -52,6 +52,7 @@ def deploy_all(regions='us-west-2', servers_per_region=3, instance_type='t2.smal
 
         execute('ec2.set_instance_roles')
         ec2.wait_for_all_servers()
+        execute('cluster.setup_security_groups')
         execute('cluster.config_nfs_server')
         execute('cluster.config_nfs_client')  
         execute('retrieve_code')

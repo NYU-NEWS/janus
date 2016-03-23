@@ -125,15 +125,20 @@ def load_instances():
 @hosts('localhost')
 def set_instance_roles():
     execute('ec2.load_instances')
-    roledefs = { 'leaders': [], 'servers': [] }
+    roledefs = { 'all': [], 'leaders': [], 'servers': [] }
+    
+    def add_server(t, ip):
+        roledefs['all'].append(ip)
+        roledefs[t].apend(ip)
+
     for region, instances in created_instances.iteritems():
         first = True
         for instance in instances:
             if first:
-                roledefs['leaders'].append(instance.public_ip_address)
+                add_server('leaders', instance.public_ip_address)
                 first = False
             else:
-                roledefs['servers'].append(instance.public_ip_address)
+                add_server('servers', instance.public_ip_address)
     env.roledefs = roledefs
     logging.info(env.roledefs)
 
