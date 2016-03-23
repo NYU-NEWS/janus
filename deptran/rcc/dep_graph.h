@@ -19,13 +19,13 @@ class RccGraph {
  public:
 //    Graph<PieInfo> pie_gra_;
   Graph <TxnInfo> txn_gra_;
-
+  svrid_t server_id_ = 0; // TODO
 //  std::vector<rrr::Client *> rpc_clients_;
 //  std::vector<RococoProxy *> rpc_proxies_;
 //  std::vector<std::string> server_addrs_;
 
 
-  RccGraph() {
+  RccGraph() : txn_gra_() {
     // TODO remove this out, use commo instead.
 //    Config::GetConfig()->get_all_site_addr(server_addrs_);
 //    rpc_clients_ = std::vector<rrr::Client *>(server_addrs_.size(), nullptr);
@@ -39,10 +39,7 @@ class RccGraph {
 //  RococoProxy *get_server_proxy(uint32_t id);
 
   /** on start_req */
-  void start_pie(
-      txnid_t txn_id,
-      RccVertex **tv
-  );
+  void FindOrCreateTxnInfo(txnid_t txn_id, RccVertex **tv);
 
   void Aggregate(RccGraph& graph) {{verify(0);}};
 

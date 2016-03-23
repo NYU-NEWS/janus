@@ -3,6 +3,9 @@
 
 #include "commo.h"
 #include "dep_graph.h"
+#include "txn-info.h"
+#include "graph_marshaler.h"
+#include "rcc_srpc.h"
 
 namespace rococo {
 
@@ -10,7 +13,21 @@ void RccCommo::SendHandout(SimpleCommand &cmd,
                            const function<void(int res,
                                                SimpleCommand& cmd,
                                                RccGraph& graph)>& callback) {
-  verify(0);
+  rrr::FutureAttr fuattr;
+  std::function<void(Future*)> cb =
+      [callback, &cmd] (Future *fu) {
+        int res;
+        Marshal &m = fu->get_reply();
+        RccGraph graph;
+        m >> res >> cmd.output >> graph;
+        callback(res, cmd, graph);
+      };
+  fuattr.callback = cb;
+  auto proxy = (RococoProxy*)RandomProxyForPartition(cmd.PartitionId()).second;
+  Log_debug("dispatch to %ld", cmd.PartitionId());
+  verify(cmd.type_ > 0);
+  verify(cmd.root_type_ > 0);
+  Future::safe_release(proxy->async_Handout(cmd, fuattr));
 }
 
 void RccCommo::SendHandoutRo(SimpleCommand &cmd,

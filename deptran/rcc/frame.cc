@@ -39,7 +39,6 @@ Coordinator* RccFrame::CreateCoord(cooid_t coo_id,
 }
 
 Scheduler* RccFrame::CreateScheduler() {
-  verify(0);
   Scheduler* sched = new RccSched();
   sched->frame_ = this;
   return sched;

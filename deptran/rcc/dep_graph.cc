@@ -32,11 +32,12 @@ static pthread_t th_id_s = 0;
 //}
 
 /** on start_req */
-void RccGraph::start_pie(txnid_t txn_id,
-                         Vertex<TxnInfo> **tv) {
+void RccGraph::FindOrCreateTxnInfo(txnid_t txn_id,
+                                   Vertex<TxnInfo> **tv) {
   verify(tv != NULL);
   *tv = txn_gra_.FindOrCreateV(txn_id);
-  static auto id = Config::GetConfig()->get_site_id();
+  // TODO fix.
+  static auto id = server_id_;
   auto txn_info = (*tv)->data_;
   verify(txn_info != nullptr);
   txn_info->servers_.insert(id);

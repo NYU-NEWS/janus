@@ -14,7 +14,7 @@ int RccSched::OnHandoutRequest(const SimpleCommand &cmd,
                                RccGraph *graph,
                                const function<void()> &callback) {
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(cmd.root_id_);
-  dep_graph_->start_pie(cmd.root_id_, &dtxn->tv_);
+  dep_graph_->FindOrCreateTxnInfo(cmd.root_id_, &dtxn->tv_);
 
   auto job = [&cmd, res, dtxn, callback, graph, output, this]() {
     dtxn->Execute(cmd, res, output);
