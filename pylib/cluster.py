@@ -9,7 +9,7 @@ from fabric.contrib.files import exists
 from fabric.decorators import roles, parallel
 from fabric.context_managers import prefix
 
-from pylib.ec2 import instance_by_pub_ip
+from pylib.ec2 import instance_by_pub_ip, created_instances
 
 def Xput(*args, **kwargs):
     res = put(*args, **kwargs)
@@ -64,4 +64,59 @@ def config_nfs_client(server_ip=None):
     reboot()
     with settings(warn_only=True):
         sudo('mount /mnt')
+
+def sec_grp_name(region):
+    return 'sg_janus_{}'.format(region)
+
+@task
+@roles('localhost')
+def setup_security_groups():
+    if 'security_groups' in env:
+        return
+
+    execute('ec2.set_instance_roles')
+    regions = create_instances.keys()
+    roledefs = env.roledefs
+     
+    ec2 = boto3.resource('ec2')
+    sec_groups = {}
+    for region in regions:
+        res = ec2.client.create_security_group(
+            GroupName=sec_grp_name(region),
+            Description='janus security group')
+        if res is not None and 'GroupId' in res:
+            sec_groups[region] = res['GroupId']
+        else:
+            raise RuntimeError("could not create security group.")
+    
+
+    all_ips = [] 
+    for region in regions:
+        security_group = ec2.SecurityGroup(sec_groups[region])
+        if security_group is not None:
+            security_group.load()
+            security_group.authorize_ingress(SourceSecurityGroupName=sec_grp_name(region))
+
+
+            permissions = {
+                'IpProtocol': '-1',
+                'FromPort': -1,
+                'ToPort': -1,
+                'IpRanges': []
+            }
+
+            for region2 in regions:
+                if region2 != region:
+                    for instance in created_instances[region2].itervalues():
+                        logging.debug("append {} to security group {}", ip,
+                                      sec_grp_name(region))
+                        permissions['IpRanges'].append({ 'CidrIp': ip }) 
+
+            security_group.authorize_ingress(IpPermissions=permissions)
+        else:
+            raise RuntimeError("could not load security group")
+
+    env.security_groups = sec_groups
+
+
 
