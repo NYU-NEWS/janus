@@ -58,6 +58,7 @@ def list_regions():
 @task
 @hosts('localhost')
 def create(region, num=1, instance_type=INSTANCE_TYPE):
+    global created_instances
     if not exists('~/.aws/credentials'):
         raise RuntimeError("can't find aws credentials")
     execute('ec2.load_instances')
@@ -200,6 +201,7 @@ def terminate_instances():
 
     execute('ec2.rm_instances_data')
 
+
 STATE_RUNNING = 16
 @task
 @hosts('localhost')
@@ -238,11 +240,6 @@ def wait_for_all_servers(timeout=300):
             time.sleep(d)
             n=n+1
     logging.info("done waiting for servers to become ready.")
-
-
-
-
-
 
 
 def persist_instances():

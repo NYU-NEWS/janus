@@ -4,7 +4,7 @@ import StringIO
 import time
 
 from fabric.api import env, task, run, sudo, local
-from fabric.api import put, execute, cd, runs_once, reboot
+from fabric.api import put, execute, cd, runs_once, reboot, settings
 from fabric.contrib.files import exists
 from fabric.decorators import roles, parallel
 from fabric.context_managers import prefix
@@ -42,6 +42,9 @@ def config_nfs_server():
     sudo('service nfs-kernel-server start')
     time.sleep(5)
     sudo('service nfs-kernel-server restart')
+    time.sleep(5)
+    sudo('service nfs-kernel-server reload')
+
 
 @task
 @roles('servers')
@@ -59,4 +62,6 @@ def config_nfs_client(server_ip=None):
     contents = StringIO.StringIO(template.substitute(server_ip=server_ip))
     Xput(contents, "/etc/fstab", use_sudo=True)
     reboot()
+    with settings(warn_only=True):
+        sudo('mount /mnt')
 

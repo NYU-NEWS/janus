@@ -1,6 +1,7 @@
 import logging
 import os
 import traceback
+import time
 
 
 from fabric.api import env, task, run, local, hosts
@@ -47,16 +48,18 @@ def environment():
 def deploy_all(regions='us-west-2', servers_per_region=3, instance_type='t2.small'):
     """
     keyword arguments:
-        regions (string) - semi-colon separated list of regions to deploy to;
+        regions (string) - colon separated list of regions to deploy to;
         default 'us-west-2'
         servers_per_region (int) - default 3
         instance_type - the ec2 instance type; default 't2.small'
     """
+    start = time.time()
     try:
-        regions = regions.split(';')
+        regions = regions.split(':')
+        logging.info('deploy to regions: {}'.format(','.join(regions)))
         for region in regions:
+            logging.debug('create in region: {}'.format(region))
             execute('ec2.create', region=region, num=servers_per_region, instance_type=instance_type)
-
         execute('ec2.set_instance_roles')
         ec2.wait_for_all_servers()
         execute('cluster.config_nfs_server')
@@ -67,6 +70,8 @@ def deploy_all(regions='us-west-2', servers_per_region=3, instance_type='t2.smal
         traceback.print_exc()
         logging.info("Terminating ec2 instances...")
         ec2.terminate_instances()
+    finally:
+        print("{:.2f} seconds elapsed".format(time.time() - start))
 
 
 
