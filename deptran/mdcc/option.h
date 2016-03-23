@@ -14,7 +14,7 @@ namespace mdcc {
   using rococo::MultiValue;
 
   class OptionSet;
-  typedef std::pair<string, size_t> RowId; // table, key
+  typedef std::pair<string, int64_t> RowId; // table, key
   typedef std::map<RowId, OptionSet*> RecordOptionMap;
 
   struct Option {
@@ -112,7 +112,7 @@ namespace mdcc {
     m >> i;
     o.accepted_ = (i) ? true : false;
     m >> o.key_;
-    size_t key_hash;
+    int64_t key_hash;
     m >> key_hash;
     o.row_id_ = RowId(o.table_, key_hash);
     return m;

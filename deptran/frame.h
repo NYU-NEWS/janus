@@ -35,11 +35,11 @@ class Frame {
   Frame(int mode) : mode_(mode) {};
   // for both dtxn and rep
   virtual Coordinator* CreateCoord(cooid_t coo_id,
-                           Config* config,
-                           int benchmark,
-                           ClientControlServiceImpl *ccsi,
-                           uint32_t id,
-                           TxnRegistry* txn_reg);
+                                   Config* config,
+                                   int benchmark,
+                                   ClientControlServiceImpl *ccsi,
+                                   uint32_t id,
+                                   TxnRegistry* txn_reg);
   virtual Executor* CreateExecutor(cmdid_t cmd_id, Scheduler *sch);
   virtual Scheduler *CreateScheduler();
   virtual Communicator* CreateCommo();
