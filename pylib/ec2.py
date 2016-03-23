@@ -54,6 +54,8 @@ def list_regions():
             print("\t{k}: {v}".format(k=k, v=v))
     print
 
+def sec_grp_name(region):
+    return 'sg_janus_{}'.format(region)
 
 @task
 @hosts('localhost')
@@ -62,14 +64,16 @@ def create(region, num=1, instance_type=INSTANCE_TYPE):
     if not exists('~/.aws/credentials'):
         raise RuntimeError("can't find aws credentials")
     execute('ec2.load_instances')
+    execute('cluster.setup_security_groups')
     num = int(num)
     ec2 = boto3.resource('ec2', region_name=region)
     verify_region_has_image(region)
     
+    security_group = [ sec_grp_name(region) ]
     instances = ec2.create_instances(ImageId=EC2_REGIONS[region]['ami_image'], 
                                      MinCount=num,
                                      MaxCount=num, 
-                                     SecurityGroups=SECURITY_GROUPS,
+                                     SecurityGroups=security_group,
                                      InstanceType=INSTANCE_TYPE)
     
     logging.info("created {num} instances in region {region}".format(num=num,
@@ -132,7 +136,7 @@ def set_instance_roles():
     
     def add_server(t, ip):
         roledefs['all'].append(ip)
-        roledefs[t].apend(ip)
+        roledefs[t].append(ip)
 
     for region, instances in created_instances.iteritems():
         first = True
@@ -205,6 +209,9 @@ def terminate_instances():
         ec2.instances.filter(InstanceIds=ids).terminate()
 
     execute('ec2.rm_instances_data')
+    
+    for region in created_instances.iterkeys():
+        execute('cluster.delete_security_group', region=region)
 
 
 STATE_RUNNING = 16

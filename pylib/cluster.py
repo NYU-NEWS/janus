@@ -2,14 +2,17 @@ import logging
 import string
 import StringIO
 import time
+import traceback
+
+import boto3
 
 from fabric.api import env, task, run, sudo, local
 from fabric.api import put, execute, cd, runs_once, reboot, settings
 from fabric.contrib.files import exists
-from fabric.decorators import roles, parallel
+from fabric.decorators import roles, parallel, hosts
 from fabric.context_managers import prefix
 
-from pylib.ec2 import instance_by_pub_ip, created_instances
+from pylib.ec2 import instance_by_pub_ip, created_instances, EC2_REGIONS
 
 def Xput(*args, **kwargs):
     res = put(*args, **kwargs)
@@ -68,35 +71,69 @@ def config_nfs_client(server_ip=None):
 def sec_grp_name(region):
     return 'sg_janus_{}'.format(region)
 
+
 @task
-@roles('localhost')
+@hosts('localhost')
+def delete_security_group(region):
+    if region is None:
+        return
+
+    client = boto3.client('ec2', region_name=region)
+    try:
+        client.delete_security_group(GroupName=sec_grp_name(region))
+    except:
+        traceback.print_exc()
+
+
+@task
+@hosts('localhost')
+@runs_once
 def setup_security_groups():
     if 'security_groups' in env:
         return
 
     execute('ec2.set_instance_roles')
-    regions = create_instances.keys()
+    regions = EC2_REGIONS.keys()
     roledefs = env.roledefs
      
-    ec2 = boto3.resource('ec2')
     sec_groups = {}
     for region in regions:
-        res = ec2.client.create_security_group(
-            GroupName=sec_grp_name(region),
-            Description='janus security group')
+        client = boto3.client('ec2', region_name=region)
+        res = None
+        try:
+            res = client.create_security_group(
+                GroupName=sec_grp_name(region),
+                Description='janus security group')
+        except:
+            traceback.print_exc()
+            groups = client.describe_security_groups(GroupNames=[sec_grp_name(region)])
+            group_id = groups['SecurityGroups'][0]['GroupId']
+            res = {'GroupId': group_id}
+
         if res is not None and 'GroupId' in res:
             sec_groups[region] = res['GroupId']
         else:
             raise RuntimeError("could not create security group.")
+    env.security_groups = sec_groups
     
-
+@task
+@hosts('localhost')
+def load_security_grp_ips():
+    execute('ec2.load_instances')
+    execute('cluster.setup_security_groups')
+    sec_groups = env.security_groups
+    regions = created_instances.keys()
     all_ips = [] 
     for region in regions:
+        ec2 = boto3.resource('ec2', region_name=region)
         security_group = ec2.SecurityGroup(sec_groups[region])
         if security_group is not None:
             security_group.load()
-            security_group.authorize_ingress(SourceSecurityGroupName=sec_grp_name(region))
-
+            logging.info("authorizing region machines for security group {}", sec_grp_name(region))
+            try:
+                security_group.authorize_ingress(SourceSecurityGroupName=sec_grp_name(region))
+            except:
+                traceback.print_exc()
 
             permissions = {
                 'IpProtocol': '-1',
@@ -106,17 +143,22 @@ def setup_security_groups():
             }
 
             for region2 in regions:
-                if region2 != region:
-                    for instance in created_instances[region2].itervalues():
-                        logging.debug("append {} to security group {}", ip,
-                                      sec_grp_name(region))
-                        permissions['IpRanges'].append({ 'CidrIp': ip }) 
-
-            security_group.authorize_ingress(IpPermissions=permissions)
+                if True or region2 != region:
+                    for instance in created_instances[region2]:
+                        cidr = instance.public_ip_address + "/32"
+                        logging.info("append {} to security group {}".format(
+                            cidr, sec_grp_name(region)))
+                        permissions['IpRanges'].append({ 'CidrIp': cidr })
+            
+            logging.info("adding rules: {}", permissions)
+            try:
+                security_group.authorize_ingress(IpPermissions=[permissions])
+            except:
+                traceback.print_exc()
+            
         else:
             raise RuntimeError("could not load security group")
 
-    env.security_groups = sec_groups
 
 
 
