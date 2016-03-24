@@ -23,6 +23,28 @@ def Xput(*args, **kwargs):
         raise RuntimeError('failed transferring {}'.format(args[0]))
     return res
 
+@task
+@roles('leaders')
+def put_janus_config():
+    import yaml
+    execute('ec2.set_instance_roles')
+    config_fn = 'config/aws.yml'
+    config = yaml.load(open(config_fn).read())
+    config['host'] = {}
+    host = config['host']
+    created_instances = get_created_instances()
+    leader_ip_address = env.roledefs['leaders'][0]
+    for region, instances in created_instances.iteritems():
+        cnt = 0
+        for instance in instances:
+            proc_name = "{region}-{cnt}".format(region=region, cnt=cnt)
+            if instance.public_ip_address != leader_ip_address:
+                host[proc_name] = instance.public_ip_address
+                cnt += 1
+    config_contents = StringIO.StringIO(yaml.dump(config, default_flow_style=False))
+    put(config_contents, "{}/config/aws.yml".format(env.nfs_home))
+
+
 
 @task
 @runs_once
@@ -61,7 +83,7 @@ def config_nfs_server():
 
 
 @task
-@roles('servers')
+@roles('servers', 'leaders')
 def config_nfs_client(server_ip=None):
     if server_ip is None:
         execute('ec2.load_instances')
