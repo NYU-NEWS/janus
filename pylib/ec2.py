@@ -15,24 +15,26 @@ EC2_REGIONS = {
     'eu-west-1': {
         'location': 'Ireland',
         'endpoint': 'ec2.eu-west-1.amazonaws.com',
-        'ami_image': None,
+        'ami_image': 'ami-22b53151',
     },
     'ap-northeast-2': {
         'location': 'Seoul',
         'endpoint': 'ec2.ap-northeast-2.amazonaws.com',
-        'ami_image': None,
+        'ami_image': 'ami-6fa66f01',
     },
     'us-west-2': {
         'location': 'Oregon',
         'endpoint': 'ec2.us-west-2.amazonaws.com',
         'ami_image': 'ami-63d03903',
     },
-#    'ap-southeast-1': 'ec2.ap-southeast-1.amazonaws.com',
-#    'ap-southeast-2': 'ec2.ap-southeast-2.amazonaws.com',
-#    'ap-northeast-1': 'ec2.ap-northeast-1.amazonaws.com',
-#    'us-east-1': 'ec2.us-east-1.amazonaws.com',
-#    'sa-east-1': 'ec2.sa-east-1.amazonaws.com',
-#    'us-west-1': 'ec2.us-west-1.amazonaws.com',
+    
+    # these regions are not used
+    'ap-southeast-1': {},
+    'ap-southeast-2': {},
+    'ap-northeast-1': {},
+    'us-east-1': {},
+    'sa-east-1': {},
+    'us-west-1': {},
 }
 
 INSTANCE_TYPE = 't2.micro'
@@ -41,6 +43,8 @@ DATA_DIR = ".ec2-data"
 
 # maps region to instances
 created_instances = {}
+def get_created_instances():
+    return created_instances
 
 
 @task
@@ -52,21 +56,26 @@ def list_regions():
             print("\t{k}: {v}".format(k=k, v=v))
     print
 
+def sec_grp_name(region):
+    return 'sg_janus_{}'.format(region)
 
 @task
 @hosts('localhost')
 def create(region, num=1, instance_type=INSTANCE_TYPE):
+    global created_instances
     if not exists('~/.aws/credentials'):
         raise RuntimeError("can't find aws credentials")
     execute('ec2.load_instances')
+    execute('cluster.setup_security_groups')
     num = int(num)
     ec2 = boto3.resource('ec2', region_name=region)
     verify_region_has_image(region)
     
+    security_group = [ sec_grp_name(region) ]
     instances = ec2.create_instances(ImageId=EC2_REGIONS[region]['ami_image'], 
                                      MinCount=num,
                                      MaxCount=num, 
-                                     SecurityGroups=SECURITY_GROUPS,
+                                     SecurityGroups=security_group,
                                      InstanceType=INSTANCE_TYPE)
     
     logging.info("created {num} instances in region {region}".format(num=num,
@@ -106,7 +115,7 @@ def load_instances():
 
     logging.info("loaded instance data:")
     for region, instances in created_instances.iteritems():
-        logging.info("\n" + region + ":")
+        logging.info(region + ":")
         for instance in instances:
             try:
                 logging.info("{iid}: public={ip}, private={pip}".format(
@@ -125,17 +134,22 @@ def load_instances():
 @hosts('localhost')
 def set_instance_roles():
     execute('ec2.load_instances')
-    roledefs = { 'leaders': [], 'servers': [] }
+    roledefs = { 'all': [], 'leaders': [], 'servers': [] }
+    
+    def add_server(t, ip):
+        roledefs['all'].append(ip)
+        roledefs[t].append(ip)
+
     for region, instances in created_instances.iteritems():
         first = True
         for instance in instances:
             if first:
-                roledefs['leaders'].append(instance.public_ip_address)
+                add_server('leaders', instance.public_ip_address)
                 first = False
             else:
-                roledefs['servers'].append(instance.public_ip_address)
+                add_server('servers', instance.public_ip_address)
     env.roledefs = roledefs
-    logging.info(env.roledefs)
+    logging.debug("roles: {}".format(env.roledefs))
 
 
 def wait_for_ip_address(instances, timeout=60):
@@ -197,12 +211,17 @@ def terminate_instances():
         ec2.instances.filter(InstanceIds=ids).terminate()
 
     execute('ec2.rm_instances_data')
+    
+    for region in created_instances.iterkeys():
+        execute('cluster.delete_security_group', region=region)
+
 
 STATE_RUNNING = 16
 @task
 @hosts('localhost')
 def wait_for_all_servers(timeout=300):
-    n = 0 
+    n = 5 
+    d = 0
     start = time.time()
     done = False
     while not done:
@@ -226,21 +245,18 @@ def wait_for_all_servers(timeout=300):
                     else:
                         done = False
 
-
-        if time.time() - start > timeout:
+        elapsed = time.time() - start
+        if elapsed > timeout:
             raise TimeoutError("timeout waiting for servers to become ready.") 
         if not done:
-            d = 1.5 ** n
-            logging.info("wait servers to become ready..\n" + \
-                         "sleep for {d}, timeout {t}".format(d=d,t=timeout))
+            if d<30:
+                d = 1.5 ** n
+            msg = "wait servers to become ready..\n" + \
+                  "sleep for {d:.2f}, elapsed {e:.2f}, timeout {t}"
+            logging.info(msg.format(d=d,e=elapsed,t=timeout))
             time.sleep(d)
             n=n+1
     logging.info("done waiting for servers to become ready.")
-
-
-
-
-
 
 
 def persist_instances():

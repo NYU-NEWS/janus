@@ -1,6 +1,7 @@
 import logging
 import os
 import traceback
+import time
 
 
 from fabric.api import env, task, run, local, hosts
@@ -31,36 +32,71 @@ def init():
 def environment():
     if '__envset__' not in env:
         env.__envset__ = True
+        
+        # standard fabric variables
+        env.connection_attempts = 10
+        env.timeout = 30 
         env.use_ssh_config = True
+        
+        # custom variables
         env.local_cwd = os.path.dirname(os.path.realpath(__file__))
-        env.setdefault('remote_home', "/mnt/janus")
-        env.setdefault('nfs_home', "/export/janus")
-        env.setdefault('git_repo', "git@github.com:NYU-NEWS/janus.git")
-        env.setdefault('git_revision', "origin/master")
-        env.setdefault("py_virtual_env",
-                       "{home}/py_venv".format(home=env.nfs_home))
+        env.setdefault('remote_home', '/mnt/janus')
+        env.setdefault('nfs_home', '/export/janus')
+        env.setdefault('git_repo', 'git@github.com:NYU-NEWS/janus.git')
+        env.setdefault('git_revision', 'master')
+        env.setdefault('py_virtual_env',
+                       '{home}/py_venv'.format(home=env.nfs_home))
 
 
 @task
 @runs_once
 @hosts('localhost')
-def deploy_all(regions='us-west-2', servers_per_region=3, instance_type='t2.small'):
-    try:
-        regions = regions.split(';')
-        for region in regions:
-            execute('ec2.create', region=region, num=servers_per_region, instance_type=instance_type)
+def deploy_all(regions='us-west-2', servers_per_region=[3], instance_type='t2.small'):
+    """
+    keyword arguments:
+        regions (string) - colon separated list of regions to deploy to;
+        default 'us-west-2'
+        servers_per_region (list) - default [3] 
+        instance_type - the ec2 instance type; default 't2.small'
+    example:
+         fab deploy_all:regions=us-west-2:eu-west-1,servers_per_region=3:2
+    """
+    if isinstance(regions, basestring):
+        regions = regions.split(':')
+    if isinstance(servers_per_region, basestring):
+        servers_per_region = [ int(i) for i in servers_per_region.split(':') ]
 
+    assert(len(servers_per_region) == len(regions))
+
+    start = time.time()
+    try:
+        logging.info('deploy to regions: {}'.format(','.join(regions)))
+        for region in regions:
+            execute('cluster.delete_security_group', region=region)
+        execute('cluster.setup_security_groups', regions=regions)
+        
+        region_index = 0
+        for region in regions:
+            logging.debug('create in region: {}'.format(region))
+            execute('ec2.create', 
+                    region=region,
+                    num=servers_per_region[region_index], 
+                    instance_type=instance_type)
+            region_index += 1
+
+        execute('cluster.load_security_grp_ips')
         execute('ec2.set_instance_roles')
         ec2.wait_for_all_servers()
         execute('cluster.config_nfs_server')
-        execute('cluster.config_nfs_client')  
+        execute('cluster.config_nfs_client')
         execute('retrieve_code')
         execute('build')
     except Exception as e:
         traceback.print_exc()
         logging.info("Terminating ec2 instances...")
         ec2.terminate_instances()
-
+    finally:
+        print("{:.2f} seconds elapsed".format(time.time() - start))
 
 
 @task
@@ -101,11 +137,16 @@ def retrieve_code():
     with cd(parent):
         logging.info("check out code in {}".format(parent))
         if not exists(env.nfs_home):
-            run('git clone --recursive --depth=1 ' + env.git_repo)
+            cmd = 'git clone --recursive ' + \
+                  '{repo}'.format(repo=env.git_repo)
+            run(cmd)
+            with cd(env.nfs_home):
+                cmd = 'git checkout {rev}'.format(rev=env.git_revision)
+                run(cmd)
         else:
             with cd(env.nfs_home):
-                run('git fetch origin')
-                run('git reset --hard {rev}'.format(rev=env.git_revision))
+                run('git fetch origin {rev}'.format(rev=env.git_revision))
+                run('git checkout {rev}'.format(rev=env.git_revision))
 
 
 init()
