@@ -114,10 +114,10 @@ Frame* Frame::GetFrame(string name) {
 
 Frame* Frame::RegFrame(int mode, vector<string> names, Frame* frame) {
   for (auto name: names) {
-    verify(frame_name_mode_s.find(name) == frame_name_mode_s.end());
+    //verify(frame_name_mode_s.find(name) == frame_name_mode_s.end());
     frame_name_mode_s[name] = mode;
   }
-  RegFrame(mode, frame);
+  return RegFrame(mode, frame);
 }
 
 Sharding* Frame::CreateSharding() {
