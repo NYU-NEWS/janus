@@ -36,7 +36,7 @@ class TxnInfo {
     return status_;
   }
 
-  inline bool is_commit() const {
+  inline bool IsDecided() const {
     return (status_ & TXN_DCD);
   }
 

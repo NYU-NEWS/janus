@@ -1,10 +1,12 @@
-#include "all.h"
+#include "../__dep__.h"
+#include "../constants.h"
+#include "dep_graph.h"
 
 
-rrr::PollMgr *svr_poll_mgr_g = nullptr;
 
 namespace rococo {
 
+rrr::PollMgr *svr_poll_mgr_g = nullptr;
 static pthread_t th_id_s = 0;
 
 //RococoProxy *RccGraph::get_server_proxy(uint32_t id) {
@@ -33,9 +35,11 @@ static pthread_t th_id_s = 0;
 
 /** on start_req */
 void RccGraph::FindOrCreateTxnInfo(txnid_t txn_id,
-                                   Vertex<TxnInfo> **tv) {
+                                   RccVertex **tv) {
   verify(tv != NULL);
-  *tv = txn_gra_.FindOrCreateV(txn_id);
+  *tv = FindOrCreateV(txn_id);
+  verify(FindV(txn_id) != nullptr);
+  verify(*tv != nullptr);
   // TODO fix.
   static auto id = server_id_;
   auto txn_info = (*tv)->data_;
@@ -44,45 +48,70 @@ void RccGraph::FindOrCreateTxnInfo(txnid_t txn_id,
 }
 
 uint64_t RccGraph::MinItfrGraph(uint64_t tid,
-                                RccGraph &gra_m) {
+                                RccGraph* new_graph) {
 //  gra_m.gra = &txn_gra_;
 
-  Vertex<TxnInfo> *source = txn_gra_.FindV(tid);
+  Vertex<TxnInfo> *source = FindV(tid);
   verify(source != NULL);
   // Log_debug("compute for sub graph, tid: %llx parent size: %d",
   //     tid, (int) source->from_.size());
 
 //  auto &ret_set = gra_m.ret_set;
-  verify(0); // TODO
-  std::unordered_set<Vertex<TxnInfo> *> ret_set;
-  find_txn_anc_opt(source, ret_set);
-  ret_set.insert(source);
-  return ret_set.size();
-}
+//  unordered_set<RccVertex *> ret_set;
+//  find_txn_anc_opt(source, ret_set);
 
-void RccGraph::find_txn_anc_opt(Vertex<TxnInfo> *source,
-                                std::unordered_set<Vertex<TxnInfo> *> &ret_set) {
-  verify(source != NULL);
-  // Log::debug("compute for sub graph, tid: %llx parent size: %d",
-  //     tid, (int) source->from_.size());
-  std::vector<Vertex<TxnInfo> *> search_stack;
+  vector<RccVertex *> search_stack;
+  set<RccVertex*> searched_set;
   search_stack.push_back(source);
-
   while (search_stack.size() > 0) {
-    Vertex<TxnInfo> *v = search_stack.back();
+    RccVertex *v = search_stack.back();
+    searched_set.insert(v);
     search_stack.pop_back();
-
+    RccVertex* new_v = new_graph->FindOrCreateV(*v);
     for (auto &kv: v->incoming_) {
-      auto &parent = kv.first;
-      if (!parent->data_->is_commit()
-          && ret_set.find(parent) == ret_set.end()) {
-        ret_set.insert(parent);
-        search_stack.push_back(parent);
+      auto parent_v = kv.first;
+      auto weight = kv.second;
+      auto parent_txn = parent_v->data_;
+      if (parent_txn->IsDecided()) {
+        continue;
       }
+      if (searched_set.find(parent_v) != searched_set.end()) {
+        continue;
+      }
+      RccVertex* new_parent_v = new_graph->FindOrCreateV(*parent_v);
+      new_v->AddParentEdge(new_parent_v, weight);
+      search_stack.push_back(parent_v);
     }
   }
-  // remove source from result set.
-  ret_set.erase(source);
+  return new_graph->size();
+}
+
+void RccGraph::find_txn_anc_opt(RccVertex *source,
+                                unordered_set<RccVertex *> &ret_set) {
+  verify(0);
+//  verify(source != NULL);
+//  verify(ret_set.size() == 0);
+//  // Log::debug("compute for sub graph, tid: %llx parent size: %d",
+//  //     tid, (int) source->from_.size());
+//  vector<RccVertex *> search_stack;
+//  search_stack.push_back(source);
+//
+//  while (search_stack.size() > 0) {
+//    RccVertex *v = search_stack.back();
+//    search_stack.pop_back();
+//
+//    for (auto &kv: v->incoming_) {
+//      auto &parent_vertex = kv.first;
+//      TxnInfo &parent_txn = parent_vertex->data_;
+//      if (!parent_txn.IsDecided() &&
+//          ret_set.find(parent_vertex) == ret_set.end()) {
+//        ret_set.insert(parent_vertex);
+//        search_stack.push_back(parent_vertex);
+//      }
+//    }
+//  }
+  // remove source from result set. ? no
+  // ret_set.erase(source);
   //if (RandomGenerator::rand(1, 100) == 1) {
   //    Log::info("anc size: %d", ret_set.size());
   //}
@@ -90,7 +119,7 @@ void RccGraph::find_txn_anc_opt(Vertex<TxnInfo> *source,
 
 void RccGraph::find_txn_anc_opt(uint64_t txn_id,
                                 std::unordered_set<Vertex<TxnInfo> *> &ret_set) {
-  Vertex<TxnInfo> *source = txn_gra_.FindV(txn_id);
+  Vertex<TxnInfo> *source = FindV(txn_id);
   verify(source != NULL);
   find_txn_anc_opt(source, ret_set);
 }
@@ -99,7 +128,7 @@ void RccGraph::find_txn_scc_anc_opt(
     uint64_t txn_id,
     std::unordered_set<Vertex<TxnInfo> *> &ret_set
 ) {
-  std::vector<Vertex<TxnInfo> *> scc = txn_gra_.FindSCC(txn_id);
+  std::vector<Vertex<TxnInfo> *> scc = FindSCC(txn_id);
   //for (auto v: scc) {
   //    find_txn_anc_opt(v->data_.id(), ret_set);
   //}
@@ -115,6 +144,30 @@ void RccGraph::find_txn_scc_anc_opt(
   //if (RandomGenerator::rand(1, 100) == 1) {
   //    Log::info("scc anc size: %d", ret_set.size());
   //}
+}
+
+
+void RccGraph::write_to_marshal(rrr::Marshal &m) const {
+  verify(0); // TODO
+  unordered_set<RccVertex *> ret_set;
+  int32_t n = size();
+  m << n;
+
+  for (auto &old_sv: ret_set) {
+    m << old_sv->data_->id();
+    m << *(old_sv->data_);
+
+    marshal_help_1(m, ret_set, old_sv);
+
+//        marshal_help_2(m, ret_set, old_sv);
+
+//      verify(ma_size == to_size);
+  }
+
+  //if (RandomGenerator::rand(1,200) == 1) {
+  //    Log::info("sub graph in start reply, size: %d",  (int)n);
+  //}
+  //Log::debug("sub graph, return size: %d",  (int)n);
 }
 
 
@@ -163,29 +216,6 @@ void RccGraph::marshal_help_2(
       //Log::debug("this vertex is not what I want to include");
     }
   }
-}
-
-void RccGraph::write_to_marshal(rrr::Marshal &m) const {
-  verify(0); // TODO
-  std::unordered_set<Vertex<TxnInfo> *> ret_set;
-  int32_t n = size();
-  m << n;
-
-  for (auto &old_sv: ret_set) {
-    m << old_sv->data_->id();
-    m << *(old_sv->data_);
-
-    marshal_help_1(m, ret_set, old_sv);
-
-//        marshal_help_2(m, ret_set, old_sv);
-
-//      verify(ma_size == to_size);
-  }
-
-  //if (RandomGenerator::rand(1,200) == 1) {
-  //    Log::info("sub graph in start reply, size: %d",  (int)n);
-  //}
-  //Log::debug("sub graph, return size: %d",  (int)n);
 }
 
 

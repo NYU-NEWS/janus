@@ -8,6 +8,11 @@
 
 namespace rococo {
 
+RccSched::RccSched() : Scheduler() {
+  verify(dep_graph_ == nullptr);
+  dep_graph_ = new RccGraph();
+}
+
 int RccSched::OnHandoutRequest(const SimpleCommand &cmd,
                                int32_t *res,
                                map<int32_t, Value> *output,
@@ -19,7 +24,8 @@ int RccSched::OnHandoutRequest(const SimpleCommand &cmd,
   auto job = [&cmd, res, dtxn, callback, graph, output, this]() {
     dtxn->Execute(cmd, res, output);
     dtxn->UpdateStatus(TXN_STD);
-    dep_graph_->MinItfrGraph(cmd.id_, *graph);
+    auto sz = dep_graph_->MinItfrGraph(cmd.root_id_, graph);
+    verify(sz > 0);
     callback();
   };
 
@@ -41,7 +47,7 @@ int RccSched::OnFinishRequest(cmdid_t cmd_id,
   RccDTxn *dtxn = (RccDTxn*) GetDTxn(cmd_id);
   verify(dtxn != nullptr);
   dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
-  for (auto& pair: graph.txn_gra_.vertex_index_) {
+  for (auto& pair: graph.vertex_index_) {
     waitlist_.push_back(pair.second);
   }
 //  Graph<TxnInfo> &txn_gra_ = RccDTxn::dep_s->txn_gra_;
@@ -56,11 +62,11 @@ int RccSched::OnInquiryRequest(cmdid_t cmd_id,
                                const function<void()> &callback) {
 
   DragonBall *ball = new DragonBall(2, [this, cmd_id, callback, graph] () {
-    dep_graph_->MinItfrGraph(cmd_id, *graph);
+    dep_graph_->MinItfrGraph(cmd_id, graph);
     callback();
   });
   // TODO Optimize this.
-  Vertex<TxnInfo> *v = dep_graph_->txn_gra_.FindV(cmd_id);
+  Vertex<TxnInfo> *v = dep_graph_->FindV(cmd_id);
   //register an event, triggered when the status >= COMMITTING;
   verify (v->data_->is_involved());
   v->data_->register_event(TXN_CMT, ball);
@@ -114,7 +120,7 @@ void RccSched::CheckWaitlist() {
 //}
 
 void RccSched::InquireAbout(Vertex<TxnInfo> *av) {
-  Graph<TxnInfo> &txn_gra = dep_graph_->txn_gra_;
+//  Graph<TxnInfo> &txn_gra = dep_graph_->txn_gra_;
   TxnInfo &tinfo = *(av->data_);
   verify(!tinfo.is_involved());
   verify(!tinfo.during_asking);
@@ -177,7 +183,7 @@ void RccSched::InquireAbout(Vertex<TxnInfo> *av) {
 
 void RccSched::InquireAck(RccGraph& graph) {
   dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
-  for (auto& pair: graph.txn_gra_.vertex_index_) {
+  for (auto& pair: graph.vertex_index_) {
     waitlist_.push_back(pair.second);
   }
 //  Graph<TxnInfo> &txn_gra_ = RccDTxn::dep_s->txn_gra_;

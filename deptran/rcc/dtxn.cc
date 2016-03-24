@@ -23,9 +23,16 @@ void RccDTxn::Execute(const SimpleCommand &cmd,
   auto pair = txn_reg_->get(cmd);
   // To tolerate deprecated codes
   int xxx, *yyy;
-  yyy = (pair.defer == DF_REAL) ? nullptr : &xxx;
-  if (pair.defer == DF_REAL) dreqs_.push_back(cmd);
-  verify(pair.defer != DF_FAKE);
+  if (pair.defer == DF_REAL) {
+    yyy = &xxx;
+    dreqs_.push_back(cmd);
+  } else if (pair.defer == DF_NO) {
+    yyy = &xxx;
+  } else if (pair.defer == DF_FAKE) {
+    verify(0);
+  } else {
+    verify(0);
+  }
   pair.txn_handler(nullptr,
                    this,
                    const_cast<SimpleCommand&>(cmd),

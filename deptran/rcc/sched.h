@@ -20,6 +20,8 @@ class RccSched : public Scheduler {
   list<Vertex<TxnInfo>*> waitlist_ = {};
 //  Vertex<TxnInfo> *v : wait_list_
 
+  RccSched();
+
   int OnHandoutRequest(const SimpleCommand &cmd,
                        rrr::i32 *res,
                        map<int32_t, Value> *output,

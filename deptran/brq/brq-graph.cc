@@ -5,7 +5,8 @@
 namespace rococo {
 
 
-void BRQGraph::BuildEdgePointer(BRQGraph &graph, std::map<txnid_t, BRQVertex*>& index) {
+void BRQGraph::BuildEdgePointer(BRQGraph &graph,
+                                map<txnid_t, BRQVertex*>& index) {
   for (auto &pair: graph.vertex_index_) {
     auto copy_vertex = pair.second;
     auto vertex = index[copy_vertex->data_->txn_id_];

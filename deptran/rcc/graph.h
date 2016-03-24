@@ -14,20 +14,28 @@ class Vertex {
 
   Vertex(uint64_t id) { data_ = std::shared_ptr<T>(new T(id)); }
 
+  Vertex(Vertex<T> &v) { data_ = v.data_;}
+
   void AddEdge(Vertex<T> *other, int8_t weight) {
     // printf("add edge: %d -> %d\n", this->id(), other->id());
     outgoing_[other] = weight;
     other->incoming_[this] = weight;
   }
 
-  int id() const { return data_->id(); }
+  void AddParentEdge(Vertex<T> *other, int8_t weight) {
+    // printf("add edge: %d -> %d\n", this->id(), other->id());
+    incoming_[other] = weight;
+    other->outgoing_[this] = weight;
+  }
+
+  uint64_t id() const { return data_->id(); }
 };
 
 template <typename T>
 class Graph {
  public:
   typedef std::vector<Vertex<T> *> VertexList;
-  std::unordered_map<uint64_t, Vertex<T> *> vertex_index_;
+  std::unordered_map<uint64_t, Vertex<T> *> vertex_index_ = {};
 
   Graph() {}
 
@@ -58,9 +66,17 @@ class Graph {
     }
   }
 
-  Vertex<T> *CreateV(int32_t id) {
+  Vertex<T> *CreateV(uint64_t id) {
     auto v = new Vertex<T>(id);
     AddV(v);
+    verify(v->id() == id);
+    return v;
+  }
+
+  Vertex<T> *CreateV(Vertex<T>& av) {
+    auto v = new Vertex<T>(av);
+    AddV(v);
+    verify(v->id() == av.id());
     return v;
   }
 
@@ -70,7 +86,13 @@ class Graph {
     return v;
   }
 
-  int size() const { return vertex_index_.size(); }
+  Vertex<T> *FindOrCreateV(Vertex<T>& av) {
+    auto v = FindV(av.id());
+    if (v == nullptr) v = CreateV(av);
+    return v;
+  }
+
+  uint64_t size() const { return vertex_index_.size(); }
 
   bool TraversePred(Vertex<T> *vertex, int64_t depth,
                     std::function<bool(Vertex<T> *)> &func,
