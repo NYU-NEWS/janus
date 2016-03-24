@@ -54,9 +54,11 @@ def environment():
 def deploy_all(regions='us-west-2', servers_per_region=[3], instance_type='t2.small'):
     """
     keyword arguments:
-        regions (string) - colon separated list of regions to deploy to;
-        default 'us-west-2'
-        servers_per_region (list) - default [3] 
+        regions (string) - colon separated list of regions to deploy to; 
+            default 'us-west-2'
+        servers_per_region (string) - colon separated list indicating 
+            the number of servers in each region; 
+            default 3 
         instance_type - the ec2 instance type; default 't2.small'
     example:
          fab deploy_all:regions=us-west-2:eu-west-1,servers_per_region=3:2
