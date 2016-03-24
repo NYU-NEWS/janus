@@ -36,6 +36,10 @@ public:
   txnid_t txn_id_;
   bool is_finished_;
 
+  uint64_t id() const {
+    return txn_id_;
+  }
+
   // TODO should this be abstracted as a command?
   //    typedef struct {
   //        RequestHeader header;

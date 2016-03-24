@@ -86,6 +86,50 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
   return new_graph->size();
 }
 
+
+
+void RccGraph::BuildEdgePointer(RccGraph &graph,
+                                map<txnid_t, RccVertex*>& index) {
+  for (auto &pair: graph.vertex_index_) {
+    auto id = pair.first;
+    auto a_vertex = pair.second;
+    auto vertex = index[a_vertex->id()];
+    for (auto pair : a_vertex->incoming_) {
+      auto a_parent_vertex = pair.first;
+      auto weight = pair.second;
+      auto parent = index[a_parent_vertex->id()];
+      vertex->incoming_[parent] |= weight;
+      parent->outgoing_[vertex] |= weight;
+    }
+  }
+}
+
+RccVertex* RccGraph::AggregateVertex(RccVertex *av) {
+  // create the dtxn if not exist.
+  auto vertex = FindOrCreateV(*av);
+  if (vertex->data_ == av->data_) {
+    // skip
+  } else {
+    // add edges.
+    TxnInfo &info = *vertex->data_;
+    TxnInfo &a_info = *av->data_;
+    info.union_data(a_info); // TODO
+  }
+  return vertex;
+}
+
+void RccGraph::Aggregate(RccGraph &graph) {
+  // aggregate vertexes
+  map<txnid_t, RccVertex*> index;
+  for (auto& pair: graph.vertex_index_) {
+    auto vertex = this->AggregateVertex(pair.second);
+    index[vertex->id()] = vertex;
+  }
+  // aggregate edges.
+  this->BuildEdgePointer(graph, index);
+}
+
+
 void RccGraph::find_txn_anc_opt(RccVertex *source,
                                 unordered_set<RccVertex *> &ret_set) {
   verify(0);

@@ -70,7 +70,6 @@ void RccCoord::HandoutAck(phase_t phase,
   // TODO?
   if (graph.size() > 1) txn->disable_early_return();
 
-  txn->n_pieces_out_++;
   txn->Merge(cmd);
 
   if (txn->HasMoreSubCmdReadyNotOut()) {

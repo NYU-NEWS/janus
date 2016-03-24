@@ -41,7 +41,12 @@ class RccGraph : public Graph<TxnInfo> {
   /** on start_req */
   void FindOrCreateTxnInfo(txnid_t txn_id, RccVertex **tv);
 
-  void Aggregate(RccGraph& graph) {{verify(0);}};
+  void BuildEdgePointer(RccGraph &graph,
+                        map<txnid_t, RccVertex*>& index);
+
+  RccVertex* AggregateVertex(RccVertex *av);
+
+  void Aggregate(RccGraph& graph);
 
 //  void union_txn_graph(Graph <TxnInfo> &gra) {
 //    txn_gra_.Aggregate(gra, true);

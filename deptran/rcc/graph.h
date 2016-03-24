@@ -8,8 +8,9 @@ namespace rococo {
 template <typename T>
 class Vertex {
  public:
-  std::map<Vertex *, int8_t> outgoing_;
-  std::map<Vertex *, int8_t> incoming_;
+  map<uint64_t, int8_t> parents_ = {};
+  std::map<Vertex *, int8_t> outgoing_ = {};
+  std::map<Vertex *, int8_t> incoming_ = {};
   std::shared_ptr<T> data_;
 
   Vertex(uint64_t id) { data_ = std::shared_ptr<T>(new T(id)); }
