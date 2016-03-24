@@ -140,8 +140,8 @@ def set_instance_roles():
         roledefs['all'].append(ip)
         roledefs[t].append(ip)
 
+    first = True
     for region, instances in created_instances.iteritems():
-        first = True
         for instance in instances:
             if first:
                 add_server('leaders', instance.public_ip_address)
@@ -149,7 +149,7 @@ def set_instance_roles():
             else:
                 add_server('servers', instance.public_ip_address)
     env.roledefs = roledefs
-    logging.debug("roles: {}".format(env.roledefs))
+    logging.info("roles: {}".format(env.roledefs))
 
 
 def wait_for_ip_address(instances, timeout=60):
