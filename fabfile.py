@@ -145,7 +145,9 @@ def retrieve_code():
                 run(cmd)
         else:
             with cd(env.nfs_home):
-                run('git fetch origin {rev}'.format(rev=env.git_revision))
+                run('git fetch origin')
+                run('git checkout master')
+                run('git pull origin master')
                 run('git checkout {rev}'.format(rev=env.git_revision))
 
 
