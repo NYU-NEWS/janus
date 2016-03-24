@@ -1,1 +1,1 @@
-/export       172.16.0.0/12(rw,fsid=0,insecure,no_subtree_check,async)
+/export $host_and_options 

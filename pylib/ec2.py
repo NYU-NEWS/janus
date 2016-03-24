@@ -43,6 +43,8 @@ DATA_DIR = ".ec2-data"
 
 # maps region to instances
 created_instances = {}
+def get_created_instances():
+    return created_instances
 
 
 @task
@@ -113,7 +115,7 @@ def load_instances():
 
     logging.info("loaded instance data:")
     for region, instances in created_instances.iteritems():
-        logging.info("\n" + region + ":")
+        logging.info(region + ":")
         for instance in instances:
             try:
                 logging.info("{iid}: public={ip}, private={pip}".format(
@@ -147,7 +149,7 @@ def set_instance_roles():
             else:
                 add_server('servers', instance.public_ip_address)
     env.roledefs = roledefs
-    logging.info(env.roledefs)
+    logging.debug("roles: {}".format(env.roledefs))
 
 
 def wait_for_ip_address(instances, timeout=60):
@@ -218,7 +220,8 @@ STATE_RUNNING = 16
 @task
 @hosts('localhost')
 def wait_for_all_servers(timeout=300):
-    n = 0 
+    n = 5 
+    d = 0
     start = time.time()
     done = False
     while not done:
@@ -242,13 +245,15 @@ def wait_for_all_servers(timeout=300):
                     else:
                         done = False
 
-
-        if time.time() - start > timeout:
+        elapsed = time.time() - start
+        if elapsed > timeout:
             raise TimeoutError("timeout waiting for servers to become ready.") 
         if not done:
-            d = 1.5 ** n
-            logging.info("wait servers to become ready..\n" + \
-                         "sleep for {d}, timeout {t}".format(d=d,t=timeout))
+            if d<30:
+                d = 1.5 ** n
+            msg = "wait servers to become ready..\n" + \
+                  "sleep for {d:.2f}, elapsed {e:.2f}, timeout {t}"
+            logging.info(msg.format(d=d,e=elapsed,t=timeout))
             time.sleep(d)
             n=n+1
     logging.info("done waiting for servers to become ready.")
