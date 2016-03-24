@@ -364,8 +364,11 @@ class ClientController(object):
             futures = []
             while (i < len(rpc_proxy)):
                 logging.debug("%s", rpc_proxy[i].__dict__)
-                future = rpc_proxy[i].async_client_response()
-                futures.append(future)
+                try:
+                    future = rpc_proxy[i].async_client_response()
+                    futures.append(future)
+                except:
+                    traceback.print_exc()
                 i += 1
 
             i = 0
