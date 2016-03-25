@@ -44,8 +44,8 @@ class TxnInfo {
     return (status_ & TXN_CMT);
   }
 
-  bool is_involved() {
-    auto it = servers_.find(Config::GetConfig()->get_site_id());
+  bool is_involved(svrid_t id) {
+    auto it = servers_.find(id);
     if (it == servers_.end()) {
       return false;
     } else {
@@ -96,12 +96,12 @@ class TxnInfo {
     }
   }
 
-  void union_status(
-      int8_t status,
-      bool is_trigger = true,
-      bool is_server = false
-  ) {
-    if (is_server && is_involved()) {
+  void union_status(int8_t status,
+                    bool is_trigger = true,
+                    bool is_server = false) {
+
+    if (false) {
+      // TODO
       // I cannot change the status of this txn.
     } else {
       status_ |= status;

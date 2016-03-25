@@ -95,18 +95,24 @@ class Graph {
 
   uint64_t size() const { return vertex_index_.size(); }
 
-  bool TraversePred(Vertex<T> *vertex, int64_t depth,
-                    std::function<bool(Vertex<T> *)> &func,
-                    std::set<Vertex<T> *> &walked) {
+  // what does ret value stand for ???
+  // false: aborted by user?
+  bool TraversePred(Vertex<T> *vertex,
+                    int64_t depth,
+                    function<bool(Vertex<T> *)> &func,
+                    set<Vertex<T> *> &walked) {
     auto pair = walked.insert(vertex);
-    if (!pair.second) {
+    if (!pair.second)
+      // already traversed.
       return true;
-    }
+
     for (auto pair : vertex->incoming_) {
       auto v = pair.first;
-      if (!func(v)) return false;
+      if (!func(v))
+        return false; // traverse aborted by users.
       if (depth < 0 || depth > 0) {
-        if (!TraversePred(v, depth - 1, func, walked)) return false;
+        if (!TraversePred(v, depth - 1, func, walked))
+          return false;
       }
     }
     return true;

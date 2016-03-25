@@ -17,6 +17,7 @@ class RccSched : public Scheduler {
  public:
   RccGraph *dep_graph_ = nullptr;
   RccCommo* commo_ = nullptr;
+  svrid_t server_id_ = 0;
   list<Vertex<TxnInfo>*> waitlist_ = {};
 //  Vertex<TxnInfo> *v : wait_list_
 
@@ -46,7 +47,7 @@ class RccSched : public Scheduler {
 
   void InquireAck(RccGraph& graph);
 
-  bool AllAncCmt(RccVertex *v) {verify(0);};
+  bool AllAncCmt(RccVertex *v);
   void Decide(RccScc){verify(0);};
   RccScc FindScc(RccVertex *v){verify(0);};
 

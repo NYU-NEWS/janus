@@ -60,7 +60,7 @@ int RccSched::OnFinishRequest(cmdid_t cmd_id,
 int RccSched::OnInquiryRequest(cmdid_t cmd_id,
                                RccGraph *graph,
                                const function<void()> &callback) {
-
+  verify(0);
   DragonBall *ball = new DragonBall(2, [this, cmd_id, callback, graph] () {
     dep_graph_->MinItfrGraph(cmd_id, graph);
     callback();
@@ -68,7 +68,7 @@ int RccSched::OnInquiryRequest(cmdid_t cmd_id,
   // TODO Optimize this.
   Vertex<TxnInfo> *v = dep_graph_->FindV(cmd_id);
   //register an event, triggered when the status >= COMMITTING;
-  verify (v->data_->is_involved());
+  verify (v->data_->is_involved(server_id_));
   v->data_->register_event(TXN_CMT, ball);
   ball->trigger();
 }
@@ -77,10 +77,10 @@ void RccSched::CheckWaitlist() {
   for (Vertex<TxnInfo> *v : waitlist_) {
     TxnInfo& tinfo = *(v->data_);
     if (tinfo.status() <= TXN_STD &&
-        !tinfo.is_involved() &&
+        !tinfo.is_involved(server_id_) &&
         tinfo.during_asking) {
       InquireAbout(v);
-    } else if (tinfo.status() == TXN_CMT) {
+    } else if (tinfo.status() >= TXN_CMT && tinfo.status() < TXN_DCD) {
       if (AllAncCmt(v)) {
         Decide(FindScc(v));
       } // else do nothing
@@ -122,7 +122,7 @@ void RccSched::CheckWaitlist() {
 void RccSched::InquireAbout(Vertex<TxnInfo> *av) {
 //  Graph<TxnInfo> &txn_gra = dep_graph_->txn_gra_;
   TxnInfo &tinfo = *(av->data_);
-  verify(!tinfo.is_involved());
+  verify(!tinfo.is_involved(server_id_));
   verify(!tinfo.during_asking);
   parid_t par_id = *(tinfo.servers_.begin());
   commo()->SendInquire(par_id,
@@ -190,6 +190,21 @@ void RccSched::InquireAck(RccGraph& graph) {
 //  tv_->data_->res = res;
 //  tv_->data_->union_status(TXN_CMT);
   CheckWaitlist();
+}
+
+bool RccSched::AllAncCmt(RccVertex *vertex) {
+  set<RccVertex*> walked;
+  bool ret = true;
+  std::function<bool(RccVertex*)> func = [&ret] (RccVertex* v) -> bool {
+    TxnInfo& info = *v->data_;
+    if (info.status() >= TXN_CMT) {
+    } else {
+      ret = false;
+      return false;
+    }
+  };
+  dep_graph_->TraversePred(vertex, -1, func, walked);
+  return ret;
 }
 
 

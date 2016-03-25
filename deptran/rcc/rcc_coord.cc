@@ -10,7 +10,7 @@ namespace rococo {
 
 void RccCoord::Handout() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  phase_++;
+//  phase_++;
   // new txn id for every new and retry.
 //  RequestHeader header = gen_header(ch);
 
@@ -46,7 +46,7 @@ void RccCoord::HandoutAck(phase_t phase,
                           SimpleCommand& cmd,
                           RccGraph& graph) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-  verify(phase == phase_);
+  verify(phase == phase_); // cannot proceed without all acks.
   n_handout_ack_++;
   TxnCommand *txn = (TxnCommand *) cmd_;
   handout_acks_[cmd.inn_id_] = true;
@@ -106,20 +106,19 @@ void RccCoord::Finish() {
   TxnCommand *ch = (TxnCommand*) cmd_;
   // commit or abort piece
   rrr::FutureAttr fuattr;
-
   Log_debug(
     "send deptran finish requests to %d servers, tid: %llx, graph size: %d",
     (int)ch->partition_ids_.size(),
     cmd_->id_,
-    ch->gra_.size());
-  verify(ch->partition_ids_.size() == ch->gra_.FindV(
-           cmd_->id_)->data_->servers_.size());
+    graph_.size());
+  TxnInfo& info = *graph_.FindV(cmd_->id_)->data_;
+  verify(ch->partition_ids_.size() == info.servers_.size());
+  info.union_status(TXN_CMT);
 
 //  ChopFinishRequest req;
 //  req.txn_id = cmd_->id_;
 //  req.gra    = ch->gra_;
-
-  verify(ch->gra_.size() > 0);
+  verify(graph_.size() > 0);
 //  verify(req.gra.size() > 0);
 
   for (auto& rp : ch->partition_ids_) {

@@ -43,7 +43,13 @@ void RccCommo::SendFinish(parid_t pid,
                           const function<void(int res,
                                               map<int, map<int32_t,
                                                            Value>>& output)> &callback) {
-  verify(0);
+  FutureAttr fuattr;
+  function<void(Future*)> cb = [] (Future* fu) {
+    // verify(0);
+  };
+  fuattr.callback = cb;
+  auto proxy = (RococoProxy*)RandomProxyForPartition(pid).second;
+  Future::safe_release(proxy->async_Finish(tid, graph, fuattr));
 }
 
 void RccCommo::SendInquire(parid_t pid,
