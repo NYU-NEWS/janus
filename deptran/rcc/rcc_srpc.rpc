@@ -62,7 +62,7 @@ abstract service Rococo {
 
   defer Finish(cmdid_t id,
                RccGraph |
-               map<i32, Value> output);
+               map<uint32_t, map<int32_t, Value>> outputs);
 
   defer Inquire(cmdid_t txn_id |
                 RccGraph res);

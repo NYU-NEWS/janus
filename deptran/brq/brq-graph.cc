@@ -5,10 +5,11 @@
 namespace rococo {
 
 
-void BRQGraph::BuildEdgePointer(BRQGraph &graph, std::map<txnid_t, BRQVertex*>& index) {
+void BRQGraph::BuildEdgePointer(BRQGraph &graph,
+                                map<txnid_t, BRQVertex*>& index) {
   for (auto &pair: graph.vertex_index_) {
     auto copy_vertex = pair.second;
-    auto vertex = index[copy_vertex->data_->txn_id_];
+    auto vertex = index[copy_vertex->id()];
     for (auto pair : copy_vertex->incoming_) {
       auto parent = index[pair.first->data_->txn_id_];
       vertex->incoming_.insert(std::make_pair(parent, 0));
@@ -19,7 +20,7 @@ void BRQGraph::BuildEdgePointer(BRQGraph &graph, std::map<txnid_t, BRQVertex*>& 
 
 BRQVertex* BRQGraph::AggregateVertex(BRQVertex *av) {
   // create the dtxn if not exist.
-  auto vertex = vertex_index_[av->data_->txn_id_];
+  auto vertex = vertex_index_[av->id()]; // FIX
   if (vertex->data_ == nullptr) {
     vertex->data_ = av->data_;
   } else {
@@ -37,10 +38,10 @@ BRQVertex* BRQGraph::AggregateVertex(BRQVertex *av) {
 
 void BRQGraph::Aggregate(BRQGraph &graph) {
   // aggregate vertexes
-  std::map<txnid_t, BRQVertex*> index;
+  map<txnid_t, BRQVertex*> index;
   for (auto& pair: graph.vertex_index_) {
     auto vertex = this->AggregateVertex(pair.second);
-    index[vertex->data_->txn_id_] = vertex;
+    index[vertex->id()] = vertex;
   }
   // aggregate edges.
   this->BuildEdgePointer(graph, index);

@@ -66,7 +66,7 @@ class TxnCommand: public Command {
 
   TxnRegistry *txn_reg_ = nullptr;
 
-  Graph<TxnInfo> gra_;
+//  Graph<TxnInfo> gra_;
 
   map<int32_t, Value> ws_ = {}; // workspace.
   map<int32_t, Value> ws_init_ = {};

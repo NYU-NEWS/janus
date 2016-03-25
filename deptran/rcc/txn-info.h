@@ -16,6 +16,7 @@ class TxnInfo {
   txnid_t txn_id_;
   std::set<uint32_t> servers_;
   std::vector<uint64_t> pieces_;
+  bool executed_ = false;
 
   bool committed_ = false;
 
@@ -28,6 +29,11 @@ class TxnInfo {
     txn_id_ = id;
   }
 
+  ~TxnInfo() {
+    Log_debug("txn info destruct, id: %llx", txn_id_);
+    txn_id_ = 0; // for debug purpose
+  }
+
   inline int8_t get_status() const {
     return status_;
   }
@@ -36,16 +42,16 @@ class TxnInfo {
     return status_;
   }
 
-  inline bool is_commit() const {
+  inline bool IsDecided() const {
     return (status_ & TXN_DCD);
   }
 
-  inline bool is_finish() const {
-    return (status_ & TXN_CMT);
+  inline bool IsExecuted() const {
+    return executed_;
   }
 
-  bool is_involved() {
-    auto it = servers_.find(Config::GetConfig()->get_site_id());
+  bool is_involved(svrid_t id) {
+    auto it = servers_.find(id);
     if (it == servers_.end()) {
       return false;
     } else {
@@ -96,12 +102,12 @@ class TxnInfo {
     }
   }
 
-  void union_status(
-      int8_t status,
-      bool is_trigger = true,
-      bool is_server = false
-  ) {
-    if (is_server && is_involved()) {
+  void union_status(int8_t status,
+                    bool is_trigger = true,
+                    bool is_server = false) {
+
+    if (false) {
+      // TODO
       // I cannot change the status of this txn.
     } else {
       status_ |= status;

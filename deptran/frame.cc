@@ -64,7 +64,6 @@ map<string, int> Frame::frame_name_mode_s = {
     {"2pl", MODE_2PL},
     {"occ", MODE_OCC},
     {"ro6", MODE_RO6},
-    {"brq", MODE_BRQ},
     {"rpc_null",      MODE_RPC_NULL},
     {"deptran",       MODE_DEPTRAN},
     {"deptran_er",    MODE_DEPTRAN},

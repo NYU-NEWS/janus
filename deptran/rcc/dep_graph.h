@@ -14,18 +14,19 @@
 namespace rococo {
 
 typedef Vertex<TxnInfo> RccVertex;
-typedef vector<RccVertex> RccScc;
-class RccGraph {
+typedef vector<RccVertex*> RccScc;
+
+class RccGraph : public Graph<TxnInfo> {
  public:
 //    Graph<PieInfo> pie_gra_;
-  Graph <TxnInfo> txn_gra_;
-
+//  Graph <TxnInfo> txn_gra_;
+  svrid_t server_id_ = 0; // TODO
 //  std::vector<rrr::Client *> rpc_clients_;
 //  std::vector<RococoProxy *> rpc_proxies_;
 //  std::vector<std::string> server_addrs_;
 
 
-  RccGraph() {
+  RccGraph() : Graph<TxnInfo>() {
     // TODO remove this out, use commo instead.
 //    Config::GetConfig()->get_all_site_addr(server_addrs_);
 //    rpc_clients_ = std::vector<rrr::Client *>(server_addrs_.size(), nullptr);
@@ -39,19 +40,21 @@ class RccGraph {
 //  RococoProxy *get_server_proxy(uint32_t id);
 
   /** on start_req */
-  void start_pie(
-      txnid_t txn_id,
-      RccVertex **tv
-  );
+  void FindOrCreateTxnInfo(txnid_t txn_id, RccVertex **tv);
 
-  void Aggregate(RccGraph& graph) {{verify(0);}};
+  void BuildEdgePointer(RccGraph &graph,
+                        map<txnid_t, RccVertex*>& index);
 
-  void union_txn_graph(Graph <TxnInfo> &gra) {
-    txn_gra_.Aggregate(gra, true);
-  }
+  RccVertex* AggregateVertex(RccVertex *av);
+
+  void Aggregate(RccGraph& graph);
+
+//  void union_txn_graph(Graph <TxnInfo> &gra) {
+//    txn_gra_.Aggregate(gra, true);
+//  }
 
   std::vector<Vertex < TxnInfo>*> find_txn_scc(TxnInfo &ti) {
-    return txn_gra_.FindSCC(ti.id());
+    return FindSCC(ti.id());
   }
 
   void find_txn_anc_opt(Vertex <TxnInfo> *source,
@@ -72,7 +75,7 @@ class RccGraph {
       std::set<Vertex < TxnInfo> *
   > &ret_set
   ) {
-    std::vector<Vertex < TxnInfo>*> scc = txn_gra_.FindSCC(v);
+    std::vector<Vertex < TxnInfo>*> scc = FindSCC(v);
     for (auto v: scc) {
       find_txn_nearest_anc(v, ret_set);
     }
@@ -86,20 +89,14 @@ class RccGraph {
     //}
   }
 
-  int size() const {
-    return txn_gra_.size();
-  };
-
   void find_txn_scc_anc_opt(
       uint64_t txn_id,
       std::unordered_set<Vertex < TxnInfo> *
   > &ret_set
   );
 
-  uint64_t MinItfrGraph(
-      uint64_t tid,
-      RccGraph &gra_m
-  );
+  uint64_t MinItfrGraph(uint64_t tid,
+                        RccGraph* gra_m);
 
   void write_to_marshal(rrr::Marshal &m) const;
 

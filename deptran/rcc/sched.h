@@ -17,8 +17,11 @@ class RccSched : public Scheduler {
  public:
   RccGraph *dep_graph_ = nullptr;
   RccCommo* commo_ = nullptr;
+  svrid_t server_id_ = 0;
   list<Vertex<TxnInfo>*> waitlist_ = {};
 //  Vertex<TxnInfo> *v : wait_list_
+
+  RccSched();
 
   int OnHandoutRequest(const SimpleCommand &cmd,
                        rrr::i32 *res,
@@ -28,7 +31,7 @@ class RccSched : public Scheduler {
 
   int OnFinishRequest(cmdid_t cmd_id,
                       const RccGraph& graph,
-                      map<int32_t, Value> *output,
+                      map<innid_t, map<int32_t, Value>> *output,
                       const function<void()>& callback);
 
   int OnInquiryRequest(cmdid_t cmd_id,
@@ -44,12 +47,11 @@ class RccSched : public Scheduler {
 
   void InquireAck(RccGraph& graph);
 
-  bool AllAncCmt(RccVertex *v) {verify(0);};
-  void Decide(RccScc){verify(0);};
-  RccScc FindScc(RccVertex *v){verify(0);};
+  bool AllAncCmt(RccVertex *v);
+  void Decide(const RccScc&);
 
-  bool AllAncFns(RccScc){verify(0);};
-  void Execute(RccScc){verify(0);};
+  bool AllAncFns(const RccScc&);
+  void Execute(const RccScc&);
 
 
   RccCommo* commo() {

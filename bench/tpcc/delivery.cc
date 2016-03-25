@@ -41,7 +41,7 @@ void TpccPiece::RegDelivery() {
   INPUT_PIE(TPCC_DELIVERY, TPCC_DELIVERY_0,
             TPCC_VAR_W_ID, TPCC_VAR_D_ID)
   SHARD_PIE(TPCC_DELIVERY, TPCC_DELIVERY_0, TPCC_TB_NEW_ORDER, TPCC_VAR_W_ID)
-  BEGIN_PIE(TPCC_DELIVERY, TPCC_DELIVERY_0, DF_FAKE) {
+  BEGIN_PIE(TPCC_DELIVERY, TPCC_DELIVERY_0, DF_NO) {
     // this is a little bit tricky, the first half will do most of the job,
     // removing the row from the table, but it won't actually release the
     // resource. And the bottom half is in charge of release the resource,

@@ -8,18 +8,24 @@
 
 namespace rococo {
 
+RccSched::RccSched() : Scheduler() {
+  verify(dep_graph_ == nullptr);
+  dep_graph_ = new RccGraph();
+}
+
 int RccSched::OnHandoutRequest(const SimpleCommand &cmd,
                                int32_t *res,
                                map<int32_t, Value> *output,
                                RccGraph *graph,
                                const function<void()> &callback) {
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(cmd.root_id_);
-  dep_graph_->start_pie(cmd.root_id_, &dtxn->tv_);
+  dep_graph_->FindOrCreateTxnInfo(cmd.root_id_, &dtxn->tv_);
 
   auto job = [&cmd, res, dtxn, callback, graph, output, this]() {
-    dtxn->Execute(cmd, res, output);
+    dtxn->DispatchExecute(cmd, res, output);
     dtxn->UpdateStatus(TXN_STD);
-    dep_graph_->MinItfrGraph(cmd.id_, *graph);
+    auto sz = dep_graph_->MinItfrGraph(cmd.root_id_, graph);
+    verify(sz > 0);
     callback();
   };
 
@@ -35,15 +41,20 @@ int RccSched::OnHandoutRequest(const SimpleCommand &cmd,
 
 int RccSched::OnFinishRequest(cmdid_t cmd_id,
                               const RccGraph &graph,
-                              map<int32_t, Value> *output,
+                              map<innid_t, map<int32_t, Value>> *output,
                               const function<void()> &callback) {
   // union the graph into dep graph
   RccDTxn *dtxn = (RccDTxn*) GetDTxn(cmd_id);
   verify(dtxn != nullptr);
   dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
-  for (auto& pair: graph.txn_gra_.vertex_index_) {
-    waitlist_.push_back(pair.second);
+  for (auto& pair: graph.vertex_index_) {
+    // TODO optimize here.
+    auto txnid = pair.first;
+    waitlist_.push_back(dep_graph_->vertex_index_[txnid]);
   }
+  verify(dtxn->outputs_ == nullptr);
+  dtxn->outputs_ = output;
+  dtxn->finish_ok_callback_ = callback;
 //  Graph<TxnInfo> &txn_gra_ = RccDTxn::dep_s->txn_gra_;
 //  tv_->data_->res = res;
 //  tv_->data_->union_status(TXN_CMT);
@@ -54,36 +65,42 @@ int RccSched::OnFinishRequest(cmdid_t cmd_id,
 int RccSched::OnInquiryRequest(cmdid_t cmd_id,
                                RccGraph *graph,
                                const function<void()> &callback) {
-
+  verify(0);
   DragonBall *ball = new DragonBall(2, [this, cmd_id, callback, graph] () {
-    dep_graph_->MinItfrGraph(cmd_id, *graph);
+    dep_graph_->MinItfrGraph(cmd_id, graph);
     callback();
   });
   // TODO Optimize this.
-  Vertex<TxnInfo> *v = dep_graph_->txn_gra_.FindV(cmd_id);
+  Vertex<TxnInfo> *v = dep_graph_->FindV(cmd_id);
   //register an event, triggered when the status >= COMMITTING;
-  verify (v->data_->is_involved());
+  verify (v->data_->is_involved(server_id_));
   v->data_->register_event(TXN_CMT, ball);
   ball->trigger();
 }
 
 void RccSched::CheckWaitlist() {
-  for (Vertex<TxnInfo> *v : waitlist_) {
+  for (RccVertex *v : waitlist_) {
+    // TODO minimize the lenght of waitlist.
     TxnInfo& tinfo = *(v->data_);
     if (tinfo.status() <= TXN_STD &&
-        !tinfo.is_involved() &&
+        !tinfo.is_involved(server_id_) &&
         tinfo.during_asking) {
+      verify(0);
       InquireAbout(v);
-    } else if (tinfo.status() == TXN_CMT) {
+    } else if (tinfo.status() >= TXN_CMT && tinfo.status() < TXN_DCD) {
       if (AllAncCmt(v)) {
-        Decide(FindScc(v));
-      } // else do nothing
+        Decide(dep_graph_->FindSCC(v));
+      } else {
+        // else do nothing
+        verify(0);
+        Log_debug("this transaction has some ongoing ancestors");
+      }
     } // else do nothing
 
-    if (tinfo.status() == TXN_DCD &&
-        !tinfo.is_finish() &&
-        AllAncFns(FindScc(v))) {
-        Execute(FindScc(v));
+    if (tinfo.status() >= TXN_DCD &&
+        !tinfo.IsExecuted() &&
+        AllAncFns(dep_graph_->FindSCC(v))) {
+        Execute(dep_graph_->FindSCC(v));
     } // else do nothing
   }
 }
@@ -114,9 +131,9 @@ void RccSched::CheckWaitlist() {
 //}
 
 void RccSched::InquireAbout(Vertex<TxnInfo> *av) {
-  Graph<TxnInfo> &txn_gra = dep_graph_->txn_gra_;
+//  Graph<TxnInfo> &txn_gra = dep_graph_->txn_gra_;
   TxnInfo &tinfo = *(av->data_);
-  verify(!tinfo.is_involved());
+  verify(!tinfo.is_involved(server_id_));
   verify(!tinfo.during_asking);
   parid_t par_id = *(tinfo.servers_.begin());
   commo()->SendInquire(par_id,
@@ -177,7 +194,7 @@ void RccSched::InquireAbout(Vertex<TxnInfo> *av) {
 
 void RccSched::InquireAck(RccGraph& graph) {
   dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
-  for (auto& pair: graph.txn_gra_.vertex_index_) {
+  for (auto& pair: graph.vertex_index_) {
     waitlist_.push_back(pair.second);
   }
 //  Graph<TxnInfo> &txn_gra_ = RccDTxn::dep_s->txn_gra_;
@@ -186,5 +203,61 @@ void RccSched::InquireAck(RccGraph& graph) {
   CheckWaitlist();
 }
 
+bool RccSched::AllAncCmt(RccVertex *vertex) {
+  set<RccVertex*> walked;
+  bool ret = true;
+  std::function<bool(RccVertex*)> func = [&ret] (RccVertex* v) -> bool {
+    TxnInfo& info = *v->data_;
+    if (info.status() >= TXN_CMT) {
+      return true;
+    } else {
+      ret = false;
+      return false;
+    }
+  };
+  dep_graph_->TraversePred(vertex, -1, func, walked);
+  return ret;
+}
+
+void RccSched::Decide(const RccScc& scc) {
+  for (auto v : scc) {
+    TxnInfo& info = *v->data_;
+    info.union_status(TXN_DCD);
+  }
+}
+
+bool RccSched::AllAncFns(const RccScc& scc) {
+  verify(scc.size() > 0);
+  set<RccVertex*> scc_set;
+  scc_set.insert(scc.begin(), scc.end());
+  set<RccVertex*> walked;
+  bool ret = true;
+  std::function<bool(RccVertex*)> func =
+      [&ret, &scc_set] (RccVertex* v) -> bool {
+    TxnInfo& info = *v->data_;
+    if (info.status() >= TXN_DCD) {
+      return true;
+    } else if (scc_set.find(v) != scc_set.end()) {
+      return true;
+    } else {
+      ret = false;
+      return false; // abort traverse
+    }
+  };
+  dep_graph_->TraversePred(scc[0], -1, func, walked);
+  return ret;
+};
+
+void RccSched::Execute(const RccScc& scc) {
+  verify(scc.size() > 0);
+  for (auto v : scc) {
+    TxnInfo& info = *(v->data_);
+    RccDTxn *dtxn = (RccDTxn *) GetDTxn(info.id());
+    verify(dtxn != nullptr);
+    dtxn->CommitExecute();
+    dtxn->ReplyFinishOk();
+    info.executed_ = true;
+  }
+}
 
 } // namespace rococo

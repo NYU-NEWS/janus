@@ -3,6 +3,7 @@
 //C++ standard library
 #include <map>
 #include <unordered_map>
+#include <unordered_set>
 #include <mutex>
 #include <string>
 #include <vector>
@@ -22,6 +23,7 @@ using std::string;
 using std::vector;
 using std::list;
 using std::set;
+using std::unordered_set;
 using std::pair;
 using std::function;
 

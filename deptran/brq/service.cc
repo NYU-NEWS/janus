@@ -116,9 +116,9 @@ void BrqServiceImpl::Handout(const SimpleCommand& cmd,
 //}
 
 void BrqServiceImpl::Finish(const cmdid_t& cmd_id,
-                               const RccGraph& graph,
-                               map<int32_t, Value>* output,
-                               DeferredReply* defer) {
+                            const RccGraph& graph,
+                               map<innid_t, map<int32_t, Value>>* output,
+                            DeferredReply* defer) {
   verify(graph.size() > 0);
   std::lock_guard <std::mutex> guard(mtx_);
   dtxn_sched()->OnFinishRequest(cmd_id,
