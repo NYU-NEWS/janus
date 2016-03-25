@@ -191,8 +191,8 @@ class Graph {
     }
   }
 
-  std::vector<Vertex<T> *> FindSortedSCC(
-      Vertex<T> *vertex, std::vector<Vertex<T> *> *ret_sorted_scc) {
+  std::vector<Vertex<T> *> FindSortedSCC(Vertex<T> *vertex,
+                                         vector<Vertex<T> *> *ret_sorted_scc) {
     std::map<Vertex<T> *, int> indexes;
     std::map<Vertex<T> *, int> lowlinks;
     int index = 0;

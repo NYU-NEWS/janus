@@ -74,7 +74,7 @@ int RccSched::OnInquiryRequest(cmdid_t cmd_id,
 }
 
 void RccSched::CheckWaitlist() {
-  for (Vertex<TxnInfo> *v : waitlist_) {
+  for (RccVertex *v : waitlist_) {
     TxnInfo& tinfo = *(v->data_);
     if (tinfo.status() <= TXN_STD &&
         !tinfo.is_involved(server_id_) &&
@@ -82,14 +82,15 @@ void RccSched::CheckWaitlist() {
       InquireAbout(v);
     } else if (tinfo.status() >= TXN_CMT && tinfo.status() < TXN_DCD) {
       if (AllAncCmt(v)) {
-        Decide(FindScc(v));
+
+        Decide(dep_graph_->FindSCC(v));
       } // else do nothing
     } // else do nothing
 
-    if (tinfo.status() == TXN_DCD &&
-        !tinfo.is_finish() &&
-        AllAncFns(FindScc(v))) {
-        Execute(FindScc(v));
+    if (tinfo.status() >= TXN_DCD &&
+        !tinfo.IsExecuted() &&
+        AllAncFns(dep_graph_->FindSCC(v))) {
+        Execute(dep_graph_->FindSCC(v));
     } // else do nothing
   }
 }
@@ -198,6 +199,7 @@ bool RccSched::AllAncCmt(RccVertex *vertex) {
   std::function<bool(RccVertex*)> func = [&ret] (RccVertex* v) -> bool {
     TxnInfo& info = *v->data_;
     if (info.status() >= TXN_CMT) {
+      return true;
     } else {
       ret = false;
       return false;
@@ -206,6 +208,35 @@ bool RccSched::AllAncCmt(RccVertex *vertex) {
   dep_graph_->TraversePred(vertex, -1, func, walked);
   return ret;
 }
+
+void RccSched::Decide(const RccScc& scc) {
+  for (auto v : scc) {
+    TxnInfo& info = *v->data_;
+    info.union_status(TXN_DCD);
+  }
+}
+
+bool RccSched::AllAncFns(const RccScc& scc) {
+  verify(scc.size() > 0);
+  set<RccVertex*> scc_set;
+  scc_set.insert(scc.begin(), scc.end());
+  set<RccVertex*> walked;
+  bool ret = true;
+  std::function<bool(RccVertex*)> func =
+      [&ret, &scc_set] (RccVertex* v) -> bool {
+    TxnInfo& info = *v->data_;
+    if (info.status() >= TXN_DCD) {
+      return true;
+    } else if (scc_set.find(v) != scc_set.end()) {
+      return true;
+    } else {
+      ret = false;
+      return false; // abort traverse
+    }
+  };
+  dep_graph_->TraversePred(scc[0], -1, func, walked);
+  return ret;
+};
 
 
 } // namespace rococo

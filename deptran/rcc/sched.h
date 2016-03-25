@@ -48,11 +48,10 @@ class RccSched : public Scheduler {
   void InquireAck(RccGraph& graph);
 
   bool AllAncCmt(RccVertex *v);
-  void Decide(RccScc){verify(0);};
-  RccScc FindScc(RccVertex *v){verify(0);};
+  void Decide(const RccScc&);
 
-  bool AllAncFns(RccScc){verify(0);};
-  void Execute(RccScc){verify(0);};
+  bool AllAncFns(const RccScc&);
+  void Execute(const RccScc&){verify(0);};
 
 
   RccCommo* commo() {

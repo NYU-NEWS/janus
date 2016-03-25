@@ -11,6 +11,7 @@ struct ChopFinishResponse;
 class TxnInfo {
  private:
   int8_t status_ = TXN_UKN;
+  bool executed_ = false;
 
  public:
   txnid_t txn_id_;
@@ -40,8 +41,8 @@ class TxnInfo {
     return (status_ & TXN_DCD);
   }
 
-  inline bool is_finish() const {
-    return (status_ & TXN_CMT);
+  inline bool IsExecuted() const {
+    return executed_;
   }
 
   bool is_involved(svrid_t id) {
