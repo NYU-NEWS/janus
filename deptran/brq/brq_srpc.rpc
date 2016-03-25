@@ -18,7 +18,7 @@ abstract service Brq {
 
   defer Finish(cmdid_t id,
                RccGraph |
-               map<i32, Value> output);
+               map<uint32_t, map<i32, Value>> output);
 
   defer Inquire(cmdid_t txn_id |
                 RccGraph res);

@@ -15,6 +15,7 @@ namespace rococo {
 
 typedef Vertex<TxnInfo> RccVertex;
 typedef vector<RccVertex*> RccScc;
+
 class RccGraph : public Graph<TxnInfo> {
  public:
 //    Graph<PieInfo> pie_gra_;

@@ -14,9 +14,9 @@ RccDTxn::RccDTxn(txnid_t tid,
   mdb_txn_ = mgr->GetOrCreateMTxn(tid_);
 }
 
-void RccDTxn::Execute(const SimpleCommand &cmd,
-                      int32_t *res,
-                      map<int32_t, Value> *output) {
+void RccDTxn::DispatchExecute(const SimpleCommand &cmd,
+                              int32_t *res,
+                              map<int32_t, Value> *output) {
   verify(phase_ <= PHASE_RCC_START);
   phase_ = PHASE_RCC_START;
   // execute the IR actions.
@@ -39,6 +39,18 @@ void RccDTxn::Execute(const SimpleCommand &cmd,
                    yyy,
                    *output);
   *res = pair.defer;
+}
+
+void RccDTxn::CommitExecute() {
+  for (auto &cmd: dreqs_) {
+    auto pair = txn_reg_->get(cmd);
+    int tmp;
+    pair.txn_handler(nullptr, this, cmd, &tmp, (*outputs_)[cmd.inn_id_]);
+  }
+}
+
+void RccDTxn::ReplyFinishOk() {
+  finish_ok_callback_();
 }
 
 bool RccDTxn::start_exe_itfr(defer_t defer_type,

@@ -19,7 +19,8 @@ class RccCommo : public Communicator {
   void SendFinish(parid_t pid,
                   txnid_t tid,
                   RccGraph& graph,
-                  const function<void(int res, map<int, map<int32_t, Value>>&
+                  const function<void(int res, map<innid_t,
+                                                   map<int32_t, Value>>&
                   output)> &callback) ;
 
   void SendInquire(parid_t pid,

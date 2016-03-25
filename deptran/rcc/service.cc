@@ -119,7 +119,7 @@ void RococoServiceImpl::Handout(const SimpleCommand& cmd,
 
 void RococoServiceImpl::Finish(const cmdid_t& cmd_id,
                                const RccGraph& graph,
-                               map<int32_t, Value>* output,
+                               map<innid_t, map<int32_t, Value>>* output,
                                DeferredReply* defer) {
   verify(graph.size() > 0);
   std::lock_guard <std::mutex> guard(mtx_);

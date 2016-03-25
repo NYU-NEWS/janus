@@ -42,7 +42,7 @@ public:
   void Finish();
   void FinishAck(phase_t phase,
                  int res,
-                 map<int, map<int32_t, Value>>& output);
+                 map<innid_t, map<int32_t, Value>>& output);
 
   void HandoutRo();
   void HandoutRoAck(phase_t phase,
@@ -50,5 +50,7 @@ public:
                     SimpleCommand& cmd,
                     map<int, mdb::version_t>& vers);
   void FinishRo() {verify(0);};
+
+  void Reset() override;
 };
 } // namespace rococo

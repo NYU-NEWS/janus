@@ -31,7 +31,7 @@ class RccSched : public Scheduler {
 
   int OnFinishRequest(cmdid_t cmd_id,
                       const RccGraph& graph,
-                      map<int32_t, Value> *output,
+                      map<innid_t, map<int32_t, Value>> *output,
                       const function<void()>& callback);
 
   int OnInquiryRequest(cmdid_t cmd_id,
@@ -51,7 +51,7 @@ class RccSched : public Scheduler {
   void Decide(const RccScc&);
 
   bool AllAncFns(const RccScc&);
-  void Execute(const RccScc&){verify(0);};
+  void Execute(const RccScc&);
 
 
   RccCommo* commo() {

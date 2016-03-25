@@ -8,18 +8,23 @@ namespace rococo {
 class RccDTxn: public DTxn {
  public:
   int status_ = TXN_UKN;
-  vector<SimpleCommand> dreqs_;
-  Vertex <TxnInfo> *tv_;
+  vector<SimpleCommand> dreqs_ = {};
+  Vertex <TxnInfo> *tv_ = {};
+  map<innid_t, map<int32_t, Value>> *outputs_ = nullptr;
+  vector<TxnInfo *> conflict_txns_ = {}; // This is read-only transaction
+  function<void()> finish_ok_callback_ =  [] () {verify(0);};
 
-  std::vector<TxnInfo *> conflict_txns_; // This is read-only transaction
-
-  bool read_only_;
+  bool read_only_ = false;
 
   RccDTxn(txnid_t tid, Scheduler *mgr, bool ro);
 
-  virtual void Execute(const SimpleCommand &cmd,
-                       int *res,
-                       map<int32_t, Value> *output);
+  virtual void DispatchExecute(const SimpleCommand &cmd,
+                               int *res,
+                               map<int32_t, Value> *output);
+
+  virtual void CommitExecute();
+
+  virtual void ReplyFinishOk();
 
   virtual bool start_exe_itfr(
       defer_t defer,

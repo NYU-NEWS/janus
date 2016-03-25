@@ -22,7 +22,7 @@ int RccSched::OnHandoutRequest(const SimpleCommand &cmd,
   dep_graph_->FindOrCreateTxnInfo(cmd.root_id_, &dtxn->tv_);
 
   auto job = [&cmd, res, dtxn, callback, graph, output, this]() {
-    dtxn->Execute(cmd, res, output);
+    dtxn->DispatchExecute(cmd, res, output);
     dtxn->UpdateStatus(TXN_STD);
     auto sz = dep_graph_->MinItfrGraph(cmd.root_id_, graph);
     verify(sz > 0);
@@ -41,15 +41,20 @@ int RccSched::OnHandoutRequest(const SimpleCommand &cmd,
 
 int RccSched::OnFinishRequest(cmdid_t cmd_id,
                               const RccGraph &graph,
-                              map<int32_t, Value> *output,
+                              map<innid_t, map<int32_t, Value>> *output,
                               const function<void()> &callback) {
   // union the graph into dep graph
   RccDTxn *dtxn = (RccDTxn*) GetDTxn(cmd_id);
   verify(dtxn != nullptr);
   dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
   for (auto& pair: graph.vertex_index_) {
-    waitlist_.push_back(pair.second);
+    // TODO optimize here.
+    auto txnid = pair.first;
+    waitlist_.push_back(dep_graph_->vertex_index_[txnid]);
   }
+  verify(dtxn->outputs_ == nullptr);
+  dtxn->outputs_ = output;
+  dtxn->finish_ok_callback_ = callback;
 //  Graph<TxnInfo> &txn_gra_ = RccDTxn::dep_s->txn_gra_;
 //  tv_->data_->res = res;
 //  tv_->data_->union_status(TXN_CMT);
@@ -75,16 +80,21 @@ int RccSched::OnInquiryRequest(cmdid_t cmd_id,
 
 void RccSched::CheckWaitlist() {
   for (RccVertex *v : waitlist_) {
+    // TODO minimize the lenght of waitlist.
     TxnInfo& tinfo = *(v->data_);
     if (tinfo.status() <= TXN_STD &&
         !tinfo.is_involved(server_id_) &&
         tinfo.during_asking) {
+      verify(0);
       InquireAbout(v);
     } else if (tinfo.status() >= TXN_CMT && tinfo.status() < TXN_DCD) {
       if (AllAncCmt(v)) {
-
         Decide(dep_graph_->FindSCC(v));
-      } // else do nothing
+      } else {
+        // else do nothing
+        verify(0);
+        Log_debug("this transaction has some ongoing ancestors");
+      }
     } // else do nothing
 
     if (tinfo.status() >= TXN_DCD &&
@@ -238,5 +248,16 @@ bool RccSched::AllAncFns(const RccScc& scc) {
   return ret;
 };
 
+void RccSched::Execute(const RccScc& scc) {
+  verify(scc.size() > 0);
+  for (auto v : scc) {
+    TxnInfo& info = *(v->data_);
+    RccDTxn *dtxn = (RccDTxn *) GetDTxn(info.id());
+    verify(dtxn != nullptr);
+    dtxn->CommitExecute();
+    dtxn->ReplyFinishOk();
+    info.executed_ = true;
+  }
+}
 
 } // namespace rococo

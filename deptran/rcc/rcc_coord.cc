@@ -78,7 +78,7 @@ void RccCoord::HandoutAck(phase_t phase,
               txn->id_, txn->n_pieces_out_, txn->GetNPieceAll());
     Handout();
   } else if (AllHandoutAckReceived()) {
-    Log_debug("receive all start acks, txn_id: %ld; START PREPARE", cmd_->id_);
+    Log_debug("receive all start acks, txn_id: %llx; START PREPARE", cmd_->id_);
     Finish();
     // TODO?
     if (txn->do_early_return()) {
@@ -136,7 +136,7 @@ void RccCoord::Finish() {
 
 void RccCoord::FinishAck(phase_t phase,
                          int res,
-                         map<int, map<int32_t, Value>>& output) {
+                         map<innid_t, map<int32_t, Value>>& output) {
   TxnCommand* ch = (TxnCommand*) cmd_;
   verify(phase_ == phase);
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
@@ -331,4 +331,13 @@ void RccCoord::do_one(TxnRequest& req) {
     handout();
   }
 }
+
+void RccCoord::Reset() {
+  ThreePhaseCoordinator::Reset();
+  graph_.Clear();
+  ro_state_ = BEGIN;
+  last_vers_.clear();
+  curr_vers_.clear();
+}
+
 } // namespace rococo

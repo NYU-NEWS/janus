@@ -11,12 +11,12 @@ struct ChopFinishResponse;
 class TxnInfo {
  private:
   int8_t status_ = TXN_UKN;
-  bool executed_ = false;
 
  public:
   txnid_t txn_id_;
   std::set<uint32_t> servers_;
   std::vector<uint64_t> pieces_;
+  bool executed_ = false;
 
   bool committed_ = false;
 
@@ -27,6 +27,11 @@ class TxnInfo {
 
   TxnInfo(uint64_t id) {
     txn_id_ = id;
+  }
+
+  ~TxnInfo() {
+    Log_debug("txn info destruct, id: %llx", txn_id_);
+    txn_id_ = 0; // for debug purpose
   }
 
   inline int8_t get_status() const {

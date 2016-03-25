@@ -42,11 +42,16 @@ class Graph {
 
   Graph(const VertexList &vertices) { AddV(vertices); }
 
-  ~Graph() {
+  void Clear() {
     for (auto p : vertex_index_) {
       auto v = p.second;
       delete v;
     }
+    vertex_index_.clear();
+  }
+
+  virtual ~Graph() {
+    Clear();
   }
 
   void AddV(Vertex<T> *v) { vertex_index_[v->id()] = v; }
