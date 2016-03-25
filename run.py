@@ -367,9 +367,9 @@ class ClientController(object):
                 try:
                     future = rpc_proxy[i].async_client_response()
                     futures.append(future)
+                    i += 1
                 except:
                     traceback.print_exc()
-                i += 1
 
             i = 0
             while (i < len(futures)):
@@ -408,7 +408,7 @@ class ClientController(object):
             self.print_max = False
             for k, v in self.txn_infos.items():
                 #v.print_max()
-                v.print_mid(len(self.rpc_proxy))
+                v.print_mid(len(sites))
 
         if (not self.recording_period):
             if (progress >= 20 and progress <= 60):
@@ -435,6 +435,7 @@ class ClientController(object):
             rows = self.txn_infos[txn_type].get_res(interval_time, total_time, self.recording_period, self.commit_txn, interval_commits, do_sample, do_sample_lock)
             total_table.append(rows[0])
             interval_table.append(rows[1])
+        logging.info("total_time: {}".format(total_time))
         total_table.append(["----", "Total", self.start_txn, self.total_txn, self.total_try, self.commit_txn, int(round(self.commit_txn / total_time))])
         interval_total_row = ["----", "Total", self.start_txn - self.pre_start_txn, self.total_txn - self.pre_total_txn, self.total_try - self.pre_total_try, interval_commits, int(round((self.commit_txn - self.pre_commit_txn) / interval_time))]
         interval_total_row.extend([0.0 for x in g_latencies_header])
@@ -464,7 +465,7 @@ class ClientController(object):
             if (self.print_max):
                 self.print_max = False
                 for k, v in self.txn_infos.items():
-                    v.print_mid(len(self.rpc_proxy))
+                    v.print_mid(len(sites))
             return True
         else:
             return False
@@ -573,7 +574,6 @@ class ServerController(object):
         cond.release()
         return server_process
    
-    #TODO: need to use this function
     def shutdown_sites(self, sites):
         for site in sites:
             try:

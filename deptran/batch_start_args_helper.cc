@@ -2,9 +2,6 @@
 
 namespace rococo {
 
-//BatchStartArgsHelper::BatchStartArgsHelper(std::vector<Value> *arg) : arg_(arg) {
-//}
-//
 BatchStartArgsHelper::BatchStartArgsHelper() {
   arg_type_ = ARG_NONE;
 }
