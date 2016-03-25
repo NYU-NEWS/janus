@@ -76,7 +76,7 @@ def create(region, num=1, instance_type=INSTANCE_TYPE):
                                      MinCount=num,
                                      MaxCount=num, 
                                      SecurityGroups=security_group,
-                                     InstanceType=INSTANCE_TYPE)
+                                     InstanceType=instance_type)
     
     logging.info("created {num} instances in region {region}".format(num=num,
                                                              region=region))
