@@ -40,6 +40,7 @@ void ServerWorker::SetupBase() {
   txn_reg_ = new TxnRegistry();
   dtxn_sched_ = dtxn_frame_->CreateScheduler();
   dtxn_sched_->txn_reg_ = txn_reg_;
+  dtxn_sched_->SetPartitionId(site_info_->partition_id_);
   sharding_->dtxn_sched_ = dtxn_sched_;
 
   if (config->IsReplicated() &&

@@ -23,10 +23,15 @@ class Scheduler {
   Scheduler* rep_sched_ = nullptr;
 //  Coordinator* rep_coord_ = nullptr;
   TxnRegistry* txn_reg_ = nullptr;
+  parid_t partition_id_;
 
   Scheduler();
   Scheduler(int mode);
   ~Scheduler();
+
+  virtual void SetPartitionId(parid_t par_id) {
+    partition_id_ = par_id;
+  }
 
   Coordinator*CreateRepCoord();
   DTxn *GetDTxn(i64 tid);

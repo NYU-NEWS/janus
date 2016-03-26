@@ -1,6 +1,6 @@
 #pragma once
 
-#include "all.h"
+#include "deptran/piece.h"
 
 namespace rococo {
 
