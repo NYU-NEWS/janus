@@ -1,5 +1,5 @@
 #include "marshal-value.h"
-#include "rcc_coord.h"
+#include "coord.h"
 #include "frame.h"
 #include "dtxn.h"
 #include "dep_graph.h"

@@ -1,5 +1,5 @@
 #pragma once
-#include "../rcc/rcc_coord.h"
+#include "../rcc/coord.h"
 
 namespace rococo {
 class RO6Coord : public RccCoord {
