@@ -29,11 +29,11 @@ void ServerControlServiceImpl::set_sig_handler() {
   sact.sa_flags = 0;
   sact.sa_handler = shutdown_wrapper;
   sigaction(SIGALRM, &sact, NULL);
-
   sig_handler_set_ = true;
 }
 
 void ServerControlServiceImpl::server_shutdown() {
+  Log_info("Shutdown Server Control Service");
   status_mutex_.lock();
   status_ = SCS_STOP;
   status_cond_.bcast();
@@ -169,6 +169,7 @@ double timespec2ms(struct timespec time) {
 }
 
 void ClientControlServiceImpl::client_shutdown() {
+  Log_info("Shutdown Client Control Service");
   status_mutex_.lock();
   status_ = CCS_STOP;
   status_cond_.bcast();

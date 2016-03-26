@@ -349,9 +349,10 @@ class ClientController(object):
         for site in sites:
             rpc_proxy.add(site.process.client_rpc_proxy)
         rpc_proxy = list(rpc_proxy)
-
+    
         while (len(rpc_proxy) != len(self.finish_set)):
             time.sleep(self.timeout)
+            logging.info("top client heartbeat; sleep {}".format(self.timeout))
             for k in self.txn_infos.keys():
                 self.txn_infos[k].clear()
             self.start_txn = 0
@@ -360,20 +361,17 @@ class ClientController(object):
             self.commit_txn = 0
             self.run_sec = 0
             self.run_nsec = 0
-            i = 0
-            futures = []
-            while (i < len(rpc_proxy)):
-                logging.debug("%s", rpc_proxy[i].__dict__)
+        
+        futures = []
+        for proxy in rpc_proxy:
                 try:
-                    future = rpc_proxy[i].async_client_response()
+                    future = proxy.async_client_response()
                     futures.append(future)
-                    i += 1
                 except:
                     traceback.print_exc()
-
-            i = 0
-            while (i < len(futures)):
-                res = futures[i].result
+         
+        for future in futures:
+                res = future.result
                 period_time = res.period_sec + res.period_nsec / 1000000000.0
                 for txn_type in res.txn_info.keys():
                     if txn_type not in self.txn_infos:
@@ -387,12 +385,13 @@ class ClientController(object):
                 self.run_nsec += res.run_nsec
                 self.n_asking += res.n_asking
                 if (res.is_finish == 1):
-                    self.finish_set.add(i)
-                i += 1
-            self.cur_time = time.time()
-            need_break = self.print_stage_result(do_sample, do_sample_lock)
+                    self.finish_set.add(res)
+                self.cur_time = time.time()
+                need_break = self.print_stage_result(do_sample, do_sample_lock)
             if (need_break):
                 break
+            else:
+                time.sleep(self.timeout)
 
     def print_stage_result(self, do_sample, do_sample_lock):
         sites = ProcessInfo.get_sites(self.process_infos, 
@@ -699,6 +698,7 @@ class ServerController(object):
         s = "nohup " + self.taskset_func(host_process_counts[process.host_address]) + \
                " ./build/deptran_server " + \
                "-b " + \
+               "-d " + str(self.config['args'].c_duration) + " " + \
                "-f '" + self.config['args'].config_file.name + "' " + \
                "-P '" + process.name + "' " + \
                "-p " + str(self.config['args'].rpc_port + process.id) + " " \
@@ -859,7 +859,7 @@ class SiteInfo:
                 logging.info("client control rpc already connected for site %s",
                              self.name)
                 self.rpc_proxy = self.process.client_rpc_proxy
-                return
+                return True
             logging.info("start connect to client ctrl rpc for site %s @ %s:%s", 
                      self.name, 
                      self.process.host_address, 
@@ -876,8 +876,9 @@ class SiteInfo:
         self.rpc_client = Client()
         result = None 
         while (result != 0):
-            bind_address = "{host}:{port}".format(host=self.process.host_address,
-                                          port=port)
+            bind_address = "{host}:{port}".format(
+                host=self.process.host_address,
+                port=port)
             result = self.rpc_client.connect(bind_address)
             if time.time() - connect_start > timeout:
                 raise RuntimeError("rpc connect time out")
@@ -888,6 +889,7 @@ class SiteInfo:
             self.rpc_proxy = self.process.client_rpc_proxy
         else:
             self.rpc_proxy = ServerControlProxy(self.rpc_client)
+    return True
 
 class ProcessInfo:
     id = -1
@@ -953,7 +955,7 @@ def get_process_info(config):
     return process_infos
 
 def main():
-    logging.basicConfig(level=logging.DEBUG)
+    logging.basicConfig(format='%(asctime)s: %(levelname)s: %(message)s', level=logging.DEBUG)
     server_controller = None
     client_controller = None
     config = None
