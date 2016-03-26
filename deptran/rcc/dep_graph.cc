@@ -41,10 +41,9 @@ void RccGraph::FindOrCreateTxnInfo(txnid_t txn_id,
   verify(FindV(txn_id) != nullptr);
   verify(*tv != nullptr);
   // TODO fix.
-  static auto id = server_id_;
   auto txn_info = (*tv)->data_;
   verify(txn_info != nullptr);
-  txn_info->servers_.insert(id);
+  txn_info->partition_.insert(partition_id_);
 }
 
 uint64_t RccGraph::MinItfrGraph(uint64_t tid,

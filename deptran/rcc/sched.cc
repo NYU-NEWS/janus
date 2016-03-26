@@ -11,6 +11,7 @@ namespace rococo {
 RccSched::RccSched() : Scheduler() {
   verify(dep_graph_ == nullptr);
   dep_graph_ = new RccGraph();
+  dep_graph_->partition_id_ = partition_id_;
 }
 
 int RccSched::OnHandoutRequest(const SimpleCommand &cmd,
@@ -20,11 +21,17 @@ int RccSched::OnHandoutRequest(const SimpleCommand &cmd,
                                const function<void()> &callback) {
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(cmd.root_id_);
   dep_graph_->FindOrCreateTxnInfo(cmd.root_id_, &dtxn->tv_);
+  verify(dep_graph_->partition_id_ == partition_id_);
 
   auto job = [&cmd, res, dtxn, callback, graph, output, this]() {
+    verify(cmd.partition_id_ == this->partition_id_);
     dtxn->DispatchExecute(cmd, res, output);
     dtxn->UpdateStatus(TXN_STD);
     auto sz = dep_graph_->MinItfrGraph(cmd.root_id_, graph);
+    TxnInfo& info1 = *dep_graph_->vertex_index_.at(cmd.root_id_)->data_;
+    TxnInfo& info2 = *graph->vertex_index_.at(cmd.root_id_)->data_;
+    verify(info1.partition_.find(cmd.partition_id_) != info1.partition_.end());
+    verify(info2.partition_.find(cmd.partition_id_) != info2.partition_.end());
     verify(sz > 0);
     callback();
   };
@@ -73,7 +80,7 @@ int RccSched::OnInquiryRequest(cmdid_t cmd_id,
   // TODO Optimize this.
   Vertex<TxnInfo> *v = dep_graph_->FindV(cmd_id);
   //register an event, triggered when the status >= COMMITTING;
-  verify (v->data_->is_involved(server_id_));
+  verify (v->data_->is_involved(partition_id_));
   v->data_->register_event(TXN_CMT, ball);
   ball->trigger();
 }
@@ -83,7 +90,7 @@ void RccSched::CheckWaitlist() {
     // TODO minimize the lenght of waitlist.
     TxnInfo& tinfo = *(v->data_);
     if (tinfo.status() <= TXN_STD &&
-        !tinfo.is_involved(server_id_) &&
+        !tinfo.is_involved(partition_id_) &&
         tinfo.during_asking) {
       verify(0);
       InquireAbout(v);
@@ -133,9 +140,9 @@ void RccSched::CheckWaitlist() {
 void RccSched::InquireAbout(Vertex<TxnInfo> *av) {
 //  Graph<TxnInfo> &txn_gra = dep_graph_->txn_gra_;
   TxnInfo &tinfo = *(av->data_);
-  verify(!tinfo.is_involved(server_id_));
+  verify(!tinfo.is_involved(partition_id_));
   verify(!tinfo.during_asking);
-  parid_t par_id = *(tinfo.servers_.begin());
+  parid_t par_id = *(tinfo.partition_.begin());
   commo()->SendInquire(par_id,
                        tinfo.txn_id_,
                        std::bind(&RccSched::InquireAck,
@@ -259,5 +266,7 @@ void RccSched::Execute(const RccScc& scc) {
     info.executed_ = true;
   }
 }
+
+
 
 } // namespace rococo

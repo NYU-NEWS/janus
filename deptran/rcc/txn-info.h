@@ -14,7 +14,7 @@ class TxnInfo {
 
  public:
   txnid_t txn_id_;
-  std::set<uint32_t> servers_;
+  std::set<uint32_t> partition_;
   std::vector<uint64_t> pieces_;
   bool executed_ = false;
 
@@ -51,8 +51,8 @@ class TxnInfo {
   }
 
   bool is_involved(svrid_t id) {
-    auto it = servers_.find(id);
-    if (it == servers_.end()) {
+    auto it = partition_.find(id);
+    if (it == partition_.end()) {
       return false;
     } else {
       return true;
@@ -60,11 +60,11 @@ class TxnInfo {
   }
 
   uint32_t random_server() {
-    verify(servers_.size() > 0);
-    uint32_t i = RandomGenerator::rand(0, servers_.size() - 1);
-    auto it = servers_.begin();
+    verify(partition_.size() > 0);
+    uint32_t i = RandomGenerator::rand(0, partition_.size() - 1);
+    auto it = partition_.begin();
     std::advance(it, i);
-    uint32_t id = *(servers_.begin());
+    uint32_t id = *(partition_.begin());
     Log::debug("random a related server, id: %x", id);
     return id;
   }
@@ -81,16 +81,15 @@ class TxnInfo {
     txn_id_ = id;
   }
 
-  inline void union_data(
-      const TxnInfo &ti,
-      bool trigger = true,
-      bool server = false
-  ) {
-    servers_.insert(ti.servers_.begin(), ti.servers_.end());
+  inline void union_data(const TxnInfo &ti,
+                         bool trigger = false,
+                         bool server = false) {
+    partition_.insert(ti.partition_.begin(), ti.partition_.end());
     union_status(ti.status_, trigger, server);
   }
 
   void trigger() {
+    verify(0);
     for (auto &kv: events_) {
       if (kv.first <= status_) {
         while (kv.second.size() > 0) {
@@ -103,7 +102,7 @@ class TxnInfo {
   }
 
   void union_status(int8_t status,
-                    bool is_trigger = true,
+                    bool is_trigger = false,
                     bool is_server = false) {
 
     if (false) {
@@ -135,13 +134,13 @@ class TxnInfo {
 };
 
 inline rrr::Marshal &operator<<(rrr::Marshal &m, const TxnInfo &ti) {
-  m << ti.txn_id_ << ti.status() << ti.servers_;
+  m << ti.txn_id_ << ti.status() << ti.partition_;
   return m;
 }
 
 inline rrr::Marshal &operator>>(rrr::Marshal &m, TxnInfo &ti) {
   int8_t status;
-  m >> ti.txn_id_ >> status >> ti.servers_;
+  m >> ti.txn_id_ >> status >> ti.partition_;
   ti.union_status(status);
   return m;
 }

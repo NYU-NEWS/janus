@@ -20,7 +20,7 @@ class RccGraph : public Graph<TxnInfo> {
  public:
 //    Graph<PieInfo> pie_gra_;
 //  Graph <TxnInfo> txn_gra_;
-  svrid_t server_id_ = 0; // TODO
+  svrid_t partition_id_ = 0; // TODO
 //  std::vector<rrr::Client *> rpc_clients_;
 //  std::vector<RococoProxy *> rpc_proxies_;
 //  std::vector<std::string> server_addrs_;
