@@ -105,12 +105,11 @@ void RccCoord::HandoutAck(phase_t phase,
 /** caller should be thread safe */
 void RccCoord::Finish() {
   verify(IS_MODE_RCC || IS_MODE_RO6);
-  Log::debug("deptran finish, %llx", cmd_->id_);
   TxnCommand *ch = (TxnCommand*) cmd_;
   // commit or abort piece
   rrr::FutureAttr fuattr;
   Log_debug(
-    "send deptran finish requests to %d servers, tid: %llx, graph size: %d",
+    "send rcc finish requests to %d servers, tid: %llx, graph size: %d",
     (int)ch->partition_ids_.size(),
     cmd_->id_,
     graph_.size());

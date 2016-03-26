@@ -158,7 +158,7 @@ void TpccPiece::RegNewOrder() {
     r = dtxn->Query(dtxn->GetTable(TPCC_TB_ORDER_C_ID_SECONDARY),
                     mb,
                     ROW_ORDER_SEC);
-    dtxn->WriteColumn(r, 3, cmd.input[TPCC_VAR_W_ID]);
+    dtxn->WriteColumn(r, 3, cmd.input[TPCC_VAR_W_ID], TXN_DEFERRED);
     return;
   } END_PIE
 
@@ -285,18 +285,18 @@ void TpccPiece::RegNewOrder() {
 
     // Ri stock
     Value buf(0);
-    dtxn->ReadColumn(r, TPCC_COL_STOCK_S_QUANTITY, &buf);
+    dtxn->ReadColumn(r, TPCC_COL_STOCK_S_QUANTITY, &buf, TXN_DEFERRED);
     int32_t new_ol_quantity = buf.get_i32() -
         cmd.input[TPCC_VAR_OL_QUANTITY(I)].get_i32();
 
-    dtxn->ReadColumn(r, TPCC_COL_STOCK_S_YTD, &buf);
+    dtxn->ReadColumn(r, TPCC_COL_STOCK_S_YTD, &buf, TXN_DEFERRED);
     Value new_s_ytd(buf.get_i32() +
         cmd.input[TPCC_VAR_OL_QUANTITY(I)].get_i32());
 
-    dtxn->ReadColumn(r, TPCC_COL_STOCK_S_ORDER_CNT, &buf);
+    dtxn->ReadColumn(r, TPCC_COL_STOCK_S_ORDER_CNT, &buf, TXN_DEFERRED);
     Value new_s_order_cnt((i32)(buf.get_i32() + 1));
 
-    dtxn->ReadColumn(r, TPCC_COL_STOCK_S_REMOTE_CNT, &buf);
+    dtxn->ReadColumn(r, TPCC_COL_STOCK_S_REMOTE_CNT, &buf, TXN_DEFERRED);
     Value new_s_remote_cnt(buf.get_i32() +
         cmd.input[TPCC_VAR_S_REMOTE_CNT(I)].get_i32());
 
@@ -316,7 +316,8 @@ void TpccPiece::RegNewOrder() {
                            new_s_ytd,
                            new_s_order_cnt,
                            new_s_remote_cnt
-                       });
+                       },
+                       TXN_DEFERRED);
     *res = SUCCESS;
     return;
   END_LOOP_PIE

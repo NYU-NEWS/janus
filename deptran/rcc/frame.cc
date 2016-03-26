@@ -58,7 +58,7 @@ RccFrame::CreateRpcServices(uint32_t site_id,
 
 mdb::Row* RccFrame::CreateRow(const mdb::Schema *schema,
                               vector<Value>& row_data) {
-  mdb::Row* r = mdb::VersionedRow::create(schema, row_data);
+  mdb::Row* r = RCCRow::create(schema, row_data);
   return r;
 }
 

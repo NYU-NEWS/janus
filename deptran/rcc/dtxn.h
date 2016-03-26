@@ -26,6 +26,16 @@ class RccDTxn: public DTxn {
 
   virtual void ReplyFinishOk();
 
+  bool ReadColumn(mdb::Row *row,
+                  mdb::column_id_t col_id,
+                  Value *value,
+                  int hint_flag) override;
+
+  bool WriteColumn(Row *row,
+                   column_id_t col_id,
+                   const Value &value,
+                   int hint_flag = TXN_INSTANT) override;
+
   virtual bool start_exe_itfr(
       defer_t defer,
       TxnHandler &handler,

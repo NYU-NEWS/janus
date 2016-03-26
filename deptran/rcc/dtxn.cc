@@ -42,6 +42,8 @@ void RccDTxn::DispatchExecute(const SimpleCommand &cmd,
 }
 
 void RccDTxn::CommitExecute() {
+  verify(phase_ == PHASE_RCC_START);
+  phase_ = PHASE_RCC_COMMIT;
   for (auto &cmd: dreqs_) {
     auto pair = txn_reg_->get(cmd);
     int tmp;
@@ -268,12 +270,12 @@ void RccDTxn::start_ro(const SimpleCommand& cmd,
 void RccDTxn::kiss(mdb::Row *r, int col, bool immediate) {
 
   entry_t *entry = ((RCCRow *) r)->get_dep_entry(col);
+  int8_t edge_type = immediate ? EDGE_I : EDGE_D;
 
   if (read_only_) {
     if (entry->last_)
       conflict_txns_.push_back(entry->last_->data_.get());
   } else {
-    int8_t edge_type = immediate ? EDGE_I : EDGE_D;
     if (entry->last_ != NULL) {
       entry->last_->outgoing_[tv_] |= edge_type;
       tv_->incoming_[entry->last_] |= edge_type;
@@ -282,4 +284,78 @@ void RccDTxn::kiss(mdb::Row *r, int col, bool immediate) {
     }
   }
 }
+
+bool RccDTxn::ReadColumn(mdb::Row *row,
+                         mdb::column_id_t col_id,
+                         Value *value,
+                         int hint_flag) {
+  verify(!read_only_);
+  if (phase_ == PHASE_RCC_START) {
+    int8_t edge_type;
+    if (hint_flag == TXN_BYPASS || hint_flag == TXN_INSTANT) {
+      mdb_txn()->read_column(row, col_id, value);
+    }
+
+    if (hint_flag == TXN_INSTANT || hint_flag == TXN_DEFERRED) {
+//      entry_t *entry = ((RCCRow *) row)->get_dep_entry(col_id);
+      auto r = dynamic_cast<RCCRow*>(row);
+      verify(r != nullptr);
+      entry_t *entry = r->get_dep_entry(col_id);
+      int8_t edge_type = hint_flag == TXN_INSTANT ? EDGE_I : EDGE_D;
+      // TODO optimize.
+      if (entry->last_ != NULL) {
+        entry->last_->outgoing_[tv_] |= edge_type;
+        tv_->incoming_[entry->last_] |= edge_type;
+      } else {
+        entry->last_ = tv_;
+      }
+    }
+  } else if (phase_ == PHASE_RCC_COMMIT) {
+    if (hint_flag == TXN_BYPASS || hint_flag == TXN_DEFERRED) {
+      mdb_txn()->read_column(row, col_id, value);
+    } else {
+      verify(0);
+    }
+  } else {
+    verify(0);
+  }
+  return true;
+}
+
+bool RccDTxn::WriteColumn(Row *row,
+                          column_id_t col_id,
+                          const Value &value,
+                          int hint_flag) {
+  verify(!read_only_);
+  if (phase_ == PHASE_RCC_START) {
+    int8_t edge_type;
+    if (hint_flag == TXN_BYPASS || hint_flag == TXN_INSTANT) {
+      mdb_txn()->write_column(row, col_id, value);
+    }
+    if (hint_flag == TXN_INSTANT || hint_flag == TXN_DEFERRED) {
+//      entry_t *entry = ((RCCRow *) row)->get_dep_entry(col_id);
+      auto r = dynamic_cast<RCCRow*>(row);
+      verify(r != nullptr);
+      entry_t *entry = r->get_dep_entry(col_id);
+      int8_t edge_type = hint_flag == TXN_INSTANT ? EDGE_I : EDGE_D;
+      // TODO optimize.
+      if (entry->last_ != nullptr) {
+        entry->last_->outgoing_[tv_] |= edge_type;
+        tv_->incoming_[entry->last_] |= edge_type;
+      } else {
+        entry->last_ = tv_;
+      }
+    }
+  } else if (phase_ == PHASE_RCC_COMMIT) {
+    if (hint_flag == TXN_BYPASS || hint_flag == TXN_DEFERRED) {
+      mdb_txn()->write_column(row, col_id, value);
+    } else {
+      verify(0);
+    }
+  } else {
+    verify(0);
+  }
+  return true;
+}
+
 } // namespace rococo

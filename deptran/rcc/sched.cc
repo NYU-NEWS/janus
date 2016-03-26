@@ -99,7 +99,6 @@ void RccSched::CheckWaitlist() {
         Decide(dep_graph_->FindSCC(v));
       } else {
         // else do nothing
-        verify(0);
         Log_debug("this transaction has some ongoing ancestors");
       }
     } // else do nothing
