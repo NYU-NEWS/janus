@@ -17,7 +17,7 @@ class RccSched : public Scheduler {
  public:
   RccGraph *dep_graph_ = nullptr;
   RccCommo* commo_ = nullptr;
-  list<Vertex<TxnInfo>*> waitlist_ = {};
+  list<RccVertex*> waitlist_ = {};
 //  Vertex<TxnInfo> *v : wait_list_
 
   RccSched();
@@ -38,9 +38,9 @@ class RccSched : public Scheduler {
                       map<innid_t, map<int32_t, Value>> *output,
                       const function<void()>& callback);
 
-  int OnInquiryRequest(cmdid_t cmd_id,
-                       RccGraph* graph,
-                       const function<void()>& callback);
+  int OnInquireRequest(cmdid_t cmd_id,
+                       RccGraph *graph,
+                       const function<void()> &callback);
 
 //  void to_decide(Vertex<TxnInfo> *v,
 //                 rrr::DeferredReply *defer);

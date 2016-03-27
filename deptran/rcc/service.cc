@@ -155,7 +155,7 @@ void RococoServiceImpl::Inquire(const cmdid_t &tid,
                                 rrr::DeferredReply *defer) {
   verify(IS_MODE_RCC || IS_MODE_RO6);
   std::lock_guard <std::mutex> guard(mtx_);
-  dtxn_sched()->OnInquiryRequest(tid, graph, [defer] () {defer->reply();});
+  dtxn_sched()->OnInquireRequest(tid, graph, [defer]() { defer->reply(); });
 //  RccDTxn *dtxn = (RccDTxn *) dtxn_sched_->GetDTxn(tid);
 //  dtxn->inquire(res, defer);
 }

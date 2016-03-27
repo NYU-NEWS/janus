@@ -7,6 +7,7 @@ namespace rococo {
 
 struct ChopFinishResponse;
 
+class RccGraph;
 // TODO Should this class be merged with RCCDTxn?
 class TxnInfo {
  private:
@@ -22,6 +23,9 @@ class TxnInfo {
 
   bool during_commit = false;
   bool during_asking = false;
+
+  vector<RccGraph*> graphs_for_inquire_ = {};
+  vector<function<void()>> callbacks_for_inquire_ = {};
 
   ChopFinishResponse *res = nullptr;
 
@@ -42,6 +46,10 @@ class TxnInfo {
     return status_;
   }
 
+  inline bool IsCommitting() const {
+    return (status_ & TXN_CMT);
+  }
+
   inline bool IsDecided() const {
     return (status_ & TXN_DCD);
   }
@@ -50,7 +58,7 @@ class TxnInfo {
     return executed_;
   }
 
-  bool is_involved(svrid_t id) {
+  bool Involve(svrid_t id) {
     auto it = partition_.find(id);
     if (it == partition_.end()) {
       return false;

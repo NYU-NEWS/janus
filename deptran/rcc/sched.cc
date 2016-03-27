@@ -69,7 +69,7 @@ int RccSched::OnFinishRequest(cmdid_t cmd_id,
   CheckWaitlist();
 }
 
-int RccSched::OnInquiryRequest(cmdid_t cmd_id,
+int RccSched::OnInquireRequest(cmdid_t cmd_id,
                                RccGraph *graph,
                                const function<void()> &callback) {
   verify(0);
@@ -77,22 +77,47 @@ int RccSched::OnInquiryRequest(cmdid_t cmd_id,
     dep_graph_->MinItfrGraph(cmd_id, graph);
     callback();
   });
-  // TODO Optimize this.
-  Vertex<TxnInfo> *v = dep_graph_->FindV(cmd_id);
+  RccVertex* v = dep_graph_->FindV(cmd_id);
+  TxnInfo& info = *v->data_;
   //register an event, triggered when the status >= COMMITTING;
-  verify (v->data_->is_involved(partition_id_));
-  v->data_->register_event(TXN_CMT, ball);
-  ball->trigger();
+  verify (info.Involve(partition_id_));
+
+  if (info.IsCommitting()) {
+    dep_graph_->MinItfrGraph(cmd_id, graph);
+  } else {
+    info.graphs_for_inquire_.push_back(graph);
+    info.callbacks_for_inquire_.push_back(callback);
+  }
+
+//  v->data_->register_event(TXN_CMT, ball);
+//  ball->trigger();
 }
 
 void RccSched::CheckWaitlist() {
-  for (RccVertex *v : waitlist_) {
+  auto it = waitlist_.begin();
+  Log_debug("waitlist length: %d", (int)waitlist_.size());
+  while (it != waitlist_.end()) {
+    RccVertex* v = *it;
+//  for (RccVertex *v : waitlist_) {
     // TODO minimize the lenght of waitlist.
     TxnInfo& tinfo = *(v->data_);
+    // reply inquire requests if possible.
+    verify(tinfo.graphs_for_inquire_.size() ==
+        tinfo.callbacks_for_inquire_.size());
+    if (tinfo.IsCommitting() && tinfo.graphs_for_inquire_.size() > 0) {
+      for (auto graph : tinfo.graphs_for_inquire_) {
+        dep_graph_->MinItfrGraph(tinfo.id(), graph);
+      }
+      for (auto callback : tinfo.callbacks_for_inquire_) {
+        callback();
+      }
+      tinfo.callbacks_for_inquire_.clear();
+      tinfo.graphs_for_inquire_.clear();
+    }
+    // inquire about unknown transaction.
     if (tinfo.status() <= TXN_STD &&
-        !tinfo.is_involved(partition_id_) &&
+        !tinfo.Involve(partition_id_) &&
         tinfo.during_asking) {
-      verify(0);
       InquireAbout(v);
     } else if (tinfo.status() >= TXN_CMT && tinfo.status() < TXN_DCD) {
       if (AllAncCmt(v)) {
@@ -106,9 +131,20 @@ void RccSched::CheckWaitlist() {
     if (tinfo.status() >= TXN_DCD &&
         !tinfo.IsExecuted() &&
         AllAncFns(dep_graph_->FindSCC(v))) {
-        Execute(dep_graph_->FindSCC(v));
+      Execute(dep_graph_->FindSCC(v));
     } // else do nothing
+
+    // Adjust the waitlist.
+    if (tinfo.IsExecuted()) {
+      verify(tinfo.IsDecided());
+      it = waitlist_.erase(it);
+    } else if (tinfo.IsDecided() && !tinfo.Involve(partition_id_)) {
+      it = waitlist_.erase(it);
+    } else {
+      it++;
+    }
   }
+  // TODO optimize for the waitlist.
 }
 //
 //void RccSched::to_decide(Vertex<TxnInfo> *v,
@@ -139,9 +175,10 @@ void RccSched::CheckWaitlist() {
 void RccSched::InquireAbout(Vertex<TxnInfo> *av) {
 //  Graph<TxnInfo> &txn_gra = dep_graph_->txn_gra_;
   TxnInfo &tinfo = *(av->data_);
-  verify(!tinfo.is_involved(partition_id_));
+  verify(!tinfo.Involve(partition_id_));
   verify(!tinfo.during_asking);
   parid_t par_id = *(tinfo.partition_.begin());
+  tinfo.during_asking = true;
   commo()->SendInquire(par_id,
                        tinfo.txn_id_,
                        std::bind(&RccSched::InquireAck,
