@@ -362,15 +362,15 @@ class ClientController(object):
             self.run_sec = 0
             self.run_nsec = 0
         
-        futures = []
-        for proxy in rpc_proxy:
+            futures = []
+            for proxy in rpc_proxy:
                 try:
                     future = proxy.async_client_response()
                     futures.append(future)
                 except:
                     traceback.print_exc()
          
-        for future in futures:
+            for future in futures:
                 res = future.result
                 period_time = res.period_sec + res.period_nsec / 1000000000.0
                 for txn_type in res.txn_info.keys():
@@ -386,8 +386,9 @@ class ClientController(object):
                 self.n_asking += res.n_asking
                 if (res.is_finish == 1):
                     self.finish_set.add(res)
-                self.cur_time = time.time()
-                need_break = self.print_stage_result(do_sample, do_sample_lock)
+
+            self.cur_time = time.time()
+            need_break = self.print_stage_result(do_sample, do_sample_lock)
             if (need_break):
                 break
             else:
@@ -746,6 +747,10 @@ def create_parser():
             help="time interval to report benchmark status in seconds", 
             default=5, action="store", metavar="TIME", type=int)
 
+    parser.add_argument("-w", "--wait", dest="wait",
+                        help="wait after starting processes",
+                        default=False, action="store_true")
+
     parser.add_argument("-d", "--duration", dest="c_duration", 
             help="benchmark running duration in seconds", default=60, 
             action="store", metavar="TIME", type=int)
@@ -889,7 +894,7 @@ class SiteInfo:
             self.rpc_proxy = self.process.client_rpc_proxy
         else:
             self.rpc_proxy = ServerControlProxy(self.rpc_client)
-    return True
+        return True
 
 class ProcessInfo:
     id = -1
@@ -970,6 +975,10 @@ def main():
         server_controller.start()
 
         client_controller = ClientController(config, process_infos)
+
+        if config['args'].wait:
+            raw_input("press <enter> to start")
+
         process = server_controller.setup_heartbeat(client_controller)
         if process is not None:
             process.join()
