@@ -8,7 +8,7 @@
 
 namespace rococo {
 
-void RccCoord::Handout() {
+void RccCoord::Dispatch() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 //  phase_++;
   // new txn id for every new and retry.
@@ -32,7 +32,7 @@ void RccCoord::Handout() {
               n_handout_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
     handout_acks_[subcmd->inn_id()] = false;
     commo()->SendHandout(*subcmd,
-                         std::bind(&RccCoord::HandoutAck,
+                         std::bind(&RccCoord::DispatchAck,
                                    this,
                                    phase_,
                                    std::placeholders::_1,
@@ -41,10 +41,10 @@ void RccCoord::Handout() {
   }
 }
 
-void RccCoord::HandoutAck(phase_t phase,
-                          int res,
-                          SimpleCommand& cmd,
-                          RccGraph& graph) {
+void RccCoord::DispatchAck(phase_t phase,
+                           int res,
+                           SimpleCommand &cmd,
+                           RccGraph &graph) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(phase == phase_); // cannot proceed without all acks.
   TxnInfo& info = *graph.vertex_index_.at(cmd.root_id_)->data_;
@@ -79,7 +79,7 @@ void RccCoord::HandoutAck(phase_t phase,
     Log_debug("command has more sub-cmd, cmd_id: %lx,"
                   " n_started_: %d, n_pieces: %d",
               txn->id_, txn->n_pieces_out_, txn->GetNPieceAll());
-    Handout();
+    Dispatch();
   } else if (AllHandoutAckReceived()) {
     Log_debug("receive all start acks, txn_id: %llx; START PREPARE", cmd_->id_);
     Finish();
@@ -224,7 +224,7 @@ void RccCoord::HandoutRoAck(phase_t phase,
       ch->read_only_reset();
       last_vers_ = curr_vers_;
       curr_vers_.clear();
-      this->Handout();
+      this->Dispatch();
     }
   }
 }
@@ -324,7 +324,7 @@ void RccCoord::do_one(TxnRequest& req) {
   verify(ro_state_ == BEGIN);
   auto handout = ch->is_read_only() ?
                  std::bind(&RccCoord::HandoutRo, this) :
-                 std::bind(&RccCoord::Handout, this);
+                 std::bind(&RccCoord::Dispatch, this);
   if (recorder_) {
     std::string log_s;
     req.get_log(cmd_->id_, log_s);

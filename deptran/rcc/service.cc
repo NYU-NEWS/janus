@@ -83,7 +83,7 @@ RococoServiceImpl::RococoServiceImpl(Scheduler *sched,
 //}
 
 
-void RococoServiceImpl::Handout(const SimpleCommand& cmd,
+void RococoServiceImpl::Dispatch(const SimpleCommand& cmd,
                                 int32_t* res,
                                 map<int32_t, Value>* output,
                                 RccGraph* graph,

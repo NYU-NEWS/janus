@@ -44,10 +44,10 @@ class ClassicServiceImpl: public ClassicService {
 //      std::vector<vector<Value>> *output,
 //      DeferredReply *defer);
 
-  void Handout(const SimpleCommand &cmd,
-               int32_t *res,
-               map<int32_t, Value> *output,
-               DeferredReply *defer_reply) override;
+  void Dispatch(const SimpleCommand &cmd,
+                int32_t *res,
+                map<int32_t, Value> *output,
+                DeferredReply *defer_reply) override;
 
   void prepare_txn(const i64 &tid,
                    const std::vector<i32> &sids,

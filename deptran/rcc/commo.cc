@@ -27,7 +27,7 @@ void RccCommo::SendHandout(SimpleCommand &cmd,
   Log_debug("dispatch to %ld", cmd.PartitionId());
   verify(cmd.type_ > 0);
   verify(cmd.root_type_ > 0);
-  Future::safe_release(proxy->async_Handout(cmd, fuattr));
+  Future::safe_release(proxy->async_Dispatch(cmd, fuattr));
 }
 
 void RccCommo::SendHandoutRo(SimpleCommand &cmd,

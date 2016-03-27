@@ -21,7 +21,7 @@ void NoneCoord::do_one(TxnRequest &req) {
   Log_debug("do one request txn_id: %ld\n", cmd_->id_);
 
   if (ccsi_) ccsi_->txn_start_one(thread_id_, cmd->type_);
-  Handout();
+  Dispatch();
 }
 
 void NoneCoord::Handout() {
@@ -66,7 +66,7 @@ void NoneCoord::HandoutAck(phase_t phase, int res, Command& cmd) {
     Log_debug("command has more sub-cmd, cmd_id: %lx,"
                   " n_started_: %d, n_pieces: %d",
                 cmd_->id_, ch->n_pieces_out_, ch->GetNPieceAll());
-    Handout();
+    Dispatch();
   } else if (AllHandoutAckReceived()) {
     Log_debug("receive all handout acks, txn_id: %ld; START PREPARE",
               cmd_->id_);

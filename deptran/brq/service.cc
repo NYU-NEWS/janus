@@ -81,7 +81,7 @@ BrqServiceImpl::BrqServiceImpl(Scheduler *sched,
 //}
 
 
-void BrqServiceImpl::Handout(const SimpleCommand& cmd,
+void BrqServiceImpl::Dispatch(const SimpleCommand& cmd,
                                 int32_t* res,
                                 map<int32_t, Value>* output,
                                 RccGraph* graph,

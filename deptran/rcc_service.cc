@@ -138,7 +138,7 @@ ClassicServiceImpl::ClassicServiceImpl(Scheduler *sched,
 //}
 
 
-void ClassicServiceImpl::Handout(const SimpleCommand &cmd,
+void ClassicServiceImpl::Dispatch(const SimpleCommand &cmd,
                                  rrr::i32 *res,
                                  map<int32_t, Value> *output,
                                  rrr::DeferredReply *defer) {

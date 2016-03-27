@@ -31,11 +31,11 @@ public:
 
   virtual ~BrqCoord() {}
 
-  // Handout inherits from RccCoord;
-  void HandoutAck(phase_t phase,
-                  int res,
-                  SimpleCommand& cmd,
-                  RccGraph& graph);
+  // Dispatch inherits from RccCoord;
+  void DispatchAck(phase_t phase,
+                   int res,
+                   SimpleCommand &cmd,
+                   RccGraph &graph);
 
   // do_one inherits from RccCoord;
 

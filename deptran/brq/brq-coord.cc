@@ -33,10 +33,10 @@ void BrqCoord::launch_recovery(cmdid_t cmd_id) {
 }
 
 
-void BrqCoord::HandoutAck(phase_t phase,
-                          int res,
-                          SimpleCommand& cmd,
-                          RccGraph& graph) {
+void BrqCoord::DispatchAck(phase_t phase,
+                           int res,
+                           SimpleCommand &cmd,
+                           RccGraph &graph) {
   verify(0);
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(phase == phase_);
@@ -70,7 +70,7 @@ void BrqCoord::HandoutAck(phase_t phase,
     Log_debug("command has more sub-cmd, cmd_id: %lx,"
                   " n_started_: %d, n_pieces: %d",
               txn->id_, txn->n_pieces_out_, txn->GetNPieceAll());
-    Handout();
+    Dispatch();
   }
 }
 

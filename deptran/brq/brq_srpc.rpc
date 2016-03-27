@@ -11,7 +11,7 @@ abstract service Brq {
 
     // Below is for rococo only
 
-  defer Handout(SimpleCommand cmd |
+  defer Dispatch(SimpleCommand cmd |
                 i32 res,
                 map<i32, Value> output,
                 RccGraph graph);

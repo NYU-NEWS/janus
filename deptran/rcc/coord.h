@@ -34,11 +34,11 @@ public:
 
   void do_one(TxnRequest&) override;
 
-  void Handout();
-  virtual void HandoutAck(phase_t phase,
-                  int res,
-                  SimpleCommand& cmd,
-                  RccGraph& graph);
+  void Dispatch();
+  virtual void DispatchAck(phase_t phase,
+                           int res,
+                           SimpleCommand &cmd,
+                           RccGraph &graph);
   void Finish();
   void FinishAck(phase_t phase,
                  int res,

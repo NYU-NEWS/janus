@@ -69,11 +69,11 @@ class RococoServiceImpl: public RococoService {
 //      BatchChopStartResponse *res,
 //      DeferredReply *defer);
 
-  void Handout(const SimpleCommand& cmd,
-               int32_t* res,
-               map<int32_t, Value>* output,
-               RccGraph* graph,
-               DeferredReply* defer) override;
+  void Dispatch(const SimpleCommand& cmd,
+                int32_t* res,
+                map<int32_t, Value>* output,
+                RccGraph* graph,
+                DeferredReply* defer) override;
 
   void Finish(const cmdid_t& cmd_id,
               const RccGraph& graph,

@@ -52,7 +52,7 @@ void ThreePhaseCoordinator::do_one(TxnRequest &req) {
   switch (mode) {
     case MODE_OCC:
     case MODE_2PL:
-      Handout();
+      Dispatch();
       break;
     case MODE_RPC_NULL:
 //      rpc_null_start(ch);
@@ -128,10 +128,10 @@ void ThreePhaseCoordinator::restart(TxnCommand *ch) {
   double last_latency = ch->last_attempt_latency();
 
   if (ccsi_) ccsi_->txn_retry_one(this->thread_id_, ch->type_, last_latency);
-  Handout();
+  Dispatch();
 }
 
-void ThreePhaseCoordinator::Handout() {
+void ThreePhaseCoordinator::Dispatch() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   //  ___TestPhaseOne(cmd_id_);
 
@@ -200,7 +200,7 @@ void ThreePhaseCoordinator::HandoutAck(phase_t phase, int res, Command& cmd) {
       Log_debug("command has more sub-cmd, cmd_id: %lx,"
                     " n_started_: %d, n_pieces: %d",
                 cmd_->id_, ch->n_pieces_out_, ch->GetNPieceAll());
-      Handout();
+      Dispatch();
     } else if (AllHandoutAckReceived()) {
       Log_debug("receive all start acks, txn_id: %ld; START PREPARE", cmd_->id_);
       Prepare();

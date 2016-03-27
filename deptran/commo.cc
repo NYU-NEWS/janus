@@ -25,7 +25,7 @@ void RococoCommunicator::SendHandout(SimpleCommand &cmd,
   Log_debug("SendStart to %ld from %ld", proxy.first, coo->coo_id_);
   verify(cmd.type_ > 0);
   verify(cmd.root_type_ > 0);
-  Future::safe_release(proxy.second->async_Handout(cmd, fuattr));
+  Future::safe_release(proxy.second->async_Dispatch(cmd, fuattr));
 }
 
 void RococoCommunicator::SendStart(SimpleCommand &cmd,
@@ -35,7 +35,7 @@ void RococoCommunicator::SendStart(SimpleCommand &cmd,
   fuattr.callback = callback;
   auto proxy = RandomProxyForPartition(cmd.PartitionId());
   Log_debug("SendStart to %ld\n", proxy.first);
-  Future::safe_release(proxy.second->async_Handout(cmd, fuattr));
+  Future::safe_release(proxy.second->async_Dispatch(cmd, fuattr));
 }
 
 void RococoCommunicator::SendPrepare(groupid_t gid,

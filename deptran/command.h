@@ -38,6 +38,7 @@ public:
     return new Command(*this);
 //    verify(0);
   };
+  virtual ~Command() {};
 };
 
 class SequentialCommand {
@@ -75,6 +76,7 @@ class SimpleCommand: public Command {
     *cmd = *this;
     return cmd;
   }
+  virtual ~SimpleCommand() {};
 };
 
 

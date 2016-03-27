@@ -21,7 +21,7 @@ abstract service MultiPaxos {
 
 // below is for 2PL and OCC
 abstract service Classic {
-    defer Handout(SimpleCommand cmd |
+    defer Dispatch(SimpleCommand cmd |
                   i32 res,
                   map<i32, Value> output);
 
