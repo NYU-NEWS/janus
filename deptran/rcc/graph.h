@@ -19,14 +19,14 @@ class Vertex {
 
   void AddEdge(Vertex<T> *other, int8_t weight) {
     // printf("add edge: %d -> %d\n", this->id(), other->id());
-    outgoing_[other] = weight;
-    other->incoming_[this] = weight;
+    outgoing_[other] |= weight;
+    other->incoming_[this] |= weight;
   }
 
   void AddParentEdge(Vertex<T> *other, int8_t weight) {
     // printf("add edge: %d -> %d\n", this->id(), other->id());
-    incoming_[other] = weight;
-    other->outgoing_[this] = weight;
+    incoming_[other] |= weight;
+    other->outgoing_[this] |= weight;
   }
 
   uint64_t id() const { return data_->id(); }

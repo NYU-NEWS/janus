@@ -62,6 +62,7 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
   vector<RccVertex *> search_stack;
   set<RccVertex*> searched_set;
   search_stack.push_back(source);
+  bool debug = false;
   while (search_stack.size() > 0) {
     RccVertex *v = search_stack.back();
     searched_set.insert(v);
@@ -70,19 +71,29 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
     for (auto &kv: v->incoming_) {
       auto parent_v = kv.first;
       auto weight = kv.second;
-      auto parent_txn = parent_v->data_;
-      if (parent_txn->IsDecided()) {
+      TxnInfo& parent_txn = *parent_v->data_;
+      if (parent_v == v) {
+        verify(0); // or continue?
+      }
+      if (parent_txn.IsDecided()) {
         continue;
       }
       if (searched_set.find(parent_v) != searched_set.end()) {
         continue;
       }
+      // TODO Debug here. why is this not happening?
+//      verify(0);
+      debug = true;
       RccVertex* new_parent_v = new_graph->FindOrCreateV(*parent_v);
       new_v->AddParentEdge(new_parent_v, weight);
       search_stack.push_back(parent_v);
     }
   }
-  return new_graph->size();
+  auto sz = new_graph->size();
+  if (debug) {
+    Log_debug("return graph size: %llx", sz);
+  }
+  return sz;
 }
 
 

@@ -268,7 +268,7 @@ void RccDTxn::start_ro(const SimpleCommand& cmd,
 //
 
 void RccDTxn::kiss(mdb::Row *r, int col, bool immediate) {
-
+  verify(0);
   entry_t *entry = ((RCCRow *) r)->get_dep_entry(col);
   int8_t edge_type = immediate ? EDGE_I : EDGE_D;
 
@@ -298,17 +298,7 @@ bool RccDTxn::ReadColumn(mdb::Row *row,
 
     if (hint_flag == TXN_INSTANT || hint_flag == TXN_DEFERRED) {
 //      entry_t *entry = ((RCCRow *) row)->get_dep_entry(col_id);
-      auto r = dynamic_cast<RCCRow*>(row);
-      verify(r != nullptr);
-      entry_t *entry = r->get_dep_entry(col_id);
-      int8_t edge_type = hint_flag == TXN_INSTANT ? EDGE_I : EDGE_D;
-      // TODO optimize.
-      if (entry->last_ != NULL) {
-        entry->last_->outgoing_[tv_] |= edge_type;
-        tv_->incoming_[entry->last_] |= edge_type;
-      } else {
-        entry->last_ = tv_;
-      }
+      TraceDep(row, col_id, hint_flag);
     }
   } else if (phase_ == PHASE_RCC_COMMIT) {
     if (hint_flag == TXN_BYPASS || hint_flag == TXN_DEFERRED) {
@@ -334,17 +324,7 @@ bool RccDTxn::WriteColumn(Row *row,
     }
     if (hint_flag == TXN_INSTANT || hint_flag == TXN_DEFERRED) {
 //      entry_t *entry = ((RCCRow *) row)->get_dep_entry(col_id);
-      auto r = dynamic_cast<RCCRow*>(row);
-      verify(r != nullptr);
-      entry_t *entry = r->get_dep_entry(col_id);
-      int8_t edge_type = hint_flag == TXN_INSTANT ? EDGE_I : EDGE_D;
-      // TODO optimize.
-      if (entry->last_ != nullptr) {
-        entry->last_->outgoing_[tv_] |= edge_type;
-        tv_->incoming_[entry->last_] |= edge_type;
-      } else {
-        entry->last_ = tv_;
-      }
+      TraceDep(row, col_id, hint_flag);
     }
   } else if (phase_ == PHASE_RCC_COMMIT) {
     if (hint_flag == TXN_BYPASS || hint_flag == TXN_DEFERRED) {
@@ -356,6 +336,25 @@ bool RccDTxn::WriteColumn(Row *row,
     verify(0);
   }
   return true;
+}
+
+void RccDTxn::TraceDep(Row* row, column_id_t col_id, int hint_flag) {
+  auto r = dynamic_cast<RCCRow*>(row);
+  verify(r != nullptr);
+  entry_t *entry = r->get_dep_entry(col_id);
+  int8_t edge_type = (hint_flag == TXN_INSTANT) ? EDGE_I : EDGE_D;
+  // TODO optimize.
+  RccVertex*& parent_v = entry->last_;
+  if (parent_v == tv_) {
+    // skip
+  } else if (parent_v != nullptr) {
+    tv_->AddParentEdge(parent_v, edge_type);
+  } else if (parent_v == nullptr) {
+    parent_v = tv_;
+  } else {
+    verify(0);
+  }
+
 }
 
 } // namespace rococo

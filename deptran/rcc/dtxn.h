@@ -36,7 +36,9 @@ class RccDTxn: public DTxn {
                    const Value &value,
                    int hint_flag = TXN_INSTANT) override;
 
-  virtual bool start_exe_itfr(
+  void TraceDep(Row* row, column_id_t col_id, int hint_flag);
+
+    virtual bool start_exe_itfr(
       defer_t defer,
       TxnHandler &handler,
       const SimpleCommand& cmd,
