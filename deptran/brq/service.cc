@@ -7,7 +7,7 @@
 //#include "dtxn.h"
 #include "sched.h"
 #include "../benchmark_control_rpc.h"
-#include "brq.h"
+#include "dtxn.h"
 
 namespace rococo {
 

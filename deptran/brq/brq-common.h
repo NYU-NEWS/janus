@@ -1,7 +1,7 @@
 #pragma once
 
 #include "command.h"
-#include "brq-graph.h"
+#include "dep_graph.h"
 
 namespace rococo {
 

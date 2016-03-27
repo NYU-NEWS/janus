@@ -1,8 +1,8 @@
 #pragma once
 
-#include "all.h"
-#include "command.h"
-#include "brq-graph.h"
+#include "../dtxn.h"
+#include "../command.h"
+#include "dep_graph.h"
 #include "brq-common.h"
 
 namespace rococo {

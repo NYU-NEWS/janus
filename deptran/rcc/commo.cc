@@ -17,9 +17,8 @@ void RccCommo::SendHandout(SimpleCommand &cmd,
   std::function<void(Future*)> cb =
       [callback, &cmd] (Future *fu) {
         int res;
-        Marshal &m = fu->get_reply();
         RccGraph graph;
-        m >> res >> cmd.output >> graph;
+        fu->get_reply() >> res >> cmd.output >> graph;
         callback(res, cmd, graph);
       };
   fuattr.callback = cb;

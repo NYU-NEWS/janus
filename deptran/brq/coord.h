@@ -3,10 +3,10 @@
 #include "../__dep__.h"
 #include "../constants.h"
 #include "../command.h"
-#include "brq-graph.h"
-#include "brq-common.h"
-#include "brq-commo.h"
 #include "../rcc/coord.h"
+#include "dep_graph.h"
+#include "brq-common.h"
+#include "commo.h"
 
 namespace rococo {
 class BrqCoord : public RccCoord {
