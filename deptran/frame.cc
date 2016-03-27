@@ -8,7 +8,7 @@
 #include "dtxn.h"
 #include "scheduler.h"
 #include "none/coord.h"
-#include "rcc/rcc_coord.h"
+#include "rcc/coord.h"
 #include "ro6/ro6_coord.h"
 #include "tpl/coord.h"
 #include "tpl/exec.h"
@@ -157,11 +157,6 @@ mdb::Row* Frame::CreateRow(const mdb::Schema *schema,
     case MODE_OCC:
       r = mdb::VersionedRow::create(schema, row_data);
       break;
-
-    case MODE_RCC:
-      r = RCCRow::create(schema, row_data);
-      break;
-
     case MODE_RO6:
       r = RO6Row::create(schema, row_data);
       break;

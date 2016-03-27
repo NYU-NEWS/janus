@@ -6,7 +6,7 @@
 #include "brq-graph.h"
 #include "brq-common.h"
 #include "brq-commo.h"
-#include "../rcc/rcc_coord.h"
+#include "../rcc/coord.h"
 
 namespace rococo {
 class BrqCoord : public RccCoord {

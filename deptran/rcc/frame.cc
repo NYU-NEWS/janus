@@ -2,7 +2,7 @@
 #include "frame.h"
 //#include "exec.h"
 //#include "coord.h"
-#include "rcc_coord.h"
+#include "coord.h"
 #include "sched.h"
 #include "dtxn.h"
 #include "commo.h"
@@ -58,7 +58,7 @@ RccFrame::CreateRpcServices(uint32_t site_id,
 
 mdb::Row* RccFrame::CreateRow(const mdb::Schema *schema,
                               vector<Value>& row_data) {
-  mdb::Row* r = mdb::VersionedRow::create(schema, row_data);
+  mdb::Row* r = RCCRow::create(schema, row_data);
   return r;
 }
 

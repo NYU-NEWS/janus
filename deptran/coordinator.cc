@@ -66,6 +66,9 @@ Coordinator::~Coordinator() {
       }
 #endif /* ifdef TXN_STAT */
 
+  // debug;
+  mtx_.lock();
+  mtx_.unlock();
 // TODO (shuai) destroy all the rpc clients and proxies.
 }
 } // namespace rococo

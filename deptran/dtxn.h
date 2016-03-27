@@ -13,10 +13,11 @@ using mdb::Row;
 using mdb::Table;
 using mdb::column_id_t;
 
-#define TXN_BYPASS (true)
-#define TXN_SAFE   (false)
-#define TXN_DEFERRED (true)
-#define TXN_INSTANT  (false)
+#define TXN_BYPASS   (0x01)
+#define TXN_SAFE     (0x02)
+#define TXN_INSTANT  (0x02)
+#define TXN_DEFERRED (0x04)
+
 
 #define IS_MODE_RCC (Config::GetConfig()->get_mode() == MODE_RCC)
 #define IS_MODE_RO6 (Config::GetConfig()->get_mode() == MODE_RO6)
@@ -74,22 +75,22 @@ class DTxn {
   virtual bool ReadColumn(mdb::Row *row,
                           mdb::column_id_t col_id,
                           Value *value,
-                          int hint_flag = TXN_SAFE);
+                          int hint_flag = TXN_INSTANT);
 
   virtual bool ReadColumns(Row *row,
                            const std::vector<column_id_t> &col_ids,
                            std::vector<Value> *values,
-                           int hint_flag = TXN_SAFE);
+                           int hint_flag = TXN_INSTANT);
 
   virtual bool WriteColumn(Row *row,
                            column_id_t col_id,
                            const Value &value,
-                           int hint_flag = TXN_SAFE);
+                           int hint_flag = TXN_INSTANT);
 
   virtual bool WriteColumns(Row *row,
                             const std::vector<column_id_t> &col_ids,
                             const std::vector<Value> &values,
-                            int hint_flag = TXN_SAFE);
+                            int hint_flag = TXN_INSTANT);
 
   virtual bool InsertRow(Table *tbl, Row *row);
 

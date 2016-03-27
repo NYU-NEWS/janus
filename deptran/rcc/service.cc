@@ -191,6 +191,7 @@ void RococoServiceImpl::RegisterStats() {
 }
 
 RccSched* RococoServiceImpl::dtxn_sched() {
+  verify(dtxn_sched_ != nullptr);
   return (RccSched*)dtxn_sched_;
 }
 

@@ -294,7 +294,7 @@ void Config::LoadYML(std::string &filename) {
 void Config::LoadSiteYML(YAML::Node config) {
   auto servers = config["server"];
   int partition_id = 0;
-  int site_id = 0;
+  int site_id = 0; // start from
   int locale_id = 0;
 
   // count the sites so that we can reserve storage up front

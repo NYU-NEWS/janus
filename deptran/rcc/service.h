@@ -29,9 +29,9 @@ class RococoServiceImpl: public RococoService {
   uint64_t n_asking_ = 0;
 
   std::mutex mtx_;
-  Recorder *recorder_ = NULL;
+  Recorder *recorder_ = nullptr;
   ServerControlServiceImpl *scsi_; // for statistics;
-  Scheduler *dtxn_sched_;
+  Scheduler *dtxn_sched_ = nullptr;
 
 #ifdef PIECE_COUNT
   typedef struct piece_count_key_t{

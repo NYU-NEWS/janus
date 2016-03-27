@@ -1,5 +1,5 @@
 #include "marshal-value.h"
-#include "rcc_coord.h"
+#include "coord.h"
 #include "frame.h"
 #include "dtxn.h"
 #include "dep_graph.h"
@@ -47,6 +47,9 @@ void RccCoord::HandoutAck(phase_t phase,
                           RccGraph& graph) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(phase == phase_); // cannot proceed without all acks.
+  TxnInfo& info = *graph.vertex_index_.at(cmd.root_id_)->data_;
+  verify(cmd.root_id_ == info.id());
+  verify(info.partition_.find(cmd.partition_id_) != info.partition_.end());
   n_handout_ack_++;
   TxnCommand *txn = (TxnCommand *) cmd_;
   handout_acks_[cmd.inn_id_] = true;
@@ -102,17 +105,16 @@ void RccCoord::HandoutAck(phase_t phase,
 /** caller should be thread safe */
 void RccCoord::Finish() {
   verify(IS_MODE_RCC || IS_MODE_RO6);
-  Log::debug("deptran finish, %llx", cmd_->id_);
   TxnCommand *ch = (TxnCommand*) cmd_;
   // commit or abort piece
   rrr::FutureAttr fuattr;
   Log_debug(
-    "send deptran finish requests to %d servers, tid: %llx, graph size: %d",
+    "send rcc finish requests to %d servers, tid: %llx, graph size: %d",
     (int)ch->partition_ids_.size(),
     cmd_->id_,
     graph_.size());
   TxnInfo& info = *graph_.FindV(cmd_->id_)->data_;
-  verify(ch->partition_ids_.size() == info.servers_.size());
+  verify(ch->partition_ids_.size() == info.partition_.size());
   info.union_status(TXN_CMT);
 
 //  ChopFinishRequest req;

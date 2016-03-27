@@ -1,4 +1,5 @@
-#include "all.h"
+#include "__dep__.h"
+#include "dtxn.h"
 #include "frame.h"
 #include "scheduler.h"
 
@@ -131,8 +132,12 @@ bool DTxn::WriteColumns(Row *row,
                         const std::vector<Value> &values,
                         int hint_flag) {
   verify(mdb_txn() != nullptr);
-  auto ret = mdb_txn()->write_columns(row, col_ids, values);
-  verify(ret == true);
+//  auto ret = mdb_txn()->write_columns(row, col_ids, values);
+  verify(col_ids.size() == values.size());
+  for (int i = 0; i < col_ids.size(); i++) {
+    auto ret = WriteColumn(row, col_ids[i], values[i], hint_flag);
+    verify(ret == true);
+  }
   return true;
 }
 

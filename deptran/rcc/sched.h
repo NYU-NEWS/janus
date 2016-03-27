@@ -17,11 +17,15 @@ class RccSched : public Scheduler {
  public:
   RccGraph *dep_graph_ = nullptr;
   RccCommo* commo_ = nullptr;
-  svrid_t server_id_ = 0;
   list<Vertex<TxnInfo>*> waitlist_ = {};
 //  Vertex<TxnInfo> *v : wait_list_
 
   RccSched();
+
+  virtual void SetPartitionId(parid_t par_id) {
+    partition_id_ = par_id;
+    dep_graph_->partition_id_ = par_id;
+  }
 
   int OnHandoutRequest(const SimpleCommand &cmd,
                        rrr::i32 *res,

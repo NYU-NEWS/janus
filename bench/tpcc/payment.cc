@@ -288,7 +288,7 @@ void TpccPiece::RegPayment() {
               Value(buf[14].get_double() + cmd.input[TPCC_VAR_H_AMOUNT].get_double()),
               c_data
       });
-      dtxn->WriteColumns(r, col_ids, col_data);
+      dtxn->WriteColumns(r, col_ids, col_data, TXN_DEFERRED);
     } else {
       std::vector<mdb::column_id_t> col_ids({
               TPCC_COL_CUSTOMER_C_BALANCE,
@@ -298,7 +298,7 @@ void TpccPiece::RegPayment() {
               Value(buf[13].get_double() - cmd.input[TPCC_VAR_H_AMOUNT].get_double()),
               Value(buf[14].get_double() + cmd.input[TPCC_VAR_H_AMOUNT].get_double())
       });
-      dtxn->WriteColumns(r, col_ids, col_data);
+      dtxn->WriteColumns(r, col_ids, col_data, TXN_DEFERRED);
     }
 
     output[TPCC_VAR_C_ID] =     cmd.input[TPCC_VAR_D_ID];

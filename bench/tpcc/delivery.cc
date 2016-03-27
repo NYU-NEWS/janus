@@ -260,7 +260,7 @@ void TpccPiece::RegDelivery() {
 
     r = dtxn->Query(dtxn->GetTable(TPCC_TB_CUSTOMER), mb, ROW_CUSTOMER);
     Value buf(0.0);
-    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_BALANCE, &buf);
+    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_BALANCE, &buf, TXN_DEFERRED);
     buf.set_double(buf.get_double() + cmd.input[TPCC_VAR_OL_AMOUNT].get_double());
     dtxn->WriteColumn(r, TPCC_COL_CUSTOMER_C_BALANCE,
                       buf, TXN_DEFERRED);
