@@ -73,6 +73,7 @@ def configure(conf):
 
     # check python modules
     conf.check_python_module('tabulate')
+    conf.check_python_module('pyyaml')
 
 def build(bld):
     _depend("rrr/pylib/simplerpcgen/rpcgen.py",
@@ -246,11 +247,11 @@ def _properly_split(args):
 
 def _gen_srpc_headers():
     for srpc in glob.glob("deptran/*/*.rpc"):
-        target = os.path.splitext(srpc)[0]+'.h' 
+        target = os.path.splitext(srpc)[0]+'.h'
         _depend(target,
                 srpc,
-                "bin/rpcgen --cpp " + srpc)    
-    pass  
+                "bin/rpcgen --cpp " + srpc)
+    pass
 
 def _depend(target, source, action):
     target = _properly_split(target)
