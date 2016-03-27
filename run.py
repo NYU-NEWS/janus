@@ -369,7 +369,7 @@ class ClientController(object):
                     futures.append(future)
                 except:
                     traceback.print_exc()
-         
+            i=0 
             for future in futures:
                 res = future.result
                 period_time = res.period_sec + res.period_nsec / 1000000000.0
@@ -385,7 +385,8 @@ class ClientController(object):
                 self.run_nsec += res.run_nsec
                 self.n_asking += res.n_asking
                 if (res.is_finish == 1):
-                    self.finish_set.add(res)
+                    self.finish_set.add(i)
+                i += 1
 
             self.cur_time = time.time()
             need_break = self.print_stage_result(do_sample, do_sample_lock)
