@@ -1,6 +1,7 @@
 #ifdef CPU_PROFILE
 # include <google/profiler.h>
 #endif // ifdef CPU_PROFILE
+#include <unistd.h>
 #include "__dep__.h"
 #include "frame.h"
 #include "client_worker.h"
@@ -107,6 +108,8 @@ void wait_for_clients() {
 
 int main(int argc, char *argv[]) {
   check_current_path();
+  
+  Log_info("starting process %ld", getpid());
 
   // read configuration
   int ret = Config::CreateConfig(argc, argv);

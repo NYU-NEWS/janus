@@ -6,7 +6,7 @@ import time
 
 from fabric.api import env, task, run, local, hosts
 from fabric.api import execute, cd, runs_once, sudo
-from fabric.contrib.files import exists
+from fabric.contrib.files import exists, append
 from fabric.decorators import roles
 from fabric.context_managers import prefix
 
@@ -93,6 +93,7 @@ def deploy_all(regions='us-west-2', servers_per_region=[3], instance_type='t2.sm
         execute('cluster.config_nfs_client')
         execute('retrieve_code')
         execute('build')
+
     except Exception as e:
         traceback.print_exc()
         logging.info("Terminating ec2 instances...")
@@ -105,13 +106,17 @@ def deploy_all(regions='us-west-2', servers_per_region=[3], instance_type='t2.sm
 @runs_once
 @roles('leaders')
 def create_virtual_env():
+    venv = env.py_virtual_env
+    append('/home/ubuntu/.bash_profile',
+           'source {venv}/bin/activate'.format(venv=venv))
     if exists(env.py_virtual_env):
         return
+    
     with cd(env.nfs_home):
         execute('retrieve_code')
         run('pyenv local 2.7.11')
-        run('virtualenv {venv}'.format(venv=env.py_virtual_env))
-        run('{venv}/bin/pip install -r requirements.txt'.format(venv=env.py_virtual_env))
+        run('virtualenv {venv}'.format(venv=venv))
+        run('{venv}/bin/pip install -r requirements.txt'.format(venv=venv))
 
 
 @task
