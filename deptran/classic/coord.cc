@@ -221,7 +221,7 @@ void ThreePhaseCoordinator::Prepare() {
   }
 
   for (auto &partition_id : cmd->partition_ids_) {
-    Log_debug("send prepare tid: %ld; site %d", cmd_->id_, partition_id);
+    Log_debug("send prepare tid: %ld; partition_id %d", cmd_->id_, partition_id);
     commo()->SendPrepare(partition_id,
                          cmd_->id_,
                          sids,
