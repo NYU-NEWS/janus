@@ -27,5 +27,7 @@ class RccFrame : public Frame {
 
   DTxn* CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) override;
 
+  Communicator* CreateCommo() override;
+
 };
 } // namespace rococo

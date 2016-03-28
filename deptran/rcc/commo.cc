@@ -57,7 +57,15 @@ void RccCommo::SendFinish(parid_t pid,
 void RccCommo::SendInquire(parid_t pid,
                            txnid_t tid,
                            const function<void(RccGraph& graph)>& callback) {
-  verify(0);
+  FutureAttr fuattr;
+  function<void(Future*)> cb = [callback] (Future* fu) {
+    RccGraph graph;
+    fu->get_reply() >> graph;
+    callback(graph);
+  };
+  fuattr.callback = cb;
+  auto proxy = (RococoProxy*)RandomProxyForPartition(pid).second;
+  Future::safe_release(proxy->async_Inquire(tid, fuattr));
 }
 
 
