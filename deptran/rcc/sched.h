@@ -12,15 +12,18 @@ class SimpleCommand;
 class RccGraph;
 class RccCommo;
 class TxnInfo;
+class WaitlistChecker;
 
 class RccSched : public Scheduler {
  public:
   RccGraph *dep_graph_ = nullptr;
   RccCommo* commo_ = nullptr;
+  WaitlistChecker* waitlist_checker_ = nullptr;
   list<RccVertex*> waitlist_ = {};
 //  Vertex<TxnInfo> *v : wait_list_
 
   RccSched();
+  virtual ~RccSched();
 
   virtual void SetPartitionId(parid_t par_id) {
     partition_id_ = par_id;

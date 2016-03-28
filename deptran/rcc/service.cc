@@ -10,6 +10,7 @@
 #include "service.h"
 #include "dtxn.h"
 #include "sched.h"
+#include "waitlist_checker.h"
 
 namespace rococo {
 
@@ -29,7 +30,7 @@ RococoServiceImpl::RococoServiceImpl(Scheduler *sched,
     recorder_ = new Recorder(path);
     poll_mgr->add(recorder_);
   }
-
+  poll_mgr->add(((RccSched*)sched)->waitlist_checker_);
   this->RegisterStats();
 }
 
