@@ -57,7 +57,8 @@ int RccSched::OnFinishRequest(cmdid_t cmd_id,
   for (auto& pair: graph.vertex_index_) {
     // TODO optimize here.
     auto txnid = pair.first;
-    waitlist_.push_back(dep_graph_->vertex_index_[txnid]);
+//    verify(GetDTxn(txnid));
+    waitlist_.push_back(dep_graph_->vertex_index_.at(txnid));
   }
   verify(dtxn->outputs_ == nullptr);
   dtxn->outputs_ = output;
@@ -99,7 +100,7 @@ void RccSched::CheckWaitlist() {
   while (it != waitlist_.end()) {
     RccVertex* v = *it;
 //  for (RccVertex *v : waitlist_) {
-    // TODO minimize the lenght of waitlist.
+    // TODO minimize the length of the waitlist.
     TxnInfo& tinfo = *(v->data_);
     // reply inquire requests if possible.
     verify(tinfo.graphs_for_inquire_.size() ==
@@ -238,6 +239,7 @@ void RccSched::InquireAbout(Vertex<TxnInfo> *av) {
 void RccSched::InquireAck(RccGraph& graph) {
   dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
   for (auto& pair: graph.vertex_index_) {
+    verify(0);
     waitlist_.push_back(pair.second);
   }
 //  Graph<TxnInfo> &txn_gra_ = RccDTxn::dep_s->txn_gra_;
@@ -296,6 +298,7 @@ void RccSched::Execute(const RccScc& scc) {
   for (auto v : scc) {
     TxnInfo& info = *(v->data_);
     RccDTxn *dtxn = (RccDTxn *) GetDTxn(info.id());
+    if (dtxn == nullptr) continue;
     verify(dtxn != nullptr);
     dtxn->CommitExecute();
     dtxn->ReplyFinishOk();

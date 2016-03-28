@@ -45,8 +45,12 @@ void Scheduler::DestroyDTxn(i64 tid) {
 DTxn* Scheduler::GetDTxn(i64 tid) {
   //Log_debug("DTxnMgr::get(%ld)\n", tid);
   auto it = dtxns_.find(tid);
-  verify(it != dtxns_.end());
-  return it->second;
+//  verify(it != dtxns_.end());
+  if (it != dtxns_.end()) {
+    return it->second;
+  } else {
+    return nullptr;
+  }
 }
 
 mdb::Txn* Scheduler::GetMTxn(const i64 tid) {
