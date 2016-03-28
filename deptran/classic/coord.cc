@@ -220,18 +220,18 @@ void ThreePhaseCoordinator::Prepare() {
     sids.push_back(site);
   }
 
-  for (auto &site : cmd->partition_ids_) {
-    Log_debug("send prepare tid: %ld", cmd_->id_);
-    commo()->SendPrepare(site,
-                        cmd_->id_,
-                        sids,
-                        std::bind(&ThreePhaseCoordinator::PrepareAck,
+  for (auto &partition_id : cmd->partition_ids_) {
+    Log_debug("send prepare tid: %ld; site %d", cmd_->id_, partition_id);
+    commo()->SendPrepare(partition_id,
+                         cmd_->id_,
+                         sids,
+                         std::bind(&ThreePhaseCoordinator::PrepareAck,
                                   this,
                                   phase_,
                                   std::placeholders::_1));
-    verify(site_prepare_[site] == 0);
-    site_prepare_[site]++;
-    verify(site_prepare_[site] == 1);
+    verify(site_prepare_[partition_id] == 0);
+    site_prepare_[partition_id]++;
+    verify(site_prepare_[partition_id] == 1);
   }
 }
 

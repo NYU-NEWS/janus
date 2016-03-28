@@ -666,16 +666,28 @@ const char * Config::get_ctrl_init() {
 
 // TODO obsolete
 int Config::get_all_site_addr(std::vector<std::string>& servers) {
-  for (auto& site : GetMyServers()) {
-    servers.push_back(site.GetHostAddr());
-  }
-  return servers.size();
+    const int num_servers = this->NumSites();
+    for (int i=0; i<num_servers; i++) {
+      auto& site = const_cast<SiteInfo&>(SiteById(i));
+      servers.push_back(site.GetHostAddr());
+    }
+    return num_servers;
 }
 
 int Config::get_site_addr(unsigned int sid, std::string& server) {
   auto site = SiteById(sid);
   server.assign(site.GetHostAddr());
   return 1;
+}
+
+int Config::NumSites(SiteInfoType type) {
+  std::vector<SiteInfo>* searching;
+  if (type == SERVER) {
+    searching = &sites_;
+  } else {
+    searching = &par_clients_;
+  }
+  return searching->size();
 }
 
 const Config::SiteInfo& Config::SiteById(uint32_t id) {
