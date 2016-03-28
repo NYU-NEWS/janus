@@ -57,6 +57,7 @@ class RccSched : public Scheduler {
   bool AllAncFns(const RccScc&);
   void Execute(const RccScc&);
 
+  void __DebugExamineWaitlist();
 
   RccCommo* commo() {
     return commo_;

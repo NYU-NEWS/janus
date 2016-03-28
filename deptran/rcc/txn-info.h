@@ -55,6 +55,7 @@ class TxnInfo {
   }
 
   inline bool IsExecuted() const {
+    if (executed_) verify(IsDecided());
     return executed_;
   }
 

@@ -136,16 +136,35 @@ void RccSched::CheckWaitlist() {
     } // else do nothing
 
     // Adjust the waitlist.
-    if (tinfo.IsExecuted()) {
-      verify(tinfo.IsDecided());
+    if (tinfo.IsExecuted() ||
+        (tinfo.IsDecided() && !tinfo.Involve(partition_id_))) {
       it = waitlist_.erase(it);
-    } else if (tinfo.IsDecided() && !tinfo.Involve(partition_id_)) {
-      it = waitlist_.erase(it);
+      // check for its descendants, perhaps add redundant vertex here.
+      for (auto child_pair : v->outgoing_) {
+        auto child_v = child_pair.first;
+        waitlist_.push_back(child_v);
+      }
     } else {
       it++;
     }
   }
+  __DebugExamineWaitlist();
   // TODO optimize for the waitlist.
+}
+
+void RccSched::__DebugExamineWaitlist() {
+  set<RccVertex*> vertexes;
+  for (auto v : waitlist_) {
+    auto& tinfo = *v->data_;
+    auto pair = vertexes.insert(v);
+    if (!pair.second) {
+      Log_debug("duplicated vertex in waitlist");
+    }
+    if (AllAncCmt(v)) {
+      verify(!tinfo.IsExecuted());
+      verify(tinfo.IsDecided());
+    }
+  }
 }
 //
 //void RccSched::to_decide(Vertex<TxnInfo> *v,
