@@ -27,7 +27,7 @@ class Scheduler {
 
   Scheduler();
   Scheduler(int mode);
-  ~Scheduler();
+  virtual ~Scheduler();
 
   virtual void SetPartitionId(parid_t par_id) {
     partition_id_ = par_id;

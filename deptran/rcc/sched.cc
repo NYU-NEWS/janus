@@ -5,6 +5,7 @@
 #include "sched.h"
 #include "dtxn.h"
 #include "commo.h"
+#include "waitlist_checker.h"
 
 namespace rococo {
 
@@ -12,6 +13,12 @@ RccSched::RccSched() : Scheduler() {
   verify(dep_graph_ == nullptr);
   dep_graph_ = new RccGraph();
   dep_graph_->partition_id_ = partition_id_;
+  waitlist_checker_ = new WaitlistChecker(this);
+}
+
+RccSched::~RccSched() {
+  verify(waitlist_checker_);
+  delete waitlist_checker_;
 }
 
 int RccSched::OnHandoutRequest(const SimpleCommand &cmd,
@@ -95,6 +102,7 @@ int RccSched::OnInquireRequest(cmdid_t cmd_id,
 }
 
 void RccSched::CheckWaitlist() {
+  bool check_again = false;
   auto it = waitlist_.begin();
   Log_debug("waitlist length: %d", (int)waitlist_.size());
   while (it != waitlist_.end()) {
@@ -122,6 +130,7 @@ void RccSched::CheckWaitlist() {
       InquireAbout(v);
     } else if (tinfo.status() >= TXN_CMT && tinfo.status() < TXN_DCD) {
       if (AllAncCmt(v)) {
+        check_again = true;
         Decide(dep_graph_->FindSCC(v));
       } else {
         // else do nothing
@@ -132,23 +141,27 @@ void RccSched::CheckWaitlist() {
     if (tinfo.status() >= TXN_DCD &&
         !tinfo.IsExecuted() &&
         AllAncFns(dep_graph_->FindSCC(v))) {
+      check_again = true;
       Execute(dep_graph_->FindSCC(v));
     } // else do nothing
 
     // Adjust the waitlist.
     if (tinfo.IsExecuted() ||
         (tinfo.IsDecided() && !tinfo.Involve(partition_id_))) {
-      it = waitlist_.erase(it);
       // check for its descendants, perhaps add redundant vertex here.
-      for (auto child_pair : v->outgoing_) {
-        auto child_v = child_pair.first;
-        waitlist_.push_back(child_v);
-      }
+//      for (auto child_pair : v->outgoing_) {
+//        auto child_v = child_pair.first;
+//        waitlist_.push_back(child_v);
+//      }
+      it = waitlist_.erase(it);
     } else {
       it++;
     }
   }
-  __DebugExamineWaitlist();
+  if (check_again)
+    CheckWaitlist();
+  else
+    __DebugExamineWaitlist();
   // TODO optimize for the waitlist.
 }
 
@@ -160,7 +173,7 @@ void RccSched::__DebugExamineWaitlist() {
     if (!pair.second) {
       Log_debug("duplicated vertex in waitlist");
     }
-    if (AllAncCmt(v)) {
+    if (tinfo.status() >= TXN_CMT && AllAncCmt(v)) {
       verify(!tinfo.IsExecuted());
       verify(tinfo.IsDecided());
     }
