@@ -52,7 +52,7 @@ class RccSched : public Scheduler {
 
   void CheckWaitlist();
 
-  void InquireAck(RccGraph& graph);
+  void InquireAck(cmdid_t cmd_id, RccGraph& graph);
 
   bool AllAncCmt(RccVertex *v);
   void Decide(const RccScc&);
@@ -61,10 +61,8 @@ class RccSched : public Scheduler {
   void Execute(const RccScc&);
 
   void __DebugExamineWaitlist();
-
-  RccCommo* commo() {
-    return commo_;
-  }
+  RccVertex* __DebugFindAnOngoingAncestor(RccVertex* vertex);
+  RccCommo* commo();
 };
 
 } // namespace rococo
