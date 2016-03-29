@@ -10,6 +10,7 @@
 #include "dep_graph.h"
 #include "service.h"
 #include "../rcc/rcc_row.h"
+#include "../rcc/dtxn.h"
 
 namespace rococo {
 
@@ -68,8 +69,8 @@ mdb::Row* BrqFrame::CreateRow(const mdb::Schema *schema,
 DTxn* BrqFrame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {
 //  auto dtxn = new BrqDTxn(tid, mgr, ro);
 //  return dtxn;
-  verify(0);
-  return nullptr;
+  auto dtxn = new RccDTxn(tid, mgr, ro);
+  return dtxn;
 }
 
 Communicator* BrqFrame::CreateCommo() {

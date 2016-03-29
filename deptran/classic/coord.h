@@ -21,10 +21,7 @@ class ThreePhaseCoordinator : public Coordinator {
     }
   }
 
-  RococoCommunicator* commo() {
-    verify(commo_ != nullptr);
-    return (RococoCommunicator*) commo_;
-  }
+  RococoCommunicator* commo();
 
 #ifdef TXN_STAT
   typedef struct txn_stat_t {

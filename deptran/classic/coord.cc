@@ -29,9 +29,17 @@ ThreePhaseCoordinator::ThreePhaseCoordinator(uint32_t coo_id,
   // TODO: doesn't belong here;
   // it is currently here so that subclasses such as RCCCoord and OCCoord don't break
   verify(commo_ == nullptr);
-  commo_ = new RococoCommunicator();
+//  commo_ = new RococoCommunicator();
+//  commo_ = frame_->CreateCommo();
 }
 
+RococoCommunicator* ThreePhaseCoordinator::commo() {
+  if (commo_ == nullptr) {
+    commo_ = frame_->CreateCommo();
+  }
+  verify(commo_ != nullptr);
+  return (RococoCommunicator*) commo_;
+}
 
 /** thread safe */
 void ThreePhaseCoordinator::do_one(TxnRequest &req) {

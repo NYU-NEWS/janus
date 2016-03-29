@@ -10,10 +10,7 @@ class RccCommo;
 class RccCoord: public ThreePhaseCoordinator {
 
 public:
-  RccCommo* commo() {
-    verify(commo_ != nullptr);
-    return (RccCommo*)(commo_);
-  }
+  RccCommo* commo();
 
 public:
   RccGraph graph_;

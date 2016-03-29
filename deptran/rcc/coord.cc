@@ -8,6 +8,15 @@
 
 namespace rococo {
 
+RccCommo* RccCoord::commo() {
+  if (commo_ == nullptr) {
+    commo_ = frame_->CreateCommo();
+  }
+  verify(commo_ != nullptr);
+  return (RccCommo*)(commo_);
+}
+
+
 void RccCoord::Dispatch() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 //  phase_++;
@@ -31,13 +40,13 @@ void RccCoord::Dispatch() {
     Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
               n_handout_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
     handout_acks_[subcmd->inn_id()] = false;
-    commo()->SendHandout(*subcmd,
-                         std::bind(&RccCoord::DispatchAck,
-                                   this,
-                                   phase_,
-                                   std::placeholders::_1,
-                                   std::placeholders::_2,
-                                   std::placeholders::_3));
+    auto func = std::bind(&RccCoord::DispatchAck,
+                          this,
+                          phase_,
+                          std::placeholders::_1,
+                          std::placeholders::_2,
+                          std::placeholders::_3);
+    commo()->SendHandout(*subcmd, func);
   }
 }
 
@@ -104,7 +113,6 @@ void RccCoord::DispatchAck(phase_t phase,
 
 /** caller should be thread safe */
 void RccCoord::Finish() {
-  verify(IS_MODE_RCC || IS_MODE_RO6);
   TxnCommand *ch = (TxnCommand*) cmd_;
   // commit or abort piece
   rrr::FutureAttr fuattr;

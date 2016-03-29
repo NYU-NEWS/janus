@@ -151,7 +151,6 @@ void BrqServiceImpl::Finish(const cmdid_t& cmd_id,
 void BrqServiceImpl::Inquire(const cmdid_t &tid,
                              BrqGraph *graph,
                              rrr::DeferredReply *defer) {
-  verify(IS_MODE_RCC || IS_MODE_RO6);
   std::lock_guard <std::mutex> guard(mtx_);
   dtxn_sched()->OnInquireRequest(tid, graph, [defer]() { defer->reply(); });
 //  RccDTxn *dtxn = (RccDTxn *) dtxn_sched_->GetDTxn(tid);
