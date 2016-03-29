@@ -130,11 +130,13 @@ def build(bld):
                 uselib="BOOST BOOST_SYSTEM YAML-CPP",
                 use="PTHREAD rrr memdb deptran")
 
-    bld.program(source=bld.path.ant_glob("deptran/s_main.cc"),
+    bld.program(source=bld.path.ant_glob("deptran/*.cc"
+                                         "deptran/*/*.cc"
+                                         "bench/*/*.cc"),
                 target="deptran_server",
                 includes=". rrr deptran ",
                 uselib="BOOST BOOST_SYSTEM",
-                use="rrr memdb deptran YAML-CPP PTHREAD PROFILER RT")
+                use="rrr memdb YAML-CPP PTHREAD PROFILER RT")
 
 #    bld.program(source=bld.path.ant_glob("deptran/c_main.cc"),
 #                target="deptran_client",
@@ -237,7 +239,7 @@ def _enable_debug(conf):
         conf.env.append_value("CXXFLAGS", "-Wall -pthread -O0 -DNDEBUG -g "
                 "-ggdb -DLOG_DEBUG -rdynamic -fno-omit-frame-pointer".split())
     else:
-        conf.env.append_value("CXXFLAGS", "-Wall -pthread -O2 -DNDEBUG".split())
+        conf.env.append_value("CXXFLAGS", "-pthread -O0 -DNDEBUG -DLOG_INFO".split())
 
 def _properly_split(args):
     if args == None:
