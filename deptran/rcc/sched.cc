@@ -10,7 +10,7 @@
 
 namespace rococo {
 
-RccSched::RccSched() : Scheduler() {
+RccSched::RccSched() : Scheduler(), waitlist_(), mtx_() {
   verify(dep_graph_ == nullptr);
   dep_graph_ = new RccGraph();
   dep_graph_->partition_id_ = partition_id_;
@@ -58,6 +58,7 @@ int RccSched::OnFinishRequest(cmdid_t cmd_id,
                               const RccGraph &graph,
                               map<innid_t, map<int32_t, Value>> *output,
                               const function<void()> &callback) {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
   // union the graph into dep graph
   RccDTxn *dtxn = (RccDTxn*) GetDTxn(cmd_id);
   verify(dtxn != nullptr);
@@ -97,6 +98,8 @@ int RccSched::OnInquireRequest(cmdid_t cmd_id,
   } else {
     info.graphs_for_inquire_.push_back(graph);
     info.callbacks_for_inquire_.push_back(callback);
+    verify(info.graphs_for_inquire_.size() ==
+        info.callbacks_for_inquire_.size());
   }
 
 //  v->data_->register_event(TXN_CMT, ball);
@@ -104,6 +107,7 @@ int RccSched::OnInquireRequest(cmdid_t cmd_id,
 }
 
 void RccSched::CheckWaitlist() {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
   bool check_again = false;
   auto it = waitlist_.begin();
   Log_debug("waitlist length: %d", (int)waitlist_.size());
@@ -176,6 +180,7 @@ void RccSched::CheckWaitlist() {
 }
 
 void RccSched::__DebugExamineWaitlist() {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
   set<RccVertex*> vertexes;
   for (auto v : waitlist_) {
     auto& tinfo = *v->data_;
@@ -280,6 +285,7 @@ void RccSched::InquireAbout(Vertex<TxnInfo> *av) {
 }
 
 void RccSched::InquireAck(cmdid_t cmd_id, RccGraph& graph) {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
   dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
   auto v = dep_graph_->FindV(cmd_id);
   TxnInfo& tinfo = *v->data_;

@@ -20,6 +20,7 @@ class RccSched : public Scheduler {
   RccCommo* commo_ = nullptr;
   WaitlistChecker* waitlist_checker_ = nullptr;
   list<RccVertex*> waitlist_ = {};
+  std::recursive_mutex mtx_;
 //  Vertex<TxnInfo> *v : wait_list_
 
   RccSched();
