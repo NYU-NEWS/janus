@@ -26,12 +26,7 @@ class RccGraph : public Graph<TxnInfo> {
 //  std::vector<std::string> server_addrs_;
 
 
-  RccGraph() : Graph<TxnInfo>() {
-    // TODO remove this out, use commo instead.
-//    Config::GetConfig()->get_all_site_addr(server_addrs_);
-//    rpc_clients_ = std::vector<rrr::Client *>(server_addrs_.size(), nullptr);
-//    rpc_proxies_ = std::vector<RococoProxy *>(server_addrs_.size(), nullptr);
-  }
+  RccGraph() : Graph<TxnInfo>() { }
 
   ~RccGraph() {
     // XXX hopefully some memory leak here does not hurt. :(

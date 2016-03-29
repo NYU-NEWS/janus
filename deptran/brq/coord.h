@@ -6,9 +6,9 @@
 #include "../rcc/coord.h"
 #include "dep_graph.h"
 #include "brq-common.h"
-#include "commo.h"
 
 namespace rococo {
+class BrqCommo;
 class BrqCoord : public RccCoord {
 public:
   cooid_t  coo_id_;
@@ -18,24 +18,23 @@ public:
   Recorder *recorder_;
   ballot_t ballot_; // the ballot I am holding
   cmdid_t cmd_id_;
-  BRQCommo *commo_;
+  BrqCommo *commo_;
   // data structures for saving replies.
   struct reply_cnt_t {int yes; int no;};
   std::map<groupid_t, reply_cnt_t> n_fast_accept_reply_;
   std::map<groupid_t, reply_cnt_t> n_accept_reply_;
   std::map<groupid_t, reply_cnt_t> n_prepare_reply_;
   std::map<groupid_t, reply_cnt_t> n_commit_reply_;
-  BRQGraph deps_;
 
   using RccCoord::RccCoord;
 
   virtual ~BrqCoord() {}
 
   // Dispatch inherits from RccCoord;
-  void DispatchAck(phase_t phase,
-                   int res,
-                   SimpleCommand &cmd,
-                   RccGraph &graph);
+//  void DispatchAck(phase_t phase,
+//                   int res,
+//                   SimpleCommand &cmd,
+//                   RccGraph &graph);
 
   // do_one inherits from RccCoord;
 
@@ -73,10 +72,6 @@ public:
     verify(0);
     return false;
   };
-
-  void reset() {
-    verify(0);
-  }; // reuse for next cmd.
 
 //  void launch(Command &cmd);
   void launch_recovery(cmdid_t cmd_id);

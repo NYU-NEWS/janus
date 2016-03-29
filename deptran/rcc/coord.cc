@@ -322,15 +322,15 @@ void RccCoord::do_one(TxnRequest& req) {
   if (ccsi_) ccsi_->txn_start_one(thread_id_, cmd_->type_);
 
   verify(ro_state_ == BEGIN);
-  auto handout = ch->is_read_only() ?
+  auto dispatch = ch->is_read_only() ?
                  std::bind(&RccCoord::HandoutRo, this) :
                  std::bind(&RccCoord::Dispatch, this);
   if (recorder_) {
     std::string log_s;
     req.get_log(cmd_->id_, log_s);
-    recorder_->submit(log_s, handout);
+    recorder_->submit(log_s, dispatch);
   } else {
-    handout();
+    dispatch();
   }
 }
 

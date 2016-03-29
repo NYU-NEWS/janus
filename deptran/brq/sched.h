@@ -1,6 +1,5 @@
 
 #pragma once
-#include "../scheduler.h"
 #include "../rcc/sched.h"
 
 namespace rococo {

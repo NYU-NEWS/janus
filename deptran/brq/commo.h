@@ -1,8 +1,9 @@
 
+#include "../communicator.h"
 #include "brq-common.h"
 
 namespace rococo {
-class BRQCommo {
+class BrqCommo : public Communicator {
 public:
 
   void broadcast_fast_accept(groupid_t,

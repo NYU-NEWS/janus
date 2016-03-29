@@ -24,6 +24,8 @@ class BrqFrame : public Frame {
                       vector<Value> &row_data) override;
 
   DTxn* CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) override;
+
+  Communicator* CreateCommo() override;
 };
 
 } // namespace rococo

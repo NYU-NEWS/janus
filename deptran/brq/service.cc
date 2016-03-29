@@ -1,13 +1,13 @@
 #include "../__dep__.h"
 #include "../config.h"
-//#include "graph.h"
-//#include "graph_marshaler.h"
-//#include "dep_graph.h"
-#include "service.h"
-//#include "dtxn.h"
-#include "sched.h"
+#include "../command.h"
+#include "../command_marshaler.h"
 #include "../benchmark_control_rpc.h"
+#include "sched.h"
 #include "dtxn.h"
+#include "dep_graph.h"
+#include "../rcc/graph_marshaler.h"
+#include "service.h"
 
 namespace rococo {
 
@@ -82,10 +82,10 @@ BrqServiceImpl::BrqServiceImpl(Scheduler *sched,
 
 
 void BrqServiceImpl::Dispatch(const SimpleCommand& cmd,
-                                int32_t* res,
-                                map<int32_t, Value>* output,
-                                RccGraph* graph,
-                                DeferredReply* defer) {
+                              int32_t* res,
+                              map<int32_t, Value>* output,
+                              BrqGraph* graph,
+                              DeferredReply* defer) {
   std::lock_guard <std::mutex> guard(this->mtx_);
   dtxn_sched()->OnHandoutRequest(cmd,
                                  res,
@@ -116,7 +116,7 @@ void BrqServiceImpl::Dispatch(const SimpleCommand& cmd,
 //}
 
 void BrqServiceImpl::Finish(const cmdid_t& cmd_id,
-                            const RccGraph& graph,
+                            const BrqGraph& graph,
                                map<innid_t, map<int32_t, Value>>* output,
                             DeferredReply* defer) {
   verify(graph.size() > 0);
@@ -149,8 +149,8 @@ void BrqServiceImpl::Finish(const cmdid_t& cmd_id,
 //}
 
 void BrqServiceImpl::Inquire(const cmdid_t &tid,
-                                RccGraph *graph,
-                                rrr::DeferredReply *defer) {
+                             BrqGraph *graph,
+                             rrr::DeferredReply *defer) {
   verify(IS_MODE_RCC || IS_MODE_RO6);
   std::lock_guard <std::mutex> guard(mtx_);
   dtxn_sched()->OnInquireRequest(tid, graph, [defer]() { defer->reply(); });

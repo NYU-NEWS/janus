@@ -14,7 +14,7 @@ public:
   std::vector<mdb::Value> *output_;
 };
 
-class BRQGraph;
+class BrqGraph;
 class BrqDTxn {
 public:
 
@@ -48,7 +48,7 @@ public:
   //    } DeferredRequest;
 
   // TODO rewrite dependency graph
-  BRQGraph *graph_;
+  BrqGraph *graph_;
   //
   std::set<txnid_t> deps_;
   std::set<BrqDTxn *> to_;
@@ -60,7 +60,7 @@ public:
   };
   CommitStack commit_stack_; 
 
-  BrqDTxn(txnid_t txn_id, BRQGraph* graph);
+  BrqDTxn(txnid_t txn_id, BrqGraph* graph);
 
   // fast-accept/start
   void FastAccept(FastAcceptRequest &req, FastAcceptReply *rep, rrr::DeferredReply *defer);

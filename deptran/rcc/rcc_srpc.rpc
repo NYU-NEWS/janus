@@ -30,16 +30,16 @@ struct BatchRequestHeader {
 //    string read_only; // for ro6
 // }
 
-struct ChopFinishRequest {
-    i64 txn_id;
-    Graph<TxnInfo> gra;
-    string read_only; // for ro6
-}
+// struct ChopFinishRequest {
+//    i64 txn_id;
+//    Graph<TxnInfo> gra;
+//    string read_only; // for ro6
+//}
 
-struct ChopFinishResponse {
-    i32 res;
-    vector<pair<RequestHeader, map<i32, Value>>> outputs;
-}
+//struct ChopFinishResponse {
+//    i32 res;
+//    vector<pair<RequestHeader, map<i32, Value>>> outputs;
+//}
 
 // struct CollectFinishResponse {
 //    GraphMarshaler gra_m;

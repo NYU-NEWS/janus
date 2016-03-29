@@ -3,7 +3,7 @@
 
 namespace rococo {
 
-BrqDTxn::BrqDTxn(txnid_t txn_id, BRQGraph *graph)
+BrqDTxn::BrqDTxn(txnid_t txn_id, BrqGraph *graph)
   : txn_id_(txn_id), graph_(graph) {
 }
 

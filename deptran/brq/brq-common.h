@@ -14,7 +14,7 @@ struct FastAcceptRequest {
 
 struct FastAcceptReply {
   bool     ack; // true or false: yes or no
-  BRQGraph deps;
+  BrqGraph deps;
 };
 
 struct PrepareReqeust {
@@ -28,14 +28,14 @@ struct PrepareReply {
   ballot_t ballot_cmd_vote;
   ballot_t ballot_deps_vote;
   Command  cmd;  // optional
-  BRQGraph deps; // optional
+  BrqGraph deps; // optional
 };
 
 struct AcceptRequest {
   cmdid_t cmd_id;
   ballot_t ballot;
   Command  cmd;
-  BRQGraph deps;
+  BrqGraph deps;
 };
 
 struct AcceptReply {
@@ -46,7 +46,7 @@ struct CommitRequest {
   cmdid_t cmd_id;
   ballot_t ballot;
   Command  cmd;
-  BRQGraph subgraph;
+  BrqGraph subgraph;
 };
 
 struct CommitReply {

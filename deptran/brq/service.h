@@ -5,7 +5,6 @@
 #include "../constants.h"
 #include "../rcc/graph.h"
 #include "../rcc/graph_marshaler.h"
-#include "service.h"
 #include "brq_srpc.h"
 
 
@@ -72,17 +71,17 @@ class BrqServiceImpl: public BrqService {
   void Dispatch(const SimpleCommand& cmd,
                 int32_t* res,
                 map<int32_t, Value>* output,
-                RccGraph* graph,
+                BrqGraph* graph,
                 DeferredReply* defer) override;
 
   void Finish(const cmdid_t& cmd_id,
-              const RccGraph& graph,
+              const BrqGraph& graph,
               map<innid_t, map<int32_t, Value>>* output,
               DeferredReply* defer) override;
 
 
   void Inquire(const cmdid_t &tid,
-               RccGraph* graph,
+               BrqGraph* graph,
                DeferredReply *) override;
 
 //

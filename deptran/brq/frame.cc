@@ -1,9 +1,15 @@
 
 #include "../__dep__.h"
+#include "../command.h"
+#include "../command_marshaler.h"
+#include "../communicator.h"
+#include "commo.h"
 #include "frame.h"
 #include "coord.h"
 #include "sched.h"
+#include "dep_graph.h"
 #include "service.h"
+#include "../rcc/rcc_row.h"
 
 namespace rococo {
 
@@ -35,8 +41,6 @@ Executor* BrqFrame::CreateExecutor(uint64_t, Scheduler *sched) {
 
 
 Scheduler* BrqFrame::CreateScheduler() {
-  verify(0);
-//  Scheduler *sched = nullptr;
   Scheduler* sched = new RccSched();
   sched->frame_ = this;
   return sched;
@@ -57,7 +61,7 @@ BrqFrame::CreateRpcServices(uint32_t site_id,
 mdb::Row* BrqFrame::CreateRow(const mdb::Schema *schema,
                               vector<Value>& row_data) {
 
-  mdb::Row* r = mdb::VersionedRow::create(schema, row_data);
+  mdb::Row* r = RCCRow::create(schema, row_data);
   return r;
 }
 
@@ -66,6 +70,10 @@ DTxn* BrqFrame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {
 //  return dtxn;
   verify(0);
   return nullptr;
+}
+
+Communicator* BrqFrame::CreateCommo() {
+  return new BrqCommo();
 }
 
 }

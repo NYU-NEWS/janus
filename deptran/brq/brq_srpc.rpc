@@ -2,25 +2,16 @@
 namespace rococo;
 
 abstract service Brq {
-    // input: contains many pieces, each piece consist of
-    // | <i32 p_type> <i64 pid> <i32 input_size> <i32 max_output_size>
-    // <input_0> <input_1> ... |
-    // output: contains many pieces, each piece consist of
-    // | <i32 res> <i32 output_size> <output_0> <output_1> ... |
-
-
-    // Below is for rococo only
 
   defer Dispatch(SimpleCommand cmd |
-                i32 res,
-                map<i32, Value> output,
-                RccGraph graph);
+                 i32 res,
+                 map<i32, Value> output,
+                 BrqGraph ret_graph);
 
   defer Finish(cmdid_t id,
-               RccGraph |
+               BrqGraph |
                map<uint32_t, map<i32, Value>> output);
 
   defer Inquire(cmdid_t txn_id |
-                RccGraph res);
-
+                BrqGraph ret_graph);
 }
