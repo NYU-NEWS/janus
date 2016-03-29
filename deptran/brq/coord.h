@@ -12,7 +12,7 @@ class BrqCommo;
 class BrqCoord : public RccCoord {
 public:
   cooid_t  coo_id_;
-  phase_t  phase_; // a phase identifier
+//  phase_t  phase_; // a phase identifier
   uint32_t thread_id_;
   uint32_t cmdid_prefix_c_;
   Recorder *recorder_;

@@ -11,6 +11,7 @@ class RccCoord: public ThreePhaseCoordinator {
 
 public:
   RccCommo* commo() {
+    verify(commo_ != nullptr);
     return (RccCommo*)(commo_);
   }
 

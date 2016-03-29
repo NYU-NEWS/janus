@@ -41,7 +41,7 @@ Executor* BrqFrame::CreateExecutor(uint64_t, Scheduler *sched) {
 
 
 Scheduler* BrqFrame::CreateScheduler() {
-  Scheduler* sched = new RccSched();
+  Scheduler* sched = new BrqSched();
   sched->frame_ = this;
   return sched;
 }
