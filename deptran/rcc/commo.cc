@@ -1,6 +1,4 @@
 
-#pragma once
-
 #include "commo.h"
 #include "dep_graph.h"
 #include "txn-info.h"

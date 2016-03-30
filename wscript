@@ -130,13 +130,11 @@ def build(bld):
                 uselib="BOOST BOOST_SYSTEM YAML-CPP",
                 use="PTHREAD rrr memdb deptran")
 
-    bld.program(source=bld.path.ant_glob("deptran/*.cc"
-                                         "deptran/*/*.cc"
-                                         "bench/*/*.cc"),
+    bld.program(source=bld.path.ant_glob("deptran/s_main.cc"),
                 target="deptran_server",
                 includes=". rrr deptran ",
-                uselib="BOOST BOOST_SYSTEM",
-                use="rrr memdb YAML-CPP PTHREAD PROFILER RT")
+                uselib="BOOST BOOST_SYSTEM YAML-CPP",
+                use="rrr memdb deptran PTHREAD PROFILER RT")
 
 #    bld.program(source=bld.path.ant_glob("deptran/c_main.cc"),
 #                target="deptran_client",
