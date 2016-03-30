@@ -100,3 +100,17 @@ using mdb::symbol_t;
 using mdb::Table;
 using mdb::column_id_t;
 using mdb::SnapshotTable;
+
+
+// rpc library
+class dummy_class {
+ public:
+  dummy_class() {
+#ifdef LOG_LEVEL_AS_DEBUG
+    Log::set_level(Log::DEBUG);
+#else
+    Log::set_level(Log::INFO);
+#endif
+  }
+};
+static dummy_class dummy___;

@@ -6,19 +6,6 @@
 #include "marshal-value.h"
 
 
-// rpc library
-#define LOG_LEVEL_AS_DEBUG
-class dummy_class {
- public:
-  dummy_class() {
-#ifdef LOG_LEVEL_AS_DEBUG
-    Log::set_level(Log::DEBUG);
-#else
-    Log::set_level(Log::INFO);
-#endif
-  }
-};
-static dummy_class dummy___;
 
 
 #define level_s
