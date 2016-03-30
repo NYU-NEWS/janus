@@ -35,7 +35,7 @@ ThreePhaseCoordinator::ThreePhaseCoordinator(uint32_t coo_id,
 
 RococoCommunicator* ThreePhaseCoordinator::commo() {
   if (commo_ == nullptr) {
-    commo_ = frame_->CreateCommo();
+    commo_ = new RococoCommunicator;
   }
   verify(commo_ != nullptr);
   return (RococoCommunicator*) commo_;
