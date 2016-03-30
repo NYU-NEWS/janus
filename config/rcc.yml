@@ -1,0 +1,9 @@
+
+mode:
+  cc: rcc # concurrency control
+  ab: none # atomic broadcast
+  read_only: occ
+  batch: false
+  retry: 0
+  ongoing: 1 # per client
+
