@@ -32,15 +32,15 @@ def options(opt):
                    default=False, action='store_true')
     opt.add_option('-T', '--enable-txn-stat', dest='txn_stat',
                    default=False, action='store_true')
+    opt.add_option('-D', '--disable-check-python', dest='disable_check_python',
+                   default=False, action='store_true')
     opt.parse_args();
 
 def configure(conf):
     _choose_compiler(conf)
     _enable_pic(conf)
     conf.load("compiler_cxx unittest_gtest")
-    conf.load("python")
     conf.load("boost")
-    conf.check_python_headers()
 
     _enable_tcmalloc(conf)
     _enable_cxx11(conf)
@@ -71,9 +71,14 @@ def configure(conf):
     if sys.platform != 'darwin':
         conf.env.LIB_RT = 'rt'
 
-    # check python modules
-    conf.check_python_module('tabulate')
-    conf.check_python_module('yaml')
+    if Options.options.disable_check_python:
+        pass
+    else:
+        conf.load("python")
+        conf.check_python_headers()
+        # check python modules
+        conf.check_python_module('tabulate')
+        conf.check_python_module('yaml')
 
 def build(bld):
     _depend("rrr/pylib/simplerpcgen/rpcgen.py",
@@ -122,15 +127,17 @@ def build(bld):
 #                includes=". rrr",
 #                use="base simplerpc PTHREAD")
 
-    bld.program(source=bld.path.ant_glob("test/*.cc"),
-                target="run_tests",
-                features="gtest",
-                includes=". rrr deptran  "
-                         "test memdb",
-                uselib="BOOST BOOST_SYSTEM YAML-CPP",
-                use="PTHREAD rrr memdb deptran")
+#    bld.program(source=bld.path.ant_glob("test/*.cc"),
+#                target="run_tests",
+#                features="gtest",
+#                includes=". rrr deptran  "
+#                         "test memdb",
+#                uselib="BOOST BOOST_SYSTEM YAML-CPP",
+#                use="PTHREAD rrr memdb deptran")
 
-    bld.program(source=bld.path.ant_glob("deptran/s_main.cc"),
+    bld.program(source=bld.path.ant_glob("deptran/*.cc "
+                                         "deptran/*/*.cc "
+                                         "bench/*/*.cc"),
                 target="deptran_server",
                 includes=". rrr deptran ",
                 uselib="BOOST BOOST_SYSTEM YAML-CPP",
@@ -151,15 +158,15 @@ def build(bld):
 #                includes=". rrr deptran test",
 #                use="rrr PTHREAD RT")
 #
-    bld.stlib(source=bld.path.ant_glob("deptran/*.cc "
-                                       "deptran/*/*.cc "
-                                       "bench/*/*.cc ",
-                                       excl="deptran/*_main.c*"),
-        #use="PTHREAD APR APR-UTIL base simplerpc memdb")
-        target="deptran",
-        includes=". rrr memdb bench deptran ",
-        use="PTHREAD base simplerpc memdb")
-
+#    bld.stlib(source=bld.path.ant_glob("deptran/*.cc "
+#                                       "deptran/*/*.cc "
+#                                       "bench/*/*.cc ",
+#                                       excl="deptran/*_main.c*"),
+#        #use="PTHREAD APR APR-UTIL base simplerpc memdb")
+#        target="deptran",
+#        includes=". rrr memdb bench deptran ",
+#        use="PTHREAD base simplerpc memdb")
+#
 #
 # waf helper functions
 #
