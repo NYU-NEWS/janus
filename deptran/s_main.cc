@@ -55,27 +55,35 @@ void client_launch_workers(vector<Config::SiteInfo> &client_sites) {
   }
 }
 
+
+
 void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
   auto config = Config::GetConfig();
   Log_info("server enabled, number of sites: %d", server_sites.size());
   svr_workers.resize(server_sites.size(), ServerWorker());
   int i=0;
+  vector<std::thread> setup_ths;
   for (auto& site_info : server_sites) {
-    Log_info("launching site: %x, bind address %s",
-             site_info.id,
-             site_info.GetBindAddress().c_str());
-    auto& worker = svr_workers[i++];
-    worker.site_info_ = const_cast<Config::SiteInfo*>(&config->SiteById(site_info.id));
-    worker.SetupBase();
-    // register txn piece logic
-    worker.RegPiece();
-    // setup communication between controller script
-    worker.SetupHeartbeat();
-    // populate table according to benchmarks
-    worker.PopTable();
-    // start server service
-    worker.SetupService();
-    Log_info("site %d launched!", site_info.id);
+    setup_ths.push_back(std::thread([&site_info, &i, &config] () {
+      Log_info("launching site: %x, bind address %s",
+               site_info.id,
+               site_info.GetBindAddress().c_str());
+      auto& worker = svr_workers[i++];
+      worker.site_info_ = const_cast<Config::SiteInfo*>(&config->SiteById(site_info.id));
+      worker.SetupBase();
+      // register txn piece logic
+      worker.RegPiece();
+      // setup communication between controller script
+      worker.SetupHeartbeat();
+      // populate table according to benchmarks
+      worker.PopTable();
+      // start server service
+      worker.SetupService();
+      Log_info("site %d launched!", site_info.id);
+    }));
+  }
+  for (auto& th: setup_ths) {
+    th.join();
   }
 
   for (ServerWorker& worker : svr_workers) {
