@@ -7,7 +7,7 @@ namespace rococo {
 class RccSched;
 class WaitlistChecker : public FrequentJob {
  public:
-  RccSched *sched_;
+  RccSched *sched_ = nullptr;
 
   WaitlistChecker() = delete;
   WaitlistChecker(RccSched* sched);

@@ -33,12 +33,12 @@ namespace deptran {
       auto id = cmd.input[0].get_i64();
       buf[0] = cmd.input[0].get_blob();
       auto row = dtxn->Query(dtxn->GetTable(RW_BENCHMARK_TABLE), buf);
-      if (!dtxn->ReadColumn(row, 1, &result)) {
+      if (!dtxn->ReadColumn(row, 1, &result, TXN_DEFERRED)) {
         *res = REJECT;
         return;
       }
       result.set_i32(result.get_i32()+1);
-      if (!dtxn->WriteColumn(row, 1, result)) {
+      if (!dtxn->WriteColumn(row, 1, result, TXN_DEFERRED)) {
         *res = REJECT;
         return;
       }
