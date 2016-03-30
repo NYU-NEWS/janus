@@ -13,7 +13,7 @@ RccCommo* RccCoord::commo() {
     commo_ = frame_->CreateCommo();
   }
   verify(commo_ != nullptr);
-  return (RccCommo*)(commo_);
+  return dynamic_cast<RccCommo*>(commo_);
 }
 
 
@@ -115,7 +115,6 @@ void RccCoord::DispatchAck(phase_t phase,
 void RccCoord::Finish() {
   TxnCommand *ch = (TxnCommand*) cmd_;
   // commit or abort piece
-  rrr::FutureAttr fuattr;
   Log_debug(
     "send rcc finish requests to %d servers, tid: %llx, graph size: %d",
     (int)ch->partition_ids_.size(),
@@ -125,11 +124,7 @@ void RccCoord::Finish() {
   verify(ch->partition_ids_.size() == info.partition_.size());
   info.union_status(TXN_CMT);
 
-//  ChopFinishRequest req;
-//  req.txn_id = cmd_->id_;
-//  req.gra    = ch->gra_;
   verify(graph_.size() > 0);
-//  verify(req.gra.size() > 0);
 
   for (auto& rp : ch->partition_ids_) {
     commo()->SendFinish(rp,
@@ -147,30 +142,30 @@ void RccCoord::Finish() {
 void RccCoord::FinishAck(phase_t phase,
                          int res,
                          map<innid_t, map<int32_t, Value>>& output) {
-  TxnCommand* ch = (TxnCommand*) cmd_;
+  TxnCommand* txn = (TxnCommand*) cmd_;
   verify(phase_ == phase);
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   n_finish_ack_++;
 
   Log_debug("receive finish response. tid: %llx", cmd_->id_);
-  ch->outputs_.insert(output.begin(), output.end());
+  txn->outputs_.insert(output.begin(), output.end());
 
-  if (n_finish_ack_ == ch->GetPartitionIds().size()) {
+  if (n_finish_ack_ == txn->GetPartitionIds().size()) {
     // generate a reply and callback.
     Log_debug("deptran callback, %llx", cmd_->id_);
 
-    if (!ch->do_early_return()) {
-      ch->reply_.res_ = SUCCESS;
-      TxnReply& txn_reply_buf = ch->get_reply();
-      double    last_latency  = ch->last_attempt_latency();
+    if (!txn->do_early_return()) {
+      txn->reply_.res_ = SUCCESS;
+      TxnReply& txn_reply_buf = txn->get_reply();
+      double    last_latency  = txn->last_attempt_latency();
       this->report(txn_reply_buf, last_latency
 #ifdef TXN_STAT
           , ch
 #endif // ifdef TXN_STAT
       );
-      ch->callback_(txn_reply_buf);
+      txn->callback_(txn_reply_buf);
     }
-    delete ch;
+    delete txn;
   }
 }
 

@@ -24,7 +24,7 @@ void NoneCoord::do_one(TxnRequest &req) {
   Dispatch();
 }
 
-void NoneCoord::Handout() {
+void NoneCoord::Dispatch() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   phase_++;
 
@@ -40,7 +40,7 @@ void NoneCoord::Handout() {
     handout_acks_[subcmd->inn_id()] = false;
     commo()->SendHandout(*subcmd,
                          this,
-                         std::bind(&ThreePhaseCoordinator::HandoutAck,
+                         std::bind(&ThreePhaseCoordinator::DispatchAck,
                                    this,
                                    phase_,
                                    std::placeholders::_1,
@@ -51,7 +51,7 @@ void NoneCoord::Handout() {
 
 
 
-void NoneCoord::HandoutAck(phase_t phase, int res, Command& cmd) {
+void NoneCoord::DispatchAck(phase_t phase, int res, Command &cmd) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(phase == phase_);
   n_handout_ack_++;

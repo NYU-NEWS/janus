@@ -18,7 +18,6 @@ public:
   Recorder *recorder_;
   ballot_t ballot_; // the ballot I am holding
   cmdid_t cmd_id_;
-  BrqCommo *commo_;
   // data structures for saving replies.
   struct reply_cnt_t {int yes; int no;};
   std::map<groupid_t, reply_cnt_t> n_fast_accept_reply_;
@@ -30,25 +29,30 @@ public:
 
   virtual ~BrqCoord() {}
 
+  BrqCommo* commo();
   // Dispatch inherits from RccCoord;
-//  void DispatchAck(phase_t phase,
-//                   int res,
-//                   SimpleCommand &cmd,
-//                   RccGraph &graph);
+  void DispatchAck(phase_t phase,
+                   int res,
+                   SimpleCommand &cmd,
+                   RccGraph &graph);
+
+  void PreAccept();
+  void PreAcceptAck(phase_t phase,
+                    parid_t par_id,
+                    int res,
+                    RccGraph& graph);
 
   // do_one inherits from RccCoord;
 
   void restart() {verify(0);};
   // functions needed in the fast accept phase.
-  void FastAccept();
-  void FastAcceptAck(groupid_t, FastAcceptReply *, phase_t);
-  bool check_fastpath_possible() {verify(0);};
-  bool check_fastpath() {verify(0);};
-  bool check_slowpath_possible() {
+  bool FastpathPossible() {verify(0);};
+  bool FastQuorumsAchieved() {verify(0);};
+  bool SlowpathPossible() {
     verify(0);
     return false;
   };
-  bool check_slowpath() {
+  bool SlowQuorumsAchieved() {
     verify(0);
     return false;
   };
@@ -66,8 +70,10 @@ public:
     return false;
   };
 
-  void commit();
-  void commit_ack(groupid_t, CommitReply*, phase_t);
+  void Commit();
+  void CommitAck(phase_t phase,
+                 parid_t par_id,
+                 map<innid_t, map<int32_t, Value>>& output);
   bool check_commit() {
     verify(0);
     return false;

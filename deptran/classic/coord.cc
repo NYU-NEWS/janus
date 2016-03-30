@@ -162,7 +162,7 @@ void ThreePhaseCoordinator::Dispatch() {
     handout_acks_[subcmd->inn_id()] = false;
     commo()->SendHandout(*subcmd,
                          this,
-                         std::bind(&ThreePhaseCoordinator::HandoutAck,
+                         std::bind(&ThreePhaseCoordinator::DispatchAck,
                                    this,
                                    phase_,
                                    std::placeholders::_1,
@@ -177,7 +177,7 @@ bool ThreePhaseCoordinator::AllHandoutAckReceived() {
                      [](std::pair<innid_t, bool> pair){ return pair.second; });
 }
 
-void ThreePhaseCoordinator::HandoutAck(phase_t phase, int res, Command& cmd) {
+void ThreePhaseCoordinator::DispatchAck(phase_t phase, int res, Command &cmd) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
 
   if (IsPhaseOrStageStale(phase, HANDOUT)) {

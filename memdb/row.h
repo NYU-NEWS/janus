@@ -529,6 +529,7 @@ class VersionedRow: public CoarseLockedRow {
     row->init_ver(n_columns);
 //    memcpy(row->ver_, this->ver_, n_columns * sizeof(version_t));
     row->ver_ = this->ver_;
+    verify(row->ver_.size() > 0);
   }
 
  public:
@@ -538,6 +539,7 @@ class VersionedRow: public CoarseLockedRow {
   }
 
   version_t get_column_ver(column_id_t column_id) const {
+    verify(ver_.size() > 0);
     verify(column_id < ver_.size());
     return ver_[column_id];
   }

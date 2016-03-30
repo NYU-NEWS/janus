@@ -75,7 +75,7 @@ class ThreePhaseCoordinator : public Coordinator {
   void restart(TxnCommand *ch);
 
   virtual void Dispatch();
-  virtual void HandoutAck(phase_t phase, int res, Command& cmd);
+  virtual void DispatchAck(phase_t phase, int res, Command &cmd);
   void Prepare();
   void PrepareAck(phase_t phase, Future *fu);
   void Decide();

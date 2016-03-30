@@ -8,8 +8,8 @@ class NoneCoord : public ThreePhaseCoordinator {
   using ThreePhaseCoordinator::ThreePhaseCoordinator;
 
   virtual void do_one(TxnRequest &);
-  virtual void Handout();
-  virtual void HandoutAck(phase_t phase, int res, Command& cmd);
+  virtual void Dispatch() override;
+  virtual void DispatchAck(phase_t phase, int res, Command &cmd);
 
 
 };

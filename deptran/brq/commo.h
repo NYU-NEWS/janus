@@ -26,6 +26,20 @@ class BrqCommo: public RccCommo {
   void SendInquire(parid_t pid,
                    txnid_t tid,
                    const function<void(RccGraph &graph)> &) override;
+
+  void BroadcastPreAccept(parid_t par_id,
+                          txnid_t cmd_id_,
+                          ballot_t ballot,
+                          RccGraph& graph,
+                          const function<void(int, RccGraph&)> &callback)
+  {verify(0);}
+
+  void BroadcastCommit(parid_t,
+                       txnid_t cmd_id_,
+                       RccGraph& graph,
+                       const function<void(map<innid_t,
+                                               map<int32_t, Value>>&)>
+                       &callback) {verify(0);};
 };
 
 } // namespace
