@@ -11,11 +11,11 @@ TapirCommo* TapirCoord::commo() {
   if (commo_ == nullptr) {
     commo_ = new TapirCommo();
   }
-  return (TapirCommo*)commo_;
+  return dynamic_cast<TapirCommo*>(commo_);
 }
 
 
-void TapirCoord::Handout() {
+void TapirCoord::Dispatch() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 //  phase_++;
 
@@ -31,7 +31,7 @@ void TapirCoord::Handout() {
     handout_acks_[subcmd->inn_id()] = false;
     commo()->SendHandout(*subcmd,
                          this,
-                         std::bind(&ThreePhaseCoordinator::HandoutAck,
+                         std::bind(&ThreePhaseCoordinator::DispatchAck,
                                    this,
                                    phase_,
                                    std::placeholders::_1,
@@ -41,7 +41,7 @@ void TapirCoord::Handout() {
 }
 
 
-void TapirCoord::HandoutAck(phase_t phase, int res, Command& cmd) {
+void TapirCoord::DispatchAck(phase_t phase, int res, Command &cmd) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
 //  verify(phase == phase_);
   n_handout_ack_++;
@@ -56,7 +56,7 @@ void TapirCoord::HandoutAck(phase_t phase, int res, Command& cmd) {
     Log_debug("command has more sub-cmd, cmd_id: %lx,"
                   " n_started_: %d, n_pieces: %d",
               cmd_->id_, ch->n_pieces_out_, ch->GetNPieceAll());
-    Handout();
+    Dispatch();
   } else if (AllHandoutAckReceived()) {
     Log_debug("receive all handout acks, txn_id: %ld; START PREPARE",
               cmd_->id_);
@@ -175,7 +175,7 @@ void TapirCoord::restart(TxnCommand* cmd) {
   if (ccsi_) ccsi_->txn_retry_one(this->thread_id_, cmd->type_, last_latency);
   cmd_->root_id_ = this->next_txn_id();
   cmd_->id_ = cmd_->root_id_;
-  Handout();
+  Dispatch();
 }
 
 int TapirCoord::GetFastQuorum(parid_t par_id) {

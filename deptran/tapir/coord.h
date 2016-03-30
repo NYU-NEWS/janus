@@ -22,8 +22,8 @@ class TapirCoord : public NoneCoord {
   void Reset() override;
   TapirCommo* commo();
 
-  void Handout() override;
-  void HandoutAck(phase_t, int res, Command& cmd) override;
+  void Dispatch() override;
+  void DispatchAck(phase_t, int res, Command &cmd) override;
 
   void FastAccept();
   void FastAcceptAck(phase_t phase, parid_t par_id, Future *fu);

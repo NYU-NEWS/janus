@@ -59,12 +59,16 @@ void TapirExecutor::Commit() {
   for (auto row : locked_rows_) {
     row->unlock_row_by(cmd_id_);
   }
+  dtxn()->read_vers_.clear();
+  dtxn()->write_bufs_.clear();
 }
 
 void TapirExecutor::Abort() {
   for (auto row : locked_rows_) {
     row->unlock_row_by(cmd_id_);
   }
+  dtxn()->read_vers_.clear();
+  dtxn()->write_bufs_.clear();
 }
 
 TapirDTxn* TapirExecutor::dtxn() {
