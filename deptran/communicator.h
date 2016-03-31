@@ -16,7 +16,7 @@ class ClassicProxy;
 
 class Communicator {
  public:
-  const int CONNECT_TIMEOUT_MS = 10000;
+  const int CONNECT_TIMEOUT_MS = 30*1000;
   rrr::PollMgr *rpc_poll_ = nullptr;
   map<siteid_t, rrr::Client *> rpc_clients_ = {};
   map<siteid_t, ClassicProxy *> rpc_proxies_ = {};
