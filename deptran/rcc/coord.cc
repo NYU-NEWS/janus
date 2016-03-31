@@ -169,7 +169,7 @@ void RccCoord::FinishAck(phase_t phase,
   }
 }
 
-void RccCoord::HandoutRo() {
+void RccCoord::DispatchRo() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   phase_++;
   // new txn id for every new and retry.
@@ -219,7 +219,7 @@ void RccCoord::HandoutRoAck(phase_t phase,
 
   ch->n_pieces_out_++;
   if (cmd_->HasMoreSubCmdReadyNotOut()) {
-    HandoutRo();
+    DispatchRo();
   } else if (ch->n_pieces_out_ == ch->GetNPieceAll()) {
     if (last_vers_ == curr_vers_) {
       // TODO
@@ -326,7 +326,7 @@ void RccCoord::do_one(TxnRequest& req) {
 
   verify(ro_state_ == BEGIN);
   auto dispatch = ch->is_read_only() ?
-                 std::bind(&RccCoord::HandoutRo, this) :
+                  std::bind(&RccCoord::DispatchRo, this) :
                  std::bind(&RccCoord::Dispatch, this);
   if (recorder_) {
     std::string log_s;

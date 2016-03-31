@@ -42,7 +42,7 @@ public:
                  int res,
                  map<innid_t, map<int32_t, Value>>& output);
 
-  void HandoutRo();
+  virtual void DispatchRo();
   void HandoutRoAck(phase_t phase,
                     int res,
                     SimpleCommand& cmd,

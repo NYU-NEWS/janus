@@ -31,6 +31,7 @@ public:
 
   BrqCommo* commo();
   // Dispatch inherits from RccCoord;
+  void DispatchRo() {Dispatch();}
   void DispatchAck(phase_t phase,
                    int res,
                    SimpleCommand &cmd,
