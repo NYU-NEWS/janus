@@ -15,17 +15,20 @@ EC2_REGIONS = {
     'eu-west-1': {
         'location': 'Ireland',
         'endpoint': 'ec2.eu-west-1.amazonaws.com',
-        'ami_image': 'ami-22b53151',
+        #'ami_image': 'ami-22b53151',
+        'ami_image': 'ami-5a31b729',
     },
     'ap-northeast-2': {
         'location': 'Seoul',
         'endpoint': 'ec2.ap-northeast-2.amazonaws.com',
-        'ami_image': 'ami-6fa66f01',
+        #'ami_image': 'ami-6fa66f01',
+        'ami_image': 'ami-18d61f76',
     },
     'us-west-2': {
         'location': 'Oregon',
         'endpoint': 'ec2.us-west-2.amazonaws.com',
-        'ami_image': 'ami-63d03903',
+        #'ami_image': 'ami-63d03903',
+        'ami_image': 'ami-bb6f85db'
     },
     
     # these regions are not used
