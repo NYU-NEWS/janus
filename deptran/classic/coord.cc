@@ -131,7 +131,7 @@ void ThreePhaseCoordinator::Reset() {
 void ThreePhaseCoordinator::restart(TxnCommand *ch) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   Reset();
-  ch->retry();
+  ch->Reset();
 
   double last_latency = ch->last_attempt_latency();
 
@@ -146,13 +146,13 @@ void ThreePhaseCoordinator::Dispatch() {
   if (stage_ != HANDOUT) {
     IncrementPhaseAndChangeStage(HANDOUT);
   }
-
+  auto txn = (TxnCommand*) cmd_;
 //  StartRequest req;
 //  req.cmd_id = cmd_id_;
 
   int cnt = 0;
-  while (cmd_->HasMoreSubCmdReadyNotOut()) {
-    auto subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd();
+  while (txn->HasMoreSubCmdReadyNotOut()) {
+    auto subcmd = (SimpleCommand*) txn->GetNextReadySubCmd();
     subcmd->id_ = next_pie_id();
     verify(subcmd->root_id_ == cmd_->id_);
     n_handout_++;

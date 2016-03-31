@@ -26,7 +26,7 @@ public:
 
     virtual bool is_read_only();
 
-    virtual void retry();
+    virtual void Reset();
 
     virtual ~RWChopper();
 

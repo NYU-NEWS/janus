@@ -106,6 +106,12 @@ bool TxnCommand::HasMoreSubCmdReadyNotOut() {
   }
 }
 
+void TxnCommand::Reset() {
+  n_pieces_input_ready_ = 0;
+  n_pieces_replied_ = 0;
+  n_pieces_out_ = 0;
+}
+
 //bool TxnCommand::start_callback(int pi,
 //                                map<int32_t, mdb::Value> &output,
 //                                bool is_defer) {
@@ -131,7 +137,7 @@ bool TxnCommand::HasMoreSubCmdReadyNotOut() {
 
 void TxnCommand::read_only_reset() {
   read_only_failed_ = false;
-  retry();
+  Reset();
 }
 
 bool TxnCommand::read_only_start_callback(int pi,

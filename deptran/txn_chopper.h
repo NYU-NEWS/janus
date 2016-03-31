@@ -158,7 +158,7 @@ class TxnCommand: public Command {
   TxnReply &get_reply();
 
   /** for retry */
-  virtual void retry() = 0;
+  virtual void Reset();
 
   virtual ~TxnCommand() { }
 

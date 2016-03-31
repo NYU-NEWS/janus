@@ -67,11 +67,14 @@ bool RWChopper::is_read_only() {
     verify(0);
 }
 
-void RWChopper::retry() {
-  status_ = {{0,READY}};
+void RWChopper::Reset() {
+  TxnChopper::Reset();
+  for (auto& pair : status_) {
+    pair.second = READY;
+  }
   commit_.store(true);
   partition_ids_.clear();
-  n_pieces_out_ = 0;
+  n_pieces_input_ready_ = 1;
   n_try_++;
 }
 
