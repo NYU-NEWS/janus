@@ -22,8 +22,8 @@ class Communicator;
 class Frame {
  public:
   // static variables to hold frames
-  static map<int, Frame*> frame_s_;
-  static map<string, int> frame_name_mode_s;
+  static map<string, int>& FrameNameToMode();
+  static map<int, Frame*>& ModeToFrame();
   static int Name2Mode(string name);
   static Frame* GetFrame(int mode);
   static Frame* GetFrame(string name);

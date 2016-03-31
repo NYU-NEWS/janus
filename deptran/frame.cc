@@ -58,29 +58,11 @@
 
 namespace rococo {
 
-map<int, Frame*> Frame::frame_s_ = {};
-map<string, int> Frame::frame_name_mode_s = {
-    {"none",          MODE_NONE},
-    {"2pl", MODE_2PL},
-    {"occ", MODE_OCC},
-    {"ro6", MODE_RO6},
-    {"rpc_null",      MODE_RPC_NULL},
-    {"deptran",       MODE_DEPTRAN},
-    {"deptran_er",    MODE_DEPTRAN},
-    {"2pl_w",         MODE_2PL},
-    {"2pl_wait_die",  MODE_2PL},
-    {"2pl_ww",        MODE_2PL},
-    {"2pl_wound_die", MODE_2PL},
-    {"mdcc",          MODE_MDCC},
-    {"multi_paxos",   MODE_MULTI_PAXOS},
-    {"epaxos",        MODE_NOT_READY},
-    {"rep_commit",    MODE_NOT_READY}
-};
-
 Frame* Frame::RegFrame(int mode, Frame *frame) {
-  auto it = Frame::frame_s_.find(mode);
-  verify(it == frame_s_.end());
-  frame_s_[mode] = frame;
+  auto& mode_to_frame = Frame::ModeToFrame();
+  auto it = mode_to_frame.find(mode);
+  verify(it == mode_to_frame.end());
+  mode_to_frame[mode] = frame;
   return frame;
 }
 
@@ -94,8 +76,9 @@ Frame* Frame::GetFrame(int mode) {
       frame = new Frame(mode);
       break;
     default:
-      auto it = Frame::frame_s_.find(mode);
-      verify(it != frame_s_.end());
+      auto& mode_to_frame = Frame::ModeToFrame();
+      auto it = mode_to_frame.find(mode);
+      verify(it != mode_to_frame.end());
       frame = it->second;
   }
 
@@ -103,7 +86,7 @@ Frame* Frame::GetFrame(int mode) {
 }
 
 int Frame::Name2Mode(string name) {
-  auto &m = frame_name_mode_s;
+  auto &m = Frame::FrameNameToMode();
   return m.at(name);
 }
 
@@ -114,7 +97,8 @@ Frame* Frame::GetFrame(string name) {
 Frame* Frame::RegFrame(int mode, vector<string> names, Frame* frame) {
   for (auto name: names) {
     //verify(frame_name_mode_s.find(name) == frame_name_mode_s.end());
-    frame_name_mode_s[name] = mode;
+    auto &m = Frame::FrameNameToMode();
+    m[name] = mode;
   }
   return RegFrame(mode, frame);
 }
@@ -462,5 +446,30 @@ vector<rrr::Service *> Frame::CreateRpcServices(uint32_t site_id,
       verify(0);
   }
   return result;
+}
+map<string, int> &Frame::FrameNameToMode() {
+  static map<string, int> frame_name_mode_s = {
+      {"none",          MODE_NONE},
+      {"2pl", MODE_2PL},
+      {"occ", MODE_OCC},
+      {"ro6", MODE_RO6},
+      {"rpc_null",      MODE_RPC_NULL},
+      {"deptran",       MODE_DEPTRAN},
+      {"deptran_er",    MODE_DEPTRAN},
+      {"2pl_w",         MODE_2PL},
+      {"2pl_wait_die",  MODE_2PL},
+      {"2pl_ww",        MODE_2PL},
+      {"2pl_wound_die", MODE_2PL},
+      {"mdcc",          MODE_MDCC},
+      {"multi_paxos",   MODE_MULTI_PAXOS},
+      {"epaxos",        MODE_NOT_READY},
+      {"rep_commit",    MODE_NOT_READY}
+  };
+  return frame_name_mode_s;
+}
+
+map<int, Frame *> &Frame::ModeToFrame() {
+  static map<int, Frame*> frame_s_ = {};
+  return frame_s_;
 }
 } // namespace rococo;
