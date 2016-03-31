@@ -799,6 +799,7 @@ int Config::get_mode() {
 }
 
 unsigned int Config::get_num_threads() {
+  verify(num_coordinator_threads_ > 0);
   return num_coordinator_threads_;
 }
 
