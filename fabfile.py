@@ -93,6 +93,7 @@ def deploy_all(regions='us-west-2', servers_per_region=[3], instance_type='t2.sm
         execute('cluster.config_nfs_client')
         execute('retrieve_code')
         execute('build')
+        execute('cluster.put_janus_config')
 
     except Exception as e:
         traceback.print_exc()
