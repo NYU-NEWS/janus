@@ -207,7 +207,7 @@ class ClientControlServiceImpl: public ClientControlService {
   CondVar status_cond_;
   status_t status_;
   pthread_t **coo_threads_;
-  std::map<int32_t, txn_info_t> *txn_info_;
+  std::map<int32_t, txn_info_t>* txn_info_;
   bool txn_info_switch_;
 
   pthread_rwlock_t collect_lock_;
@@ -237,6 +237,8 @@ class ClientControlServiceImpl: public ClientControlService {
 
   inline void txn_start_one(unsigned int id, int32_t txn_type) {
     pthread_rwlock_rdlock(&collect_lock_);
+    verify(id >= 0 && id < num_threads_);
+    verify(txn_info_[id].find(txn_type) != txn_info_[id].end());
     txn_info_[id][txn_type].start(txn_info_switch_);
     pthread_rwlock_unlock(&collect_lock_);
   }
