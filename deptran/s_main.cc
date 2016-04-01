@@ -19,15 +19,14 @@ static vector<ServerWorker> svr_workers;
 static vector<ClientWorker*> client_workers;
 static std::vector<std::thread> client_threads;
 
-void client_setup_heartbeat() {
+void client_setup_heartbeat(int num_clients) {
   Log_info("%s", __FUNCTION__);
   std::map<int32_t, std::string> txn_types;
   Frame::GetFrame(Config::GetConfig()->cc_mode_)->GetTxnTypes(txn_types);
-  unsigned int num_threads = Config::GetConfig()->get_num_threads(); // func
   bool hb = Config::GetConfig()->do_heart_beat();
   if (hb) {
     // setup controller rpc server
-    ccsi_g = new ClientControlServiceImpl(num_threads, txn_types);
+    ccsi_g = new ClientControlServiceImpl(num_clients, txn_types);
     int n_io_threads = 1;
     cli_poll_mgr_g = new rrr::PollMgr(n_io_threads);
     base::ThreadPool *thread_pool = new base::ThreadPool(1);
@@ -133,7 +132,7 @@ int main(int argc, char *argv[]) {
 
   auto client_infos = Config::GetConfig()->GetMyClients();
   if (client_infos.size() > 0) {
-    client_setup_heartbeat();
+    client_setup_heartbeat(client_infos.size());
     client_launch_workers(client_infos);
     wait_for_clients();
     Log_info("done waiting for clients.");
