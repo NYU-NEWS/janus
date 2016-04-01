@@ -22,11 +22,11 @@ RccSched::~RccSched() {
   delete waitlist_checker_;
 }
 
-int RccSched::OnHandoutRequest(const SimpleCommand &cmd,
-                               int32_t *res,
-                               map<int32_t, Value> *output,
-                               RccGraph *graph,
-                               const function<void()> &callback) {
+int RccSched::OnDispatch(const SimpleCommand &cmd,
+                         int32_t *res,
+                         map<int32_t, Value> *output,
+                         RccGraph *graph,
+                         const function<void()> &callback) {
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(cmd.root_id_);
   dep_graph_->FindOrCreateTxnInfo(cmd.root_id_, &dtxn->tv_);
   verify(dep_graph_->partition_id_ == partition_id_);
@@ -54,10 +54,10 @@ int RccSched::OnHandoutRequest(const SimpleCommand &cmd,
   }
 }
 
-int RccSched::OnFinishRequest(cmdid_t cmd_id,
-                              const RccGraph &graph,
-                              map<innid_t, map<int32_t, Value>> *output,
-                              const function<void()> &callback) {
+int RccSched::OnCommit(cmdid_t cmd_id,
+                       const RccGraph &graph,
+                       map<innid_t, map<int32_t, Value>> *output,
+                       const function<void()> &callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   // union the graph into dep graph
   RccDTxn *dtxn = (RccDTxn*) GetDTxn(cmd_id);
@@ -80,9 +80,9 @@ int RccSched::OnFinishRequest(cmdid_t cmd_id,
   CheckWaitlist();
 }
 
-int RccSched::OnInquireRequest(cmdid_t cmd_id,
-                               RccGraph *graph,
-                               const function<void()> &callback) {
+int RccSched::OnInquire(cmdid_t cmd_id,
+                        RccGraph *graph,
+                        const function<void()> &callback) {
 //  DragonBall *ball = new DragonBall(2, [this, cmd_id, callback, graph] () {
 //    dep_graph_->MinItfrGraph(cmd_id, graph);
 //    callback();

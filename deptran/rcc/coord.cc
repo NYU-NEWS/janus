@@ -8,12 +8,34 @@
 
 namespace rococo {
 
+#define PHASE_INIT       0
+#define PHASE_DISPATCH   1
+#define PHASE_COMMIT     2
+#define PHASE_END        3
+
+
 RccCommo* RccCoord::commo() {
   if (commo_ == nullptr) {
     commo_ = frame_->CreateCommo();
   }
   verify(commo_ != nullptr);
   return dynamic_cast<RccCommo*>(commo_);
+}
+
+void RccCoord::PreDispatch() {
+  verify(ro_state_ == BEGIN);
+  TxnCommand* txn = dynamic_cast<TxnCommand*>(cmd_);
+  auto dispatch = txn->is_read_only() ?
+                  std::bind(&RccCoord::DispatchRo, this) :
+                  std::bind(&RccCoord::Dispatch, this);
+  if (recorder_) {
+    std::string log_s;
+    // TODO get appropriate log
+//    req.get_log(cmd_->id_, log_s);
+    recorder_->submit(log_s, dispatch);
+  } else {
+    dispatch();
+  }
 }
 
 
@@ -91,7 +113,7 @@ void RccCoord::DispatchAck(phase_t phase,
     Dispatch();
   } else if (AllDispatchAcked()) {
     Log_debug("receive all start acks, txn_id: %llx; START PREPARE", cmd_->id_);
-    Finish();
+    GotoNextPhase();
     // TODO?
     if (txn->do_early_return()) {
       early_return = true;
@@ -155,23 +177,27 @@ void RccCoord::FinishAck(phase_t phase,
     Log_debug("deptran callback, %llx", cmd_->id_);
 
     if (!txn->do_early_return()) {
-      txn->reply_.res_ = SUCCESS;
-      TxnReply& txn_reply_buf = txn->get_reply();
-      double    last_latency  = txn->last_attempt_latency();
-      this->report(txn_reply_buf, last_latency
-#ifdef TXN_STAT
-          , ch
-#endif // ifdef TXN_STAT
-      );
-      txn->callback_(txn_reply_buf);
+      GotoNextPhase();
     }
     delete txn;
   }
 }
 
+void RccCoord::End() {
+  TxnCommand* txn = (TxnCommand*) cmd_;
+  txn->reply_.res_ = SUCCESS;
+  TxnReply& txn_reply_buf = txn->get_reply();
+  double    last_latency  = txn->last_attempt_latency();
+  this->report(txn_reply_buf, last_latency
+#ifdef TXN_STAT
+      , ch
+#endif // ifdef TXN_STAT
+  );
+  txn->callback_(txn_reply_buf);
+}
+
 void RccCoord::DispatchRo() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  phase_++;
   // new txn id for every new and retry.
 //  RequestHeader header = gen_header(ch);
 
@@ -314,27 +340,18 @@ void RccCoord::DispatchRoAck(phase_t phase,
 void RccCoord::do_one(TxnRequest& req) {
   // pre-process
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-  TxnCommand *ch = frame_->CreateChopper(req, txn_reg_);
+  TxnCommand *txn = frame_->CreateChopper(req, txn_reg_);
   verify(txn_reg_ != nullptr);
-  cmd_ = ch;
+  cmd_ = txn;
   cmd_->id_ = this->next_txn_id();
   cmd_->root_id_ = this->next_txn_id();
   Reset();
+  phase_--; // TODO remove this
   Log_debug("do one request");
 
   if (ccsi_) ccsi_->txn_start_one(thread_id_, cmd_->type_);
-
-  verify(ro_state_ == BEGIN);
-  auto dispatch = ch->is_read_only() ?
-                  std::bind(&RccCoord::DispatchRo, this) :
-                 std::bind(&RccCoord::Dispatch, this);
-  if (recorder_) {
-    std::string log_s;
-    req.get_log(cmd_->id_, log_s);
-    recorder_->submit(log_s, dispatch);
-  } else {
-    dispatch();
-  }
+  verify((phase_ % 3) == PHASE_INIT);
+  GotoNextPhase();
 }
 
 void RccCoord::Reset() {
@@ -343,6 +360,31 @@ void RccCoord::Reset() {
   ro_state_ = BEGIN;
   last_vers_.clear();
   curr_vers_.clear();
+}
+
+
+void RccCoord::GotoNextPhase() {
+  int n_phase = 3;
+  int current_phase = phase_ % n_phase;
+  switch (phase_++ % n_phase) {
+    case PHASE_INIT:
+      PreDispatch();
+      verify(phase_ % n_phase == PHASE_DISPATCH);
+      break;
+    case PHASE_DISPATCH:
+      verify(phase_ % n_phase == PHASE_COMMIT);
+      Finish();
+      break;
+    case PHASE_COMMIT:
+      verify(phase_ % n_phase == PHASE_INIT);
+      End();
+      break;
+    case PHASE_END:
+      verify(0);
+      break;
+    default:
+      verify(0);
+  }
 }
 
 } // namespace rococo

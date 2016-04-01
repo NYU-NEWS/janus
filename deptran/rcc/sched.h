@@ -31,20 +31,20 @@ class RccSched : public Scheduler {
     dep_graph_->partition_id_ = par_id;
   }
 
-  int OnHandoutRequest(const SimpleCommand &cmd,
-                       rrr::i32 *res,
-                       map<int32_t, Value> *output,
-                       RccGraph* graph,
-                       const function<void()>& callback);
+  int OnDispatch(const SimpleCommand &cmd,
+                 rrr::i32 *res,
+                 map<int32_t, Value> *output,
+                 RccGraph *graph,
+                 const function<void()> &callback);
 
-  int OnFinishRequest(cmdid_t cmd_id,
-                      const RccGraph& graph,
-                      map<innid_t, map<int32_t, Value>> *output,
-                      const function<void()>& callback);
+  int OnCommit(cmdid_t cmd_id,
+               const RccGraph &graph,
+               TxnOutput* output,
+               const function<void()> &callback);
 
-  int OnInquireRequest(cmdid_t cmd_id,
-                       RccGraph *graph,
-                       const function<void()> &callback);
+  int OnInquire(cmdid_t cmd_id,
+                RccGraph *graph,
+                const function<void()> &callback);
 
 //  void to_decide(Vertex<TxnInfo> *v,
 //                 rrr::DeferredReply *defer);

@@ -32,6 +32,7 @@ public:
 
   void do_one(TxnRequest&) override;
 
+  void PreDispatch();
   void Dispatch();
   virtual void DispatchAck(phase_t phase,
                            int res,
@@ -48,7 +49,10 @@ public:
                      SimpleCommand &cmd,
                      map<int, mdb::version_t> &vers);
   void FinishRo() {verify(0);};
-
+  void End();
   void Reset() override;
+
+
+    virtual void GotoNextPhase();
 };
 } // namespace rococo
