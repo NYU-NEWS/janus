@@ -4,7 +4,7 @@
 
 namespace rococo {
 
-void RococoCommunicator::SendHandout(SimpleCommand &cmd,
+void RococoCommunicator::SendDispatch(SimpleCommand &cmd,
                                      Coordinator *coo,
                                      const function<void(int,
                                                          Command&)> &callback) {
@@ -21,7 +21,7 @@ void RococoCommunicator::SendHandout(SimpleCommand &cmd,
         callback(res, cmd);
   };
   fuattr.callback = cb;
-  auto proxy = RandomProxyForPartition(cmd.PartitionId());
+  auto proxy = LeaderProxyForPartition(cmd.PartitionId());
   Log_debug("SendStart to %ld from %ld", proxy.first, coo->coo_id_);
   verify(cmd.type_ > 0);
   verify(cmd.root_type_ > 0);
@@ -33,7 +33,7 @@ void RococoCommunicator::SendStart(SimpleCommand &cmd,
                                    std::function<void(Future *fu)> &callback) {
   rrr::FutureAttr fuattr;
   fuattr.callback = callback;
-  auto proxy = RandomProxyForPartition(cmd.PartitionId());
+  auto proxy = LeaderProxyForPartition(cmd.PartitionId());
   Log_debug("SendStart to %ld\n", proxy.first);
   Future::safe_release(proxy.second->async_Dispatch(cmd, fuattr));
 }
@@ -44,8 +44,7 @@ void RococoCommunicator::SendPrepare(groupid_t gid,
                                      const function<void(Future*)> &callback) {
   FutureAttr fuattr;
   fuattr.callback = callback;
-  ClassicProxy *proxy = rpc_proxies_[gid];
-
+  ClassicProxy *proxy = LeaderProxyForPartition(gid).second;
   Log_debug("SendPrepare to %ld sites gid:%ld, tid:%ld\n", sids.size(), gid, tid);
   Future::safe_release(proxy->async_prepare_txn(tid, sids, fuattr));
 }
@@ -63,7 +62,7 @@ void RococoCommunicator::SendCommit(parid_t pid,
 
   FutureAttr fuattr;
   fuattr.callback = callback;
-  ClassicProxy *proxy = rpc_proxies_[pid];
+  ClassicProxy *proxy = LeaderProxyForPartition(pid).second;
   Log_debug("SendCommit to %ld tid:%ld\n", pid, tid);
   Future::safe_release(proxy->async_commit_txn(tid, fuattr));
 }
@@ -73,7 +72,7 @@ void RococoCommunicator::SendAbort(parid_t pid, txnid_t tid,
 //  ___LogSent(pid, tid);
   FutureAttr fuattr;
   fuattr.callback = callback;
-  ClassicProxy *proxy = rpc_proxies_[pid];
+  ClassicProxy *proxy = LeaderProxyForPartition(pid).second;
   Log_debug("SendAbort to %ld tid:%ld\n", pid, tid);
   Future::safe_release(proxy->async_abort_txn(tid, fuattr));
 }

@@ -48,6 +48,8 @@ class Communicator {
 
   std::pair<siteid_t, ClassicProxy*> RandomProxyForPartition(parid_t
                                                              partition_id) const;
+  std::pair<siteid_t, ClassicProxy*> LeaderProxyForPartition(parid_t) const;
+
   std::pair<int, ClassicProxy*> ConnectToSite(rococo::Config::SiteInfo &site,
                                               std::chrono::milliseconds timeout_ms);
 };

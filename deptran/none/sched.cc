@@ -9,10 +9,10 @@
 
 namespace rococo {
 
-int NoneSched::OnHandoutRequest(const SimpleCommand &cmd,
-                                rrr::i32 *res,
-                                map<int32_t, Value> *output,
-                                rrr::DeferredReply *defer) {
+int NoneSched::OnDispatch(const SimpleCommand &cmd,
+                          rrr::i32 *res,
+                          map<int32_t, Value> *output,
+                          rrr::DeferredReply *defer) {
   auto exec = GetOrCreateExecutor(cmd.root_id_);
   exec->Execute(cmd, res, *output);
   defer->reply();

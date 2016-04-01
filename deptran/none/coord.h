@@ -3,9 +3,9 @@
 #include "../classic/coord.h"
 
 namespace rococo {
-class NoneCoord : public ThreePhaseCoordinator {
+class NoneCoord : public ClassicCoord {
  public:
-  using ThreePhaseCoordinator::ThreePhaseCoordinator;
+  using ClassicCoord::ClassicCoord;
 
   virtual void do_one(TxnRequest &);
   virtual void Dispatch() override;

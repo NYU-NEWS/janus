@@ -4,8 +4,8 @@
 
 namespace rococo {
 
-class TPLCoord: public ThreePhaseCoordinator {
-  using ThreePhaseCoordinator::ThreePhaseCoordinator;
+class TPLCoord: public ClassicCoord {
+  using ClassicCoord::ClassicCoord;
 };
 
 } // namespace rococo

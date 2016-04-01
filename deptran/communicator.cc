@@ -45,6 +45,15 @@ std::pair<siteid_t, ClassicProxy*> Communicator::RandomProxyForPartition(
   return partition_proxies[index];
 }
 
+std::pair<siteid_t, ClassicProxy*>
+Communicator::LeaderProxyForPartition(parid_t partition_id) const {
+  auto it = rpc_par_proxies_.find(partition_id);
+  verify(it != rpc_par_proxies_.end());
+  auto& partition_proxies = it->second;
+  int index = 0;
+  return partition_proxies[index];
+}
+
 std::pair<int, ClassicProxy*> Communicator::ConnectToSite(Config::SiteInfo &site,
                                                           milliseconds timeout) {
   string addr = site.GetHostAddr();

@@ -155,7 +155,7 @@ int TPLExecutor::Commit() {
 }
 
 int TPLExecutor::abort() {
-  ThreePhaseExecutor::abort();
+  ClassicExecutor::abort();
   release_piece_map(false);
   return 0;
 }

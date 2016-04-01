@@ -16,6 +16,8 @@ class MultiPaxosCoord : public Coordinator {
     verify(commo_ != nullptr);
     return (MultiPaxosCommo*) commo_;
   }
+  bool in_submission_ = false;
+  bool in_accept = false; // debug
  public:
 //  using Coordinator::Coordinator;
   MultiPaxosCoord(uint32_t coo_id,

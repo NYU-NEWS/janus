@@ -355,7 +355,7 @@ void RccCoord::do_one(TxnRequest& req) {
 }
 
 void RccCoord::Reset() {
-  ThreePhaseCoordinator::Reset();
+  ClassicCoord::Reset();
   graph_.Clear();
   ro_state_ = BEGIN;
   last_vers_.clear();

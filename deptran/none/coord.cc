@@ -38,9 +38,9 @@ void NoneCoord::Dispatch() {
     Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
               n_handout_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
     handout_acks_[subcmd->inn_id()] = false;
-    commo()->SendHandout(*subcmd,
+    commo()->SendDispatch(*subcmd,
                          this,
-                         std::bind(&ThreePhaseCoordinator::DispatchAck,
+                         std::bind(&ClassicCoord::DispatchAck,
                                    this,
                                    phase_,
                                    std::placeholders::_1,

@@ -9,10 +9,10 @@
 namespace rococo {
 
 class SimpleCommand;
-class ThreePhaseExecutor: public Executor {
+class ClassicExecutor: public Executor {
   using Executor::Executor;
  public:
-  virtual ~ThreePhaseExecutor();
+  virtual ~ClassicExecutor();
 
   virtual int StartLaunch(const SimpleCommand &cmd,
                           rrr::i32 *res,

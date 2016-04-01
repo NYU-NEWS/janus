@@ -7,8 +7,8 @@
 namespace rococo {
 
 class PieceStatus;
-class TPLExecutor: public ThreePhaseExecutor {
-  using ThreePhaseExecutor::ThreePhaseExecutor;
+class TPLExecutor: public ClassicExecutor {
+  using ClassicExecutor::ClassicExecutor;
  public:
   bool prepared_ = false;
   bool wounded_ = false;

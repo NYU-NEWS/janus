@@ -9,7 +9,7 @@
 namespace rococo {
 
 class Executor;
-class TPLSched: public ThreePhaseSched {
+class TPLSched: public ClassicSched {
  public:
   TPLSched();
 

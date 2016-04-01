@@ -17,7 +17,9 @@ MultiPaxosCoord::MultiPaxosCoord(uint32_t coo_id,
 
 void MultiPaxosCoord::Submit(SimpleCommand& cmd,
                              const function<void()>& func) {
+  verify(!in_submission_);
   verify(cmd_ == nullptr);
+  in_submission_ = true;
   cmd_ = new SimpleCommand();
   *cmd_ = cmd;
   callback_ = func;
@@ -43,6 +45,7 @@ void MultiPaxosCoord::Prepare() {
 }
 
 void MultiPaxosCoord::PrepareAck(phase_t phase, Future *fu) {
+  if (phase_ != phase) return;
   TxnCommand* cmd = (TxnCommand*) cmd_;
   n_prepare_ack_ ++;
   ballot_t max_ballot;
@@ -61,8 +64,12 @@ void MultiPaxosCoord::PrepareAck(phase_t phase, Future *fu) {
 }
 
 void MultiPaxosCoord::Accept() {
+  verify(!in_accept);
+  in_accept = true;
   phase_++;
   TxnCommand* cmd = (TxnCommand*) cmd_;
+  Log_debug("multi-paxos coordinator broadcasts accept, slot_id: %llx",
+            slot_id_);
   commo()->BroadcastAccept(par_id_,
                           slot_id_,
                           curr_ballot_,

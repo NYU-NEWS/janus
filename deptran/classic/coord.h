@@ -8,14 +8,14 @@
 namespace rococo {
 class ClientControlServiceImpl;
 
-class ThreePhaseCoordinator : public Coordinator {
+class ClassicCoord : public Coordinator {
  public:
-  ThreePhaseCoordinator(uint32_t coo_id,
+  ClassicCoord(uint32_t coo_id,
                         int benchmark,
                         ClientControlServiceImpl *ccsi,
                         uint32_t thread_id);
 
-  virtual ~ThreePhaseCoordinator() {
+  virtual ~ClassicCoord() {
     if (commo_) {
       delete commo_;
     }

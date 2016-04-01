@@ -18,7 +18,7 @@
 
 namespace rococo {
 
-ThreePhaseCoordinator::ThreePhaseCoordinator(uint32_t coo_id,
+ClassicCoord::ClassicCoord(uint32_t coo_id,
                                              int benchmark,
                                              ClientControlServiceImpl *ccsi,
                                              uint32_t thread_id)
@@ -33,7 +33,7 @@ ThreePhaseCoordinator::ThreePhaseCoordinator(uint32_t coo_id,
 //  commo_ = frame_->CreateCommo();
 }
 
-RococoCommunicator* ThreePhaseCoordinator::commo() {
+RococoCommunicator* ClassicCoord::commo() {
   if (commo_ == nullptr) {
     commo_ = new RococoCommunicator;
   }
@@ -42,7 +42,7 @@ RococoCommunicator* ThreePhaseCoordinator::commo() {
 }
 
 /** thread safe */
-void ThreePhaseCoordinator::do_one(TxnRequest &req) {
+void ClassicCoord::do_one(TxnRequest &req) {
   // pre-process
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   TxnCommand *cmd = frame_->CreateTxnCommand(req, txn_reg_);
@@ -94,13 +94,13 @@ void ThreePhaseCoordinator::do_one(TxnRequest &req) {
 //  Future::safe_release(proxy->async_rpc_null(fuattr));
 //}
 
-void ThreePhaseCoordinator::IncrementPhaseAndChangeStage(CoordinatorStage stage) {
+void ClassicCoord::IncrementPhaseAndChangeStage(CoordinatorStage stage) {
   phase_++;
   stage_ = stage;
   Log_debug("moving to phase %ld; stage %d", phase_, stage_);
 }
 
-bool ThreePhaseCoordinator::IsPhaseOrStageStale(phase_t phase, CoordinatorStage stage) {
+bool ClassicCoord::IsPhaseOrStageStale(phase_t phase, CoordinatorStage stage) {
   bool result = false;
   if (phase_ != phase) {
     Log_debug("phase %d doesn't match %d\n", phase, phase_);
@@ -113,7 +113,7 @@ bool ThreePhaseCoordinator::IsPhaseOrStageStale(phase_t phase, CoordinatorStage 
   return result;
 }
 
-void ThreePhaseCoordinator::Reset() {
+void ClassicCoord::Reset() {
   for (int i = 0; i < site_prepare_.size(); i++) {
     site_prepare_[i] = 0;
   }
@@ -128,7 +128,7 @@ void ThreePhaseCoordinator::Reset() {
 //  TxnCommand *ch = (TxnCommand *) cmd_;
 }
 
-void ThreePhaseCoordinator::restart(TxnCommand *ch) {
+void ClassicCoord::restart(TxnCommand *ch) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   Reset();
   ch->Reset();
@@ -139,7 +139,7 @@ void ThreePhaseCoordinator::restart(TxnCommand *ch) {
   Dispatch();
 }
 
-void ThreePhaseCoordinator::Dispatch() {
+void ClassicCoord::Dispatch() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   //  ___TestPhaseOne(cmd_id_);
 
@@ -160,9 +160,9 @@ void ThreePhaseCoordinator::Dispatch() {
     Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
               n_handout_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
     handout_acks_[subcmd->inn_id()] = false;
-    commo()->SendHandout(*subcmd,
+    commo()->SendDispatch(*subcmd,
                          this,
-                         std::bind(&ThreePhaseCoordinator::DispatchAck,
+                         std::bind(&ClassicCoord::DispatchAck,
                                    this,
                                    phase_,
                                    std::placeholders::_1,
@@ -171,13 +171,13 @@ void ThreePhaseCoordinator::Dispatch() {
   Log_debug("sent %d SubCmds\n", cnt);
 }
 
-bool ThreePhaseCoordinator::AllDispatchAcked() {
+bool ClassicCoord::AllDispatchAcked() {
   return std::all_of(handout_acks_.begin(),
                      handout_acks_.end(),
                      [](std::pair<innid_t, bool> pair){ return pair.second; });
 }
 
-void ThreePhaseCoordinator::DispatchAck(phase_t phase, int res, Command &cmd) {
+void ClassicCoord::DispatchAck(phase_t phase, int res, Command &cmd) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
 
   if (IsPhaseOrStageStale(phase, HANDOUT)) {
@@ -217,7 +217,7 @@ void ThreePhaseCoordinator::DispatchAck(phase_t phase, int res, Command &cmd) {
 }
 
 /** caller should be thread_safe */
-void ThreePhaseCoordinator::Prepare() {
+void ClassicCoord::Prepare() {
   IncrementPhaseAndChangeStage(PREPARE);
   TxnCommand *cmd = (TxnCommand *) cmd_;
   auto mode = Config::GetConfig()->cc_mode_;
@@ -233,7 +233,7 @@ void ThreePhaseCoordinator::Prepare() {
     commo()->SendPrepare(partition_id,
                          cmd_->id_,
                          sids,
-                         std::bind(&ThreePhaseCoordinator::PrepareAck,
+                         std::bind(&ClassicCoord::PrepareAck,
                                   this,
                                   phase_,
                                   std::placeholders::_1));
@@ -243,7 +243,7 @@ void ThreePhaseCoordinator::Prepare() {
   }
 }
 
-void ThreePhaseCoordinator::PrepareAck(phase_t phase, Future *fu) {
+void ClassicCoord::PrepareAck(phase_t phase, Future *fu) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   if (IsPhaseOrStageStale(phase, PREPARE)) {
     Log_debug("ignore stale prepareack\n");
@@ -277,7 +277,7 @@ void ThreePhaseCoordinator::PrepareAck(phase_t phase, Future *fu) {
   }
 }
 
-void ThreePhaseCoordinator::Decide() {
+void ClassicCoord::Decide() {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   IncrementPhaseAndChangeStage(FINISH);
   ___TestPhaseThree(cmd_->id_);
@@ -295,7 +295,7 @@ void ThreePhaseCoordinator::Decide() {
       Log_debug("send commit for txn_id %ld to %ld\n", cmd->id_, rp);
       commo()->SendCommit(rp,
                          cmd_->id_,
-                         std::bind(&ThreePhaseCoordinator::FinishAck,
+                         std::bind(&ClassicCoord::FinishAck,
                                    this,
                                    phase_,
                                    std::placeholders::_1));
@@ -308,7 +308,7 @@ void ThreePhaseCoordinator::Decide() {
       Log_debug("send abort for txn_id %ld to %ld\n", cmd->id_, rp);
       commo()->SendAbort(rp,
                         cmd_->id_,
-                        std::bind(&ThreePhaseCoordinator::FinishAck,
+                        std::bind(&ClassicCoord::FinishAck,
                                   this,
                                   phase_,
                                   std::placeholders::_1));
@@ -317,7 +317,7 @@ void ThreePhaseCoordinator::Decide() {
   }
 }
 
-void ThreePhaseCoordinator::FinishAck(phase_t phase, Future *fu) {
+void ClassicCoord::FinishAck(phase_t phase, Future *fu) {
   TxnCommand* cmd = (TxnCommand*)cmd_;
   bool callback = false;
   bool retry = false;
@@ -363,7 +363,7 @@ void ThreePhaseCoordinator::FinishAck(phase_t phase, Future *fu) {
   }
 }
 
-void ThreePhaseCoordinator::report(TxnReply &txn_reply,
+void ClassicCoord::report(TxnReply &txn_reply,
                                    double last_latency
 #ifdef TXN_STAT
     , TxnChopper *ch
@@ -391,13 +391,13 @@ void ThreePhaseCoordinator::report(TxnReply &txn_reply,
   }
 }
 
-void ThreePhaseCoordinator::___TestPhaseThree(txnid_t txn_id) {
+void ClassicCoord::___TestPhaseThree(txnid_t txn_id) {
   auto it = ___phase_three_tids_.find(txn_id);
 //  verify(it == ___phase_three_tids_.end());
   ___phase_three_tids_.insert(txn_id);
 }
 
-void ThreePhaseCoordinator::___TestPhaseOne(txnid_t txn_id) {
+void ClassicCoord::___TestPhaseOne(txnid_t txn_id) {
   auto it = ___phase_one_tids_.find(txn_id);
   verify(it == ___phase_one_tids_.end());
   ___phase_one_tids_.insert(txn_id);

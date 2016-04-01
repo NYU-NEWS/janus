@@ -8,17 +8,17 @@
 
 namespace rococo {
 
-ThreePhaseExecutor::~ThreePhaseExecutor() {
+ClassicExecutor::~ClassicExecutor() {
 }
 
-int ThreePhaseExecutor::StartLaunch(const SimpleCommand &cmd,
+int ClassicExecutor::StartLaunch(const SimpleCommand &cmd,
                                     rrr::i32 *res,
                                     map<int32_t, Value>* output,
                                     rrr::DeferredReply *defer) {
   verify(0);
 }
 
-int ThreePhaseExecutor::PrepareLaunch(const std::vector<i32> &sids,
+int ClassicExecutor::PrepareLaunch(const std::vector<i32> &sids,
                                       rrr::i32 *res,
                                       rrr::DeferredReply *defer) {
   verify(phase_ < 2);
@@ -42,11 +42,11 @@ int ThreePhaseExecutor::PrepareLaunch(const std::vector<i32> &sids,
 //  return 0;
 }
 
-bool ThreePhaseExecutor::Prepare() {
+bool ClassicExecutor::Prepare() {
   verify(0);
 }
 
-int ThreePhaseExecutor::abort_launch(
+int ClassicExecutor::abort_launch(
     rrr::i32 *res,
     rrr::DeferredReply *defer
 ) {
@@ -66,7 +66,7 @@ int ThreePhaseExecutor::abort_launch(
   return 0;
 }
 
-int ThreePhaseExecutor::abort() {
+int ClassicExecutor::abort() {
   verify(mdb_txn_ != NULL);
   verify(mdb_txn_ == sched_->RemoveMTxn(cmd_id_));
   // TODO fix, might have double delete here.
@@ -76,7 +76,7 @@ int ThreePhaseExecutor::abort() {
   return SUCCESS;
 }
 
-int ThreePhaseExecutor::commit_launch(rrr::i32 *res,
+int ClassicExecutor::commit_launch(rrr::i32 *res,
                                       rrr::DeferredReply *defer) {
   *res = this->Commit();
   if (Config::GetConfig()->do_logging()) {
@@ -91,11 +91,11 @@ int ThreePhaseExecutor::commit_launch(rrr::i32 *res,
   return 0;
 }
 
-int ThreePhaseExecutor::Commit() {
+int ClassicExecutor::Commit() {
   verify(0);
 }
 
-void ThreePhaseExecutor::execute(const SimpleCommand &cmd,
+void ClassicExecutor::execute(const SimpleCommand &cmd,
                                  rrr::i32 *res,
                                  map<int32_t, Value> &output,
                                  rrr::i32 *output_size) {
@@ -106,7 +106,7 @@ void ThreePhaseExecutor::execute(const SimpleCommand &cmd,
                                  output);
 }
 
-void ThreePhaseExecutor::Execute(const SimpleCommand &cmd,
+void ClassicExecutor::Execute(const SimpleCommand &cmd,
                                  rrr::i32 *res,
                                  map<int32_t, Value> &output) {
   txn_reg_->get(cmd).txn_handler(this,

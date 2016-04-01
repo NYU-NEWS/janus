@@ -16,7 +16,7 @@
 
 namespace rococo {
 
-OCCSched::OCCSched() : ThreePhaseSched() {
+OCCSched::OCCSched() : ClassicSched() {
   mdb_txn_mgr_ = new mdb::TxnMgrOCC();
 }
 

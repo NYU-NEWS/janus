@@ -9,11 +9,11 @@
 
 namespace rococo {
 
-int ThreePhaseSched::OnHandoutRequest(const SimpleCommand &cmd,
-                                      rrr::i32 *res,
-                                      map<int32_t, Value> *output,
-                                      rrr::DeferredReply *defer) {
-  auto exec = (ThreePhaseExecutor*) GetOrCreateExecutor(cmd.root_id_);
+int ClassicSched::OnDispatch(const SimpleCommand &cmd,
+                                rrr::i32 *res,
+                                map<int32_t, Value> *output,
+                                rrr::DeferredReply *defer) {
+  auto exec = (ClassicExecutor*) GetOrCreateExecutor(cmd.root_id_);
   exec->StartLaunch(cmd,
                     res,
                     output,
@@ -21,12 +21,13 @@ int ThreePhaseSched::OnHandoutRequest(const SimpleCommand &cmd,
   return 0;
 }
 
-int ThreePhaseSched::OnPhaseTwoRequest(
+int ClassicSched::OnPrepare(
     cmdid_t cmd_id,
-    const std::vector <i32> &sids,
+    const std::vector<i32> &sids,
     rrr::i32 *res,
     rrr::DeferredReply *defer) {
-  auto exec = dynamic_cast<ThreePhaseExecutor*>(GetExecutor(cmd_id));
+  auto exec = dynamic_cast<ClassicExecutor*>(GetExecutor(cmd_id));
+  verify(exec != nullptr);
   string log;
   auto func = [exec, res, defer] () -> void {
     *res = exec->Prepare() ? SUCCESS : REJECT;
@@ -44,11 +45,11 @@ int ThreePhaseSched::OnPhaseTwoRequest(
   return 0;
 }
 
-int ThreePhaseSched::OnPhaseThreeRequest(cmdid_t cmd_id,
-                                         int commit_or_abort,
-                                         rrr::i32 *res,
-                                         rrr::DeferredReply *defer) {
-  auto exec = (ThreePhaseExecutor*)GetExecutor(cmd_id);
+int ClassicSched::OnCommit(cmdid_t cmd_id,
+                              int commit_or_abort,
+                              rrr::i32 *res,
+                              rrr::DeferredReply *defer) {
+  auto exec = (ClassicExecutor*)GetExecutor(cmd_id);
   verify(exec->phase_ < 3);
   exec->phase_ = 3;
   if (commit_or_abort == SUCCESS) {

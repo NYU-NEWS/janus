@@ -160,7 +160,7 @@ void ClassicServiceImpl::Dispatch(const SimpleCommand &cmd,
 //  output->resize(output_size);
   // find stored procedure, and run it
   *res = SUCCESS;
-  ((ThreePhaseSched *) dtxn_sched_)->OnHandoutRequest(cmd, res, output, defer);
+  ((ClassicSched *) dtxn_sched_)->OnDispatch(cmd, res, output, defer);
 }
 
 void ClassicServiceImpl::prepare_txn(
@@ -170,8 +170,8 @@ void ClassicServiceImpl::prepare_txn(
     rrr::DeferredReply *defer
 ) {
   std::lock_guard<std::mutex> guard(mtx_);
-  auto sched = (ThreePhaseSched*)dtxn_sched_;
-  sched->OnPhaseTwoRequest(tid, sids, res, defer);
+  auto sched = (ClassicSched*)dtxn_sched_;
+  sched->OnPrepare(tid, sids, res, defer);
 //  auto *dtxn = (TPLDTxn *) dtxn_sched_->get(tid);
 //  dtxn->prepare_launch(sids, res, defer);
 // TODO move the stat to somewhere else.
@@ -199,8 +199,8 @@ void ClassicServiceImpl::commit_txn(
     rrr::DeferredReply *defer
 ) {
   std::lock_guard<std::mutex> guard(mtx_);
-  auto sched = (ThreePhaseSched*) dtxn_sched_;
-  sched->OnPhaseThreeRequest(tid, SUCCESS, res, defer);
+  auto sched = (ClassicSched*) dtxn_sched_;
+  sched->OnCommit(tid, SUCCESS, res, defer);
 }
 
 void ClassicServiceImpl::abort_txn(
@@ -209,8 +209,8 @@ void ClassicServiceImpl::abort_txn(
     rrr::DeferredReply *defer
 ) {
   Log::debug("get abort_txn: tid: %ld", tid);
-  auto sched = (ThreePhaseSched*) dtxn_sched_;
-  sched->OnPhaseThreeRequest(tid, REJECT, res, defer);
+  auto sched = (ClassicSched*) dtxn_sched_;
+  sched->OnCommit(tid, REJECT, res, defer);
 }
 
 

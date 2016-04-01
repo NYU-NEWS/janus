@@ -7,7 +7,7 @@ namespace rococo {
 
 class RccCommo;
 
-class RccCoord: public ThreePhaseCoordinator {
+class RccCoord: public ClassicCoord {
 
 public:
   RccCommo* commo();
@@ -24,7 +24,7 @@ public:
            int benchmark,
            ClientControlServiceImpl *ccsi,
            uint32_t thread_id)
-      : ThreePhaseCoordinator(coo_id,
+      : ClassicCoord(coo_id,
                               benchmark,
                               ccsi,
                               thread_id), graph_() {

@@ -23,7 +23,7 @@ class RococoCommunicator : public Communicator {
   void SendStart(SimpleCommand& cmd,
                  int32_t output_size,
                  std::function<void(Future *fu)> &callback);
-  void SendHandout(SimpleCommand &cmd,
+  void SendDispatch(SimpleCommand &cmd,
                    Coordinator *coo,
                    const std::function<void(int res, Command& cmd)> &) ;
   void SendPrepare(parid_t gid,
