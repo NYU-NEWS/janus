@@ -1,0 +1,34 @@
+
+bench:
+  workload: rw_benchmark
+  scale: 1
+  weight:
+    read: 1
+    write: 1
+#        new_order: 44
+#        payment : 44
+#        delivery: 4
+#        order_status: 4
+#        stock_level: 4
+  population: # intial number of records in each table
+    history: 30000
+
+schema: # table information
+  - name: history
+    column:
+      - {name: h_key,     type: integer, primary: true}
+      - {name: h_c_id,    type: integer}
+      - {name: h_c_d_id,  type: integer}
+      - {name: h_c_w_id,  type: integer}
+      - {name: h_d_id,    type: integer}
+      - {name: h_w_id,    type: integer}
+      - {name: h_date,    type: string}
+      - {name: h_amount,  type: double}
+      - {name: h_data,    type: string}
+
+# sharding strategy.
+# default is MOD by primary key.
+# CUSTOM means strategy is defined in the code.
+# TODO a better way to define sharding strategy.
+sharding:
+  history:    MOD
