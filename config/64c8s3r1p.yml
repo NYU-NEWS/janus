@@ -88,6 +88,22 @@ process:
   s106: localhost
   s107: localhost
   s108: localhost
+  s201: localhost
+  s202: localhost
+  s203: localhost
+  s204: localhost
+  s205: localhost
+  s206: localhost
+  s207: localhost
+  s208: localhost
+  s301: localhost
+  s302: localhost
+  s303: localhost
+  s304: localhost
+  s305: localhost
+  s306: localhost
+  s307: localhost
+  s308: localhost
   c01: localhost
   c02: localhost
   c03: localhost

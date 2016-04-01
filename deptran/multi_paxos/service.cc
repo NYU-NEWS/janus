@@ -19,10 +19,10 @@ void MultiPaxosServiceImpl::Prepare(const uint64_t& slot,
                                     uint64_t* max_ballot,
                                     rrr::DeferredReply* defer) {
   verify(sched_ != nullptr);
-  sched_->OnPrepareRequest(slot,
-                          ballot,
-                          max_ballot,
-                          std::bind(&rrr::DeferredReply::reply, defer));
+  sched_->OnPrepare(slot,
+                    ballot,
+                    max_ballot,
+                    std::bind(&rrr::DeferredReply::reply, defer));
 }
 
 void MultiPaxosServiceImpl::Accept(const uint64_t& slot,
@@ -31,11 +31,11 @@ void MultiPaxosServiceImpl::Accept(const uint64_t& slot,
                                    uint64_t* max_ballot,
                                    rrr::DeferredReply* defer) {
   verify(sched_ != nullptr);
-  sched_->OnAcceptRequest(slot,
-                          ballot,
-                          cmd,
-                          max_ballot,
-                          std::bind(&rrr::DeferredReply::reply, defer));
+  sched_->OnAccept(slot,
+                   ballot,
+                   cmd,
+                   max_ballot,
+                   std::bind(&rrr::DeferredReply::reply, defer));
 }
 
 void MultiPaxosServiceImpl::Decide(const uint64_t& slot,
@@ -43,9 +43,9 @@ void MultiPaxosServiceImpl::Decide(const uint64_t& slot,
                                    const Command& cmd,
                                    rrr::DeferredReply* defer) {
   verify(sched_ != nullptr);
-  sched_->OnDecideRequest(slot,
-                          ballot,
-                          cmd);
+  sched_->OnCommit(slot,
+                   ballot,
+                   cmd);
   defer->reply();
 }
 

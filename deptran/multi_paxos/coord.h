@@ -16,7 +16,8 @@ class MultiPaxosCoord : public Coordinator {
     verify(commo_ != nullptr);
     return (MultiPaxosCommo*) commo_;
   }
-  bool in_submission_ = false;
+  bool in_submission_ = false; // debug;
+  bool in_prepare_ = false; // debug
   bool in_accept = false; // debug
  public:
 //  using Coordinator::Coordinator;
@@ -42,7 +43,8 @@ class MultiPaxosCoord : public Coordinator {
   }
 
   uint32_t GetQuorum() {
-    return n_replica() / 2 + 1;
+    return n_replica(); // TODO
+//    return n_replica() / 2 + 1;
   }
 
   void do_one(TxnRequest &req) override {}

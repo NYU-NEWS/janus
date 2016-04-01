@@ -32,9 +32,14 @@ ballot_t MultiPaxosCoord::PickBallot() {
 }
 
 void MultiPaxosCoord::Prepare() {
+  verify(!in_prepare_);
+  in_prepare_ = true;
   TxnCommand* cmd = (TxnCommand*) cmd_;
   curr_ballot_ = PickBallot();
   verify(slot_id_ > 0);
+  Log_debug("multi-paxos coordinator broadcasts prepare, slot_id: %llx",
+            slot_id_);
+  verify(n_prepare_ack_ == 0);
   commo()->BroadcastPrepare(par_id_,
                             slot_id_,
                             curr_ballot_,
@@ -47,7 +52,6 @@ void MultiPaxosCoord::Prepare() {
 void MultiPaxosCoord::PrepareAck(phase_t phase, Future *fu) {
   if (phase_ != phase) return;
   TxnCommand* cmd = (TxnCommand*) cmd_;
-  n_prepare_ack_ ++;
   ballot_t max_ballot;
   fu->get_reply() >> max_ballot;
   if (max_ballot == curr_ballot_) {
@@ -55,6 +59,7 @@ void MultiPaxosCoord::PrepareAck(phase_t phase, Future *fu) {
   } else {
     verify(0);
   }
+  verify(n_prepare_ack_ <= n_replica_);
   if (n_prepare_ack_ >= GetQuorum()) {
     Accept();
   } else {
