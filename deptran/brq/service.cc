@@ -166,7 +166,17 @@ void BrqServiceImpl::rcc_ro_start_pie(const SimpleCommand &cmd,
 //  dtxn->start_ro(cmd, *output, defer);
 }
 
-
+void BrqServiceImpl::PreAccept(const cmdid_t &txnid,
+                               const RccGraph& graph,
+                               int32_t* res,
+                               RccGraph* res_graph,
+                               DeferredReply* defer) {
+  dtxn_sched()->OnPreAccept(txnid,
+                            graph,
+                            res,
+                            res_graph,
+                            [defer] () {defer->reply();});
+}
 
 void BrqServiceImpl::RegisterStats() {
   if (scsi_) {

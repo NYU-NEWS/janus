@@ -89,7 +89,7 @@ void RccCoord::DispatchAck(phase_t phase,
                   " n_started_: %d, n_pieces: %d",
               txn->id_, txn->n_pieces_out_, txn->GetNPieceAll());
     Dispatch();
-  } else if (AllHandoutAckReceived()) {
+  } else if (AllDispatchAcked()) {
     Log_debug("receive all start acks, txn_id: %llx; START PREPARE", cmd_->id_);
     Finish();
     // TODO?
@@ -169,7 +169,7 @@ void RccCoord::FinishAck(phase_t phase,
   }
 }
 
-void RccCoord::HandoutRo() {
+void RccCoord::DispatchRo() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   phase_++;
   // new txn id for every new and retry.
@@ -193,7 +193,7 @@ void RccCoord::HandoutRo() {
               n_handout_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
     handout_acks_[subcmd->inn_id()] = false;
     commo()->SendHandoutRo(*subcmd,
-                           std::bind(&RccCoord::HandoutRoAck,
+                           std::bind(&RccCoord::DispatchRoAck,
                                      this,
                                      phase_,
                                      std::placeholders::_1,
@@ -202,10 +202,10 @@ void RccCoord::HandoutRo() {
   }
 }
 
-void RccCoord::HandoutRoAck(phase_t phase,
-                            int res,
-                            SimpleCommand& cmd,
-                            map<int, mdb::version_t>& vers) {
+void RccCoord::DispatchRoAck(phase_t phase,
+                             int res,
+                             SimpleCommand &cmd,
+                             map<int, mdb::version_t> &vers) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(phase == phase_);
 
@@ -219,7 +219,7 @@ void RccCoord::HandoutRoAck(phase_t phase,
 
   ch->n_pieces_out_++;
   if (cmd_->HasMoreSubCmdReadyNotOut()) {
-    HandoutRo();
+    DispatchRo();
   } else if (ch->n_pieces_out_ == ch->GetNPieceAll()) {
     if (last_vers_ == curr_vers_) {
       // TODO
@@ -326,7 +326,7 @@ void RccCoord::do_one(TxnRequest& req) {
 
   verify(ro_state_ == BEGIN);
   auto dispatch = ch->is_read_only() ?
-                 std::bind(&RccCoord::HandoutRo, this) :
+                  std::bind(&RccCoord::DispatchRo, this) :
                  std::bind(&RccCoord::Dispatch, this);
   if (recorder_) {
     std::string log_s;

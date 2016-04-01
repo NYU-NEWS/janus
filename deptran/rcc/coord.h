@@ -42,11 +42,11 @@ public:
                  int res,
                  map<innid_t, map<int32_t, Value>>& output);
 
-  void HandoutRo();
-  void HandoutRoAck(phase_t phase,
-                    int res,
-                    SimpleCommand& cmd,
-                    map<int, mdb::version_t>& vers);
+  virtual void DispatchRo();
+  void DispatchRoAck(phase_t phase,
+                     int res,
+                     SimpleCommand &cmd,
+                     map<int, mdb::version_t> &vers);
   void FinishRo() {verify(0);};
 
   void Reset() override;

@@ -65,5 +65,33 @@ void BrqCommo::SendInquire(parid_t pid,
   Future::safe_release(proxy->async_Inquire(tid, fuattr));
 }
 
+void BrqCommo::BroadcastPreAccept(parid_t par_id,
+                                  txnid_t cmd_id,
+                                  ballot_t ballot,
+                                  RccGraph& graph,
+                                  const function<void(int, RccGraph&)> &callback) {
+  verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
+  for (auto &p : rpc_par_proxies_[par_id]) {
+    auto proxy = (BrqProxy*)(p.second);
+    verify(proxy != nullptr);
+    FutureAttr fuattr;
+    fuattr.callback = [callback] (Future* fu) {
+      int32_t res;
+      RccGraph graph;
+      fu->get_reply() >> res >> graph;
+      callback(res, graph);
+    };
+    verify(cmd_id > 0);
+    Future::safe_release(proxy->async_PreAccept(cmd_id, graph, fuattr));
+  }
+}
+
+void BrqCommo::BroadcastCommit(parid_t,
+                               txnid_t cmd_id_,
+                               RccGraph& graph,
+                               const function<void(TxnOutput&)>
+                               &callback) {
+  verify(0);
+}
 
 } // namespace rococo

@@ -17,7 +17,6 @@ public:
   uint32_t cmdid_prefix_c_;
   Recorder *recorder_;
   ballot_t ballot_; // the ballot I am holding
-  cmdid_t cmd_id_;
   // data structures for saving replies.
   struct reply_cnt_t {int yes; int no;};
   std::map<groupid_t, reply_cnt_t> n_fast_accept_reply_;
@@ -31,6 +30,7 @@ public:
 
   BrqCommo* commo();
   // Dispatch inherits from RccCoord;
+  void DispatchRo() {Dispatch();}
   void DispatchAck(phase_t phase,
                    int res,
                    SimpleCommand &cmd,
@@ -46,8 +46,8 @@ public:
 
   void restart() {verify(0);};
   // functions needed in the fast accept phase.
-  bool FastpathPossible() {verify(0);};
-  bool FastQuorumsAchieved() {verify(0);};
+  bool FastpathPossible();
+  bool FastQuorumsAchieved();
   bool SlowpathPossible() {
     verify(0);
     return false;

@@ -171,7 +171,7 @@ void ThreePhaseCoordinator::Dispatch() {
   Log_debug("sent %d SubCmds\n", cnt);
 }
 
-bool ThreePhaseCoordinator::AllHandoutAckReceived() {
+bool ThreePhaseCoordinator::AllDispatchAcked() {
   return std::all_of(handout_acks_.begin(),
                      handout_acks_.end(),
                      [](std::pair<innid_t, bool> pair){ return pair.second; });
@@ -209,7 +209,7 @@ void ThreePhaseCoordinator::DispatchAck(phase_t phase, int res, Command &cmd) {
                     " n_started_: %d, n_pieces: %d",
                 cmd_->id_, ch->n_pieces_out_, ch->GetNPieceAll());
       Dispatch();
-    } else if (AllHandoutAckReceived()) {
+    } else if (AllDispatchAcked()) {
       Log_debug("receive all start acks, txn_id: %ld; START PREPARE", cmd_->id_);
       Prepare();
     }
