@@ -71,7 +71,7 @@ void BrqCoord::DispatchAck(phase_t phase,
                   " n_started_: %d, n_pieces: %d",
               txn->id_, txn->n_pieces_out_, txn->GetNPieceAll());
     Dispatch();
-  } else if (AllHandoutAckReceived()) {
+  } else if (AllDispatchAcked()) {
     Log_debug("receive all start acks, txn_id: %llx; START PREPARE", cmd_->id_);
     PreAccept();
   }
@@ -86,7 +86,7 @@ void BrqCoord::PreAccept() {
   for (auto par_id : cmd_->GetPartitionIds()) {
     // TODO
     commo()->BroadcastPreAccept(par_id,
-                                cmd_id_,
+                                cmd_->id_,
                                 magic_ballot(),
                                 graph_,
                                 std::bind(&BrqCoord::PreAcceptAck,
@@ -110,9 +110,10 @@ void BrqCoord::PreAcceptAck(phase_t phase,
   if (res == SUCCESS) {
     n.yes++;
   } else {
+    verify(0);
     n.no++;
   }
-  if (!FastpathPossible()){
+  if (FastpathPossible()){
     // there is still chance for fastpath
     if (FastQuorumsAchieved()) {
       // receive enough identical replies to continue fast path.
@@ -192,7 +193,7 @@ void BrqCoord::Commit() {
   info.union_status(TXN_CMT);
   for (auto g : cmd_->GetPartitionIds()) {
     commo()->BroadcastCommit(g,
-                             cmd_id_,
+                             cmd_->id_,
                              graph_,
                              std::bind(&BrqCoord::CommitAck,
                                        this,
@@ -231,4 +232,16 @@ void BrqCoord::CommitAck(phase_t phase,
   // if there are still more results to collect.
   return;
 }
+
+bool BrqCoord::FastpathPossible() {
+  // TODO
+  return true;
+};
+
+bool BrqCoord::FastQuorumsAchieved() {
+  // TODO
+//  verify(0);
+  return true;
+}
+
 } // namespace rococo

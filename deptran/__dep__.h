@@ -114,3 +114,6 @@ class dummy_class {
   }
 };
 static dummy_class dummy___;
+
+#include "constants.h"
+typedef map<innid_t, map<int32_t, Value>> TxnOutput;

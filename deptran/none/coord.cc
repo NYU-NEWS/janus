@@ -67,7 +67,7 @@ void NoneCoord::DispatchAck(phase_t phase, int res, Command &cmd) {
                   " n_started_: %d, n_pieces: %d",
                 cmd_->id_, ch->n_pieces_out_, ch->GetNPieceAll());
     Dispatch();
-  } else if (AllHandoutAckReceived()) {
+  } else if (AllDispatchAcked()) {
     Log_debug("receive all handout acks, txn_id: %ld; START PREPARE",
               cmd_->id_);
     verify(0);

@@ -14,4 +14,9 @@ abstract service Brq {
 
   defer Inquire(cmdid_t txn_id |
                 BrqGraph ret_graph);
+
+  defer PreAccept(cmdid_t txn_id,
+                  RccGraph graph |
+                  i32 res,
+                  RccGraph ret_graph);
 }

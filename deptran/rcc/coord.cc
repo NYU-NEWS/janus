@@ -89,7 +89,7 @@ void RccCoord::DispatchAck(phase_t phase,
                   " n_started_: %d, n_pieces: %d",
               txn->id_, txn->n_pieces_out_, txn->GetNPieceAll());
     Dispatch();
-  } else if (AllHandoutAckReceived()) {
+  } else if (AllDispatchAcked()) {
     Log_debug("receive all start acks, txn_id: %llx; START PREPARE", cmd_->id_);
     Finish();
     // TODO?
@@ -193,7 +193,7 @@ void RccCoord::DispatchRo() {
               n_handout_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
     handout_acks_[subcmd->inn_id()] = false;
     commo()->SendHandoutRo(*subcmd,
-                           std::bind(&RccCoord::HandoutRoAck,
+                           std::bind(&RccCoord::DispatchRoAck,
                                      this,
                                      phase_,
                                      std::placeholders::_1,
@@ -202,10 +202,10 @@ void RccCoord::DispatchRo() {
   }
 }
 
-void RccCoord::HandoutRoAck(phase_t phase,
-                            int res,
-                            SimpleCommand& cmd,
-                            map<int, mdb::version_t>& vers) {
+void RccCoord::DispatchRoAck(phase_t phase,
+                             int res,
+                             SimpleCommand &cmd,
+                             map<int, mdb::version_t> &vers) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(phase == phase_);
 

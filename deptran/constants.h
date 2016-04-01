@@ -1,5 +1,6 @@
 #pragma once
 #include <stdint.h>
+
 namespace rococo {
 
 #define ballot_t uint64_t
@@ -85,5 +86,6 @@ namespace rococo {
 #define TPCC_DIST_PART (3)
 #define TPCC_REAL_DIST_PART (4)
 #define MICRO_BENCH (5)
+
 
 } // namespace rococo

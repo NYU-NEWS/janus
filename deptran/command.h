@@ -7,6 +7,7 @@ namespace rococo {
  * This is the command context to exchange between
  * coordinator and servers, or server to server.
  */
+
 class Command {
 public:
   cmdid_t id_ = 0;

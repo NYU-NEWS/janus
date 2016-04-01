@@ -86,7 +86,7 @@ class ThreePhaseCoordinator : public Coordinator {
 
   bool IsPhaseOrStageStale(phase_t phase, CoordinatorStage stage);
   void IncrementPhaseAndChangeStage(CoordinatorStage stage);
-  bool AllHandoutAckReceived();
+  bool AllDispatchAcked();
 
 
   void report(TxnReply &txn_reply,
