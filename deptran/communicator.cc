@@ -33,10 +33,12 @@ Communicator::Communicator(PollMgr* poll_mgr) {
 }
 
 Communicator::~Communicator() {
+  verify(rpc_clients_.size() > 0);
   for (auto &pair : rpc_clients_) {
     rrr::Client *rpc_cli = pair.second;
-//    rpc_cli->close_and_release();
+    rpc_cli->close_and_release();
   }
+  rpc_clients_.clear();
 }
 
 std::pair<siteid_t, ClassicProxy*> Communicator::RandomProxyForPartition(

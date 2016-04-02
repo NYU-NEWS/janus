@@ -17,6 +17,7 @@ MultiPaxosCoord::MultiPaxosCoord(uint32_t coo_id,
 
 void MultiPaxosCoord::Submit(SimpleCommand& cmd,
                              const function<void()>& func) {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
   verify(!in_submission_);
   verify(cmd_ == nullptr);
   in_submission_ = true;
@@ -32,6 +33,7 @@ ballot_t MultiPaxosCoord::PickBallot() {
 }
 
 void MultiPaxosCoord::Prepare() {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
   verify(!in_prepare_);
   in_prepare_ = true;
   TxnCommand* cmd = (TxnCommand*) cmd_;
@@ -50,6 +52,7 @@ void MultiPaxosCoord::Prepare() {
 }
 
 void MultiPaxosCoord::PrepareAck(phase_t phase, Future *fu) {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
   if (phase_ != phase) return;
   TxnCommand* cmd = (TxnCommand*) cmd_;
   ballot_t max_ballot;
@@ -69,6 +72,7 @@ void MultiPaxosCoord::PrepareAck(phase_t phase, Future *fu) {
 }
 
 void MultiPaxosCoord::Accept() {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
   verify(!in_accept);
   in_accept = true;
   phase_++;
@@ -86,6 +90,7 @@ void MultiPaxosCoord::Accept() {
 }
 
 void MultiPaxosCoord::AcceptAck(phase_t phase, Future *fu) {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
   if (phase_ > phase) return;
   TxnCommand *cmd = (TxnCommand *) cmd_;
   ballot_t max_ballot;
@@ -105,6 +110,7 @@ void MultiPaxosCoord::AcceptAck(phase_t phase, Future *fu) {
 }
 
 void MultiPaxosCoord::Decide() {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
   phase_++;
   auto cmd = (TxnCommand*) cmd_;
   commo()->BroadcastDecide(par_id_, slot_id_, curr_ballot_, *cmd);

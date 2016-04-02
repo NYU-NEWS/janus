@@ -9,7 +9,8 @@ namespace rococo {
 class TxnCommand;
 class MultiPaxosCommo : public Communicator {
  public:
-  using Communicator::Communicator;
+  MultiPaxosCommo() = delete;
+  MultiPaxosCommo(PollMgr*);
   void BroadcastPrepare(parid_t par_id,
                         slotid_t slot_id,
                         ballot_t ballot,

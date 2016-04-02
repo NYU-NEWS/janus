@@ -8,6 +8,9 @@
 
 namespace rococo {
 
+MultiPaxosCommo::MultiPaxosCommo(PollMgr* poll) : Communicator(poll) {
+//  verify(poll != nullptr);
+}
 
 void MultiPaxosCommo::BroadcastPrepare(parid_t par_id,
                                        slotid_t slot_id,

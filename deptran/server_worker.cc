@@ -197,10 +197,10 @@ void ServerWorker::WaitForShutdown() {
 void ServerWorker::SetupCommo() {
   verify(svr_poll_mgr_ != nullptr);
   if (dtxn_frame_) {
-    dtxn_commo_ = dtxn_frame_->CreateCommo(svr_poll_mgr_);
+    dtxn_commo_ = dtxn_frame_->CreateCommo();
   }
   if (rep_frame_) {
-    rep_commo_ = rep_frame_->CreateCommo(svr_poll_mgr_);
+    rep_commo_ = rep_frame_->CreateCommo();
   }
 }
 
@@ -210,6 +210,10 @@ void ServerWorker::ShutDown() {
   for (auto service : services_) {
     delete service;
   }
+//  if (dtxn_commo_)
+//    delete dtxn_commo_;
+//  if (rep_commo_)
+//    delete rep_commo_;
   thread_pool_g->release();
   svr_poll_mgr_->release();
 }
