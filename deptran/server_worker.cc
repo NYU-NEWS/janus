@@ -109,34 +109,34 @@ void ServerWorker::SetupService() {
 
   // init rrr::PollMgr 1 threads
   int n_io_threads = 1;
-  svr_poll_mgr_g = new rrr::PollMgr(n_io_threads);
+  svr_poll_mgr_ = new rrr::PollMgr(n_io_threads);
 
   // init service implementation
 
   if (dtxn_frame_ != nullptr) {
     services_ = dtxn_frame_->CreateRpcServices(site_info_->id,
                                                dtxn_sched_,
-                                               svr_poll_mgr_g,
+                                               svr_poll_mgr_,
                                                scsi_g);
   }
 
   if (rep_frame_ != nullptr) {
     auto s2 = rep_frame_->CreateRpcServices(site_info_->id,
                                             rep_sched_,
-                                            svr_poll_mgr_g,
+                                            svr_poll_mgr_,
                                             scsi_g);
 
     services_.insert(services_.end(), s2.begin(), s2.end());
   }
 
   auto &alarm = TimeoutALock::get_alarm_s();
-  ServerWorker::svr_poll_mgr_g->add(&alarm);
+  ServerWorker::svr_poll_mgr_->add(&alarm);
 
   uint32_t num_threads = 1;
   thread_pool_g = new base::ThreadPool(num_threads);
 
   // init rrr::Server
-  rpc_server_ = new rrr::Server(svr_poll_mgr_g, thread_pool_g);
+  rpc_server_ = new rrr::Server(svr_poll_mgr_, thread_pool_g);
 
   // reg services
   for (auto service : services_) {
@@ -195,11 +195,12 @@ void ServerWorker::WaitForShutdown() {
 }
 
 void ServerWorker::SetupCommo() {
+  verify(svr_poll_mgr_ != nullptr);
   if (dtxn_frame_) {
-    dtxn_commo_ = dtxn_frame_->CreateCommo();
+    dtxn_commo_ = dtxn_frame_->CreateCommo(svr_poll_mgr_);
   }
   if (rep_frame_) {
-    rep_commo_ = rep_frame_->CreateCommo();
+    rep_commo_ = rep_frame_->CreateCommo(svr_poll_mgr_);
   }
 }
 
@@ -210,6 +211,6 @@ void ServerWorker::ShutDown() {
     delete service;
   }
   thread_pool_g->release();
-  svr_poll_mgr_g->release();
+  svr_poll_mgr_->release();
 }
 } // namespace rococo

@@ -25,7 +25,7 @@ class BrqFrame : public Frame {
 
   DTxn* CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) override;
 
-  Communicator* CreateCommo() override;
+  Communicator* CreateCommo(PollMgr* poll = nullptr) override;
 };
 
 } // namespace rococo

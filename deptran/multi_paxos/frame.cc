@@ -38,6 +38,7 @@ Coordinator* MultiPaxosFrame::CreateCoord(cooid_t coo_id,
                             ccsi,
                             id);
   coo->frame_ = this;
+  verify(commo_ != nullptr);
   coo->commo_ = commo_;
   coo->slot_hint_ = &slot_hint_;
   coo->slot_id_ = slot_hint_++;
@@ -53,12 +54,12 @@ Scheduler* MultiPaxosFrame::CreateScheduler() {
   return sch;
 }
 
-Communicator* MultiPaxosFrame::CreateCommo() {
+Communicator* MultiPaxosFrame::CreateCommo(PollMgr* poll) {
   // We only have 1 instance of MultiPaxosFrame object that is returned from
   // GetFrame method. MultiPaxosC2ommo currently seems ok to share among the
   // clients of this method.
   if (commo_ == nullptr) {
-    commo_ = new MultiPaxosCommo();
+    commo_ = new MultiPaxosCommo(poll);
   }
   return commo_;
 }

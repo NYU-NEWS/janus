@@ -6,6 +6,7 @@ namespace rococo {
 
 class BrqCommo: public RccCommo {
  public:
+  using RccCommo::RccCommo;
   void SendHandout(SimpleCommand &cmd,
                    const function<void(int res,
                                        SimpleCommand &cmd,

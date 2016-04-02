@@ -12,9 +12,12 @@ namespace rococo {
 
 using namespace std::chrono;
 
-Communicator::Communicator() {
+Communicator::Communicator(PollMgr* poll_mgr) {
   vector<string> addrs;
-  rpc_poll_ = new PollMgr(1);
+  if (poll_mgr == nullptr)
+    rpc_poll_ = new PollMgr(1);
+  else
+    rpc_poll_ = poll_mgr;
   auto config = Config::GetConfig();
   vector<parid_t> partitions = config->GetAllPartitionIds();
   for (auto &par_id : partitions) {

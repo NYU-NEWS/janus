@@ -22,7 +22,7 @@ class MultiPaxosFrame : public Frame {
                            uint32_t id,
                            TxnRegistry* txn_reg) override;
   Scheduler* CreateScheduler() override;
-  Communicator* CreateCommo() override;
+  Communicator* CreateCommo(PollMgr* poll = nullptr) override;
   vector<rrr::Service *> CreateRpcServices(uint32_t site_id,
                                            Scheduler *dtxn_sched,
                                            rrr::PollMgr *poll_mgr,

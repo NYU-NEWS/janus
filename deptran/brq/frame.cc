@@ -73,8 +73,8 @@ DTxn* BrqFrame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {
   return dtxn;
 }
 
-Communicator* BrqFrame::CreateCommo() {
-  return new BrqCommo();
+Communicator* BrqFrame::CreateCommo(PollMgr* poll) {
+  return new BrqCommo(poll);
 }
 
 }

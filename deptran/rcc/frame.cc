@@ -67,8 +67,8 @@ DTxn* RccFrame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {
   return dtxn;
 }
 
-Communicator* RccFrame::CreateCommo() {
-  return new RccCommo();
+Communicator* RccFrame::CreateCommo(PollMgr* poll) {
+  return new RccCommo(poll);
 }
 
 } // namespace rococo

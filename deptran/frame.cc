@@ -301,7 +301,7 @@ TxnCommand * Frame::CreateChopper(TxnRequest &req, TxnRegistry* reg) {
   return CreateTxnCommand(req, reg);
 }
 
-Communicator* Frame::CreateCommo() {
+Communicator* Frame::CreateCommo(PollMgr* pollmgr) {
   // Default: return null;
   Communicator* commo = nullptr;
   return commo;

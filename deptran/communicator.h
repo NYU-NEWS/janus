@@ -26,7 +26,7 @@ class Communicator {
 //  vector<rrr::Client*> rpc_clients_ = {};
 //  vector<RococoProxy*> rpc_proxies_ = {};
 
-  Communicator();
+  Communicator(PollMgr* poll_mgr = nullptr);
 //
 //  virtual void SendStart(SimpleCommand& cmd,
 //                         int32_t output_size,

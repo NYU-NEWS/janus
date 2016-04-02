@@ -42,7 +42,7 @@ class Frame {
                                    TxnRegistry* txn_reg);
   virtual Executor* CreateExecutor(cmdid_t cmd_id, Scheduler *sch);
   virtual Scheduler *CreateScheduler();
-  virtual Communicator* CreateCommo();
+  virtual Communicator* CreateCommo(PollMgr* pollmgr = nullptr);
   // for only dtxn
   Sharding* CreateSharding();
   Sharding* CreateSharding(Sharding* sd);
