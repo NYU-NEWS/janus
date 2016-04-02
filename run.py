@@ -321,7 +321,12 @@ class ClientController(object):
         self.start_client()
         logging.info("Clients started")
 
-        self.benchmark_record(do_sample, do_sample_lock)
+        start = time.time()
+        try:
+            self.benchmark_record(do_sample, do_sample_lock)
+        finally:
+            logging.info("Duration: {:.2f} seconds".format(time.time() - start))
+
         print "Benchmark finished\n"
 
     def start_client(self):
@@ -351,8 +356,7 @@ class ClientController(object):
         rpc_proxy = list(rpc_proxy)
     
         while (len(rpc_proxy) != len(self.finish_set)):
-            time.sleep(self.timeout)
-            logging.info("top client heartbeat; sleep {}".format(self.timeout))
+            logging.info("top client heartbeat; period {}".format(self.timeout))
             for k in self.txn_infos.keys():
                 self.txn_infos[k].clear()
             self.start_txn = 0
@@ -399,11 +403,13 @@ class ClientController(object):
         sites = ProcessInfo.get_sites(self.process_infos, 
                                       SiteInfo.SiteType.Client)
 
-        interval_time = (self.run_sec - self.pre_run_sec \
-                        + (self.run_nsec - self.pre_run_nsec) / 1000000000.0) \
-                        / len(sites)
-        total_time = (self.run_sec + self.run_nsec / 1000000000.0) / len(sites)
+        interval_time = (self.run_sec - self.pre_run_sec) + \
+                        (self.run_nsec - self.pre_run_nsec) / 1000000000.0
+
+        total_time = (self.run_sec + self.run_nsec / 1000000000.0)
+        logging.debug("run_sec: {}; run_nsec: {}".format(self.run_sec, self.run_nsec))
         progress = int(round(100 * total_time / self.duration))
+        logging.debug("Progress: {}".format(progress))
 
         if (self.print_max):
             self.print_max = False
@@ -421,6 +427,7 @@ class ClientController(object):
                     v.set_mid_status()
         else:
             if (progress >= 60):
+                logging.debug("done with recording period")
                 self.recording_period = False
                 self.print_max = True
                 do_sample_lock.acquire()
@@ -961,10 +968,11 @@ def get_process_info(config):
     return process_infos
 
 def main():
-    logging.basicConfig(format='%(asctime)s: %(levelname)s: %(message)s', level=logging.DEBUG)
+    logging.basicConfig(format='%(levelname)s: %(asctime)s: %(message)s', level=logging.DEBUG)
     server_controller = None
     client_controller = None
     config = None
+    start = None
 
     try:
         options = create_parser().parse_args()
