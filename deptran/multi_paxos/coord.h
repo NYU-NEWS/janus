@@ -27,7 +27,6 @@ class MultiPaxosCoord : public Coordinator {
                   uint32_t thread_id);
   ballot_t curr_ballot_ = 0; // TODO
   uint32_t n_replica_ = 0;   // TODO
-  parid_t par_id_ = 0; // belong to a partition
   slotid_t slot_id_ = 0;
   ballot_t *slot_hint_ = nullptr;
 

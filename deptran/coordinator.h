@@ -28,6 +28,7 @@ public:
 class Coordinator : public CoordinatorBase {
  public:
   uint32_t coo_id_;
+  parid_t par_id_;
   int benchmark_;
   ClientControlServiceImpl *ccsi_;
   uint32_t thread_id_;

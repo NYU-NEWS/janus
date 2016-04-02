@@ -9,6 +9,7 @@
 #include "frame.h"
 #include "bench/tpcc/piece.h"
 #include "executor.h"
+#include "coordinator.h"
 
 namespace rococo {
 
@@ -186,6 +187,7 @@ Coordinator* Scheduler::CreateRepCoord() {
                                   nullptr,
                                   id,
                                   txn_reg_);
+  coord->par_id_ = partition_id_;
   return coord;
 }
 
