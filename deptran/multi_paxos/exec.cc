@@ -15,12 +15,12 @@ ballot_t MultiPaxosExecutor::Prepare(const ballot_t ballot) {
 }
 
 ballot_t MultiPaxosExecutor::Accept(const ballot_t ballot,
-                                    const Command& cmd) {
+                                    const ContainerCommand& cmd) {
   verify(max_ballot_accepted_ < ballot);
   if (max_ballot_seen_ <= ballot) {
     max_ballot_seen_ = ballot;
     max_ballot_accepted_ = ballot;
-    cmd_ = cmd.Clone();
+//    cmd_ = cmd.Clone();
   } else {
     // TODO
     verify(0);
@@ -28,11 +28,11 @@ ballot_t MultiPaxosExecutor::Accept(const ballot_t ballot,
   return max_ballot_seen_;
 }
 
-ballot_t MultiPaxosExecutor::Decide(ballot_t ballot, Command& cmd) {
+ballot_t MultiPaxosExecutor::Decide(ballot_t ballot, ContainerCommand& cmd) {
   verify(max_ballot_seen_ <= ballot);
   max_ballot_seen_ = ballot;
   max_ballot_accepted_ = ballot;
-  cmd_ = cmd.Clone();
+//  cmd_ = cmd.Clone();
 }
 
 } // namespace rococo

@@ -1,4 +1,7 @@
-#include "all.h"
+#include "__dep__.h"
+#include "command.h"
+#include "command_marshaler.h"
+#include "benchmark_control_rpc.h"
 
 namespace rococo {
 

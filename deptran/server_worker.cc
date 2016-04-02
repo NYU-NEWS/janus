@@ -52,6 +52,12 @@ void ServerWorker::SetupBase() {
     dtxn_sched_->rep_frame_ = rep_frame_;
     dtxn_sched_->rep_sched_ = rep_sched_;
   }
+  // add callbacks to execute commands to rep_sched_
+  if (rep_sched_ && dtxn_sched_) {
+    rep_sched_->RegLearnerAction(std::bind(&Scheduler::OnLearn,
+                                           dtxn_sched_,
+                                           std::placeholders::_1));
+  }
 }
 
 void ServerWorker::PopTable() {

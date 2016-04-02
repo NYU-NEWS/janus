@@ -117,8 +117,12 @@ class Coordinator : public CoordinatorBase {
   }
 
   virtual void do_one(TxnRequest &) = 0;
-  virtual void Submit(SimpleCommand &,
+  virtual void Submit(Command &,
                       const std::function<void()>&) {
+    verify(0);
+  }
+  virtual void Submit(ContainerCommand& cmd,
+              const std::function<void()>& func) {
     verify(0);
   }
   virtual void Reset() {

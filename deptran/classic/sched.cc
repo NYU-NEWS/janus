@@ -6,6 +6,7 @@
 #include "sched.h"
 #include "../tpl/tpl.h"
 #include "exec.h"
+#include "tpc_command.h"
 
 namespace rococo {
 
@@ -22,6 +23,13 @@ int ClassicSched::OnDispatch(const SimpleCommand &cmd,
   return 0;
 }
 
+
+// On prepare with replication
+//   1. dispatch the whole transaction to others.
+//   2. use a paxos command to commit the prepare request.
+//   3. after that, run the function to prepare.
+//   0. an non-optimized version would be.
+//      dispatch the transaction command with paxos instance
 int ClassicSched::OnPrepare(cmdid_t cmd_id,
                             const std::vector<i32> &sids,
                             rrr::i32 *res,
@@ -36,8 +44,9 @@ int ClassicSched::OnPrepare(cmdid_t cmd_id,
     callback();
   };
   if (Config::GetConfig()->IsReplicated()) {
-    SimpleCommand cmd; // TODO
-    CreateRepCoord()->Submit(cmd, func);
+//    SimpleCommand cmd; // TODO
+    TpcPrepareCommand *cmd = new TpcPrepareCommand; // TODO watch out memory
+    CreateRepCoord()->Submit(*cmd, func);
   } else if (Config::GetConfig()->do_logging()) {
     this->get_prepare_log(cmd_id, sids, &log);
     recorder_->submit(log, func);

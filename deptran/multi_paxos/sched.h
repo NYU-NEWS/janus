@@ -7,6 +7,7 @@
 namespace rococo {
 
 class Command;
+class ContainerCommand;
 class MultiPaxosSched : public Scheduler {
  public:
   void OnPrepare(slotid_t slot_id,
@@ -16,13 +17,13 @@ class MultiPaxosSched : public Scheduler {
 
   void OnAccept(const slotid_t slot_id,
                 const ballot_t ballot,
-                const Command &cmd,
+                const ContainerCommand &cmd,
                 ballot_t *max_ballot,
                 const function<void()> &cb);
 
   void OnCommit(const slotid_t slot_id,
                 const ballot_t ballot,
-                const Command &cmd);
+                const ContainerCommand &cmd);
 };
 
 } // namespace rococo

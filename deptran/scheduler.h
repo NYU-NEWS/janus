@@ -1,6 +1,7 @@
 #pragma once
 #include "__dep__.h"
 #include "constants.h"
+#include "command.h"
 
 namespace rococo {
 
@@ -14,6 +15,8 @@ class Scheduler {
   map<i64, DTxn *> dtxns_;
   map<i64, mdb::Txn *> mdb_txns_;
   map<cmdid_t, Executor*> executors_ = {};
+  function<void(ContainerCommand&)> learner_action_ =
+      [] (ContainerCommand&) -> void {verify(0);};
 
   mdb::TxnMgr *mdb_txn_mgr_;
   int mode_;
@@ -73,6 +76,11 @@ class Scheduler {
                  mdb::Table *tbl
   );
 
+  void RegLearnerAction(function<void(ContainerCommand&)> learner_action) {
+    learner_action_ = learner_action;
+  }
+
+  virtual void OnLearn(ContainerCommand& cmd) {verify(0);};
 };
 
 
