@@ -13,10 +13,10 @@ class TPLSched: public ClassicSched {
  public:
   TPLSched();
 
-  virtual int OnPhaseOneRequest(const SimpleCommand& cmd,
-                                rrr::i32 *res,
-                                map<int32_t, Value> *output,
-                                rrr::DeferredReply *defer);
+  int OnDispatch(const SimpleCommand &cmd,
+                 rrr::i32 *res,
+                 map<int32_t, Value> *output,
+                 const function<void()>& callback) override;
 
   virtual mdb::Txn *get_mdb_txn(const i64 tid);
 //  virtual mdb::Txn *get_mdb_txn(const RequestHeader &req);

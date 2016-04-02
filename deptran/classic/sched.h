@@ -12,18 +12,18 @@ class ClassicSched: public NoneSched {
  public:
 
   virtual int OnDispatch(const SimpleCommand &cmd,
-                         rrr::i32 *res,
+                         int32_t *res,
                          map<int32_t, Value> *output,
-                         rrr::DeferredReply *defer);
+                         const function<void()>& callback);
   // PrepareRequest
   virtual int OnPrepare(cmdid_t cmd_id,
                         const std::vector<i32> &sids,
                         rrr::i32 *res,
-                        rrr::DeferredReply *defer);
+                        const function<void()>& callback);
   virtual int OnCommit(cmdid_t cmd_id,
                        int commit_or_abort,
-                       rrr::i32 *res,
-                       rrr::DeferredReply *defer);
+                       int32_t *res,
+                       const function<void()>& callback);
 };
 
 }

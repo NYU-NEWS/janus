@@ -20,7 +20,7 @@ class PieceStatus {
   int num_waiting_;
   int num_acquired_;
   bool rej_;
-  rrr::DeferredReply* defer_;
+  function<void()> callback_;
   mdb::Value *output_buf_;
 //  rrr::i32 *output_size_buf_;
   std::map <int32_t, Value> *output_;
@@ -51,7 +51,7 @@ class PieceStatus {
  public:
 
   PieceStatus(const SimpleCommand& cmd,
-              rrr::DeferredReply *defer,
+              const function<void()>& callback,
               std::map <int32_t, mdb::Value> *output,
               const std::function<int(void)> &wound_callback,
               TPLExecutor *exec);

@@ -25,13 +25,13 @@ abstract service Classic {
                   i32 res,
                   map<i32, Value> output);
 
-    defer prepare_txn (i64 tid, 
-                       vector<i32> sids | 
-                       i32 res);
+    defer Prepare(i64 tid, 
+                  vector<i32> sids | 
+                  i32 res);
 
-    defer commit_txn (i64 tid | i32 res);
+    defer Commit(i64 tid | i32 res);
 
-    defer abort_txn (i64 tid | i32 res);
+    defer Abort(i64 tid | i32 res);
 
     // input: contains many pieces, each piece consist of
     // | <i32 p_type> <i64 pid> <i32 input_size> <i32 max_output_size> 

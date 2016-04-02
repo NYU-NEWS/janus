@@ -160,18 +160,17 @@ void ClassicServiceImpl::Dispatch(const SimpleCommand &cmd,
 //  output->resize(output_size);
   // find stored procedure, and run it
   *res = SUCCESS;
-  ((ClassicSched *) dtxn_sched_)->OnDispatch(cmd, res, output, defer);
+  ((ClassicSched *) dtxn_sched_)->OnDispatch(cmd, res, output,
+                                             [defer] () {defer->reply();});
 }
 
-void ClassicServiceImpl::prepare_txn(
-    const rrr::i64 &tid,
-    const std::vector<i32> &sids,
-    rrr::i32 *res,
-    rrr::DeferredReply *defer
-) {
+void ClassicServiceImpl::Prepare(const rrr::i64 &tid,
+                                 const std::vector<i32> &sids,
+                                 rrr::i32 *res,
+                                 rrr::DeferredReply *defer) {
   std::lock_guard<std::mutex> guard(mtx_);
   auto sched = (ClassicSched*)dtxn_sched_;
-  sched->OnPrepare(tid, sids, res, defer);
+  sched->OnPrepare(tid, sids, res, [defer] () {defer->reply();});
 //  auto *dtxn = (TPLDTxn *) dtxn_sched_->get(tid);
 //  dtxn->prepare_launch(sids, res, defer);
 // TODO move the stat to somewhere else.
@@ -193,24 +192,20 @@ void ClassicServiceImpl::prepare_txn(
 #endif
 }
 
-void ClassicServiceImpl::commit_txn(
-    const rrr::i64 &tid,
-    rrr::i32 *res,
-    rrr::DeferredReply *defer
-) {
+void ClassicServiceImpl::Commit(const rrr::i64 &tid,
+                                rrr::i32 *res,
+                                rrr::DeferredReply *defer) {
   std::lock_guard<std::mutex> guard(mtx_);
   auto sched = (ClassicSched*) dtxn_sched_;
-  sched->OnCommit(tid, SUCCESS, res, defer);
+  sched->OnCommit(tid, SUCCESS, res, [defer] () {defer->reply();});
 }
 
-void ClassicServiceImpl::abort_txn(
-    const rrr::i64 &tid,
-    rrr::i32 *res,
-    rrr::DeferredReply *defer
-) {
+void ClassicServiceImpl::Abort(const rrr::i64 &tid,
+                               rrr::i32 *res,
+                               rrr::DeferredReply *defer) {
   Log::debug("get abort_txn: tid: %ld", tid);
   auto sched = (ClassicSched*) dtxn_sched_;
-  sched->OnCommit(tid, REJECT, res, defer);
+  sched->OnCommit(tid, REJECT, res, [defer] () {defer->reply();});
 }
 
 

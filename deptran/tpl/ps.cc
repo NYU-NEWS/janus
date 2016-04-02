@@ -7,7 +7,7 @@
 namespace rococo {
 
 PieceStatus::PieceStatus(const SimpleCommand& cmd,
-                         rrr::DeferredReply *defer,
+                         const function<void()>& callback,
                          std::map <int32_t, mdb::Value> *output,
                          const std::function<int(void)> &wound_callback,
                          TPLExecutor *exec)
@@ -15,7 +15,7 @@ PieceStatus::PieceStatus(const SimpleCommand& cmd,
       num_waiting_(1),
       num_acquired_(0),
       rej_(false),
-      defer_(defer),
+      callback_(callback),
       output_buf_(NULL),
       output_(output),
       finish_(false),

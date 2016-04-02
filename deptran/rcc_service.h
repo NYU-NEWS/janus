@@ -49,18 +49,18 @@ class ClassicServiceImpl: public ClassicService {
                 map<int32_t, Value> *output,
                 DeferredReply *defer_reply) override;
 
-  void prepare_txn(const i64 &tid,
-                   const std::vector<i32> &sids,
-                   i32 *res,
-                   DeferredReply *defer) override;
+  void Prepare(const i64 &tid,
+               const std::vector<i32> &sids,
+               i32 *res,
+               DeferredReply *defer) override;
 
-  void commit_txn(const i64 &tid,
-                  i32 *res,
-                  DeferredReply *defer) override;
+  void Commit(const i64 &tid,
+              i32 *res,
+              DeferredReply *defer) override;
 
-  void abort_txn(const i64 &tid,
-                 i32 *res,
-                 DeferredReply *defer) override;
+  void Abort(const i64 &tid,
+             i32 *res,
+             DeferredReply *defer) override;
 
 #ifdef PIECE_COUNT
   typedef struct piece_count_key_t{

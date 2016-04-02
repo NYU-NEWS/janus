@@ -12,7 +12,7 @@ namespace rococo {
 int TPLExecutor::StartLaunch(const SimpleCommand& cmd,
                              rrr::i32 *res,
                              map<int32_t, Value> *output,
-                             rrr::DeferredReply *defer) {
+                             const function<void()>& callback) {
   verify(mdb_txn()->rtti() == mdb::symbol_t::TXN_2PL);
   verify(phase_ <= 1);
   mdb::Txn2PL *txn = (mdb::Txn2PL *) mdb_txn();
@@ -20,9 +20,9 @@ int TPLExecutor::StartLaunch(const SimpleCommand& cmd,
   if (wounded_) {
     // other pieces have already been wounded. so cannot proceed.
     *res = REJECT;
-    defer->reply();
+    callback();
   } else {
-    InitPieceStatus(cmd, defer, output);
+    InitPieceStatus(cmd, callback, output);
     Log_debug("get txn handler and start reg lock, txn_id: %lx, pie_id: %lx",
               cmd.root_id_, cmd.id_);
     auto entry = txn_reg_->get(cmd);
@@ -106,7 +106,7 @@ std::function<void(void)> TPLExecutor::get_2pl_succ_callback(
 
     Log_debug("set finish on tid %ld\n", cmd.root_id_);
     ps->set_finish();
-    ps->defer_->reply();
+    ps->callback_();
   };
 }
 
@@ -129,7 +129,7 @@ std::function<void(void)> TPLExecutor::get_2pl_fail_callback(
       ps->remove_output();
 
       ps->set_finish();
-      ps->defer_->reply();
+      ps->callback_();
     }
   };
 }
@@ -154,8 +154,8 @@ int TPLExecutor::Commit() {
   return SUCCESS;
 }
 
-int TPLExecutor::abort() {
-  ClassicExecutor::abort();
+int TPLExecutor::Abort() {
+  ClassicExecutor::Abort();
   release_piece_map(false);
   return 0;
 }
@@ -200,7 +200,7 @@ PieceStatus* TPLExecutor::get_piece_status(i64 pid) {
 }
 
 void TPLExecutor::InitPieceStatus(const SimpleCommand &cmd,
-                                  rrr::DeferredReply* defer,
+                                  const function<void()>& callback,
                                   std::map<int32_t, Value> *output) {
 
   auto tid = cmd.root_id_;
@@ -215,13 +215,12 @@ void TPLExecutor::InitPieceStatus(const SimpleCommand &cmd,
           return 0;
         }
       };
-  PieceStatus *ps =
-      new PieceStatus(cmd,
-                      defer,
-                      output,
+  PieceStatus *ps = new PieceStatus(cmd,
+                                    callback,
+                                    output,
 //                      &this->wounded_,
-                      wound_callback,
-                      this);
+                                    wound_callback,
+                                    this);
   piece_map_[pid] = ps;
   SetPsCache(ps);
 }

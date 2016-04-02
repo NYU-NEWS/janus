@@ -21,7 +21,7 @@ class TPLExecutor: public ClassicExecutor {
   PieceStatus *get_piece_status(i64 pid);
   void release_piece_map(bool commit);
   void InitPieceStatus(const SimpleCommand &cmd,
-                       rrr::DeferredReply *defer,
+                       const function<void()>& callback,
                        std::map<int32_t, Value> *output);
 
   virtual ~TPLExecutor(){};
@@ -29,7 +29,7 @@ class TPLExecutor: public ClassicExecutor {
   int StartLaunch(const SimpleCommand &cmd,
                   rrr::i32 *res,
                   map<int32_t, Value> *output,
-                  rrr::DeferredReply *defer) override;
+                  const function<void()>& callback) override;
 
   // Below are merged from TxnRegistry.
 
@@ -47,7 +47,7 @@ class TPLExecutor: public ClassicExecutor {
 
   virtual bool Prepare() override;
   virtual int Commit() override;
-  virtual int abort() override;
+  virtual int Abort() override;
 
 };
 

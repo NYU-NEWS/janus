@@ -20,13 +20,13 @@ TPLSched::TPLSched() : ClassicSched() {
   mdb_txn_mgr_ = new mdb::TxnMgr2PL();
 }
 
-int TPLSched::OnPhaseOneRequest(const SimpleCommand& cmd,
-                                rrr::i32 *res,
-                                map<int32_t, Value> *output,
-                                rrr::DeferredReply *defer) {
+int TPLSched::OnDispatch(const SimpleCommand &cmd,
+                         rrr::i32 *res,
+                         map<int32_t, Value> *output,
+                         const function<void()>& callback) {
   verify(frame_ != nullptr);
   TPLExecutor* exec = (TPLExecutor*) GetOrCreateExecutor(cmd.root_id_);
-  exec->StartLaunch(cmd, res, output, defer);
+  exec->StartLaunch(cmd, res, output, callback);
   return 0;
 }
 

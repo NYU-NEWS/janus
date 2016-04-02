@@ -46,7 +46,7 @@ void RococoCommunicator::SendPrepare(groupid_t gid,
   fuattr.callback = callback;
   ClassicProxy *proxy = LeaderProxyForPartition(gid).second;
   Log_debug("SendPrepare to %ld sites gid:%ld, tid:%ld\n", sids.size(), gid, tid);
-  Future::safe_release(proxy->async_prepare_txn(tid, sids, fuattr));
+  Future::safe_release(proxy->async_Prepare(tid, sids, fuattr));
 }
 
 void RococoCommunicator::___LogSent(parid_t pid, txnid_t tid) {
@@ -64,7 +64,7 @@ void RococoCommunicator::SendCommit(parid_t pid,
   fuattr.callback = callback;
   ClassicProxy *proxy = LeaderProxyForPartition(pid).second;
   Log_debug("SendCommit to %ld tid:%ld\n", pid, tid);
-  Future::safe_release(proxy->async_commit_txn(tid, fuattr));
+  Future::safe_release(proxy->async_Commit(tid, fuattr));
 }
 
 void RococoCommunicator::SendAbort(parid_t pid, txnid_t tid,
@@ -74,7 +74,7 @@ void RococoCommunicator::SendAbort(parid_t pid, txnid_t tid,
   fuattr.callback = callback;
   ClassicProxy *proxy = LeaderProxyForPartition(pid).second;
   Log_debug("SendAbort to %ld tid:%ld\n", pid, tid);
-  Future::safe_release(proxy->async_abort_txn(tid, fuattr));
+  Future::safe_release(proxy->async_Abort(tid, fuattr));
 }
 
 

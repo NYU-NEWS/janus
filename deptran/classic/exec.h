@@ -17,7 +17,7 @@ class ClassicExecutor: public Executor {
   virtual int StartLaunch(const SimpleCommand &cmd,
                           rrr::i32 *res,
                           map<int32_t, Value>* output,
-                          rrr::DeferredReply *defer);
+                          const function<void()>& callback);
 
   int PrepareLaunch(const std::vector<i32> &sids,
                     int32_t *res,
@@ -25,19 +25,15 @@ class ClassicExecutor: public Executor {
 
   virtual bool Prepare();
 
-  int commit_launch(
-      rrr::i32 *res,
-      rrr::DeferredReply *defer
-  );
+  int CommitLaunch(int32_t *res,
+                   const function<void()> &callback);
 
   virtual int Commit();
 
-  int abort_launch(
-      rrr::i32 *res,
-      rrr::DeferredReply *defer
-  );
+  int AbortLaunch(int32_t *res,
+                  const function<void()> &callback);
 
-  virtual int abort();
+  virtual int Abort();
 
   void Execute(const SimpleCommand &cmd,
                rrr::i32 *res,
