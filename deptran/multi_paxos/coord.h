@@ -37,14 +37,15 @@ class MultiPaxosCoord : public Coordinator {
   }
 
   slotid_t GetNextSlot() {
+    verify(0);
     verify(slot_hint_ != nullptr);
     slot_id_ = (*slot_hint_)++;
     return 0;
   }
 
   uint32_t GetQuorum() {
-    return n_replica(); // TODO
-//    return n_replica() / 2 + 1;
+//    return n_replica(); // TODO
+    return n_replica() / 2 + 1;
   }
 
   void do_one(TxnRequest &req) override {}

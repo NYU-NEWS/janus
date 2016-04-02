@@ -39,7 +39,9 @@ void MultiPaxosCoord::Prepare() {
   TxnCommand* cmd = (TxnCommand*) cmd_;
   curr_ballot_ = PickBallot();
   verify(slot_id_ > 0);
-  Log_debug("multi-paxos coordinator broadcasts prepare, slot_id: %llx",
+  Log_debug("multi-paxos coordinator broadcasts prepare, "
+                "par_id_: %lx, slot_id: %llx",
+            par_id_,
             slot_id_);
   verify(n_prepare_ack_ == 0);
   commo()->BroadcastPrepare(par_id_,
@@ -77,8 +79,9 @@ void MultiPaxosCoord::Accept() {
   in_accept = true;
   phase_++;
   TxnCommand* cmd = (TxnCommand*) cmd_;
-  Log_debug("multi-paxos coordinator broadcasts accept, slot_id: %llx",
-            slot_id_);
+  Log_debug("multi-paxos coordinator broadcasts accept, "
+                "par_id_: %lx, slot_id: %llx",
+            par_id_, slot_id_);
   commo()->BroadcastAccept(par_id_,
                           slot_id_,
                           curr_ballot_,

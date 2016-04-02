@@ -13,6 +13,7 @@ int ClassicSched::OnDispatch(const SimpleCommand &cmd,
                                 rrr::i32 *res,
                                 map<int32_t, Value> *output,
                                 rrr::DeferredReply *defer) {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto exec = (ClassicExecutor*) GetOrCreateExecutor(cmd.root_id_);
   exec->StartLaunch(cmd,
                     res,
@@ -26,10 +27,12 @@ int ClassicSched::OnPrepare(
     const std::vector<i32> &sids,
     rrr::i32 *res,
     rrr::DeferredReply *defer) {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto exec = dynamic_cast<ClassicExecutor*>(GetExecutor(cmd_id));
   verify(exec != nullptr);
   string log;
-  auto func = [exec, res, defer] () -> void {
+  auto func = [exec, res, defer, this] () -> void {
+    std::lock_guard<std::recursive_mutex> lock(mtx_);
     *res = exec->Prepare() ? SUCCESS : REJECT;
     defer->reply();
   };
@@ -49,6 +52,7 @@ int ClassicSched::OnCommit(cmdid_t cmd_id,
                               int commit_or_abort,
                               rrr::i32 *res,
                               rrr::DeferredReply *defer) {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto exec = (ClassicExecutor*)GetExecutor(cmd_id);
   verify(exec->phase_ < 3);
   exec->phase_ = 3;
