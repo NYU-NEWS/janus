@@ -24,6 +24,7 @@ class Scheduler {
 //  Coordinator* rep_coord_ = nullptr;
   TxnRegistry* txn_reg_ = nullptr;
   parid_t partition_id_;
+  std::recursive_mutex mtx_;
 
   Scheduler();
   Scheduler(int mode);

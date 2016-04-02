@@ -161,7 +161,7 @@ void Scheduler::get_prepare_log(i64 txn_id,
   }
 }
 
-Scheduler::Scheduler() {
+Scheduler::Scheduler() : mtx_() {
   //  verify(DTxnMgr::txn_mgr_s == NULL);
 //  DTxnMgr::txn_mgr_s = this;
   mdb_txn_mgr_ = new mdb::TxnMgrUnsafe();
