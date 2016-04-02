@@ -21,7 +21,7 @@ void MultiPaxosSched::OnPrepare(slotid_t slot_id,
 
 void MultiPaxosSched::OnAccept(const slotid_t slot_id,
                                const ballot_t ballot,
-                               const Command &cmd,
+                               const ContainerCommand &cmd,
                                ballot_t *max_ballot,
                                const function<void()> &cb) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
@@ -34,7 +34,7 @@ void MultiPaxosSched::OnAccept(const slotid_t slot_id,
 
 void MultiPaxosSched::OnCommit(const slotid_t slot_id,
                                const ballot_t ballot,
-                               const Command &cmd) {
+                               const ContainerCommand &cmd) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   Log_debug("multi-paxos scheduler decide for slot: %lx", slot_id);
 //  verify(0);

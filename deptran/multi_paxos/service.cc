@@ -27,7 +27,7 @@ void MultiPaxosServiceImpl::Prepare(const uint64_t& slot,
 
 void MultiPaxosServiceImpl::Accept(const uint64_t& slot,
                                    const ballot_t& ballot,
-                                   const Command& cmd,
+                                   const ContainerCommand& cmd,
                                    uint64_t* max_ballot,
                                    rrr::DeferredReply* defer) {
   verify(sched_ != nullptr);
@@ -40,7 +40,7 @@ void MultiPaxosServiceImpl::Accept(const uint64_t& slot,
 
 void MultiPaxosServiceImpl::Decide(const uint64_t& slot,
                                    const ballot_t& ballot,
-                                   const Command& cmd,
+                                   const ContainerCommand& cmd,
                                    rrr::DeferredReply* defer) {
   verify(sched_ != nullptr);
   sched_->OnCommit(slot,

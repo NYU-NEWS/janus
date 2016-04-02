@@ -15,14 +15,14 @@ MultiPaxosCoord::MultiPaxosCoord(uint32_t coo_id,
 }
 
 
-void MultiPaxosCoord::Submit(SimpleCommand& cmd,
+void MultiPaxosCoord::Submit(ContainerCommand& cmd,
                              const function<void()>& func) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   verify(!in_submission_);
   verify(cmd_ == nullptr);
+  verify(cmd.self_cmd_ != nullptr);
   in_submission_ = true;
-  cmd_ = new SimpleCommand();
-  *cmd_ = cmd;
+  cmd_ = &cmd;
   callback_ = func;
   Prepare();
 }
@@ -78,10 +78,10 @@ void MultiPaxosCoord::Accept() {
   verify(!in_accept);
   in_accept = true;
   phase_++;
-  TxnCommand* cmd = (TxnCommand*) cmd_;
   Log_debug("multi-paxos coordinator broadcasts accept, "
                 "par_id_: %lx, slot_id: %llx",
             par_id_, slot_id_);
+  auto cmd = (ContainerCommand*) cmd_;
   commo()->BroadcastAccept(par_id_,
                           slot_id_,
                           curr_ballot_,
@@ -115,7 +115,7 @@ void MultiPaxosCoord::AcceptAck(phase_t phase, Future *fu) {
 void MultiPaxosCoord::Decide() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   phase_++;
-  auto cmd = (TxnCommand*) cmd_;
+  auto cmd = (ContainerCommand*) cmd_;
   commo()->BroadcastDecide(par_id_, slot_id_, curr_ballot_, *cmd);
 }
 

@@ -11,12 +11,12 @@ abstract service MultiPaxos {
 
   defer Accept(uint64_t slot,
                uint64_t ballot,
-               Command cmd |
+               ContainerCommand cmd |
                uint64_t max_ballot);
 
   defer Decide(uint64_t slot,
                uint64_t ballot,
-               Command cmd);
+               ContainerCommand cmd);
 }
 
 // below is for 2PL and OCC

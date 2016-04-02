@@ -20,6 +20,7 @@ class MultiPaxosCoord : public Coordinator {
   bool in_prepare_ = false; // debug
   bool in_accept = false; // debug
  public:
+  ContainerCommand* cmd_ = nullptr;
 //  using Coordinator::Coordinator;
   MultiPaxosCoord(uint32_t coo_id,
                   int32_t benchmark,
@@ -48,7 +49,8 @@ class MultiPaxosCoord : public Coordinator {
   }
 
   void do_one(TxnRequest &req) override {}
-  void Submit(SimpleCommand& cmd, const std::function<void()>& func) override;
+  void Submit(ContainerCommand& cmd,
+              const std::function<void()>& func) override;
 
   ballot_t PickBallot();
   void Prepare();

@@ -15,6 +15,7 @@ public:
   innid_t inn_id_ = 0;
   cmdid_t root_id_ = 0;
   cmdtype_t root_type_ = 0;
+  Command* cmd = nullptr; // this is the container for real command.
 
  public:
   virtual innid_t inn_id() const {return inn_id_;}
@@ -78,6 +79,19 @@ class SimpleCommand: public Command {
     return cmd;
   }
   virtual ~SimpleCommand() {};
+};
+
+class ContainerCommand {
+ public:
+  static map<cmdtype_t, function<ContainerCommand*()>>& Initializers();
+  static int RegInitializer(cmdtype_t, function<ContainerCommand*()>);
+  static function<ContainerCommand*()> GetInitializer(cmdtype_t);
+
+  cmdtype_t type_ = 0;
+  ContainerCommand* self_cmd_ = nullptr;
+  virtual Marshal& ToMarshal(Marshal&) const {verify(0);};
+  virtual Marshal& FromMarshal(Marshal&) {verify(0);};
+
 };
 
 

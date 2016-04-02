@@ -30,7 +30,7 @@ void MultiPaxosCommo::BroadcastPrepare(parid_t par_id,
 void MultiPaxosCommo::BroadcastAccept(parid_t par_id,
                                       slotid_t slot_id,
                                       ballot_t ballot,
-                                      Command& cmd,
+                                      ContainerCommand& cmd,
                                       const function<void(Future*)> &cb) {
   auto proxies = rpc_par_proxies_[par_id];
   vector<Future*> fus;
@@ -49,7 +49,7 @@ void MultiPaxosCommo::BroadcastAccept(parid_t par_id,
 void MultiPaxosCommo::BroadcastDecide(const parid_t par_id,
                                       const slotid_t slot_id,
                                       const ballot_t ballot,
-                                      const Command& cmd) {
+                                      const ContainerCommand& cmd) {
   auto proxies = rpc_par_proxies_[par_id];
   vector<Future*> fus;
   for (auto &p : proxies) {
