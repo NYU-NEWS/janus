@@ -153,7 +153,8 @@ bool TpccTxn::start_callback(int pi,
   return handler(this, output_map);
 }
 
-void TpccTxn::retry() {
+void TpccTxn::Reset() {
+  TxnCommand::Reset();
   ws_ = ws_init_;
   partition_ids_.clear();
   n_try_++;
@@ -166,7 +167,7 @@ void TpccTxn::retry() {
       NewOrderRetry();
       break;
     case TPCC_PAYMENT:
-      payment_retry();
+      PaymentRetry();
       break;
     case TPCC_ORDER_STATUS:
       OrderStatusRetry();

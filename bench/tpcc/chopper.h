@@ -69,7 +69,7 @@ class TpccTxn: public TxnCommand {
 
   virtual void PaymentInit(TxnRequest &req);
 
-  virtual void payment_retry();
+  virtual void PaymentRetry();
 
   virtual void StockLevelInit(TxnRequest &req);
 
@@ -100,7 +100,7 @@ class TpccTxn: public TxnCommand {
                               map<int32_t, Value> &output);
   virtual bool is_read_only();
 
-  virtual void retry();
+  virtual void Reset();
 
   virtual bool CheckReady();
 

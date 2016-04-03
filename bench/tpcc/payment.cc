@@ -59,7 +59,7 @@ void TpccTxn::PaymentInit(TxnRequest &req) {
   CheckReady();
 }
 
-void TpccTxn::payment_retry() {
+void TpccTxn::PaymentRetry() {
   status_[TPCC_PAYMENT_0] = WAITING;
   status_[TPCC_PAYMENT_1] = WAITING;
   status_[TPCC_PAYMENT_2] = WAITING;
