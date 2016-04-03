@@ -15,7 +15,7 @@ siteid_t TpccRealDistChopper::GetPiecePar(innid_t inn_id) {
   } else {
     verify(0);
   }
-  partition_id = TpccChopper::GetPiecePartitionId(inn_id);
+  partition_id = TpccTxn::GetPiecePartitionId(inn_id);
   return partition_id;
 }
 

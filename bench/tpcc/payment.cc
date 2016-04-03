@@ -4,7 +4,7 @@
 
 namespace rococo {
 
-void TpccChopper::PaymentInit(TxnRequest &req) {
+void TpccTxn::PaymentInit(TxnRequest &req) {
 
   n_pieces_all_ = 6;
 
@@ -59,7 +59,7 @@ void TpccChopper::PaymentInit(TxnRequest &req) {
   CheckReady();
 }
 
-void TpccChopper::payment_retry() {
+void TpccTxn::payment_retry() {
   status_[TPCC_PAYMENT_0] = WAITING;
   status_[TPCC_PAYMENT_1] = WAITING;
   status_[TPCC_PAYMENT_2] = WAITING;

@@ -270,7 +270,7 @@ TxnCommand* Frame::CreateTxnCommand(TxnRequest& req, TxnRegistry* reg) {
       cmd = new TpcaPaymentChopper();
       break;
     case TPCC:
-      cmd = new TpccChopper();
+      cmd = new TpccTxn();
       break;
     case TPCC_DIST_PART:
       cmd = new TpccDistChopper();

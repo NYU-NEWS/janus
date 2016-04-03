@@ -3,7 +3,7 @@
 namespace rococo {
 
 
-void TpccChopper::StockLevelInit(TxnRequest &req) {
+void TpccTxn::StockLevelInit(TxnRequest &req) {
 
   n_pieces_all_ = 2;
   n_pieces_input_ready_ = 1;
@@ -32,7 +32,7 @@ void TpccChopper::StockLevelInit(TxnRequest &req) {
   // piece 2 - n, R stock init in stock_level_callback
 }
 
-void TpccChopper::stock_level_retry() {
+void TpccTxn::StockLevelRetry() {
   n_pieces_all_ = 2;
   n_pieces_input_ready_ = 1;
   // inputs_.resize(n_pieces_all_);
@@ -119,7 +119,7 @@ void TpccPiece::RegStockLevel() {
   } END_PIE
 
   BEGIN_CB(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_1)
-    TpccChopper *tpcc_ch = (TpccChopper*) ch;
+    TpccTxn *tpcc_ch = (TpccTxn*) ch;
     Log_debug("tid %llx: stock_level: outptu_size: %u",
               tpcc_ch->txn_id_, output.size());
     // verify(output_size >= 20 * 5);

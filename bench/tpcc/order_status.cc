@@ -6,7 +6,7 @@ namespace rococo {
 
 
 
-void TpccChopper::OrderStatusInit(TxnRequest &req) {
+void TpccTxn::OrderStatusInit(TxnRequest &req) {
   order_status_dep_.piece_order = false;
   /**
    * req.input_
@@ -78,7 +78,7 @@ void TpccChopper::OrderStatusInit(TxnRequest &req) {
 }
 
 //
-//void TpccChopper::order_status_shard(const char *tb,
+//void TpccTxn::order_status_shard(const char *tb,
 //                                     map<int32_t, Value> &input,
 //                                     uint32_t &site) {
 //  MultiValue mv;
@@ -94,7 +94,7 @@ void TpccChopper::OrderStatusInit(TxnRequest &req) {
 //}
 
 
-void TpccChopper::OrderStatusRetry() {
+void TpccTxn::OrderStatusRetry() {
   order_status_dep_.piece_last2id = order_status_dep_.piece_ori_last2id;
   order_status_dep_.piece_order = false;
 

@@ -5,11 +5,11 @@ namespace rococo {
 
 static uint32_t TXN_TYPE = TPCC_NEW_ORDER;
 
-void TpccChopper::NewOrderInit(TxnRequest &req) {
+void TpccTxn::NewOrderInit(TxnRequest &req) {
   NewOrderRetry();
 }
 
-void TpccChopper::NewOrderRetry() {
+void TpccTxn::NewOrderRetry() {
   status_[TPCC_NEW_ORDER_0] = WAITING;
   status_[TPCC_NEW_ORDER_1] = WAITING;
   status_[TPCC_NEW_ORDER_2] = WAITING;
