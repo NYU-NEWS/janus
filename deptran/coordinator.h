@@ -35,6 +35,8 @@ class Coordinator : public CoordinatorBase {
   bool batch_optimal_ = false;
   bool retry_wait_;
 
+  bool committed_ = false;
+  bool aborted_ = false;
   uint32_t n_handout_ = 0;
   uint32_t n_handout_ack_ = 0;
   uint32_t n_prepare_req_ = 0;
@@ -128,6 +130,8 @@ class Coordinator : public CoordinatorBase {
     verify(0);
   }
   virtual void Reset() {
+    committed_ = false;
+    aborted_ = false;
     n_handout_ = 0;
     n_handout_ack_ = 0;
     n_prepare_req_ = 0;
@@ -135,6 +139,7 @@ class Coordinator : public CoordinatorBase {
     n_finish_req_ = 0;
     n_finish_ack_ = 0;
   }
-  virtual void restart(TxnCommand *ch) = 0;
+  virtual void restart(TxnCommand *ch) {verify(0);};
+  virtual void Restart() = 0;
 };
 }

@@ -10,6 +10,7 @@ class ClientControlServiceImpl;
 
 class ClassicCoord : public Coordinator {
  public:
+  enum Phase {INIT_END=0, DISPATCH=1, PREPARE=2, COMMIT=3};
   ClassicCoord(uint32_t coo_id,
                         int benchmark,
                         ClientControlServiceImpl *ccsi,
@@ -72,7 +73,7 @@ class ClassicCoord : public Coordinator {
   /** do it asynchronously, thread safe. */
   virtual void do_one(TxnRequest &);
   virtual void Reset() override;
-  void restart(TxnCommand *ch);
+  void Restart();
 
   virtual void Dispatch();
   virtual void DispatchAck(phase_t phase, int res, Command &cmd);
@@ -83,11 +84,12 @@ class ClassicCoord : public Coordinator {
   void Abort() {
     verify(0);
   }
+  void End();
 
-  bool IsPhaseOrStageStale(phase_t phase, CoordinatorStage stage);
-  void IncrementPhaseAndChangeStage(CoordinatorStage stage);
+//    bool IsPhaseOrStageStale(phase_t phase, CoordinatorStage stage);
+//  void IncrementPhaseAndChangeStage(CoordinatorStage stage);
   bool AllDispatchAcked();
-
+  virtual void GotoNextPhase();
 
   void report(TxnReply &txn_reply,
               double last_latency

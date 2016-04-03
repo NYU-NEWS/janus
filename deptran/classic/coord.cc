@@ -57,20 +57,8 @@ void ClassicCoord::do_one(TxnRequest &req) {
   if (ccsi_) ccsi_->txn_start_one(thread_id_, cmd->type_);
 
   auto mode = Config::GetConfig()->cc_mode_;
-  switch (mode) {
-    case MODE_OCC:
-    case MODE_2PL:
-      Dispatch();
-      break;
-    case MODE_RPC_NULL:
-//      rpc_null_start(ch);
-//      break;
-    case MODE_RCC:
-    case MODE_RO6:
-    case MODE_NONE:
-    default:
-      verify(0);
-  }
+  verify(mode == MODE_2PL || mode == MODE_OCC);
+  GotoNextPhase();
   // finish request is triggered in the callback of start request.
 }
 
@@ -94,24 +82,55 @@ void ClassicCoord::do_one(TxnRequest &req) {
 //  Future::safe_release(proxy->async_rpc_null(fuattr));
 //}
 
-void ClassicCoord::IncrementPhaseAndChangeStage(CoordinatorStage stage) {
-  phase_++;
-  stage_ = stage;
-  Log_debug("moving to phase %ld; stage %d", phase_, stage_);
+
+void ClassicCoord::GotoNextPhase() {
+  int n_phase = 4;
+  int current_phase = phase_ % n_phase;
+  switch (phase_++ % n_phase) {
+    case Phase::INIT_END:
+      Dispatch();
+      verify(phase_ % n_phase == Phase::DISPATCH);
+      break;
+    case Phase::DISPATCH:
+      verify(phase_ % n_phase == Phase::PREPARE);
+      Prepare();
+      break;
+    case Phase::PREPARE:
+      verify(phase_ % n_phase == Phase::COMMIT);
+      Decide();
+      break;
+    case Phase::COMMIT:
+      verify(phase_ % n_phase == Phase::INIT_END);
+      if (committed_)
+        End();
+      else if (aborted_)
+        Restart();
+      else
+        verify(0);
+      break;
+    default:
+      verify(0);
+  }
 }
 
-bool ClassicCoord::IsPhaseOrStageStale(phase_t phase, CoordinatorStage stage) {
-  bool result = false;
-  if (phase_ != phase) {
-    Log_debug("phase %d doesn't match %d\n", phase, phase_);
-    result = true;
-  }
-  if (stage_ != stage) {
-    Log_debug("stage %d doesn't match %d\n", stage, stage_);
-    result = true;
-  }
-  return result;
-}
+//void ClassicCoord::IncrementPhaseAndChangeStage(CoordinatorStage stage) {
+//  phase_++;
+//  stage_ = stage;
+//  Log_debug("moving to phase %ld; stage %d", phase_, stage_);
+//}
+//
+//bool ClassicCoord::IsPhaseOrStageStale(phase_t phase, CoordinatorStage stage) {
+//  bool result = false;
+//  if (phase_ != phase) {
+//    Log_debug("phase %d doesn't match %d\n", phase, phase_);
+//    result = true;
+//  }
+//  if (stage_ != stage) {
+//    Log_debug("stage %d doesn't match %d\n", stage, stage_);
+//    result = true;
+//  }
+//  return result;
+//}
 
 void ClassicCoord::Reset() {
   for (int i = 0; i < site_prepare_.size(); i++) {
@@ -124,28 +143,23 @@ void ClassicCoord::Reset() {
   n_finish_req_ = 0;
   n_finish_ack_ = 0;
   handout_acks_.clear();
-  IncrementPhaseAndChangeStage(HANDOUT);
 //  TxnCommand *ch = (TxnCommand *) cmd_;
 }
 
-void ClassicCoord::restart(TxnCommand *ch) {
+void ClassicCoord::Restart() {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   Reset();
+  TxnCommand *ch = (TxnCommand*) cmd_;
   ch->Reset();
-
   double last_latency = ch->last_attempt_latency();
-
-  if (ccsi_) ccsi_->txn_retry_one(this->thread_id_, ch->type_, last_latency);
-  Dispatch();
+  if (ccsi_)
+    ccsi_->txn_retry_one(this->thread_id_, ch->type_, last_latency);
+  GotoNextPhase();
 }
 
 void ClassicCoord::Dispatch() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   //  ___TestPhaseOne(cmd_id_);
-
-  if (stage_ != HANDOUT) {
-    IncrementPhaseAndChangeStage(HANDOUT);
-  }
   auto txn = (TxnCommand*) cmd_;
 //  StartRequest req;
 //  req.cmd_id = cmd_id_;
@@ -179,11 +193,11 @@ bool ClassicCoord::AllDispatchAcked() {
 
 void ClassicCoord::DispatchAck(phase_t phase, int res, Command &cmd) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-
-  if (IsPhaseOrStageStale(phase, HANDOUT)) {
-    Log_debug("ignore stale startack\n");
-    return;
-  }
+  if (phase != phase_) return;
+//  if (IsPhaseOrStageStale(phase, HANDOUT)) {
+//    Log_debug("ignore stale startack\n");
+//    return;
+//  }
   n_handout_ack_++;
   TxnCommand *ch = (TxnCommand *) cmd_;
   handout_acks_[cmd.inn_id_] = true;
@@ -211,14 +225,13 @@ void ClassicCoord::DispatchAck(phase_t phase, int res, Command &cmd) {
       Dispatch();
     } else if (AllDispatchAcked()) {
       Log_debug("receive all start acks, txn_id: %ld; START PREPARE", cmd_->id_);
-      Prepare();
+      GotoNextPhase();
     }
   }
 }
 
 /** caller should be thread_safe */
 void ClassicCoord::Prepare() {
-  IncrementPhaseAndChangeStage(PREPARE);
   TxnCommand *cmd = (TxnCommand *) cmd_;
   auto mode = Config::GetConfig()->cc_mode_;
   verify(mode == MODE_OCC || mode == MODE_2PL);
@@ -245,10 +258,7 @@ void ClassicCoord::Prepare() {
 
 void ClassicCoord::PrepareAck(phase_t phase, Future *fu) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-  if (IsPhaseOrStageStale(phase, PREPARE)) {
-    Log_debug("ignore stale prepareack\n");
-    return;
-  }
+  if (phase != phase_) return;
   TxnCommand* cmd = (TxnCommand*) cmd_;
   n_prepare_ack_++;
   int32_t e = fu->get_error_code();
@@ -271,7 +281,7 @@ void ClassicCoord::PrepareAck(phase_t phase, Future *fu) {
 
   if (n_prepare_ack_ == cmd->partition_ids_.size()) {
     Log_debug("2PL prepare finished for %ld", cmd->root_id_);
-    this->Decide();
+    GotoNextPhase();
   } else {
     // Do nothing.
   }
@@ -279,7 +289,6 @@ void ClassicCoord::PrepareAck(phase_t phase, Future *fu) {
 
 void ClassicCoord::Decide() {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-  IncrementPhaseAndChangeStage(FINISH);
   ___TestPhaseThree(cmd_->id_);
   TxnCommand *cmd = (TxnCommand *) cmd_;
   auto mode = Config::GetConfig()->cc_mode_;
@@ -318,49 +327,39 @@ void ClassicCoord::Decide() {
 }
 
 void ClassicCoord::FinishAck(phase_t phase, Future *fu) {
+  std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+  if (phase != phase_) return;
   TxnCommand* cmd = (TxnCommand*)cmd_;
-  bool callback = false;
-  bool retry = false;
-  {
-    std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-    if (IsPhaseOrStageStale(phase, FINISH)) {
-      Log_debug("ignore stale finish ack\n");
-      return;
+  n_finish_ack_++;
+  Log_debug("finish cmd_id_: %ld; n_finish_ack_: %ld; n_finish_req_: %ld",
+            cmd_->id_, n_finish_ack_, n_finish_req_);
+  verify(cmd->GetPartitionIds().size() == n_finish_req_);
+  if (n_finish_ack_ == cmd->GetPartitionIds().size()) {
+    verify(cmd->can_retry());
+    if ((cmd->reply_.res_ == REJECT) ) {
+      aborted_ = true;
+    } else {
+      committed_ = true;
     }
-
-    n_finish_ack_++;
-    Log_debug("finish cmd_id_: %ld; n_finish_ack_: %ld; n_finish_req_: %ld",
-               cmd_->id_, n_finish_ack_, n_finish_req_);
-    verify(cmd->GetPartitionIds().size() == n_finish_req_);
-    if (n_finish_ack_ == cmd->GetPartitionIds().size()) {
-      if ((cmd->reply_.res_ == REJECT) && cmd->can_retry()) {
-        retry = true;
-      } else {
-        callback = true;
-      }
-    }
+    GotoNextPhase();
   }
   Log_debug("callback: %s, retry: %s",
-             callback ? "True" : "False",
-             retry ? "True" : "False");
+             committed_ ? "True" : "False",
+             aborted_ ? "True" : "False");
+}
 
-  if (retry) {
-    this->restart(cmd);
-  }
-
-  if (callback) {
-    // generate a reply and callback.
-    TxnReply &txn_reply_buf = cmd->get_reply();
-    double last_latency = cmd->last_attempt_latency();
-    this->report(txn_reply_buf, last_latency
+void ClassicCoord::End() {
+  TxnCommand* txn = (TxnCommand*) cmd_;
+  txn->reply_.res_ = SUCCESS;
+  TxnReply& txn_reply_buf = txn->get_reply();
+  double    last_latency  = txn->last_attempt_latency();
+  this->report(txn_reply_buf, last_latency
 #ifdef TXN_STAT
-        , ch
+      , ch
 #endif // ifdef TXN_STAT
-    );
-
-    cmd->callback_(txn_reply_buf);
-    delete cmd;
-  }
+  );
+  txn->callback_(txn_reply_buf);
+  delete txn;
 }
 
 void ClassicCoord::report(TxnReply &txn_reply,

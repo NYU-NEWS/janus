@@ -61,7 +61,7 @@ class MultiPaxosCoord : public Coordinator {
   void Decide();
 
   void Reset() override {}
-  void restart(TxnCommand *) override {}
+  void Restart() override {verify(0);}
 };
 
 } //namespace rococo

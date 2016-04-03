@@ -163,36 +163,20 @@ void RccCoord::Finish() {
 void RccCoord::FinishAck(phase_t phase,
                          int res,
                          map<innid_t, map<int32_t, Value>>& output) {
+  std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   TxnCommand* txn = (TxnCommand*) cmd_;
   verify(phase_ == phase);
-  std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   n_finish_ack_++;
 
   Log_debug("receive finish response. tid: %llx", cmd_->id_);
   txn->outputs_.insert(output.begin(), output.end());
 
+  verify(!txn->do_early_return());
   if (n_finish_ack_ == txn->GetPartitionIds().size()) {
     // generate a reply and callback.
     Log_debug("deptran callback, %llx", cmd_->id_);
-
-    if (!txn->do_early_return()) {
-      GotoNextPhase();
-    }
-    delete txn;
+    GotoNextPhase();
   }
-}
-
-void RccCoord::End() {
-  TxnCommand* txn = (TxnCommand*) cmd_;
-  txn->reply_.res_ = SUCCESS;
-  TxnReply& txn_reply_buf = txn->get_reply();
-  double    last_latency  = txn->last_attempt_latency();
-  this->report(txn_reply_buf, last_latency
-#ifdef TXN_STAT
-      , ch
-#endif // ifdef TXN_STAT
-  );
-  txn->callback_(txn_reply_buf);
 }
 
 void RccCoord::DispatchRo() {
@@ -345,7 +329,6 @@ void RccCoord::do_one(TxnRequest& req) {
   cmd_->id_ = this->next_txn_id();
   cmd_->root_id_ = this->next_txn_id();
   Reset();
-  phase_--; // TODO remove this
   Log_debug("do one request");
 
   if (ccsi_) ccsi_->txn_start_one(thread_id_, cmd_->type_);

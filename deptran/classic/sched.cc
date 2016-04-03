@@ -77,7 +77,9 @@ int ClassicSched::OnCommit(cmdid_t cmd_id,
   }
   DestroyExecutor(cmd_id);
   TpcCommitCommand* cmd = new TpcCommitCommand;
-  CreateRepCoord()->Submit(*cmd);
+  if (Config::GetConfig()->IsReplicated()) {
+    CreateRepCoord()->Submit(*cmd);
+  }
   return 0;
 }
 
