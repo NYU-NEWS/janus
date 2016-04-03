@@ -33,6 +33,7 @@ cwd = os.getcwd()
 deptran_home, ff = os.path.split(os.path.realpath(__file__))
 g_log_dir = deptran_home + "/log"
 
+ONE_BILLION = float(10 ** 9)
 g_latencies_percentage = [0.5, 0.9, 0.99, 0.999]
 g_latencies_header = [str(x * 100) + "% LATENCY" for x in g_latencies_percentage]
 g_att_latencies_percentage = [0.5, 0.9, 0.99, 0.999]
@@ -376,7 +377,7 @@ class ClientController(object):
             i=0 
             for future in futures:
                 res = future.result
-                period_time = res.period_sec + res.period_nsec / 1000000000.0
+                period_time = res.period_sec + res.period_nsec / ONE_BILLION
                 for txn_type in res.txn_info.keys():
                     if txn_type not in self.txn_infos:
                         self.txn_infos[txn_type] = TxnInfo(txn_type, self.txn_names[txn_type], self.txn_names[txn_type] == self.interest_txn)
@@ -384,13 +385,29 @@ class ClientController(object):
                     self.total_txn += res.txn_info[txn_type].total_txn
                     self.total_try += res.txn_info[txn_type].total_try
                     self.commit_txn += res.txn_info[txn_type].commit_txn
-                    self.txn_infos[txn_type].push_res(res.txn_info[txn_type].start_txn, res.txn_info[txn_type].total_txn, res.txn_info[txn_type].total_try, res.txn_info[txn_type].commit_txn, res.txn_info[txn_type].this_latency, res.txn_info[txn_type].last_latency, res.txn_info[txn_type].interval_latency, res.txn_info[txn_type].attempt_latency, period_time, res.txn_info[txn_type].num_try)
+                    self.txn_infos[txn_type].push_res(
+                        res.txn_info[txn_type].start_txn,
+                        res.txn_info[txn_type].total_txn,
+                        res.txn_info[txn_type].total_try,
+                        res.txn_info[txn_type].commit_txn,
+                        res.txn_info[txn_type].this_latency,
+                        res.txn_info[txn_type].last_latency,
+                        res.txn_info[txn_type].interval_latency,
+                        res.txn_info[txn_type].attempt_latency,
+                        period_time,
+                        res.txn_info[txn_type].num_try)
+
+                logging.debug("timing from server: run_sec {:.2f}; run_nsec {:.2f}".format(res.run_sec, res.run_nsec))
                 self.run_sec += res.run_sec
                 self.run_nsec += res.run_nsec
                 self.n_asking += res.n_asking
                 if (res.is_finish == 1):
                     self.finish_set.add(i)
                 i += 1
+
+            self.run_sec /= len(futures)
+            self.run_nsec /= len(futures)
+            logging.debug("avg timing from {} servers: run_sec {:.2f}; run_nsec {:.2f}".format(len(futures), res.run_sec, res.run_nsec))
 
             self.cur_time = time.time()
             need_break = self.print_stage_result(do_sample, do_sample_lock)
@@ -400,16 +417,16 @@ class ClientController(object):
                 time.sleep(self.timeout)
 
     def print_stage_result(self, do_sample, do_sample_lock):
-        sites = ProcessInfo.get_sites(self.process_infos, 
+        sites = ProcessInfo.get_sites(self.process_infos,
                                       SiteInfo.SiteType.Client)
 
         interval_time = (self.run_sec - self.pre_run_sec) + \
-                        (self.run_nsec - self.pre_run_nsec) / 1000000000.0
+                        ((self.run_nsec - self.pre_run_nsec) / ONE_BILLION)
 
-        total_time = (self.run_sec + self.run_nsec / 1000000000.0)
-        logging.debug("run_sec: {}; run_nsec: {}".format(self.run_sec, self.run_nsec))
+        total_time = (self.run_sec + self.run_nsec / ONE_BILLION)
+
         progress = int(round(100 * total_time / self.duration))
-        logging.debug("Progress: {}".format(progress))
+        logging.info("Progress: {}".format(progress))
 
         if (self.print_max):
             self.print_max = False
@@ -427,7 +444,7 @@ class ClientController(object):
                     v.set_mid_status()
         else:
             if (progress >= 60):
-                logging.debug("done with recording period")
+                logging.info("done with recording period")
                 self.recording_period = False
                 self.print_max = True
                 do_sample_lock.acquire()
@@ -460,7 +477,7 @@ class ClientController(object):
         output_str += tabulate(interval_table, headers=interval_header) + "\n"
         output_str += "\tTotal asking finish: " + str(self.n_asking) + "\n"
         output_str += "----------------------------------------------------------------------\n"
-        print output_str
+        logging.info(output_str)
 
         self.pre_start_txn = self.start_txn
         self.pre_total_txn = self.total_txn
