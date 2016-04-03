@@ -95,7 +95,6 @@ void ClassicCoord::GotoNextPhase() {
       verify(phase_ % n_phase == Phase::PREPARE);
       verify(!committed_);
       if (aborted_) {
-        verify(0);
         phase_++;
         Commit();
       } else {
@@ -219,7 +218,7 @@ void ClassicCoord::DispatchAck(phase_t phase, int res, Command &cmd) {
 
   Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
             n_handout_ack_, n_handout_, cmd_->id_, cmd.inn_id_);
-  verify(res == SUCCESS);
+//  verify(res == SUCCESS);
   if (res == REJECT) {
     Log_debug("got REJECT reply for cmd_id: %lx, inn_id: %d; NOT COMMITING",
                cmd.root_id_, cmd.inn_id());

@@ -1,11 +1,11 @@
-import subprocess
 from subprocess import call
 
 run_app_     = "build/deptran_server"
 config_path_ = "config/"
 
-modes_ =       ["tpl_ww",
-#                "occ",
+modes_ =       ["none",
+                "tpl_ww",
+                "occ",
                 "tpl_ww_paxos",
 #                "occ_paxos",
 #                "tapir",
@@ -27,10 +27,10 @@ def run(m, s, b):
     f = open(output_path, "w")
     r = call([run_app_, "-f", pm, "-f", ps, "-f", pb, "-P", "localhost"], stdout=f, stderr=f)
     if r == 0:
-        print("%s \t%s\t %s\t OK" % (m, s, b))
+        print("%-15s \t%-10s\t %s\t OK" % (m, s, b))
         pass
     else:
-        print("%s \t%s\t %s\t Failed" % (m, s, b))
+        print("%-15s \t%-10s\t %s\t Failed" % (m, s, b))
         pass
     pass
 
