@@ -45,8 +45,6 @@
 #include "bench/micro/piece.h"
 #include "bench/micro/chopper.h"
 
-#include "txn-chopper-factory.h"
-
 #include "tpl/sched.h"
 #include "occ/sched.h"
 

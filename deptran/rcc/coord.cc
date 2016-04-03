@@ -3,7 +3,6 @@
 #include "frame.h"
 #include "dtxn.h"
 #include "dep_graph.h"
-#include "../txn-chopper-factory.h"
 #include "../benchmark_control_rpc.h"
 
 namespace rococo {

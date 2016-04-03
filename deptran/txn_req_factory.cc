@@ -27,8 +27,6 @@
 #include "bench/micro/piece.h"
 #include "bench/micro/chopper.h"
 
-#include "txn-chopper-factory.h"
-
 namespace rococo {
 
 //TxnGenerator *TxnGenerator::txn_req_factory_s = NULL;
