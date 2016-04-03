@@ -200,7 +200,8 @@ bool ClassicCoord::AllDispatchAcked() {
                           [] (std::pair<innid_t, bool> pair){
                             return pair.second;
                           });
-  verify(n_handout_ack_ == n_handout_);
+  if (ret1)
+    verify(n_handout_ack_ == n_handout_);
   return ret1;
 }
 
