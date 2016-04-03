@@ -16,6 +16,7 @@ from argparse import ArgumentParser
 from multiprocessing import Value
 from multiprocessing import Lock
 import yaml
+import tempfile
 
 # third-party python modules 
 from tabulate import tabulate
@@ -756,10 +757,10 @@ def create_parser():
     
     parser = ArgumentParser()
 
-    parser.add_argument("-f", "--file", dest="config_file", 
-            help="read config from FILE, default is sample.yml", 
-            default="./config/sample.yml", metavar="FILE", 
-            type=argparse.FileType('r'))
+    parser.add_argument("-f", "--file", dest="config_files", 
+            help="read config from FILE, default is sample.yml",
+            action='append',
+            default=["./config/sample.yml"], metavar="FILE")
 
     parser.add_argument("-P", "--port", dest="rpc_port", help="port to use", 
             default=5555, metavar="PORT")
@@ -984,6 +985,23 @@ def get_process_info(config):
             pi.add_site(site, site_type, port)
     return process_infos
 
+def build_config(options):
+    config_files = options.config_files
+    config = {'args': options}
+    for c in config_files:
+        with open(c, 'r') as f:
+            yml = yaml.load(f)
+            config.update(yml)
+
+    config['args'].config_file = tempfile.NamedTemporaryFile('w',
+                                                             prefix='janus_config',
+                                                             suffix='.yml',
+                                                             dir='./tmp')
+    config_file = config['args'].config_file
+    config_file.write(yaml.dump(config))
+    logging.debug("aggregate config file: {}".format(config_file.name))
+    return config
+
 def main():
     logging.basicConfig(format='%(levelname)s: %(asctime)s: %(message)s',
                         level=logging.INFO)
@@ -992,9 +1010,7 @@ def main():
     config = None
 
     try:
-        options = create_parser().parse_args()
-        config = yaml.load(options.config_file)
-        config['args'] = options 
+        config = build_config(create_parser().parse_args())
         
         process_infos = get_process_info(config)
         server_controller = ServerController(config, process_infos)
@@ -1014,10 +1030,15 @@ def main():
     finally:
         logging.info("shutting down...")
         if server_controller is not None:
-            server_controller.server_kill()
+            try:
+                server_controller.server_kill()
+            except:
+                traceback.print_exc()
         if client_controller is not None:
-            client_controller.client_kill()
-        config['args'].config_file.close()
+            try:
+                client_controller.client_kill()
+            except:
+                traceback.print_exc()
 
 if __name__ == "__main__":
     main()
