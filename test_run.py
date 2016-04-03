@@ -23,14 +23,14 @@ def run(m, s, b):
     ps = config_path_ + s + ".yml"
     pb = config_path_ + b + ".yml"
 
-    cmd = run_app_ + " -f " + pm + " -f " + ps + " -f " + pb + " -P localhost &> " + m + '-' + s + '-' + b + ".txt"
-#    print(cmd)
-    r = call(cmd, shell=True)
+    output_path = m + '-' + s + '-' + b + ".res"
+    f = open(output_path, "w")
+    r = call([run_app_, "-f", pm, "-f", ps, "-f", pb, "-P", "localhost"], stdout=f, stderr=f)
     if r == 0:
+        print("%s %s %s OK" % (m, s, b))
         pass
     else:
-        print("failed exec:")
-        print(cmd)
+        print("%s %s %s Failed" % (m, s, b))
         pass
     pass
 
