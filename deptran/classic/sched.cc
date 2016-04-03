@@ -36,23 +36,27 @@ int ClassicSched::OnPrepare(cmdid_t cmd_id,
                             const function<void()>& callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto exec = dynamic_cast<ClassicExecutor*>(GetExecutor(cmd_id));
-  verify(exec != nullptr);
-  string log;
-  auto func = [exec, res, callback, this] () -> void {
-    std::lock_guard<std::recursive_mutex> lock(mtx_);
-    *res = exec->Prepare() ? SUCCESS : REJECT;
-    callback();
-  };
+  *res = exec->Prepare() ? SUCCESS : REJECT;
+
   if (Config::GetConfig()->IsReplicated()) {
 //    SimpleCommand cmd; // TODO
     TpcPrepareCommand *cmd = new TpcPrepareCommand; // TODO watch out memory
-    CreateRepCoord()->Submit(*cmd, func);
+    CreateRepCoord()->Submit(*cmd, callback);
   } else if (Config::GetConfig()->do_logging()) {
+    string log;
     this->get_prepare_log(cmd_id, sids, &log);
-    recorder_->submit(log, func);
+    recorder_->submit(log, callback);
   } else {
-    func();
+    callback();
   }
+  return 0;
+}
+
+int ClassicSched::PrepareReplicated(cmdid_t cmd_id, int res, TxnCommand& cmd) {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
+//  auto exec = dynamic_cast<ClassicExecutor*>(GetExecutor(cmd_id));
+  // TODO verify it is the same leader, error if not.
+  // TODO and return the prepare callback here.
   return 0;
 }
 
@@ -72,6 +76,21 @@ int ClassicSched::OnCommit(cmdid_t cmd_id,
     verify(0);
   }
   DestroyExecutor(cmd_id);
+  TpcCommitCommand* cmd = new TpcCommitCommand;
+  CreateRepCoord()->Submit(*cmd);
   return 0;
 }
+
+void ClassicSched::OnLearn(ContainerCommand& cmd) {
+  if (cmd.type_ == CMD_TPC_PREPARE) {
+    TpcPrepareCommand& c = (TpcPrepareCommand&)cmd;
+    PrepareReplicated(c.txn_id_, c.res_, *c.txn_cmd_);
+  } else if (cmd.type_ == CMD_TPC_COMMIT) {
+    // TODO, execute for slave.
+    // pass
+  } else {
+    verify(0);
+  }
+}
+
 } // namespace rococo

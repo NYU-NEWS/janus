@@ -37,6 +37,7 @@ void MultiPaxosSched::OnCommit(const slotid_t slot_id,
                                const ContainerCommand &cmd) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   Log_debug("multi-paxos scheduler decide for slot: %lx", slot_id);
+  learner_action_(const_cast<ContainerCommand&>(cmd));
 //  verify(0);
 }
 

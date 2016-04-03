@@ -7,6 +7,7 @@
 
 namespace rococo {
 
+class TxnCommand;
 class ClassicSched: public NoneSched {
  using NoneSched::NoneSched;
  public:
@@ -24,6 +25,11 @@ class ClassicSched: public NoneSched {
                        int commit_or_abort,
                        int32_t *res,
                        const function<void()>& callback);
-};
+
+  void OnLearn(ContainerCommand&) override;
+
+  int PrepareReplicated(cmdid_t cmd_id, int res, TxnCommand& cmd);
+
+  };
 
 }

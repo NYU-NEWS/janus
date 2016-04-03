@@ -50,7 +50,8 @@ class MultiPaxosCoord : public Coordinator {
 
   void do_one(TxnRequest &req) override {}
   void Submit(ContainerCommand& cmd,
-              const std::function<void()>& func) override;
+              const std::function<void()>& func = [] () {},
+              const std::function<void()>& exe_callback = [] () {}) override;
 
   ballot_t PickBallot();
   void Prepare();

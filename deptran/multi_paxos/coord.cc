@@ -16,14 +16,15 @@ MultiPaxosCoord::MultiPaxosCoord(uint32_t coo_id,
 
 
 void MultiPaxosCoord::Submit(ContainerCommand& cmd,
-                             const function<void()>& func) {
+                             const function<void()>& func,
+                             const std::function<void()>& exe_callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   verify(!in_submission_);
   verify(cmd_ == nullptr);
   verify(cmd.self_cmd_ != nullptr);
   in_submission_ = true;
   cmd_ = &cmd;
-  callback_ = func;
+  commit_callback_ = func;
   Prepare();
 }
 
@@ -56,7 +57,6 @@ void MultiPaxosCoord::Prepare() {
 void MultiPaxosCoord::PrepareAck(phase_t phase, Future *fu) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   if (phase_ != phase) return;
-  TxnCommand* cmd = (TxnCommand*) cmd_;
   ballot_t max_ballot;
   fu->get_reply() >> max_ballot;
   if (max_ballot == curr_ballot_) {
@@ -85,7 +85,7 @@ void MultiPaxosCoord::Accept() {
   commo()->BroadcastAccept(par_id_,
                           slot_id_,
                           curr_ballot_,
-                          *cmd,
+                          *cmd_,
                           std::bind(&MultiPaxosCoord::AcceptAck,
                                     this,
                                     phase_,
@@ -104,7 +104,7 @@ void MultiPaxosCoord::AcceptAck(phase_t phase, Future *fu) {
     verify(0);
   }
   if (n_finish_ack_ >= GetQuorum()) {
-    callback_();
+    commit_callback_();
     Decide();
   } else {
     // TODO

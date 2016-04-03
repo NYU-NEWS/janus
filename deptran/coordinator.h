@@ -45,7 +45,8 @@ class Coordinator : public CoordinatorBase {
   std::atomic<uint64_t> next_pie_id_;
   std::atomic<uint64_t> next_txn_id_;
 
-  std::function<void()> callback_;
+  std::function<void()> commit_callback_ = [] () {verify(0);};
+  std::function<void()> exe_callback_ = [] () {verify(0);};
 
   std::recursive_mutex mtx_;
   Recorder *recorder_;
@@ -122,7 +123,8 @@ class Coordinator : public CoordinatorBase {
     verify(0);
   }
   virtual void Submit(ContainerCommand& cmd,
-              const std::function<void()>& func) {
+                      const std::function<void()>& commit_callback = [](){},
+                      const std::function<void()>& exe_callback = [](){}) {
     verify(0);
   }
   virtual void Reset() {

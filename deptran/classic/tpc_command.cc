@@ -23,3 +23,13 @@ Marshal& TpcPrepareCommand::FromMarshal(Marshal& m) {
   // TODO
   return m;
 }
+
+
+Marshal& TpcCommitCommand::ToMarshal(Marshal& m) const {
+  // TODO
+  return m;
+}
+Marshal& TpcCommitCommand::FromMarshal(Marshal& m) {
+  // TODO
+  return m;
+}
