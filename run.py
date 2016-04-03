@@ -357,7 +357,7 @@ class ClientController(object):
         rpc_proxy = list(rpc_proxy)
     
         while (len(rpc_proxy) != len(self.finish_set)):
-            logging.info("top client heartbeat; period {}".format(self.timeout))
+            logging.info("top client heartbeat; timeout {}".format(self.timeout))
             for k in self.txn_infos.keys():
                 self.txn_infos[k].clear()
             self.start_txn = 0
@@ -985,11 +985,11 @@ def get_process_info(config):
     return process_infos
 
 def main():
-    logging.basicConfig(format='%(levelname)s: %(asctime)s: %(message)s', level=logging.DEBUG)
+    logging.basicConfig(format='%(levelname)s: %(asctime)s: %(message)s',
+                        level=logging.INFO)
     server_controller = None
     client_controller = None
     config = None
-    start = None
 
     try:
         options = create_parser().parse_args()
