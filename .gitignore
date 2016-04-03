@@ -28,4 +28,4 @@ deptran/mdcc/mdcc_rpc.h
 .unittest-gtest/
 *.yml
 *rpc.h
-*.txt
+*.res

@@ -5,10 +5,10 @@ run_app_     = "build/deptran_server"
 config_path_ = "config/"
 
 modes_ =       ["tpl_ww",
-                "occ",
+#                "occ",
                 "tpl_ww_paxos",
-                "occ_paxos",
-                "tapir",
+#                "occ_paxos",
+#                "tapir",
                 "brq"]
 sites_ =       ["1c1s1p",
                 "2c2s1p",
@@ -27,17 +27,17 @@ def run(m, s, b):
     f = open(output_path, "w")
     r = call([run_app_, "-f", pm, "-f", ps, "-f", pb, "-P", "localhost"], stdout=f, stderr=f)
     if r == 0:
-        print("%s %s %s OK" % (m, s, b))
+        print("%s \t%s\t %s\t OK" % (m, s, b))
         pass
     else:
-        print("%s %s %s Failed" % (m, s, b))
+        print("%s \t%s\t %s\t Failed" % (m, s, b))
         pass
     pass
 
 def main():
-    for b in benchmarks_:
-        for s in sites_:
-            for m in modes_:
+    for m in modes_:
+        for b in benchmarks_:
+            for s in sites_:
                 run(m, s, b)
     pass
 
