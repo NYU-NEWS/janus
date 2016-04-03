@@ -123,6 +123,15 @@ def create_virtual_env():
 @task
 @runs_once
 @roles('leaders')
+def create_work_dirs():
+    dirs = ['tmp/', 'logs/', 'log_archive/']
+    for d in dirs:
+        dir_path = os.path.join(env.nfs_home, d)
+        run("mkdir -p {}".format(dir_path))
+
+@task
+@runs_once
+@roles('leaders')
 def build(args=None, clean=True):
     execute('retrieve_code')
     execute('create_virtual_env')
@@ -145,8 +154,7 @@ def retrieve_code():
     with cd(parent):
         logging.info("check out code in {}".format(parent))
         if not exists(env.nfs_home):
-            cmd = 'git clone --recursive ' + \
-                  '{repo}'.format(repo=env.git_repo)
+            cmd = 'git clone --recursive {repo}'.format(repo=env.git_repo)
             run(cmd)
             with cd(env.nfs_home):
                 cmd = 'git checkout {rev}'.format(rev=env.git_revision)
