@@ -112,23 +112,8 @@ void RccCoord::DispatchAck(phase_t phase,
     Dispatch();
   } else if (AllDispatchAcked()) {
     Log_debug("receive all start acks, txn_id: %llx; START PREPARE", cmd_->id_);
+    verify(!txn->do_early_return());
     GotoNextPhase();
-    // TODO?
-    if (txn->do_early_return()) {
-      early_return = true;
-    }
-    //
-    if (early_return) {
-      txn->reply_.res_ = SUCCESS;
-      TxnReply& txn_reply_buf = txn->get_reply();
-      double    last_latency  = txn->last_attempt_latency();
-      this->report(txn_reply_buf, last_latency
-      #ifdef TXN_STAT
-          , ch
-      #endif // ifdef TXN_STAT
-      );
-      txn->callback_(txn_reply_buf);
-    }
   }
 }
 

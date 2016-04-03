@@ -93,11 +93,18 @@ void ClassicCoord::GotoNextPhase() {
       break;
     case Phase::DISPATCH:
       verify(phase_ % n_phase == Phase::PREPARE);
-      Prepare();
+      verify(!committed_);
+      if (aborted_) {
+        verify(0);
+        phase_++;
+        Commit();
+      } else {
+        Prepare();
+      }
       break;
     case Phase::PREPARE:
       verify(phase_ % n_phase == Phase::COMMIT);
-      Decide();
+      Commit();
       break;
     case Phase::COMMIT:
       verify(phase_ % n_phase == Phase::INIT_END);
@@ -143,6 +150,8 @@ void ClassicCoord::Reset() {
   n_finish_req_ = 0;
   n_finish_ack_ = 0;
   handout_acks_.clear();
+  aborted_ = false;
+  committed_ = false;
 //  TxnCommand *ch = (TxnCommand *) cmd_;
 }
 
@@ -186,9 +195,13 @@ void ClassicCoord::Dispatch() {
 }
 
 bool ClassicCoord::AllDispatchAcked() {
-  return std::all_of(handout_acks_.begin(),
-                     handout_acks_.end(),
-                     [](std::pair<innid_t, bool> pair){ return pair.second; });
+  bool ret1 = std::all_of(handout_acks_.begin(),
+                          handout_acks_.end(),
+                          [] (std::pair<innid_t, bool> pair){
+                            return pair.second;
+                          });
+  verify(n_handout_ack_ == n_handout_);
+  return ret1;
 }
 
 void ClassicCoord::DispatchAck(phase_t phase, int res, Command &cmd) {
@@ -200,21 +213,23 @@ void ClassicCoord::DispatchAck(phase_t phase, int res, Command &cmd) {
 //  }
   n_handout_ack_++;
   TxnCommand *ch = (TxnCommand *) cmd_;
+  verify(handout_acks_[cmd.inn_id_] == false);
   handout_acks_[cmd.inn_id_] = true;
 
   Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
             n_handout_ack_, n_handout_, cmd_->id_, cmd.inn_id_);
-
+  verify(res == SUCCESS);
   if (res == REJECT) {
     Log_debug("got REJECT reply for cmd_id: %lx, inn_id: %d; NOT COMMITING",
                cmd.root_id_, cmd.inn_id());
+    aborted_ = true;
     ch->commit_.store(false);
   }
-  if (!ch->commit_.load()) {
+  if (aborted_) {
     if (n_handout_ack_ == n_handout_) {
       Log_debug("received all start acks (at least one is REJECT); calling "
                     "Finish()");
-      this->Decide();
+      GotoNextPhase();
     }
   } else {
     cmd_->Merge(cmd);
@@ -287,7 +302,7 @@ void ClassicCoord::PrepareAck(phase_t phase, Future *fu) {
   }
 }
 
-void ClassicCoord::Decide() {
+void ClassicCoord::Commit() {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   ___TestPhaseThree(cmd_->id_);
   TxnCommand *cmd = (TxnCommand *) cmd_;
@@ -304,10 +319,10 @@ void ClassicCoord::Decide() {
       Log_debug("send commit for txn_id %ld to %ld\n", cmd->id_, rp);
       commo()->SendCommit(rp,
                          cmd_->id_,
-                         std::bind(&ClassicCoord::FinishAck,
-                                   this,
-                                   phase_,
-                                   std::placeholders::_1));
+                          std::bind(&ClassicCoord::CommitAck,
+                                    this,
+                                    phase_,
+                                    std::placeholders::_1));
       site_commit_[rp]++;
     }
   } else {
@@ -317,16 +332,16 @@ void ClassicCoord::Decide() {
       Log_debug("send abort for txn_id %ld to %ld\n", cmd->id_, rp);
       commo()->SendAbort(rp,
                         cmd_->id_,
-                        std::bind(&ClassicCoord::FinishAck,
-                                  this,
-                                  phase_,
-                                  std::placeholders::_1));
+                         std::bind(&ClassicCoord::CommitAck,
+                                   this,
+                                   phase_,
+                                   std::placeholders::_1));
       site_abort_[rp]++;
     }
   }
 }
 
-void ClassicCoord::FinishAck(phase_t phase, Future *fu) {
+void ClassicCoord::CommitAck(phase_t phase, Future *fu) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   if (phase != phase_) return;
   TxnCommand* cmd = (TxnCommand*)cmd_;
