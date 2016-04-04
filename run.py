@@ -725,16 +725,19 @@ class ServerController(object):
         s = "nohup " + self.taskset_func(host_process_counts[process.host_address]) + \
                " ./build/deptran_server " + \
                "-b " + \
-               "-d " + str(self.config['args'].c_duration) + " " + \
-               "-f '" + self.config['args'].config_file.name + "' " + \
-               "-P '" + process.name + "' " + \
-               "-p " + str(self.config['args'].rpc_port + process.id) + " " \
-               "-t " + str(self.config['args'].s_timeout) + " " \
-               "-r '" + self.config['args'].log_dir + "' " + \
-               recording + \
-               "1>'" + self.log_dir + "/proc-" + process.name + ".log' " + \
-               "2>'" + self.log_dir + "/proc-" + process.name + ".err' " + \
-               "&"
+               "-d " + str(self.config['args'].c_duration) + " "
+
+        for fn in self.config['args'].config_files:
+               s += "-f '" + fn + "' "
+
+        s += "-P '" + process.name + "' " + \
+             "-p " + str(self.config['args'].rpc_port + process.id) + " " \
+             "-t " + str(self.config['args'].s_timeout) + " " \
+             "-r '" + self.config['args'].log_dir + "' " + \
+             recording + \
+             "1>'" + self.log_dir + "/proc-" + process.name + ".log' " + \
+             "2>'" + self.log_dir + "/proc-" + process.name + ".err' " + \
+             "&"
 
         host_process_counts[process.host_address] += 1
         cmd.append(s)
@@ -760,7 +763,7 @@ def create_parser():
     parser.add_argument("-f", "--file", dest="config_files", 
             help="read config from FILE, default is sample.yml",
             action='append',
-            default=["./config/sample.yml"], metavar="FILE")
+            default=[], metavar="FILE")
 
     parser.add_argument("-P", "--port", dest="rpc_port", help="port to use", 
             default=5555, metavar="PORT")
@@ -992,19 +995,11 @@ def build_config(options):
         with open(c, 'r') as f:
             yml = yaml.load(f)
             config.update(yml)
-
-    config['args'].config_file = tempfile.NamedTemporaryFile('w',
-                                                             prefix='janus_config',
-                                                             suffix='.yml',
-                                                             dir='./tmp')
-    config_file = config['args'].config_file
-    config_file.write(yaml.dump(config))
-    logging.debug("aggregate config file: {}".format(config_file.name))
     return config
 
 def main():
     logging.basicConfig(format='%(levelname)s: %(asctime)s: %(message)s',
-                        level=logging.INFO)
+                        level=logging.DEBUG)
     server_controller = None
     client_controller = None
     config = None
