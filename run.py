@@ -759,6 +759,10 @@ class ServerController(object):
 def create_parser():
     
     parser = ArgumentParser()
+    
+    parser.add_argument('-n', "--name", dest="experiment_name",
+                        help="name of experiment",
+                        default=None)
 
     parser.add_argument("-f", "--file", dest="config_files", 
             help="read config from FILE, default is sample.yml",
@@ -997,6 +1001,16 @@ def build_config(options):
             config.update(yml)
     return config
 
+def setup_experiment(config):
+    if config['args'].experiment_name is not None:
+        log_file = os.path.join(config['args'].log_dir,
+                                config['args'].experiment_name + ".log")
+        dat_file = os.path.join(config['args'].log_dir,
+                                config['args'].experiment_name + ".dat")
+        config['data_file'] = open(dat_file, 'w')
+        
+
+
 def main():
     logging.basicConfig(format='%(levelname)s: %(asctime)s: %(message)s',
                         level=logging.DEBUG)
@@ -1007,6 +1021,8 @@ def main():
     try:
         config = build_config(create_parser().parse_args())
         
+        setup_experiment(config)
+
         process_infos = get_process_info(config)
         server_controller = ServerController(config, process_infos)
         server_controller.start()
