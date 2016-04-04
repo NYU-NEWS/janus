@@ -3,9 +3,9 @@
 
 namespace deptran {
 
-class TpccChopper;
+class TpccTxn;
 
-class TpccDistChopper: public TpccChopper {
+class TpccDistChopper: public TpccTxn {
  protected:
   virtual void new_order_shard(const char *tb,
                                const std::vector<mdb::Value> &input,

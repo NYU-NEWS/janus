@@ -38,7 +38,7 @@ class TxnOCC: public Txn2PL {
  public:
   TxnOCC(const TxnMgr *mgr, txn_id_t txnid) : Txn2PL(mgr, txnid),
                                               verified_(false),
-                                              policy_(symbol_t::OCC_EAGER) { }
+                                              policy_(symbol_t::OCC_LAZY) { }
 
   TxnOCC(const TxnMgr *mgr,
          txn_id_t txnid,
@@ -51,7 +51,7 @@ class TxnOCC: public Txn2PL {
   }
 
   bool __DebugVersionCheck();
-  bool __DebugCheckReadVersion(row_column_pair row_col, version_t v);
+  bool __DebugCheckReadVersion(row_column_pair row_col, version_t ver_now);
 
   bool is_readonly() const {
     return !snapshot_tables_.empty();

@@ -68,6 +68,7 @@ Frame* Frame::GetFrame(int mode) {
   Frame *frame = nullptr;
   // some built-in mode
   switch (mode) {
+    case MODE_NONE:
     case MODE_MDCC:
     case MODE_2PL:
     case MODE_OCC:
@@ -270,7 +271,7 @@ TxnCommand* Frame::CreateTxnCommand(TxnRequest& req, TxnRegistry* reg) {
       cmd = new TpcaPaymentChopper();
       break;
     case TPCC:
-      cmd = new TpccChopper();
+      cmd = new TpccTxn();
       break;
     case TPCC_DIST_PART:
       cmd = new TpccDistChopper();
@@ -344,6 +345,8 @@ Executor* Frame::CreateExecutor(cmdid_t cmd_id, Scheduler* sched) {
   Executor* exec = nullptr;
   auto mode = Config::GetConfig()->cc_mode_;
   switch (mode) {
+    case MODE_NONE:
+      verify(0);
     case MODE_2PL:
       exec = new TPLExecutor(cmd_id, sched);
       break;
@@ -373,13 +376,17 @@ Scheduler* Frame::CreateScheduler() {
       sch = new mdcc::MdccScheduler();
       break;
     case MODE_NONE:
+      sch = new NoneSched();
+      break;
     case MODE_RPC_NULL:
     case MODE_RCC:
     case MODE_RO6:
+      verify(0);
       break;
     default:
       sch = new Scheduler(mode);
   }
+  verify(sch);
   sch->frame_ = this;
   return sch;
 }
@@ -438,6 +445,7 @@ vector<rrr::Service *> Frame::CreateRpcServices(uint32_t site_id,
       break;
     case MODE_2PL:
     case MODE_OCC:
+    case MODE_NONE:
       result.push_back(new ClassicServiceImpl(dtxn_sched, poll_mgr, scsi));
       break;
     default:

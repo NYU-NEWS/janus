@@ -20,10 +20,10 @@ namespace rococo {
 #define TPCC_DELIVERY_INDEX_ORDER_LINE_TO_CNT(i)        ((i - 2) / 4)
 #define TPCC_DELIVERY_INDEX_ORDER_LINE_TO_CUSTOMER(i)   (i + 1)
 
-TpccChopper::TpccChopper() {
+TpccTxn::TpccTxn() {
 }
 
-void TpccChopper::init(TxnRequest &req) {
+void TpccTxn::init(TxnRequest &req) {
   ws_init_ = req.input_;
   ws_ = ws_init_;
   type_ = req.txn_type_;
@@ -55,7 +55,7 @@ void TpccChopper::init(TxnRequest &req) {
 }
 
 // This is sort of silly. We should have a better way.
-bool TpccChopper::CheckReady() {
+bool TpccTxn::CheckReady() {
   bool ret = false;
   auto &map = txn_reg_->input_vars_[type_];
   for (auto &kv : map) {
@@ -90,7 +90,7 @@ bool TpccChopper::CheckReady() {
   return ret;
 }
 
-bool TpccChopper::start_callback(int pi,
+bool TpccTxn::start_callback(int pi,
                                  int res,
                                  map<int32_t, Value> &output_map) {
   bool ret;
@@ -153,7 +153,8 @@ bool TpccChopper::start_callback(int pi,
   return handler(this, output_map);
 }
 
-void TpccChopper::retry() {
+void TpccTxn::Reset() {
+  TxnCommand::Reset();
   ws_ = ws_init_;
   partition_ids_.clear();
   n_try_++;
@@ -166,7 +167,7 @@ void TpccChopper::retry() {
       NewOrderRetry();
       break;
     case TPCC_PAYMENT:
-      payment_retry();
+      PaymentRetry();
       break;
     case TPCC_ORDER_STATUS:
       OrderStatusRetry();
@@ -175,14 +176,15 @@ void TpccChopper::retry() {
       DeliveryRetry();
       break;
     case TPCC_STOCK_LEVEL:
-      stock_level_retry();
+      StockLevelRetry();
       break;
     default:
       verify(0);
   }
+  verify(n_pieces_input_ready_ > 0);
 }
 
-bool TpccChopper::is_read_only() {
+bool TpccTxn::is_read_only() {
   switch (type_) {
     case TPCC_NEW_ORDER:
       return false;
@@ -199,7 +201,7 @@ bool TpccChopper::is_read_only() {
   }
 }
 
-parid_t TpccChopper::GetPiecePartitionId(innid_t inn_id) {
+parid_t TpccTxn::GetPiecePartitionId(innid_t inn_id) {
   parid_t partition_id;
   auto it = txn_reg_->sharding_input_.find(std::make_pair(type_, inn_id));
   if (it != txn_reg_->sharding_input_.end()) {
@@ -222,7 +224,7 @@ parid_t TpccChopper::GetPiecePartitionId(innid_t inn_id) {
   return partition_id;
 }
 
-int TpccChopper::GetNPieceAll() {
+int TpccTxn::GetNPieceAll() {
   if (type_ == TPCC_STOCK_LEVEL) {
     verify(ws_.count(TPCC_VAR_OL_AMOUNT) > 0 == ws_.count(TPCC_VAR_N_PIECE_ALL) > 0);
     if (ws_.count(TPCC_VAR_OL_AMOUNT) > 0) {
@@ -236,7 +238,7 @@ int TpccChopper::GetNPieceAll() {
   return n_pieces_all_;
 }
 
-TpccChopper::~TpccChopper() {
+TpccTxn::~TpccTxn() {
   //else if (txn_type_ == TPCC_DELIVERY) {
   //    free(delivery_dep_.piece_new_orders);
   //    free(delivery_dep_.piece_orders);

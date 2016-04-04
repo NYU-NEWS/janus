@@ -11,7 +11,7 @@ class TxnCommand;
 class TxnRequest;
 class BatchStartArgsHelper;
 
-class TpccChopper: public TxnCommand {
+class TpccTxn: public TxnCommand {
  public:
   typedef struct {
     size_t ol_cnt;
@@ -69,11 +69,11 @@ class TpccChopper: public TxnCommand {
 
   virtual void PaymentInit(TxnRequest &req);
 
-  virtual void payment_retry();
+  virtual void PaymentRetry();
 
   virtual void StockLevelInit(TxnRequest &req);
 
-  virtual void stock_level_retry();
+  virtual void StockLevelRetry();
 
   // delivery
   virtual void DeliveryInit(TxnRequest &req);
@@ -90,7 +90,7 @@ class TpccChopper: public TxnCommand {
   virtual void OrderStatusRetry();
 
  public:
-  TpccChopper();
+  TpccTxn();
 
   virtual parid_t GetPiecePartitionId(innid_t inn_id);
 
@@ -100,13 +100,13 @@ class TpccChopper: public TxnCommand {
                               map<int32_t, Value> &output);
   virtual bool is_read_only();
 
-  virtual void retry();
+  virtual void Reset();
 
   virtual bool CheckReady();
 
   virtual int GetNPieceAll();
 
-  virtual ~TpccChopper();
+  virtual ~TpccTxn();
 };
 
 }

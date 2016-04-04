@@ -2,7 +2,7 @@
 
 namespace rococo {
 
-void TpccChopper::DeliveryInit(TxnRequest &req) {
+void TpccTxn::DeliveryInit(TxnRequest &req) {
   n_pieces_all_ = 4;
 
 
@@ -27,7 +27,7 @@ void TpccChopper::DeliveryInit(TxnRequest &req) {
   CheckReady();
 }
 
-void TpccChopper::DeliveryRetry() {
+void TpccTxn::DeliveryRetry() {
   status_[TPCC_DELIVERY_0] = WAITING;
   status_[TPCC_DELIVERY_1] = WAITING;
   status_[TPCC_DELIVERY_2] = WAITING;
@@ -112,7 +112,7 @@ void TpccPiece::RegDelivery() {
   } END_PIE
 
 //  BEGIN_CB(TPCC_DELIVERY, TPCC_DELIVERY_0)
-//    TpccChopper *tpcc_ch = (TpccChopper*) ch;
+//    TpccTxn *tpcc_ch = (TpccTxn*) ch;
 //    verify(output.size() == 1);
 //    if (output[TPCC_VAR_O_ID].get_i32() == (i32) -1) { // new_order not found
 //      tpcc_ch->status_[TPCC_DELIVERY_1] = FINISHED;
@@ -161,7 +161,7 @@ void TpccPiece::RegDelivery() {
   } END_PIE
 
 //  BEGIN_CB(TPCC_DELIVERY, TPCC_DELIVERY_1)
-//    TpccChopper *tpcc_ch = (TpccChopper*) ch;
+//    TpccTxn *tpcc_ch = (TpccTxn*) ch;
 //    verify(output.size() == 1);
 //    tpcc_ch->inputs_[TPCC_DELIVERY_3][TPCC_VAR_C_ID] = output[TPCC_VAR_C_ID];
 //    bool b = tpcc_ch->ws_.count(TPCC_VAR_OL_AMOUNT) > 0;
@@ -232,7 +232,7 @@ void TpccPiece::RegDelivery() {
   } END_PIE
 
 //  BEGIN_CB(TPCC_DELIVERY, TPCC_DELIVERY_2)
-//    TpccChopper *tpcc_ch = (TpccChopper*) ch;
+//    TpccTxn *tpcc_ch = (TpccTxn*) ch;
 //    verify(output.size() == 1);
 //    tpcc_ch->inputs_[TPCC_DELIVERY_3][TPCC_VAR_OL_AMOUNT] = output[TPCC_VAR_OL_AMOUNT];
 //    bool b = tpcc_ch->ws_.count(TPCC_VAR_C_ID) > 0;

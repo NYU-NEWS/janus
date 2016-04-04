@@ -91,7 +91,7 @@ class ContainerCommand {
   ContainerCommand* self_cmd_ = nullptr;
   virtual Marshal& ToMarshal(Marshal&) const {verify(0);};
   virtual Marshal& FromMarshal(Marshal&) {verify(0);};
-
+  virtual ~ContainerCommand(){}
 };
 
 

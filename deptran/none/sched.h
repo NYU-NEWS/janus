@@ -13,7 +13,7 @@ class NoneSched: public Scheduler {
   virtual int OnDispatch(const SimpleCommand &cmd,
                          rrr::i32 *res,
                          map<int32_t, Value> *output,
-                         rrr::DeferredReply *defer);
+                         const function<void()>& callback);
 };
 
 }

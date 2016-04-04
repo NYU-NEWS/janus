@@ -2,9 +2,9 @@
 
 namespace rococo {
 
-class TpccChopper;
+class TpccTxn;
 
-class TpccRealDistChopper: public TpccChopper {
+class TpccRealDistChopper: public TpccTxn {
  protected:
   virtual siteid_t GetPiecePar(innid_t inn_id);
 

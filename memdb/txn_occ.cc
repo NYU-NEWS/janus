@@ -43,17 +43,17 @@ bool TxnOCC::version_check() {
 bool TxnOCC::__DebugVersionCheck() {
   for (auto& pair: ver_check_read_) {
     auto& row_col = pair.first;
-    auto& version = pair.second;
+    auto& ver_read = pair.second;
     auto it = ver_check_write_.find(row_col);
     if (it != ver_check_write_.end()) {
-      auto& v2 = it->second;
-      if (version < v2) {
+      auto& ver_write = it->second;
+      if (ver_read < ver_write) {
         Row* r = row_col.row;
         int c = row_col.col_id;
         uint64_t iii = id();
         Log_debug("Txnid %lx, Table Name %s, col_id %d",
                   iii, r->get_table()->Name().c_str(), c);
-        verify(version >= v2);
+        verify(ver_read >= ver_write);
       }
     }
   }
@@ -174,7 +174,8 @@ bool TxnOCC::read_column(Row *row, column_id_t col_id, Value *value) {
                     v_row->get_column_ver(col_id));
     // increase row reference count because later we are going to check its version
     incr_row_refcount(row);
-
+    __DebugCheckReadVersion(row_column_pair(v_row, col_id),
+                            v_row->get_column_ver(col_id));
   } else {
     verify(row->rtti() == symbol_t::ROW_VERSIONED);
   }
@@ -184,11 +185,13 @@ bool TxnOCC::read_column(Row *row, column_id_t col_id, Value *value) {
   return true;
 }
 
-bool TxnOCC::__DebugCheckReadVersion(row_column_pair row_col, version_t v) {
+bool TxnOCC::__DebugCheckReadVersion(row_column_pair row_col,
+                                     version_t ver_now) {
+  // v is current version in database (or the new row)
   auto it = ver_check_read_.find(row_col);
   if (it != ver_check_read_.end()) {
-    auto v2 = it->second;
-    verify(v2 >= v);
+    auto ver_read = it->second;
+    verify(ver_read >= ver_now);
   }
 }
 
@@ -215,16 +218,15 @@ bool TxnOCC::write_column(Row *row, column_id_t col_id, const Value &value) {
   if (row->rtti() == symbol_t::ROW_VERSIONED) {
     VersionedRow *v_row = (VersionedRow *) row;
     if (policy_ == symbol_t::OCC_EAGER) {
+      verify(0);
       v_row->incr_column_ver(col_id);
     }
-
+    version_t ver_now = v_row->get_column_ver(col_id);
     auto row_col = row_column_pair(v_row, col_id);
-    version_t v = v_row->get_column_ver(col_id);
-    __DebugCheckReadVersion(row_col, v);
-    insert_into_map(ver_check_write_, row_col, v);
+    __DebugCheckReadVersion(row_col, ver_now);
+//    insert_into_map(ver_check_write_, row_col, ver_now); // ???
     // increase row reference count because later we are going to check its version
     incr_row_refcount(row);
-
   } else {
     // row must either be FineLockedRow or CoarseLockedRow
     verify(row->rtti() == symbol_t::ROW_VERSIONED);
