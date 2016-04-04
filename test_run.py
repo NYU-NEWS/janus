@@ -25,7 +25,7 @@ def run(m, s, b):
 
     output_path = m + '-' + s + '-' + b + ".res"
     f = open(output_path, "w")
-    r = call([run_app_, "-f", pm, "-f", ps, "-f", pb, "-P", "localhost"], stdout=f, stderr=f)
+    r = call([run_app_, "-f", pm, "-f", ps, "-f", pb, "-P", "localhost", "-d", "10"], stdout=f, stderr=f)
     if r == 0:
         print("%-15s \t%-10s\t %s\t OK" % (m, s, b))
         pass
