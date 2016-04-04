@@ -1,0 +1,8 @@
+
+mode:
+  cc: none # concurrency control
+  ab: none # atomic broadcast
+  batch: false
+  retry: 0
+  ongoing: 1 # per client
+
