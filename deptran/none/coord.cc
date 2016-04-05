@@ -83,6 +83,7 @@ void NoneCoord::GotoNextPhase() {
       verify(phase_ % n_phase == Phase::DISPATCH);
       break;
     case Phase::DISPATCH:
+      committed_ = true;
       verify(phase_ % n_phase == Phase::INIT_END);
       End();
       break;
