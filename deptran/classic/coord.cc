@@ -108,7 +108,7 @@ void ClassicCoord::GotoNextPhase() {
       break;
     case Phase::COMMIT:
       verify(phase_ % n_phase == Phase::INIT_END);
-      if (committed_ || n_retry_ > Config::GetConfig()->max_retry_)
+      if (committed_)
         End();
       else if (aborted_) {
         Restart();
@@ -158,14 +158,19 @@ void ClassicCoord::Reset() {
 
 void ClassicCoord::Restart() {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+  verify(aborted_);
   n_retry_++;
-  Reset();
-  TxnCommand *ch = (TxnCommand*) cmd_;
-  ch->Reset();
-  double last_latency = ch->last_attempt_latency();
+  TxnCommand *txn = (TxnCommand*) cmd_;
+  double last_latency = txn->last_attempt_latency();
   if (ccsi_)
-    ccsi_->txn_retry_one(this->thread_id_, ch->type_, last_latency);
-  GotoNextPhase();
+    ccsi_->txn_retry_one(this->thread_id_, txn->type_, last_latency);
+  if (n_retry_ > Config::GetConfig()->max_retry_) {
+    End();
+  } else {
+    Reset();
+    txn->Reset();
+    GotoNextPhase();
+  }
 }
 
 void ClassicCoord::Dispatch() {
@@ -374,13 +379,11 @@ void ClassicCoord::End() {
     txn->reply_.res_ = SUCCESS;
     this->report(txn_reply_buf, last_latency
 #ifdef TXN_STAT
-        , ch
+        , txn
 #endif // ifdef TXN_STAT
     );
   } else if (aborted_) {
     txn->reply_.res_ = REJECT;
-    if (ccsi_)
-      ccsi_->txn_retry_one(this->thread_id_, txn->type_, last_latency);
   } else
     verify(0);
   txn->callback_(txn_reply_buf);

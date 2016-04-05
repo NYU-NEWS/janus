@@ -67,13 +67,13 @@ std::pair<int, ClassicProxy*> Communicator::ConnectToSite(Config::SiteInfo &site
   double elapsed;
   int attempt = 0;
   do {
-    Log::debug("connect to site: %s (attempt %d)", addr.c_str(), attempt++);
+    Log_debug("connect to site: %s (attempt %d)", addr.c_str(), attempt++);
     auto connect_result = rpc_cli->connect(addr.c_str());
     if (connect_result == SUCCESS) {
       ClassicProxy *rpc_proxy = new ClassicProxy(rpc_cli);
       rpc_clients_.insert(std::make_pair(site.id, rpc_cli));
       rpc_proxies_.insert(std::make_pair(site.id, rpc_proxy));
-      Log::info("connect to site: %s success!", addr.c_str());
+      Log_debug("connect to site: %s success!", addr.c_str());
       return std::make_pair(SUCCESS, rpc_proxy);
     } else {
       std::this_thread::sleep_for(milliseconds(CONNECT_TIMEOUT_MS / 20));
