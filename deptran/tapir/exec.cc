@@ -27,7 +27,7 @@ void TapirExecutor::FastAccept(int* res) {
         // grab read lock.
         if (!row->rlock_row_by(this->cmd_id_)) {
           *res = REJECT;
-          verify(0);
+//          verify(0);
         } else {
           // remember locks.
           locked_rows_.insert(row);
