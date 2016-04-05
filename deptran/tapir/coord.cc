@@ -69,6 +69,7 @@ void TapirCoord::Reset() {
 
 void TapirCoord::FastAccept() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
+  Log_debug("send out fast accept for cmd_id: %llx", cmd_->id_);
   for (auto par_id : cmd_->GetPartitionIds()) {
     commo()->BroadcastFastAccept(par_id,
                                  cmd_->id_,

@@ -6,10 +6,11 @@
 
 namespace rococo {
 
-int TapirSched::OnHandoutRequest(const SimpleCommand &cmd,
-                                 int *res,
-                                 map<int32_t, Value> *output,
-                                 const function<void()> &callback) {
+int TapirSched::OnDispatch(const SimpleCommand &cmd,
+                           int *res,
+                           map<int32_t, Value> *output,
+                           const function<void()> &callback) {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
 //  auto exec = (TapirExecutor*) GetOrCreateExecutor(cmd.root_id_);
   auto exec = GetOrCreateExecutor(cmd.root_id_);
 //  verify(0);
@@ -23,6 +24,8 @@ int TapirSched::OnHandoutRequest(const SimpleCommand &cmd,
 int TapirSched::OnFastAccept(cmdid_t cmd_id,
                              int* res,
                              const function<void()>& callback) {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
+  Log_debug("receive fast accept for cmd_id: %llx", cmd_id);
   auto exec = (TapirExecutor*) GetOrCreateExecutor(cmd_id);
   exec->FastAccept(res);
   callback();
@@ -32,6 +35,7 @@ int TapirSched::OnFastAccept(cmdid_t cmd_id,
 int TapirSched::OnDecide(cmdid_t cmd_id,
                          int decision,
                          const function<void()>& callback) {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto exec = (TapirExecutor*) GetOrCreateExecutor(cmd_id);
   if (decision == TapirCoord::COMMIT) {
     exec->Commit();

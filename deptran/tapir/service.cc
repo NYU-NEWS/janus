@@ -11,7 +11,7 @@ void TapirServiceImpl::Handout(const SimpleCommand& cmd,
                                rrr::i32* res,
                                map<int32_t, Value>* output,
                                rrr::DeferredReply* defer) {
-  sched_->OnHandoutRequest(cmd, res, output, [defer] () {defer->reply();});
+  sched_->OnDispatch(cmd, res, output, [defer]() { defer->reply(); });
 }
 
 void TapirServiceImpl::Prepare(rrr::DeferredReply* defer) {
