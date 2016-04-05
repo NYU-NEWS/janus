@@ -8,15 +8,16 @@ namespace rococo {
 #define MAGIC_SACCEPT_BALLOT 2;
 
 class TapirCommo;
-class TapirCoord : public NoneCoord {
+class TapirCoord : public ClassicCoord {
  public:
-  enum Decision { UNKNOWN, COMMIT, ABORT };
+  enum Phase {INIT_END, DISPATCH, FAST_ACCEPT, DECIDE};
+  enum Decision { UNKNOWN, COMMIT, ABORT};
   Decision decision_ = UNKNOWN;
   map<parid_t, int> n_accept_oks_ = {};
   map<parid_t, int> n_accpet_rejects_ = {};
   map<parid_t, int> n_fast_accept_oks_ = {};
   map<parid_t, int> n_fast_accept_rejects_ = {};
-  using NoneCoord::NoneCoord;
+  using ClassicCoord::ClassicCoord;
 
 //  void do_one(TxnRequest &) override;
   void Reset() override;
@@ -37,7 +38,8 @@ class TapirCoord : public NoneCoord {
   void Accept();
   void AcceptAck(phase_t phase, parid_t par_id, Future *fu);
 
-  void restart(TxnCommand *);
+  void Restart() override;
+  void GotoNextPhase() override;
 
   int GetFastQuorum(parid_t par_id);
   int GetSlowQuorum(parid_t par_id);

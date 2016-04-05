@@ -14,11 +14,8 @@ TapirCommo* TapirCoord::commo() {
   return dynamic_cast<TapirCommo*>(commo_);
 }
 
-
 void TapirCoord::Dispatch() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-//  phase_++;
-
   int cnt = 0;
   while (cmd_->HasMoreSubCmdReadyNotOut()) {
     auto subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd();
@@ -31,7 +28,7 @@ void TapirCoord::Dispatch() {
     handout_acks_[subcmd->inn_id()] = false;
     commo()->SendHandout(*subcmd,
                          this,
-                         std::bind(&ThreePhaseCoordinator::DispatchAck,
+                         std::bind(&ClassicCoord::DispatchAck,
                                    this,
                                    phase_,
                                    std::placeholders::_1,
@@ -57,10 +54,10 @@ void TapirCoord::DispatchAck(phase_t phase, int res, Command &cmd) {
                   " n_started_: %d, n_pieces: %d",
               cmd_->id_, ch->n_pieces_out_, ch->GetNPieceAll());
     Dispatch();
-  } else if (AllHandoutAckReceived()) {
+  } else if (AllDispatchAcked()) {
     Log_debug("receive all handout acks, txn_id: %ld; START PREPARE",
               cmd_->id_);
-    FastAccept();
+    GotoNextPhase();
   }
 }
 
@@ -72,7 +69,6 @@ void TapirCoord::Reset() {
 
 void TapirCoord::FastAccept() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  phase_++;
   for (auto par_id : cmd_->GetPartitionIds()) {
     commo()->BroadcastFastAccept(par_id,
                                  cmd_->id_,
@@ -114,13 +110,13 @@ void TapirCoord::FastAcceptAck(phase_t phase, parid_t par_id, Future *fu) {
   if (FastQuorumPossible()) {
     if (AllFastQuorumReached()) {
       decision_ = COMMIT;
-      Decide();
+      GotoNextPhase();
     } else {
       // do nothing and wait for future ack.
     }  
   } else {
       decision_ = ABORT;
-      Decide();
+      GotoNextPhase();
   }
 }
 
@@ -139,7 +135,6 @@ bool TapirCoord::FastQuorumPossible() {
 
 void TapirCoord::Accept() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  phase_++;
   ballot_t ballot = MAGIC_SACCEPT_BALLOT;
   auto decision = ABORT;
   for (auto par_id : cmd_->GetPartitionIds()) {
@@ -156,26 +151,23 @@ void TapirCoord::Accept() {
 }
 
 void TapirCoord::AcceptAck(phase_t phase, parid_t pid, Future* fu) {
+  if (phase_ != phase) return;
   int res;
   fu->get_reply() >> res;
   verify(res == SUCCESS);
   n_accept_oks_[pid]++;
   if (n_accept_oks_[pid] >= GetSlowQuorum(pid)) {
-    Decide();
+    GotoNextPhase();
   } else {
     // TODO keep waiting.
   }
 }
 
-void TapirCoord::restart(TxnCommand* cmd) {
+void TapirCoord::Restart() {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-  Reset();
-  cmd->retry();
-  double last_latency = cmd->last_attempt_latency();
-  if (ccsi_) ccsi_->txn_retry_one(this->thread_id_, cmd->type_, last_latency);
   cmd_->root_id_ = this->next_txn_id();
   cmd_->id_ = cmd_->root_id_;
-  Dispatch();
+  ClassicCoord::Restart();
 }
 
 int TapirCoord::GetFastQuorum(parid_t par_id) {
@@ -219,7 +211,6 @@ bool TapirCoord::AllFastQuorumReached() {
 }
 
 void TapirCoord::Decide() {
-  phase_++;
   verify(decision_ != UNKNOWN);
   auto pars = cmd_->GetPartitionIds();
   Log_debug("send out decide request, cmd_id: %lx, ", cmd_->id_);
@@ -227,19 +218,50 @@ void TapirCoord::Decide() {
     commo()->BroadcastDecide(par_id, cmd_->id_, decision_);
   }
   if (decision_ == COMMIT) {
-    Log_debug("commit and callback, cmd_id: %lx, ", cmd_->id_);
-    TxnCommand* cmd = (TxnCommand*)cmd_;
-    auto& txn_reply = cmd->get_reply();
-    verify(cmd->callback_);
-    cmd->callback_(txn_reply);
+    committed_ = true;
+    GotoNextPhase();
   } else if (decision_ == ABORT) {
+    aborted_ = true;
     // TODO retry if abort.
-    Reset();
-    TxnCommand* cmd = (TxnCommand*)cmd_;
-    cmd->retry();
-    this->restart(cmd);
+    GotoNextPhase();
   } else {
     verify(0);
+  }
+}
+
+void TapirCoord::GotoNextPhase() {
+  int n_phase = 4;
+  switch (phase_++ % n_phase) {
+    case Phase::INIT_END:
+      Dispatch();
+      verify(phase_ % n_phase == Phase::DISPATCH);
+      break;
+    case Phase::DISPATCH:
+      verify(phase_ % n_phase == Phase::FAST_ACCEPT);
+      FastAccept();
+//      verify(!committed_);
+//      if (aborted_) {
+//        phase_++;
+//        Commit();
+//      } else {
+//        Prepare();
+//      }
+      break;
+    case Phase::FAST_ACCEPT:
+      verify(phase_ % n_phase == Phase::DECIDE);
+      Decide();
+      break;
+    case Phase::DECIDE:
+      verify(phase_ % n_phase == Phase::INIT_END);
+      if (committed_)
+        End();
+      else if (aborted_)
+        Restart();
+      else
+        verify(0);
+      break;
+    default:
+      verify(0);
   }
 }
 

@@ -1,0 +1,6 @@
+mode:
+  cc: tapir # concurrency control
+  ab: tapir # atomic broadcast
+  batch: false
+  retry: 0
+  ongoing: 1 # per client
