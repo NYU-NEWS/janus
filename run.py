@@ -29,6 +29,9 @@ from simplerpc.marshal import Marshal
 from deptran.rcc_rpc import ServerControlProxy
 from deptran.rcc_rpc import ClientControlProxy
 
+LOG_LEVEL = logging.DEBUG
+LOG_FILE_LEVEL = logging.DEBUG
+logger = logging.getLogger('janus') 
 
 cwd = os.getcwd()
 deptran_home, ff = os.path.split(os.path.realpath(__file__))
@@ -305,7 +308,7 @@ class ClientController(object):
                                       SiteInfo.SiteType.Client)
         for site in sites:
             site.connect_rpc(self.timeout)
-            logging.info("Connected to client site %s @ %s", site.name, site.process.host_address)
+            logger.info("Connected to client site %s @ %s", site.name, site.process.host_address)
 
         barriers = []
         for site in sites:
@@ -313,21 +316,21 @@ class ClientController(object):
         
         for barrier in barriers:
             barrier.wait()
-        logging.info("Clients all ready")
+        logger.info("Clients all ready")
 
         res = sites[0].process.client_rpc_proxy.sync_client_get_txn_names()
         for k, v in res.items():
-            logging.debug("txn: %s - %s", v, k)
+            logger.debug("txn: %s - %s", v, k)
             self.txn_names[k] = v
 
         self.start_client()
-        logging.info("Clients started")
+        logger.info("Clients started")
 
         start = time.time()
         try:
             self.benchmark_record(do_sample, do_sample_lock)
         finally:
-            logging.info("Duration: {:.2f} seconds".format(time.time() - start))
+            logger.info("Duration: {:.2f} seconds".format(time.time() - start))
 
         print "Benchmark finished\n"
 
@@ -345,7 +348,7 @@ class ClientController(object):
         for future in futures:
             future.wait()
 
-        logging.info("client start send successfully.")
+        logger.info("client start send successfully.")
 
         self.start_time = time.time()
 
@@ -358,7 +361,7 @@ class ClientController(object):
         rpc_proxy = list(rpc_proxy)
     
         while (len(rpc_proxy) != len(self.finish_set)):
-            logging.info("top client heartbeat; timeout {}".format(self.timeout))
+            logger.info("top client heartbeat; timeout {}".format(self.timeout))
             for k in self.txn_infos.keys():
                 self.txn_infos[k].clear()
             self.start_txn = 0
@@ -398,7 +401,7 @@ class ClientController(object):
                         period_time,
                         res.txn_info[txn_type].num_try)
 
-                logging.debug("timing from server: run_sec {:.2f}; run_nsec {:.2f}".format(res.run_sec, res.run_nsec))
+                logger.debug("timing from server: run_sec {:.2f}; run_nsec {:.2f}".format(res.run_sec, res.run_nsec))
                 self.run_sec += res.run_sec
                 self.run_nsec += res.run_nsec
                 self.n_asking += res.n_asking
@@ -408,7 +411,7 @@ class ClientController(object):
 
             self.run_sec /= len(futures)
             self.run_nsec /= len(futures)
-            logging.debug("avg timing from {} servers: run_sec {:.2f}; run_nsec {:.2f}".format(len(futures), res.run_sec, res.run_nsec))
+            logger.debug("avg timing from {} servers: run_sec {:.2f}; run_nsec {:.2f}".format(len(futures), res.run_sec, res.run_nsec))
 
             self.cur_time = time.time()
             need_break = self.print_stage_result(do_sample, do_sample_lock)
@@ -427,7 +430,7 @@ class ClientController(object):
         total_time = (self.run_sec + self.run_nsec / ONE_BILLION)
 
         progress = int(round(100 * total_time / self.duration))
-        logging.info("Progress: {}".format(progress))
+        logger.info("Progress: {}".format(progress))
 
         if (self.print_max):
             self.print_max = False
@@ -445,7 +448,7 @@ class ClientController(object):
                     v.set_mid_status()
         else:
             if (progress >= 60):
-                logging.info("done with recording period")
+                logger.info("done with recording period")
                 self.recording_period = False
                 self.print_max = True
                 do_sample_lock.acquire()
@@ -461,7 +464,7 @@ class ClientController(object):
             rows = self.txn_infos[txn_type].get_res(interval_time, total_time, self.recording_period, self.commit_txn, interval_commits, do_sample, do_sample_lock)
             total_table.append(rows[0])
             interval_table.append(rows[1])
-        logging.info("total_time: {}".format(total_time))
+        logger.info("total_time: {}".format(total_time))
         total_table.append(["----", "Total", self.start_txn, self.total_txn, self.total_try, self.commit_txn, int(round(self.commit_txn / total_time))])
         interval_total_row = ["----", "Total", self.start_txn - self.pre_start_txn, self.total_txn - self.pre_total_txn, self.total_try - self.pre_total_try, interval_commits, int(round((self.commit_txn - self.pre_commit_txn) / interval_time))]
         interval_total_row.extend([0.0 for x in g_latencies_header])
@@ -478,7 +481,7 @@ class ClientController(object):
         output_str += tabulate(interval_table, headers=interval_header) + "\n"
         output_str += "\tTotal asking finish: " + str(self.n_asking) + "\n"
         output_str += "----------------------------------------------------------------------\n"
-        logging.info(output_str)
+        logger.info(output_str)
 
         self.pre_start_txn = self.start_txn
         self.pre_total_txn = self.total_txn
@@ -497,7 +500,7 @@ class ClientController(object):
             return False
 
     def client_kill(self):
-        logging.info("killing clients ...")
+        logger.info("killing clients ...")
         sites = ProcessInfo.get_sites(self.process_infos, SiteInfo.SiteType.Client)
         hosts = { s.process.host_address for s in sites }
         for host in hosts:
@@ -548,24 +551,24 @@ class ServerController(object):
         if (taskset == 1):
             # set task on CPU 1
             self.taskset_func = lambda x: "taskset -c " + str(2 * x + 16)
-            logging.info("Setting servers on CPU 1")
+            logger.info("Setting servers on CPU 1")
         elif (taskset == 2): 
             # set task on CPU 0, odd number cores, no overlapping with irq cores
             self.taskset_func = lambda x: "taskset -c " + str(2 * x + 1)
-            logging.info("Setting servers on CPU 0, odd number cores")
+            logger.info("Setting servers on CPU 0, odd number cores")
         elif (taskset == 3): 
             # set task on CPU 0, even number cores, overlapping with irq cores
             self.taskset_func = lambda x: "taskset -c " + str(2 * x)
-            logging.info("Setting servers on CPU 0, even number cores")
+            logger.info("Setting servers on CPU 0, even number cores")
         else:
             self.taskset_func = lambda x: ""
-            logging.info("No taskset, auto scheduling")
+            logger.info("No taskset, auto scheduling")
         self.pre_statistics = dict()
         self.pre_time = time.time()
 
     def server_kill(self):
         hosts = { pi.host_address for pi in self.process_infos.itervalues() }
-        logging.info("killing servers on %s", ', '.join(hosts))
+        logger.info("killing servers on %s", ', '.join(hosts))
         for host in hosts:
             cmd = "killall deptran_server"
             subprocess.call(['ssh', '-f', host, cmd])
@@ -583,15 +586,15 @@ class ServerController(object):
         server_process.daemon = False
         server_process.start()
 
-        logging.info("Waiting for server init ...")
+        logger.info("Waiting for server init ...")
         cond.acquire()
         while (s_init_finish.value == 0):
             cond.wait()
         if s_init_finish.value == 5:
-            logging.error("Waiting for server init ... FAIL")
+            logger.error("Waiting for server init ... FAIL")
             return None 
         cond.release()
-        logging.info("Waiting for server init ... Done")
+        logger.info("Waiting for server init ... Done")
         
         # let all clients start running the benchmark
         client_controller.client_run(do_sample, do_sample_lock)
@@ -615,12 +618,12 @@ class ServerController(object):
                                           SiteInfo.SiteType.Server)
             for site in sites:
                 site.connect_rpc(self.timeout)
-                logging.info("Connected to site %s @ %s", site.name, site.process.host_address)
+                logger.info("Connected to site %s @ %s", site.name, site.process.host_address)
 
             for site in sites:
                 while (site.rpc_proxy.sync_server_ready() != 1):
                     time.sleep(1) # waiting for server to initialize
-                logging.info("site %s ready", site.name)
+                logger.info("site %s ready", site.name)
 
             cond.acquire()
             s_init_finish.value = 1
@@ -632,7 +635,7 @@ class ServerController(object):
             avg_cpu_util = 0.0
             sample_result = []
             while (True):
-                logging.debug("top server heartbeat loop")
+                logger.debug("top server heartbeat loop")
                 do_statistics = False
                 do_sample_lock.acquire()
                 if do_sample.value == 1:
@@ -649,7 +652,7 @@ class ServerController(object):
                 futures = []
                 
                 for site in sites:
-                    logging.debug("ping %s", site.name)
+                    logger.debug("ping %s", site.name)
                     if do_statistics:
                         futures.append(site.rpc_proxy.async_server_heart_beat_with_data())
                     else:
@@ -746,24 +749,23 @@ class ServerController(object):
     def start(self):
         # this current starts all the processes
         # todo: separate this into a class that starts and stops deptran
-        logging.debug(self.process_infos)
+        logger.debug(self.process_infos)
 
         host_process_counts = { host_address: 0 for host_address in self.config['host'].itervalues() }
 
         for process_name, process in self.process_infos.iteritems():
-            logging.info("starting %s @ %s", process_name, process.host_address)
+            logger.info("starting %s @ %s", process_name, process.host_address)
             cmd = self.gen_process_cmd(process, host_process_counts)
-            logging.debug("%s", cmd)
+            logger.debug("%s", cmd)
             subprocess.call(['ssh', '-f',process.host_address, cmd])
 
 def create_parser():
-    
     parser = ArgumentParser()
     
     parser.add_argument('-n', "--name", dest="experiment_name",
                         help="name of experiment",
                         default=None)
-
+    
     parser.add_argument("-f", "--file", dest="config_files", 
             help="read config from FILE, default is sample.yml",
             action='append',
@@ -820,7 +822,7 @@ def create_parser():
     parser.add_argument("-H", "--hosts", dest="hosts_path", 
             help="hosts path", default="./config/hosts-local", 
             metavar="HOSTS_PATH")
-    logging.debug(parser) 
+    logger.debug(parser) 
     return parser
     
 class TrialConfig:
@@ -842,15 +844,15 @@ class TrialConfig:
         
     def check_correctness(self):
         if self.c_single_server not in [0, 1, 2]:
-            logging.error("Invalid single server argument.")
+            logger.error("Invalid single server argument.")
             return False
             
         if not os.path.exists(self.config_path):
-            logging.error("Config path incorrect.")
+            logger.error("Config path incorrect.")
             return False
         
         if not os.path.exists(self.hosts_path):
-            logging.error("Hosts path incorrect.")
+            logger.error("Hosts path incorrect.")
             return False
         
         return True
@@ -887,24 +889,24 @@ class SiteInfo:
             self.port = int(port)
             self.rpc_port = self.port + self.CTRL_PORT_DELTA
         else:
-            logging.error("server definition should have a port")
+            logger.error("server definition should have a port")
             sys.exit(1) 
 
 
     def connect_rpc(self, timeout):
         if self.site_type == SiteInfo.SiteType.Client:
             if self.process.client_rpc_proxy is not None:
-                logging.info("client control rpc already connected for site %s",
+                logger.info("client control rpc already connected for site %s",
                              self.name)
                 self.rpc_proxy = self.process.client_rpc_proxy
                 return True
-            logging.info("start connect to client ctrl rpc for site %s @ %s:%s", 
+            logger.info("start connect to client ctrl rpc for site %s @ %s:%s", 
                      self.name, 
                      self.process.host_address, 
                      self.process.rpc_port)
             port = self.process.rpc_port
         else:
-            logging.info("start connect to server ctrl rpc for site %s @ %s:%s", 
+            logger.info("start connect to server ctrl rpc for site %s @ %s:%s", 
                      self.name, 
                      self.process.host_address, 
                      self.rpc_port)
@@ -1001,26 +1003,45 @@ def build_config(options):
             config.update(yml)
     return config
 
+
+def setup_logging(log_file_path=None):
+    root_logger = logging.getLogger('')
+    root_logger.setLevel(LOG_FILE_LEVEL)
+
+    if log_file_path is not None:
+        print("logging to file: %s" % log_file_path)
+        fh = logging.FileHandler(log_file_path)
+        fh.setLevel(LOG_FILE_LEVEL)
+        formatter = logging.Formatter(fmt='%(levelname)s: %(asctime)s: %(message)s')
+        fh.setFormatter(formatter)
+        root_logger.addHandler(fh)
+
+    ch = logging.StreamHandler()
+    ch.setLevel(LOG_LEVEL)
+    formatter = logging.Formatter(fmt='%(levelname)s: %(message)s')
+    ch.setFormatter(formatter)
+    root_logger.addHandler(ch)
+    print('logger initialized')
+
+
 def setup_experiment(config):
+    log_path = None
     if config['args'].experiment_name is not None:
-        log_file = os.path.join(config['args'].log_dir,
+        log_path = os.path.join(config['args'].log_dir,
                                 config['args'].experiment_name + ".log")
         dat_file = os.path.join(config['args'].log_dir,
                                 config['args'].experiment_name + ".dat")
         config['data_file'] = open(dat_file, 'w')
-        
+    setup_logging(log_path)
 
 
 def main():
-    logging.basicConfig(format='%(levelname)s: %(asctime)s: %(message)s',
-                        level=logging.DEBUG)
     server_controller = None
     client_controller = None
     config = None
 
     try:
         config = build_config(create_parser().parse_args())
-        
         setup_experiment(config)
 
         process_infos = get_process_info(config)
@@ -1039,7 +1060,7 @@ def main():
     except Exception:
         traceback.print_exc()
     finally:
-        logging.info("shutting down...")
+        logger.info("shutting down...")
         if server_controller is not None:
             try:
                 server_controller.server_kill()
