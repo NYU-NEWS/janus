@@ -35,26 +35,13 @@ class Coordinator : public CoordinatorBase {
   bool batch_optimal_ = false;
   bool retry_wait_;
 
-  bool committed_ = false;
-  bool aborted_ = false;
-  uint32_t n_handout_ = 0;
-  uint32_t n_handout_ack_ = 0;
-  uint32_t n_prepare_req_ = 0;
-  uint32_t n_prepare_ack_ = 0;
-  uint32_t n_finish_req_ = 0;
-  uint32_t n_finish_ack_ = 0;
-
   std::atomic<uint64_t> next_pie_id_;
   std::atomic<uint64_t> next_txn_id_;
-
-  std::function<void()> commit_callback_ = [] () {verify(0);};
-  std::function<void()> exe_callback_ = [] () {verify(0);};
 
   std::recursive_mutex mtx_;
   Recorder *recorder_;
   Command *cmd_ = nullptr;
 //  cmdid_t cmd_id_;
-  CoordinatorStage stage_ = HANDOUT;
   phase_t phase_ = 0;
   map<innid_t, bool> handout_acks_ = {};
   map<innid_t, bool> handout_outs_ = {};
@@ -63,10 +50,25 @@ class Coordinator : public CoordinatorBase {
   Communicator* commo_ = nullptr;
   Frame* frame_ = nullptr;
 
+  // should be reset on issueing a new request
+  uint32_t n_retry_ = 0;
+  // below should be reset on retry.
+  bool committed_ = false;
+  bool aborted_ = false;
+  uint32_t n_handout_ = 0;
+  uint32_t n_handout_ack_ = 0;
+  uint32_t n_prepare_req_ = 0;
+  uint32_t n_prepare_ack_ = 0;
+  uint32_t n_finish_req_ = 0;
+  uint32_t n_finish_ack_ = 0;
   std::vector<int> site_prepare_;
   std::vector<int> site_commit_;
   std::vector<int> site_abort_;
   std::vector<int> site_piece_;
+  std::function<void()> commit_callback_ = [] () {verify(0);};
+  std::function<void()> exe_callback_ = [] () {verify(0);};
+  // above should be reset
+
 #ifdef TXN_STAT
   typedef struct txn_stat_t {
     uint64_t                             n_serv_tch;

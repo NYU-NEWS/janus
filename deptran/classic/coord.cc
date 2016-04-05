@@ -50,6 +50,7 @@ void ClassicCoord::do_one(TxnRequest &req) {
   cmd_ = cmd;
   cmd_->root_id_ = this->next_txn_id();
   cmd_->id_ = cmd_->root_id_;
+  n_retry_ = 0;
   Reset(); // In case of reuse.
 
   Log_debug("do one request txn_id: %ld\n", cmd_->id_);
@@ -107,10 +108,11 @@ void ClassicCoord::GotoNextPhase() {
       break;
     case Phase::COMMIT:
       verify(phase_ % n_phase == Phase::INIT_END);
-      if (committed_)
+      if (committed_ || n_retry_ > Config::GetConfig()->max_retry_)
         End();
-      else if (aborted_)
+      else if (aborted_) {
         Restart();
+      }
       else
         verify(0);
       break;
@@ -156,6 +158,7 @@ void ClassicCoord::Reset() {
 
 void ClassicCoord::Restart() {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+  n_retry_++;
   Reset();
   TxnCommand *ch = (TxnCommand*) cmd_;
   ch->Reset();
@@ -365,20 +368,28 @@ void ClassicCoord::CommitAck(phase_t phase, Future *fu) {
 
 void ClassicCoord::End() {
   TxnCommand* txn = (TxnCommand*) cmd_;
-  txn->reply_.res_ = SUCCESS;
   TxnReply& txn_reply_buf = txn->get_reply();
   double    last_latency  = txn->last_attempt_latency();
-  this->report(txn_reply_buf, last_latency
+  if (committed_) {
+    txn->reply_.res_ = SUCCESS;
+    this->report(txn_reply_buf, last_latency
 #ifdef TXN_STAT
-      , ch
+        , ch
 #endif // ifdef TXN_STAT
-  );
+    );
+  } else if (aborted_) {
+    txn->reply_.res_ = REJECT;
+    if (ccsi_)
+      ccsi_->txn_retry_one(this->thread_id_, txn->type_, last_latency);
+  } else
+    verify(0);
   txn->callback_(txn_reply_buf);
   delete txn;
+
 }
 
 void ClassicCoord::report(TxnReply &txn_reply,
-                                   double last_latency
+                          double last_latency
 #ifdef TXN_STAT
     , TxnChopper *ch
 #endif // ifdef TXN_STAT
