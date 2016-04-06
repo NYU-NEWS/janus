@@ -2,6 +2,11 @@
 #include "__dep__.h"
 #include "constants.h"
 
+#define CMD_TPC_PREPARE (1)
+#define CMD_TPC_COMMIT  (2)
+#define CMD_SIMPLE      (100)
+#define CMD_TXN         (200)
+
 namespace rococo {
 /**
  * This is the command context to exchange between

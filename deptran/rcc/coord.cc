@@ -27,6 +27,7 @@ void RccCoord::PreDispatch() {
   auto dispatch = txn->is_read_only() ?
                   std::bind(&RccCoord::DispatchRo, this) :
                   std::bind(&RccCoord::Dispatch, this);
+  dispatch = std::bind(&RccCoord::Dispatch, this);
   if (recorder_) {
     std::string log_s;
     // TODO get appropriate log

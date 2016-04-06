@@ -4,8 +4,6 @@
 
 namespace rococo {
 
-#define CMD_TPC_PREPARE (1)
-#define CMD_TPC_COMMIT  (2)
 
 class TxnCommand;
 class TpcPrepareCommand : public ContainerCommand {

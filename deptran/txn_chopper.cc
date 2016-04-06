@@ -205,4 +205,44 @@ void TxnRequest::get_log(i64 tid, std::string &log) {
   }
 }
 
+Marshal& TxnCommand::ToMarshal(Marshal& m) const {
+  m << ws_;
+  m << ws_init_;
+  m << inputs_;
+  m << output_size_;
+  m << p_types_;
+  m << sharding_;
+  m << status_;
+// FIXME
+//  m << cmd_;
+  m << partition_ids_;
+  m << n_pieces_all_;
+  m << n_pieces_input_ready_;
+  m << n_pieces_replied_;
+  m << n_pieces_out_;
+  m << n_finished_;
+  m << max_try_;
+  m << n_try_;
+}
+
+Marshal& TxnCommand::FromMarshal(Marshal& m) {
+  m >> ws_;
+  m >> ws_init_;
+  m >> inputs_;
+  m >> output_size_;
+  m >> p_types_;
+  m >> sharding_;
+  m >> status_;
+// FIXME
+//  m >> cmd_;
+  m >> partition_ids_;
+  m >> n_pieces_all_;
+  m >> n_pieces_input_ready_;
+  m >> n_pieces_replied_;
+  m >> n_pieces_out_;
+  m >> n_finished_;
+  m >> max_try_;
+  m >> n_try_;
+}
+
 } // namespace rcc

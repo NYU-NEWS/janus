@@ -56,7 +56,7 @@ class TxnCommand: public ContainerCommand {
 
   double pre_time_;
 
-  bool early_return_;
+  bool early_return_ = false;
  protected:
   template<class T>
   T ChooseRandom(const std::vector<T>& v) {
@@ -65,20 +65,16 @@ class TxnCommand: public ContainerCommand {
  public:
   txnid_t txn_id_; // TODO obsolete
 
-  TxnRegistry *txn_reg_ = nullptr;
-
-//  Graph<TxnInfo> gra_;
-
   map<int32_t, Value> ws_ = {}; // workspace.
   map<int32_t, Value> ws_init_ = {};
   map<int32_t, map<int32_t, Value> > inputs_;  // input of each piece.
   map<int32_t, int32_t> output_size_;
   map<int32_t, cmdtype_t> p_types_;                  // types of each piece.
   map<int32_t, parid_t> sharding_;
-  std::atomic<bool> commit_;
-  map<int32_t, CommandStatus> status_; // -1 waiting; 0 ready; 1 ongoing; 2 finished;
+  map<int32_t, int32_t> status_; // -1 waiting; 0 ready; 1 ongoing; 2 finished;
   map<int32_t, ContainerCommand*> cmd_;
   std::set<parid_t> partition_ids_;
+  std::atomic<bool> commit_;
 
   /** server involved*/
 
@@ -92,7 +88,8 @@ class TxnCommand: public ContainerCommand {
   int max_try_ = 0;
   int n_try_ = 0;
 
-  Sharding *sss_;
+  TxnRegistry *txn_reg_ = nullptr;
+  Sharding *sss_ = nullptr;
 
   std::function<void(TxnReply &)> callback_;
   TxnReply reply_;
@@ -142,6 +139,10 @@ class TxnCommand: public ContainerCommand {
     return sharding_[inn_id];
   }
   virtual bool IsOneRound();
+
+  Marshal& ToMarshal(Marshal& m) const override;
+  Marshal& FromMarshal(Marshal& m) override;
+
   inline bool can_retry() {
     return (max_try_ == 0 || n_try_ < max_try_);
   }
