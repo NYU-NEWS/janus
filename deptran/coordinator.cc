@@ -55,6 +55,10 @@ Coordinator::~Coordinator() {
              site_commit_[i], site_abort_[i]);
   }
 
+  if (commo_) {
+    delete commo_;
+    commo_ = nullptr;
+  }
 
   if (recorder_) delete recorder_;
 #ifdef TXN_STAT

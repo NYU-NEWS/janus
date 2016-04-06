@@ -17,9 +17,9 @@ class ClassicCoord : public Coordinator {
                         uint32_t thread_id);
 
   virtual ~ClassicCoord() {
-    if (commo_) {
-      delete commo_;
-    }
+//    if (commo_) {
+//      delete commo_;
+//    }
   }
 
   RococoCommunicator* commo();

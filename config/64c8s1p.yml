@@ -153,3 +153,6 @@ process:
   c63: localhost
   c64: localhost
 
+# process_name - host_addr map
+host:
+  localhost: 127.0.0.1

@@ -15,9 +15,9 @@ static ClientControlServiceImpl *ccsi_g = nullptr;
 static rrr::PollMgr *cli_poll_mgr_g = nullptr;
 static rrr::Server *cli_hb_server_g = nullptr;
 
-static vector<ServerWorker> svr_workers;
-static vector<ClientWorker*> client_workers;
-static std::vector<std::thread> client_threads;
+static vector<ServerWorker> svr_workers_g = {};
+static vector<ClientWorker*> client_workers_g = {};
+static std::vector<std::thread> client_threads_g = {};
 
 void client_setup_heartbeat(int num_clients) {
   Log_info("%s", __FUNCTION__);
@@ -48,9 +48,9 @@ void client_launch_workers(vector<Config::SiteInfo> &client_sites) {
     ClientWorker* worker = new ClientWorker(client_id, client_sites[client_id],
                                    Config::GetConfig(), ccsi_g);
     workers.push_back(worker);
-    client_threads.push_back(std::thread(&ClientWorker::work,
+    client_threads_g.push_back(std::thread(&ClientWorker::work,
                                          worker));
-    client_workers.push_back(worker);
+    client_workers_g.push_back(worker);
   }
 }
 
@@ -59,7 +59,7 @@ void client_launch_workers(vector<Config::SiteInfo> &client_sites) {
 void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
   auto config = Config::GetConfig();
   Log_info("server enabled, number of sites: %d", server_sites.size());
-  svr_workers.resize(server_sites.size(), ServerWorker());
+  svr_workers_g.resize(server_sites.size(), ServerWorker());
   int i=0;
   vector<std::thread> setup_ths;
   for (auto& site_info : server_sites) {
@@ -67,7 +67,7 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
       Log_info("launching site: %x, bind address %s",
                site_info.id,
                site_info.GetBindAddress().c_str());
-      auto& worker = svr_workers[i++];
+      auto& worker = svr_workers_g[i++];
       worker.site_info_ = const_cast<Config::SiteInfo*>(&config->SiteById(site_info.id));
       worker.SetupBase();
       // register txn piece logic
@@ -85,7 +85,7 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
     th.join();
   }
 
-  for (ServerWorker& worker : svr_workers) {
+  for (ServerWorker& worker : svr_workers_g) {
     // start communicator after all servers are running
     worker.SetupCommo();
   }
@@ -93,7 +93,7 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
 }
 
 void server_shutdown() {
-  for (auto &worker : svr_workers) {
+  for (auto &worker : svr_workers_g) {
     worker.ShutDown();
   }
 }
@@ -105,10 +105,10 @@ void check_current_path() {
 
 void wait_for_clients() {
   Log_info("%s: wait for client threads to exit.", __FUNCTION__);
-  for (auto &th: client_threads) {
+  for (auto &th: client_threads_g) {
     th.join();
   }
-  for (auto worker : client_workers) {
+  for (auto& worker : client_workers_g) {
     delete worker;
   }
 }
@@ -135,13 +135,13 @@ int main(int argc, char *argv[]) {
     client_setup_heartbeat(client_infos.size());
     client_launch_workers(client_infos);
     wait_for_clients();
-    Log_info("done waiting for clients.");
+    Log_info("all clients have shut down.");
   }
 
-  for (auto& worker : svr_workers) {
+  for (auto& worker : svr_workers_g) {
     worker.WaitForShutdown();
   }
-  Log_info("done waiting for server workers.");
+  Log_info("all server workers have shut down.");
 
   server_shutdown();
 
