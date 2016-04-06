@@ -26,13 +26,13 @@ void TapirCoord::Dispatch() {
     Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
               n_handout_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
     handout_acks_[subcmd->inn_id()] = false;
-    commo()->SendHandout(*subcmd,
-                         this,
-                         std::bind(&ClassicCoord::DispatchAck,
-                                   this,
-                                   phase_,
-                                   std::placeholders::_1,
-                                   std::placeholders::_2));
+    commo()->SendDispatch(*subcmd,
+                          this,
+                          std::bind(&ClassicCoord::DispatchAck,
+                                    this,
+                                    phase_,
+                                    std::placeholders::_1,
+                                    std::placeholders::_2));
   }
   Log_debug("sent %d SubCmds\n", cnt);
 }
@@ -40,7 +40,7 @@ void TapirCoord::Dispatch() {
 
 void TapirCoord::DispatchAck(phase_t phase, int res, Command &cmd) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-//  verify(phase == phase_);
+  verify(phase == phase_);
   n_handout_ack_++;
   TxnCommand *ch = (TxnCommand *) cmd_;
   handout_acks_[cmd.inn_id_] = true;
@@ -93,13 +93,11 @@ void TapirCoord::FastAccept() {
 //  }
 }
 
-void TapirCoord::FastAcceptAck(phase_t phase, parid_t par_id, Future *fu) {
+void TapirCoord::FastAcceptAck(phase_t phase, parid_t par_id, int32_t res) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   if (phase_ > phase) return;
   // if for every partition, get fast quorum of OK, go into decide.
   // do not consider anything else for now.
-  int res;
-  fu->get_reply() >> res;
 //  verify(res == SUCCESS); // TODO
   if (res == SUCCESS) {
     n_fast_accept_oks_[par_id]++;

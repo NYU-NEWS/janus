@@ -4,7 +4,7 @@
 
 namespace rococo {
 
-void TapirExecutor::FastAccept(int* res) {
+void TapirExecutor::FastAccept(int32_t* res) {
   // validate read versions and
   *res = SUCCESS;
   auto& read_vers = dtxn()->read_vers_;

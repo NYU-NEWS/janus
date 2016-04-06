@@ -11,6 +11,9 @@ ClientWorker::~ClientWorker() {
   if (txn_req_factory_) {
     delete txn_req_factory_;
   }
+  verify(coo_);
+  delete coo_;
+  coo_ = nullptr;
 }
 
 void ClientWorker::RequestDone(TxnReply &txn_reply) {
@@ -76,7 +79,6 @@ void ClientWorker::work() {
            num_try.load(),
            Config::GetConfig()->get_duration());
 
-  delete coo_;
   if (ccsi) {
     Log_info("%s: wait_for_shutdown at client %d", __FUNCTION__, this->coo_id);
     ccsi->wait_for_shutdown();

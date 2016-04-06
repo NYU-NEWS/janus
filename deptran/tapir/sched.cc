@@ -7,7 +7,7 @@
 namespace rococo {
 
 int TapirSched::OnDispatch(const SimpleCommand &cmd,
-                           int *res,
+                           int32_t* res,
                            map<int32_t, Value> *output,
                            const function<void()> &callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
@@ -22,7 +22,7 @@ int TapirSched::OnDispatch(const SimpleCommand &cmd,
 }
 
 int TapirSched::OnFastAccept(cmdid_t cmd_id,
-                             int* res,
+                             int32_t* res,
                              const function<void()>& callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   Log_debug("receive fast accept for cmd_id: %llx", cmd_id);

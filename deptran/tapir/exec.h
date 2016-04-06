@@ -10,7 +10,7 @@ class TapirExecutor : public Executor {
   using Executor::Executor;
   set<VersionedRow*> locked_rows_ = {};
 
-  void FastAccept(int *res);
+  void FastAccept(int32_t *res);
   void Commit();
   void Abort();
 

@@ -27,7 +27,7 @@ class TapirCoord : public ClassicCoord {
   void DispatchAck(phase_t, int res, Command &cmd) override;
 
   void FastAccept();
-  void FastAcceptAck(phase_t phase, parid_t par_id, Future *fu);
+  void FastAcceptAck(phase_t phase, parid_t par_id, int32_t res);
 
   bool AllFastQuorumReached();
   bool AllSlowQuorumReached();

@@ -7,22 +7,21 @@
 
 namespace rococo {
 
-void TapirCommo::SendHandout(SimpleCommand &cmd,
-                             Coordinator *coo,
-                             const function<void(int,
-                                                 Command&)> &callback) {
+void TapirCommo::SendDispatch(SimpleCommand &cmd,
+                              Coordinator *coo,
+                              const function<void(int,
+                                                  Command &)> &callback) {
   rrr::FutureAttr fuattr;
   parid_t par_id = cmd.PartitionId();
-  auto proxy = (TapirProxy*) rpc_par_proxies_[par_id][0].second;
+  auto proxy = (TapirProxy*) LeaderProxyForPartition(cmd.PartitionId()).second;
   std::function<void(Future*)> cb =
       [coo, this, callback, &cmd] (Future *fu) {
         Log_debug("SendStart callback for %ld from %ld",
                   cmd.PartitionId(),
                   coo->coo_id_);
 
-        int res;
-        Marshal &m = fu->get_reply();
-        m >> res >> cmd.output;
+        int32_t res;
+        fu->get_reply() >> res >> cmd.output;
         callback(res, cmd);
       };
   fuattr.callback = cb;
@@ -34,19 +33,23 @@ void TapirCommo::SendHandout(SimpleCommand &cmd,
 
 void TapirCommo::BroadcastFastAccept(parid_t par_id,
                                      cmdid_t cmd_id,
-                                     const function<void(Future* fu)>& cb) {
+                                     const function<void(int32_t)>& cb) {
   auto proxies = rpc_par_proxies_[par_id];
   for (auto &p : proxies) {
     auto proxy = (TapirProxy*) p.second;
     FutureAttr fuattr;
-    fuattr.callback = cb;
+    fuattr.callback = [cb] (Future* fu) {
+      int32_t res;
+      fu->get_reply() >> res;
+      cb(res);
+    };
     Future::safe_release(proxy->async_FastAccept(cmd_id, fuattr));
   }
 }
 
 void TapirCommo::BroadcastDecide(parid_t par_id,
                                  cmdid_t cmd_id,
-                                 int decision) {
+                                 int32_t decision) {
   auto proxies = rpc_par_proxies_[par_id];
   for (auto &p : proxies) {
     auto proxy = (TapirProxy*) p.second;

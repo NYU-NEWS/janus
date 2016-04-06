@@ -92,6 +92,12 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
   Log_info("server workers' communicators setup");
 }
 
+void client_shutdown() {
+  for (auto& worker : client_workers_g) {
+    delete worker;
+  }
+}
+
 void server_shutdown() {
   for (auto &worker : svr_workers_g) {
     worker.ShutDown();
@@ -107,9 +113,6 @@ void wait_for_clients() {
   Log_info("%s: wait for client threads to exit.", __FUNCTION__);
   for (auto &th: client_threads_g) {
     th.join();
-  }
-  for (auto& worker : client_workers_g) {
-    delete worker;
   }
 }
 
@@ -143,6 +146,10 @@ int main(int argc, char *argv[]) {
   }
   Log_info("all server workers have shut down.");
 
+  // TODO, FIXME pending_future in rpc cause error.
+  Log_info("exit in a nasty way");
+  exit(0);
+  client_shutdown();
   server_shutdown();
 
   RandomGenerator::destroy();
