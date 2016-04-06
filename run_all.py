@@ -2,17 +2,20 @@
 import traceback
 import os
 import tempfile
+import subprocess
 from argparse import ArgumentParser
 import logging
 from logging import info, debug, error 
 
 import yaml
 
-DEFAULT_MODES = ["none:none", "tpl_ww:none", "occ:none", "tpl_ww:paxos", "occ:paxos",
+DEFAULT_MODES = ["tpl_ww:none", "occ:none", "tpl_ww:paxos", "occ:paxos",
                  "tapir:tapir", "brq:brq"]
 DEFAULT_CLIENTS = ["1:11"]
 DEFAULT_SERVERS = ["3:4"]
 DEFAULT_BENCHMARKS = [ "rw_benchmark", "tpccd" ]
+DEFAULT_TRIAL_DURATION = 10
+DEFAULT_EXECUTABLE = "./run.py"
 TMP_DIR='./tmp'
 
 logger = logging.getLogger('')
@@ -21,6 +24,9 @@ def create_parser():
     parser = ArgumentParser()
     parser.add_argument(dest="experiment_name",
                         help="name of experiment")
+    parser.add_argument('-e', "--executable", dest="executable",
+                        help="the executable to run",
+                        default = DEFAULT_EXECUTABLE)
     parser.add_argument("-c", "--client-count", dest="client_counts",
                         help="client counts; accpets " + \
                         "'<start>:<stop>:<step>' tuples with same semantics as " + \
@@ -33,6 +39,10 @@ def create_parser():
                         "range builtin function.",
                         action='append',
                         default = DEFAULT_SERVERS)
+    parser.add_argument("-d", "--duration", dest="duration",
+                        help="trial duration",
+                        type=int,
+                        default = DEFAULT_TRIAL_DURATION)
     parser.add_argument("-r", "--replicas", dest="num_replicas",
                         help="number of replicas",
                         type=int,
@@ -62,6 +72,7 @@ def parse_commandline():
 
 
 def gen_experiment_suffix(b, m, c):
+    m = m.replace(':', '_')
     return "{}-{}-{}".format(b, m, c)
 
 
@@ -152,11 +163,11 @@ def modify_benchmark_and_mode(args, benchmark, mode, abmode):
     for config in configs:
         modified = False
 
-        ouput_config = config
+        output_config = config
         config = load_config(config)
 
         if 'bench' in config and 'workload' in config['bench']:
-            config['workload']['bench'] = benchmark
+            config['bench']['workload'] = benchmark
             modified = True
         if 'mode' in config and 'cc' in config['mode']:
             config['mode']['cc'] = mode
@@ -168,12 +179,12 @@ def modify_benchmark_and_mode(args, benchmark, mode, abmode):
         if modified:
             f = tempfile.NamedTemporaryFile(
                 mode='w', 
-                prefix='janus-other-{}'.format(experiment_name),
+                prefix='janus-other-{}'.format(args.experiment_name),
                 suffix='.yml',
                 dir=TMP_DIR,
                 delete=False)
             output_config = f.name
-            log.debug("generated config: %s", output_config)
+            logger.debug("generated config: %s", output_config)
             contents = yaml.dump(config, default_flow_style=False)
             with f:
                 f.write(contents)
@@ -195,18 +206,37 @@ def generate_config(args, experiment_name, benchmark, mode, num_client,
                     num_server, num_replicas):
     logger.debug("generate_config: {}, {}, {}, {}".format(
         experiment_name, benchmark, mode, num_client))
+    hosts_config = load_config(args.hosts_file)
     proc_and_site_config = gen_process_and_site(experiment_name, num_client,
                                                 num_server, num_replicas, 
-                                                load_config(args.hosts_file))
+                                                hosts_config)
     logger.debug("site and process config: %s", proc_and_site_config)
     cc_mode, ab_mode = mode.split(':')
     config_files = modify_benchmark_and_mode(args, benchmark, cc_mode, ab_mode) 
+    config_files.insert(0, args.hosts_file)
     config_files.append(proc_and_site_config)
-    return aggregate_configs(*config_files)
+    logger.info(config_files)
+    result = config_files 
+    logger.info("result: %s", result)
+    return result
 
 
 def run_experiment(config_file, name, args, benchmark, mode, num_client):
-    pass
+    cmd = [args.executable]
+    cmd.extend(['-n', "'{}'".format(args.experiment_name)])
+    for c in config_file:
+        cmd.extend(['-f', c]) 
+    cmd.extend(['-d', args.duration])
+
+    cmd = [str(c) for c in cmd]
+
+    logger.info("running: %s", ' '.join(cmd))
+    res=subprocess.call(cmd)
+    if res != 0:
+        logger.error("subprocess returned %d", res)
+    else:
+        logger.info("subprocess success.")
+    return res
 
 
 def archive_results(name):
@@ -218,7 +248,7 @@ def generate_graphs(name):
 
 
 def run_experiments(args):
-    # todo: break up nested loop if this function gets any bigger
+    # todo: break up nested loop
     for server_range in args.server_counts:
         for num_server in get_range(server_range):
             for client_range in args.client_counts:
