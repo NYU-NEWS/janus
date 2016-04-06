@@ -9,7 +9,7 @@ MultiPaxosServiceImpl::MultiPaxosServiceImpl(Scheduler *sched)
 
 }
 
-void MultiPaxosServiceImpl::Forward(const Command& cmd,
+void MultiPaxosServiceImpl::Forward(const ContainerCommand& cmd,
                                     rrr::DeferredReply* defer) {
 
 }

@@ -39,7 +39,7 @@ class TxnRequest {
 
 enum CommandStatus {WAITING=-1, READY, ONGOING, FINISHED, INIT};
 
-class TxnCommand: public Command {
+class TxnCommand: public ContainerCommand {
  private:
   static inline bool is_consistent(map<int32_t, Value> &previous,
                                    map<int32_t, Value> &current) {
@@ -77,7 +77,7 @@ class TxnCommand: public Command {
   map<int32_t, parid_t> sharding_;
   std::atomic<bool> commit_;
   map<int32_t, CommandStatus> status_; // -1 waiting; 0 ready; 1 ongoing; 2 finished;
-  map<int32_t, Command*> cmd_;
+  map<int32_t, ContainerCommand*> cmd_;
   std::set<parid_t> partition_ids_;
 
   /** server involved*/
@@ -131,9 +131,9 @@ class TxnCommand: public Command {
     return n_pieces_all_;
   }
   virtual bool IsFinished(){verify(0);}
-  virtual void Merge(Command&);
+  virtual void Merge(ContainerCommand&);
   virtual bool HasMoreSubCmdReadyNotOut();
-  virtual Command*GetNextReadySubCmd();
+  virtual ContainerCommand* GetNextReadySubCmd();
   virtual set<siteid_t> GetPartitionIds();
 
 

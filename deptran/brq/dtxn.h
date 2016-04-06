@@ -22,7 +22,7 @@ public:
   ballot_t   ballot_cmd_vote_; // initialized as NULL
   ballot_t   ballot_deps_seen_; // initialized as (0, 0)
   ballot_t   ballot_deps_vote_; // initialized as NULL
-  Command cmd_;             // , initialized as NULL
+  ContainerCommand cmd_;             // , initialized as NULL
   // deps// initialized as NULL
   // status, initialized as (PREPARED, FAST_PREPARED, UNKNOWN)
   enum status_t {
@@ -63,17 +63,17 @@ public:
   BrqDTxn(txnid_t txn_id, BrqGraph* graph);
 
   // fast-accept/start
-  void FastAccept(FastAcceptRequest &req, FastAcceptReply *rep, rrr::DeferredReply *defer);
+//  void FastAccept(FastAcceptRequest &req, FastAcceptReply *rep, rrr::DeferredReply *defer);
   // prepare
-  void Prepare(PrepareReqeust &request, PrepareReply *rep, rrr::DeferredReply *reply);
+//  void Prepare(PrepareReqeust &request, PrepareReply *rep, rrr::DeferredReply *reply);
   // accept
-  void accept(AcceptRequest& request, AcceptReply *reply, rrr::DeferredReply *defer);
+//  void accept(AcceptRequest& request, AcceptReply *reply, rrr::DeferredReply *defer);
   // commit
-  void Commit(CommitRequest &req, CommitReply *rep, rrr::DeferredReply *defer);
+//  void Commit(CommitRequest &req, CommitReply *rep, rrr::DeferredReply *defer);
   void commit_exec();
   // inquire
-  void inquire(InquiryReply *rep, rrr::DeferredReply *defer);
-  void inquire_dcpd(InquiryReply *rep, rrr::DeferredReply *defer);
+//  void inquire(InquiryReply *rep, rrr::DeferredReply *defer);
+//  void inquire_dcpd(InquiryReply *rep, rrr::DeferredReply *defer);
   //    virtual void start(
   //            const RequestHeader &header,
   //            const std::vector<mdb::Value> &input,

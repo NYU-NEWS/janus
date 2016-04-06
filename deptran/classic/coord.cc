@@ -212,7 +212,7 @@ bool ClassicCoord::AllDispatchAcked() {
   return ret1;
 }
 
-void ClassicCoord::DispatchAck(phase_t phase, int res, Command &cmd) {
+void ClassicCoord::DispatchAck(phase_t phase, int res, ContainerCommand &cmd) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   if (phase != phase_) return;
 //  if (IsPhaseOrStageStale(phase, HANDOUT)) {

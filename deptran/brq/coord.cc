@@ -164,27 +164,28 @@ void BrqCoord::accept() {
 //  };
 }
 
-void BrqCoord::accept_ack(groupid_t g, AcceptReply* reply,
-                          phase_t phase) {
-  if (phase_ != phase) {
-    return;
-  }
-  auto &n = n_accept_reply_[g];
-  if (reply && reply->ack) {
-    n.yes++;
-  } else {
-    n.no++;
-  }
-  if (check_accept_possible()) {
-    if (check_accept()) {
-      // go to commit
-    }
-  } else {
-    // not handle this currently
-    verify(0);
-  }
-  // if have reached a quorum
-}
+//void BrqCoord::accept_ack(groupid_t g,
+//                          AcceptReply* reply,
+//                          phase_t phase) {
+//  if (phase_ != phase) {
+//    return;
+//  }
+//  auto &n = n_accept_reply_[g];
+//  if (reply && reply->ack) {
+//    n.yes++;
+//  } else {
+//    n.no++;
+//  }
+//  if (check_accept_possible()) {
+//    if (check_accept()) {
+//      // go to commit
+//    }
+//  } else {
+//    // not handle this currently
+//    verify(0);
+//  }
+//  // if have reached a quorum
+//}
 
 void BrqCoord::Commit() {
   TxnCommand *txn = (TxnCommand*) cmd_;

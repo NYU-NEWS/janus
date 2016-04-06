@@ -25,7 +25,7 @@ class RococoCommunicator : public Communicator {
                  std::function<void(Future *fu)> &callback);
   void SendDispatch(SimpleCommand &cmd,
                    Coordinator *coo,
-                   const std::function<void(int res, Command& cmd)> &) ;
+                   const std::function<void(int res, ContainerCommand&)>&) ;
   void SendPrepare(parid_t gid,
                    txnid_t tid, 
                    std::vector<int32_t> &sids, 

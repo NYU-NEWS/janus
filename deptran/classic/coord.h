@@ -76,7 +76,7 @@ class ClassicCoord : public Coordinator {
   void Restart();
 
   virtual void Dispatch();
-  virtual void DispatchAck(phase_t phase, int res, Command &cmd);
+  virtual void DispatchAck(phase_t phase, int res, ContainerCommand &cmd);
   void Prepare();
   void PrepareAck(phase_t phase, Future *fu);
   void Commit();

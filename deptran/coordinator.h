@@ -40,7 +40,7 @@ class Coordinator : public CoordinatorBase {
 
   std::recursive_mutex mtx_;
   Recorder *recorder_;
-  Command *cmd_ = nullptr;
+  ContainerCommand *cmd_ = nullptr;
 //  cmdid_t cmd_id_;
   phase_t phase_ = 0;
   map<innid_t, bool> handout_acks_ = {};
@@ -122,10 +122,6 @@ class Coordinator : public CoordinatorBase {
   }
 
   virtual void do_one(TxnRequest &) = 0;
-  virtual void Submit(Command &,
-                      const std::function<void()>&) {
-    verify(0);
-  }
   virtual void Submit(ContainerCommand& cmd,
                       const std::function<void()>& commit_callback = [](){},
                       const std::function<void()>& exe_callback = [](){}) {

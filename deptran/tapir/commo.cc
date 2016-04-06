@@ -10,7 +10,8 @@ namespace rococo {
 void TapirCommo::SendDispatch(SimpleCommand &cmd,
                               Coordinator *coo,
                               const function<void(int,
-                                                  Command &)> &callback) {
+                                                  ContainerCommand &)>
+                              &callback) {
   rrr::FutureAttr fuattr;
   parid_t par_id = cmd.PartitionId();
   auto proxy = (TapirProxy*) LeaderProxyForPartition(cmd.PartitionId()).second;

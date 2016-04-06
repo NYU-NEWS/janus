@@ -6,44 +6,23 @@
 
 namespace rococo {
 
-rrr::Marshal &operator<<(rrr::Marshal &m, const Command &cmd) {
+rrr::Marshal &operator<<(rrr::Marshal &m, const ContainerCommand &cmd) {
   m << cmd.id_;
   m << cmd.type_;
   m << cmd.inn_id_;
   m << cmd.root_id_;
   m << cmd.root_type_;
-//  m << cmd.input;
-//  m << cmd.output;
-//  m << cmd.output_size;
-//  m << cmd.site_id_;
-  verify(0);
-  return m;
-}
-
-rrr::Marshal &operator>>(rrr::Marshal &m, Command &cmd) {
-  m >> cmd.id_;
-  m >> cmd.type_;
-  m >> cmd.inn_id_;
-  m >> cmd.root_id_;
-  m >> cmd.root_type_;
-//  m >> cmd.input;
-//  m >> cmd.output;
-//  m >> cmd.output_size;
-//  m >> cmd.site_id_;
-  verify(0);
-  return m;
-}
-
-
-rrr::Marshal &operator<<(rrr::Marshal &m, const ContainerCommand &cmd) {
-  m << cmd.type_;
   verify(cmd.self_cmd_);
   cmd.self_cmd_->ToMarshal(m);
   return m;
 }
 
 rrr::Marshal &operator>>(rrr::Marshal &m, ContainerCommand &cmd) {
+  m >> cmd.id_;
   m >> cmd.type_;
+  m >> cmd.inn_id_;
+  m >> cmd.root_id_;
+  m >> cmd.root_type_;
   auto it = cmd.Initializers().find(cmd.type_);
   verify(it != cmd.Initializers().end());
   cmd.self_cmd_ = it->second();

@@ -60,7 +60,7 @@ public:
   void prepare();
   // functions needed in the accept phase.
   void accept();
-  void accept_ack(groupid_t, AcceptReply*, phase_t);
+//  void accept_ack(groupid_t, AcceptReply*, phase_t);
   bool check_accept_possible() {
     verify(0);
     return false;

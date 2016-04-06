@@ -20,7 +20,7 @@ class TpcPrepareCommand : public ContainerCommand {
 
   Marshal& ToMarshal(Marshal&) const override;
   Marshal& FromMarshal(Marshal&) override;
-  virtual Command& Execute() {verify(0);};
+  virtual ContainerCommand& Execute() {verify(0);};
 };
 
 class TpcCommitCommand : public ContainerCommand {
@@ -32,7 +32,7 @@ class TpcCommitCommand : public ContainerCommand {
   TxnCommand* txn_cmd_ = nullptr;
   virtual Marshal& ToMarshal(Marshal&) const;
   virtual Marshal& FromMarshal(Marshal&);
-  virtual Command& Execute() {verify(0);};
+  virtual ContainerCommand& Execute() {verify(0);};
 };
 
 } // namespace rococo

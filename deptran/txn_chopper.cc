@@ -27,7 +27,7 @@ bool TxnCommand::IsOneRound() {
   return false;
 }
 
-Command *TxnCommand::GetNextReadySubCmd() {
+ContainerCommand *TxnCommand::GetNextReadySubCmd() {
   verify(n_pieces_out_ < n_pieces_input_ready_);
   verify(n_pieces_out_ < n_pieces_all_);
   SimpleCommand *cmd = nullptr;
@@ -81,7 +81,7 @@ int TxnCommand::next_piece(
 }
 
 
-void TxnCommand::Merge(Command &cmd) {
+void TxnCommand::Merge(ContainerCommand &cmd) {
   n_pieces_replied_++;
   verify(n_pieces_all_ >= n_pieces_input_ready_);
   verify(n_pieces_input_ready_ >= n_pieces_out_);

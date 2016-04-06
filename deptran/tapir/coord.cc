@@ -38,7 +38,7 @@ void TapirCoord::Dispatch() {
 }
 
 
-void TapirCoord::DispatchAck(phase_t phase, int res, Command &cmd) {
+void TapirCoord::DispatchAck(phase_t phase, int32_t res, ContainerCommand &cmd) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(phase == phase_);
   n_handout_ack_++;

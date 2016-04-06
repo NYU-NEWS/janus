@@ -7,7 +7,8 @@ namespace rococo {
 void RococoCommunicator::SendDispatch(SimpleCommand &cmd,
                                      Coordinator *coo,
                                      const function<void(int,
-                                                         Command&)> &callback) {
+                                                         ContainerCommand&)>
+                                      &callback) {
   rrr::FutureAttr fuattr;
   std::function<void(Future*)> cb =
       [coo, this, callback, &cmd] (Future *fu) {

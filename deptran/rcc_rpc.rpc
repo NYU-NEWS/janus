@@ -3,7 +3,7 @@ namespace rococo;
 
 abstract service MultiPaxos {
 
-  defer Forward(Command cmd);
+  defer Forward(ContainerCommand cmd);
 
   defer Prepare(uint64_t slot,
                 uint64_t ballot |

@@ -12,7 +12,7 @@ class TapirCommo : public Communicator {
 
   void SendDispatch(SimpleCommand &cmd,
                     Coordinator *coo,
-                    const function<void(int, Command &)> &callback);
+                    const function<void(int, ContainerCommand &)> &callback);
   void BroadcastFastAccept(parid_t par_id,
                            cmdid_t cmd_id,
                            const function<void(int32_t)>& callback);
