@@ -37,15 +37,13 @@ void RccCommo::SendHandoutRo(SimpleCommand &cmd,
 void RccCommo::SendFinish(parid_t pid,
                           txnid_t tid,
                           RccGraph& graph,
-                          const function<void(int res,
-                                              map<innid_t, map<int32_t,
+                          const function<void(map<innid_t, map<int32_t,
                                                            Value>>& output)> &callback) {
   FutureAttr fuattr;
   function<void(Future*)> cb = [callback] (Future* fu) {
-    int res;
     map<innid_t, map<int32_t, Value>> outputs;
-    fu->get_reply() >> res >> outputs;
-    callback(res, outputs);
+    fu->get_reply() >> outputs;
+    callback(outputs);
   };
   fuattr.callback = cb;
   auto proxy = (RococoProxy*)RandomProxyForPartition(pid).second;

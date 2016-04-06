@@ -140,8 +140,8 @@ void RccCoord::Finish() {
                         std::bind(&RccCoord::FinishAck,
                                   this,
                                   phase_,
-                                  std::placeholders::_1,
-                                  std::placeholders::_2));
+                                  SUCCESS,
+                                  std::placeholders::_1));
 //    Future::safe_release(proxy->async_rcc_finish_txn(req, fuattr));
   }
 }
@@ -161,6 +161,7 @@ void RccCoord::FinishAck(phase_t phase,
   if (n_finish_ack_ == txn->GetPartitionIds().size()) {
     // generate a reply and callback.
     Log_debug("deptran callback, %llx", cmd_->id_);
+    committed_ = true;
     GotoNextPhase();
   }
 }

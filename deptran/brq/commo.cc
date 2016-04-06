@@ -36,7 +36,7 @@ void BrqCommo::SendHandoutRo(SimpleCommand &cmd,
 void BrqCommo::SendFinish(parid_t pid,
                           txnid_t tid,
                           RccGraph& graph,
-                          const function<void(int res,
+                          const function<void(
                                               map<innid_t, map<int32_t,
                                                                Value>>& output)> &callback) {
   FutureAttr fuattr;
@@ -44,7 +44,7 @@ void BrqCommo::SendFinish(parid_t pid,
     int res;
     map<innid_t, map<int32_t, Value>> outputs;
     fu->get_reply() >> res >> outputs;
-    callback(res, outputs);
+    callback(outputs);
   };
   fuattr.callback = cb;
   auto proxy = (BrqProxy*)RandomProxyForPartition(pid).second;
