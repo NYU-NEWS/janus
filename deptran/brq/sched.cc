@@ -16,3 +16,13 @@ void BrqSched::OnPreAccept(const txnid_t txnid,
   *res = SUCCESS;
   callback();
 } //
+
+void BrqSched::OnCommit(const txnid_t txn_id,
+                        const RccGraph& graph,
+                        int32_t* res,
+                        TxnOutput* output,
+                        function<void()> callback) {
+  // TODO to support cascade abort
+  *res = SUCCESS;
+  RccSched::OnCommit(txn_id, graph, output, callback);
+}

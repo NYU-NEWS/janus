@@ -36,19 +36,18 @@ void BrqCommo::SendHandoutRo(SimpleCommand &cmd,
 void BrqCommo::SendFinish(parid_t pid,
                           txnid_t tid,
                           RccGraph& graph,
-                          const function<void(
-                                              map<innid_t, map<int32_t,
-                                                               Value>>& output)> &callback) {
+                          const function<void(TxnOutput& output)> &callback) {
+  verify(0);
   FutureAttr fuattr;
   function<void(Future*)> cb = [callback] (Future* fu) {
-    int res;
-    map<innid_t, map<int32_t, Value>> outputs;
+    int32_t res;
+    TxnOutput outputs;
     fu->get_reply() >> res >> outputs;
     callback(outputs);
   };
   fuattr.callback = cb;
   auto proxy = (BrqProxy*)RandomProxyForPartition(pid).second;
-  Future::safe_release(proxy->async_Finish(tid, (BrqGraph&)graph, fuattr));
+  Future::safe_release(proxy->async_Commit(tid, (BrqGraph&)graph, fuattr));
 }
 
 void BrqCommo::SendInquire(parid_t pid,
@@ -86,12 +85,25 @@ void BrqCommo::BroadcastPreAccept(parid_t par_id,
   }
 }
 
-void BrqCommo::BroadcastCommit(parid_t,
-                               txnid_t cmd_id_,
+void BrqCommo::BroadcastCommit(parid_t par_id,
+                               txnid_t cmd_id,
                                RccGraph& graph,
-                               const function<void(TxnOutput&)>
+                               const function<void(int32_t, TxnOutput&)>
                                &callback) {
-  verify(0);
+  verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
+  for (auto &p : rpc_par_proxies_[par_id]) {
+    auto proxy = (BrqProxy*)(p.second);
+    verify(proxy != nullptr);
+    FutureAttr fuattr;
+    fuattr.callback = [callback] (Future* fu) {
+      int32_t res;
+      TxnOutput output;
+      fu->get_reply() >> res >> output;
+      callback(res, output);
+    };
+    verify(cmd_id > 0);
+    Future::safe_release(proxy->async_Commit(cmd_id, graph, fuattr));
+  }
 }
 
 } // namespace rococo

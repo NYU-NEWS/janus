@@ -7,11 +7,6 @@
 
 namespace rococo {
 
-#define PHASE_INIT       0
-#define PHASE_DISPATCH   1
-#define PHASE_COMMIT     2
-#define PHASE_END        3
-
 
 RccCommo* RccCoord::commo() {
   if (commo_ == nullptr) {
@@ -319,7 +314,7 @@ void RccCoord::do_one(TxnRequest& req) {
   Log_debug("do one request");
 
   if (ccsi_) ccsi_->txn_start_one(thread_id_, cmd_->type_);
-  verify((phase_ % 3) == PHASE_INIT);
+  verify((phase_ % 3) == Phase::INIT_END);
   GotoNextPhase();
 }
 
@@ -336,20 +331,17 @@ void RccCoord::GotoNextPhase() {
   int n_phase = 3;
   int current_phase = phase_ % n_phase;
   switch (phase_++ % n_phase) {
-    case PHASE_INIT:
+    case Phase::INIT_END:
       PreDispatch();
-      verify(phase_ % n_phase == PHASE_DISPATCH);
+      verify(phase_ % n_phase == Phase::DISPATCH);
       break;
-    case PHASE_DISPATCH:
-      verify(phase_ % n_phase == PHASE_COMMIT);
+    case Phase::DISPATCH:
+      verify(phase_ % n_phase == Phase::COMMIT);
       Finish();
       break;
-    case PHASE_COMMIT:
-      verify(phase_ % n_phase == PHASE_INIT);
+    case Phase::COMMIT:
+      verify(phase_ % n_phase == Phase::INIT_END);
       End();
-      break;
-    case PHASE_END:
-      verify(0);
       break;
     default:
       verify(0);

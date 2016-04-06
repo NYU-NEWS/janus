@@ -115,14 +115,16 @@ void BrqServiceImpl::Dispatch(const SimpleCommand& cmd,
 //    }
 //}
 
-void BrqServiceImpl::Finish(const cmdid_t& cmd_id,
-                            const BrqGraph& graph,
-                               map<innid_t, map<int32_t, Value>>* output,
+void BrqServiceImpl::Commit(const cmdid_t& cmd_id,
+                            const RccGraph& graph,
+                            int32_t *res,
+                            TxnOutput* output,
                             DeferredReply* defer) {
   verify(graph.size() > 0);
   std::lock_guard <std::mutex> guard(mtx_);
   dtxn_sched()->OnCommit(cmd_id,
                          graph,
+                         res,
                          output,
                          [defer]() { defer->reply(); });
 //  RccDTxn *txn = (RccDTxn *) dtxn_sched_->GetDTxn(req.txn_id);

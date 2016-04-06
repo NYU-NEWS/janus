@@ -14,6 +14,12 @@ class BrqSched : public RccSched {
                    int32_t* res,
                    RccGraph* res_graph,
                    function<void()> callback);
+
+  void OnCommit(const txnid_t txn_id,
+                const RccGraph& graph,
+                int32_t* res,
+                TxnOutput* output,
+                function<void()> callback);
 };
 
 } // namespace rococo

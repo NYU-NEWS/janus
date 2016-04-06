@@ -56,7 +56,7 @@ int RccSched::OnDispatch(const SimpleCommand &cmd,
 
 int RccSched::OnCommit(cmdid_t cmd_id,
                        const RccGraph &graph,
-                       map<innid_t, map<int32_t, Value>> *output,
+                       TxnOutput* output,
                        const function<void()> &callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   // union the graph into dep graph

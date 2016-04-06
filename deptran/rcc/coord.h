@@ -15,6 +15,7 @@ public:
 public:
   RccGraph graph_;
   enum RoState {BEGIN, FIRST, SECOND, DONE};
+  enum Phase {INIT_END=0, DISPATCH, COMMIT};
 
   RoState ro_state_ = BEGIN;
   map<int32_t, mdb::version_t> last_vers_;

@@ -79,7 +79,7 @@ class ClassicCoord : public Coordinator {
   virtual void DispatchAck(phase_t phase, int res, ContainerCommand &cmd);
   void Prepare();
   void PrepareAck(phase_t phase, Future *fu);
-  void Commit();
+  virtual void Commit();
   void CommitAck(phase_t phase, Future *fu);
   void Abort() {
     verify(0);

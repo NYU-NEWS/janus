@@ -20,9 +20,7 @@ class BrqCommo: public RccCommo {
   void SendFinish(parid_t pid,
                   txnid_t tid,
                   RccGraph &graph,
-                  const function<void(map<innid_t,
-                                                   map<int32_t, Value>> &
-                  output)> &callback) override;
+                  const function<void(TxnOutput&)>&) override;
 
   void SendInquire(parid_t pid,
                    txnid_t tid,
@@ -32,13 +30,12 @@ class BrqCommo: public RccCommo {
                           txnid_t cmd_id_,
                           ballot_t ballot,
                           RccGraph& graph,
-                          const function<void(int, RccGraph&)> &callback);
+                          const function<void(int32_t, RccGraph&)> &callback);
 
   void BroadcastCommit(parid_t,
                        txnid_t cmd_id_,
                        RccGraph& graph,
-                       const function<void(map<innid_t,
-                                               map<int32_t, Value>>&)>
+                       const function<void(int32_t, TxnOutput&)>
                        &callback);
 };
 

@@ -11,6 +11,9 @@ namespace rococo {
 class BrqCommo;
 class BrqCoord : public RccCoord {
 public:
+  enum Phase {INIT_END=0, DISPATCH=1, PREPARE=2,
+    PRE_ACCEPT=3, ACCEPT=4, COMMIT=5};
+
   cooid_t  coo_id_;
 //  phase_t  phase_; // a phase identifier
   uint32_t thread_id_;
@@ -73,7 +76,8 @@ public:
   void Commit();
   void CommitAck(phase_t phase,
                  parid_t par_id,
-                 map<innid_t, map<int32_t, Value>>& output);
+                 int32_t res,
+                 TxnOutput& output);
   bool check_commit() {
     verify(0);
     return false;
@@ -93,5 +97,7 @@ public:
     ret = (ret << 32 | coo_id_);
     return ret;
   }
+
+  void GotoNextPhase() override;
 };
 } // namespace rococo

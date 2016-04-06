@@ -73,7 +73,7 @@ void BrqCoord::DispatchAck(phase_t phase,
     Dispatch();
   } else if (AllDispatchAcked()) {
     Log_debug("receive all start acks, txn_id: %llx; START PREPARE", cmd_->id_);
-    PreAccept();
+    GotoNextPhase();
   }
 }
 
@@ -81,7 +81,6 @@ void BrqCoord::DispatchAck(phase_t phase,
 void BrqCoord::PreAccept() {
 //  // generate fast accept request
   // set broadcast callback
-  auto phase = phase_;
   // broadcast
   for (auto par_id : cmd_->GetPartitionIds()) {
     // TODO
@@ -118,8 +117,7 @@ void BrqCoord::PreAcceptAck(phase_t phase,
     if (FastQuorumsAchieved()) {
       // receive enough identical replies to continue fast path.
       // go to the commit.
-      phase_++;
-      Commit();
+      GotoNextPhase();
     } else {
       // skip, wait
     }
@@ -128,7 +126,6 @@ void BrqCoord::PreAcceptAck(phase_t phase,
     if (SlowpathPossible()) {
         if(SlowQuorumsAchieved()) {
           // go to the accept phase
-          phase_++;
           verify(0); // TODO
         } else {
           // skip, wait
@@ -192,45 +189,34 @@ void BrqCoord::Commit() {
   TxnInfo& info = *graph_.FindV(cmd_->id_)->data_;
   verify(txn->partition_ids_.size() == info.partition_.size());
   info.union_status(TXN_CMT);
-  for (auto g : cmd_->GetPartitionIds()) {
-    commo()->BroadcastCommit(g,
+  for (auto par_id : cmd_->GetPartitionIds()) {
+    commo()->BroadcastCommit(par_id,
                              cmd_->id_,
                              graph_,
                              std::bind(&BrqCoord::CommitAck,
                                        this,
                                        phase_,
-                                       g,
-                                       std::placeholders::_1));
+                                       par_id,
+                                       std::placeholders::_1,
+                                       std::placeholders::_2));
   }
 }
 
 void BrqCoord::CommitAck(phase_t phase,
-                         parid_t g,
-                         map<innid_t, map<int32_t, Value>>& output) {
+                         parid_t par_id,
+                         int32_t res,
+                         TxnOutput& output) {
   // TODO?
-  if (phase != phase_)
-    return;
-  auto &n = n_commit_reply_[g];
+  if (phase != phase_) return;
+  auto &n = n_commit_reply_[par_id];
   if (++(n.yes) > 1)
     return; // already seen outputs.
 
   TxnCommand* txn = (TxnCommand*) cmd_;
   txn->outputs_.insert(output.begin(), output.end());
-  if (check_commit()) {
-    phase_++;
-    // TODO command callback.
-    txn->reply_.res_ = SUCCESS;
-    TxnReply& txn_reply_buf = txn->get_reply();
-    double    last_latency  = txn->last_attempt_latency();
-    this->report(txn_reply_buf, last_latency
-#ifdef TXN_STAT
-        , ch
-#endif // ifdef TXN_STAT
-    );
-    txn->callback_(txn_reply_buf);
-  }
   // if collect enough results.
   // if there are still more results to collect.
+  GotoNextPhase();
   return;
 }
 
@@ -243,6 +229,36 @@ bool BrqCoord::FastQuorumsAchieved() {
   // TODO
 //  verify(0);
   return true;
+}
+
+void BrqCoord::GotoNextPhase() {
+  int n_phase = 6;
+  int current_phase = phase_ % n_phase; // for debug
+  switch (phase_++ % n_phase) {
+    case Phase::INIT_END:
+      PreDispatch();
+      verify(phase_ % n_phase == Phase::DISPATCH);
+      break;
+    case Phase::DISPATCH:
+      phase_++;
+      verify(phase_ % n_phase == Phase::PRE_ACCEPT);
+      PreAccept();
+      break;
+    case Phase::PRE_ACCEPT:
+      phase_++; // FIXME
+      verify(phase_ % n_phase == Phase::COMMIT);
+      // TODO
+      break;
+    case Phase::ACCEPT:
+      verify(0);
+      verify(phase_ % n_phase == Phase::COMMIT);
+    case Phase::COMMIT:
+      verify(phase_ % n_phase == Phase::INIT_END);
+      End();
+      break;
+    default:
+      verify(0);
+  }
 }
 
 } // namespace rococo

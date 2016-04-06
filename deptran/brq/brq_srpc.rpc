@@ -8,9 +8,10 @@ abstract service Brq {
                  map<i32, Value> output,
                  BrqGraph ret_graph);
 
-  defer Finish(cmdid_t id,
-               BrqGraph |
-               map<uint32_t, map<i32, Value>> output);
+  defer Commit(cmdid_t id,
+               RccGraph |
+               int32_t res,
+               TxnOutput output);
 
   defer Inquire(cmdid_t txn_id |
                 BrqGraph ret_graph);

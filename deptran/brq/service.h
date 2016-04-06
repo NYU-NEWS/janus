@@ -74,9 +74,10 @@ class BrqServiceImpl: public BrqService {
                 BrqGraph* graph,
                 DeferredReply* defer) override;
 
-  void Finish(const cmdid_t& cmd_id,
-              const BrqGraph& graph,
-              map<innid_t, map<int32_t, Value>>* output,
+  void Commit(const cmdid_t& cmd_id,
+              const RccGraph& graph,
+              int32_t *res,
+              TxnOutput* output,
               DeferredReply* defer) override;
 
 
