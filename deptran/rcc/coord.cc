@@ -24,10 +24,10 @@ RccCommo* RccCoord::commo() {
 void RccCoord::PreDispatch() {
   verify(ro_state_ == BEGIN);
   TxnCommand* txn = dynamic_cast<TxnCommand*>(cmd_);
-  auto dispatch = txn->is_read_only() ?
-                  std::bind(&RccCoord::DispatchRo, this) :
-                  std::bind(&RccCoord::Dispatch, this);
-  dispatch = std::bind(&RccCoord::Dispatch, this);
+//  auto dispatch = txn->is_read_only() ?
+//                  std::bind(&RccCoord::DispatchRo, this) :
+//                  std::bind(&RccCoord::Dispatch, this);
+  auto dispatch = std::bind(&RccCoord::Dispatch, this);
   if (recorder_) {
     std::string log_s;
     // TODO get appropriate log

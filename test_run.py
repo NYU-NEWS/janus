@@ -45,11 +45,16 @@ def run(m, s, b):
 
 def main():
     global modes_
+    global sites_
+    global benchmarks_
     parser = argparse.ArgumentParser();
     parser.add_argument('-m', '--mode', help='running modes', default=modes_,
                         nargs='+', dest='modes')
+    parser.add_argument('-s', '--site', help='sites', default=sites_,
+                        nargs='+', dest='sites')
     args = parser.parse_args()
     modes_ = args.modes
+    sites_ = args.sites
     for m in modes_:
         for b in benchmarks_:
             for s in sites_:
