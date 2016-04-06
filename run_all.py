@@ -16,6 +16,13 @@ DEFAULT_SERVERS = ["3:4"]
 DEFAULT_BENCHMARKS = [ "rw_benchmark", "tpccd" ]
 DEFAULT_TRIAL_DURATION = 10
 DEFAULT_EXECUTABLE = "./run.py"
+
+APPEND_DEFAULTS = {
+    'client_counts': DEFAULT_CLIENTS,
+    'server_counts': DEFAULT_SERVERS, 
+    'benchmarks': DEFAULT_BENCHMARKS,
+    'modes': DEFAULT_MODES,
+}
 TMP_DIR='./tmp'
 
 logger = logging.getLogger('')
@@ -32,13 +39,13 @@ def create_parser():
                         "'<start>:<stop>:<step>' tuples with same semantics as " + \
                         "range builtin function.",
                         action='append',
-                        default = DEFAULT_CLIENTS)
+                        default=[])
     parser.add_argument("-s", "--server-count", dest="server_counts",
                         help="client counts; accpets " + \
                         "'<start>:<stop>:<step>' tuples with same semantics as " + \
                         "range builtin function.",
                         action='append',
-                        default = DEFAULT_SERVERS)
+                        default =[])
     parser.add_argument("-d", "--duration", dest="duration",
                         help="trial duration",
                         type=int,
@@ -50,11 +57,11 @@ def create_parser():
     parser.add_argument('-b', "--benchmarks", dest="benchmarks",
                         help="the benchmarks to run",
                         action='append',
-                        default = DEFAULT_BENCHMARKS)
+                        default =[])
     parser.add_argument("-m", "--modes", dest="modes",
                         help="Concurrency control modes; tuple '<cc-mode>:<ab-mode>'",
                         action='append',
-                        default = DEFAULT_MODES)
+                        default=[])
     parser.add_argument("-hh", "--hosts", dest="hosts_file",
                         help="path to file containing hosts yml config",
                         default='config/hosts.yml',
@@ -68,6 +75,9 @@ def create_parser():
 
 def parse_commandline():
     args = create_parser().parse_args()
+    for k,v in args.__dict__.iteritems():
+        if k in APPEND_DEFAULTS and v == []:
+            args.__dict__[k] = APPEND_DEFAULTS[k] 
     return args
 
 
@@ -216,7 +226,15 @@ def generate_config(args, experiment_name, benchmark, mode, num_client,
     config_files.insert(0, args.hosts_file)
     config_files.append(proc_and_site_config)
     logger.info(config_files)
-    result = config_files 
+    result = aggregate_configs(*config_files)
+    with tempfile.NamedTemporaryFile(
+        mode='w', 
+        prefix='janus-final-{}'.format(args.experiment_name),
+        suffix='.yml',
+        dir=TMP_DIR,
+        delete=False) as f:
+        f.write(yaml.dump(result))
+        result = f.name
     logger.info("result: %s", result)
     return result
 
@@ -224,10 +242,8 @@ def generate_config(args, experiment_name, benchmark, mode, num_client,
 def run_experiment(config_file, name, args, benchmark, mode, num_client):
     cmd = [args.executable]
     cmd.extend(['-n', "'{}'".format(args.experiment_name)])
-    for c in config_file:
-        cmd.extend(['-f', c]) 
+    cmd.extend(['-f', config_file]) 
     cmd.extend(['-d', args.duration])
-
     cmd = [str(c) for c in cmd]
 
     logger.info("running: %s", ' '.join(cmd))
@@ -280,11 +296,16 @@ def run_experiments(args):
                                             full_experiment_name)
                                 traceback.print_exc()
                     
+def print_args(args):
+    for k,v in args.__dict__.iteritems():
+        logger.debug("%s = %s", k, v)
+
 
 def main():
     logging.basicConfig(format="%(levelname)s : %(message)s")
     logger.setLevel(logging.DEBUG)
     args = parse_commandline()
+    print_args(args)
     try:
         run_experiments(args)
     except Exception:
