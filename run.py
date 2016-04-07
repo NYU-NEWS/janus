@@ -1036,6 +1036,7 @@ def setup_experiment(config):
 
 
 def main():
+    ret = 0
     server_controller = None
     client_controller = None
     config = None
@@ -1059,6 +1060,7 @@ def main():
         
     except Exception:
         traceback.print_exc()
+        ret = 1
     finally:
         logger.info("shutting down...")
         if server_controller is not None:
@@ -1071,6 +1073,7 @@ def main():
                 client_controller.client_kill()
             except:
                 traceback.print_exc()
+        sys.exit(ret)
 
 if __name__ == "__main__":
     main()
