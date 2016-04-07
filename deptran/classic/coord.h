@@ -16,11 +16,9 @@ class ClassicCoord : public Coordinator {
                         ClientControlServiceImpl *ccsi,
                         uint32_t thread_id);
 
-  virtual ~ClassicCoord() {
-//    if (commo_) {
-//      delete commo_;
-//    }
-  }
+  virtual ~ClassicCoord() { }
+
+  inline TxnCommand& txn() {return *(TxnCommand*)cmd_;}
 
   RococoCommunicator* commo();
 

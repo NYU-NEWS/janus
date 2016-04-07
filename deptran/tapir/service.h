@@ -22,6 +22,7 @@ class TapirServiceImpl: public TapirService {
               const int32_t& decision,
               rrr::DeferredReply* defer) override;
   void FastAccept(const cmdid_t& cmd_id,
+                  const vector<SimpleCommand>& txn_cmds,
                   rrr::i32* res,
                   rrr::DeferredReply* defer) override;
   void Decide(const cmdid_t& cmd_id,

@@ -26,9 +26,11 @@ void TapirServiceImpl::Accept(const cmdid_t& cmd_id,
 }
 
 void TapirServiceImpl::FastAccept(const cmdid_t& cmd_id,
+                                  const vector<SimpleCommand>& txn_cmds,
                                   rrr::i32* res,
                                   rrr::DeferredReply* defer) {
-  sched_->OnFastAccept(cmd_id, res, [defer] () {defer->reply();});
+  sched_->OnFastAccept(cmd_id, txn_cmds, res,
+                       [defer] () {defer->reply();});
 }
 
 void TapirServiceImpl::Decide(const cmdid_t& cmd_id,

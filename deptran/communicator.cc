@@ -24,7 +24,7 @@ Communicator::Communicator(PollMgr* poll_mgr) {
     auto site_infos = config->SitesByPartitionId(par_id);
     vector<std::pair<siteid_t, ClassicProxy*>> proxies;
     for (auto &si : site_infos) {
-      auto result = this->ConnectToSite(si, milliseconds(Communicator::CONNECT_TIMEOUT_MS));
+      auto result = ConnectToSite(si, milliseconds(CONNECT_TIMEOUT_MS));
       verify(result.first == SUCCESS);
       proxies.push_back(std::make_pair(si.id, result.second));
     }
@@ -41,26 +41,27 @@ Communicator::~Communicator() {
   rpc_clients_.clear();
 }
 
-std::pair<siteid_t, ClassicProxy*> Communicator::RandomProxyForPartition(
-    parid_t partition_id) const {
-  auto it = rpc_par_proxies_.find(partition_id);
+std::pair<siteid_t, ClassicProxy*>
+Communicator::RandomProxyForPartition(parid_t par_id) const {
+  auto it = rpc_par_proxies_.find(par_id);
   verify(it != rpc_par_proxies_.end());
-  auto& partition_proxies = it->second;
-  int index = rrr::RandomGenerator::rand(0, partition_proxies.size()-1);
-  return partition_proxies[index];
+  auto& par_proxies = it->second;
+  int index = rrr::RandomGenerator::rand(0, par_proxies.size() - 1);
+  return par_proxies[index];
 }
 
 std::pair<siteid_t, ClassicProxy*>
-Communicator::LeaderProxyForPartition(parid_t partition_id) const {
-  auto it = rpc_par_proxies_.find(partition_id);
+Communicator::LeaderProxyForPartition(parid_t par_id) const {
+  auto it = rpc_par_proxies_.find(par_id);
   verify(it != rpc_par_proxies_.end());
   auto& partition_proxies = it->second;
   int index = 0;
   return partition_proxies[index];
 }
 
-std::pair<int, ClassicProxy*> Communicator::ConnectToSite(Config::SiteInfo &site,
-                                                          milliseconds timeout) {
+std::pair<int, ClassicProxy*>
+Communicator::ConnectToSite(Config::SiteInfo &site,
+                            milliseconds timeout) {
   string addr = site.GetHostAddr();
   auto start = steady_clock::now();
   rrr::Client* rpc_cli = new rrr::Client(rpc_poll_);
@@ -85,5 +86,11 @@ std::pair<int, ClassicProxy*> Communicator::ConnectToSite(Config::SiteInfo &site
   rpc_cli->close_and_release();
   return std::make_pair(FAILURE, nullptr);
 }
+
+std::pair<siteid_t, ClassicProxy*>
+Communicator::NearestProxyForPartition(parid_t par_id) const {
+  // TODO Fix me.
+  return LeaderProxyForPartition(par_id);
+};
 
 } // namespace rococo

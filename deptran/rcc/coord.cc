@@ -52,11 +52,11 @@ void RccCoord::Dispatch() {
     auto subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd();
     subcmd->id_ = next_pie_id();
     verify(subcmd->root_id_ == cmd_->id_);
-    n_handout_++;
+    n_dispatch_++;
     cnt++;
     Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
-              n_handout_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
-    handout_acks_[subcmd->inn_id()] = false;
+              n_dispatch_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
+    dispatch_acks_[subcmd->inn_id()] = false;
     auto func = std::bind(&RccCoord::DispatchAck,
                           this,
                           phase_,
@@ -76,12 +76,12 @@ void RccCoord::DispatchAck(phase_t phase,
   TxnInfo& info = *graph.vertex_index_.at(cmd.root_id_)->data_;
   verify(cmd.root_id_ == info.id());
   verify(info.partition_.find(cmd.partition_id_) != info.partition_.end());
-  n_handout_ack_++;
+  n_dispatch_ack_++;
   TxnCommand *txn = (TxnCommand *) cmd_;
-  handout_acks_[cmd.inn_id_] = true;
+  dispatch_acks_[cmd.inn_id_] = true;
 
   Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
-            n_handout_ack_, n_handout_, txn->id_, cmd.inn_id_);
+            n_dispatch_ack_, n_dispatch_, txn->id_, cmd.inn_id_);
 
   bool early_return = false;
 
@@ -178,11 +178,11 @@ void RccCoord::DispatchRo() {
     auto subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd();
     subcmd->id_ = next_pie_id();
     verify(subcmd->root_id_ == cmd_->id_);
-    n_handout_++;
+    n_dispatch_++;
     cnt++;
     Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
-              n_handout_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
-    handout_acks_[subcmd->inn_id()] = false;
+              n_dispatch_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
+    dispatch_acks_[subcmd->inn_id()] = false;
     commo()->SendHandoutRo(*subcmd,
                            std::bind(&RccCoord::DispatchRoAck,
                                      this,

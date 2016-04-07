@@ -10,7 +10,7 @@ Executor::Executor(txnid_t txn_id, Scheduler *sched)
   verify(sched != nullptr);
 }
 
-Executor::~Executor(){
+Executor::~Executor() {
 //  verify(mdb_txn_ == nullptr);
   verify(dtxn_ != nullptr);
   sched_->DestroyDTxn(cmd_id_);

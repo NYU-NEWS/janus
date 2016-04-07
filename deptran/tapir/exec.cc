@@ -4,9 +4,24 @@
 
 namespace rococo {
 
-void TapirExecutor::FastAccept(int32_t* res) {
+void TapirExecutor::FastAccept(const vector<SimpleCommand>& txn_cmds,
+                               int32_t* res) {
   // validate read versions and
   *res = SUCCESS;
+  for (auto& cmd: txn_cmds) {
+    map<int32_t, Value> output;
+    int32_t r;
+    Execute(cmd, &r, output);
+    for (auto& pair : output) {
+      verify(cmd.output.size() > 0);
+      auto& i = pair.first;
+      auto& v = pair.second;
+      if (v.ver_ != cmd.output.at(i).ver_) {
+        *res = REJECT;
+      }
+    }
+  }
+  // TODO
   auto& read_vers = dtxn()->read_vers_;
   for (auto& pair1 : read_vers) {
     Row* r = pair1.first;
@@ -32,7 +47,6 @@ void TapirExecutor::FastAccept(int32_t* res) {
           // remember locks.
           locked_rows_.insert(row);
         }
-
       };
     }
   }
@@ -50,7 +64,6 @@ void TapirExecutor::FastAccept(int32_t* res) {
     }
   }
   verify(*res == SUCCESS || *res == REJECT);
-//  *res = SUCCESS;
 }
 
 void TapirExecutor::Commit() {

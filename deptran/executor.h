@@ -9,6 +9,7 @@ class TxnRegistry;
 class Scheduler;
 class DTxn;
 class SimpleCommand;
+class TxnCommand;
 class Executor {
  public:
   Recorder* recorder_ = nullptr;
@@ -16,14 +17,15 @@ class Executor {
   mdb::Txn *mdb_txn_ = nullptr;
   Scheduler* sched_ = nullptr;
   DTxn* dtxn_ = nullptr;
+  TxnCommand* txn_cmd_ = nullptr;
   cmdid_t cmd_id_ = 0;
   int phase_ = -1;
 
   Executor() = delete;
   Executor(txnid_t txn_id, Scheduler* sched);
   virtual void Execute(const SimpleCommand &cmd,
-               rrr::i32 *res,
-               map<int32_t, Value> &output);
+                       rrr::i32 *res,
+                       map<int32_t, Value> &output);
 
   virtual ~Executor();
   mdb::Txn* mdb_txn();

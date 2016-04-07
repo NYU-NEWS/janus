@@ -22,18 +22,19 @@ int TapirSched::OnDispatch(const SimpleCommand &cmd,
 }
 
 int TapirSched::OnFastAccept(cmdid_t cmd_id,
+                             const vector<SimpleCommand>& txn_cmds,
                              int32_t* res,
                              const function<void()>& callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   Log_debug("receive fast accept for cmd_id: %llx", cmd_id);
   auto exec = (TapirExecutor*) GetOrCreateExecutor(cmd_id);
-  exec->FastAccept(res);
+  exec->FastAccept(txn_cmds, res);
   callback();
   return 0;
 }
 
 int TapirSched::OnDecide(cmdid_t cmd_id,
-                         int decision,
+                         int32_t decision,
                          const function<void()>& callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto exec = (TapirExecutor*) GetOrCreateExecutor(cmd_id);

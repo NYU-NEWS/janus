@@ -15,7 +15,7 @@ void TapirCommo::SendDispatch(SimpleCommand &cmd,
   rrr::FutureAttr fuattr;
   parid_t par_id = cmd.PartitionId();
   auto proxy = (TapirProxy*) LeaderProxyForPartition(cmd.PartitionId()).second;
-  std::function<void(Future*)> cb =
+  function<void(Future*)> cb =
       [coo, this, callback, &cmd] (Future *fu) {
         Log_debug("SendStart callback for %ld from %ld",
                   cmd.PartitionId(),
@@ -34,6 +34,7 @@ void TapirCommo::SendDispatch(SimpleCommand &cmd,
 
 void TapirCommo::BroadcastFastAccept(parid_t par_id,
                                      cmdid_t cmd_id,
+                                     vector<SimpleCommand>& cmds,
                                      const function<void(int32_t)>& cb) {
   auto proxies = rpc_par_proxies_[par_id];
   for (auto &p : proxies) {
@@ -44,7 +45,7 @@ void TapirCommo::BroadcastFastAccept(parid_t par_id,
       fu->get_reply() >> res;
       cb(res);
     };
-    Future::safe_release(proxy->async_FastAccept(cmd_id, fuattr));
+    Future::safe_release(proxy->async_FastAccept(cmd_id, cmds, fuattr));
   }
 }
 

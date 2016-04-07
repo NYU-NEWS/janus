@@ -52,12 +52,12 @@ void BrqCoord::DispatchAck(phase_t phase,
   TxnInfo& info = *graph.vertex_index_.at(cmd.root_id_)->data_;
   verify(cmd.root_id_ == info.id());
   verify(info.partition_.find(cmd.partition_id_) != info.partition_.end());
-  n_handout_ack_++;
+  n_dispatch_ack_++;
   TxnCommand *txn = (TxnCommand *) cmd_;
-  handout_acks_[cmd.inn_id_] = true;
+  dispatch_acks_[cmd.inn_id_] = true;
 
   Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
-            n_handout_ack_, n_handout_, txn->id_, cmd.inn_id_);
+            n_dispatch_ack_, n_dispatch_, txn->id_, cmd.inn_id_);
 
   // where should I store this graph?
   Log_debug("start response graph size: %d", (int)graph.size());

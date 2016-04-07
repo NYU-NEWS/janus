@@ -27,6 +27,16 @@ bool TxnCommand::IsOneRound() {
   return false;
 }
 
+vector<SimpleCommand> TxnCommand::GetCmdsByPartition(parid_t par_id) {
+  vector<SimpleCommand> cmds;
+  for (auto c: cmds_) {
+    SimpleCommand &cmd = *(SimpleCommand*)c.second;
+    if (cmd.partition_id_ == par_id) {
+      cmds.push_back(cmd);
+    }
+  }
+}
+
 ContainerCommand *TxnCommand::GetNextReadySubCmd() {
   verify(n_pieces_out_ < n_pieces_input_ready_);
   verify(n_pieces_out_ < n_pieces_all_);
@@ -50,7 +60,7 @@ ContainerCommand *TxnCommand::GetNextReadySubCmd() {
       cmd->input = inputs_[pi];
       cmd->output_size = output_size_[pi];
       cmd->root_ = this;
-      cmd_[pi] = cmd;
+      cmds_[pi] = cmd;
       partition_ids_.insert(cmd->partition_id_);
 
       Log_debug("getting subcmd i: %d, thread id: %x",

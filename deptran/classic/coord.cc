@@ -144,13 +144,13 @@ void ClassicCoord::Reset() {
   for (int i = 0; i < site_prepare_.size(); i++) {
     site_prepare_[i] = 0;
   }
-  n_handout_ = 0;
-  n_handout_ack_ = 0;
+  n_dispatch_ = 0;
+  n_dispatch_ack_ = 0;
   n_prepare_req_ = 0;
   n_prepare_ack_ = 0;
   n_finish_req_ = 0;
   n_finish_ack_ = 0;
-  handout_acks_.clear();
+  dispatch_acks_.clear();
   aborted_ = false;
   committed_ = false;
 //  TxnCommand *ch = (TxnCommand *) cmd_;
@@ -185,11 +185,11 @@ void ClassicCoord::Dispatch() {
     auto subcmd = (SimpleCommand*) txn->GetNextReadySubCmd();
     subcmd->id_ = next_pie_id();
     verify(subcmd->root_id_ == cmd_->id_);
-    n_handout_++;
+    n_dispatch_++;
     cnt++;
     Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
-              n_handout_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
-    handout_acks_[subcmd->inn_id()] = false;
+              n_dispatch_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
+    dispatch_acks_[subcmd->inn_id()] = false;
     commo()->SendDispatch(*subcmd,
                          this,
                          std::bind(&ClassicCoord::DispatchAck,
@@ -202,13 +202,13 @@ void ClassicCoord::Dispatch() {
 }
 
 bool ClassicCoord::AllDispatchAcked() {
-  bool ret1 = std::all_of(handout_acks_.begin(),
-                          handout_acks_.end(),
+  bool ret1 = std::all_of(dispatch_acks_.begin(),
+                          dispatch_acks_.end(),
                           [] (std::pair<innid_t, bool> pair){
                             return pair.second;
                           });
   if (ret1)
-    verify(n_handout_ack_ == n_handout_);
+    verify(n_dispatch_ack_ == n_dispatch_);
   return ret1;
 }
 
@@ -219,13 +219,13 @@ void ClassicCoord::DispatchAck(phase_t phase, int res, ContainerCommand &cmd) {
 //    Log_debug("ignore stale startack\n");
 //    return;
 //  }
-  n_handout_ack_++;
+  n_dispatch_ack_++;
   TxnCommand *ch = (TxnCommand *) cmd_;
-  verify(handout_acks_[cmd.inn_id_] == false);
-  handout_acks_[cmd.inn_id_] = true;
+  verify(dispatch_acks_[cmd.inn_id_] == false);
+  dispatch_acks_[cmd.inn_id_] = true;
 
   Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
-            n_handout_ack_, n_handout_, cmd_->id_, cmd.inn_id_);
+            n_dispatch_ack_, n_dispatch_, cmd_->id_, cmd.inn_id_);
 //  verify(res == SUCCESS);
   if (res == REJECT) {
     Log_debug("got REJECT reply for cmd_id: %lx, inn_id: %d; NOT COMMITING",
@@ -234,7 +234,7 @@ void ClassicCoord::DispatchAck(phase_t phase, int res, ContainerCommand &cmd) {
     ch->commit_.store(false);
   }
   if (aborted_) {
-    if (n_handout_ack_ == n_handout_) {
+    if (n_dispatch_ack_ == n_dispatch_) {
       Log_debug("received all start acks (at least one is REJECT); calling "
                     "Finish()");
       GotoNextPhase();
@@ -313,20 +313,20 @@ void ClassicCoord::PrepareAck(phase_t phase, Future *fu) {
 void ClassicCoord::Commit() {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   ___TestPhaseThree(cmd_->id_);
-  TxnCommand *cmd = (TxnCommand *) cmd_;
   auto mode = Config::GetConfig()->cc_mode_;
   verify(mode == MODE_OCC || mode == MODE_2PL);
-  Log_debug("send out finish request, cmd_id: %lx, %ld", cmd->id_, n_finish_req_);
+  Log_debug("send out finish request, cmd_id: %lx, %ld",
+            txn().id_, n_finish_req_);
 
   // commit or abort piece
 //  RequestHeader header = gen_header(cmd);
-  if (cmd->commit_.load()) {
-    cmd->reply_.res_ = SUCCESS;
-    for (auto &rp : cmd->partition_ids_) {
+  if (txn().commit_.load()) {
+    txn().reply_.res_ = SUCCESS;
+    for (auto &rp : txn().partition_ids_) {
       n_finish_req_ ++;
-      Log_debug("send commit for txn_id %ld to %ld\n", cmd->id_, rp);
+      Log_debug("send commit for txn_id %ld to %ld\n", txn().id_, rp);
       commo()->SendCommit(rp,
-                         cmd_->id_,
+                         txn().id_,
                           std::bind(&ClassicCoord::CommitAck,
                                     this,
                                     phase_,
@@ -334,10 +334,10 @@ void ClassicCoord::Commit() {
       site_commit_[rp]++;
     }
   } else {
-    cmd->reply_.res_ = REJECT;
-    for (auto &rp : cmd->partition_ids_) {
+    txn().reply_.res_ = REJECT;
+    for (auto &rp : txn().partition_ids_) {
       n_finish_req_ ++;
-      Log_debug("send abort for txn_id %ld to %ld\n", cmd->id_, rp);
+      Log_debug("send abort for txn_id %ld to %ld\n", txn().id_, rp);
       commo()->SendAbort(rp,
                         cmd_->id_,
                          std::bind(&ClassicCoord::CommitAck,

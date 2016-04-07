@@ -72,7 +72,7 @@ class TxnCommand: public ContainerCommand {
   map<int32_t, cmdtype_t> p_types_;                  // types of each piece.
   map<int32_t, parid_t> sharding_;
   map<int32_t, int32_t> status_; // -1 waiting; 0 ready; 1 ongoing; 2 finished;
-  map<int32_t, ContainerCommand*> cmd_;
+  map<int32_t, ContainerCommand*> cmds_;
   std::set<parid_t> partition_ids_;
   std::atomic<bool> commit_;
 
@@ -133,12 +133,12 @@ class TxnCommand: public ContainerCommand {
   virtual ContainerCommand* GetNextReadySubCmd();
   virtual set<siteid_t> GetPartitionIds();
 
-
   virtual parid_t GetPiecePartitionId(innid_t inn_id) {
     verify(sharding_.find(inn_id) != sharding_.end());
     return sharding_[inn_id];
   }
   virtual bool IsOneRound();
+  vector<SimpleCommand> GetCmdsByPartition(parid_t par_id);
 
   Marshal& ToMarshal(Marshal& m) const override;
   Marshal& FromMarshal(Marshal& m) override;

@@ -4,6 +4,7 @@
 namespace rrr {
 
 rrr::Marshal &operator<<(rrr::Marshal &m, const mdb::Value &value) {
+  m << value.ver_;
   switch (value.get_kind()) {
     case Value::I32:
       m << (i32) 0 << value.get_i32();
@@ -25,7 +26,7 @@ rrr::Marshal &operator<<(rrr::Marshal &m, const mdb::Value &value) {
 }
 
 rrr::Marshal &operator>>(rrr::Marshal &m, mdb::Value &value) {
-  std::string str;
+  m >> value.ver_;
   i32 k;
   m >> k;
   switch (k) {

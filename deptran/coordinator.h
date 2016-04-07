@@ -43,7 +43,7 @@ class Coordinator : public CoordinatorBase {
   ContainerCommand *cmd_ = nullptr;
 //  cmdid_t cmd_id_;
   phase_t phase_ = 0;
-  map<innid_t, bool> handout_acks_ = {};
+  map<innid_t, bool> dispatch_acks_ = {};
   map<innid_t, bool> handout_outs_ = {};
   Sharding* sharding_ = nullptr;
   TxnRegistry *txn_reg_ = nullptr;
@@ -55,8 +55,8 @@ class Coordinator : public CoordinatorBase {
   // below should be reset on retry.
   bool committed_ = false;
   bool aborted_ = false;
-  uint32_t n_handout_ = 0;
-  uint32_t n_handout_ack_ = 0;
+  uint32_t n_dispatch_ = 0;
+  uint32_t n_dispatch_ack_ = 0;
   uint32_t n_prepare_req_ = 0;
   uint32_t n_prepare_ack_ = 0;
   uint32_t n_finish_req_ = 0;
@@ -130,8 +130,8 @@ class Coordinator : public CoordinatorBase {
   virtual void Reset() {
     committed_ = false;
     aborted_ = false;
-    n_handout_ = 0;
-    n_handout_ack_ = 0;
+    n_dispatch_ = 0;
+    n_dispatch_ack_ = 0;
     n_prepare_req_ = 0;
     n_prepare_ack_ = 0;
     n_finish_req_ = 0;

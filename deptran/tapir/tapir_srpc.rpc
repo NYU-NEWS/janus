@@ -10,7 +10,8 @@ abstract service Tapir {
                uint64_t ballot,
 	       int32_t decision);
   // works as 2PC prepare on a paxos fast-accept
-  defer FastAccept(uint64_t cmd_id |
+  defer FastAccept(uint64_t cmd_id,
+                   vector<SimpleCommand> txn_cmds |
                    i32 res);
   // works as a 2PC commit/abort with a paxos decision
   defer Decide(uint64_t cmd_id, i32 commit);

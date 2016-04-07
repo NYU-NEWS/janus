@@ -15,6 +15,7 @@ class TapirCommo : public Communicator {
                     const function<void(int, ContainerCommand &)> &callback);
   void BroadcastFastAccept(parid_t par_id,
                            cmdid_t cmd_id,
+                           vector<SimpleCommand>& cmds,
                            const function<void(int32_t)>& callback);
   void BroadcastDecide(parid_t,
                        cmdid_t cmd_id,

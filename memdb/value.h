@@ -10,8 +10,8 @@ namespace mdb {
 
 class Value {
     friend std::ostream& operator<< (std::ostream& o, const Value& v);
-
 public:
+    uint64_t ver_ = 0;
 
     typedef enum {
         UNKNOWN,

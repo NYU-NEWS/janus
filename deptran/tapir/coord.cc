@@ -21,11 +21,11 @@ void TapirCoord::Dispatch() {
     auto subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd();
     subcmd->id_ = next_pie_id();
     verify(subcmd->root_id_ == cmd_->id_);
-    n_handout_++;
+    n_dispatch_++;
     cnt++;
     Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
-              n_handout_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
-    handout_acks_[subcmd->inn_id()] = false;
+              n_dispatch_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
+    dispatch_acks_[subcmd->inn_id()] = false;
     commo()->SendDispatch(*subcmd,
                           this,
                           std::bind(&ClassicCoord::DispatchAck,
@@ -38,15 +38,17 @@ void TapirCoord::Dispatch() {
 }
 
 
-void TapirCoord::DispatchAck(phase_t phase, int32_t res, ContainerCommand &cmd) {
+void TapirCoord::DispatchAck(phase_t phase,
+                             int32_t res,
+                             ContainerCommand &cmd) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(phase == phase_);
-  n_handout_ack_++;
+  n_dispatch_ack_++;
   TxnCommand *ch = (TxnCommand *) cmd_;
-  handout_acks_[cmd.inn_id_] = true;
+  dispatch_acks_[cmd.inn_id_] = true;
 
   Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
-            n_handout_ack_, n_handout_, cmd_->id_, cmd.inn_id_);
+            n_dispatch_ack_, n_dispatch_, cmd_->id_, cmd.inn_id_);
   verify(res == SUCCESS);
   cmd_->Merge(cmd);
   if (cmd_->HasMoreSubCmdReadyNotOut()) {
@@ -70,9 +72,11 @@ void TapirCoord::Reset() {
 void TapirCoord::FastAccept() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   Log_debug("send out fast accept for cmd_id: %llx", cmd_->id_);
-  for (auto par_id : cmd_->GetPartitionIds()) {
+  for (auto par_id : txn().GetPartitionIds()) {
+    vector<SimpleCommand> txn_cmds = txn().GetCmdsByPartition(par_id);
     commo()->BroadcastFastAccept(par_id,
-                                 cmd_->id_,
+                                 txn().id_,
+                                 txn_cmds,
                                  std::bind(&TapirCoord::FastAcceptAck,
                                            this,
                                            phase_,
@@ -93,7 +97,9 @@ void TapirCoord::FastAccept() {
 //  }
 }
 
-void TapirCoord::FastAcceptAck(phase_t phase, parid_t par_id, int32_t res) {
+void TapirCoord::FastAcceptAck(phase_t phase,
+                               parid_t par_id,
+                               int32_t res) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   if (phase_ > phase) return;
   // if for every partition, get fast quorum of OK, go into decide.
@@ -109,13 +115,15 @@ void TapirCoord::FastAcceptAck(phase_t phase, parid_t par_id, int32_t res) {
   if (FastQuorumPossible()) {
     if (AllFastQuorumReached()) {
       decision_ = COMMIT;
+      committed_ = true;
       GotoNextPhase();
     } else {
       // do nothing and wait for future ack.
     }  
   } else {
-      decision_ = ABORT;
-      GotoNextPhase();
+    decision_ = ABORT;
+    aborted_ = true;
+    GotoNextPhase();
   }
 }
 
