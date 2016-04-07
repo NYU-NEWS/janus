@@ -1,8 +1,10 @@
 #! /usr/bin/env python
+import sys
 import traceback
 import os
 import tempfile
 import subprocess
+import itertools
 from argparse import ArgumentParser
 import logging
 from logging import info, debug, error 
@@ -207,7 +209,6 @@ def aggregate_configs(*args):
     print(args)
     config = {}
     for fn in args:
-        print "file: {}".format(fn)
         config.update(load_config(fn))
     return config
 
@@ -262,40 +263,45 @@ def archive_results(name):
 def generate_graphs(name):
     pass
 
-
 def run_experiments(args):
-    # todo: break up nested loop
-    for server_range in args.server_counts:
-        for num_server in get_range(server_range):
-            for client_range in args.client_counts:
-                for num_client in get_range(client_range):
-                    for mode in args.modes:
-                        for benchmark in args.benchmarks: 
-                            experiment_suffix = gen_experiment_suffix(
-                                benchmark,
-                                mode,
-                                num_client)
-                            full_experiment_name = "{}-{}".format(
-                                args.experiment_name,
-                                experiment_suffix) 
-                            logger.info("Experiment: {name}".format(
-                                name=full_experiment_name))
-                            config_file = generate_config(args,
-                                                          full_experiment_name,
-                                                          benchmark, mode,
-                                                          num_client,
-                                                          num_server,
-                                                          args.num_replicas)
-                            try:
-                                run_experiment(config_file, full_experiment_name, args,
-                                               benchmark, mode, num_client)
-                                generate_graphs(full_experiment_name)
-                                archive_results(full_experiment_name)
-                            except Exception:
-                                logger.info("Experiment %s failed.",
-                                            full_experiment_name)
-                                traceback.print_exc()
-                    
+    server_counts = itertools.chain.from_iterable([get_range(sr) for sr in args.server_counts])
+    client_counts = itertools.chain.from_iterable([get_range(cr) for cr in args.client_counts])
+
+    experiment_params = (server_counts,
+                         client_counts,
+                         args.modes,
+                         args.benchmarks)
+
+    experiments = itertools.product(*experiment_params)
+    for params in experiments:
+        (num_server, num_client, mode, benchmark) = params 
+        experiment_suffix = gen_experiment_suffix(
+            benchmark,
+            mode,
+            num_client)
+        experiment_name = "{}-{}".format(
+            args.experiment_name,
+            experiment_suffix)
+
+        logger.info("Experiment: {}".format(params))
+        config_file = generate_config(
+            args,
+            experiment_name,
+            benchmark, mode,
+            num_client,
+            num_server,
+            args.num_replicas)
+        try:
+            run_experiment(config_file, experiment_name, args,
+                           benchmark, mode, num_client)
+            generate_graphs(experiment_name)
+            archive_results(experiment_name)
+        except Exception:
+            logger.info("Experiment %s failed.",
+                        experiment_name)
+            traceback.print_exc()
+                   
+
 def print_args(args):
     for k,v in args.__dict__.iteritems():
         logger.debug("%s = %s", k, v)
