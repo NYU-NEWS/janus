@@ -74,6 +74,7 @@ void TapirCoord::FastAccept() {
   Log_debug("send out fast accept for cmd_id: %llx", cmd_->id_);
   for (auto par_id : txn().GetPartitionIds()) {
     vector<SimpleCommand> txn_cmds = txn().GetCmdsByPartition(par_id);
+    verify(txn_cmds.size() < 10000);
     commo()->BroadcastFastAccept(par_id,
                                  txn().id_,
                                  txn_cmds,

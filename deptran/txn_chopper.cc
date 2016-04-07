@@ -36,6 +36,7 @@ vector<SimpleCommand> TxnCommand::GetCmdsByPartition(parid_t par_id) {
       cmds.push_back(*cmd);
     }
   }
+  return cmds;
 }
 
 ContainerCommand *TxnCommand::GetNextReadySubCmd() {

@@ -91,11 +91,12 @@ txn_reg_->input_vars_[txn][pie] = {__VA_ARGS__};
 
 #define TPL_KISS(...) (0)
 #define TPL_KISS_NONE (0)
-#define TPL_KISS_ROW(r) \
-  if (IS_MODE_2PL && ((TPLDTxn*)dtxn)->locking_) { \
-    ((TPLDTxn*)dtxn)->row_lock_ = r; \
-    return; \
-}
+#define TPL_KISS_ROW  (0)
+//#define TPL_KISS_ROW(r) \
+//  if (IS_MODE_2PL && ((TPLDTxn*)dtxn)->locking_) { \
+//    ((TPLDTxn*)dtxn)->row_lock_ = r; \
+//    return; \
+//}
 
 
 #define RCC_KISS(row, col, imdt) \

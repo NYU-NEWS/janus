@@ -32,6 +32,8 @@ rrr::Marshal &operator>>(rrr::Marshal &m, ContainerCommand &cmd) {
 
 
 rrr::Marshal &operator<<(rrr::Marshal &m, const SimpleCommand &cmd) {
+  if (cmd.input.size() == 0) verify(cmd.input.begin() == cmd.input.end());
+  verify(cmd.input.size() < 10000);
   m << cmd.id_;
   m << cmd.type_;
   m << cmd.inn_id_;

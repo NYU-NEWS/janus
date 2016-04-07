@@ -57,6 +57,7 @@ bool TxnOCC::__DebugVersionCheck() {
       }
     }
   }
+  return true;
 }
 
 bool TxnOCC::version_check(const std::unordered_map<row_column_pair,
@@ -193,6 +194,7 @@ bool TxnOCC::__DebugCheckReadVersion(row_column_pair row_col,
     auto ver_read = it->second;
     verify(ver_read >= ver_now);
   }
+  return true;
 }
 
 bool TxnOCC::write_column(Row *row, column_id_t col_id, const Value &value) {

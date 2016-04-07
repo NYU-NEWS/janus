@@ -71,66 +71,23 @@ void TpccPiece::RegDelivery() {
                                       cmd.id_);
     if (rs.has_next()) {
       r = rs.next();
-      TPL_KISS_ROW(r);
+//      TPL_KISS_ROW(r);
       dtxn->ReadColumn(r, TPCC_COL_NEW_ORDER_NO_W_ID, &buf);
       output[TPCC_VAR_O_ID] = buf;
     } else {
       verify(0);
-      TPL_KISS_NONE;
+//      TPL_KISS_NONE;
       output[TPCC_VAR_O_ID] = Value((i32) -1);
     }
-    if (r) {
-      mdb::Txn *txn = dtxn->mdb_txn();
-      txn->remove_row(tbl, r);
-    }
-
-//    if (IS_MODE_RCC || IS_MODE_RO6) { // deptran
-//      if (IN_PHASE_1) { // deptran start req, top half
-//        if (r) { // if find a row
-//          // FIXME!!!!!
-//          RCC_KISS(r, 0, true);
-//          RCC_KISS(r, 1, true);
-//          RCC_KISS(r, 2, true);
-//          static int iiiii = 0;
-//          RCC_SAVE_ROW(r, iiiii++);
-//          tbl->remove(r, false); // don't release the row
-//        }
-//      } else { // deptran finish
-//        auto &row_map = ((RCCDTxn*)dtxn)->dreqs_.back().row_map;
-//        for (auto &it : row_map) {
-//          it.second->release();
-//        }
-//      }
-//    } else { // non deptran
-//      if (r) {
-//        txn->remove_row(tbl, r);
-//      }
+    // TODO FIXME
+//    if (r) {
+//      mdb::Txn *txn = dtxn->mdb_txn();
+//      txn->remove_row(tbl, r);
 //    }
 
     *res = SUCCESS;
     return;
   } END_PIE
-
-//  BEGIN_CB(TPCC_DELIVERY, TPCC_DELIVERY_0)
-//    TpccTxn *tpcc_ch = (TpccTxn*) ch;
-//    verify(output.size() == 1);
-//    if (output[TPCC_VAR_O_ID].get_i32() == (i32) -1) { // new_order not found
-//      tpcc_ch->status_[TPCC_DELIVERY_1] = FINISHED;
-//      tpcc_ch->status_[TPCC_DELIVERY_2] = FINISHED;
-//      tpcc_ch->status_[TPCC_DELIVERY_3] = FINISHED;
-//      tpcc_ch->n_pieces_out_ += 3;
-//      Log_info("TPCC DELIVERY: no more new order for w_id: %d, d_id: %d",
-//                tpcc_ch->inputs_[TPCC_DELIVERY_0][TPCC_VAR_W_ID].get_i32(),
-//                tpcc_ch->inputs_[TPCC_DELIVERY_0][TPCC_VAR_D_ID].get_i32());
-//      return false;
-//    } else {
-//      tpcc_ch->inputs_[TPCC_DELIVERY_1][TPCC_VAR_O_ID] = output[TPCC_VAR_O_ID];
-//      tpcc_ch->inputs_[TPCC_DELIVERY_2][TPCC_VAR_O_ID] = output[TPCC_VAR_O_ID];
-//      tpcc_ch->status_[TPCC_DELIVERY_1] = READY;
-//      tpcc_ch->status_[TPCC_DELIVERY_2] = READY;
-//      return true;
-//    }
-//  END_CB
 
   // Ri & W order
   INPUT_PIE(TPCC_DELIVERY, TPCC_DELIVERY_1,
@@ -159,19 +116,6 @@ void TpccPiece::RegDelivery() {
     *res = SUCCESS;
     return;
   } END_PIE
-
-//  BEGIN_CB(TPCC_DELIVERY, TPCC_DELIVERY_1)
-//    TpccTxn *tpcc_ch = (TpccTxn*) ch;
-//    verify(output.size() == 1);
-//    tpcc_ch->inputs_[TPCC_DELIVERY_3][TPCC_VAR_C_ID] = output[TPCC_VAR_C_ID];
-//    bool b = tpcc_ch->ws_.count(TPCC_VAR_OL_AMOUNT) > 0;
-//    if (b) {
-//      tpcc_ch->status_[TPCC_DELIVERY_3] = READY;
-//      return true;
-//    } else {
-//      return false;
-//    }
-//  END_CB
 
   // Ri & W order_line
   INPUT_PIE(TPCC_DELIVERY, TPCC_DELIVERY_2,
@@ -230,19 +174,6 @@ void TpccPiece::RegDelivery() {
 
     *res = SUCCESS;
   } END_PIE
-
-//  BEGIN_CB(TPCC_DELIVERY, TPCC_DELIVERY_2)
-//    TpccTxn *tpcc_ch = (TpccTxn*) ch;
-//    verify(output.size() == 1);
-//    tpcc_ch->inputs_[TPCC_DELIVERY_3][TPCC_VAR_OL_AMOUNT] = output[TPCC_VAR_OL_AMOUNT];
-//    bool b = tpcc_ch->ws_.count(TPCC_VAR_C_ID) > 0;
-//    if (b) {
-//      tpcc_ch->status_[TPCC_DELIVERY_3] = READY;
-//      return true;
-//    } else {
-//      return false;
-//    }
-//  END_CB
 
   // W customer
   INPUT_PIE(TPCC_DELIVERY, TPCC_DELIVERY_3,

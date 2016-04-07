@@ -66,7 +66,7 @@ void ServerWorker::PopTable() {
   // get all tables
   std::vector<std::string> table_names;
 
-  Log_info("start data population for Site %d", site_info_->id);
+  Log_info("start data population for site %d", site_info_->id);
   ret = sharding_->GetTableNames(site_info_->id, table_names);
   verify(ret > 0);
 
