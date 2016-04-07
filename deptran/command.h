@@ -112,7 +112,7 @@ class SimpleCommand: public ContainerCommand {
   ContainerCommand* root_ = nullptr;
   map<int32_t, Value> input = {};
   map<int32_t, Value> output = {};
-  int output_size = 0;
+  int32_t output_size = 0;
   parid_t partition_id_ = 0xFFFFFFFF;
   SimpleCommand() = default;
   virtual parid_t PartitionId() const {

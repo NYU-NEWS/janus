@@ -29,10 +29,11 @@ bool TxnCommand::IsOneRound() {
 
 vector<SimpleCommand> TxnCommand::GetCmdsByPartition(parid_t par_id) {
   vector<SimpleCommand> cmds;
-  for (auto c: cmds_) {
-    SimpleCommand &cmd = *(SimpleCommand*)c.second;
-    if (cmd.partition_id_ == par_id) {
-      cmds.push_back(cmd);
+  for (auto& pair: cmds_) {
+    SimpleCommand* cmd = dynamic_cast<SimpleCommand*>(pair.second);
+    verify(cmd);
+    if (cmd->partition_id_ == par_id) {
+      cmds.push_back(*cmd);
     }
   }
 }
