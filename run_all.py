@@ -11,12 +11,17 @@ from logging import info, debug, error
 
 import yaml
 
-DEFAULT_MODES = ["tpl_ww:none", "occ:none", "tpl_ww:paxos", "occ:paxos",
-                 "tapir:tapir", "brq:brq"]
-DEFAULT_CLIENTS = ["1:11"]
-DEFAULT_SERVERS = ["3:4"]
+DEFAULT_MODES = ["tpl_ww:none",
+                 "occ:none",
+                 "tpl_ww:paxos",
+                 "occ:paxos",
+                 "tapir:tapir",
+                 "brq:brq"]
+
+DEFAULT_CLIENTS = ["1:2"]
+DEFAULT_SERVERS = ["1:2"]
 DEFAULT_BENCHMARKS = [ "rw_benchmark", "tpccd" ]
-DEFAULT_TRIAL_DURATION = 10
+DEFAULT_TRIAL_DURATION = 30
 DEFAULT_EXECUTABLE = "./run.py"
 
 APPEND_DEFAULTS = {
@@ -260,7 +265,7 @@ def archive_results(name):
     pass
 
 
-def generate_graphs(name):
+def scrape_data(name):
     pass
 
 def run_experiments(args):
@@ -294,7 +299,7 @@ def run_experiments(args):
         try:
             run_experiment(config_file, experiment_name, args,
                            benchmark, mode, num_client)
-            generate_graphs(experiment_name)
+            scrape_data(experiment_name)
             archive_results(experiment_name)
         except Exception:
             logger.info("Experiment %s failed.",
