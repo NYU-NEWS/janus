@@ -8,6 +8,7 @@
 namespace rococo {
 
 class TxnCommand;
+class TpcPrepareCommand;
 class ClassicSched: public NoneSched {
  using NoneSched::NoneSched;
  public:
@@ -30,6 +31,6 @@ class ClassicSched: public NoneSched {
 
   int PrepareReplicated(TpcPrepareCommand& cmd);
 
-  };
+};
 
-}
+} // namespace rococo

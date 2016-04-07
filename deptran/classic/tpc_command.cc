@@ -1,4 +1,6 @@
 #include "tpc_command.h"
+#include "../command.h"
+#include "../command_marshaler.h"
 
 using namespace rococo;
 
