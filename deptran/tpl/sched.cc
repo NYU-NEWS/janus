@@ -20,17 +20,6 @@ TPLSched::TPLSched() : ClassicSched() {
   mdb_txn_mgr_ = new mdb::TxnMgr2PL();
 }
 
-int TPLSched::OnDispatch(const SimpleCommand &cmd,
-                         rrr::i32 *res,
-                         map<int32_t, Value> *output,
-                         const function<void()>& callback) {
-  verify(frame_ != nullptr);
-  TPLExecutor* exec = (TPLExecutor*) GetOrCreateExecutor(cmd.root_id_);
-  exec->StartLaunch(cmd, res, output, callback);
-  return 0;
-}
-
-
 mdb::Txn* TPLSched::del_mdb_txn(const i64 tid) {
   mdb::Txn *txn = NULL;
   std::map<i64, mdb::Txn *>::iterator it = mdb_txns_.find(tid);

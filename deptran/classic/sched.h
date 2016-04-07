@@ -28,7 +28,7 @@ class ClassicSched: public NoneSched {
 
   void OnLearn(ContainerCommand&) override;
 
-  int PrepareReplicated(cmdid_t cmd_id, int res, TxnCommand& cmd);
+  int PrepareReplicated(TpcPrepareCommand& cmd);
 
   };
 

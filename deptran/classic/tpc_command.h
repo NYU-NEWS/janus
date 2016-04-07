@@ -14,7 +14,7 @@ class TpcPrepareCommand : public ContainerCommand {
   }
   txnid_t txn_id_ = 0;
   int32_t res_ = -1;
-  TxnCommand* txn_cmd_ = nullptr;
+  vector<SimpleCommand> cmds_ = {};
 
   Marshal& ToMarshal(Marshal&) const override;
   Marshal& FromMarshal(Marshal&) override;
@@ -27,7 +27,6 @@ class TpcCommitCommand : public ContainerCommand {
     self_cmd_ = this;
     type_ = CMD_TPC_COMMIT;
   }
-  TxnCommand* txn_cmd_ = nullptr;
   virtual Marshal& ToMarshal(Marshal&) const;
   virtual Marshal& FromMarshal(Marshal&);
   virtual ContainerCommand& Execute() {verify(0);};

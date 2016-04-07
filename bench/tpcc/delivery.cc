@@ -5,7 +5,6 @@ namespace rococo {
 void TpccTxn::DeliveryInit(TxnRequest &req) {
   n_pieces_all_ = 4;
 
-
   // piece 0, Ri & W new_order
   output_size_[TPCC_DELIVERY_0] = 1;
   // piece 1, Ri & W order

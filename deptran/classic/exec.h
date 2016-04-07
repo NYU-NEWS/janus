@@ -12,6 +12,8 @@ class SimpleCommand;
 class ClassicExecutor: public Executor {
   using Executor::Executor;
  public:
+  vector<SimpleCommand> cmds_ = {};
+
   virtual ~ClassicExecutor();
 
   virtual int StartLaunch(const SimpleCommand &cmd,

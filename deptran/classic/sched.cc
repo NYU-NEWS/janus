@@ -15,7 +15,9 @@ int ClassicSched::OnDispatch(const SimpleCommand &cmd,
                              map<int32_t, Value> *output,
                              const function<void()>& callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
+  verify(frame_);
   auto exec = (ClassicExecutor*) GetOrCreateExecutor(cmd.root_id_);
+  exec->cmds_.push_back(cmd);
   exec->StartLaunch(cmd,
                     res,
                     output,
@@ -41,6 +43,7 @@ int ClassicSched::OnPrepare(cmdid_t cmd_id,
   if (Config::GetConfig()->IsReplicated()) {
 //    SimpleCommand cmd; // TODO
     TpcPrepareCommand *cmd = new TpcPrepareCommand; // TODO watch out memory
+    cmd->cmds_ = exec->cmds_;
     CreateRepCoord()->Submit(*cmd, callback);
   } else if (Config::GetConfig()->do_logging()) {
     string log;
@@ -52,7 +55,7 @@ int ClassicSched::OnPrepare(cmdid_t cmd_id,
   return 0;
 }
 
-int ClassicSched::PrepareReplicated(cmdid_t cmd_id, int res, TxnCommand& cmd) {
+int ClassicSched::PrepareReplicated(TpcPrepareCommand& cmd) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 //  auto exec = dynamic_cast<ClassicExecutor*>(GetExecutor(cmd_id));
   // TODO verify it is the same leader, error if not.
@@ -86,7 +89,7 @@ int ClassicSched::OnCommit(cmdid_t cmd_id,
 void ClassicSched::OnLearn(ContainerCommand& cmd) {
   if (cmd.type_ == CMD_TPC_PREPARE) {
     TpcPrepareCommand& c = (TpcPrepareCommand&)cmd;
-    PrepareReplicated(c.txn_id_, c.res_, *c.txn_cmd_);
+    PrepareReplicated(c);
   } else if (cmd.type_ == CMD_TPC_COMMIT) {
     // TODO, execute for slave.
     // pass

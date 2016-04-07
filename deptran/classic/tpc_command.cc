@@ -16,11 +16,15 @@ static int volatile x2 =
 
 
 Marshal& TpcPrepareCommand::ToMarshal(Marshal& m) const {
-  // TODO
+  m << txn_id_;
+  m << res_;
+  m << cmds_;
   return m;
 }
 Marshal& TpcPrepareCommand::FromMarshal(Marshal& m) {
-  // TODO
+  m >> txn_id_;
+  m >> res_;
+  m >> cmds_;
   return m;
 }
 
