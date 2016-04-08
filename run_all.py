@@ -5,6 +5,7 @@ import os
 import tempfile
 import subprocess
 import itertools
+import shutil
 from argparse import ArgumentParser
 import logging
 from logging import info, debug, error 
@@ -262,7 +263,25 @@ def run_experiment(config_file, name, args, benchmark, mode, num_client):
 
 
 def archive_results(name):
-    pass
+    log_dir = "./log/"
+    scripts_dir = "./scripts/"
+    archive_dir = "./archive/"
+    log_file = os.path.join(log_dir, name + ".log")
+    data_file = os.path.join(log_dir, name + ".yml")
+    archive_file = os.path.join(archive_dir, name + ".tgz")
+    
+    try:
+        logger.info("copy {} to {}".format(data_file, archive_dir))
+        shutil.copy2(data_file, archive_dir)
+    except IOError:
+        traceback.print_exc()
+
+    archive_cmd = os.path.join(scripts_dir, "archive.sh")
+    cmd = [archive_cmd, '-czvf', archive_file, log_dir]
+    logger.info("running: {}".format(" ".join(cmd)))
+    res = subprocess.call(cmd)
+    if res != 0:
+        logger.info("Error {} while archiving.".format(res))
 
 
 def scrape_data(name):
