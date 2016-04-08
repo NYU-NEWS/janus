@@ -94,11 +94,11 @@ class TpccTxn: public TxnCommand {
 
   virtual parid_t GetPiecePartitionId(innid_t inn_id);
 
-  virtual void init(TxnRequest &req);
+  virtual void Init(TxnRequest &req);
   virtual bool start_callback(int pi,
                               int res,
                               map<int32_t, Value> &output);
-  virtual bool is_read_only();
+  virtual bool IsReadOnly();
 
   virtual void Reset();
 

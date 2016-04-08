@@ -296,20 +296,131 @@ int Sharding::GetTableNames(uint32_t sid,
 
 bool Sharding::Ready2Populate(tb_info_t *tb_info) {
   auto &columns = tb_info->columns;
-  for (auto c_it = columns.begin(); c_it != columns.end(); c_it++)
-    if ((c_it->foreign != NULL) && (c_it->foreign->values != NULL) &&
-        (c_it->foreign->values->size() == 0))
+  for (auto c_it = columns.begin(); c_it != columns.end(); c_it++) {
+    auto fcol = c_it->foreign;
+    if ((fcol != nullptr) &&
+        (fcol->values != nullptr) &&
+        (fcol->values->size() == 0))
       // have foreign table
       // foreign table has some mysterious values
       // those values have not been put in
       return false;
+  }
   return true;
 }
 
+int Sharding::PopulateTable(tb_info_t *tb_info,
+                            parid_t par_id) {
+  // find table and secondary table
+  mdb::Table *const table_ptr = dtxn_sched_->get_table(tb_info->tb_name);
+  const mdb::Schema *schema = table_ptr->schema();
+  mdb::SortedTable *tbl_sec_ptr = nullptr;
+
+  verify(schema->columns_count() == tb_info->columns.size());
+
+  num_foreign_row = 1;
+  bound_foreign_index = {};
+  self_primary_col = 0;
+  prim_foreign_index = {};
+  uint32_t col_index = 0;
+
+  mdb::Schema::iterator col_it = schema->begin();
+  for (col_index = 0; col_index < tb_info->columns.size(); col_index++) {
+    verify(col_it != schema->end());
+    verify(tb_info->columns[col_index].name == col_it->name);
+    verify(tb_info->columns[col_index].type == col_it->type);
+    PreparePrimaryColumn(tb_info, col_index, col_it);
+    col_it++;
+  }
+  verify(col_it == schema->end());
+
+  // TODO (ycui) add a vector in tb_info_t to record used values for key.
+  uint64_t loc_num_records = tb_info->num_records;
+  verify(loc_num_records % num_foreign_row == 0 ||
+      tb_info->num_records < num_foreign_row);
+  num_self_primary = loc_num_records / num_foreign_row;
+//  verify(num_self_primary > 0);
+  Value key_value = value_get_zero(tb_info->columns[self_primary_col].type);
+  Value max_key = value_get_n(tb_info->columns[self_primary_col].type,
+                              num_self_primary);
+  for (; key_value < max_key || num_self_primary == 0; ++key_value) {
+    init_index(prim_foreign_index);
+    InsertRow(tb_info, par_id, key_value, schema, table_ptr, tbl_sec_ptr);
+  }
+}
+
 // TODO this should be moved to per benchmark class
-int Sharding::PopulateTable(uint32_t partition_id) {
+int Sharding::PopulateTables(parid_t partition_id) {
+  auto n_left = tb_infos_.size();
+  verify(n_left > 0);
+
+  do {
+    bool populated = false;
+    for (auto tb_it = tb_infos_.begin(); tb_it != tb_infos_.end(); tb_it++) {
+      tb_info_t *tb_info = &(tb_it->second);
+      verify(tb_it->first == tb_info->tb_name);
+
+      // TODO is this unnecessary?
+      auto it = tb_info->populated.find(partition_id);
+      if (it == tb_info->populated.end()) {
+        tb_info->populated[partition_id] = false;
+      }
+
+      if (!tb_info->populated[partition_id] &&
+          Ready2Populate(tb_info)) {
+        PopulateTable(tb_info, partition_id);
+        tb_info->populated[partition_id] = true;
+        // finish populate one table
+        n_left--;
+        populated = true;
+      }
+    }
+    verify(populated);
+  } while (n_left > 0);
+
+  release_foreign_values();
+  return 0;
+
   fprintf(stderr, "%s -- implement in subclass\n", __FUNCTION__);
   verify(0);
+}
+
+
+void Sharding::InsertRow(tb_info_t *tb_info,
+                         uint32_t &partition_id,
+                         Value &key_value,
+                         const mdb::Schema *schema,
+                         mdb::Table *const table_ptr,
+                         mdb::SortedTable *tbl_sec_ptr) {
+  vector<Value> row_data;
+  row_data.reserve(tb_info->columns.size());
+  record_key = true;
+  n_row_inserted_ = 0;
+  while (true) {
+    row_data.clear();
+    // generate row data
+    auto ret = GenerateRowData(tb_info, partition_id, key_value, row_data);
+    if (ret) {
+      // if the row_data is successfully generated.
+      InsertRowData(tb_info, partition_id, key_value, schema,
+                    table_ptr, tbl_sec_ptr, row_data);
+      if ((num_self_primary == 0) && (n_row_inserted_ >= tb_info->num_records)) {
+        // enough records have been inserted, give the caller the hint.
+        num_self_primary = 1;
+        break;
+      }
+    } else {
+      // if the row data is not generated, do nothing.
+    }
+
+    if (num_self_primary == 0) {
+      if (0 != index_increase(prim_foreign_index, bound_foreign_index)) {
+        verify(0);
+      }
+    } else if (0 != index_increase(prim_foreign_index, bound_foreign_index)) {
+      break;
+    }
+  }
 }
 
 int Sharding::get_number_rows(std::map<std::string, uint64_t> &table_map) {

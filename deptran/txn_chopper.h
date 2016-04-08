@@ -106,7 +106,7 @@ class TxnCommand: public ContainerCommand {
                          int &pi,
                          int &p_type);
 
-  virtual void init(TxnRequest &req) = 0;
+  virtual void Init(TxnRequest &req) = 0;
 
   // phase 1, res is NULL
   // phase 2, res returns SUCCESS is output is consistent with previous value
@@ -120,7 +120,7 @@ class TxnCommand: public ContainerCommand {
 //                              map<int32_t, mdb::Value> &output,
 //                              bool is_defer);
   virtual bool finish_callback(ChopFinishResponse &res) { return false; }
-  virtual bool is_read_only() = 0;
+  virtual bool IsReadOnly() = 0;
   virtual void read_only_reset();
   virtual bool read_only_start_callback(int pi,
                                         int *res,

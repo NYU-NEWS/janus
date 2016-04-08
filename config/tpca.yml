@@ -1,0 +1,31 @@
+
+bench:
+  workload: tpca
+  scale: 1
+  weight:
+    read: 1
+    write: 1
+  population: # intial number of records in each table
+    branch:   100000
+    teller:   100000
+    customer: 100000
+
+schema:
+  - name: branch
+    column:
+      - {name: branch_id,   type: integer, primary: true} 
+      - {name: balance,     type: integer} 
+  - name: teller
+    column:
+      - {name: teller_id,   type: integer, primary: true}
+      - {name: branch_id,   type: integer, foreign: branch.branch_id }
+  - name: customer
+    column:
+      - {name: customer_id, type: integer, primary: true}
+      - {name: branch_id,   type: integer, foreign: branch.branch_id}
+      - {name: balance,     type: integer}
+
+sharding:
+  teller:   MOD
+  branch:   MOD
+  customer: MOD

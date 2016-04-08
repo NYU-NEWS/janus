@@ -3,7 +3,7 @@
 #include "./bench/tpca/chopper.h"
 
 namespace rococo {
-void TpcaPaymentChopper::init(TxnRequest &req) {
+void TpcaPaymentChopper::Init(TxnRequest &req) {
   verify(req.txn_type_ == TPCA_PAYMENT);
   type_ = TPCA_PAYMENT;
 
@@ -12,20 +12,20 @@ void TpcaPaymentChopper::init(TxnRequest &req) {
   Value& bra = req.input_[2];
 
   inputs_.clear();
-  inputs_[0] = {{0, cus}/*, inc*/};
-  inputs_[1] = {{0, tel}/*, inc*/};
-  inputs_[2] = {{0, bra}/*, inc*/};
+  inputs_[TPCA_PAYMENT_1] = {{0, cus}/*, inc*/};
+  inputs_[TPCA_PAYMENT_2] = {{0, tel}/*, inc*/};
+  inputs_[TPCA_PAYMENT_3] = {{0, bra}/*, inc*/};
 
   output_size_ = {
-      {0, 0},
-      {1, 0},
-      {2, 0}
+      {TPCA_PAYMENT_1, 0},
+      {TPCA_PAYMENT_2, 0},
+      {TPCA_PAYMENT_3, 0}
   };
 
   this->p_types_ = {
-      {0, TPCA_PAYMENT_1},
-      {1, TPCA_PAYMENT_2},
-      {2, TPCA_PAYMENT_3}
+      {TPCA_PAYMENT_1, TPCA_PAYMENT_1},
+      {TPCA_PAYMENT_2, TPCA_PAYMENT_2},
+      {TPCA_PAYMENT_3, TPCA_PAYMENT_3}
   };
 
   sss_->GetPartition(TPCA_CUSTOMER, cus, sharding_[TPCA_PAYMENT_1]);
@@ -45,4 +45,18 @@ void TpcaPaymentChopper::init(TxnRequest &req) {
   };
   commit_.store(true);
 }
+
+void TpcaPaymentChopper::Reset() {
+  n_pieces_out_ = 0;
+  status_ = {
+      {TPCA_PAYMENT_1, READY},
+      {TPCA_PAYMENT_2, READY},
+      {TPCA_PAYMENT_3, READY}
+  };
+  commit_.store(true);
+  partition_ids_.clear();
+  n_try_++;
+}
+
+
 } // namespace rococo

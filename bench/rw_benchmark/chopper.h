@@ -14,7 +14,7 @@ private:
 public:
     RWChopper();
 
-    virtual void init(TxnRequest& req);
+    virtual void Init(TxnRequest &req);
 
     virtual bool start_callback(const std::vector<int> &pi,
                                 int res,
@@ -24,7 +24,7 @@ public:
                                 int res,
                                 map<int32_t, Value> &output);
 
-    virtual bool is_read_only();
+    virtual bool IsReadOnly();
 
     virtual void Reset();
 

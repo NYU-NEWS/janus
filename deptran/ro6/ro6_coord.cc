@@ -246,14 +246,14 @@ void RO6Coord::do_one(TxnRequest & req) {
     std::string log_s;
     req.get_log(cmd_->id_, log_s);
     std::function<void(void)> start_func = [this, ch]() {
-      if (ch->is_read_only()) ro6_start_ro(ch);
+      if (ch->IsReadOnly()) ro6_start_ro(ch);
       else {
         deptran_start(ch);
       }
     };
     recorder_->submit(log_s, start_func);
   } else {
-    if (ch->is_read_only()) ro6_start_ro(ch);
+    if (ch->IsReadOnly()) ro6_start_ro(ch);
     else {
         deptran_start(ch);
     }

@@ -15,6 +15,10 @@ extern char TPCA_CUSTOMER[];
 #define TPCA_PAYMENT_2 (1)
 #define TPCA_PAYMENT_3 (2)
 
+#define TPCA_VAR_X   (100)
+#define TPCA_VAR_Y   (200)
+#define TPCA_VAR_Z   (300)
+
 class TpcaPiece : public Piece {
 
 public:
@@ -22,8 +26,6 @@ public:
     void reg_all();
 
     void reg_pieces();
-
-    void reg_lock_oracles();
 };
 
 } // namespace rococo

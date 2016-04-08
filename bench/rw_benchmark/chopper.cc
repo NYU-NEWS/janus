@@ -31,7 +31,7 @@ void RWChopper::R_txn_init(TxnRequest &req) {
 RWChopper::RWChopper() {
 }
 
-void RWChopper::init(TxnRequest &req) {
+void RWChopper::Init(TxnRequest &req) {
   type_ = req.txn_type_;
   callback_ = req.callback_;
   max_try_ = req.n_try_;
@@ -60,7 +60,7 @@ bool RWChopper::start_callback(int pi,
   return false;
 }
 
-bool RWChopper::is_read_only() {
+bool RWChopper::IsReadOnly() {
   if (type_ == RW_BENCHMARK_W_TXN)
     return false;
   else if (type_ == RW_BENCHMARK_R_TXN)

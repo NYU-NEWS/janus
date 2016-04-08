@@ -156,8 +156,8 @@ txn_reg_->input_vars_[txn][pie] = {__VA_ARGS__};
 #define RO6_RO_PHASE_1 ((Config::GetConfig()->get_mode() == MODE_RO6) && ((RO6DTxn*)dtxn)->read_only_ && dtxn->phase_ == 1)
 
 
-#define C_LAST_SCHEMA (((TPCCDSharding*)(this->sss_))->g_c_last_schema)
+#define C_LAST_SCHEMA (((TpccdSharding*)(this->sss_))->g_c_last_schema)
 
-#define C_LAST2ID (((TPCCDSharding*)(this->sss_))->g_c_last2id)
+#define C_LAST2ID (((TpccdSharding*)(this->sss_))->g_c_last2id)
 
 } // namespace rcc

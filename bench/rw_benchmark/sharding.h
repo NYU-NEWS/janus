@@ -5,6 +5,6 @@
 #include <bench/tpcc_real_dist/sharding.h>
 
 namespace rococo {
-  class RWBenchmarkSharding : public TPCCDSharding {
+  class RWBenchmarkSharding : public TpccdSharding {
   };
 }

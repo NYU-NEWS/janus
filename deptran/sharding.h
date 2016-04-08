@@ -142,6 +142,22 @@ class Sharding {
   Scheduler *dtxn_sched_;
   Frame* frame_;
 
+  // below is used for table populater
+
+  // number of all combination of foreign columns
+  uint64_t num_foreign_row = 1;
+  // the column index for foreign w_id and d_id.
+  vector<uint32_t> bound_foreign_index = {};
+  // the index of column that is primary but not foreign
+  uint32_t self_primary_col = 0;
+  // col index -> (0, number of records in foreign table or size of value vector)
+  map<uint32_t, std::pair<uint32_t, uint32_t> > prim_foreign_index = {};
+  uint64_t num_self_primary = 0;
+  // the number of row that have been inserted.
+  int n_row_inserted_ = 0;
+  bool record_key = true; // ?
+
+
   void BuildTableInfoPtr();
 
   void insert_dist_mapping(const MultiValue &mv);
@@ -173,10 +189,6 @@ class Sharding {
 //      const std::vector<std::string> &table_names,
 //      unsigned int sid);
 
-  int do_tpcc_populate_table(const std::vector<std::string> &table_names,
-                             unsigned int sid)
-  ;
-
   bool Ready2Populate(tb_info_t *tb_info);
 
   void release_foreign_values();
@@ -201,7 +213,29 @@ class Sharding {
 
   int get_number_rows(std::map<std::string, uint64_t> &table_map);
 
-  virtual int PopulateTable(uint32_t sid);
+
+  virtual int PopulateTables(parid_t par_id);
+  virtual int PopulateTable(tb_info_t *tb_info, parid_t par_id);
+  virtual void PreparePrimaryColumn(tb_info_t *tb_info,
+                                    uint32_t col_index,
+                                    mdb::Schema::iterator &col_it) = 0;
+  virtual bool GenerateRowData(tb_info_t *tb_info,
+                       uint32_t &sid,
+                       Value &key_value,
+                       vector<Value> &row_data) = 0;
+  virtual void InsertRow(tb_info_t *tb_info,
+                         uint32_t &partition_id,
+                         Value &key_value,
+                         const mdb::Schema *schema,
+                         mdb::Table *const table_ptr,
+                         mdb::SortedTable *tbl_sec_ptr);
+  virtual void InsertRowData(tb_info_t *tb_info,
+                             uint32_t &partition_id,
+                             Value &key_value,
+                             const mdb::Schema *schema,
+                             mdb::Table *const table_ptr,
+                             mdb::SortedTable *tbl_sec_ptr,
+                             vector<Value> &row_data) = 0;
 
   virtual ~Sharding();
 

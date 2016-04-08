@@ -9,7 +9,7 @@
 
 namespace rococo {
 
-void TPCCDSharding::InsertRowData(tb_info_t *tb_info,
+void TpccdSharding::InsertRowData(tb_info_t *tb_info,
                                   uint32_t &partition_id,
                                   Value &key_value,
                                   const mdb::Schema *schema,
@@ -107,7 +107,7 @@ void TPCCDSharding::InsertRowData(tb_info_t *tb_info,
   }
 }
 
-bool TPCCDSharding::GenerateRowData(tb_info_t *tb_info,
+bool TpccdSharding::GenerateRowData(tb_info_t *tb_info,
                                     uint32_t &sid,
                                     Value &key_value,
                                     vector<Value> &row_data) {
@@ -205,7 +205,7 @@ bool TPCCDSharding::GenerateRowData(tb_info_t *tb_info,
   return col_index == tb_info->columns.size();
 }
 
-void TPCCDSharding::InsertRow(tb_info_t *tb_info,
+void TpccdSharding::InsertRow(tb_info_t *tb_info,
                               uint32_t &partition_id,
                               Value &key_value,
                               const mdb::Schema *schema,
@@ -243,7 +243,7 @@ void TPCCDSharding::InsertRow(tb_info_t *tb_info,
 }
 
 // if a column is primary, this should be called.
-void TPCCDSharding::PreparePrimaryColumn(tb_info_t *tb_info,
+void TpccdSharding::PreparePrimaryColumn(tb_info_t *tb_info,
                                          uint32_t col_index,
                                          mdb::Schema::iterator &col_it) {
   auto &col = tb_info->columns[col_index];
@@ -328,7 +328,7 @@ void TPCCDSharding::PreparePrimaryColumn(tb_info_t *tb_info,
   }
 }
 
-void TPCCDSharding::PopulateTable(tb_info_t *tb_info, parid_t partition_id) {
+int TpccdSharding::PopulateTable(tb_info_t *tb_info, parid_t partition_id) {
   // find table and secondary table
   mdb::Table *const table_ptr = dtxn_sched_->get_table(tb_info->tb_name);
   const mdb::Schema *schema = table_ptr->schema();
@@ -381,35 +381,4 @@ void TPCCDSharding::PopulateTable(tb_info_t *tb_info, parid_t partition_id) {
   }
 }
 
-int TPCCDSharding::PopulateTable(parid_t partition_id) {
-  auto n_left = tb_infos_.size();
-  verify(n_left > 0);
-
-  do {
-    bool populated = false;
-    for (auto tb_it = tb_infos_.begin(); tb_it != tb_infos_.end(); tb_it++) {
-      tb_info_t *tb_info = &(tb_it->second);
-      verify(tb_it->first == tb_info->tb_name);
-
-      // TODO is this unnecessary?
-      auto it = tb_info->populated.find(partition_id);
-      if (it == tb_info->populated.end()) {
-        tb_info->populated[partition_id] = false;
-      }
-
-      if (!tb_info->populated[partition_id] && Ready2Populate(tb_info)) {
-        PopulateTable(tb_info, partition_id);
-        tb_info->populated[partition_id] = true;
-        // finish populate one table
-        n_left--;
-        populated = true;
-      }
-    }
-    verify(populated);
-  } while (n_left > 0);
-
-  release_foreign_values();
-
-  return 0;
-}
 } // namespace rococo

@@ -2,55 +2,54 @@
 
 namespace deptran {
 
-MicroBenchChopper::MicroBenchChopper() {
+MicroTxnCmd::MicroTxnCmd() {
 }
 
-void MicroBenchChopper::init_W(TxnRequest &req) {
+void MicroTxnCmd::InitW(TxnRequest &req) {
   verify(req.txn_type_ == MICRO_BENCH_W);
   type_ = MICRO_BENCH_W;
   inputs_.clear();
-  inputs_[0] = {
-      {0, req.input_[0]},
-      {1, req.input_[4]}
+  inputs_[MICRO_BENCH_W_0] = {
+      {MICRO_VAR_K_0, req.input_[0]},
+      {MICRO_VAR_V_0, req.input_[4]}
   };
-  inputs_[1] = {
-      {0, req.input_[1]},
-      {1, req.input_[5]}
+  inputs_[MICRO_BENCH_W_1] = {
+      {MICRO_VAR_K_1, req.input_[1]},
+      {MICRO_VAR_V_1, req.input_[5]}
   };
   inputs_[2] = {
-      {0, req.input_[2]},
-      {1, req.input_[6]}
+      {MICRO_VAR_K_2, req.input_[2]},
+      {MICRO_VAR_V_2, req.input_[6]}
   };
   inputs_[3] = {
-      {0, req.input_[3]},
-      {1, req.input_[7]}
+      {MICRO_VAR_K_3, req.input_[3]},
+      {MICRO_VAR_V_3, req.input_[7]}
   };
 
   output_size_ = {
-      {0, 0},
-      {1, 0},
-      {2, 0},
-      {3, 0}
+      {MICRO_BENCH_W_0, 0},
+      {MICRO_BENCH_W_1, 0},
+      {MICRO_BENCH_W_2, 0},
+      {MICRO_BENCH_W_3, 0}
   };
 
   p_types_ = {
-      {0, MICRO_BENCH_W_0},
-      {1, MICRO_BENCH_W_1},
-      {2, MICRO_BENCH_W_2},
-      {3, MICRO_BENCH_W_3}
+      {MICRO_BENCH_W_0, MICRO_BENCH_W_0},
+      {MICRO_BENCH_W_1, MICRO_BENCH_W_1},
+      {MICRO_BENCH_W_2, MICRO_BENCH_W_2},
+      {MICRO_BENCH_W_3, MICRO_BENCH_W_3}
   };
 }
 
-void MicroBenchChopper::init(TxnRequest &req) {
-
+void MicroTxnCmd::Init(TxnRequest &req) {
   inputs_.clear();
 
   switch (req.txn_type_) {
     case MICRO_BENCH_R:
-      init_R(req);
+      InitR(req);
       break;
     case MICRO_BENCH_W:
-      init_W(req);
+      InitW(req);
       break;
     default:
       verify(0);
@@ -75,60 +74,57 @@ void MicroBenchChopper::init(TxnRequest &req) {
   sss_->GetPartition(MICRO_BENCH_TABLE_D, req.input_[3], sharding_[3]);
 }
 
-void MicroBenchChopper::init_R(TxnRequest &req) {
+void MicroTxnCmd::InitR(TxnRequest &req) {
   verify(req.txn_type_ == MICRO_BENCH_R);
   type_ = MICRO_BENCH_R;
-  inputs_[0] = {{0, req.input_[0]}};
-  inputs_[1] = {{1, req.input_[1]}};
-  inputs_[2] = {{2, req.input_[2]}};
-  inputs_[3] = {{3, req.input_[3]}};
+  inputs_[MICRO_BENCH_R_0] = {{MICRO_VAR_K_0, req.input_[0]}};
+  inputs_[MICRO_BENCH_R_1] = {{MICRO_VAR_K_1, req.input_[1]}};
+  inputs_[MICRO_BENCH_R_2] = {{MICRO_VAR_K_2, req.input_[2]}};
+  inputs_[MICRO_BENCH_R_3] = {{MICRO_VAR_K_3, req.input_[3]}};
 
   output_size_ = {
-      {0, 1},
-      {1, 1},
-      {2, 1},
-      {3, 1}
+      {MICRO_BENCH_R_0, 1},
+      {MICRO_BENCH_R_1, 1},
+      {MICRO_BENCH_R_2, 1},
+      {MICRO_BENCH_R_3, 1}
   };
 
   p_types_ = {
-      {0, MICRO_BENCH_R_0},
-      {1, MICRO_BENCH_R_1},
-      {2, MICRO_BENCH_R_2},
-      {3, MICRO_BENCH_R_3}
+      {MICRO_BENCH_R_0, MICRO_BENCH_R_0},
+      {MICRO_BENCH_R_1, MICRO_BENCH_R_1},
+      {MICRO_BENCH_R_2, MICRO_BENCH_R_2},
+      {MICRO_BENCH_R_3, MICRO_BENCH_R_3}
   };
-
 }
 
-bool MicroBenchChopper::start_callback(const std::vector<int> &pi,
+bool MicroTxnCmd::start_callback(const std::vector<int> &pi,
                                        int res,
                                        BatchStartArgsHelper &bsah) {
   return false;
 }
 
 
-bool MicroBenchChopper::start_callback(int pi,
+bool MicroTxnCmd::start_callback(int pi,
                                        int res,
                                        map<int32_t, Value> &output) {
   return false;
 }
 
-bool MicroBenchChopper::is_read_only() {
+bool MicroTxnCmd::IsReadOnly() {
   return false;
 }
 
-void MicroBenchChopper::retry() {
+void MicroTxnCmd::Reset() {
   n_pieces_out_ = 0;
-  status_ = {
-      {0, READY},
-      {1, READY},
-      {2, READY},
-      {3, READY}
-  };
-  commit_.store(true);
+  n_pieces_input_ready_ = 4;
+  for (auto& pair :status_) {
+    pair.second = READY;
+  }
+//  commit_.store(true);
   partition_ids_.clear();
   n_try_++;
 }
 
-MicroBenchChopper::~MicroBenchChopper() { }
+MicroTxnCmd::~MicroTxnCmd() { }
 
 } // namespace deptran

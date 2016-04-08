@@ -23,7 +23,7 @@ namespace rococo {
 TpccTxn::TpccTxn() {
 }
 
-void TpccTxn::init(TxnRequest &req) {
+void TpccTxn::Init(TxnRequest &req) {
   ws_init_ = req.input_;
   ws_ = ws_init_;
   type_ = req.txn_type_;
@@ -184,7 +184,7 @@ void TpccTxn::Reset() {
   verify(n_pieces_input_ready_ > 0);
 }
 
-bool TpccTxn::is_read_only() {
+bool TpccTxn::IsReadOnly() {
   switch (type_) {
     case TPCC_NEW_ORDER:
       return false;

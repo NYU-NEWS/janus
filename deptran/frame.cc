@@ -23,6 +23,7 @@
 // for tpca benchmark
 #include "bench/tpca/piece.h"
 #include "bench/tpca/chopper.h"
+#include "bench/tpca/sharding.h"
 
 // tpcc benchmark
 #include "bench/tpcc/piece.h"
@@ -107,10 +108,13 @@ Sharding* Frame::CreateSharding() {
   auto bench = Config::config_s->benchmark_;
   switch (bench) {
     case TPCC_REAL_DIST_PART:
-      ret = new TPCCDSharding();
+      ret = new TpccdSharding();
       break;
     case RW_BENCHMARK:
       ret = new RWBenchmarkSharding();
+      break;
+    case TPCA:
+      ret = new TpcaSharding();
       break;
     default:
       verify(0);
@@ -283,7 +287,7 @@ TxnCommand* Frame::CreateTxnCommand(TxnRequest& req, TxnRegistry* reg) {
       cmd = new RWChopper();
       break;
     case MICRO_BENCH:
-      cmd = new MicroBenchChopper();
+      cmd = new MicroTxnCmd();
       break;
     default:
       verify(0);
@@ -291,7 +295,7 @@ TxnCommand* Frame::CreateTxnCommand(TxnRequest& req, TxnRegistry* reg) {
   verify(cmd != NULL);
   cmd->txn_reg_ = reg;
   cmd->sss_ = Config::GetConfig()->sharding_;
-  cmd->init(req);
+  cmd->Init(req);
   verify(cmd->n_pieces_input_ready_ > 0);
   return cmd;
 }
