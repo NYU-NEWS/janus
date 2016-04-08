@@ -205,13 +205,13 @@ class TxnInfo(object):
             percent = percent*100
             key = str(percent)
             if len(self.mid_latencies)>0:
-                index = int(math.ceil(percent/100*len(self.mid_latencies)))
+                index = int(math.ceil(percent/100*len(self.mid_latencies)))-1
                 latencies[key] = self.mid_latencies[index]
             else:
                 latencies[key] = 9999.99
             
             if len(self.mid_attempt_latencies)>0:
-                att_index = int(math.ceil(percent/100*len(self.mid_attempt_latencies)))
+                att_index = int(math.ceil(percent/100*len(self.mid_attempt_latencies)))-1
                 att_latencies[key] = self.mid_attempt_latencies[att_index]
             else:
                 att_latencies[key] = 9999.99
