@@ -247,12 +247,12 @@ def generate_config(args, experiment_name, benchmark, mode, num_client,
 
 def run_experiment(config_file, name, args, benchmark, mode, num_client):
     cmd = [args.executable]
-    cmd.extend(['-n', "'{}'".format(args.experiment_name)])
-    cmd.extend(['-f', config_file]) 
-    cmd.extend(['-d', args.duration])
+    cmd.extend(["-n", "{}".format(name)])
+    cmd.extend(["-f", config_file]) 
+    cmd.extend(["-d", args.duration])
     cmd = [str(c) for c in cmd]
 
-    logger.info("running: %s", ' '.join(cmd))
+    logger.info("running: %s", " ".join(cmd))
     res=subprocess.call(cmd)
     if res != 0:
         logger.error("subprocess returned %d", res)
@@ -266,7 +266,21 @@ def archive_results(name):
 
 
 def scrape_data(name):
-    pass
+    log_dir = "./log/"
+    scripts_dir = "./scripts/"
+    log_file = os.path.join(log_dir, name + ".log")
+    output_data_file = os.path.join(log_dir, name + ".yml")
+    
+    cmd = [os.path.join(scripts_dir, "extract_txn_info.py"),
+           log_file, 
+           output_data_file]
+
+    logger.info("executing {}".format(' '.join(cmd)))
+    res=subprocess.call([os.path.join(scripts_dir, "extract_txn_info.py"),
+                         log_file, output_data_file])
+    if res!=0:
+        logger.error("Error scraping data!!")
+
 
 def run_experiments(args):
     server_counts = itertools.chain.from_iterable([get_range(sr) for sr in args.server_counts])
@@ -297,9 +311,15 @@ def run_experiments(args):
             num_server,
             args.num_replicas)
         try:
-            run_experiment(config_file, experiment_name, args,
-                           benchmark, mode, num_client)
-            scrape_data(experiment_name)
+            result = run_experiment(config_file, 
+                                    experiment_name, 
+                                    args, 
+                                    benchmark, 
+                                    mode, 
+                                    num_client)
+            if result == 0:
+                scrape_data(experiment_name)
+
             archive_results(experiment_name)
         except Exception:
             logger.info("Experiment %s failed.",

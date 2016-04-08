@@ -12,6 +12,7 @@ import argparse
 import traceback
 import itertools
 import random
+import math
 from argparse import ArgumentParser
 from multiprocessing import Value
 from multiprocessing import Lock
@@ -187,61 +188,67 @@ class TxnInfo(object):
         return ret
 
     def print_mid(self, num_clients):
-        start_txn = str(self.mid_start_txn - self.mid_pre_start_txn)
-        total_txn = str(self.mid_total_txn - self.mid_pre_total_txn)
-        tries = str(self.mid_total_try - self.mid_pre_total_try)
-        commit_txn = str(self.mid_commit_txn - self.mid_pre_commit_txn)
+        start_txn = self.mid_start_txn - self.mid_pre_start_txn
+        total_txn = self.mid_total_txn - self.mid_pre_total_txn
+        tries = self.mid_total_try - self.mid_pre_total_try
+        commit_txn = self.mid_commit_txn - self.mid_pre_commit_txn
         self.mid_time /= num_clients
-        tps = str(int(round((self.mid_commit_txn - self.mid_pre_commit_txn) / self.mid_time)))
-
+        tps = int(round((self.mid_commit_txn - self.mid_pre_commit_txn) / self.mid_time))
+        
         self.mid_latencies.sort()
         self.mid_attempt_latencies.sort()
         self.mid_n_try.sort()
-
-        min_latency = g_max_latency
-        max_latency = g_max_latency
-        latency_str = ""
-        latencies_size = len(self.mid_latencies)
-        if (latencies_size > 0):
-            min_latency = self.mid_latencies[0]
-            max_latency = self.mid_latencies[latencies_size - 1]
-        latencies_sample_size = [int(x * latencies_size) for x in g_latencies_percentage]
-        i = 0
-        while i < len(g_latencies_header):
-            latency_str += "; " + g_latencies_header[i] + ": "
-            s_size = latencies_sample_size[i]
-            if s_size != 0:
-                latency_str += str(sum(self.mid_latencies[0:s_size]) / s_size)
+        
+        latencies = {}
+        att_latencies = {}
+        for percent in g_latencies_percentage:
+            percent = percent*100
+            key = str(percent)
+            if len(self.mid_latencies)>0:
+                index = int(math.ceil(percent/100*len(self.mid_latencies)))
+                latencies[key] = self.mid_latencies[index]
             else:
-                latency_str += str(g_max_latency)
-            i += 1
-
-        attempt_latencies_size = len(self.mid_attempt_latencies)
-        attempt_latencies_sample_size = [int(x * attempt_latencies_size) for x in g_att_latencies_percentage]
-        i = 0
-        while i < len(g_att_latencies_header):
-            latency_str += "; " + g_att_latencies_header[i] + ": "
-            s_size = attempt_latencies_sample_size[i]
-            if s_size != 0:
-                latency_str += str(sum(self.mid_attempt_latencies[0:s_size]) / s_size)
+                latencies[key] = 9999.99
+            
+            if len(self.mid_attempt_latencies)>0:
+                att_index = int(math.ceil(percent/100*len(self.mid_attempt_latencies)))
+                att_latencies[key] = self.mid_attempt_latencies[att_index]
             else:
-                latency_str += str(g_max_latency)
-            i += 1
+                att_latencies[key] = 9999.99
 
-        n_tried_str = ""
-        n_try_size = len(self.mid_n_try)
-        n_try_sample_size = [int(x * n_try_size) for x in g_n_try_percentage]
-        i = 0
-        while i < len(g_n_try_header):
-            n_tried_str += "; " + g_n_try_header[i] + ": "
-            s_size = n_try_sample_size[i]
-            if s_size != 0:
-                n_tried_str += str(sum(self.mid_n_try[0:s_size]) * 1.0 / s_size)
-            else:
-                n_tried_str += str(g_max_try)
-            i += 1
+        #logger.debug("latencies: %s", latencies)
+        #logger.debug("att latencies: %s", att_latencies)
 
-        print "RECORDING_RESULT: TXN: <" + self.txn_name + ">; STARTED_TXNS: " + start_txn + "; FINISHED_TXNS: " + total_txn + "; ATTEMPTS: " + tries + "; COMMITS: " + commit_txn + "; TPS: " + tps + latency_str + "; TIME: " + str(self.mid_time) + "; LATENCY MIN: " + str(min_latency) + "; LATENCY MAX: " + str(max_latency) + n_tried_str
+        self.data = {
+            'txn_name': self.txn_name,
+            'start_cnt': start_txn,
+            'total_cnt': total_txn,
+            'attempts': tries,
+            'commits': commit_txn,
+            'tps': tps,
+        }
+        self.data['latency'] = {}
+        self.data['latency'].update(latencies)
+        if len(self.mid_latencies)>0:
+            self.data['latency']['min'] = self.mid_latencies[0]
+            self.data['latency']['max'] = self.mid_latencies[len(self.mid_latencies)-1]
+        else:
+            self.data['latency']['min'] = 9999.99 
+            self.data['latency']['max'] = 9999.99 
+
+        self.data['att_latency'] = {}
+        self.data['att_latency'].update(att_latencies)
+        if len(self.mid_latencies)>0:
+            self.data['att_latency']['min'] = self.mid_attempt_latencies[0]
+            self.data['att_latency']['max'] = self.mid_attempt_latencies[
+                len(self.mid_attempt_latencies)-1
+            ]
+        else:
+            self.data['att_latency']['min'] = 9999.99 
+            self.data['att_latency']['max'] = 9999.99 
+        
+        logger.info("\n__Data__\n{}\n__EndData__\n".format(yaml.dump(self.data)))
+
 
     def print_max(self):
         latency_str = ""
@@ -263,7 +270,8 @@ class TxnInfo(object):
             n_tried_str += "; " + l_str + ": " + str(self.max_data[9 + latency_size + att_latency_size + i])
             i += 1
 
-        print "RECORDING_RESULT: TXN: <" + str(self.max_data[1]) + ">; STARTED_TXNS: " + str(self.max_data[2]) + "; FINISHED_TXNS: " + str(self.max_data[3]) + "; ATTEMPTS: " + str(self.max_data[4]) + "; COMMITS: " + str(self.max_data[5]) + "; TPS: " + str(self.max_data[6]) + latency_str + "; TIME: " + str(self.max_interval) + "; LATENCY MIN: " + str(self.max_data[7]) + "; LATENCY MAX: " + str(self.max_data[8]) + n_tried_str
+        logger.info("RECORDING_RESULT: TXN: <" + str(self.max_data[1]) + ">; STARTED_TXNS: " + str(self.max_data[2]) + "; FINISHED_TXNS: " + str(self.max_data[3]) + "; ATTEMPTS: " + str(self.max_data[4]) + "; COMMITS: " + str(self.max_data[5]) + "; TPS: " + str(self.max_data[6]) + latency_str + "; TIME: " + str(self.max_interval) + "; LATENCY MIN: " + str(self.max_data[7]) + "; LATENCY MAX: " + str(self.max_data[8]) + n_tried_str)
+        
 
 class ClientController(object):
     def __init__(self, config, process_infos):
@@ -592,7 +600,7 @@ class ServerController(object):
             cond.wait()
         if s_init_finish.value == 5:
             logger.error("Waiting for server init ... FAIL")
-            return None 
+            raise RuntimeError("server init failed.")
         cond.release()
         logger.info("Waiting for server init ... Done")
         
