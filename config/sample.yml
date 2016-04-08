@@ -11,26 +11,14 @@
 # site - partition map
 site:
   server: # each line is a partition, the first is the master site_name:port
-#    - ["s101:8000", "s201:8001", "s301:8002"]
-#    - ["s102:8100", "s202:8101", "s302:8102"]
-#    - ["s103:8200", "s203:8201", "s303:8202"]
     - ["s101:8101"]
-#    - ["s102:8102"]
-#    - ["s103:8103"]
   client: # each line is a partition
     - ["c1"]
-#    - ["c1", "c2"]
-#    - ["c3", "c4"]
 
 # site_name - process_name map
 process:
   s101: localhost
-#  s102: localhost
-#  s103: localhost
   c1: localhost
-#  c2: localhost
-#  c3: localhost
-#  c4: localhost
 
 # process_name - host_addr map
 host:
@@ -54,11 +42,6 @@ bench:
     delivery: 4
     order_status: 4
     stock_level:  4
-#        new_order: 44
-#        payment : 44
-#        delivery: 4
-#        order_status: 4
-#        stock_level: 4
   population: # intial number of records in each table
     warehouse: 1
     district: 10
