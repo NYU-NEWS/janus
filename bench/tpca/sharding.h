@@ -24,6 +24,9 @@ class TpcaSharding: public Sharding {
                      mdb::Table *const table_ptr,
                      mdb::SortedTable *tbl_sec_ptr,
                      vector<Value> &row_data) override {verify(0);};
+
+  bool Ready2Populate(tb_info_t *tb_info) override;
+
 };
 
 } // namespace rococo

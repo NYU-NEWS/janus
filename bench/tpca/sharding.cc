@@ -67,4 +67,8 @@ int TpcaSharding::PopulateTable(tb_info_t *tb_info_ptr, parid_t par_id) {
   return 0;
 }
 
+bool TpcaSharding::Ready2Populate(tb_info_t *tb_info) {
+  return true;
+}
+
 } // namespace rococo

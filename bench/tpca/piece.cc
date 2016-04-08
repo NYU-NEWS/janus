@@ -25,9 +25,9 @@ void TpcaPiece::reg_pieces() {
     mdb::MultiBlob mb(1);
     mb[0] = cmd.input.at(TPCA_VAR_X).get_blob();
 
-    r = dtxn->Query(txn->get_table(TPCA_CUSTOMER), mb);
+    r = dtxn->Query(dtxn->GetTable(TPCA_CUSTOMER), mb);
     dtxn->ReadColumn(r, 1, &buf, TXN_BYPASS);
-    buf.set_i64(buf.get_i64() + 1/*input[1].get_i64()*/);
+    buf.set_i32(buf.get_i32() + 1/*input[1].get_i32()*/);
     dtxn->WriteColumn(r, 1, buf, TXN_DEFERRED);
 
     output[TPCA_VAR_X] = buf;
@@ -44,9 +44,9 @@ void TpcaPiece::reg_pieces() {
     mdb::MultiBlob mb(1);
     mb[0] = cmd.input.at(TPCA_VAR_Y).get_blob();
 
-    r = dtxn->Query(txn->get_table(TPCA_TELLER), mb);
+    r = dtxn->Query(dtxn->GetTable(TPCA_TELLER), mb);
     dtxn->ReadColumn(r, 1, &buf, TXN_BYPASS);
-    buf.set_i64(buf.get_i64() + 1/*input[1].get_i64()*/);
+    buf.set_i32(buf.get_i32() + 1/*input[1].get_i32()*/);
     dtxn->WriteColumn(r, 1, buf, TXN_DEFERRED);
     *res = SUCCESS;
   } END_PIE
@@ -63,9 +63,9 @@ void TpcaPiece::reg_pieces() {
     mdb::MultiBlob mb(1);
     mb[0] = cmd.input.at(TPCA_VAR_Z).get_blob();
 
-    r = dtxn->Query(txn->get_table(TPCA_BRANCH), mb);
+    r = dtxn->Query(dtxn->GetTable(TPCA_BRANCH), mb);
     dtxn->ReadColumn(r, 1, &buf, TXN_BYPASS);
-    buf.set_i64(buf.get_i64() + 1/*input[1].get_i64()*/);
+    buf.set_i32(buf.get_i32() + 1/*input[1].get_i32()*/);
     dtxn->WriteColumn(r, 1, buf, TXN_DEFERRED);
 
     *res = SUCCESS;

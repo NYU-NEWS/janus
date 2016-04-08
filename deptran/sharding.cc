@@ -350,7 +350,7 @@ int Sharding::PopulateTable(tb_info_t *tb_info,
 }
 
 // TODO this should be moved to per benchmark class
-int Sharding::PopulateTables(parid_t partition_id) {
+int Sharding::PopulateTables(parid_t par_id) {
   auto n_left = tb_infos_.size();
   verify(n_left > 0);
 
@@ -361,15 +361,15 @@ int Sharding::PopulateTables(parid_t partition_id) {
       verify(tb_it->first == tb_info->tb_name);
 
       // TODO is this unnecessary?
-      auto it = tb_info->populated.find(partition_id);
+      auto it = tb_info->populated.find(par_id);
       if (it == tb_info->populated.end()) {
-        tb_info->populated[partition_id] = false;
+        tb_info->populated[par_id] = false;
       }
 
-      if (!tb_info->populated[partition_id] &&
+      if (!tb_info->populated[par_id] &&
           Ready2Populate(tb_info)) {
-        PopulateTable(tb_info, partition_id);
-        tb_info->populated[partition_id] = true;
+        PopulateTable(tb_info, par_id);
+        tb_info->populated[par_id] = true;
         // finish populate one table
         n_left--;
         populated = true;

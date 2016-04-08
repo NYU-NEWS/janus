@@ -189,7 +189,7 @@ class Sharding {
 //      const std::vector<std::string> &table_names,
 //      unsigned int sid);
 
-  bool Ready2Populate(tb_info_t *tb_info);
+  virtual bool Ready2Populate(tb_info_t *tb_info);
 
   void release_foreign_values();
 

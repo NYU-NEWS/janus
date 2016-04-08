@@ -12,9 +12,9 @@ void TpcaPaymentChopper::Init(TxnRequest &req) {
   Value& bra = req.input_[2];
 
   inputs_.clear();
-  inputs_[TPCA_PAYMENT_1] = {{0, cus}/*, inc*/};
-  inputs_[TPCA_PAYMENT_2] = {{0, tel}/*, inc*/};
-  inputs_[TPCA_PAYMENT_3] = {{0, bra}/*, inc*/};
+  inputs_[TPCA_PAYMENT_1] = {{TPCA_VAR_X, cus}/*, inc*/};
+  inputs_[TPCA_PAYMENT_2] = {{TPCA_VAR_Y, tel}/*, inc*/};
+  inputs_[TPCA_PAYMENT_3] = {{TPCA_VAR_Z, bra}/*, inc*/};
 
   output_size_ = {
       {TPCA_PAYMENT_1, 0},
@@ -37,6 +37,7 @@ void TpcaPaymentChopper::Init(TxnRequest &req) {
   callback_ = req.callback_;
   max_try_ = req.n_try_;
   n_try_ = 1;
+  n_pieces_input_ready_ = 3;
 
   status_ = {
       {TPCA_PAYMENT_1, READY},
