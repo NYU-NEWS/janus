@@ -48,6 +48,7 @@ void TpcaPaymentChopper::Init(TxnRequest &req) {
 }
 
 void TpcaPaymentChopper::Reset() {
+  TxnCommand::Reset();
   n_pieces_out_ = 0;
   status_ = {
       {TPCA_PAYMENT_1, READY},
