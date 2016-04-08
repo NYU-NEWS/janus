@@ -277,7 +277,7 @@ def archive_results(name):
         traceback.print_exc()
 
     archive_cmd = os.path.join(scripts_dir, "archive.sh")
-    cmd = [archive_cmd, '-czvf', archive_file, log_dir]
+    cmd = [archive_cmd, name]
     logger.info("running: {}".format(" ".join(cmd)))
     res = subprocess.call(cmd)
     if res != 0:
