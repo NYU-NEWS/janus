@@ -99,7 +99,10 @@ def get_range(r):
     parts = r.split(':')
     for p in parts:
         a.append(int(p))
-    return range(*a)
+    if len(parts)==1:
+        return range(a[0],a[0]+1)
+    else:
+        return range(*a)
 
 def gen_process_and_site(experiment_name, num_c, num_s, num_replicas, hosts_config):
     process_map = {}

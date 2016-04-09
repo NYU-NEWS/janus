@@ -5,10 +5,11 @@ import time
 
 
 from fabric.api import env, task, run, local, hosts
-from fabric.api import execute, cd, runs_once, sudo
+from fabric.api import execute, cd, runs_once, sudo, parallel
 from fabric.contrib.files import exists, append
 from fabric.decorators import roles
 from fabric.context_managers import prefix
+from fabric.operations import reboot
 
 # tasks are exported under the module names
 from pylib import ec2
@@ -68,6 +69,7 @@ def deploy_all(regions='us-west-2', servers_per_region=[3], instance_type='t2.sm
     if isinstance(servers_per_region, basestring):
         servers_per_region = [ int(i) for i in servers_per_region.split(':') ]
 
+    success = False
     assert(len(servers_per_region) == len(regions))
 
     start = time.time()
@@ -92,13 +94,18 @@ def deploy_all(regions='us-west-2', servers_per_region=[3], instance_type='t2.sm
         execute('cluster.config_nfs_server')
         execute('cluster.config_nfs_client')
         execute('retrieve_code')
-        execute('build')
+        success = True
+        execute('build', args="-d")
         execute('cluster.put_janus_config')
+        execute('cluster.put_limits_config')
+        execute('create_work_dirs')
+        execute('ec2.reboot_all')
 
     except Exception as e:
         traceback.print_exc()
-        logging.info("Terminating ec2 instances...")
-        ec2.terminate_instances()
+        if not success:
+            logging.info("Terminating ec2 instances...")
+            ec2.terminate_instances()
     finally:
         print("{:.2f} seconds elapsed".format(time.time() - start))
 
@@ -124,10 +131,11 @@ def create_virtual_env():
 @runs_once
 @roles('leaders')
 def create_work_dirs():
-    dirs = ['tmp/', 'logs/', 'log_archive/']
+    dirs = ['tmp/', 'log/', 'archive/', 'log_archive/']
     for d in dirs:
         dir_path = os.path.join(env.nfs_home, d)
         run("mkdir -p {}".format(dir_path))
+    
 
 @task
 @runs_once

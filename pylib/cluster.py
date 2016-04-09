@@ -3,7 +3,10 @@ import string
 import StringIO
 import time
 import traceback
+import os
+import os.path
 
+import yaml
 import boto3
 
 from fabric.api import env, task, run, sudo, local
@@ -11,7 +14,6 @@ from fabric.api import put, execute, cd, runs_once, reboot, settings
 from fabric.contrib.files import exists
 from fabric.decorators import roles, parallel, hosts
 from fabric.context_managers import prefix
-
 from pylib.ec2 import instance_by_pub_ip, EC2_REGIONS, get_created_instances
 
 # Static ip address ranges allowed to contact the instances
@@ -25,13 +27,31 @@ def Xput(*args, **kwargs):
 
 @task
 @roles('leaders')
-def put_janus_config():
-    import yaml
+def ping():
+    created_instances = get_created_instances()
+    for region, instances in created_instances.iteritems():
+        for instance in instances:
+            ip = instance.public_ip_address
+            run('ping -c 3 {}'.format(ip))
+
+@task
+@roles('leaders')
+def put_janus_config(copy_configs=[]):
     execute('ec2.set_instance_roles')
-    config_fn = 'config/aws.yml'
-    config = yaml.load(open(config_fn).read())
-    config['host'] = {}
-    host = config['host']
+    
+    # copy the specified files to the server
+    if isinstance(copy_configs, basestring):
+        copy_configs = copy_configs.split(':')
+    for c in copy_configs:
+        fn = os.path.basename(c)
+        dest_fn = os.path.join(env.nfs_home, "config", fn)
+        put(c, dest_fn) 
+    
+    # write hosts config for the active aws instances
+    aws_hosts_fn = 'aws_hosts.yml'
+    aws_hosts = {'host': {}}
+    host = aws_hosts['host']
+
     created_instances = get_created_instances()
     leader_ip_address = env.roledefs['leaders'][0]
     for region, instances in created_instances.iteritems():
@@ -41,9 +61,10 @@ def put_janus_config():
             if instance.public_ip_address != leader_ip_address:
                 host[proc_name] = instance.public_ip_address
                 cnt += 1
-    config_contents = StringIO.StringIO(yaml.dump(config, default_flow_style=False))
-    put(config_contents, "{}/config/aws.yml".format(env.nfs_home))
-
+    config_contents = StringIO.StringIO(
+        yaml.dump(aws_hosts, default_flow_style=False))
+    dest_fn = os.path.join(env.nfs_home, "config", aws_hosts_fn)
+    put(config_contents, dest_fn) 
 
 
 @task
@@ -80,6 +101,23 @@ def config_nfs_server():
 
     sudo('exportfs -a')
     reboot()
+
+
+@task
+@roles('servers', 'leaders')
+def put_limits_config():
+    source_fn = "config/etc/security/limits.conf"
+    dest_fn = "/etc/security/limits.conf"
+    Xput(source_fn, dest_fn, use_sudo=True)
+
+@task
+@roles('servers', 'leaders')
+@parallel
+def mount_nfs():
+    try:
+        sudo('mount /mnt')
+    except:
+        traceback.print_exc()
 
 
 @task

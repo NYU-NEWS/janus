@@ -193,7 +193,7 @@ class TxnInfo(object):
         tries = self.mid_total_try - self.mid_pre_total_try
         commit_txn = self.mid_commit_txn - self.mid_pre_commit_txn
         self.mid_time /= num_clients
-        tps = int(round((self.mid_commit_txn - self.mid_pre_commit_txn) / self.mid_time))
+        tps = commit_txn / self.mid_time
         
         self.mid_latencies.sort()
         self.mid_attempt_latencies.sort()
@@ -216,10 +216,8 @@ class TxnInfo(object):
             else:
                 att_latencies[key] = 9999.99
 
-        #logger.debug("latencies: %s", latencies)
-        #logger.debug("att latencies: %s", att_latencies)
-
         self.data = {
+            'duration': self.mid_time,
             'txn_name': self.txn_name,
             'start_cnt': start_txn,
             'total_cnt': total_txn,
@@ -367,6 +365,8 @@ class ClientController(object):
         for site in sites:
             rpc_proxy.add(site.process.client_rpc_proxy)
         rpc_proxy = list(rpc_proxy)
+        logger.info("contact {} client rpc proxies".format(len(rpc_proxy)))
+        self.num_proxies = len(rpc_proxy)
     
         while (len(rpc_proxy) != len(self.finish_set)):
             logger.info("top client heartbeat; timeout {}".format(self.timeout))
@@ -444,10 +444,11 @@ class ClientController(object):
             self.print_max = False
             for k, v in self.txn_infos.items():
                 #v.print_max()
-                v.print_mid(len(sites))
+                v.print_mid(self.num_proxies)
 
         if (not self.recording_period):
             if (progress >= 20 and progress <= 60):
+                logger.info("start recording period")
                 self.recording_period = True
                 do_sample_lock.acquire()
                 do_sample.value = 1
@@ -502,7 +503,7 @@ class ClientController(object):
             if (self.print_max):
                 self.print_max = False
                 for k, v in self.txn_infos.items():
-                    v.print_mid(len(sites))
+                    v.print_mid(self.num_proxies)
             return True
         else:
             return False

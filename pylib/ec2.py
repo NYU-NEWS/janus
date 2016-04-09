@@ -7,8 +7,8 @@ import socket
 import traceback
 
 import boto3
-from fabric.api import env, task, run, local, execute
-from fabric.decorators import hosts
+from fabric.api import env, task, run, local, execute, parallel
+from fabric.decorators import hosts, roles
 from fabric.contrib.files import exists
 
 EC2_REGIONS = {
@@ -49,6 +49,17 @@ created_instances = {}
 def get_created_instances():
     return created_instances
 
+@task
+@roles('leaders')
+@parallel(pool_size=10)
+def reboot_all():
+    instance_ids = []
+    for region, instances in get_created_instances().iteritems():
+        ec2 = boto3.client('ec2', region_name=region)
+        for instance in instances:
+            instance_ids.append(instance.id)
+        ec2.reboot_instances(InstanceIds=instance_ids)
+        instance_ids = []
 
 @task
 def list_regions():
