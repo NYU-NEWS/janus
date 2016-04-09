@@ -11,6 +11,9 @@ class MultiPaxosCoord : public Coordinator {
  public:
 //  static ballot_t next_slot_s;
  private:
+  enum Phase {INIT_END=0, PREPARE=1, ACCEPT=2, COMMIT=3};
+  const int32_t n_phase_ = 4;
+
   MultiPaxosCommo* commo() {
     // TODO fix this.
     verify(commo_ != nullptr);
@@ -36,6 +39,11 @@ class MultiPaxosCoord : public Coordinator {
     return n_replica_;
   }
 
+  bool IsLeader() {
+    //TODO
+    return true;
+  }
+
   slotid_t GetNextSlot() {
     verify(0);
     verify(slot_hint_ != nullptr);
@@ -44,7 +52,6 @@ class MultiPaxosCoord : public Coordinator {
   }
 
   uint32_t GetQuorum() {
-//    return n_replica(); // TODO
     return n_replica() / 2 + 1;
   }
 
@@ -58,10 +65,12 @@ class MultiPaxosCoord : public Coordinator {
   void PrepareAck(phase_t phase, Future *fu);
   void Accept();
   void AcceptAck(phase_t phase, Future *fu);
-  void Decide();
+  void Commit();
 
   void Reset() override {}
   void Restart() override {verify(0);}
+
+  void GotoNextPhase();
 };
 
 } //namespace rococo

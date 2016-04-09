@@ -37,7 +37,6 @@ void MultiPaxosCoord::Prepare() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   verify(!in_prepare_);
   in_prepare_ = true;
-  TxnCommand* cmd = (TxnCommand*) cmd_;
   curr_ballot_ = PickBallot();
   verify(slot_id_ > 0);
   Log_debug("multi-paxos coordinator broadcasts prepare, "
@@ -66,7 +65,7 @@ void MultiPaxosCoord::PrepareAck(phase_t phase, Future *fu) {
   }
   verify(n_prepare_ack_ <= n_replica_);
   if (n_prepare_ack_ >= GetQuorum()) {
-    Accept();
+    GotoNextPhase();
   } else {
     // TODO what if receive majority of rejects.
     // Do nothing.
@@ -77,7 +76,6 @@ void MultiPaxosCoord::Accept() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   verify(!in_accept);
   in_accept = true;
-  phase_++;
   Log_debug("multi-paxos coordinator broadcasts accept, "
                 "par_id_: %lx, slot_id: %llx",
             par_id_, slot_id_);
@@ -85,7 +83,7 @@ void MultiPaxosCoord::Accept() {
   commo()->BroadcastAccept(par_id_,
                           slot_id_,
                           curr_ballot_,
-                          *cmd_,
+                          *cmd,
                           std::bind(&MultiPaxosCoord::AcceptAck,
                                     this,
                                     phase_,
@@ -104,19 +102,55 @@ void MultiPaxosCoord::AcceptAck(phase_t phase, Future *fu) {
     verify(0);
   }
   if (n_finish_ack_ >= GetQuorum()) {
-    commit_callback_();
-    Decide();
+    committed_ = true;
+    GotoNextPhase();
   } else {
     // TODO
     // Do nothing.
   }
 }
 
-void MultiPaxosCoord::Decide() {
+void MultiPaxosCoord::Commit() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  phase_++;
+  commit_callback_();
   auto cmd = (ContainerCommand*) cmd_;
   commo()->BroadcastDecide(par_id_, slot_id_, curr_ballot_, *cmd);
+  verify(phase_ == Phase::COMMIT);
+  GotoNextPhase();
+}
+
+
+void MultiPaxosCoord::GotoNextPhase() {
+  int n_phase = 4;
+  int current_phase = phase_ % n_phase;
+  switch (phase_++ % n_phase) {
+    case Phase::INIT_END:
+      if (IsLeader()) {
+        phase_++;
+        Accept();
+      } else {
+        Prepare();
+      }
+//      verify(phase_ % n_phase_ == Phase::DISPATCH);
+      break;
+    case Phase::ACCEPT:
+      verify(phase_ % n_phase == Phase::COMMIT);
+      if (committed_) {
+        Commit();
+      } else {
+        verify(0);
+      }
+      break;
+    case Phase::PREPARE:
+      verify(phase_ % n_phase == Phase::ACCEPT);
+      Accept();
+      break;
+    case Phase::COMMIT:
+      // do nothing.
+      break;
+    default:
+      verify(0);
+  }
 }
 
 } // namespace rococo
