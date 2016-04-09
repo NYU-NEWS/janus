@@ -340,7 +340,7 @@ class ClientController(object):
         finally:
             logger.info("Duration: {:.2f} seconds".format(time.time() - start))
 
-        print "Benchmark finished\n"
+        logger.info("Benchmark finished")
 
     def start_client(self):
         sites = ProcessInfo.get_sites(self.process_infos, 
@@ -516,7 +516,7 @@ class ClientController(object):
             subprocess.call(['ssh', '-f', host, cmd])
 
     def client_shutdown(self):
-        print "Shutting down clients ..."
+        logger.debug("Shutting down clients ...")
         sites = ProcessInfo.get_sites(self.process_infos, SiteInfo.SiteType.Client)
         for site in self.sites:
             try:
@@ -1034,7 +1034,7 @@ def setup_logging(log_file_path=None):
     formatter = logging.Formatter(fmt='%(levelname)s: %(message)s')
     ch.setFormatter(formatter)
     root_logger.addHandler(ch)
-    print('logger initialized')
+    logger.debug('logger initialized')
 
 
 def setup_experiment(config):
