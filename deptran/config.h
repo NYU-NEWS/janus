@@ -200,7 +200,7 @@ class Config {
   uint32_t get_num_threads();
   uint32_t get_start_coordinator_id();
   int32_t get_benchmark();
-  uint32_t get_num_site();
+  uint32_t GetNumPartition();
   uint32_t get_scale_factor();
   uint32_t get_max_retry();
   single_server_t get_single_server();

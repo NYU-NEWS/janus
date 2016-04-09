@@ -74,7 +74,7 @@ void TpccPiece::RegDelivery() {
       dtxn->ReadColumn(r, TPCC_COL_NEW_ORDER_NO_W_ID, &buf);
       output[TPCC_VAR_O_ID] = buf;
     } else {
-      verify(0);
+//      verify(0);
 //      TPL_KISS_NONE;
       output[TPCC_VAR_O_ID] = Value((i32) -1);
     }

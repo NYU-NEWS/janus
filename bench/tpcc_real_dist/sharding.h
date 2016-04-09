@@ -1,14 +1,11 @@
 #pragma once
 #include "__dep__.h"
-#include "deptran/sharding.h"
+#include "../tpcc/sharding.h"
 
 namespace rococo {
 
-class TpccdSharding: public Sharding {
+class TpccdSharding: public TpccSharding {
  public:
-  std::multimap<c_last_id_t, rrr::i32> g_c_last2id; // XXX hardcode
-  mdb::Schema g_c_last_schema;                      // XXX
-
 
 
   int PopulateTable(tb_info_t *tb_info, parid_t) override;

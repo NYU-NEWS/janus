@@ -170,7 +170,7 @@ bool TpccdSharding::GenerateRowData(tb_info_t *tb_info,
               tb_infos_[std::string(TPCC_TB_DISTRICT)].num_records;
         }
       } else if (boost::algorithm::ends_with(col.foreign_col_name, "d_id")) {
-        n = Config::GetConfig()->get_num_site() *
+        n = Config::GetConfig()->GetNumPartition() *
             tb_infos_[std::string(TPCC_TB_DISTRICT)].num_records /
             tb_infos_[std::string(TPCC_TB_WAREHOUSE)].num_records;
       } else {
@@ -364,7 +364,7 @@ int TpccdSharding::PopulateTable(tb_info_t *tb_info, parid_t partition_id) {
   // ???
   uint64_t loc_num_records = tb_info->num_records;
   if (tb_info->tb_name == TPCC_TB_DISTRICT) {
-    auto n_partition = Config::GetConfig()->get_num_site();
+    auto n_partition = Config::GetConfig()->GetNumPartition();
     loc_num_records *= n_partition;
   }
 //  verify(tb_info->num_records >= num_foreign_row);

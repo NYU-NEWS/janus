@@ -28,6 +28,7 @@
 // tpcc benchmark
 #include "bench/tpcc/piece.h"
 #include "bench/tpcc/chopper.h"
+#include "bench/tpcc/sharding.h"
 
 // tpcc dist partition benchmark
 #include "bench/tpcc_dist/piece.h"
@@ -109,6 +110,9 @@ Sharding* Frame::CreateSharding() {
   switch (bench) {
     case TPCC_REAL_DIST_PART:
       ret = new TpccdSharding();
+      break;
+    case TPCC:
+      ret = new TpccSharding();
       break;
     case RW_BENCHMARK:
       ret = new RWBenchmarkSharding();

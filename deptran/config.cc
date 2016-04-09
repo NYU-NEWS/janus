@@ -587,7 +587,7 @@ void Config::InitTPCCD() {
     i32 n_w_id =
         (i32)(tb_infos[std::string(TPCC_TB_WAREHOUSE)].num_records);
     verify(n_w_id > 0);
-    i32 n_d_id = (i32)(get_num_site() *
+    i32 n_d_id = (i32)(GetNumPartition() *
         tb_infos[std::string(TPCC_TB_DISTRICT)].num_records / n_w_id);
     i32 d_id = 0, w_id = 0;
 
@@ -811,8 +811,10 @@ int Config::get_benchmark() {
   return benchmark_;
 }
 
-unsigned int Config::get_num_site() {
-  return GetMyServers().size();
+unsigned int Config::GetNumPartition() {
+  // TODO FIXME this should be number of partition.
+  return replica_groups_.size();
+//  return GetMyServers().size();
 }
 
 unsigned int Config::get_scale_factor() {
