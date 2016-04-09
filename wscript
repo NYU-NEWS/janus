@@ -242,7 +242,7 @@ def _enable_debug(conf):
     if Options.options.debug:
         Logs.pprint("PINK", "Debug support enabled")
         conf.env.append_value("CXXFLAGS", "-Wall -pthread -O0 -DNDEBUG -g "
-                "-ggdb -DLOG_DEBUG -rdynamic -fno-omit-frame-pointer".split())
+                "-ggdb -DLOG_LEVEL_AS_DEBUG -DLOG_DEBUG -rdynamic -fno-omit-frame-pointer".split())
     else:
         conf.env.append_value("CXXFLAGS", "-pthread -O0 -DNDEBUG -DLOG_INFO".split())
 

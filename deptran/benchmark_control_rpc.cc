@@ -219,7 +219,11 @@ void ClientControlServiceImpl::client_response(ClientResponse *res) {
       it->second.interval_latency.clear();
     }
   }
+#ifdef LOG_LEVEL_AS_DEBUG
+  LogClientResponse(res);
+#endif
   pthread_rwlock_unlock(&collect_lock_);
+
 
   int use = 0;
   if (txn_info_switch_)
@@ -341,6 +345,45 @@ ClientControlServiceImpl::~ClientControlServiceImpl() {
   }
   free(coo_threads_);
   delete[] txn_info_;
+}
+
+void ClientControlServiceImpl::LogClientResponse(ClientResponse *res) {
+  char output[2048];
+  output[0] = '\0';
+  Log_debug("run_sec: %ld", res->run_sec);
+  Log_debug("run_nsec: %ld", res->run_nsec);
+  Log_debug("period_sec: %ld", res->period_sec);
+  Log_debug("period_nsec: %ld", res->period_nsec);
+
+  for (int i = 0; i < num_threads_; i++) {
+    for (std::map<int32_t, txn_info_t>::iterator it = txn_info_[i].begin();
+         it != txn_info_[i].end(); it++) {
+
+      Log_debug("%d: start_txn: %d", it->first, res->txn_info[it->first].start_txn);
+      Log_debug("%d: total_txn: %d", it->first, res->txn_info[it->first].total_txn);
+      Log_debug("%d: total_try: %d", it->first, res->txn_info[it->first].total_try);
+      Log_debug("%d: commit_txn: %d", it->first, res->txn_info[it->first].commit_txn);
+      Log_debug("%d: interval_latency: ", it->first);
+      auto& interval_lat = res->txn_info[it->first].interval_latency;
+      size_t cnt = 0;
+      for (auto lat_it = interval_lat.begin(); lat_it != interval_lat.end(); ++lat_it) {
+        char buf[128];
+        snprintf(buf, sizeof(buf), "%0.6f, ", *lat_it);
+        if (strlen(buf)+cnt < sizeof(output)-1) {
+          strcat(output, buf);
+          cnt += strlen(buf);
+        } else {
+          Log_debug("%s", output);
+          output[0] = '\0';
+          strcat(output, buf);
+          cnt = strlen(buf);
+        }
+      }
+      if (strlen(output)>0) {
+        Log_debug("%s", output);
+      }
+    }
+  }
 }
 
 }

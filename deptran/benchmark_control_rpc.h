@@ -220,6 +220,7 @@ class ClientControlServiceImpl: public ClientControlService {
 
   std::map<int32_t, std::string> txn_names_;
 
+  void LogClientResponse(ClientResponse *res);
  public:
   void client_get_txn_names(std::map<i32, std::string> *txn_names);
   void client_shutdown();
