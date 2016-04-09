@@ -385,7 +385,7 @@ class ClientController(object):
                     future = proxy.async_client_response()
                     futures.append(future)
                 except:
-                    traceback.print_exc()
+                    logger.error(traceback.format_exc())
             i=0 
             for future in futures:
                 res = future.result
@@ -522,7 +522,7 @@ class ClientController(object):
             try:
                 site.rpc_proxy.sync_client_shutdown()
             except:
-                traceback.print_exc()
+                logger.error(traceback.format_exc())
 
 class ServerResponse(object):
     def __init__(self, value_times_pair):
@@ -616,7 +616,7 @@ class ServerController(object):
             try:
                 site.rpc_proxy.sync_server_shutdown()
             except:
-                traceback.print_exc()
+                logger.error(traceback.format_exc())
 
 
     def server_heart_beat(self, cond, s_init_finish, do_sample, do_sample_lock):
@@ -717,7 +717,7 @@ class ServerController(object):
             print "AVG_LOG_FLUSH_SZ: " + str(avg_r_sz) + ";"
             print "BENCHMARK_SUCCEED"
         except:
-            traceback.print_exc()
+            logger.error(traceback.format_exc())
             cond.acquire()
             s_init_finish.value = 5
             cond.notify()
@@ -1067,7 +1067,7 @@ def main():
             process.join()
         
     except Exception:
-        traceback.print_exc()
+        logger.error(traceback.format_exc())
         ret = 1
     finally:
         logger.info("shutting down...")
@@ -1075,12 +1075,12 @@ def main():
             try:
                 server_controller.server_kill()
             except:
-                traceback.print_exc()
+                logger.error(traceback.format_exc())
         if client_controller is not None:
             try:
                 client_controller.client_kill()
             except:
-                traceback.print_exc()
+                logger.error(traceback.format_exc())
         sys.exit(ret)
 
 if __name__ == "__main__":
