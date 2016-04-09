@@ -350,6 +350,7 @@ ClientControlServiceImpl::~ClientControlServiceImpl() {
 void ClientControlServiceImpl::LogClientResponse(ClientResponse *res) {
   char output[2048];
   output[0] = '\0';
+  Log_debug("__%s__", __FUNCTION__);
   Log_debug("run_sec: %ld", res->run_sec);
   Log_debug("run_nsec: %ld", res->run_nsec);
   Log_debug("period_sec: %ld", res->period_sec);
@@ -367,23 +368,23 @@ void ClientControlServiceImpl::LogClientResponse(ClientResponse *res) {
       auto& interval_lat = res->txn_info[it->first].interval_latency;
       size_t cnt = 0;
       for (auto lat_it = interval_lat.begin(); lat_it != interval_lat.end(); ++lat_it) {
-        char buf[128];
+        char buf[32];
         snprintf(buf, sizeof(buf), "%0.6f, ", *lat_it);
-        if (strlen(buf)+cnt < sizeof(output)-1) {
-          strcat(output, buf);
+        if (strlen(buf)+cnt < sizeof(output)) {
           cnt += strlen(buf);
         } else {
           Log_debug("%s", output);
           output[0] = '\0';
-          strcat(output, buf);
           cnt = strlen(buf);
         }
+        strcat(output, buf);
       }
       if (strlen(output)>0) {
         Log_debug("%s", output);
       }
     }
   }
+  Log_debug("__End %s__", __FUNCTION__);
 }
 
 }
