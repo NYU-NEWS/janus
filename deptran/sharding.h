@@ -113,13 +113,13 @@ class Sharding {
 
     tb_info_t(std::string method,
               uint32_t ns = 0,
-              std::vector<uint32_t>* sid = nullptr,
+              std::vector<uint32_t>* pars = nullptr,
               uint64_t _num_records = 0,
               mdb::symbol_t _symbol = mdb::TBL_UNSORTED
     ) : num_records(_num_records),
         symbol(_symbol) {
-      if (sid) {
-        site_id = std::vector<uint32_t>(*sid);
+      if (pars) {
+        par_ids = vector<uint32_t>(*pars);
       }
       if (method == "modulus") sharding_method = MODULUS;
       else if (method == "int_modulus") sharding_method = INT_MODULUS;
@@ -127,13 +127,13 @@ class Sharding {
     }
 
     method_t sharding_method;
-    std::vector<uint32_t> site_id;
-    uint64_t num_records;
-    map<parid_t, bool> populated; // partition_id -> populated
+    vector<uint32_t> par_ids = {};
+    uint64_t num_records = 0;
+    map<parid_t, bool> populated = {}; // partition_id -> populated
 
-    std::vector<column_t> columns;
+    vector<column_t> columns = {};
     mdb::symbol_t symbol;
-    std::string tb_name;
+    std::string tb_name = "";
   };
 
   std::map<std::string, tb_info_t> tb_infos_;
@@ -175,8 +175,8 @@ class Sharding {
   std::vector<siteid_t> SiteIdsForKey(const std::string &tb_name,
                                       const MultiValue &key);
 
-  int get_site_id_from_tb(const std::string &tb_name,
-                          std::vector<unsigned int> &site_id);
+  int GetTablePartitions(const std::string &tb_name,
+                         std::vector<unsigned int> &par_ids);
 
 //  int do_populate_table(const std::vector<std::string> &table_names,
 //                        unsigned int sid);

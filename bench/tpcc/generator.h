@@ -8,7 +8,7 @@
 namespace rococo {
 
 class TpccTxnGenerator : public TxnGenerator {
-
+ public:
   typedef struct {
     int n_w_id_;
     int n_d_id_;

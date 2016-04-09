@@ -226,7 +226,7 @@ int Sharding::GetPartition(const std::string &tb_name,
                            parid_t& par_id) {
   std::map<std::string, tb_info_t>::iterator it = tb_infos_.find(tb_name);
   if (it == tb_infos_.end()) return -1;
-  if (it->second.site_id.size() == 0) return -2;
+  if (it->second.par_ids.size() == 0) return -2;
   par_id = partition_id_from_key(key, &(it->second));
   return 0;
 }
@@ -245,14 +245,17 @@ std::vector<siteid_t> Sharding::SiteIdsForKey(const std::string &tb_name,
   return result;
 }
 
-int Sharding::get_site_id_from_tb(const std::string &tb_name,
-                                  std::vector<uint32_t> &site_id) {
+int Sharding::GetTablePartitions(const std::string &tb_name,
+                                 vector<uint32_t> &par_ids) {
   std::map<std::string, tb_info_t>::iterator it = tb_infos_.find(tb_name);
   if (it == tb_infos_.end()) return -1;
-  if (it->second.site_id.size() == 0) return -2;
+  if (it->second.par_ids.size() == 0) return -2;
 
-  site_id.clear();
-  site_id.insert(site_id.end(), it->second.site_id.begin(), it->second.site_id.end());
+  tb_info_t& tbl_info = it->second;
+  par_ids.clear();
+  par_ids.insert(par_ids.end(),
+                 tbl_info.par_ids.begin(),
+                 tbl_info.par_ids.end());
   return 0;
 }
 
@@ -283,7 +286,7 @@ int Sharding::GetTableNames(uint32_t sid,
   for (auto it = tb_infos_.begin(); it != tb_infos_.end(); it++) {
     auto &tbl_name = it->first;
     auto &tbl_info = it->second;
-    for (auto site_id : tbl_info.site_id) {
+    for (auto site_id : tbl_info.par_ids) {
       if (site_id == sid) {
         tables.push_back(tbl_name);
         break;

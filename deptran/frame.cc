@@ -37,6 +37,7 @@
 // tpcc real dist partition benchmark
 #include "bench/tpcc_real_dist/piece.h"
 #include "bench/tpcc_real_dist/chopper.h"
+#include "bench/tpcc_real_dist/generator.h"
 
 // rw benchmark
 #include "bench/rw_benchmark/piece.h"
@@ -417,9 +418,11 @@ TxnGenerator * Frame::CreateTxnGenerator() {
   TxnGenerator * gen = nullptr;
   switch (benchmark) {
     case TPCC:
+      gen = new TpccTxnGenerator(Config::GetConfig());
+      break;
     case TPCC_DIST_PART:
     case TPCC_REAL_DIST_PART:
-      gen = new TpccTxnGenerator(Config::GetConfig());
+      gen = new TpccdTxnGenerator(Config::GetConfig());
       break;
     case TPCA:
     case RW_BENCHMARK:
