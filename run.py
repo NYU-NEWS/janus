@@ -711,11 +711,16 @@ class ServerController(object):
                 time.sleep(self.timeout / 4)
 
             for single_record in sample_result:
-                print "SERVREC: " + str(single_record[0]) + ": VALUE: " + str(single_record[1]) + "; TIMES: " + str(single_record[2]) + "; MEAN: " + str(single_record[3]) + "; TIME: " + str(single_record[4])
-            print "CPUINFO: " + str(avg_cpu_util) + ";"
-            print "AVG_LOG_FLUSH_CNT: " + str(avg_r_cnt) + ";"
-            print "AVG_LOG_FLUSH_SZ: " + str(avg_r_sz) + ";"
-            print "BENCHMARK_SUCCEED"
+                logger.info("SERVREC: %s; " + str(single_record[0]) + ": VALUE: " +
+                            \
+                            str(single_record[1]) + "; TIMES: " + \
+                            str(single_record[2]) + "; MEAN: " + \
+                            str(single_record[3]) + "; TIME: " + \
+                            str(single_record[4]))
+            logger.info("CPUINFO: " + str(avg_cpu_util))
+            logger.info("AVG_LOG_FLUSH_CNT: " + str(avg_r_cnt))
+            logger.info("AVG_LOG_FLUSH_SZ: " + str(avg_r_sz))
+            logger.info("BENCHMARK SUCCESS!")
         except:
             logger.error(traceback.format_exc())
             cond.acquire()
