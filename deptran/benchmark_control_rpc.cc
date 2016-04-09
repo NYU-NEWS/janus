@@ -347,9 +347,8 @@ ClientControlServiceImpl::~ClientControlServiceImpl() {
   delete[] txn_info_;
 }
 
+const int MAX_LAT_LOG = 25;
 void ClientControlServiceImpl::LogClientResponse(ClientResponse *res) {
-  char output[2048];
-  output[0] = '\0';
   Log_debug("__%s__", __FUNCTION__);
   Log_debug("run_sec: %ld", res->run_sec);
   Log_debug("run_nsec: %ld", res->run_nsec);
@@ -364,10 +363,14 @@ void ClientControlServiceImpl::LogClientResponse(ClientResponse *res) {
       Log_debug("%d: total_txn: %d", it->first, res->txn_info[it->first].total_txn);
       Log_debug("%d: total_try: %d", it->first, res->txn_info[it->first].total_try);
       Log_debug("%d: commit_txn: %d", it->first, res->txn_info[it->first].commit_txn);
+
+      char output[1024];
+      output[0] = '\0';
       Log_debug("%d: interval_latency: ", it->first);
       auto& interval_lat = res->txn_info[it->first].interval_latency;
       size_t cnt = 0;
-      for (auto lat_it = interval_lat.begin(); lat_it != interval_lat.end(); ++lat_it) {
+      int n = 0;
+      for (auto lat_it = interval_lat.begin(); lat_it != interval_lat.end() && n < MAX_LAT_LOG; ++lat_it, ++n) {
         char buf[32];
         snprintf(buf, sizeof(buf), "%0.6f, ", *lat_it);
         if (strlen(buf)+cnt < sizeof(output)) {
