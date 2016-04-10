@@ -26,6 +26,12 @@ def Xput(*args, **kwargs):
     return res
 
 @task
+@roles('all')
+@parallel
+def disable_ssh_host_check():
+    Xput('config/ssh_config', '/home/ubuntu/.ssh/config')
+
+@task
 @roles('leaders')
 def ping():
     created_instances = get_created_instances()
