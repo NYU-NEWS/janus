@@ -279,15 +279,15 @@ int Sharding::init_schema(const std::string &tb_name,
   return schema->columns_count();
 }
 
-int Sharding::GetTableNames(uint32_t sid,
+int Sharding::GetTableNames(parid_t par_id,
                             vector<string> &tables) {
 //  tables.clear();
   verify(tables.size() == 0);
   for (auto it = tb_infos_.begin(); it != tb_infos_.end(); it++) {
     auto &tbl_name = it->first;
     auto &tbl_info = it->second;
-    for (auto site_id : tbl_info.par_ids) {
-      if (site_id == sid) {
+    for (auto pid : tbl_info.par_ids) {
+      if (pid == par_id) {
         tables.push_back(tbl_name);
         break;
       }

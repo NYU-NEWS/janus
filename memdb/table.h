@@ -33,7 +33,7 @@ public:
 
     virtual void insert(Row* row) = 0;
     virtual void remove(Row* row, bool do_free = true) = 0;
-
+    virtual uint64_t size() {verify(0); return 0;}
     virtual void notify_before_update(Row* row, int updated_column_id) {
         // used to notify IndexedTable to update secondary index
     }
@@ -169,6 +169,8 @@ public:
             return count_;
         }
     };
+
+    virtual uint64_t size() {return rows_.size();}
 
     SortedTable(std::string name, const Schema* schema): Table(name, schema) {}
 

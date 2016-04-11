@@ -93,7 +93,8 @@ void ServerWorker::PopTable() {
   }
   verify(sharding_);
   sharding_->PopulateTables(site_info_->partition_id_);
-  Log_info("Site %d data populated", site_info_->id);
+  Log_info("data populated for site: %x, partition: %x",
+           site_info_->id, site_info_->partition_id_);
   verify(ret > 0);
 }
 

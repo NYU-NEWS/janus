@@ -10,11 +10,12 @@ int TpccSharding::PopulateTable(tb_info_t *tb_info_ptr, parid_t par_id) {
   const mdb::Schema *schema = table_ptr->schema();
   verify(schema->columns_count() == tb_info_ptr->columns.size());
 
-  unsigned int col_index = 0;
+
+  uint32_t col_index = 0;
+  auto n_partition = Config::GetConfig()->GetNumPartition();
   if (tb_info_ptr->tb_name == TPCC_TB_WAREHOUSE) { // warehouse table
     Value key_value, max_key;
     mdb::Schema::iterator col_it = schema->begin();
-    auto n_partition = Config::GetConfig()->GetNumPartition();
     for (col_index = 0; col_index < tb_info_ptr->columns.size(); col_index++) {
       verify(col_it != schema->end());
       verify(tb_info_ptr->columns[col_index].name == col_it->name);
@@ -59,8 +60,7 @@ int TpccSharding::PopulateTable(tb_info_t *tb_info_ptr, parid_t par_id) {
         table_ptr->insert(row);
       }
     }
-  }
-  else { // non warehouse tables
+  } else { // non warehouse tables
     unsigned long long int num_foreign_row = 1;
     unsigned long long int num_self_primary = 0;
     unsigned int self_primary_col = 0;
@@ -132,7 +132,10 @@ int TpccSharding::PopulateTable(tb_info_t *tb_info_ptr, parid_t par_id) {
                                 num_self_primary);
     std::vector<Value> row_data;
     //Log_debug("Begin primary key: %s, Max primary key: %s", to_string(key_value).c_str(), to_string(max_key).c_str());
+
+
     for (; key_value < max_key || num_self_primary == 0; ++key_value) {
+
       bool record_key = true;
       init_index(prim_foreign_index);
       int counter = 0;
@@ -184,7 +187,7 @@ int TpccSharding::PopulateTable(tb_info_t *tb_info_ptr, parid_t par_id) {
             }
             else if (last4 == "w_id") {
               n = tb_infos_[std::string(TPCC_TB_WAREHOUSE)].num_records
-                  * Config::GetConfig()->GetNumPartition();
+                  * n_partition;
             }
             else if (last4 == "c_id") {
               if (tb_info_ptr->columns[col_index].name == "o_c_id")
@@ -230,8 +233,14 @@ int TpccSharding::PopulateTable(tb_info_t *tb_info_ptr, parid_t par_id) {
           //for (int i = 0; i < tb_info_ptr->columns.size(); i++)
           //    buf.append(tb_info_ptr->columns[i].name).append(":").append(to_string(row_data[i])).append("; ");
           //rrr::Log::info("%s", buf.c_str());
+
           mdb::Row *r = frame_->CreateRow(schema, row_data);
           table_ptr->insert(r);
+          if (tb_info_ptr->tb_name == TPCC_TB_STOCK && par_id == 1 ) {
+            auto item_id = row_data[0].get_i32();
+            if (item_id == 9999)
+              Log_debug("debug point here. %d", item_id);
+          }
 
           //
           if (tbl_sec_ptr) {
@@ -293,6 +302,8 @@ int TpccSharding::PopulateTable(tb_info_t *tb_info_ptr, parid_t par_id) {
       }
     }
   }
+
+
 
 }
 
