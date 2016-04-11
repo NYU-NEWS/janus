@@ -565,13 +565,13 @@ void Config::LoadShardingYML(YAML::Node config) {
          replica_group_it != this->replica_groups_.end();
          replica_group_it++) {
       auto &replica_group = *replica_group_it;
-
-      for (auto replica_it = replica_group.replicas.begin();
-           replica_it != replica_group.replicas.end();
-           replica_it++) {
-        const auto& site_info = *replica_it;
-        tbl_info.par_ids.push_back(site_info->id);
-      }
+      tbl_info.par_ids.push_back(replica_group.partition_id);
+//      for (auto replica_it = replica_group.replicas.begin();
+//           replica_it != replica_group.replicas.end();
+//           replica_it++) {
+//        const auto& site_info = *replica_it;
+//        tbl_info.par_ids.push_back(site_info->id);
+//      }
 
       tbl_info.symbol = tbl_types_map_["sorted"];
     }

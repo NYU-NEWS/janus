@@ -13,6 +13,7 @@ int NoneSched::OnDispatch(const SimpleCommand &cmd,
                           map<int32_t, Value> *output,
                           const function<void()>& callback) {
   auto dtxn = GetOrCreateDTxn(cmd.root_id_);
+  verify(partition_id_ == cmd.partition_id_);
   txn_reg_->get(cmd).txn_handler(nullptr,
                                  dtxn,
                                  const_cast<SimpleCommand&>(cmd),

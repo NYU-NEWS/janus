@@ -14,6 +14,7 @@ TpccTxnGenerator::TpccTxnGenerator(Config* config)
   sharding_->GetTablePartitions(TPCC_TB_WAREHOUSE, partitions);
   uint64_t tb_w_rows = table_num_rows[std::string(TPCC_TB_WAREHOUSE)];
   tpcc_para_.n_w_id_ = (int) tb_w_rows * partitions.size();
+//  verify(tpcc_para_.n_w_id_ < 3);
   tpcc_para_.const_home_w_id_ = RandomGenerator::rand(0, tpcc_para_.n_w_id_ - 1);
   uint64_t tb_d_rows = table_num_rows[std::string(TPCC_TB_DISTRICT)];
   tpcc_para_.n_d_id_ = (int) tb_d_rows;
@@ -38,8 +39,8 @@ TpccTxnGenerator::TpccTxnGenerator(Config* config)
 }
 
 
-void TpccTxnGenerator::get_tpcc_new_order_txn_req(
-    TxnRequest *req, uint32_t cid) const {
+void TpccTxnGenerator::get_tpcc_new_order_txn_req(TxnRequest *req,
+                                                  uint32_t cid) const {
   req->txn_type_ = TPCC_NEW_ORDER;
   //int home_w_id = RandomGenerator::rand(0, tpcc_para_.n_w_id_ - 1);
   int home_w_id = cid % tpcc_para_.n_w_id_;
@@ -99,10 +100,12 @@ void TpccTxnGenerator::get_tpcc_new_order_txn_req(
       remote_w_id = remote_w_id >= home_w_id ? remote_w_id + 1 : remote_w_id;
       req->input_[TPCC_VAR_S_W_ID(i)] = Value((i32) remote_w_id);
       req->input_[TPCC_VAR_S_REMOTE_CNT(i)] = Value((i32)1);
+//      verify(req->input_[TPCC_VAR_S_W_ID(i)].get_i32() < 3);
       all_local = false;
     } else {
       req->input_[TPCC_VAR_S_W_ID(i)] = req->input_[TPCC_VAR_W_ID];
       req->input_[TPCC_VAR_S_REMOTE_CNT(i)] = Value((i32)0);
+//      verify(req->input_[TPCC_VAR_S_W_ID(i)].get_i32() < 3);
     }
     req->input_[TPCC_VAR_OL_QUANTITY(i)] = Value((i32) RandomGenerator::rand(0, 10));
   }
@@ -114,6 +117,10 @@ void TpccTxnGenerator::get_tpcc_new_order_txn_req(
   //    for (int j = i + 1; j < ol_cnt; j++)
   //        verify(i_id_buf[i] != i_id_buf[j]);
   //}
+  // debug
+//  for (int i = 0; i < ol_cnt; i++) {
+//    verify(req->input_[TPCC_VAR_S_W_ID(i)].get_i32() < 3);
+//  }
 
 }
 

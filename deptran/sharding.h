@@ -120,6 +120,7 @@ class Sharding {
         symbol(_symbol) {
       if (pars) {
         par_ids = vector<uint32_t>(*pars);
+        verify(0);
       }
       if (method == "modulus") sharding_method = MODULUS;
       else if (method == "int_modulus") sharding_method = INT_MODULUS;

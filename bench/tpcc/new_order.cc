@@ -238,11 +238,12 @@ void TpccPiece::RegNewOrder() {
     mdb::MultiBlob mb(2);
     mb[0] = cmd.input[TPCC_VAR_I_ID(I)].get_blob();
     mb[1] = cmd.input[TPCC_VAR_S_W_ID(I)].get_blob();
+    int32_t w_id = cmd.input[TPCC_VAR_S_W_ID(I)].get_i32();
+    int32_t i_id = cmd.input[TPCC_VAR_I_ID(I)].get_i32();
     Log_debug("new order read stock. item_id: %x, s_w_id: %x",
-              cmd.input[TPCC_VAR_I_ID(I)].get_i32(),
-              cmd.input[TPCC_VAR_S_W_ID(I)].get_i32());
+              i_id,
+              w_id);
     auto tbl_stock = dtxn->GetTable(TPCC_TB_STOCK);
-    verify(tbl_stock->size() == 10000);
     mdb::Row *r = dtxn->Query(tbl_stock, mb, ROW_STOCK);
     verify(r->schema_);
     //i32 s_dist_col = 3 + input[2].get_i32();
