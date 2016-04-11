@@ -25,7 +25,7 @@ void TpccdSharding::InsertRowData(tb_info_t *tb_info,
       mv[i] = row_data[schema->key_columns_id()[i]];
     }
 
-    if (partition_id == partition_id_from_key(mv, tb_info)) {
+    if (partition_id == PartitionFromKey(mv, tb_info)) {
       n_row_inserted_++;
       auto r = frame_->CreateRow(schema, row_data);
       table_ptr->insert(r);
@@ -38,7 +38,7 @@ void TpccdSharding::InsertRowData(tb_info_t *tb_info,
       mv[i] = row_data[schema->key_columns_id()[i]];
     }
 
-    if (partition_id == partition_id_from_key(mv, tb_info)) {
+    if (partition_id == PartitionFromKey(mv, tb_info)) {
       n_row_inserted_++;
       auto r = frame_->CreateRow(schema, row_data);
       table_ptr->insert(r);
@@ -120,7 +120,7 @@ bool TpccdSharding::GenerateRowData(tb_info_t *tb_info,
         // primary key, and no column is foreign key.
         if ((tb_info->tb_name != TPCC_TB_WAREHOUSE) &&
             (tb_info->tb_name != TPCC_TB_ITEM) &&
-            (sid != partition_id_from_key(key_value, tb_info))) {
+            (sid != PartitionFromKey(key_value, tb_info))) {
           // the key does not belong to this site.
           break;
         }

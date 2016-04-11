@@ -35,7 +35,7 @@ int TpccSharding::PopulateTable(tb_info_t *tb_info_ptr, parid_t par_id) {
       for (col_index = 0; col_index < tb_info_ptr->columns.size();
            col_index++) {
         if (tb_info_ptr->columns[col_index].is_primary) {
-          if (par_id != partition_id_from_key(key_value, tb_info_ptr))
+          if (par_id != PartitionFromKey(key_value, tb_info_ptr))
             break;
           if (tb_info_ptr->columns[col_index].values != NULL)
             tb_info_ptr->columns[col_index].values->push_back(key_value);
@@ -145,7 +145,7 @@ int TpccSharding::PopulateTable(tb_info_t *tb_info_ptr, parid_t par_id) {
              col_index++) {
           if (tb_info_ptr->columns[col_index].is_primary) {
             if (prim_foreign_index.size() == 0) {
-              if (par_id != partition_id_from_key(key_value, tb_info_ptr))
+              if (par_id != PartitionFromKey(key_value, tb_info_ptr))
                 break;
               row_data.push_back(key_value);
               if (tb_info_ptr->columns[col_index].values != NULL) {

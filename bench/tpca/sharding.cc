@@ -33,7 +33,7 @@ int TpcaSharding::PopulateTable(tb_info_t *tb_info_ptr, parid_t par_id) {
       if (tb_info_ptr->columns[col_index].is_primary) {
         //if (tb_info_ptr->columns[col_index].values != NULL)
         //    tb_info_ptr->columns[col_index].values->push_back(key_value);
-        if (par_id != partition_id_from_key(key_value, tb_info_ptr))
+        if (par_id != PartitionFromKey(key_value, tb_info_ptr))
           break;
         row_data.push_back(key_value);
 

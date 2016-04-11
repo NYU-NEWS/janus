@@ -26,19 +26,19 @@ Value value_rr_get_next(const std::string &s,
 int init_index(map<uint32_t, std::pair<uint32_t,
                                             uint32_t> > &index);
 
-int index_reverse_increase(std::map<unsigned int, std::pair<unsigned int,
-                                                            unsigned int> > &index);
+int index_reverse_increase(map<uint32_t, std::pair<uint32_t,
+                                                   uint32_t> > &index);
 
-int index_reverse_increase(std::map<unsigned int, std::pair<unsigned int,
-                                                            unsigned int> > &index,
-                           const std::vector<unsigned int> &bound_index);
+int index_reverse_increase(map<uint32_t, std::pair<uint32_t,
+                                                   uint32_t> > &index,
+                           const std::vector<uint32_t> &bound_index);
 
-int index_increase(std::map<unsigned int, std::pair<unsigned int,
-                                                    unsigned int> > &index);
+int index_increase(map<uint32_t, std::pair<uint32_t,
+                                                uint32_t> > &index);
 
-int index_increase(std::map<unsigned int, std::pair<unsigned int,
-                                                    unsigned int> > &index,
-                   const std::vector<unsigned int> &bound_index);
+int index_increase(map<uint32_t, std::pair<uint32_t,
+                                           uint32_t> > &index,
+                   const std::vector<uint32_t> &bound_index);
 
 
 // XXX hardcode for c_last secondary index
@@ -81,7 +81,10 @@ class Sharding {
              bool _is_foreign,
              string ftbl_name,
              string fcol_name
-    ) : type(_type), name(_name), is_primary(_is_primary), values(NULL),
+    ) : type(_type),
+        name(_name),
+        is_primary(_is_primary),
+        values(nullptr),
         is_foreign(_is_foreign),
         foreign_tbl_name(ftbl_name),
         foreign_col_name(fcol_name),
@@ -90,10 +93,15 @@ class Sharding {
     }
 
     column_t(const column_t& c)
-        : type(c.type), name(c.name), is_primary(c.is_primary),
-          is_foreign(c.is_foreign), foreign_tbl_name(c.foreign_tbl_name),
-          foreign_col_name(c.foreign_col_name), foreign(nullptr),
-          foreign_tb(nullptr), values(nullptr) {}
+        : type(c.type),
+          name(c.name),
+          is_primary(c.is_primary),
+          is_foreign(c.is_foreign),
+          foreign_tbl_name(c.foreign_tbl_name),
+          foreign_col_name(c.foreign_col_name),
+          foreign(nullptr),
+          foreign_tb(nullptr),
+          values(nullptr) {}
 
     Value::kind type;
     std::string name;
@@ -194,8 +202,8 @@ class Sharding {
 
   void release_foreign_values();
 
-  uint32_t partition_id_from_key(const MultiValue &key,
-                                 const tb_info_t *tb_info);
+  uint32_t PartitionFromKey(const MultiValue &key,
+                            const tb_info_t *tb_info);
 
   uint32_t modulus(const MultiValue &key, uint32_t num_partitions);
 

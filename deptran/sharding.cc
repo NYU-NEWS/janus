@@ -70,8 +70,8 @@ void Sharding::BuildTableInfoPtr() {
 
 }
 
-uint32_t Sharding::partition_id_from_key(const MultiValue &key,
-                                         const tb_info_t *tb_info) {
+parid_t Sharding::PartitionFromKey(const MultiValue &key,
+                                   const tb_info_t *tb_info) {
   const MultiValue &key_buf =
       Config::GetConfig()->get_benchmark() != TPCC_REAL_DIST_PART ?
       key :
@@ -227,7 +227,7 @@ int Sharding::GetPartition(const std::string &tb_name,
   std::map<std::string, tb_info_t>::iterator it = tb_infos_.find(tb_name);
   if (it == tb_infos_.end()) return -1;
   if (it->second.par_ids.size() == 0) return -2;
-  par_id = partition_id_from_key(key, &(it->second));
+  par_id = PartitionFromKey(key, &(it->second));
   return 0;
 }
 
@@ -236,7 +236,7 @@ std::vector<siteid_t> Sharding::SiteIdsForKey(const std::string &tb_name,
   std::map<std::string, tb_info_t>::iterator tb_info_it = tb_infos_.find(tb_name);
   verify(tb_info_it != tb_infos_.end());
 
-  parid_t partition_id = partition_id_from_key(key, &(tb_info_it->second));
+  parid_t partition_id = PartitionFromKey(key, &(tb_info_it->second));
   auto sites = Config::GetConfig()->SitesByPartitionId(partition_id);
   std::vector<siteid_t> result;
   std::for_each(sites.begin(), sites.end(), [&result](const Config::SiteInfo& site) {

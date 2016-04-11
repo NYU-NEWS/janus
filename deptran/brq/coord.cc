@@ -97,21 +97,21 @@ void BrqCoord::PreAccept() {
 }
 
 void BrqCoord::PreAcceptAck(phase_t phase,
-                            parid_t gid,
+                            parid_t par_id,
                             int res,
                             RccGraph& graph) {
   // if recevie more messages after already gone to next phase, ignore
   if (phase != phase_) return;
-  n_fast_accpet_graphs_[gid].push_back(graph);
+  n_fast_accpet_graphs_[par_id].push_back(graph);
   if (res == SUCCESS) {
-    n_fast_accept_oks_[gid]++;
+    n_fast_accept_oks_[par_id]++;
   } else if (res == REJECT) {
     verify(0);
-    n_fast_accept_rejects_[gid]++;
+    n_fast_accept_rejects_[par_id]++;
   } else {
     verify(0);
   }
-  if (FastpathPossible()){
+  if (FastpathPossible()) {
     // there is still chance for fastpath
     if (FastQuorumsAchieved()) {
       // receive enough identical replies to continue fast path.
@@ -231,6 +231,8 @@ bool BrqCoord::FastpathPossible() {
     }
     // check graph.
     // if more than (par_size - fast quorum) graph is different, then nack.
+    auto& vec_graph = n_fast_accpet_graphs_[par_id];
+
   }
   return all_fast_quorum_possible;
 };
