@@ -83,7 +83,6 @@ void BrqCoord::PreAccept() {
   // set broadcast callback
   // broadcast
   for (auto par_id : cmd_->GetPartitionIds()) {
-    // TODO
     commo()->BroadcastPreAccept(par_id,
                                 cmd_->id_,
                                 magic_ballot(),
@@ -102,21 +101,22 @@ void BrqCoord::PreAcceptAck(phase_t phase,
                             int res,
                             RccGraph& graph) {
   // if recevie more messages after already gone to next phase, ignore
-  if (phase != phase_) {
-    return;
-  }
-  auto& n = n_fast_accept_reply_[gid];
+  if (phase != phase_) return;
+  n_fast_accpet_graphs_[gid].push_back(graph);
   if (res == SUCCESS) {
-    n.yes++;
+    n_fast_accept_oks_[gid]++;
+  } else if (res == REJECT) {
+    verify(0);
+    n_fast_accept_rejects_[gid]++;
   } else {
     verify(0);
-    n.no++;
   }
   if (FastpathPossible()){
     // there is still chance for fastpath
     if (FastQuorumsAchieved()) {
       // receive enough identical replies to continue fast path.
       // go to the commit.
+      committed_ = true;
       GotoNextPhase();
     } else {
       // skip, wait
@@ -221,13 +221,28 @@ void BrqCoord::CommitAck(phase_t phase,
 }
 
 bool BrqCoord::FastpathPossible() {
-  // TODO
-  return true;
+  auto pars = txn().GetPartitionIds();
+  bool all_fast_quorum_possible = true;
+  for (auto& par_id : pars) {
+    auto par_size = Config::GetConfig()->GetPartitionSize(par_id);
+    if (n_fast_accept_rejects_[par_id] > par_size - GetFastQuorum(par_id)) {
+      all_fast_quorum_possible = false;
+      break;
+    }
+    // check graph.
+    // if more than (par_size - fast quorum) graph is different, then nack.
+  }
+  return all_fast_quorum_possible;
 };
+
+int BrqCoord::GetFastQuorum(parid_t par_id) {
+  int n = Config::GetConfig()->GetPartitionSize(par_id);
+  return n;
+}
 
 bool BrqCoord::FastQuorumsAchieved() {
   // TODO
-//  verify(0);
+  verify(0);
   return true;
 }
 

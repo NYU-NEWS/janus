@@ -1,6 +1,6 @@
 
 #include "command.h"
-#include "command_marshaler.h"3
+#include "command_marshaler.h"
 #include "tapir_srpc.h"
 #include "commo.h"
 #include "../coordinator.h"

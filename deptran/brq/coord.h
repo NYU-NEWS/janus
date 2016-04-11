@@ -22,10 +22,15 @@ public:
   ballot_t ballot_; // the ballot I am holding
   // data structures for saving replies.
   struct reply_cnt_t {int yes; int no;};
-  std::map<groupid_t, reply_cnt_t> n_fast_accept_reply_;
-  std::map<groupid_t, reply_cnt_t> n_accept_reply_;
-  std::map<groupid_t, reply_cnt_t> n_prepare_reply_;
-  std::map<groupid_t, reply_cnt_t> n_commit_reply_;
+  map<parid_t, int> n_fast_accept_oks_ = {};
+  map<parid_t, int> n_fast_accept_rejects_ = {};
+  map<parid_t, vector<RccGraph>> n_fast_accpet_graphs_ {};
+
+
+//  map<groupid_t, reply_cnt_t> n_fast_accept_reply_;
+//  map<groupid_t, reply_cnt_t> n_accept_reply_;
+  map<groupid_t, reply_cnt_t> n_prepare_reply_;
+  map<groupid_t, reply_cnt_t> n_commit_reply_;
 
   using RccCoord::RccCoord;
 
@@ -55,6 +60,7 @@ public:
     verify(0);
     return false;
   };
+  int GetFastQuorum(parid_t par_id);
   bool SlowQuorumsAchieved() {
     verify(0);
     return false;

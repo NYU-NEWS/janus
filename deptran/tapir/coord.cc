@@ -132,8 +132,8 @@ bool TapirCoord::FastQuorumPossible() {
   auto pars = cmd_->GetPartitionIds();
   bool all_fast_quorum_possible = true;
   for (auto& par_id : pars) {
-    if (n_fast_accept_rejects_[par_id] >
-        Config::GetConfig()->GetPartitionSize(par_id)-GetFastQuorum(par_id)) {
+    auto par_size = Config::GetConfig()->GetPartitionSize(par_id);
+    if (n_fast_accept_rejects_[par_id] > par_size-GetFastQuorum(par_id)) {
       all_fast_quorum_possible = false;
       break;
     }

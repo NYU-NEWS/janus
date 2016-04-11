@@ -22,6 +22,8 @@ sites_ =       ["1c1s1p",
                 "3c3s3r1p",
                 "64c8s3r1p"]
 benchmarks_ =  ["rw",
+                "tpca",
+                "tpcc",
                 "tpccd"]
 
 def run(m, s, b):
@@ -52,9 +54,12 @@ def main():
                         nargs='+', dest='modes')
     parser.add_argument('-s', '--site', help='sites', default=sites_,
                         nargs='+', dest='sites')
+    parser.add_argument('-b', '--bench', help='sites', default=benchmarks_,
+                        nargs='+', dest='benchmarks')
     args = parser.parse_args()
     modes_ = args.modes
     sites_ = args.sites
+    benchmarks_ = args.benchmarks
     for m in modes_:
         for b in benchmarks_:
             for s in sites_:
