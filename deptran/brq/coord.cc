@@ -123,6 +123,7 @@ void BrqCoord::PreAcceptAck(phase_t phase,
     }
   } else {
     // fastpath is no longer a choice
+    verify(0);
     if (SlowpathPossible()) {
         if(SlowQuorumsAchieved()) {
           // go to the accept phase

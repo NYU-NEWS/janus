@@ -96,7 +96,23 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
   return sz;
 }
 
+bool RccGraph::operator== (RccGraph& rhs) const {
+  // quick check on vertex_index size
+  if (vertex_index_.size() != rhs.vertex_index_.size())
+    return false;
+  for (auto& pair: vertex_index_) {
+    auto id = pair.first;
+    auto& vertex = pair.second;
+    auto it = rhs.vertex_index_.find(id);
+    if (it == rhs.vertex_index_.end())
+      return false;
+    if (vertex != it->second)
+      return false;
+  }
+  //
 
+  return true;
+}
 
 void RccGraph::BuildEdgePointer(RccGraph &graph,
                                 map<txnid_t, RccVertex*>& index) {
