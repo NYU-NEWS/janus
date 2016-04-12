@@ -232,7 +232,9 @@ bool BrqCoord::FastpathPossible() {
     // TODO check graph.
     // if more than (par_size - fast quorum) graph is different, then nack.
     auto& vec_graph = n_fast_accpet_graphs_[par_id];
-    verify(0);
+    int r = FastQuorumGraphCheck(par_id);
+    if (r == 2)
+      all_fast_quorum_possible = false;
   }
   return all_fast_quorum_possible;
 };
@@ -243,14 +245,41 @@ int BrqCoord::GetFastQuorum(parid_t par_id) {
 }
 
 bool BrqCoord::AllFastQuorumsReached() {
-  // TODO
-  verify(0);
   auto pars = txn().GetPartitionIds();
   bool all_fast_quorum_reached = true;
   for (auto &par_id : pars) {
-
+    int r = FastQuorumGraphCheck(par_id);
+    if (r == 2) {
+      return false;
+    } else if (r == 1) {
+      // do nothing
+    } else if (r == 0) {
+      verify(0);
+    } else {
+      verify(0);
+    }
   }
   return all_fast_quorum_reached;
+}
+
+// return value
+// 0: less than a fast quorum
+// 1: a fast quorum of the same
+// 2: >=(par_size - fast quorum) of different graphs.
+int BrqCoord::FastQuorumGraphCheck(parid_t par_id) {
+  verify(0);
+  auto& vec_graph = n_fast_accpet_graphs_[par_id];
+  auto par_size = Config::GetConfig()->GetPartitionSize(par_id);
+  auto fast_quorum = GetFastQuorum(par_id);
+  if (vec_graph.size() < fast_quorum)
+    return 0;
+  verify(vec_graph.size() >= 1);
+  for (int i = 1; i < vec_graph.size(); i++) {
+    RccGraph& graph = vec_graph[i];
+    if (graph != vec_graph[0])
+      return 2;
+  }
+  return 1;
 }
 
 void BrqCoord::GotoNextPhase() {

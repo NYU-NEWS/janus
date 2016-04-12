@@ -90,6 +90,16 @@ class RccGraph : public Graph<TxnInfo> {
   > &ret_set
   );
 
+  bool operator== (RccGraph& rhs) const {
+    // TODO
+    return true;
+  }
+
+  bool operator!= (RccGraph& rhs) const {
+    // TODO
+    return false;
+  }
+
   uint64_t MinItfrGraph(uint64_t tid,
                         RccGraph* gra_m);
 

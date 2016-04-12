@@ -103,7 +103,7 @@ public:
     ret = (ret << 32 | coo_id_);
     return ret;
   }
-
+  int FastQuorumGraphCheck(parid_t par_id);
   void GotoNextPhase() override;
 };
 } // namespace rococo
