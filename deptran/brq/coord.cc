@@ -77,7 +77,6 @@ void BrqCoord::DispatchAck(phase_t phase,
   }
 }
 
-
 void BrqCoord::PreAccept() {
 //  // generate fast accept request
   // set broadcast callback
@@ -102,7 +101,8 @@ void BrqCoord::PreAcceptAck(phase_t phase,
                             RccGraph& graph) {
   // if recevie more messages after already gone to next phase, ignore
   if (phase != phase_) return;
-  n_fast_accpet_graphs_[par_id].push_back(graph);
+  verify(n_fast_accept_graphs_.size() == 0);
+  n_fast_accept_graphs_[par_id].push_back(graph);
   if (res == SUCCESS) {
     n_fast_accept_oks_[par_id]++;
   } else if (res == REJECT) {
@@ -123,14 +123,13 @@ void BrqCoord::PreAcceptAck(phase_t phase,
     }
   } else {
     // fastpath is no longer a choice
-    verify(0);
     if (SlowpathPossible()) {
-        if(SlowQuorumsAchieved()) {
-          // go to the accept phase
-          verify(0); // TODO
-        } else {
-          // skip, wait
-        }
+      if (AllSlowQuorumsReached()) {
+        verify(!committed_);
+        GotoNextPhase();
+      } else {
+        // skip, wait
+      }
     } else {
       // slowpath is not a choice either.
       // not handle for now.
@@ -146,20 +145,23 @@ void BrqCoord::prepare() {
   verify(0);
 }
 
-void BrqCoord::accept() {
-//  AcceptRequest request;
+void BrqCoord::Accept() {
 //  request.ballot = ballot_;
-//  request.cmd_id = cmd_id_;
-//  request.cmd = *cmd_;
-//  // TODO
-//  //request.deps = deps_;
-//  auto phase = phase_;
-//  auto callback = [this, phase] (groupid_t g, AcceptReply* reply) {
-//    this->accept_ack(g, reply, phase);
-//  };
-//  auto timeout_callback = [this, phase] (groupid_t g) {
-//    this->accept_ack(g, nullptr, phase);
-//  };
+//
+//  // graph?
+//  for (auto par_id : cmd_->GetPartitionIds()) {
+//    commo()->BroadcastAccept(par_id,
+//                             cmd_->id_,
+//                             ballot_,
+//                             graph_,
+//                             std::bind(&BrqCoord::AcceptAck,
+//                                          this,
+//                                          phase_,
+//                                          par_id,
+//                                          std::placeholders::_1,
+//                                          std::placeholders::_2));
+//  }
+//  verify(0);
 }
 
 //void BrqCoord::accept_ack(groupid_t g,
@@ -228,21 +230,28 @@ bool BrqCoord::FastpathPossible() {
     auto par_size = Config::GetConfig()->GetPartitionSize(par_id);
     if (n_fast_accept_rejects_[par_id] > par_size - GetFastQuorum(par_id)) {
       all_fast_quorum_possible = false;
+      verify(0);
       break;
     }
     // TODO check graph.
     // if more than (par_size - fast quorum) graph is different, then nack.
-    auto& vec_graph = n_fast_accpet_graphs_[par_id];
+    auto& vec_graph = n_fast_accept_graphs_[par_id];
     int r = FastQuorumGraphCheck(par_id);
-    if (r == 2)
-      all_fast_quorum_possible = false;
+    if (r == 2) verify(0);
+//      all_fast_quorum_possible = false;
   }
+  verify(all_fast_quorum_possible);
   return all_fast_quorum_possible;
 };
 
-int BrqCoord::GetFastQuorum(parid_t par_id) {
-  int n = Config::GetConfig()->GetPartitionSize(par_id);
+int32_t BrqCoord::GetFastQuorum(parid_t par_id) {
+  int32_t n = Config::GetConfig()->GetPartitionSize(par_id);
   return n;
+}
+
+int32_t BrqCoord::GetSlowQuorum(parid_t par_id) {
+  int32_t n = Config::GetConfig()->GetPartitionSize(par_id);
+  return n/2 + 1;
 }
 
 bool BrqCoord::AllFastQuorumsReached() {
@@ -263,17 +272,28 @@ bool BrqCoord::AllFastQuorumsReached() {
   return all_fast_quorum_reached;
 }
 
+bool BrqCoord::AllSlowQuorumsReached() {
+  auto pars = cmd_->GetPartitionIds();
+  bool all_slow_quorum_reached =
+      std::all_of(pars.begin(),
+                  pars.end(),
+                  [this] (parid_t par_id) {
+                    return n_fast_accept_oks_[par_id] >= GetSlowQuorum(par_id);
+                  });
+  return all_slow_quorum_reached;
+};
+
 // return value
 // 0: less than a fast quorum
 // 1: a fast quorum of the same
 // 2: >=(par_size - fast quorum) of different graphs.
 int BrqCoord::FastQuorumGraphCheck(parid_t par_id) {
-  verify(0);
-  auto& vec_graph = n_fast_accpet_graphs_[par_id];
+  auto& vec_graph = n_fast_accept_graphs_[par_id];
   auto par_size = Config::GetConfig()->GetPartitionSize(par_id);
   auto fast_quorum = GetFastQuorum(par_id);
   if (vec_graph.size() < fast_quorum)
     return 0;
+  verify(vec_graph.size() == 1);
   verify(vec_graph.size() >= 1);
   for (int i = 1; i < vec_graph.size(); i++) {
     RccGraph& graph = vec_graph[i];
@@ -297,8 +317,14 @@ void BrqCoord::GotoNextPhase() {
       PreAccept();
       break;
     case Phase::PRE_ACCEPT:
-      phase_++; // FIXME
-      verify(phase_ % n_phase == Phase::COMMIT);
+      if (committed_) {
+        phase_++; // FIXME
+        verify(phase_ % n_phase == Phase::COMMIT);
+        Commit();
+      } else {
+        verify(phase_ % n_phase == Phase::ACCEPT);
+        Accept();
+      }
       // TODO
       break;
     case Phase::ACCEPT:
@@ -313,4 +339,10 @@ void BrqCoord::GotoNextPhase() {
   }
 }
 
+void BrqCoord::Reset() {
+  ClassicCoord::Reset();
+  n_fast_accept_graphs_.clear();
+  n_fast_accept_oks_.clear();
+  n_fast_accept_rejects_.clear();
+}
 } // namespace rococo

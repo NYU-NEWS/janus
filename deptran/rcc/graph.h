@@ -71,7 +71,7 @@ class Graph {
   void Clear() {
     for (auto p : vertex_index_) {
       auto v = p.second;
-      delete v;
+//      delete v; FIXME
     }
     vertex_index_.clear();
   }

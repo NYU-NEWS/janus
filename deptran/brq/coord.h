@@ -19,12 +19,12 @@ public:
   uint32_t thread_id_;
   uint32_t cmdid_prefix_c_;
   Recorder *recorder_;
-  ballot_t ballot_; // the ballot I am holding
+  ballot_t ballot_ = 0; // the ballot I am holding
   // data structures for saving replies.
   struct reply_cnt_t {int yes; int no;};
   map<parid_t, int> n_fast_accept_oks_ = {};
   map<parid_t, int> n_fast_accept_rejects_ = {};
-  map<parid_t, vector<RccGraph>> n_fast_accpet_graphs_ {};
+  map<parid_t, vector<RccGraph>> n_fast_accept_graphs_ {};
 
 
 //  map<groupid_t, reply_cnt_t> n_fast_accept_reply_;
@@ -57,18 +57,16 @@ public:
   bool FastpathPossible();
   bool AllFastQuorumsReached();
   bool SlowpathPossible() {
-    verify(0);
-    return false;
+    // TODO without failures, slow path should always be possible.
+    return true;
   };
-  int GetFastQuorum(parid_t par_id);
-  bool SlowQuorumsAchieved() {
-    verify(0);
-    return false;
-  };
+  int32_t GetFastQuorum(parid_t par_id);
+  int32_t GetSlowQuorum(parid_t par_id);
+  bool AllSlowQuorumsReached();
 
   void prepare();
   // functions needed in the accept phase.
-  void accept();
+  void Accept();
 //  void accept_ack(groupid_t, AcceptReply*, phase_t);
   bool check_accept_possible() {
     verify(0);
@@ -105,5 +103,6 @@ public:
   }
   int FastQuorumGraphCheck(parid_t par_id);
   void GotoNextPhase() override;
+  void Reset() override;
 };
 } // namespace rococo
