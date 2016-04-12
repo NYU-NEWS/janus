@@ -113,7 +113,7 @@ void BrqCoord::PreAcceptAck(phase_t phase,
   }
   if (FastpathPossible()) {
     // there is still chance for fastpath
-    if (FastQuorumsAchieved()) {
+    if (AllFastQuorumsReached()) {
       // receive enough identical replies to continue fast path.
       // go to the commit.
       committed_ = true;
@@ -229,10 +229,10 @@ bool BrqCoord::FastpathPossible() {
       all_fast_quorum_possible = false;
       break;
     }
-    // check graph.
+    // TODO check graph.
     // if more than (par_size - fast quorum) graph is different, then nack.
     auto& vec_graph = n_fast_accpet_graphs_[par_id];
-
+    verify(0);
   }
   return all_fast_quorum_possible;
 };
@@ -242,10 +242,15 @@ int BrqCoord::GetFastQuorum(parid_t par_id) {
   return n;
 }
 
-bool BrqCoord::FastQuorumsAchieved() {
+bool BrqCoord::AllFastQuorumsReached() {
   // TODO
   verify(0);
-  return true;
+  auto pars = txn().GetPartitionIds();
+  bool all_fast_quorum_reached = true;
+  for (auto &par_id : pars) {
+
+  }
+  return all_fast_quorum_reached;
 }
 
 void BrqCoord::GotoNextPhase() {

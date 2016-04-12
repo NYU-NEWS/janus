@@ -55,7 +55,7 @@ public:
   void restart() {verify(0);};
   // functions needed in the fast accept phase.
   bool FastpathPossible();
-  bool FastQuorumsAchieved();
+  bool AllFastQuorumsReached();
   bool SlowpathPossible() {
     verify(0);
     return false;

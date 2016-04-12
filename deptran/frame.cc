@@ -143,7 +143,6 @@ mdb::Row* Frame::CreateRow(const mdb::Schema *schema,
     case MODE_2PL:
       r = mdb::FineLockedRow::create(schema, row_data);
       break;
-
     case MODE_NONE: // FIXME
     case MODE_MDCC:
     case MODE_OCC:
@@ -152,7 +151,6 @@ mdb::Row* Frame::CreateRow(const mdb::Schema *schema,
     case MODE_RO6:
       r = RO6Row::create(schema, row_data);
       break;
-
     default:
       verify(0);
   }
