@@ -39,8 +39,18 @@ class Vertex {
                                [id] (std::pair<Vertex<T>*, int8_t> ppp) {
                                  return ppp.first->id() == id;
                                });
+      if (!found) return false;
     }
-
+    for (auto& pair: outgoing_) {
+      auto id = pair.first->id();
+      bool found = std::any_of(rhs.outgoing_.begin(),
+                               rhs.outgoing_.end(),
+                               [id] (std::pair<Vertex<T>*, int8_t> ppp) {
+                                 return ppp.first->id() == id;
+                               });
+      if (!found) return false;
+    }
+    return true;
   }
 
   bool operator!= (Vertex<T>& rhs) const {
