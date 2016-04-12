@@ -458,7 +458,7 @@ class ClientController(object):
             self.print_max = False
             for k, v in self.txn_infos.items():
                 #v.print_max()
-                logger("PRINT MAX!!!!!!!!!!!!!!!")
+                logger.info("PRINT MID!!!!!!!!!!!!!!!")
                 v.print_mid(self.num_proxies)
 
         if (not self.recording_period):
