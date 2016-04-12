@@ -123,21 +123,16 @@ def gen_process_and_site(experiment_name, num_c, num_s, num_replicas, hosts_conf
             x += 1
         servers.append(l)
 
-    # allocate servers 1 to a process;
-	# clients assigned round robin to remaining processes
-    t = (num_s*num_replicas)+1 
+    region_data = None
+    with open('config/aws_hosts_region.yml', 'r') as f:
+        region_data = yaml.load(f)
+    
     process_names = []
-    if t > len(hosts):
-        host_processes = hosts.keys()
-        i=0
-        while len(process_names) < t:
-            process_names.append(host_processes[i%len(host_processes)])
-            i += 1
-        process_names = sorted(process_names)
-    else:
-        process_names = sorted(hosts.keys())
-    process_names.reverse()
-
+    for process_infos in itertools.izip(*region_data.itervalues()):
+        for process_info in process_infos:
+            process_names.append(process_info[0])
+    logger.info("process_names: {}".format(process_names))
+    
     for s in servers:
         assign_to = process_names.pop()
         s_name = s[0].split(':')[0]
