@@ -9,8 +9,8 @@ template <typename T>
 class Vertex {
  public:
   map<uint64_t, int8_t> parents_ = {};
-  std::map<Vertex *, int8_t> outgoing_ = {};
-  std::map<Vertex *, int8_t> incoming_ = {};
+  map<Vertex *, int8_t> outgoing_ = {};
+  map<Vertex *, int8_t> incoming_ = {};
   std::shared_ptr<T> data_;
 
   Vertex(uint64_t id) { data_ = std::shared_ptr<T>(new T(id)); }
@@ -30,6 +30,22 @@ class Vertex {
   }
 
   uint64_t id() const { return data_->id(); }
+
+  bool operator== (Vertex<T>& rhs) const {
+    for (auto& pair: incoming_) {
+      auto id = pair.first->id();
+      bool found = std::any_of(rhs.incoming_.begin(),
+                               rhs.incoming_.end(),
+                               [id] (std::pair<Vertex<T>*, int8_t> ppp) {
+                                 return ppp.first->id() == id;
+                               });
+    }
+
+  }
+
+  bool operator!= (Vertex<T>& rhs) const {
+    return !(*this == rhs);
+  }
 };
 
 template <typename T>

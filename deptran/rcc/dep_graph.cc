@@ -102,11 +102,12 @@ bool RccGraph::operator== (RccGraph& rhs) const {
     return false;
   for (auto& pair: vertex_index_) {
     auto id = pair.first;
-    auto& vertex = pair.second;
+    RccVertex* vertex = pair.second;
     auto it = rhs.vertex_index_.find(id);
     if (it == rhs.vertex_index_.end())
       return false;
-    if (vertex != it->second)
+    RccVertex* av = it->second;
+    if (*vertex != *av)
       return false;
   }
   //
