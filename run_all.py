@@ -122,17 +122,30 @@ def gen_process_and_site(experiment_name, num_c, num_s, num_replicas, hosts_conf
             r += 1
             x += 1
         servers.append(l)
+    
+    # assign servers 1 to a process, and clients
+    # get distributed evenly to the rest of the processes.
 
-    region_data = None
-    with open('config/aws_hosts_region.yml', 'r') as f:
-        region_data = yaml.load(f)
-    
     process_names = []
-    for process_infos in itertools.izip(*region_data.itervalues()):
-        for process_info in process_infos:
-            process_names.append(process_info[0])
-    logger.info("process_names: {}".format(process_names))
+    region_data = None
+    region_data_fn = 'config/aws_hosts_region.yml'
+    if os.path.exists(region_data_fn):
+        with open('config/aws_hosts_region.yml', 'r') as f:
+            region_data = yaml.load(f)
     
+        for process_infos in itertools.izip(*region_data.itervalues()):
+            for process_info in process_infos:
+                process_names.append(process_info[0])
+        logger.info("process_names: {}".format(process_names))
+    else:
+        process_names = hosts.keys()
+        i=0
+        while len(process_names) < len(servers)+1:
+            process_names.append(hosts.keys()[i % len(hosts.keys())])
+            i += 1
+    
+    logger.info("process names: {}".format(process_names))
+
     for s in servers:
         assign_to = process_names.pop()
         s_name = s[0].split(':')[0]
