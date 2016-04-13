@@ -4,6 +4,7 @@
 #include "sharding.h"
 #include "scheduler.h"
 #include "frame.h"
+#include "communicator.h"
 
 
 namespace rococo {
@@ -41,6 +42,7 @@ void ServerWorker::SetupBase() {
   dtxn_sched_ = dtxn_frame_->CreateScheduler();
   dtxn_sched_->txn_reg_ = txn_reg_;
   dtxn_sched_->SetPartitionId(site_info_->partition_id_);
+  dtxn_sched_->loc_id_ = site_info_->locale_id;
   sharding_->dtxn_sched_ = dtxn_sched_;
 
   if (config->IsReplicated() &&
@@ -49,6 +51,7 @@ void ServerWorker::SetupBase() {
     rep_frame_->site_info_ = site_info_;
     rep_sched_ = rep_frame_->CreateScheduler();
     rep_sched_->txn_reg_ = txn_reg_;
+    rep_sched_->loc_id_ = site_info_->locale_id;
     dtxn_sched_->rep_frame_ = rep_frame_;
     dtxn_sched_->rep_sched_ = rep_sched_;
   }
@@ -205,9 +208,14 @@ void ServerWorker::SetupCommo() {
   verify(svr_poll_mgr_ != nullptr);
   if (dtxn_frame_) {
     dtxn_commo_ = dtxn_frame_->CreateCommo();
+    dtxn_commo_->loc_id_ = site_info_->locale_id;
+    dtxn_sched_->commo_ = dtxn_commo_;
   }
   if (rep_frame_) {
     rep_commo_ = rep_frame_->CreateCommo();
+    rep_commo_->loc_id_ = site_info_->locale_id;
+    rep_sched_->commo_ = rep_commo_;
+
   }
 }
 

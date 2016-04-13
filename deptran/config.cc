@@ -37,7 +37,6 @@
 #include "bench/micro/chopper.h"
 
 
-
 namespace rococo {
 Config *Config::config_s = nullptr;
 

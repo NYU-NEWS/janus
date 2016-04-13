@@ -53,6 +53,7 @@ void ClientWorker::work() {
                              ccsi,
                              id,
                              txn_reg_);
+  coo_->loc_id_ = my_site_.locale_id;
   Log_debug("after create coo");
   if (ccsi) ccsi->wait_for_start(id);
   Log_debug("after wait for start");

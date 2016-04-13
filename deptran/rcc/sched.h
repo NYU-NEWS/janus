@@ -17,7 +17,6 @@ class WaitlistChecker;
 class RccSched : public Scheduler {
  public:
   RccGraph *dep_graph_ = nullptr;
-  RccCommo* commo_ = nullptr;
   WaitlistChecker* waitlist_checker_ = nullptr;
   list<RccVertex*> waitlist_ = {};
   std::recursive_mutex mtx_;

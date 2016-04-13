@@ -10,10 +10,12 @@ class TxnRegistry;
 class Executor;
 class Coordinator;
 class Frame;
+class Communicator;
 class Scheduler {
  public:
-  map<i64, DTxn *> dtxns_;
-  map<i64, mdb::Txn *> mdb_txns_;
+  locid_t loc_id_ = -1;
+  map<i64, DTxn *> dtxns_ = {};
+  map<i64, mdb::Txn *> mdb_txns_ = {};
   map<cmdid_t, Executor*> executors_ = {};
   function<void(ContainerCommand&)> learner_action_ =
       [] (ContainerCommand&) -> void {verify(0);};
@@ -24,7 +26,8 @@ class Scheduler {
   Frame *frame_ = nullptr;
   Frame *rep_frame_ = nullptr;
   Scheduler* rep_sched_ = nullptr;
-//  Coordinator* rep_coord_ = nullptr;
+  Communicator* commo_ = nullptr;
+  //  Coordinator* rep_coord_ = nullptr;
   TxnRegistry* txn_reg_ = nullptr;
   parid_t partition_id_;
   std::recursive_mutex mtx_;

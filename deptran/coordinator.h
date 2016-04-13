@@ -18,6 +18,7 @@ class CoordinatorBase {
 public:
   std::mutex mtx_;
   uint32_t n_start_ = 0;
+  locid_t loc_id_ = -1;
   virtual ~CoordinatorBase() = default;
   // TODO do_one should be replaced with Submit.
   virtual void do_one(TxnRequest &) = 0;
@@ -28,7 +29,8 @@ public:
 class Coordinator : public CoordinatorBase {
  public:
   uint32_t coo_id_;
-  parid_t par_id_;
+  parid_t par_id_ = -1;
+  locid_t loc_id_ = -1;
   int benchmark_;
   ClientControlServiceImpl *ccsi_;
   uint32_t thread_id_;

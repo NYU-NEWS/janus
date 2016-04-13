@@ -378,11 +378,12 @@ void RccSched::Execute(const RccScc& scc) {
 }
 
 RccCommo* RccSched::commo() {
-  if (commo_ == nullptr) {
-    commo_ = dynamic_cast<RccCommo*>(frame_->CreateCommo());
-  }
-  verify(commo_ != nullptr);
-  return commo_;
+//  if (commo_ == nullptr) {
+//    verify(0);
+//  }
+  auto commo = dynamic_cast<RccCommo*>(commo_);
+  verify(commo != nullptr);
+  return commo;
 }
 
 

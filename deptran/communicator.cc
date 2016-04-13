@@ -90,7 +90,12 @@ Communicator::ConnectToSite(Config::SiteInfo &site,
 std::pair<siteid_t, ClassicProxy*>
 Communicator::NearestProxyForPartition(parid_t par_id) const {
   // TODO Fix me.
-  return LeaderProxyForPartition(par_id);
+  auto it = rpc_par_proxies_.find(par_id);
+  verify(it != rpc_par_proxies_.end());
+  auto& partition_proxies = it->second;
+  verify(partition_proxies.size() > loc_id_);
+  int index = loc_id_;
+  return partition_proxies[index];
 };
 
 } // namespace rococo

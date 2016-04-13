@@ -33,6 +33,7 @@ namespace rococo {
 BrqCommo* BrqCoord::commo() {
   if (commo_ == nullptr) {
     commo_ = frame_->CreateCommo();
+    commo_->loc_id_ = loc_id_;
   }
   verify(commo_ != nullptr);
   return dynamic_cast<BrqCommo*>(commo_);

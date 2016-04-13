@@ -54,8 +54,6 @@ void client_launch_workers(vector<Config::SiteInfo> &client_sites) {
   }
 }
 
-
-
 void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
   auto config = Config::GetConfig();
   Log_info("server enabled, number of sites: %d", server_sites.size());
@@ -72,13 +70,14 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
       worker.SetupBase();
       // register txn piece logic
       worker.RegPiece();
-      // setup communication between controller script
-      worker.SetupHeartbeat();
+
       // populate table according to benchmarks
       worker.PopTable();
       // start server service
       worker.SetupService();
       Log_info("site %d launched!", site_info.id);
+      // start communicator after all servers are running
+      worker.SetupCommo();
     }));
   }
   for (auto& th: setup_ths) {
@@ -86,8 +85,8 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
   }
 
   for (ServerWorker& worker : svr_workers_g) {
-    // start communicator after all servers are running
-    worker.SetupCommo();
+    // setup communication between controller script
+    worker.SetupHeartbeat();
   }
   Log_info("server workers' communicators setup");
 }
