@@ -560,6 +560,7 @@ void Config::LoadShardingYML(YAML::Node config) {
     auto &tbl_info = info_it->second;
     string method = it->second.as<string>();
 
+    Log_info("group size: %d", replica_groups_.size());
     for (auto replica_group_it = this->replica_groups_.begin();
          replica_group_it != this->replica_groups_.end();
          replica_group_it++) {
@@ -574,7 +575,7 @@ void Config::LoadShardingYML(YAML::Node config) {
 
       tbl_info.symbol = tbl_types_map_["sorted"];
     }
-
+  
     verify(tbl_info.par_ids.size() > 0);
   }
 }

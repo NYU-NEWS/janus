@@ -124,11 +124,14 @@ class TxnInfo(object):
             self.min_interval = interval_time
 
         if self.mid_status == 0:
+            logger.debug("before recording period: {}".format(self.txn_type))
             self.mid_pre_start_txn += start_txn
             self.mid_pre_total_txn += total_txn
             self.mid_pre_total_try += total_try
             self.mid_pre_commit_txn += commit_txn
+            logger.debug("mid_pre_commit_txn (+{}): {}".format(commit_txn, self.mid_pre_commit_txn))
         elif self.mid_status == 1:
+            logger.debug("during recording period!!! {}".format(self.txn_type))
             self.mid_latencies.extend(latencies)
             self.mid_attempt_latencies.extend(attempt_latencies)
             self.mid_time += interval_time
@@ -137,6 +140,8 @@ class TxnInfo(object):
             self.mid_total_txn += total_txn
             self.mid_total_try += total_try
             self.mid_commit_txn += commit_txn
+            logger.debug("mid_commit_txn (+{}): {}".format(commit_txn, self.mid_commit_txn))
+            logger.debug("self.mid_latencies: {}".format(self.mid_latencies))
 
     def get_res(self, interval_time, total_time, set_max, 
             all_total_commits, all_interval_commits, do_sample, do_sample_lock):
@@ -194,6 +199,10 @@ class TxnInfo(object):
         commit_txn = self.mid_commit_txn - self.mid_pre_commit_txn
         self.mid_time /= num_clients
         tps = commit_txn / self.mid_time
+
+        logger.info("mid_commit_txn: {}".format(self.mid_commit_txn))
+        logger.info("mid_pre_commit_txn: {}".format(self.mid_pre_commit_txn))
+        logger.info("mid_time = {}".format(self.mid_time))
         
         self.mid_latencies.sort()
         self.mid_attempt_latencies.sort()
@@ -202,16 +211,21 @@ class TxnInfo(object):
         latencies = {}
         att_latencies = {}
         for percent in g_latencies_percentage:
+            logger.info("percent: {}".format(percent))
             percent = percent*100
             key = str(percent)
+            logger.info("latency count!!!!!!!!  {}".format(len(self.mid_latencies)))
             if len(self.mid_latencies)>0:
                 index = int(math.ceil(percent/100*len(self.mid_latencies)))-1
+                logger.info("index!!!! {}".format(index))
                 latencies[key] = self.mid_latencies[index]
             else:
                 latencies[key] = 9999.99
             
+            logger.info("attempt latency count!!!!!!!!  {}".format(len(self.mid_attempt_latencies)))
             if len(self.mid_attempt_latencies)>0:
                 att_index = int(math.ceil(percent/100*len(self.mid_attempt_latencies)))-1
+                logger.info("attempt index!!!! {}".format(att_index))
                 att_latencies[key] = self.mid_attempt_latencies[att_index]
             else:
                 att_latencies[key] = 9999.99
@@ -444,6 +458,7 @@ class ClientController(object):
             self.print_max = False
             for k, v in self.txn_infos.items():
                 #v.print_max()
+                logger.info("PRINT MID!!!!!!!!!!!!!!!")
                 v.print_mid(self.num_proxies)
 
         if (not self.recording_period):

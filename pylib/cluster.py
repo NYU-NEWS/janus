@@ -58,19 +58,30 @@ def put_janus_config(copy_configs=[]):
     aws_hosts = {'host': {}}
     host = aws_hosts['host']
 
+
     created_instances = get_created_instances()
+    region_data = {region: [] for region in created_instances.keys()}
     leader_ip_address = env.roledefs['leaders'][0]
     for region, instances in created_instances.iteritems():
         cnt = 0
         for instance in instances:
             proc_name = "{region}-{cnt}".format(region=region, cnt=cnt)
             if instance.public_ip_address != leader_ip_address:
-                host[proc_name] = instance.public_ip_address
+                host[proc_name] = instance.public_ip_address 
+                region_data[region].append( (proc_name,
+                                             instance.public_ip_address) )
                 cnt += 1
+
     config_contents = StringIO.StringIO(
         yaml.dump(aws_hosts, default_flow_style=False))
     dest_fn = os.path.join(env.nfs_home, "config", aws_hosts_fn)
     put(config_contents, dest_fn) 
+
+    aws_hosts_region_fn = 'aws_hosts_region.yml'
+    contents = StringIO.StringIO(
+        yaml.dump(region_data, default_flow_style=False))
+    dest_fn = os.path.join(env.nfs_home, "config", aws_hosts_region_fn)
+    put(contents, dest_fn)
 
 
 @task
