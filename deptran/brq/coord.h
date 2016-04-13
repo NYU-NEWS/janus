@@ -25,12 +25,13 @@ public:
   map<parid_t, int> n_fast_accept_oks_ = {};
   map<parid_t, int> n_fast_accept_rejects_ = {};
   map<parid_t, vector<RccGraph>> n_fast_accept_graphs_ {};
+  map<parid_t, int> n_commit_oks_ = {};
 
 
 //  map<groupid_t, reply_cnt_t> n_fast_accept_reply_;
 //  map<groupid_t, reply_cnt_t> n_accept_reply_;
   map<groupid_t, reply_cnt_t> n_prepare_reply_;
-  map<groupid_t, reply_cnt_t> n_commit_reply_;
+//  map<groupid_t, reply_cnt_t> n_commit_reply_;
 
   using RccCoord::RccCoord;
 

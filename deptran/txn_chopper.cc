@@ -92,16 +92,35 @@ int TxnCommand::next_piece(
   verify(0);
 }
 
+bool TxnCommand::OutputReady() {
+  if (n_pieces_all_ == n_pieces_replied_) {
+    return true;
+  } else {
+    return false;
+  }
+}
 
-void TxnCommand::Merge(ContainerCommand &cmd) {
+void TxnCommand::Merge(TxnOutput& output) {
+  for (auto& pair: output) {
+    Merge(pair.first, pair.second);
+  }
+}
+
+void TxnCommand::Merge(innid_t inn_id, map<int32_t, Value>& output) {
+  verify(outputs_.find(inn_id) == outputs_.end());
   n_pieces_replied_++;
   verify(n_pieces_all_ >= n_pieces_input_ready_);
   verify(n_pieces_input_ready_ >= n_pieces_out_);
   verify(n_pieces_out_ >= n_pieces_replied_);
+  outputs_[inn_id] = output;
+  this->start_callback(inn_id, SUCCESS, output);
+}
+
+void TxnCommand::Merge(ContainerCommand &cmd) {
   auto simple_cmd = (SimpleCommand *) &cmd;
   auto pi = cmd.inn_id();
   auto &output = simple_cmd->output;
-  this->start_callback(pi, SUCCESS, output);
+  Merge(pi, output);
 }
 
 bool TxnCommand::HasMoreSubCmdReadyNotOut() {

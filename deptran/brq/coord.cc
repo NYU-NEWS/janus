@@ -209,17 +209,18 @@ void BrqCoord::CommitAck(phase_t phase,
                          parid_t par_id,
                          int32_t res,
                          TxnOutput& output) {
-  // TODO?
   if (phase != phase_) return;
-  auto &n = n_commit_reply_[par_id];
-  if (++(n.yes) > 1)
-    return; // already seen outputs.
+  n_commit_oks_[par_id]++;
+  if (n_commit_oks_[par_id] > 1)
+    return;
 
-  TxnCommand* txn = (TxnCommand*) cmd_;
-  txn->outputs_.insert(output.begin(), output.end());
+//  txn().Merge(output);
   // if collect enough results.
   // if there are still more results to collect.
   GotoNextPhase();
+//  bool all_acked = txn().OutputReady();
+//  if (all_acked)
+//  GotoNextPhase();
   return;
 }
 
@@ -264,7 +265,7 @@ bool BrqCoord::AllFastQuorumsReached() {
     } else if (r == 1) {
       // do nothing
     } else if (r == 0) {
-      verify(0);
+      // do nothing
     } else {
       verify(0);
     }
@@ -344,5 +345,6 @@ void BrqCoord::Reset() {
   n_fast_accept_graphs_.clear();
   n_fast_accept_oks_.clear();
   n_fast_accept_rejects_.clear();
+  n_commit_oks_.clear();
 }
 } // namespace rococo

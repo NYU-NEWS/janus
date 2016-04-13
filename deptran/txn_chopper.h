@@ -51,11 +51,8 @@ class TxnCommand: public ContainerCommand {
     return true;
   }
  public:
-  map<int32_t, map<int32_t, Value> > outputs_;
-  bool read_only_failed_;
-
-  double pre_time_;
-
+  bool read_only_failed_ = false;
+  double pre_time_ = 0.0;
   bool early_return_ = false;
  protected:
   template<class T>
@@ -68,6 +65,7 @@ class TxnCommand: public ContainerCommand {
   map<int32_t, Value> ws_ = {}; // workspace.
   map<int32_t, Value> ws_init_ = {};
   map<int32_t, map<int32_t, Value> > inputs_ = {};  // input of each piece.
+  TxnOutput outputs_ = {};
   map<int32_t, int32_t> output_size_ = {};
   map<int32_t, cmdtype_t> p_types_ = {};                  // types of each piece.
   map<int32_t, parid_t> sharding_ = {};
@@ -128,8 +126,11 @@ class TxnCommand: public ContainerCommand {
   virtual int GetNPieceAll() {
     return n_pieces_all_;
   }
+  virtual bool OutputReady();
   virtual bool IsFinished(){verify(0);}
   virtual void Merge(ContainerCommand&);
+  virtual void Merge(innid_t inn_id, map<int32_t, Value>& output);
+  virtual void Merge(TxnOutput& output);
   virtual bool HasMoreSubCmdReadyNotOut();
   virtual ContainerCommand* GetNextReadySubCmd();
   virtual set<siteid_t> GetPartitionIds();

@@ -145,15 +145,16 @@ void RccCoord::FinishAck(phase_t phase,
                          int res,
                          map<innid_t, map<int32_t, Value>>& output) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-  TxnCommand* txn = (TxnCommand*) cmd_;
   verify(phase_ == phase);
   n_finish_ack_++;
 
   Log_debug("receive finish response. tid: %llx", cmd_->id_);
-  txn->outputs_.insert(output.begin(), output.end());
+  txn().outputs_.insert(output.begin(), output.end());
 
-  verify(!txn->do_early_return());
-  if (n_finish_ack_ == txn->GetPartitionIds().size()) {
+  verify(!txn().do_early_return());
+  bool all_acked = (n_finish_ack_ == txn().GetPartitionIds().size());
+  verify(all_acked == txn().OutputReady());
+  if (all_acked) {
     // generate a reply and callback.
     Log_debug("deptran callback, %llx", cmd_->id_);
     committed_ = true;

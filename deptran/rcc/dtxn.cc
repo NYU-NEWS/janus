@@ -42,7 +42,7 @@ void RccDTxn::DispatchExecute(const SimpleCommand &cmd,
 }
 
 void RccDTxn::CommitExecute() {
-  verify(phase_ == PHASE_RCC_START);
+//  verify(phase_ == PHASE_RCC_START);
   phase_ = PHASE_RCC_COMMIT;
   for (auto &cmd: dreqs_) {
     auto pair = txn_reg_->get(cmd);
