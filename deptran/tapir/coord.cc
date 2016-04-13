@@ -10,6 +10,8 @@ TapirCommo* TapirCoord::commo() {
 //  verify(commo_ != nullptr);
   if (commo_ == nullptr) {
     commo_ = new TapirCommo();
+    commo_->loc_id_ = loc_id_;
+    verify(loc_id_ < 100);
   }
   return dynamic_cast<TapirCommo*>(commo_);
 }
@@ -25,7 +27,6 @@ void TapirCoord::Dispatch() {
     cnt++;
     Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
               n_dispatch_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
-    dispatch_acks_[subcmd->inn_id()] = false;
     commo()->SendDispatch(*subcmd,
                           this,
                           std::bind(&ClassicCoord::DispatchAck,
@@ -45,6 +46,7 @@ void TapirCoord::DispatchAck(phase_t phase,
   verify(phase == phase_);
   n_dispatch_ack_++;
   TxnCommand *ch = (TxnCommand *) cmd_;
+  verify(dispatch_acks_.count(cmd.inn_id_) == 0);
   dispatch_acks_[cmd.inn_id_] = true;
 
   Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
@@ -65,6 +67,7 @@ void TapirCoord::DispatchAck(phase_t phase,
 
 void TapirCoord::Reset() {
   Coordinator::Reset();
+  dispatch_acks_.clear();
   n_accept_oks_.clear();
   n_fast_accept_oks_.clear();
 }

@@ -73,7 +73,7 @@ namespace mdcc {
 
   void MdccScheduler::StartTransaction(txnid_t txn_id,
                                        txntype_t txn_type,
-                                       const map<int32_t, Value> &inputs,
+                                       const rococo::TxnWorkspace &inputs,
                                        i8* result,
                                        rrr::DeferredReply *defer) {
     TxnRequest req;

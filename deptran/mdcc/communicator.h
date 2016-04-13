@@ -2,6 +2,7 @@
 // Created by lamont on 12/22/15.
 //
 #pragma once
+#include "../txn_chopper.h"
 #include "msg.h"
 #include "deptran/coordinator.h"
 #include "deptran/mdcc/Ballot.h"

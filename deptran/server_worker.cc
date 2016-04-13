@@ -160,7 +160,9 @@ void ServerWorker::SetupService() {
     Log_fatal("server launch failed.");
   }
 
-  Log_info("Server %s ready at %s", this->site_info_->name.c_str(), bind_addr.c_str());
+  Log_info("Server %s ready at %s",
+           site_info_->name.c_str(),
+           bind_addr.c_str());
 
   if (hb_rpc_server_ != nullptr) {
 #ifdef CPU_PROFILE

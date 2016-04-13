@@ -21,7 +21,7 @@ abstract service MdccAcceptor {
 struct StartRequest {
   i64 txn_id;
   i32 txn_type;
-  map<i32, Value> inputs;
+  rococo::TxnWorkspace inputs;
 };
 
 struct StartPieceRequest {
@@ -29,7 +29,7 @@ struct StartPieceRequest {
   i32 txn_type;
   i32 piece_id;
   rococo::SimpleCommand command;
-  map<i32, Value> inputs;
+  rococo::TxnWorkspace inputs;
 };
 
 struct StartResponse {

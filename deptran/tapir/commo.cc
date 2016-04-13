@@ -14,7 +14,7 @@ void TapirCommo::SendDispatch(SimpleCommand &cmd,
                               &callback) {
   rrr::FutureAttr fuattr;
   parid_t par_id = cmd.PartitionId();
-  auto proxy = (TapirProxy*) LeaderProxyForPartition(cmd.PartitionId()).second;
+  auto proxy = (TapirProxy*) NearestProxyForPartition(cmd.PartitionId()).second;
   function<void(Future*)> cb =
       [coo, this, callback, &cmd] (Future *fu) {
         Log_debug("SendStart callback for %ld from %ld",

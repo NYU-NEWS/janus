@@ -27,15 +27,51 @@ class TxnReply {
   int32_t txn_type_;
 };
 
+
+class TxnWorkspace {
+ public:
+  set<int32_t> keys_;
+  std::shared_ptr<map<int32_t, Value>> values_;
+  TxnWorkspace();
+  ~TxnWorkspace();
+  TxnWorkspace(const TxnWorkspace& rhs);
+  TxnWorkspace& operator= (const map<int32_t, Value> &rhs);
+  TxnWorkspace& operator= (const TxnWorkspace& rhs);
+  Value& operator[] (size_t idx);
+  map<int32_t, Value>::iterator find(int32_t k) {
+    return (*values_).find(k);
+  };
+  map<int32_t, Value>::iterator end() {
+    return (*values_).end();
+  };
+  size_t count(int32_t k) {
+    return (*values_).count(k);
+  }
+  Value& at(int32_t k) {
+    return (*values_).at(k);
+  }
+  size_t size() {
+    return values_->size();
+  }
+  void insert(map<int32_t, Value>::iterator begin_it,
+              map<int32_t, Value>::iterator end_it) {
+    (*values_).insert(begin_it, end_it);
+  }
+};
+
 class TxnRequest {
  public:
-  uint32_t txn_type_;
-  map<int32_t, Value> input_;    // the inputs for the transactions.
+  uint32_t txn_type_ = ~0;
+  TxnWorkspace input_ = {};    // the inputs for the transactions.
   int n_try_ = 20;
   function<void(TxnReply &)> callback_ = [] (TxnReply&)->void {verify(0);};
   function<void()> fail_callback_ = [] () {verify(0);};
   void get_log(i64 tid, std::string &log);
 };
+
+Marshal& operator << (Marshal& m, const TxnWorkspace &ws);
+
+Marshal& operator >> (Marshal& m, TxnWorkspace &ws);
 
 enum CommandStatus {WAITING=-1, READY, ONGOING, FINISHED, INIT};
 
@@ -62,8 +98,8 @@ class TxnCommand: public ContainerCommand {
  public:
   txnid_t txn_id_; // TODO obsolete
 
-  map<int32_t, Value> ws_ = {}; // workspace.
-  map<int32_t, Value> ws_init_ = {};
+  TxnWorkspace ws_ = {}; // workspace.
+  TxnWorkspace ws_init_ = {};
   map<int32_t, map<int32_t, Value> > inputs_ = {};  // input of each piece.
   TxnOutput outputs_ = {};
   map<int32_t, int32_t> output_size_ = {};

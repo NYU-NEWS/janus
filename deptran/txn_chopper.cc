@@ -11,11 +11,45 @@
 
 namespace rococo {
 
+TxnWorkspace::TxnWorkspace() {
+  values_ = std::make_shared<map<int32_t, Value>>();
+}
+
+TxnWorkspace::~TxnWorkspace() {
+//  delete values_;
+}
+
+TxnWorkspace::TxnWorkspace(const TxnWorkspace& rhs) {
+  values_ = rhs.values_;
+}
+
+TxnWorkspace& TxnWorkspace::operator=(const TxnWorkspace& rhs) {
+  values_ = rhs.values_;
+  return *this;
+}
+
+TxnWorkspace& TxnWorkspace::operator=(const map<int32_t, Value>& rhs) {
+  *values_ = rhs;
+  return *this;
+}
+
+Value& TxnWorkspace::operator[](size_t idx) {
+  return (*values_)[idx];
+}
+
 TxnCommand::TxnCommand() {
   clock_gettime(&start_time_);
   read_only_failed_ = false;
   pre_time_ = timespec2ms(start_time_);
   early_return_ = Config::GetConfig()->do_early_return();
+}
+
+Marshal& operator << (Marshal& m, const TxnWorkspace &ws) {
+  m << *(ws.values_);
+}
+
+Marshal& operator >> (Marshal& m, TxnWorkspace &ws) {
+  m >> *(ws.values_);
 }
 
 
@@ -141,6 +175,7 @@ void TxnCommand::Reset() {
   n_pieces_input_ready_ = 0;
   n_pieces_replied_ = 0;
   n_pieces_out_ = 0;
+  outputs_.clear();
 }
 
 //bool TxnCommand::start_callback(int pi,

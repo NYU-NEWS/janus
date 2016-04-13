@@ -138,7 +138,7 @@ namespace mdcc {
     void StartTransaction(
       txnid_t txn_id,
       txntype_t txn_type,
-      const map<int32_t, Value> &input,
+      const rococo::TxnWorkspace &input,
       i8* result,
       rrr::DeferredReply *defer);
 
