@@ -208,12 +208,16 @@ void ServerWorker::SetupCommo() {
   verify(svr_poll_mgr_ != nullptr);
   if (dtxn_frame_) {
     dtxn_commo_ = dtxn_frame_->CreateCommo();
-    dtxn_commo_->loc_id_ = site_info_->locale_id;
+    if (dtxn_commo_) {
+      dtxn_commo_->loc_id_ = site_info_->locale_id;
+    }
     dtxn_sched_->commo_ = dtxn_commo_;
   }
   if (rep_frame_) {
     rep_commo_ = rep_frame_->CreateCommo();
-    rep_commo_->loc_id_ = site_info_->locale_id;
+    if (rep_commo_) {
+      rep_commo_->loc_id_ = site_info_->locale_id;
+    }
     rep_sched_->commo_ = rep_commo_;
 
   }
