@@ -114,7 +114,7 @@ def gen_process_and_site(experiment_name, num_c, num_s, num_replicas, hosts_conf
         clients.append(['c'+str(x)])
     
     x=0
-    while x<num_s:
+    while x<(num_s*num_replicas):
         l = []
         r = 0
         while r<num_replicas:
@@ -146,10 +146,11 @@ def gen_process_and_site(experiment_name, num_c, num_s, num_replicas, hosts_conf
     
     logger.info("process names: {}".format(process_names))
 
-    for s in servers:
-        assign_to = process_names.pop()
-        s_name = s[0].split(':')[0]
-        process_map[s_name] = assign_to
+    for server_list in servers:
+	for s in server_list:	
+		assign_to = process_names.pop()
+		s_name = s.split(':')[0]
+		process_map[s_name] = assign_to
 
     idx = 0
     for c in clients:
