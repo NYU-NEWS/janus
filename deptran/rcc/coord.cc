@@ -153,7 +153,7 @@ void RccCoord::FinishAck(phase_t phase,
 
   verify(!txn().do_early_return());
   bool all_acked = (n_finish_ack_ == txn().GetPartitionIds().size());
-  verify(all_acked == txn().OutputReady());
+//  verify(all_acked == txn().OutputReady());
   if (all_acked) {
     // generate a reply and callback.
     Log_debug("deptran callback, %llx", cmd_->id_);
