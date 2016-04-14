@@ -210,6 +210,7 @@ class ClientControlServiceImpl: public ClientControlService {
   std::map<int32_t, txn_info_t>* txn_info_;
   bool txn_info_switch_;
 
+  std::recursive_mutex mtx_ = {};
   pthread_rwlock_t collect_lock_;
 
   unsigned int num_threads_;
@@ -237,6 +238,7 @@ class ClientControlServiceImpl: public ClientControlService {
   void wait_for_shutdown();
 
   inline void txn_start_one(unsigned int id, int32_t txn_type) {
+    std::lock_guard<std::recursive_mutex> guard(mtx_);
     pthread_rwlock_rdlock(&collect_lock_);
     verify(id >= 0 && id < num_threads_);
     verify(txn_info_[id].find(txn_type) != txn_info_[id].end());
@@ -245,6 +247,7 @@ class ClientControlServiceImpl: public ClientControlService {
   }
 
   inline void txn_retry_one(unsigned int id, int32_t txn_type, double attempt_latency) {
+    std::lock_guard<std::recursive_mutex> guard(mtx_);
     pthread_rwlock_rdlock(&collect_lock_);
     txn_info_[id][txn_type].retry(txn_info_switch_, attempt_latency);
     pthread_rwlock_unlock(&collect_lock_);
@@ -256,6 +259,7 @@ class ClientControlServiceImpl: public ClientControlService {
                               double latency,
                               double attempt_latency,
                               int32_t tried) {
+    std::lock_guard<std::recursive_mutex> guard(mtx_);
     pthread_rwlock_rdlock(&collect_lock_);
     latency_collection_status_t lcs = LCS_IGNORE;
     if (last_time_ < start_time)
@@ -272,6 +276,7 @@ class ClientControlServiceImpl: public ClientControlService {
                              double latency,
                              double attempt_latency,
                              int32_t tried) {
+    std::lock_guard<std::recursive_mutex> guard(mtx_);
     pthread_rwlock_rdlock(&collect_lock_);
     latency_collection_status_t lcs = LCS_IGNORE;
     if (last_time_ < start_time)

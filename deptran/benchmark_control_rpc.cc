@@ -189,6 +189,7 @@ void ClientControlServiceImpl::client_force_stop() {
 }
 
 void ClientControlServiceImpl::client_response(ClientResponse *res) {
+  std::lock_guard<std::recursive_mutex> guard(mtx_);
   status_mutex_.lock();
   if (CCS_FINISH == status_)
     res->is_finish = (rrr::i32) 1;
