@@ -46,10 +46,11 @@ void ServerControlServiceImpl::server_shutdown() {
 
 void ServerControlServiceImpl::server_ready(rrr::i32 *res) {
   status_mutex_.lock();
-  if (SCS_RUN == status_)
+  if (SCS_RUN == status_) {
     *res = 1;
-  else
+  } else {
     *res = 0;
+  }
   status_mutex_.unlock();
 }
 

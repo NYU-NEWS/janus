@@ -373,6 +373,7 @@ class ClientController(object):
         self.start_time = time.time()
 
     def benchmark_record(self, do_sample, do_sample_lock):
+        logger.debug("in benchmark_record")
         sites = ProcessInfo.get_sites(self.process_infos, 
                                       SiteInfo.SiteType.Client)
         rpc_proxy = set()
@@ -598,6 +599,7 @@ class ServerController(object):
             subprocess.call(['ssh', '-f', host, cmd])
     
     def setup_heartbeat(self, client_controller):
+        logger.debug("in setup_heartbeat")
         cond = multiprocessing.Condition()
         s_init_finish = Value('i', 0)
 
@@ -636,6 +638,7 @@ class ServerController(object):
 
 
     def server_heart_beat(self, cond, s_init_finish, do_sample, do_sample_lock):
+        logger.debug("in server_heart_beat")
         sites = []
         try:
             sites = ProcessInfo.get_sites(self.process_infos,
@@ -645,6 +648,8 @@ class ServerController(object):
                 logger.info("Connected to site %s @ %s", site.name, site.process.host_address)
 
             for site in sites:
+                
+                logger.info("call sync_server_ready on site {}".format(site.id))
                 while (site.rpc_proxy.sync_server_ready() != 1):
                     time.sleep(1) # waiting for server to initialize
                 logger.info("site %s ready", site.name)
@@ -659,7 +664,7 @@ class ServerController(object):
             avg_cpu_util = 0.0
             sample_result = []
             while (True):
-                logger.debug("top server heartbeat loop")
+                logger.info("top server heartbeat loop")
                 do_statistics = False
                 do_sample_lock.acquire()
                 if do_sample.value == 1:
@@ -923,6 +928,7 @@ class SiteInfo:
 
 
     def connect_rpc(self, timeout):
+        logger.debug("in connect_rpc {}".format(self.id))
         if self.site_type == SiteInfo.SiteType.Client:
             if self.process.client_rpc_proxy is not None:
                 logger.info("client control rpc already connected for site %s",
@@ -1076,7 +1082,9 @@ def main():
 
         process_infos = get_process_info(config)
         server_controller = ServerController(config, process_infos)
+        logger.debug("before server_controller.start");
         server_controller.start()
+        logger.debug("after server_controller.start");
 
         client_controller = ClientController(config, process_infos)
 

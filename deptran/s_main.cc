@@ -71,23 +71,26 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
       worker.SetupBase();
       // register txn piece logic
       worker.RegPiece();
-
       // populate table according to benchmarks
       worker.PopTable();
       // start server service
+      worker.SetupHeartbeat();
+      // setup communication between controller script
       worker.SetupService();
       Log_info("site %d launched!", site_info.id);
-      // start communicator after all servers are running
-      worker.SetupCommo();
     }));
   }
+
+  Log_info("waiting for client setup threads.");
   for (auto& th: setup_ths) {
     th.join();
   }
+  Log_info("done waiting for client setup threads.");
 
   for (ServerWorker& worker : svr_workers_g) {
-    // setup communication between controller script
-    worker.SetupHeartbeat();
+    // start communicator after all servers are running
+    Log_info("start communication for site %d", worker.site_info_->id);
+    worker.SetupCommo();
   }
   Log_info("server workers' communicators setup");
 }

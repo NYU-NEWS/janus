@@ -25,7 +25,7 @@ void ServerWorker::SetupHeartbeat() {
   std::string addr_port = std::string("0.0.0.0:") +
       std::to_string(port);
   hb_rpc_server_->start(addr_port.c_str());
-  Log_debug("heartbeat setup for %s on %s", this->site_info_->name.c_str(), addr_port.c_str());
+  Log_info("heartbeat setup for %s on %s", this->site_info_->name.c_str(), addr_port.c_str());
 }
 
 void ServerWorker::SetupBase() {
@@ -172,7 +172,7 @@ void ServerWorker::SetupService() {
     // start to profile
     ProfilerStart(prof_file);
 #endif // ifdef CPU_PROFILE
-    Log_debug("notify ready to control script");
+    Log_info("notify ready to control script for %s", bind_addr.c_str());
     scsi_g->set_ready();
   }
 }
