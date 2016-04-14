@@ -790,7 +790,7 @@ class ServerController(object):
         for process_name, process in self.process_infos.iteritems():
             logger.info("starting %s @ %s", process_name, process.host_address)
             cmd = self.gen_process_cmd(process, host_process_counts)
-            logger.debug("%s", cmd)
+            logger.info("running: %s", cmd)
             subprocess.call(['ssh', '-f',process.host_address, cmd])
 
 def create_parser():
@@ -1064,9 +1064,6 @@ def setup_experiment(config):
     if config['args'].experiment_name is not None:
         log_path = os.path.join(config['args'].log_dir,
                                 config['args'].experiment_name + ".log")
-        dat_file = os.path.join(config['args'].log_dir,
-                                config['args'].experiment_name + ".dat")
-        config['data_file'] = open(dat_file, 'w')
     setup_logging(log_path)
 
 

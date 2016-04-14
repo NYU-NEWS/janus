@@ -291,6 +291,7 @@ void Config::LoadYML(std::string &filename) {
 
   if (config["n_concurrent"]) {
     n_concurrent_ = config["n_concurrent"].as<uint16_t>();
+    Log_info("# of concurrent requests: %d", n_concurrent_);
   }
 
 }
