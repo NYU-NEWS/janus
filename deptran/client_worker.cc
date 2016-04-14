@@ -58,7 +58,7 @@ void ClientWorker::work() {
   verify(n_concurrent_ > 0);
   for (uint32_t n_txn = 0; n_txn < n_concurrent_; n_txn++) {
     cooid_t coo_id = cli_id_;
-    coo_id = coo_id << 16 + n_txn;
+    coo_id = (coo_id << 16) + n_txn;
     auto coo = frame_->CreateCoord(coo_id,
                                    config_,
                                    benchmark,
