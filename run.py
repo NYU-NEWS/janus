@@ -30,7 +30,7 @@ from simplerpc.marshal import Marshal
 from deptran.rcc_rpc import ServerControlProxy
 from deptran.rcc_rpc import ClientControlProxy
 
-LOG_LEVEL = logging.DEBUG
+LOG_LEVEL = logging.INFO
 LOG_FILE_LEVEL = logging.DEBUG
 logger = logging.getLogger('janus') 
 
@@ -1041,7 +1041,7 @@ def build_config(options):
 
 def setup_logging(log_file_path=None):
     root_logger = logging.getLogger('')
-    root_logger.setLevel(LOG_FILE_LEVEL)
+    root_logger.setLevel(LOG_LEVEL)
 
     if log_file_path is not None:
         print("logging to file: %s" % log_file_path)
