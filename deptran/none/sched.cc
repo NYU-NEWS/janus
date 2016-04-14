@@ -19,7 +19,7 @@ int NoneSched::OnDispatch(const SimpleCommand &cmd,
                                  dtxn,
                                  const_cast<SimpleCommand&>(cmd),
                                  res,
-                     2            *output);
+                                 *output);
   *res = SUCCESS;
   callback();
   return 0;
