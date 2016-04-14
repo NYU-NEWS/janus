@@ -7,7 +7,7 @@ import socket
 import traceback
 
 import boto3
-from fabric.api import env, task, run, local, execute, parallel
+from fabric.api import env, task, run, local, execute, parallel, runs_once
 from fabric.decorators import hosts, roles
 from fabric.contrib.files import exists
 
@@ -147,6 +147,13 @@ def load_instances():
 @task
 @hosts('localhost')
 def set_instance_roles():
+    if env.roledefs is not None and
+       'all' in env.roledefs.keys() and 
+       len(env.roledefs['all'])>0:
+        # roles already set
+        logging.debug("instance roles: {}".format(env.roledefs))
+        return
+
     execute('ec2.load_instances')
     roledefs = { 'all': [], 'leaders': [], 'servers': [] }
     
