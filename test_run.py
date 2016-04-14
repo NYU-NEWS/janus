@@ -21,15 +21,24 @@ sites_ =       ["1c1s1p",
                 "64c8s1p",
                 "3c3s3r1p",
                 "64c8s3r1p"]
-benchmarks_ =  ["rw",
-                "tpca",
-                "tpcc",
-                "tpccd"]
+benchmarks_ =  [
+    "rw",
+    "tpca",
+    "tpcc",
+    "tpccd"
+]
 
-def run(m, s, b):
+concurrent_ = [
+    "concurrent_1",
+    "concurrent_10",
+    "concurrent_100"
+]
+
+def run(m, s, b, c):
     pm = config_path_ + m + ".yml"
     ps = config_path_ + s + ".yml"
     pb = config_path_ + b + ".yml"
+    pc = config_path_ + c + ".yml"
 
     output_path = m + '-' + s + '-' + b + ".res"
     t1 = time();
@@ -42,7 +51,7 @@ def run(m, s, b):
     except:
         res = "Timeout"
     t2 = time();
-    print("%-15s \t%-10s\t %s\t %-6s \t %.2fs" % (m, s, b, res, t2-t1))
+    print("%-15s%-10s%-10s%-15s%-6s \t %.2fs" % (m, s, b, c, res, t2-t1))
     pass
 
 def main():
@@ -60,10 +69,12 @@ def main():
     modes_ = args.modes
     sites_ = args.sites
     benchmarks_ = args.benchmarks
+    print("%-15s%-10s%-10s%-15s%-6s \t %-5s" % ("mode", "site", "bench", "concurrent", "result", "time"))
     for m in modes_:
         for b in benchmarks_:
             for s in sites_:
-                run(m, s, b)
+                for c in concurrent_:
+                   run(m, s, b, c)
     pass
 
 if __name__ == "__main__":

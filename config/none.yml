@@ -4,5 +4,5 @@ mode:
   ab: none # atomic broadcast
   batch: false
   retry: 0
-  ongoing: 1 # per client
+  ongoing: 2 # per client
 

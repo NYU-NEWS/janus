@@ -85,9 +85,9 @@ class ContainerCommand {
   virtual void Merge(ContainerCommand&){verify(0);};;
   virtual bool IsFinished(){verify(0);};
 
-  virtual set<siteid_t> GetPartitionIds() {
+  virtual set<parid_t> GetPartitionIds() {
     verify(0);
-    return set<siteid_t>();
+    return set<parid_t>();
   }
   virtual bool HasMoreSubCmdReadyNotOut() {
     verify(0);

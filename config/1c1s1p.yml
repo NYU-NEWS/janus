@@ -21,7 +21,6 @@ site:
     - ["c101"]
 #    - ["c102"]
 
-
 # site_name - process_name map
 process:
   s101: localhost

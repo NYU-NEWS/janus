@@ -46,8 +46,10 @@ void client_launch_workers(vector<Config::SiteInfo> &client_sites) {
   Log_info("client enabled, number of sites: %d", client_sites.size());
   vector<ClientWorker*> workers;
   for (uint32_t client_id = 0; client_id < client_sites.size(); client_id++) {
-    ClientWorker* worker = new ClientWorker(client_id, client_sites[client_id],
-                                   Config::GetConfig(), ccsi_g);
+    ClientWorker* worker = new ClientWorker(client_id,
+                                            client_sites[client_id],
+                                            Config::GetConfig(),
+                                            ccsi_g);
     workers.push_back(worker);
     client_threads_g.push_back(std::thread(&ClientWorker::work,
                                          worker));

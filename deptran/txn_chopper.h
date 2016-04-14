@@ -191,7 +191,7 @@ class TxnCommand: public ContainerCommand {
   virtual void Merge(TxnOutput& output);
   virtual bool HasMoreSubCmdReadyNotOut();
   virtual ContainerCommand* GetNextReadySubCmd();
-  virtual set<siteid_t> GetPartitionIds();
+  virtual set<parid_t> GetPartitionIds();
   TxnWorkspace& GetWorkspace(innid_t inn_id) {
     verify(inn_id != 0);
     auto it = inputs_.find(inn_id);

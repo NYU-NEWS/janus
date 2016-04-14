@@ -27,6 +27,7 @@ void TapirCoord::Dispatch() {
     cnt++;
     Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
               n_dispatch_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
+    dispatch_acks_[subcmd->inn_id()] = false;
     commo()->SendDispatch(*subcmd,
                           this,
                           std::bind(&ClassicCoord::DispatchAck,
@@ -46,7 +47,6 @@ void TapirCoord::DispatchAck(phase_t phase,
   verify(phase == phase_);
   n_dispatch_ack_++;
   TxnCommand *ch = (TxnCommand *) cmd_;
-  verify(dispatch_acks_.count(cmd.inn_id_) == 0);
   dispatch_acks_[cmd.inn_id_] = true;
 
   Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",

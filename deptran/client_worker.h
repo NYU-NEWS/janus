@@ -16,23 +16,22 @@ class TxnReply;
 class ClientWorker {
  public:
   Frame* frame_;
-  uint32_t coo_id;
+  cliid_t cli_id_;
   int32_t benchmark;
   int32_t mode;
   bool batch_start;
   uint32_t id;
   uint32_t duration;
   ClientControlServiceImpl *ccsi;
-  uint32_t n_outstanding_;
+  uint32_t n_concurrent_;
   rrr::Mutex finish_mutex;
   rrr::CondVar finish_cond;
-  CoordinatorBase* coo_ = nullptr;
-  Coordinator* rep_coord_ = nullptr;
+  vector<CoordinatorBase*> coos_ = {};
   std::atomic<uint32_t> num_txn, success, num_try;
   TxnGenerator * txn_req_factory_;
   Timer *timer_;
   TxnRegistry* txn_reg_ = nullptr;
-  Config* config;
+  Config* config_;
   Config::SiteInfo& my_site_;
   vector<string> servers_;
  public:
@@ -43,7 +42,7 @@ class ClientWorker {
   ClientWorker() = delete;
   ~ClientWorker();
 
-  void RequestDone(TxnReply &txn_reply);
+  void RequestDone(Coordinator* coo, TxnReply &txn_reply);
 
   void work();
 };
