@@ -71,7 +71,7 @@ Marshal& operator >> (Marshal& m, TxnWorkspace &ws) {
 }
 
 
-set<siteid_t> TxnChopper::GetPartitionIds() {
+set<parid_t> TxnChopper::GetPartitionIds() {
   return partition_ids_;
 }
 

@@ -54,7 +54,7 @@ class Config {
   bool retry_wait_;
   string logging_path_;
   single_server_t single_server_;
-  uint32_t concurrent_txn_;
+  uint16_t n_concurrent_;
   uint32_t max_retry_;
 
   // TODO remove, will cause problems.
@@ -68,7 +68,7 @@ class Config {
   
   enum SiteInfoType { CLIENT, SERVER };
   struct SiteInfo {
-    uint32_t id; // unique site id
+    siteid_t id; // unique site id
     uint32_t locale_id; // represents a group of servers, such as those located in same datacenter
     string name;        // site name
     string proc_name;   // proc name

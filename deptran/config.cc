@@ -236,7 +236,7 @@ Config::Config(char           *ctrl_hostname,
   retry_wait_(false),
   logging_path_(logging_path),
   single_server_(single_server),
-  concurrent_txn_(1),
+  n_concurrent_(1),
   max_retry_(1),
   num_site_(0),
   start_coordinator_id_(0),
@@ -288,6 +288,11 @@ void Config::LoadYML(std::string &filename) {
   if (config["sharding"]) {
     LoadShardingYML(config["sharding"]);
   }
+
+  if (config["n_concurrent"]) {
+    n_concurrent_ = config["n_concurrent"].as<uint16_t>();
+  }
+
 }
 
 void Config::LoadSiteYML(YAML::Node config) {
@@ -440,7 +445,7 @@ void Config::LoadModeYML(YAML::Node config) {
   boost::algorithm::to_lower(ab_str);
   this->InitMode(mode_str, ab_str);
   max_retry_ = config["retry"].as<uint32_t>();
-  concurrent_txn_ = config["ongoing"].as<int>();
+//  concurrent_txn_ = config["ongoing"].as<uint32_t>();
   batch_start_ = config["batch"].as<bool>();
 
 }
@@ -448,7 +453,7 @@ void Config::LoadModeYML(YAML::Node config) {
 void Config::LoadBenchYML(YAML::Node config) {
   std::string bench_str = config["workload"].as<string>();
   this->InitBench(bench_str);
-  scale_factor_ = config["scale"].as<int>();
+  scale_factor_ = config["scale"].as<uint32_t>();
   auto weights = config["weight"];
   for (auto it = weights.begin(); it != weights.end(); it++) {
     auto txn_name = it->first.as<string>();
@@ -830,7 +835,7 @@ Config::single_server_t Config::get_single_server() {
 }
 
 unsigned int Config::get_concurrent_txn() {
-  return concurrent_txn_;
+  return n_concurrent_;
 }
 
 bool Config::get_batch_start() {

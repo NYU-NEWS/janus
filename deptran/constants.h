@@ -10,8 +10,9 @@ namespace rococo {
 #define innid_t uint32_t
 #define parid_t uint32_t
 #define locid_t uint32_t
-#define svrid_t uint32_t
-#define siteid_t uint32_t
+#define svrid_t uint16_t
+#define cliid_t uint16_t
+#define siteid_t uint16_t
 #define slotid_t uint64_t
 #define phase_t uint32_t
 #define status_t uint32_t
