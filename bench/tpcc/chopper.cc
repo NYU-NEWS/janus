@@ -1,4 +1,7 @@
-#include "all.h"
+#include "deptran/__dep__.h"
+#include "deptran/txn_chopper.h"
+#include "chopper.h"
+#include "piece.h"
 
 namespace rococo {
 
@@ -72,7 +75,8 @@ bool TpccTxn::CheckReady() {
         all_found = false;
         break;
       } else {
-        inputs_[pi][var] = ws_[var];
+        TxnWorkspace& ws = GetWorkspace(pi);
+        ws.keys_ = var_set;
         verify(ws_[var].get_kind() != 0);
       }
     }
@@ -119,7 +123,8 @@ bool TpccTxn::start_callback(int pi,
   // below is for debug
   if (type_ == TPCC_STOCK_LEVEL && pi == TPCC_STOCK_LEVEL_0) {
     verify(ws_.count(TPCC_VAR_D_NEXT_O_ID) > 0);
-    verify(inputs_[TPCC_STOCK_LEVEL_1].count(TPCC_VAR_D_NEXT_O_ID) > 0);
+    TxnWorkspace& ws = GetWorkspace(TPCC_STOCK_LEVEL_1);
+    verify(ws.count(TPCC_VAR_D_NEXT_O_ID) > 0);
     verify(status_[TPCC_STOCK_LEVEL_1] == READY);
   }
 //  if (txn_type_ == TPCC_NEW_ORDER && pi == TPCC_NEW_ORDER_0) {

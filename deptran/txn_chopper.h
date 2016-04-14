@@ -7,7 +7,6 @@
 #include "rcc/graph.h"
 #include "rcc/graph_marshaler.h"
 #include "command_marshaler.h"
-#include "rcc_rpc.h"
 #include "txn_reg.h"
 
 namespace rococo {
@@ -30,7 +29,7 @@ class TxnReply {
 
 class TxnWorkspace {
  public:
-  set<int32_t> keys_;
+  set<int32_t> keys_ = {};
   std::shared_ptr<map<int32_t, Value>> values_;
   TxnWorkspace();
   ~TxnWorkspace();
@@ -38,6 +37,7 @@ class TxnWorkspace {
   TxnWorkspace& operator= (const map<int32_t, Value> &rhs);
   TxnWorkspace& operator= (const TxnWorkspace& rhs);
   Value& operator[] (size_t idx);
+
   map<int32_t, Value>::iterator find(int32_t k) {
     return (*values_).find(k);
   };
@@ -50,8 +50,8 @@ class TxnWorkspace {
   Value& at(int32_t k) {
     return (*values_).at(k);
   }
-  size_t size() {
-    return values_->size();
+  size_t size() const {
+    return keys_.size();
   }
   void insert(map<int32_t, Value>::iterator begin_it,
               map<int32_t, Value>::iterator end_it) {
@@ -71,9 +71,31 @@ class TxnRequest {
 
 Marshal& operator << (Marshal& m, const TxnWorkspace &ws);
 
-Marshal& operator >> (Marshal& m, TxnWorkspace &ws);
+Marshal& operator >> (Marshal& m, TxnWorkspace& ws);
 
 enum CommandStatus {WAITING=-1, READY, ONGOING, FINISHED, INIT};
+
+
+class SimpleCommand: public ContainerCommand {
+ public:
+  ContainerCommand* root_ = nullptr;
+  TxnWorkspace input = {};
+  map<int32_t, Value> output = {};
+  int32_t output_size = 0;
+  parid_t partition_id_ = 0xFFFFFFFF;
+  SimpleCommand() = default;
+  virtual parid_t PartitionId() const {
+    verify(partition_id_ != 0xFFFFFFFF);
+    return partition_id_;
+  }
+  virtual ContainerCommand* RootCmd() const {return root_;}
+  virtual ContainerCommand* Clone() const override {
+    SimpleCommand* cmd = new SimpleCommand();
+    *cmd = *this;
+    return cmd;
+  }
+  virtual ~SimpleCommand() {};
+};
 
 class TxnCommand: public ContainerCommand {
  private:
@@ -86,6 +108,7 @@ class TxnCommand: public ContainerCommand {
         return false;
     return true;
   }
+  map<innid_t, TxnWorkspace> inputs_ = {};  // input of each piece.
  public:
   bool read_only_failed_ = false;
   double pre_time_ = 0.0;
@@ -100,7 +123,6 @@ class TxnCommand: public ContainerCommand {
 
   TxnWorkspace ws_ = {}; // workspace.
   TxnWorkspace ws_init_ = {};
-  map<int32_t, map<int32_t, Value> > inputs_ = {};  // input of each piece.
   TxnOutput outputs_ = {};
   map<int32_t, int32_t> output_size_ = {};
   map<int32_t, cmdtype_t> p_types_ = {};                  // types of each piece.
@@ -170,6 +192,14 @@ class TxnCommand: public ContainerCommand {
   virtual bool HasMoreSubCmdReadyNotOut();
   virtual ContainerCommand* GetNextReadySubCmd();
   virtual set<siteid_t> GetPartitionIds();
+  TxnWorkspace& GetWorkspace(innid_t inn_id) {
+    verify(inn_id != 0);
+    auto it = inputs_.find(inn_id);
+    if (inputs_.find(inn_id) == inputs_.end()) {
+      inputs_[inn_id] = TxnWorkspace(ws_);
+    }
+    return inputs_[inn_id];
+  }
 
   virtual parid_t GetPiecePartitionId(innid_t inn_id) {
     verify(sharding_.find(inn_id) != sharding_.end());

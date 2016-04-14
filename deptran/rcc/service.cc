@@ -1,6 +1,7 @@
 
 #include "../__dep__.h"
 #include "../command.h"
+#include "../txn_chopper.h"
 #include "../command_marshaler.h"
 #include "../benchmark_control_rpc.h"
 #include "../config.h"

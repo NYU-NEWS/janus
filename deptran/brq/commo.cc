@@ -1,4 +1,5 @@
 #include "../rcc/txn-info.h"
+#include "../txn_chopper.h"
 #include "../rcc/graph_marshaler.h"
 #include "dep_graph.h"
 #include "commo.h"

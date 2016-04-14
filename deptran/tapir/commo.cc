@@ -1,5 +1,6 @@
 
 #include "command.h"
+#include "txn_chopper.h"
 #include "command_marshaler.h"
 #include "tapir_srpc.h"
 #include "commo.h"

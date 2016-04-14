@@ -1,7 +1,7 @@
 #ifndef RW_BENCHMARK_PIE_H_
 #define RW_BENCHMARK_PIE_H_
 
-#include "all.h"
+#include "deptran/piece.h"
 
 namespace deptran {
 

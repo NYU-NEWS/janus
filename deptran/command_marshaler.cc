@@ -1,6 +1,7 @@
 #include "__dep__.h"
 #include "marshal-value.h"
 #include "command.h"
+#include "txn_chopper.h"
 #include "command_marshaler.h"
 #include "txn_chopper.h"
 
@@ -32,7 +33,7 @@ rrr::Marshal &operator>>(rrr::Marshal &m, ContainerCommand &cmd) {
 
 
 rrr::Marshal &operator<<(rrr::Marshal &m, const SimpleCommand &cmd) {
-  if (cmd.input.size() == 0) verify(cmd.input.begin() == cmd.input.end());
+//  if (cmd.input.size() == 0) verify(cmd.input.begin() == cmd.input.end());
   verify(cmd.input.size() < 10000);
   m << cmd.id_;
   m << cmd.type_;

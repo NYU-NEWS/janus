@@ -12,13 +12,15 @@ class ClassicCoord : public Coordinator {
  public:
   enum Phase {INIT_END=0, DISPATCH=1, PREPARE=2, COMMIT=3};
   ClassicCoord(uint32_t coo_id,
-                        int benchmark,
-                        ClientControlServiceImpl *ccsi,
-                        uint32_t thread_id);
+               int benchmark,
+               ClientControlServiceImpl *ccsi,
+               uint32_t thread_id);
 
   virtual ~ClassicCoord() { }
 
-  inline TxnCommand& txn() {return *(TxnCommand*)cmd_;}
+  inline TxnCommand& txn() {
+    return *(TxnCommand*)cmd_;
+  }
 
   RococoCommunicator* commo();
 

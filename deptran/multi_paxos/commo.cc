@@ -3,6 +3,7 @@
 #include "../rcc/graph.h"
 #include "../rcc/graph_marshaler.h"
 #include "../command.h"
+#include "../txn_chopper.h"
 #include "../command_marshaler.h"
 #include "../rcc_rpc.h"
 

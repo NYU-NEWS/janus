@@ -20,10 +20,12 @@ TxnWorkspace::~TxnWorkspace() {
 }
 
 TxnWorkspace::TxnWorkspace(const TxnWorkspace& rhs) {
+  keys_ = rhs.keys_;
   values_ = rhs.values_;
 }
 
 TxnWorkspace& TxnWorkspace::operator=(const TxnWorkspace& rhs) {
+  keys_ = rhs.keys_;
   values_ = rhs.values_;
   return *this;
 }
@@ -34,6 +36,7 @@ TxnWorkspace& TxnWorkspace::operator=(const map<int32_t, Value>& rhs) {
 }
 
 Value& TxnWorkspace::operator[](size_t idx) {
+  keys_.insert(idx);
   return (*values_)[idx];
 }
 
@@ -45,11 +48,26 @@ TxnCommand::TxnCommand() {
 }
 
 Marshal& operator << (Marshal& m, const TxnWorkspace &ws) {
-  m << *(ws.values_);
+//  m << (ws.keys_);
+  uint64_t sz = ws.keys_.size();
+  m << sz;
+  for (int32_t k : ws.keys_) {
+    auto it = (*ws.values_).find(k);
+    verify(it != (*ws.values_).end());
+    m << k << it->second;
+  }
 }
 
 Marshal& operator >> (Marshal& m, TxnWorkspace &ws) {
-  m >> *(ws.values_);
+  uint64_t sz;
+  m >> sz;
+  for (uint64_t i = 0; i < sz; i++) {
+    int32_t k;
+    Value v;
+    m >> k >> v;
+    ws.keys_.insert(k);
+    (*ws.values_)[k] = v;
+  }
 }
 
 

@@ -3,6 +3,7 @@
 #include "../scheduler.h"
 #include "dtxn.h"
 #include "bench/tpcc/piece.h"
+#include "txn_chopper.h"
 
 namespace rococo {
 

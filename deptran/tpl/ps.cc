@@ -1,5 +1,6 @@
-#include <deptran/txn_reg.h>
-#include "__dep__.h"
+#include "../__dep__.h"
+#include "../txn_chopper.h"
+#include "../txn_reg.h"
 #include "ps.h"
 #include "tpl.h"
 #include "exec.h"

@@ -2,6 +2,7 @@
 #include "../config.h"
 #include "../multi_value.h"
 #include "../rcc/dep_graph.h"
+#include "../txn_chopper.h"
 #include "../rcc/graph_marshaler.h"
 #include "sched.h"
 #include "../tpl/exec.h"
@@ -18,7 +19,7 @@ int NoneSched::OnDispatch(const SimpleCommand &cmd,
                                  dtxn,
                                  const_cast<SimpleCommand&>(cmd),
                                  res,
-                                 *output);
+                     2            *output);
   *res = SUCCESS;
   callback();
   return 0;

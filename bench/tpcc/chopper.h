@@ -1,8 +1,5 @@
-#ifndef TPCC_CHOPPER_H_
-#define TPCC_CHOPPER_H_
-
-#include "memdb/value.h"
-#include <vector>
+#pragma once
+#include "deptran/__dep__.h"
 #include "./bench/tpcc/piece.h"
 
 namespace rococo {
@@ -110,5 +107,3 @@ class TpccTxn: public TxnCommand {
 };
 
 }
-
-#endif // TPCC_CHOPPER_H_

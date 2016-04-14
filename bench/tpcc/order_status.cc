@@ -29,10 +29,10 @@ void TpccTxn::OrderStatusInit(TxnRequest &req) {
     n_pieces_input_ready_ = 3;
   } else { // query by c_last
     // piece 0, R customer, c_last --> c_id
-    inputs_[TPCC_ORDER_STATUS_0] = {
-        {TPCC_VAR_C_LAST, req.input_[TPCC_VAR_C_ID_LAST]},  // 0 ==>    c_last
-        {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},    // 1 ==>    c_w_id
-        {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}     // 2 ==>    c_d_id
+    GetWorkspace(TPCC_ORDER_STATUS_0).keys_ = {
+        TPCC_VAR_C_LAST,
+        TPCC_VAR_W_ID,
+        TPCC_VAR_D_ID
     };
     output_size_[TPCC_ORDER_STATUS_0] = 1; // return c_id only
     p_types_[TPCC_ORDER_STATUS_0] = TPCC_ORDER_STATUS_0;
@@ -47,29 +47,29 @@ void TpccTxn::OrderStatusInit(TxnRequest &req) {
     status_[TPCC_ORDER_STATUS_2] = WAITING; // piece 2 waiting for piece 0
   }
 
-  // piece 1, R customer, depends on piece 0 if using c_last instead of c_id
-  inputs_[TPCC_ORDER_STATUS_1] = {
-      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},  // 0 ==> c_w_id
-      {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]},  // 1 ==> c_d_id
-      {TPCC_VAR_C_ID, req.input_[TPCC_VAR_C_ID_LAST]}   // 2 ==> c_id, may depends on piece 0
+  GetWorkspace(TPCC_ORDER_STATUS_1).keys_ = {
+      TPCC_VAR_W_ID,
+      TPCC_VAR_D_ID,
+      TPCC_VAR_C_ID
   };
+  // piece 1, R customer, depends on piece 0 if using c_last instead of c_id
   output_size_[TPCC_ORDER_STATUS_1] = 4;
   p_types_[TPCC_ORDER_STATUS_1] = TPCC_ORDER_STATUS_1;
 
   // piece 2, R order, depends on piece 0 if using c_last instead of c_id
-  inputs_[TPCC_ORDER_STATUS_2] = {
-      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]}, // 0 ==>    o_w_id
-      {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}, // 1 ==>    o_d_id
-      {TPCC_VAR_C_ID, req.input_[TPCC_VAR_C_ID_LAST]}  // 2 ==>    o_c_id, may depends on piece 0
+  GetWorkspace(TPCC_ORDER_STATUS_2).keys_ = {
+      TPCC_VAR_W_ID,
+      TPCC_VAR_D_ID,
+      TPCC_VAR_C_ID
   };
   output_size_[TPCC_ORDER_STATUS_2] = 3;
   p_types_[TPCC_ORDER_STATUS_2] = TPCC_ORDER_STATUS_2;
 
   // piece 3, R order_line, depends on piece 2
-  inputs_[TPCC_ORDER_STATUS_3] = {
-      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]}, // 0 ==>    ol_w_id
-      {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}, // 1 ==>    ol_d_id
-      {TPCC_VAR_O_ID, Value()}        // 2 ==>    ol_o_id, depends on piece 2
+  GetWorkspace(TPCC_ORDER_STATUS_3).keys_ = {
+      TPCC_VAR_W_ID,
+      TPCC_VAR_D_ID,
+      TPCC_VAR_O_ID
   };
   output_size_[TPCC_ORDER_STATUS_3] = 15 * 5;
   p_types_[TPCC_ORDER_STATUS_3] = TPCC_ORDER_STATUS_3;

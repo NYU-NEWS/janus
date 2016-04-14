@@ -19,9 +19,9 @@
 namespace rococo {
 
 ClassicCoord::ClassicCoord(uint32_t coo_id,
-                                             int benchmark,
-                                             ClientControlServiceImpl *ccsi,
-                                             uint32_t thread_id)
+                           int benchmark,
+                           ClientControlServiceImpl *ccsi,
+                           uint32_t thread_id)
     : Coordinator(coo_id,
                   benchmark,
                   ccsi,
@@ -151,9 +151,8 @@ void ClassicCoord::Reset() {
   n_finish_req_ = 0;
   n_finish_ack_ = 0;
   dispatch_acks_.clear();
-  aborted_ = false;
   committed_ = false;
-//  TxnCommand *ch = (TxnCommand *) cmd_;
+  aborted_ = false;
 }
 
 void ClassicCoord::Restart() {
@@ -198,7 +197,7 @@ void ClassicCoord::Dispatch() {
                                    std::placeholders::_1,
                                    std::placeholders::_2));
   }
-  Log_debug("sent %d SubCmds\n", cnt);
+  Log_debug("sent %d subcmds\n", cnt);
 }
 
 bool ClassicCoord::AllDispatchAcked() {
@@ -408,8 +407,7 @@ void ClassicCoord::report(TxnReply &txn_reply,
                              txn_reply.time_,
                              last_latency,
                              txn_reply.n_try_);
-    }
-    else
+    } else
       ccsi_->txn_reject_one(thread_id_,
                             txn_reply.txn_type_,
                             txn_reply.start_time_,

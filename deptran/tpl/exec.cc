@@ -1,6 +1,7 @@
 
 #include "../config.h"
 #include "../multi_value.h"
+#include "../txn_chopper.h"
 #include "../rcc/dep_graph.h"
 #include "../rcc/graph_marshaler.h"
 #include "exec.h"

@@ -2,6 +2,7 @@
 #include "config.h"
 #include "scheduler.h"
 #include "command.h"
+#include "txn_chopper.h"
 #include "command_marshaler.h"
 #include "rcc_service.h"
 #include "classic/sched.h"

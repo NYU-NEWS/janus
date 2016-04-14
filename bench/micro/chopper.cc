@@ -6,43 +6,44 @@ MicroTxnCmd::MicroTxnCmd() {
 }
 
 void MicroTxnCmd::InitW(TxnRequest &req) {
-  verify(req.txn_type_ == MICRO_BENCH_W);
-  type_ = MICRO_BENCH_W;
-  inputs_.clear();
-  inputs_[MICRO_BENCH_W_0] = {
-      {MICRO_VAR_K_0, req.input_[0]},
-      {MICRO_VAR_V_0, req.input_[4]}
-  };
-  inputs_[MICRO_BENCH_W_1] = {
-      {MICRO_VAR_K_1, req.input_[1]},
-      {MICRO_VAR_V_1, req.input_[5]}
-  };
-  inputs_[2] = {
-      {MICRO_VAR_K_2, req.input_[2]},
-      {MICRO_VAR_V_2, req.input_[6]}
-  };
-  inputs_[3] = {
-      {MICRO_VAR_K_3, req.input_[3]},
-      {MICRO_VAR_V_3, req.input_[7]}
-  };
-
-  output_size_ = {
-      {MICRO_BENCH_W_0, 0},
-      {MICRO_BENCH_W_1, 0},
-      {MICRO_BENCH_W_2, 0},
-      {MICRO_BENCH_W_3, 0}
-  };
-
-  p_types_ = {
-      {MICRO_BENCH_W_0, MICRO_BENCH_W_0},
-      {MICRO_BENCH_W_1, MICRO_BENCH_W_1},
-      {MICRO_BENCH_W_2, MICRO_BENCH_W_2},
-      {MICRO_BENCH_W_3, MICRO_BENCH_W_3}
-  };
+//  verify(req.txn_type_ == MICRO_BENCH_W);
+//  type_ = MICRO_BENCH_W;
+//  inputs_.clear();
+//  inputs_[MICRO_BENCH_W_0] = {
+//      {MICRO_VAR_K_0, req.input_[0]},
+//      {MICRO_VAR_V_0, req.input_[4]}
+//  };
+//  inputs_[MICRO_BENCH_W_1] = {
+//      {MICRO_VAR_K_1, req.input_[1]},
+//      {MICRO_VAR_V_1, req.input_[5]}
+//  };
+//  inputs_[MICRO_BENCH_W_2] = {
+//      {MICRO_VAR_K_2, req.input_[2]},
+//      {MICRO_VAR_V_2, req.input_[6]}
+//  };
+//  inputs_[MICRO_BENCH_W_3] = {
+//      {MICRO_VAR_K_3, req.input_[3]},
+//      {MICRO_VAR_V_3, req.input_[7]}
+//  };
+//
+//  output_size_ = {
+//      {MICRO_BENCH_W_0, 0},
+//      {MICRO_BENCH_W_1, 0},
+//      {MICRO_BENCH_W_2, 0},
+//      {MICRO_BENCH_W_3, 0}
+//  };
+//
+//  p_types_ = {
+//      {MICRO_BENCH_W_0, MICRO_BENCH_W_0},
+//      {MICRO_BENCH_W_1, MICRO_BENCH_W_1},
+//      {MICRO_BENCH_W_2, MICRO_BENCH_W_2},
+//      {MICRO_BENCH_W_3, MICRO_BENCH_W_3}
+//  };
 }
 
 void MicroTxnCmd::Init(TxnRequest &req) {
-  inputs_.clear();
+  ws_init_ = req.input_;
+  ws_ = req.input_;
 
   switch (req.txn_type_) {
     case MICRO_BENCH_R:
@@ -77,24 +78,24 @@ void MicroTxnCmd::Init(TxnRequest &req) {
 void MicroTxnCmd::InitR(TxnRequest &req) {
   verify(req.txn_type_ == MICRO_BENCH_R);
   type_ = MICRO_BENCH_R;
-  inputs_[MICRO_BENCH_R_0] = {{MICRO_VAR_K_0, req.input_[0]}};
-  inputs_[MICRO_BENCH_R_1] = {{MICRO_VAR_K_1, req.input_[1]}};
-  inputs_[MICRO_BENCH_R_2] = {{MICRO_VAR_K_2, req.input_[2]}};
-  inputs_[MICRO_BENCH_R_3] = {{MICRO_VAR_K_3, req.input_[3]}};
-
-  output_size_ = {
-      {MICRO_BENCH_R_0, 1},
-      {MICRO_BENCH_R_1, 1},
-      {MICRO_BENCH_R_2, 1},
-      {MICRO_BENCH_R_3, 1}
-  };
-
-  p_types_ = {
-      {MICRO_BENCH_R_0, MICRO_BENCH_R_0},
-      {MICRO_BENCH_R_1, MICRO_BENCH_R_1},
-      {MICRO_BENCH_R_2, MICRO_BENCH_R_2},
-      {MICRO_BENCH_R_3, MICRO_BENCH_R_3}
-  };
+//  inputs_[MICRO_BENCH_R_0] = {{MICRO_VAR_K_0, req.input_[0]}};
+//  inputs_[MICRO_BENCH_R_1] = {{MICRO_VAR_K_1, req.input_[1]}};
+//  inputs_[MICRO_BENCH_R_2] = {{MICRO_VAR_K_2, req.input_[2]}};
+//  inputs_[MICRO_BENCH_R_3] = {{MICRO_VAR_K_3, req.input_[3]}};
+//
+//  output_size_ = {
+//      {MICRO_BENCH_R_0, 1},
+//      {MICRO_BENCH_R_1, 1},
+//      {MICRO_BENCH_R_2, 1},
+//      {MICRO_BENCH_R_3, 1}
+//  };
+//
+//  p_types_ = {
+//      {MICRO_BENCH_R_0, MICRO_BENCH_R_0},
+//      {MICRO_BENCH_R_1, MICRO_BENCH_R_1},
+//      {MICRO_BENCH_R_2, MICRO_BENCH_R_2},
+//      {MICRO_BENCH_R_3, MICRO_BENCH_R_3}
+//  };
 }
 
 bool MicroTxnCmd::start_callback(const std::vector<int> &pi,

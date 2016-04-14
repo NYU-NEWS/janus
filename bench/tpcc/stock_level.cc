@@ -1,4 +1,5 @@
-#include "all.h"
+
+#include "chopper.h"
 
 namespace rococo {
 
@@ -12,19 +13,19 @@ void TpccTxn::StockLevelInit(TxnRequest &req) {
   stock_level_dep_.threshold = req.input_[TPCC_VAR_THRESHOLD].get_i32();
 
   // piece 0, R district
-  inputs_[TPCC_STOCK_LEVEL_0] = {
-      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},
-      {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}
+  GetWorkspace(TPCC_STOCK_LEVEL_0).keys_ = {
+      TPCC_VAR_W_ID,
+      TPCC_VAR_D_ID,
   };
   output_size_[TPCC_STOCK_LEVEL_0] = 1;
   p_types_[TPCC_STOCK_LEVEL_0] = TPCC_STOCK_LEVEL_0;
   status_[TPCC_STOCK_LEVEL_0] = READY;
 
   // piece 1, R order_line
-  inputs_[TPCC_STOCK_LEVEL_1] = {
-      {TPCC_VAR_D_NEXT_O_ID, Value()},        // 0    ==> d_next_o_id, depends on piece 0
-      {TPCC_VAR_W_ID, req.input_[TPCC_VAR_W_ID]},         // 1    ==> ol_w_id
-      {TPCC_VAR_D_ID, req.input_[TPCC_VAR_D_ID]}          // 2    ==> ol_d_id
+  GetWorkspace(TPCC_STOCK_LEVEL_1).keys_ = {
+      TPCC_VAR_D_NEXT_O_ID,
+      TPCC_VAR_W_ID,
+      TPCC_VAR_D_ID,
   };
   output_size_[TPCC_STOCK_LEVEL_1] = 20 * 15 + 1; // 20 orders * 15 order_line per order at most
   p_types_[TPCC_STOCK_LEVEL_1] = TPCC_STOCK_LEVEL_1;
@@ -130,10 +131,10 @@ void TpccPiece::RegStockLevel() {
 
     for (int i = 0; i < output[TPCC_VAR_OL_AMOUNT].get_i32(); i++) {
       auto pi =  TPCC_STOCK_LEVEL_RS(i);
-      tpcc_ch->inputs_[pi] = {
-          {TPCC_VAR_OL_I_ID(i), tpcc_ch->ws_[TPCC_VAR_OL_I_ID(i)]},
-          {TPCC_VAR_W_ID,       tpcc_ch->ws_[TPCC_VAR_W_ID]},
-          {TPCC_VAR_THRESHOLD,  tpcc_ch->ws_[TPCC_VAR_THRESHOLD]}
+      tpcc_ch->GetWorkspace(pi).keys_ = {
+          TPCC_VAR_OL_I_ID(i),
+          TPCC_VAR_W_ID,
+          TPCC_VAR_THRESHOLD
       };
       tpcc_ch->status_[pi] = READY;
       tpcc_ch->n_pieces_input_ready_++;

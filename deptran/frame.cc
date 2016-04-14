@@ -6,6 +6,7 @@
 #include "marshal-value.h"
 #include "coordinator.h"
 #include "dtxn.h"
+#include "rcc_service.h"
 #include "scheduler.h"
 #include "none/coord.h"
 #include "rcc/coord.h"

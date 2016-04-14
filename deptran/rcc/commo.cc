@@ -1,6 +1,7 @@
 
 #include "commo.h"
 #include "dep_graph.h"
+#include "../txn_chopper.h"
 #include "txn-info.h"
 #include "graph_marshaler.h"
 #include "rcc_srpc.h"

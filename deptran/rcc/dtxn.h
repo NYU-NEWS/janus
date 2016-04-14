@@ -1,4 +1,5 @@
 #pragma once
+#include "../txn_chopper.h"
 #include "../dtxn.h"
 
 #define PHASE_RCC_START (1)

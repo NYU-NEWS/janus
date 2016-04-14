@@ -1,6 +1,7 @@
 #pragma once
 
-#include "all.h"
+#include "deptran/__dep__.h"
+#include "deptran/txn_chopper.h"
 
 namespace deptran {
 

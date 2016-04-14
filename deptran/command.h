@@ -107,25 +107,5 @@ class ContainerCommand {
 };
 
 
-class SimpleCommand: public ContainerCommand {
- public:
-  ContainerCommand* root_ = nullptr;
-  map<int32_t, Value> input = {};
-  map<int32_t, Value> output = {};
-  int32_t output_size = 0;
-  parid_t partition_id_ = 0xFFFFFFFF;
-  SimpleCommand() = default;
-  virtual parid_t PartitionId() const {
-    verify(partition_id_ != 0xFFFFFFFF);
-    return partition_id_;
-  }
-  virtual ContainerCommand* RootCmd() const {return root_;}
-  virtual ContainerCommand* Clone() const override {
-    SimpleCommand* cmd = new SimpleCommand();
-    *cmd = *this;
-    return cmd;
-  }
-  virtual ~SimpleCommand() {};
-};
 
 } // namespace rococo

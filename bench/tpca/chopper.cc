@@ -6,15 +6,16 @@ namespace rococo {
 void TpcaPaymentChopper::Init(TxnRequest &req) {
   verify(req.txn_type_ == TPCA_PAYMENT);
   type_ = TPCA_PAYMENT;
+  ws_init_ = req.input_;
+  ws_ = ws_init_;
 
-  Value& cus = req.input_[0];
-  Value& tel = req.input_[1];
-  Value& bra = req.input_[2];
+  Value& cus = req.input_[TPCA_VAR_X];
+  Value& tel = req.input_[TPCA_VAR_Y];
+  Value& bra = req.input_[TPCA_VAR_Z];
 
-  inputs_.clear();
-  inputs_[TPCA_PAYMENT_1] = {{TPCA_VAR_X, cus}/*, inc*/};
-  inputs_[TPCA_PAYMENT_2] = {{TPCA_VAR_Y, tel}/*, inc*/};
-  inputs_[TPCA_PAYMENT_3] = {{TPCA_VAR_Z, bra}/*, inc*/};
+  GetWorkspace(TPCA_PAYMENT_1).keys_ = {TPCA_VAR_X};
+  GetWorkspace(TPCA_PAYMENT_2).keys_ = {TPCA_VAR_Y};
+  GetWorkspace(TPCA_PAYMENT_3).keys_ = {TPCA_VAR_Z};
 
   output_size_ = {
       {TPCA_PAYMENT_1, 0},

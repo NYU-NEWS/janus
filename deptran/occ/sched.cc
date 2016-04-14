@@ -9,6 +9,7 @@
 #include "../dtxn.h"
 #include "../scheduler.h"
 #include "../rcc/graph.h"
+#include "../txn_chopper.h"
 #include "../rcc/graph_marshaler.h"
 #include "../marshal-value.h"
 #include "../rcc_rpc.h"

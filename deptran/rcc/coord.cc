@@ -41,13 +41,6 @@ void RccCoord::Dispatch() {
   // new txn id for every new and retry.
 //  RequestHeader header = gen_header(ch);
 
-  int pi;
-
-  map<int32_t, Value> *input = nullptr;
-  int32_t server_id;
-  int     res;
-  int     output_size;
-
   int cnt;
   while (cmd_->HasMoreSubCmdReadyNotOut()) {
     auto subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd();
@@ -165,16 +158,6 @@ void RccCoord::FinishAck(phase_t phase,
 
 void RccCoord::DispatchRo() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  // new txn id for every new and retry.
-//  RequestHeader header = gen_header(ch);
-
-  int pi;
-
-  map<int32_t, Value> *input = nullptr;
-  int32_t server_id;
-  int     res;
-  int     output_size;
-
   int cnt;
   while (cmd_->HasMoreSubCmdReadyNotOut()) {
     auto subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd();

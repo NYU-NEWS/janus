@@ -3,7 +3,7 @@
 #include "../communicator.h"
 
 namespace rococo {
-
+class SimpleCommand;
 class RccGraph;
 class RccCommo : public Communicator {
  public:

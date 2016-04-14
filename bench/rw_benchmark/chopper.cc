@@ -1,10 +1,16 @@
-#include "all.h"
+
+
+#include "deptran/__dep__.h"
+#include "deptran/txn_chopper.h"
+#include "chopper.h"
+#include "piece.h"
 
 namespace deptran {
 
 void RWChopper::W_txn_init(TxnRequest &req) {
-  inputs_.clear();
-  inputs_[RW_BENCHMARK_W_TXN_0] = map<int32_t, Value>({{0, req.input_[0]}});
+//  inputs_.clear();
+//  inputs_[RW_BENCHMARK_W_TXN_0] = map<int32_t, Value>({{0, req.input_[0]}});
+  GetWorkspace(RW_BENCHMARK_W_TXN_0).keys_ = {0};
   n_pieces_input_ready_ = 1;
 
   output_size_ = {{0,0}};
@@ -16,8 +22,9 @@ void RWChopper::W_txn_init(TxnRequest &req) {
 }
 
 void RWChopper::R_txn_init(TxnRequest &req) {
-  inputs_.clear();
-  inputs_[RW_BENCHMARK_R_TXN_0] = map<int32_t, Value>({{0, req.input_[0]}});
+//  inputs_.clear();
+//  inputs_[RW_BENCHMARK_R_TXN_0] = map<int32_t, Value>({{0, req.input_[0]}});
+  GetWorkspace(RW_BENCHMARK_R_TXN_0).keys_ = {0};
   n_pieces_input_ready_ = 1;
 
   output_size_= {{0, 1}};
@@ -32,6 +39,8 @@ RWChopper::RWChopper() {
 }
 
 void RWChopper::Init(TxnRequest &req) {
+  ws_init_ = req.input_;
+  ws_ = req.input_;
   type_ = req.txn_type_;
   callback_ = req.callback_;
   max_try_ = req.n_try_;

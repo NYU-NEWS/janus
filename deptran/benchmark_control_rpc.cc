@@ -1,5 +1,6 @@
 #include "__dep__.h"
 #include "command.h"
+#include "txn_chopper.h"
 #include "command_marshaler.h"
 #include "benchmark_control_rpc.h"
 
@@ -206,7 +207,7 @@ void ClientControlServiceImpl::client_response(ClientResponse *res) {
   txn_info_switch_ = !txn_info_switch_;
 
   for (int i = 0; i < num_threads_; i++) {
-    for (std::map<int32_t, txn_info_t>::iterator it = txn_info_[i].begin();
+    for (auto it = txn_info_[i].begin();
          it != txn_info_[i].end(); it++) {
       res->txn_info[it->first].start_txn += it->second.start_txn;
       res->txn_info[it->first].total_txn += it->second.total_txn;
