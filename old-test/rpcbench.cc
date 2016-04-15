@@ -45,7 +45,7 @@ static void signal_handler(int sig) {
 }
 
 static void* stat_proc(void*) {
-    std::vector<long int> summary;
+    std::vector<int> summary;
     summary.reserve(seconds);
     i64 last_cnt = 0;
     for (int i = 0; i < seconds; i++) {
@@ -59,11 +59,11 @@ static void* stat_proc(void*) {
         sleep(1);
     }
     should_stop = true;
-    long int sum = 0;
+    int sum = 0;
     for (size_t i=0; i<summary.size(); i++) {
         sum += summary[i];
     }
-    Log::info("avg qps: %.2f", sum/summary.size());
+    Log::info("avg qps: %2.2f", ((float)sum)/summary.size());
     pthread_exit(nullptr);
     return nullptr;
 }
