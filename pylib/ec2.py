@@ -147,8 +147,8 @@ def load_instances():
 @task
 @hosts('localhost')
 def set_instance_roles():
-    if env.roledefs is not None and
-       'all' in env.roledefs.keys() and 
+    if env.roledefs is not None and \
+       'all' in env.roledefs.keys() and \
        len(env.roledefs['all'])>0:
         # roles already set
         logging.debug("instance roles: {}".format(env.roledefs))
