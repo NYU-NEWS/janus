@@ -45,16 +45,25 @@ static void signal_handler(int sig) {
 }
 
 static void* stat_proc(void*) {
+    std::vector<long int> summary;
+    summary.reserve(seconds);
     i64 last_cnt = 0;
     for (int i = 0; i < seconds; i++) {
         int cnt = req_counter.peek_next();
         if (last_cnt != 0) {
+            long int qps = cnt - last_cnt;
             Log::info("qps: %ld", cnt - last_cnt);
+            summary.push_back(qps);
         }
         last_cnt = cnt;
         sleep(1);
     }
     should_stop = true;
+    long int sum = 0;
+    for (size_t i=0; i<summary.size(); i++) {
+        sum += summary[i];
+    }
+    Log::info("avg qps: %.2f", sum/summary.size());
     pthread_exit(nullptr);
     return nullptr;
 }
