@@ -10,6 +10,7 @@ import boto3
 from fabric.api import env, task, run, local, execute, parallel, runs_once
 from fabric.decorators import hosts, roles
 from fabric.contrib.files import exists
+from pylib.security_group import sec_grp_name, save_sec_grp
 
 EC2_REGIONS = {
     'eu-west-1': {
@@ -42,7 +43,6 @@ EC2_REGIONS = {
 
 INSTANCE_TYPE = 't2.micro'
 SECURITY_GROUPS = ['nyu']
-DATA_DIR = ".ec2-data"
 
 # maps region to instances
 created_instances = {}
@@ -69,9 +69,6 @@ def list_regions():
             v = info[k]
             print("\t{k}: {v}".format(k=k, v=v))
     print
-
-def sec_grp_name(region):
-    return 'sg_janus_{}'.format(region)
 
 @task
 @hosts('localhost')
@@ -205,10 +202,11 @@ def verify_region_has_image(region):
 
 
 def instance_data_fn():
-    d = "{cwd}/{data_dir}".format(cwd=env.local_cwd, data_dir=DATA_DIR)
+    d = "{cwd}/{data_dir}".format(cwd=env.local_cwd, data_dir=env.data_dir)
     if not os.path.isdir(d):
         local("mkdir -p {d}".format(d=d))
     return "{d}/instance.dat".format(d=d)
+
 
 
 @task

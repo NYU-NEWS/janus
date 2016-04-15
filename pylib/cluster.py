@@ -3,6 +3,7 @@ import string
 import StringIO
 import time
 import traceback
+import random
 import os
 import os.path
 
@@ -15,6 +16,7 @@ from fabric.contrib.files import exists
 from fabric.decorators import roles, parallel, hosts
 from fabric.context_managers import prefix
 from pylib.ec2 import instance_by_pub_ip, EC2_REGIONS, get_created_instances
+from pylib.security_group import sec_grp_name, save_sec_grp
 
 # Static ip address ranges allowed to contact the instances
 ALLOWED_IP_RANGES = [ '128.122.140.0/24' ]
@@ -159,9 +161,6 @@ def config_nfs_client(server_ip=None):
         traceback.print_exc()
 
 
-def sec_grp_name(region):
-    return 'sg_janus_{}'.format(region)
-
 
 @task
 @hosts('localhost')
@@ -204,9 +203,11 @@ def setup_security_groups(regions=EC2_REGIONS.keys()):
             res = {'GroupId': group_id}
 
         if res is not None and 'GroupId' in res:
-            sec_groups[region] = res['GroupId']
+            sec_groups[region] = res['GroupId']        
+            save_sec_grp(region, sec_grp_name(region))
         else:
             raise RuntimeError("could not create security group.")
+    
     env.security_groups = sec_groups
     
 @task
@@ -251,5 +252,4 @@ def load_security_grp_ips():
             
         else:
             raise RuntimeError("could not load security group")
-
 

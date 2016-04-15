@@ -47,6 +47,7 @@ def environment():
         env.setdefault('git_revision', 'master')
         env.setdefault('py_virtual_env',
                        '{home}/py_venv'.format(home=env.nfs_home))
+        env.setdefault('data_dir', '.ec2-data')
 
 
 @task
