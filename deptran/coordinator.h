@@ -31,7 +31,7 @@ class Coordinator : public CoordinatorBase {
   uint32_t coo_id_;
   parid_t par_id_ = -1;
   int benchmark_;
-  ClientControlServiceImpl *ccsi_;
+  ClientControlServiceImpl *ccsi_ = nullptr;
   uint32_t thread_id_;
   bool batch_optimal_ = false;
   bool retry_wait_;

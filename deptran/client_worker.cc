@@ -56,6 +56,8 @@ void ClientWorker::work() {
   timer_ = new Timer();
   timer_->start();
   verify(n_concurrent_ > 0);
+  auto commo = frame_->CreateCommo();
+  commo->loc_id_ = my_site_.locale_id;
   for (uint32_t n_txn = 0; n_txn < n_concurrent_; n_txn++) {
     cooid_t coo_id = cli_id_;
     coo_id = (coo_id << 16) + n_txn;
@@ -66,6 +68,7 @@ void ClientWorker::work() {
                                    id,
                                    txn_reg_);
     coo->loc_id_ = my_site_.locale_id;
+    coo->commo_ = commo;
     verify(coo->loc_id_ < 100);
     Log_debug("after create coo");
 

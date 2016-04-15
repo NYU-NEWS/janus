@@ -21,6 +21,8 @@ class TxnRegistry;
 class Communicator;
 class Frame {
  public:
+  Communicator* commo_ = nullptr;
+
   // static variables to hold frames
   static map<string, int>& FrameNameToMode();
   static map<int, Frame*>& ModeToFrame();

@@ -13,7 +13,9 @@ TapirCommo* TapirCoord::commo() {
     commo_->loc_id_ = loc_id_;
     verify(loc_id_ < 100);
   }
-  return dynamic_cast<TapirCommo*>(commo_);
+  auto commo = dynamic_cast<TapirCommo*>(commo_);
+  verify(commo != nullptr);
+  return commo;
 }
 
 void TapirCoord::Dispatch() {

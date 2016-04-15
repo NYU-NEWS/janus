@@ -310,8 +310,8 @@ TxnCommand * Frame::CreateChopper(TxnRequest &req, TxnRegistry* reg) {
 
 Communicator* Frame::CreateCommo(PollMgr* pollmgr) {
   // Default: return null;
-  Communicator* commo = nullptr;
-  return commo;
+  commo_ = new RococoCommunicator;
+  return commo_;
 }
 
 DTxn* Frame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {

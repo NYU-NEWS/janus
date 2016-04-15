@@ -35,6 +35,13 @@ Coordinator* TapirFrame::CreateCoord(cooid_t coo_id,
   return coord;
 }
 
+Communicator* TapirFrame::CreateCommo(PollMgr* pollmgr) {
+  // Default: return null;
+  commo_ = new TapirCommo;
+  return commo_;
+}
+
+
 Scheduler* TapirFrame::CreateScheduler() {
   Scheduler* sched = new TapirSched();
   sched->frame_ = this;
