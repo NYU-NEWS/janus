@@ -11,7 +11,7 @@ bench:
 #        order_status: 4
 #        stock_level: 4
   population: # intial number of records in each table
-    history: 300
+    history: 300000
 
 schema: # table information
   - name: history
