@@ -29,7 +29,12 @@ void ServerWorker::SetupHeartbeat() {
   std::string addr_port = std::string("0.0.0.0:") +
       std::to_string(port);
   hb_rpc_server_->start(addr_port.c_str());
-  Log_info("heartbeat setup for %s on %s", this->site_info_->name.c_str(), addr_port.c_str());
+  if (hb_rpc_server_ != nullptr) {
+//    Log_info("notify ready to control script for %s", bind_addr.c_str());
+    scsi_g->set_ready();
+  }
+  Log_info("heartbeat setup for %s on %s",
+           this->site_info_->name.c_str(), addr_port.c_str());
 }
 
 void ServerWorker::SetupBase() {
@@ -116,7 +121,9 @@ void ServerWorker::RegPiece() {
 }
 
 void ServerWorker::SetupService() {
-  Log_info("enter %s for %s @ %s", __FUNCTION__, this->site_info_->name.c_str(), site_info_->GetBindAddress().c_str());
+  Log_info("enter %s for %s @ %s", __FUNCTION__,
+           this->site_info_->name.c_str(),
+           site_info_->GetBindAddress().c_str());
   int ret;
   // set running mode and initialize transaction manager.
   std::string bind_addr = site_info_->GetBindAddress();
@@ -175,10 +182,6 @@ void ServerWorker::SetupService() {
   // start to profile
   ProfilerStart(prof_file);
 #endif // ifdef CPU_PROFILE
-  if (hb_rpc_server_ != nullptr) {
-    Log_info("notify ready to control script for %s", bind_addr.c_str());
-    scsi_g->set_ready();
-  }
 }
 
 void ServerWorker::WaitForShutdown() {
