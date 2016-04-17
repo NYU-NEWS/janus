@@ -75,14 +75,17 @@ bool TpccTxn::CheckReady() {
         all_found = false;
         break;
       } else {
-        TxnWorkspace& ws = GetWorkspace(pi);
-        ws.keys_ = var_set;
-        verify(ws_[var].get_kind() != 0);
+//        TxnWorkspace& ws = GetWorkspace(pi);
+//        if (ws.keys_.size() == 0)
+//          ws.keys_ = var_set;
+//        verify(ws_[var].get_kind() != 0);
       }
     }
     // all found.
     if (all_found && status == WAITING) {
       status = READY;
+      TxnWorkspace& ws = GetWorkspace(pi);
+      ws.keys_ = var_set;
       n_pieces_input_ready_++;
       ret = true;
     }
