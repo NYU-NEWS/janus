@@ -51,9 +51,13 @@ void RococoCommunicator::SendPrepare(groupid_t gid,
 }
 
 void RococoCommunicator::___LogSent(parid_t pid, txnid_t tid) {
-  auto it = phase_three_sent_.find(std::make_pair(pid, tid));
-  verify(it == phase_three_sent_.end());
-  phase_three_sent_.insert(std::make_pair(pid, tid));
+  std::lock_guard<std::mutex> l(mtx_);
+  auto value = std::make_pair(pid, tid);
+  auto it = phase_three_sent_.find(value);
+  if (it != phase_three_sent_.end()) {
+    Log_fatal("phase 3 sent exists: %d %x", it->first, it->second);
+  }
+  phase_three_sent_.insert(value);
 }
 
 void RococoCommunicator::SendCommit(parid_t pid,
