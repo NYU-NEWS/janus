@@ -60,12 +60,44 @@ void TpccTxn::Init(TxnRequest &req) {
 // This is sort of silly. We should have a better way.
 bool TpccTxn::CheckReady() {
   bool ret = false;
-  auto &map = txn_reg_->input_vars_[type_];
+  map<innid_t, set<int32_t>>& map = txn_reg_->input_vars_[type_];
+  for (auto &pair : status_) {
+    const innid_t& pi = pair.first;
+    int32_t& status = pair.second;
+    if (status != WAITING) {
+      continue;
+    }
+    set<int32_t>& var_set = map[pi];
+    bool all_found = true;
+    for (auto &var : var_set) {
+      if (ws_.find(var) == ws_.end()) {
+        // not found. input not all ready.
+        all_found = false;
+        break;
+      } else {
+        TxnWorkspace& ws = GetWorkspace(pi);
+        ws.keys_ = var_set;
+        verify(ws_[var].get_kind() != 0);
+      }
+    }
+    // all found.
+    if (all_found && status == WAITING) {
+      status = READY;
+      n_pieces_input_ready_++;
+      ret = true;
+    }
+  }
+  return ret;
   for (auto &kv : map) {
-    auto pi = kv.first;
-    auto &var_set = kv.second;
+    innid_t pi = kv.first;
+    set<int32_t>& var_set = kv.second;
 
+    auto it = status_.find(pi);
     if (status_.find(pi) == status_.end()) {
+      continue;
+    }
+    int32_t& status = it->second;
+    if (status != WAITING) {
       continue;
     }
     bool all_found = true;
@@ -81,8 +113,8 @@ bool TpccTxn::CheckReady() {
       }
     }
     // all found.
-    if (all_found && status_[pi] == WAITING) {
-      status_[pi] = READY;
+    if (all_found && status == WAITING) {
+      status = READY;
       n_pieces_input_ready_++;
       ret = true;
 //        for (auto &var : var_set) {
