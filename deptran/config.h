@@ -169,6 +169,8 @@ class Config {
   const char *get_ctrl_key();
   const char *get_ctrl_init();
 
+  int GetProfilePath(char *prof_file);
+
   // const char *get_ctrl_run();
   uint32_t get_duration();
   bool do_heart_beat();
@@ -178,9 +180,9 @@ class Config {
 
   int NumSites(SiteInfoType type=SERVER);
   const SiteInfo& SiteById(uint32_t id);
-  std::vector<SiteInfo> SitesByPartitionId(parid_t partition_id);
-  std::vector<SiteInfo> SitesByLocaleId(uint32_t locale_id, SiteInfoType type=SERVER);
-  std::vector<SiteInfo> SitesByProcessName(string proc_name, SiteInfoType type=SERVER);
+  vector<SiteInfo> SitesByPartitionId(parid_t partition_id);
+  vector<SiteInfo> SitesByLocaleId(uint32_t locale_id, SiteInfoType type=SERVER);
+  vector<SiteInfo> SitesByProcessName(string proc_name, SiteInfoType type=SERVER);
   SiteInfo* SiteByName(std::string name);
   int GetPartitionSize(parid_t par_id);
   vector<SiteInfo> GetMyServers() { return SitesByProcessName(this->proc_name_, SERVER); }
@@ -207,11 +209,6 @@ class Config {
   uint32_t get_concurrent_txn();
   bool get_batch_start();
   bool do_early_return();
-
-#ifdef CPU_PROFILE
-  int                  get_prof_filename(char *prof_file);
-#endif // ifdef CPU_PROFILE
-
   bool do_logging();
   bool IsReplicated();
 

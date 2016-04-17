@@ -6,6 +6,10 @@
 #include "frame.h"
 #include "communicator.h"
 
+#ifdef CPU_PROFILE
+# include <google/profiler.h>
+#endif // ifdef CPU_PROFILE
+
 
 namespace rococo {
 
@@ -164,14 +168,14 @@ void ServerWorker::SetupService() {
            site_info_->name.c_str(),
            bind_addr.c_str());
 
-  if (hb_rpc_server_ != nullptr) {
 #ifdef CPU_PROFILE
-    char prof_file[1024];
-    verify(0 < Config::get_config()->get_prof_filename(prof_file));
+  char prof_file[1024];
+  Config::GetConfig()->GetProfilePath(prof_file);
 
-    // start to profile
-    ProfilerStart(prof_file);
+  // start to profile
+  ProfilerStart(prof_file);
 #endif // ifdef CPU_PROFILE
+  if (hb_rpc_server_ != nullptr) {
     Log_info("notify ready to control script for %s", bind_addr.c_str());
     scsi_g->set_ready();
   }
@@ -198,11 +202,11 @@ void ServerWorker::WaitForShutdown() {
         }
       }
     }
-#ifdef CPU_PROFILE
-    // stop profiling
-    ProfilerStop();
-#endif // ifdef CPU_PROFILE
   }
+#ifdef CPU_PROFILE
+  // stop profiling
+  ProfilerStop();
+#endif // ifdef CPU_PROFILE
   Log_debug("exit %s", __FUNCTION__);
 }
 

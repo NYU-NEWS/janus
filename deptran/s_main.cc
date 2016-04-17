@@ -1,6 +1,4 @@
-#ifdef CPU_PROFILE
-# include <google/profiler.h>
-#endif // ifdef CPU_PROFILE
+
 #include <unistd.h>
 #include "__dep__.h"
 #include "frame.h"
@@ -76,9 +74,9 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
       // populate table according to benchmarks
       worker.PopTable();
       // start server service
-      worker.SetupHeartbeat();
-      // setup communication between controller script
       worker.SetupService();
+      Log_info("start communication for site %d", worker.site_info_->id);
+      worker.SetupCommo();
       Log_info("site %d launched!", site_info.id);
     }));
   }
@@ -91,8 +89,8 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
 
   for (ServerWorker& worker : svr_workers_g) {
     // start communicator after all servers are running
-    Log_info("start communication for site %d", worker.site_info_->id);
-    worker.SetupCommo();
+    // setup communication between controller script
+    worker.SetupHeartbeat();
   }
   Log_info("server workers' communicators setup");
 }

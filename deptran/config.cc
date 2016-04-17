@@ -59,8 +59,8 @@ int Config::CreateConfig(int argc, char **argv) {
   char *ctrl_hostname           = NULL;
   char *ctrl_key                = NULL;
   char *ctrl_init               = NULL /*, *ctrl_run = NULL*/;
-  unsigned int ctrl_port        = 0;
-  unsigned int ctrl_timeout     = 0;
+  uint32_t ctrl_port        = 0;
+  uint32_t ctrl_timeout     = 0;
   uint32_t duration         = 10;
   bool heart_beat               = false;
   single_server_t single_server = SS_DISABLED;
@@ -736,7 +736,8 @@ int Config::GetPartitionSize(parid_t partition_id) {
   verify(0);
 }
 
-std::vector<Config::SiteInfo> Config::SitesByLocaleId(uint32_t locale_id, SiteInfoType type) {
+std::vector<Config::SiteInfo>
+Config::SitesByLocaleId(uint32_t locale_id, SiteInfoType type) {
   std::vector<SiteInfo> result;
   std::vector<SiteInfo>* searching;
   if (type==SERVER) {
@@ -751,7 +752,8 @@ std::vector<Config::SiteInfo> Config::SitesByLocaleId(uint32_t locale_id, SiteIn
   return result;
 }
 
-vector<Config::SiteInfo> Config::SitesByProcessName(string proc_name, Config::SiteInfoType type) {
+vector<Config::SiteInfo>
+Config::SitesByProcessName(string proc_name, Config::SiteInfoType type) {
   std::vector<SiteInfo> result;
   std::vector<SiteInfo>* searching;
   if (type==SERVER) {
@@ -851,13 +853,10 @@ std::map<string, double>& Config::get_txn_weights() {
   return txn_weights_;
 };
 
-#ifdef CPU_PROFILE
-int Config::get_prof_filename(char *prof_file) {
+int Config::GetProfilePath(char *prof_file) {
   if (prof_file == NULL) return -1;
-  return sprintf(prof_file, "log/site-%d.prof", sid_);
+  return sprintf(prof_file, "process-%s.prof", proc_name_.c_str());
 }
-
-#endif // ifdef CPU_PROFILE
 
 bool Config::do_early_return() {
   return early_return_;
