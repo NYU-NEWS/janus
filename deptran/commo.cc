@@ -51,19 +51,20 @@ void RococoCommunicator::SendPrepare(groupid_t gid,
 }
 
 void RococoCommunicator::___LogSent(parid_t pid, txnid_t tid) {
-  std::lock_guard<std::mutex> l(mtx_);
   auto value = std::make_pair(pid, tid);
   auto it = phase_three_sent_.find(value);
   if (it != phase_three_sent_.end()) {
     Log_fatal("phase 3 sent exists: %d %x", it->first, it->second);
+  } else {
+    phase_three_sent_.insert(value);
+    Log_debug("phase 3 sent: pid: %d; tid: %x", value.first, value.second);
   }
-  phase_three_sent_.insert(value);
 }
 
 void RococoCommunicator::SendCommit(parid_t pid,
                                     txnid_t tid,
                                     const function<void(Future *fu)> &callback) {
-  ___LogSent(pid, tid);
+  //___LogSent(pid, tid);
 
   FutureAttr fuattr;
   fuattr.callback = callback;
