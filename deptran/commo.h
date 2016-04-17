@@ -39,7 +39,6 @@ class RococoCommunicator : public Communicator {
                  const std::function<void(Future *fu)> &callback) ;
 
   // for debug
-  std::mutex mtx_;
   std::set<std::pair<parid_t, txnid_t>> phase_three_sent_;
 
   void ___LogSent(parid_t pid, txnid_t tid);
