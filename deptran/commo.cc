@@ -64,8 +64,9 @@ void RococoCommunicator::___LogSent(parid_t pid, txnid_t tid) {
 void RococoCommunicator::SendCommit(parid_t pid,
                                     txnid_t tid,
                                     const function<void(Future *fu)> &callback) {
-  //___LogSent(pid, tid);
-
+#ifdef LOG_LEVEL_AS_DEBUG
+  ___LogSent(pid, tid);
+#endif
   FutureAttr fuattr;
   fuattr.callback = callback;
   ClassicProxy *proxy = LeaderProxyForPartition(pid).second;
@@ -75,7 +76,9 @@ void RococoCommunicator::SendCommit(parid_t pid,
 
 void RococoCommunicator::SendAbort(parid_t pid, txnid_t tid,
                                    const function<void(Future *fu)> &callback) {
-//  ___LogSent(pid, tid);
+#ifdef LOG_LEVEL_AS_DEBUG
+  ___LogSent(pid, tid);
+#endif
   FutureAttr fuattr;
   fuattr.callback = callback;
   ClassicProxy *proxy = LeaderProxyForPartition(pid).second;
