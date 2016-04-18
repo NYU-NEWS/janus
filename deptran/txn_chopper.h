@@ -194,11 +194,10 @@ class TxnCommand: public ContainerCommand {
   virtual set<parid_t> GetPartitionIds();
   TxnWorkspace& GetWorkspace(innid_t inn_id) {
     verify(inn_id != 0);
-    auto it = inputs_.find(inn_id);
-    if (inputs_.find(inn_id) == inputs_.end()) {
-      inputs_[inn_id] = TxnWorkspace(ws_);
-    }
-    return inputs_[inn_id];
+    TxnWorkspace& ws = inputs_[inn_id];
+    if (ws.values_->size() == 0)
+      ws.values_ = ws_.values_;
+    return ws;
   }
 
   virtual parid_t GetPiecePartitionId(innid_t inn_id) {
