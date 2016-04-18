@@ -1,4 +1,4 @@
-#include "all.h"
+#include "ro6.h"
 #include "memdb/row.h"
 /*
  * RO-6: Define class members for RO6DTxn in dtxn.hpp

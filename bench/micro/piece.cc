@@ -1,6 +1,9 @@
-#include "all.h"
 
-namespace deptran {
+#include "deptran/__dep__.h"
+#include "deptran/piece.h"
+#include "piece.h"
+
+namespace rococo {
 
 char MICRO_BENCH_TABLE_A[] = "table_a";
 char MICRO_BENCH_TABLE_B[] = "table_b";

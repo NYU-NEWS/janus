@@ -1,7 +1,8 @@
-#ifndef MICRO_PIECE_H_
-#define MICRO_PIECE_H_
+#pragma once
 
-namespace deptran {
+#include "deptran/piece.h"
+
+namespace rococo {
 
 class Piece;
 
@@ -42,6 +43,5 @@ public:
     void reg_pieces();
 };
 
-}
+} // namespace rococo
 
-#endif // MICRO_PIECE_H_

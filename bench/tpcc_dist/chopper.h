@@ -1,7 +1,9 @@
 #ifndef TPCC_DIST_CHOPPER_H_
 #define TPCC_DIST_CHOPPER_H_
 
-namespace deptran {
+#include "../tpcc/chopper.h"
+
+namespace rococo {
 
 class TpccTxn;
 
@@ -35,6 +37,6 @@ class TpccDistChopper: public TpccTxn {
   virtual ~TpccDistChopper();
 };
 
-}
+} // namespace rococo
 
 #endif

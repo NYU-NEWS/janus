@@ -1,5 +1,6 @@
-#include "all.h"
-#include "tpl/tpl.h"
+
+#include "deptran/__dep__.h"
+#include "piece.h"
 
 namespace rococo {
 

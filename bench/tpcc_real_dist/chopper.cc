@@ -1,6 +1,8 @@
-#include "all.h"
+#include "deptran/__dep__.h"
+#include "chopper.h"
+#include "piece.h"
 
-namespace deptran {
+namespace rococo {
 
 TpccRealDistChopper::TpccRealDistChopper() {
 }
@@ -33,4 +35,4 @@ bool TpccRealDistChopper::IsOneRound() {
 TpccRealDistChopper::~TpccRealDistChopper() {
 }
 
-}
+} // namespace rococo

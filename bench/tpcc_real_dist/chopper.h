@@ -1,8 +1,8 @@
 #pragma once
 
-namespace rococo {
+#include "../tpcc/chopper.h"
 
-class TpccTxn;
+namespace rococo {
 
 class TpccRealDistChopper: public TpccTxn {
  protected:

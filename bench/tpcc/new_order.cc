@@ -1,4 +1,5 @@
-#include "all.h"
+#include "chopper.h"
+#include "piece.h"
 #include "generator.h"
 
 namespace rococo {

@@ -1,6 +1,6 @@
-#include "all.h"
+#include "chopper.h"
 
-namespace deptran {
+namespace rococo {
 
 MicroTxnCmd::MicroTxnCmd() {
 }
@@ -128,4 +128,4 @@ void MicroTxnCmd::Reset() {
 
 MicroTxnCmd::~MicroTxnCmd() { }
 
-} // namespace deptran
+} // namespace rococo

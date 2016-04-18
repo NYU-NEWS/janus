@@ -1,6 +1,12 @@
-#include "all.h"
+#include "piece.h"
+#include "bench/rw_benchmark/piece.h"
+#include "bench/micro/piece.h"
+#include "bench/tpca/piece.h"
+#include "bench/tpcc/piece.h"
+#include "bench/tpcc_dist/piece.h"
+#include "bench/tpcc_real_dist/piece.h"
 
-namespace deptran {
+namespace rococo {
 
 Piece *Piece::get_piece(int benchmark) {
   switch (benchmark) {
@@ -22,4 +28,4 @@ Piece *Piece::get_piece(int benchmark) {
   }
 }
 
-}
+} // namespace rococo

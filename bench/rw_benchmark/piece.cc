@@ -1,6 +1,8 @@
-#include "all.h"
+#include "deptran/__dep__.h"
+#include "../tpcc/piece.h"
+#include "piece.h"
 
-namespace deptran {
+namespace rococo {
   char RW_BENCHMARK_TABLE[] = "history";
 
   void RWPiece::reg_all() {

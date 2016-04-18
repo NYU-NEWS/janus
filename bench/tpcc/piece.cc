@@ -1,4 +1,4 @@
-#include "all.h"
+#include "piece.h"
 #include <limits>
 
 namespace rococo {
