@@ -53,9 +53,9 @@ def row_key(r):
 
 def output_data_file(key, group):
     fn='_'.join(key) + ".csv"
-    print("generate csv: {}".format(fn))
     if os.path.exists(fn) and not ARGS.force:
         raise RuntimeError("file already exists: {}".format(fn))
+    print("generate csv: {}".format(fn))
     with open(fn, 'w') as f:
         f.write("# ")
         f.write(", ".join(labels + lat_labels))
