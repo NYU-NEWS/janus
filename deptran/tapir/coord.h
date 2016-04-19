@@ -24,7 +24,7 @@ class TapirCoord : public ClassicCoord {
   TapirCommo* commo();
 
   void Dispatch() override;
-  void DispatchAck(phase_t, int32_t res, ContainerCommand &cmd) override;
+  void DispatchAck(phase_t, int32_t res, TxnOutput& output) override;
 
   void FastAccept();
   void FastAcceptAck(phase_t phase, parid_t par_id, int32_t res);

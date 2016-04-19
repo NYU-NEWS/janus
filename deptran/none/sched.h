@@ -3,17 +3,17 @@
 //
 #pragma once
 
-#include "../scheduler.h"
+#include "../classic/sched.h"
 
 namespace rococo {
 
-class NoneSched: public Scheduler {
- using Scheduler::Scheduler;
+class NoneSched: public ClassicSched {
+ using ClassicSched::ClassicSched;
  public:
-  virtual int OnDispatch(const SimpleCommand &cmd,
+  virtual int OnDispatch(const vector<SimpleCommand> &cmd,
                          rrr::i32 *res,
-                         map<int32_t, Value> *output,
-                         const function<void()>& callback);
+                         TxnOutput* output,
+                         const function<void()>& callback) override;
 };
 
 }

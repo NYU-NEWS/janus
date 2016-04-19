@@ -8,23 +8,25 @@
 
 namespace rococo {
 
-void RccCommo::SendHandout(SimpleCommand &cmd,
-                           const function<void(int res,
-                                               SimpleCommand& cmd,
-                                               RccGraph& graph)>& callback) {
+void RccCommo::SendDispatch(vector<SimpleCommand> &cmd,
+                            const function<void(int res,
+                                                TxnOutput&,
+                                                RccGraph&)>& callback) {
   rrr::FutureAttr fuattr;
   std::function<void(Future*)> cb =
-      [callback, &cmd] (Future *fu) {
+      [callback] (Future *fu) {
         int res;
+        TxnOutput output;
         RccGraph graph;
-        fu->get_reply() >> res >> cmd.output >> graph;
-        callback(res, cmd, graph);
+        fu->get_reply() >> res >> output >> graph;
+        callback(res, output, graph);
       };
   fuattr.callback = cb;
-  auto proxy = (RococoProxy*)LeaderProxyForPartition(cmd.PartitionId()).second;
-  Log_debug("dispatch to %ld", cmd.PartitionId());
-  verify(cmd.type_ > 0);
-  verify(cmd.root_type_ > 0);
+  auto proxy = (RococoProxy*)LeaderProxyForPartition(
+      cmd[0].PartitionId()).second;
+  Log_debug("dispatch to %ld", cmd[0].PartitionId());
+//  verify(cmd.type_ > 0);
+//  verify(cmd.root_type_ > 0);
   Future::safe_release(proxy->async_Dispatch(cmd, fuattr));
 }
 

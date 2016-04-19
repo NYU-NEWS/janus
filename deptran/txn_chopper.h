@@ -149,7 +149,7 @@ class TxnCommand: public ContainerCommand {
   map<int32_t, parid_t> sharding_ = {};
   map<int32_t, int32_t> status_ = {}; // -1 waiting; 0 ready; 1 ongoing; 2
   // finished;
-  map<int32_t, ContainerCommand*> cmds_ = {};
+  map<int32_t, SimpleCommand*> cmds_ = {};
   std::set<parid_t> partition_ids_ = {};
   std::atomic<bool> commit_ ;
 

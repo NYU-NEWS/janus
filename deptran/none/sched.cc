@@ -9,17 +9,20 @@
 
 namespace rococo {
 
-int NoneSched::OnDispatch(const SimpleCommand &cmd,
+int NoneSched::OnDispatch(const vector<SimpleCommand> &cmd,
                           rrr::i32 *res,
-                          map<int32_t, Value> *output,
+                          TxnOutput *output,
                           const function<void()>& callback) {
-  auto dtxn = GetOrCreateDTxn(cmd.root_id_);
-  verify(partition_id_ == cmd.partition_id_);
-  txn_reg_->get(cmd).txn_handler(nullptr,
+  auto dtxn = GetOrCreateDTxn(cmd[0].root_id_);
+  verify(partition_id_ == cmd[0].partition_id_);
+  for (auto& c : cmd) {
+    txn_reg_->get(c).txn_handler(nullptr,
                                  dtxn,
-                                 const_cast<SimpleCommand&>(cmd),
+                                 const_cast<SimpleCommand&>(c),
                                  res,
-                                 *output);
+                                 (*output)[c.inn_id()]);
+  }
+
   *res = SUCCESS;
   callback();
   return 0;

@@ -10,9 +10,9 @@ class TapirCommo : public Communicator {
  public:
   using Communicator::Communicator;
 
-  void SendDispatch(SimpleCommand &cmd,
+  void SendDispatch(vector<SimpleCommand> &cmd,
                     Coordinator *coo,
-                    const function<void(int, ContainerCommand &)> &callback);
+                    const function<void(int, TxnOutput &)> &callback);
   void BroadcastFastAccept(parid_t par_id,
                            cmdid_t cmd_id,
                            vector<SimpleCommand>& cmds,

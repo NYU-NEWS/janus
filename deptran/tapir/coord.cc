@@ -20,17 +20,23 @@ TapirCommo* TapirCoord::commo() {
 
 void TapirCoord::Dispatch() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
+  //  ___TestPhaseOne(cmd_id_);
+  auto txn = (TxnCommand*) cmd_;
+
   int cnt = 0;
-  while (cmd_->HasMoreSubCmdReadyNotOut()) {
-    auto subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd();
-    subcmd->id_ = next_pie_id();
-    verify(subcmd->root_id_ == cmd_->id_);
-    n_dispatch_++;
-    cnt++;
-    Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
-              n_dispatch_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
-    dispatch_acks_[subcmd->inn_id()] = false;
-    commo()->SendDispatch(*subcmd,
+  auto cmds_by_par = txn->GetReadyCmds();
+  for (auto& pair: cmds_by_par) {
+    const parid_t& par_id = pair.first;
+    vector<SimpleCommand*>& cmds = pair.second;
+    n_dispatch_ += cmds.size();
+    cnt += cmds.size();
+    vector<SimpleCommand> cc;
+    for (SimpleCommand* c: cmds) {
+      c->id_ = next_pie_id();
+      dispatch_acks_[c->inn_id_] = false;
+      cc.push_back(*c);
+    }
+    commo()->SendDispatch(cc,
                           this,
                           std::bind(&ClassicCoord::DispatchAck,
                                     this,
@@ -44,25 +50,28 @@ void TapirCoord::Dispatch() {
 
 void TapirCoord::DispatchAck(phase_t phase,
                              int32_t res,
-                             ContainerCommand &cmd) {
+                             TxnOutput& outputs) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-  verify(phase == phase_);
-  n_dispatch_ack_++;
-  TxnCommand *ch = (TxnCommand *) cmd_;
-  dispatch_acks_[cmd.inn_id_] = true;
+  if (phase != phase_) return;
+  TxnCommand *txn = (TxnCommand *) cmd_;
+  for (auto& pair : outputs) {
+    n_dispatch_ack_++;
+    const innid_t& inn_id = pair.first;
+    verify(dispatch_acks_[inn_id] == false);
+    dispatch_acks_[inn_id] = true;
+    Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
+              n_dispatch_ack_, n_dispatch_, cmd_->id_, inn_id);
 
-  Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
-            n_dispatch_ack_, n_dispatch_, cmd_->id_, cmd.inn_id_);
-  verify(res == SUCCESS);
-  cmd_->Merge(cmd);
-  if (cmd_->HasMoreSubCmdReadyNotOut()) {
-    Log_debug("command has more sub-cmd, cmd_id: %lx,"
+    txn->Merge(pair.first, pair.second);
+  }
+  if (txn->HasMoreSubCmdReadyNotOut()) {
+    Log_debug("command has more sub-cmd, cmd_id: %llx,"
                   " n_started_: %d, n_pieces: %d",
-              cmd_->id_, ch->n_pieces_out_, ch->GetNPieceAll());
+              txn->id_, txn->n_pieces_out_, txn->GetNPieceAll());
     Dispatch();
   } else if (AllDispatchAcked()) {
-    Log_debug("receive all handout acks, txn_id: %ld; START PREPARE",
-              cmd_->id_);
+    Log_debug("receive all start acks, txn_id: %llx; START PREPARE",
+              txn->id_);
     GotoNextPhase();
   }
 }

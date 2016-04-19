@@ -7,10 +7,10 @@ TapirServiceImpl::TapirServiceImpl(Scheduler *sched) {
   sched_ = (TapirSched*)sched;
 }
 
-void TapirServiceImpl::Handout(const SimpleCommand& cmd,
-                               rrr::i32* res,
-                               map<int32_t, Value>* output,
-                               rrr::DeferredReply* defer) {
+void TapirServiceImpl::Dispatch(const vector<SimpleCommand>& cmd,
+                                rrr::i32* res,
+                                TxnOutput* output,
+                                rrr::DeferredReply* defer) {
   sched_->OnDispatch(cmd, res, output, [defer]() { defer->reply(); });
 }
 

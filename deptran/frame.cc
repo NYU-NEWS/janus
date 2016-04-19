@@ -9,6 +9,7 @@
 #include "rcc_service.h"
 #include "scheduler.h"
 #include "none/coord.h"
+#include "none/sched.h"
 #include "rcc/coord.h"
 #include "ro6/ro6_coord.h"
 #include "tpl/coord.h"

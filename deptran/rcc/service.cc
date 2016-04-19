@@ -85,11 +85,11 @@ RococoServiceImpl::RococoServiceImpl(Scheduler *sched,
 //}
 
 
-void RococoServiceImpl::Dispatch(const SimpleCommand& cmd,
-                                int32_t* res,
-                                map<int32_t, Value>* output,
-                                RccGraph* graph,
-                                DeferredReply* defer) {
+void RococoServiceImpl::Dispatch(const vector<SimpleCommand>& cmd,
+                                 int32_t* res,
+                                 TxnOutput* output,
+                                 RccGraph* graph,
+                                 DeferredReply* defer) {
   std::lock_guard <std::mutex> guard(this->mtx_);
   dtxn_sched()->OnDispatch(cmd,
                            res,
@@ -121,7 +121,7 @@ void RococoServiceImpl::Dispatch(const SimpleCommand& cmd,
 
 void RococoServiceImpl::Finish(const cmdid_t& cmd_id,
                                const RccGraph& graph,
-                               map<innid_t, map<int32_t, Value>>* output,
+                               TxnOutput* output,
                                DeferredReply* defer) {
   verify(graph.size() > 0);
   std::lock_guard <std::mutex> guard(mtx_);

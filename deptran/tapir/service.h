@@ -13,10 +13,10 @@ class TapirServiceImpl: public TapirService {
  public:
   TapirSched* sched_ = nullptr;
   TapirServiceImpl(Scheduler* sched);
-  void Handout(const SimpleCommand& cmd,
-               rrr::i32* res,
-               map<int32_t, Value>* output,
-               rrr::DeferredReply* reply) override;
+  void Dispatch(const vector<SimpleCommand>& cmd,
+                rrr::i32* res,
+                TxnOutput* output,
+                rrr::DeferredReply* reply) override;
   void Prepare(rrr::DeferredReply* defer) override;
   void Accept(const cmdid_t& cmd_id,
               const ballot_t& ballot,

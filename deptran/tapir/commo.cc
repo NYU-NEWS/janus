@@ -8,29 +8,27 @@
 
 namespace rococo {
 
-void TapirCommo::SendDispatch(SimpleCommand &cmd,
+void TapirCommo::SendDispatch(vector<SimpleCommand> &cmd,
                               Coordinator *coo,
                               const function<void(int,
-                                                  ContainerCommand &)>
+                                                  TxnOutput &)>
                               &callback) {
   rrr::FutureAttr fuattr;
-  parid_t par_id = cmd.PartitionId();
-  auto proxy = (TapirProxy*) NearestProxyForPartition(cmd.PartitionId()).second;
+  parid_t par_id = cmd[0].PartitionId();
+  auto proxy = (TapirProxy*)
+      NearestProxyForPartition(cmd[0].PartitionId()).second;
   function<void(Future*)> cb =
-      [coo, this, callback, &cmd] (Future *fu) {
-        Log_debug("SendStart callback for %ld from %ld",
-                  cmd.PartitionId(),
-                  coo->coo_id_);
-
+      [coo, this, callback] (Future *fu) {
         int32_t res;
-        fu->get_reply() >> res >> cmd.output;
-        callback(res, cmd);
+        TxnOutput output;
+        fu->get_reply() >> res >> output;
+        callback(res, output);
       };
   fuattr.callback = cb;
-  Log_debug("SendStart to %ld from %ld", cmd.PartitionId(), coo->coo_id_);
-  verify(cmd.type_ > 0);
-  verify(cmd.root_type_ > 0);
-  Future::safe_release(proxy->async_Handout(cmd, fuattr));
+  Log_debug("SendStart to %ld from %ld", cmd[0].PartitionId(), coo->coo_id_);
+//  verify(cmd.type_ > 0);
+//  verify(cmd.root_type_ > 0);
+  Future::safe_release(proxy->async_Dispatch(cmd, fuattr));
 }
 
 void TapirCommo::BroadcastFastAccept(parid_t par_id,

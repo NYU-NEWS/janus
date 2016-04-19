@@ -68,9 +68,9 @@ class BrqServiceImpl: public BrqService {
 //      BatchChopStartResponse *res,
 //      DeferredReply *defer);
 
-  void Dispatch(const SimpleCommand& cmd,
+  void Dispatch(const vector<SimpleCommand>& cmd,
                 int32_t* res,
-                map<int32_t, Value>* output,
+                TxnOutput* output,
                 BrqGraph* graph,
                 DeferredReply* defer) override;
 

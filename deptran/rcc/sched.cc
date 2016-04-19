@@ -22,24 +22,27 @@ RccSched::~RccSched() {
   delete waitlist_checker_;
 }
 
-int RccSched::OnDispatch(const SimpleCommand &cmd,
+int RccSched::OnDispatch(const vector<SimpleCommand> &cmd,
                          int32_t *res,
-                         map<int32_t, Value> *output,
+                         TxnOutput *output,
                          RccGraph *graph,
                          const function<void()> &callback) {
-  RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(cmd.root_id_);
-  dep_graph_->FindOrCreateTxnInfo(cmd.root_id_, &dtxn->tv_);
+  RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(cmd[0].root_id_);
+  dep_graph_->FindOrCreateTxnInfo(cmd[0].root_id_, &dtxn->tv_);
   verify(dep_graph_->partition_id_ == partition_id_);
-
   auto job = [&cmd, res, dtxn, callback, graph, output, this]() {
-    verify(cmd.partition_id_ == this->partition_id_);
-    dtxn->DispatchExecute(cmd, res, output);
+    verify(cmd[0].partition_id_ == this->partition_id_);
+    for (auto&c : cmd) {
+      dtxn->DispatchExecute(c, res, &(*output)[c.inn_id()]);
+    }
     dtxn->UpdateStatus(TXN_STD);
-    auto sz = dep_graph_->MinItfrGraph(cmd.root_id_, graph);
-    TxnInfo& info1 = *dep_graph_->vertex_index_.at(cmd.root_id_)->data_;
-    TxnInfo& info2 = *graph->vertex_index_.at(cmd.root_id_)->data_;
-    verify(info1.partition_.find(cmd.partition_id_) != info1.partition_.end());
-    verify(info2.partition_.find(cmd.partition_id_) != info2.partition_.end());
+    auto sz = dep_graph_->MinItfrGraph(cmd[0].root_id_, graph);
+    TxnInfo& info1 = *dep_graph_->vertex_index_.at(cmd[0].root_id_)->data_;
+    TxnInfo& info2 = *graph->vertex_index_.at(cmd[0].root_id_)->data_;
+    verify(info1.partition_.find(cmd[0].partition_id_)
+               != info1.partition_.end());
+    verify(info2.partition_.find(cmd[0].partition_id_)
+               != info2.partition_.end());
     verify(sz > 0);
     callback();
   };

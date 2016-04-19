@@ -37,45 +37,68 @@ void RccCoord::PreDispatch() {
 
 void RccCoord::Dispatch() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-//  phase_++;
-  // new txn id for every new and retry.
-//  RequestHeader header = gen_header(ch);
+  auto txn = (TxnCommand*) cmd_;
 
-  int cnt;
-  while (cmd_->HasMoreSubCmdReadyNotOut()) {
-    auto subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd();
-    subcmd->id_ = next_pie_id();
-    verify(subcmd->root_id_ == cmd_->id_);
-    n_dispatch_++;
-    cnt++;
-    Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
-              n_dispatch_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
-    dispatch_acks_[subcmd->inn_id()] = false;
-    auto func = std::bind(&RccCoord::DispatchAck,
-                          this,
-                          phase_,
-                          std::placeholders::_1,
-                          std::placeholders::_2,
-                          std::placeholders::_3);
-    commo()->SendHandout(*subcmd, func);
+  int cnt = 0;
+  auto cmds_by_par = txn->GetReadyCmds();
+  for (auto& pair: cmds_by_par) {
+    const parid_t& par_id = pair.first;
+    vector<SimpleCommand*>& cmds = pair.second;
+    n_dispatch_ += cmds.size();
+    cnt += cmds.size();
+    vector<SimpleCommand> cc;
+    for (SimpleCommand* c: cmds) {
+      c->id_ = next_pie_id();
+      dispatch_acks_[c->inn_id_] = false;
+      cc.push_back(*c);
+    }
+    commo()->SendDispatch(cc,
+                          std::bind(&RccCoord::DispatchAck,
+                                    this,
+                                    phase_,
+                                    std::placeholders::_1,
+                                    std::placeholders::_2,
+                                    std::placeholders::_3));
   }
+
+//  int cnt;
+//  while (cmd_->HasMoreSubCmdReadyNotOut()) {
+//    auto subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd();
+//    subcmd->id_ = next_pie_id();
+//    verify(subcmd->root_id_ == cmd_->id_);
+//    n_dispatch_++;
+//    cnt++;
+//    Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
+//              n_dispatch_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
+//    dispatch_acks_[subcmd->inn_id()] = false;
+//    auto func = std::bind(&RccCoord::DispatchAck,
+//                          this,
+//                          phase_,
+//                          std::placeholders::_1,
+//                          std::placeholders::_2,
+//                          std::placeholders::_3);
+//    commo()->SendHandout(*subcmd, func);
+//  }
 }
 
 void RccCoord::DispatchAck(phase_t phase,
                            int res,
-                           SimpleCommand &cmd,
+                           TxnOutput& output,
                            RccGraph &graph) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(phase == phase_); // cannot proceed without all acks.
-  TxnInfo& info = *graph.vertex_index_.at(cmd.root_id_)->data_;
-  verify(cmd.root_id_ == info.id());
-  verify(info.partition_.find(cmd.partition_id_) != info.partition_.end());
-  n_dispatch_ack_++;
-  TxnCommand *txn = (TxnCommand *) cmd_;
-  dispatch_acks_[cmd.inn_id_] = true;
+  TxnInfo& info = *graph.vertex_index_.at(txn().root_id_)->data_;
+//  verify(cmd[0].root_id_ == info.id());
+//  verify(info.partition_.find(cmd.partition_id_) != info.partition_.end());
 
-  Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
-            n_dispatch_ack_, n_dispatch_, txn->id_, cmd.inn_id_);
+  for (auto& pair : output) {
+    n_dispatch_ack_++;
+    verify(dispatch_acks_[pair.first] == false);
+    dispatch_acks_[pair.first] = true;
+    txn().Merge(pair.first, pair.second);
+    Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
+              n_dispatch_ack_, n_dispatch_, txn().id_, pair.first);
+  }
 
   bool early_return = false;
 
@@ -84,25 +107,17 @@ void RccCoord::DispatchAck(phase_t phase,
   verify(graph.size() > 0);
   graph_.Aggregate(graph);
 
-//  Log_debug(
-//      "receive deptran start response, tid: %llx, pid: %llx, graph size: %d",
-//      cmd.root_id_,
-//      cmd->id_,
-//      gra.size());
-
   // TODO?
-  if (graph.size() > 1) txn->disable_early_return();
+  if (graph.size() > 1) txn().disable_early_return();
 
-  txn->Merge(cmd);
-
-  if (txn->HasMoreSubCmdReadyNotOut()) {
+  if (txn().HasMoreSubCmdReadyNotOut()) {
     Log_debug("command has more sub-cmd, cmd_id: %lx,"
                   " n_started_: %d, n_pieces: %d",
-              txn->id_, txn->n_pieces_out_, txn->GetNPieceAll());
+              txn().id_, txn().n_pieces_out_, txn().GetNPieceAll());
     Dispatch();
   } else if (AllDispatchAcked()) {
     Log_debug("receive all start acks, txn_id: %llx; START PREPARE", cmd_->id_);
-    verify(!txn->do_early_return());
+    verify(!txn().do_early_return());
     GotoNextPhase();
   }
 }

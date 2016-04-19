@@ -37,7 +37,7 @@ public:
   void Dispatch();
   virtual void DispatchAck(phase_t phase,
                            int res,
-                           SimpleCommand &cmd,
+                           TxnOutput &cmd,
                            RccGraph &graph);
   void Finish();
   void FinishAck(phase_t phase,

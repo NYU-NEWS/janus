@@ -9,9 +9,9 @@ class TapirSched : public Scheduler {
  public:
   using Scheduler::Scheduler;
 
-  int OnDispatch(const SimpleCommand &cmd,
+  int OnDispatch(const vector<SimpleCommand> &cmd,
                  int *res,
-                 map<int32_t, Value> *output,
+                 TxnOutput *output,
                  const function<void()> &callback);
 
   int OnFastAccept(cmdid_t cmd_id,

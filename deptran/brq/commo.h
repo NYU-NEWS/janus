@@ -7,10 +7,10 @@ namespace rococo {
 class BrqCommo: public RccCommo {
  public:
   using RccCommo::RccCommo;
-  void SendHandout(SimpleCommand &cmd,
-                   const function<void(int res,
-                                       SimpleCommand &cmd,
-                                       RccGraph &graph)> &);
+  void SendDispatch(vector<SimpleCommand> &cmd,
+                    const function<void(int res,
+                                        TxnOutput& output,
+                                        RccGraph &graph)> &);
   void SendHandoutRo(SimpleCommand &cmd,
                      const function<void(int res,
                                          SimpleCommand &cmd,

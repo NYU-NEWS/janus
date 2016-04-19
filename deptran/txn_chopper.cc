@@ -205,6 +205,7 @@ void TxnCommand::Merge(innid_t inn_id, map<int32_t, Value>& output) {
   verify(n_pieces_input_ready_ >= n_pieces_out_);
   verify(n_pieces_out_ >= n_pieces_replied_);
   outputs_[inn_id] = output;
+  cmds_[inn_id]->output = output;
   this->start_callback(inn_id, SUCCESS, output);
 }
 

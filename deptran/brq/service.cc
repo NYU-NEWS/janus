@@ -82,9 +82,9 @@ BrqServiceImpl::BrqServiceImpl(Scheduler *sched,
 //}
 
 
-void BrqServiceImpl::Dispatch(const SimpleCommand& cmd,
+void BrqServiceImpl::Dispatch(const vector<SimpleCommand>& cmd,
                               int32_t* res,
-                              map<int32_t, Value>* output,
+                              TxnOutput* output,
                               BrqGraph* graph,
                               DeferredReply* defer) {
   std::lock_guard <std::mutex> guard(this->mtx_);

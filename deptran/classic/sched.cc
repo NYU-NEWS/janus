@@ -10,18 +10,29 @@
 
 namespace rococo {
 
-int ClassicSched::OnDispatch(const SimpleCommand &cmd,
+int ClassicSched::OnDispatch(const vector<SimpleCommand>& cmd,
                              int32_t *res,
-                             map<int32_t, Value> *output,
+                             TxnOutput* output,
                              const function<void()>& callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   verify(frame_);
-  auto exec = (ClassicExecutor*) GetOrCreateExecutor(cmd.root_id_);
-  exec->cmds_.push_back(cmd);
-  exec->StartLaunch(cmd,
-                    res,
-                    output,
-                    callback);
+  auto exec = (ClassicExecutor*) GetOrCreateExecutor(cmd[0].root_id_);
+
+  rrr::DragonBall* db = new rrr::DragonBall(
+      (int32_t)cmd.size(),
+      [&callback] () {
+        callback();
+      });
+
+  for (const auto& c : cmd) {
+    exec->cmds_.push_back(c);
+
+    exec->StartLaunch(c,
+                      res,
+                      &(*output)[c.inn_id()],
+                      [db] () {db->trigger();});
+  }
+
   return 0;
 }
 

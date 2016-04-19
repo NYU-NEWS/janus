@@ -3,19 +3,19 @@
 //
 #pragma once
 
-#include "../none/sched.h"
+#include "../scheduler.h"
 
 namespace rococo {
 
 class TxnCommand;
 class TpcPrepareCommand;
-class ClassicSched: public NoneSched {
- using NoneSched::NoneSched;
+class ClassicSched: public Scheduler {
+ using Scheduler::Scheduler;
  public:
 
-  virtual int OnDispatch(const SimpleCommand &cmd,
+  virtual int OnDispatch(const vector<SimpleCommand> &cmds,
                          int32_t *res,
-                         map<int32_t, Value> *output,
+                         TxnOutput* output,
                          const function<void()>& callback);
   // PrepareRequest
   virtual int OnPrepare(cmdid_t cmd_id,

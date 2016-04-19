@@ -30,9 +30,9 @@ class RccSched : public Scheduler {
     dep_graph_->partition_id_ = par_id;
   }
 
-  int OnDispatch(const SimpleCommand &cmd,
+  int OnDispatch(const vector<SimpleCommand> &cmd,
                  rrr::i32 *res,
-                 map<int32_t, Value> *output,
+                 TxnOutput* output,
                  RccGraph *graph,
                  const function<void()> &callback);
 

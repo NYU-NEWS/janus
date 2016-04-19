@@ -8,10 +8,10 @@ class RccGraph;
 class RccCommo : public Communicator {
  public:
   using Communicator::Communicator;
-  virtual void SendHandout(SimpleCommand &cmd,
-                   const function<void(int res,
-                                       SimpleCommand& cmd,
-                                       RccGraph& graph)>&) ;
+  virtual void SendDispatch(vector<SimpleCommand> &cmd,
+                            const function<void(int res,
+                                                TxnOutput& cmd,
+                                                RccGraph& graph)>&) ;
   virtual void SendHandoutRo(SimpleCommand &cmd,
                      const function<void(int res,
                                          SimpleCommand& cmd,

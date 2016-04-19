@@ -139,10 +139,10 @@ ClassicServiceImpl::ClassicServiceImpl(Scheduler *sched,
 //}
 
 
-void ClassicServiceImpl::Dispatch(const SimpleCommand &cmd,
-                                 rrr::i32 *res,
-                                 map<int32_t, Value> *output,
-                                 rrr::DeferredReply *defer) {
+void ClassicServiceImpl::Dispatch(const vector<SimpleCommand>& cmd,
+                                  rrr::i32 *res,
+                                  TxnOutput* output,
+                                  rrr::DeferredReply *defer) {
   std::lock_guard<std::mutex> guard(mtx_);
 
 #ifdef PIECE_COUNT
@@ -161,7 +161,10 @@ void ClassicServiceImpl::Dispatch(const SimpleCommand &cmd,
 //  output->resize(output_size);
   // find stored procedure, and run it
   *res = SUCCESS;
-  ((ClassicSched *) dtxn_sched_)->OnDispatch(cmd, res, output,
+  verify(cmd.size() > 0);
+  ((ClassicSched *) dtxn_sched_)->OnDispatch(cmd,
+                                             res,
+                                             output,
                                              [defer] () {defer->reply();});
 }
 

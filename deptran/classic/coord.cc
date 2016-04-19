@@ -184,17 +184,19 @@ void ClassicCoord::Dispatch() {
     vector<SimpleCommand*>& cmds = pair.second;
     n_dispatch_ += cmds.size();
     cnt += cmds.size();
+    vector<SimpleCommand> cc;
     for (SimpleCommand* c: cmds) {
       c->id_ = next_pie_id();
       dispatch_acks_[c->inn_id_] = false;
-      commo()->SendDispatch(*c,
-                            this,
-                            std::bind(&ClassicCoord::DispatchAck,
-                                      this,
-                                      phase_,
-                                      std::placeholders::_1,
-                                      std::placeholders::_2));
+      cc.push_back(*c);
     }
+    commo()->SendDispatch(cc,
+                          this,
+                          std::bind(&ClassicCoord::DispatchAck,
+                                    this,
+                                    phase_,
+                                    std::placeholders::_1,
+                                    std::placeholders::_2));
   }
 //  while (txn->HasMoreSubCmdReadyNotOut()) {
 //    auto subcmd = (SimpleCommand*) txn->GetNextReadySubCmd();
@@ -227,45 +229,47 @@ bool ClassicCoord::AllDispatchAcked() {
   return ret1;
 }
 
-void ClassicCoord::DispatchAck(phase_t phase, int res, ContainerCommand &cmd) {
+void ClassicCoord::DispatchAck(phase_t phase,
+                               int res,
+                               TxnOutput &outputs) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   if (phase != phase_) return;
-//  if (IsPhaseOrStageStale(phase, HANDOUT)) {
-//    Log_debug("ignore stale startack\n");
-//    return;
-//  }
-  n_dispatch_ack_++;
-  TxnCommand *ch = (TxnCommand *) cmd_;
-  verify(dispatch_acks_[cmd.inn_id_] == false);
-  dispatch_acks_[cmd.inn_id_] = true;
+  TxnCommand *txn = (TxnCommand *) cmd_;
+  for (auto& pair : outputs) {
+    n_dispatch_ack_++;
+    const innid_t& inn_id = pair.first;
+    verify(dispatch_acks_.at(inn_id) == false);
+    dispatch_acks_[inn_id] = true;
+    Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
+              n_dispatch_ack_, n_dispatch_, cmd_->id_, inn_id);
 
-  Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
-            n_dispatch_ack_, n_dispatch_, cmd_->id_, cmd.inn_id_);
-//  verify(res == SUCCESS);
-  if (res == REJECT) {
-    Log_debug("got REJECT reply for cmd_id: %lx, inn_id: %d; NOT COMMITING",
-               cmd.root_id_, cmd.inn_id());
-    aborted_ = true;
-    ch->commit_.store(false);
-  }
-  if (aborted_) {
-    if (n_dispatch_ack_ == n_dispatch_) {
-      Log_debug("received all start acks (at least one is REJECT); calling "
-                    "Finish()");
-      GotoNextPhase();
+    if (res == REJECT) {
+      Log_debug("got REJECT reply for cmd_id: %llx, inn_id: %x; NOT COMMITING",
+                txn->id_, inn_id);
+      aborted_ = true;
+      txn->commit_.store(false);
     }
-  } else {
-    cmd_->Merge(cmd);
-    if (cmd_->HasMoreSubCmdReadyNotOut()) {
-      Log_debug("command has more sub-cmd, cmd_id: %lx,"
-                    " n_started_: %d, n_pieces: %d",
-                cmd_->id_, ch->n_pieces_out_, ch->GetNPieceAll());
-      Dispatch();
-    } else if (AllDispatchAcked()) {
-      Log_debug("receive all start acks, txn_id: %ld; START PREPARE", cmd_->id_);
-      GotoNextPhase();
+    if (aborted_) {
+      if (n_dispatch_ack_ == n_dispatch_) {
+        Log_debug("received all start acks (at least one is REJECT); calling "
+                      "Finish()");
+        GotoNextPhase();
+      }
+    } else {
+      txn->Merge(pair.first, pair.second);
+      if (txn->HasMoreSubCmdReadyNotOut()) {
+        Log_debug("command has more sub-cmd, cmd_id: %llx,"
+                      " n_started_: %d, n_pieces: %d",
+                  txn->id_, txn->n_pieces_out_, txn->GetNPieceAll());
+        Dispatch();
+      } else if (AllDispatchAcked()) {
+        Log_debug("receive all start acks, txn_id: %llx; START PREPARE",
+                  txn->id_);
+        GotoNextPhase();
+      }
     }
   }
+
 }
 
 /** caller should be thread_safe */
