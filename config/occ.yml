@@ -1,7 +1,7 @@
 
 mode:
   cc: occ # concurrency control
-  ab: none # atomic broadcast
+  ab: multi_paxos # atomic broadcast
   read_only: occ
   batch: false
   retry: 0
