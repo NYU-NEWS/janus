@@ -13,14 +13,14 @@ pkg_check_modules(APR REQUIRED apr-1)
 pkg_check_modules(APRUTIL REQUIRED apr-util-1)
 pkg_check_modules(PYTHON2 REQUIRED python2)
 pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
-pkg_check_modules(PROFILER REQUIRED libprofiler)
+#pkg_check_modules(PROFILER REQUIRED libprofiler)
 
 FIND_PACKAGE(Boost COMPONENTS system filesystem REQUIRED)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLOG_LEVEL_AS_INFO")
 #set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DLOG_LEVEL_AS_DEBUG")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCPU_PROFILE")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCPU_PROFILE")
 
 #FIND_LIBRARY (DMALLOC_LIBRARY dmalloc /usr/lib /sw/lib)
 #FIND_PATH (DMALLOC_INCLUDE_DIR dmalloc.h PATHS /usr/include /sw/include)
@@ -49,7 +49,7 @@ include_directories(
     ${PYTHON2_INCLUDE_DIRS}
     ${APR_INCLUDE_DIRS}
     ${YAML_CPP_INCLUDE_DIRS}
-    ${PROFILER_INCLUDE_DIRS}
+#    ${PROFILER_INCLUDE_DIRS}
     .
     rrr
     memdb
@@ -72,7 +72,7 @@ link_directories(
     ${PYTHON2_LIBRARY_DIRS}
     ${APR_LIBRARY_DIRS}
     ${YAML_CPP_LIBRARY_DIRS}
-    ${PROFILER_LIBRARY_DIRS}
+#    ${PROFILER_LIBRARY_DIRS}
 )
 
 
@@ -148,7 +148,7 @@ target_link_libraries(
     ${PYTHON2_LIBRARIES}
     ${APR_LIBRARIES}
     ${APRUTIL_LIBRARIES}
-    ${PROFILER_LIBRARIES}
+#    ${PROFILER_LIBRARIES}
 )
 #
 #target_link_libraries(
