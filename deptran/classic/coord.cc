@@ -176,27 +176,43 @@ void ClassicCoord::Dispatch() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   //  ___TestPhaseOne(cmd_id_);
   auto txn = (TxnCommand*) cmd_;
-//  StartRequest req;
-//  req.cmd_id = cmd_id_;
 
   int cnt = 0;
-  while (txn->HasMoreSubCmdReadyNotOut()) {
-    auto subcmd = (SimpleCommand*) txn->GetNextReadySubCmd();
-    subcmd->id_ = next_pie_id();
-    verify(subcmd->root_id_ == cmd_->id_);
-    n_dispatch_++;
-    cnt++;
-    Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
-              n_dispatch_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
-    dispatch_acks_[subcmd->inn_id()] = false;
-    commo()->SendDispatch(*subcmd,
-                         this,
-                         std::bind(&ClassicCoord::DispatchAck,
-                                   this,
-                                   phase_,
-                                   std::placeholders::_1,
-                                   std::placeholders::_2));
+  auto cmds_by_par = txn->GetReadyCmds();
+  for (auto& pair: cmds_by_par) {
+    const parid_t& par_id = pair.first;
+    vector<SimpleCommand*>& cmds = pair.second;
+    n_dispatch_ += cmds.size();
+    cnt += cmds.size();
+    for (SimpleCommand* c: cmds) {
+      c->id_ = next_pie_id();
+      dispatch_acks_[c->inn_id_] = false;
+      commo()->SendDispatch(*c,
+                            this,
+                            std::bind(&ClassicCoord::DispatchAck,
+                                      this,
+                                      phase_,
+                                      std::placeholders::_1,
+                                      std::placeholders::_2));
+    }
   }
+//  while (txn->HasMoreSubCmdReadyNotOut()) {
+//    auto subcmd = (SimpleCommand*) txn->GetNextReadySubCmd();
+//    subcmd->id_ = next_pie_id();
+//    verify(subcmd->root_id_ == cmd_->id_);
+//    n_dispatch_++;
+//    cnt++;
+//    Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
+//              n_dispatch_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
+//    dispatch_acks_[subcmd->inn_id()] = false;
+//    commo()->SendDispatch(*subcmd,
+//                         this,
+//                         std::bind(&ClassicCoord::DispatchAck,
+//                                   this,
+//                                   phase_,
+//                                   std::placeholders::_1,
+//                                   std::placeholders::_2));
+//  }
   Log_debug("sent %d subcmds\n", cnt);
 }
 
