@@ -17,6 +17,7 @@ def parse_args():
     parser.add_argument('input_files', nargs='+')
     parser.add_argument('--force', '-f', dest="force", action="store_const",
                         const=True, default=False)
+    parser.add_argument('--prefix', '-p', dest="prefix", default="")
     ARGS = parser.parse_args(sys.argv[1:])
 
 def read_files():
@@ -52,7 +53,7 @@ def row_key(r):
     return r[0:4]
 
 def output_data_file(key, group):
-    fn='_'.join(key) + ".csv"
+    fn = ARGS.prefix + '_'.join(key) + ".csv"
     if os.path.exists(fn) and not ARGS.force:
         raise RuntimeError("file already exists: {}".format(fn))
     print("generate csv: {}".format(fn))
