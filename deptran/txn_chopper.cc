@@ -91,14 +91,54 @@ vector<SimpleCommand> TxnCommand::GetCmdsByPartition(parid_t par_id) {
   return cmds;
 }
 
+map<parid_t, vector<SimpleCommand*>> TxnCommand::GetReadyCmds() {
+  verify(n_pieces_out_ < n_pieces_input_ready_);
+  verify(n_pieces_out_ < n_pieces_all_);
+  map<parid_t, vector<SimpleCommand*>> cmds;
+
+  auto sz = status_.size();
+  for (auto &kv : status_) {
+    auto pi = kv.first;
+    auto &status = kv.second;
+
+    if (status == READY) {
+      status = INIT;
+      SimpleCommand *cmd = new SimpleCommand();
+      cmd->inn_id_ = pi;
+      cmd->partition_id_ = GetPiecePartitionId(pi);
+      cmd->type_ = pi;
+      cmd->root_id_ = id_;
+      cmd->root_type_ = type_;
+      cmd->input = inputs_[pi];
+      cmd->output_size = output_size_[pi];
+      cmd->root_ = this;
+      cmds_[pi] = cmd;
+      cmds[cmd->partition_id_].push_back(cmd);
+      partition_ids_.insert(cmd->partition_id_);
+
+      Log_debug("getting subcmd i: %d, thread id: %x",
+                pi, std::this_thread::get_id());
+      verify(status_[pi] == INIT);
+      status_[pi] = ONGOING;
+
+      //verify(cmd->type_ != 0); // not sure why this should be true???
+      verify(type_ == type());
+      verify(cmd->root_type_ == type());
+      verify(cmd->root_type_ > 0);
+      n_pieces_out_++;
+    }
+  }
+
+  verify(cmds.size() > 0);
+  return cmds;
+}
+
 ContainerCommand *TxnCommand::GetNextReadySubCmd() {
   verify(n_pieces_out_ < n_pieces_input_ready_);
   verify(n_pieces_out_ < n_pieces_all_);
   SimpleCommand *cmd = nullptr;
 
   auto sz = status_.size();
-  verify(sz > 0);
-
   for (auto &kv : status_) {
     auto pi = kv.first;
     auto &status = kv.second;

@@ -97,6 +97,26 @@ class SimpleCommand: public ContainerCommand {
   virtual ~SimpleCommand() {};
 };
 
+class BatchCommand: public ContainerCommand {
+ public:
+  ContainerCommand* root_ = nullptr;
+  TxnWorkspace input_ = {};
+  parid_t partition_id_ = ~0;
+  vector<innid_t> inn_ids_ = {};
+  BatchCommand() = default;
+  Marshal& FromMarshal(Marshal& m) override {
+    m >> input_;
+    m >> partition_id_;
+    m >> inn_ids_;
+  }
+  Marshal& ToMarshal(Marshal& m) const override {
+    m << input_;
+    m << partition_id_;
+    m << inn_ids_;
+  }
+  virtual ~BatchCommand() {};
+};
+
 class TxnCommand: public ContainerCommand {
  private:
   static inline bool is_consistent(map<int32_t, Value> &previous,
@@ -191,6 +211,7 @@ class TxnCommand: public ContainerCommand {
   virtual void Merge(TxnOutput& output);
   virtual bool HasMoreSubCmdReadyNotOut();
   virtual ContainerCommand* GetNextReadySubCmd();
+  virtual map<parid_t, vector<SimpleCommand*>> GetReadyCmds();
   virtual set<parid_t> GetPartitionIds();
   TxnWorkspace& GetWorkspace(innid_t inn_id) {
     verify(inn_id != 0);
