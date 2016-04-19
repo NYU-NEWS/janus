@@ -6,6 +6,7 @@ import tempfile
 import subprocess
 import itertools
 import shutil
+import glob
 from argparse import ArgumentParser
 import logging
 from logging import info, debug, error 
@@ -136,21 +137,21 @@ def gen_process_and_site(experiment_name, num_c, num_s, num_replicas, hosts_conf
         for process_infos in itertools.izip(*region_data.itervalues()):
             for process_info in process_infos:
                 process_names.append(process_info[0])
-        logger.info("process_names: {}".format(process_names))
+        logger.info("process_names1: {}".format(process_names))
     else:
         process_names = hosts.keys()
         i=0
-        while len(process_names) < len(servers)+1:
+        while len(process_names) < (num_s*num_replicas)+1:
             process_names.append(hosts.keys()[i % len(hosts.keys())])
             i += 1
     
-    logger.info("process names: {}".format(process_names))
+    logger.info("process names2: {}".format(process_names))
 
     for server_list in servers:
-	for s in server_list:	
-		assign_to = process_names.pop()
-		s_name = s.split(':')[0]
-		process_map[s_name] = assign_to
+        for s in server_list:	
+            assign_to = process_names.pop()
+            s_name = s.split(':')[0]
+            process_map[s_name] = assign_to
 
     idx = 0
     for c in clients:
@@ -313,6 +314,23 @@ def scrape_data(name):
         logger.error("Error scraping data!!")
 
 
+def aggregate_results(name):
+    restore_dir = os.getcwd()
+    try:
+        archive_dir = "./archive/"
+        cc = os.path.join(os.getcwd(), 'scripts/aggregate_run_output.py')
+        cmd = [cc, 
+               '-p', name + "_"]
+        os.chdir(archive_dir)
+        cmd += glob.glob('*yml')
+
+        res=subprocess.call(cmd)
+        if res!=0:
+            logger.error("Error aggregating data!!")
+    finally:
+        os.chdir(restore_dir)
+
+
 def run_experiments(args):
     server_counts = itertools.chain.from_iterable([get_range(sr) for sr in args.server_counts])
     client_counts = itertools.chain.from_iterable([get_range(cr) for cr in args.client_counts])
@@ -356,6 +374,9 @@ def run_experiments(args):
             logger.info("Experiment %s failed.",
                         experiment_name)
             traceback.print_exc()
+    
+    aggregate_results(experiment_name)
+
                    
 
 def print_args(args):
