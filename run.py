@@ -192,7 +192,7 @@ class TxnInfo(object):
         self.this_latencies = []
         return ret
 
-    def print_mid(self, num_clients):
+    def print_mid(self, config, num_clients):
         start_txn = self.mid_start_txn - self.mid_pre_start_txn
         total_txn = self.mid_total_txn - self.mid_pre_total_txn
         tries = self.mid_total_try - self.mid_pre_total_try
@@ -214,23 +214,23 @@ class TxnInfo(object):
             logger.info("percent: {}".format(percent))
             percent = percent*100
             key = str(percent)
-            logger.info("latency count!!!!!!!!  {}".format(len(self.mid_latencies)))
             if len(self.mid_latencies)>0:
                 index = int(math.ceil(percent/100*len(self.mid_latencies)))-1
-                logger.info("index!!!! {}".format(index))
                 latencies[key] = self.mid_latencies[index]
             else:
                 latencies[key] = 9999.99
             
-            logger.info("attempt latency count!!!!!!!!  {}".format(len(self.mid_attempt_latencies)))
             if len(self.mid_attempt_latencies)>0:
                 att_index = int(math.ceil(percent/100*len(self.mid_attempt_latencies)))-1
-                logger.info("attempt index!!!! {}".format(att_index))
                 att_latencies[key] = self.mid_attempt_latencies[att_index]
             else:
                 att_latencies[key] = 9999.99
 
         self.data = {
+            'benchmark': config['bench']['workload'],
+            'cc': config['mode']['cc'],
+            'ab': config['mode']['ab'],
+            'clients': sum([len(x) for x in config['site']['client']]),
             'duration': self.mid_time,
             'txn_name': self.txn_name,
             'start_cnt': start_txn,
@@ -459,8 +459,7 @@ class ClientController(object):
             self.print_max = False
             for k, v in self.txn_infos.items():
                 #v.print_max()
-                logger.info("PRINT MID!!!!!!!!!!!!!!!")
-                v.print_mid(self.num_proxies)
+                v.print_mid(self.config, self.num_proxies)
 
         if (not self.recording_period):
             if (progress >= 20 and progress <= 60):
@@ -519,7 +518,7 @@ class ClientController(object):
             if (self.print_max):
                 self.print_max = False
                 for k, v in self.txn_infos.items():
-                    v.print_mid(self.num_proxies)
+                    v.print_mid(self.config, self.num_proxies)
             return True
         else:
             return False
@@ -1065,7 +1064,6 @@ def setup_experiment(config):
         log_path = os.path.join(config['args'].log_dir,
                                 config['args'].experiment_name + ".log")
     setup_logging(log_path)
-
 
 def main():
     ret = 0
