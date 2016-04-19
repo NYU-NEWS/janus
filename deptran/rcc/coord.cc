@@ -38,7 +38,7 @@ void RccCoord::PreDispatch() {
 void RccCoord::Dispatch() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto txn = (TxnCommand*) cmd_;
-
+  verify(txn->root_id_ == txn->id_);
   int cnt = 0;
   auto cmds_by_par = txn->GetReadyCmds();
   for (auto& pair: cmds_by_par) {
@@ -87,6 +87,7 @@ void RccCoord::DispatchAck(phase_t phase,
                            RccGraph &graph) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(phase == phase_); // cannot proceed without all acks.
+  verify(txn().root_id_ == txn().id_);
   TxnInfo& info = *graph.vertex_index_.at(txn().root_id_)->data_;
 //  verify(cmd[0].root_id_ == info.id());
 //  verify(info.partition_.find(cmd.partition_id_) != info.partition_.end());
@@ -309,7 +310,7 @@ void RccCoord::do_one(TxnRequest& req) {
   verify(txn_reg_ != nullptr);
   cmd_ = txn;
   cmd_->id_ = this->next_txn_id();
-  cmd_->root_id_ = this->next_txn_id();
+  cmd_->root_id_ = cmd_->id_;
   Reset();
   Log_debug("do one request");
 
