@@ -70,6 +70,7 @@ void BrqCommo::SendInquire(parid_t pid,
 void BrqCommo::BroadcastPreAccept(parid_t par_id,
                                   txnid_t cmd_id,
                                   ballot_t ballot,
+                                  vector<SimpleCommand>& cmds,
                                   RccGraph& graph,
                                   const function<void(int, RccGraph&)> &callback) {
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
@@ -84,7 +85,10 @@ void BrqCommo::BroadcastPreAccept(parid_t par_id,
       callback(res, graph);
     };
     verify(cmd_id > 0);
-    Future::safe_release(proxy->async_PreAccept(cmd_id, graph, fuattr));
+    Future::safe_release(proxy->async_PreAccept(cmd_id,
+                                                cmds,
+                                                graph,
+                                                fuattr));
   }
 }
 

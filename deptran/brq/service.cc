@@ -170,11 +170,13 @@ void BrqServiceImpl::rcc_ro_start_pie(const SimpleCommand &cmd,
 }
 
 void BrqServiceImpl::PreAccept(const cmdid_t &txnid,
+                               const vector<SimpleCommand>& cmds,
                                const RccGraph& graph,
                                int32_t* res,
                                RccGraph* res_graph,
                                DeferredReply* defer) {
   dtxn_sched()->OnPreAccept(txnid,
+                            cmds,
                             graph,
                             res,
                             res_graph,

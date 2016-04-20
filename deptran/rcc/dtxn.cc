@@ -18,6 +18,10 @@ RccDTxn::RccDTxn(txnid_t tid,
 void RccDTxn::DispatchExecute(const SimpleCommand &cmd,
                               int32_t *res,
                               map<int32_t, Value> *output) {
+  for (auto& c: dreqs_) {
+    if (c.inn_id() == cmd.inn_id())
+      return;
+  }
   verify(phase_ <= PHASE_RCC_START);
   phase_ = PHASE_RCC_START;
   // execute the IR actions.

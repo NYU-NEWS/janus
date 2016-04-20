@@ -10,6 +10,7 @@ class BrqSched : public RccSched {
   using RccSched::RccSched;
 
   void OnPreAccept(const txnid_t txnid,
+                   const vector<SimpleCommand>& cmds,
                    const RccGraph& graph,
                    int32_t* res,
                    RccGraph* res_graph,

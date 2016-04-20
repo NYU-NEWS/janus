@@ -44,48 +44,16 @@ void BrqCoord::launch_recovery(cmdid_t cmd_id) {
   prepare();
 }
 
-void BrqCoord::DispatchAck(phase_t phase,
-                           int res,
-                           SimpleCommand &cmd,
-                           RccGraph &graph) {
-  std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-  verify(phase == phase_); // cannot proceed without all acks.
-  TxnInfo& info = *graph.vertex_index_.at(cmd.root_id_)->data_;
-  verify(cmd.root_id_ == info.id());
-  verify(info.partition_.find(cmd.partition_id_) != info.partition_.end());
-  n_dispatch_ack_++;
-  TxnCommand *txn = (TxnCommand *) cmd_;
-  dispatch_acks_[cmd.inn_id_] = true;
-
-  Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
-            n_dispatch_ack_, n_dispatch_, txn->id_, cmd.inn_id_);
-
-  // where should I store this graph?
-  Log_debug("start response graph size: %d", (int)graph.size());
-  verify(graph.size() > 0);
-  graph_.Aggregate(graph);
-
-  txn->Merge(cmd);
-
-  if (txn->HasMoreSubCmdReadyNotOut()) {
-    Log_debug("command has more sub-cmd, cmd_id: %lx,"
-                  " n_started_: %d, n_pieces: %d",
-              txn->id_, txn->n_pieces_out_, txn->GetNPieceAll());
-    Dispatch();
-  } else if (AllDispatchAcked()) {
-    Log_debug("receive all start acks, txn_id: %llx; START PREPARE", cmd_->id_);
-    GotoNextPhase();
-  }
-}
-
 void BrqCoord::PreAccept() {
 //  // generate fast accept request
   // set broadcast callback
   // broadcast
   for (auto par_id : cmd_->GetPartitionIds()) {
+    auto cmds = txn().GetCmdsByPartition(par_id);
     commo()->BroadcastPreAccept(par_id,
                                 cmd_->id_,
                                 magic_ballot(),
+                                cmds,
                                 graph_,
                                 std::bind(&BrqCoord::PreAcceptAck,
                                           this,

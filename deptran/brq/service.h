@@ -86,6 +86,7 @@ class BrqServiceImpl: public BrqService {
                DeferredReply *) override;
 
   void PreAccept(const cmdid_t &txnid,
+                 const vector<SimpleCommand>& cmd,
                  const RccGraph& graph,
                  int32_t* res,
                  RccGraph* res_graph,

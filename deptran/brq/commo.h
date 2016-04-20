@@ -29,6 +29,7 @@ class BrqCommo: public RccCommo {
   void BroadcastPreAccept(parid_t par_id,
                           txnid_t cmd_id_,
                           ballot_t ballot,
+                          vector<SimpleCommand>& cmds,
                           RccGraph& graph,
                           const function<void(int32_t, RccGraph&)> &callback);
 

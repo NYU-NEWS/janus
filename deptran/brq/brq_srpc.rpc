@@ -17,6 +17,7 @@ abstract service Brq {
                 BrqGraph ret_graph);
 
   defer PreAccept(cmdid_t txn_id,
+                  vector<SimpleCommand> cmd,
                   RccGraph graph |
                   i32 res,
                   RccGraph ret_graph);

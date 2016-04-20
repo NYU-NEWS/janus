@@ -6,6 +6,7 @@
 using namespace rococo;
 
 void BrqSched::OnPreAccept(const txnid_t txn_id,
+                           const vector<SimpleCommand>& cmds,
                            const RccGraph& graph,
                            int32_t* res,
                            RccGraph* res_graph,
@@ -13,11 +14,17 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   verify(txn_id > 0);
   dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
+  // TODO FIXME
+  // add interference based on cmds.
+  RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(cmds[0].root_id_);
+  for (auto& c: cmds) {
+    map<int32_t, Value> output;
+    dtxn->DispatchExecute(c, res, &output);
+  }
   dep_graph_->MinItfrGraph(txn_id, res_graph);
   *res = SUCCESS;
-  RccDTxn *dtxn = (RccDTxn*) GetOrCreateDTxn(txn_id);
   callback();
-} //
+}
 
 void BrqSched::OnCommit(const txnid_t txn_id,
                         const RccGraph& graph,

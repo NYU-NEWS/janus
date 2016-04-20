@@ -101,8 +101,6 @@ void RccCoord::DispatchAck(phase_t phase,
               n_dispatch_ack_, n_dispatch_, txn().id_, pair.first);
   }
 
-  bool early_return = false;
-
   // where should I store this graph?
   Log_debug("start response graph size: %d", (int)graph.size());
   verify(graph.size() > 0);
