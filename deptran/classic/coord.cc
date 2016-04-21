@@ -153,7 +153,6 @@ void ClassicCoord::Reset() {
   dispatch_acks_.clear();
   committed_ = false;
   aborted_ = false;
-  n_retry_ = 0;
 }
 
 void ClassicCoord::Restart() {
@@ -168,6 +167,7 @@ void ClassicCoord::Restart() {
   if (n_retry_ > max_retry) {
     End();
   } else {
+//    Log_info("retry count %d, max_retry: %d, this coord: %llx", n_retry_, max_retry, this);
     Reset();
     txn->Reset();
     GotoNextPhase();
