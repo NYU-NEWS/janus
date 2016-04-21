@@ -42,6 +42,10 @@ TxnGenerator::TxnGenerator(Config* config)
   std::map<std::string, uint64_t> table_num_rows;
   sharding_->get_number_rows(table_num_rows);
 
+  if (Config::GetConfig()->dist_ == "fixed") {
+    single_server_ = Config::SS_PROCESS_SINGLE;
+  }
+
   switch (benchmark_) {
     case MICRO_BENCH:
       micro_bench_para_.n_table_a_ = table_num_rows[std::string(MICRO_BENCH_TABLE_A)];
@@ -163,11 +167,14 @@ void TxnGenerator::get_rw_benchmark_txn_req(
   }
 }
 
-void TxnGenerator::get_tpca_txn_req(
-    TxnRequest *req, uint32_t cid) const {
+void TxnGenerator::GetTpcaTxnReq(TxnRequest *req, uint32_t cid) const {
   Value amount((i64) RandomGenerator::rand(0, 10000));
   req->n_try_ = n_try_;
   req->txn_type_ = TPCA_PAYMENT;
+//  auto dist = Config::GetConfig()->dist_;
+//  if (dist == "fixed" && fix_id_ < 0) {
+//    fix_id_ = 0;
+//  }
   if (fix_id_ >= 0) {
     int fix_tid = fix_id_;
     if (single_server_ == Config::SS_THREAD_SINGLE) {
@@ -234,16 +241,15 @@ void TxnGenerator::get_micro_bench_txn_req(
 
 }
 
-void TxnGenerator::get_txn_req(
-    TxnRequest *req, uint32_t cid) const {
+void TxnGenerator::GetTxnReq(TxnRequest *req, uint32_t cid) const {
   switch (benchmark_) {
     case TPCA:
-      get_tpca_txn_req(req, cid);
+      GetTpcaTxnReq(req, cid);
       break;
     case TPCC:
     case TPCC_DIST_PART:
     case TPCC_REAL_DIST_PART:
-//      get_tpcc_txn_req(req, cid);
+      // should be called in sub-classes.
       verify(0);
       break;
     case RW_BENCHMARK:

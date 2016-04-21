@@ -57,7 +57,8 @@ void RccDTxn::CommitExecute() {
 }
 
 void RccDTxn::ReplyFinishOk() {
-  finish_ok_callback_();
+//  if (commit_request_received_)
+    finish_ok_callback_();
 }
 
 bool RccDTxn::start_exe_itfr(defer_t defer_type,

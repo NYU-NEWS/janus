@@ -37,7 +37,7 @@ class TxnGenerator {
   int benchmark_;
   int n_try_;
   int single_server_;
-  int fix_id_;
+  int fix_id_ = -1;
   std::vector<double>& txn_weight_;
   std::map<string, double>& txn_weights_;
   Sharding* sharding_;
@@ -45,7 +45,7 @@ class TxnGenerator {
  public:
   TxnGenerator(Config* config);
 
-  virtual void get_txn_req(TxnRequest *req, uint32_t cid) const;
+  virtual void GetTxnReq(TxnRequest *req, uint32_t cid) const;
 
   // rw_benchmark
   void get_rw_benchmark_txn_req(TxnRequest *req, uint32_t cid) const;
@@ -53,7 +53,7 @@ class TxnGenerator {
   void get_rw_benchmark_r_txn_req(TxnRequest *req, uint32_t cid) const;
 
   // tpca
-  void get_tpca_txn_req(TxnRequest *req, uint32_t cid) const;
+  void GetTpcaTxnReq(TxnRequest *req, uint32_t cid) const;
 
   // tpcc
 

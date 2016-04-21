@@ -41,9 +41,9 @@ class RccSched : public Scheduler {
                TxnOutput* output,
                const function<void()> &callback);
 
-  int OnInquire(cmdid_t cmd_id,
-                RccGraph *graph,
-                const function<void()> &callback);
+  virtual int OnInquire(cmdid_t cmd_id,
+                        RccGraph *graph,
+                        const function<void()> &callback);
 
 //  void to_decide(Vertex<TxnInfo> *v,
 //                 rrr::DeferredReply *defer);

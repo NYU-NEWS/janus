@@ -7,7 +7,7 @@ namespace rococo {
 
 void TapirExecutor::FastAccept(const vector<SimpleCommand>& txn_cmds,
                                int32_t* res) {
-  // validate read versions and
+  // validate read versions
   *res = SUCCESS;
   for (auto& cmd: txn_cmds) {
     map<int32_t, Value> output;
@@ -15,14 +15,16 @@ void TapirExecutor::FastAccept(const vector<SimpleCommand>& txn_cmds,
     Execute(cmd, &r, output);
     for (auto& pair : output) {
       verify(cmd.output.size() > 0);
-      auto& i = pair.first;
-      auto& v = pair.second;
-      if (v.ver_ != cmd.output.at(i).ver_) {
+      auto& idx = pair.first;
+      auto& value = pair.second;
+      if (value.ver_ != cmd.output.at(idx).ver_) {
         *res = REJECT;
+        return;
       }
     }
   }
-  // TODO
+
+  // TODO lock read items.
   auto& read_vers = dtxn()->read_vers_;
   for (auto& pair1 : read_vers) {
     Row* r = pair1.first;
@@ -37,7 +39,8 @@ void TapirExecutor::FastAccept(const vector<SimpleCommand>& txn_cmds,
       auto ver_now = row->get_column_ver(col_id);
       if (ver_now > ver_read) {
         // value has been updated. abort transaction
-        *res = REJECT;
+        verify(0);
+//        *res = REJECT;
         return;
       } else {
         // grab read lock.
@@ -51,12 +54,15 @@ void TapirExecutor::FastAccept(const vector<SimpleCommand>& txn_cmds,
       };
     }
   }
+  // in debug
+//  return;
   // grab write locks.
   for (auto& pair1 : dtxn()->write_bufs_) {
     auto row = (mdb::VersionedRow*)pair1.first;
     for (auto& pair2: pair1.second) {
       auto col_id = pair2.first;
       if (!row->wlock_row_by(cmd_id_)) {
+//        verify(0);
         *res = REJECT;
       } else {
         // remember locks.
@@ -68,26 +74,34 @@ void TapirExecutor::FastAccept(const vector<SimpleCommand>& txn_cmds,
 }
 
 void TapirExecutor::Commit() {
+  verify(dtxn()->read_vers_.size() > 0 ||
+      dtxn()->write_bufs_.size() > 0);
   // merge write buffers into database.
   for (auto& pair1 : dtxn()->write_bufs_) {
     auto row = (mdb::VersionedRow*)pair1.first;
     for (auto& pair2: pair1.second) {
       auto& col_id = pair2.first;
       auto& value = pair2.second;
+      row->incr_column_ver(col_id);
+      value.ver_ = row->get_column_ver(col_id);
       row->update(col_id, value);
     }
   }
   // release all the locks.
   for (auto row : locked_rows_) {
-    row->unlock_row_by(cmd_id_);
+    auto r = row->unlock_row_by(cmd_id_);
+    verify(r);
   }
   dtxn()->read_vers_.clear();
   dtxn()->write_bufs_.clear();
 }
 
 void TapirExecutor::Abort() {
+  verify(dtxn()->read_vers_.size() > 0 ||
+      dtxn()->write_bufs_.size() > 0);
   for (auto row : locked_rows_) {
-    row->unlock_row_by(cmd_id_);
+    auto r = row->unlock_row_by(cmd_id_);
+    verify(r);
   }
   dtxn()->read_vers_.clear();
   dtxn()->write_bufs_.clear();
