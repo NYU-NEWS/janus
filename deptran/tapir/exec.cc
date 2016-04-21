@@ -97,8 +97,6 @@ void TapirExecutor::Commit() {
 }
 
 void TapirExecutor::Abort() {
-  verify(dtxn()->read_vers_.size() > 0 ||
-      dtxn()->write_bufs_.size() > 0);
   for (auto row : locked_rows_) {
     auto r = row->unlock_row_by(cmd_id_);
     verify(r);

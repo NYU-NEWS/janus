@@ -52,10 +52,6 @@ class TxnGenerator {
   void get_rw_benchmark_w_txn_req(TxnRequest *req, uint32_t cid) const;
   void get_rw_benchmark_r_txn_req(TxnRequest *req, uint32_t cid) const;
 
-  // tpca
-  void GetTpcaTxnReq(TxnRequest *req, uint32_t cid) const;
-
-  // tpcc
 
   void get_micro_bench_read_req(TxnRequest *req, uint32_t cid) const;
   void get_micro_bench_write_req(TxnRequest *req, uint32_t cid) const;

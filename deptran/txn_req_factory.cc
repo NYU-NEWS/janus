@@ -54,29 +54,6 @@ TxnGenerator::TxnGenerator(Config* config)
       micro_bench_para_.n_table_d_ = table_num_rows[std::string(MICRO_BENCH_TABLE_D)];
       break;
     case TPCA:
-      tpca_para_.n_branch_ = table_num_rows[std::string(TPCA_BRANCH)];
-      tpca_para_.n_teller_ = table_num_rows[std::string(TPCA_TELLER)];
-      tpca_para_.n_customer_ = table_num_rows[std::string(TPCA_CUSTOMER)];
-      switch (single_server_) {
-        case Config::SS_DISABLED:
-          fix_id_ = -1;
-          break;
-        case Config::SS_THREAD_SINGLE:
-        case Config::SS_PROCESS_SINGLE: {
-          verify(tpca_para_.n_branch_ == tpca_para_.n_teller_
-                     && tpca_para_.n_branch_ == tpca_para_.n_customer_);
-          fix_id_ = RandomGenerator::rand(0, tpca_para_.n_branch_ - 1);
-          unsigned int b, t, c;
-          sharding_->GetPartition(TPCA_BRANCH, Value(fix_id_), b);
-          sharding_->GetPartition(TPCA_TELLER, Value(fix_id_), t);
-          sharding_->GetPartition(TPCA_CUSTOMER, Value(fix_id_), c);
-          verify(b == c && c == t);
-          break;
-        }
-        default:
-          verify(0);
-      }
-      break;
     case TPCC:
     case TPCC_DIST_PART: {
 //      std::vector<unsigned int> sites;
@@ -98,31 +75,6 @@ TxnGenerator::TxnGenerator(Config* config)
 //      break;
     }
     case TPCC_REAL_DIST_PART: {
-//      std::vector<unsigned int> sites;
-//      sharding_->get_site_id_from_tb(TPCC_TB_WAREHOUSE, sites);
-//      uint64_t tb_w_rows = table_num_rows[std::string(TPCC_TB_WAREHOUSE)];
-//      tpcc_para_.n_w_id_ = (int) tb_w_rows;
-//      tpcc_para_.const_home_w_id_ = RandomGenerator::rand(0, tpcc_para_.n_w_id_ - 1);
-//      uint64_t tb_d_rows = table_num_rows[std::string(TPCC_TB_DISTRICT)];
-//      tpcc_para_.n_d_id_ = (int) tb_d_rows * sites.size() / tb_w_rows;
-//      uint64_t tb_c_rows = table_num_rows[std::string(TPCC_TB_CUSTOMER)];
-//      tpcc_para_.n_c_id_ = (int) tb_c_rows / tb_d_rows;
-//      tpcc_para_.n_i_id_ = (int) table_num_rows[std::string(TPCC_TB_ITEM)];
-//      tpcc_para_.delivery_d_id_ = RandomGenerator::rand(0, tpcc_para_.n_d_id_ - 1);
-//      switch (single_server_) {
-//        case Config::SS_DISABLED:
-//          fix_id_ = -1;
-//          break;
-//        case Config::SS_THREAD_SINGLE:
-//        case Config::SS_PROCESS_SINGLE: {
-//          fix_id_ = Config::GetConfig()->get_client_id() % tpcc_para_.n_d_id_;
-//          tpcc_para_.const_home_w_id_ =
-//              Config::GetConfig()->get_client_id() / tpcc_para_.n_d_id_;
-//          break;
-//        }
-//        default:
-//          verify(0);
-//      }
       break;
     }
     case RW_BENCHMARK:
@@ -167,41 +119,6 @@ void TxnGenerator::get_rw_benchmark_txn_req(
   }
 }
 
-void TxnGenerator::GetTpcaTxnReq(TxnRequest *req, uint32_t cid) const {
-  Value amount((i64) RandomGenerator::rand(0, 10000));
-  req->n_try_ = n_try_;
-  req->txn_type_ = TPCA_PAYMENT;
-//  auto dist = Config::GetConfig()->dist_;
-//  if (dist == "fixed" && fix_id_ < 0) {
-//    fix_id_ = 0;
-//  }
-  if (fix_id_ >= 0) {
-    int fix_tid = fix_id_;
-    if (single_server_ == Config::SS_THREAD_SINGLE) {
-      unsigned long s = (unsigned long) pthread_self();
-      unsigned int s2 = (unsigned int) s;
-      int r = rand_r(&s2);
-      fix_tid += r;
-      fix_tid = fix_tid >= 0 ? fix_tid : -fix_tid;
-      fix_tid %= tpca_para_.n_branch_;
-    }
-    req->input_ = {
-        {0, Value((i32) fix_tid)},
-        {1, Value((i32) fix_tid)},
-        {2, Value((i32) fix_tid)},
-        {3, amount}
-    };
-  } else {
-    req->input_ = {
-        {0, Value((i32) RandomGenerator::rand(0, tpca_para_.n_customer_ - 1))},
-        {1, Value((i32) RandomGenerator::rand(0, tpca_para_.n_teller_ - 1))},
-        {2, Value((i32) RandomGenerator::rand(0, tpca_para_.n_branch_ - 1))},
-        {3, amount}
-    };
-  }
-
-}
-
 void TxnGenerator::get_micro_bench_read_req(TxnRequest *req, uint32_t cid) const {
   req->txn_type_ = MICRO_BENCH_R;
 //  req->input_.resize(4);
@@ -244,8 +161,6 @@ void TxnGenerator::get_micro_bench_txn_req(
 void TxnGenerator::GetTxnReq(TxnRequest *req, uint32_t cid) const {
   switch (benchmark_) {
     case TPCA:
-      GetTpcaTxnReq(req, cid);
-      break;
     case TPCC:
     case TPCC_DIST_PART:
     case TPCC_REAL_DIST_PART:
