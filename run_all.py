@@ -276,6 +276,16 @@ def run_experiment(config_file, name, args, benchmark, mode, num_client):
         logger.info("subprocess success.")
     return res
 
+def save_git_revision():
+    log_dir = "./log/"
+    fn = "{}/revision.txt".format(log_dir)
+    cmd = 'git rev-parse HEAD'
+    with open(fn, 'w') as f:
+        logger.info('running: {}'.format(cmd))
+        rev = subprocess.check_output(cmd, shell=True)
+        logger.info("here: %s", rev)
+        f.write(rev)
+
 
 def archive_results(name):
     log_dir = "./log/"
@@ -362,6 +372,7 @@ def run_experiments(args):
             num_server,
             args.num_replicas)
         try:
+            save_git_revision()
             result = run_experiment(config_file, 
                                     experiment_name, 
                                     args, 
@@ -370,7 +381,6 @@ def run_experiments(args):
                                     num_client)
             if result == 0:
                 scrape_data(experiment_name)
-
             archive_results(experiment_name)
         except Exception:
             logger.info("Experiment %s failed.",
