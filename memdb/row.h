@@ -555,6 +555,13 @@ class VersionedRow: public CoarseLockedRow {
     return row;
   }
 
+
+  Value get_column(int column_id) const {
+    Value v = Row::get_column(column_id);
+    v.ver_ = get_column_ver(column_id);
+    return v;
+  }
+
   template<class Container>
   static VersionedRow *create(const Schema *schema, const Container &values) {
     verify(values.size() == schema->columns_count());
