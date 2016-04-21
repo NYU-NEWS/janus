@@ -49,6 +49,7 @@ def create_parser():
                         "range builtin function.",
                         action='append',
                         default=[])
+    parser.add_argument("-st", "--server-timeout", dest="s_timeout", default="30")
     parser.add_argument("-s", "--server-count", dest="server_counts",
                         help="client counts; accpets " + \
                         "'<start>:<stop>:<step>' tuples with same semantics as " + \
@@ -262,6 +263,7 @@ def generate_config(args, experiment_name, benchmark, mode, num_client,
 def run_experiment(config_file, name, args, benchmark, mode, num_client):
     cmd = [args.executable]
     cmd.extend(["-n", "{}".format(name)])
+    cmd.extend(["-t", str(args.s_timeout)])
     cmd.extend(["-f", config_file]) 
     cmd.extend(["-d", args.duration])
     cmd = [str(c) for c in cmd]
