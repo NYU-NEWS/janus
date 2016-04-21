@@ -3,6 +3,7 @@
 #include "frame.h"
 #include "commo.h"
 #include "benchmark_control_rpc.h"
+#include "exec.h"
 
 namespace rococo {
 
@@ -25,6 +26,7 @@ void TapirCoord::Dispatch() {
 
   int cnt = 0;
   auto cmds_by_par = txn->GetReadyCmds();
+
   for (auto& pair: cmds_by_par) {
     const parid_t& par_id = pair.first;
     vector<SimpleCommand*>& cmds = pair.second;
@@ -85,13 +87,18 @@ void TapirCoord::Reset() {
 
 void TapirCoord::FastAccept() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
+
   Log_debug("send out fast accept for cmd_id: %llx", cmd_->id_);
   auto pars = txn().GetPartitionIds();
   verify(pars.size() > 0);
+  int32_t sum = 0;
   for (auto par_id : pars) {
     vector<SimpleCommand> txn_cmds = txn().GetCmdsByPartition(par_id);
+    sum += txn_cmds.size();
     verify(txn_cmds.size() > 0);
     verify(txn_cmds.size() < 10000);
+    n_fast_accept_oks_[par_id] = 0;
+    n_fast_accept_rejects_[par_id] = 0;
     commo()->BroadcastFastAccept(par_id,
                                  txn().id_,
                                  txn_cmds,
@@ -101,6 +108,7 @@ void TapirCoord::FastAccept() {
                                            par_id,
                                            std::placeholders::_1));
   }
+  verify(sum == txn().cmds_.size());
 //
 //  while (cmd_->HasMoreSubCmdReadyNotOut()) {
 //    auto subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd();
