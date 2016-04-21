@@ -13,8 +13,8 @@ class RccDTxn: public DTxn {
   Vertex <TxnInfo> *tv_ = {};
   map<innid_t, map<int32_t, Value>> *outputs_ = nullptr;
   vector<TxnInfo *> conflict_txns_ = {}; // This is read-only transaction
-  function<void()> finish_ok_callback_ =  [] () {verify(0);};
-
+  function<void()> finish_ok_callback_ =  [] () -> void {verify(0);};
+  bool commit_request_received_ = false;
   bool read_only_ = false;
 
   RccDTxn(txnid_t tid, Scheduler *mgr, bool ro);

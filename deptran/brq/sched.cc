@@ -17,6 +17,9 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
   // TODO FIXME
   // add interference based on cmds.
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(cmds[0].root_id_);
+  if (dtxn->tv_ == nullptr) {
+    dep_graph_->FindOrCreateTxnInfo(cmds[0].root_id_, &dtxn->tv_);
+  }
   for (auto& c: cmds) {
     map<int32_t, Value> output;
     dtxn->DispatchExecute(c, res, &output);
@@ -26,12 +29,51 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
   callback();
 }
 
-void BrqSched::OnCommit(const txnid_t txn_id,
+void BrqSched::OnCommit(const txnid_t cmd_id,
                         const RccGraph& graph,
                         int32_t* res,
                         TxnOutput* output,
-                        function<void()> callback) {
+                        const function<void()>& callback) {
   // TODO to support cascade abort
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
   *res = SUCCESS;
-  RccSched::OnCommit(txn_id, graph, output, callback);
+  // union the graph into dep graph
+  RccDTxn *dtxn = (RccDTxn*) GetDTxn(cmd_id);
+  dtxn->commit_request_received_ = true;
+  verify(dtxn != nullptr);
+  dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
+  for (auto& pair: graph.vertex_index_) {
+    // TODO optimize here.
+    auto txnid = pair.first;
+    auto v = dep_graph_->FindV(txnid);
+    verify(v != nullptr);
+    waitlist_.push_back(v);
+  }
+  verify(dtxn->outputs_ == nullptr);
+  dtxn->outputs_ = output;
+  dtxn->finish_ok_callback_ = callback;
+  CheckWaitlist();
+}
+
+int BrqSched::OnInquire(cmdid_t cmd_id,
+                        RccGraph *graph,
+                        const function<void()> &callback) {
+  RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(cmd_id);
+  dep_graph_->FindOrCreateTxnInfo(cmd_id, &dtxn->tv_);
+  RccVertex* v = dtxn->tv_;
+  verify(v != nullptr);
+  TxnInfo& info = *v->data_;
+  //register an event, triggered when the status >= COMMITTING;
+  verify (info.Involve(partition_id_));
+
+  if (info.IsCommitting()) {
+    dep_graph_->MinItfrGraph(cmd_id, graph);
+    callback();
+  } else {
+    info.graphs_for_inquire_.push_back(graph);
+    info.callbacks_for_inquire_.push_back(callback);
+    verify(info.graphs_for_inquire_.size() ==
+        info.callbacks_for_inquire_.size());
+  }
+
 }

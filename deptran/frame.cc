@@ -26,6 +26,7 @@
 #include "bench/tpca/piece.h"
 #include "bench/tpca/chopper.h"
 #include "bench/tpca/sharding.h"
+#include "bench/tpca/generator.h"
 
 // tpcc benchmark
 #include "bench/tpcc/piece.h"
@@ -425,6 +426,8 @@ TxnGenerator * Frame::CreateTxnGenerator() {
       gen = new TpccdTxnGenerator(Config::GetConfig());
       break;
     case TPCA:
+      gen = new TpcaTxnGenerator(Config::GetConfig());
+      break;
     case RW_BENCHMARK:
     case MICRO_BENCH:
     default:

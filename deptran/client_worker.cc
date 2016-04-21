@@ -8,8 +8,8 @@
 namespace rococo {
 
 ClientWorker::~ClientWorker() {
-  if (txn_req_factory_) {
-    delete txn_req_factory_;
+  if (txn_generator_) {
+    delete txn_generator_;
   }
   for (auto c : coos_) {
     delete c;
@@ -22,7 +22,8 @@ void ClientWorker::RequestDone(Coordinator* coo, TxnReply &txn_reply) {
   if (timer_->elapsed() < duration) {
     Log_debug("there is still time to issue another request. continue.");
     TxnRequest req;
-    txn_req_factory_->get_txn_req(&req, cli_id_);
+
+    txn_generator_->GetTxnReq(&req, coo->coo_id_);
     req.callback_ = std::bind(&ClientWorker::RequestDone,
                               this,
                               coo,
@@ -73,7 +74,7 @@ void ClientWorker::work() {
     Log_debug("after create coo");
 
     TxnRequest req;
-    txn_req_factory_->get_txn_req(&req, coo_id);
+    txn_generator_->GetTxnReq(&req, coo_id);
     req.callback_ = std::bind(&ClientWorker::RequestDone,
                               this,
                               coo,
@@ -114,7 +115,7 @@ ClientWorker::ClientWorker(uint32_t id,
       ccsi(ccsi),
       n_concurrent_(config->get_concurrent_txn()) {
   frame_ = Frame::GetFrame(config->cc_mode_);
-  txn_req_factory_ = frame_->CreateTxnGenerator();
+  txn_generator_ = frame_->CreateTxnGenerator();
   config->get_all_site_addr(servers_);
   num_txn.store(0);
   success.store(0);

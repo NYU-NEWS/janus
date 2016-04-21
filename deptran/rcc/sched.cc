@@ -76,10 +76,6 @@ int RccSched::OnCommit(cmdid_t cmd_id,
   verify(dtxn->outputs_ == nullptr);
   dtxn->outputs_ = output;
   dtxn->finish_ok_callback_ = callback;
-//  Graph<TxnInfo> &txn_gra_ = RccDTxn::dep_s->txn_gra_;
-//  tv_->data_->res = res;
-//  tv_->data_->union_status(TXN_CMT);
-
   CheckWaitlist();
 }
 
@@ -91,6 +87,7 @@ int RccSched::OnInquire(cmdid_t cmd_id,
 //    callback();
 //  });
   RccVertex* v = dep_graph_->FindV(cmd_id);
+  verify(v != nullptr);
   TxnInfo& info = *v->data_;
   //register an event, triggered when the status >= COMMITTING;
   verify (info.Involve(partition_id_));

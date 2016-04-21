@@ -20,7 +20,11 @@ class BrqSched : public RccSched {
                 const RccGraph& graph,
                 int32_t* res,
                 TxnOutput* output,
-                function<void()> callback);
+                const function<void()>& callback);
+
+  int OnInquire(cmdid_t cmd_id,
+               RccGraph *graph,
+               const function<void()> &callback) override;
 };
 
 } // namespace rococo

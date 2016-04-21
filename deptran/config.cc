@@ -483,6 +483,8 @@ void Config::LoadBenchYML(YAML::Node config) {
     tbl_info.num_records = scale_factor_ * pop;
     verify(tbl_info.num_records > 0);
   }
+  if (config["dist"])
+    dist_ = config["dist"].as<string>();
 }
 
 void Config::LoadSchemaYML(YAML::Node config) {

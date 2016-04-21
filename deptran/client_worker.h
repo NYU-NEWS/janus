@@ -28,7 +28,7 @@ class ClientWorker {
   rrr::CondVar finish_cond;
   vector<CoordinatorBase*> coos_ = {};
   std::atomic<uint32_t> num_txn, success, num_try;
-  TxnGenerator * txn_req_factory_;
+  TxnGenerator * txn_generator_;
   Timer *timer_;
   TxnRegistry* txn_reg_ = nullptr;
   Config* config_;
