@@ -86,8 +86,11 @@ void TapirCoord::Reset() {
 void TapirCoord::FastAccept() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   Log_debug("send out fast accept for cmd_id: %llx", cmd_->id_);
-  for (auto par_id : txn().GetPartitionIds()) {
+  auto pars = txn().GetPartitionIds();
+  verify(pars.size() > 0);
+  for (auto par_id : pars) {
     vector<SimpleCommand> txn_cmds = txn().GetCmdsByPartition(par_id);
+    verify(txn_cmds.size() > 0);
     verify(txn_cmds.size() < 10000);
     commo()->BroadcastFastAccept(par_id,
                                  txn().id_,
@@ -129,14 +132,12 @@ void TapirCoord::FastAcceptAck(phase_t phase,
   }
   if (FastQuorumPossible()) {
     if (AllFastQuorumReached()) {
-      decision_ = COMMIT;
       committed_ = true;
       GotoNextPhase();
     } else {
       // do nothing and wait for future ack.
-    }  
+    }
   } else {
-    decision_ = ABORT;
     aborted_ = true;
     GotoNextPhase();
   }
@@ -233,22 +234,21 @@ bool TapirCoord::AllFastQuorumReached() {
 }
 
 void TapirCoord::Decide() {
-  verify(decision_ != UNKNOWN);
-  auto pars = cmd_->GetPartitionIds();
-  Log_debug("send out decide request, cmd_id: %lx, ", cmd_->id_);
-  for (auto par_id : pars) {
-    commo()->BroadcastDecide(par_id, cmd_->id_, decision_);
-  }
-  if (decision_ == COMMIT) {
-    committed_ = true;
-    GotoNextPhase();
-  } else if (decision_ == ABORT) {
-    aborted_ = true;
-    // TODO retry if abort.
-    GotoNextPhase();
+  verify(committed_ != aborted_);
+  int32_t d = 0;
+  if (committed_) {
+    d = Decision::COMMIT;
+  } else if (aborted_) {
+    d = Decision::ABORT;
   } else {
     verify(0);
   }
+  auto pars = cmd_->GetPartitionIds();
+  Log_debug("send out decide request, cmd_id: %llx, ", cmd_->id_);
+  for (auto par_id : pars) {
+    commo()->BroadcastDecide(par_id, cmd_->id_, d);
+  }
+  GotoNextPhase();
 }
 
 void TapirCoord::GotoNextPhase() {

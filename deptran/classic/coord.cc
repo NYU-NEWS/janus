@@ -163,9 +163,11 @@ void ClassicCoord::Restart() {
   double last_latency = txn->last_attempt_latency();
   if (ccsi_)
     ccsi_->txn_retry_one(this->thread_id_, txn->type_, last_latency);
-  if (n_retry_ > Config::GetConfig()->max_retry_) {
+  auto& max_retry = Config::GetConfig()->max_retry_;
+  if (n_retry_ > max_retry) {
     End();
   } else {
+//    Log_info("retry count %d, max_retry: %d, this coord: %llx", n_retry_, max_retry, this);
     Reset();
     txn->Reset();
     GotoNextPhase();

@@ -10,9 +10,8 @@ namespace rococo {
 class TapirCommo;
 class TapirCoord : public ClassicCoord {
  public:
-  enum Phase {INIT_END, DISPATCH, FAST_ACCEPT, DECIDE};
-  enum Decision { UNKNOWN, COMMIT, ABORT};
-  Decision decision_ = UNKNOWN;
+  enum Phase {INIT_END=0, DISPATCH=1, FAST_ACCEPT=2, DECIDE=3};
+  enum Decision { UNKNOWN = 0, COMMIT = 1, ABORT = 2};
   map<parid_t, int> n_accept_oks_ = {};
   map<parid_t, int> n_accpet_rejects_ = {};
   map<parid_t, int> n_fast_accept_oks_ = {};
