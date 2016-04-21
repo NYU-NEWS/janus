@@ -32,6 +32,12 @@ int TapirSched::OnFastAccept(cmdid_t cmd_id,
   Log_debug("receive fast accept for cmd_id: %llx", cmd_id);
   auto exec = (TapirExecutor*) GetOrCreateExecutor(cmd_id);
   exec->FastAccept(txn_cmds, res);
+
+  // DEBUG
+  verify(txn_cmds.size() > 0);
+  for (auto& c: txn_cmds) {
+
+  }
   callback();
   return 0;
 }

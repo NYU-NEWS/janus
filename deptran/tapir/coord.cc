@@ -86,8 +86,11 @@ void TapirCoord::Reset() {
 void TapirCoord::FastAccept() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   Log_debug("send out fast accept for cmd_id: %llx", cmd_->id_);
-  for (auto par_id : txn().GetPartitionIds()) {
+  auto pars = txn().GetPartitionIds();
+  verify(pars.size() > 0);
+  for (auto par_id : pars) {
     vector<SimpleCommand> txn_cmds = txn().GetCmdsByPartition(par_id);
+    verify(txn_cmds.size() > 0);
     verify(txn_cmds.size() < 10000);
     commo()->BroadcastFastAccept(par_id,
                                  txn().id_,
