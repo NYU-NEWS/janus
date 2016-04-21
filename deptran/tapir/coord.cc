@@ -83,6 +83,7 @@ void TapirCoord::Reset() {
   dispatch_acks_.clear();
   n_accept_oks_.clear();
   n_fast_accept_oks_.clear();
+  n_fast_accept_rejects_.clear();
 }
 
 void TapirCoord::FastAccept() {
