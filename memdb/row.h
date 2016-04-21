@@ -254,6 +254,7 @@ class CoarseLockedRow: public Row {
 
  protected:
 
+  CoarseLockedRow() : Row(), lock_() {}
   // protected dtor as required by RefCounted
   ~CoarseLockedRow() { }
 
