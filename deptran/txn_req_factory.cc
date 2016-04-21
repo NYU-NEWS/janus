@@ -158,7 +158,7 @@ void TxnGenerator::get_micro_bench_txn_req(
 
 }
 
-void TxnGenerator::GetTxnReq(TxnRequest *req, uint32_t cid) const {
+void TxnGenerator::GetTxnReq(TxnRequest *req, uint32_t cid) {
   switch (benchmark_) {
     case TPCA:
     case TPCC:

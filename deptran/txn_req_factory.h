@@ -45,7 +45,7 @@ class TxnGenerator {
  public:
   TxnGenerator(Config* config);
 
-  virtual void GetTxnReq(TxnRequest *req, uint32_t cid) const;
+  virtual void GetTxnReq(TxnRequest *req, uint32_t cid) ;
 
   // rw_benchmark
   void get_rw_benchmark_txn_req(TxnRequest *req, uint32_t cid) const;

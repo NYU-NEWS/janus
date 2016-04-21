@@ -6,9 +6,9 @@ namespace rococo {
 
 class TpcaTxnGenerator: public TxnGenerator {
  public:
-//  using TxnGenerator::TxnGenerator;
+  map<int32_t, int32_t> key_ids_ = {};
   TpcaTxnGenerator(Config* config);
-  virtual void GetTxnReq(TxnRequest *req, uint32_t cid) const override;
+  virtual void GetTxnReq(TxnRequest *req, uint32_t cid) override;
 };
 
 } // namespace rococo

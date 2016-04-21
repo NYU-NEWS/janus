@@ -31,25 +31,25 @@ TpcaTxnGenerator::TpcaTxnGenerator(Config* config) : TxnGenerator(config) {
   }
 }
 
-void TpcaTxnGenerator::GetTxnReq(TxnRequest *req, uint32_t cid) const {
+void TpcaTxnGenerator::GetTxnReq(TxnRequest *req, uint32_t cid) {
   Value amount((i64) RandomGenerator::rand(0, 10000));
   req->n_try_ = n_try_;
   req->txn_type_ = TPCA_PAYMENT;
-//  auto dist = Config::GetConfig()->dist_;
-//  if (dist == "fixed" && fix_id_ < 0) {
-//    fix_id_ = 0;
-//  }
+
   if (fix_id_ >= 0) {
-    int fix_tid = fix_id_;
-    if (single_server_ == Config::SS_THREAD_SINGLE) {
-      fix_tid += (cid & 0xFFFFFFFF);
-      fix_tid = fix_tid >= 0 ? fix_tid : -fix_tid;
-      fix_tid %= tpca_para_.n_branch_;
+    if (key_ids_.count(cid) == 0) {
+      int32_t& key = key_ids_[cid];
+      key = fix_id_;
+      key += (cid & 0xFFFFFFFF);
+      key = key >= 0 ? key : -key;
+      key %= tpca_para_.n_branch_;
+      Log_info("choosing key, coo_id: %x \t key: %llx", cid, key);
     }
+    int32_t& key = key_ids_[cid];
     req->input_ = {
-        {0, Value((i32) fix_tid)},
-        {1, Value((i32) fix_tid)},
-        {2, Value((i32) fix_tid)},
+        {0, Value((i32) key)},
+        {1, Value((i32) key)},
+        {2, Value((i32) key)},
         {3, amount}
     };
   } else {
