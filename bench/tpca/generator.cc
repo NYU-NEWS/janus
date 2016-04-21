@@ -1,4 +1,4 @@
-#include "deptran/config.h"
+#include "../../deptran/config.h"
 #include "generator.h"
 #include "piece.h"
 
@@ -47,16 +47,20 @@ void TpcaTxnGenerator::GetTxnReq(TxnRequest *req, uint32_t cid) {
     }
     int32_t& key = key_ids_[cid];
     req->input_ = {
-        {0, Value((i32) key)},
-        {1, Value((i32) key)},
-        {2, Value((i32) key)},
-        {3, amount}
+        {TPCA_VAR_X, Value((i32) key)},
+        {TPCA_VAR_Y, Value((i32) key)},
+        {TPCA_VAR_Z, Value((i32) key)},
+        {TPCA_VAR_AMOUNT, amount}
     };
   } else {
+    int k1 = RandomGenerator::rand(0, tpca_para_.n_customer_ - 1);
+    int k2 = RandomGenerator::rand(0, tpca_para_.n_teller_ - 1);
+    int k3 = RandomGenerator::rand(0, tpca_para_.n_branch_ - 1);
+//    Log_info("gen req, coo_id: %x \t k1: %x k2: %x, k3: %x", cid, k1, k2, k3);
     req->input_ = {
-        {0, Value((i32) RandomGenerator::rand(0, tpca_para_.n_customer_ - 1))},
-        {1, Value((i32) RandomGenerator::rand(0, tpca_para_.n_teller_ - 1))},
-        {2, Value((i32) RandomGenerator::rand(0, tpca_para_.n_branch_ - 1))},
+        {0, Value(k1)},
+        {1, Value(k2)},
+        {2, Value(k3)},
         {3, amount}
     };
   }

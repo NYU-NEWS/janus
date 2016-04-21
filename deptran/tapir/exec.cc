@@ -5,6 +5,8 @@
 
 namespace rococo {
 
+set<Row*> TapirExecutor::locked_rows_s = {};
+
 void TapirExecutor::FastAccept(const vector<SimpleCommand>& txn_cmds,
                                int32_t* res) {
   // validate read versions
@@ -46,7 +48,6 @@ void TapirExecutor::FastAccept(const vector<SimpleCommand>& txn_cmds,
         // grab read lock.
         if (!row->rlock_row_by(this->cmd_id_)) {
           *res = REJECT;
-//          verify(0);
         } else {
           // remember locks.
           locked_rows_.insert(row);
@@ -59,15 +60,14 @@ void TapirExecutor::FastAccept(const vector<SimpleCommand>& txn_cmds,
   // grab write locks.
   for (auto& pair1 : dtxn()->write_bufs_) {
     auto row = (mdb::VersionedRow*)pair1.first;
-    for (auto& pair2: pair1.second) {
-      auto col_id = pair2.first;
-      if (!row->wlock_row_by(cmd_id_)) {
+    if (!row->wlock_row_by(cmd_id_)) {
 //        verify(0);
-        *res = REJECT;
-      } else {
-        // remember locks.
-        locked_rows_.insert(row);
-      }
+      *res = REJECT;
+//      Log_info("lock row %llx failed", row);
+    } else {
+      // remember locks.
+//     Log_info("lock row %llx succeed", row);
+      locked_rows_.insert(row);
     }
   }
   verify(*res == SUCCESS || *res == REJECT);
@@ -89,6 +89,7 @@ void TapirExecutor::Commit() {
   }
   // release all the locks.
   for (auto row : locked_rows_) {
+//    Log_info("unlock row %llx succeed", row);
     auto r = row->unlock_row_by(cmd_id_);
     verify(r);
   }
@@ -98,6 +99,7 @@ void TapirExecutor::Commit() {
 
 void TapirExecutor::Abort() {
   for (auto row : locked_rows_) {
+//    Log_info("unlock row %llx succeed", row);
     auto r = row->unlock_row_by(cmd_id_);
     verify(r);
   }

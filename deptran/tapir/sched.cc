@@ -40,10 +40,11 @@ int TapirSched::OnDecide(cmdid_t cmd_id,
                          int32_t decision,
                          const function<void()>& callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  auto exec = (TapirExecutor*) GetOrCreateExecutor(cmd_id);
-  if (decision == TapirCoord::COMMIT) {
+  auto exec = (TapirExecutor*) GetExecutor(cmd_id);
+  verify(exec);
+  if (decision == TapirCoord::Decision::COMMIT) {
     exec->Commit();
-  } else if (decision == TapirCoord::ABORT) {
+  } else if (decision == TapirCoord::Decision::ABORT) {
     exec->Abort();
   } else {
     verify(0);

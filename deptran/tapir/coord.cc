@@ -129,14 +129,14 @@ void TapirCoord::FastAcceptAck(phase_t phase,
   }
   if (FastQuorumPossible()) {
     if (AllFastQuorumReached()) {
-      decision_ = COMMIT;
+      decision_ = Decision::COMMIT;
       committed_ = true;
       GotoNextPhase();
     } else {
       // do nothing and wait for future ack.
     }  
   } else {
-    decision_ = ABORT;
+    decision_ = Decision::ABORT;
     aborted_ = true;
     GotoNextPhase();
   }
@@ -233,16 +233,16 @@ bool TapirCoord::AllFastQuorumReached() {
 }
 
 void TapirCoord::Decide() {
-  verify(decision_ != UNKNOWN);
+  verify(decision_ != Decision::UNKNOWN);
   auto pars = cmd_->GetPartitionIds();
   Log_debug("send out decide request, cmd_id: %lx, ", cmd_->id_);
   for (auto par_id : pars) {
     commo()->BroadcastDecide(par_id, cmd_->id_, decision_);
   }
-  if (decision_ == COMMIT) {
+  if (decision_ == Decision::COMMIT) {
     committed_ = true;
     GotoNextPhase();
-  } else if (decision_ == ABORT) {
+  } else if (decision_ == Decision::ABORT) {
     aborted_ = true;
     // TODO retry if abort.
     GotoNextPhase();

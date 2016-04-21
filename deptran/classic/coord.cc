@@ -153,6 +153,7 @@ void ClassicCoord::Reset() {
   dispatch_acks_.clear();
   committed_ = false;
   aborted_ = false;
+  n_retry_ = 0;
 }
 
 void ClassicCoord::Restart() {
@@ -163,7 +164,8 @@ void ClassicCoord::Restart() {
   double last_latency = txn->last_attempt_latency();
   if (ccsi_)
     ccsi_->txn_retry_one(this->thread_id_, txn->type_, last_latency);
-  if (n_retry_ > Config::GetConfig()->max_retry_) {
+  auto& max_retry = Config::GetConfig()->max_retry_;
+  if (n_retry_ > max_retry) {
     End();
   } else {
     Reset();
