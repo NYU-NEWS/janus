@@ -11,13 +11,16 @@ class RccDTxn: public DTxn {
   int status_ = TXN_UKN;
   vector<SimpleCommand> dreqs_ = {};
   Vertex <TxnInfo> *tv_ = {};
-  map<innid_t, map<int32_t, Value>> *outputs_ = nullptr;
+  TxnOutput *ptr_output_repy_ = nullptr;
+  TxnOutput output_ = {};
   vector<TxnInfo *> conflict_txns_ = {}; // This is read-only transaction
   function<void()> finish_ok_callback_ =  [] () -> void {verify(0);};
   bool commit_request_received_ = false;
   bool read_only_ = false;
 
   RccDTxn(txnid_t tid, Scheduler *mgr, bool ro);
+  virtual ~RccDTxn() {
+  }
 
   virtual void DispatchExecute(const SimpleCommand &cmd,
                                int *res,

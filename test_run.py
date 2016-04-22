@@ -29,8 +29,8 @@ benchmarks_ =  [
 ]
 
 concurrent_ = [
-    "concurrent_1",
-    "concurrent_10",
+#    "concurrent_1",
+#    "concurrent_10",
     "concurrent_100"
 ]
 

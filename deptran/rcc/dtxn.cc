@@ -52,13 +52,15 @@ void RccDTxn::CommitExecute() {
   for (auto &cmd: dreqs_) {
     auto pair = txn_reg_->get(cmd);
     int tmp;
-    pair.txn_handler(nullptr, this, cmd, &tmp, (*outputs_)[cmd.inn_id_]);
+    pair.txn_handler(nullptr, this, cmd, &tmp, output_[cmd.inn_id_]);
   }
 }
 
 void RccDTxn::ReplyFinishOk() {
-//  if (commit_request_received_)
+  if (commit_request_received_) {
+    verify(ptr_output_repy_);
     finish_ok_callback_();
+  }
 }
 
 bool RccDTxn::start_exe_itfr(defer_t defer_type,

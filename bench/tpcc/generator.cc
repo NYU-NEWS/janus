@@ -207,7 +207,7 @@ void TpccTxnGenerator::get_tpcc_order_status_txn_req(
 }
 
 
-void TpccTxnGenerator::GetTxnReq(TxnRequest *req, uint32_t cid) const {
+void TpccTxnGenerator::GetTxnReq(TxnRequest *req, uint32_t cid) {
   req->n_try_ = n_try_;
   if (txn_weight_.size() != 5) {
     verify(0);

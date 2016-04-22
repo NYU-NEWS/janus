@@ -24,7 +24,7 @@ class TpccTxnGenerator : public TxnGenerator {
   TpccTxnGenerator(rococo::Config *config);
 
   // tpcc
-  virtual void GetTxnReq(TxnRequest *req, uint32_t cid) const;
+  virtual void GetTxnReq(TxnRequest *req, uint32_t cid) override;
   // tpcc new_order
   void get_tpcc_new_order_txn_req(TxnRequest *req, uint32_t cid) const;
   // tpcc payment

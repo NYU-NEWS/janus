@@ -73,8 +73,8 @@ int RccSched::OnCommit(cmdid_t cmd_id,
     verify(v != nullptr);
     waitlist_.push_back(v);
   }
-  verify(dtxn->outputs_ == nullptr);
-  dtxn->outputs_ = output;
+  verify(dtxn->ptr_output_repy_ == nullptr);
+  dtxn->ptr_output_repy_ = output;
   dtxn->finish_ok_callback_ = callback;
   CheckWaitlist();
 }
@@ -121,10 +121,10 @@ void RccSched::CheckWaitlist() {
     verify(tinfo.graphs_for_inquire_.size() ==
         tinfo.callbacks_for_inquire_.size());
     if (tinfo.IsCommitting() && tinfo.graphs_for_inquire_.size() > 0) {
-      for (auto graph : tinfo.graphs_for_inquire_) {
+      for (auto& graph : tinfo.graphs_for_inquire_) {
         dep_graph_->MinItfrGraph(tinfo.id(), graph);
       }
-      for (auto callback : tinfo.callbacks_for_inquire_) {
+      for (auto& callback : tinfo.callbacks_for_inquire_) {
         callback();
       }
       tinfo.callbacks_for_inquire_.clear();
@@ -368,6 +368,8 @@ void RccSched::Execute(const RccScc& scc) {
   for (auto v : scc) {
     TxnInfo& info = *(v->data_);
     info.executed_ = true;
+    info.union_status(TXN_DCD); // FIXME, remove this.
+    verify(info.IsDecided());
     RccDTxn *dtxn = (RccDTxn *) GetDTxn(info.id());
     if (dtxn == nullptr) continue;
     if (info.Involve(partition_id_)) {

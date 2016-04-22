@@ -39,20 +39,28 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
   *res = SUCCESS;
   // union the graph into dep graph
   RccDTxn *dtxn = (RccDTxn*) GetDTxn(cmd_id);
-  dtxn->commit_request_received_ = true;
   verify(dtxn != nullptr);
-  dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
-  for (auto& pair: graph.vertex_index_) {
-    // TODO optimize here.
-    auto txnid = pair.first;
-    auto v = dep_graph_->FindV(txnid);
-    verify(v != nullptr);
-    waitlist_.push_back(v);
+
+  auto v = dep_graph_->FindV(cmd_id);
+  verify(v != nullptr);
+  TxnInfo& info = *v->data_;
+  verify(dtxn->ptr_output_repy_ == nullptr);
+  dtxn->ptr_output_repy_ = output;
+  if (info.IsExecuted()) {
+    callback();
+  } else {
+    dtxn->commit_request_received_ = true;
+    dtxn->finish_ok_callback_ = callback;
+    dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
+    for (auto& pair: graph.vertex_index_) {
+      // TODO optimize here.
+      auto txnid = pair.first;
+      auto v = dep_graph_->FindV(txnid);
+      verify(v != nullptr);
+      waitlist_.push_back(v);
+    }
+    CheckWaitlist();
   }
-  verify(dtxn->outputs_ == nullptr);
-  dtxn->outputs_ = output;
-  dtxn->finish_ok_callback_ = callback;
-  CheckWaitlist();
 }
 
 int BrqSched::OnInquire(cmdid_t cmd_id,
