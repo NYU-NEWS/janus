@@ -528,7 +528,7 @@ class ClientController(object):
         sites = ProcessInfo.get_sites(self.process_infos, SiteInfo.SiteType.Client)
         hosts = { s.process.host_address for s in sites }
         for host in hosts:
-            cmd = "killall deptran_server"
+            cmd = "killall -9 deptran_server"
             subprocess.call(['ssh', '-f', host, cmd])
 
     def client_shutdown(self):
@@ -594,7 +594,7 @@ class ServerController(object):
         hosts = { pi.host_address for pi in self.process_infos.itervalues() }
         logger.info("killing servers on %s", ', '.join(hosts))
         for host in hosts:
-            cmd = "killall deptran_server"
+            cmd = "killall -9 deptran_server"
             subprocess.call(['ssh', '-f', host, cmd])
     
     def setup_heartbeat(self, client_controller):

@@ -309,7 +309,7 @@ void ClassicCoord::PrepareAck(phase_t phase, Future *fu) {
 
   if (e != 0) {
     cmd->commit_.store(false);
-    Log_fatal("2PL prepare failed due to error");
+    Log_fatal("2PL prepare failed due to error %d", e);
   }
 
   int res;
