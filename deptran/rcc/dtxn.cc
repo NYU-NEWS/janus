@@ -22,7 +22,7 @@ void RccDTxn::DispatchExecute(const SimpleCommand &cmd,
     if (c.inn_id() == cmd.inn_id())
       return;
   }
-  verify(phase_ <= PHASE_RCC_START);
+//  verify(phase_ <= PHASE_RCC_START);
   phase_ = PHASE_RCC_START;
   // execute the IR actions.
   auto pair = txn_reg_->get(cmd);
