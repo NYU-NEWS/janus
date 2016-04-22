@@ -310,7 +310,7 @@ void BrqCoord::GotoNextPhase() {
 }
 
 void BrqCoord::Reset() {
-  ClassicCoord::Reset();
+  RccCoord::Reset();
   n_fast_accept_graphs_.clear();
   n_fast_accept_oks_.clear();
   n_fast_accept_rejects_.clear();

@@ -57,7 +57,7 @@ void ClassicCoord::do_one(TxnRequest &req) {
 
   if (ccsi_) ccsi_->txn_start_one(thread_id_, cmd->type_);
 
-  auto mode = Config::GetConfig()->cc_mode_;
+//  auto mode = Config::GetConfig()->cc_mode_;
 //  verify(mode == MODE_2PL || mode == MODE_OCC || mode == MODE_NONE);
   GotoNextPhase();
   // finish request is triggered in the callback of start request.
@@ -141,6 +141,7 @@ void ClassicCoord::GotoNextPhase() {
 //}
 
 void ClassicCoord::Reset() {
+  Coordinator::Reset();
   for (int i = 0; i < site_prepare_.size(); i++) {
     site_prepare_[i] = 0;
   }

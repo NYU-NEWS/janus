@@ -104,6 +104,7 @@ void RccCoord::DispatchAck(phase_t phase,
   // where should I store this graph?
   Log_debug("start response graph size: %d", (int)graph.size());
   verify(graph.size() > 0);
+
   graph_.Aggregate(graph);
 
   // TODO?
@@ -301,25 +302,27 @@ void RccCoord::DispatchRoAck(phase_t phase,
 //  }
 //}
 
-void RccCoord::do_one(TxnRequest& req) {
-  // pre-process
-  std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-  TxnCommand *txn = frame_->CreateChopper(req, txn_reg_);
-  verify(txn_reg_ != nullptr);
-  cmd_ = txn;
-  cmd_->id_ = this->next_txn_id();
-  cmd_->root_id_ = cmd_->id_;
-  Reset();
-  Log_debug("do one request");
-
-  if (ccsi_) ccsi_->txn_start_one(thread_id_, cmd_->type_);
-  verify((phase_ % 3) == Phase::INIT_END);
-  GotoNextPhase();
-}
+//void RccCoord::do_one(TxnRequest& req) {
+//  // pre-process
+//  std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+//  TxnCommand *txn = frame_->CreateChopper(req, txn_reg_);
+//  verify(txn_reg_ != nullptr);
+//  cmd_ = txn;
+//  cmd_->id_ = this->next_txn_id();
+//  cmd_->root_id_ = cmd_->id_;
+//  Reset();
+//  Log_debug("do one request");
+//
+//  if (ccsi_) ccsi_->txn_start_one(thread_id_, cmd_->type_);
+//  verify((phase_ % 3) == Phase::INIT_END);
+//  GotoNextPhase();
+//}
 
 void RccCoord::Reset() {
   ClassicCoord::Reset();
   graph_.Clear();
+  verify(graph_.size() == 0);
+  verify(graph_.vertex_index_.size() == 0);
   ro_state_ = BEGIN;
   last_vers_.clear();
   curr_vers_.clear();

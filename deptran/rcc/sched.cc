@@ -27,6 +27,7 @@ int RccSched::OnDispatch(const vector<SimpleCommand> &cmd,
                          TxnOutput *output,
                          RccGraph *graph,
                          const function<void()> &callback) {
+
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(cmd[0].root_id_);
   dep_graph_->FindOrCreateTxnInfo(cmd[0].root_id_, &dtxn->tv_);
   verify(dep_graph_->partition_id_ == partition_id_);
@@ -44,6 +45,8 @@ int RccSched::OnDispatch(const vector<SimpleCommand> &cmd,
     verify(info2.partition_.find(cmd[0].partition_id_)
                != info2.partition_.end());
     verify(sz > 0);
+    if (RandomGenerator::rand(1, 2000) <= 1)
+      Log_info("dispatch ret graph size: %d", graph->size());
     callback();
   };
 

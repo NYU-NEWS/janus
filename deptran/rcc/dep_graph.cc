@@ -149,7 +149,10 @@ void RccGraph::Aggregate(RccGraph &graph) {
   // aggregate vertexes
   map<txnid_t, RccVertex*> index;
   for (auto& pair: graph.vertex_index_) {
+    verify(pair.first == pair.second->id());
     auto vertex = this->AggregateVertex(pair.second);
+    verify(vertex->id() == pair.second->id());
+    verify(vertex_index_.count(vertex->id()) > 0);
     index[vertex->id()] = vertex;
   }
   // aggregate edges.

@@ -12,6 +12,8 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
                            RccGraph* res_graph,
                            function<void()> callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
+  if (RandomGenerator::rand(1, 2000) <= 1)
+    Log_info("on pre-accept graph size: %d", graph.size());
   verify(txn_id > 0);
   dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
   // TODO FIXME
@@ -36,6 +38,8 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
                         const function<void()>& callback) {
   // TODO to support cascade abort
   std::lock_guard<std::recursive_mutex> lock(mtx_);
+  if (RandomGenerator::rand(1, 2000) <= 1)
+    Log_info("on commit graph size: %d", graph.size());
   *res = SUCCESS;
   // union the graph into dep graph
   RccDTxn *dtxn = (RccDTxn*) GetDTxn(cmd_id);

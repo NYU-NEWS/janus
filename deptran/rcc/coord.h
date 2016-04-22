@@ -31,7 +31,7 @@ public:
                               thread_id), graph_() {
   }
 
-  void do_one(TxnRequest&) override;
+//  void do_one(TxnRequest&) override;
 
   void PreDispatch();
   void Dispatch();

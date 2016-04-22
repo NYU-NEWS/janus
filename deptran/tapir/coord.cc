@@ -79,7 +79,7 @@ void TapirCoord::DispatchAck(phase_t phase,
 }
 
 void TapirCoord::Reset() {
-  Coordinator::Reset();
+  ClassicCoord::Reset();
   dispatch_acks_.clear();
   n_accept_oks_.clear();
   n_fast_accept_oks_.clear();
