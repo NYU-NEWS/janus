@@ -34,7 +34,7 @@ void TpccTxn::Init(TxnRequest &req) {
   max_try_ = req.n_try_;
   n_try_ = 1;
   commit_.store(true);
-
+  input_vars_ = txn_reg_->input_vars_[type_];
   switch (type_) {
     case TPCC_NEW_ORDER:
       NewOrderInit(req);
@@ -60,7 +60,7 @@ void TpccTxn::Init(TxnRequest &req) {
 // This is sort of silly. We should have a better way.
 bool TpccTxn::CheckReady() {
   bool ret = false;
-  map<innid_t, set<int32_t>>& map = txn_reg_->input_vars_[type_];
+  map<innid_t, set<int32_t>>& map = input_vars_;
   for (auto &pair : status_) {
     const innid_t& pi = pair.first;
     int32_t& status = pair.second;

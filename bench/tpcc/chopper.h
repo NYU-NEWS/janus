@@ -10,6 +10,7 @@ class BatchStartArgsHelper;
 
 class TpccTxn: public TxnCommand {
  public:
+  map<innid_t, set<int32_t>> input_vars_ = {};
   typedef struct {
     size_t ol_cnt;
     bool piece_0_dist;
