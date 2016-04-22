@@ -20,7 +20,7 @@ int ClassicSched::OnDispatch(const vector<SimpleCommand>& cmd,
 
   rrr::DragonBall* db = new rrr::DragonBall(
       (int32_t)cmd.size(),
-      [&callback] () {
+      [callback, this] () {
         callback();
       });
 
@@ -30,7 +30,10 @@ int ClassicSched::OnDispatch(const vector<SimpleCommand>& cmd,
     exec->StartLaunch(c,
                       res,
                       &(*output)[c.inn_id()],
-                      [db] () {db->trigger();});
+                      [db, this] () {
+                        std::lock_guard<std::recursive_mutex> lock(mtx_);
+                        db->trigger();
+                      });
   }
 
   return 0;
