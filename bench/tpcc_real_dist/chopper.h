@@ -11,6 +11,8 @@ class TpccRealDistChopper: public TpccTxn {
  public:
   TpccRealDistChopper();
   bool IsOneRound() override;
+  virtual void NewOrderInit(TxnRequest &req) override;
+  virtual void NewOrderRetry() override;
   virtual ~TpccRealDistChopper();
 };
 

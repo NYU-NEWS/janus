@@ -39,8 +39,8 @@ TpccTxnGenerator::TpccTxnGenerator(Config* config)
 }
 
 
-void TpccTxnGenerator::get_tpcc_new_order_txn_req(TxnRequest *req,
-                                                  uint32_t cid) const {
+void TpccTxnGenerator::GetNewOrderTxnReq(TxnRequest *req,
+                                         uint32_t cid) const {
   req->txn_type_ = TPCC_NEW_ORDER;
   //int home_w_id = RandomGenerator::rand(0, tpcc_para_.n_w_id_ - 1);
   int home_w_id = cid % tpcc_para_.n_w_id_;
@@ -51,23 +51,10 @@ void TpccTxnGenerator::get_tpcc_new_order_txn_req(TxnRequest *req,
   int ol_cnt = RandomGenerator::rand(5, 15);
   //int ol_cnt;
 
-  //ol_cnt= RandomGenerator::rand(10, 10);
-  //if (ol_cnt != 10 ) {
-  //    Log::error("lalalalal, random wrong! %d", ol_cnt);
-  //    verify(ol_cnt == 10);
-  //}
-  //ol_cnt= RandomGenerator::rand(2, 2);
-
   rrr::i32 i_id_buf[ol_cnt];
-//  req->input_.resize(4 + 3 * ol_cnt);
-  //if (fix_id_ >= 0) {
-  //    req->input_[0] = tpcc_para_.const_home_w_id_;
-  //    req->input_[1] = fix_id_;
-  //}
-  //else {
+
   req->input_[TPCC_VAR_W_ID] = w_id;
   req->input_[TPCC_VAR_D_ID] = d_id;
-  //}
   req->input_[TPCC_VAR_C_ID] = c_id;
   req->input_[TPCC_VAR_OL_CNT] = Value((i32) ol_cnt);
   req->input_[TPCC_VAR_O_CARRIER_ID] = Value((int32_t)0);
@@ -110,17 +97,6 @@ void TpccTxnGenerator::get_tpcc_new_order_txn_req(TxnRequest *req,
     req->input_[TPCC_VAR_OL_QUANTITY(i)] = Value((i32) RandomGenerator::rand(0, 10));
   }
   req->input_[TPCC_VAR_O_ALL_LOCAL] = all_local ? Value((i32)1) : Value ((i32)0);
-
-
-  //for (i = 0; i < ol_cnt; i++) {
-  //    verify(i_id_buf[i] < tpcc_para_.n_i_id_ && i_id_buf[i] >= 0);
-  //    for (int j = i + 1; j < ol_cnt; j++)
-  //        verify(i_id_buf[i] != i_id_buf[j]);
-  //}
-  // debug
-//  for (int i = 0; i < ol_cnt; i++) {
-//    verify(req->input_[TPCC_VAR_S_W_ID(i)].get_i32() < 3);
-//  }
 
 }
 
@@ -211,11 +187,11 @@ void TpccTxnGenerator::GetTxnReq(TxnRequest *req, uint32_t cid) {
   req->n_try_ = n_try_;
   if (txn_weight_.size() != 5) {
     verify(0);
-    get_tpcc_new_order_txn_req(req, cid);
+    GetNewOrderTxnReq(req, cid);
   } else {
     switch (RandomGenerator::weighted_select(txn_weight_)) {
       case 0:
-        get_tpcc_new_order_txn_req(req, cid);
+        GetNewOrderTxnReq(req, cid);
         break;
       case 1:
         get_tpcc_payment_txn_req(req, cid);

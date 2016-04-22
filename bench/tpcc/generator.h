@@ -26,7 +26,7 @@ class TpccTxnGenerator : public TxnGenerator {
   // tpcc
   virtual void GetTxnReq(TxnRequest *req, uint32_t cid) override;
   // tpcc new_order
-  void get_tpcc_new_order_txn_req(TxnRequest *req, uint32_t cid) const;
+  void GetNewOrderTxnReq(TxnRequest *req, uint32_t cid) const;
   // tpcc payment
   void get_tpcc_payment_txn_req(TxnRequest *req, uint32_t cid) const;
   // tpcc stock_level
