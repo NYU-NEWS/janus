@@ -7,17 +7,18 @@ namespace rococo {
 static uint32_t TXN_TYPE = TPCC_NEW_ORDER;
 
 void TpccTxn::NewOrderInit(TxnRequest &req) {
-  NewOrderRetry();
   int32_t ol_cnt = ws_[TPCC_VAR_OL_CNT].get_i32();
   auto& vars = input_vars_[TPCC_NEW_ORDER_0];
   for (int i = 0; i < ol_cnt; i++) {
     vars.insert(TPCC_VAR_I_ID(i));
+    vars.insert(TPCC_VAR_I_PRICE(i));
     vars.insert(TPCC_VAR_S_W_ID(i));
     vars.insert(TPCC_VAR_OL_DIST_INFO(i));
     vars.insert(TPCC_VAR_OL_QUANTITY(i));
     vars.insert(TPCC_VAR_OL_NUMBER(i));
     vars.insert(TPCC_VAR_OL_DELIVER_D(i));
   }
+  NewOrderRetry();
 }
 
 void TpccTxn::NewOrderRetry() {
@@ -43,10 +44,10 @@ void TpccPiece::RegNewOrder() {
             TPCC_VAR_O_CARRIER_ID, TPCC_VAR_OL_CNT, TPCC_VAR_O_ALL_LOCAL)
   SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0,
             TPCC_TB_WAREHOUSE, TPCC_VAR_W_ID)
-  BEGIN_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0, DF_NO) {
+  BEGIN_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0, DF_REAL) {
     int32_t ol_cnt = cmd.input[TPCC_VAR_OL_CNT].get_i32();
-    Log_info("ol_cnt: %d, input size: %d", ol_cnt, (int32_t)cmd.input.size());
-    verify(cmd.input.size() == 6 + ol_cnt * 6);
+//    Log_info("ol_cnt: %d, input size: %d", ol_cnt, (int32_t)cmd.input.size());
+    verify(cmd.input.size() == 6 + ol_cnt * 7);
     verify(cmd.input[TPCC_VAR_W_ID].get_i32() >= 0);
     mdb::MultiBlob mb(2);
     mb[0] = cmd.input[TPCC_VAR_D_ID].get_blob();
@@ -73,7 +74,7 @@ void TpccPiece::RegNewOrder() {
     dtxn->WriteColumn(r,
                       TPCC_COL_DISTRICT_D_NEXT_O_ID,
                       buf,
-                      TXN_INSTANT);
+                      TXN_DEFERRED);
 
 
     mdb::Row *row_warehouse = dtxn->Query(dtxn->GetTable(TPCC_TB_WAREHOUSE),
@@ -149,15 +150,15 @@ void TpccPiece::RegNewOrder() {
                       cmd.input[TPCC_VAR_W_ID], TXN_DEFERRED);
 
     mdb::Table *tbl_ol = dtxn->GetTable(TPCC_TB_ORDER_LINE);
-    for (int i = 0; i < cmd.input[TPCC_VAR_OL_CNT].get_i32(); i++) {
+    for (int i = 0; i < ol_cnt; i++) {
       Value amount = Value((double) (cmd.input[TPCC_VAR_I_PRICE(i)]
           .get_double() *
           cmd.input[TPCC_VAR_OL_QUANTITY(i)].get_i32()));
-      mdb::Row *row_ol = dtxn->CreateRow(tbl->schema(), vector<Value>(
+      mdb::Row *row_ol = dtxn->CreateRow(tbl_ol->schema(), vector<Value>(
           {
               cmd.input[TPCC_VAR_D_ID],
               cmd.input[TPCC_VAR_W_ID],
-              cmd.input[TPCC_VAR_O_ID],
+              output[TPCC_VAR_O_ID],
               cmd.input[TPCC_VAR_OL_NUMBER(i)],
               cmd.input[TPCC_VAR_I_ID(i)],
               cmd.input[TPCC_VAR_S_W_ID(i)],
