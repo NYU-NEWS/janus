@@ -32,7 +32,8 @@ from deptran.rcc_rpc import ClientControlProxy
 
 LOG_LEVEL = logging.INFO
 LOG_FILE_LEVEL = logging.DEBUG
-logger = logging.getLogger('janus') 
+logger = logging.getLogger('janus')
+logger.addHandler(logging.StreamHandler())
 
 cwd = os.getcwd()
 deptran_home, ff = os.path.split(os.path.realpath(__file__))
