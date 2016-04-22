@@ -165,6 +165,22 @@ bool DTxn::WriteColumns(Row *row,
 //  WriteColumns(row, col_ids, values);
 //}
 
+mdb::Row* DTxn::CreateRow(const mdb::Schema *schema,
+                          const std::vector<mdb::Value> &row_data) {
+  Row* r;
+  switch (Config::config_s->cc_mode_) {
+    case MODE_2PL:
+      r = mdb::FineLockedRow::create(schema, row_data);
+      break;
+    case MODE_OCC:
+    case MODE_NONE:
+      r = mdb::VersionedRow::create(schema, row_data);
+      break;
+    default:
+      verify(0);
+  }
+  return r;
+}
 
 bool DTxn::InsertRow(Table *tbl, Row *row) {
   verify(mdb_txn() != nullptr);
