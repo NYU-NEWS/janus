@@ -11,7 +11,6 @@ MultiPaxosServiceImpl::MultiPaxosServiceImpl(Scheduler *sched)
 
 void MultiPaxosServiceImpl::Forward(const ContainerCommand& cmd,
                                     rrr::DeferredReply* defer) {
-
 }
 
 void MultiPaxosServiceImpl::Prepare(const uint64_t& slot,

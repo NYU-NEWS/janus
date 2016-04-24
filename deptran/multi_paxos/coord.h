@@ -40,8 +40,7 @@ class MultiPaxosCoord : public Coordinator {
   }
 
   bool IsLeader() {
-    //TODO
-    return true;
+    return this->loc_id_ == 0;
   }
 
   slotid_t GetNextSlot() {

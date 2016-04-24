@@ -18,6 +18,10 @@ MultiPaxosCoord::MultiPaxosCoord(uint32_t coo_id,
 void MultiPaxosCoord::Submit(ContainerCommand& cmd,
                              const function<void()>& func,
                              const std::function<void()>& exe_callback) {
+  if (!this->IsLeader()) {
+    Log_fatal("todo forward to leader; i am site ", this->loc_id_);
+  }
+
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   verify(!in_submission_);
   verify(cmd_ == nullptr);
@@ -29,8 +33,7 @@ void MultiPaxosCoord::Submit(ContainerCommand& cmd,
 }
 
 ballot_t MultiPaxosCoord::PickBallot() {
-  // TODO
-  return 1;
+  return curr_ballot_+1;
 }
 
 void MultiPaxosCoord::Prepare() {
@@ -60,15 +63,19 @@ void MultiPaxosCoord::PrepareAck(phase_t phase, Future *fu) {
   fu->get_reply() >> max_ballot;
   if (max_ballot == curr_ballot_) {
     n_prepare_ack_++;
+    verify(n_prepare_ack_ <= n_replica_);
+    if (n_prepare_ack_ >= GetQuorum()) {
+      GotoNextPhase();
+    }
   } else {
-    verify(0);
-  }
-  verify(n_prepare_ack_ <= n_replica_);
-  if (n_prepare_ack_ >= GetQuorum()) {
-    GotoNextPhase();
-  } else {
-    // TODO what if receive majority of rejects.
-    // Do nothing.
+    if (max_ballot > curr_ballot_) {
+      curr_ballot_ = max_ballot + 1;
+      Log_debug("%s: saw greater ballot increment to %d", __FUNCTION__, curr_ballot_);
+      phase_ = Phase::INIT_END;
+      GotoNextPhase();
+    } else {
+      // max_ballot < curr_ballot ignore
+    }
   }
 }
 
@@ -98,15 +105,19 @@ void MultiPaxosCoord::AcceptAck(phase_t phase, Future *fu) {
   fu->get_reply() >> max_ballot;
   if (max_ballot == curr_ballot_) {
     n_finish_ack_++;
+    if (n_finish_ack_ >= GetQuorum()) {
+      committed_ = true;
+      GotoNextPhase();
+    }
   } else {
-    verify(0);
-  }
-  if (n_finish_ack_ >= GetQuorum()) {
-    committed_ = true;
-    GotoNextPhase();
-  } else {
-    // TODO
-    // Do nothing.
+    if (max_ballot > curr_ballot_) {
+      curr_ballot_ = max_ballot + 1;
+      Log_debug("%s: saw greater ballot increment to %d", __FUNCTION__, curr_ballot_);
+      phase_ = Phase::INIT_END;
+      GotoNextPhase();
+    } else {
+      // max_ballot < curr_ballot ignore
+    }
   }
 }
 
