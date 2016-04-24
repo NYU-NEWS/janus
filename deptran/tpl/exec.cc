@@ -137,7 +137,7 @@ std::function<void(void)> TPLExecutor::get_2pl_fail_callback(
 
 
 bool TPLExecutor::Prepare() {
-  auto txn = (mdb::Txn2PL *) mdb_txn_;
+  auto txn = (mdb::Txn2PL *) mdb_txn();
   verify(txn != NULL);
 
   prepared_ = true;

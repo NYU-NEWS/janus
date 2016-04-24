@@ -29,7 +29,7 @@ class ClassicSched: public Scheduler {
 
   void OnLearn(ContainerCommand&) override;
 
-  int PrepareReplicated(TpcPrepareCommand& cmd);
+  int PrepareReplicated(TpcPrepareCommand& prepare_cmd);
 
 };
 

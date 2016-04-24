@@ -13,6 +13,7 @@ class ClassicExecutor: public Executor {
   using Executor::Executor;
  public:
   vector<SimpleCommand> cmds_ = {};
+  function<void(int)> prepare_reply_ = [] (int r) {};
 
   virtual ~ClassicExecutor();
 

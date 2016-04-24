@@ -53,7 +53,8 @@ int ClassicSched::OnPrepare(cmdid_t cmd_id,
   Log_debug("%s: at site %d", __FUNCTION__, this->site_id_);
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto exec = dynamic_cast<ClassicExecutor*>(GetExecutor(cmd_id));
-  *res = exec->Prepare() ? SUCCESS : REJECT;
+  exec->prepare_reply_ = [res, callback] (int r) {*res = r; callback();};
+//  *res = exec->Prepare() ? SUCCESS : REJECT;
 
   if (Config::GetConfig()->IsReplicated()) {
     TpcPrepareCommand *cmd = new TpcPrepareCommand; // TODO watch out memory
@@ -69,11 +70,18 @@ int ClassicSched::OnPrepare(cmdid_t cmd_id,
   return 0;
 }
 
-int ClassicSched::PrepareReplicated(TpcPrepareCommand& cmd) {
+int ClassicSched::PrepareReplicated(TpcPrepareCommand& prepare_cmd) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 //  auto exec = dynamic_cast<ClassicExecutor*>(GetExecutor(cmd_id));
   // TODO verify it is the same leader, error if not.
   // TODO and return the prepare callback here.
+  auto tid = prepare_cmd.txn_id_;
+  auto exec = dynamic_cast<ClassicExecutor*>(GetOrCreateExecutor(tid));
+  verify(prepare_cmd.cmds_.size() > 0);
+  exec->cmds_ = prepare_cmd.cmds_;
+  verify(exec->cmds_.size() > 0);
+  int r = exec->Prepare() ? SUCCESS : REJECT;
+  exec->prepare_reply_(r);
   return 0;
 }
 
@@ -100,9 +108,11 @@ int ClassicSched::OnCommit(cmdid_t cmd_id,
   return 0;
 }
 
+//int ClassicSched::CommitReplicated
+
 void ClassicSched::OnLearn(ContainerCommand& cmd) {
   if (cmd.type_ == CMD_TPC_PREPARE) {
-    TpcPrepareCommand& c = (TpcPrepareCommand&)cmd;
+    TpcPrepareCommand& c = dynamic_cast<TpcPrepareCommand&>(*cmd.self_cmd_);
     PrepareReplicated(c);
   } else if (cmd.type_ == CMD_TPC_COMMIT) {
     // TODO, execute for slave.
