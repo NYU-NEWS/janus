@@ -18,8 +18,9 @@ MultiPaxosCoord::MultiPaxosCoord(uint32_t coo_id,
 void MultiPaxosCoord::Submit(ContainerCommand& cmd,
                              const function<void()>& func,
                              const std::function<void()>& exe_callback) {
-  if (!this->IsLeader()) {
-    Log_fatal("todo forward to leader; i am site ", this->loc_id_);
+  if (!IsLeader()) {
+    Log_fatal("i am not the leader; site %d; locale %d",
+              frame_->site_info_->id, loc_id_);
   }
 
   std::lock_guard<std::recursive_mutex> lock(mtx_);

@@ -14,6 +14,8 @@ namespace rococo {
 class Coordinator;
 class ClassicProxy;
 
+typedef std::pair<siteid_t, ClassicProxy*> SiteProxyPair;
+
 class Communicator {
  public:
   const int CONNECT_TIMEOUT_MS = 30*1000;
@@ -21,8 +23,8 @@ class Communicator {
   locid_t loc_id_ = -1;
   map<siteid_t, rrr::Client *> rpc_clients_ = {};
   map<siteid_t, ClassicProxy *> rpc_proxies_ = {};
-  map<parid_t, vector<std::pair<siteid_t,
-                                ClassicProxy*>>> rpc_par_proxies_ = {};
+  map<parid_t, vector<SiteProxyPair>> rpc_par_proxies_ = {};
+  map<parid_t, SiteProxyPair> leader_cache_ = {};
 
 //  vector<rrr::Client*> rpc_clients_ = {};
 //  vector<RococoProxy*> rpc_proxies_ = {};
@@ -47,14 +49,10 @@ class Communicator {
 //                         const std::function<void(Future *fu)> &callback) = 0;
   virtual ~Communicator();
 
-  std::pair<siteid_t, ClassicProxy*> RandomProxyForPartition(parid_t
-                                                             partition_id) const;
-  std::pair<siteid_t, ClassicProxy*> LeaderProxyForPartition(parid_t) const;
-
-  std::pair<siteid_t, ClassicProxy*> NearestProxyForPartition(parid_t) const;
-
-  std::pair<int, ClassicProxy*> ConnectToSite(rococo::Config::SiteInfo &site,
-                                              std::chrono::milliseconds timeout_ms);
+  SiteProxyPair RandomProxyForPartition(parid_t partition_id) const;
+  SiteProxyPair LeaderProxyForPartition(parid_t) const;
+  SiteProxyPair NearestProxyForPartition(parid_t) const;
+  std::pair<int, ClassicProxy*> ConnectToSite(rococo::Config::SiteInfo &site, std::chrono::milliseconds timeout_ms);
 };
 
 } // namespace rococo

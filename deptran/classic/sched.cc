@@ -50,12 +50,12 @@ int ClassicSched::OnPrepare(cmdid_t cmd_id,
                             const std::vector<i32> &sids,
                             rrr::i32 *res,
                             const function<void()>& callback) {
+  Log_debug("%s: at site %d", __FUNCTION__, this->site_id_);
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto exec = dynamic_cast<ClassicExecutor*>(GetExecutor(cmd_id));
   *res = exec->Prepare() ? SUCCESS : REJECT;
 
   if (Config::GetConfig()->IsReplicated()) {
-//    SimpleCommand cmd; // TODO
     TpcPrepareCommand *cmd = new TpcPrepareCommand; // TODO watch out memory
     cmd->cmds_ = exec->cmds_;
     CreateRepCoord()->Submit(*cmd, callback);

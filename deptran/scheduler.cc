@@ -178,18 +178,18 @@ Scheduler::Scheduler() : mtx_() {
 Coordinator* Scheduler::CreateRepCoord() {
 //  if (rep_coord_) return rep_coord_;
   Coordinator *coord;
-  // TODO
-  cooid_t cid = 0;
+  static cooid_t cid = 0;
   int32_t benchmark = 0;
-  id_t id;
+  static id_t id = 0;
   verify(rep_frame_ != nullptr);
-  coord = rep_frame_->CreateCoord(cid,
+  coord = rep_frame_->CreateCoord(cid++,
                                   Config::GetConfig(),
                                   benchmark,
                                   nullptr,
-                                  id,
+                                  id++,
                                   txn_reg_);
   coord->par_id_ = partition_id_;
+  coord->loc_id_ = this->loc_id_;
   return coord;
 }
 

@@ -52,11 +52,29 @@ Communicator::RandomProxyForPartition(parid_t par_id) const {
 
 std::pair<siteid_t, ClassicProxy*>
 Communicator::LeaderProxyForPartition(parid_t par_id) const {
-  auto it = rpc_par_proxies_.find(par_id);
-  verify(it != rpc_par_proxies_.end());
-  auto& partition_proxies = it->second;
-  int index = 0;
-  return partition_proxies[index];
+  auto leader_cache = const_cast<map<parid_t, SiteProxyPair>&>(this->leader_cache_);
+  auto leader_it = leader_cache.find(par_id);
+  if (leader_it != leader_cache.end()) {
+    return leader_it->second;
+  } else {
+    auto it = rpc_par_proxies_.find(par_id);
+    verify(it != rpc_par_proxies_.end());
+    auto &partition_proxies = it->second;
+    auto config = Config::GetConfig();
+    auto proxy_it = std::find_if(partition_proxies.begin(),
+                                 partition_proxies.end(),
+                                 [config](const std::pair<siteid_t, ClassicProxy *> &p) {
+                                   auto &site = config->SiteById(p.first);
+                                   return site.locale_id == 0;
+                                 });
+    if (proxy_it == partition_proxies.end()) {
+      Log_fatal("could not find leader for partition %d", par_id);
+    } else {
+      leader_cache[par_id] = *proxy_it;
+      Log_debug("leader site for parition %d is %d", par_id, proxy_it->first);
+    }
+    return *proxy_it;
+  }
 }
 
 std::pair<int, ClassicProxy*>

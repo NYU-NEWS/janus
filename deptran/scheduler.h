@@ -14,6 +14,7 @@ class Communicator;
 class Scheduler {
  public:
   locid_t loc_id_ = -1;
+  siteid_t site_id_ = -1;
   map<i64, DTxn *> dtxns_ = {};
   map<i64, mdb::Txn *> mdb_txns_ = {};
   map<cmdid_t, Executor*> executors_ = {};

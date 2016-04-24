@@ -26,11 +26,7 @@ ClassicCoord::ClassicCoord(uint32_t coo_id,
                   benchmark,
                   ccsi,
                   thread_id) {
-  // TODO: doesn't belong here;
-  // it is currently here so that subclasses such as RCCCoord and OCCoord don't break
   verify(commo_ == nullptr);
-//  commo_ = new RococoCommunicator();
-//  commo_ = frame_->CreateCommo();
 }
 
 RococoCommunicator* ClassicCoord::commo() {
@@ -396,7 +392,7 @@ void ClassicCoord::CommitAck(phase_t phase, Future *fu) {
 void ClassicCoord::End() {
   TxnCommand* txn = (TxnCommand*) cmd_;
   TxnReply& txn_reply_buf = txn->get_reply();
-  double    last_latency  = txn->last_attempt_latency();
+  double last_latency  = txn->last_attempt_latency();
   if (committed_) {
     txn->reply_.res_ = SUCCESS;
     this->report(txn_reply_buf, last_latency

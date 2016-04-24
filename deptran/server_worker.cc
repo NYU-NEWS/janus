@@ -52,6 +52,7 @@ void ServerWorker::SetupBase() {
   dtxn_sched_->txn_reg_ = txn_reg_;
   dtxn_sched_->SetPartitionId(site_info_->partition_id_);
   dtxn_sched_->loc_id_ = site_info_->locale_id;
+  dtxn_sched_->site_id_ = site_info_->id;
   sharding_->dtxn_sched_ = dtxn_sched_;
 
   if (config->IsReplicated() &&
