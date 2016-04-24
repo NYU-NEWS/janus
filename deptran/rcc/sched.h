@@ -56,9 +56,11 @@ class RccSched : public Scheduler {
 
   bool AllAncCmt(RccVertex *v);
   void Decide(const RccScc&);
-
+  bool HasICycle(const RccScc& scc);
+  bool HasAbortedAncestor(const RccScc& scc);
   bool AllAncFns(const RccScc&);
   void Execute(const RccScc&);
+  void Abort(const RccScc&);
 
   void __DebugExamineWaitlist();
   RccVertex* __DebugFindAnOngoingAncestor(RccVertex* vertex);

@@ -51,10 +51,17 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
   verify(dtxn->ptr_output_repy_ == nullptr);
   dtxn->ptr_output_repy_ = output;
   if (info.IsExecuted()) {
+    *res = SUCCESS;
+    callback();
+  } else if (info.IsAborted()) {
+    *res = REJECT;
     callback();
   } else {
     dtxn->commit_request_received_ = true;
-    dtxn->finish_ok_callback_ = callback;
+    dtxn->finish_reply_callback_ = [callback, res] (int r) {
+      *res = r;
+      callback();
+    };
     dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
     for (auto& pair: graph.vertex_index_) {
       // TODO optimize here.

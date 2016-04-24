@@ -156,6 +156,8 @@ void ClassicCoord::Restart() {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(aborted_);
   n_retry_++;
+  cmd_->root_id_ = this->next_txn_id();
+  cmd_->id_ = cmd_->root_id_;
   TxnCommand *txn = (TxnCommand*) cmd_;
   double last_latency = txn->last_attempt_latency();
   if (ccsi_)

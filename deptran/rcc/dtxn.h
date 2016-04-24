@@ -14,9 +14,11 @@ class RccDTxn: public DTxn {
   TxnOutput *ptr_output_repy_ = nullptr;
   TxnOutput output_ = {};
   vector<TxnInfo *> conflict_txns_ = {}; // This is read-only transaction
-  function<void()> finish_ok_callback_ =  [] () -> void {verify(0);};
+  function<void(int)> finish_reply_callback_ =  [] (int) -> void {verify(0);};
   bool commit_request_received_ = false;
   bool read_only_ = false;
+  bool committed = false;
+  bool aborted = false;
 
   RccDTxn(txnid_t tid, Scheduler *mgr, bool ro);
   virtual ~RccDTxn() {
@@ -27,6 +29,7 @@ class RccDTxn: public DTxn {
                                map<int32_t, Value> *output);
 
   virtual void CommitExecute();
+  virtual void Abort();
 
   virtual void ReplyFinishOk();
 

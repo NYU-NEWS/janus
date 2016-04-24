@@ -78,7 +78,7 @@ int RccSched::OnCommit(cmdid_t cmd_id,
   }
   verify(dtxn->ptr_output_repy_ == nullptr);
   dtxn->ptr_output_repy_ = output;
-  dtxn->finish_ok_callback_ = callback;
+  dtxn->finish_reply_callback_ = [callback] (int r) {callback();};
   CheckWaitlist();
 }
 
@@ -156,14 +156,19 @@ void RccSched::CheckWaitlist() {
     } // else do nothing
 
     if (tinfo.status() >= TXN_DCD &&
-        !tinfo.IsExecuted() &&
-        AllAncFns(dep_graph_->FindSCC(v))) {
-      check_again = true;
-      Execute(dep_graph_->FindSCC(v));
+        !tinfo.IsExecuted() ) {
+      auto scc = dep_graph_->FindSCC(v);
+      if (HasICycle(scc) || HasAbortedAncestor(scc)) {
+        Abort(scc);
+      } else if (AllAncFns(scc)) {
+        Execute(scc);
+        check_again = true;
+      } // else do nothing.
     } // else do nothing
 
     // Adjust the waitlist.
     if (tinfo.IsExecuted() ||
+        tinfo.IsAborted() ||
         (tinfo.IsDecided() && !tinfo.Involve(partition_id_))) {
       // check for its descendants, perhaps add redundant vertex here.
 //      for (auto child_pair : v->outgoing_) {
@@ -344,6 +349,29 @@ void RccSched::Decide(const RccScc& scc) {
   }
 }
 
+bool RccSched::HasICycle(const RccScc& scc) {
+  // TODO
+  return false;
+};
+
+bool RccSched::HasAbortedAncestor(const RccScc& scc) {
+  verify(scc.size() > 0);
+  set<RccVertex*> scc_set;
+  scc_set.insert(scc.begin(), scc.end());
+  set<RccVertex*> walked;
+  bool ret = false;
+  std::function<bool(RccVertex*)> func =
+      [&ret, &scc_set] (RccVertex* v) -> bool {
+        TxnInfo& info = *v->data_;
+        if (info.IsAborted()) {
+          ret = true; // found aborted transaction.
+          return false; // abort traverse
+        }
+      };
+  dep_graph_->TraversePred(scc[0], -1, func, walked);
+  return ret;
+};
+
 bool RccSched::AllAncFns(const RccScc& scc) {
   verify(scc.size() > 0);
   set<RccVertex*> scc_set;
@@ -381,6 +409,23 @@ void RccSched::Execute(const RccScc& scc) {
     }
   }
 }
+
+
+void RccSched::Abort(const RccScc& scc) {
+  verify(scc.size() > 0);
+  for (auto v : scc) {
+    TxnInfo& info = *(v->data_);
+    info.union_status(TXN_ABT); // FIXME, remove this.
+    verify(info.IsAborted());
+    RccDTxn *dtxn = (RccDTxn *) GetDTxn(info.id());
+    if (dtxn == nullptr) continue;
+    if (info.Involve(partition_id_)) {
+      dtxn->Abort();
+      dtxn->ReplyFinishOk();
+    }
+  }
+}
+
 
 RccCommo* RccSched::commo() {
 //  if (commo_ == nullptr) {

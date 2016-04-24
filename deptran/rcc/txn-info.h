@@ -47,6 +47,10 @@ class TxnInfo {
     return status_;
   }
 
+  inline bool IsAborted() const {
+    return (status_ & TXN_ABT);
+  }
+
   inline bool IsCommitting() const {
     return (status_ & TXN_CMT);
   }

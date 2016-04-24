@@ -46,6 +46,12 @@ void RccDTxn::DispatchExecute(const SimpleCommand &cmd,
   *res = pair.defer;
 }
 
+
+void RccDTxn::Abort() {
+  aborted = true;
+  // TODO. nullify changes in the staging area.
+}
+
 void RccDTxn::CommitExecute() {
 //  verify(phase_ == PHASE_RCC_START);
   phase_ = PHASE_RCC_COMMIT;
@@ -54,12 +60,15 @@ void RccDTxn::CommitExecute() {
     int tmp;
     pair.txn_handler(nullptr, this, cmd, &tmp, output_[cmd.inn_id_]);
   }
+  committed = true;
 }
 
 void RccDTxn::ReplyFinishOk() {
+  verify(committed != aborted);
+  int r = committed ? SUCCESS : REJECT;
   if (commit_request_received_) {
     verify(ptr_output_repy_);
-    finish_ok_callback_();
+    finish_reply_callback_(r);
   }
 }
 

@@ -85,7 +85,7 @@ void BrqCoord::PreAcceptAck(phase_t phase,
     if (AllFastQuorumsReached()) {
       // receive enough identical replies to continue fast path.
       // go to the commit.
-      committed_ = true;
+      fast_path_ = true;
       GotoNextPhase();
     } else {
       // skip, wait
@@ -94,7 +94,7 @@ void BrqCoord::PreAcceptAck(phase_t phase,
     // fastpath is no longer a choice
     if (SlowpathPossible()) {
       if (AllSlowQuorumsReached()) {
-        verify(!committed_);
+        verify(!fast_path_);
         GotoNextPhase();
       } else {
         // skip, wait
@@ -179,6 +179,13 @@ void BrqCoord::CommitAck(phase_t phase,
                          int32_t res,
                          TxnOutput& output) {
   if (phase != phase_) return;
+  if (res == SUCCESS) {
+    committed_ = true;
+  } else if (res == REJECT) {
+    aborted_ = true;
+  } else {
+    verify(0);
+  }
   n_commit_oks_[par_id]++;
   if (n_commit_oks_[par_id] > 1)
     return;
@@ -287,7 +294,7 @@ void BrqCoord::GotoNextPhase() {
       PreAccept();
       break;
     case Phase::PRE_ACCEPT:
-      if (committed_) {
+      if (fast_path_) {
         phase_++; // FIXME
         verify(phase_ % n_phase == Phase::COMMIT);
         Commit();
@@ -302,7 +309,14 @@ void BrqCoord::GotoNextPhase() {
       verify(phase_ % n_phase == Phase::COMMIT);
     case Phase::COMMIT:
       verify(phase_ % n_phase == Phase::INIT_END);
-      End();
+      verify(committed_ != aborted_);
+      if (committed_) {
+        End();
+      } else if (aborted_) {
+        Restart();
+      } else {
+        verify(0);
+      }
       break;
     default:
       verify(0);
