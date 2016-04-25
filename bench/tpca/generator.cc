@@ -1,6 +1,7 @@
 #include "../../deptran/config.h"
 #include "generator.h"
 #include "piece.h"
+#include "zipf.h"
 
 using namespace rococo;
 
@@ -53,7 +54,7 @@ void TpcaTxnGenerator::GetTxnReq(TxnRequest *req, uint32_t cid) {
         {TPCA_VAR_Z, Value((i32) key)},
         {TPCA_VAR_AMOUNT, amount}
     };
-  } else {
+  } else if (Config::GetConfig()->dist_ == "uniform") {
     boost::random::uniform_int_distribution<> d1(0, tpca_para_.n_customer_-1);
     boost::random::uniform_int_distribution<> d2(0, tpca_para_.n_teller_-1);
     boost::random::uniform_int_distribution<> d3(0, tpca_para_.n_branch_-1);
@@ -68,7 +69,22 @@ void TpcaTxnGenerator::GetTxnReq(TxnRequest *req, uint32_t cid) {
         {0, Value(k1)},
         {1, Value(k2)},
         {2, Value(k3)},
-        {3, amount}
-    };
+        {3, amount}};
+  } else if (Config::GetConfig()->dist_ == "zipf") {
+    static auto alpha = Config::GetConfig()->coeffcient_;
+    static ZipfDist d1(alpha, tpca_para_.n_customer_-1);
+    static ZipfDist d2(alpha, tpca_para_.n_teller_-1);
+    static ZipfDist d3(alpha, tpca_para_.n_branch_-1);
+    int k1 = d1(rand_gen_);
+    int k2 = d2(rand_gen_);
+    int k3 = d3(rand_gen_);
+    req->input_ = {
+        {0, Value(k1)},
+        {1, Value(k2)},
+        {2, Value(k3)},
+        {3, amount}};
+  } else {
+    verify(0);
   }
 }
+

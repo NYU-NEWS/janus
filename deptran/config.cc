@@ -485,6 +485,8 @@ void Config::LoadBenchYML(YAML::Node config) {
   }
   if (config["dist"])
     dist_ = config["dist"].as<string>();
+  if (config["coefficient"])
+    coeffcient_ = config["coefficient"].as<float>();
 }
 
 void Config::LoadSchemaYML(YAML::Node config) {

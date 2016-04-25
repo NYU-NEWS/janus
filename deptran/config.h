@@ -57,6 +57,7 @@ class Config {
   uint16_t n_concurrent_;
   uint32_t max_retry_;
   string dist_ = "uniform";
+  float coeffcient_ = 0; // "uniform"
 
   // TODO remove, will cause problems.
   uint32_t num_site_;

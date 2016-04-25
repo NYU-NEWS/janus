@@ -9,6 +9,8 @@ bench:
     branch:   100000
     teller:   100000
     customer: 100000
+  dist: zipf
+  coefficient: 1 # 0 as unifrom, 1 as pure zipf
 
 schema:
   - name: branch
