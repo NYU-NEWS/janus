@@ -58,8 +58,9 @@ int ClassicSched::OnPrepare(cmdid_t cmd_id,
 
   if (Config::GetConfig()->IsReplicated()) {
     TpcPrepareCommand *cmd = new TpcPrepareCommand; // TODO watch out memory
+    cmd->txn_id_ = cmd_id;
     cmd->cmds_ = exec->cmds_;
-    CreateRepCoord()->Submit(*cmd, callback);
+    CreateRepCoord()->Submit(*cmd);
   } else if (Config::GetConfig()->do_logging()) {
     string log;
     this->get_prepare_log(cmd_id, sids, &log);
@@ -78,7 +79,9 @@ int ClassicSched::PrepareReplicated(TpcPrepareCommand& prepare_cmd) {
   auto tid = prepare_cmd.txn_id_;
   auto exec = dynamic_cast<ClassicExecutor*>(GetOrCreateExecutor(tid));
   verify(prepare_cmd.cmds_.size() > 0);
-  exec->cmds_ = prepare_cmd.cmds_;
+  if (exec->cmds_.size() == 0)
+    exec->cmds_ = prepare_cmd.cmds_;
+  // else: is the leader.
   verify(exec->cmds_.size() > 0);
   int r = exec->Prepare() ? SUCCESS : REJECT;
   exec->prepare_reply_(r);
@@ -91,32 +94,52 @@ int ClassicSched::OnCommit(cmdid_t cmd_id,
                            const function<void()>& callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto exec = (ClassicExecutor*)GetExecutor(cmd_id);
-  verify(exec->phase_ < 3);
-  exec->phase_ = 3;
-  if (commit_or_abort == SUCCESS) {
-    exec->CommitLaunch(res, callback);
-  } else if (commit_or_abort == REJECT) {
-    exec->AbortLaunch(res, callback);
-  } else {
-    verify(0);
-  }
-  DestroyExecutor(cmd_id);
-  TpcCommitCommand* cmd = new TpcCommitCommand;
   if (Config::GetConfig()->IsReplicated()) {
+    exec->commit_reply_ = [callback] (int r) {callback();};
+    TpcCommitCommand* cmd = new TpcCommitCommand;
+    cmd->txn_id_ = cmd_id;
+    cmd->res_ = commit_or_abort;
     CreateRepCoord()->Submit(*cmd);
+  } else {
+    verify(exec->phase_ < 3);
+    exec->phase_ = 3;
+    if (commit_or_abort == SUCCESS) {
+      exec->CommitLaunch(res, callback);
+    } else if (commit_or_abort == REJECT) {
+      exec->AbortLaunch(res, callback);
+    } else {
+      verify(0);
+    }
+    DestroyExecutor(cmd_id);
   }
   return 0;
 }
 
-//int ClassicSched::CommitReplicated
+int ClassicSched::CommitReplicated(TpcCommitCommand& tpc_commit_cmd) {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
+  auto txn_id = tpc_commit_cmd.txn_id_;
+  auto exec = (ClassicExecutor*) GetExecutor(txn_id);
+  verify(exec->phase_ < 3);
+  exec->phase_ = 3;
+  int commit_or_abort = tpc_commit_cmd.res_;
+  if (commit_or_abort == SUCCESS) {
+    exec->Commit();
+  } else if (commit_or_abort == REJECT) {
+    exec->Abort();
+  } else {
+    verify(0);
+  }
+  exec->commit_reply_(SUCCESS);
+  DestroyExecutor(txn_id);
+}
 
 void ClassicSched::OnLearn(ContainerCommand& cmd) {
   if (cmd.type_ == CMD_TPC_PREPARE) {
     TpcPrepareCommand& c = dynamic_cast<TpcPrepareCommand&>(*cmd.self_cmd_);
     PrepareReplicated(c);
   } else if (cmd.type_ == CMD_TPC_COMMIT) {
-    // TODO, execute for slave.
-    // pass
+    TpcCommitCommand& c = dynamic_cast<TpcCommitCommand&>(*cmd.self_cmd_);
+    CommitReplicated(c);
   } else {
     verify(0);
   }

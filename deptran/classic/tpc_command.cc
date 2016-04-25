@@ -32,10 +32,12 @@ Marshal& TpcPrepareCommand::FromMarshal(Marshal& m) {
 
 
 Marshal& TpcCommitCommand::ToMarshal(Marshal& m) const {
-  // TODO
+  m << txn_id_;
+  m << res_;
   return m;
 }
 Marshal& TpcCommitCommand::FromMarshal(Marshal& m) {
-  // TODO
+  m >> txn_id_;
+  m >> res_;
   return m;
 }

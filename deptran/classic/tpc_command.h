@@ -28,6 +28,8 @@ class TpcCommitCommand : public ContainerCommand {
     self_cmd_ = this;
     type_ = CMD_TPC_COMMIT;
   }
+  txnid_t txn_id_ = 0;
+  int res_ = -1;
   virtual Marshal& ToMarshal(Marshal&) const;
   virtual Marshal& FromMarshal(Marshal&);
   virtual ContainerCommand& Execute() {verify(0);};

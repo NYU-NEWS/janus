@@ -9,6 +9,7 @@ namespace rococo {
 
 class TxnCommand;
 class TpcPrepareCommand;
+class TpcCommitCommand;
 class ClassicSched: public Scheduler {
  using Scheduler::Scheduler;
  public:
@@ -30,7 +31,7 @@ class ClassicSched: public Scheduler {
   void OnLearn(ContainerCommand&) override;
 
   int PrepareReplicated(TpcPrepareCommand& prepare_cmd);
-
+  int CommitReplicated(TpcCommitCommand& commit_cmd);
 };
 
 } // namespace rococo
