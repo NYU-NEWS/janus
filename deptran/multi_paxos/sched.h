@@ -10,6 +10,8 @@ class Command;
 class ContainerCommand;
 class MultiPaxosSched : public Scheduler {
  public:
+  slotid_t max_executed_slot_ = 0;
+  slotid_t max_committed_slot_ = 0;
   void OnPrepare(slotid_t slot_id,
                  ballot_t ballot,
                  ballot_t *max_ballot,
