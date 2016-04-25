@@ -69,6 +69,7 @@ namespace rococo {
 #define OP_R    (0x3)
 #define OP_W    (0x4)
 
+#define EDGE_ALL (0x0)
 #define EDGE_D  (0x1)
 #define EDGE_I  (0x2)
 

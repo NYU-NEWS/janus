@@ -67,6 +67,10 @@ void RccDTxn::ReplyFinishOk() {
   verify(committed != aborted);
   int r = committed ? SUCCESS : REJECT;
   if (commit_request_received_) {
+    if (__debug_replied)
+      return;
+    verify(!__debug_replied); // FIXME
+    __debug_replied = true;
     verify(ptr_output_repy_);
     finish_reply_callback_(r);
   }

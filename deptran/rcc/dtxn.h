@@ -19,6 +19,7 @@ class RccDTxn: public DTxn {
   bool read_only_ = false;
   bool committed = false;
   bool aborted = false;
+  bool __debug_replied = false;
 
   RccDTxn(txnid_t tid, Scheduler *mgr, bool ro);
   virtual ~RccDTxn() {

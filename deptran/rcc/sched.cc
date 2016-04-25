@@ -350,23 +350,35 @@ void RccSched::Decide(const RccScc& scc) {
 }
 
 bool RccSched::HasICycle(const RccScc& scc) {
-  // TODO
+  for (auto& vertex : scc) {
+    set<RccVertex *> walked;
+    bool ret = false;
+    std::function<bool(RccVertex *)> func =
+        [&ret, vertex](RccVertex *v) -> bool {
+          if (v == vertex) {
+            ret = true;
+            return false;
+          }
+          return true;
+        };
+    dep_graph_->TraverseDescendant(vertex, -1, func, walked, EDGE_I);
+    if (ret) return true;
+  }
   return false;
 };
 
 bool RccSched::HasAbortedAncestor(const RccScc& scc) {
   verify(scc.size() > 0);
-  set<RccVertex*> scc_set;
-  scc_set.insert(scc.begin(), scc.end());
   set<RccVertex*> walked;
   bool ret = false;
   std::function<bool(RccVertex*)> func =
-      [&ret, &scc_set] (RccVertex* v) -> bool {
+      [&ret] (RccVertex* v) -> bool {
         TxnInfo& info = *v->data_;
         if (info.IsAborted()) {
           ret = true; // found aborted transaction.
           return false; // abort traverse
         }
+        return true;
       };
   dep_graph_->TraversePred(scc[0], -1, func, walked);
   return ret;

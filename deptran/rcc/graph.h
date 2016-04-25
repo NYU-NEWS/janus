@@ -149,6 +149,31 @@ class Graph {
     return true;
   }
 
+  bool TraverseDescendant(Vertex<T> *vertex,
+                          int64_t depth,
+                          function<bool(Vertex<T> *)> &func,
+                          set<Vertex<T> *> &walked,
+                          int edge_type = EDGE_ALL) {
+    auto pair = walked.insert(vertex);
+    if (!pair.second)
+      // already traversed.
+      return true;
+
+    for (auto pair : vertex->outgoing_) {
+      auto v = pair.first;
+      auto e = pair.second;
+      if (edge_type != EDGE_ALL && edge_type != e)
+        continue;
+      if (!func(v))
+        return false; // traverse aborted by users.
+      if (depth < 0 || depth > 0) {
+        if (!TraverseDescendant(v, depth - 1, func, walked, edge_type))
+          return false;
+      }
+    }
+    return true;
+  }
+
   std::vector<Vertex<T> *> StrongConnect(Vertex<T> *v,
                                          std::map<Vertex<T> *, int> &indexes,
                                          std::map<Vertex<T> *, int> &lowlinks,
