@@ -8,11 +8,11 @@ namespace rococo {
 class OccDTxn : public DTxn {
 public:
   using DTxn::DTxn;
-  virtual mdb::Row *CreateRow(const mdb::Schema *schema,
-                              const std::vector<mdb::Value> &values) {
-    verify(0);
-    return nullptr;
-  }
+//  virtual mdb::Row *CreateRow(const mdb::Schema *schema,
+//                              const std::vector<mdb::Value> &values) {
+//    verify(0);
+//    return nullptr;
+//  }
 
   virtual bool ReadColumn(mdb::Row *row,
                           mdb::column_id_t col_id,
