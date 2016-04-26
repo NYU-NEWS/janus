@@ -90,10 +90,6 @@ bool TpccTxn::CheckReady() {
       ret = true;
     }
   }
-  if (n_pieces_input_ready_ == n_pieces_out_) {
-    verify(n_pieces_all_ == n_pieces_out_ ||
-        n_pieces_replied_ < n_pieces_out_);
-  }
   return ret;
   for (auto &kv : map) {
     innid_t pi = kv.first;
@@ -138,9 +134,9 @@ bool TpccTxn::start_callback(int pi,
                              map<int32_t, Value> &output_map) {
   bool ret;
 
-  if (type_ == TPCC_NEW_ORDER && pi == TPCC_NEW_ORDER_0) {
-    verify(output_map.count(TPCC_VAR_O_ID) > 0);
-  }
+//  if (type_ == TPCC_NEW_ORDER && pi == TPCC_NEW_ORDER_0) {
+//    verify(output_map.count(TPCC_VAR_O_ID) > 0);
+//  }
   ws_.insert(output_map.begin(), output_map.end());
   if (type_ == TPCC_PAYMENT ||
       type_ == TPCC_ORDER_STATUS ||
