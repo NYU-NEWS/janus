@@ -13,7 +13,9 @@ namespace rococo {
 
 static Frame* rcc_frame_s = Frame::RegFrame(MODE_RCC,
                                             {"rcc", "rococo"},
-                                            new RccFrame());
+                                            [] () -> Frame* {
+                                              return new RccFrame();
+                                            });
 
 Executor* RccFrame::CreateExecutor(cmdid_t cmd_id, Scheduler* sched) {
   verify(0);

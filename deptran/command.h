@@ -75,6 +75,7 @@ class ContainerCommand {
   innid_t inn_id_ = 0;
   cmdid_t root_id_ = 0;
   cmdtype_t root_type_ = 0;
+//  ContainerCommand* self_cmd_ = nullptr;
   ContainerCommand* self_cmd_ = nullptr;
 
  public:
@@ -97,7 +98,10 @@ class ContainerCommand {
   virtual ContainerCommand* GetRootCmd() {return this;};
   virtual void Reset() {verify(0);};
   virtual ContainerCommand* Clone() const  {
-    return new ContainerCommand(*this);
+    ContainerCommand* c = GetInitializer(type_)();
+    *c = *this;
+    c->self_cmd_ = c;
+    return c;
 //    verify(0);
   };
   virtual ~ContainerCommand() {};

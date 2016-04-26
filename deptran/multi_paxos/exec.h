@@ -12,7 +12,8 @@ class MultiPaxosExecutor: public Executor {
 
   ballot_t max_ballot_seen_ = 0;
   ballot_t max_ballot_accepted_ = 0;
-  ContainerCommand* cmd_;
+  ContainerCommand* cmd_ = nullptr;
+  ContainerCommand* committed_cmd_ = nullptr;
   /**
    * return max_ballot
    */

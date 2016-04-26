@@ -11,7 +11,10 @@
 namespace rococo {
 
 static Frame* mpf = Frame::RegFrame(MODE_MULTI_PAXOS,
-                                    new MultiPaxosFrame(MODE_MULTI_PAXOS));
+                                    [] () ->Frame* {
+                                      return new MultiPaxosFrame
+                                          (MODE_MULTI_PAXOS);
+                                    });
 
 //MultiPaxosDummy* MultiPaxosDummy::mpd_s = new MultiPaxosDummy();
 //static const MultiPaxosDummy mpd_g;
@@ -45,6 +48,7 @@ Coordinator* MultiPaxosFrame::CreateCoord(cooid_t coo_id,
   coo->n_replica_ = config->GetPartitionSize(site_info_->partition_id_);
   coo->loc_id_ = this->site_info_->locale_id;
   verify(coo->n_replica_ != 0); // TODO
+  Log_debug("create new multi-paxos coord, slot_id: %d", (int)coo->slot_id_);
   return coo;
 }
 
@@ -57,7 +61,7 @@ Scheduler* MultiPaxosFrame::CreateScheduler() {
 
 Communicator* MultiPaxosFrame::CreateCommo(PollMgr* poll) {
   // We only have 1 instance of MultiPaxosFrame object that is returned from
-  // GetFrame method. MultiPaxosC2ommo currently seems ok to share among the
+  // GetFrame method. MultiPaxosCommo currently seems ok to share among the
   // clients of this method.
   if (commo_ == nullptr) {
     commo_ = new MultiPaxosCommo(poll);

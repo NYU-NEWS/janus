@@ -25,12 +25,12 @@ class Frame {
 
   // static variables to hold frames
   static map<string, int>& FrameNameToMode();
-  static map<int, Frame*>& ModeToFrame();
+  static map<int, function<Frame*()>>& ModeToFrame();
   static int Name2Mode(string name);
   static Frame* GetFrame(int mode);
   static Frame* GetFrame(string name);
-  static Frame* RegFrame(int mode, Frame* frame); // deprecated.
-  static Frame* RegFrame(int mode, vector<string> names, Frame* frame);
+  static Frame* RegFrame(int mode, function<Frame*()>); // deprecated.
+  static Frame* RegFrame(int mode, vector<string> names, function<Frame*()>);
 
   int mode_;
   Config::SiteInfo* site_info_ = nullptr;

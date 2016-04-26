@@ -62,12 +62,13 @@
 
 namespace rococo {
 
-Frame* Frame::RegFrame(int mode, Frame *frame) {
+Frame* Frame::RegFrame(int mode,
+                       function<Frame*()> frame_init) {
   auto& mode_to_frame = Frame::ModeToFrame();
   auto it = mode_to_frame.find(mode);
   verify(it == mode_to_frame.end());
-  mode_to_frame[mode] = frame;
-  return frame;
+  mode_to_frame[mode] = frame_init;
+  return frame_init();
 }
 
 Frame* Frame::GetFrame(int mode) {
@@ -84,7 +85,7 @@ Frame* Frame::GetFrame(int mode) {
       auto& mode_to_frame = Frame::ModeToFrame();
       auto it = mode_to_frame.find(mode);
       verify(it != mode_to_frame.end());
-      frame = it->second;
+      frame = it->second();
   }
 
   return frame;
@@ -99,7 +100,9 @@ Frame* Frame::GetFrame(string name) {
   return GetFrame(Name2Mode(name));
 }
 
-Frame* Frame::RegFrame(int mode, vector<string> names, Frame* frame) {
+Frame* Frame::RegFrame(int mode,
+                       vector<string> names,
+                       function<Frame*()> frame) {
   for (auto name: names) {
     //verify(frame_name_mode_s.find(name) == frame_name_mode_s.end());
     auto &m = Frame::FrameNameToMode();
@@ -488,8 +491,8 @@ map<string, int> &Frame::FrameNameToMode() {
   return frame_name_mode_s;
 }
 
-map<int, Frame *> &Frame::ModeToFrame() {
-  static map<int, Frame*> frame_s_ = {};
+map<int, function<Frame*()>> &Frame::ModeToFrame() {
+  static map<int, function<Frame*()>> frame_s_ = {};
   return frame_s_;
 }
 } // namespace rococo;

@@ -30,7 +30,7 @@ void MultiPaxosCoord::Submit(ContainerCommand& cmd,
   in_submission_ = true;
   cmd_ = &cmd;
   commit_callback_ = func;
-  Prepare();
+  GotoNextPhase();
 }
 
 ballot_t MultiPaxosCoord::PickBallot() {
@@ -39,6 +39,7 @@ ballot_t MultiPaxosCoord::PickBallot() {
 
 void MultiPaxosCoord::Prepare() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
+  verify(0); // for debug;
   verify(!in_prepare_);
   in_prepare_ = true;
   curr_ballot_ = PickBallot();
@@ -71,7 +72,8 @@ void MultiPaxosCoord::PrepareAck(phase_t phase, Future *fu) {
   } else {
     if (max_ballot > curr_ballot_) {
       curr_ballot_ = max_ballot + 1;
-      Log_debug("%s: saw greater ballot increment to %d", __FUNCTION__, curr_ballot_);
+      Log_debug("%s: saw greater ballot increment to %d",
+                __FUNCTION__, curr_ballot_);
       phase_ = Phase::INIT_END;
       GotoNextPhase();
     } else {
@@ -113,7 +115,8 @@ void MultiPaxosCoord::AcceptAck(phase_t phase, Future *fu) {
   } else {
     if (max_ballot > curr_ballot_) {
       curr_ballot_ = max_ballot + 1;
-      Log_debug("%s: saw greater ballot increment to %d", __FUNCTION__, curr_ballot_);
+      Log_debug("%s: saw greater ballot increment to %d",
+                __FUNCTION__, curr_ballot_);
       phase_ = Phase::INIT_END;
       GotoNextPhase();
     } else {
@@ -126,6 +129,8 @@ void MultiPaxosCoord::Commit() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   commit_callback_();
   auto cmd = (ContainerCommand*) cmd_;
+  Log_debug("multi-paxos broadcast commit for partition: %d, slot %d",
+           (int)par_id_, (int)slot_id_);
   commo()->BroadcastDecide(par_id_, slot_id_, curr_ballot_, *cmd);
   verify(phase_ == Phase::COMMIT);
   GotoNextPhase();

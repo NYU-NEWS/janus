@@ -16,7 +16,9 @@ namespace rococo {
 
 static Frame* brq_frame_s = Frame::RegFrame(MODE_BRQ,
                                             {"brq", "baroque", "janus"},
-                                            new BrqFrame());
+                                            [] () -> Frame* {
+                                              return new BrqFrame();
+                                            });
 
 
 Coordinator* BrqFrame::CreateCoord(cooid_t coo_id,
