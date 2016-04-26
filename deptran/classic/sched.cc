@@ -20,7 +20,12 @@ int ClassicSched::OnDispatch(const vector<SimpleCommand>& cmd,
 
   rrr::DragonBall* db = new rrr::DragonBall(
       (int32_t)cmd.size(),
-      [callback, this] () {
+      [callback, this, output, exec, res] () {
+        // for debug
+        if (output->count(1000) > 0 && *res == SUCCESS) {
+          auto& m = output->at(1000);
+          verify(m.count(1011) > 0);
+        }
         callback();
       });
 

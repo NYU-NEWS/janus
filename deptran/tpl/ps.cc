@@ -9,7 +9,7 @@ namespace rococo {
 
 PieceStatus::PieceStatus(const SimpleCommand& cmd,
                          const function<void()>& callback,
-                         std::map <int32_t, mdb::Value> *output,
+                         map<int32_t, Value> *output,
                          const std::function<int(void)> &wound_callback,
                          TPLExecutor *exec)
     : pid_(cmd.id_),

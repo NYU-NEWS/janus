@@ -73,7 +73,7 @@ Marshal& operator << (Marshal& m, const TxnWorkspace &ws);
 
 Marshal& operator >> (Marshal& m, TxnWorkspace& ws);
 
-enum CommandStatus {WAITING=-1, READY, ONGOING, FINISHED, INIT};
+enum CommandStatus {WAITING=-1, READY=0, ONGOING=1, FINISHED=2, INIT=3};
 
 
 class SimpleCommand: public ContainerCommand {

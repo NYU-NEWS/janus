@@ -236,6 +236,22 @@ void ClassicCoord::DispatchAck(phase_t phase,
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   if (phase != phase_) return;
   TxnCommand *txn = (TxnCommand *) cmd_;
+  if (res == REJECT) {
+    Log_debug("got REJECT reply for cmd_id: %llx NOT COMMITING",
+              txn->root_id_);
+    aborted_ = true;
+    txn->commit_.store(false);
+  }
+  if (aborted_) {
+    if (n_dispatch_ack_ == n_dispatch_) {
+      Log_debug("received all start acks (at least one is REJECT); calling "
+                    "Finish()");
+      GotoNextPhase();
+      return;
+    } else {
+      return;
+    }
+  }
   for (auto& pair : outputs) {
     n_dispatch_ack_++;
     const innid_t& inn_id = pair.first;
@@ -243,34 +259,18 @@ void ClassicCoord::DispatchAck(phase_t phase,
     dispatch_acks_[inn_id] = true;
     Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
               n_dispatch_ack_, n_dispatch_, cmd_->id_, inn_id);
-
-    if (res == REJECT) {
-      Log_debug("got REJECT reply for cmd_id: %llx, inn_id: %x; NOT COMMITING",
-                txn->id_, inn_id);
-      aborted_ = true;
-      txn->commit_.store(false);
-    }
-    if (aborted_) {
-      if (n_dispatch_ack_ == n_dispatch_) {
-        Log_debug("received all start acks (at least one is REJECT); calling "
-                      "Finish()");
-        GotoNextPhase();
-      }
-    } else {
-      txn->Merge(pair.first, pair.second);
-      if (txn->HasMoreSubCmdReadyNotOut()) {
-        Log_debug("command has more sub-cmd, cmd_id: %llx,"
-                      " n_started_: %d, n_pieces: %d",
-                  txn->id_, txn->n_pieces_out_, txn->GetNPieceAll());
-        Dispatch();
-      } else if (AllDispatchAcked()) {
-        Log_debug("receive all start acks, txn_id: %llx; START PREPARE",
-                  txn->id_);
-        GotoNextPhase();
-      }
-    }
+    txn->Merge(pair.first, pair.second);
   }
-
+  if (txn->HasMoreSubCmdReadyNotOut()) {
+    Log_debug("command has more sub-cmd, cmd_id: %llx,"
+                  " n_started_: %d, n_pieces: %d",
+              txn->id_, txn->n_pieces_out_, txn->GetNPieceAll());
+    Dispatch();
+  } else if (AllDispatchAcked()) {
+    Log_debug("receive all start acks, txn_id: %llx; START PREPARE",
+              txn->id_);
+    GotoNextPhase();
+  }
 }
 
 /** caller should be thread_safe */

@@ -56,11 +56,6 @@ int TPLExecutor::StartLaunch(const SimpleCommand& cmd,
   return 0;
 }
 
-//int TPLExecutor::
-//int TPLExecutor::StartLock() {
-//
-//}
-
 std::function<void(void)> TPLExecutor::get_2pl_succ_callback(
     const SimpleCommand& cmd,
     rrr::i32 *res,
@@ -202,7 +197,7 @@ PieceStatus* TPLExecutor::get_piece_status(i64 pid) {
 
 void TPLExecutor::InitPieceStatus(const SimpleCommand &cmd,
                                   const function<void()>& callback,
-                                  std::map<int32_t, Value> *output) {
+                                  map<int32_t, Value> *output) {
 
   auto tid = cmd.root_id_;
   auto pid = cmd.id_;
