@@ -377,7 +377,7 @@ void ClassicCoord::CommitAck(phase_t phase, Future *fu) {
             cmd_->id_, n_finish_ack_, n_finish_req_);
   verify(cmd->GetPartitionIds().size() == n_finish_req_);
   if (n_finish_ack_ == cmd->GetPartitionIds().size()) {
-    verify(cmd->can_retry());
+//    verify(cmd->can_retry());
     if ((cmd->reply_.res_ == REJECT) ) {
       aborted_ = true;
     } else {
