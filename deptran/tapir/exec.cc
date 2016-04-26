@@ -74,8 +74,9 @@ void TapirExecutor::FastAccept(const vector<SimpleCommand>& txn_cmds,
 }
 
 void TapirExecutor::Commit() {
-  verify(dtxn()->read_vers_.size() > 0 ||
-      dtxn()->write_bufs_.size() > 0);
+  // TODO FIXME
+//  verify(dtxn()->read_vers_.size() > 0 ||
+//      dtxn()->write_bufs_.size() > 0);
   // merge write buffers into database.
   for (auto& pair1 : dtxn()->write_bufs_) {
     auto row = (mdb::VersionedRow*)pair1.first;
