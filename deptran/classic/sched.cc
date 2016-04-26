@@ -123,7 +123,7 @@ int ClassicSched::OnCommit(cmdid_t cmd_id,
 int ClassicSched::CommitReplicated(TpcCommitCommand& tpc_commit_cmd) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto txn_id = tpc_commit_cmd.txn_id_;
-  auto exec = (ClassicExecutor*) GetExecutor(txn_id);
+  auto exec = (ClassicExecutor*) GetOrCreateExecutor(txn_id);
   verify(exec->phase_ < 3);
   exec->phase_ = 3;
   int commit_or_abort = tpc_commit_cmd.res_;

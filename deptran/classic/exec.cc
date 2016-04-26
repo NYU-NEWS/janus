@@ -66,7 +66,7 @@ int ClassicExecutor::AbortLaunch(rrr::i32 *res,
 }
 
 int ClassicExecutor::Abort() {
-  verify(mdb_txn_ != NULL);
+  verify(mdb_txn() != NULL);
   verify(mdb_txn_ == sched_->RemoveMTxn(cmd_id_));
   // TODO fix, might have double delete here.
   mdb_txn_->abort();
