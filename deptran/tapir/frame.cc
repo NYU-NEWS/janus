@@ -13,7 +13,7 @@ namespace rococo {
 static Frame* tapir_frame_s = Frame::RegFrame(MODE_TAPIR,
                                               {"tapir"},
                                               [] () -> Frame* {
-                                                new TapirFrame();
+                                                return new TapirFrame();
                                               });
 
 Executor* TapirFrame::CreateExecutor(cmdid_t cmd_id, Scheduler* sched) {
