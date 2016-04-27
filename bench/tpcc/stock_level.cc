@@ -62,7 +62,7 @@ void TpccPiece::RegStockLevel() {
                               mb,
                               ROW_DISTRICT);
     dtxn->ReadColumn(r, TPCC_COL_DISTRICT_D_NEXT_O_ID,
-                     &output[TPCC_VAR_D_NEXT_O_ID], TXN_DEFERRED);
+                     &output[TPCC_VAR_D_NEXT_O_ID], TXN_INSTANT);
     *res = SUCCESS;
   } END_PIE
 
@@ -112,7 +112,8 @@ void TpccPiece::RegStockLevel() {
     for (int i = 0; i < row_list.size(); i++) {
       dtxn->ReadColumn(row_list[i],
                        TPCC_COL_ORDER_LINE_OL_I_ID,
-                       &output[TPCC_VAR_OL_I_ID(i)]);
+                       &output[TPCC_VAR_OL_I_ID(i)],
+                       TXN_INSTANT);
     }
     output[TPCC_VAR_OL_AMOUNT] = Value((int32_t)row_list.size());
 //    verify(output_size <= 300);
