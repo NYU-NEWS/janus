@@ -202,7 +202,7 @@ void TpccPiece::RegOrderStatus() {
     dtxn->ReadColumn(r,
                      TPCC_COL_CUSTOMER_C_BALANCE,
                      &output[TPCC_VAR_C_BALANCE],
-                     TXN_DEFERRED);// read c_balance
+                     TXN_INSTANT);// read c_balance
 
     *res = SUCCESS;
   } END_PIE
@@ -243,7 +243,7 @@ void TpccPiece::RegOrderStatus() {
     dtxn->ReadColumn(r,
                      TPCC_COL_ORDER_O_CARRIER_ID,
                      &output[TPCC_VAR_O_CARRIER_ID],
-                     TXN_DEFERRED); // output[2] ==> o_carrier_id
+                     TXN_INSTANT); // output[2] ==> o_carrier_id
 //        Log::debug("piece: %d, o_id: %d", TPCC_ORDER_STATUS_2, output[0].get_i32());
     *res = SUCCESS;
   } END_PIE
@@ -305,7 +305,7 @@ void TpccPiece::RegOrderStatus() {
       dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_SUPPLY_W_ID,
                        &output[TPCC_VAR_OL_W_ID(i)], TXN_BYPASS);
       dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_DELIVERY_D,
-                       &output[TPCC_VAR_OL_DELIVER_D(i)], TXN_DEFERRED);
+                       &output[TPCC_VAR_OL_DELIVER_D(i)], TXN_INSTANT);
       dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_QUANTITY,
                        &output[TPCC_VAR_OL_QUANTITY(i)], TXN_BYPASS);
       dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_AMOUNT,

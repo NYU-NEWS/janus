@@ -112,8 +112,6 @@ void TpccPiece::RegDelivery() {
                       TPCC_COL_ORDER_O_CARRIER_ID,
                       cmd.input[TPCC_VAR_O_CARRIER_ID],
                       TXN_INSTANT); // write o_carrier_id
-
-    *res = SUCCESS;
     return;
   } END_PIE
 
