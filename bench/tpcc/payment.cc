@@ -96,6 +96,7 @@ void TpccPiece::RegPayment() {
                                           cmd.input[TPCC_VAR_W_ID].get_blob(),
                                           ROW_WAREHOUSE);
     // R warehouse
+    output[TPCC_VAR_W_NAME] = Value("");
     dtxn->ReadColumn(row_warehouse,
                      TPCC_COL_WAREHOUSE_W_NAME,
                      &output[TPCC_VAR_W_NAME]);
@@ -130,7 +131,9 @@ void TpccPiece::RegPayment() {
     mdb::Row *row_district = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT),
                                          mb,
                                          ROW_DISTRICT);
-    // R district
+    output[TPCC_VAR_D_NAME] = Value("");
+
+                                                   // R district
     dtxn->ReadColumn(row_district,
                      TPCC_COL_DISTRICT_D_NAME,
                      &output[TPCC_VAR_D_NAME]);
