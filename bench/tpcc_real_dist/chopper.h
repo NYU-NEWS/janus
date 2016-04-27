@@ -13,6 +13,8 @@ class TpccRealDistChopper: public TpccTxn {
   bool IsOneRound() override;
   virtual void NewOrderInit(TxnRequest &req) override;
   virtual void NewOrderRetry() override;
+  virtual void PaymentInit(TxnRequest &req) override;
+  virtual void PaymentRetry() override;
   virtual ~TpccRealDistChopper();
 };
 
