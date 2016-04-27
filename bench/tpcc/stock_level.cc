@@ -104,7 +104,7 @@ void TpccPiece::RegStockLevel() {
         row_list.push_back(rs.next());
     }
 
-    verify(row_list.size() != 0);
+//    verify(row_list.size() != 0);
 
     std::vector<mdb::column_lock_t> column_locks;
     column_locks.reserve(row_list.size());

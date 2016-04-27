@@ -16,7 +16,7 @@ void TpccTxn::OrderStatusInit(TxnRequest &req) {
 
   n_pieces_all_ = 4;
 
-  if (req.input_[TPCC_VAR_C_ID_LAST].get_kind() == Value::I32) { // query by c_id
+  if (req.input_.count(TPCC_VAR_C_ID) > 0) { // query by c_id
     status_[TPCC_ORDER_STATUS_0] = FINISHED; // piece 0 not needed
     status_[TPCC_ORDER_STATUS_1] = READY; // piece 1 ready
     status_[TPCC_ORDER_STATUS_2] = READY; // piece 2 ready

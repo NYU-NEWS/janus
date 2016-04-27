@@ -45,6 +45,7 @@ class TxnWorkspace {
     return (*values_).end();
   };
   size_t count(int32_t k) {
+    return keys_.count(k);
     return (*values_).count(k);
   }
   Value& at(int32_t k) {
@@ -53,9 +54,13 @@ class TxnWorkspace {
   size_t size() const {
     return keys_.size();
   }
-  void insert(map<int32_t, Value>::iterator begin_it,
-              map<int32_t, Value>::iterator end_it) {
-    (*values_).insert(begin_it, end_it);
+
+  void insert(map<int32_t, Value>& m) {
+    // TODO
+    for (auto& pair : m) {
+      keys_.insert(pair.first);
+    }
+    (*values_).insert(m.begin(), m.end());
   }
 };
 

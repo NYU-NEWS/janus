@@ -30,6 +30,10 @@ TxnWorkspace& TxnWorkspace::operator=(const TxnWorkspace& rhs) {
 }
 
 TxnWorkspace& TxnWorkspace::operator=(const map<int32_t, Value>& rhs) {
+  keys_.clear();
+  for (const auto& pair: rhs) {
+    keys_.insert(pair.first);
+  }
   *values_ = rhs;
   return *this;
 }

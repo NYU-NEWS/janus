@@ -137,12 +137,17 @@ bool TpccTxn::start_callback(int pi,
 //  if (type_ == TPCC_NEW_ORDER && pi == TPCC_NEW_ORDER_0) {
 //    verify(output_map.count(TPCC_VAR_O_ID) > 0);
 //  }
-  ws_.insert(output_map.begin(), output_map.end());
+  ws_.insert(output_map);
   if (type_ == TPCC_PAYMENT ||
       type_ == TPCC_ORDER_STATUS ||
       type_ == TPCC_DELIVERY ||
       type_ == TPCC_NEW_ORDER ||
       0) {
+    // for debug
+    if (type_ == TPCC_DELIVERY && pi == TPCC_DELIVERY_2) {
+      verify(output_map.count(TPCC_VAR_OL_AMOUNT) > 0);
+      verify(ws_.count(TPCC_VAR_OL_AMOUNT) > 0);
+    }
 
     return CheckReady();
   }
@@ -151,7 +156,6 @@ bool TpccTxn::start_callback(int pi,
   if (it != txn_reg_->callbacks_.end()) {
     handler = it->second;
     ret = handler(this, output_map);
-
   } else {
 //    ws_.insert(output_map.begin(), output_map.end());
     bool ret = CheckReady();

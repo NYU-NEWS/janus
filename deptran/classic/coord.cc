@@ -242,15 +242,7 @@ void ClassicCoord::DispatchAck(phase_t phase,
     aborted_ = true;
     txn->commit_.store(false);
   }
-  for (auto& pair : outputs) {
-    n_dispatch_ack_++;
-    const innid_t& inn_id = pair.first;
-    verify(dispatch_acks_.at(inn_id) == false);
-    dispatch_acks_[inn_id] = true;
-    Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
-              n_dispatch_ack_, n_dispatch_, cmd_->id_, inn_id);
-    txn->Merge(pair.first, pair.second);
-  }
+  n_dispatch_ack_ += outputs.size();
   if (aborted_) {
     if (n_dispatch_ack_ == n_dispatch_) {
       Log_debug("received all start acks (at least one is REJECT); calling "
@@ -259,6 +251,14 @@ void ClassicCoord::DispatchAck(phase_t phase,
       return;
     }
   } else {
+    for (auto& pair : outputs) {
+      const innid_t& inn_id = pair.first;
+      verify(dispatch_acks_.at(inn_id) == false);
+      dispatch_acks_[inn_id] = true;
+      Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
+                n_dispatch_ack_, n_dispatch_, cmd_->id_, inn_id);
+      txn->Merge(pair.first, pair.second);
+    }
     if (txn->HasMoreSubCmdReadyNotOut()) {
       Log_debug("command has more sub-cmd, cmd_id: %llx,"
                     " n_started_: %d, n_pieces: %d",
