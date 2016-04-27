@@ -8,5 +8,5 @@ graph:
     y_range: '[0:100]'
     x_range: '[0:]'
     y_tics: '0,10'
-    output_file: '${txn}_tpca_client_commitrate.png'
+    output_file: '${txn}_${bench}_client_commitrate.png'
     key_location: 'bottom left'

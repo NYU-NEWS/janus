@@ -7,5 +7,5 @@ graph:
     y_label: 'Throughput (txn/s)'
     y_range: '[0:]'
     x_range: '[0:]'
-    output_file: '${txn}_tpca_client_tp.png'
+    output_file: '${txn}_${bench}_client_tp.png'
     key_location: 'top left'
