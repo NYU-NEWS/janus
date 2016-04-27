@@ -8,7 +8,7 @@ namespace rococo {
 
 // ======= New order txn =======
 #define TPCC_NEW_ORDER              10
-#define TPCC_NEW_ORDER_NAME         "NEW ORDER"
+#define TPCC_NEW_ORDER_NAME         "NEW_ORDER"
 #define TPCC_NEW_ORDER_0            1000
 #define TPCC_NEW_ORDER_1            1001
 #define TPCC_NEW_ORDER_2            1002
@@ -32,7 +32,7 @@ namespace rococo {
 
 // ===== Order status txn ======
 #define TPCC_ORDER_STATUS           30
-#define TPCC_ORDER_STATUS_NAME      "ORDER STATUS"
+#define TPCC_ORDER_STATUS_NAME      "ORDER_STATUS"
 #define TPCC_ORDER_STATUS_0         300
 #define TPCC_ORDER_STATUS_1         301
 #define TPCC_ORDER_STATUS_2         302
@@ -48,7 +48,7 @@ namespace rococo {
 
 // ====== Stock level txn ======
 #define TPCC_STOCK_LEVEL            50
-#define TPCC_STOCK_LEVEL_NAME       "STOCK LEVEL"
+#define TPCC_STOCK_LEVEL_NAME       "STOCK_LEVEL"
 #define TPCC_STOCK_LEVEL_0          500
 #define TPCC_STOCK_LEVEL_1          501
 #define TPCC_STOCK_LEVEL_RS(i)          (52000+i)

@@ -61,10 +61,20 @@ def output_data_file(key, group):
         f.write("# ")
         f.write(", ".join(labels + lat_labels))
         f.write("\n")
+        first = True
         for row in group:
             srow = [str(x) for x in row]
+          
             f.write(", ".join(srow)) 
             f.write("\n") 
+            
+            # not sure why, but first line isn't plotted.
+            # write it again
+            if first:
+                f.write(", ".join(srow)) 
+                f.write("\n") 
+                first = False
+                
 
 def main():
     parse_args()

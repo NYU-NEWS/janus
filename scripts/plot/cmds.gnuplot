@@ -2,7 +2,7 @@
 # x_label, y_label, graph_title, input_files, colors, output_file, terminal_type, 
 # x_tics, y_tics, x_range, y_range, x_col, y_col, key_locations, using_cmd
 
-if (!exists("colors"))        colors = "#AA1111 #11AA11 #1111AA"
+if (!exists("colors"))        colors = "#AA1111 #11AA11 #1111AA #AAAA11 #AA11AA #11AAAA"
 if (!exists("graph_title"))   graph_title = ""
 if (!exists("output_file"))   output_file = "out.png"
 if (!exists("terminal_type")) terminal_type = "pngcairo"
@@ -16,6 +16,7 @@ if (!exists("style"))         style = ""
 
 symbols = ""
 set macros
+set autoscale
 set terminal terminal_type
 set output output_file
 set datafile separator ','
@@ -31,5 +32,5 @@ if (exists("log_scale")) set logscale @log_scale
 
 plot for [i=1:words(input_files)] \
 word(input_files, i) using @using_cmd \
-title column(1) \
-with linespoints pt (i+2 % 50) ps 2 lt rgb word(colors, i)
+title column(2) \
+with linespoints pt (i % 50) ps 2 lt rgb word(colors, i)
