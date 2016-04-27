@@ -1,0 +1,9 @@
+bench: tpca
+graph:
+    using_cmd: '7:13'
+    x_label: 'Throughput (txn/s)'
+    y_label: 'Latency (ms)'
+    y_range: '[0:]'
+    x_range: '[0:]'
+    output_file: '${txn}_tpca_tp_lat.png'
+    key_location: 'top left'
