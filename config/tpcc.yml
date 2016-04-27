@@ -16,13 +16,13 @@ bench:
   population: # intial number of records in each table (per partition)
     warehouse: 1
     district: 10
-    customer: 3000
-    history: 3000
-    order: 3000
-    new_order: 900
-    item: 10000
-    stock: 10000
-    order_line: 30000
+    customer: 30000
+    history: 30000
+    order: 30000
+    new_order: 9000
+    item: 100000
+    stock: 100000
+    order_line: 300000
 
 schema: # table information
   - name: warehouse
