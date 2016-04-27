@@ -1,0 +1,9 @@
+bench: tpcc
+graph:
+    using_cmd: '6:($9/$8*100)'
+    x_label: 'Clients'
+    y_label: 'Commit %'
+    y_range: '[0:100]'
+    y_tics: '0,10'
+    output_file: '${txn}_tpca_client_commitrate.png'
+    key_location: 'bottom left'
