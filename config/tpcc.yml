@@ -4,7 +4,7 @@ bench:
   scale: 1
   weight:
     new_order: 44
-    payment : 0
+    payment : 44
     delivery: 0
     order_status: 0
     stock_level:  0
