@@ -18,23 +18,38 @@ int ClassicSched::OnDispatch(const vector<SimpleCommand>& cmd,
   verify(frame_);
   auto exec = (ClassicExecutor*) GetOrCreateExecutor(cmd[0].root_id_);
 
+  vector<int32_t> *rr = new vector<int32_t>(cmd.size());
   rrr::DragonBall* db = new rrr::DragonBall(
       (int32_t)cmd.size(),
-      [callback, this, output, exec, res] () {
-        // for debug
+      [callback, this, output, exec, res, rr] () {
+        bool r = std::all_of(rr->begin(), rr->end(), [] (int xxx) -> bool{
+          return xxx == SUCCESS;
+        });
+        *res = r ? SUCCESS : REJECT;
+        // { for debug
         if (output->count(1000) > 0 && *res == SUCCESS) {
           auto& m = output->at(1000);
           verify(m.count(1011) > 0);
         }
+        if (output->count(402) > 0 && *res == SUCCESS) {
+          auto& m = output->at(402);
+          verify(m.count(1013) > 0);
+        }
+        if (output->count(401) > 0 && *res == SUCCESS) {
+          auto& m = output->at(401);
+          verify(m.count(1007) > 0);
+        }
+        // } for debug
         callback();
+        delete rr;
       });
 
-  for (const auto& c : cmd) {
-    exec->cmds_.push_back(c);
-
-    exec->StartLaunch(c,
-                      res,
-                      &(*output)[c.inn_id()],
+  auto sz = cmd.size();
+  for (int i = 0; i < sz; i++) {
+    exec->cmds_.push_back(cmd[i]);
+    exec->StartLaunch(cmd[i],
+                      &(*rr)[i],
+                      &(*output)[cmd[i].inn_id()],
                       [db, this] () {
                         std::lock_guard<std::recursive_mutex> lock(mtx_);
                         db->trigger();

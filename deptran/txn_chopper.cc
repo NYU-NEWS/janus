@@ -18,9 +18,8 @@ TxnWorkspace::~TxnWorkspace() {
 //  delete values_;
 }
 
-TxnWorkspace::TxnWorkspace(const TxnWorkspace& rhs) {
-  keys_ = rhs.keys_;
-  values_ = rhs.values_;
+TxnWorkspace::TxnWorkspace(const TxnWorkspace& rhs)
+    : keys_(rhs.keys_), values_{rhs.values_} {
 }
 
 TxnWorkspace& TxnWorkspace::operator=(const TxnWorkspace& rhs) {

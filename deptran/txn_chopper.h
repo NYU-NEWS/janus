@@ -39,14 +39,22 @@ class TxnWorkspace {
   Value& operator[] (size_t idx);
 
   map<int32_t, Value>::iterator find(int32_t k) {
-    return (*values_).find(k);
+    auto it = (*values_).find(k);
+    if (it == values_->end()) {
+      verify(keys_.find(k) == keys_.end());
+    } else {
+      verify(keys_.find(k) != keys_.end());
+    }
+    return it;
   };
   map<int32_t, Value>::iterator end() {
     return (*values_).end();
   };
   size_t count(int32_t k) {
-    return keys_.count(k);
-    return (*values_).count(k);
+    auto r1 = keys_.count(k);
+    auto r2 = (*values_).count(k);
+    verify(r1 == r2);
+    return r1;
   }
   Value& at(int32_t k) {
     return (*values_).at(k);
@@ -84,11 +92,11 @@ enum CommandStatus {WAITING=-1, READY=0, ONGOING=1, FINISHED=2, INIT=3};
 class SimpleCommand: public ContainerCommand {
  public:
   ContainerCommand* root_ = nullptr;
-  TxnWorkspace input = {};
-  map<int32_t, Value> output = {};
+  TxnWorkspace input{};
+  map<int32_t, Value> output{};
   int32_t output_size = 0;
   parid_t partition_id_ = 0xFFFFFFFF;
-  SimpleCommand() = default;
+//  SimpleCommand() = default;
   virtual parid_t PartitionId() const {
     verify(partition_id_ != 0xFFFFFFFF);
     return partition_id_;

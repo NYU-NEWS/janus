@@ -144,12 +144,22 @@ bool TpccTxn::start_callback(int pi,
       type_ == TPCC_NEW_ORDER ||
       0) {
     // for debug
-    if (type_ == TPCC_DELIVERY && pi == TPCC_DELIVERY_2) {
-      verify(output_map.count(TPCC_VAR_OL_AMOUNT) > 0);
-      verify(ws_.count(TPCC_VAR_OL_AMOUNT) > 0);
-    }
 
-    return CheckReady();
+    auto ret = CheckReady();
+    if (type_ == TPCC_DELIVERY) {
+      if (pi == TPCC_DELIVERY_2) {
+        verify(output_map.count(TPCC_VAR_OL_AMOUNT) > 0);
+        verify(ws_.count(TPCC_VAR_OL_AMOUNT) > 0);
+      }
+      if (pi == TPCC_DELIVERY_1) {
+        verify(output_map.count(TPCC_VAR_C_ID) > 0);
+        verify(ws_.count(TPCC_VAR_C_ID) > 0);
+      }
+      if (n_pieces_replied_ == 3) {
+        verify(status_[TPCC_DELIVERY_3] == READY);
+      }
+    }
+    return ret;
   }
   PieceCallbackHandler handler;
   auto it = txn_reg_->callbacks_.find(std::make_pair(type_, pi));
