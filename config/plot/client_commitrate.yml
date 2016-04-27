@@ -1,4 +1,6 @@
-bench: tpcc
+bench: 
+    - tpca
+    - tpcc
 graph:
     using_cmd: '6:($9/$8*100)'
     x_label: 'Clients'

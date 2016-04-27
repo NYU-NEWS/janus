@@ -102,11 +102,14 @@ def run_gnuplot(settings, data_files):
 
 
 def generate_graph(config, txn_types, data_classes):
+    if type(config['bench']) is not list:
+        config['bench'] = [config['bench']]
     for txn_name in txn_types:
-        data_files = get_data(data_classes, [ [bench, config['bench']], [txn, txn_name]])
-        gnuplot_settings = copy.copy(config['graph'])
-        gnuplot_settings['output_file'] = Template(gnuplot_settings['output_file']).substitute(txn=txn_name)
-        run_gnuplot(gnuplot_settings, data_files)
+        for b in config['bench']:
+            data_files = get_data(data_classes, [ [bench, b], [txn, txn_name] ])
+            gnuplot_settings = copy.copy(config['graph'])
+            gnuplot_settings['output_file'] = Template(gnuplot_settings['output_file']).substitute(txn=txn_name)
+            run_gnuplot(gnuplot_settings, data_files)
 
 
 def main():
@@ -123,4 +126,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-
