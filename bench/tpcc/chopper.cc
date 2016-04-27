@@ -70,7 +70,7 @@ bool TpccTxn::CheckReady() {
     set<int32_t>& var_set = map[pi];
     bool all_found = true;
     for (auto &var : var_set) {
-      if (ws_.find(var) == ws_.end()) {
+      if (ws_.count(var) == 0) {
         // not found. input not all ready.
         all_found = false;
         break;
@@ -105,7 +105,7 @@ bool TpccTxn::CheckReady() {
     }
     bool all_found = true;
     for (auto &var : var_set) {
-      if (ws_.find(var) == ws_.end()) {
+      if (ws_.count(var) == 0) {
         // not found. input not all ready.
         all_found = false;
         break;
@@ -271,7 +271,7 @@ parid_t TpccTxn::GetPiecePartitionId(innid_t inn_id) {
 //    verify(inputs_.find(inn_id) != inputs_.end());
     vector<Value> vars;
     for (auto var_id : var_ids) {
-      verify(ws_.find(var_id) != ws_.end());
+      verify(ws_.count(var_id) != 0);
       vars.push_back(ws_.at(var_id));
     }
     MultiValue mv = MultiValue(vars);
