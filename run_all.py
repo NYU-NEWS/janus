@@ -56,6 +56,9 @@ def create_parser():
                         "range builtin function.",
                         action='append',
                         default =[])
+    parser.add_argument("-z", "--zipf", dest="zipf", default=[None],
+                        help="zipf values",
+                        nargs="+", type=str)
     parser.add_argument("-d", "--duration", dest="duration",
                         help="trial duration",
                         type=int,
@@ -91,9 +94,13 @@ def parse_commandline():
     return args
 
 
-def gen_experiment_suffix(b, m, c):
-    m = m.replace(':', '_')
-    return "{}-{}-{}".format(b, m, c)
+def gen_experiment_suffix(b, m, c, z):
+    m = m.replace(':', '-')
+    if z is not None:
+        return "{}_{}_{}_{}".format(b, m, c, z)
+    else:
+        return "{}_{}_{}".format(b, m, c)
+
 
 
 def get_range(r):
@@ -188,7 +195,7 @@ def load_config(fn):
         contents = yaml.load(f)
         return contents
 
-def modify_benchmark_and_mode(args, benchmark, mode, abmode):
+def modify_dynamic_params(args, benchmark, mode, abmode, zipf):
     output_configs = []
     configs = args.other_config
     
@@ -198,15 +205,23 @@ def modify_benchmark_and_mode(args, benchmark, mode, abmode):
         output_config = config
         config = load_config(config)
 
-        if 'bench' in config and 'workload' in config['bench']:
-            config['bench']['workload'] = benchmark
-            modified = True
+        if 'bench' in config:
+            if 'workload' in config['bench']:
+                config['bench']['workload'] = benchmark
+                modified = True
+            if 'dist' in config['bench'] and zipf is not None:
+                try:
+                    config['bench']['dist'] = float(zipf)
+                except ValueError:
+                    config['bench']['dist'] = str(zipf)
+                modified = True
         if 'mode' in config and 'cc' in config['mode']:
             config['mode']['cc'] = mode
             modified = True
         if 'mode' in config and 'ab' in config['mode']:
             config['mode']['ab'] = abmode
             modified = True
+         
         
         if modified:
             f = tempfile.NamedTemporaryFile(
@@ -226,24 +241,25 @@ def modify_benchmark_and_mode(args, benchmark, mode, abmode):
 
 
 def aggregate_configs(*args):
-    print(args)
+    logging.debug("aggregate configs: {}".format(args))
     config = {}
     for fn in args:
         config.update(load_config(fn))
     return config
 
 
-def generate_config(args, experiment_name, benchmark, mode, num_client,
+def generate_config(args, experiment_name, benchmark, mode, zipf, num_client,
                     num_server, num_replicas):
-    logger.debug("generate_config: {}, {}, {}, {}".format(
-        experiment_name, benchmark, mode, num_client))
+    logger.debug("generate_config: {}, {}, {}, {}, {}".format(
+        experiment_name, benchmark, mode, num_client, zipf))
     hosts_config = load_config(args.hosts_file)
     proc_and_site_config = gen_process_and_site(experiment_name, num_client,
                                                 num_server, num_replicas, 
                                                 hosts_config)
     logger.debug("site and process config: %s", proc_and_site_config)
     cc_mode, ab_mode = mode.split(':')
-    config_files = modify_benchmark_and_mode(args, benchmark, cc_mode, ab_mode) 
+    config_files = modify_dynamic_params(args, benchmark, cc_mode, ab_mode,
+                                         zipf) 
     config_files.insert(0, args.hosts_file)
     config_files.append(proc_and_site_config)
     logger.info(config_files)
@@ -350,15 +366,17 @@ def run_experiments(args):
     experiment_params = (server_counts,
                          client_counts,
                          args.modes,
-                         args.benchmarks)
+                         args.benchmarks,
+                         args.zipf)
 
     experiments = itertools.product(*experiment_params)
     for params in experiments:
-        (num_server, num_client, mode, benchmark) = params 
+        (num_server, num_client, mode, benchmark, zipf) = params 
         experiment_suffix = gen_experiment_suffix(
             benchmark,
             mode,
-            num_client)
+            num_client,
+            zipf)
         experiment_name = "{}-{}".format(
             args.experiment_name,
             experiment_suffix)
@@ -368,6 +386,7 @@ def run_experiments(args):
             args,
             experiment_name,
             benchmark, mode,
+            zipf,
             num_client,
             num_server,
             args.num_replicas)
