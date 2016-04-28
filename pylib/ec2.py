@@ -148,7 +148,7 @@ def set_instance_roles():
        'all' in env.roledefs.keys() and \
        len(env.roledefs['all'])>0:
         # roles already set
-        logging.debug("instance roles: {}".format(env.roledefs))
+        logging.debug("cached instance roles: {}".format(env.roledefs))
         return
 
     execute('ec2.load_instances')

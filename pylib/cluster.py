@@ -29,7 +29,7 @@ def Xput(*args, **kwargs):
 
 @task
 @roles('all')
-@parallel
+@parallel(pool_size=10)
 def disable_ssh_host_check():
     Xput('config/ssh_config', '/home/ubuntu/.ssh/config')
 
@@ -124,6 +124,7 @@ def config_nfs_server():
 
 @task
 @roles('servers', 'leaders')
+@parallel(pool_size=10)
 def put_limits_config():
     source_fn = "config/etc/security/limits.conf"
     dest_fn = "/etc/security/limits.conf"
@@ -131,7 +132,7 @@ def put_limits_config():
 
 @task
 @roles('servers', 'leaders')
-@parallel
+@parallel(pool_size=10)
 def mount_nfs():
     try:
         sudo('mount /mnt')
@@ -141,6 +142,7 @@ def mount_nfs():
 
 @task
 @roles('servers', 'leaders')
+@parallel(pool_size=10)
 def config_nfs_client(server_ip=None):
     if server_ip is None:
         execute('ec2.load_instances')
