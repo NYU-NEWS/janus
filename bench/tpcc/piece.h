@@ -59,6 +59,8 @@ namespace rococo {
 #define ROW_WAREHOUSE         __LINE__
 #define ROW_CUSTOMER          __LINE__
 #define ROW_ORDER             __LINE__
+#define RS_NEW_ORDER          __LINE__
+#define RS_ORDER_LINE         __LINE__
 #define ROW_ORDER_SEC         (cmd.id_)
 #define ROW_ITEM              (cmd.id_)
 #define ROW_STOCK             (cmd.id_)

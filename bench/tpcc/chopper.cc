@@ -155,9 +155,9 @@ bool TpccTxn::start_callback(int pi,
         verify(output_map.count(TPCC_VAR_C_ID) > 0);
         verify(ws_.count(TPCC_VAR_C_ID) > 0);
       }
-      if (n_pieces_replied_ == 3) {
-        verify(status_[TPCC_DELIVERY_3] == READY);
-      }
+//      if (n_pieces_replied_ == 3) {
+//        verify(status_[TPCC_DELIVERY_3] == READY);
+//      }
     }
     return ret;
   }
