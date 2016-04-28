@@ -142,7 +142,7 @@ def mount_nfs():
 
 @task
 @roles('servers', 'leaders')
-@parallel(pool_size=10)
+#@parallel(pool_size=10)
 def config_nfs_client(server_ip=None):
     if server_ip is None:
         execute('ec2.load_instances')

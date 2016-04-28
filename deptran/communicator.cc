@@ -95,7 +95,7 @@ Communicator::ConnectToSite(Config::SiteInfo &site,
       Log_debug("connect to site: %s success!", addr.c_str());
       return std::make_pair(SUCCESS, rpc_proxy);
     } else {
-      std::this_thread::sleep_for(milliseconds(CONNECT_TIMEOUT_MS / 20));
+      std::this_thread::sleep_for(milliseconds(CONNECT_SLEEP_MS));
     }
     auto end = steady_clock::now();
     elapsed = duration_cast<milliseconds>(end - start).count();
