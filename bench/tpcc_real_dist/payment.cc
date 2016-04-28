@@ -35,7 +35,7 @@ void TpccRealDistChopper::PaymentInit(TxnRequest &req) {
   n_pieces_replied_ = 0;
   n_pieces_out_ = 0;
   // query by c_last
-  if (ws_.find(TPCC_VAR_C_LAST) != ws_.end()) {
+  if (ws_.count(TPCC_VAR_C_LAST) != 0) {
     Log_debug("payment transaction lookup by customer name");
     // piece 3, R customer, c_last -> c_id
     output_size_[TPCC_PAYMENT_3] = 1;
@@ -71,7 +71,7 @@ void TpccRealDistChopper::PaymentRetry() {
   n_pieces_input_ready_ = 0;
   n_pieces_replied_ = 0;
   n_pieces_out_ = 0;
-  if (ws_.find(TPCC_VAR_C_LAST) != ws_.end()) {
+  if (ws_.count(TPCC_VAR_C_LAST) != 0) {
   } else {
     n_pieces_input_ready_++;
     n_pieces_out_++;

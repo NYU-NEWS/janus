@@ -6,8 +6,8 @@ bench:
     new_order: 44
     payment : 44
     delivery: 4
-    order_status: 0
-    stock_level:  0
+    order_status: 4
+    stock_level:  4
 #        new_order: 44
 #        payment : 44
 #        delivery: 4

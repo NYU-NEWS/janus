@@ -45,7 +45,7 @@ void TpcaTxnGenerator::GetTxnReq(TxnRequest *req, uint32_t cid) {
       key += (cid & 0xFFFFFFFF);
       key = key >= 0 ? key : -key;
       key %= tpca_para_.n_branch_;
-      Log_info("choosing key, coo_id: %x \t key: %llx", cid, key);
+      Log_debug("choosing key, coo_id: %x \t key: %llx", cid, key);
     }
     int32_t& key = key_ids_[cid];
     req->input_ = {

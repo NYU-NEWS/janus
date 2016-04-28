@@ -30,7 +30,7 @@ class TxnReply {
 class TxnWorkspace {
  public:
   set<int32_t> keys_ = {};
-  std::shared_ptr<map<int32_t, Value>> values_;
+  std::shared_ptr<map<int32_t, Value>> values_{};
   TxnWorkspace();
   ~TxnWorkspace();
   TxnWorkspace(const TxnWorkspace& rhs);
@@ -38,27 +38,27 @@ class TxnWorkspace {
   TxnWorkspace& operator= (const TxnWorkspace& rhs);
   Value& operator[] (size_t idx);
 
-  map<int32_t, Value>::iterator find(int32_t k) {
-    auto it = (*values_).find(k);
-    if (it == values_->end()) {
-      verify(keys_.find(k) == keys_.end());
-    } else {
-      verify(keys_.find(k) != keys_.end());
-    }
-    return it;
-  };
-  map<int32_t, Value>::iterator end() {
-    return (*values_).end();
-  };
+//  map<int32_t, Value>::iterator find(int32_t k) {
+//    auto it = (*values_).find(k);
+//    if (it == values_->end()) {
+//      verify(keys_.find(k) == keys_.end());
+//    } else {
+////      verify(keys_.find(k) != keys_.end());
+//    }
+//    return it;
+//  };
+
   size_t count(int32_t k) {
     auto r1 = keys_.count(k);
     auto r2 = (*values_).count(k);
-    verify(r1 == r2);
+    verify(r1 <= r2);
     return r1;
   }
+
   Value& at(int32_t k) {
     return (*values_).at(k);
   }
+
   size_t size() const {
     return keys_.size();
   }
@@ -75,7 +75,7 @@ class TxnWorkspace {
 class TxnRequest {
  public:
   uint32_t txn_type_ = ~0;
-  TxnWorkspace input_ = {};    // the inputs for the transactions.
+  TxnWorkspace input_{};    // the inputs for the transactions.
   int n_try_ = 20;
   function<void(TxnReply &)> callback_ = [] (TxnReply&)->void {verify(0);};
   function<void()> fail_callback_ = [] () {verify(0);};
