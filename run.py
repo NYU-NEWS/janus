@@ -786,7 +786,7 @@ class ServerController(object):
         # this current starts all the processes
         # todo: separate this into a class that starts and stops deptran
         host_process_counts = { host_address: 0 for host_address in self.config['host'].itervalues() }
-        def run_one_server(process, process_name):
+        def run_one_server(process, process_name, host_process_counts):
             logger.info("starting %s @ %s", process_name, process.host_address)
             cmd = self.gen_process_cmd(process, host_process_counts)
             logger.info("running: %s", cmd)
@@ -797,7 +797,7 @@ class ServerController(object):
         t_list = []
         for process_name, process in self.process_infos.iteritems():
             t = Thread(target=run_one_server, 
-                       args=(process, process_name,))
+                       args=(process, process_name, host_process_counts,))
             t.start()
             t_list.append(t) 
 
