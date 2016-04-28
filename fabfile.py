@@ -96,11 +96,11 @@ def deploy_all(regions='us-west-2', servers_per_region=[3], instance_type='t2.sm
         execute('cluster.config_nfs_client')
         execute('cluster.disable_ssh_host_check')
         execute('retrieve_code')
+        execute('create_work_dirs')
         success = True
         execute('build')
         execute('cluster.put_janus_config')
         execute('cluster.put_limits_config')
-        execute('create_work_dirs')
         execute('ec2.reboot_all')
 
     except Exception as e:
@@ -133,7 +133,7 @@ def create_virtual_env():
 @runs_once
 @roles('leaders')
 def create_work_dirs():
-    dirs = ['tmp/', 'log/', 'archive/', 'log_archive/']
+    dirs = ['tmp/', 'log/', 'archive/']
     for d in dirs:
         dir_path = os.path.join(env.nfs_home, d)
         run("mkdir -p {}".format(dir_path))

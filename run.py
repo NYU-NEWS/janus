@@ -13,6 +13,7 @@ import traceback
 import itertools
 import random
 import math
+from threading import Thread
 from argparse import ArgumentParser
 from multiprocessing import Value
 from multiprocessing import Lock
@@ -784,15 +785,25 @@ class ServerController(object):
     def start(self):
         # this current starts all the processes
         # todo: separate this into a class that starts and stops deptran
-        logger.debug(self.process_infos)
-
         host_process_counts = { host_address: 0 for host_address in self.config['host'].itervalues() }
-
-        for process_name, process in self.process_infos.iteritems():
+        def run_one_server(process, process_name):
             logger.info("starting %s @ %s", process_name, process.host_address)
             cmd = self.gen_process_cmd(process, host_process_counts)
             logger.info("running: %s", cmd)
             subprocess.call(['ssh', '-f',process.host_address, cmd])
+
+        logger.debug(self.process_infos)
+        
+        t_list = []
+        for process_name, process in self.process_infos.iteritems():
+            t = Thread(target=run_one_server, 
+                       args=(process, process_name,))
+            t.start()
+            t_list.append(t) 
+
+        for t in t_list:
+            t.join()
+
 
 def create_parser():
     parser = ArgumentParser()
