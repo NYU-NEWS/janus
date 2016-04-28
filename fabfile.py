@@ -94,12 +94,12 @@ def deploy_all(regions='us-west-2', servers_per_region=[3], instance_type='t2.sm
         ec2.wait_for_all_servers()
         execute('cluster.config_nfs_server')
         execute('cluster.config_nfs_client')
+        execute('cluster.disable_ssh_host_check')
         execute('retrieve_code')
         success = True
         execute('build')
         execute('cluster.put_janus_config')
         execute('cluster.put_limits_config')
-        execute('cluster.disable_ssh_host_check')
         execute('create_work_dirs')
         execute('ec2.reboot_all')
 
