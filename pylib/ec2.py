@@ -237,7 +237,7 @@ def terminate_instances():
         ec2.instances.filter(InstanceIds=ids).terminate()
 
     execute('ec2.rm_instances_data')
-    
+    time.sleep(30) 
     for region in created_instances.iterkeys():
         execute('cluster.delete_security_group', region=region)
 
