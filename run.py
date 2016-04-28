@@ -789,7 +789,7 @@ class ServerController(object):
         def run_one_server(process, process_name, host_process_counts):
             logger.info("starting %s @ %s", process_name, process.host_address)
             cmd = self.gen_process_cmd(process, host_process_counts)
-            logger.info("running: %s", cmd)
+            logger.debug("running: %s", cmd)
             subprocess.call(['ssh', '-f',process.host_address, cmd])
 
         logger.debug(self.process_infos)
