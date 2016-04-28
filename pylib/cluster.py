@@ -157,10 +157,10 @@ def config_nfs_client(server_ip=None):
     template = string.Template(open(fstab_fn).read())
     contents = StringIO.StringIO(template.substitute(server_ip=server_ip))
     Xput(contents, "/etc/fstab", use_sudo=True)
-    try:
-        sudo('mount /mnt')
-    except:
-        traceback.print_exc()
+    #try:
+    #    sudo('mount /mnt')
+    #except:
+    #    traceback.print_exc()
 
 
 
