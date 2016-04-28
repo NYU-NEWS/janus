@@ -18,7 +18,8 @@ typedef std::pair<siteid_t, ClassicProxy*> SiteProxyPair;
 
 class Communicator {
  public:
-  const int CONNECT_TIMEOUT_MS = 30*1000;
+  const int CONNECT_TIMEOUT_MS = 120*1000;
+  const int CONNECT_SLEEP_MS = 1000;
   rrr::PollMgr *rpc_poll_ = nullptr;
   locid_t loc_id_ = -1;
   map<siteid_t, rrr::Client *> rpc_clients_ = {};
