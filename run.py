@@ -645,7 +645,7 @@ class ServerController(object):
             sites = ProcessInfo.get_sites(self.process_infos,
                                           SiteInfo.SiteType.Server)
             for site in sites:
-                site.connect_rpc(self.timeout)
+                site.connect_rpc(300)
                 logger.info("Connected to site %s @ %s", site.name, site.process.host_address)
 
             for site in sites:
