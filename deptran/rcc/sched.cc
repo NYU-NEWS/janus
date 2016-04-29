@@ -27,7 +27,7 @@ int RccSched::OnDispatch(const vector<SimpleCommand> &cmd,
                          TxnOutput *output,
                          RccGraph *graph,
                          const function<void()> &callback) {
-
+  verify(graph);
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(cmd[0].root_id_);
   dep_graph_->FindOrCreateTxnInfo(cmd[0].root_id_, &dtxn->tv_);
   verify(dep_graph_->partition_id_ == partition_id_);

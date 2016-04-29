@@ -85,13 +85,13 @@ BrqServiceImpl::BrqServiceImpl(Scheduler *sched,
 void BrqServiceImpl::Dispatch(const vector<SimpleCommand>& cmd,
                               int32_t* res,
                               TxnOutput* output,
-                              BrqGraph* graph,
+                              Marshallable* graph,
                               DeferredReply* defer) {
   std::lock_guard <std::mutex> guard(this->mtx_);
   dtxn_sched()->OnDispatch(cmd,
                            res,
                            output,
-                           graph,
+                           dynamic_cast<RccGraph*>(graph->data_.get()),
                            [defer]() { defer->reply(); });
 }
 
@@ -117,21 +117,20 @@ void BrqServiceImpl::Dispatch(const vector<SimpleCommand>& cmd,
 //}
 
 void BrqServiceImpl::Commit(const cmdid_t& cmd_id,
-                            const RccGraph& graph,
+                            const Marshallable& graph,
                             int32_t *res,
                             TxnOutput* output,
                             DeferredReply* defer) {
-  verify(graph.size() > 0);
   std::lock_guard <std::mutex> guard(mtx_);
   dtxn_sched()->OnCommit(cmd_id,
-                         graph,
+                         dynamic_cast<RccGraph&>(*graph.data_),
                          res,
                          output,
                          [defer]() { defer->reply(); });
 //  RccDTxn *txn = (RccDTxn *) dtxn_sched_->GetDTxn(req.txn_id);
 //  txn->commit(req, res, defer);
 
-  stat_sz_gra_commit_.sample(graph.size());
+//  stat_sz_gra_commit_.sample(graph.size());
 }
 
 // equivalent to commit phrase
@@ -152,10 +151,11 @@ void BrqServiceImpl::Commit(const cmdid_t& cmd_id,
 //}
 
 void BrqServiceImpl::Inquire(const cmdid_t &tid,
-                             BrqGraph *graph,
+                             Marshallable *graph,
                              rrr::DeferredReply *defer) {
   std::lock_guard <std::mutex> guard(mtx_);
-  dtxn_sched()->OnInquire(tid, graph, [defer]() { defer->reply(); });
+  dtxn_sched()->OnInquire(tid, dynamic_cast<RccGraph*>(graph->data_.get()),
+                          [defer]() { defer->reply(); });
 //  RccDTxn *dtxn = (RccDTxn *) dtxn_sched_->GetDTxn(tid);
 //  dtxn->inquire(res, defer);
 }
@@ -171,15 +171,15 @@ void BrqServiceImpl::rcc_ro_start_pie(const SimpleCommand &cmd,
 
 void BrqServiceImpl::PreAccept(const cmdid_t &txnid,
                                const vector<SimpleCommand>& cmds,
-                               const RccGraph& graph,
+                               const Marshallable& graph,
                                int32_t* res,
-                               RccGraph* res_graph,
+                               Marshallable* res_graph,
                                DeferredReply* defer) {
   dtxn_sched()->OnPreAccept(txnid,
                             cmds,
-                            graph,
+                            dynamic_cast<RccGraph&>(*graph.data_),
                             res,
-                            res_graph,
+                            dynamic_cast<RccGraph*>(res_graph->data_.get()),
                             [defer] () {defer->reply();});
 }
 

@@ -6,6 +6,7 @@
 #include "marshal-value.h"
 #include "command.h"
 #include "command_marshaler.h"
+#include "../marshallable.h"
 //#include "rcc_srpc.h"
 
 /**
@@ -25,10 +26,9 @@ class RccGraph : public Graph<TxnInfo> {
 //  std::vector<RococoProxy *> rpc_proxies_;
 //  std::vector<std::string> server_addrs_;
 
+  RccGraph() : Graph<TxnInfo>() {rtti_ = Marshallable::RCC_GRAPH;}
 
-  RccGraph() : Graph<TxnInfo>() { }
-
-  ~RccGraph() {
+  virtual ~RccGraph() {
     // XXX hopefully some memory leak here does not hurt. :(
   }
 
@@ -99,6 +99,9 @@ class RccGraph : public Graph<TxnInfo> {
 
   uint64_t MinItfrGraph(uint64_t tid,
                         RccGraph* gra_m);
+
+//  Marshal& ToMarshal(Marshal& m) const override;
+//  Marshal& FromMarshal(Marshal& m) override;
 
   void write_to_marshal(rrr::Marshal &m) const;
 

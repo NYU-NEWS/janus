@@ -366,10 +366,17 @@ void RccDTxn::TraceDep(Row* row, column_id_t col_id, int hint_flag) {
   int8_t edge_type = (hint_flag == TXN_INSTANT) ? EDGE_I : EDGE_D;
   // TODO optimize.
   RccVertex*& parent_v = entry->last_;
+
   if (parent_v == tv_) {
     // skip
   } else if (parent_v != nullptr) {
-    tv_->AddParentEdge(parent_v, edge_type);
+    TxnInfo& info = *parent_v->data_;
+    if (info.IsExecuted()) {
+      ;
+    } else {
+      tv_->AddParentEdge(parent_v, edge_type);
+    }
+    parent_v = tv_;
   } else if (parent_v == nullptr) {
     parent_v = tv_;
   } else {

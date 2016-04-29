@@ -6,19 +6,19 @@ abstract service Brq {
   defer Dispatch(vector<SimpleCommand> cmd |
                  i32 res,
                  TxnOutput output,
-                 BrqGraph ret_graph);
+                 Marshallable ret_graph);
 
   defer Commit(cmdid_t id,
-               RccGraph |
+               Marshallable graph |
                int32_t res,
                TxnOutput output);
 
   defer Inquire(cmdid_t txn_id |
-                BrqGraph ret_graph);
+                Marshallable ret_graph);
 
   defer PreAccept(cmdid_t txn_id,
                   vector<SimpleCommand> cmd,
-                  RccGraph graph |
+                  Marshallable graph |
                   i32 res,
-                  RccGraph ret_graph);
+                  Marshallable ret_graph);
 }

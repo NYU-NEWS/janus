@@ -3,6 +3,7 @@
 #include "../rcc/graph_marshaler.h"
 #include "dep_graph.h"
 #include "commo.h"
+#include "marshallable.h"
 #include "brq_srpc.h"
 
 namespace rococo {

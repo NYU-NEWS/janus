@@ -8,6 +8,10 @@
 #include "benchmark_control_rpc.h"
 #include "server_worker.h"
 
+#ifdef CPU_PROFILE
+# include <google/profiler.h>
+#endif // ifdef CPU_PROFILE
+
 using namespace rococo;
 
 static ClientControlServiceImpl *ccsi_g = nullptr;
@@ -73,11 +77,12 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
       worker.RegPiece();
       // populate table according to benchmarks
       worker.PopTable();
+      Log_info("table popped for site %d", (int)worker.site_info_->id);
       // start server service
       worker.SetupService();
-      Log_info("start communication for site %d", worker.site_info_->id);
+      Log_info("start communication for site %d", (int)worker.site_info_->id);
       worker.SetupCommo();
-      Log_info("site %d launched!", site_info.id);
+      Log_info("site %d launched!", (int)site_info.id);
     }));
   }
 
@@ -86,6 +91,7 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
     th.join();
   }
   Log_info("done waiting for client setup threads.");
+
 
   for (ServerWorker& worker : svr_workers_g) {
     // start communicator after all servers are running
@@ -136,6 +142,12 @@ int main(int argc, char *argv[]) {
     server_launch_worker(server_infos);
   }
 
+#ifdef CPU_PROFILE
+  char prof_file[1024];
+  Config::GetConfig()->GetProfilePath(prof_file);
+  // start to profile
+  ProfilerStart(prof_file);
+#endif // ifdef CPU_PROFILE
   auto client_infos = Config::GetConfig()->GetMyClients();
   if (client_infos.size() > 0) {
     client_setup_heartbeat(client_infos.size());
@@ -147,11 +159,17 @@ int main(int argc, char *argv[]) {
   for (auto& worker : svr_workers_g) {
     worker.WaitForShutdown();
   }
+#ifdef CPU_PROFILE
+  // stop profiling
+  ProfilerStop();
+#endif // ifdef CPU_PROFILE
   Log_info("all server workers have shut down.");
 
   // TODO, FIXME pending_future in rpc cause error.
   Log_info("exit in a nasty way");
-  exit(0);
+  fflush(stderr);
+  fflush(stdout);
+  return 0;
   client_shutdown();
   server_shutdown();
 
@@ -159,7 +177,6 @@ int main(int argc, char *argv[]) {
   Config::DestroyConfig();
 
   Log_debug("exit process.");
-  fflush(stderr);
-  fflush(stdout);
+
   return 0;
 }
