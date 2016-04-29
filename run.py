@@ -13,6 +13,7 @@ import traceback
 import itertools
 import random
 import math
+import signal
 from threading import Thread
 from argparse import ArgumentParser
 from multiprocessing import Value
@@ -1083,6 +1084,8 @@ def main():
     client_controller = None
     config = None
 
+    os.setpgrp()
+
     try:
         config = build_config(create_parser().parse_args())
         setup_experiment(config)
@@ -1107,6 +1110,7 @@ def main():
         ret = 1
     finally:
         logger.info("shutting down...")
+        os.killpg(0, signal.SIGKILL)
         #if server_controller is not None:
         #    try:
         #        server_controller.server_kill()
