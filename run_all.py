@@ -7,6 +7,7 @@ import subprocess
 import itertools
 import shutil
 import glob
+import signal
 from argparse import ArgumentParser
 import logging
 from logging import info, debug, error 
@@ -350,7 +351,7 @@ def aggregate_results(name):
         archive_dir = "./archive/"
         cc = os.path.join(os.getcwd(), 'scripts/aggregate_run_output.py')
         cmd = [cc, 
-               '-p', name + "_"]
+               '-p', name]
         os.chdir(archive_dir)
         cmd += glob.glob('*yml')
 
@@ -400,8 +401,9 @@ def run_experiments(args):
                                     benchmark, 
                                     mode, 
                                     num_client)
-            if result == 0:
-                scrape_data(experiment_name)
+            if result != 0:
+                logger.error("experiment returned {}".format(result))
+            scrape_data(experiment_name)
             archive_results(experiment_name)
         except Exception:
             logger.info("Experiment %s failed.",
@@ -423,9 +425,12 @@ def main():
     args = parse_commandline()
     print_args(args)
     try:
+        os.setpgrp()
         run_experiments(args)
     except Exception:
         traceback.print_exc()
+    finally:
+        os.killpg(0, signal.SIGTERM)
 
 
 if __name__ == "__main__":
