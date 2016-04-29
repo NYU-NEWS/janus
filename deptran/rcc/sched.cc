@@ -182,8 +182,10 @@ void RccSched::CheckWaitlist() {
   }
   if (check_again)
     CheckWaitlist();
-  else
-    __DebugExamineWaitlist();
+  else {
+//    __DebugExamineWaitlist();
+  }
+
   // TODO optimize for the waitlist.
 }
 
@@ -198,7 +200,7 @@ void RccSched::__DebugExamineWaitlist() {
     }
     if (tinfo.status() >= TXN_CMT && AllAncCmt(v)) {
       verify(!tinfo.IsExecuted());
-      verify(tinfo.IsDecided());
+      verify(tinfo.IsDecided() || tinfo.IsAborted());
     }
   }
 }

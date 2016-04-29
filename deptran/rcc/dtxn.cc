@@ -64,7 +64,7 @@ void RccDTxn::CommitExecute() {
 }
 
 void RccDTxn::ReplyFinishOk() {
-  verify(committed != aborted);
+//  verify(committed != aborted);
   int r = committed ? SUCCESS : REJECT;
   if (commit_request_received_) {
     if (__debug_replied)
