@@ -1,17 +1,55 @@
 import subprocess
+import threading
+import logging
+import Queue
 
 def ps(hosts, grep_filter):
     output = [] 
-    cmd = ['/bin/bash', '-c', "'ps -eLF | grep \"{}\"'".format(grep_filter)]
-    for host in hosts:
+    queue = Queue.Queue(len(hosts))
+
+    def work(host, grep_filter):
+        cmd = ['/bin/bash', '-c', "'ps -eLF | grep \"{}\"'".format(grep_filter)]
         ssh_cmd = ['ssh', host]
         ssh_cmd.extend(cmd)
-        output.append("----------\nServer: {}\n-------------\n".format(host))
+        output = ""
+        output += "----------\nServer: {}\n-------------\n".format(host)
+
         try:
             o = subprocess.check_output(ssh_cmd)
-            output.append(o)
+            output += o
         except subprocess.CalledProcessError as e:
-            output.append("error calling ps! returncode {}".format(e.returncode))
+            output += "error calling ps! returncode {}".format(e.returncode)
+        queue.put(output)
+
+   
+    threads=[]
+    for host in hosts:
+        t = threading.Thread(target=work, args=(host, grep_filter,))
+        threads.append(t)
+        t.start()
+    
+    for x in range(len(hosts)):
+        output.append(queue.get())
 
     return '\n'.join(output)
+
+
+def killall(hosts, proc, param="-9"):
+    def work(host, proc, param):
+        cmd = ['killall', '-q', param, proc]
+        ssh_cmd = ['ssh', host]
+        ssh_cmd.extend(cmd)
+        res = subprocess.call(ssh_cmd)
+        if res != 0:
+            logging.error("host: {}; killall did not kill anything".format(res))
+
+    threads=[]
+    for host in hosts:
+        t = threading.Thread(target=work,args=(host, proc, param,))
+        threads.append(t)
+        t.start()
+    
+    logging.info("waiting for killall commands to finish.")
+    for t in threads:
+        t.join()
 

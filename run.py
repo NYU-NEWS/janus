@@ -531,9 +531,7 @@ class ClientController(object):
         logger.info("killing clients ...")
         sites = ProcessInfo.get_sites(self.process_infos, SiteInfo.SiteType.Client)
         hosts = { s.process.host_address for s in sites }
-        for host in hosts:
-            cmd = "killall -9 deptran_server"
-            subprocess.call(['ssh', '-f', host, cmd])
+        ps.killall(hosts, "deptran_server")
 
     def client_shutdown(self):
         logger.debug("Shutting down clients ...")
@@ -599,9 +597,7 @@ class ServerController(object):
         ps_output = ps.ps(hosts, "deptran_server")
         logger.info("Existing Server or Client Processes:\n{}".format(ps_output))
         logger.info("killing servers on %s", ', '.join(hosts))
-        for host in hosts:
-            cmd = "killall -9 deptran_server"
-            subprocess.call(['ssh', '-f', host, cmd])
+        ps.killall(hosts, "deptran_server")
     
     def setup_heartbeat(self, client_controller):
         logger.debug("in setup_heartbeat")
@@ -1111,16 +1107,11 @@ def main():
         ret = 1
     finally:
         logger.info("shutting down...")
-        if server_controller is not None:
-            try:
-                server_controller.server_kill()
-            except:
-                logger.error(traceback.format_exc())
-        if client_controller is not None:
-            try:
-                client_controller.client_kill()
-            except:
-                logger.error(traceback.format_exc())
+        #if server_controller is not None:
+        #    try:
+        #        server_controller.server_kill()
+        #    except:
+        #        logger.error(traceback.format_exc())
         sys.exit(ret)
 
 if __name__ == "__main__":
