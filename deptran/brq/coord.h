@@ -27,6 +27,7 @@ public:
   map<parid_t, vector<RccGraph>> n_fast_accept_graphs_ {};
   map<parid_t, int> n_commit_oks_ = {};
   bool fast_path_ = false;
+  bool fast_commit_ = false;
 
 //  map<groupid_t, reply_cnt_t> n_fast_accept_reply_;
 //  map<groupid_t, reply_cnt_t> n_accept_reply_;

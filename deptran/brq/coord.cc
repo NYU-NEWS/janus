@@ -172,6 +172,10 @@ void BrqCoord::Commit() {
                                        std::placeholders::_1,
                                        std::placeholders::_2));
   }
+  if (fast_commit_) {
+    committed_ = true;
+    GotoNextPhase();
+  }
 }
 
 void BrqCoord::CommitAck(phase_t phase,
@@ -179,6 +183,7 @@ void BrqCoord::CommitAck(phase_t phase,
                          int32_t res,
                          TxnOutput& output) {
   if (phase != phase_) return;
+  if (fast_commit_) return;
   if (res == SUCCESS) {
     committed_ = true;
   } else if (res == REJECT) {
@@ -325,6 +330,8 @@ void BrqCoord::GotoNextPhase() {
 
 void BrqCoord::Reset() {
   RccCoord::Reset();
+  fast_path_ = false;
+  fast_commit_ = false;
   n_fast_accept_graphs_.clear();
   n_fast_accept_oks_.clear();
   n_fast_accept_rejects_.clear();
