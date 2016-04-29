@@ -13,13 +13,25 @@ void BrqCommo::SendDispatch(vector<SimpleCommand> &cmd,
                                                 TxnOutput& cmd,
                                                 RccGraph& graph)>& callback) {
   rrr::FutureAttr fuattr;
+  auto tid = cmd[0].root_id_;
+  auto par_id = cmd[0].partition_id_;
   std::function<void(Future*)> cb =
-      [callback] (Future *fu) {
+      [callback, tid, par_id] (Future *fu) {
         int res;
         TxnOutput output;
         Marshallable graph;
         fu->get_reply() >> res >> output >> graph;
-        callback(res, output, dynamic_cast<RccGraph&>(*graph.ptr()));
+        if (graph.rtti_ == Marshallable::EMPTY_GRAPH) {
+          RccGraph rgraph;
+          auto v = rgraph.CreateV(tid);
+          TxnInfo& info = *v->data_;
+          info.partition_.insert(par_id);
+          callback(res, output, rgraph);
+        } else if (graph.rtti_ == Marshallable::RCC_GRAPH) {
+          callback(res, output, dynamic_cast<RccGraph&>(*graph.ptr()));
+        } else {
+
+        }
       };
   fuattr.callback = cb;
   auto proxy = (BrqProxy*)LeaderProxyForPartition(

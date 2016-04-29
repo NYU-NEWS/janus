@@ -17,6 +17,13 @@ namespace rococo {
 typedef Vertex<TxnInfo> RccVertex;
 typedef vector<RccVertex*> RccScc;
 
+class EmptyGraph : public Marshallable {
+ public:
+  EmptyGraph() {rtti_ = Marshallable::Kind::EMPTY_GRAPH;};
+  virtual Marshal& ToMarshal(Marshal& m) const {return m;};
+  virtual Marshal& FromMarshal(Marshal& m) {return m;};
+};
+
 class RccGraph : public Graph<TxnInfo> {
  public:
 //    Graph<PieInfo> pie_gra_;

@@ -85,16 +85,26 @@ BrqServiceImpl::BrqServiceImpl(Scheduler *sched,
 void BrqServiceImpl::Dispatch(const vector<SimpleCommand>& cmd,
                               int32_t* res,
                               TxnOutput* output,
-                              Marshallable* graph,
+                              Marshallable* res_graph,
                               DeferredReply* defer) {
   std::lock_guard <std::mutex> guard(this->mtx_);
-  graph->rtti_ = Marshallable::RCC_GRAPH;
-  graph->ptr().reset(new RccGraph());
+
+  RccGraph* tmp_graph = new RccGraph;
   dtxn_sched()->OnDispatch(cmd,
                            res,
                            output,
-                           dynamic_cast<RccGraph*>(graph->ptr().get()),
-                           [defer]() { defer->reply(); });
+                           tmp_graph,
+                           [defer, tmp_graph, res_graph] () {
+                             if (tmp_graph->size() == 1) {
+                               res_graph->rtti_ = Marshallable::EMPTY_GRAPH;
+                               res_graph->ptr().reset(new EmptyGraph);
+                             } else {
+                               res_graph->rtti_ = Marshallable::RCC_GRAPH;
+                               res_graph->ptr().reset(tmp_graph);
+                             }
+                             defer->reply();
+                             delete tmp_graph;
+                           });
 }
 
 //void BrqServiceImpl::rcc_start_pie(const SimpleCommand &cmd,

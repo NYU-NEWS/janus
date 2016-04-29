@@ -72,7 +72,7 @@ class BrqServiceImpl: public BrqService {
   void Dispatch(const vector<SimpleCommand>& cmd,
                 int32_t* res,
                 TxnOutput* output,
-                Marshallable* graph,
+                Marshallable* res_graph,
                 DeferredReply* defer) override;
 
   void Commit(const cmdid_t& cmd_id,

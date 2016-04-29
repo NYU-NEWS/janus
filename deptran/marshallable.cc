@@ -11,6 +11,9 @@ Marshal& Marshallable::FromMarshal(Marshal& m) {
     case Marshallable::RCC_GRAPH:
       data_.reset(new RccGraph());
       break;
+    case Marshallable::EMPTY_GRAPH:
+      data_.reset(new EmptyGraph);
+      break;
     default:
       verify(0);
       break;
