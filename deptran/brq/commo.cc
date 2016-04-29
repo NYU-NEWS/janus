@@ -59,9 +59,9 @@ void BrqCommo::SendInquire(parid_t pid,
                            const function<void(RccGraph& graph)>& callback) {
   FutureAttr fuattr;
   function<void(Future*)> cb = [callback] (Future* fu) {
-    BrqGraph graph;
+    Marshallable graph;
     fu->get_reply() >> graph;
-    callback(graph);
+    callback(dynamic_cast<RccGraph&>(*graph.ptr()));
   };
   fuattr.callback = cb;
   auto proxy = (BrqProxy*)RandomProxyForPartition(pid).second;
@@ -81,9 +81,9 @@ void BrqCommo::BroadcastPreAccept(parid_t par_id,
     FutureAttr fuattr;
     fuattr.callback = [callback] (Future* fu) {
       int32_t res;
-      RccGraph graph;
+      Marshallable graph;
       fu->get_reply() >> res >> graph;
-      callback(res, graph);
+      callback(res, dynamic_cast<RccGraph&>(*graph.ptr()));
     };
     verify(cmd_id > 0);
     Future::safe_release(proxy->async_PreAccept(cmd_id,
