@@ -71,6 +71,7 @@ Marshal& operator >> (Marshal& m, TxnWorkspace &ws) {
     ws.keys_.insert(k);
     (*ws.values_)[k] = v;
   }
+  return m;
 }
 
 
