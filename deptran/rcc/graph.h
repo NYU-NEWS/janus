@@ -453,7 +453,7 @@ class Graph : public Marshallable {
   Marshal& FromMarshal(Marshal &m) override{
     verify(size() == 0);
     uint64_t n;
-    verify(n > 0 && n << 10000);
+    verify(n > 0 && n < 10000);
     m >> n;
     verify(n > 0);
     map<uint64_t, Vertex<T> *> ref;
