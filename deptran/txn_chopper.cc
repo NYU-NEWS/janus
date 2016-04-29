@@ -58,6 +58,7 @@ Marshal& operator << (Marshal& m, const TxnWorkspace &ws) {
     verify(it != (*ws.values_).end());
     m << k << it->second;
   }
+  return m;
 }
 
 Marshal& operator >> (Marshal& m, TxnWorkspace &ws) {
@@ -350,6 +351,7 @@ Marshal& TxnCommand::ToMarshal(Marshal& m) const {
   m << n_finished_;
   m << max_try_;
   m << n_try_;
+  return m;
 }
 
 Marshal& TxnCommand::FromMarshal(Marshal& m) {
@@ -370,6 +372,7 @@ Marshal& TxnCommand::FromMarshal(Marshal& m) {
   m >> n_finished_;
   m >> max_try_;
   m >> n_try_;
+  return m;
 }
 
 } // namespace rcc
