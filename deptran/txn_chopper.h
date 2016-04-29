@@ -121,11 +121,13 @@ class BatchCommand: public ContainerCommand {
     m >> input_;
     m >> partition_id_;
     m >> inn_ids_;
+    return m;
   }
   Marshal& ToMarshal(Marshal& m) const override {
     m << input_;
     m << partition_id_;
     m << inn_ids_;
+    return m;
   }
   virtual ~BatchCommand() {};
 };
