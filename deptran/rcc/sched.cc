@@ -31,13 +31,17 @@ int RccSched::OnDispatch(const vector<SimpleCommand> &cmd,
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(cmd[0].root_id_);
   dep_graph_->FindOrCreateTxnInfo(cmd[0].root_id_, &dtxn->tv_);
   verify(dep_graph_->partition_id_ == partition_id_);
-  auto job = [&cmd, res, dtxn, callback, graph, output, this]() {
+  auto job = [&cmd, res, dtxn, callback, graph, output, this] () {
     verify(cmd[0].partition_id_ == this->partition_id_);
     for (auto&c : cmd) {
       dtxn->DispatchExecute(c, res, &(*output)[c.inn_id()]);
     }
     dtxn->UpdateStatus(TXN_STD);
-    auto sz = dep_graph_->MinItfrGraph(cmd[0].root_id_, graph);
+    auto sz = dep_graph_->MinItfrGraph(cmd[0].root_id_, graph, true);
+    if (sz == 0) {
+      callback();
+      return;
+    }
     TxnInfo& info1 = *dep_graph_->vertex_index_.at(cmd[0].root_id_)->data_;
     TxnInfo& info2 = *graph->vertex_index_.at(cmd[0].root_id_)->data_;
     verify(info1.partition_.find(cmd[0].partition_id_)

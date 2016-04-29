@@ -112,7 +112,7 @@ class RccGraph : public Graph<TxnInfo> {
   }
 
   uint64_t MinItfrGraph(uint64_t tid,
-                        RccGraph* gra_m);
+                        RccGraph* gra_m, bool quick =false);
 
 //  Marshal& ToMarshal(Marshal& m) const override;
 //  Marshal& FromMarshal(Marshal& m) override;

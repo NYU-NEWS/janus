@@ -47,11 +47,17 @@ void RccGraph::FindOrCreateTxnInfo(txnid_t txn_id,
 }
 
 uint64_t RccGraph::MinItfrGraph(uint64_t tid,
-                                RccGraph* new_graph) {
+                                RccGraph* new_graph,
+                                bool quick) {
 //  gra_m.gra = &txn_gra_;
 
   Vertex<TxnInfo> *source = FindV(tid);
-  verify(source != NULL);
+  verify(source != nullptr);
+  // quick path
+  if (source->incoming_.size() == 0 && quick ) {
+    return 0;
+  }
+
   // Log_debug("compute for sub graph, tid: %llx parent size: %d",
   //     tid, (int) source->from_.size());
 

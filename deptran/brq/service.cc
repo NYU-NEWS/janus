@@ -95,7 +95,7 @@ void BrqServiceImpl::Dispatch(const vector<SimpleCommand>& cmd,
                            output,
                            tmp_graph,
                            [defer, tmp_graph, res_graph] () {
-                             if (tmp_graph->size() == 1) {
+                             if (tmp_graph->size() <= 1) {
                                res_graph->rtti_ = Marshallable::EMPTY_GRAPH;
                                res_graph->ptr().reset(new EmptyGraph);
                              } else {
