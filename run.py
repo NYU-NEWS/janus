@@ -459,11 +459,11 @@ class ClientController(object):
         progress = int(round(100 * total_time / self.duration))
         logger.info("Progress: {}".format(progress))
 
-        if (self.print_max):
-            self.print_max = False
-            for k, v in self.txn_infos.items():
-                #v.print_max()
-                v.print_mid(self.config, self.num_proxies)
+        #if (self.print_max):
+        #    self.print_max = False
+        #    for k, v in self.txn_infos.items():
+        #        #v.print_max()
+        #        v.print_mid(self.config, self.num_proxies)
 
         lower_cutoff_pct = 25 
         upper_cutoff_pct = 75 
@@ -481,7 +481,10 @@ class ClientController(object):
             if (progress >= upper_cutoff_pct):
                 logger.info("done with recording period")
                 self.recording_period = False
-                self.print_max = True
+                
+                for k, v in self.txn_infos.items():
+                    v.print_mid(self.config, self.num_proxies)
+
                 do_sample_lock.acquire()
                 do_sample.value = 1
                 do_sample_lock.release()
@@ -522,10 +525,10 @@ class ClientController(object):
         self.pre_run_nsec = self.run_nsec
 
         if (self.cur_time - self.start_time > 1.5 * self.duration):
-            if (self.print_max):
-                self.print_max = False
-                for k, v in self.txn_infos.items():
-                    v.print_mid(self.config, self.num_proxies)
+            #if (self.print_max):
+            #    self.print_max = False
+            #    for k, v in self.txn_infos.items():
+            #        v.print_mid(self.config, self.num_proxies)
             return True
         else:
             return False
