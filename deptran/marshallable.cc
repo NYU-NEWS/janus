@@ -17,3 +17,8 @@ Marshal& Marshallable::FromMarshal(Marshal& m) {
   }
   data_->FromMarshal(m);
 }
+
+Marshal& Marshallable::ToMarshal(Marshal& m) const {
+  data_->ToMarshal(m);
+  return m;
+}

@@ -26,11 +26,18 @@ class RccGraph : public Graph<TxnInfo> {
 //  std::vector<RococoProxy *> rpc_proxies_;
 //  std::vector<std::string> server_addrs_;
 
-  RccGraph() : Graph<TxnInfo>() {rtti_ = Marshallable::RCC_GRAPH;}
+  RccGraph() : Graph<TxnInfo>() {
+    rtti_ = Marshallable::RCC_GRAPH;
+  }
 
   virtual ~RccGraph() {
     // XXX hopefully some memory leak here does not hurt. :(
   }
+
+  virtual std::shared_ptr<Marshallable>& ptr() override {
+    data_ = shared_from_this();
+    return data_;
+  };
 
 //  RococoProxy *get_server_proxy(uint32_t id);
 

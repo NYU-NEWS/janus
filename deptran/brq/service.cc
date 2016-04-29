@@ -88,10 +88,12 @@ void BrqServiceImpl::Dispatch(const vector<SimpleCommand>& cmd,
                               Marshallable* graph,
                               DeferredReply* defer) {
   std::lock_guard <std::mutex> guard(this->mtx_);
+  graph->rtti_ = Marshallable::RCC_GRAPH;
+  graph->ptr().reset(new RccGraph());
   dtxn_sched()->OnDispatch(cmd,
                            res,
                            output,
-                           dynamic_cast<RccGraph*>(graph->data_.get()),
+                           dynamic_cast<RccGraph*>(graph->ptr().get()),
                            [defer]() { defer->reply(); });
 }
 
@@ -123,7 +125,7 @@ void BrqServiceImpl::Commit(const cmdid_t& cmd_id,
                             DeferredReply* defer) {
   std::lock_guard <std::mutex> guard(mtx_);
   dtxn_sched()->OnCommit(cmd_id,
-                         dynamic_cast<RccGraph&>(*graph.data_),
+                         dynamic_cast<RccGraph&>(*graph.ptr().get()),
                          res,
                          output,
                          [defer]() { defer->reply(); });
@@ -154,7 +156,9 @@ void BrqServiceImpl::Inquire(const cmdid_t &tid,
                              Marshallable *graph,
                              rrr::DeferredReply *defer) {
   std::lock_guard <std::mutex> guard(mtx_);
-  dtxn_sched()->OnInquire(tid, dynamic_cast<RccGraph*>(graph->data_.get()),
+  graph->rtti_ = Marshallable::RCC_GRAPH;
+  graph->ptr().reset(new RccGraph());
+  dtxn_sched()->OnInquire(tid, dynamic_cast<RccGraph*>(graph->ptr().get()),
                           [defer]() { defer->reply(); });
 //  RccDTxn *dtxn = (RccDTxn *) dtxn_sched_->GetDTxn(tid);
 //  dtxn->inquire(res, defer);
@@ -175,11 +179,15 @@ void BrqServiceImpl::PreAccept(const cmdid_t &txnid,
                                int32_t* res,
                                Marshallable* res_graph,
                                DeferredReply* defer) {
+  verify(dynamic_cast<RccGraph*>(graph.ptr().get()));
+  verify(graph.rtti_ == Marshallable::RCC_GRAPH);
+  res_graph->rtti_ = Marshallable::RCC_GRAPH;
+  res_graph->ptr().reset(new RccGraph());
   dtxn_sched()->OnPreAccept(txnid,
                             cmds,
-                            dynamic_cast<RccGraph&>(*graph.data_),
+                            dynamic_cast<RccGraph&>(*graph.ptr().get()),
                             res,
-                            dynamic_cast<RccGraph*>(res_graph->data_.get()),
+                            dynamic_cast<RccGraph*>(res_graph->ptr().get()),
                             [defer] () {defer->reply();});
 }
 

@@ -17,9 +17,9 @@ void BrqCommo::SendDispatch(vector<SimpleCommand> &cmd,
       [callback] (Future *fu) {
         int res;
         TxnOutput output;
-        RccGraph graph;
+        Marshallable graph;
         fu->get_reply() >> res >> output >> graph;
-        callback(res, output, graph);
+        callback(res, output, dynamic_cast<RccGraph&>(*graph.ptr()));
       };
   fuattr.callback = cb;
   auto proxy = (BrqProxy*)LeaderProxyForPartition(

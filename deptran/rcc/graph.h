@@ -428,7 +428,7 @@ class Graph : public Marshallable {
 
   Marshal& ToMarshal(Marshal &m) const override{
     uint64_t n = size();
-    verify(n > 0);
+    verify(n > 0 && n < 10000);
     m << n;
     int i = 0;
     for (auto &pair : vertex_index_) {
@@ -453,6 +453,7 @@ class Graph : public Marshallable {
   Marshal& FromMarshal(Marshal &m) override{
     verify(size() == 0);
     uint64_t n;
+    verify(n > 0 && n << 10000);
     m >> n;
     verify(n > 0);
     map<uint64_t, Vertex<T> *> ref;

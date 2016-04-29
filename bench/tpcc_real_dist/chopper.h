@@ -15,8 +15,8 @@ class TpccRealDistChopper: public TpccTxn {
   virtual void NewOrderRetry() override;
   virtual void PaymentInit(TxnRequest &req) override;
   virtual void PaymentRetry() override;
-  //virtual void DeliveryInit(TxnRequest &req) override;
-  //virtual void DeliveryRetry() override;
+  virtual void DeliveryInit(TxnRequest &req) override;
+  virtual void DeliveryRetry() override;
   virtual ~TpccRealDistChopper();
 };
 
