@@ -211,7 +211,9 @@ def modify_dynamic_params(args, benchmark, mode, abmode, zipf):
                 modified = True
             if 'dist' in config['bench'] and zipf is not None:
                 try:
-                    config['bench']['dist'] = float(zipf)
+                    zipf_value = float(zipf)
+                    config['bench']['coefficient'] = zipf_value
+                    config['bench']['dist'] = 'zipf' 
                 except ValueError:
                     config['bench']['dist'] = str(zipf)
                 modified = True

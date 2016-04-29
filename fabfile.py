@@ -98,7 +98,7 @@ def deploy_all(regions='us-west-2', servers_per_region=[3], instance_type='t2.sm
         execute('retrieve_code')
         execute('create_work_dirs')
         success = True
-        execute('build')
+        execute('build', args="-t")
         execute('cluster.put_janus_config')
         execute('cluster.put_limits_config')
         execute('ec2.reboot_all')
@@ -137,7 +137,13 @@ def create_work_dirs():
     for d in dirs:
         dir_path = os.path.join(env.nfs_home, d)
         run("mkdir -p {}".format(dir_path))
-    
+  
+@task
+@roles('all')
+@parallel
+def install_apt_packages():
+    sudo('apt-get -y install pkg-config libgoogle-perftools-dev')
+
 
 @task
 @runs_once
@@ -145,7 +151,7 @@ def create_work_dirs():
 def build(args=None, clean=True):
     execute('retrieve_code')
     execute('create_virtual_env')
-    sudo('apt-get install pkg-config')
+    execute('install_apt_packages')
     opts = ["./waf"] 
     if args:
         opts.insert(1, args)
