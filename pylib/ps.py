@@ -6,6 +6,7 @@ def ps(hosts, grep_filter):
     for host in hosts:
         ssh_cmd = ['ssh', host]
         ssh_cmd.extend(cmd)
+        output.append("----------\nServer: {}\n-------------\n".format(host))
         try:
             o = subprocess.check_output(ssh_cmd)
             output.append(o)

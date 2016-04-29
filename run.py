@@ -30,6 +30,7 @@ from simplerpc import Client
 from simplerpc.marshal import Marshal
 from deptran.rcc_rpc import ServerControlProxy
 from deptran.rcc_rpc import ClientControlProxy
+from pylib import ps
 
 LOG_LEVEL = logging.INFO
 LOG_FILE_LEVEL = logging.DEBUG
@@ -595,6 +596,8 @@ class ServerController(object):
 
     def server_kill(self):
         hosts = { pi.host_address for pi in self.process_infos.itervalues() }
+        ps_output = ps.ps(hosts, "deptran_server")
+        logger.info("Existing Server or Client Processes:\n{}".format(ps_output))
         logger.info("killing servers on %s", ', '.join(hosts))
         for host in hosts:
             cmd = "killall -9 deptran_server"
