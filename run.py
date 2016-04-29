@@ -464,8 +464,10 @@ class ClientController(object):
             for k, v in self.txn_infos.items():
                 #v.print_max()
                 v.print_mid(self.config, self.num_proxies)
-        upper_cutoff_pct = (33.33/2+66.66) 
-        lower_cutoff_pct = (33.33/2) 
+
+        lower_cutoff_pct = 25 
+        upper_cutoff_pct = 75 
+
         if (not self.recording_period):
             if (progress >= lower_cutoff_pct and progress <= upper_cutoff_pct):
                 logger.info("start recording period")
