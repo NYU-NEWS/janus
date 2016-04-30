@@ -5,9 +5,6 @@ function new_experiment {
 	tar -czvf ~/${1}.tgz archive && rm -rf archive && mkdir -p archive
 }
 
-new_experiment $exp_name
-exit 0
-
 exp_name=single_datacenter_rw
 ./run_all.py -hh config/aws_hosts.yml -cc config/concurrent_10.yml -cc config/rw.yml -cc config/tpl_ww_paxos.yml -b rw_benchmark -m brq:brq -m 2pl_ww:multi_paxos -m occ:multi_paxos -m tapir:tapir -c 1 -c 2 -c 4 -c 8 -c 16 -c 32 -c 64 -s 1 -r 3 -d 90 $exp_name 
 new_experiment $exp_name
