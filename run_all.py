@@ -119,7 +119,6 @@ def gen_process_and_site(experiment_name, num_c, num_s, num_replicas, hosts_conf
     clients = [] 
     servers = [] 
     hosts = hosts_config['host']	
-    logging.info(hosts_config)
     
     servers_and_clients = []
     current_list = []
@@ -167,19 +166,14 @@ def gen_process_and_site(experiment_name, num_c, num_s, num_replicas, hosts_conf
             region_data['region'].append( (proc, host,) )
         region_data_original = copy.deepcopy(region_data)
     
-    logging.info(region_data)
-    logging.info("original: {}".format(region_data_original))
-
     for sidx in range(num_s*num_replicas):
         region_idx = sidx % len(regions)
         s_name = "s{}".format(sidx)
         region_members = region_data[regions[region_idx]]
         assign_to = region_members.pop(0)[0]
-        logging.info("rd: {}".format(region_members))
         if len(region_members) == 0:
             region_data[regions[region_idx]] = copy.deepcopy(region_data_original[regions[region_idx]])
             region_members = region_data[regions[region_idx]]
-            logging.info("rd: {}".format(region_members))
         process_map[s_name] = assign_to
     
     
@@ -189,13 +183,10 @@ def gen_process_and_site(experiment_name, num_c, num_s, num_replicas, hosts_conf
         region = regions[region_idx]
         process_idx = process_indices[region_idx]
         c_name = "c{}".format(cidx)
-        logging.info("process_idx {}, region_data['{}']: {}".format(
-                     process_idx, region, region_data[region]))
         assign_to = region_data[region][process_idx][0]
         process_map[c_name] = assign_to
         process_indices[region_idx] = (process_indices[region_idx] + 1) % len(region_data[region])
     
-    logging.debug(process_map)
     site_process_config = {'site': {}}
     site_process_config['site']['client'] = clients 
     site_process_config['site']['server'] = servers 
