@@ -1,5 +1,6 @@
 #! /usr/bin/env python
 import sys
+import copy
 import traceback
 import os
 import tempfile
@@ -14,10 +15,8 @@ from logging import info, debug, error
 
 import yaml
 
-DEFAULT_MODES = ["tpl_ww:none",
-                 "occ:none",
-                 "tpl_ww:paxos",
-                 "occ:paxos",
+DEFAULT_MODES = ["tpl_ww:multi_paxos",
+                 "occ:multi_paxos",
                  "tapir:tapir",
                  "brq:brq"]
 
@@ -119,16 +118,23 @@ def gen_process_and_site(experiment_name, num_c, num_s, num_replicas, hosts_conf
     clients = [] 
     servers = [] 
     hosts = hosts_config['host']	
-
+    logging.info(hosts_config)
+    
+    servers_and_clients = []
     for x in range(num_c):
-        clients.append(['c'+str(x)])
+        client ='c'+str(x) 
+        clients.append([client])
+        servers_and_clients.append(client)
     
     x=0
     while x<(num_s*num_replicas):
         l = []
         r = 0
         while r<num_replicas:
-            l.append('s'+str(x)+':'+str(x+10000))
+            server = 's'+str(x)
+            port = str(x+10000)
+            l.append(server+':'+port)
+            servers_and_clients.append(server)
             r += 1
             x += 1
         servers.append(l)
@@ -136,44 +142,57 @@ def gen_process_and_site(experiment_name, num_c, num_s, num_replicas, hosts_conf
     # assign servers 1 to a process, and clients
     # get distributed evenly to the rest of the processes.
 
-    process_names = []
-    region_data = None
     region_data_fn = 'config/aws_hosts_region.yml'
+    region_data = None 
+    region_data_original = None
+    regions = []
     if os.path.exists(region_data_fn):
         with open('config/aws_hosts_region.yml', 'r') as f:
             region_data = yaml.load(f)
-    
-        for process_infos in itertools.izip(*region_data.itervalues()):
-            for process_info in process_infos:
-                process_names.append(process_info[0])
-        logger.info("process_names1: {}".format(process_names))
+            region_data_original = copy.deepcopy(region_data)
+            regions = region_data.keys()
+            logging.debug("regions: {}".format(regions))
     else:
-        process_names = hosts.keys()
-        i=0
-        while len(process_names) < (num_s*num_replicas)+1:
-            process_names.append(hosts.keys()[i % len(hosts.keys())])
-            i += 1
+        # just fake the data: 1 region contains all the hosts
+        region_data = {'region': []}
+        regions = ['region']
+        for proc, host in hosts.iteritems():
+            region_data['region'].append( (proc, host,) )
+        region_data_original = copy.deepcopy(region_data)
     
-    logger.info("process names2: {}".format(process_names))
+    logging.info(region_data)
+    logging.info("original: {}".format(region_data_original))
 
-    for server_list in servers:
-        for s in server_list:	
-            assign_to = process_names.pop()
-            s_name = s.split(':')[0]
-            process_map[s_name] = assign_to
-
-    idx = 0
-    for c in clients:
-        c_name = c[0]
-        assign_to = process_names[idx % len(process_names)]
-        idx += 1
+    for sidx in range(num_s*num_replicas):
+        region_idx = sidx % len(regions)
+        s_name = "s{}".format(sidx)
+        region_members = region_data[regions[region_idx]]
+        assign_to = region_members.pop(0)[0]
+        logging.info("rd: {}".format(region_members))
+        if len(region_members) == 0:
+            region_data[regions[region_idx]] = copy.deepcopy(region_data_original[regions[region_idx]])
+            region_members = region_data[regions[region_idx]]
+            logging.info("rd: {}".format(region_members))
+        process_map[s_name] = assign_to
+    
+    
+    process_indices = [0 for r in regions]
+    for cidx in range(num_c):
+        region_idx = cidx % len(regions)
+        region = regions[region_idx]
+        process_idx = process_indices[region_idx]
+        c_name = "c{}".format(cidx)
+        logging.info("process_idx {}, region_data['{}']: {}".format(
+                     process_idx, region, region_data[region]))
+        assign_to = region_data[region][process_idx][0]
         process_map[c_name] = assign_to
+        process_indices[region_idx] = (process_indices[region_idx] + 1) % len(region_data[region])
     
+    logging.debug(process_map)
     site_process_config = {'site': {}}
     site_process_config['site']['client'] = clients 
     site_process_config['site']['server'] = servers 
     site_process_config['process'] = process_map
-
     if not os.path.isdir(TMP_DIR):
         os.makedirs(TMP_DIR)
 
