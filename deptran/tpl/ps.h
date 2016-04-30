@@ -5,7 +5,7 @@
 
 namespace rococo {
 
-class TPLExecutor;
+class TplExecutor;
 
 class PieceStatus {
   friend class Txn2PL;
@@ -37,7 +37,7 @@ class PieceStatus {
 //  bool *wound_;
 
 //  mdb::Txn2PL *txn_;
-  TPLExecutor *exec_;
+  TplExecutor *exec_;
 
   PieceStatus() : rw_lock_group_(0), rm_lock_group_(0) {
     verify(0);
@@ -54,7 +54,7 @@ class PieceStatus {
               const function<void()>& callback,
               std::map <int32_t, mdb::Value> *output,
               const std::function<int(void)> &wound_callback,
-              TPLExecutor *exec);
+              TplExecutor *exec);
 
   ~PieceStatus() {
   }

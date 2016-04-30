@@ -25,7 +25,7 @@ bool OCCExecutor::Prepare() {
   verify(txn != NULL);
 
   verify(txn->outcome_ == symbol_t::NONE);
-  verify(txn->verified_ == false);
+  verify(!txn->verified_);
 
   if (!txn->version_check()) {
     return false;
@@ -88,12 +88,12 @@ bool OCCExecutor::Prepare() {
 
 
 int OCCExecutor::Commit() {
-  verify(mdb_txn_ != NULL);
+  verify(mdb_txn() != NULL);
   verify(mdb_txn_ == sched_->RemoveMTxn(cmd_id_));
 
   auto txn = dynamic_cast<mdb::TxnOCC*>(mdb_txn_);
   verify(txn->outcome_ == symbol_t::NONE);
-  verify(txn->verified_ == true);
+  verify(txn->verified_);
 
   for (auto &it : txn->inserts_) {
     it.table->insert(it.row);
