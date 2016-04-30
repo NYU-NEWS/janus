@@ -602,8 +602,9 @@ class ServerController(object):
         hosts = { pi.host_address for pi in self.process_infos.itervalues() }
         ps_output = ps.ps(hosts, "deptran_server")
         logger.info("Existing Server or Client Processes:\n{}".format(ps_output))
-        logger.info("killing servers on %s", ', '.join(hosts))
         ps.killall(hosts, "deptran_server", "-9 -w")
+        ps_output = ps.ps(hosts, "deptran_server")
+        logger.info("Existing Server or Client After Kill:\n{}".format(ps_output))
     
     def setup_heartbeat(self, client_controller):
         logger.debug("in setup_heartbeat")
@@ -1113,12 +1114,13 @@ def main():
         ret = 1
     finally:
         logger.info("shutting down...")
-        #if server_controller is not None:
-        #    try:
-        #        server_controller.server_kill()
-        #    except:
-        #        logger.error(traceback.format_exc())
-        sys.exit(ret)
+        if server_controller is not None:
+            try:
+                server_controller.server_kill()
+            except:
+                logger.error(traceback.format_exc())
+        if ret != 0:
+            sys.exit(ret)
 
 if __name__ == "__main__":
     main()
