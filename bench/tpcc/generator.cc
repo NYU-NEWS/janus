@@ -48,8 +48,8 @@ void TpccTxnGenerator::GetNewOrderTxnReq(TxnRequest *req,
   //Value d_id((i32)RandomGenerator::rand(0, tpcc_para_.n_d_id_ - 1));
   Value d_id((i32) (cid / tpcc_para_.n_w_id_) % tpcc_para_.n_d_id_);
   Value c_id((i32) RandomGenerator::nu_rand(1022, 0, tpcc_para_.n_c_id_ - 1));
-//  int ol_cnt = RandomGenerator::rand(5, 15);
-  int ol_cnt = 0;
+  int ol_cnt = RandomGenerator::rand(5, 15);
+//  int ol_cnt = 0;
 
   rrr::i32 i_id_buf[ol_cnt];
 

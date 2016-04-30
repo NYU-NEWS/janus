@@ -108,11 +108,13 @@ void ClassicExecutor::execute(const SimpleCommand &cmd,
 void ClassicExecutor::Execute(const SimpleCommand &cmd,
                                  rrr::i32 *res,
                                  map<int32_t, Value> &output) {
-  txn_reg_->get(cmd).txn_handler(this,
-                                 dtxn_,
-                                 const_cast<SimpleCommand&>(cmd),
-                                 res,
-                                 output);
+
+  const auto& handler = txn_reg_->get(cmd).txn_handler;
+  handler(this,
+          dtxn_,
+          const_cast<SimpleCommand&>(cmd),
+          res,
+          output);
 }
 
 } // namespace rococo;
