@@ -114,6 +114,7 @@ def get_range(r):
         return range(*a)
 
 def gen_process_and_site(experiment_name, num_c, num_s, num_replicas, hosts_config):
+    # this needs to be refactored
     process_map = {}
     clients = [] 
     servers = [] 
@@ -121,10 +122,16 @@ def gen_process_and_site(experiment_name, num_c, num_s, num_replicas, hosts_conf
     logging.info(hosts_config)
     
     servers_and_clients = []
+    current_list = []
     for x in range(num_c):
         client ='c'+str(x) 
-        clients.append([client])
+        current_list.append(client)
+        if len(current_list) == num_replicas:
+            clients.append(current_list)
+            current_list = []
         servers_and_clients.append(client)
+    if len(current_list) > 0:
+        clients.append(current_list)
     
     x=0
     while x<(num_s*num_replicas):
