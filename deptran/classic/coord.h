@@ -80,7 +80,7 @@ class ClassicCoord : public Coordinator {
                            int res,
                            map<innid_t, map<int32_t, Value>> &outputs);
   void Prepare();
-  void PrepareAck(phase_t phase, Future *fu);
+  void PrepareAck(phase_t phase, int res);
   virtual void Commit();
   void CommitAck(phase_t phase, Future *fu);
   void Abort() {

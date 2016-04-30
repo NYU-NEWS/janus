@@ -89,7 +89,7 @@ void BrqServiceImpl::Dispatch(const vector<SimpleCommand>& cmd,
                               DeferredReply* defer) {
   std::lock_guard <std::mutex> guard(this->mtx_);
 
-  RccGraph* tmp_graph = new RccGraph;
+  RccGraph* tmp_graph = new RccGraph();
   dtxn_sched()->OnDispatch(cmd,
                            res,
                            output,
@@ -98,12 +98,12 @@ void BrqServiceImpl::Dispatch(const vector<SimpleCommand>& cmd,
                              if (tmp_graph->size() <= 1) {
                                res_graph->rtti_ = Marshallable::EMPTY_GRAPH;
                                res_graph->ptr().reset(new EmptyGraph);
+                               delete tmp_graph;
                              } else {
                                res_graph->rtti_ = Marshallable::RCC_GRAPH;
                                res_graph->ptr().reset(tmp_graph);
                              }
                              defer->reply();
-                             delete tmp_graph;
                            });
 }
 

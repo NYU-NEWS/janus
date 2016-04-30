@@ -361,7 +361,7 @@ Executor* Frame::CreateExecutor(cmdid_t cmd_id, Scheduler* sched) {
     case MODE_NONE:
       verify(0);
     case MODE_2PL:
-      exec = new TPLExecutor(cmd_id, sched);
+      exec = new TplExecutor(cmd_id, sched);
       break;
     case MODE_OCC:
       exec = new OCCExecutor(cmd_id, sched);

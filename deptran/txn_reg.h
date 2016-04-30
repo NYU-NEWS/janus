@@ -68,13 +68,13 @@ class TxnRegistry {
     all_[func_key] = (txn_handler_defer_pair_t) {txn_handler, defer};
   }
 
-  txn_handler_defer_pair_t get(const base::i32 t_type,
+  txn_handler_defer_pair_t& get(const base::i32 t_type,
                                const base::i32 p_type) {
     auto it = all_.find(std::make_pair(t_type, p_type));
     verify(it != all_.end());
     return it->second;
   }
-  txn_handler_defer_pair_t get(const SimpleCommand &);
+  txn_handler_defer_pair_t& get(const SimpleCommand &);
 
  public:
   // prevent instance creation

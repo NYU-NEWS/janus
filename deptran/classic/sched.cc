@@ -86,6 +86,8 @@ int ClassicSched::OnPrepare(cmdid_t cmd_id,
     this->get_prepare_log(cmd_id, sids, &log);
     recorder_->submit(log, callback);
   } else {
+    auto exec = dynamic_cast<ClassicExecutor*>(GetExecutor(cmd_id));
+    *res = exec->Prepare() ? SUCCESS : REJECT;
     callback();
   }
   return 0;

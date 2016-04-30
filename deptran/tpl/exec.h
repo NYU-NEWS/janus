@@ -7,7 +7,7 @@
 namespace rococo {
 
 class PieceStatus;
-class TPLExecutor: public ClassicExecutor {
+class TplExecutor: public ClassicExecutor {
   using ClassicExecutor::ClassicExecutor;
  public:
   bool prepared_ = false;
@@ -24,7 +24,7 @@ class TPLExecutor: public ClassicExecutor {
                        const function<void()>& callback,
                        std::map<int32_t, Value> *output);
 
-  virtual ~TPLExecutor(){};
+  virtual ~TplExecutor(){};
 
   int StartLaunch(const SimpleCommand &cmd,
                   rrr::i32 *res,
@@ -33,17 +33,13 @@ class TPLExecutor: public ClassicExecutor {
 
   // Below are merged from TxnRegistry.
 
-  std::function<void(void)> get_2pl_fail_callback(
-      const SimpleCommand& cmd,
-      rrr::i32 *res,
-      PieceStatus *ps
-  );
+  void LockSucceeded(const SimpleCommand& cmd,
+                     rrr::i32 *res,
+                     PieceStatus *ps);
 
-  std::function<void(void)> get_2pl_succ_callback(
-      const SimpleCommand& cmd,
-      rrr::i32 *res,
-      PieceStatus *ps
-  );
+  void LockFailed(const SimpleCommand& cmd,
+                  rrr::i32 *res,
+                  PieceStatus *ps);
 
   virtual bool Prepare() override;
   virtual int Commit() override;

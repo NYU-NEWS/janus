@@ -445,7 +445,7 @@ void Config::LoadModeYML(YAML::Node config) {
   auto ab_str = config["ab"].as<string>();
   boost::algorithm::to_lower(ab_str);
   this->InitMode(mode_str, ab_str);
-  max_retry_ = config["retry"].as<uint32_t>();
+  max_retry_ = config["retry"].as<int32_t>();
 //  concurrent_txn_ = config["ongoing"].as<uint32_t>();
   batch_start_ = config["batch"].as<bool>();
 
@@ -833,7 +833,7 @@ unsigned int Config::get_scale_factor() {
   return scale_factor_;
 }
 
-unsigned int Config::get_max_retry() {
+int32_t Config::get_max_retry() {
   return max_retry_;
 }
 

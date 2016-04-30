@@ -22,11 +22,12 @@ void Executor::Execute(const SimpleCommand &cmd,
                        map<int32_t, Value> &output) {
   verify(output.size() == 0);
   *res = SUCCESS;
-  txn_reg_->get(cmd).txn_handler(this,
-                                 dtxn_,
-                                 const_cast<SimpleCommand&>(cmd),
-                                 res,
-                                 output);
+  const auto &handler = txn_reg_->get(cmd).txn_handler;
+  handler(this,
+          dtxn_,
+          const_cast<SimpleCommand&>(cmd),
+          res,
+          output);
   // for debug;
   for (auto &pair: output) {
     verify(pair.second.get_kind() != Value::UNKNOWN);

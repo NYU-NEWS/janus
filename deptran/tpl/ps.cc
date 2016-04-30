@@ -11,7 +11,7 @@ PieceStatus::PieceStatus(const SimpleCommand& cmd,
                          const function<void()>& callback,
                          map<int32_t, Value> *output,
                          const std::function<int(void)> &wound_callback,
-                         TPLExecutor *exec)
+                         TplExecutor *exec)
     : pid_(cmd.id_),
       num_waiting_(1),
       num_acquired_(0),
@@ -54,8 +54,9 @@ void PieceStatus::reg_rm_lock(mdb::Row *row,
   is_rm_ = true;
   verify(row->rtti() == mdb::symbol_t::ROW_FINE);
   mdb::FineLockedRow *fl_row = (mdb::FineLockedRow *) row;
-  for (int i = 0; i < row->schema()->columns_count(); i++)
+  for (int i = 0; i < row->schema()->columns_count(); i++) {
     rm_lock_group_.add(fl_row->get_alock(i), rrr::ALock::WLOCK);
+  }
   rm_lock_group_.lock_all(succ_callback, fail_callback);
 }
 

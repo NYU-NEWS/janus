@@ -156,14 +156,14 @@ void ClassicCoord::Restart() {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(aborted_);
   n_retry_++;
-  cmd_->root_id_ = this->next_txn_id();
-  cmd_->id_ = cmd_->root_id_;
+//  cmd_->root_id_ = this->next_txn_id();
+  verify(cmd_->id_ == cmd_->root_id_);
   TxnCommand *txn = (TxnCommand*) cmd_;
   double last_latency = txn->last_attempt_latency();
   if (ccsi_)
     ccsi_->txn_retry_one(this->thread_id_, txn->type_, last_latency);
   auto& max_retry = Config::GetConfig()->max_retry_;
-  if (n_retry_ > max_retry) {
+  if (n_retry_ > max_retry && max_retry >= 0) {
     End();
   } else {
 //    Log_info("retry count %d, max_retry: %d, this coord: %llx", n_retry_, max_retry, this);
@@ -298,31 +298,25 @@ void ClassicCoord::Prepare() {
   }
 }
 
-void ClassicCoord::PrepareAck(phase_t phase, Future *fu) {
+void ClassicCoord::PrepareAck(phase_t phase, int res) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   if (phase != phase_) return;
   TxnCommand* cmd = (TxnCommand*) cmd_;
   n_prepare_ack_++;
-  int32_t e = fu->get_error_code();
-
-  if (e != 0) {
-    cmd->commit_.store(false);
-    Log_fatal("2PL prepare failed due to error %d", e);
-  }
-
-  int res;
-  fu->get_reply() >> res;
-  Log_debug("tid %ld; prepare result %d", cmd_->root_id_, res);
 
   if (res == REJECT) {
-    Log_debug("Prepare rejected for %ld by %ld\n",
-               cmd_->root_id_,
-               cmd->inn_id());
     cmd->commit_.store(false);
+    aborted_ = false;
+//    Log_fatal("2PL prepare failed due to error %d", e);
   }
+  Log_debug("tid %ld; prepare result %d", cmd_->root_id_, res);
 
   if (n_prepare_ack_ == cmd->partition_ids_.size()) {
     Log_debug("2PL prepare finished for %ld", cmd->root_id_);
+    if (!aborted_) {
+      cmd->commit_.store(true);
+      committed_ = true;
+    }
     GotoNextPhase();
   } else {
     // Do nothing.
@@ -337,9 +331,9 @@ void ClassicCoord::Commit() {
   Log_debug("send out finish request, cmd_id: %lx, %ld",
             txn().id_, n_finish_req_);
 
-  // commit or abort piece
-//  RequestHeader header = gen_header(cmd);
-  if (txn().commit_.load()) {
+  verify(txn().commit_.load() == committed_);
+
+  if (committed_) {
     txn().reply_.res_ = SUCCESS;
     for (auto &rp : txn().partition_ids_) {
       n_finish_req_ ++;
@@ -352,7 +346,7 @@ void ClassicCoord::Commit() {
                                     std::placeholders::_1));
       site_commit_[rp]++;
     }
-  } else {
+  } else if (aborted_) {
     txn().reply_.res_ = REJECT;
     for (auto &rp : txn().partition_ids_) {
       n_finish_req_ ++;
@@ -365,7 +359,10 @@ void ClassicCoord::Commit() {
                                    std::placeholders::_1));
       site_abort_[rp]++;
     }
+  } else {
+    verify(0);
   }
+  GotoNextPhase();
 }
 
 void ClassicCoord::CommitAck(phase_t phase, Future *fu) {
@@ -383,7 +380,7 @@ void ClassicCoord::CommitAck(phase_t phase, Future *fu) {
     } else {
       committed_ = true;
     }
-    GotoNextPhase();
+//    GotoNextPhase();
   }
   Log_debug("callback: %s, retry: %s",
              committed_ ? "True" : "False",

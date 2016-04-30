@@ -55,7 +55,7 @@ class Config {
   string logging_path_;
   single_server_t single_server_;
   uint16_t n_concurrent_;
-  uint32_t max_retry_;
+  int32_t max_retry_;
   string dist_ = "uniform";
   float coeffcient_ = 0; // "uniform"
 
@@ -206,7 +206,7 @@ class Config {
   int32_t get_benchmark();
   uint32_t GetNumPartition();
   uint32_t get_scale_factor();
-  uint32_t get_max_retry();
+  int32_t get_max_retry();
   single_server_t get_single_server();
   uint32_t get_concurrent_txn();
   bool get_batch_start();
