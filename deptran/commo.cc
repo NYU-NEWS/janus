@@ -34,9 +34,15 @@ void RococoCommunicator::SendStart(SimpleCommand &cmd,
 void RococoCommunicator::SendPrepare(groupid_t gid,
                                      txnid_t tid,
                                      std::vector<int32_t> &sids,
-                                     const function<void(Future*)> &callback) {
+                                     const function<void(int)> &callback) {
   FutureAttr fuattr;
-  fuattr.callback = callback;
+  std::function<void(Future*)> cb =
+      [this, callback] (Future *fu) {
+        int res;
+        fu->get_reply() >> res;
+        callback(res);
+      };
+  fuattr.callback = cb;
   ClassicProxy *proxy = LeaderProxyForPartition(gid).second;
   Log_debug("SendPrepare to %ld sites gid:%ld, tid:%ld\n", sids.size(), gid, tid);
   Future::safe_release(proxy->async_Prepare(tid, sids, fuattr));

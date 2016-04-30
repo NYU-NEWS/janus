@@ -30,7 +30,7 @@ class RococoCommunicator : public Communicator {
   void SendPrepare(parid_t gid,
                    txnid_t tid, 
                    std::vector<int32_t> &sids, 
-                   const std::function<void(Future *fu)> &callback) ;
+                   const std::function<void(int)> &callback) ;
   void SendCommit(parid_t pid,
                   txnid_t tid,
                   const std::function<void(Future *fu)> &callback) ;
