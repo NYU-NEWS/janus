@@ -163,7 +163,7 @@ void ClassicCoord::Restart() {
   if (ccsi_)
     ccsi_->txn_retry_one(this->thread_id_, txn->type_, last_latency);
   auto& max_retry = Config::GetConfig()->max_retry_;
-  if (n_retry_ > max_retry) {
+  if (n_retry_ > max_retry && max_retry >= 0) {
     End();
   } else {
 //    Log_info("retry count %d, max_retry: %d, this coord: %llx", n_retry_, max_retry, this);
