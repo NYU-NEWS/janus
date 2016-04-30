@@ -20,7 +20,7 @@ int TplExecutor::StartLaunch(const SimpleCommand& cmd,
   verify(mdb_txn_ != nullptr);
   if (wounded_) {
     // other pieces have already been wounded. so cannot proceed.
-    Log_info("wounded");
+    Log_debug("wounded");
     *res = REJECT;
     callback();
   } else {
@@ -49,7 +49,7 @@ int TplExecutor::StartLaunch(const SimpleCommand& cmd,
                                    this, cmd, res, ps);
     if (dtxn->locks_.size() > 0) {
       if (cmd.type_ == 1000) {
-        Log_info("lock size for tpcc new order piece 1000, %d",
+        Log_debug("lock size for tpcc new order piece 1000, %d",
                  dtxn->locks_.size());
       }
       ps->reg_rw_lock(dtxn->locks_, succ_callback, fail_callback);
@@ -113,7 +113,7 @@ void TplExecutor::LockSucceeded(const SimpleCommand& cmd,
 void TplExecutor::LockFailed(const SimpleCommand& cmd,
                              rrr::i32 *res,
                              PieceStatus *ps) {
-  Log_info("tid: %llx, pid: %llx, p_type: %d, lock reject call back",
+  Log_debug("tid: %llx, pid: %llx, p_type: %d, lock reject call back",
            (int64_t)cmd.root_id_, (int64_t)cmd.id_, (int)cmd.type_);
   Log::debug("fail callback: PS: %p", ps);
   verify(ps != NULL); //FIXME
@@ -132,7 +132,7 @@ bool TplExecutor::Prepare() {
   auto txn = (mdb::Txn2PL *) mdb_txn();
   verify(txn != NULL);
   if (wounded_)
-    Log_info("wounded");
+    Log_debug("wounded");
   prepared_ = true;
   return !wounded_;
 }
