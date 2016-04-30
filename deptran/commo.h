@@ -33,10 +33,10 @@ class RococoCommunicator : public Communicator {
                    const std::function<void(int)> &callback) ;
   void SendCommit(parid_t pid,
                   txnid_t tid,
-                  const std::function<void(Future *fu)> &callback) ;
+                  const std::function<void()> &callback) ;
   void SendAbort(parid_t pid,
                  txnid_t tid,
-                 const std::function<void(Future *fu)> &callback) ;
+                 const std::function<void()> &callback) ;
 
   // for debug
   std::set<std::pair<parid_t, txnid_t>> phase_three_sent_;

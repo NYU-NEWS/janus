@@ -342,8 +342,7 @@ void ClassicCoord::Commit() {
                          txn().id_,
                           std::bind(&ClassicCoord::CommitAck,
                                     this,
-                                    phase_,
-                                    std::placeholders::_1));
+                                    phase_));
       site_commit_[rp]++;
     }
   } else if (aborted_) {
@@ -355,17 +354,16 @@ void ClassicCoord::Commit() {
                         cmd_->id_,
                          std::bind(&ClassicCoord::CommitAck,
                                    this,
-                                   phase_,
-                                   std::placeholders::_1));
+                                   phase_));
       site_abort_[rp]++;
     }
   } else {
     verify(0);
   }
-  GotoNextPhase();
+//  GotoNextPhase();
 }
 
-void ClassicCoord::CommitAck(phase_t phase, Future *fu) {
+void ClassicCoord::CommitAck(phase_t phase) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   if (phase != phase_) return;
   TxnCommand* cmd = (TxnCommand*)cmd_;
@@ -380,7 +378,7 @@ void ClassicCoord::CommitAck(phase_t phase, Future *fu) {
     } else {
       committed_ = true;
     }
-//    GotoNextPhase();
+    GotoNextPhase();
   }
   Log_debug("callback: %s, retry: %s",
              committed_ ? "True" : "False",
