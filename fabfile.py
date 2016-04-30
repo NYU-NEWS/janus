@@ -142,6 +142,7 @@ def create_work_dirs():
 @roles('all')
 @parallel
 def install_apt_packages():
+    sudo('apt-get -y update')
     sudo('apt-get -y install pkg-config libgoogle-perftools-dev')
 
 
