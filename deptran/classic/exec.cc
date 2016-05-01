@@ -61,7 +61,7 @@ int ClassicExecutor::AbortLaunch(rrr::i32 *res,
   // TODO optimize
   //  sched_->Destroy(cmd_id_);
   callback();
-  Log::debug("abort finish");
+  Log_debug("abort finish");
   return 0;
 }
 

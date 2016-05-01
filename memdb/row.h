@@ -376,7 +376,7 @@ public:
 class FineLockedRow: public Row {
   typedef enum {
     WAIT_DIE,
-    WOUND_DIE,
+    WOUND_WAIT,
     TIMEOUT
   } type_2pl_t;
   static type_2pl_t type_2pl_;
@@ -392,7 +392,7 @@ class FineLockedRow: public Row {
         //    lock_[i] = (locks + i);
         break;
       }
-      case WOUND_DIE: {
+      case WOUND_WAIT: {
         lock_ = new rrr::WoundDieALock[n_columns];
         //rrr::WoundDieALock *locks = new rrr::WoundDieALock[n_columns];
         //for (int i = 0; i < n_columns; i++)
@@ -421,7 +421,7 @@ class FineLockedRow: public Row {
         delete[] ((rrr::WaitDieALock *) lock_);
         //delete[] ((rrr::WaitDieALock *)lock_[0]);
         break;
-      case WOUND_DIE:
+      case WOUND_WAIT:
         delete[] ((rrr::WoundDieALock *) lock_);
         //delete[] ((rrr::WoundDieALock *)lock_[0]);
         break;
@@ -451,8 +451,8 @@ class FineLockedRow: public Row {
     type_2pl_ = WAIT_DIE;
   }
 
-  static void set_wound_die() {
-    type_2pl_ = WOUND_DIE;
+  static void set_wound_wait() {
+    type_2pl_ = WOUND_WAIT;
   }
 
   virtual symbol_t rtti() const {
@@ -464,7 +464,7 @@ class FineLockedRow: public Row {
     switch (type_2pl_) {
       case WAIT_DIE:
         return ((rrr::WaitDieALock *) lock_) + column_id;
-      case WOUND_DIE:
+      case WOUND_WAIT:
         return ((rrr::WoundDieALock *) lock_) + column_id;
       case TIMEOUT:
         return ((rrr::TimeoutALock *) lock_) + column_id;
