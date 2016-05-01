@@ -28,13 +28,15 @@ bool OCCExecutor::Prepare() {
   verify(!txn->verified_);
 
   if (!txn->version_check()) {
+    Log_debug("txn: %llx occ validation failed.", (int64_t)cmd_id_);
     return false;
   } else {
-
+    verify(txn->ver_check_read_.size() > 0 || txn->ver_check_write_.size() > 0);
     // now lock the commit
     for (auto &it : txn->ver_check_read_) {
       Row *row = it.first.row;
       VersionedRow *v_row = (VersionedRow *) row;
+      Log_debug("r_lock row: %llx", row);
       if (!v_row->rlock_row_by(txn->id())) {
 #ifdef CONFLICT_COUNT
         const Table *tbl = v_row->get_table();
@@ -51,13 +53,15 @@ bool OCCExecutor::Prepare() {
           v_row->unlock_row_by(txn->id());
         }
         txn->locks_.clear();
+        Log_debug("txn: %llx occ read locks failed.", (int64_t)cmd_id_);
         return false;
       }
       insert_into_map(txn->locks_, row, -1);
     }
-    for (auto &it : txn->ver_check_write_) {
-      Row *row = it.first.row;
+    for (auto &it : txn->updates_) {
+      Row *row = it.first;
       VersionedRow *v_row = (VersionedRow *) row;
+      Log_debug("w_lock row: %llx", row);
       if (!v_row->wlock_row_by(txn->id())) {
 #ifdef CONFLICT_COUNT
         const Table *tbl = v_row->get_table();
@@ -74,11 +78,12 @@ bool OCCExecutor::Prepare() {
           v_row->unlock_row_by(txn->id());
         }
         txn->locks_.clear();
+        Log_debug("txn: %llx occ write locks failed.", (int64_t)cmd_id_);
         return false;
       }
       insert_into_map(txn->locks_, row, -1);
     }
-
+    Log_debug("txn: %llx occ locks succeed.", (int64_t)cmd_id_);
     txn->verified_ = true;
     return true;
   }
@@ -88,8 +93,9 @@ bool OCCExecutor::Prepare() {
 
 
 int OCCExecutor::Commit() {
-  verify(mdb_txn() != NULL);
+  verify(mdb_txn() != nullptr);
   verify(mdb_txn_ == sched_->RemoveMTxn(cmd_id_));
+  Log_debug("txn: %llx commit.", (int64_t)cmd_id_);
 
   auto txn = dynamic_cast<mdb::TxnOCC*>(mdb_txn_);
   verify(txn->outcome_ == symbol_t::NONE);

@@ -387,10 +387,10 @@ void Config::InitMode(string &cc_name, string& ab_name) {
     early_return_ = true;
   } else if (cc_name == "2pl_w") {
     retry_wait_ = true;
-  } else if (cc_name == "2pl_wait_die") {
+  } else if (cc_name == "2pl_wait_die" || cc_name == "2pl_wd") {
     mdb::FineLockedRow::set_wait_die();
   } else if ((cc_name == "2pl_ww") || (cc_name == "2pl_wound_die")) {
-    mdb::FineLockedRow::set_wound_die();
+    mdb::FineLockedRow::set_wound_wait();
   }
 
   ab_mode_ = Frame::Name2Mode(ab_name);

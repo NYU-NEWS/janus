@@ -108,8 +108,7 @@ void ClassicCoord::GotoNextPhase() {
         End();
       else if (aborted_) {
         Restart();
-      }
-      else
+      } else
         verify(0);
       break;
     default:
@@ -156,8 +155,8 @@ void ClassicCoord::Restart() {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(aborted_);
   n_retry_++;
-//  cmd_->root_id_ = this->next_txn_id();
-  verify(cmd_->id_ == cmd_->root_id_);
+  cmd_->root_id_ = this->next_txn_id();
+  cmd_->id_ = cmd_->root_id_;
   TxnCommand *txn = (TxnCommand*) cmd_;
   double last_latency = txn->last_attempt_latency();
   if (ccsi_)
@@ -306,10 +305,10 @@ void ClassicCoord::PrepareAck(phase_t phase, int res) {
 
   if (res == REJECT) {
     cmd->commit_.store(false);
-    aborted_ = false;
+    aborted_ = true;
 //    Log_fatal("2PL prepare failed due to error %d", e);
   }
-  Log_debug("tid %ld; prepare result %d", cmd_->root_id_, res);
+  Log_debug("tid %llx; prepare result %d", (int64_t)cmd_->root_id_, res);
 
   if (n_prepare_ack_ == cmd->partition_ids_.size()) {
     Log_debug("2PL prepare finished for %ld", cmd->root_id_);
