@@ -107,6 +107,7 @@ def generate_graph(config, txn_types, data_classes):
     for txn_name in txn_types:
         for b in config['bench']:
             data_files = get_data(data_classes, [ [bench, b], [txn, txn_name] ])
+            logging.debug("generate for {} {}: {}".format(b, txn_name, data_files))
             gnuplot_settings = copy.copy(config['graph'])
             gnuplot_settings['output_file'] = Template(gnuplot_settings['output_file']).substitute(txn=txn_name, bench=b)
             run_gnuplot(gnuplot_settings, data_files)
@@ -117,7 +118,9 @@ def main():
     global args
     parse_args()
     data_classes = classify_data()
+    logging.debug("data: {}".format(data_classes))
     txn_types = set([k[0] for k in data_classes.keys()])
+    logging.info("Transaction Types: {}".format(txn_types))
     for fn in args.graphs:
         with open(fn, 'r') as f:
             config = yaml.load(f)

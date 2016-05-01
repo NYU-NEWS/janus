@@ -1,6 +1,7 @@
 bench: 
     - tpca
     - tpcc
+    - rw_benchmark
 graph:
     using_cmd: '7:13'
     x_label: 'Throughput (txn/s)'

@@ -1,6 +1,7 @@
 bench: 
     - tpca
     - tpcc
+    - rw_benchmark
 graph:
     using_cmd: '6:($9/$8*100.0)'
     x_label: 'Clients'
