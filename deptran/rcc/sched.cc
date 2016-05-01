@@ -148,14 +148,14 @@ void RccSched::CheckWaitlist() {
         Decide(dep_graph_->FindSCC(v));
       } else {
         // else do nothing
-        auto anc_v = __DebugFindAnOngoingAncestor(v);
-        TxnInfo& tinfo = *anc_v->data_;
-        Log_debug("this transaction has some ongoing ancestors, tid: %llx, "
-                      "is_involved: %d, during_inquire: %d, inquire_acked: %d",
-                  tinfo.id(),
-                  tinfo.Involve(partition_id_),
-                  tinfo.during_asking,
-                  tinfo.inquire_acked_);
+//        auto anc_v = __DebugFindAnOngoingAncestor(v);
+//        TxnInfo& tinfo = *anc_v->data_;
+//        Log_debug("this transaction has some ongoing ancestors, tid: %llx, "
+//                      "is_involved: %d, during_inquire: %d, inquire_acked: %d",
+//                  tinfo.id(),
+//                  tinfo.Involve(partition_id_),
+//                  tinfo.during_asking,
+//                  tinfo.inquire_acked_);
       }
     } // else do nothing
 

@@ -44,6 +44,7 @@ rrr::Marshal &operator<<(rrr::Marshal &m, const SimpleCommand &cmd) {
   m << cmd.output;
   m << cmd.output_size;
   m << cmd.partition_id_;
+  m << cmd.timestamp_;
   return m;
 }
 
@@ -57,6 +58,7 @@ rrr::Marshal &operator>>(rrr::Marshal &m, SimpleCommand &cmd) {
   m >> cmd.output;
   m >> cmd.output_size;
   m >> cmd.partition_id_;
+  m >> cmd.timestamp_;
   return m;
 }
 

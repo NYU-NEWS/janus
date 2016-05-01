@@ -92,6 +92,7 @@ enum CommandStatus {WAITING=-1, READY=0, ONGOING=1, FINISHED=2, INIT=3};
 class SimpleCommand: public ContainerCommand {
  public:
   ContainerCommand* root_ = nullptr;
+  uint64_t timestamp_{0};
   TxnWorkspace input{};
   map<int32_t, Value> output{};
   int32_t output_size = 0;
@@ -155,7 +156,7 @@ class TxnCommand: public ContainerCommand {
   }
  public:
   txnid_t txn_id_; // TODO obsolete
-
+  uint64_t timestamp_ = 0;
   TxnWorkspace ws_ = {}; // workspace.
   TxnWorkspace ws_init_ = {};
   TxnOutput outputs_ = {};
@@ -190,12 +191,6 @@ class TxnCommand: public ContainerCommand {
   TxnCommand();
 
 //  virtual cmdtype_t type() {return txn_type_;};
-
-  virtual int next_piece(map<int32_t, Value>* &input,
-                         int &output_size,
-                         int32_t &server_id,
-                         int &pi,
-                         int &p_type);
 
   virtual void Init(TxnRequest &req) = 0;
 

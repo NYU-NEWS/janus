@@ -21,9 +21,9 @@ PieceStatus::PieceStatus(const SimpleCommand& cmd,
       output_(output),
       finish_(false),
       rw_succ_(false),
-      rw_lock_group_(swap_bits(cmd.root_id_), wound_callback),
+      rw_lock_group_(swap_bits(cmd.timestamp_), wound_callback),
       rm_succ_(false),
-      rm_lock_group_(swap_bits(cmd.root_id_), wound_callback),
+      rm_lock_group_(swap_bits(cmd.timestamp_), wound_callback),
       is_rw_(false),
       exec_(exec) {
   handler_ = exec_->txn_reg_->get(cmd).txn_handler;
