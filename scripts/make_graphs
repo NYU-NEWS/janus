@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# should be run from the directory containing the csv files.
+data_files=( ${1:-*csv} )
+
+# will copy the png files to here
+output_dir=${2:-.}
+
+# where the config and plot scripts live
+janus_home=${3:-/home/lamont/work_area/nyu/research/janus/janus}
+
+mkdir -p $output_dir
+python $janus_home/scripts/plot/do_plot.py -g $janus_home/config/plot/*yml -d ${data_files[@]} -gcmds $janus_home/scripts/plot/cmds.gnuplot
+mv *png $output_dir
