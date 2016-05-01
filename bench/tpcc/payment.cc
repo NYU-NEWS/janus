@@ -6,29 +6,29 @@ namespace rococo {
 
 void TpccTxn::PaymentInit(TxnRequest &req) {
 
-  n_pieces_all_ = 3;
+  n_pieces_all_ = 6;
 
   status_[TPCC_PAYMENT_0] = WAITING;
-//  status_[TPCC_PAYMENT_1] = WAITING;
-//  status_[TPCC_PAYMENT_2] = WAITING;
+  status_[TPCC_PAYMENT_1] = WAITING;
+  status_[TPCC_PAYMENT_2] = WAITING;
   status_[TPCC_PAYMENT_3] = WAITING;
   status_[TPCC_PAYMENT_4] = WAITING;
-//  status_[TPCC_PAYMENT_5] = WAITING;
+  status_[TPCC_PAYMENT_5] = WAITING;
 
 
   p_types_[TPCC_PAYMENT_0] = TPCC_PAYMENT_0;
-//  p_types_[TPCC_PAYMENT_1] = TPCC_PAYMENT_1;
-//  p_types_[TPCC_PAYMENT_2] = TPCC_PAYMENT_2;
+  p_types_[TPCC_PAYMENT_1] = TPCC_PAYMENT_1;
+  p_types_[TPCC_PAYMENT_2] = TPCC_PAYMENT_2;
   p_types_[TPCC_PAYMENT_3] = TPCC_PAYMENT_3;
   p_types_[TPCC_PAYMENT_4] = TPCC_PAYMENT_4;
-//  p_types_[TPCC_PAYMENT_5] = TPCC_PAYMENT_5;
+  p_types_[TPCC_PAYMENT_5] = TPCC_PAYMENT_5;
 
 
   output_size_[TPCC_PAYMENT_0] = 6;
   // piece 1, Ri district
-//  output_size_[TPCC_PAYMENT_1] = 6;
+  output_size_[TPCC_PAYMENT_1] = 6;
   // piece 2, W district
-//  output_size_[TPCC_PAYMENT_2] = 0;
+  output_size_[TPCC_PAYMENT_2] = 0;
 
   n_pieces_input_ready_ = 0;
   n_pieces_replied_ = 0;
@@ -116,13 +116,13 @@ void TpccPiece::RegPayment() {
                      TPCC_COL_WAREHOUSE_W_ZIP,
                      &output[TPCC_VAR_W_ZIP]);
     *res = SUCCESS;
-//  } END_PIE
-//
-//  // piece 1, Ri district
-//  INPUT_PIE(TPCC_PAYMENT, TPCC_PAYMENT_1, TPCC_VAR_W_ID, TPCC_VAR_D_ID)
-//  SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_1, TPCC_TB_DISTRICT, TPCC_VAR_W_ID);
-//  BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_1, DF_NO) {
-//    verify(input.size() == 2);
+  } END_PIE
+
+  // piece 1, Ri district
+  INPUT_PIE(TPCC_PAYMENT, TPCC_PAYMENT_1, TPCC_VAR_W_ID, TPCC_VAR_D_ID)
+  SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_1, TPCC_TB_DISTRICT, TPCC_VAR_W_ID);
+  BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_1, DF_NO) {
+    verify(cmd.input.size() == 2);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_1);
     Value buf;
     mdb::MultiBlob mb(2);
@@ -154,15 +154,15 @@ void TpccPiece::RegPayment() {
                      &output[TPCC_VAR_D_ZIP]);
 
     *res = SUCCESS;
-//  } END_PIE
-//
-//  // piece 1, Ri & W district
-//  INPUT_PIE(TPCC_PAYMENT, TPCC_PAYMENT_2,
-//            TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_H_AMOUNT)
-//  SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_2, TPCC_TB_DISTRICT, TPCC_VAR_W_ID);
-//  BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_2, DF_REAL) {
-//    verify(cmd.input.size() == 3);
-//    Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_2);
+  } END_PIE
+
+  // piece 1, Ri & W district
+  INPUT_PIE(TPCC_PAYMENT, TPCC_PAYMENT_2,
+            TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_H_AMOUNT)
+  SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_2, TPCC_TB_DISTRICT, TPCC_VAR_W_ID);
+  BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_2, DF_REAL) {
+    verify(cmd.input.size() == 3);
+    Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_2);
 
     Value buf_temp(0.0);
     mdb::Row *row_temp = NULL;
@@ -174,22 +174,23 @@ void TpccPiece::RegPayment() {
     verify(row_temp->schema_ != nullptr);
     dtxn->ReadColumn(row_temp, TPCC_COL_DISTRICT_D_YTD, &buf_temp, TXN_BYPASS);
     // W district
+    Value buf(0.0);
     buf.set_double(buf_temp.get_double() +
         cmd.input[TPCC_VAR_H_AMOUNT].get_double());
     dtxn->WriteColumn(row_temp, TPCC_COL_DISTRICT_D_YTD,
                       buf_temp, TXN_DEFERRED);
     *res = SUCCESS;
-//  } END_PIE
+  } END_PIE
 
-  //
-  //  INPUT_PIE(TPCC_PAYMENT, TPCC_PAYMENT_5,
-  //            TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_W_NAME, TPCC_VAR_D_NAME,
-  //            TPCC_VAR_C_ID, TPCC_VAR_C_W_ID, TPCC_VAR_C_D_ID,
-  //            TPCC_VAR_H_KEY, TPCC_VAR_H_AMOUNT)
-  //  SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_5, TPCC_TB_HISTORY, TPCC_VAR_H_KEY);
-  //  BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_5, DF_REAL) {
-  //    verify(cmd.input.size() == 9);
-  //    Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_5);
+
+  INPUT_PIE(TPCC_PAYMENT, TPCC_PAYMENT_5,
+            TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_W_NAME, TPCC_VAR_D_NAME,
+            TPCC_VAR_C_ID, TPCC_VAR_C_W_ID, TPCC_VAR_C_D_ID,
+            TPCC_VAR_H_KEY, TPCC_VAR_H_AMOUNT)
+  SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_5, TPCC_TB_HISTORY, TPCC_VAR_H_KEY);
+  BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_5, DF_REAL) {
+    verify(cmd.input.size() == 9);
+    Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_5);
 
     mdb::Txn *txn = dtxn->mdb_txn();
     mdb::Table *tbl = txn->get_table(TPCC_TB_HISTORY);
@@ -206,9 +207,9 @@ void TpccPiece::RegPayment() {
     row_data[5] = cmd.input[TPCC_VAR_W_ID];               // h_d_w_id =>  d_w_id
     row_data[6] = Value(std::to_string(time(NULL)));  // h_date
     row_data[7] = cmd.input[TPCC_VAR_H_AMOUNT];           // h_amount =>  h_amount
-    row_data[8] = Value(output[TPCC_VAR_W_NAME].get_str() +
+    row_data[8] = Value(cmd.input[TPCC_VAR_W_NAME].get_str() +
         "    " +
-        output[TPCC_VAR_D_NAME].get_str()); // d_data => w_name + 4spaces +
+        cmd.input[TPCC_VAR_D_NAME].get_str()); // d_data => w_name + 4spaces +
                                                    // d_name
 
     row_history = dtxn->CreateRow(tbl->schema(), row_data);
