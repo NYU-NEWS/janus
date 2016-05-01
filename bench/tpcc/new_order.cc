@@ -84,8 +84,6 @@ void TpccPiece::RegNewOrder() {
     dtxn->ReadColumn(row_warehouse, TPCC_COL_WAREHOUSE_W_TAX,
                      &output[TPCC_VAR_W_TAX], TXN_BYPASS); // read w_tax
 
-
-
     mb = mdb::MultiBlob(3);
     mb[0] = cmd.input[TPCC_VAR_C_ID].get_blob();
     mb[1] = cmd.input[TPCC_VAR_D_ID].get_blob();

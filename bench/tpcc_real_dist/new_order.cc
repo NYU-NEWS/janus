@@ -69,17 +69,18 @@ void TpccRealDistPiece::RegNewOrder() {
   } END_PIE
 
   // R warehouse
-  INPUT_PIE(TPCCD_NEW_ORDER, TPCCD_NEW_ORDER_1, TPCC_VAR_W_ID)
+  INPUT_PIE(TPCCD_NEW_ORDER, TPCCD_NEW_ORDER_1,
+            TPCC_VAR_W_ID)
   SHARD_PIE(TPCCD_NEW_ORDER, TPCCD_NEW_ORDER_1,
             TPCC_TB_DISTRICT, TPCC_VAR_D_ID, TPCC_VAR_W_ID);
   BEGIN_PIE(TPCCD_NEW_ORDER, TPCCD_NEW_ORDER_1, DF_NO) {
     verify(cmd.input.size() == 1);
     Log::debug("TPCCD_NEW_ORDER, piece: %d", TPCCD_NEW_ORDER_1);
-    mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_WAREHOUSE),
-                              cmd.input[TPCC_VAR_W_ID].get_blob(),
-                              ROW_WAREHOUSE);
+    mdb::Row *row_warehouse = dtxn->Query(dtxn->GetTable(TPCC_TB_WAREHOUSE),
+                                          cmd.input[TPCC_VAR_W_ID].get_blob(),
+                                          ROW_WAREHOUSE);
     // R warehouse
-    dtxn->ReadColumn(r, TPCC_COL_WAREHOUSE_W_TAX,
+    dtxn->ReadColumn(row_warehouse, TPCC_COL_WAREHOUSE_W_TAX,
                      &output[TPCC_VAR_W_TAX], TXN_BYPASS); // read w_tax
     return;
   } END_PIE
@@ -98,13 +99,13 @@ void TpccRealDistPiece::RegNewOrder() {
     mb[1] = cmd.input[TPCC_VAR_D_ID].get_blob();
     mb[2] = cmd.input[TPCC_VAR_W_ID].get_blob();
     auto table = dtxn->GetTable(TPCC_TB_CUSTOMER);
-    mdb::Row *r = dtxn->Query(table, mb, ROW_CUSTOMER);
+    mdb::Row *row_customer = dtxn->Query(table, mb, ROW_CUSTOMER);
     // R customer
-    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_LAST,
+    dtxn->ReadColumn(row_customer, TPCC_COL_CUSTOMER_C_LAST,
                      &output[TPCC_VAR_C_LAST], TXN_BYPASS);
-    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_CREDIT,
+    dtxn->ReadColumn(row_customer, TPCC_COL_CUSTOMER_C_CREDIT,
                      &output[TPCC_VAR_C_CREDIT], TXN_BYPASS);
-    dtxn->ReadColumn(r, TPCC_COL_CUSTOMER_C_DISCOUNT,
+    dtxn->ReadColumn(row_customer, TPCC_COL_CUSTOMER_C_DISCOUNT,
                      &output[TPCC_VAR_C_DISCOUNT], TXN_BYPASS);
 
     return;
@@ -345,6 +346,5 @@ void TpccRealDistPiece::RegNewOrder() {
     *res = SUCCESS;
     return;
   } END_LOOP_PIE
-
 }
 } // namespace rococo
