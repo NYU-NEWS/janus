@@ -31,9 +31,9 @@ bool OCCExecutor::Prepare() {
     Log_debug("txn: %llx occ validation failed.", (int64_t)cmd_id_);
     return false;
   } else {
-    verify(txn->ver_check_read_.size() > 0
-               || txn->ver_check_write_.size() > 0
-               || txn->updates_.size() > 0);
+//    verify(txn->ver_check_read_.size() > 0
+//               || txn->ver_check_write_.size() > 0
+//               || txn->updates_.size() > 0);
     // now lock the commit
     for (auto &it : txn->ver_check_read_) {
       Row *row = it.first.row;
