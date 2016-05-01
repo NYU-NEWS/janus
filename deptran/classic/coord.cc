@@ -43,9 +43,10 @@ void ClassicCoord::do_one(TxnRequest &req) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   TxnCommand *cmd = frame_->CreateTxnCommand(req, txn_reg_);
   verify(txn_reg_ != nullptr);
+  cmd->root_id_ = this->next_txn_id();
+  cmd->id_ = cmd->root_id_;
+  cmd->timestamp_ = cmd->root_id_;
   cmd_ = cmd;
-  cmd_->root_id_ = this->next_txn_id();
-  cmd_->id_ = cmd_->root_id_;
   n_retry_ = 0;
   Reset(); // In case of reuse.
 
@@ -359,7 +360,7 @@ void ClassicCoord::Commit() {
   } else {
     verify(0);
   }
-//  GotoNextPhase();
+  GotoNextPhase();
 }
 
 void ClassicCoord::CommitAck(phase_t phase) {
@@ -377,7 +378,7 @@ void ClassicCoord::CommitAck(phase_t phase) {
     } else {
       committed_ = true;
     }
-    GotoNextPhase();
+//    GotoNextPhase();
   }
   Log_debug("callback: %s, retry: %s",
              committed_ ? "True" : "False",

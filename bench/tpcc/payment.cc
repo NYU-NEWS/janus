@@ -61,11 +61,11 @@ void TpccTxn::PaymentInit(TxnRequest &req) {
 
 void TpccTxn::PaymentRetry() {
   status_[TPCC_PAYMENT_0] = WAITING;
-//  status_[TPCC_PAYMENT_1] = WAITING;
-//  status_[TPCC_PAYMENT_2] = WAITING;
+  status_[TPCC_PAYMENT_1] = WAITING;
+  status_[TPCC_PAYMENT_2] = WAITING;
   status_[TPCC_PAYMENT_3] = WAITING;
   status_[TPCC_PAYMENT_4] = WAITING;
-//  status_[TPCC_PAYMENT_5] = WAITING;
+  status_[TPCC_PAYMENT_5] = WAITING;
 
   n_pieces_input_ready_ = 0;
   n_pieces_replied_ = 0;

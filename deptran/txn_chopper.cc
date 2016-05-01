@@ -116,6 +116,7 @@ map<parid_t, vector<SimpleCommand*>> TxnCommand::GetReadyCmds() {
       cmd->input = inputs_[pi];
       cmd->output_size = output_size_[pi];
       cmd->root_ = this;
+      cmd->timestamp_ = timestamp_;
       cmds_[pi] = cmd;
       cmds[cmd->partition_id_].push_back(cmd);
       partition_ids_.insert(cmd->partition_id_);
@@ -158,6 +159,7 @@ ContainerCommand *TxnCommand::GetNextReadySubCmd() {
       cmd->input = inputs_[pi];
       cmd->output_size = output_size_[pi];
       cmd->root_ = this;
+      cmd->timestamp_ = timestamp_;
       cmds_[pi] = cmd;
       partition_ids_.insert(cmd->partition_id_);
 
@@ -177,15 +179,6 @@ ContainerCommand *TxnCommand::GetNextReadySubCmd() {
 
   verify(cmd);
   return cmd;
-}
-
-int TxnCommand::next_piece(
-    map<int32_t, Value>* &input,
-    int &output_size,
-    int32_t &server_id,
-    int32_t &pi,
-    int32_t &p_type) {
-  verify(0);
 }
 
 bool TxnCommand::OutputReady() {
