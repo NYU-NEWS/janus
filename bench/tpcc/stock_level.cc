@@ -100,7 +100,8 @@ void TpccPiece::RegStockLevel() {
     std::vector<mdb::Row *> row_list;
     row_list.reserve(20);
 
-    while (rs.has_next()) {
+    int i = 0;
+    while (i++ < 20 && rs.has_next()) {
         row_list.push_back(rs.next());
     }
 

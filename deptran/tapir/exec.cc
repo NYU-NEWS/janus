@@ -16,10 +16,11 @@ void TapirExecutor::FastAccept(const vector<SimpleCommand>& txn_cmds,
     int32_t r;
     Execute(cmd, &r, output);
     for (auto& pair : output) {
-      verify(cmd.output.size() > 0);
+//      verify(cmd.output.size() > 0);
       auto& idx = pair.first;
       auto& value = pair.second;
-      if (value.ver_ != cmd.output.at(idx).ver_) {
+      if (cmd.output.count(idx) == 0 ||
+            value.ver_ != cmd.output.at(idx).ver_) {
         *res = REJECT;
         return;
       }

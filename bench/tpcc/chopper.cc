@@ -261,7 +261,7 @@ bool TpccTxn::IsReadOnly() {
 }
 
 parid_t TpccTxn::GetPiecePartitionId(innid_t inn_id) {
-  parid_t partition_id;
+  parid_t partition_id = 0;
   auto it = txn_reg_->sharding_input_.find(std::make_pair(type_, inn_id));
   if (it != txn_reg_->sharding_input_.end()) {
     auto &pair = it->second;
