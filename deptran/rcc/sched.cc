@@ -73,6 +73,22 @@ int RccSched::OnCommit(cmdid_t cmd_id,
   RccDTxn *dtxn = (RccDTxn*) GetDTxn(cmd_id);
   verify(dtxn != nullptr);
   dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
+
+  verify(dtxn->ptr_output_repy_ == nullptr);
+  dtxn->ptr_output_repy_ = output;
+  dtxn->finish_reply_callback_ = [callback] (int r) {callback();};
+
+  // fast path without check wait list?
+  if (graph.size() == 1) {
+    auto v = dep_graph_->FindV(cmd_id);
+    if (v->incoming_.size() == 0);
+    Execute(*v->data_);
+    return 0;
+  } else {
+    Log_debug("graph size on commit, %d", (int) graph.size());
+//    verify(0);
+  }
+
   for (auto& pair: graph.vertex_index_) {
     // TODO optimize here.
     auto txnid = pair.first;
@@ -80,9 +96,7 @@ int RccSched::OnCommit(cmdid_t cmd_id,
     verify(v != nullptr);
     waitlist_.push_back(v);
   }
-  verify(dtxn->ptr_output_repy_ == nullptr);
-  dtxn->ptr_output_repy_ = output;
-  dtxn->finish_reply_callback_ = [callback] (int r) {callback();};
+
   CheckWaitlist();
 }
 
@@ -208,31 +222,6 @@ void RccSched::__DebugExamineWaitlist() {
     }
   }
 }
-//
-//void RccSched::to_decide(Vertex<TxnInfo> *v,
-//                         rrr::DeferredReply *defer) {
-//  TxnInfo &tinfo = *(v->data_);
-//  if (tinfo.during_commit) {
-//    Log_debug("this txn is already during commit! tid: %llx", tinfo.id());
-//    return;
-//  } else {
-//    tinfo.during_commit = true;
-//  }
-//  std::unordered_set<Vertex<TxnInfo> *> anc;
-//  dep_graph_->find_txn_anc_opt(v, anc);
-//  std::function<void(void)> anc_finish_cb =
-//      [this, v, defer]() {
-//        this->dep_graph_->commit_anc_finish(v, defer);
-//      };
-//  DragonBall *wait_finish_ball =
-//      new DragonBall(anc.size() + 1, anc_finish_cb);
-//  for (auto &av: anc) {
-//    Log::debug("\t ancestor id: %llx", av->data_->id());
-//    av->data_->register_event(TXN_CMT, wait_finish_ball);
-//    InquireAbout(av);
-//  }
-//  wait_finish_ball->trigger();
-//}
 
 void RccSched::InquireAbout(Vertex<TxnInfo> *av) {
 //  Graph<TxnInfo> &txn_gra = dep_graph_->txn_gra_;
@@ -247,55 +236,6 @@ void RccSched::InquireAbout(Vertex<TxnInfo> *av) {
                                  this,
                                  tinfo.id(),
                                  std::placeholders::_1));
-//  if (!tinfo.is_involved()) {
-//    if (tinfo.is_commit()) {
-//      Log_debug("observed commited unrelated txn, id: %llx", tinfo.id());
-//    } else if (tinfo.is_finish()) {
-//      Log_debug("observed finished unrelated txn, id: %llx", tinfo.id());
-//      to_decide(av, nullptr);
-//    } else if (tinfo.during_asking) {
-//      // don't have to ask twice
-//      Log_debug("observed in-asking unrealted txn, id: %llx", tinfo.id());
-//    } else {
-//      static int64_t sample = 0;
-//      int32_t sid = tinfo.random_server();
-//      RococoProxy *proxy = RccDTxn::dep_s->get_server_proxy(sid);
-//
-//      rrr::FutureAttr fuattr;
-//      fuattr.callback = [this, av, &txn_gra](Future *fu) {
-//        // std::lock_guard<std::mutex> guard(this->mtx_);
-//        int e = fu->get_error_code();
-//        if (e != 0) {
-//          Log_info("connection failed: e: %d =%s", e, strerror(e));
-//          verify(0);
-//        }
-//        Log_debug("got finish request for this txn, it is not related"
-//                       " to this server tid: %llx.", av->data_->id());
-//
-//        CollectFinishResponse res;
-//        fu->get_reply() >> res;
-//
-//        //stat_sz_gra_ask_.sample(res.gra_m.gra->size());
-//        // Be careful! this one could bring more evil than we want.
-//        txn_gra.Aggregate(*(res.gra_m.gra), true);
-//        // for every transaction it unions,  handle this transaction
-//        // like normal finish workflow.
-//        // FIXME is there problem here?
-//        to_decide(av, nullptr);
-//      };
-//      Log_debug("observed uncommitted unrelated txn, tid: %llx, related"
-//                     " server id: %x", tinfo.id(), sid);
-//      tinfo.during_asking = true;
-//      //stat_n_ask_.sample();
-//      Future *f1 = proxy->async_rcc_ask_txn(tinfo.txn_id_, fuattr);
-//      verify(f1 != nullptr);
-//      Future::safe_release(f1);
-//      // verify(av->data_.is_involved());
-//      // n_asking_ ++;
-//    }
-//  } else {
-//    // This txn belongs to me, sooner or later I'll receive the finish request.
-//  }
 }
 
 void RccSched::InquireAck(cmdid_t cmd_id, RccGraph& graph) {
@@ -416,18 +356,21 @@ void RccSched::Execute(const RccScc& scc) {
   verify(scc.size() > 0);
   for (auto v : scc) {
     TxnInfo& info = *(v->data_);
-    info.executed_ = true;
-    info.union_status(TXN_DCD); // FIXME, remove this.
-    verify(info.IsDecided());
-    RccDTxn *dtxn = (RccDTxn *) GetDTxn(info.id());
-    if (dtxn == nullptr) continue;
-    if (info.Involve(partition_id_)) {
-      dtxn->CommitExecute();
-      dtxn->ReplyFinishOk();
-    }
+    Execute(info);
   }
 }
 
+void RccSched::Execute(TxnInfo& info) {
+  info.executed_ = true;
+  info.union_status(TXN_DCD); // FIXME, remove this.
+  verify(info.IsDecided());
+  RccDTxn *dtxn = (RccDTxn *) GetDTxn(info.id());
+  if (dtxn == nullptr) return;
+  if (info.Involve(partition_id_)) {
+    dtxn->CommitExecute();
+    dtxn->ReplyFinishOk();
+  }
+}
 
 void RccSched::Abort(const RccScc& scc) {
   verify(scc.size() > 0);

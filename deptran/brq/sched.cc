@@ -48,8 +48,11 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
   auto v = dep_graph_->FindV(cmd_id);
   verify(v != nullptr);
   TxnInfo& info = *v->data_;
+
   verify(dtxn->ptr_output_repy_ == nullptr);
   dtxn->ptr_output_repy_ = output;
+
+
   if (info.IsExecuted()) {
     *res = SUCCESS;
     callback();
@@ -62,6 +65,16 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
       *res = r;
       callback();
     };
+    // fast path without check wait list?
+    if (graph.size() == 1) {
+      auto v = dep_graph_->FindV(cmd_id);
+      if (v->incoming_.size() == 0);
+      Execute(*v->data_);
+      return;
+    } else {
+      Log_debug("graph size on commit, %d", (int) graph.size());
+//    verify(0);
+    }
     dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
     for (auto& pair: graph.vertex_index_) {
       // TODO optimize here.

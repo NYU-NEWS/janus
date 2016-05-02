@@ -60,6 +60,7 @@ class RccSched : public Scheduler {
   bool HasAbortedAncestor(const RccScc& scc);
   bool AllAncFns(const RccScc&);
   void Execute(const RccScc&);
+  void Execute(TxnInfo&);
   void Abort(const RccScc&);
 
   void __DebugExamineWaitlist();
