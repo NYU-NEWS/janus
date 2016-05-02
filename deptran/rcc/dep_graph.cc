@@ -41,9 +41,10 @@ void RccGraph::FindOrCreateTxnInfo(txnid_t txn_id,
   verify(FindV(txn_id) != nullptr);
   verify(*tv != nullptr);
   // TODO fix.
-  auto txn_info = (*tv)->data_;
-  verify(txn_info != nullptr);
-  txn_info->partition_.insert(partition_id_);
+  TxnInfo& txn_info = *(*tv)->data_;
+//  verify(txn_info != nullptr);
+  txn_info.partition_.insert(partition_id_);
+  txn_info.graph_ = this;
 }
 
 uint64_t RccGraph::MinItfrGraph(uint64_t tid,
@@ -196,6 +197,24 @@ void RccGraph::find_txn_anc_opt(RccVertex *source,
   //    Log::info("anc size: %d", ret_set.size());
   //}
 }
+
+bool RccGraph::HasICycle(const RccScc& scc) {
+  for (auto& vertex : scc) {
+    set<RccVertex *> walked;
+    bool ret = false;
+    std::function<bool(RccVertex *)> func =
+        [&ret, vertex](RccVertex *v) -> bool {
+          if (v == vertex) {
+            ret = true;
+            return false;
+          }
+          return true;
+        };
+    TraverseDescendant(vertex, -1, func, walked, EDGE_I);
+    if (ret) return true;
+  }
+  return false;
+};
 
 void RccGraph::find_txn_anc_opt(uint64_t txn_id,
                                 std::unordered_set<Vertex<TxnInfo> *> &ret_set) {

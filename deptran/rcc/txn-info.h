@@ -24,6 +24,7 @@ class TxnInfo {
   bool during_commit = false;
   bool during_asking = false;
   bool inquire_acked_ = false;
+  RccGraph* graph_{nullptr};
 
   vector<RccGraph*> graphs_for_inquire_ = {};
   vector<function<void()>> callbacks_for_inquire_ = {};

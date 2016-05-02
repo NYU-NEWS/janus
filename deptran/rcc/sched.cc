@@ -30,6 +30,7 @@ int RccSched::OnDispatch(const vector<SimpleCommand> &cmd,
   verify(graph);
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(cmd[0].root_id_);
   dep_graph_->FindOrCreateTxnInfo(cmd[0].root_id_, &dtxn->tv_);
+  dtxn->graph_ == dep_graph_;
   verify(dep_graph_->partition_id_ == partition_id_);
   auto job = [&cmd, res, dtxn, callback, graph, output, this] () {
     verify(cmd[0].partition_id_ == this->partition_id_);
@@ -42,15 +43,17 @@ int RccSched::OnDispatch(const vector<SimpleCommand> &cmd,
       callback();
       return;
     }
-    TxnInfo& info1 = *dep_graph_->vertex_index_.at(cmd[0].root_id_)->data_;
-    TxnInfo& info2 = *graph->vertex_index_.at(cmd[0].root_id_)->data_;
-    verify(info1.partition_.find(cmd[0].partition_id_)
-               != info1.partition_.end());
-    verify(info2.partition_.find(cmd[0].partition_id_)
-               != info2.partition_.end());
-    verify(sz > 0);
-    if (RandomGenerator::rand(1, 2000) <= 1)
-      Log_info("dispatch ret graph size: %d", graph->size());
+//    { debug
+//    TxnInfo& info1 = *dep_graph_->vertex_index_.at(cmd[0].root_id_)->data_;
+//    TxnInfo& info2 = *graph->vertex_index_.at(cmd[0].root_id_)->data_;
+//    verify(info1.partition_.find(cmd[0].partition_id_)
+//               != info1.partition_.end());
+//    verify(info2.partition_.find(cmd[0].partition_id_)
+//               != info2.partition_.end());
+//    verify(sz > 0);
+//    if (RandomGenerator::rand(1, 2000) <= 1)
+//      Log_info("dispatch ret graph size: %d", graph->size());
+//    debug }
     callback();
   };
 
@@ -176,7 +179,9 @@ void RccSched::CheckWaitlist() {
     if (tinfo.status() >= TXN_DCD &&
         !tinfo.IsExecuted() ) {
       auto scc = dep_graph_->FindSCC(v);
-      if (HasICycle(scc) || HasAbortedAncestor(scc)) {
+      if (scc.size() > 1 && HasICycle(scc)) {
+        Abort(scc);
+      } else if (HasAbortedAncestor(scc)) {
         Abort(scc);
       } else if (AllAncFns(scc)) {
         Execute(scc);

@@ -22,8 +22,8 @@ void RccDTxn::DispatchExecute(const SimpleCommand &cmd,
     if (c.inn_id() == cmd.inn_id())
       return;
   }
-//  verify(phase_ <= PHASE_RCC_START);
-  phase_ = PHASE_RCC_START;
+  verify(phase_ <= PHASE_RCC_DISPATCH);
+  phase_ = PHASE_RCC_DISPATCH;
   // execute the IR actions.
   auto pair = txn_reg_->get(cmd);
   // To tolerate deprecated codes
@@ -311,7 +311,7 @@ bool RccDTxn::ReadColumn(mdb::Row *row,
                          Value *value,
                          int hint_flag) {
   verify(!read_only_);
-  if (phase_ == PHASE_RCC_START) {
+  if (phase_ == PHASE_RCC_DISPATCH) {
     int8_t edge_type;
     if (hint_flag == TXN_BYPASS || hint_flag == TXN_INSTANT) {
       mdb_txn()->read_column(row, col_id, value);
@@ -338,8 +338,7 @@ bool RccDTxn::WriteColumn(Row *row,
                           const Value &value,
                           int hint_flag) {
   verify(!read_only_);
-  if (phase_ == PHASE_RCC_START) {
-    int8_t edge_type;
+  if (phase_ == PHASE_RCC_DISPATCH) {
     if (hint_flag == TXN_BYPASS || hint_flag == TXN_INSTANT) {
       mdb_txn()->write_column(row, col_id, value);
     }
@@ -382,7 +381,12 @@ void RccDTxn::TraceDep(Row* row, column_id_t col_id, int hint_flag) {
   } else {
     verify(0);
   }
-
+#ifdef DEBUG_CODE
+  auto scc = graph_->FindSCC(tv_);
+  if (scc.size() > 1 && graph_->HasICycle(scc)) {
+//    verify(0);
+  }
+#endif
 }
 
 } // namespace rococo

@@ -149,9 +149,9 @@ void TpccPiece::RegNewOrder() {
     verify(r->schema_);
     dtxn->InsertRow(tbl, r);
 
-    r = dtxn->Query(dtxn->GetTable(TPCC_TB_ORDER_C_ID_SECONDARY),
-                    mb,
-                    ROW_ORDER_SEC);
+//    r = dtxn->Query(dtxn->GetTable(TPCC_TB_ORDER_C_ID_SECONDARY),
+//                    mb,
+//                    ROW_ORDER_SEC);
     dtxn->WriteColumn(r, 3, cmd.input[TPCC_VAR_W_ID], TXN_DEFERRED);
     return;
   } END_PIE

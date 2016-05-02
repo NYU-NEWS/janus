@@ -2,7 +2,7 @@
 #include "../txn_chopper.h"
 #include "../dtxn.h"
 
-#define PHASE_RCC_START (1)
+#define PHASE_RCC_DISPATCH (1)
 #define PHASE_RCC_COMMIT (2)
 
 namespace rococo {
@@ -10,7 +10,8 @@ class RccDTxn: public DTxn {
  public:
   int status_ = TXN_UKN;
   vector<SimpleCommand> dreqs_ = {};
-  Vertex <TxnInfo> *tv_ = {};
+  Vertex <TxnInfo> *tv_{nullptr};
+  RccGraph* graph_{nullptr};
   TxnOutput *ptr_output_repy_ = nullptr;
   TxnOutput output_ = {};
   vector<TxnInfo *> conflict_txns_ = {}; // This is read-only transaction

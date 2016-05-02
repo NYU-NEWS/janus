@@ -21,10 +21,13 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(cmds[0].root_id_);
   if (dtxn->tv_ == nullptr) {
     dep_graph_->FindOrCreateTxnInfo(cmds[0].root_id_, &dtxn->tv_);
+    dtxn->graph_ = dep_graph_;
   }
-  for (auto& c: cmds) {
-    map<int32_t, Value> output;
-    dtxn->DispatchExecute(c, res, &output);
+  if (dtxn->phase_ < PHASE_RCC_DISPATCH) {
+    for (auto& c: cmds) {
+      map<int32_t, Value> output;
+      dtxn->DispatchExecute(c, res, &output);
+    }
   }
   dep_graph_->MinItfrGraph(txn_id, res_graph);
   *res = SUCCESS;
@@ -57,12 +60,14 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
     *res = SUCCESS;
     callback();
   } else if (info.IsAborted()) {
+//    verify(0);
     *res = REJECT;
     callback();
   } else {
     dtxn->commit_request_received_ = true;
     dtxn->finish_reply_callback_ = [callback, res] (int r) {
       *res = r;
+//      verify(r == SUCCESS);
       callback();
     };
     // fast path without check wait list?
@@ -92,6 +97,7 @@ int BrqSched::OnInquire(cmdid_t cmd_id,
                         const function<void()> &callback) {
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(cmd_id);
   dep_graph_->FindOrCreateTxnInfo(cmd_id, &dtxn->tv_);
+  dtxn->graph_ = dep_graph_;
   RccVertex* v = dtxn->tv_;
   verify(v != nullptr);
   TxnInfo& info = *v->data_;

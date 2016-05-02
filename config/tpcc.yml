@@ -4,10 +4,10 @@ bench:
   scale: 1
   weight:
     new_order: 44
-    payment : 44
-    delivery: 4
-    order_status: 4
-    stock_level:  4
+    payment :     0   
+    delivery:     0
+    order_status: 0
+    stock_level:  0
 #        new_order: 44
 #        payment : 44
 #        delivery: 4
