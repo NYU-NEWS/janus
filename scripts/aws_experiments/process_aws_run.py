@@ -5,6 +5,7 @@ import sys
 import itertools
 import logging
 import traceback
+import shutil
 #import yaml
 
 prefixes = [ "single_dc", "multi_dc" ]
