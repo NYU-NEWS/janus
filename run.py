@@ -229,12 +229,14 @@ class TxnInfo(object):
                 att_latencies[key] = self.mid_attempt_latencies[att_index]
             else:
                 att_latencies[key] = 9999.99
-
+        num_clients = sum([len(x) 
+                           for x in config['site']['client']]) * \
+                      config["n_concurrent"]
         self.data = {
             'benchmark': config['bench']['workload'],
             'cc': config['mode']['cc'],
             'ab': config['mode']['ab'],
-            'clients': sum([len(x) for x in config['site']['client']]),
+            'clients': num_clients, 
             'duration': self.mid_time,
             'txn_name': self.txn_name,
             'start_cnt': start_txn,
