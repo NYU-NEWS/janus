@@ -10,4 +10,4 @@ graph:
     x_range: '[0:]'
     y_tics: '0,10'
     output_file: '${txn}_${bench}_client_abortrate.png'
-    key_location: 'bottom left'
+    key_location: 'top left'
