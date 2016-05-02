@@ -28,7 +28,6 @@ def run(c):
 
 def rmdir(d):
     logging.info("remove {}".format(d))
-    return
     shutil.rmtree(d)
 
 def mkdirp(d):
