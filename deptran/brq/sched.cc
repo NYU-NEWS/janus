@@ -96,6 +96,7 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
 int BrqSched::OnInquire(cmdid_t cmd_id,
                         RccGraph *graph,
                         const function<void()> &callback) {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(cmd_id);
   dep_graph_->FindOrCreateTxnInfo(cmd_id, &dtxn->tv_);
   dtxn->graph_ = dep_graph_;
