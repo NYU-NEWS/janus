@@ -14,12 +14,12 @@ void ServerWorker::SetupHeartbeat() {
   bool hb = Config::GetConfig()->do_heart_beat();
   if (!hb) return;
   auto timeout = Config::GetConfig()->get_ctrl_timeout();
-  scsi_g = new ServerControlServiceImpl(timeout);
+  scsi_ = new ServerControlServiceImpl(timeout);
   int n_io_threads = 1;
   svr_hb_poll_mgr_g = new rrr::PollMgr(n_io_threads);
   hb_thread_pool_g = new rrr::ThreadPool(1);
   hb_rpc_server_ = new rrr::Server(svr_hb_poll_mgr_g, hb_thread_pool_g);
-  hb_rpc_server_->reg(scsi_g);
+  hb_rpc_server_->reg(scsi_);
 
   auto port = this->site_info_->port + ServerWorker::CtrlPortDelta;
   std::string addr_port = std::string("0.0.0.0:") +
@@ -27,7 +27,7 @@ void ServerWorker::SetupHeartbeat() {
   hb_rpc_server_->start(addr_port.c_str());
   if (hb_rpc_server_ != nullptr) {
 //    Log_info("notify ready to control script for %s", bind_addr.c_str());
-    scsi_g->set_ready();
+    scsi_->set_ready();
   }
   Log_info("heartbeat setup for %s on %s",
            this->site_info_->name.c_str(), addr_port.c_str());
@@ -135,14 +135,14 @@ void ServerWorker::SetupService() {
     services_ = dtxn_frame_->CreateRpcServices(site_info_->id,
                                                dtxn_sched_,
                                                svr_poll_mgr_,
-                                               scsi_g);
+                                               scsi_);
   }
 
   if (rep_frame_ != nullptr) {
     auto s2 = rep_frame_->CreateRpcServices(site_info_->id,
                                             rep_sched_,
                                             svr_poll_mgr_,
-                                            scsi_g);
+                                            scsi_);
 
     services_.insert(services_.end(), s2.begin(), s2.end());
   }
@@ -177,9 +177,9 @@ void ServerWorker::SetupService() {
 void ServerWorker::WaitForShutdown() {
   Log_debug("%s", __FUNCTION__);
   if (hb_rpc_server_ != nullptr) {
-    scsi_g->wait_for_shutdown();
+    scsi_->wait_for_shutdown();
     delete hb_rpc_server_;
-    delete scsi_g;
+    delete scsi_;
     svr_hb_poll_mgr_g->release();
     hb_thread_pool_g->release();
 

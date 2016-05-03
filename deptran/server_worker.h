@@ -25,7 +25,7 @@ class ServerWorker {
   base::ThreadPool *thread_pool_g = nullptr;
 
   rrr::PollMgr *svr_hb_poll_mgr_g = nullptr;
-  ServerControlServiceImpl *scsi_g = nullptr;
+  ServerControlServiceImpl *scsi_ = nullptr;
   rrr::Server *hb_rpc_server_ = nullptr;
   base::ThreadPool *hb_thread_pool_g = nullptr;
 

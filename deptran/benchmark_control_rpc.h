@@ -55,7 +55,7 @@ class ServerControlServiceImpl: public ServerControlService {
   unsigned int timeout_;
   bool sig_handler_set_;
 
-  static ServerControlServiceImpl *scsi_s;
+//  static ServerControlServiceImpl *scsi_s;
 
   static void shutdown_wrapper(int sig);
 

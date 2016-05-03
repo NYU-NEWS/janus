@@ -6,7 +6,7 @@
 
 namespace rococo {
 
-ServerControlServiceImpl *ServerControlServiceImpl::scsi_s = NULL;
+//ServerControlServiceImpl *ServerControlServiceImpl::scsi_s = NULL;
 
 const char S_RES_KEY_N_SCC[] = "scc";
 const char S_RES_KEY_N_ASK[] = "ask";
@@ -22,9 +22,9 @@ const std::string ServerControlServiceImpl::STAT_SZ_GRAPH_ASK = "ask_graph";
 const std::string ServerControlServiceImpl::STAT_RO6_SZ_VECTOR = "ack_start_vector";
 
 void ServerControlServiceImpl::shutdown_wrapper(int sig) {
-  if (scsi_s != NULL) {
-    scsi_s->server_shutdown();
-  }
+//  if (scsi_s != NULL) {
+//    scsi_s->server_shutdown();
+//  }
 }
 
 void ServerControlServiceImpl::set_sig_handler() {
@@ -122,7 +122,7 @@ ServerControlServiceImpl::ServerControlServiceImpl(unsigned int timeout,
     timeout_(timeout),
     sig_handler_set_(false) {
 
-  scsi_s = this;
+//  scsi_s = this;
 }
 
 ServerControlServiceImpl::~ServerControlServiceImpl() {
