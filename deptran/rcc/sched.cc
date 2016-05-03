@@ -304,11 +304,11 @@ bool RccSched::AllAncCmt(RccVertex *vertex) {
     TxnInfo& info = *v->data_;
     int r = 0;
     if (info.IsExecuted() || info.IsAborted()) {
-      r = Graph::SearchHint::Skip;
+      r = RccGraph::SearchHint::Skip;
     } else if (info.status() >= TXN_CMT) {
-      r = Graph::SearchHint::Ok;
+      r = RccGraph::SearchHint::Ok;
     } else {
-      r = Graph::SearchHint::Exit;
+      r = RccGraph::SearchHint::Exit;
       all_anc_cmt = false;
     }
     return r;
@@ -344,39 +344,44 @@ bool RccSched::HasICycle(const RccScc& scc) {
 
 bool RccSched::HasAbortedAncestor(const RccScc& scc) {
   verify(scc.size() > 0);
-  bool ret = false;
-  std::function<bool(RccVertex*)> func =
-      [&ret] (RccVertex* v) -> bool {
+  bool has_aborted = false;
+  std::function<int(RccVertex*)> func =
+      [&has_aborted] (RccVertex* v) -> int {
         TxnInfo& info = *v->data_;
-        if (info.IsAborted()) {
-          ret = true; // found aborted transaction.
-          return false; // abort traverse
+        if (info.IsExecuted()) {
+          return RccGraph::SearchHint::Skip;
         }
-        return true;
+        if (info.IsAborted()) {
+          has_aborted = true; // found aborted transaction.
+          return RccGraph::SearchHint::Exit; // abort traverse
+        }
+        return RccGraph::SearchHint::Ok;
       };
   dep_graph_->TraversePred(scc[0], -1, func);
-  return ret;
+  return has_aborted;
 };
 
 bool RccSched::AllAncFns(const RccScc& scc) {
   verify(scc.size() > 0);
   set<RccVertex*> scc_set;
   scc_set.insert(scc.begin(), scc.end());
-  bool ret = true;
-  std::function<bool(RccVertex*)> func =
-      [&ret, &scc_set] (RccVertex* v) -> bool {
+  bool all_anc_fns = true;
+  std::function<int(RccVertex*)> func =
+      [&all_anc_fns, &scc_set] (RccVertex* v) -> int {
     TxnInfo& info = *v->data_;
-    if (info.status() >= TXN_DCD) {
-      return true;
+    if (info.IsExecuted()) {
+      return RccGraph::SearchHint::Skip;
+    } else if (info.status() >= TXN_DCD) {
+      return RccGraph::SearchHint::Ok;
     } else if (scc_set.find(v) != scc_set.end()) {
-      return true;
+      return RccGraph::SearchHint::Ok;
     } else {
-      ret = false;
-      return false; // abort traverse
+      all_anc_fns = false;
+      return RccGraph::SearchHint::Exit; // abort traverse
     }
   };
   dep_graph_->TraversePred(scc[0], -1, func);
-  return ret;
+  return all_anc_fns;
 };
 
 void RccSched::Execute(const RccScc& scc) {
