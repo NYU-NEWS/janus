@@ -129,12 +129,16 @@ class Graph : public Marshallable {
 
   uint64_t size() const { return vertex_index_.size(); }
 
+  enum SearchHint {
+    Exit = 0,      // quit search
+    Ok = 1,        // go on
+    Skip = 2       // skip the current branch
+  };
 
-  // what does ret value stand for ???
-  // false: aborted by user?
-  bool TraversePred(Vertex<T> *vertex,
+  // depth first search.
+  int TraversePred(Vertex<T> *vertex,
                     int64_t depth,
-                    function<bool(Vertex<T> *)> &func,
+                    function<int(Vertex<T> *)> &func,
                     vector<Vertex<T> *> *walked = nullptr) {
     bool to_clean = false;
     if (walked == nullptr) {
@@ -148,18 +152,20 @@ class Graph : public Marshallable {
     }
     walked->push_back(vertex);
 
-    bool ret = true;
+    int ret = SearchHint::Ok;
     for (auto pair : vertex->incoming_) {
       auto v = pair.first;
-      if (!func(v)) {
-        ret = false;
+      ret = func(v);
+      if (ret == SearchHint::Exit) {
         break;
+      } else if (ret == SearchHint::Skip) {
+        continue;
       }
+      verify(ret == SearchHint::Ok);
       if (depth < 0 || depth > 0) {
-        if (!TraversePred(v, depth - 1, func, walked)) {
-          ret = false;
+        ret = TraversePred(v, depth - 1, func, walked);
+        if (ret == SearchHint::Exit)
           break;
-        }
       }
     }
     if (to_clean) {
@@ -168,7 +174,6 @@ class Graph : public Marshallable {
       }
       delete walked;
     }
-
     return ret;
   }
 

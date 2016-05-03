@@ -299,18 +299,22 @@ RccVertex* RccSched::__DebugFindAnOngoingAncestor(RccVertex* vertex) {
 }
 
 bool RccSched::AllAncCmt(RccVertex *vertex) {
-  bool ret = true;
-  std::function<bool(RccVertex*)> func = [&ret] (RccVertex* v) -> bool {
+  bool all_anc_cmt = true;
+  std::function<int(RccVertex*)> func = [&all_anc_cmt] (RccVertex* v) -> int {
     TxnInfo& info = *v->data_;
-    if (info.status() >= TXN_CMT) {
-      return true;
+    int r = 0;
+    if (info.IsExecuted() || info.IsAborted()) {
+      r = Graph::SearchHint::Skip;
+    } else if (info.status() >= TXN_CMT) {
+      r = Graph::SearchHint::Ok;
     } else {
-      ret = false;
-      return false;
+      r = Graph::SearchHint::Exit;
+      all_anc_cmt = false;
     }
+    return r;
   };
   dep_graph_->TraversePred(vertex, -1, func);
-  return ret;
+  return all_anc_cmt;
 }
 
 void RccSched::Decide(const RccScc& scc) {
