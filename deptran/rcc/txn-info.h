@@ -11,13 +11,13 @@ class RccGraph;
 // TODO Should this class be merged with RCCDTxn?
 class TxnInfo {
  private:
-  int8_t status_ = TXN_UKN;
+  int8_t status_{TXN_UKN};
 
  public:
   txnid_t txn_id_;
   std::set<uint32_t> partition_;
   std::vector<uint64_t> pieces_;
-  bool executed_ = false;
+  bool executed_{false};
 
   bool committed_ = false;
 

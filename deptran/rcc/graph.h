@@ -144,6 +144,7 @@ class Graph : public Marshallable {
     if (walked == nullptr) {
       to_clean = true;
       walked = new vector<Vertex<T>*>;
+      walked->reserve(100);
     }
     if (vertex->walked_) {
       return true;

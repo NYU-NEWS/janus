@@ -112,7 +112,9 @@ class RccGraph : public Graph<TxnInfo> {
   }
 
   uint64_t MinItfrGraph(uint64_t tid,
-                        RccGraph* gra_m, bool quick =false);
+                        RccGraph* gra_m,
+                        bool quick = false,
+                        int depth = -1);
 
   bool HasICycle(const RccScc& scc);
 

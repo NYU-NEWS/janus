@@ -38,7 +38,13 @@ int RccSched::OnDispatch(const vector<SimpleCommand> &cmd,
       dtxn->DispatchExecute(c, res, &(*output)[c.inn_id()]);
     }
     dtxn->UpdateStatus(TXN_STD);
-    auto sz = dep_graph_->MinItfrGraph(cmd[0].root_id_, graph, true);
+    int depth = 1;
+    auto sz = dep_graph_->MinItfrGraph(cmd[0].root_id_, graph, true, depth);
+//#ifdef DEBUG_CODE
+    if (sz > 4) {
+      Log_fatal("something is wrong, graph size %d", sz);
+    }
+//#endif
     if (sz == 0) {
       callback();
       return;
@@ -118,7 +124,7 @@ int RccSched::OnInquire(cmdid_t cmd_id,
   verify (info.Involve(partition_id_));
 
   if (info.status() >= TXN_CMT) {
-    dep_graph_->MinItfrGraph(cmd_id, graph);
+    dep_graph_->MinItfrGraph(cmd_id, graph, false, 1);
     callback();
   } else {
     info.graphs_for_inquire_.push_back(graph);
@@ -140,7 +146,7 @@ void RccSched::CheckInquired(TxnInfo& tinfo) {
   if (tinfo.status() >= TXN_CMT && tinfo.graphs_for_inquire_.size() > 0) {
     for (auto& graph : tinfo.graphs_for_inquire_) {
       verify(graph != nullptr);
-      dep_graph_->MinItfrGraph(tinfo.id(), graph);
+      dep_graph_->MinItfrGraph(tinfo.id(), graph, false, 1);
     }
     for (auto& callback : tinfo.callbacks_for_inquire_) {
       verify(callback);

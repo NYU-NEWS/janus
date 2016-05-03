@@ -29,7 +29,7 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
       dtxn->DispatchExecute(c, res, &output);
     }
   }
-  dep_graph_->MinItfrGraph(txn_id, res_graph);
+  dep_graph_->MinItfrGraph(txn_id, res_graph, false, 1);
   *res = SUCCESS;
   callback();
 }
