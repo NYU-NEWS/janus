@@ -117,7 +117,7 @@ int RccSched::OnInquire(cmdid_t cmd_id,
   //register an event, triggered when the status >= COMMITTING;
   verify (info.Involve(partition_id_));
 
-  if (info.IsCommitting()) {
+  if (info.status() >= TXN_CMT) {
     dep_graph_->MinItfrGraph(cmd_id, graph);
     callback();
   } else {
@@ -133,7 +133,7 @@ void RccSched::CheckInquired(TxnInfo& tinfo) {
   // reply inquire requests if possible.
   verify(tinfo.graphs_for_inquire_.size() ==
       tinfo.callbacks_for_inquire_.size());
-  if (tinfo.IsCommitting() && tinfo.graphs_for_inquire_.size() > 0) {
+  if (tinfo.status() >= TXN_CMT && tinfo.graphs_for_inquire_.size() > 0) {
     for (auto& graph : tinfo.graphs_for_inquire_) {
       dep_graph_->MinItfrGraph(tinfo.id(), graph);
     }
