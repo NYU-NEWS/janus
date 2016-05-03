@@ -9,10 +9,12 @@ namespace rococo {
 template <typename T>
 class Vertex {
  public:
-  map<uint64_t, int8_t> parents_ = {};
-  map<Vertex *, int8_t> outgoing_ = {};
-  map<Vertex *, int8_t> incoming_ = {};
-  std::shared_ptr<T> data_;
+  map<uint64_t, int8_t> parents_{};
+  map<Vertex *, int8_t> outgoing_{};
+  map<Vertex *, int8_t> incoming_{};
+  bool walked_{false}; // flag for traversing.
+  std::shared_ptr<T> data_{};
+  std::shared_ptr<vector<Vertex*>> scc_{};
 
   Vertex(uint64_t id) { data_ = std::shared_ptr<T>(new T(id)); }
 
@@ -127,6 +129,49 @@ class Graph : public Marshallable {
 
   uint64_t size() const { return vertex_index_.size(); }
 
+
+  // what does ret value stand for ???
+  // false: aborted by user?
+  bool TraversePred(Vertex<T> *vertex,
+                    int64_t depth,
+                    function<bool(Vertex<T> *)> &func,
+                    vector<Vertex<T> *> *walked = nullptr) {
+    bool to_clean = false;
+    if (walked == nullptr) {
+      to_clean = true;
+      walked = new vector<Vertex<T>*>;
+    }
+    if (vertex->walked_) {
+      return true;
+    } else {
+      vertex->walked_ = true;
+    }
+    walked->push_back(vertex);
+
+    bool ret = true;
+    for (auto pair : vertex->incoming_) {
+      auto v = pair.first;
+      if (!func(v)) {
+        ret = false;
+        break;
+      }
+      if (depth < 0 || depth > 0) {
+        if (!TraversePred(v, depth - 1, func, walked)) {
+          ret = false;
+          break;
+        }
+      }
+    }
+    if (to_clean) {
+      for (Vertex<T>* v: *walked) {
+        v->walked_ = false;
+      }
+      delete walked;
+    }
+
+    return ret;
+  }
+
   // what does ret value stand for ???
   // false: aborted by user?
   bool TraversePred(Vertex<T> *vertex,
@@ -200,11 +245,9 @@ class Graph : public Marshallable {
       }
     }
 
-    std::vector<Vertex<T> *> ret;
-
+    vector<Vertex<T>*> ret;
     if (lowlinks[v] == indexes[v]) {
       Vertex<T> *w;
-
       do {
         w = S.back();
         S.pop_back();
@@ -342,15 +385,19 @@ class Graph : public Marshallable {
     return ret2;
   }
 
-  std::vector<Vertex<T> *> FindSCC(Vertex<T> *vertex) {
-    std::map<Vertex<T> *, int> indexes;
-    std::map<Vertex<T> *, int> lowlinks;
+  std::vector<Vertex<T> *>& FindSCC(Vertex<T> *vertex) {
+    if (vertex->scc_) {
+      // already computed.
+      return *vertex->scc_;
+    }
+    map<Vertex<T> *, int> indexes;
+    map<Vertex<T> *, int> lowlinks;
     int index = 0;
     std::vector<Vertex<T> *> S;
-    std::vector<Vertex<T> *> ret =
-        StrongConnect(vertex, indexes, lowlinks, index, S);
 
-    return ret;
+    vertex->scc_.reset(new vector<Vertex<T>*>);
+    *vertex->scc_ = StrongConnect(vertex, indexes, lowlinks, index, S);
+    return *vertex->scc_;
   }
 
   std::vector<Vertex<T> *> FindSCC(uint64_t id) {

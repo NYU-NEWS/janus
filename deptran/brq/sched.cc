@@ -75,6 +75,7 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
       auto v = dep_graph_->FindV(cmd_id);
       if (v->incoming_.size() == 0);
       Execute(*v->data_);
+      CheckInquired(*v->data_);
       return;
     } else {
       Log_debug("graph size on commit, %d", (int) graph.size());
@@ -86,7 +87,7 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
       auto txnid = pair.first;
       auto v = dep_graph_->FindV(txnid);
       verify(v != nullptr);
-      waitlist_.push_back(v);
+      waitlist_.insert(v);
     }
     CheckWaitlist();
   }
@@ -104,7 +105,7 @@ int BrqSched::OnInquire(cmdid_t cmd_id,
   //register an event, triggered when the status >= COMMITTING;
   verify (info.Involve(partition_id_));
 
-  if (info.IsCommitting()) {
+  if (info.status() >= TXN_CMT) {
     dep_graph_->MinItfrGraph(cmd_id, graph);
     callback();
   } else {

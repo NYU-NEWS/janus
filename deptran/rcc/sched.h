@@ -18,7 +18,7 @@ class RccSched : public Scheduler {
  public:
   RccGraph *dep_graph_ = nullptr;
   WaitlistChecker* waitlist_checker_ = nullptr;
-  list<RccVertex*> waitlist_ = {};
+  set<RccVertex*> waitlist_{};
   std::recursive_mutex mtx_;
 //  Vertex<TxnInfo> *v : wait_list_
 
@@ -49,11 +49,9 @@ class RccSched : public Scheduler {
 //                 rrr::DeferredReply *defer);
 
   void InquireAbout(Vertex<TxnInfo> *av);
-
+  void CheckInquired(TxnInfo& tinfo);
   void CheckWaitlist();
-
   void InquireAck(cmdid_t cmd_id, RccGraph& graph);
-
   bool AllAncCmt(RccVertex *v);
   void Decide(const RccScc&);
   bool HasICycle(const RccScc& scc);
