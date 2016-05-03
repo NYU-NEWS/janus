@@ -131,8 +131,12 @@ int RccSched::OnInquire(cmdid_t cmd_id,
 
 void RccSched::CheckInquired(TxnInfo& tinfo) {
   // reply inquire requests if possible.
-  verify(tinfo.graphs_for_inquire_.size() ==
-      tinfo.callbacks_for_inquire_.size());
+  auto sz1 = tinfo.graphs_for_inquire_.size();
+  auto sz2 = tinfo.callbacks_for_inquire_.size();
+  if (sz1 != sz2) {
+    Log_fatal("graphs for inquire sz %d, callbacks sz %d",
+              (int) sz1, (int) sz2);
+  }
   if (tinfo.status() >= TXN_CMT && tinfo.graphs_for_inquire_.size() > 0) {
     for (auto& graph : tinfo.graphs_for_inquire_) {
       dep_graph_->MinItfrGraph(tinfo.id(), graph);
