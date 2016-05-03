@@ -139,9 +139,11 @@ void RccSched::CheckInquired(TxnInfo& tinfo) {
   }
   if (tinfo.status() >= TXN_CMT && tinfo.graphs_for_inquire_.size() > 0) {
     for (auto& graph : tinfo.graphs_for_inquire_) {
+      verify(graph != nullptr);
       dep_graph_->MinItfrGraph(tinfo.id(), graph);
     }
     for (auto& callback : tinfo.callbacks_for_inquire_) {
+      verify(callback);
       callback();
     }
     tinfo.callbacks_for_inquire_.clear();
