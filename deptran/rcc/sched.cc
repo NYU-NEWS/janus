@@ -155,6 +155,7 @@ void RccSched::CheckWaitlist() {
     verify(v != nullptr);
 //  for (RccVertex *v : waitlist_) {
     // TODO minimize the length of the waitlist.
+    verify(v->data_);
     TxnInfo& tinfo = *(v->data_);
     CheckInquired(tinfo);
     // inquire about unknown transaction.
