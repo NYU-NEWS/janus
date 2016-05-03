@@ -55,7 +55,8 @@ def classify_data():
     for fn in args.data_files:
         lines = open(fn,'r').readlines()
         for l in lines:
-            if l.strip()[0] != '#':
+            l = l.strip()
+            if l != '' and l[0] != '#':
                 key = tuple(l.split(',')[0:4]) # key is txn,cc,ab,bench
                 key = tuple([k.strip() for k in key])
                 if key not in output:

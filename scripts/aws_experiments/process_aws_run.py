@@ -6,20 +6,26 @@ import itertools
 import logging
 import traceback
 import shutil
-#import yaml
 
 prefixes = [ "single_dc", "multi_dc" ]
 benchmarks = [ "rw", "tpca", "tpcc" ]
 zipfs = [ "0.0", "0.25", "0.5", "0.75", "1.0" ]
 
 cwd = os.getcwd()
-janus_home="/home/lamont/work_area/nyu/research/janus/janus"
+
+
+janus_home = None
+if os.environ.get('JANUS_HOME') is None:
+    raise RuntimeError("please set JANUS_HOME environment variable")
+else:
+    janus_home=os.environ['JANUS_HOME']
 
 csv_extractor=os.path.join(janus_home,"scripts","aws_experiments","extract_csv.sh")
 make_graphs_cmd=os.path.join(janus_home,"scripts","make_graphs")
 
 work_dir = os.path.abspath("./.work_dir")
 output_dir = os.path.abspath("./output")
+csv_dir = os.path.join(output_dir, "data")
 
 processed_files = {}
 
@@ -47,6 +53,10 @@ def gen_filename(config):
 
 def get_csv(f):
     cmd = "{} {}".format(csv_extractor, f)
+    logging.info("run: {}".format(cmd))
+    os.system(cmd)
+
+    cmd = "{} {} {}".format(csv_extractor, f, csv_dir)
     logging.info("run: {}".format(cmd))
     os.system(cmd)
 
@@ -83,6 +93,7 @@ def process_file(f, config):
 def init():
     logging.basicConfig(level=logging.DEBUG)
     mkdirp(output_dir)
+    mkdirp(csv_dir)
 
 def main():
     try:

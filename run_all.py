@@ -102,7 +102,6 @@ def gen_experiment_suffix(b, m, c, z):
         return "{}_{}_{}".format(b, m, c)
 
 
-
 def get_range(r):
     a = []
     parts = r.split(':')
@@ -112,6 +111,7 @@ def get_range(r):
         return range(a[0],a[0]+1)
     else:
         return range(*a)
+
 
 def gen_process_and_site(experiment_name, num_c, num_s, num_replicas, hosts_config):
     # this needs to be refactored
@@ -314,13 +314,14 @@ def run_experiment(config_file, name, args, benchmark, mode, num_client):
 
 def save_git_revision():
     log_dir = "./log/"
+    rev = None
     fn = "{}/revision.txt".format(log_dir)
     cmd = 'git rev-parse HEAD'
     with open(fn, 'w') as f:
         logger.info('running: {}'.format(cmd))
         rev = subprocess.check_output(cmd, shell=True)
-        logger.info("here: %s", rev)
         f.write(rev)
+    return rev
 
 
 def archive_results(name):
@@ -367,8 +368,7 @@ def aggregate_results(name):
     try:
         archive_dir = "./archive/"
         cc = os.path.join(os.getcwd(), 'scripts/aggregate_run_output.py')
-        cmd = [cc, 
-               '-p', name]
+        cmd = [cc, '-p', name, '-r', save_git_revision()]
         os.chdir(archive_dir)
         cmd += glob.glob('*yml')
 

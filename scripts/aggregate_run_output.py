@@ -18,6 +18,7 @@ def parse_args():
     parser.add_argument('--force', '-f', dest="force", action="store_const",
                         const=True, default=False)
     parser.add_argument('--prefix', '-p', dest="prefix", default="")
+    parser.add_argument('--rev', '-r', dest="git_revision", default="")
     ARGS = parser.parse_args(sys.argv[1:])
 
 def read_files():
@@ -61,6 +62,7 @@ def output_data_file(key, group):
         f.write("# ")
         f.write(", ".join(labels + lat_labels))
         f.write("\n")
+        f.write("# git sha: {}\n".format(ARGS.git_revision))
         first = True
         for row in group:
             srow = [str(x) for x in row]
