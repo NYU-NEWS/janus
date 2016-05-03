@@ -74,8 +74,8 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
     if (graph.size() == 1) {
       auto v = dep_graph_->FindV(cmd_id);
       if (v->incoming_.size() == 0);
-      Execute(*v->data_);
       CheckInquired(*v->data_);
+      Execute(*v->data_);
       return;
     } else {
       Log_debug("graph size on commit, %d", (int) graph.size());
