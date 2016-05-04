@@ -406,15 +406,18 @@ bool RccSched::HasICycle(const RccScc& scc) {
 };
 
 void RccSched::TriggerCheckAfterAggregation(RccGraph &graph) {
+  bool check=false;
   for (auto& pair: graph.vertex_index_) {
     // TODO optimize here.
     auto txnid = pair.first;
     auto v = dep_graph_->FindV(txnid);
     verify(v != nullptr);
-//    if (v->Get().status() >= TXN_CMT)
+    // if (v->Get().status() >= TXN_CMT)
     waitlist_.insert(v);
+    check=true;
   }
-  CheckWaitlist();
+  if (check)
+    CheckWaitlist();
 }
 
 
