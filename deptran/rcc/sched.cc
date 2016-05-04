@@ -149,9 +149,13 @@ void RccSched::CheckInquired(TxnInfo& tinfo) {
 
 void RccSched::CheckWaitlist() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
+#ifdef DEBUG_CODE
   Log_info("start to check waitlist, length: %d, fridge size: %d",
            (int)waitlist_.size(), (int)fridge_.size());
+#endif
   while (waitlist_.size() > 0) {
+//    Log_info("checking loop, length: %d, fridge size: %d",
+//             (int)waitlist_.¬size(), (int)fridge_.size());
     auto it = waitlist_.begin();
     RccVertex* v = *it;
     verify(v != nullptr);
@@ -186,6 +190,14 @@ void RccSched::CheckWaitlist() {
       } else if (HasAbortedAncestor(scc)) {
         Abort(scc);
       } else if (AllAncFns(scc)) {
+        // FIXME
+        for (auto vv : scc) {
+#ifdef DEBUG_CODE
+          verify(vv->Get().get_status() >= TXN_DCD);
+#endif
+          vv->Get().union_status(TXN_DCD);
+        }
+        verify(AllAncCmt(v));
         Execute(scc);
 //        check_again = true;
       } // else do nothing.
@@ -193,7 +205,7 @@ void RccSched::CheckWaitlist() {
 
     // Adjust the waitlist.
     __DebugExamineGraphVerify(v);
-    if (tinfo.status() >= TXN_DCD) {
+    if (tinfo.status() >= TXN_DCD && tinfo.IsExecuted()) {
       for (auto& child_pair : v->outgoing_) {
         RccVertex* child_v = child_pair.first;
         if (!child_v->Get().IsExecuted() &&
@@ -261,9 +273,12 @@ void RccSched::__DebugExamineFridge() {
     if (tinfo.status() >= TXN_CMT) {
       if (AllAncCmt(v)) {
 //        verify(!tinfo.IsExecuted());
-        verify(tinfo.IsDecided() || tinfo.IsAborted());
-        in_wait_anc_exec++;
+//        verify(tinfo.IsDecided() || tinfo.IsAborted());
+        if (!tinfo.IsExecuted())
+          in_wait_anc_exec++;
       } else {
+//        RccScc& scc = dep_graph_->FindSCC(v);
+//        verify(!AllAncFns(scc));
         in_wait_anc_cmt++;
       }
     }

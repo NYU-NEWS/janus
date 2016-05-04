@@ -12,7 +12,7 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
                            RccGraph* res_graph,
                            function<void()> callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  Log_info("on preaccept: %llx par: %d", txn_id, (int)partition_id_);
+//  Log_info("on preaccept: %llx par: %d", txn_id, (int)partition_id_);
   if (RandomGenerator::rand(1, 2000) <= 1)
     Log_info("on pre-accept graph size: %d", graph.size());
   verify(txn_id > 0);
@@ -68,7 +68,7 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
     *res = REJECT;
     callback();
   } else {
-    Log_info("on commit: %llx par: %d", cmd_id, (int)partition_id_);
+//    Log_info("on commit: %llx par: %d", cmd_id, (int)partition_id_);
     dtxn->commit_request_received_ = true;
     dtxn->finish_reply_callback_ = [callback, res] (int r) {
       *res = r;
@@ -77,7 +77,6 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
     };
     dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
     TriggerCheckAfterAggregation(const_cast<RccGraph &>(graph));
-    fflush(stdout);
     // fast path without check wait list?
 //    if (graph.size() == 1) {
 //      auto v = dep_graph_->FindV(cmd_id);

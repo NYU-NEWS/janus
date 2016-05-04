@@ -59,49 +59,67 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
   if (source->incoming_.size() == 0 && quick) {
     return 0;
   }
+  if (source->Get().get_status() >= TXN_DCD) {
+    auto& scc = FindSCC(source);
+    set<RccVertex*> scc_set(scc.begin(), scc.end());
+    for (auto vv : scc) {
+      RccVertex* new_v = new_graph->FindOrCreateV(*vv);
+      for (auto &kv: vv->incoming_) {
+        auto parent_v = kv.first;
+        auto weight = kv.second;
+        if (scc_set.count(parent_v) > 0) {
+          RccVertex* new_parent_v = new_graph->FindOrCreateV(*parent_v);
+          new_v->AddParentEdge(new_parent_v, weight);
+        }
+      }
+    }
+  } else {
 // Log_debug("compute for sub graph, tid: %llx parent size: %d",
 //     tid, (int) source->from_.size());
 //  auto &ret_set = gra_m.ret_set;
 //  unordered_set<RccVertex *> ret_set;
 //  find_txn_anc_opt(source, ret_set);
-  vector<RccVertex *> search_stack;
-  set<RccVertex*> searched_set;
-  search_stack.push_back(source);
-  verify(depth == 1 || depth == -1);
-  while (search_stack.size() > 0) {
-    RccVertex *v = search_stack.back();
-    searched_set.insert(v);
-    search_stack.pop_back();
-    RccVertex* new_v = new_graph->FindOrCreateV(*v);
-    for (auto &kv: v->incoming_) {
-      auto parent_v = kv.first;
-      auto weight = kv.second;
-      TxnInfo& parent_txn = parent_v->Get();
-      if (parent_v == v) {
-        verify(0); // or continue?
-      }
-      if (parent_txn.status() >= TXN_DCD || parent_txn.IsExecuted()) {
-        continue;
-      }
-      if (searched_set.find(parent_v) != searched_set.end()) {
-        continue;
-      }
-      if (depth == 1) {
-        // TODO
-        RccVertex* new_parent_v = new_graph->FindOrCreateV(parent_v->id());
-        TxnInfo& tinfo = new_parent_v->Get();
-        tinfo.partition_ = parent_v->Get().partition_;
-        verify(tinfo.status() == TXN_UKN);
-        new_v->AddParentEdge(new_parent_v, weight);
-      } else if (depth == -1) {
-        RccVertex* new_parent_v = new_graph->FindOrCreateV(*parent_v);
-        new_v->AddParentEdge(new_parent_v, weight);
-        search_stack.push_back(parent_v);
-      } else {
-        verify(0);
+    vector<RccVertex *> search_stack;
+    set<RccVertex*> searched_set;
+    search_stack.push_back(source);
+    verify(depth == 1 || depth == -1);
+    while (search_stack.size() > 0) {
+      RccVertex *v = search_stack.back();
+      searched_set.insert(v);
+      search_stack.pop_back();
+      RccVertex* new_v = new_graph->FindOrCreateV(*v);
+      for (auto &kv: v->incoming_) {
+        auto parent_v = kv.first;
+        auto weight = kv.second;
+        TxnInfo& parent_txn = parent_v->Get();
+        if (parent_v == v) {
+          verify(0); // or continue?
+        }
+        if (parent_txn.status() >= TXN_DCD || parent_txn.IsExecuted()) {
+          continue;
+        }
+        if (searched_set.find(parent_v) != searched_set.end()) {
+          continue;
+        }
+        if (depth == 1) {
+          // TODO
+          RccVertex* new_parent_v = new_graph->FindOrCreateV(parent_v->id());
+          TxnInfo& tinfo = new_parent_v->Get();
+          tinfo.partition_ = parent_v->Get().partition_;
+          verify(tinfo.status() == TXN_UKN);
+          new_v->AddParentEdge(new_parent_v, weight);
+        } else if (depth == -1) {
+          RccVertex* new_parent_v = new_graph->FindOrCreateV(*parent_v);
+          new_v->AddParentEdge(new_parent_v, weight);
+          search_stack.push_back(parent_v);
+        } else {
+          verify(0);
+        }
       }
     }
   }
+
+
   auto sz = new_graph->size();
   Log_debug("return graph size: %llx", sz);
   return sz;
