@@ -8,16 +8,16 @@ namespace rococo {
 
 template <typename T>
 class Vertex {
+ private:
+  std::shared_ptr<T> data_{};
  public:
   map<uint64_t, int8_t> parents_{};
   map<Vertex *, int8_t> outgoing_{};
   map<Vertex *, int8_t> incoming_{};
   bool walked_{false}; // flag for traversing.
-  std::shared_ptr<T> data_{};
   std::shared_ptr<vector<Vertex*>> scc_{};
 
   Vertex(uint64_t id) { data_ = std::shared_ptr<T>(new T(id)); }
-
   Vertex(Vertex<T> &v) { data_ = v.data_;}
 
   void AddEdge(Vertex<T> *other, int8_t weight) {
@@ -32,7 +32,15 @@ class Vertex {
     other->outgoing_[this] |= weight;
   }
 
-  uint64_t id() const { return data_->id(); }
+  T& Get() {
+    verify(data_);
+    return *data_;
+  }
+
+  uint64_t id() const {
+    verify(data_);
+    return data_->id();
+  }
 
   bool operator== (Vertex<T>& rhs) const {
     for (auto& pair: incoming_) {
@@ -74,7 +82,7 @@ class Graph : public Marshallable {
   void Clear() {
     for (auto p : vertex_index_) {
       auto v = p.second;
-//      delete v; FIXME
+      delete v;
     }
     vertex_index_.clear();
   }
@@ -488,13 +496,13 @@ class Graph : public Marshallable {
       auto &v = pair.second;
       i++;
       int32_t n_out_edge = v->outgoing_.size();
-      m << v->data_->id();
-      m << *(v->data_);
+      m << v->id();
+      m << v->Get();
       m << n_out_edge;
       for (auto &it : v->outgoing_) {
         Vertex<T> *vv = it.first;
         verify(vv != nullptr);
-        uint64_t id = vv->data_->id();
+        uint64_t id = vv->id();
         int8_t weight = it.second;
         m << id << weight;
       }
@@ -519,7 +527,7 @@ class Graph : public Marshallable {
       uint64_t v_id;
       m >> v_id;
       ref[v_id] = new Vertex<T>(v_id);
-      m >> *(ref[v_id]->data_);
+      m >> ref[v_id]->Get();
       int32_t n_out_edge;
       m >> n_out_edge;
 

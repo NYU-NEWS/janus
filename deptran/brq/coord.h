@@ -24,7 +24,7 @@ public:
   struct reply_cnt_t {int yes; int no;};
   map<parid_t, int> n_fast_accept_oks_ = {};
   map<parid_t, int> n_fast_accept_rejects_ = {};
-  map<parid_t, vector<RccGraph>> n_fast_accept_graphs_ {};
+  map<parid_t, vector<RccGraph*>> n_fast_accept_graphs_ {};
   map<parid_t, int> n_commit_oks_ = {};
   bool fast_path_ = false;
   bool fast_commit_ = false;
@@ -46,7 +46,7 @@ public:
   void PreAcceptAck(phase_t phase,
                     parid_t par_id,
                     int res,
-                    RccGraph& graph);
+                    RccGraph* graph);
 
   // do_one inherits from RccCoord;
 

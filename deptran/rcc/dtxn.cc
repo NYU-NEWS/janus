@@ -294,8 +294,8 @@ void RccDTxn::kiss(mdb::Row *r, int col, bool immediate) {
   int8_t edge_type = immediate ? EDGE_I : EDGE_D;
 
   if (read_only_) {
-    if (entry->last_)
-      conflict_txns_.push_back(entry->last_->data_.get());
+    if (entry->last_) ;
+//      conflict_txns_.push_back(entry->last_->data_.get()); //FIXME
   } else {
     if (entry->last_ != NULL) {
       entry->last_->outgoing_[tv_] |= edge_type;
@@ -369,7 +369,7 @@ void RccDTxn::TraceDep(Row* row, column_id_t col_id, int hint_flag) {
   if (parent_v == tv_) {
     // skip
   } else if (parent_v != nullptr) {
-    TxnInfo& info = *parent_v->data_;
+    TxnInfo& info = parent_v->Get();
     if (info.IsExecuted()) {
       ;
     } else {

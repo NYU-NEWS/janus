@@ -67,9 +67,10 @@ void BrqCoord::PreAccept() {
 void BrqCoord::PreAcceptAck(phase_t phase,
                             parid_t par_id,
                             int res,
-                            RccGraph& graph) {
+                            RccGraph* graph) {
   // if recevie more messages after already gone to next phase, ignore
   if (phase != phase_) return;
+  verify(graph);
   verify(n_fast_accept_graphs_.size() == 0);
   n_fast_accept_graphs_[par_id].push_back(graph);
   if (res == SUCCESS) {
@@ -158,7 +159,7 @@ void BrqCoord::Accept() {
 
 void BrqCoord::Commit() {
   TxnCommand *txn = (TxnCommand*) cmd_;
-  TxnInfo& info = *graph_.FindV(cmd_->id_)->data_;
+  TxnInfo& info = graph_.FindV(cmd_->id_)->Get();
   verify(txn->partition_ids_.size() == info.partition_.size());
   info.union_status(TXN_CMT);
   for (auto par_id : cmd_->GetPartitionIds()) {
@@ -278,8 +279,8 @@ int BrqCoord::FastQuorumGraphCheck(parid_t par_id) {
   verify(vec_graph.size() == 1);
   verify(vec_graph.size() >= 1);
   for (int i = 1; i < vec_graph.size(); i++) {
-    RccGraph& graph = vec_graph[i];
-    if (graph != vec_graph[0])
+    RccGraph& graph = *vec_graph[i];
+    if (graph != *vec_graph[0])
       return 2;
   }
   return 1;

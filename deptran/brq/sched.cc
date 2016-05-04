@@ -16,6 +16,7 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
     Log_info("on pre-accept graph size: %d", graph.size());
   verify(txn_id > 0);
   dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
+  TriggerCheckAfterAggregation(const_cast<RccGraph&>(graph));
   // TODO FIXME
   // add interference based on cmds.
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(cmds[0].root_id_);
@@ -50,11 +51,10 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
 
   auto v = dep_graph_->FindV(cmd_id);
   verify(v != nullptr);
-  TxnInfo& info = *v->data_;
+  TxnInfo& info = v->Get();
 
   verify(dtxn->ptr_output_repy_ == nullptr);
   dtxn->ptr_output_repy_ = output;
-
 
   if (info.IsExecuted()) {
     *res = SUCCESS;
@@ -71,27 +71,21 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
       callback();
     };
     // fast path without check wait list?
-    if (graph.size() == 1) {
-      auto v = dep_graph_->FindV(cmd_id);
-      if (v->incoming_.size() == 0);
-      CheckInquired(*v->data_);
-      Execute(*v->data_);
-      return;
-    } else {
-      Log_debug("graph size on commit, %d", (int) graph.size());
-//    verify(0);
-    }
-    dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
-    for (auto& pair: graph.vertex_index_) {
-      // TODO optimize here.
-      auto txnid = pair.first;
-      auto v = dep_graph_->FindV(txnid);
-      verify(v != nullptr);
-      waitlist_.insert(v);
-    }
-    CheckWaitlist();
+//    if (graph.size() == 1) {
+//      auto v = dep_graph_->FindV(cmd_id);
+//      if (v->incoming_.size() == 0);
+//      CheckInquired(v->Get());
+//      Execute(v->Get());
+//      return;
+//    } else {
+//      Log_debug("graph size on commit, %d", (int) graph.size());
+////    verify(0);
+//    }
   }
+  dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
+  TriggerCheckAfterAggregation(const_cast<RccGraph &>(graph));
 }
+
 
 int BrqSched::OnInquire(cmdid_t cmd_id,
                         RccGraph *graph,
@@ -102,7 +96,7 @@ int BrqSched::OnInquire(cmdid_t cmd_id,
   dtxn->graph_ = dep_graph_;
   RccVertex* v = dtxn->tv_;
   verify(v != nullptr);
-  TxnInfo& info = *v->data_;
+  TxnInfo& info = v->Get();
   //register an event, triggered when the status >= COMMITTING;
   verify (info.Involve(partition_id_));
 

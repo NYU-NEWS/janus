@@ -24,7 +24,7 @@ void BrqCommo::SendDispatch(vector<SimpleCommand> &cmd,
         if (graph.rtti_ == Marshallable::EMPTY_GRAPH) {
           RccGraph rgraph;
           auto v = rgraph.CreateV(tid);
-          TxnInfo& info = *v->data_;
+          TxnInfo& info = v->Get();
           info.partition_.insert(par_id);
           callback(res, output, rgraph);
         } else if (graph.rtti_ == Marshallable::RCC_GRAPH) {
@@ -85,7 +85,7 @@ void BrqCommo::BroadcastPreAccept(parid_t par_id,
                                   ballot_t ballot,
                                   vector<SimpleCommand>& cmds,
                                   RccGraph& graph,
-                                  const function<void(int, RccGraph&)> &callback) {
+                                  const function<void(int, RccGraph*)> &callback) {
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
   for (auto &p : rpc_par_proxies_[par_id]) {
     auto proxy = (BrqProxy*)(p.second);
@@ -93,9 +93,9 @@ void BrqCommo::BroadcastPreAccept(parid_t par_id,
     FutureAttr fuattr;
     fuattr.callback = [callback] (Future* fu) {
       int32_t res;
-      Marshallable graph;
-      fu->get_reply() >> res >> graph;
-      callback(res, dynamic_cast<RccGraph&>(*graph.ptr()));
+      Marshallable* graph = new Marshallable;
+      fu->get_reply() >> res >> *graph;
+      callback(res, dynamic_cast<RccGraph*>(graph->ptr().get()));
     };
     verify(cmd_id > 0);
     Future::safe_release(proxy->async_PreAccept(cmd_id,

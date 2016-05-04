@@ -18,8 +18,9 @@ class RccSched : public Scheduler {
  public:
   RccGraph *dep_graph_ = nullptr;
   WaitlistChecker* waitlist_checker_ = nullptr;
-  set<RccVertex*> waitlist_{};
-  std::recursive_mutex mtx_;
+  set<RccVertex*> waitlist_ = {};
+  set<RccVertex*> fridge_ = {};
+  std::recursive_mutex mtx_{};
 //  Vertex<TxnInfo> *v : wait_list_
 
   RccSched();
@@ -49,9 +50,11 @@ class RccSched : public Scheduler {
 //                 rrr::DeferredReply *defer);
 
   void InquireAbout(Vertex<TxnInfo> *av);
+  void InquireAboutIfNeeded(TxnInfo &info);
   void CheckInquired(TxnInfo& tinfo);
   void CheckWaitlist();
   void InquireAck(cmdid_t cmd_id, RccGraph& graph);
+  void TriggerCheckAfterAggregation(RccGraph &graph);
   bool AllAncCmt(RccVertex *v);
   void Decide(const RccScc&);
   bool HasICycle(const RccScc& scc);
@@ -61,8 +64,9 @@ class RccSched : public Scheduler {
   void Execute(TxnInfo&);
   void Abort(const RccScc&);
 
-  void __DebugExamineWaitlist();
+  void __DebugExamineFridge();
   RccVertex* __DebugFindAnOngoingAncestor(RccVertex* vertex);
+  void __DebugExamineGraphVerify(RccVertex *v);
   RccCommo* commo();
 };
 

@@ -41,7 +41,7 @@ void RccGraph::FindOrCreateTxnInfo(txnid_t txn_id,
   verify(FindV(txn_id) != nullptr);
   verify(*tv != nullptr);
   // TODO fix.
-  TxnInfo& txn_info = *(*tv)->data_;
+  TxnInfo& txn_info = (*tv)->Get();
 //  verify(txn_info != nullptr);
   txn_info.partition_.insert(partition_id_);
   txn_info.graph_ = this;
@@ -51,6 +51,7 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
                                 RccGraph* new_graph,
                                 bool quick,
                                 int depth) {
+  verify(new_graph != nullptr);
 //  gra_m.gra = &txn_gra_;
   Vertex<TxnInfo> *source = FindV(tid);
   verify(source != nullptr);
@@ -75,7 +76,7 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
     for (auto &kv: v->incoming_) {
       auto parent_v = kv.first;
       auto weight = kv.second;
-      TxnInfo& parent_txn = *parent_v->data_;
+      TxnInfo& parent_txn = parent_v->Get();
       if (parent_v == v) {
         verify(0); // or continue?
       }
@@ -88,8 +89,8 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
       if (depth == 1) {
         // TODO
         RccVertex* new_parent_v = new_graph->FindOrCreateV(parent_v->id());
-        TxnInfo& tinfo = *new_parent_v->data_;
-        tinfo.partition_ = parent_v->data_->partition_;
+        TxnInfo& tinfo = new_parent_v->Get();
+        tinfo.partition_ = parent_v->Get().partition_;
         verify(tinfo.status() == TXN_UKN);
         new_v->AddParentEdge(new_parent_v, weight);
       } else if (depth == -1) {
@@ -144,12 +145,13 @@ void RccGraph::BuildEdgePointer(RccGraph &graph,
 RccVertex* RccGraph::AggregateVertex(RccVertex *av) {
   // create the dtxn if not exist.
   auto vertex = FindOrCreateV(*av);
-  if (vertex->data_ == av->data_) {
+  if (false) {
+//  if (vertex->data_ == av->data_) {
     // skip
   } else {
     // add edges.
-    TxnInfo &info = *vertex->data_;
-    TxnInfo &a_info = *av->data_;
+    TxnInfo &info = vertex->Get();
+    TxnInfo &a_info = av->Get();
     info.union_data(a_info); // TODO
   }
   return vertex;
