@@ -254,6 +254,7 @@ void RccSched::__DebugExamineFridge() {
   int in_wait_self_cmt = 0;
   int in_wait_anc_exec = 0;
   int in_wait_anc_cmt = 0;
+  int64_t id = 0;
   for (RccVertex* v : fridge_) {
     TxnInfo& tinfo = v->Get();
     if (tinfo.status() >= TXN_CMT) {
@@ -269,6 +270,7 @@ void RccSched::__DebugExamineFridge() {
     if (tinfo.status() < TXN_CMT) {
       if (tinfo.Involve(partition_id_)) {
         in_wait_self_cmt++;
+        id = tinfo.id();
       } else {
         verify(tinfo.during_asking);
         in_ask++;
@@ -280,6 +282,7 @@ void RccSched::__DebugExamineFridge() {
                " in_wait_anc_exec: %d, in wait anc cmt: %d, else %d",
            sz, in_ask, in_wait_self_cmt, in_wait_anc_exec, in_wait_anc_cmt,
            sz - in_ask - in_wait_anc_exec - in_wait_anc_cmt - in_wait_self_cmt);
+  Log_info("wait for myself commit: %llx par: %d", id, (int)partition_id_);
 #endif
 }
 
