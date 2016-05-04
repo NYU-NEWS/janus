@@ -149,9 +149,10 @@ void RccSched::CheckInquired(TxnInfo& tinfo) {
 
 void RccSched::CheckWaitlist() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
+  Log_info("start to check waitlist, length: %d, fridge size: %d",
+           (int)waitlist_.size(), (int)fridge_.size());
   while (waitlist_.size() > 0) {
     auto it = waitlist_.begin();
-    Log_debug("waitlist length: %d", (int)waitlist_.size());
     RccVertex* v = *it;
     verify(v != nullptr);
 //  for (RccVertex *v : waitlist_) {
@@ -195,9 +196,9 @@ void RccSched::CheckWaitlist() {
     if (tinfo.status() >= TXN_DCD) {
       for (auto& child_pair : v->outgoing_) {
         RccVertex* child_v = child_pair.first;
-        if (waitlist_.count(child_v) == 0) {
+        if (!child_v->Get().IsExecuted() &&
+            waitlist_.count(child_v) == 0) {
           waitlist_.insert(child_v);
-//            check_again = true;
         }
       }
     }

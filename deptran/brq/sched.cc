@@ -43,7 +43,6 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
                         const function<void()>& callback) {
   // TODO to support cascade abort
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  Log_info("on commit: %llx par: %d", cmd_id, (int)partition_id_);
   if (RandomGenerator::rand(1, 2000) <= 1)
     Log_info("on commit graph size: %d", graph.size());
   *res = SUCCESS;
@@ -58,7 +57,10 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
   verify(dtxn->ptr_output_repy_ == nullptr);
   dtxn->ptr_output_repy_ = output;
 
+
+
   if (info.IsExecuted()) {
+    verify(info.status() > TXN_CMT);
     *res = SUCCESS;
     callback();
   } else if (info.IsAborted()) {
@@ -66,12 +68,16 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
     *res = REJECT;
     callback();
   } else {
+    Log_info("on commit: %llx par: %d", cmd_id, (int)partition_id_);
     dtxn->commit_request_received_ = true;
     dtxn->finish_reply_callback_ = [callback, res] (int r) {
       *res = r;
 //      verify(r == SUCCESS);
       callback();
     };
+    dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
+    TriggerCheckAfterAggregation(const_cast<RccGraph &>(graph));
+    fflush(stdout);
     // fast path without check wait list?
 //    if (graph.size() == 1) {
 //      auto v = dep_graph_->FindV(cmd_id);
@@ -84,8 +90,7 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
 ////    verify(0);
 //    }
   }
-  dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
-  TriggerCheckAfterAggregation(const_cast<RccGraph &>(graph));
+
 }
 
 
