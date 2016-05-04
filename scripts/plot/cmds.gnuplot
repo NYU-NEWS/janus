@@ -26,6 +26,17 @@ if (!exists("style"))         style = ""
 if (!exists("output_type"))   output_type = "png"
 
 set output output_file
+
+
+set tics nomirror
+set style line 11 lc rgb '#808080' lt 1
+set border 3 back ls 11
+set tics nomirror
+# define grid
+set style line 12 lc rgb '#808080' lt 0 lw 1
+set grid back ls 12
+
+
 symbols = ""
 set macros
 set autoscale
@@ -44,4 +55,4 @@ if (exists("log_scale")) set logscale @log_scale
 plot for [i=1:words(input_files)] \
 word(input_files, i) using @using_cmd \
 title column(2) \
-with linespoints pt (i % 50) ps 2 lt rgb word(colors, i)
+with linespoints pt (i % 50) ps 2 lt rgb word(colors, i) lw 2
