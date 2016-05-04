@@ -9,5 +9,5 @@ graph:
     y_label: 'Latency (ms)'
     y_range: '[0:]'
     x_range: '[0:]'
-    output_file: '${txn}_${bench}_client_lat.png'
+    output_file: '${txn}_${bench}_client_lat'
     key_location: 'top left'

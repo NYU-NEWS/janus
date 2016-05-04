@@ -105,13 +105,29 @@ def run_gnuplot(settings, data_files):
 def generate_graph(config, txn_types, data_classes):
     if type(config['bench']) is not list:
         config['bench'] = [config['bench']]
-    for txn_name in txn_types:
-        for b in config['bench']:
-            data_files = get_data(data_classes, [ [bench, b], [txn, txn_name] ])
-            logging.debug("generate for {} {}: {}".format(b, txn_name, data_files))
-            gnuplot_settings = copy.copy(config['graph'])
-            gnuplot_settings['output_file'] = Template(gnuplot_settings['output_file']).substitute(txn=txn_name, bench=b)
-            run_gnuplot(gnuplot_settings, data_files)
+    logging.info(config)
+    if 'output' not in config:
+        config['output'] = [ 'png' ]
+    for output_type in ['ps', 'png']:
+        if output_type == 'ps':
+            extentsion = '.eps'
+            graph_size = '5,5'
+        else:
+            extentsion = '.png'
+            graph_size = '1024,768'
+
+        for txn_name in txn_types:
+            for b in config['bench']:
+                data_files = get_data(data_classes, [ [bench, b], [txn, txn_name] ])
+                logging.debug("generate for {} {}: {}".format(b, txn_name, data_files))
+                gnuplot_settings = copy.copy(config['graph'])
+                gnuplot_settings['output_type'] = output_type
+                if 'graph_size' not in gnuplot_settings:
+                    gnuplot_settings['graph_size'] = graph_size 
+                gnuplot_settings['output_file'] = \
+                    Template(gnuplot_settings['output_file']).substitute(txn=txn_name, bench=b) + \
+                    extentsion
+                run_gnuplot(gnuplot_settings, data_files)
 
 
 def main():

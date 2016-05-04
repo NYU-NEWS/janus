@@ -12,3 +12,5 @@ janus_home=${3:-/home/lamont/work_area/nyu/research/janus/janus}
 mkdir -p $output_dir
 python $janus_home/scripts/plot/do_plot.py -g $janus_home/config/plot/*yml -d ${data_files[@]} -gcmds $janus_home/scripts/plot/cmds.gnuplot
 mv *png $output_dir
+mv *eps $output_dir
+exit 0
