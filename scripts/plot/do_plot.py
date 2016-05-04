@@ -111,7 +111,7 @@ def generate_graph(config, txn_types, data_classes):
     for output_type in ['ps', 'png']:
         if output_type == 'ps':
             extentsion = '.eps'
-            graph_size = '5,5'
+            graph_size = '4,3'
         else:
             extentsion = '.png'
             graph_size = '1024,768'
