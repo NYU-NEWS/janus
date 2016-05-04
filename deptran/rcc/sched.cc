@@ -193,11 +193,11 @@ void RccSched::CheckWaitlist() {
         // FIXME
         for (auto vv : scc) {
 #ifdef DEBUG_CODE
+          verify(AllAncCmt(vv));
           verify(vv->Get().get_status() >= TXN_DCD);
 #endif
           vv->Get().union_status(TXN_DCD);
         }
-        verify(AllAncCmt(v));
         Execute(scc);
 //        check_again = true;
       } // else do nothing.
