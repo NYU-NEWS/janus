@@ -55,30 +55,16 @@ TxnGenerator::TxnGenerator(Config* config)
       break;
     case TPCA:
     case TPCC:
-    case TPCC_DIST_PART: {
-//      std::vector<unsigned int> sites;
-//      sharding_->get_site_id_from_tb(TPCC_TB_WAREHOUSE, sites);
-//      uint64_t tb_w_rows = table_num_rows[std::string(TPCC_TB_WAREHOUSE)];
-//      tpcc_para_.n_w_id_ = (int) tb_w_rows * sites.size();
-//      tpcc_para_.const_home_w_id_ = RandomGenerator::rand(0, tpcc_para_.n_w_id_ - 1);
-//      uint64_t tb_d_rows = table_num_rows[std::string(TPCC_TB_DISTRICT)];
-//      tpcc_para_.n_d_id_ = (int) tb_d_rows / tb_w_rows;
-//      uint64_t tb_c_rows = table_num_rows[std::string(TPCC_TB_CUSTOMER)];
-//      tpcc_para_.n_c_id_ = (int) tb_c_rows / tb_d_rows;
-//      tpcc_para_.n_i_id_ = (int) table_num_rows[std::string(TPCC_TB_ITEM)];
-//      tpcc_para_.delivery_d_id_ = RandomGenerator::rand(0, tpcc_para_.n_d_id_ - 1);
-//      if (single_server_ != Config::SS_DISABLED) {
-//        verify(0);
-//      }
-//      else
-//        fix_id_ = -1;
-//      break;
-    }
+    case TPCC_DIST_PART:
     case TPCC_REAL_DIST_PART: {
       break;
     }
     case RW_BENCHMARK:
       rw_benchmark_para_.n_table_ = table_num_rows[std::string(RW_BENCHMARK_TABLE)];
+      fix_id_ = (Config::GetConfig()->dist_ == "fixed") ?
+                RandomGenerator::rand(0, rw_benchmark_para_.n_table_) :
+                -1;
+      Log_info("using fixed id of %d", fix_id_);
       break;
     default:
       Log_fatal("benchmark not implemented");
@@ -88,18 +74,25 @@ TxnGenerator::TxnGenerator(Config* config)
 
 void TxnGenerator::get_rw_benchmark_w_txn_req(
     TxnRequest *req, uint32_t cid) const {
+  auto id = (fix_id_ == -1) ?
+            RandomGenerator::rand(0, rw_benchmark_para_.n_table_ - 1) :
+            fix_id_;
+
   req->txn_type_ = RW_BENCHMARK_W_TXN;
   req->input_ = {
-      {0, Value((i32) RandomGenerator::rand(0, rw_benchmark_para_.n_table_ - 1))},
+      {0, Value((i32) id)},
       {1, Value((i32) RandomGenerator::rand(0, 10000))}
   };
 }
 
 void TxnGenerator::get_rw_benchmark_r_txn_req(
     TxnRequest *req, uint32_t cid) const {
+  auto id = (fix_id_ == -1) ?
+    RandomGenerator::rand(0, rw_benchmark_para_.n_table_ - 1) :
+    fix_id_;
   req->txn_type_ = RW_BENCHMARK_R_TXN;
   req->input_ = {
-      {0, Value((i32) RandomGenerator::rand(0, rw_benchmark_para_.n_table_ - 1))}
+      {0, Value((i32) id)}
   };
 }
 

@@ -2,7 +2,8 @@
 # x_label, y_label, graph_title, input_files, colors, output_file, terminal_type, 
 # x_tics, y_tics, x_range, y_range, x_col, y_col, key_locations, using_cmd
 if (output_type eq "ps") {
-    set terminal postscript size @graph_size color colortext "Helvetica,10"
+    set terminal postscript size @graph_size color colortext "Helvetica,16" eps
+	#set terminal postscript "Helvetica" eps font 22
     if (!exists("output_file")) {
         output_file = "out.eps"
     }
