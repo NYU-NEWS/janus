@@ -14,14 +14,15 @@ class Vertex {
   set<uint64_t> parents_{};
   map<Vertex *, int8_t> outgoing_{};
   map<Vertex *, int8_t> incoming_{};
+  set<Vertex *> removed_children_{};
   bool walked_{false}; // flag for traversing.
   std::shared_ptr<vector<Vertex*>> scc_{};
 
   Vertex(uint64_t id) {
     data_ = std::shared_ptr<T>(new T(id));
   }
-  Vertex(Vertex<T> &v) {
-    data_ = v.data_;
+  Vertex(Vertex<T> &v): data_(v.data_), parents_(v.parents_) {
+    ;
   }
   set<uint64_t>& GetParentSet() {
 #ifdef DEBUG_CODE
@@ -255,6 +256,43 @@ class Graph : public Marshallable {
     return true;
   }
 
+  Scc<T> StrongConnectPred(Vertex<T> *v,
+                           std::map<Vertex<T> *, int> &indexes,
+                           std::map<Vertex<T> *, int> &lowlinks,
+                           int &index,
+                           std::vector<Vertex<T> *> &S) {
+    indexes[v] = index;
+    lowlinks[v] = index;
+    index++;
+    S.push_back(v);
+
+    for (auto &kv : v->incoming_) {
+      Vertex<T> *w = kv.first;
+
+      if (indexes.find(w) == indexes.end()) {
+        this->StrongConnectPred(w, indexes, lowlinks, index, S);
+        lowlinks[v] = (lowlinks[v] < lowlinks[w]) ? lowlinks[v] : lowlinks[w];
+      } else {
+        for (auto &t : S) {
+          if (t == w) {
+            lowlinks[v] = lowlinks[v] < indexes[w] ? lowlinks[v] : indexes[w];
+          }
+        }
+      }
+    }
+
+    Scc<T> ret;
+    if (lowlinks[v] == indexes[v]) {
+      Vertex<T> *w;
+      do {
+        w = S.back();
+        S.pop_back();
+        ret.push_back(w);
+      } while (w != v);
+    }
+    return ret;
+  }
+
   std::vector<Vertex<T> *> StrongConnect(Vertex<T> *v,
                                          std::map<Vertex<T> *, int> &indexes,
                                          std::map<Vertex<T> *, int> &lowlinks,
@@ -420,7 +458,25 @@ class Graph : public Marshallable {
     return ret2;
   }
 
-  Scc<T>& FindSCC(Vertex<T> *vertex) {
+  virtual Scc<T>& FindSccPred(Vertex<T>* vertex) {
+    if (vertex->scc_) {
+      // already computed.
+      return *vertex->scc_;
+    }
+    map<Vertex<T> *, int> indexes;
+    map<Vertex<T> *, int> lowlinks;
+    int index = 0;
+    std::vector<Vertex<T> *> S;
+    std::shared_ptr<Scc<T>> ptr(new Scc<T>);
+    *ptr = StrongConnectPred(vertex, indexes, lowlinks, index, S);
+    for (Vertex<T>* v : *ptr) {
+      verify(!v->scc_); // FIXME
+      v->scc_ = ptr;
+    }
+    return *ptr;
+  }
+
+  virtual Scc<T>& FindSCC(Vertex<T> *vertex) {
     if (vertex->scc_) {
       // already computed.
       return *vertex->scc_;

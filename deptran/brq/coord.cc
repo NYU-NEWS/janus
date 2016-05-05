@@ -159,9 +159,11 @@ void BrqCoord::Accept() {
 
 void BrqCoord::Commit() {
   TxnCommand *txn = (TxnCommand*) cmd_;
-  TxnInfo& info = graph_.FindV(cmd_->id_)->Get();
+  RccVertex* v = graph_.FindV(cmd_->id_);
+  TxnInfo& info = v->Get();
   verify(txn->partition_ids_.size() == info.partition_.size());
-  info.union_status(TXN_CMT);
+//  info.union_status(TXN_CMT);
+  graph_.UpgradeStatus(v, TXN_CMT);
   for (auto par_id : cmd_->GetPartitionIds()) {
     commo()->BroadcastCommit(par_id,
                              cmd_->id_,

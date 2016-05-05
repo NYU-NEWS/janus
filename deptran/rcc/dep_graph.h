@@ -55,15 +55,20 @@ class RccGraph : public Graph<TxnInfo> {
                         map<txnid_t, RccVertex*>& index);
   void RebuildEdgePointer(map<txnid_t, RccVertex*>& index);
   RccVertex* AggregateVertex(RccVertex *rhs_v);
+  void UpgradeStatus(RccVertex* v, int8_t status);
 
   void Aggregate(RccGraph& graph);
+  void SelectGraphCmtUkn(RccVertex* vertex, RccGraph* new_graph);
   void SelectGraph(set<RccVertex*> vertexes, RccGraph* new_graph);
+  RccScc& FindSCC(RccVertex *vertex) override;
+  bool AllAncCmt(RccVertex *vertex);
 //  void union_txn_graph(Graph <TxnInfo> &gra) {
 //    txn_gra_.Aggregate(gra, true);
 //  }
 
   std::vector<Vertex < TxnInfo>*> find_txn_scc(TxnInfo &ti) {
-    return FindSCC(ti.id());
+    verify(0);
+//    return FindSCC(ti.id());
   }
 
   void find_txn_anc_opt(Vertex <TxnInfo> *source,

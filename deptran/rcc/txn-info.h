@@ -17,10 +17,9 @@ class TxnInfo {
   txnid_t txn_id_;
   std::set<uint32_t> partition_;
   std::vector<uint64_t> pieces_;
+  bool fully_dispatched{false};
   bool executed_{false};
-
   bool committed_ = false;
-
   bool during_commit = false;
   bool during_asking = false;
   bool inquire_acked_ = false;
@@ -124,7 +123,11 @@ class TxnInfo {
       // TODO
       // I cannot change the status of this txn.
     } else {
+#ifdef DEBUG_CODE
+      verify((status_ | status) >= status_);
+#endif
       status_ |= status;
+
     }
     if (is_trigger) {
       trigger();

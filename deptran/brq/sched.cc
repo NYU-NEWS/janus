@@ -22,13 +22,27 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
   // TODO FIXME
   // add interference based on cmds.
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(txn_id);
-  if (dtxn->phase_ < PHASE_RCC_DISPATCH) {
-    for (auto& c: cmds) {
-      map<int32_t, Value> output;
-      dtxn->DispatchExecute(c, res, &output);
+  TxnInfo& tinfo = dtxn->tv_->Get();
+  if (tinfo.status() < TXN_CMT) {
+    if (dtxn->phase_ < PHASE_RCC_DISPATCH && tinfo.status() < TXN_CMT) {
+      for (auto& c: cmds) {
+        map<int32_t, Value> output;
+        dtxn->DispatchExecute(c, res, &output);
+      }
+    }
+  } else {
+    if (dtxn->dreqs_.size() == 0) {
+      for (auto& c: cmds) {
+        dtxn->dreqs_.push_back(c);
+      }
     }
   }
+  verify(!tinfo.fully_dispatched);
+  tinfo.fully_dispatched = true;
   dep_graph_->MinItfrGraph(txn_id, res_graph, false, 1);
+  if (tinfo.status() >= TXN_CMT) {
+    waitlist_.insert(dtxn->tv_);
+  }
   *res = SUCCESS;
   callback();
 }
@@ -100,13 +114,17 @@ int BrqSched::OnInquire(cmdid_t cmd_id,
   verify (info.Involve(partition_id_));
 
   auto cb_wrapper = [callback, graph] () {
-//    for (auto pair : graph->vertex_index_) {
-//      RccVertex* v = pair.second;
-//      if (v->Get().status() >= TXN_CMT) {
+#ifdef DEBUG_CODE
+    for (auto pair : graph->vertex_index_) {
+      RccVertex* v = pair.second;
+      TxnInfo& tinfo = v->Get();
+      if (tinfo.status() >= TXN_CMT) {
 //        Log_info("inquire ack, txnid: %llx, parent size: %d",
 //                 pair.first, v->GetParentSet().size());
-//      }
-//    }
+        RccSched::__DebugCheckParentSetSize(v->id(), v->parents_.size());
+      }
+    }
+#endif
     callback();
   };
 

@@ -132,9 +132,10 @@ void RccCoord::Finish() {
     (int)ch->partition_ids_.size(),
     cmd_->id_,
     graph_.size());
-  TxnInfo& info = graph_.FindV(cmd_->id_)->Get();
+  RccVertex* v = graph_.FindV(cmd_->id_);
+  TxnInfo& info = v->Get();
   verify(ch->partition_ids_.size() == info.partition_.size());
-  info.union_status(TXN_CMT);
+  graph_.UpgradeStatus(v, TXN_CMT);
 
   verify(graph_.size() > 0);
 

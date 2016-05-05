@@ -10,6 +10,20 @@
 
 namespace rococo {
 
+map<txnid_t, int32_t> RccSched::__debug_xxx_s{};
+std::recursive_mutex RccSched::__debug_mutex_s{};
+void RccSched::__DebugCheckParentSetSize(txnid_t tid, int32_t sz) {
+#ifdef DEBUG_CODE
+  std::lock_guard<std::recursive_mutex> guard(__debug_mutex_s);
+  if (__debug_xxx_s.count(tid) > 0) {
+    auto s = __debug_xxx_s[tid];
+    verify(s == sz);
+  } else {
+    __debug_xxx_s[tid] = sz;
+  }
+#endif
+}
+
 RccSched::RccSched() : Scheduler(), waitlist_(), mtx_() {
   verify(dep_graph_ == nullptr);
   dep_graph_ = new RccGraph();
@@ -39,16 +53,18 @@ int RccSched::OnDispatch(const vector<SimpleCommand> &cmd,
                          RccGraph *graph,
                          const function<void()> &callback) {
   verify(graph);
-  RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(cmd[0].root_id_);
+  txnid_t txn_id = cmd[0].root_id_;
+  RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(txn_id);
   verify(dep_graph_->partition_id_ == partition_id_);
-  auto job = [&cmd, res, dtxn, callback, graph, output, this] () {
+  auto job = [&cmd, res, dtxn, callback, graph, output, this, txn_id] () {
     verify(cmd[0].partition_id_ == this->partition_id_);
     for (auto&c : cmd) {
       dtxn->DispatchExecute(c, res, &(*output)[c.inn_id()]);
     }
     dtxn->UpdateStatus(TXN_STD);
     int depth = 1;
-    auto sz = dep_graph_->MinItfrGraph(cmd[0].root_id_, graph, true, depth);
+    verify(cmd[0].root_id_ == txn_id);
+    auto sz = dep_graph_->MinItfrGraph(txn_id, graph, true, depth);
 //#ifdef DEBUG_CODE
     if (sz > 4) {
       Log_fatal("something is wrong, graph size %d", sz);
@@ -199,7 +215,9 @@ void RccSched::CheckWaitlist() {
       }
     } // else do nothing
 
-    if (tinfo.status() >= TXN_DCD && !tinfo.IsExecuted() ) {
+    if (tinfo.status() >= TXN_DCD &&
+        !tinfo.IsExecuted() &&
+        dep_graph_->AllAncCmt(v) ) {
       RccScc& scc = dep_graph_->FindSCC(v);
 #ifdef DEBUG_CODE
       for (auto vv : scc) {
@@ -220,7 +238,12 @@ void RccSched::CheckWaitlist() {
 #endif
 //          vv->Get().union_status(TXN_DCD);
         }
-        Execute(scc);
+        if (FullyDispatched(scc)) {
+          Execute(scc);
+          for (auto v : scc) {
+            AddChildrenIntoWaitlist(v);
+          }
+        }
 //        check_again = true;
       } // else do nothing.
     } // else do nothing
@@ -228,13 +251,7 @@ void RccSched::CheckWaitlist() {
     // Adjust the waitlist.
     __DebugExamineGraphVerify(v);
     if (tinfo.status() >= TXN_DCD && tinfo.IsExecuted()) {
-      for (auto& child_pair : v->outgoing_) {
-        RccVertex* child_v = child_pair.first;
-        if (!child_v->Get().IsExecuted() &&
-            waitlist_.count(child_v) == 0) {
-          waitlist_.insert(child_v);
-        }
-      }
+      AddChildrenIntoWaitlist(v);
     }
 
     if (tinfo.IsExecuted() ||
@@ -270,6 +287,28 @@ void RccSched::CheckWaitlist() {
 //  }
 }
 
+void RccSched::AddChildrenIntoWaitlist(RccVertex* v) {
+  TxnInfo& tinfo = v->Get();
+  verify(tinfo.status() >= TXN_DCD && tinfo.IsExecuted());
+
+  for (auto& child_pair : v->outgoing_) {
+    RccVertex* child_v = child_pair.first;
+    if (!child_v->Get().IsExecuted() &&
+        waitlist_.count(child_v) == 0) {
+      waitlist_.insert(child_v);
+    }
+  }
+  for (RccVertex* child_v : v->removed_children_) {
+    if (!child_v->Get().IsExecuted() &&
+        waitlist_.count(child_v) == 0) {
+      waitlist_.insert(child_v);
+    }
+  }
+#ifdef DEBUG_CODE
+    fridge_.erase(v);
+#endif
+}
+
 void RccSched::__DebugExamineGraphVerify(RccVertex *v) {
 #ifdef DEBUG_CODE
   for (auto& pair : v->incoming_) {
@@ -295,13 +334,16 @@ void RccSched::__DebugExamineFridge() {
     if (tinfo.status() >= TXN_CMT) {
       verify(tinfo.graphs_for_inquire_.size() == 0);
     }
-
     if (tinfo.status() >= TXN_CMT) {
       if (AllAncCmt(v)) {
 //        verify(!tinfo.IsExecuted());
 //        verify(tinfo.IsDecided() || tinfo.IsAborted());
-        if (!tinfo.IsExecuted())
+        if (!tinfo.IsExecuted()) {
           in_wait_anc_exec++;
+        } else {
+          // why is this still in fridge?
+          verify(0);
+        }
       } else {
 //        RccScc& scc = dep_graph_->FindSCC(v);
 //        verify(!AllAncFns(scc));
@@ -409,8 +451,8 @@ bool RccSched::AllAncCmt(RccVertex *vertex) {
 void RccSched::Decide(const RccScc& scc) {
   for (auto v : scc) {
     TxnInfo& info = v->Get();
-    info.union_status(TXN_DCD);
-    Log_info("txnid: %llx, parent size: %d", v->id(), v->parents_.size());
+    dep_graph_->UpgradeStatus(v, TXN_DCD);
+//    Log_info("txnid: %llx, parent size: %d", v->id(), v->parents_.size());
   }
 }
 
@@ -442,34 +484,36 @@ void RccSched::TriggerCheckAfterAggregation(RccGraph &graph) {
     verify(v != nullptr);
 #ifdef DEBUG_CODE
     // TODO, check the Sccs are the same.
-    if (rhs_v->Get().status() >= TXN_DCD) {
+    if (rhs_v->Get().status() >= TXN_DCD && dep_graph_->AllAncCmt(rhs_v)) {
       RccScc& rhs_scc = graph.FindSCC(rhs_v);
       for (auto vv : rhs_scc) {
         verify(vv->Get().status() >= TXN_DCD);
       }
-      RccScc& scc = dep_graph_->FindSCC(v);
-      auto sz = scc.size();
-      auto rhs_sz = rhs_scc.size();
-      verify(sz >= rhs_sz);
-      verify(sz == rhs_sz);
-      for (auto vv : rhs_scc) {
-        bool r = std::any_of(scc.begin(),
-                             scc.end(),
-                             [vv] (RccVertex* vvv) -> bool {
-                               return vvv->id() == vv->id();
-                             }
-        );
-        verify(r);
+      if (AllAncCmt(v)) {
+        RccScc& scc = dep_graph_->FindSCC(v);
+        auto sz = scc.size();
+        auto rhs_sz = rhs_scc.size();
+        verify(sz >= rhs_sz);
+        verify(sz == rhs_sz);
+        for (auto vv : rhs_scc) {
+          bool r = std::any_of(scc.begin(),
+                               scc.end(),
+                               [vv] (RccVertex* vvv) -> bool {
+                                 return vvv->id() == vv->id();
+                               }
+          );
+          verify(r);
+        }
       }
     }
-
-    if (v->Get().status() >= TXN_DCD) {
-      RccScc& scc = dep_graph_->FindSCC(v);
-      for (auto vv : scc) {
-        auto s = vv->Get().status();
-        verify(s >= TXN_DCD);
-      }
-    }
+//
+//    if (v->Get().status() >= TXN_DCD) {
+//      RccScc& scc = dep_graph_->FindSCC(v);
+//      for (auto vv : scc) {
+//        auto s = vv->Get().status();
+//        verify(s >= TXN_DCD);
+//      }
+//    }
     if (v->Get().status() >= TXN_CMT && AllAncCmt(v)) {
       dep_graph_->FindSCC(v);
     }
@@ -501,6 +545,20 @@ bool RccSched::HasAbortedAncestor(const RccScc& scc) {
   dep_graph_->TraversePred(scc[0], -1, func);
   return has_aborted;
 };
+
+bool RccSched::FullyDispatched(const RccScc& scc) {
+  bool ret = std::all_of(scc.begin(),
+                         scc.end(),
+                         [this] (RccVertex *v) {
+                           bool r = true;
+                           TxnInfo& tinfo = v->Get();
+                           if (tinfo.Involve(partition_id_)) {
+                             r = tinfo.fully_dispatched;
+                           }
+                           return r;
+                         });
+  return ret;
+}
 
 bool RccSched::AllAncFns(const RccScc& scc) {
   verify(scc.size() > 0);
