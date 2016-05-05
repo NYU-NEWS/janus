@@ -124,6 +124,7 @@ void RccCoord::DispatchAck(phase_t phase,
 
 /** caller should be thread safe */
 void RccCoord::Finish() {
+  verify(0);
   TxnCommand *ch = (TxnCommand*) cmd_;
   // commit or abort piece
   Log_debug(

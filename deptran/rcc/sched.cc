@@ -159,8 +159,8 @@ void RccSched::AnswerIfInquired(TxnInfo &tinfo) {
 void RccSched::CheckWaitlist() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 #ifdef DEBUG_CODE
-  Log_info("start to check waitlist, length: %d, fridge size: %d",
-           (int)waitlist_.size(), (int)fridge_.size());
+//  Log_info("start to check waitlist, length: %d, fridge size: %d",
+//           (int)waitlist_.size(), (int)fridge_.size());
 #endif
   while (waitlist_.size() > 0) {
 //    Log_info("checking loop, length: %d, fridge size: %d",
@@ -293,6 +293,10 @@ void RccSched::__DebugExamineFridge() {
   for (RccVertex* v : fridge_) {
     TxnInfo& tinfo = v->Get();
     if (tinfo.status() >= TXN_CMT) {
+      verify(tinfo.graphs_for_inquire_.size() == 0);
+    }
+
+    if (tinfo.status() >= TXN_CMT) {
       if (AllAncCmt(v)) {
 //        verify(!tinfo.IsExecuted());
 //        verify(tinfo.IsDecided() || tinfo.IsAborted());
@@ -320,7 +324,7 @@ void RccSched::__DebugExamineFridge() {
                " in_wait_anc_exec: %d, in wait anc cmt: %d, else %d",
            sz, in_ask, in_wait_self_cmt, in_wait_anc_exec, in_wait_anc_cmt,
            sz - in_ask - in_wait_anc_exec - in_wait_anc_cmt - in_wait_self_cmt);
-  Log_info("wait for myself commit: %llx par: %d", id, (int)partition_id_);
+//  Log_info("wait for myself commit: %llx par: %d", id, (int)partition_id_);
 #endif
 }
 
@@ -406,6 +410,7 @@ void RccSched::Decide(const RccScc& scc) {
   for (auto v : scc) {
     TxnInfo& info = v->Get();
     info.union_status(TXN_DCD);
+    Log_info("txnid: %llx, parent size: %d", v->id(), v->parents_.size());
   }
 }
 
@@ -530,7 +535,7 @@ void RccSched::Execute(const RccScc& scc) {
 
 void RccSched::Execute(TxnInfo& info) {
   info.executed_ = true;
-  info.union_status(TXN_DCD); // FIXME, remove this.
+//  info.union_status(TXN_DCD); // FIXME, remove this.
   verify(info.IsDecided());
   RccDTxn *dtxn = (RccDTxn *) GetDTxn(info.id());
   if (dtxn == nullptr) return;
@@ -541,6 +546,7 @@ void RccSched::Execute(TxnInfo& info) {
 }
 
 void RccSched::Abort(const RccScc& scc) {
+  verify(0);
   verify(scc.size() > 0);
   for (auto v : scc) {
     TxnInfo& info = v->Get();

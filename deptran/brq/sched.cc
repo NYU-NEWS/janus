@@ -54,11 +54,12 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
   dtxn->ptr_output_repy_ = output;
 
   if (info.IsExecuted()) {
-    verify(info.status() > TXN_CMT);
+    verify(info.status() >= TXN_DCD);
+    verify(info.graphs_for_inquire_.size() == 0);
     *res = SUCCESS;
     callback();
   } else if (info.IsAborted()) {
-//    verify(0);
+    verify(0);
     *res = REJECT;
     callback();
   } else {
@@ -117,6 +118,7 @@ int BrqSched::OnInquire(cmdid_t cmd_id,
     info.callbacks_for_inquire_.push_back(cb_wrapper);
     verify(info.graphs_for_inquire_.size() ==
         info.callbacks_for_inquire_.size());
+    waitlist_.insert(v);
   }
 
 }

@@ -384,6 +384,7 @@ void RccDTxn::TraceDep(Row* row, column_id_t col_id, int hint_flag) {
   }
 #ifdef DEBUG_CODE
   verify(graph_);
+  verify(tv_->Get().status() < TXN_CMT);
 //  RccScc& scc = graph_->FindSCC(tv_);
 //  if (scc.size() > 1 && graph_->HasICycle(scc)) {
 //    verify(0);

@@ -112,6 +112,7 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
     set<RccVertex*> vertex_set{source};
     SelectGraph(vertex_set, new_graph);
   } else {
+    verify(0);
 // Log_debug("compute for sub graph, tid: %llx parent size: %d",
 //     tid, (int) source->from_.size());
 //  auto &ret_set = gra_m.ret_set;
@@ -157,21 +158,21 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
       }
     }
   }
-//
-//#ifdef DEBUG_CODE
-//  for (auto& pair : new_graph->vertex_index_) {
-//    RccVertex* rhs_v = pair.second;
-//    RccVertex* source = FindV(rhs_v->id());
-//    if (source->Get().status() >= TXN_CMT) {
-//      RccVertex* target = new_graph->FindV(source->id());
-//      verify(target == rhs_v);
-//      verify(target);
-//      auto p1 = source->GetParentSet();
-//      auto p2 = target->GetParentSet();
-//      verify(p1 == p2);
-//    }
-//  }
-//#endif
+
+#ifdef DEBUG_CODE
+  for (auto& pair : new_graph->vertex_index_) {
+    RccVertex* rhs_v = pair.second;
+    RccVertex* source = FindV(rhs_v->id());
+    if (rhs_v->Get().status() >= TXN_CMT) {
+      RccVertex* target = new_graph->FindV(source->id());
+      verify(target == rhs_v);
+      verify(target);
+      auto p1 = source->GetParentSet();
+      auto p2 = target->GetParentSet();
+      verify(p1 == p2);
+    }
+  }
+#endif
 
   auto sz = new_graph->size();
   Log_debug("return graph size: %llx", sz);
@@ -281,8 +282,8 @@ RccVertex* RccGraph::AggregateVertex(RccVertex *rhs_v) {
   if (status1 >= TXN_CMT && status2 >= TXN_CMT) {
     // they should have the same parents.
     if (parent_set1 != parent_set2) {
-//      Log_fatal("failed in aggregating, txnid: %llx, parent size: %d",
-//                rhs_v->id(), (int) rhs_v->parents_.size());
+      Log_fatal("failed in aggregating, txnid: %llx, parent size: %d",
+                rhs_v->id(), (int) rhs_v->parents_.size());
       verify(0);
     }
   }
@@ -292,6 +293,8 @@ RccVertex* RccGraph::AggregateVertex(RccVertex *rhs_v) {
     vertex->parents_.insert(rhs_v->parents_.begin(), rhs_v->parents_.end());
   }
   if (status1 < TXN_CMT && status2 >= TXN_CMT) {
+    Log_info("aggregating, txnid: %llx, parent size: %d",
+              rhs_v->id(), (int) rhs_v->parents_.size());
     vertex->parents_ = rhs_v->parents_;
   }
 #ifdef DEBUG_CODE
