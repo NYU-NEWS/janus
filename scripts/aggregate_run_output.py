@@ -38,7 +38,7 @@ def extract_data(txn_data, file_data):
             etxn = experiment[txn]
             for l in labels:
                 row.append(etxn[l])
-            latencies = etxn['att_latency']
+            latencies = etxn['latency']
             global lat_labels
             lat_labels = sorted(latencies.keys())
             for l in lat_labels:
