@@ -31,14 +31,18 @@ EC2_REGIONS = {
         #'ami_image': 'ami-63d03903',
         'ami_image': 'ami-bb6f85db'
     },
-    
+    'us-west-1': {
+        'location': 'California',
+        'endpoint': 'ec2.us-west-1.amazonaws.com',
+        'ami_image': 'ami-9c730afc'
+    },
+
     # these regions are not used
     'ap-southeast-1': {},
     'ap-southeast-2': {},
     'ap-northeast-1': {},
     'us-east-1': {},
     'sa-east-1': {},
-    'us-west-1': {},
 }
 
 INSTANCE_TYPE = 't2.micro'
@@ -245,7 +249,7 @@ def terminate_instances():
 STATE_RUNNING = 16
 @task
 @hosts('localhost')
-def wait_for_all_servers(timeout=300):
+def wait_for_all_servers(timeout=600):
     n = 5 
     d = 0
     start = time.time()
@@ -267,6 +271,7 @@ def wait_for_all_servers(timeout=300):
                         sys_status = res['InstanceStatuses'][0]['SystemStatus']['Status']
                         inst_status = res['InstanceStatuses'][0]['InstanceStatus']['Status']
                         if  sys_status != 'ok' or inst_status != 'ok':
+                            logging.info("instance %s not ready", instance.id)
                             done = False
                     else:
                         done = False
