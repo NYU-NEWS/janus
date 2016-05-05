@@ -11,23 +11,39 @@ class Vertex {
  private:
   std::shared_ptr<T> data_{};
  public:
-  map<uint64_t, int8_t> parents_{};
+  set<uint64_t> parents_{};
   map<Vertex *, int8_t> outgoing_{};
   map<Vertex *, int8_t> incoming_{};
   bool walked_{false}; // flag for traversing.
   std::shared_ptr<vector<Vertex*>> scc_{};
 
-  Vertex(uint64_t id) { data_ = std::shared_ptr<T>(new T(id)); }
-  Vertex(Vertex<T> &v) { data_ = v.data_;}
+  Vertex(uint64_t id) {
+    data_ = std::shared_ptr<T>(new T(id));
+  }
+  Vertex(Vertex<T> &v) {
+    data_ = v.data_;
+  }
+  set<uint64_t>& GetParentSet() {
+#ifdef DEBUG_CODE
+    set<uint64_t> ret;
+    for (auto& pair : incoming_) {
+      ret.insert(pair.first->id());
+    }
+    verify(ret == parents_);
+#endif
+    return parents_;
+  }
 
-  void AddEdge(Vertex<T> *other, int8_t weight) {
+  void AddChildEdge(Vertex<T> *other, int8_t weight) {
     // printf("add edge: %d -> %d\n", this->id(), other->id());
     outgoing_[other] |= weight;
     other->incoming_[this] |= weight;
+    other->parents_.insert(other->id());
   }
 
   void AddParentEdge(Vertex<T> *other, int8_t weight) {
     // printf("add edge: %d -> %d\n", this->id(), other->id());
+    parents_.insert(other->id());
     incoming_[other] |= weight;
     other->outgoing_[this] |= weight;
   }
@@ -70,11 +86,13 @@ class Vertex {
 };
 
 template <typename T>
+using Scc = vector<Vertex<T>*>;
+
+template <typename T>
 class Graph : public Marshallable {
  public:
   typedef std::vector<Vertex<T> *> VertexList;
   std::unordered_map<uint64_t, Vertex<T> *> vertex_index_ = {};
-
   Graph() {}
 
   Graph(const VertexList &vertices) { AddV(vertices); }
@@ -113,6 +131,9 @@ class Graph : public Marshallable {
     auto v = new Vertex<T>(id);
     AddV(v);
     verify(v->id() == id);
+#ifdef DEBUG_CODE
+    verify(FindV(id));
+#endif
     return v;
   }
 
@@ -145,9 +166,9 @@ class Graph : public Marshallable {
 
   // depth first search.
   int TraversePred(Vertex<T> *vertex,
-                    int64_t depth,
-                    function<int(Vertex<T> *)> &func,
-                    vector<Vertex<T> *> *walked = nullptr) {
+                   int64_t depth,
+                   function<int(Vertex<T> *)> &func,
+                   vector<Vertex<T> *> *walked = nullptr) {
     bool to_clean = false;
     if (walked == nullptr) {
       to_clean = true;
@@ -162,8 +183,8 @@ class Graph : public Marshallable {
     walked->push_back(vertex);
 
     int ret = SearchHint::Ok;
-    for (auto pair : vertex->incoming_) {
-      auto v = pair.first;
+    for (auto& pair : vertex->incoming_) {
+      auto& v = pair.first;
       ret = func(v);
       if (ret == SearchHint::Exit) {
         break;
@@ -197,8 +218,8 @@ class Graph : public Marshallable {
       // already traversed.
       return true;
 
-    for (auto pair : vertex->incoming_) {
-      auto v = pair.first;
+    for (auto& pair : vertex->incoming_) {
+      auto& v = pair.first;
       if (!func(v))
         return false; // traverse aborted by users.
       if (depth < 0 || depth > 0) {
@@ -219,9 +240,9 @@ class Graph : public Marshallable {
       // already traversed.
       return true;
 
-    for (auto pair : vertex->outgoing_) {
-      auto v = pair.first;
-      auto e = pair.second;
+    for (auto& pair : vertex->outgoing_) {
+      auto& v = pair.first;
+      auto& e = pair.second;
       if (edge_type != EDGE_ALL && edge_type != e)
         continue;
       if (!func(v))
@@ -399,7 +420,7 @@ class Graph : public Marshallable {
     return ret2;
   }
 
-  std::vector<Vertex<T> *>& FindSCC(Vertex<T> *vertex) {
+  Scc<T>& FindSCC(Vertex<T> *vertex) {
     if (vertex->scc_) {
       // already computed.
       return *vertex->scc_;
@@ -408,13 +429,16 @@ class Graph : public Marshallable {
     map<Vertex<T> *, int> lowlinks;
     int index = 0;
     std::vector<Vertex<T> *> S;
-
-    vertex->scc_.reset(new vector<Vertex<T>*>);
-    *vertex->scc_ = StrongConnect(vertex, indexes, lowlinks, index, S);
-    return *vertex->scc_;
+    std::shared_ptr<Scc<T>> ptr(new Scc<T>);
+    *ptr = StrongConnect(vertex, indexes, lowlinks, index, S);
+    for (Vertex<T>* v : *ptr) {
+      verify(!v->scc_); // FIXME
+      v->scc_ = ptr;
+    }
+    return *ptr;
   }
 
-  std::vector<Vertex<T> *> FindSCC(uint64_t id) {
+  Scc<T>& FindSCC(uint64_t id) {
     std::vector<int> ret;
     Vertex<T> *v = this->FindV(id);
     verify(v != NULL);
@@ -556,6 +580,7 @@ class Graph : public Marshallable {
         Vertex<T> *child_v = ref[child_vid];
         v->outgoing_[child_v] = weight;
         child_v->incoming_[v] = weight;
+        child_v->parents_.insert(v->id());
       }
     }
 

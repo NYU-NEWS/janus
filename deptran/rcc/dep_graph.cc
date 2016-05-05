@@ -60,7 +60,7 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
     return 0;
   }
   if (source->Get().get_status() >= TXN_DCD) {
-    auto& scc = FindSCC(source);
+    RccScc& scc = FindSCC(source);
     set<RccVertex*> scc_set(scc.begin(), scc.end());
     for (auto vv : scc) {
       RccVertex* new_v = new_graph->FindOrCreateV(*vv);
@@ -73,6 +73,9 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
         }
       }
     }
+#ifdef DEBUG_CODE
+    verify(new_graph->size() == scc.size());
+#endif
   } else {
 // Log_debug("compute for sub graph, tid: %llx parent size: %d",
 //     tid, (int) source->from_.size());
@@ -119,6 +122,15 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
     }
   }
 
+#ifdef DEBUG_CODE
+  if (source->Get().status() >= TXN_CMT) {
+    RccVertex* target = new_graph->FindV(source->id());
+    verify(target);
+    auto p1 = source->GetParentSet();
+    auto p2 = target->GetParentSet();
+//    verify(p1 == p2);
+  }
+#endif
 
   auto sz = new_graph->size();
   Log_debug("return graph size: %llx", sz);
@@ -144,34 +156,115 @@ bool RccGraph::operator== (RccGraph& rhs) const {
   return true;
 }
 
-void RccGraph::BuildEdgePointer(RccGraph &graph,
-                                map<txnid_t, RccVertex*>& index) {
-  for (auto &pair: graph.vertex_index_) {
+void RccGraph::RebuildEdgePointer(map<txnid_t, RccVertex*>& index) {
+  // TODO
+  for (auto& pair : index) {
     auto id = pair.first;
-    auto a_vertex = pair.second;
-    auto vertex = index[a_vertex->id()];
-    for (auto pair : a_vertex->incoming_) {
-      auto a_parent_vertex = pair.first;
-      auto weight = pair.second;
-      auto parent = index[a_parent_vertex->id()];
-      vertex->incoming_[parent] |= weight;
-      parent->outgoing_[vertex] |= weight;
+    RccVertex* v = pair.second;
+    // add pointers
+    for (auto& parent_id : v->parents_) {
+      RccVertex* parent_v = FindV(parent_id);
+      verify(parent_v);
+      v->incoming_[parent_v] = EDGE_D; // FIXME
+      parent_v->outgoing_[v] = EDGE_D; // FIXME
+    }
+    // remove pointers
+    for (auto it = v->incoming_.begin(); it != v->incoming_.end();) {
+      RccVertex* parent_v = it->first;
+      auto parent_id = parent_v->id();
+      if (v->parents_.count(parent_id) == 0) {
+        it = v->incoming_.erase(it);
+        auto n = parent_v->outgoing_.erase(v); // FIXME
+        verify(n > 0);
+      } else {
+        it++;
+      }
     }
   }
 }
 
-RccVertex* RccGraph::AggregateVertex(RccVertex *av) {
-  // create the dtxn if not exist.
-  auto vertex = FindOrCreateV(*av);
-  if (false) {
-//  if (vertex->data_ == av->data_) {
-    // skip
-  } else {
-    // add edges.
-    TxnInfo &info = vertex->Get();
-    TxnInfo &a_info = av->Get();
-    info.union_data(a_info); // TODO
+void RccGraph::BuildEdgePointer(RccGraph &graph,
+                                map<txnid_t, RccVertex*>& index) {
+  verify(0);
+  for (auto &pair: graph.vertex_index_) {
+    auto id = pair.first;
+    RccVertex* a_vertex = pair.second;
+    RccVertex* vertex = index[a_vertex->id()];
+
+#ifdef DEBUG_CODE
+    if (vertex->Get().get_status() >= TXN_CMT &&
+        a_vertex->Get().get_status() >= TXN_CMT) {
+      // they should have the same parents.
+      auto set1 = vertex->GetParentSet();
+      auto set2 = a_vertex->GetParentSet();
+      verify(set1 == set2);
+    }
+#endif
+    if (vertex->Get().status() < TXN_CMT &&
+        a_vertex->Get().status() >= TXN_CMT) {
+      for (auto pair : vertex->incoming_) {
+        RccVertex* parent_v = pair.first;
+        parent_v->outgoing_.erase(vertex); // FIXME check wait list still?
+      }
+      vertex->incoming_.clear();
+    }
+
+    if (vertex->Get().status() >= TXN_CMT &&
+        a_vertex->Get().status() < TXN_CMT) {
+      // do nothing
+    } else {
+      for (auto pair : a_vertex->incoming_) {
+        auto a_parent_vertex = pair.first;
+        auto weight = pair.second;
+        auto parent = index[a_parent_vertex->id()];
+        vertex->incoming_[parent] |= weight;
+        parent->outgoing_[vertex] |= weight;
+      }
+    }
   }
+}
+
+RccVertex* RccGraph::AggregateVertex(RccVertex *rhs_v) {
+  // create the dtxn if not exist.
+  RccVertex* vertex = FindOrCreateV(*rhs_v);
+  auto status1 = vertex->Get().get_status();
+  auto status2 = rhs_v->Get().get_status();
+  auto& parent_set1 = vertex->parents_;
+  auto& parent_set2 = rhs_v->parents_;
+#ifdef DEBUG_CODE
+  if (status2 >= TXN_CMT) {
+    Log_info("aggregating gt CMT, txnid: %llx, parent size: %d",
+             rhs_v->id(), (int) rhs_v->parents_.size());
+  }
+  if (status1 >= TXN_CMT &&
+      status2 >= TXN_CMT) {
+    // they should have the same parents.
+    if (parent_set1 != parent_set2) {
+//      Log_fatal("failed in aggregating, txnid: %llx, parent size: %d",
+//                av->id(), (int) av->parents_.size());
+    }
+  }
+#endif
+
+  if (status1 < TXN_CMT && status2 < TXN_CMT) {
+    vertex->parents_.insert(rhs_v->parents_.begin(), rhs_v->parents_.end());
+  }
+  if (status1 < TXN_CMT && status2 >= TXN_CMT) {
+    vertex->parents_ = rhs_v->parents_;
+  }
+#ifdef DEBUG_CODE
+  if (status1 >= TXN_CMT) {
+    // do nothing about edges.
+    if (status2 >= TXN_DCD) {
+      for (auto p : parent_set2) {
+        verify(parent_set1.count(p) > 0);
+      }
+    }
+  }
+#endif
+  TxnInfo &info = vertex->Get();
+  TxnInfo &a_info = rhs_v->Get();
+  info.union_data(a_info); // TODO
   return vertex;
 }
 
@@ -179,14 +272,65 @@ void RccGraph::Aggregate(RccGraph &graph) {
   // aggregate vertexes
   map<txnid_t, RccVertex*> index;
   for (auto& pair: graph.vertex_index_) {
-    verify(pair.first == pair.second->id());
-    auto vertex = this->AggregateVertex(pair.second);
+    RccVertex* rhs_v = pair.second;
+    verify(pair.first == rhs_v->id());
+    RccVertex* vertex = AggregateVertex(rhs_v);
     verify(vertex->id() == pair.second->id());
     verify(vertex_index_.count(vertex->id()) > 0);
     index[vertex->id()] = vertex;
   }
   // aggregate edges.
-  this->BuildEdgePointer(graph, index);
+  RebuildEdgePointer(index);
+
+#ifdef DEBUG_CODE
+  for (auto& pair: graph.vertex_index_) {
+    // TODO optimize here.
+    auto txnid = pair.first;
+    RccVertex* rhs_v = pair.second;
+    auto v = FindV(txnid);
+    verify(v != nullptr);
+    // TODO, check the Sccs are the same.
+    if (rhs_v->Get().status() >= TXN_DCD) {
+      verify(v->Get().status() >= TXN_DCD);
+      RccScc& rhs_scc = graph.FindSCC(rhs_v);
+      for (auto vv : rhs_scc) {
+        verify(vv->Get().status() >= TXN_DCD);
+      }
+      RccScc& scc = FindSCC(v);
+      auto sz = scc.size();
+      auto rhs_sz = rhs_scc.size();
+      if (sz != rhs_sz) {
+        // TODO
+        for (auto& vv : rhs_scc) {
+          auto vvv = FindV(vv->id());
+          verify(vvv->Get().status() >= TXN_DCD);
+        }
+        verify(0);
+      }
+//      verify(sz >= rhs_sz);
+//      verify(sz == rhs_sz);
+      for (auto vv : rhs_scc) {
+        bool r = std::any_of(scc.begin(),
+                             scc.end(),
+                             [vv] (RccVertex* vvv) -> bool {
+                               return vvv->id() == vv->id();
+                             }
+        );
+        verify(r);
+      }
+    }
+
+    if (v->Get().status() >= TXN_DCD) {
+      RccScc& scc = FindSCC(v);
+      for (auto vv : scc) {
+        auto s = vv->Get().status();
+        verify(s >= TXN_DCD);
+      }
+    }
+  }
+
+#endif
+//  this->BuildEdgePointer(graph, index);
 }
 
 

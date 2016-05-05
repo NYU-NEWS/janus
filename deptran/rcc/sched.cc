@@ -22,6 +22,17 @@ RccSched::~RccSched() {
   delete waitlist_checker_;
 }
 
+
+DTxn* RccSched::GetOrCreateDTxn(txnid_t tid, bool ro) {
+  RccDTxn* dtxn = (RccDTxn*) Scheduler::GetOrCreateDTxn(tid, ro);
+  if (dtxn->tv_ == nullptr) {
+    dep_graph_->FindOrCreateTxnInfo(tid, &dtxn->tv_);
+    dtxn->graph_ = dep_graph_;
+  }
+  verify(dtxn->graph_ != nullptr);
+  return dtxn;
+}
+
 int RccSched::OnDispatch(const vector<SimpleCommand> &cmd,
                          int32_t *res,
                          TxnOutput *output,
@@ -29,8 +40,6 @@ int RccSched::OnDispatch(const vector<SimpleCommand> &cmd,
                          const function<void()> &callback) {
   verify(graph);
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(cmd[0].root_id_);
-  dep_graph_->FindOrCreateTxnInfo(cmd[0].root_id_, &dtxn->tv_);
-  dtxn->graph_ == dep_graph_;
   verify(dep_graph_->partition_id_ == partition_id_);
   auto job = [&cmd, res, dtxn, callback, graph, output, this] () {
     verify(cmd[0].partition_id_ == this->partition_id_);
@@ -125,7 +134,7 @@ int RccSched::OnInquire(cmdid_t cmd_id,
 
 }
 
-void RccSched::CheckInquired(TxnInfo& tinfo) {
+void RccSched::AnswerIfInquired(TxnInfo &tinfo) {
   // reply inquire requests if possible.
   auto sz1 = tinfo.graphs_for_inquire_.size();
   auto sz2 = tinfo.callbacks_for_inquire_.size();
@@ -162,12 +171,19 @@ void RccSched::CheckWaitlist() {
 //  for (RccVertex *v : waitlist_) {
     // TODO minimize the length of the waitlist.
     TxnInfo& tinfo = v->Get();
-    CheckInquired(tinfo);
+    AnswerIfInquired(tinfo);
     InquireAboutIfNeeded(tinfo); // inquire about unknown transaction.
     if (tinfo.status() >= TXN_CMT && tinfo.status() < TXN_DCD) {
       if (AllAncCmt(v)) {
 //        check_again = true;
-        Decide(dep_graph_->FindSCC(v));
+        RccScc& scc = dep_graph_->FindSCC(v);
+        Decide(scc);
+#ifdef DEBUG_CODE
+        for(auto vv : scc) {
+          auto s = vv->Get().status();
+          verify(s >= TXN_DCD);
+        }
+#endif
       } else {
         // else do nothing
 #ifdef DEBUG_CODE
@@ -185,6 +201,12 @@ void RccSched::CheckWaitlist() {
 
     if (tinfo.status() >= TXN_DCD && !tinfo.IsExecuted() ) {
       RccScc& scc = dep_graph_->FindSCC(v);
+#ifdef DEBUG_CODE
+      for (auto vv : scc) {
+        auto s = vv->Get().status();
+        verify(s >= TXN_DCD);
+      }
+#endif
       if (scc.size() > 1 && HasICycle(scc)) {
         Abort(scc);
       } else if (HasAbortedAncestor(scc)) {
@@ -194,9 +216,9 @@ void RccSched::CheckWaitlist() {
         for (auto vv : scc) {
 #ifdef DEBUG_CODE
           verify(AllAncCmt(vv));
-          verify(vv->Get().get_status() >= TXN_DCD);
+          verify(vv->Get().status() >= TXN_DCD);
 #endif
-          vv->Get().union_status(TXN_DCD);
+//          vv->Get().union_status(TXN_DCD);
         }
         Execute(scc);
 //        check_again = true;
@@ -406,15 +428,50 @@ bool RccSched::HasICycle(const RccScc& scc) {
 };
 
 void RccSched::TriggerCheckAfterAggregation(RccGraph &graph) {
-  bool check=false;
+  bool check = false;
   for (auto& pair: graph.vertex_index_) {
     // TODO optimize here.
     auto txnid = pair.first;
+    RccVertex* rhs_v = pair.second;
     auto v = dep_graph_->FindV(txnid);
     verify(v != nullptr);
-    // if (v->Get().status() >= TXN_CMT)
+#ifdef DEBUG_CODE
+    // TODO, check the Sccs are the same.
+    if (rhs_v->Get().status() >= TXN_DCD) {
+      RccScc& rhs_scc = graph.FindSCC(rhs_v);
+      for (auto vv : rhs_scc) {
+        verify(vv->Get().status() >= TXN_DCD);
+      }
+      RccScc& scc = dep_graph_->FindSCC(v);
+      auto sz = scc.size();
+      auto rhs_sz = rhs_scc.size();
+      verify(sz >= rhs_sz);
+      verify(sz == rhs_sz);
+      for (auto vv : rhs_scc) {
+        bool r = std::any_of(scc.begin(),
+                             scc.end(),
+                             [vv] (RccVertex* vvv) -> bool {
+                               return vvv->id() == vv->id();
+                             }
+        );
+        verify(r);
+      }
+    }
+
+    if (v->Get().status() >= TXN_DCD) {
+      RccScc& scc = dep_graph_->FindSCC(v);
+      for (auto vv : scc) {
+        auto s = vv->Get().status();
+        verify(s >= TXN_DCD);
+      }
+    }
+    if (v->Get().status() >= TXN_CMT && AllAncCmt(v)) {
+      dep_graph_->FindSCC(v);
+    }
+#endif
+//    if (v->Get().status() >= TXN_CMT)
+    check = true;
     waitlist_.insert(v);
-    check=true;
   }
   if (check)
     CheckWaitlist();

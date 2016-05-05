@@ -333,6 +333,7 @@ bool RccDTxn::ReadColumn(mdb::Row *row,
   return true;
 }
 
+
 bool RccDTxn::WriteColumn(Row *row,
                           column_id_t col_id,
                           const Value &value,
@@ -382,10 +383,11 @@ void RccDTxn::TraceDep(Row* row, column_id_t col_id, int hint_flag) {
     verify(0);
   }
 #ifdef DEBUG_CODE
-  RccScc& scc = graph_->FindSCC(tv_);
-  if (scc.size() > 1 && graph_->HasICycle(scc)) {
+  verify(graph_);
+//  RccScc& scc = graph_->FindSCC(tv_);
+//  if (scc.size() > 1 && graph_->HasICycle(scc)) {
 //    verify(0);
-  }
+//  }
 #endif
 }
 

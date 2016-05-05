@@ -27,7 +27,7 @@ DTxn* Scheduler::CreateDTxn(i64 tid, bool ro) {
   return dtxn;
 }
 
-DTxn* Scheduler::GetOrCreateDTxn(i64 tid, bool ro) {
+DTxn* Scheduler::GetOrCreateDTxn(txnid_t tid, bool ro) {
   auto it = dtxns_.find(tid);
   if (it == dtxns_.end()) {
     return CreateDTxn(tid, ro);

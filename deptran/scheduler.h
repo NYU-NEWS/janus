@@ -44,7 +44,7 @@ class Scheduler {
   Coordinator*CreateRepCoord();
   DTxn *GetDTxn(i64 tid);
   DTxn *CreateDTxn(i64 tid, bool ro = false);
-  DTxn *GetOrCreateDTxn(i64 tid, bool ro = false);
+  virtual DTxn *GetOrCreateDTxn(txnid_t tid, bool ro = false);
   void DestroyDTxn(i64 tid);
 
   Executor* GetExecutor(txnid_t txn_id);

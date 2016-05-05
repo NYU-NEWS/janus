@@ -16,15 +16,12 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
   if (RandomGenerator::rand(1, 2000) <= 1)
     Log_info("on pre-accept graph size: %d", graph.size());
   verify(txn_id > 0);
+  verify(cmds[0].root_id_ == txn_id);
   dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
   TriggerCheckAfterAggregation(const_cast<RccGraph&>(graph));
   // TODO FIXME
   // add interference based on cmds.
-  RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(cmds[0].root_id_);
-  if (dtxn->tv_ == nullptr) {
-    dep_graph_->FindOrCreateTxnInfo(cmds[0].root_id_, &dtxn->tv_);
-    dtxn->graph_ = dep_graph_;
-  }
+  RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(txn_id);
   if (dtxn->phase_ < PHASE_RCC_DISPATCH) {
     for (auto& c: cmds) {
       map<int32_t, Value> output;
@@ -49,15 +46,12 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
   // union the graph into dep graph
   RccDTxn *dtxn = (RccDTxn*) GetDTxn(cmd_id);
   verify(dtxn != nullptr);
-
-  auto v = dep_graph_->FindV(cmd_id);
-  verify(v != nullptr);
+  verify(dtxn->tv_ != nullptr);
+  auto v = dtxn->tv_;
   TxnInfo& info = v->Get();
 
   verify(dtxn->ptr_output_repy_ == nullptr);
   dtxn->ptr_output_repy_ = output;
-
-
 
   if (info.IsExecuted()) {
     verify(info.status() > TXN_CMT);
@@ -98,20 +92,29 @@ int BrqSched::OnInquire(cmdid_t cmd_id,
                         const function<void()> &callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(cmd_id);
-  dep_graph_->FindOrCreateTxnInfo(cmd_id, &dtxn->tv_);
-  dtxn->graph_ = dep_graph_;
   RccVertex* v = dtxn->tv_;
   verify(v != nullptr);
   TxnInfo& info = v->Get();
   //register an event, triggered when the status >= COMMITTING;
   verify (info.Involve(partition_id_));
 
+  auto cb_wrapper = [callback, graph] () {
+//    for (auto pair : graph->vertex_index_) {
+//      RccVertex* v = pair.second;
+//      if (v->Get().status() >= TXN_CMT) {
+//        Log_info("inquire ack, txnid: %llx, parent size: %d",
+//                 pair.first, v->GetParentSet().size());
+//      }
+//    }
+    callback();
+  };
+
   if (info.status() >= TXN_CMT) {
     dep_graph_->MinItfrGraph(cmd_id, graph);
-    callback();
+    cb_wrapper();
   } else {
     info.graphs_for_inquire_.push_back(graph);
-    info.callbacks_for_inquire_.push_back(callback);
+    info.callbacks_for_inquire_.push_back(cb_wrapper);
     verify(info.graphs_for_inquire_.size() ==
         info.callbacks_for_inquire_.size());
   }

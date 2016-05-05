@@ -53,8 +53,8 @@ class RccGraph : public Graph<TxnInfo> {
 
   void BuildEdgePointer(RccGraph &graph,
                         map<txnid_t, RccVertex*>& index);
-
-  RccVertex* AggregateVertex(RccVertex *av);
+  void RebuildEdgePointer(map<txnid_t, RccVertex*>& index);
+  RccVertex* AggregateVertex(RccVertex *rhs_v);
 
   void Aggregate(RccGraph& graph);
 

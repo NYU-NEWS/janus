@@ -26,6 +26,8 @@ class RccSched : public Scheduler {
   RccSched();
   virtual ~RccSched();
 
+  DTxn* GetOrCreateDTxn(txnid_t tid, bool ro = false) override ;
+
   virtual void SetPartitionId(parid_t par_id) {
     partition_id_ = par_id;
     dep_graph_->partition_id_ = par_id;
@@ -51,7 +53,7 @@ class RccSched : public Scheduler {
 
   void InquireAbout(Vertex<TxnInfo> *av);
   void InquireAboutIfNeeded(TxnInfo &info);
-  void CheckInquired(TxnInfo& tinfo);
+  void AnswerIfInquired(TxnInfo &tinfo);
   void CheckWaitlist();
   void InquireAck(cmdid_t cmd_id, RccGraph& graph);
   void TriggerCheckAfterAggregation(RccGraph &graph);
