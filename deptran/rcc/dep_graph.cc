@@ -59,6 +59,7 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
   if (source->incoming_.size() == 0 && quick) {
     return 0;
   }
+  verify(depth == 1);
   if (source->Get().get_status() >= TXN_DCD) {
     RccScc& scc = FindSCC(source);
     set<RccVertex*> scc_set(scc.begin(), scc.end());
@@ -240,8 +241,8 @@ RccVertex* RccGraph::AggregateVertex(RccVertex *rhs_v) {
       status2 >= TXN_CMT) {
     // they should have the same parents.
     if (parent_set1 != parent_set2) {
-//      Log_fatal("failed in aggregating, txnid: %llx, parent size: %d",
-//                av->id(), (int) av->parents_.size());
+      Log_fatal("failed in aggregating, txnid: %llx, parent size: %d",
+                rhs_v->id(), (int) rhs_v->parents_.size());
     }
   }
 #endif

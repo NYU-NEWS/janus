@@ -110,7 +110,7 @@ int BrqSched::OnInquire(cmdid_t cmd_id,
   };
 
   if (info.status() >= TXN_CMT) {
-    dep_graph_->MinItfrGraph(cmd_id, graph);
+    dep_graph_->MinItfrGraph(cmd_id, graph, false, 1);
     cb_wrapper();
   } else {
     info.graphs_for_inquire_.push_back(graph);
