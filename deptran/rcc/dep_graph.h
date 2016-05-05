@@ -57,7 +57,7 @@ class RccGraph : public Graph<TxnInfo> {
   RccVertex* AggregateVertex(RccVertex *rhs_v);
 
   void Aggregate(RccGraph& graph);
-
+  void SelectGraph(set<RccVertex*> vertexes, RccGraph* new_graph);
 //  void union_txn_graph(Graph <TxnInfo> &gra) {
 //    txn_gra_.Aggregate(gra, true);
 //  }

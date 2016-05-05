@@ -47,6 +47,46 @@ void RccGraph::FindOrCreateTxnInfo(txnid_t txn_id,
   txn_info.graph_ = this;
 }
 
+void RccGraph::SelectGraph(set<RccVertex*> vertexes, RccGraph* new_graph) {
+  for (auto v : vertexes) {
+    RccVertex* new_v = new_graph->FindOrCreateV(*v);
+    for (auto &kv: v->incoming_) {
+      RccVertex* parent_v = kv.first;
+      auto weight = kv.second;
+      RccVertex* new_parent_v = nullptr;
+      if (vertexes.count(parent_v) > 0) {
+        new_parent_v = new_graph->FindOrCreateV(*parent_v);
+      } else {
+        new_parent_v = new_graph->FindOrCreateV(parent_v->id());
+        verify(new_parent_v->Get().status() == TXN_UKN);
+      }
+      new_v->AddParentEdge(new_parent_v, weight);
+    }
+#ifdef DEBUG_CODE
+    if (v->Get().status() >- TXN_CMT) {
+      auto& p1 = v->GetParentSet();
+      auto& p2 = v->GetParentSet();
+      verify(p1 == p2);
+    }
+#endif
+  }
+
+#ifdef DEBUG_CODE
+  for (auto& pair : new_graph->vertex_index_) {
+    RccVertex* rhs_v = pair.second;
+    RccVertex* source = FindV(rhs_v->id());
+    if (vertexes.count(source) > 0 && source->Get().status() >= TXN_CMT) {
+      RccVertex* target = new_graph->FindV(source->id());
+      verify(target == rhs_v);
+      verify(target);
+      auto p1 = source->GetParentSet();
+      auto p2 = target->GetParentSet();
+      verify(p1 == p2);
+    }
+  }
+#endif
+}
+
 uint64_t RccGraph::MinItfrGraph(uint64_t tid,
                                 RccGraph* new_graph,
                                 bool quick,
@@ -62,21 +102,15 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
   verify(depth == 1);
   if (source->Get().get_status() >= TXN_DCD) {
     RccScc& scc = FindSCC(source);
-    set<RccVertex*> scc_set(scc.begin(), scc.end());
-    for (auto vv : scc) {
-      RccVertex* new_v = new_graph->FindOrCreateV(*vv);
-      for (auto &kv: vv->incoming_) {
-        auto parent_v = kv.first;
-        auto weight = kv.second;
-        if (scc_set.count(parent_v) > 0) {
-          RccVertex* new_parent_v = new_graph->FindOrCreateV(*parent_v);
-          new_v->AddParentEdge(new_parent_v, weight);
-        }
-      }
-    }
+    set<RccVertex*> vertex_set{};
+    vertex_set.insert(scc.begin(), scc.end());
+    SelectGraph(vertex_set, new_graph);
 #ifdef DEBUG_CODE
-    verify(new_graph->size() == scc.size());
+    verify(new_graph->size() >= scc.size());
 #endif
+  } else if (depth == 1) {
+    set<RccVertex*> vertex_set{source};
+    SelectGraph(vertex_set, new_graph);
   } else {
 // Log_debug("compute for sub graph, tid: %llx parent size: %d",
 //     tid, (int) source->from_.size());
@@ -99,9 +133,9 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
         if (parent_v == v) {
           verify(0); // or continue?
         }
-        if (parent_txn.status() >= TXN_DCD || parent_txn.IsExecuted()) {
-          continue;
-        }
+//        if (parent_txn.status() >= TXN_DCD || parent_txn.IsExecuted()) {
+//          continue;
+//        }
         if (searched_set.find(parent_v) != searched_set.end()) {
           continue;
         }
@@ -113,6 +147,7 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
           verify(tinfo.status() == TXN_UKN);
           new_v->AddParentEdge(new_parent_v, weight);
         } else if (depth == -1) {
+          verify(0);
           RccVertex* new_parent_v = new_graph->FindOrCreateV(*parent_v);
           new_v->AddParentEdge(new_parent_v, weight);
           search_stack.push_back(parent_v);
@@ -122,16 +157,21 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
       }
     }
   }
-
-#ifdef DEBUG_CODE
-  if (source->Get().status() >= TXN_CMT) {
-    RccVertex* target = new_graph->FindV(source->id());
-    verify(target);
-    auto p1 = source->GetParentSet();
-    auto p2 = target->GetParentSet();
-//    verify(p1 == p2);
-  }
-#endif
+//
+//#ifdef DEBUG_CODE
+//  for (auto& pair : new_graph->vertex_index_) {
+//    RccVertex* rhs_v = pair.second;
+//    RccVertex* source = FindV(rhs_v->id());
+//    if (source->Get().status() >= TXN_CMT) {
+//      RccVertex* target = new_graph->FindV(source->id());
+//      verify(target == rhs_v);
+//      verify(target);
+//      auto p1 = source->GetParentSet();
+//      auto p2 = target->GetParentSet();
+//      verify(p1 == p2);
+//    }
+//  }
+//#endif
 
   auto sz = new_graph->size();
   Log_debug("return graph size: %llx", sz);
@@ -181,6 +221,7 @@ void RccGraph::RebuildEdgePointer(map<txnid_t, RccVertex*>& index) {
         it++;
       }
     }
+    verify(v->parents_.size() == v->incoming_.size());
   }
 }
 
@@ -230,19 +271,19 @@ RccVertex* RccGraph::AggregateVertex(RccVertex *rhs_v) {
   RccVertex* vertex = FindOrCreateV(*rhs_v);
   auto status1 = vertex->Get().get_status();
   auto status2 = rhs_v->Get().get_status();
-  auto& parent_set1 = vertex->parents_;
-  auto& parent_set2 = rhs_v->parents_;
+  auto& parent_set1 = vertex->GetParentSet();
+  auto& parent_set2 = rhs_v->GetParentSet();
 #ifdef DEBUG_CODE
   if (status2 >= TXN_CMT) {
-    Log_info("aggregating gt CMT, txnid: %llx, parent size: %d",
-             rhs_v->id(), (int) rhs_v->parents_.size());
+//    Log_info("aggregating gt CMT, txnid: %llx, parent size: %d",
+//             rhs_v->id(), (int) rhs_v->parents_.size());
   }
-  if (status1 >= TXN_CMT &&
-      status2 >= TXN_CMT) {
+  if (status1 >= TXN_CMT && status2 >= TXN_CMT) {
     // they should have the same parents.
     if (parent_set1 != parent_set2) {
-      Log_fatal("failed in aggregating, txnid: %llx, parent size: %d",
-                rhs_v->id(), (int) rhs_v->parents_.size());
+//      Log_fatal("failed in aggregating, txnid: %llx, parent size: %d",
+//                rhs_v->id(), (int) rhs_v->parents_.size());
+      verify(0);
     }
   }
 #endif
