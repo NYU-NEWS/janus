@@ -22,7 +22,8 @@ void RccCommo::SendDispatch(vector<SimpleCommand> &cmd,
         callback(res, output, graph);
       };
   fuattr.callback = cb;
-  auto proxy = (RococoProxy*)LeaderProxyForPartition(
+  // TODO fix.
+  auto proxy = (RococoProxy*)NearestProxyForPartition(
       cmd[0].PartitionId()).second;
   Log_debug("dispatch to %ld", cmd[0].PartitionId());
 //  verify(cmd.type_ > 0);
@@ -48,7 +49,7 @@ void RccCommo::SendFinish(parid_t pid,
     callback(outputs);
   };
   fuattr.callback = cb;
-  auto proxy = (RococoProxy*)LeaderProxyForPartition(pid).second;
+  auto proxy = (RococoProxy*)NearestProxyForPartition(pid).second;
   Future::safe_release(proxy->async_Finish(tid, graph, fuattr));
 }
 
@@ -62,7 +63,7 @@ void RccCommo::SendInquire(parid_t pid,
     callback(graph);
   };
   fuattr.callback = cb;
-  auto proxy = (RococoProxy*)LeaderProxyForPartition(pid).second;
+  auto proxy = (RococoProxy*)NearestProxyForPartition(pid).second;
   Future::safe_release(proxy->async_Inquire(tid, fuattr));
 }
 

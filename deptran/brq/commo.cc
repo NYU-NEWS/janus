@@ -34,7 +34,7 @@ void BrqCommo::SendDispatch(vector<SimpleCommand> &cmd,
         }
       };
   fuattr.callback = cb;
-  auto proxy = (BrqProxy*)LeaderProxyForPartition(
+  auto proxy = (BrqProxy*)NearestProxyForPartition(
       cmd[0].PartitionId()).second;
   Log_debug("dispatch to %ld", cmd[0].PartitionId());
 //  verify(cmd.type_ > 0);
@@ -62,7 +62,7 @@ void BrqCommo::SendFinish(parid_t pid,
     callback(outputs);
   };
   fuattr.callback = cb;
-  auto proxy = (BrqProxy*)RandomProxyForPartition(pid).second;
+  auto proxy = (BrqProxy*)NearestProxyForPartition(pid).second;
   Future::safe_release(proxy->async_Commit(tid, (BrqGraph&)graph, fuattr));
 }
 
@@ -76,7 +76,8 @@ void BrqCommo::SendInquire(parid_t pid,
     callback(dynamic_cast<RccGraph&>(*graph.ptr()));
   };
   fuattr.callback = cb;
-  auto proxy = (BrqProxy*)RandomProxyForPartition(pid).second;
+  // TODO fix.
+  auto proxy = (BrqProxy*)NearestProxyForPartition(pid).second;
   Future::safe_release(proxy->async_Inquire(tid, fuattr));
 }
 
