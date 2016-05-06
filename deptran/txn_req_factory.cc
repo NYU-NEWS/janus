@@ -64,7 +64,6 @@ TxnGenerator::TxnGenerator(Config* config)
       fix_id_ = (Config::GetConfig()->dist_ == "fixed") ?
                 RandomGenerator::rand(0, rw_benchmark_para_.n_table_) :
                 -1;
-      Log_info("using fixed id of %d", fix_id_);
       break;
     default:
       Log_fatal("benchmark not implemented");
@@ -72,45 +71,6 @@ TxnGenerator::TxnGenerator(Config* config)
   }
 }
 
-void TxnGenerator::get_rw_benchmark_w_txn_req(
-    TxnRequest *req, uint32_t cid) const {
-  auto id = (fix_id_ == -1) ?
-            RandomGenerator::rand(0, rw_benchmark_para_.n_table_ - 1) :
-            fix_id_;
-
-  req->txn_type_ = RW_BENCHMARK_W_TXN;
-  req->input_ = {
-      {0, Value((i32) id)},
-      {1, Value((i32) RandomGenerator::rand(0, 10000))}
-  };
-}
-
-void TxnGenerator::get_rw_benchmark_r_txn_req(
-    TxnRequest *req, uint32_t cid) const {
-  auto id = (fix_id_ == -1) ?
-    RandomGenerator::rand(0, rw_benchmark_para_.n_table_ - 1) :
-    fix_id_;
-  req->txn_type_ = RW_BENCHMARK_R_TXN;
-  req->input_ = {
-      {0, Value((i32) id)}
-  };
-}
-
-void TxnGenerator::get_rw_benchmark_txn_req(
-    TxnRequest *req, uint32_t cid) const {
-  req->n_try_ = n_try_;
-  std::vector<double> weights = { txn_weights_["read"], txn_weights_["write"] };
-  switch (RandomGenerator::weighted_select(weights)) {
-    case 0: // read
-      get_rw_benchmark_r_txn_req(req, cid);
-      break;
-    case 1: // write
-      get_rw_benchmark_w_txn_req(req, cid);
-      break;
-    default:
-      verify(0);
-  }
-}
 
 void TxnGenerator::get_micro_bench_read_req(TxnRequest *req, uint32_t cid) const {
   req->txn_type_ = MICRO_BENCH_R;
@@ -123,7 +83,7 @@ void TxnGenerator::get_micro_bench_read_req(TxnRequest *req, uint32_t cid) const
 
 void TxnGenerator::get_micro_bench_write_req(TxnRequest *req, uint32_t cid) const {
   req->txn_type_ = MICRO_BENCH_W;
-//  req->input_.resize(8);
+  //  req->input_.resize(8);
   req->input_[0] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_a_ - 1));
   req->input_[1] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_b_ - 1));
   req->input_[2] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_c_ - 1));
@@ -159,9 +119,6 @@ void TxnGenerator::GetTxnReq(TxnRequest *req, uint32_t cid) {
     case TPCC_REAL_DIST_PART:
       // should be called in sub-classes.
       verify(0);
-      break;
-    case RW_BENCHMARK:
-      get_rw_benchmark_txn_req(req, cid);
       break;
     case MICRO_BENCH:
       get_micro_bench_txn_req(req, cid);

@@ -47,12 +47,6 @@ class TxnGenerator {
 
   virtual void GetTxnReq(TxnRequest *req, uint32_t cid) ;
 
-  // rw_benchmark
-  void get_rw_benchmark_txn_req(TxnRequest *req, uint32_t cid) const;
-  void get_rw_benchmark_w_txn_req(TxnRequest *req, uint32_t cid) const;
-  void get_rw_benchmark_r_txn_req(TxnRequest *req, uint32_t cid) const;
-
-
   void get_micro_bench_read_req(TxnRequest *req, uint32_t cid) const;
   void get_micro_bench_write_req(TxnRequest *req, uint32_t cid) const;
   void get_micro_bench_txn_req(TxnRequest *req, uint32_t cid) const;

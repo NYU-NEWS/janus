@@ -1,3 +1,4 @@
+#include <bench/rw_benchmark/generator.h>
 #include "__dep__.h"
 #include "frame.h"
 #include "config.h"
@@ -432,6 +433,8 @@ TxnGenerator * Frame::CreateTxnGenerator() {
       gen = new TpcaTxnGenerator(Config::GetConfig());
       break;
     case RW_BENCHMARK:
+      gen = new RWTxnGenerator(Config::GetConfig());
+      break;
     case MICRO_BENCH:
     default:
       gen = new TxnGenerator(Config::GetConfig());
