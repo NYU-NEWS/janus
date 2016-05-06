@@ -190,11 +190,29 @@ void RccSched::CheckWaitlist() {
     TxnInfo& tinfo = v->Get();
     AnswerIfInquired(tinfo);
     InquireAboutIfNeeded(tinfo); // inquire about unknown transaction.
-    if (tinfo.status() >= TXN_CMT && tinfo.status() < TXN_DCD) {
+    if (tinfo.status() >= TXN_CMT &&
+        !tinfo.IsExecuted()) {
       if (AllAncCmt(v)) {
 //        check_again = true;
         RccScc& scc = dep_graph_->FindSCC(v);
         Decide(scc);
+        if (AllAncFns(scc)) {
+          // FIXME
+          for (auto vv : scc) {
+#ifdef DEBUG_CODE
+            verify(AllAncCmt(vv));
+          verify(vv->Get().status() >= TXN_DCD);
+#endif
+//          vv->Get().union_status(TXN_DCD);
+          }
+          if (FullyDispatched(scc)) {
+            Execute(scc);
+            for (auto v : scc) {
+              AddChildrenIntoWaitlist(v);
+            }
+          }
+//        check_again = true;
+        } // else do nothing.
 #ifdef DEBUG_CODE
         for(auto vv : scc) {
           auto s = vv->Get().status();
@@ -216,38 +234,38 @@ void RccSched::CheckWaitlist() {
       }
     } // else do nothing
 
-    if (tinfo.status() >= TXN_DCD &&
-        !tinfo.IsExecuted() &&
-        dep_graph_->AllAncCmt(v) ) {
-      RccScc& scc = dep_graph_->FindSCC(v);
-#ifdef DEBUG_CODE
-      for (auto vv : scc) {
-        auto s = vv->Get().status();
-        verify(s >= TXN_DCD);
-      }
-#endif
-      if (scc.size() > 1 && HasICycle(scc)) {
-        Abort(scc);
-      } else if (HasAbortedAncestor(scc)) {
-        Abort(scc);
-      } else if (AllAncFns(scc)) {
-        // FIXME
-        for (auto vv : scc) {
-#ifdef DEBUG_CODE
-          verify(AllAncCmt(vv));
-          verify(vv->Get().status() >= TXN_DCD);
-#endif
-//          vv->Get().union_status(TXN_DCD);
-        }
-        if (FullyDispatched(scc)) {
-          Execute(scc);
-          for (auto v : scc) {
-            AddChildrenIntoWaitlist(v);
-          }
-        }
-//        check_again = true;
-      } // else do nothing.
-    } // else do nothing
+//    if (tinfo.status() >= TXN_DCD &&
+//        !tinfo.IsExecuted() &&
+//        dep_graph_->AllAncCmt(v) ) {
+//      RccScc& scc = dep_graph_->FindSCC(v);
+//#ifdef DEBUG_CODE
+//      for (auto vv : scc) {
+//        auto s = vv->Get().status();
+//        verify(s >= TXN_DCD);
+//      }
+//#endif
+//      if (scc.size() > 1 && HasICycle(scc)) {
+//        Abort(scc);
+//      } else if (HasAbortedAncestor(scc)) {
+//        Abort(scc);
+//      } else if (AllAncFns(scc)) {
+//        // FIXME
+//        for (auto vv : scc) {
+//#ifdef DEBUG_CODE
+//          verify(AllAncCmt(vv));
+//          verify(vv->Get().status() >= TXN_DCD);
+//#endif
+////          vv->Get().union_status(TXN_DCD);
+//        }
+//        if (FullyDispatched(scc)) {
+//          Execute(scc);
+//          for (auto v : scc) {
+//            AddChildrenIntoWaitlist(v);
+//          }
+//        }
+////        check_again = true;
+//      } // else do nothing.
+//    } // else do nothing
 
     // Adjust the waitlist.
     __DebugExamineGraphVerify(v);
