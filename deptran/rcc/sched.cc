@@ -52,29 +52,27 @@ int RccSched::OnDispatch(const vector<SimpleCommand> &cmd,
                          TxnOutput *output,
                          RccGraph *graph,
                          const function<void()> &callback) {
+  std::lock_guard<std::recursive_mutex> guard(mtx_);
   verify(graph);
   txnid_t txn_id = cmd[0].root_id_;
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(txn_id);
   verify(dep_graph_->partition_id_ == partition_id_);
-  auto job = [&cmd, res, dtxn, callback, graph, output, this, txn_id] () {
-    verify(cmd[0].partition_id_ == this->partition_id_);
-    for (auto&c : cmd) {
-      dtxn->DispatchExecute(c, res, &(*output)[c.inn_id()]);
-    }
-    dtxn->UpdateStatus(TXN_STD);
-    int depth = 1;
-    verify(cmd[0].root_id_ == txn_id);
-    auto sz = dep_graph_->MinItfrGraph(txn_id, graph, true, depth);
+//  auto job = [&cmd, res, dtxn, callback, graph, output, this, txn_id] () {
+  verify(cmd[0].partition_id_ == this->partition_id_);
+  for (auto&c : cmd) {
+    dtxn->DispatchExecute(c, res, &(*output)[c.inn_id()]);
+  }
+  dtxn->UpdateStatus(TXN_STD);
+  int depth = 1;
+  verify(cmd[0].root_id_ == txn_id);
+  auto sz = dep_graph_->MinItfrGraph(txn_id, graph, true, depth);
 //#ifdef DEBUG_CODE
-    if (sz > 4) {
-      Log_fatal("something is wrong, graph size %d", sz);
-    }
+//    if (sz > 4) {
+//      Log_fatal("something is wrong, graph size %d", sz);
+//    }
 //#endif
-    if (sz == 0) {
-      callback();
-      return;
-    }
 #ifdef DEBUG_CODE
+  if (sz > 0) {
     TxnInfo& info1 = dep_graph_->vertex_index_.at(cmd[0].root_id_)->Get();
     TxnInfo& info2 = graph->vertex_index_.at(cmd[0].root_id_)->Get();
     verify(info1.partition_.find(cmd[0].partition_id_)
@@ -84,18 +82,19 @@ int RccSched::OnDispatch(const vector<SimpleCommand> &cmd,
     verify(sz > 0);
     if (RandomGenerator::rand(1, 2000) <= 1)
       Log_info("dispatch ret graph size: %d", graph->size());
-#endif
-    callback();
-  };
-
-  static bool do_record = Config::GetConfig()->do_logging();
-  if (do_record) {
-    Marshal m;
-    m << cmd;
-    recorder_->submit(m, job);
-  } else {
-    job();
   }
+#endif
+  callback();
+//  };
+//
+//  static bool do_record = Config::GetConfig()->do_logging();
+//  if (do_record) {
+//    Marshal m;
+//    m << cmd;
+//    recorder_->submit(m, job);
+//  } else {
+//    job();
+//  }
 }
 
 int RccSched::OnCommit(cmdid_t cmd_id,
@@ -131,6 +130,8 @@ int RccSched::OnInquire(cmdid_t cmd_id,
 //    dep_graph_->MinItfrGraph(cmd_id, graph);
 //    callback();
 //  });
+  std::lock_guard<std::recursive_mutex> guard(mtx_);
+
   verify(0);
   RccVertex* v = dep_graph_->FindV(cmd_id);
   verify(v != nullptr);
