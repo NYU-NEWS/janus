@@ -83,6 +83,7 @@ void BrqCoord::PreAcceptAck(phase_t phase,
   }
   if (FastpathPossible()) {
     // there is still chance for fastpath
+    graph_.Aggregate(*graph);
     if (AllFastQuorumsReached()) {
       // receive enough identical replies to continue fast path.
       // go to the commit.
@@ -92,6 +93,7 @@ void BrqCoord::PreAcceptAck(phase_t phase,
       // skip, wait
     }
   } else {
+    verify(0);
     // fastpath is no longer a choice
     if (SlowpathPossible()) {
       if (AllSlowQuorumsReached()) {
@@ -248,7 +250,7 @@ bool BrqCoord::AllFastQuorumsReached() {
       return false;
     } else if (r == 1) {
       // do nothing
-    } else if (r == 0) {
+    } else if (r == 3) {
       // do nothing
     } else {
       verify(0);
@@ -269,23 +271,35 @@ bool BrqCoord::AllSlowQuorumsReached() {
 };
 
 // return value
-// 0: less than a fast quorum
 // 1: a fast quorum of the same
-// 2: >=(par_size - fast quorum) of different graphs.
+// 2: >=(par_size - fast quorum) of different graphs. fast quorum not possible.
+// 3: less than a fast quorum graphs received.
 int BrqCoord::FastQuorumGraphCheck(parid_t par_id) {
-  auto& vec_graph = n_fast_accept_graphs_[par_id];
   auto par_size = Config::GetConfig()->GetPartitionSize(par_id);
+  auto& vec_graph = n_fast_accept_graphs_[par_id];
   auto fast_quorum = GetFastQuorum(par_id);
   if (vec_graph.size() < fast_quorum)
-    return 0;
-  verify(vec_graph.size() == 1);
-  verify(vec_graph.size() >= 1);
+    return 3;
+  int res = fast_accept_graph_check_caches_[par_id];
+  if (res > 0) return res;
+
+  res = 1;
+//  verify(vec_graph.size() == 1);
+//  verify(vec_graph.size() >= 1);
+  RccVertex* v = vec_graph[0]->FindV(cmd_->id_);
+  verify(v != nullptr);
+  auto& parent_set = v->GetParentSet();
   for (int i = 1; i < vec_graph.size(); i++) {
     RccGraph& graph = *vec_graph[i];
-    if (graph != *vec_graph[0])
-      return 2;
+    RccVertex* vv = graph.FindV(cmd_->id_);
+    auto& pp_set = vv->GetParentSet();
+    if (parent_set != pp_set) {
+      res = 2;
+      break;
+    }
   }
-  return 1;
+  fast_accept_graph_check_caches_[par_id] = res;
+  return res;
 }
 
 void BrqCoord::GotoNextPhase() {
@@ -338,6 +352,7 @@ void BrqCoord::Reset() {
   n_fast_accept_graphs_.clear();
   n_fast_accept_oks_.clear();
   n_fast_accept_rejects_.clear();
+  fast_accept_graph_check_caches_.clear();
   n_commit_oks_.clear();
 }
 } // namespace rococo
