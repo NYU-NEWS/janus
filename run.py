@@ -232,6 +232,11 @@ class TxnInfo(object):
         num_clients = sum([len(x)
                            for x in config['site']['client']]) * \
                       config["n_concurrent"]
+        
+        zipf = -1
+        if 'coefficient' in config['bench']:
+            zipf = config['bench']['coefficient']
+
         self.data = {
             'benchmark': config['bench']['workload'],
             'cc': config['mode']['cc'],
@@ -244,6 +249,7 @@ class TxnInfo(object):
             'attempts': tries,
             'commits': commit_txn,
             'tps': tps,
+            'zipf': zipf  
         }
         self.data['latency'] = {}
         self.data['latency'].update(latencies)

@@ -10,6 +10,7 @@ ARGS = None
 labels = ['txn_name', 'cc', 'ab', 'benchmark', 'duration', 'clients',
           'tps', 'attempts', 'commits', 'start_cnt', 'total_cnt']
 lat_labels = None
+other_labels = [ 'zipf' ]
 
 def parse_args():
     global ARGS
@@ -43,6 +44,8 @@ def extract_data(txn_data, file_data):
             lat_labels = sorted(latencies.keys())
             for l in lat_labels:
                 row.append(latencies[l])
+            for l in other_labels:
+                row.append(etxn[l])
             if txn not in txn_data:
                 txn_data[txn] = []
             a = txn_data[txn]
@@ -60,7 +63,7 @@ def output_data_file(key, group):
     print("generate csv: {}".format(fn))
     with open(fn, 'w') as f:
         f.write("# ")
-        f.write(", ".join(labels + lat_labels))
+        f.write(", ".join(labels + lat_labels + other_labels))
         f.write("\n")
         f.write("# git sha: {}\n".format(ARGS.git_revision))
         first = True
