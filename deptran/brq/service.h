@@ -92,6 +92,12 @@ class BrqServiceImpl: public BrqService {
                  int32_t* res,
                  Marshallable* res_graph,
                  DeferredReply* defer) override;
+
+  void Accept(const cmdid_t &txnid,
+              const ballot_t& ballot,
+              const Marshallable& graph,
+              int32_t* res,
+              DeferredReply* defer) override;
 //
 //  void rcc_start_pie(const SimpleCommand& cmd,
 //                     ChopStartResponse *res,

@@ -45,6 +45,7 @@ void BrqCoord::launch_recovery(cmdid_t cmd_id) {
 }
 
 void BrqCoord::PreAccept() {
+  std::lock_guard<std::recursive_mutex> guard(mtx_);
 //  // generate fast accept request
   // set broadcast callback
   // broadcast
@@ -68,35 +69,36 @@ void BrqCoord::PreAcceptAck(phase_t phase,
                             parid_t par_id,
                             int res,
                             RccGraph* graph) {
+  std::lock_guard<std::recursive_mutex> guard(mtx_);
   // if recevie more messages after already gone to next phase, ignore
   if (phase != phase_) return;
   verify(graph);
-  verify(n_fast_accept_graphs_.size() == 0);
+//  verify(n_fast_accept_graphs_.size() == 0);
   n_fast_accept_graphs_[par_id].push_back(graph);
   if (res == SUCCESS) {
     n_fast_accept_oks_[par_id]++;
   } else if (res == REJECT) {
     verify(0);
-    n_fast_accept_rejects_[par_id]++;
+//    n_fast_accept_rejects_[par_id]++;
   } else {
     verify(0);
   }
   if (FastpathPossible()) {
     // there is still chance for fastpath
-    graph_.Aggregate(*graph);
     if (AllFastQuorumsReached()) {
       // receive enough identical replies to continue fast path.
       // go to the commit.
       fast_path_ = true;
+//      Log_info("pre acked success on txn_id: %llx", cmd_->id_);
+      ChooseGraph();
       GotoNextPhase();
     } else {
       // skip, wait
     }
   } else {
-    verify(0);
     // fastpath is no longer a choice
     if (SlowpathPossible()) {
-      if (AllSlowQuorumsReached()) {
+      if (PreAcceptAllSlowQuorumsReached()) {
         verify(!fast_path_);
         GotoNextPhase();
       } else {
@@ -117,54 +119,67 @@ void BrqCoord::prepare() {
   verify(0);
 }
 
-void BrqCoord::Accept() {
-//  request.ballot = ballot_;
-//
-//  // graph?
-//  for (auto par_id : cmd_->GetPartitionIds()) {
-//    commo()->BroadcastAccept(par_id,
-//                             cmd_->id_,
-//                             ballot_,
-//                             graph_,
-//                             std::bind(&BrqCoord::AcceptAck,
-//                                          this,
-//                                          phase_,
-//                                          par_id,
-//                                          std::placeholders::_1,
-//                                          std::placeholders::_2));
-//  }
-//  verify(0);
+void BrqCoord::ChooseGraph() {
+  for (auto& pair : n_fast_accept_graphs_) {
+    auto& vec_graph = pair.second;
+    if (fast_path_) {
+      auto& g = vec_graph[0];
+      graph_.Aggregate(*g);
+    } else {
+      for (auto g : vec_graph) {
+        graph_.Aggregate(*g);
+      }
+    }
+  }
 }
 
-//void BrqCoord::accept_ack(groupid_t g,
-//                          AcceptReply* reply,
-//                          phase_t phase) {
-//  if (phase_ != phase) {
-//    return;
-//  }
-//  auto &n = n_accept_reply_[g];
-//  if (reply && reply->ack) {
-//    n.yes++;
-//  } else {
-//    n.no++;
-//  }
-//  if (check_accept_possible()) {
-//    if (check_accept()) {
-//      // go to commit
-//    }
-//  } else {
-//    // not handle this currently
-//    verify(0);
-//  }
-//  // if have reached a quorum
-//}
+void BrqCoord::Accept() {
+  std::lock_guard<std::recursive_mutex> guard(mtx_);
+  verify(!fast_path_);
+//  Log_info("broadcast accept request for txn_id: %llx", cmd_->id_);
+  ChooseGraph();
+  for (auto par_id : cmd_->GetPartitionIds()) {
+    commo()->BroadcastAccept(par_id,
+                             cmd_->id_,
+                             ballot_,
+                             graph_,
+                             std::bind(&BrqCoord::AcceptAck,
+                                          this,
+                                          phase_,
+                                          par_id,
+                                          std::placeholders::_1));
+  }
+}
+
+void BrqCoord::AcceptAck(phase_t phase,
+                         parid_t par_id,
+                         int res) {
+  std::lock_guard<std::recursive_mutex> guard(mtx_);
+  if (phase_ != phase) {
+    return;
+  }
+  verify(res == SUCCESS);
+  n_accept_oks_[par_id]++;
+
+  if (AcceptQuorumPossible()) {
+    if (AcceptQuorumReached()) {
+      GotoNextPhase();
+    } else {
+      // skip;
+    }
+  } else {
+    // not handle this currently
+    verify(0);
+  }
+  // if have reached a quorum
+}
 
 void BrqCoord::Commit() {
+  std::lock_guard<std::recursive_mutex> guard(mtx_);
   TxnCommand *txn = (TxnCommand*) cmd_;
   RccVertex* v = graph_.FindV(cmd_->id_);
   TxnInfo& info = v->Get();
   verify(txn->partition_ids_.size() == info.partition_.size());
-//  info.union_status(TXN_CMT);
   graph_.UpgradeStatus(v, TXN_CMT);
   for (auto par_id : cmd_->GetPartitionIds()) {
     commo()->BroadcastCommit(par_id,
@@ -187,6 +202,7 @@ void BrqCoord::CommitAck(phase_t phase,
                          parid_t par_id,
                          int32_t res,
                          TxnOutput& output) {
+  std::lock_guard<std::recursive_mutex> guard(mtx_);
   if (phase != phase_) return;
   if (fast_commit_) return;
   if (res == SUCCESS) {
@@ -215,19 +231,20 @@ bool BrqCoord::FastpathPossible() {
   bool all_fast_quorum_possible = true;
   for (auto& par_id : pars) {
     auto par_size = Config::GetConfig()->GetPartitionSize(par_id);
-    if (n_fast_accept_rejects_[par_id] > par_size - GetFastQuorum(par_id)) {
-      all_fast_quorum_possible = false;
-      verify(0);
-      break;
-    }
+//    if (n_fast_accept_rejects_[par_id] > par_size - GetFastQuorum(par_id)) {
+//      all_fast_quorum_possible = false;
+//      verify(0);
+//      break;
+//    }
     // TODO check graph.
     // if more than (par_size - fast quorum) graph is different, then nack.
-    auto& vec_graph = n_fast_accept_graphs_[par_id];
     int r = FastQuorumGraphCheck(par_id);
-    if (r == 2) verify(0);
-//      all_fast_quorum_possible = false;
+    if (r == 1 || r == 3) {
+
+    } else if (r == 2) {
+      all_fast_quorum_possible = false;
+    }
   }
-  verify(all_fast_quorum_possible);
   return all_fast_quorum_possible;
 };
 
@@ -243,7 +260,6 @@ int32_t BrqCoord::GetSlowQuorum(parid_t par_id) {
 
 bool BrqCoord::AllFastQuorumsReached() {
   auto pars = txn().GetPartitionIds();
-  bool all_fast_quorum_reached = true;
   for (auto &par_id : pars) {
     int r = FastQuorumGraphCheck(par_id);
     if (r == 2) {
@@ -252,14 +268,25 @@ bool BrqCoord::AllFastQuorumsReached() {
       // do nothing
     } else if (r == 3) {
       // do nothing
+      return false;
     } else {
       verify(0);
     }
   }
-  return all_fast_quorum_reached;
+  return true;
 }
 
-bool BrqCoord::AllSlowQuorumsReached() {
+bool BrqCoord::AcceptQuorumReached() {
+  auto pars = txn().GetPartitionIds();
+  for (auto &par_id : pars) {
+    if (n_fast_accept_oks_[par_id] < GetSlowQuorum(par_id)) {
+      return false;
+    }
+  }
+  return true;
+}
+
+bool BrqCoord::PreAcceptAllSlowQuorumsReached() {
   auto pars = cmd_->GetPartitionIds();
   bool all_slow_quorum_reached =
       std::all_of(pars.begin(),
@@ -286,6 +313,7 @@ int BrqCoord::FastQuorumGraphCheck(parid_t par_id) {
   res = 1;
 //  verify(vec_graph.size() == 1);
 //  verify(vec_graph.size() >= 1);
+  verify(vec_graph.size() == fast_quorum);
   RccVertex* v = vec_graph[0]->FindV(cmd_->id_);
   verify(v != nullptr);
   auto& parent_set = v->GetParentSet();
@@ -327,8 +355,9 @@ void BrqCoord::GotoNextPhase() {
       // TODO
       break;
     case Phase::ACCEPT:
-      verify(0);
       verify(phase_ % n_phase == Phase::COMMIT);
+      Commit();
+      break;
     case Phase::COMMIT:
       verify(phase_ % n_phase == Phase::INIT_END);
       verify(committed_ != aborted_);
@@ -351,7 +380,8 @@ void BrqCoord::Reset() {
   fast_commit_ = false;
   n_fast_accept_graphs_.clear();
   n_fast_accept_oks_.clear();
-  n_fast_accept_rejects_.clear();
+  n_accept_oks_.clear();
+//  n_fast_accept_rejects_.clear();
   fast_accept_graph_check_caches_.clear();
   n_commit_oks_.clear();
 }

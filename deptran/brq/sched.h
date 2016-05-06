@@ -16,6 +16,12 @@ class BrqSched : public RccSched {
                    RccGraph *res_graph,
                    function<void()> callback);
 
+  void OnAccept(const txnid_t txn_id,
+                const ballot_t& ballot,
+                const RccGraph& graph,
+                int32_t* res,
+                function<void()> callback);
+
   void OnCommit(const txnid_t txn_id,
                 const RccGraph &graph,
                 int32_t *res,

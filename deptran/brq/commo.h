@@ -33,6 +33,12 @@ class BrqCommo: public RccCommo {
                           RccGraph& graph,
                           const function<void(int32_t, RccGraph*)> &callback);
 
+  void BroadcastAccept(parid_t par_id,
+                       txnid_t cmd_id,
+                       ballot_t ballot,
+                       RccGraph& graph,
+                       const function<void(int)> &callback);
+
   void BroadcastCommit(parid_t,
                        txnid_t cmd_id_,
                        RccGraph& graph,

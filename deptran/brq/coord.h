@@ -22,8 +22,9 @@ public:
   ballot_t ballot_ = 0; // the ballot I am holding
   // data structures for saving replies.
   struct reply_cnt_t {int yes; int no;};
-  map<parid_t, int> n_fast_accept_oks_ = {};
-  map<parid_t, int> n_fast_accept_rejects_ = {};
+  map<parid_t, int> n_fast_accept_oks_{};
+  map<parid_t, int> n_accept_oks_{};
+//  map<parid_t, int> n_fast_accept_rejects_ = {};
   map<parid_t, vector<RccGraph*>> n_fast_accept_graphs_ {};
   map<parid_t, int> fast_accept_graph_check_caches_{};
   map<parid_t, int> n_commit_oks_ = {};
@@ -61,20 +62,17 @@ public:
   };
   int32_t GetFastQuorum(parid_t par_id);
   int32_t GetSlowQuorum(parid_t par_id);
-  bool AllSlowQuorumsReached();
+  bool PreAcceptAllSlowQuorumsReached();
 
   void prepare();
   // functions needed in the accept phase.
+  void ChooseGraph();
   void Accept();
-//  void accept_ack(groupid_t, AcceptReply*, phase_t);
-  bool check_accept_possible() {
-    verify(0);
-    return false;
+  void AcceptAck(phase_t phase, parid_t par_id, int res);
+  bool AcceptQuorumPossible() {
+    return true;
   };
-  bool check_accept() {
-    verify(0);
-    return false;
-  };
+  bool AcceptQuorumReached();
 
   void Commit();
   void CommitAck(phase_t phase,

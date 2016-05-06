@@ -201,6 +201,21 @@ void BrqServiceImpl::PreAccept(const cmdid_t &txnid,
                             [defer] () {defer->reply();});
 }
 
+
+void BrqServiceImpl::Accept(const cmdid_t &txnid,
+                            const ballot_t& ballot,
+                            const Marshallable& graph,
+                            int32_t* res,
+                            DeferredReply* defer) {
+  verify(dynamic_cast<RccGraph*>(graph.ptr().get()));
+  verify(graph.rtti_ == Marshallable::RCC_GRAPH);
+  dtxn_sched()->OnAccept(txnid,
+                         ballot,
+                         dynamic_cast<RccGraph&>(*graph.ptr().get()),
+                         res,
+                         [defer] () {defer->reply();});
+}
+
 void BrqServiceImpl::RegisterStats() {
   if (scsi_) {
     scsi_->set_recorder(recorder_);

@@ -105,6 +105,30 @@ void BrqCommo::BroadcastPreAccept(parid_t par_id,
   }
 }
 
+void BrqCommo::BroadcastAccept(parid_t par_id,
+                               txnid_t cmd_id,
+                               ballot_t ballot,
+                               RccGraph& graph,
+                               const function<void(int)> &callback) {
+  verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
+  for (auto &p : rpc_par_proxies_[par_id]) {
+    auto proxy = (BrqProxy*)(p.second);
+    verify(proxy != nullptr);
+    FutureAttr fuattr;
+    fuattr.callback = [callback] (Future* fu) {
+      int32_t res;
+      fu->get_reply() >> res;
+      callback(res);
+    };
+    verify(cmd_id > 0);
+    Future::safe_release(proxy->async_Accept(cmd_id,
+                                             ballot,
+                                             graph,
+                                             fuattr));
+  }
+}
+
+
 void BrqCommo::BroadcastCommit(parid_t par_id,
                                txnid_t cmd_id,
                                RccGraph& graph,

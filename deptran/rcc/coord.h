@@ -13,7 +13,7 @@ public:
   RccCommo* commo();
 
 public:
-  RccGraph graph_;
+  RccGraph graph_{};
   enum RoState {BEGIN, FIRST, SECOND, DONE};
   enum Phase {INIT_END=0, DISPATCH, COMMIT};
 
@@ -29,6 +29,7 @@ public:
                               benchmark,
                               ccsi,
                               thread_id), graph_() {
+    verify(graph_.size() == 0);
   }
 
 //  void do_one(TxnRequest&) override;

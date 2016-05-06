@@ -47,6 +47,17 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
   callback();
 }
 
+void BrqSched::OnAccept(const txnid_t txn_id,
+                        const ballot_t& ballot,
+                        const RccGraph& graph,
+                        int32_t* res,
+                        function<void()> callback) {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
+  // TODO
+  *res = SUCCESS;
+  callback();
+}
+
 void BrqSched::OnCommit(const txnid_t cmd_id,
                         const RccGraph& graph,
                         int32_t* res,
