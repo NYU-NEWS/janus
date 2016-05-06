@@ -8,7 +8,7 @@ import traceback
 import shutil
 
 prefixes = [ "single_dc", "multi_dc" ]
-benchmarks = [ "rw", "tpca", "tpcc" ]
+benchmarks = [ "rw", "rw_fixed", "tpca", "tpca_fixed", "tpcc" ]
 zipfs = [ "0.0", "0.25", "0.5", "0.75", "1.0" ]
 
 cwd = os.getcwd()

@@ -183,5 +183,10 @@ def retrieve_code():
                 run('git pull origin master')
                 run('git checkout {rev}'.format(rev=env.git_revision))
 
+@task
+@hosts('localhost')
+def ping():
+    execute('cluster.ping')
+
 
 init()
