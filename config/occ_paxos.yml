@@ -4,6 +4,6 @@ mode:
   ab: multi_paxos # atomic broadcast
   read_only: occ
   batch: false
-  retry: 5 
+  retry: 20
   ongoing: 1 # per client
 

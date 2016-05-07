@@ -2,5 +2,5 @@ mode:
   cc: tapir # concurrency control
   ab: tapir # atomic broadcast
   batch: false
-  retry: 5 
+  retry: 20 
   ongoing: 1 # per client

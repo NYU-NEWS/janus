@@ -181,7 +181,7 @@ def set_instance_roles():
     logging.info("roles: {}".format(env.roledefs))
 
 
-def wait_for_ip_address(instances, timeout=60):
+def wait_for_ip_address(instances, timeout=120):
     i = 0
     start_time = time.time()
     done = False 
@@ -249,7 +249,7 @@ def terminate_instances():
 STATE_RUNNING = 16
 @task
 @hosts('localhost')
-def wait_for_all_servers(timeout=600):
+def wait_for_all_servers(timeout=3600):
     n = 5 
     d = 0
     start = time.time()
@@ -278,7 +278,7 @@ def wait_for_all_servers(timeout=600):
 
         elapsed = time.time() - start
         if elapsed > timeout:
-            raise TimeoutError("timeout waiting for servers to become ready.") 
+            raise RuntimeError("timeout waiting for servers to become ready.") 
         if not done:
             if d<30:
                 d = 1.5 ** n
