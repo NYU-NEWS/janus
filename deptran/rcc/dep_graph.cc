@@ -382,11 +382,16 @@ RccScc& RccGraph::FindSCC(RccVertex *vertex) {
 }
 
 bool RccGraph::AllAncCmt(RccVertex *vertex) {
+  if(vertex->Get().all_anc_cmt_hint) {
+    return true;
+  }
   bool all_anc_cmt = true;
   std::function<int(RccVertex*)> func = [&all_anc_cmt] (RccVertex* v) -> int {
     TxnInfo& info = v->Get();
     int r = 0;
-    if (info.IsExecuted() || info.IsAborted()) {
+    if (info.IsExecuted() ||
+        info.all_anc_cmt_hint ||
+        info.IsAborted()) {
       r = RccGraph::SearchHint::Skip;
     } else if (info.status() >= TXN_CMT) {
       r = RccGraph::SearchHint::Ok;
@@ -397,6 +402,7 @@ bool RccGraph::AllAncCmt(RccVertex *vertex) {
     return r;
   };
   TraversePred(vertex, -1, func);
+  vertex->Get().all_anc_cmt_hint = all_anc_cmt;
   return all_anc_cmt;
 }
 
