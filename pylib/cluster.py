@@ -235,14 +235,16 @@ def load_security_grp_ips():
                 'ToPort': -1,
                 'IpRanges': []
             }
+             
+            permissions['IpRanges'].append({ 'CidrIp': '0.0.0.0/32' })
+
+            #for region2 in regions:
+            #    for instance in created_instances[region2]:
+            #        cidr = instance.public_ip_address + "/32"
+            #        permissions['IpRanges'].append({ 'CidrIp': cidr })
             
-            for region2 in regions:
-                for instance in created_instances[region2]:
-                    cidr = instance.public_ip_address + "/32"
-                    permissions['IpRanges'].append({ 'CidrIp': cidr })
-            
-            for cidr in ALLOWED_IP_RANGES:
-                permissions['IpRanges'].append({ 'CidrIp': cidr })
+            #for cidr in ALLOWED_IP_RANGES:
+            #    permissions['IpRanges'].append({ 'CidrIp': cidr })
 
             logging.info("add rules to security group {}:\n{}".format(
                 sec_grp_name(region), permissions))
