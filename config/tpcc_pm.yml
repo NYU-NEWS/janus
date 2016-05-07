@@ -3,16 +3,16 @@ bench:
   workload: tpcc #sharded by warehouse
   scale: 1
   weight:
- #   new_order: 44
- #   payment :     0   
+    new_order:    0
+    payment :     4   
     delivery:     0
     order_status: 0
     stock_level:  0
-    new_order: 44
-    payment : 44
- #    delivery: 4
- #    order_status: 4
- #    stock_level: 4
+#   new_order: 44
+#    payment : 44
+#    delivery: 4
+#    order_status: 4
+#    stock_level: 4
   population: # intial number of records in each table (per partition)
     warehouse: 1
     district: 10

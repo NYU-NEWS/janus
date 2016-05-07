@@ -87,9 +87,12 @@ void TpccPiece::RegPayment() {
             TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_H_AMOUNT,
             TPCC_VAR_C_ID, TPCC_VAR_C_W_ID, TPCC_VAR_C_D_ID,
             TPCC_VAR_H_KEY)
+  OUTPUT_PIE(TPCC_PAYMENT, TPCC_PAYMENT_0,
+             TPCC_VAR_W_NAME, TPCC_VAR_W_STREET_1, TPCC_VAR_W_STREET_2,
+             TPCC_VAR_W_CITY, TPCC_VAR_W_STATE, TPCC_VAR_W_ZIP);
   SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_0, TPCC_TB_WAREHOUSE, TPCC_VAR_W_ID);
   BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_0, DF_NO) {
-    verify(cmd.input.size() == 7);
+    verify(cmd.input.size() >= 7);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_0);
     i32 oi = 0;
     mdb::Row *row_warehouse = dtxn->Query(dtxn->GetTable(TPCC_TB_WAREHOUSE),
@@ -99,30 +102,38 @@ void TpccPiece::RegPayment() {
     output[TPCC_VAR_W_NAME] = Value("");
     dtxn->ReadColumn(row_warehouse,
                      TPCC_COL_WAREHOUSE_W_NAME,
-                     &output[TPCC_VAR_W_NAME]);
+                     &output[TPCC_VAR_W_NAME],
+                     TXN_BYPASS);
     dtxn->ReadColumn(row_warehouse,
                      TPCC_COL_WAREHOUSE_W_STREET_1,
-                     &output[TPCC_VAR_W_STREET_1]);
+                     &output[TPCC_VAR_W_STREET_1],
+                     TXN_BYPASS);
     dtxn->ReadColumn(row_warehouse,
                      TPCC_COL_WAREHOUSE_W_STREET_2,
-                     &output[TPCC_VAR_W_STREET_2]);
+                     &output[TPCC_VAR_W_STREET_2],
+                     TXN_BYPASS);
     dtxn->ReadColumn(row_warehouse,
                      TPCC_COL_WAREHOUSE_W_CITY,
-                     &output[TPCC_VAR_W_CITY]);
+                     &output[TPCC_VAR_W_CITY],
+                     TXN_BYPASS);
     dtxn->ReadColumn(row_warehouse,
                      TPCC_COL_WAREHOUSE_W_STATE,
-                     &output[TPCC_VAR_W_STATE]);
+                     &output[TPCC_VAR_W_STATE],
+                     TXN_BYPASS);
     dtxn->ReadColumn(row_warehouse,
                      TPCC_COL_WAREHOUSE_W_ZIP,
-                     &output[TPCC_VAR_W_ZIP]);
+                     &output[TPCC_VAR_W_ZIP],
+                     TXN_BYPASS);
     *res = SUCCESS;
   } END_PIE
 
   // piece 1, Ri district
-  INPUT_PIE(TPCC_PAYMENT, TPCC_PAYMENT_1, TPCC_VAR_W_ID, TPCC_VAR_D_ID)
-  SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_1, TPCC_TB_DISTRICT, TPCC_VAR_W_ID);
+  INPUT_PIE(TPCC_PAYMENT, TPCC_PAYMENT_1,
+            TPCC_VAR_W_ID, TPCC_VAR_D_ID)
+  SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_1,
+            TPCC_TB_DISTRICT, TPCC_VAR_W_ID);
   BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_1, DF_NO) {
-    verify(cmd.input.size() == 2);
+    verify(cmd.input.size() >= 2);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_1);
     Value buf;
     mdb::MultiBlob mb(2);
@@ -136,22 +147,28 @@ void TpccPiece::RegPayment() {
                                                    // R district
     dtxn->ReadColumn(row_district,
                      TPCC_COL_DISTRICT_D_NAME,
-                     &output[TPCC_VAR_D_NAME]);
+                     &output[TPCC_VAR_D_NAME],
+                     TXN_BYPASS);
     dtxn->ReadColumn(row_district,
                      TPCC_COL_DISTRICT_D_STREET_1,
-                     &output[TPCC_VAR_D_STREET_1]);
+                     &output[TPCC_VAR_D_STREET_1],
+                     TXN_BYPASS);
     dtxn->ReadColumn(row_district,
                      TPCC_COL_DISTRICT_D_STREET_2,
-                     &output[TPCC_VAR_D_STREET_2]);
+                     &output[TPCC_VAR_D_STREET_2],
+                     TXN_BYPASS);
     dtxn->ReadColumn(row_district,
                      TPCC_COL_DISTRICT_D_CITY,
-                     &output[TPCC_VAR_D_CITY]);
+                     &output[TPCC_VAR_D_CITY],
+                     TXN_BYPASS);
     dtxn->ReadColumn(row_district,
                      TPCC_COL_DISTRICT_D_STATE,
-                     &output[TPCC_VAR_D_STATE]);
+                     &output[TPCC_VAR_D_STATE],
+                     TXN_BYPASS);
     dtxn->ReadColumn(row_district,
                      TPCC_COL_DISTRICT_D_ZIP,
-                     &output[TPCC_VAR_D_ZIP]);
+                     &output[TPCC_VAR_D_ZIP],
+                     TXN_BYPASS);
 
     *res = SUCCESS;
   } END_PIE
@@ -159,9 +176,10 @@ void TpccPiece::RegPayment() {
   // piece 1, Ri & W district
   INPUT_PIE(TPCC_PAYMENT, TPCC_PAYMENT_2,
             TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_H_AMOUNT)
-  SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_2, TPCC_TB_DISTRICT, TPCC_VAR_W_ID);
+  SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_2,
+            TPCC_TB_DISTRICT, TPCC_VAR_W_ID);
   BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_2, DF_REAL) {
-    verify(cmd.input.size() == 3);
+    verify(cmd.input.size() >= 3);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_2);
 
     Value buf_temp(0.0);
@@ -184,12 +202,14 @@ void TpccPiece::RegPayment() {
 
 
   INPUT_PIE(TPCC_PAYMENT, TPCC_PAYMENT_5,
-            TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_W_NAME, TPCC_VAR_D_NAME,
+            TPCC_VAR_W_ID, TPCC_VAR_D_ID,
+            TPCC_VAR_W_NAME, TPCC_VAR_D_NAME,
             TPCC_VAR_C_ID, TPCC_VAR_C_W_ID, TPCC_VAR_C_D_ID,
             TPCC_VAR_H_KEY, TPCC_VAR_H_AMOUNT)
-  SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_5, TPCC_TB_HISTORY, TPCC_VAR_H_KEY);
+  SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_5,
+            TPCC_TB_HISTORY, TPCC_VAR_H_KEY);
   BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_5, DF_REAL) {
-    verify(cmd.input.size() == 9);
+    verify(cmd.input.size() >= 9);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_5);
 
     mdb::Txn *txn = dtxn->mdb_txn();
@@ -219,10 +239,12 @@ void TpccPiece::RegPayment() {
 
   // piece 2, R customer secondary index, c_last -> c_id
   INPUT_PIE(TPCC_PAYMENT, TPCC_PAYMENT_3,
-            TPCC_VAR_C_W_ID, TPCC_VAR_C_D_ID, TPCC_VAR_C_LAST)
+            TPCC_VAR_C_W_ID,
+            TPCC_VAR_C_D_ID,
+            TPCC_VAR_C_LAST)
   SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_3, TPCC_TB_CUSTOMER, TPCC_VAR_C_W_ID);
   BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_3, DF_NO) {
-    verify(cmd.input.size() == 3);
+    verify(cmd.input.size() >= 3);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_3);
 
     mdb::MultiBlob mbl(3), mbh(3);
@@ -270,9 +292,10 @@ void TpccPiece::RegPayment() {
   INPUT_PIE(TPCC_PAYMENT, TPCC_PAYMENT_4,
             TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_H_AMOUNT,
             TPCC_VAR_C_ID, TPCC_VAR_C_W_ID, TPCC_VAR_C_D_ID)
-  SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_4, TPCC_TB_CUSTOMER, TPCC_VAR_C_W_ID);
+  SHARD_PIE(TPCC_PAYMENT, TPCC_PAYMENT_4,
+            TPCC_TB_CUSTOMER, TPCC_VAR_C_W_ID);
   BEGIN_PIE(TPCC_PAYMENT, TPCC_PAYMENT_4, DF_REAL) {
-    verify(cmd.input.size() == 6);
+    verify(cmd.input.size() >= 6);
     Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_4);
     mdb::Row *r = NULL;
     mdb::MultiBlob mb(3);

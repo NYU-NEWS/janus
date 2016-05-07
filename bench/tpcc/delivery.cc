@@ -40,7 +40,10 @@ void TpccPiece::RegDelivery() {
   // Ri & W new_order
   INPUT_PIE(TPCC_DELIVERY, TPCC_DELIVERY_0,
             TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_O_CARRIER_ID)
-  SHARD_PIE(TPCC_DELIVERY, TPCC_DELIVERY_0, TPCC_TB_NEW_ORDER, TPCC_VAR_W_ID)
+  OUTPUT_PIE(TPCC_DELIVERY, TPCC_DELIVERY_0,
+            TPCC_VAR_O_ID)
+  SHARD_PIE(TPCC_DELIVERY, TPCC_DELIVERY_0,
+            TPCC_TB_NEW_ORDER, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_DELIVERY, TPCC_DELIVERY_0, DF_REAL) {
     // this is a little bit tricky, the first half will do most of the job,
     // removing the row from the table, but it won't actually release the
@@ -92,8 +95,12 @@ void TpccPiece::RegDelivery() {
 
   // Ri & W order
   INPUT_PIE(TPCC_DELIVERY, TPCC_DELIVERY_1,
-            TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_O_ID, TPCC_VAR_O_CARRIER_ID)
-  SHARD_PIE(TPCC_DELIVERY, TPCC_DELIVERY_1, TPCC_TB_ORDER, TPCC_VAR_W_ID)
+            TPCC_VAR_W_ID, TPCC_VAR_D_ID,
+            TPCC_VAR_O_ID, TPCC_VAR_O_CARRIER_ID)
+  OUTPUT_PIE(TPCC_DELIVERY, TPCC_DELIVERY_1,
+             TPCC_VAR_C_ID)
+  SHARD_PIE(TPCC_DELIVERY, TPCC_DELIVERY_1,
+            TPCC_TB_ORDER, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_DELIVERY, TPCC_DELIVERY_1, DF_NO) {
     Log_debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_1);
     verify(cmd.input.size() == 4);
@@ -119,7 +126,8 @@ void TpccPiece::RegDelivery() {
 //   Ri & W order_line
   INPUT_PIE(TPCC_DELIVERY, TPCC_DELIVERY_2,
             TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_O_ID)
-  SHARD_PIE(TPCC_DELIVERY, TPCC_DELIVERY_2, TPCC_TB_ORDER_LINE, TPCC_VAR_W_ID)
+  SHARD_PIE(TPCC_DELIVERY, TPCC_DELIVERY_2,
+            TPCC_TB_ORDER_LINE, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_DELIVERY, TPCC_DELIVERY_2, DF_NO) {
     Log_debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_2);
     verify(cmd.input.size() == 3);
@@ -178,8 +186,10 @@ void TpccPiece::RegDelivery() {
 
   // W customer
   INPUT_PIE(TPCC_DELIVERY, TPCC_DELIVERY_3,
-            TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_C_ID, TPCC_VAR_OL_AMOUNT)
-  SHARD_PIE(TPCC_DELIVERY, TPCC_DELIVERY_3, TPCC_TB_CUSTOMER, TPCC_VAR_W_ID)
+            TPCC_VAR_W_ID, TPCC_VAR_D_ID,
+            TPCC_VAR_C_ID, TPCC_VAR_OL_AMOUNT)
+  SHARD_PIE(TPCC_DELIVERY, TPCC_DELIVERY_3,
+            TPCC_TB_CUSTOMER, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_DELIVERY, TPCC_DELIVERY_3, DF_REAL) {
     Log_debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_3);
     verify(cmd.input.size() == 4);
@@ -190,9 +200,11 @@ void TpccPiece::RegDelivery() {
     mb[1] = cmd.input[TPCC_VAR_D_ID].get_blob();
     mb[2] = cmd.input[TPCC_VAR_W_ID].get_blob();
 
-    row_customer = dtxn->Query(dtxn->GetTable(TPCC_TB_CUSTOMER), mb, ROW_CUSTOMER);
+    auto tbl_customer = dtxn->GetTable(TPCC_TB_CUSTOMER);
+    row_customer = dtxn->Query(tbl_customer, mb, ROW_CUSTOMER);
     Value buf = Value(0.0);
-    dtxn->ReadColumn(row_customer, TPCC_COL_CUSTOMER_C_BALANCE, &buf, TXN_DEFERRED);
+    dtxn->ReadColumn(row_customer, TPCC_COL_CUSTOMER_C_BALANCE,
+                     &buf, TXN_DEFERRED);
     buf.set_double(buf.get_double() +
         cmd.input[TPCC_VAR_OL_AMOUNT].get_double());
     dtxn->WriteColumn(row_customer, TPCC_COL_CUSTOMER_C_BALANCE,
