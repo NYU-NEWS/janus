@@ -17,15 +17,15 @@ void TpccTxn::OrderStatusInit(TxnRequest &req) {
   n_pieces_all_ = 4;
 
   if (req.input_.count(TPCC_VAR_C_ID) > 0) { // query by c_id
-    status_[TPCC_ORDER_STATUS_0] = FINISHED; // piece 0 not needed
-    status_[TPCC_ORDER_STATUS_1] = READY; // piece 1 ready
-    status_[TPCC_ORDER_STATUS_2] = READY; // piece 2 ready
+    status_[TPCC_ORDER_STATUS_0] = OUTPUT_READY; // piece 0 not needed
+    status_[TPCC_ORDER_STATUS_1] = DISPATCHABLE; // piece 1 ready
+    status_[TPCC_ORDER_STATUS_2] = DISPATCHABLE; // piece 2 ready
     order_status_dep_.piece_last2id = true;
     order_status_dep_.piece_ori_last2id = true;
 
-    n_pieces_out_ = 1; // since piece 0 not needed, set it as one started piece
-    n_pieces_replied_ = 1;
-    n_pieces_input_ready_ = 3;
+    n_pieces_dispatched_ = 1; // since piece 0 not needed, set it as one started piece
+    n_pieces_dispatch_acked_ = 1;
+    n_pieces_dispatchable_ = 3;
   } else { // query by c_last
     // piece 0, R customer, c_last --> c_id
     GetWorkspace(TPCC_ORDER_STATUS_0).keys_ = {
@@ -36,8 +36,8 @@ void TpccTxn::OrderStatusInit(TxnRequest &req) {
     output_size_[TPCC_ORDER_STATUS_0] = 1; // return c_id only
     p_types_[TPCC_ORDER_STATUS_0] = TPCC_ORDER_STATUS_0;
 
-    status_[TPCC_ORDER_STATUS_0] = READY;  // piece 0 ready
-    n_pieces_input_ready_ = 1;
+    status_[TPCC_ORDER_STATUS_0] = DISPATCHABLE;  // piece 0 ready
+    n_pieces_dispatchable_ = 1;
 
     order_status_dep_.piece_last2id = false;
     order_status_dep_.piece_ori_last2id = false;
@@ -98,18 +98,18 @@ void TpccTxn::OrderStatusRetry() {
   order_status_dep_.piece_order = false;
 
   if (order_status_dep_.piece_last2id) {
-    status_[TPCC_ORDER_STATUS_0] = FINISHED;
-    status_[TPCC_ORDER_STATUS_1] = READY;
-    status_[TPCC_ORDER_STATUS_2] = READY;
-    n_pieces_out_ = 1;
-    n_pieces_replied_ = 1;
-    n_pieces_input_ready_ = 3;
+    status_[TPCC_ORDER_STATUS_0] = OUTPUT_READY;
+    status_[TPCC_ORDER_STATUS_1] = DISPATCHABLE;
+    status_[TPCC_ORDER_STATUS_2] = DISPATCHABLE;
+    n_pieces_dispatched_ = 1;
+    n_pieces_dispatch_acked_ = 1;
+    n_pieces_dispatchable_ = 3;
   }
   else {
-    status_[TPCC_ORDER_STATUS_0] = READY;
+    status_[TPCC_ORDER_STATUS_0] = DISPATCHABLE;
     status_[TPCC_ORDER_STATUS_1] = WAITING;
     status_[TPCC_ORDER_STATUS_2] = WAITING;
-    n_pieces_input_ready_ = 1;
+    n_pieces_dispatchable_ = 1;
   }
   status_[TPCC_ORDER_STATUS_3] = WAITING;
 }

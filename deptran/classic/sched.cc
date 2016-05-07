@@ -19,42 +19,96 @@ int ClassicSched::OnDispatch(const vector<SimpleCommand>& cmd,
   auto exec = (ClassicExecutor*) GetOrCreateExecutor(cmd[0].root_id_);
 
   vector<int32_t> *rr = new vector<int32_t>(cmd.size());
-  rrr::DragonBall* db = new rrr::DragonBall(
-      (int32_t)cmd.size(),
-      [callback, this, output, exec, res, rr] () {
-        bool r = std::all_of(rr->begin(), rr->end(), [] (int xxx) -> bool{
-          return xxx == SUCCESS;
-        });
-        *res = r ? SUCCESS : REJECT;
-        // { for debug
-        if (output->count(1000) > 0 && *res == SUCCESS) {
-          auto& m = output->at(1000);
-          verify(m.count(1011) > 0);
-        }
-        if (output->count(402) > 0 && *res == SUCCESS) {
-          auto& m = output->at(402);
-          verify(m.count(1013) > 0);
-        }
-        if (output->count(401) > 0 && *res == SUCCESS) {
-          auto& m = output->at(401);
-          verify(m.count(1007) > 0);
-        }
-        // } for debug
-        callback();
-        delete rr;
-      });
+//  rrr::DragonBall* db = new rrr::DragonBall(
+//      (int32_t)cmd.size(),
+//      [callback, this, output, exec, res, rr] () {
+//        bool r = std::all_of(rr->begin(), rr->end(), [] (int xxx) -> bool{
+//          return xxx == SUCCESS;
+//        });
+//        *res = r ? SUCCESS : REJECT;
+//#ifdef DEBUG_CODE
+//        if (output->count(1000) > 0 && *res == SUCCESS) {
+//          auto& m = output->at(1000);
+//          verify(m.count(1011) > 0);
+//        }
+//        if (output->count(402) > 0 && *res == SUCCESS) {
+//          auto& m = output->at(402);
+//          verify(m.count(1013) > 0);
+//        }
+//        if (output->count(401) > 0 && *res == SUCCESS) {
+//          auto& m = output->at(401);
+//          verify(m.count(1007) > 0);
+//        }
+//#endif
+//        callback();
+//        delete rr;
+//      });
 
-  auto sz = cmd.size();
-  for (int i = 0; i < sz; i++) {
-    exec->cmds_.push_back(cmd[i]);
-    exec->StartLaunch(cmd[i],
-                      &(*rr)[i],
-                      &(*output)[cmd[i].inn_id()],
-                      [db, this] () {
-                        std::lock_guard<std::recursive_mutex> lock(mtx_);
-                        db->trigger();
-                      });
+  // XXX just touch in case
+  for (auto c: cmd) {
+    (*output)[c.inn_id()];
   }
+
+  // TODO
+  verify(cmd.size() > 0);
+  int* sz = new int(cmd.size());
+  int* i = new int(0);
+  function<void()>* func = new function<void()>();
+  TxnWorkspace* ws = new TxnWorkspace();
+  *res = SUCCESS;
+  *func = [sz, i, func, &cmd, rr, exec, output, ws, res, callback, this] () {
+    std::lock_guard<std::recursive_mutex> lock(mtx_);
+    verify(*sz == cmd.size());
+
+    if (*res == REJECT) {
+      callback();
+      return;
+    }
+
+    if (*i > 0) { // not first time called.
+      int j = (*i) - 1;
+      verify(j >= 0);
+      verify(j < cmd.size());
+      auto& m = (*output)[cmd[j].inn_id()];
+      if (cmd[j].inn_id() == 1000) {
+        verify(m.count(1011) > 0);
+      }
+      ws->insert(m);
+    }
+    if (*i == *sz) {
+      callback();
+      return;
+//      delete i;
+//      delete sz;
+//      delete rr;
+//      delete func;
+//      delete ws;
+    } else if (*i < *sz) {
+      int j = *i;
+      (*i)++;
+      const_cast<SimpleCommand&>(cmd[j]).input.Aggregate(*ws);
+      exec->cmds_.push_back(cmd[j]);
+      exec->OnDispatch(cmd[j],
+                       res,
+                       &(*output)[cmd[j].inn_id()],
+                       *func);
+    }
+
+  };
+
+  (*func)();
+
+//  auto sz = cmd.size();
+//  for (int i = 0; i < sz; i++) {
+//    exec->cmds_.push_back(cmd[i]);
+//    exec->OnDispatch(cmd[i],
+//                     &(*rr)[i],
+//                     &(*output)[cmd[i].inn_id()],
+//                     [db, this] () {
+//                       std::lock_guard<std::recursive_mutex> lock(mtx_);
+//                       db->trigger();
+//                     });
+//  }
 
   return 0;
 }

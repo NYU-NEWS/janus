@@ -62,10 +62,10 @@ void MicroTxnCmd::Init(TxnRequest &req) {
   n_try_ = 1;
 
   status_ = {
-      {0, READY},
-      {1, READY},
-      {2, READY},
-      {3, READY}
+      {0, DISPATCHABLE},
+      {1, DISPATCHABLE},
+      {2, DISPATCHABLE},
+      {3, DISPATCHABLE}
   };
   commit_.store(true);
 
@@ -116,10 +116,10 @@ bool MicroTxnCmd::IsReadOnly() {
 }
 
 void MicroTxnCmd::Reset() {
-  n_pieces_out_ = 0;
-  n_pieces_input_ready_ = 4;
+  n_pieces_dispatched_ = 0;
+  n_pieces_dispatchable_ = 4;
   for (auto& pair :status_) {
-    pair.second = READY;
+    pair.second = DISPATCHABLE;
   }
 //  commit_.store(true);
   partition_ids_.clear();

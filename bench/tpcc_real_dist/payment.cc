@@ -31,9 +31,9 @@ void TpccRealDistChopper::PaymentInit(TxnRequest &req) {
   // piece 2, W district
   output_size_[TPCC_PAYMENT_2] = 0;
 
-  n_pieces_input_ready_ = 0;
-  n_pieces_replied_ = 0;
-  n_pieces_out_ = 0;
+  n_pieces_dispatchable_ = 0;
+  n_pieces_dispatch_acked_ = 0;
+  n_pieces_dispatched_ = 0;
   // query by c_last
   if (ws_.count(TPCC_VAR_C_LAST) != 0) {
     Log_debug("payment transaction lookup by customer name");
@@ -46,11 +46,11 @@ void TpccRealDistChopper::PaymentInit(TxnRequest &req) {
   } else {
     // query by c_id,
     // piece 3, R customer, set it to finish
-    status_[TPCC_PAYMENT_3] = FINISHED;
+    status_[TPCC_PAYMENT_3] = OUTPUT_READY;
     // piece 4, set it to ready
-    n_pieces_input_ready_++;
-    n_pieces_out_++;
-    n_pieces_replied_++;
+    n_pieces_dispatchable_++;
+    n_pieces_dispatched_++;
+    n_pieces_dispatch_acked_++;
   }
 
   // piece 4, R & W customer
@@ -68,15 +68,15 @@ void TpccRealDistChopper::PaymentRetry() {
   status_[TPCC_PAYMENT_4] = WAITING;
   status_[TPCC_PAYMENT_5] = WAITING;
 
-  n_pieces_input_ready_ = 0;
-  n_pieces_replied_ = 0;
-  n_pieces_out_ = 0;
+  n_pieces_dispatchable_ = 0;
+  n_pieces_dispatch_acked_ = 0;
+  n_pieces_dispatched_ = 0;
   if (ws_.count(TPCC_VAR_C_LAST) != 0) {
   } else {
-    n_pieces_input_ready_++;
-    n_pieces_out_++;
-    n_pieces_replied_++;
-    status_[TPCC_PAYMENT_3] = FINISHED;
+    n_pieces_dispatchable_++;
+    n_pieces_dispatched_++;
+    n_pieces_dispatch_acked_++;
+    status_[TPCC_PAYMENT_3] = OUTPUT_READY;
   }
   CheckReady();
 }

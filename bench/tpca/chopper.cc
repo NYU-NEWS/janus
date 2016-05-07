@@ -38,23 +38,23 @@ void TpcaPaymentChopper::Init(TxnRequest &req) {
   callback_ = req.callback_;
   max_try_ = req.n_try_;
   n_try_ = 1;
-  n_pieces_input_ready_ = 3;
+  n_pieces_dispatchable_ = 3;
 
   status_ = {
-      {TPCA_PAYMENT_1, READY},
-      {TPCA_PAYMENT_2, READY},
-      {TPCA_PAYMENT_3, READY}
+      {TPCA_PAYMENT_1, DISPATCHABLE},
+      {TPCA_PAYMENT_2, DISPATCHABLE},
+      {TPCA_PAYMENT_3, DISPATCHABLE}
   };
   commit_.store(true);
 }
 
 void TpcaPaymentChopper::Reset() {
   TxnCommand::Reset();
-  n_pieces_input_ready_ = 3;
+  n_pieces_dispatchable_ = 3;
   status_ = {
-      {TPCA_PAYMENT_1, READY},
-      {TPCA_PAYMENT_2, READY},
-      {TPCA_PAYMENT_3, READY}
+      {TPCA_PAYMENT_1, DISPATCHABLE},
+      {TPCA_PAYMENT_2, DISPATCHABLE},
+      {TPCA_PAYMENT_3, DISPATCHABLE}
   };
   commit_.store(true);
   partition_ids_.clear();

@@ -113,7 +113,7 @@ void RccCoord::DispatchAck(phase_t phase,
   if (txn().HasMoreSubCmdReadyNotOut()) {
     Log_debug("command has more sub-cmd, cmd_id: %lx,"
                   " n_started_: %d, n_pieces: %d",
-              txn().id_, txn().n_pieces_out_, txn().GetNPieceAll());
+              txn().id_, txn().n_pieces_dispatched_, txn().GetNPieceAll());
     Dispatch();
   } else if (AllDispatchAcked()) {
     Log_debug("receive all start acks, txn_id: %llx; START PREPARE", cmd_->id_);
@@ -210,10 +210,10 @@ void RccCoord::DispatchRoAck(phase_t phase,
              cmd_->id_,
              cmd.inn_id_);
 
-  ch->n_pieces_out_++;
+  ch->n_pieces_dispatched_++;
   if (cmd_->HasMoreSubCmdReadyNotOut()) {
     DispatchRo();
-  } else if (ch->n_pieces_out_ == ch->GetNPieceAll()) {
+  } else if (ch->n_pieces_dispatched_ == ch->GetNPieceAll()) {
     if (last_vers_ == curr_vers_) {
       // TODO
     } else {

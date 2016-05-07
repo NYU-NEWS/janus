@@ -18,9 +18,9 @@ void TpccRealDistChopper::NewOrderRetry() {
   status_[TPCCD_NEW_ORDER_4] = WAITING;
   int32_t ol_cnt = ws_[TPCC_VAR_OL_CNT].get_i32();
   n_pieces_all_ = 5 + 4 * ol_cnt;
-  n_pieces_input_ready_ = 0;
-  n_pieces_replied_ = 0;
-  n_pieces_out_ = 0;
+  n_pieces_dispatchable_ = 0;
+  n_pieces_dispatch_acked_ = 0;
+  n_pieces_dispatched_ = 0;
   for (size_t i = 0; i < ol_cnt; i++) {
     status_[TPCCD_NEW_ORDER_RI(i)] = WAITING;
     status_[TPCCD_NEW_ORDER_RS(i)] = WAITING;

@@ -2,6 +2,7 @@
 #include "executor.h"
 #include "scheduler.h"
 #include "txn_reg.h"
+#include "txn_chopper.h"
 
 namespace rococo {
 
@@ -33,6 +34,30 @@ void Executor::Execute(const SimpleCommand &cmd,
     verify(pair.second.get_kind() != Value::UNKNOWN);
   }
 }
+
+void Executor::Execute(const vector<SimpleCommand>& cmds,
+                       TxnOutput* output) {
+  TxnWorkspace ws;
+  for (const SimpleCommand& c: cmds) {
+    auto& cmd = const_cast<SimpleCommand&>(c);
+    const auto &handler = txn_reg_->get(c).txn_handler;
+    auto& m = (*output)[c.inn_id_];
+    int res;
+    cmd.input.Aggregate(ws);
+    handler(this,
+            dtxn_,
+            cmd,
+            &res,
+            m);
+    ws.insert(m);
+#ifdef DEBUG_CODE
+    for (auto &pair: output) {
+      verify(pair.second.get_kind() != Value::UNKNOWN);
+    }
+#endif
+  }
+}
+
 
 mdb::Txn* Executor::mdb_txn() {
   if (mdb_txn_ != nullptr) return mdb_txn_;

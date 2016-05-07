@@ -7,7 +7,7 @@ namespace rococo {
 void TpccTxn::StockLevelInit(TxnRequest &req) {
 
   n_pieces_all_ = 2;
-  n_pieces_input_ready_ = 1;
+  n_pieces_dispatchable_ = 1;
 
   stock_level_dep_.w_id = req.input_[TPCC_VAR_W_ID].get_i32();
   stock_level_dep_.threshold = req.input_[TPCC_VAR_THRESHOLD].get_i32();
@@ -19,7 +19,7 @@ void TpccTxn::StockLevelInit(TxnRequest &req) {
   };
   output_size_[TPCC_STOCK_LEVEL_0] = 1;
   p_types_[TPCC_STOCK_LEVEL_0] = TPCC_STOCK_LEVEL_0;
-  status_[TPCC_STOCK_LEVEL_0] = READY;
+  status_[TPCC_STOCK_LEVEL_0] = DISPATCHABLE;
 
   // piece 1, R order_line
   GetWorkspace(TPCC_STOCK_LEVEL_1).keys_ = {
@@ -35,13 +35,13 @@ void TpccTxn::StockLevelInit(TxnRequest &req) {
 
 void TpccTxn::StockLevelRetry() {
   n_pieces_all_ = 2;
-  n_pieces_input_ready_ = 1;
+  n_pieces_dispatchable_ = 1;
   // inputs_.resize(n_pieces_all_);
   // output_size_.resize(n_pieces_all_);
   // p_types_.resize(n_pieces_all_);
   // sharding_.resize(n_pieces_all_);
   //  status_.resize(n_pieces_all_);
-  status_[TPCC_STOCK_LEVEL_0] = READY;
+  status_[TPCC_STOCK_LEVEL_0] = DISPATCHABLE;
   status_[TPCC_STOCK_LEVEL_1] = WAITING;
 }
 
@@ -138,8 +138,8 @@ void TpccPiece::RegStockLevel() {
           TPCC_VAR_W_ID,
           TPCC_VAR_THRESHOLD
       };
-      tpcc_ch->status_[pi] = READY;
-      tpcc_ch->n_pieces_input_ready_++;
+      tpcc_ch->status_[pi] = DISPATCHABLE;
+      tpcc_ch->n_pieces_dispatchable_++;
     }
     return true;
   END_CB

@@ -10,10 +10,11 @@
 #include "tpl.h"
 
 namespace rococo {
-int TplExecutor::StartLaunch(const SimpleCommand& cmd,
-                             rrr::i32 *res,
-                             map<int32_t, Value> *output,
-                             const function<void()>& callback) {
+
+int TplExecutor::OnDispatch(const SimpleCommand &cmd,
+                            rrr::i32 *res,
+                            map<int32_t, Value> *output,
+                            const function<void()> &callback) {
   verify(mdb_txn()->rtti() == mdb::symbol_t::TXN_2PL);
   verify(phase_ <= 1);
   mdb::Txn2PL *txn = (mdb::Txn2PL *) mdb_txn();

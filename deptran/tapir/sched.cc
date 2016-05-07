@@ -6,19 +6,15 @@
 
 namespace rococo {
 
-int TapirSched::OnDispatch(const vector<SimpleCommand> &cmd,
+int TapirSched::OnDispatch(const vector<SimpleCommand> &cmds,
                            int32_t* res,
                            TxnOutput *output,
                            const function<void()> &callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-//  auto exec = (TapirExecutor*) GetOrCreateExecutor(cmd.root_id_);
-  auto exec = GetOrCreateExecutor(cmd[0].root_id_);
-//  verify(0);
-  exec->mdb_txn();
-  for (const auto& c: cmd) {
-    exec->Execute(c, res, (*output)[c.inn_id()]);
-  }
-
+  auto exec = GetOrCreateExecutor(cmds[0].root_id_);
+  verify(exec->mdb_txn());
+  exec->Execute(cmds, output);
+  *res = SUCCESS;
   callback();
   return 0;
 

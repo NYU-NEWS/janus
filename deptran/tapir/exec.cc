@@ -11,16 +11,20 @@ void TapirExecutor::FastAccept(const vector<SimpleCommand>& txn_cmds,
                                int32_t* res) {
   // validate read versions
   *res = SUCCESS;
-  for (auto& cmd: txn_cmds) {
-    map<int32_t, Value> output;
-    int32_t r;
-    Execute(cmd, &r, output);
-    for (auto& pair : output) {
-//      verify(cmd.output.size() > 0);
-      auto& idx = pair.first;
-      auto& value = pair.second;
-      if (cmd.output.count(idx) == 0 ||
-            value.ver_ != cmd.output.at(idx).ver_) {
+
+  map<int32_t, Value> output_m;
+  for (auto& c: txn_cmds) {
+    output_m.insert(c.output.begin(), c.output.end());
+  }
+
+  TxnOutput output;
+  Execute(txn_cmds, &output);
+  for (auto& pair : output) {
+    for (auto& ppair: pair.second) {
+      auto& idx = ppair.first;
+      Value& value = ppair.second;
+      if (output_m.count(idx) == 0 ||
+          value.ver_ != output_m.at(idx).ver_) {
         *res = REJECT;
         return;
       }

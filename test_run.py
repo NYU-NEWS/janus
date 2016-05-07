@@ -25,6 +25,7 @@ benchmarks_ =  [
     "rw",
     "tpca",
     "tpcc",
+    "tpcc_no",
     "tpccd"
 ]
 

@@ -34,7 +34,9 @@ void RccDTxn::DispatchExecute(const SimpleCommand &cmd,
   } else if (pair.defer == DF_NO) {
     yyy = &xxx;
   } else if (pair.defer == DF_FAKE) {
-    verify(0);
+    dreqs_.push_back(cmd);
+    return;
+//    verify(0);
   } else {
     verify(0);
   }
@@ -55,10 +57,14 @@ void RccDTxn::Abort() {
 void RccDTxn::CommitExecute() {
 //  verify(phase_ == PHASE_RCC_START);
   phase_ = PHASE_RCC_COMMIT;
+  TxnWorkspace ws;
   for (auto &cmd: dreqs_) {
     auto pair = txn_reg_->get(cmd);
     int tmp;
-    pair.txn_handler(nullptr, this, cmd, &tmp, output_[cmd.inn_id_]);
+    cmd.input.Aggregate(ws);
+    auto& m = output_[cmd.inn_id_];
+    pair.txn_handler(nullptr, this, cmd, &tmp, m);
+    ws.insert(m);
   }
   committed = true;
 }

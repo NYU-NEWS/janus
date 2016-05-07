@@ -84,6 +84,7 @@ class TxnRegistry {
   map<std::pair<txntype_t, innid_t>,
       std::pair<string, vector<int32_t>>> sharding_input_ = {};
   map<txntype_t, map<innid_t, set<int32_t>>> input_vars_ = {};
+  map<txntype_t, map<innid_t, set<int32_t>>> output_vars_ = {};
   map<txntype_t, std::function<void(TxnCommand * ch, TxnRequest& req)> > init_ = {};
   map<txntype_t, std::function<void(TxnCommand * ch)>> retry_ = {};
 

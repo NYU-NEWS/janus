@@ -26,7 +26,8 @@ class Executor {
   virtual void Execute(const SimpleCommand &cmd,
                        rrr::i32 *res,
                        map<int32_t, Value> &output);
-
+  virtual void Execute(const vector<SimpleCommand>& cmd,
+                       TxnOutput* output) ;
   virtual ~Executor();
   mdb::Txn* mdb_txn();
 };

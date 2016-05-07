@@ -9,10 +9,10 @@
 
 namespace rococo {
 
-int OCCExecutor::StartLaunch(const SimpleCommand& cmd,
-                             rrr::i32 *res,
-                             map<int32_t, Value>* output,
-                             const function<void()>& callback) {
+int OCCExecutor::OnDispatch(const SimpleCommand &cmd,
+                            rrr::i32 *res,
+                            map<int32_t, Value> *output,
+                            const function<void()> &callback) {
   this->Execute(cmd, res, *output);
   callback();
   return 0;

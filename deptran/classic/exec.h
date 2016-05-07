@@ -19,10 +19,15 @@ class ClassicExecutor: public Executor {
 
   virtual ~ClassicExecutor();
 
-  virtual int StartLaunch(const SimpleCommand &cmd,
-                          rrr::i32 *res,
-                          map<int32_t, Value>* output,
-                          const function<void()>& callback);
+  virtual int OnDispatch(const SimpleCommand &cmd,
+                         rrr::i32 *res,
+                         map<int32_t, Value> *output,
+                         const function<void()> &callback);
+
+  virtual int OnDispatch(const vector<SimpleCommand>& cmd,
+                         int32_t *res,
+                         TxnOutput* output,
+                         const function<void()>& callback);
 
   int PrepareLaunch(const std::vector<i32> &sids,
                     int32_t *res,

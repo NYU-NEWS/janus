@@ -12,10 +12,17 @@ namespace rococo {
 ClassicExecutor::~ClassicExecutor() {
 }
 
-int ClassicExecutor::StartLaunch(const SimpleCommand &cmd,
-                                 rrr::i32 *res,
-                                 map<int32_t, Value>* output,
-                                 const function<void()>& callback) {
+int ClassicExecutor::OnDispatch(const SimpleCommand &cmd,
+                                rrr::i32 *res,
+                                map<int32_t, Value> *output,
+                                const function<void()> &callback) {
+  verify(0);
+}
+
+int ClassicExecutor::OnDispatch(const vector<SimpleCommand>& cmd,
+                                int32_t* res,
+                                TxnOutput* output,
+                                const function<void()>& callback) {
   verify(0);
 }
 
@@ -98,6 +105,7 @@ void ClassicExecutor::execute(const SimpleCommand &cmd,
                                  rrr::i32 *res,
                                  map<int32_t, Value> &output,
                                  rrr::i32 *output_size) {
+  verify(0);
   txn_reg_->get(cmd).txn_handler(this,
                                  dtxn_,
                                  const_cast<SimpleCommand&>(cmd),

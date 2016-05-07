@@ -54,7 +54,7 @@ void TpccTxn::Init(TxnRequest &req) {
     default:
       verify(0);
   }
-  verify(n_pieces_input_ready_ > 0);
+  verify(n_pieces_dispatchable_ > 0);
 }
 
 // This is sort of silly. We should have a better way.
@@ -75,18 +75,20 @@ bool TpccTxn::CheckReady() {
         all_found = false;
         break;
       } else {
-//        TxnWorkspace& ws = GetWorkspace(pi);
-//        if (ws.keys_.size() == 0)
-//          ws.keys_ = var_set;
-//        verify(ws_[var].get_kind() != 0);
+#ifdef DEBUG_CODE
+    TxnWorkspace& ws = GetWorkspace(pi);
+    if (ws.keys_.size() == 0)
+      ws.keys_ = var_set;
+    verify(ws_[var].get_kind() != 0);
+#endif
       }
     }
     // all found.
     if (all_found && status == WAITING) {
-      status = READY;
+      status = DISPATCHABLE;
       TxnWorkspace& ws = GetWorkspace(pi);
       ws.keys_ = var_set;
-      n_pieces_input_ready_++;
+      n_pieces_dispatchable_++;
       ret = true;
     }
   }
@@ -117,8 +119,8 @@ bool TpccTxn::CheckReady() {
     }
     // all found.
     if (all_found && status == WAITING) {
-      status = READY;
-      n_pieces_input_ready_++;
+      status = DISPATCHABLE;
+      n_pieces_dispatchable_++;
       ret = true;
 //        for (auto &var : var_set) {
 //          inputs_[pi][var] = ws_[var];
@@ -179,7 +181,7 @@ bool TpccTxn::start_callback(int pi,
     verify(ws_.count(TPCC_VAR_D_NEXT_O_ID) > 0);
     TxnWorkspace& ws = GetWorkspace(TPCC_STOCK_LEVEL_1);
     verify(ws.count(TPCC_VAR_D_NEXT_O_ID) > 0);
-    verify(status_[TPCC_STOCK_LEVEL_1] == READY);
+    verify(status_[TPCC_STOCK_LEVEL_1] == DISPATCHABLE);
   }
 //  if (txn_type_ == TPCC_NEW_ORDER && pi == TPCC_NEW_ORDER_0) {
 //    verify(ws_.find(TPCC_VAR_O_ID) != ws_.end());
@@ -218,9 +220,9 @@ void TpccTxn::Reset() {
   partition_ids_.clear();
   n_try_++;
   commit_.store(true);
-  n_pieces_input_ready_ = 0;
-  n_pieces_replied_ = 0;
-  n_pieces_out_ = 0;
+  n_pieces_dispatchable_ = 0;
+  n_pieces_dispatch_acked_ = 0;
+  n_pieces_dispatched_ = 0;
   switch (type_) {
     case TPCC_NEW_ORDER:
       NewOrderRetry();
@@ -240,7 +242,7 @@ void TpccTxn::Reset() {
     default:
       verify(0);
   }
-  verify(n_pieces_input_ready_ > 0);
+  verify(n_pieces_dispatchable_ > 0);
 }
 
 bool TpccTxn::IsReadOnly() {

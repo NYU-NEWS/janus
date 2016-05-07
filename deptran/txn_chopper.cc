@@ -22,6 +22,13 @@ TxnWorkspace::TxnWorkspace(const TxnWorkspace& rhs)
     : keys_(rhs.keys_), values_{rhs.values_} {
 }
 
+void TxnWorkspace::Aggregate(const TxnWorkspace& rhs) {
+  keys_.insert(rhs.keys_.begin(), rhs.keys_.end());
+  if (values_ != rhs.values_) {
+    values_->insert(rhs.values_->begin(), rhs.values_->end());
+  }
+}
+
 TxnWorkspace& TxnWorkspace::operator=(const TxnWorkspace& rhs) {
   keys_ = rhs.keys_;
   values_ = rhs.values_;
@@ -96,16 +103,19 @@ vector<SimpleCommand> TxnCommand::GetCmdsByPartition(parid_t par_id) {
 }
 
 map<parid_t, vector<SimpleCommand*>> TxnCommand::GetReadyCmds() {
-  verify(n_pieces_out_ < n_pieces_input_ready_);
-  verify(n_pieces_out_ < n_pieces_all_);
+  verify(n_pieces_dispatched_ < n_pieces_dispatchable_);
+  verify(n_pieces_dispatched_ < n_pieces_all_);
   map<parid_t, vector<SimpleCommand*>> cmds;
 
+//  int n_debug = 0;
   auto sz = status_.size();
   for (auto &kv : status_) {
     auto pi = kv.first;
     auto &status = kv.second;
 
-    if (status == READY) {
+//    if (status > DISPATCHABLE)
+//
+    if (status == DISPATCHABLE) {
       status = INIT;
       SimpleCommand *cmd = new SimpleCommand();
       cmd->inn_id_ = pi;
@@ -124,13 +134,13 @@ map<parid_t, vector<SimpleCommand*>> TxnCommand::GetReadyCmds() {
       Log_debug("getting subcmd i: %d, thread id: %x",
                 pi, std::this_thread::get_id());
       verify(status_[pi] == INIT);
-      status_[pi] = ONGOING;
+      status_[pi] = DISPATCHED;
 
       //verify(cmd->type_ != 0); // not sure why this should be true???
       verify(type_ == type());
       verify(cmd->root_type_ == type());
       verify(cmd->root_type_ > 0);
-      n_pieces_out_++;
+      n_pieces_dispatched_++;
     }
   }
 
@@ -139,16 +149,16 @@ map<parid_t, vector<SimpleCommand*>> TxnCommand::GetReadyCmds() {
 }
 
 ContainerCommand *TxnCommand::GetNextReadySubCmd() {
-  verify(n_pieces_out_ < n_pieces_input_ready_);
-  verify(n_pieces_out_ < n_pieces_all_);
+  verify(0);
+  verify(n_pieces_dispatched_ < n_pieces_dispatchable_);
+  verify(n_pieces_dispatched_ < n_pieces_all_);
   SimpleCommand *cmd = nullptr;
 
   auto sz = status_.size();
   for (auto &kv : status_) {
     auto pi = kv.first;
     auto &status = kv.second;
-
-    if (status == READY) {
+    if (status == DISPATCHABLE) {
       status = INIT;
       cmd = new SimpleCommand();
       cmd->inn_id_ = pi;
@@ -166,13 +176,13 @@ ContainerCommand *TxnCommand::GetNextReadySubCmd() {
       Log_debug("getting subcmd i: %d, thread id: %x",
                 pi, std::this_thread::get_id());
       verify(status_[pi] == INIT);
-      status_[pi] = ONGOING;
+      status_[pi] = DISPATCHED;
 
       //verify(cmd->type_ != 0); // not sure why this should be true???
       verify(type_ == type());
       verify(cmd->root_type_ == type());
       verify(cmd->root_type_ > 0);
-      n_pieces_out_++;
+      n_pieces_dispatched_++;
       return cmd;
     }
   }
@@ -182,7 +192,7 @@ ContainerCommand *TxnCommand::GetNextReadySubCmd() {
 }
 
 bool TxnCommand::OutputReady() {
-  if (n_pieces_all_ == n_pieces_replied_) {
+  if (n_pieces_all_ == n_pieces_dispatch_acked_) {
     return true;
   } else {
     return false;
@@ -197,10 +207,10 @@ void TxnCommand::Merge(TxnOutput& output) {
 
 void TxnCommand::Merge(innid_t inn_id, map<int32_t, Value>& output) {
   verify(outputs_.find(inn_id) == outputs_.end());
-  n_pieces_replied_++;
-  verify(n_pieces_all_ >= n_pieces_input_ready_);
-  verify(n_pieces_input_ready_ >= n_pieces_out_);
-  verify(n_pieces_out_ >= n_pieces_replied_);
+  n_pieces_dispatch_acked_++;
+  verify(n_pieces_all_ >= n_pieces_dispatchable_);
+  verify(n_pieces_dispatchable_ >= n_pieces_dispatched_);
+  verify(n_pieces_dispatched_ >= n_pieces_dispatch_acked_);
   outputs_[inn_id] = output;
   cmds_[inn_id]->output = output;
   this->start_callback(inn_id, SUCCESS, output);
@@ -214,23 +224,23 @@ void TxnCommand::Merge(ContainerCommand &cmd) {
 }
 
 bool TxnCommand::HasMoreSubCmdReadyNotOut() {
-  verify(n_pieces_all_ >= n_pieces_input_ready_);
-  verify(n_pieces_input_ready_ >= n_pieces_out_);
-  verify(n_pieces_out_ >= n_pieces_replied_);
-  if (n_pieces_input_ready_ == n_pieces_out_) {
-    verify(n_pieces_all_ == n_pieces_out_ ||
-           n_pieces_replied_ < n_pieces_out_);
+  verify(n_pieces_all_ >= n_pieces_dispatchable_);
+  verify(n_pieces_dispatchable_ >= n_pieces_dispatched_);
+  verify(n_pieces_dispatched_ >= n_pieces_dispatch_acked_);
+  if (n_pieces_dispatchable_ == n_pieces_dispatched_) {
+    verify(n_pieces_all_ == n_pieces_dispatched_ ||
+           n_pieces_dispatch_acked_ < n_pieces_dispatched_);
     return false;
   } else {
-    verify(n_pieces_input_ready_ > n_pieces_out_);
+    verify(n_pieces_dispatchable_ > n_pieces_dispatched_);
     return true;
   }
 }
 
 void TxnCommand::Reset() {
-  n_pieces_input_ready_ = 0;
-  n_pieces_replied_ = 0;
-  n_pieces_out_ = 0;
+  n_pieces_dispatchable_ = 0;
+  n_pieces_dispatch_acked_ = 0;
+  n_pieces_dispatched_ = 0;
   outputs_.clear();
 }
 
@@ -339,9 +349,9 @@ Marshal& TxnCommand::ToMarshal(Marshal& m) const {
 //  m << cmd_;
   m << partition_ids_;
   m << n_pieces_all_;
-  m << n_pieces_input_ready_;
-  m << n_pieces_replied_;
-  m << n_pieces_out_;
+  m << n_pieces_dispatchable_;
+  m << n_pieces_dispatch_acked_;
+  m << n_pieces_dispatched_;
   m << n_finished_;
   m << max_try_;
   m << n_try_;
@@ -360,9 +370,9 @@ Marshal& TxnCommand::FromMarshal(Marshal& m) {
 //  m >> cmd_;
   m >> partition_ids_;
   m >> n_pieces_all_;
-  m >> n_pieces_input_ready_;
-  m >> n_pieces_replied_;
-  m >> n_pieces_out_;
+  m >> n_pieces_dispatchable_;
+  m >> n_pieces_dispatch_acked_;
+  m >> n_pieces_dispatched_;
   m >> n_finished_;
   m >> max_try_;
   m >> n_try_;

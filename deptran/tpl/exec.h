@@ -26,10 +26,10 @@ class TplExecutor: public ClassicExecutor {
 
   virtual ~TplExecutor(){};
 
-  int StartLaunch(const SimpleCommand &cmd,
-                  rrr::i32 *res,
-                  map<int32_t, Value> *output,
-                  const function<void()>& callback) override;
+  int OnDispatch(const SimpleCommand &cmd,
+                 rrr::i32 *res,
+                 map<int32_t, Value> *output,
+                 const function<void()> &callback) override;
 
   // Below are merged from TxnRegistry.
 

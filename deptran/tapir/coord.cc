@@ -69,7 +69,7 @@ void TapirCoord::DispatchAck(phase_t phase,
   if (txn->HasMoreSubCmdReadyNotOut()) {
     Log_debug("command has more sub-cmd, cmd_id: %llx,"
                   " n_started_: %d, n_pieces: %d",
-              txn->id_, txn->n_pieces_out_, txn->GetNPieceAll());
+              txn->id_, txn->n_pieces_dispatched_, txn->GetNPieceAll());
     Dispatch();
   } else if (AllDispatchAcked()) {
     Log_debug("receive all start acks, txn_id: %llx; START PREPARE",

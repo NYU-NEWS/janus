@@ -36,6 +36,7 @@ class TxnWorkspace {
   TxnWorkspace(const TxnWorkspace& rhs);
   TxnWorkspace& operator= (const map<int32_t, Value> &rhs);
   TxnWorkspace& operator= (const TxnWorkspace& rhs);
+  void Aggregate(const TxnWorkspace& rhs);
   Value& operator[] (size_t idx);
 
 //  map<int32_t, Value>::iterator find(int32_t k) {
@@ -86,7 +87,13 @@ Marshal& operator << (Marshal& m, const TxnWorkspace &ws);
 
 Marshal& operator >> (Marshal& m, TxnWorkspace& ws);
 
-enum CommandStatus {WAITING=-1, READY=0, ONGOING=1, FINISHED=2, INIT=3};
+enum CommandStatus {
+  WAITING=-1,
+  DISPATCHABLE=0,
+  DISPATCHED=1,
+  OUTPUT_READY=2,
+  INIT=3
+};
 
 
 class SimpleCommand: public ContainerCommand {
@@ -172,9 +179,9 @@ class TxnCommand: public ContainerCommand {
   /** server involved*/
 
   int n_pieces_all_ = 0;
-  int n_pieces_input_ready_ = 0;
-  int n_pieces_replied_ = 0;
-  int n_pieces_out_ = 0;
+  int n_pieces_dispatchable_ = 0;
+  int n_pieces_dispatch_acked_ = 0;
+  int n_pieces_dispatched_ = 0;
   /** finished pieces counting */
   int n_finished_ = 0;
 

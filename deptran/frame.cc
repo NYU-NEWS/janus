@@ -306,7 +306,7 @@ TxnCommand* Frame::CreateTxnCommand(TxnRequest& req, TxnRegistry* reg) {
   cmd->txn_reg_ = reg;
   cmd->sss_ = Config::GetConfig()->sharding_;
   cmd->Init(req);
-  verify(cmd->n_pieces_input_ready_ > 0);
+  verify(cmd->n_pieces_dispatchable_ > 0);
   return cmd;
 }
 
