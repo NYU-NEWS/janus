@@ -1,0 +1,10 @@
+bench: 
+    - tpca
+graph:
+    using_cmd: '18:($9/$10*100.0)'
+    x_label: 'Zipf Coefficient'
+    y_label: 'Commit %'
+    y_range: '[0:]'
+    x_range: '[0:]'
+    output_file: '${txn}_${bench}_zipf_commitrate'
+    key_location: 'bottom left'
