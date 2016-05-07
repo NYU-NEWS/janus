@@ -91,6 +91,7 @@ def put_janus_config(copy_configs=[]):
 @roles('leaders')
 def config_nfs_server():
     cmds = [
+        'apt-get update -qq',
         'apt-get -y install nfs-kernel-server',
         'service nfs-kernel-server stop',
         'mkdir -p /export',
@@ -236,7 +237,7 @@ def load_security_grp_ips():
                 'IpRanges': []
             }
              
-            permissions['IpRanges'].append({ 'CidrIp': '0.0.0.0/32' })
+            permissions['IpRanges'].append({ 'CidrIp': '0.0.0.0/0' })
 
             #for region2 in regions:
             #    for instance in created_instances[region2]:
