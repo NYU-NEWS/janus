@@ -51,7 +51,7 @@ void TpccPiece::RegDelivery() {
     // including the vertex entry
 
     Log_debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_0);
-    verify(cmd.input.size() == 3);
+    verify(cmd.input.size() >= 3);
     Value buf;
     //cell_locator_t cl(TPCC_TB_NEW_ORDER, 3);
     mdb::Row *r = NULL;
@@ -103,7 +103,7 @@ void TpccPiece::RegDelivery() {
             TPCC_TB_ORDER, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_DELIVERY, TPCC_DELIVERY_1, DF_NO) {
     Log_debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_1);
-    verify(cmd.input.size() == 4);
+    verify(cmd.input.size() >= 4);
     mdb::Txn *txn = dtxn->mdb_txn_;
     mdb::MultiBlob mb(3);
     //cell_locator_t cl(TPCC_TB_ORDER, 3);
@@ -111,7 +111,8 @@ void TpccPiece::RegDelivery() {
     mb[1] = cmd.input[TPCC_VAR_W_ID].get_blob();
     mb[2] = cmd.input[TPCC_VAR_O_ID].get_blob();
     //Log::debug("Delivery: o_d_id: %d, o_w_id: %d, o_id: %d, hash: %u", input[2].get_i32(), input[1].get_i32(), input[0].get_i32(), mdb::MultiBlob::hash()(cl.primary_key));
-    mdb::Row *row_order = dtxn->Query(txn->get_table(TPCC_TB_ORDER), mb, ROW_ORDER);
+    auto tbl_order = txn->get_table(TPCC_TB_ORDER);
+    mdb::Row *row_order = dtxn->Query(tbl_order, mb, ROW_ORDER);
     dtxn->ReadColumn(row_order,
                      TPCC_COL_ORDER_O_C_ID,
                      &output[TPCC_VAR_C_ID],
@@ -130,7 +131,7 @@ void TpccPiece::RegDelivery() {
             TPCC_TB_ORDER_LINE, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_DELIVERY, TPCC_DELIVERY_2, DF_NO) {
     Log_debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_2);
-    verify(cmd.input.size() == 3);
+    verify(cmd.input.size() >= 3);
     //        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
     mdb::MultiBlob mbl = mdb::MultiBlob(4);
     mdb::MultiBlob mbh = mdb::MultiBlob(4);
@@ -192,7 +193,7 @@ void TpccPiece::RegDelivery() {
             TPCC_TB_CUSTOMER, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_DELIVERY, TPCC_DELIVERY_3, DF_REAL) {
     Log_debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_3);
-    verify(cmd.input.size() == 4);
+    verify(cmd.input.size() >= 4);
     mdb::Row *row_customer = NULL;
     mdb::MultiBlob mb = mdb::MultiBlob (3);
     //cell_locator_t cl(TPCC_TB_CUSTOMER, 3);

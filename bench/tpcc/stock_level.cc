@@ -48,8 +48,10 @@ void TpccTxn::StockLevelRetry() {
 
 void TpccPiece::RegStockLevel() {
   // Ri district
-  INPUT_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_0, TPCC_VAR_W_ID, TPCC_VAR_D_ID)
-  SHARD_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_0, TPCC_TB_DISTRICT, TPCC_VAR_W_ID)
+  INPUT_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_0,
+            TPCC_VAR_W_ID, TPCC_VAR_D_ID)
+  SHARD_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_0,
+            TPCC_TB_DISTRICT, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_0, DF_NO) {
     verify(dtxn != nullptr);
 //    verify(input.size() == 2);
@@ -58,11 +60,12 @@ void TpccPiece::RegStockLevel() {
     mb[0] = cmd.input[TPCC_VAR_D_ID].get_blob();
     mb[1] = cmd.input[TPCC_VAR_W_ID].get_blob();
 
-    mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT),
+    auto tbl_district =  dtxn->GetTable(TPCC_TB_DISTRICT);
+    mdb::Row *r = dtxn->Query(tbl_district,
                               mb,
                               ROW_DISTRICT);
     dtxn->ReadColumn(r, TPCC_COL_DISTRICT_D_NEXT_O_ID,
-                     &output[TPCC_VAR_D_NEXT_O_ID], TXN_INSTANT);
+                     &output[TPCC_VAR_D_NEXT_O_ID], TXN_BYPASS);
     *res = SUCCESS;
   } END_PIE
 
@@ -114,7 +117,7 @@ void TpccPiece::RegStockLevel() {
       dtxn->ReadColumn(row_list[i],
                        TPCC_COL_ORDER_LINE_OL_I_ID,
                        &output[TPCC_VAR_OL_I_ID(i)],
-                       TXN_INSTANT);
+                       TXN_BYPASS);
     }
     output[TPCC_VAR_OL_AMOUNT] = Value((int32_t)row_list.size());
 //    verify(output_size <= 300);
@@ -161,7 +164,7 @@ void TpccPiece::RegStockLevel() {
     mb[1] = cmd.input[TPCC_VAR_W_ID].get_blob();
 
     mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_STOCK), mb, ROW_STOCK);
-    dtxn->ReadColumn(r, TPCC_COL_STOCK_S_QUANTITY, &buf, TXN_DEFERRED);
+    dtxn->ReadColumn(r, TPCC_COL_STOCK_S_QUANTITY, &buf, TXN_BYPASS);
 
     if (buf.get_i32() < cmd.input[TPCC_VAR_THRESHOLD].get_i32())
         output[TPCC_VAR_UNKOWN] = Value((i32) 1);

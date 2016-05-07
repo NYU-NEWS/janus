@@ -123,7 +123,7 @@ void TpccPiece::RegOrderStatus() {
             TPCC_TB_CUSTOMER, TPCC_VAR_W_ID);
   BEGIN_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_0, DF_NO) {
 
-    verify(cmd.input.size() == 3);
+    verify(cmd.input.size() >= 3);
     Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_0);
 
     mdb::MultiBlob mbl(3), mbh(3);
@@ -175,7 +175,7 @@ void TpccPiece::RegOrderStatus() {
             TPCC_TB_CUSTOMER, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_1, DF_NO) {
     Log_debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_1);
-    verify(cmd.input.size() == 3);
+    verify(cmd.input.size() >= 3);
 
     mdb::Table *tbl = dtxn->GetTable(TPCC_TB_CUSTOMER);
     // R customer
@@ -202,7 +202,7 @@ void TpccPiece::RegOrderStatus() {
     dtxn->ReadColumn(r,
                      TPCC_COL_CUSTOMER_C_BALANCE,
                      &output[TPCC_VAR_C_BALANCE],
-                     TXN_INSTANT);// read c_balance
+                     TXN_BYPASS);// read c_balance
 
     *res = SUCCESS;
   } END_PIE
@@ -214,7 +214,7 @@ void TpccPiece::RegOrderStatus() {
             TPCC_TB_ORDER, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_2, DF_NO) {
     Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_2);
-    verify(cmd.input.size() == 3);
+    verify(cmd.input.size() >= 3);
 
     mdb::MultiBlob mb_0(3);
     mb_0[0] = cmd.input[TPCC_VAR_D_ID].get_blob();
@@ -243,7 +243,7 @@ void TpccPiece::RegOrderStatus() {
     dtxn->ReadColumn(r,
                      TPCC_COL_ORDER_O_CARRIER_ID,
                      &output[TPCC_VAR_O_CARRIER_ID],
-                     TXN_INSTANT); // output[2] ==> o_carrier_id
+                     TXN_BYPASS); // output[2] ==> o_carrier_id
 //        Log::debug("piece: %d, o_id: %d", TPCC_ORDER_STATUS_2, output[0].get_i32());
     *res = SUCCESS;
   } END_PIE
@@ -255,7 +255,7 @@ void TpccPiece::RegOrderStatus() {
             TPCC_TB_ORDER_LINE, TPCC_VAR_W_ID)
   BEGIN_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_3, DF_NO) {
     Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_3);
-    verify(cmd.input.size() == 3);
+    verify(cmd.input.size() >= 3);
     mdb::MultiBlob mbl(4), mbh(4);
     Log_debug("ol_d_id: %d, ol_w_id: %d, ol_o_id: %d",
               cmd.input[TPCC_VAR_O_ID].get_i32(),
@@ -305,7 +305,7 @@ void TpccPiece::RegOrderStatus() {
       dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_SUPPLY_W_ID,
                        &output[TPCC_VAR_OL_W_ID(i)], TXN_BYPASS);
       dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_DELIVERY_D,
-                       &output[TPCC_VAR_OL_DELIVER_D(i)], TXN_INSTANT);
+                       &output[TPCC_VAR_OL_DELIVER_D(i)], TXN_BYPASS);
       dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_QUANTITY,
                        &output[TPCC_VAR_OL_QUANTITY(i)], TXN_BYPASS);
       dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_AMOUNT,

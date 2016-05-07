@@ -27,6 +27,9 @@ benchmarks_ =  [
     "tpcc",
     "tpcc_no",
     "tpcc_pm",
+    "tpcc_dl",
+    "tpcc_os",
+    "tpcc_sl",
     "tpccd"
 ]
 
