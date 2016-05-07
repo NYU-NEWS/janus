@@ -3,7 +3,7 @@ bench:
   workload: tpca
   scale: 1
   weight:
-    read: 1
+    read: 0
     write: 1
   population: # intial number of records in each table
     branch:   100000
