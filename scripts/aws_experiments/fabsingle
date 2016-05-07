@@ -1,0 +1,2 @@
+#!/bin/bash
+fab --set data_dir=.ec2_single ec2.set_instance_roles "$@"
