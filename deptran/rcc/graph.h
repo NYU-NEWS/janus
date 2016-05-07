@@ -268,6 +268,9 @@ class Graph : public Marshallable {
 
     for (auto &kv : v->incoming_) {
       Vertex<T> *w = kv.first;
+      if (w->scc_) // opt scc already computed
+        continue;
+
 
       if (indexes.find(w) == indexes.end()) {
         this->StrongConnectPred(w, indexes, lowlinks, index, S);

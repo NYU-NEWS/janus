@@ -366,9 +366,9 @@ RccVertex* RccGraph::AggregateVertex(RccVertex *rhs_v) {
 }
 
 RccScc& RccGraph::FindSCC(RccVertex *vertex) {
-  RccScc& scc = Graph<TxnInfo>::FindSCC(vertex);
-#ifdef DEBUG_CODE
   RccScc& scc2 = Graph<TxnInfo>::FindSccPred(vertex);
+#ifdef DEBUG_CODE
+  RccScc& scc = Graph<TxnInfo>::FindSCC(vertex);
   std::sort(scc.begin(), scc.end());
   std::sort(scc2.begin(), scc2.end());
   verify(scc == scc2);
@@ -378,7 +378,7 @@ RccScc& RccGraph::FindSCC(RccVertex *vertex) {
     verify(AllAncCmt(v));
   }
 #endif
-  return scc;
+  return scc2;
 }
 
 bool RccGraph::AllAncCmt(RccVertex *vertex) {
