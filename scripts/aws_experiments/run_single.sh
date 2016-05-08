@@ -9,7 +9,7 @@ duration=90
 prefix="single_dc"
 
 exp_name=${prefix}_zipf_graph
-scripts/aws_experiments/zipf_graph.py $exp_name -c 32 -f config/tpca_zipf.yml config/tapir.yml config/concurrent_10.yml
+scripts/aws_experiments/zipf_graph.py $exp_name -c 64 -f config/tpca_zipf.yml config/tapir.yml config/concurrent_10.yml
 new_experiment $exp_name
 
 #exp_name=${prefix}_rw_fixed
