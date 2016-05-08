@@ -12,7 +12,7 @@ default_configs = [
 ]
 default_modes = [ 'brq:brq', 'tapir:tapir', '2pl_ww:multi_paxos', 'occ:multi_paxos' ]
 default_benchmark = [ 'tpca' ]
-default_options = ['-d', '30', '-s', '3', '-r', '3']
+default_options = ['-d', '40', '-s', '3', '-r', '3']
 
 def parse_args():
 	parser = argparse.ArgumentParser(description='Process some integers.')
@@ -48,6 +48,7 @@ def run(config, zipf):
 	for c in config.clients:
 		cmd.extend(['-c', c])
 	cmd.extend(['-z', zipf])
+    cmd.extend(config.options)
 	
 	logging.info('> {}'.format(' '.join(cmd)))
 	logging.info(cmd)
