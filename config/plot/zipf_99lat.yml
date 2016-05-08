@@ -1,0 +1,10 @@
+bench: 
+    - tpca
+graph:
+    using_cmd: '18:15'
+    x_label: 'Zipf Coefficient'
+    y_label: 'Latency (ms)'
+    y_range: '[0:]'
+    x_range: '[0:]'
+    output_file: '${txn}_${bench}_zipf_lat99'
+    key_location: 'top left'

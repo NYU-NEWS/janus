@@ -1,0 +1,10 @@
+bench: 
+    - tpca
+    - tpcc
+    - rw_benchmark
+graph:
+    using_cmd: '($6):($9/$8)'
+    x_label: '# Clients'
+    y_label: 'Commit Rate'
+    output_file: '${txn}_${bench}_client_commitrate_attempts'
+    key_location: 'bottom left'
