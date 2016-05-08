@@ -39,8 +39,22 @@ def ping():
     created_instances = get_created_instances()
     for region, instances in created_instances.iteritems():
         for instance in instances:
+            if instance.public_ip_address == env.roledefs['leaders'][0]: 
+                continue
             ip = instance.public_ip_address
             run('ping -c 3 {}'.format(ip))
+
+@task
+@roles('leaders')
+def sshping():
+    created_instances = get_created_instances()
+    for region, instances in created_instances.iteritems():
+        for instance in instances:
+            if instance.public_ip_address == env.roledefs['leaders'][0]: 
+                continue
+            ip = instance.public_ip_address
+            run('ssh {} /bin/echo here'.format(ip))
+
 
 @task
 @roles('leaders')
