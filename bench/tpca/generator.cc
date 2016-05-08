@@ -72,9 +72,9 @@ void TpcaTxnGenerator::GetTxnReq(TxnRequest *req, uint32_t cid) {
         {3, amount}};
   } else if (Config::GetConfig()->dist_ == "zipf") {
     static auto alpha = Config::GetConfig()->coeffcient_;
-    static ZipfDist d1(alpha, tpca_para_.n_customer_-1);
-    static ZipfDist d2(alpha, tpca_para_.n_teller_-1);
-    static ZipfDist d3(alpha, tpca_para_.n_branch_-1);
+    static ZipfDist d1(alpha, tpca_para_.n_customer_);
+    static ZipfDist d2(alpha, tpca_para_.n_teller_);
+    static ZipfDist d3(alpha, tpca_para_.n_branch_);
     int k1 = d1(rand_gen_);
     int k2 = d2(rand_gen_);
     int k3 = d3(rand_gen_);
