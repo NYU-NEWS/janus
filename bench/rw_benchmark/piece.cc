@@ -19,8 +19,9 @@ namespace rococo {
       verify(cmd.input.size()==1);
       auto id = cmd.input[0].get_i64();
       buf[0] = cmd.input[0].get_blob();
-      auto row = dtxn->Query(dtxn->GetTable(RW_BENCHMARK_TABLE), buf);
-      dtxn->ReadColumn(row, 1, &result);
+      auto tbl = dtxn->GetTable(RW_BENCHMARK_TABLE);
+      auto row = dtxn->Query(tbl, buf);
+      dtxn->ReadColumn(row, 1, &result, TXN_BYPASS);
       output[0] = result;
       *res = SUCCESS;
       return;
@@ -34,8 +35,9 @@ namespace rococo {
       verify(cmd.input.size() == 1);
       auto id = cmd.input[0].get_i64();
       buf[0] = cmd.input[0].get_blob();
-      auto row = dtxn->Query(dtxn->GetTable(RW_BENCHMARK_TABLE), buf);
-      dtxn->ReadColumn(row, 1, &result, TXN_DEFERRED);
+      auto tbl = dtxn->GetTable(RW_BENCHMARK_TABLE);
+      auto row = dtxn->Query(tbl, buf);
+      dtxn->ReadColumn(row, 1, &result, TXN_BYPASS);
       result.set_i32(result.get_i32()+1);
       dtxn->WriteColumn(row, 1, result, TXN_DEFERRED);
       *res = SUCCESS;

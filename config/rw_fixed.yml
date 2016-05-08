@@ -6,7 +6,7 @@ bench:
     read: 0 
     write: 1
   population: # intial number of records in each table
-    history: 100000
+    history: 1000000
   dist: fixed 
 
 schema: # table information
@@ -14,13 +14,13 @@ schema: # table information
     column:
       - {name: h_key,     type: integer, primary: true}
       - {name: h_c_id,    type: integer}
-      - {name: h_c_d_id,  type: integer}
-      - {name: h_c_w_id,  type: integer}
-      - {name: h_d_id,    type: integer}
-      - {name: h_w_id,    type: integer}
-      - {name: h_date,    type: string}
-      - {name: h_amount,  type: double}
-      - {name: h_data,    type: string}
+#      - {name: h_c_d_id,  type: integer}
+#      - {name: h_c_w_id,  type: integer}
+#      - {name: h_d_id,    type: integer}
+#      - {name: h_w_id,    type: integer}
+#      - {name: h_date,    type: string}
+#      - {name: h_amount,  type: double}
+#      - {name: h_data,    type: string}
 
 # sharding strategy.
 # default is MOD by primary key.
