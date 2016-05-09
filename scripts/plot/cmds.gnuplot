@@ -4,7 +4,7 @@
 set size ratio 0.5625
 
 if (output_type eq "ps") {
-    set terminal postscript  color colortext "Helvetica,25" eps
+    set terminal postscript  color colortext "Helvetica,30" eps
 	#set terminal postscript "Helvetica" eps font 22
     if (!exists("output_file")) {
         output_file = "out.eps"
