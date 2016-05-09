@@ -50,7 +50,7 @@ class DTxn {
   int phase_;
   mdb::Txn *mdb_txn_ = nullptr;
   Recorder *recorder_ = NULL;
-  TxnRegistry *txn_reg_;
+  TxnRegistry *txn_reg_{nullptr};
 
   map<int64_t, mdb::Row*> context_row_;
   map<int64_t, Value> context_value_;

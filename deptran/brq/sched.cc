@@ -111,7 +111,7 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
 //    Log_info("on commit graph size: %d", graph.size());
   *res = SUCCESS;
   // union the graph into dep graph
-  RccDTxn *dtxn = (RccDTxn*) GetDTxn(cmd_id);
+  RccDTxn *dtxn = (RccDTxn*) GetOrCreateDTxn(cmd_id);
   verify(dtxn != nullptr);
   verify(dtxn->tv_ != nullptr);
   auto v = dtxn->tv_;
@@ -163,7 +163,7 @@ void BrqSched::OnCommitWoGraph(const txnid_t cmd_id,
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   *res = SUCCESS;
   // union the graph into dep graph
-  RccDTxn *dtxn = (RccDTxn*) GetDTxn(cmd_id);
+  RccDTxn *dtxn = (RccDTxn*) GetOrCreateDTxn(cmd_id);
   verify(dtxn != nullptr);
   verify(dtxn->tv_ != nullptr);
   auto v = dtxn->tv_;
