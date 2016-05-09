@@ -18,7 +18,7 @@ def parse_args():
     parser = argparse.ArgumentParser(description='Process some integers.')
     parser.add_argument('name', default='foo')
     parser.add_argument('--zipf', metavar='N', 
-            dest='zipf', type=int, nargs='+', default=default_zipfs,
+            dest='zipf', nargs='+', default=default_zipfs,
             help='The zipf distribution coefficients: (e.g. 0.0 0.25)')
     parser.add_argument('--clients', '-c', metavar='N', nargs='+',
             dest='clients', default=['1'],
