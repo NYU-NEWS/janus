@@ -33,7 +33,7 @@ def parse_args():
                         dest="graphs",
                         type=str, 
                         nargs='+',
-                        help='the data files')
+                        help='the graph config')
     parser.add_argument('-gexe', '--gnuplot-exe',
                         metavar='FILE',
                         dest="gnuplot_exe",
@@ -77,7 +77,7 @@ def get_data(data_classes, filters):
             res.append( f[0](key,*f[1:]) )
         if all(res):
             output.append(fn)
-    return output
+    return sorted(output)
 
 
 def run_gnuplot(settings, data_files):
@@ -108,7 +108,7 @@ def generate_graph(config, txn_types, data_classes):
     logging.info(config)
     if 'output' not in config:
         config['output'] = [ 'png' ]
-    for output_type in ['ps', 'png']:
+    for output_type in ['ps']:
         if output_type == 'ps':
             extentsion = '.eps'
             graph_size = '4,3'

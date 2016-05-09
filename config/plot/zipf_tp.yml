@@ -7,4 +7,4 @@ graph:
     y_range: '[0:]'
     x_range: '[0:]'
     output_file: '${txn}_${bench}_zipf_tp'
-    key_location: 'top left'
+    key_location: 'top right'

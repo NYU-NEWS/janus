@@ -1,10 +1,10 @@
 bench: 
     - tpca
 graph:
-    using_cmd: '18:($9/$10*100.0)'
+    using_cmd: '($18):($9/$8)'
     x_label: 'Zipf Coefficient'
-    y_label: '# Commits / # Started'
+    y_label: 'Commit Rate (# commits / # attempts)'
     y_range: '[0:]'
     x_range: '[0:]'
-    output_file: '${txn}_${bench}_zipf_attemptspct'
+    output_file: '${txn}_${bench}_zipf_commits_attempts'
     key_location: 'bottom left'

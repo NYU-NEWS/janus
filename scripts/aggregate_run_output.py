@@ -32,11 +32,22 @@ def read_files():
             traceback.print_exc()
     return results
 
+def format_cc_name(etxn):
+    m = {
+        'brq': 'Janus',
+        '2pl_ww': '2PL',
+        'occ': 'OCC',
+        'tapir': 'Tapir'
+    }
+    if etxn['cc'] in m:
+        etxn['cc'] = m[etxn['cc']]
+
 def extract_data(txn_data, file_data):
     for experiment in file_data:
         for txn in experiment.keys():
             row = []
             etxn = experiment[txn]
+            format_cc_name(etxn)
             for l in labels:
                 row.append(etxn[l])
             latencies = etxn['latency']
