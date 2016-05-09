@@ -4,13 +4,13 @@
 set size ratio 0.5625
 
 if (output_type eq "ps") {
-    set terminal postscript  color colortext "Helvetica,20" eps
+    set terminal postscript  color colortext "Helvetica,25" eps
 	#set terminal postscript "Helvetica" eps font 22
     if (!exists("output_file")) {
         output_file = "out.eps"
     }
 } else {
-    set terminal pngcairo size @graph_size font "Helvetica,10"
+    set terminal pngcairo size @graph_size font "Helvetica,12"
     if (!exists("output_file")) {
         output_file = "out.png"
     }
