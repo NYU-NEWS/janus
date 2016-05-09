@@ -8,3 +8,4 @@ graph:
     x_range: '[0:]'
     output_file: '${txn}_${bench}_zipf_lat'
     key_location: 'top left'
+    x_tics: 0,0.25
