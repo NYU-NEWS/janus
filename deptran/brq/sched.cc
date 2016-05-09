@@ -13,8 +13,8 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
                            function<void()> callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 //  Log_info("on preaccept: %llx par: %d", txn_id, (int)partition_id_);
-  if (RandomGenerator::rand(1, 2000) <= 1)
-    Log_info("on pre-accept graph size: %d", graph.size());
+//  if (RandomGenerator::rand(1, 2000) <= 1)
+//    Log_info("on pre-accept graph size: %d", graph.size());
   verify(txn_id > 0);
   verify(cmds[0].root_id_ == txn_id);
   dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
@@ -46,6 +46,48 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
   *res = SUCCESS;
   callback();
 }
+
+void BrqSched::OnPreAcceptWoGraph(const txnid_t txn_id,
+                                  const vector<SimpleCommand>& cmds,
+                                  int32_t* res,
+                                  RccGraph* res_graph,
+                                  function<void()> callback) {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
+//  Log_info("on preaccept: %llx par: %d", txn_id, (int)partition_id_);
+//  if (RandomGenerator::rand(1, 2000) <= 1)
+//    Log_info("on pre-accept graph size: %d", graph.size());
+  verify(txn_id > 0);
+  verify(cmds[0].root_id_ == txn_id);
+//  dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
+//  TriggerCheckAfterAggregation(const_cast<RccGraph&>(graph));
+  // TODO FIXME
+  // add interference based on cmds.
+  RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(txn_id);
+  TxnInfo& tinfo = dtxn->tv_->Get();
+  if (tinfo.status() < TXN_CMT) {
+    if (dtxn->phase_ < PHASE_RCC_DISPATCH && tinfo.status() < TXN_CMT) {
+      for (auto& c: cmds) {
+        map<int32_t, Value> output;
+        dtxn->DispatchExecute(c, res, &output);
+      }
+    }
+  } else {
+    if (dtxn->dreqs_.size() == 0) {
+      for (auto& c: cmds) {
+        dtxn->dreqs_.push_back(c);
+      }
+    }
+  }
+  verify(!tinfo.fully_dispatched);
+  tinfo.fully_dispatched = true;
+  dep_graph_->MinItfrGraph(txn_id, res_graph, false, 1);
+  if (tinfo.status() >= TXN_CMT) {
+    waitlist_.insert(dtxn->tv_);
+  }
+  *res = SUCCESS;
+  callback();
+}
+
 
 void BrqSched::OnAccept(const txnid_t txn_id,
                         const ballot_t& ballot,

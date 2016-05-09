@@ -88,6 +88,16 @@ void BrqCommo::BroadcastPreAccept(parid_t par_id,
                                   RccGraph& graph,
                                   const function<void(int, RccGraph*)> &callback) {
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
+
+  bool skip_graph = false;
+  if (graph.size() == 1) {
+    RccVertex* v = graph.FindV(cmd_id);
+    verify(v);
+    verify(v->incoming_.size() == 0);
+    verify(v->outgoing_.size() == 0);
+    skip_graph = true;
+  }
+
   for (auto &p : rpc_par_proxies_[par_id]) {
     auto proxy = (BrqProxy*)(p.second);
     verify(proxy != nullptr);
@@ -99,10 +109,16 @@ void BrqCommo::BroadcastPreAccept(parid_t par_id,
       callback(res, dynamic_cast<RccGraph*>(graph->ptr().get()));
     };
     verify(cmd_id > 0);
-    Future::safe_release(proxy->async_PreAccept(cmd_id,
-                                                cmds,
-                                                graph,
-                                                fuattr));
+    if (skip_graph) {
+      Future::safe_release(proxy->async_PreAcceptWoGraph(cmd_id,
+                                                         cmds,
+                                                         fuattr));
+    } else {
+      Future::safe_release(proxy->async_PreAccept(cmd_id,
+                                                  cmds,
+                                                  graph,
+                                                  fuattr));
+    }
   }
 }
 

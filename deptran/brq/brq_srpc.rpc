@@ -22,6 +22,11 @@ abstract service Brq {
                   i32 res,
                   Marshallable ret_graph);
 
+  defer PreAcceptWoGraph(cmdid_t txn_id,
+                         vector<SimpleCommand> cmd |
+                         i32 res,
+                         Marshallable ret_graph);
+
   defer Accept(cmdid_t txn_id,
                ballot_t ballot,
                Marshallable graph |

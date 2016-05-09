@@ -93,6 +93,12 @@ class BrqServiceImpl: public BrqService {
                  Marshallable* res_graph,
                  DeferredReply* defer) override;
 
+  void PreAcceptWoGraph(const cmdid_t& txnid,
+                        const vector<SimpleCommand>& cmd,
+                        int32_t* res,
+                        Marshallable* res_graph,
+                        DeferredReply* defer) override;
+
   void Accept(const cmdid_t &txnid,
               const ballot_t& ballot,
               const Marshallable& graph,

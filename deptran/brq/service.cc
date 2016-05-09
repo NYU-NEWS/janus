@@ -201,6 +201,20 @@ void BrqServiceImpl::PreAccept(const cmdid_t &txnid,
                             [defer] () {defer->reply();});
 }
 
+void BrqServiceImpl::PreAcceptWoGraph(const cmdid_t& txnid,
+                                      const vector<SimpleCommand>& cmds,
+                                      int32_t* res,
+                                      Marshallable* res_graph,
+                                      DeferredReply* defer) {
+  res_graph->rtti_ = Marshallable::RCC_GRAPH;
+  res_graph->ptr().reset(new RccGraph());
+  dtxn_sched()->OnPreAcceptWoGraph(txnid,
+                                   cmds,
+                                   res,
+                                   dynamic_cast<RccGraph*>(res_graph->ptr().get()),
+                                   [defer] () {defer->reply();});
+}
+
 
 void BrqServiceImpl::Accept(const cmdid_t &txnid,
                             const ballot_t& ballot,
