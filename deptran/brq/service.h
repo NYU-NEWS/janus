@@ -81,6 +81,10 @@ class BrqServiceImpl: public BrqService {
               TxnOutput* output,
               DeferredReply* defer) override;
 
+  void CommitWoGraph(const cmdid_t& cmd_id,
+                     int32_t *res,
+                     TxnOutput* output,
+                     DeferredReply* defer) override;
 
   void Inquire(const cmdid_t &tid,
                Marshallable* graph,

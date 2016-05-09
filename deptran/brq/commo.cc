@@ -81,6 +81,18 @@ void BrqCommo::SendInquire(parid_t pid,
   Future::safe_release(proxy->async_Inquire(tid, fuattr));
 }
 
+bool BrqCommo::IsGraphOrphan(RccGraph& graph, txnid_t cmd_id) {
+  if (graph.size() == 1) {
+    RccVertex* v = graph.FindV(cmd_id);
+    verify(v);
+    verify(v->incoming_.size() == 0);
+    verify(v->outgoing_.size() == 0);
+    return true;
+  } else {
+    return false;
+  }
+}
+
 void BrqCommo::BroadcastPreAccept(parid_t par_id,
                                   txnid_t cmd_id,
                                   ballot_t ballot,
@@ -89,14 +101,7 @@ void BrqCommo::BroadcastPreAccept(parid_t par_id,
                                   const function<void(int, RccGraph*)> &callback) {
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
 
-  bool skip_graph = false;
-  if (graph.size() == 1) {
-    RccVertex* v = graph.FindV(cmd_id);
-    verify(v);
-    verify(v->incoming_.size() == 0);
-    verify(v->outgoing_.size() == 0);
-    skip_graph = true;
-  }
+  bool skip_graph = IsGraphOrphan(graph, cmd_id);
 
   for (auto &p : rpc_par_proxies_[par_id]) {
     auto proxy = (BrqProxy*)(p.second);
@@ -151,6 +156,8 @@ void BrqCommo::BroadcastCommit(parid_t par_id,
                                RccGraph& graph,
                                const function<void(int32_t, TxnOutput&)>
                                &callback) {
+  bool skip_graph = IsGraphOrphan(graph, cmd_id);
+
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
   for (auto &p : rpc_par_proxies_[par_id]) {
     auto proxy = (BrqProxy*)(p.second);
@@ -163,7 +170,11 @@ void BrqCommo::BroadcastCommit(parid_t par_id,
       callback(res, output);
     };
     verify(cmd_id > 0);
-    Future::safe_release(proxy->async_Commit(cmd_id, graph, fuattr));
+    if (skip_graph) {
+      Future::safe_release(proxy->async_CommitWoGraph(cmd_id, fuattr));
+    } else {
+      Future::safe_release(proxy->async_Commit(cmd_id, graph, fuattr));
+    }
   }
 }
 

@@ -34,6 +34,11 @@ class BrqSched : public RccSched {
                 TxnOutput *output,
                 const function<void()> &callback);
 
+  void OnCommitWoGraph(const txnid_t cmd_id,
+                       int32_t* res,
+                       TxnOutput* output,
+                       const function<void()>& callback);
+
   int OnInquire(cmdid_t cmd_id,
                 RccGraph *graph,
                 const function<void()> &callback) override;

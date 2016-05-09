@@ -13,6 +13,10 @@ abstract service Brq {
                int32_t res,
                TxnOutput output);
 
+  defer CommitWoGraph(cmdid_t id |
+                      int32_t res,
+                      TxnOutput output);
+
   defer Inquire(cmdid_t txn_id |
                 Marshallable ret_graph);
 

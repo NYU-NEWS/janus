@@ -145,6 +145,17 @@ void BrqServiceImpl::Commit(const cmdid_t& cmd_id,
 //  stat_sz_gra_commit_.sample(graph.size());
 }
 
+void BrqServiceImpl::CommitWoGraph(const cmdid_t& cmd_id,
+                   int32_t *res,
+                   TxnOutput* output,
+                   DeferredReply* defer) {
+  std::lock_guard <std::mutex> guard(mtx_);
+  dtxn_sched()->OnCommitWoGraph(cmd_id,
+                                res,
+                                output,
+                                [defer]() { defer->reply(); });
+}
+
 // equivalent to commit phrase
 //void BrqServiceImpl::rcc_finish_txn(
 //    const ChopFinishRequest &req,
@@ -189,6 +200,7 @@ void BrqServiceImpl::PreAccept(const cmdid_t &txnid,
                                int32_t* res,
                                Marshallable* res_graph,
                                DeferredReply* defer) {
+  std::lock_guard <std::mutex> guard(mtx_);
   verify(dynamic_cast<RccGraph*>(graph.ptr().get()));
   verify(graph.rtti_ == Marshallable::RCC_GRAPH);
   res_graph->rtti_ = Marshallable::RCC_GRAPH;
@@ -206,6 +218,7 @@ void BrqServiceImpl::PreAcceptWoGraph(const cmdid_t& txnid,
                                       int32_t* res,
                                       Marshallable* res_graph,
                                       DeferredReply* defer) {
+  std::lock_guard <std::mutex> guard(mtx_);
   res_graph->rtti_ = Marshallable::RCC_GRAPH;
   res_graph->ptr().reset(new RccGraph());
   dtxn_sched()->OnPreAcceptWoGraph(txnid,

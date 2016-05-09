@@ -44,6 +44,9 @@ class BrqCommo: public RccCommo {
                        RccGraph& graph,
                        const function<void(int32_t, TxnOutput&)>
                        &callback);
-};
+
+  bool IsGraphOrphan(RccGraph& graph, txnid_t cmd_id);
+
+  };
 
 } // namespace
