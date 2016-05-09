@@ -45,6 +45,25 @@ void RccGraph::FindOrCreateTxnInfo(txnid_t txn_id,
   dtxn.graph_ = this;
 }
 
+RccVertex* RccGraph::FindOrCreateRccVertex(txnid_t txn_id,
+                                           RccSched* sched) {
+  RccVertex* v = nullptr;
+  verify(sched != nullptr);
+//  verify(tv != NULL);
+  v = FindOrCreateV(txn_id);
+//  *tv = FindOrCreateV(txn_id);
+//  verify(FindV(txn_id) != nullptr);
+//  verify(*tv != nullptr);
+  // TODO fix.
+  RccDTxn& dtxn = v->Get();
+  // FIXME, set mgr and mdb_txn?
+  dtxn.sched_ = sched;
+  dtxn.tv_ = v;
+  dtxn.partition_.insert(partition_id_);
+  dtxn.graph_ = this;
+  return v;
+}
+
 void RccGraph::SelectGraphCmtUkn(RccVertex* vertex, RccGraph* new_graph) {
   RccVertex* new_v = new_graph->FindOrCreateV(vertex->id());
   auto s = vertex->Get().status();

@@ -39,13 +39,14 @@ RccSched::~RccSched() {
 
 DTxn* RccSched::GetOrCreateDTxn(txnid_t tid, bool ro) {
 //  RccDTxn* dtxn = (RccDTxn*) Scheduler::GetOrCreateDTxn(tid, ro);
-  RccDTxn* dtxn = (RccDTxn*) dep_graph_->FindOrCreateTxnInfo(tid);
-  if (dtxn->tv_ == nullptr) {
-    dep_graph_->FindOrCreateTxnInfo(tid, &dtxn->tv_);
-    dtxn->graph_ = dep_graph_;
+  RccVertex* v = dep_graph_->FindOrCreateRccVertex(tid, this);
+//  RccDTxn* dtxn = (RccDTxn*) dep_graph_->FindOrCreateTxnInfo(tid);
+  RccDTxn& dtxn = v->Get();
+  verify(dtxn.graph_ != nullptr);
+  if (dtxn.txn_reg_ == nullptr) {
+    dtxn.txn_reg_ = txn_reg_;
   }
-  verify(dtxn->graph_ != nullptr);
-  return dtxn;
+  return &dtxn;
 }
 
 int RccSched::OnDispatch(const vector<SimpleCommand> &cmd,
@@ -615,7 +616,7 @@ void RccSched::Execute(RccDTxn& info) {
   info.executed_ = true;
 //  info.union_status(TXN_DCD); // FIXME, remove this.
   verify(info.IsDecided());
-  RccDTxn *dtxn = (RccDTxn *) GetDTxn(info.id());
+  RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(info.id());
   if (dtxn == nullptr) return;
   if (info.Involve(partition_id_)) {
     dtxn->CommitExecute();

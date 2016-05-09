@@ -55,10 +55,18 @@ class RccSched : public Scheduler {
 
 //  void to_decide(Vertex<TxnInfo> *v,
 //                 rrr::DeferredReply *defer);
+  DTxn* CreateDTxn(i64 tid, bool ro) override {
+    verify(0);
+  }
 
-  void InquireAbout(Vertex<TxnInfo> *av);
-  void InquireAboutIfNeeded(TxnInfo &info);
-  void AnswerIfInquired(TxnInfo &tinfo);
+  DTxn* GetDTxn(i64 tid) override {
+    verify(0);
+  }
+
+
+  void InquireAbout(Vertex<RccDTxn> *av);
+  void InquireAboutIfNeeded(RccDTxn &info);
+  void AnswerIfInquired(RccDTxn &tinfo);
   void CheckWaitlist();
   void InquireAck(cmdid_t cmd_id, RccGraph& graph);
   void TriggerCheckAfterAggregation(RccGraph &graph);
@@ -70,7 +78,7 @@ class RccSched : public Scheduler {
   bool HasAbortedAncestor(const RccScc& scc);
   bool AllAncFns(const RccScc&);
   void Execute(const RccScc&);
-  void Execute(TxnInfo&);
+  void Execute(RccDTxn&);
   void Abort(const RccScc&);
 
   void __DebugExamineFridge();

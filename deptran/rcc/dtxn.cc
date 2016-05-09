@@ -30,6 +30,7 @@ void RccDTxn::DispatchExecute(const SimpleCommand &cmd,
   verify(phase_ <= PHASE_RCC_DISPATCH);
   phase_ = PHASE_RCC_DISPATCH;
   // execute the IR actions.
+  verify(txn_reg_);
   auto pair = txn_reg_->get(cmd);
   // To tolerate deprecated codes
   int xxx, *yyy;

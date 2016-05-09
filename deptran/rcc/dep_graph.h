@@ -24,6 +24,7 @@ class EmptyGraph : public Marshallable {
   virtual Marshal& FromMarshal(Marshal& m) {return m;};
 };
 
+class RccSched;
 class RccGraph : public Graph<RccDTxn> {
  public:
 //    Graph<PieInfo> pie_gra_;
@@ -50,7 +51,7 @@ class RccGraph : public Graph<RccDTxn> {
 
   /** on start_req */
   void FindOrCreateTxnInfo(txnid_t txn_id, RccVertex **tv);
-
+  RccVertex* FindOrCreateRccVertex(txnid_t txn_id, RccSched* sched);
   void BuildEdgePointer(RccGraph &graph,
                         map<txnid_t, RccVertex*>& index);
   void RebuildEdgePointer(map<txnid_t, RccVertex*>& index);
