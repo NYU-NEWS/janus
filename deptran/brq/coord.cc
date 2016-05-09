@@ -178,7 +178,7 @@ void BrqCoord::Commit() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   TxnCommand *txn = (TxnCommand*) cmd_;
   RccVertex* v = graph_.FindV(cmd_->id_);
-  TxnInfo& info = v->Get();
+  RccDTxn& info = v->Get();
   verify(txn->partition_ids_.size() == info.partition_.size());
   graph_.UpgradeStatus(v, TXN_CMT);
   for (auto par_id : cmd_->GetPartitionIds()) {
