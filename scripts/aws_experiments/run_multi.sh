@@ -5,7 +5,7 @@ function new_experiment {
 	tar -czvf ~/${1}.tgz archive && rm -rf archive && mkdir -p archive
 }
 
-duration=40
+duration=90
 prefix="multi_dc"
 
 #exp_name=${prefix}_rw_fixed
