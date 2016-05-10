@@ -7,5 +7,5 @@ graph:
     y_range: '[0:]'
     x_range: '[0.5:1]'
     x_tics: 0,0.1
-    output_file: '${txn}_${bench}_zipf_lat'
-    key_location: 'top left at 10,10'
+    output_file: 'single_tpca_${txn}_${bench}_zipf_lat'
+    key_location: 'center right'

@@ -6,5 +6,6 @@ graph:
     y_label: 'Throughput (txn/s)'
     y_range: '[0:]'
     x_range: '[0.5:1]'
+    x_tics: 0,0.1
     output_file: '${txn}_${bench}_zipf_tp'
     key_location: 'top right'

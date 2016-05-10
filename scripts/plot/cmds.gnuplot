@@ -31,7 +31,7 @@ if (!exists("output_type"))   output_type = "png"
 set output output_file
 
 set tics nomirror
-set style line 11 lc rgb '#808080' lt 1
+set style line 11 lc rgb '#000000' lt 1
 set border 3 back ls 11
 set tics nomirror
 # define grid
@@ -62,4 +62,4 @@ set linetype cycle 4
 plot for [i=1:words(input_files)] \
 word(input_files, i) using @using_cmd \
 title column(2) \
-with linespoints pt (i+5 % 50) ps 2 lt i lw 5
+with linespoints pt (i+5 % 50) ps 3 lt i lw 5
