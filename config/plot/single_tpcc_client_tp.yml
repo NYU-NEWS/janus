@@ -7,6 +7,6 @@ graph:
     x_label: 'Clients'
     y_label: 'Throughput (txn/s)'
     y_range: '[0:]'
-    x_range: '[0:400]'
-    output_file: 'tpcc_${txn}_${bench}_client_tp'
+    x_range: '[0:200]'
+    output_file: 'single_tpcc_${txn}_${bench}_client_tp'
     key_location: 'top left'

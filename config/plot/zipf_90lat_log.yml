@@ -1,7 +1,7 @@
 bench: 
     - tpca
 graph:
-    using_cmd: '18:14'
+    using_cmd: '18:13'
     x_label: 'Zipf Coefficient'
     y_label: 'Latency (ms)'
     y_range: '[10:]'

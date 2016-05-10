@@ -3,11 +3,10 @@ bench:
     - tpcc
     - rw_benchmark
 graph:
-    using_cmd: '6:15:12:14'
-    errorbars: 'yerrorbars'
+    using_cmd: '6:14'
     x_label: 'Clients'
     y_label: 'Latency (ms)'
-    y_range: '[0:5000]'
-    x_range: '[0:1600]'
+    y_range: '[0:]'
+    x_range: '[0:800]'
     output_file: 'tpcc_${txn}_${bench}_client_lat99'
     key_location: 'top left'
