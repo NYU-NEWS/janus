@@ -4,7 +4,9 @@ import sys
 import logging
 import argparse
 
-default_zipfs = [ '0.0', '0.25', '0.5', '0.75', '1.0' ]
+#default_zipfs = [ '0.0', '0.25', '0.5', '0.75', '1.0' ]
+default_zipfs = [ '0.5', '0.6', '0.7', '0.8', '0.9', '1.0' ]
+
 default_configs = [ 
     'config/concurrent_50.yml',
     'config/tpca_zipf.yml',
