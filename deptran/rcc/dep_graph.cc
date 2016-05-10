@@ -315,15 +315,14 @@ void RccGraph::BuildEdgePointer(RccGraph &graph,
 }
 
 void RccGraph::UpgradeStatus(RccVertex *v, int8_t status) {
-  auto s = v->Get().status();
-  if (s >= TXN_CMT) {
+  RccDTxn& dtxn = v->Get();
+  if (dtxn.status() >= TXN_CMT) {
     RccSched::__DebugCheckParentSetSize(v->id(), v->parents_.size());
   } else if (status >= TXN_CMT) {
     RccSched::__DebugCheckParentSetSize(v->id(), v->parents_.size());
   }
-  v->Get().union_status(status);
+  dtxn.union_status(status);
 }
-
 
 RccVertex* RccGraph::AggregateVertex(RccVertex *rhs_v) {
   // create the dtxn if not exist.

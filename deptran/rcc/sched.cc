@@ -189,11 +189,11 @@ void RccSched::CheckWaitlist() {
     verify(v != nullptr);
 //  for (RccVertex *v : waitlist_) {
     // TODO minimize the length of the waitlist.
-    RccDTxn& tinfo = v->Get();
-    AnswerIfInquired(tinfo);
-    InquireAboutIfNeeded(tinfo); // inquire about unknown transaction.
-    if (tinfo.status() >= TXN_CMT &&
-        !tinfo.IsExecuted()) {
+    RccDTxn& dtxn = v->Get();
+    AnswerIfInquired(dtxn);
+    InquireAboutIfNeeded(dtxn); // inquire about unknown transaction.
+    if (dtxn.status() >= TXN_CMT &&
+        !dtxn.IsExecuted()) {
       if (AllAncCmt(v)) {
 //        check_again = true;
         RccScc& scc = dep_graph_->FindSCC(v);
@@ -271,13 +271,13 @@ void RccSched::CheckWaitlist() {
 
     // Adjust the waitlist.
     __DebugExamineGraphVerify(v);
-    if (tinfo.status() >= TXN_DCD && tinfo.IsExecuted()) {
+    if (dtxn.status() >= TXN_DCD && dtxn.IsExecuted()) {
       AddChildrenIntoWaitlist(v);
     }
 
-    if (tinfo.IsExecuted() ||
-        tinfo.IsAborted() ||
-        (tinfo.IsDecided() && !tinfo.Involve(partition_id_))) {
+    if (dtxn.IsExecuted() ||
+        dtxn.IsAborted() ||
+        (dtxn.IsDecided() && !dtxn.Involve(partition_id_))) {
       // check for its descendants, perhaps add redundant vertex here.
 //      for (auto child_pair : v->outgoing_) {
 //        auto child_v = child_pair.first;
@@ -453,11 +453,11 @@ RccVertex* RccSched::__DebugFindAnOngoingAncestor(RccVertex* vertex) {
 bool RccSched::AllAncCmt(RccVertex *vertex) {
   bool all_anc_cmt = true;
   std::function<int(RccVertex*)> func = [&all_anc_cmt] (RccVertex* v) -> int {
-    RccDTxn& info = v->Get();
+    RccDTxn& dtxn = v->Get();
     int r = 0;
-    if (info.IsExecuted() || info.IsAborted()) {
+    if (dtxn.IsExecuted() || dtxn.IsAborted()) {
       r = RccGraph::SearchHint::Skip;
-    } else if (info.status() >= TXN_CMT) {
+    } else if (dtxn.status() >= TXN_CMT) {
       r = RccGraph::SearchHint::Ok;
     } else {
       r = RccGraph::SearchHint::Exit;

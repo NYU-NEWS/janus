@@ -50,12 +50,12 @@ class Vertex {
   }
 
   T& Get() {
-    verify(data_);
+//    verify(data_);
     return *data_;
   }
 
   uint64_t id() const {
-    verify(data_);
+//    verify(data_);
     return data_->id();
   }
 

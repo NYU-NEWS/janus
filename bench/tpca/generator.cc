@@ -1,3 +1,4 @@
+#include <deptran/txn_req_factory.h>
 #include "../../deptran/config.h"
 #include "generator.h"
 #include "piece.h"
@@ -31,6 +32,7 @@ TpcaTxnGenerator::TpcaTxnGenerator(Config* config) : TxnGenerator(config) {
       verify(0);
   }
   rand_gen_.seed((int)std::time(0) + (uint64_t)pthread_self());
+
 }
 
 void TpcaTxnGenerator::GetTxnReq(TxnRequest *req, uint32_t cid) {
@@ -71,13 +73,15 @@ void TpcaTxnGenerator::GetTxnReq(TxnRequest *req, uint32_t cid) {
         {2, Value(k3)},
         {3, amount}};
   } else if (Config::GetConfig()->dist_ == "zipf") {
-    static auto alpha = Config::GetConfig()->coeffcient_;
-    static ZipfDist d1(alpha, tpca_para_.n_customer_);
-    static ZipfDist d2(alpha, tpca_para_.n_teller_);
-    static ZipfDist d3(alpha, tpca_para_.n_branch_);
-    int k1 = d1(rand_gen_);
-    int k2 = d2(rand_gen_);
-    int k3 = d3(rand_gen_);
+    auto alpha = Config::GetConfig()->coeffcient_;
+    if (d1_ == nullptr) {
+      d1_ = new ZipfDist(alpha, tpca_para_.n_customer_);
+      d2_ = new ZipfDist(alpha, tpca_para_.n_teller_);
+      d3_ = new ZipfDist(alpha, tpca_para_.n_branch_);
+    }
+    int k1 = (*d1_)(rand_gen_);
+    int k2 = (*d2_)(rand_gen_);
+    int k3 = (*d3_)(rand_gen_);
     req->input_ = {
         {0, Value(k1)},
         {1, Value(k2)},

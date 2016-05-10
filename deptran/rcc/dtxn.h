@@ -155,7 +155,7 @@ class RccDTxn: public DTxn {
   }
 
   inline bool IsExecuted() const {
-    if (executed_) verify(IsDecided());
+//    if (executed_) verify(IsDecided());
     return executed_;
   }
 

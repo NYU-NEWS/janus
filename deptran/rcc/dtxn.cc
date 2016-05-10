@@ -383,9 +383,9 @@ void RccDTxn::TraceDep(Row* row, column_id_t col_id, int hint_flag) {
   if (parent_v == tv_) {
     // skip
   } else if (parent_v != nullptr) {
-    RccDTxn& info = parent_v->Get();
-    if (info.IsExecuted()) {
-      ;
+    RccDTxn& dtxn = parent_v->Get();
+    if (dtxn.IsExecuted()) {
+//      verify(0);
     } else {
       tv_->AddParentEdge(parent_v, edge_type);
     }
