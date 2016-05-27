@@ -138,7 +138,7 @@ def config_nfs_server():
 
 
 @task
-@roles('servers', 'leaders')
+@roles('all')
 @parallel(pool_size=10)
 def put_limits_config():
     source_fn = "config/etc/security/limits.conf"
