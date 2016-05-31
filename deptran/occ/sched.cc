@@ -29,8 +29,7 @@ mdb::Txn* OCCSched::get_mdb_txn(const i64 tid) {
     txn = mdb_txn_mgr_->start(tid);
     //XXX using occ lazy mode: increment version at commit time
     ((mdb::TxnOCC *) txn)->set_policy(mdb::OCC_LAZY);
-    std::pair<std::map<i64, mdb::Txn *>::iterator, bool> ret
-        = mdb_txns_.insert(std::pair<i64, mdb::Txn *>(tid, txn));
+    auto ret = mdb_txns_.insert(std::pair<i64, mdb::Txn *>(tid, txn));
     verify(ret.second);
   } else {
     txn = it->second;

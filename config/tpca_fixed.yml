@@ -6,9 +6,9 @@ bench:
     read: 0
     write: 1
   population: # intial number of records in each table
-    branch:   100000
-    teller:   100000
-    customer: 100000
+    branch:   1000000
+    teller:   1000000
+    customer: 1000000
   dist: fixed 
   coefficient: 1 # 0 as unifrom, 1 as pure zipf
 

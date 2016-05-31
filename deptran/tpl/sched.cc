@@ -23,7 +23,7 @@ TPLSched::TPLSched() : ClassicSched() {
 
 mdb::Txn* TPLSched::del_mdb_txn(const i64 tid) {
   mdb::Txn *txn = NULL;
-  std::map<i64, mdb::Txn *>::iterator it = mdb_txns_.find(tid);
+  auto it = mdb_txns_.find(tid);
   if (it == mdb_txns_.end()) {
     verify(0);
   } else {
@@ -40,8 +40,7 @@ mdb::Txn* TPLSched::get_mdb_txn(const i64 tid) {
     //verify(IS_MODE_2PL);2
     txn = mdb_txn_mgr_->start(tid);
     //XXX using occ lazy mode: increment version at commit time
-    std::pair<std::map<i64, mdb::Txn *>::iterator, bool> ret
-        = mdb_txns_.insert(std::pair<i64, mdb::Txn *>(tid, txn));
+    auto ret = mdb_txns_.insert(std::pair<i64, mdb::Txn *>(tid, txn));
     verify(ret.second);
   } else {
     txn = it->second;

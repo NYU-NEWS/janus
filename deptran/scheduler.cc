@@ -68,7 +68,7 @@ mdb::Txn* Scheduler::GetMTxn(const i64 tid) {
 
 mdb::Txn* Scheduler::RemoveMTxn(const i64 tid) {
   mdb::Txn *txn = nullptr;
-  std::map<i64, mdb::Txn *>::iterator it = mdb_txns_.find(tid);
+  auto it = mdb_txns_.find(tid);
   verify(it != mdb_txns_.end());
   txn = it->second;
   mdb_txns_.erase(it);
@@ -86,8 +86,7 @@ mdb::Txn* Scheduler::GetOrCreateMTxn(const i64 tid) {
     if (mode == MODE_OCC || mode == MODE_MDCC) {
       ((mdb::TxnOCC *) txn)->set_policy(mdb::OCC_LAZY);
     }
-    std::pair<std::map<i64, mdb::Txn *>::iterator, bool> ret
-        = mdb_txns_.insert(std::pair<i64, mdb::Txn *>(tid, txn));
+    auto ret = mdb_txns_.insert(std::pair<i64, mdb::Txn *>(tid, txn));
     verify(ret.second);
   } else {
     txn = it->second;
@@ -126,7 +125,7 @@ mdb::Txn* Scheduler::GetOrCreateMTxn(const i64 tid) {
 void Scheduler::get_prepare_log(i64 txn_id,
                                 const std::vector<i32> &sids,
                                 std::string *str) {
-  map<i64, mdb::Txn *>::iterator it = mdb_txns_.find(txn_id);
+  auto it = mdb_txns_.find(txn_id);
   verify(it != mdb_txns_.end() && it->second != NULL);
 
   // marshal txn_id
@@ -212,7 +211,7 @@ Scheduler::Scheduler(int mode) : Scheduler() {
 }
 
 Scheduler::~Scheduler() {
-  map<i64, mdb::Txn *>::iterator it = mdb_txns_.begin();
+  auto it = mdb_txns_.begin();
   for (; it != mdb_txns_.end(); it++)
     Log::info("tid: %ld still running", it->first);
   if (it->second) {
