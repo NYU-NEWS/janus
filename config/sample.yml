@@ -7,6 +7,9 @@
 # site: logical site (either as server/coordinator), which lives in a thread (may share thread 
 # process 
 # host is  
+client:
+    type: open # { open, closed }
+    rate: 1000 # only used for open clients -- units are txn/s
 
 # site - partition map
 site:

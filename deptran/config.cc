@@ -1,4 +1,5 @@
 //#include "all.h"
+#include <algorithm>
 
 #include "__dep__.h"
 #include "multi_value.h"
@@ -288,12 +289,13 @@ void Config::LoadYML(std::string &filename) {
   if (config["sharding"]) {
     LoadShardingYML(config["sharding"]);
   }
-
+  if (config["client"]) {
+    LoadClientYML(config["client"]);
+  }
   if (config["n_concurrent"]) {
     n_concurrent_ = config["n_concurrent"].as<uint16_t>();
     Log_info("# of concurrent requests: %d", n_concurrent_);
   }
-
 }
 
 void Config::LoadSiteYML(YAML::Node config) {
@@ -576,17 +578,22 @@ void Config::LoadShardingYML(YAML::Node config) {
          replica_group_it++) {
       auto &replica_group = *replica_group_it;
       tbl_info.par_ids.push_back(replica_group.partition_id);
-//      for (auto replica_it = replica_group.replicas.begin();
-//           replica_it != replica_group.replicas.end();
-//           replica_it++) {
-//        const auto& site_info = *replica_it;
-//        tbl_info.par_ids.push_back(site_info->id);
-//      }
-
       tbl_info.symbol = tbl_types_map_["sorted"];
     }
   
     verify(tbl_info.par_ids.size() > 0);
+  }
+}
+
+void Config::LoadClientYML(YAML::Node client) {
+  std::string type = client["type"].as<std::string>();
+  std::transform(type.begin(), type.end(), type.begin(), ::tolower);
+  if (type == "open") {
+    client_type_ = Open;
+    client_rate_ = client["rate"].as<int>();
+  } else {
+    client_type_ = Closed;
+    client_rate_ = -1;
   }
 }
 

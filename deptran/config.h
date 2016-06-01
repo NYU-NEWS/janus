@@ -22,6 +22,8 @@ class Config {
       {"snapshot", mdb::TBL_SNAPSHOT}
   };
 
+  enum ClientType { Open, Closed };
+
  public:
 
   static Config *config_s;
@@ -40,7 +42,8 @@ class Config {
   vector<string> config_paths_;
 
   // common configuration
-
+  ClientType client_type_ = Closed;
+  int client_rate_ = -1;
   int32_t cc_mode_ = 0;
   int32_t ab_mode_ = 0;
   uint32_t proc_id_;
@@ -155,6 +158,7 @@ class Config {
   void LoadModeYML(YAML::Node config);
   void LoadBenchYML(YAML::Node config);
   void LoadShardingYML(YAML::Node config);
+  void LoadClientYML(YAML::Node client);
   void LoadSchemaYML(YAML::Node config);
   void LoadSchemaTableColumnYML(Sharding::tb_info_t &tb_info,
                                 YAML::Node column);
