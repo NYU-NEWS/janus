@@ -199,23 +199,6 @@ void ClassicCoord::Dispatch() {
                                     std::placeholders::_1,
                                     std::placeholders::_2));
   }
-//  while (txn->HasMoreSubCmdReadyNotOut()) {
-//    auto subcmd = (SimpleCommand*) txn->GetNextReadySubCmd();
-//    subcmd->id_ = next_pie_id();
-//    verify(subcmd->root_id_ == cmd_->id_);
-//    n_dispatch_++;
-//    cnt++;
-//    Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
-//              n_dispatch_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
-//    dispatch_acks_[subcmd->inn_id()] = false;
-//    commo()->SendDispatch(*subcmd,
-//                         this,
-//                         std::bind(&ClassicCoord::DispatchAck,
-//                                   this,
-//                                   phase_,
-//                                   std::placeholders::_1,
-//                                   std::placeholders::_2));
-//  }
   Log_debug("sent %d subcmds\n", cnt);
 }
 

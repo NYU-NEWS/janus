@@ -2,6 +2,7 @@
 
 #include "__dep__.h"
 #include "config.h"
+#include "communicator.h"
 
 namespace rococo {
 
@@ -16,6 +17,7 @@ class TxnReply;
 class ClientWorker {
  public:
   Frame* frame_;
+  Communicator* commo_;
   cliid_t cli_id_;
   int32_t benchmark;
   int32_t mode;
@@ -41,10 +43,11 @@ class ClientWorker {
                ClientControlServiceImpl *ccsi);
   ClientWorker() = delete;
   ~ClientWorker();
-
-  void RequestDone(Coordinator* coo, TxnReply &txn_reply);
-
   void work();
+ protected:
+  Coordinator* CreateCoordinator(int offset_id);
+  void DispatchRequest(Coordinator *coo);
+  void RequestDone(Coordinator* coo, TxnReply &txn_reply);
 };
 } // namespace rococo
 
