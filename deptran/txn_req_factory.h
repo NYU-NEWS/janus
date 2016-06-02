@@ -45,6 +45,11 @@ class TxnGenerator {
  public:
   TxnGenerator(Config* config);
 
+  virtual void GetTxnReq(TxnRequest* req,
+                         uint32_t i_client,
+                         uint32_t n_client) {
+    verify(0);
+  }
   virtual void GetTxnReq(TxnRequest *req, uint32_t cid) ;
 
   void get_micro_bench_read_req(TxnRequest *req, uint32_t cid) const;
