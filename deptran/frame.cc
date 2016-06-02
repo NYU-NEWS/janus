@@ -163,31 +163,6 @@ mdb::Row* Frame::CreateRow(const mdb::Schema *schema,
   }
   return r;
 }
-//
-//Coordinator* Frame::CreateRepCoord(cooid_t coo_id,
-//                                   Config* config,
-//                                   int benchmark,
-//                                   ClientControlServiceImpl *ccsi,
-//                                   uint32_t id,
-//                                   bool batch_start,
-//                                   TxnRegistry* txn_reg) {
-//  Coordinator *coo;
-//  auto mode = Config::GetConfig()->ab_mode_;
-//  switch(mode) {
-//    case MODE_MULTI_PAXOS:
-//      coo = new MultiPaxosCoord(coo_id,
-//                                benchmark,
-//                                ccsi,
-//                                id,
-//                                batch_start);
-//      break;
-//    case MODE_EPAXOS:
-//    case MODE_NOT_READY:
-//      Log_fatal("this atomic broadcast protocol is currently not supported.");
-//  }
-//
-//  return coo;
-//}
 
 Coordinator* Frame::CreateCoord(cooid_t coo_id,
                                 Config* config,
