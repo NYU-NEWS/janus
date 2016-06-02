@@ -31,7 +31,7 @@ void ClientWorker::RequestDone(Coordinator* coo, TxnReply &txn_reply) {
   if (have_more_time && config_->client_type_ == Config::Open) {
     finish_mutex.lock();
     n_concurrent_--;
-    Log_debug("there is still time to issue another request. continue. %d", n_concurrent_);
+    Log_debug("open client -- num_outstanding: %d", n_concurrent_);
     finish_mutex.unlock();
   } else if (have_more_time && config_->client_type_ == Config::Closed) {
     Log_debug("there is still time to issue another request. continue.");
@@ -87,28 +87,32 @@ void ClientWorker::work() {
   } else {
     Log::set_level(Log::DEBUG);
     const double wait_time = 1.0/(double)config_->client_rate_;
-    int id_offset = 0;
-    std::function<void()> do_dispatch = [this, &id_offset, &do_dispatch, wait_time]() {
-      id_offset++;
-      auto coo = this->CreateCoordinator(id_offset);
-      this->DispatchRequest(coo);
+    Log_debug("wait time %2.2f", wait_time);
+    unsigned long int txn_count = 0;
+    std::function<void()> do_dispatch = [&]() {
+      double tps=0;
+      int count=0;
+      do {
+        txn_count++;
+        tps = txn_count / this->timer_->elapsed();
+        count++;
+        auto coo = this->CreateCoordinator(txn_count);
+        this->DispatchRequest(coo);
+        Log_debug("client tps: %2.2f", tps);
+      } while (tps < this->config_->client_rate_);
+      Log_debug("exit do_dispatch");
     };
+
     n_concurrent_ = 0;
-    std::thread t([this, wait_time, do_dispatch]() {
-      while (timer_->elapsed() < duration) {
-        Log_debug("elapsed: %2.2f; duration: %d", timer_->elapsed(), duration);
-        finish_mutex.lock();
-        n_concurrent_++;
-        Log_debug("new work @ %d; n_concurrent_ = %d", this->cli_id_, n_concurrent_);
-        finish_mutex.unlock();
-        std::thread tt([&do_dispatch]() { do_dispatch(); });
-        std::this_thread::sleep_for(std::chrono::duration<double>(wait_time));
-        tt.join();
-      }
-      Log_debug("exit client work generator...");
-    });
-    t.join();
-    Log_debug("after work join...");
+    while (timer_->elapsed() < duration) {
+      //finish_mutex.lock();
+      n_concurrent_++;
+      Log_debug("new transaction at client %d; n_concurrent_ = %d", this->cli_id_, n_concurrent_);
+      //finish_mutex.unlock();
+      do_dispatch();
+      std::this_thread::sleep_for(std::chrono::duration<double>(0.90 * wait_time));
+    }
+    Log_debug("exit client dispatch loop...");
   }
 
   finish_mutex.lock();
