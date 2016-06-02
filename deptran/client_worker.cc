@@ -85,7 +85,6 @@ void ClientWorker::work() {
       DispatchRequest(coo);
     }
   } else {
-    Log::set_level(Log::DEBUG);
     const double wait_time = 1.0/(double)config_->client_rate_;
     Log_debug("wait time %2.2f", wait_time);
     unsigned long int txn_count = 0;
@@ -100,17 +99,15 @@ void ClientWorker::work() {
         this->DispatchRequest(coo);
         Log_debug("client tps: %2.2f", tps);
       } while (tps < this->config_->client_rate_);
-      Log_debug("exit do_dispatch");
     };
 
     n_concurrent_ = 0;
     while (timer_->elapsed() < duration) {
-      //finish_mutex.lock();
+      finish_mutex.lock();
       n_concurrent_++;
-      Log_debug("new transaction at client %d; n_concurrent_ = %d", this->cli_id_, n_concurrent_);
-      //finish_mutex.unlock();
+      finish_mutex.unlock();
       do_dispatch();
-      std::this_thread::sleep_for(std::chrono::duration<double>(0.90 * wait_time));
+      std::this_thread::sleep_for(std::chrono::duration<double>(wait_time));
     }
     Log_debug("exit client dispatch loop...");
   }
