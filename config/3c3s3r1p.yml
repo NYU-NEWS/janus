@@ -20,10 +20,9 @@ process:
   s301: localhost
   s302: localhost
   s303: localhost
-  c01: localhost2
-  c02: localhost2
-  c03: localhost2
+  c01: localhost
+  c02: localhost
+  c03: localhost
 
 host:
   localhost: 127.0.0.1
-  localhost2: 127.0.0.1
