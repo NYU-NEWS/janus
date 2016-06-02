@@ -33,6 +33,7 @@ void ClientWorker::RequestDone(Coordinator* coo, TxnReply &txn_reply) {
     n_concurrent_--;
     Log_debug("open client -- num_outstanding: %d", n_concurrent_);
     finish_mutex.unlock();
+    delete coo;
   } else if (have_more_time && config_->client_type_ == Config::Closed) {
     Log_debug("there is still time to issue another request. continue.");
     DispatchRequest(coo);
@@ -88,13 +89,12 @@ void ClientWorker::work() {
     const double wait_time = 1.0/(double)config_->client_rate_;
     Log_debug("wait time %2.2f", wait_time);
     unsigned long int txn_count = 0;
+
     std::function<void()> do_dispatch = [&]() {
       double tps=0;
-      int count=0;
       do {
         txn_count++;
         tps = txn_count / this->timer_->elapsed();
-        count++;
         auto coo = this->CreateCoordinator(txn_count);
         this->DispatchRequest(coo);
         Log_debug("client tps: %2.2f", tps);
