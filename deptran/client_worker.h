@@ -45,7 +45,7 @@ class ClientWorker {
   ~ClientWorker();
   void work();
  protected:
-  Coordinator* CreateCoordinator(int offset_id);
+  Coordinator* CreateCoordinator(uint16_t offset_id);
   void DispatchRequest(Coordinator *coo);
   void RequestDone(Coordinator* coo, TxnReply &txn_reply);
 };

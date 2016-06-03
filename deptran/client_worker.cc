@@ -50,7 +50,7 @@ void ClientWorker::RequestDone(Coordinator* coo, TxnReply &txn_reply) {
   }
 }
 
-Coordinator* ClientWorker::CreateCoordinator(int offset_id) {
+Coordinator* ClientWorker::CreateCoordinator(uint16_t offset_id) {
   cooid_t coo_id = cli_id_;
   coo_id = (coo_id << 16) + offset_id;
   auto coo = frame_->CreateCoord(coo_id,
@@ -86,16 +86,16 @@ void ClientWorker::work() {
       DispatchRequest(coo);
     }
   } else {
-    const double wait_time = 1.0/(double)config_->client_rate_;
+    const double wait_time = 1.0 / (double)config_->client_rate_;
     Log_debug("wait time %2.2f", wait_time);
-    unsigned long int txn_count = 0;
 
+    uint64_t txn_count = 0;
     std::function<void()> do_dispatch = [&]() {
       double tps=0;
       do {
         txn_count++;
         tps = txn_count / this->timer_->elapsed();
-        auto coo = this->CreateCoordinator(txn_count);
+        auto coo = this->CreateCoordinator(txn_count); // okay to overflow?
         this->DispatchRequest(coo);
         Log_debug("client tps: %2.2f", tps);
       } while (tps < this->config_->client_rate_);
