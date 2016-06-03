@@ -28,7 +28,12 @@ class ClientWorker {
   uint32_t n_concurrent_;
   rrr::Mutex finish_mutex;
   rrr::CondVar finish_cond;
+
+  // coordinators_{mutex, cond} synchronization currently only used for open clients
+  rrr::Mutex coordinators_mutex;
+  rrr::CondVar coordinators_cond;
   vector<CoordinatorBase*> coos_ = {};
+
   std::atomic<uint32_t> num_txn, success, num_try;
   TxnGenerator * txn_generator_;
   Timer *timer_;
@@ -45,9 +50,11 @@ class ClientWorker {
   ~ClientWorker();
   void work();
  protected:
-  Coordinator* CreateCoordinator(int offset_id);
+  Coordinator* CreateCoordinator(uint16_t offset_id);
   void DispatchRequest(Coordinator *coo);
   void RequestDone(Coordinator* coo, TxnReply &txn_reply);
+
+  Coordinator* GetFreeCoordinator();
 };
 } // namespace rococo
 

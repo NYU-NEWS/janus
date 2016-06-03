@@ -27,13 +27,19 @@ void ClientWorker::RequestDone(Coordinator* coo, TxnReply &txn_reply) {
 
   bool have_more_time = timer_->elapsed() < duration;
 
+  if (config_->client_type_ == Config::Open) {
+    coordinators_mutex.lock();
+    coos_.push_back(coo);
+    coordinators_cond.signal();
+    coordinators_mutex.unlock();
+  }
+
   Log_debug("elapsed: %2.2f; duration: %d", timer_->elapsed(), duration);
   if (have_more_time && config_->client_type_ == Config::Open) {
     finish_mutex.lock();
     n_concurrent_--;
     Log_debug("open client -- num_outstanding: %d", n_concurrent_);
     finish_mutex.unlock();
-    delete coo;
   } else if (have_more_time && config_->client_type_ == Config::Closed) {
     Log_debug("there is still time to issue another request. continue.");
     DispatchRequest(coo);
@@ -43,14 +49,16 @@ void ClientWorker::RequestDone(Coordinator* coo, TxnReply &txn_reply) {
     finish_mutex.lock();
     n_concurrent_--;
     if (n_concurrent_ == 0) {
-      Log_debug("signal...");
+      Log_debug("all coordinators finished... signal done");
       finish_cond.signal();
+    } else {
+      Log_debug("waiting for %d more coordinators to finish", n_concurrent_);
     }
     finish_mutex.unlock();
   }
 }
 
-Coordinator* ClientWorker::CreateCoordinator(int offset_id) {
+Coordinator* ClientWorker::CreateCoordinator(uint16_t offset_id) {
   cooid_t coo_id = cli_id_;
   coo_id = (coo_id << 16) + offset_id;
   auto coo = frame_->CreateCoord(coo_id,
@@ -62,6 +70,7 @@ Coordinator* ClientWorker::CreateCoordinator(int offset_id) {
   coo->loc_id_ = my_site_.locale_id;
   coo->commo_ = commo_;
   Log_debug("coordinator %d created.", coo_id);
+  coos_.push_back(coo);
   return coo;
 }
 
@@ -87,25 +96,28 @@ void ClientWorker::work() {
     }
   } else {
     const double wait_time = 1.0/(double)config_->client_rate_;
-    Log_debug("wait time %2.2f", wait_time);
+    Log_debug("wait time %.10f", wait_time);
     unsigned long int txn_count = 0;
 
     std::function<void()> do_dispatch = [&]() {
       double tps=0;
       do {
         txn_count++;
-        tps = txn_count / this->timer_->elapsed();
-        auto coo = this->CreateCoordinator(txn_count);
-        this->DispatchRequest(coo);
+        tps = txn_count / timer_->elapsed();
+        finish_mutex.lock();
+        n_concurrent_++;
+        finish_mutex.unlock();
+        DispatchRequest(GetFreeCoordinator());
         Log_debug("client tps: %2.2f", tps);
-      } while (tps < this->config_->client_rate_);
+      } while (tps < config_->client_rate_);
     };
+
+    for (uint32_t i = 0; i < n_concurrent_; i++) {
+      CreateCoordinator(i);
+    }
 
     n_concurrent_ = 0;
     while (timer_->elapsed() < duration) {
-      finish_mutex.lock();
-      n_concurrent_++;
-      finish_mutex.unlock();
       do_dispatch();
       std::this_thread::sleep_for(std::chrono::duration<double>(wait_time));
     }
@@ -118,8 +130,6 @@ void ClientWorker::work() {
     finish_cond.wait(finish_mutex);
   }
   finish_mutex.unlock();
-  fflush(stderr);
-  fflush(stdout);
 
   Log_info("Finish:\nTotal: %u, Commit: %u, Attempts: %u, Running for %u\n",
            num_txn.load(),
@@ -143,7 +153,6 @@ void ClientWorker::work() {
                               this,
                               coo,
                               std::placeholders::_1);
-    coos_.push_back(coo);
     coo->do_one(req);
   }
 
@@ -169,6 +178,18 @@ void ClientWorker::work() {
   commo_ = frame_->CreateCommo();
   commo_->loc_id_ = my_site_.locale_id;
 }
+
+  Coordinator* ClientWorker::GetFreeCoordinator() {
+    coordinators_mutex.lock();
+    while (coos_.size() == 0) {
+      coordinators_cond.wait(coordinators_mutex);
+    }
+    auto coo = coos_.back();
+    coos_.pop_back();
+    coordinators_mutex.unlock();
+    return dynamic_cast<Coordinator*>(coo);
+  }
+
 
 } // namespace rococo
 
