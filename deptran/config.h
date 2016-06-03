@@ -193,6 +193,9 @@ class Config {
   int GetPartitionSize(parid_t par_id);
   vector<SiteInfo> GetMyServers() { return SitesByProcessName(this->proc_name_, SERVER); }
   vector<SiteInfo> GetMyClients() { return SitesByProcessName(this->proc_name_, CLIENT); }
+  int NumClients() {
+    return par_clients_.size();
+  }
 
   vector<parid_t> GetAllPartitionIds() {
     vector<parid_t> ret;

@@ -1,4 +1,4 @@
-#include "../rcc/txn-info.h"
+#include "../rcc/dtxn.h"
 #include "../txn_chopper.h"
 #include "../rcc/graph_marshaler.h"
 #include "dep_graph.h"
@@ -24,7 +24,7 @@ void BrqCommo::SendDispatch(vector<SimpleCommand> &cmd,
         if (graph.rtti_ == Marshallable::EMPTY_GRAPH) {
           RccGraph rgraph;
           auto v = rgraph.CreateV(tid);
-          TxnInfo& info = v->Get();
+          RccDTxn& info = v->Get();
           info.partition_.insert(par_id);
           callback(res, output, rgraph);
         } else if (graph.rtti_ == Marshallable::RCC_GRAPH) {

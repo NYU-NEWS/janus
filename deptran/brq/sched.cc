@@ -22,9 +22,9 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
   // TODO FIXME
   // add interference based on cmds.
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(txn_id);
-  TxnInfo& tinfo = dtxn->tv_->Get();
-  if (tinfo.status() < TXN_CMT) {
-    if (dtxn->phase_ < PHASE_RCC_DISPATCH && tinfo.status() < TXN_CMT) {
+//  TxnInfo& tinfo = dtxn->tv_->Get();
+  if (dtxn->status() < TXN_CMT) {
+    if (dtxn->phase_ < PHASE_RCC_DISPATCH && dtxn->status() < TXN_CMT) {
       for (auto& c: cmds) {
         map<int32_t, Value> output;
         dtxn->DispatchExecute(c, res, &output);
@@ -37,10 +37,10 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
       }
     }
   }
-  verify(!tinfo.fully_dispatched);
-  tinfo.fully_dispatched = true;
+  verify(!dtxn->fully_dispatched);
+  dtxn->fully_dispatched = true;
   dep_graph_->MinItfrGraph(txn_id, res_graph, false, 1);
-  if (tinfo.status() >= TXN_CMT) {
+  if (dtxn->status() >= TXN_CMT) {
     waitlist_.insert(dtxn->tv_);
   }
   *res = SUCCESS;
@@ -63,7 +63,7 @@ void BrqSched::OnPreAcceptWoGraph(const txnid_t txn_id,
   // TODO FIXME
   // add interference based on cmds.
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(txn_id);
-  TxnInfo& tinfo = dtxn->tv_->Get();
+  RccDTxn& tinfo = *dtxn;
   if (tinfo.status() < TXN_CMT) {
     if (dtxn->phase_ < PHASE_RCC_DISPATCH && tinfo.status() < TXN_CMT) {
       for (auto& c: cmds) {
@@ -115,7 +115,7 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
   verify(dtxn != nullptr);
   verify(dtxn->tv_ != nullptr);
   auto v = dtxn->tv_;
-  TxnInfo& info = v->Get();
+  RccDTxn& info = v->Get();
 
   verify(dtxn->ptr_output_repy_ == nullptr);
   dtxn->ptr_output_repy_ = output;
@@ -167,7 +167,7 @@ void BrqSched::OnCommitWoGraph(const txnid_t cmd_id,
   verify(dtxn != nullptr);
   verify(dtxn->tv_ != nullptr);
   auto v = dtxn->tv_;
-  TxnInfo& info = v->Get();
+  RccDTxn& info = v->Get();
 
   verify(dtxn->ptr_output_repy_ == nullptr);
   dtxn->ptr_output_repy_ = output;
@@ -215,7 +215,7 @@ int BrqSched::OnInquire(cmdid_t cmd_id,
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(cmd_id);
   RccVertex* v = dtxn->tv_;
   verify(v != nullptr);
-  TxnInfo& info = v->Get();
+  RccDTxn& info = v->Get();
   //register an event, triggered when the status >= COMMITTING;
   verify (info.Involve(partition_id_));
 

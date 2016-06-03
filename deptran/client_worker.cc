@@ -97,8 +97,7 @@ void ClientWorker::work() {
   } else {
     const double wait_time = 1.0/(double)config_->client_rate_;
     Log_debug("wait time %.10f", wait_time);
-    unsigned long int txn_count = 0;
-
+    uint64_t txn_count = 0;
     std::function<void()> do_dispatch = [&]() {
       double tps=0;
       do {
@@ -112,7 +111,7 @@ void ClientWorker::work() {
       } while (tps < config_->client_rate_);
     };
 
-    for (uint32_t i = 0; i < n_concurrent_; i++) {
+    for (uint16_t i = 0; i < n_concurrent_; i++) {
       CreateCoordinator(i);
     }
 

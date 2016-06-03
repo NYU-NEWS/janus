@@ -11,6 +11,9 @@ class TpcaTxnGenerator: public TxnGenerator {
   map<int32_t, int32_t> key_ids_ = {};
   TpcaTxnGenerator(Config* config);
   virtual void GetTxnReq(TxnRequest *req, uint32_t cid) override;
+  virtual void GetTxnReq(TxnRequest *req,
+                         uint32_t i_client,
+                         uint32_t n_client) override;
 };
 
 } // namespace rococo
