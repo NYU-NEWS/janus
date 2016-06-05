@@ -40,9 +40,10 @@ void RccGraph::FindOrCreateTxnInfo(txnid_t txn_id,
   verify(FindV(txn_id) != nullptr);
   verify(*tv != nullptr);
   // TODO fix.
-  RccDTxn& dtxn = (*tv)->Get();
-  dtxn.partition_.insert(partition_id_);
-  dtxn.graph_ = this;
+  TxnInfo& txn_info = (*tv)->Get();
+//  verify(txn_info != nullptr);
+  txn_info.partition_.insert(partition_id_);
+  txn_info.graph_ = this;
 }
 
 void RccGraph::SelectGraphCmtUkn(RccVertex* vertex, RccGraph* new_graph) {
@@ -118,7 +119,7 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
                                 int depth) {
   verify(new_graph != nullptr);
 //  gra_m.gra = &txn_gra_;
-  RccVertex* source = FindV(tid);
+  Vertex<TxnInfo> *source = FindV(tid);
   verify(source != nullptr);
   // quick path
   if (source->incoming_.size() == 0 && quick) {
@@ -157,7 +158,7 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
       for (auto &kv: v->incoming_) {
         auto parent_v = kv.first;
         auto weight = kv.second;
-        RccDTxn& parent_txn = parent_v->Get();
+        TxnInfo& parent_txn = parent_v->Get();
         if (parent_v == v) {
           verify(0); // or continue?
         }
@@ -170,7 +171,7 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
         if (depth == 1) {
           // TODO
           RccVertex* new_parent_v = new_graph->FindOrCreateV(parent_v->id());
-          RccDTxn& tinfo = new_parent_v->Get();
+          TxnInfo& tinfo = new_parent_v->Get();
           tinfo.partition_ = parent_v->Get().partition_;
           verify(tinfo.status() == TXN_UKN);
           new_v->AddParentEdge(new_parent_v, weight);
@@ -334,8 +335,8 @@ RccVertex* RccGraph::AggregateVertex(RccVertex *rhs_v) {
   /**
    * If local vertex is not yet fully dispatched, what to do?
    */
-  RccDTxn &info = vertex->Get();
-  RccDTxn &rhs_tinfo = rhs_v->Get();
+  TxnInfo &info = vertex->Get();
+  TxnInfo &rhs_tinfo = rhs_v->Get();
 //  partition_id_;
 
   if (status1 < TXN_CMT && status2 < TXN_CMT) {
@@ -365,7 +366,7 @@ RccVertex* RccGraph::AggregateVertex(RccVertex *rhs_v) {
 }
 
 RccScc& RccGraph::FindSCC(RccVertex *vertex) {
-  RccScc& scc2 = Graph<RccDTxn>::FindSccPred(vertex);
+  RccScc& scc2 = Graph<TxnInfo>::FindSccPred(vertex);
 #ifdef DEBUG_CODE
   RccScc& scc = Graph<TxnInfo>::FindSCC(vertex);
   std::sort(scc.begin(), scc.end());
@@ -386,7 +387,7 @@ bool RccGraph::AllAncCmt(RccVertex *vertex) {
   }
   bool all_anc_cmt = true;
   std::function<int(RccVertex*)> func = [&all_anc_cmt] (RccVertex* v) -> int {
-    RccDTxn& info = v->Get();
+    TxnInfo& info = v->Get();
     int r = 0;
     if (info.IsExecuted() ||
         info.all_anc_cmt_hint ||
@@ -547,17 +548,17 @@ bool RccGraph::HasICycle(const RccScc& scc) {
 };
 
 void RccGraph::find_txn_anc_opt(uint64_t txn_id,
-                                std::unordered_set<RccVertex *> &ret_set) {
-  RccVertex* source = FindV(txn_id);
+                                std::unordered_set<Vertex<TxnInfo> *> &ret_set) {
+  Vertex<TxnInfo> *source = FindV(txn_id);
   verify(source != NULL);
   find_txn_anc_opt(source, ret_set);
 }
 
-//void RccGraph::find_txn_scc_anc_opt(
-//    uint64_t txn_id,
-//    std::unordered_set<RccVertex *> &ret_set
-//) {
-//  verify(0);
+void RccGraph::find_txn_scc_anc_opt(
+    uint64_t txn_id,
+    std::unordered_set<Vertex<TxnInfo> *> &ret_set
+) {
+  verify(0);
 //  std::vector<Vertex<TxnInfo> *> scc = FindSCC(txn_id);
   //for (auto v: scc) {
   //    find_txn_anc_opt(v->data_.id(), ret_set);
@@ -574,7 +575,7 @@ void RccGraph::find_txn_anc_opt(uint64_t txn_id,
   //if (RandomGenerator::rand(1, 100) == 1) {
   //    Log::info("scc anc size: %d", ret_set.size());
   //}
-//}
+}
 
 
 void RccGraph::write_to_marshal(rrr::Marshal &m) const {
@@ -601,9 +602,9 @@ void RccGraph::write_to_marshal(rrr::Marshal &m) const {
 }
 
 
-//void RccGraph::marshal_help_1(rrr::Marshal &m,
-//                              const std::unordered_set<Vertex<TxnInfo>*> &ret_set,
-//                              Vertex<TxnInfo> *old_sv) const {
+void RccGraph::marshal_help_1(rrr::Marshal &m,
+                              const std::unordered_set<Vertex<TxnInfo>*> &ret_set,
+                              Vertex<TxnInfo> *old_sv) const {
 //  int32_t to_size = 0;
 //  //if (RandomGenerator::rand(1,200) == 1) {
 //  //    Log::info("direct parent number, size: %d",  (int)old_sv->to_.size());
@@ -626,12 +627,12 @@ void RccGraph::write_to_marshal(rrr::Marshal &m) const {
 //    m << id;
 //    m << relation[i];
 //  }
-//}
+}
 
-//void RccGraph::marshal_help_2(
-//    rrr::Marshal &m,
-//    const std::unordered_set<Vertex<TxnInfo>*> &ret_set,
-//    Vertex<TxnInfo> *old_sv) const {
+void RccGraph::marshal_help_2(
+    rrr::Marshal &m,
+    const std::unordered_set<Vertex<TxnInfo>*> &ret_set,
+    Vertex<TxnInfo> *old_sv) const {
   //int32_t ma_size = 0;
 //  for (auto &kv: old_sv->outgoing_) {
 //    auto old_tv = kv.first;
@@ -645,7 +646,7 @@ void RccGraph::write_to_marshal(rrr::Marshal &m) const {
 //      //Log::debug("this vertex is not what I want to include");
 //    }
 //  }
-//}
+}
 
 //Marshal& RccGraph::ToMarshal(Marshal& m) const {
 //  m << (Graph<TxnInfo>&)*this;

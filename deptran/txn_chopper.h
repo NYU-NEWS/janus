@@ -5,7 +5,7 @@
 #include "rcc/graph.h"
 #include "rcc/txn-info.h"
 #include "rcc/graph.h"
-//#include "rcc/graph_marshaler.h"
+#include "rcc/graph_marshaler.h"
 #include "command_marshaler.h"
 #include "txn_reg.h"
 

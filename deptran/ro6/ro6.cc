@@ -113,42 +113,42 @@ void RO6DTxn::start_ro(const SimpleCommand &cmd,
                        rrr::DeferredReply *defer) {
 //    RCCDTxn::start_ro(header, input, output, defer);
 
-//  conflict_txns_.clear();
-//  auto txn_handler_pair = txn_reg_->get(cmd.root_type_, cmd.type_);
-//  int output_size = 300;
-//  int res;
-//  phase_ = 1;
-//  // TODO fix
-//  txn_handler_pair.txn_handler(nullptr,
-//                               this,
-//                               const_cast<SimpleCommand&>(cmd),
-//                               &res,
-//                               output);
-//  // get conflicting transactions
-//  std::vector<TxnInfo *> &conflict_txns = conflict_txns_;
-//
-//  // TODO callback: read the value and return.
-//  std::function<void(void)> cb = [&cmd, &output, defer, this]() {
-//    int res;
-//    int output_size = 0;
-//    this->phase_ = 2;
-//    auto txn_handler_pair = txn_reg_->get(cmd.root_type_, cmd.type_);
-//    // TODO fix
-//    txn_handler_pair.txn_handler(nullptr,
-//                                 this,
-//                                 const_cast<SimpleCommand&>(cmd),
-//                                 &res,
-//                                 output);
-//    defer->reply();
-//  };
-//  // wait for them become commit.
-//
-//  DragonBall *ball = new DragonBall(conflict_txns.size() + 1, cb);
-//
-//  for (auto tinfo: conflict_txns) {
-//    tinfo->register_event(TXN_DCD, ball);
-//  }
-//  ball->trigger();
+  conflict_txns_.clear();
+  auto txn_handler_pair = txn_reg_->get(cmd.root_type_, cmd.type_);
+  int output_size = 300;
+  int res;
+  phase_ = 1;
+  // TODO fix
+  txn_handler_pair.txn_handler(nullptr,
+                               this,
+                               const_cast<SimpleCommand&>(cmd),
+                               &res,
+                               output);
+  // get conflicting transactions
+  std::vector<TxnInfo *> &conflict_txns = conflict_txns_;
+
+  // TODO callback: read the value and return.
+  std::function<void(void)> cb = [&cmd, &output, defer, this]() {
+    int res;
+    int output_size = 0;
+    this->phase_ = 2;
+    auto txn_handler_pair = txn_reg_->get(cmd.root_type_, cmd.type_);
+    // TODO fix
+    txn_handler_pair.txn_handler(nullptr,
+                                 this,
+                                 const_cast<SimpleCommand&>(cmd),
+                                 &res,
+                                 output);
+    defer->reply();
+  };
+  // wait for them become commit.
+
+  DragonBall *ball = new DragonBall(conflict_txns.size() + 1, cb);
+
+  for (auto tinfo: conflict_txns) {
+    tinfo->register_event(TXN_DCD, ball);
+  }
+  ball->trigger();
 
   // TODO: for Shuai, this does everything read transactions need in
   // start phase. See the comments to its declaration in dtxn.hpp

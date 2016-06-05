@@ -1,6 +1,7 @@
 #pragma once
 
 #include "__dep__.h"
+#include "rcc/dep_graph.h"
 #include "rcc/rcc_row.h"
 #include "ro6/ro6_row.h"
 #include "multi_value.h"
@@ -25,8 +26,7 @@ using mdb::column_id_t;
 #define IS_MODE_NONE (Config::GetConfig()->get_mode() == MODE_NONE)
 
 struct entry_t {
-  void* last_{nullptr}; // last transaction(write) that touches this
-  // item. (arriving order)
+  Vertex<TxnInfo> *last_ = NULL; // last transaction(write) that touches this item. (arriving order)
 
   const entry_t &operator=(const entry_t &rhs) {
     last_ = rhs.last_;
