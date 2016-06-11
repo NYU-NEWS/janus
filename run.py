@@ -232,7 +232,7 @@ class TxnInfo(object):
         num_clients = sum([len(x)
                            for x in config['site']['client']]) * \
                       config["n_concurrent"]
-        
+
         zipf = -1
         if 'coefficient' in config['bench']:
             zipf = config['bench']['coefficient']
@@ -249,7 +249,7 @@ class TxnInfo(object):
             'attempts': tries,
             'commits': commit_txn,
             'tps': tps,
-            'zipf': zipf  
+            'zipf': zipf
         }
         self.data['latency'] = {}
         self.data['latency'].update(latencies)
@@ -443,6 +443,10 @@ class ClientController(object):
                 if (res.is_finish == 1):
                     self.finish_set.add(i)
                 i += 1
+
+            if len(futures) == 0:
+                logger.fatal("client control rpc futures length 0")
+                exit()
 
             self.run_sec /= len(futures)
             self.run_nsec /= len(futures)
