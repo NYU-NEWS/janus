@@ -36,7 +36,7 @@ from pylib import ps
 LOG_LEVEL = logging.INFO
 LOG_FILE_LEVEL = logging.DEBUG
 logger = logging.getLogger('janus')
-logger.addHandler(logging.StreamHandler())
+#logger.addHandler(logging.StreamHandler())
 
 cwd = os.getcwd()
 deptran_home, ff = os.path.split(os.path.realpath(__file__))
@@ -396,7 +396,7 @@ class ClientController(object):
         self.num_proxies = len(rpc_proxy)
 
         while (len(rpc_proxy) != len(self.finish_set)):
-            logger.info("top client heartbeat; timeout {}".format(self.timeout))
+            logger.debug("top client heartbeat; timeout {}".format(self.timeout))
             for k in self.txn_infos.keys():
                 self.txn_infos[k].clear()
             self.start_txn = 0
@@ -684,7 +684,7 @@ class ServerController(object):
             avg_cpu_util = 0.0
             sample_result = []
             while (True):
-                logger.info("top server heartbeat loop")
+                logger.debug("top server heartbeat loop")
                 do_statistics = False
                 do_sample_lock.acquire()
                 if do_sample.value == 1:
