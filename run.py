@@ -446,7 +446,7 @@ class ClientController(object):
 
             if len(futures) == 0:
                 logger.fatal("client control rpc futures length 0")
-                exit()
+                sys.exit(1)
 
             self.run_sec /= len(futures)
             self.run_nsec /= len(futures)
@@ -613,10 +613,10 @@ class ServerController(object):
     def server_kill(self):
         hosts = { pi.host_address for pi in self.process_infos.itervalues() }
         ps_output = ps.ps(hosts, "deptran_server")
-        logger.info("Existing Server or Client Processes:\n{}".format(ps_output))
+        logger.debug("Existing Server or Client Processes:\n{}".format(ps_output))
         ps.killall(hosts, "deptran_server", "-9 -w")
         ps_output = ps.ps(hosts, "deptran_server")
-        logger.info("Existing Server or Client After Kill:\n{}".format(ps_output))
+        logger.debug("Existing Server or Client After Kill:\n{}".format(ps_output))
 
     def setup_heartbeat(self, client_controller):
         logger.debug("in setup_heartbeat")
@@ -700,12 +700,17 @@ class ServerController(object):
                 cpu_util = [0.0] * len(sites)
                 futures = []
 
-                for site in sites:
-                    logger.debug("ping %s", site.name)
-                    if do_statistics:
-                        futures.append(site.rpc_proxy.async_server_heart_beat_with_data())
-                    else:
-                        futures.append(site.rpc_proxy.async_server_heart_beat())
+                try:
+                    for site in sites:
+                        logger.debug("ping %s", site.name)
+                        if do_statistics:
+                            futures.append(site.rpc_proxy.async_server_heart_beat_with_data())
+                        else:
+                            futures.append(site.rpc_proxy.async_server_heart_beat())
+                except:
+                    logger.fatal("server heart beat failure")
+                    sys.exit(1)
+
 
                 i = 0
                 while (i < len(futures)):
