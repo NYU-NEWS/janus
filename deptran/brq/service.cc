@@ -266,5 +266,17 @@ BrqSched* BrqServiceImpl::dtxn_sched() {
   return (BrqSched*)dtxn_sched_;
 }
 
+void BrqServiceImpl::UpgradeEpoch(const uint32_t& curr_epoch,
+                                  int32_t *res,
+                                  DeferredReply* defer) {
+  *res = dtxn_sched()->OnUpgradeEpoch(curr_epoch);
+  defer->reply();
+}
+
+void BrqServiceImpl::TruncateEpoch(const uint32_t& old_epoch,
+                                   DeferredReply* defer) {
+  // TODO
+  defer->reply();
+}
 
 } // namespace rococo

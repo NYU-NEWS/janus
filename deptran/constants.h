@@ -15,6 +15,7 @@ namespace rococo {
 #define siteid_t uint16_t
 #define slotid_t uint64_t
 #define phase_t uint32_t
+#define epoch_t uint32_t
 #define status_t uint32_t
 #define txntype_t uint32_t
 #define cmdtype_t uint32_t

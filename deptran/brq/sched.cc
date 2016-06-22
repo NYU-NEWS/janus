@@ -1,6 +1,7 @@
 
 
 #include "sched.h"
+#include "commo.h"
 #include "../rcc/dtxn.h"
 
 using namespace rococo;
@@ -45,6 +46,7 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
   }
   *res = SUCCESS;
   callback();
+  TriggerUpgradeEpoch();
 }
 
 void BrqSched::OnPreAcceptWoGraph(const txnid_t txn_id,
@@ -245,4 +247,59 @@ int BrqSched::OnInquire(cmdid_t cmd_id,
     waitlist_.insert(v);
   }
 
+}
+
+BrqCommo* BrqSched::commo() {
+
+  auto commo = dynamic_cast<BrqCommo*>(commo_);
+  verify(commo != nullptr);
+  return commo;
+}
+
+void BrqSched::TriggerUpgradeEpoch() {
+  if (site_id_ == 0) {
+    auto t_now = std::time(nullptr);
+    auto d = std::difftime(t_now, last_upgrade_time_);
+    if (d < EPOCH_DURATION || in_upgrade_epoch_) {
+      return;
+    }
+    last_upgrade_time_ = t_now;
+    in_upgrade_epoch_ = true;
+    commo()->SendUpgradeEpoch(curr_epoch_, std::bind(&BrqSched::UpgradeEpochAck,
+                                                     this,
+                                                     std::placeholders::_1,
+                                                     std::placeholders::_2,
+                                                     std::placeholders::_3));
+  }
+}
+
+void BrqSched::UpgradeEpochAck(parid_t par_id,
+                               siteid_t site_id,
+                               int32_t res) {
+  auto parids = Config::GetConfig()->GetAllPartitionIds();
+  for (auto p : parids) {
+    if (epoch_replies_.count(p) == 0) {
+      epoch_replies_[p] = 0;
+    }
+  }
+  verify(res == 0);
+  epoch_replies_[par_id] ++;
+  for (auto& pair: epoch_replies_) {
+    auto par_id = pair.first;
+    auto par_size = Config::GetConfig()->GetPartitionSize(par_id);
+    verify(epoch_replies_[par_id] <= par_size);
+    if (epoch_replies_[par_id] != par_size) {
+      return;
+    }
+  }
+
+  in_upgrade_epoch_ = false;
+  epoch_replies_.clear();
+  TriggerTruncateEpoch();
+}
+
+void BrqSched::TriggerTruncateEpoch() {
+  if (curr_epoch_ > 2) {
+    commo()->SendTruncateEpoch(curr_epoch_ - 2);
+  }
 }

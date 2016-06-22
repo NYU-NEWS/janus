@@ -35,4 +35,9 @@ abstract service Brq {
                ballot_t ballot,
                Marshallable graph |
                i32 res);
+
+  defer UpgradeEpoch(uint32_t curr_epoch |
+                     int32_t res)
+
+  defer TruncateEpoch(uint32_t old_epoch)
 }

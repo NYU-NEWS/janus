@@ -42,6 +42,13 @@ DTxn* RccSched::GetOrCreateDTxn(txnid_t tid, bool ro) {
   RccVertex* v = dep_graph_->FindOrCreateRccVertex(tid, this);
 //  RccDTxn* dtxn = (RccDTxn*) dep_graph_->FindOrCreateTxnInfo(tid);
   RccDTxn& dtxn = v->Get();
+  if (dtxn.epoch_ == 0) {
+    dtxn.epoch_ = curr_epoch_;
+  }
+  auto pair = epoch_dtxn_[dtxn.epoch_].insert(&dtxn);
+  if (pair.second) {
+    active_epoch_[dtxn.epoch_]++;
+  }
   verify(dtxn.graph_ != nullptr);
   if (dtxn.txn_reg_ == nullptr) {
     dtxn.txn_reg_ = txn_reg_;
@@ -607,20 +614,20 @@ bool RccSched::AllAncFns(const RccScc& scc) {
 void RccSched::Execute(const RccScc& scc) {
   verify(scc.size() > 0);
   for (auto v : scc) {
-    RccDTxn& info = v->Get();
-    Execute(info);
+    RccDTxn& dtxn = v->Get();
+    Execute(dtxn);
   }
 }
 
-void RccSched::Execute(RccDTxn& info) {
-  info.executed_ = true;
-//  info.union_status(TXN_DCD); // FIXME, remove this.
-  verify(info.IsDecided());
-  RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(info.id());
-  if (dtxn == nullptr) return;
-  if (info.Involve(partition_id_)) {
-    dtxn->CommitExecute();
-    dtxn->ReplyFinishOk();
+void RccSched::Execute(RccDTxn& dtxn) {
+  dtxn.executed_ = true;
+  verify(dtxn.IsDecided());
+  verify(dtxn.epoch_ > 0);
+  verify(active_epoch_[dtxn.epoch_] > 0);
+  active_epoch_[dtxn.epoch_]--;
+  if (dtxn.Involve(partition_id_)) {
+    dtxn.CommitExecute();
+    dtxn.ReplyFinishOk();
   }
 }
 
@@ -648,6 +655,11 @@ RccCommo* RccSched::commo() {
   auto commo = dynamic_cast<RccCommo*>(commo_);
   verify(commo != nullptr);
   return commo;
+}
+
+void RccSched::OnTruncateEpoch(uint32_t old_epoch) {
+  Log_info("truncating epochs: %d", old_epoch);
+  verify(0);
 }
 
 

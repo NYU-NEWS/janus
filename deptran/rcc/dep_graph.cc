@@ -35,14 +35,14 @@ static pthread_t th_id_s = 0;
 /** on start_req */
 void RccGraph::FindOrCreateTxnInfo(txnid_t txn_id,
                                    RccVertex **tv) {
-  verify(tv != NULL);
-  *tv = FindOrCreateV(txn_id);
-  verify(FindV(txn_id) != nullptr);
-  verify(*tv != nullptr);
-  // TODO fix.
-  RccDTxn& dtxn = (*tv)->Get();
-  dtxn.partition_.insert(partition_id_);
-  dtxn.graph_ = this;
+//  verify(tv != NULL);
+//  *tv = FindOrCreateV(txn_id);
+//  verify(FindV(txn_id) != nullptr);
+//  verify(*tv != nullptr);
+//  // TODO fix.
+//  RccDTxn& dtxn = (*tv)->Get();
+//  dtxn.partition_.insert(partition_id_);
+//  dtxn.graph_ = this;
 }
 
 RccVertex* RccGraph::FindOrCreateRccVertex(txnid_t txn_id,

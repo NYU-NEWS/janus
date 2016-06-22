@@ -122,6 +122,11 @@ class BrqServiceImpl: public BrqService {
                         DeferredReply *reply);
 
   void RegisterStats();
+  void UpgradeEpoch(const uint32_t& curr_epoch,
+                    int32_t *res,
+                    DeferredReply* defer) override;
+  void TruncateEpoch(const uint32_t& old_epoch,
+                     DeferredReply* defer) override;
 
  private:
   BrqSched* dtxn_sched();

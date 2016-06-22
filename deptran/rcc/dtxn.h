@@ -22,6 +22,7 @@ class RccDTxn: public DTxn {
   bool committed = false;
   bool aborted = false;
   bool __debug_replied = false;
+  epoch_t epoch_{0};
 
   RccDTxn(txnid_t tid, Scheduler *mgr, bool ro);
 
@@ -249,13 +250,13 @@ class RccDTxn: public DTxn {
 
 
 inline rrr::Marshal &operator<<(rrr::Marshal &m, const RccDTxn &ti) {
-  m << ti.txn_id_ << ti.status() << ti.partition_;
+  m << ti.txn_id_ << ti.status() << ti.partition_ << ti.epoch_;
   return m;
 }
 
 inline rrr::Marshal &operator>>(rrr::Marshal &m, RccDTxn &ti) {
   int8_t status;
-  m >> ti.txn_id_ >> status >> ti.partition_;
+  m >> ti.txn_id_ >> status >> ti.partition_ >> ti.epoch_;
   ti.union_status(status);
   return m;
 }

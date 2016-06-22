@@ -26,7 +26,13 @@ class RccSched : public Scheduler {
   set<RccVertex*> waitlist_ = {};
   set<RccVertex*> fridge_ = {};
   std::recursive_mutex mtx_{};
-//  Vertex<TxnInfo> *v : wait_list_
+  uint32_t curr_epoch_{1};
+  std::time_t last_upgrade_time_{0};
+  map<parid_t, int32_t> epoch_replies_{};
+  bool in_upgrade_epoch_{false};
+  const int EPOCH_DURATION = 5;
+  map<epoch_t, int64_t> active_epoch_{};
+  map<epoch_t, unordered_set<RccDTxn*>> epoch_dtxn_{};
 
   RccSched();
   virtual ~RccSched();
@@ -80,6 +86,8 @@ class RccSched : public Scheduler {
   void Execute(const RccScc&);
   void Execute(RccDTxn&);
   void Abort(const RccScc&);
+
+  void OnTruncateEpoch(uint32_t old_epoch);
 
   void __DebugExamineFridge();
   RccVertex* __DebugFindAnOngoingAncestor(RccVertex* vertex);
