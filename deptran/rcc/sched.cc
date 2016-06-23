@@ -659,6 +659,7 @@ RccCommo* RccSched::commo() {
 
 void RccSched::OnTruncateEpoch(uint32_t old_epoch) {
   Log_info("truncating epochs: %d", old_epoch);
+  // TODO
   verify(0);
 }
 

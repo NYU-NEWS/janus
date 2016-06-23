@@ -59,7 +59,7 @@ def configure(conf):
     conf.env.append_value("CXXFLAGS", "-Wno-unused-function")
     conf.env.append_value("CXXFLAGS", "-Wno-unused-variable")
     conf.env.append_value("CXXFLAGS", "-Wno-sign-compare")
-    conf.check_boost(lib='system filesystem')
+    conf.check_boost(lib='system filesystem coroutine')
 
     conf.env.append_value("CXXFLAGS", "-Wno-sign-compare")
     conf.env.append_value('INCLUDES', ['/usr/local/include'])
@@ -99,9 +99,11 @@ def build(bld):
 
     bld.stlib(source=bld.path.ant_glob("rrr/base/*.cpp "
                                        "rrr/misc/*.cpp "
-                                       "rrr/rpc/*.cpp"),
+                                       "rrr/rpc/*.cpp "
+                                       "rrr/coroutine/*.cc"),
               target="rrr",
               includes=". rrr",
+              uselib="BOOST BOOST_SYSTEM BOOST_COROUTINE",
               use="PTHREAD")
 
 #    bld.stlib(source=bld.path.ant_glob("rpc/*.cc"), target="simplerpc",
@@ -140,7 +142,7 @@ def build(bld):
                                          "bench/*/*.cc"),
                 target="deptran_server",
                 includes=". rrr deptran ",
-                uselib="BOOST BOOST_SYSTEM YAML-CPP",
+                uselib="BOOST BOOST_SYSTEM BOOST_COROUTINE YAML-CPP",
                 use="rrr memdb deptran PTHREAD PROFILER RT")
 
 #    bld.program(source=bld.path.ant_glob("deptran/c_main.cc"),
@@ -151,6 +153,7 @@ def build(bld):
     bld.program(source="old-test/rpcbench.cc old-test/benchmark_service.cc",
                 target="rpcbench",
                 includes=". rrr deptran old-test",
+                uselib="BOOST BOOST_SYSTEM BOOST_COROUTINE YAML-CPP",
                 use="rrr PTHREAD")
 
 #    bld.program(source="test/rpc_microbench.cc test/benchmark_service.cc",

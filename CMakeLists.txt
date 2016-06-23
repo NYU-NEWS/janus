@@ -15,7 +15,7 @@ pkg_check_modules(PYTHON2 REQUIRED python2)
 pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
 #pkg_check_modules(PROFILER REQUIRED libprofiler)
 
-FIND_PACKAGE(Boost COMPONENTS system filesystem REQUIRED)
+FIND_PACKAGE(Boost COMPONENTS system filesystem coroutine REQUIRED)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG_CODE")
 
@@ -85,7 +85,9 @@ file(GLOB RRR_SRC
     "rrr/base/*.cpp"
     "rrr/misc/*.hpp"
     "rrr/misc/*.cpp"
-#    "rrr/mq/*.cpp"
+    "rrr/coroutine/*.h"
+    "rrr/coroutine/*.cc"
+    "rrr/mq/*.cpp"
 #    "rrr/mq/*.h"
     "rrr/pylib/simplerpc/_pyrpc.cpp"
     "rrr/rpc/*.cpp"

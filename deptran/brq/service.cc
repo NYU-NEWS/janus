@@ -269,14 +269,18 @@ BrqSched* BrqServiceImpl::dtxn_sched() {
 void BrqServiceImpl::UpgradeEpoch(const uint32_t& curr_epoch,
                                   int32_t *res,
                                   DeferredReply* defer) {
+//  Coroutine::Create(std::bind(&BrqSched::OnUpgradeEpoch, dtxn_sched_));
   *res = dtxn_sched()->OnUpgradeEpoch(curr_epoch);
   defer->reply();
 }
 
 void BrqServiceImpl::TruncateEpoch(const uint32_t& old_epoch,
                                    DeferredReply* defer) {
-  // TODO
-  defer->reply();
+  std::function<void()> func = [&] () {
+    dtxn_sched()->OnTruncateEpoch(old_epoch);
+    defer->reply();
+  };
+  Coroutine::Create(func);
 }
 
 } // namespace rococo
