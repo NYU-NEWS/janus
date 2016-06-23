@@ -20,6 +20,10 @@
 #include "rpc/client.hpp"
 #include "rpc/server.hpp"
 
+#include "coroutine/scheduler.h"
+#include "coroutine/coroutine.h"
+#include "coroutine/event.h"
+
 namespace base = rrr;
 
 #endif // RRR_HPP_
