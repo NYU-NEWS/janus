@@ -20,6 +20,7 @@ void Coroutine::Create(std::function<void()> func) {
   coro->func_ = func;
   // TODO
 //  coro->Run(func);
+  sched->new_coros_.push_back(coro);
   sched->Loop();
   sched->ReturnCoroutine(coro);
 }

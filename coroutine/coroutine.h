@@ -20,6 +20,7 @@ class Coroutine {
   boost_coro_yield_t* boost_coro_yield_{nullptr};
 
   Coroutine();
+  ~Coroutine();
   void BoostRunWrapper(boost_coro_yield_t& yield);
   void Run(const std::function<void()> &func, bool defer = false);
   void Yield();

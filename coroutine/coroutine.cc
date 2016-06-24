@@ -7,12 +7,27 @@ namespace rrr {
 
 Coroutine::Coroutine() {
   sched_ = Scheduler::CurrentScheduler();
-  boost_coro_task_ = new boost_coro_task_t(std::bind(&Coroutine::BoostRunWrapper, this, std::placeholders::_1));
+  boost_coro_task_t task([] (boost_coro_yield_t& yield) -> void {});
+  task();
+  boost_coro_task_t task2(
+      std::bind(&Coroutine::BoostRunWrapper, this, std::placeholders::_1));
+  task2();
+  boost_coro_task_t* task3 = new boost_coro_task_t(
+      std::bind(&Coroutine::BoostRunWrapper, this, std::placeholders::_1));
+  (*task3)();
+//  boost_coro_task_ = new boost_coro_task_t(
+//      std::bind(&Coroutine::BoostRunWrapper, this, std::placeholders::_1));
+}
+
+Coroutine::~Coroutine() {
+  verify(boost_coro_task_ != nullptr);
+  delete boost_coro_task_;
 }
 
 void Coroutine::BoostRunWrapper(boost_coro_yield_t &yield) {
   boost_coro_yield_ = &yield;
-  func_();
+//  verify(func_);
+//  func_();
 }
 
 void Coroutine::Run(const std::function<void()> &func, bool defer) {
