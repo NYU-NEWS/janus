@@ -11,7 +11,11 @@ void TapirServiceImpl::Dispatch(const vector<SimpleCommand>& cmd,
                                 rrr::i32* res,
                                 TxnOutput* output,
                                 rrr::DeferredReply* defer) {
-  sched_->OnDispatch(cmd, res, output, [defer]() { defer->reply(); });
+  std::function<void()> func = [&] () -> void {
+    sched_->OnDispatch(cmd, res, output, [&] () {defer->reply();});
+  };
+//  Coroutine::Create(func);
+//  func();
 }
 
 void TapirServiceImpl::Prepare(rrr::DeferredReply* defer) {

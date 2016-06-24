@@ -135,6 +135,7 @@ Sharding* Frame::CreateSharding() {
 }
 
 Sharding* Frame::CreateSharding(Sharding *sd) {
+  verify(sd != nullptr);
   Sharding* ret = CreateSharding();
   *ret = *sd;
   ret->frame_ = this;

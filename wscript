@@ -129,46 +129,46 @@ def build(bld):
 #                includes=". rrr",
 #                use="base simplerpc PTHREAD")
 
-#    bld.program(source=bld.path.ant_glob("test/*.cc"),
-#                target="run_tests",
-#                features="gtest",
-#                includes=". rrr deptran  "
-#                         "test memdb",
-#                uselib="BOOST BOOST_SYSTEM YAML-CPP",
-#                use="PTHREAD rrr memdb deptran")
+    bld.stlib(source=bld.path.ant_glob("deptran/*.cc "
+                                       "deptran/*/*.cc "
+                                       "bench/*/*.cc ",
+                                       excl="deptran/*_main.c*"),
+              target="deptran",
+              includes=". rrr deptran ",
+              uselib="BOOST BOOST_SYSTEM BOOST_COROUTINE YAML-CPP",
+              use="PTHREAD memdb base simplerpc memdb PROFILER RT")
 
-    bld.program(source=bld.path.ant_glob("deptran/*.cc "
-                                         "deptran/*/*.cc "
-                                         "bench/*/*.cc"),
-                target="deptran_server",
-                includes=". rrr deptran ",
+    bld.program(source=bld.path.ant_glob("test/*.cc"),
+                target="tests",
+                features="gtest",
+                includes=". rrr deptran test memdb",
                 uselib="BOOST BOOST_SYSTEM BOOST_COROUTINE YAML-CPP",
-                use="rrr memdb deptran PTHREAD PROFILER RT")
+                use="PTHREAD rrr memdb deptran PROFILER RT")
+
+#    bld.program(source=bld.path.ant_glob("deptran/*.cc "
+#                                         "deptran/*/*.cc "
+#                                         "bench/*/*.cc"),
+#                target="deptran_server",
+#                includes=". rrr deptran ",
+#                uselib="BOOST BOOST_SYSTEM BOOST_COROUTINE YAML-CPP",
+#                use="rrr memdb PTHREAD PROFILER RT")
 
 #    bld.program(source=bld.path.ant_glob("deptran/c_main.cc"),
 #                target="deptran_client",
 #                includes=". rrr bench deptran deptran/ro6 deptran/rcc deptran/tpl deptran/brq deptran/none",
 #                use="rrr memdb deptran YAML-CPP PTHREAD RT")
 
-    bld.program(source="old-test/rpcbench.cc old-test/benchmark_service.cc",
-                target="rpcbench",
-                includes=". rrr deptran old-test",
-                uselib="BOOST BOOST_SYSTEM BOOST_COROUTINE YAML-CPP",
-                use="rrr PTHREAD")
+#    bld.program(source="old-test/rpcbench.cc old-test/benchmark_service.cc",
+#                target="rpcbench",
+#                includes=". rrr deptran old-test",
+#                uselib="BOOST BOOST_SYSTEM BOOST_COROUTINE YAML-CPP",
+#                use="rrr PTHREAD")
 
 #    bld.program(source="test/rpc_microbench.cc test/benchmark_service.cc",
 #                target="rpc_microbench",
 #                includes=". rrr deptran test",
 #                use="rrr PTHREAD RT")
 #
-#    bld.stlib(source=bld.path.ant_glob("deptran/*.cc "
-#                                       "deptran/*/*.cc "
-#                                       "bench/*/*.cc ",
-#                                       excl="deptran/*_main.c*"),
-#        #use="PTHREAD APR APR-UTIL base simplerpc memdb")
-#        target="deptran",
-#        includes=". rrr memdb bench deptran ",
-#        use="PTHREAD base simplerpc memdb")
 #
 #
 # waf helper functions
