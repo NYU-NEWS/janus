@@ -5,18 +5,19 @@
 
 namespace rrr {
 
-Coroutine::Coroutine() {
+Coroutine::Coroutine(const std::function<void()>& func) : func_(func) {
   sched_ = Scheduler::CurrentScheduler();
-  boost_coro_task_t task([] (boost_coro_yield_t& yield) -> void {});
-  task();
-  boost_coro_task_t task2(
-      std::bind(&Coroutine::BoostRunWrapper, this, std::placeholders::_1));
-  task2();
-  boost_coro_task_t* task3 = new boost_coro_task_t(
-      std::bind(&Coroutine::BoostRunWrapper, this, std::placeholders::_1));
-  (*task3)();
-//  boost_coro_task_ = new boost_coro_task_t(
+//  auto func = [] (boost_coro_yield_t& yield) -> void {yield();};
+//  boost_coro_task_t task(func);
+//  task();
+//  boost_coro_task_t task2(
 //      std::bind(&Coroutine::BoostRunWrapper, this, std::placeholders::_1));
+//  task2();
+//  boost_coro_task_t* task3 = new boost_coro_task_t(
+//      std::bind(&Coroutine::BoostRunWrapper, this, std::placeholders::_1));
+//  (*task3)();
+  boost_coro_task_ = new boost_coro_task_t(
+      std::bind(&Coroutine::BoostRunWrapper, this, std::placeholders::_1));
 }
 
 Coroutine::~Coroutine() {
@@ -26,8 +27,9 @@ Coroutine::~Coroutine() {
 
 void Coroutine::BoostRunWrapper(boost_coro_yield_t &yield) {
   boost_coro_yield_ = &yield;
-//  verify(func_);
-//  func_();
+  verify(func_);
+  func_();
+  yield();
 }
 
 void Coroutine::Run(const std::function<void()> &func, bool defer) {

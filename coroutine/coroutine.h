@@ -11,7 +11,7 @@ class Scheduler;
 class Coroutine {
  public:
   static Coroutine* CurrentCoroutine();
-  static void Create(std::function<void()> func);
+  static void Create(const std::function<void()>& func);
 
   Scheduler* sched_{nullptr};
   std::function<void()> func_{};
@@ -19,7 +19,8 @@ class Coroutine {
   boost_coro_task_t* boost_coro_task_{nullptr};
   boost_coro_yield_t* boost_coro_yield_{nullptr};
 
-  Coroutine();
+  Coroutine() = delete;
+  Coroutine(const std::function<void()>& func);
   ~Coroutine();
   void BoostRunWrapper(boost_coro_yield_t& yield);
   void Run(const std::function<void()> &func, bool defer = false);

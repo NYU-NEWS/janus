@@ -14,7 +14,7 @@ class Scheduler {
   std::list<Coroutine*> new_coros_{};
 
   void AddReadyEvent(Event *ev);
-  Coroutine* GetCoroutine();
+  Coroutine* GetCoroutine(const std::function<void()>& func);
   void ReturnCoroutine(Coroutine* coro);
   void Loop(bool infinite = false);
 };

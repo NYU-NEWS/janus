@@ -51,13 +51,18 @@ class IntEvent : public Event {
   };
 
   int increment(int i=1) {
-    value_+=i;
+    int t = value_;
+    value_ += i;
     TestTrigger();
+    return t;
   };
 
   int decrement(int i=1) {
-    value_-=i;
+    int t = value_;
+    value_ -= i;
     TestTrigger();
+    return t;
+
   };
 
   bool IsReady() override {

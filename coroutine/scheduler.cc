@@ -1,4 +1,5 @@
 
+#include <functional>
 #include "../base/all.hpp"
 #include "scheduler.h"
 #include "coroutine.h"
@@ -14,10 +15,9 @@ Coroutine* Coroutine::CurrentCoroutine() {
   return curr_coro_;
 }
 
-void Coroutine::Create(std::function<void()> func) {
+void Coroutine::Create(const std::function<void()>& func) {
   auto sched = Scheduler::CurrentScheduler();
-  auto coro = sched->GetCoroutine();
-  coro->func_ = func;
+  auto coro = sched->GetCoroutine(func);
   // TODO
 //  coro->Run(func);
   sched->new_coros_.push_back(coro);
@@ -33,8 +33,8 @@ void Scheduler::AddReadyEvent(Event *ev) {
   ready_events_.push_back(ev);
 }
 
-Coroutine* Scheduler::GetCoroutine() {
-  Coroutine* c = new Coroutine;
+Coroutine* Scheduler::GetCoroutine(const std::function<void()>& func) {
+  Coroutine* c = new Coroutine(func);
   return c;
 }
 
