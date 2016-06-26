@@ -181,6 +181,7 @@ def _choose_compiler(conf):
         os.environ["CXX"] = "clang++"
         conf.env.append_value("CXXFLAGS", "-stdlib=libc++")
         conf.env.append_value("LINKFLAGS", "-stdlib=libc++")
+        Logs.pprint("PINK", "libc++ used")
     else:
         Logs.pprint("PINK", "use system default compiler")
 
