@@ -14,7 +14,7 @@ void TapirServiceImpl::Dispatch(const vector<SimpleCommand>& cmd,
   std::function<void()> func = [&] () -> void {
     sched_->OnDispatch(cmd, res, output, [&] () {defer->reply();});
   };
-//  Coroutine::Create(func);
+  Coroutine::Create(func);
 //  func();
 }
 
