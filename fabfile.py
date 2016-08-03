@@ -162,6 +162,18 @@ def build(args=None, clean=True):
     with cd(env.nfs_home): 
         run_python(' '.join(opts))
 
+@task
+@runs_once
+@roles('leaders')
+def retrieve_boost():
+    with cd(env.nfs_home):
+        # get from beaker-1
+        boost_archive = 'boost_1_58_0.tar.gz' 
+        boost = 'http://216.165.108.10/~lamont/{boost_archive}'.format(**locals())
+        run('wget {boost}'.format(**locals()))
+        run('tar -xzvf {boost_archive} && ln -s {d}/boost boost'.format(
+            d=boost_archive.replace('.tar.gz',''),
+            boost_archive=boost_archive))
 
 @task
 @runs_once
@@ -170,6 +182,7 @@ def retrieve_code():
     parent = os.path.dirname(env.nfs_home)
     with cd(parent):
         logging.info("check out code in {}".format(parent))
+
         if not exists(env.nfs_home):
             cmd = 'git clone --recursive {repo}'.format(repo=env.git_repo)
             run(cmd)
@@ -182,6 +195,7 @@ def retrieve_code():
                 run('git checkout master')
                 run('git pull origin master')
                 run('git checkout {rev}'.format(rev=env.git_revision))
+        execute('retrieve_boost')
 
 @task
 @hosts('localhost')
