@@ -166,14 +166,16 @@ def build(args=None, clean=True):
 @runs_once
 @roles('leaders')
 def retrieve_boost():
+    return
     with cd(env.nfs_home):
         # get from beaker-1
         boost_archive = 'boost_1_58_0.tar.gz' 
         boost = 'http://216.165.108.10/~lamont/{boost_archive}'.format(**locals())
         run('wget {boost}'.format(**locals()))
-        run('tar -xzvf {boost_archive} && ln -s {d}/boost boost'.format(
-            d=boost_archive.replace('.tar.gz',''),
-            boost_archive=boost_archive))
+        run('tar -xzvf {boost_archive}'.format(boost_archive=boost_archive))
+    with cd(env.nfs_home + "/" + boost_archive.replace('.tar.gz','')):
+        sudo('./bootstrap')
+        sudo('./b2 install')
 
 @task
 @runs_once
