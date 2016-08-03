@@ -28,8 +28,8 @@ EC2_REGIONS = {
     'us-west-2': {
         'location': 'Oregon',
         'endpoint': 'ec2.us-west-2.amazonaws.com',
-        #'ami_image': 'ami-63d03903',
-        'ami_image': 'ami-bb6f85db'
+        #'ami_image': 'ami-bb6f85db'
+        'ami_image': 'ami-60ed2400'
     },
     'us-west-1': {
         'location': 'California',
