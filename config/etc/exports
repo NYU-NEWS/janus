@@ -1,1 +1,1 @@
-/export $host_and_options 
+/export            *(rw,sync,no_root_squash,no_subtree_check)
