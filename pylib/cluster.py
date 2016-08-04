@@ -28,12 +28,6 @@ def Xput(*args, **kwargs):
     return res
 
 @task
-@roles('all')
-@parallel(pool_size=10)
-def disable_ssh_host_check():
-    Xput('config/ssh_config', '/home/ubuntu/.ssh/config')
-
-@task
 @roles('leaders')
 def ping():
     created_instances = get_created_instances()
@@ -54,6 +48,14 @@ def sshping():
                 continue
             ip = instance.public_ip_address
             run('ssh {} /bin/echo here'.format(ip))
+
+@task
+@roles('all')
+@parallel(pool_size=10)
+def config_ssh():
+    Xput('config/ssh/config', '/home/ubuntu/.ssh/config')
+    Xput('config/ssh/id_rsa', '/home/ubuntu/.ssh/id_rsa')
+    Xput('config/ssh/id_rsa.pub', '/home/ubuntu/.ssh/id_rsa.pub')
 
 
 @task
@@ -134,7 +136,6 @@ def config_nfs_server():
     Xput(contents, '/etc/hosts.allow', use_sudo=True)
 
     sudo('exportfs -a')
-    reboot()
 
 
 @task
