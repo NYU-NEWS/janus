@@ -16,20 +16,17 @@ EC2_REGIONS = {
     'eu-west-1': {
         'location': 'Ireland',
         'endpoint': 'ec2.eu-west-1.amazonaws.com',
-        #'ami_image': 'ami-22b53151',
-        'ami_image': 'ami-5a31b729',
+        'ami_image': 'ami-68d3bd1b',
     },
     'ap-northeast-2': {
         'location': 'Seoul',
         'endpoint': 'ec2.ap-northeast-2.amazonaws.com',
-        #'ami_image': 'ami-6fa66f01',
-        'ami_image': 'ami-18d61f76',
+        'ami_image': 'ami-722de71c'
     },
     'us-west-2': {
         'location': 'Oregon',
         'endpoint': 'ec2.us-west-2.amazonaws.com',
-        #'ami_image': 'ami-bb6f85db'
-        'ami_image': 'ami-60ed2400'
+        'ami_image': 'ami-4f39f02f'
     },
     'us-west-1': {
         'location': 'California',
