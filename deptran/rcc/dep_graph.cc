@@ -384,7 +384,7 @@ RccVertex* RccGraph::AggregateVertex(RccVertex *rhs_v) {
 }
 
 RccScc& RccGraph::FindSCC(RccVertex *vertex) {
-  RccScc& scc2 = Graph<RccDTxn>::FindSccPred(vertex);
+  RccScc& scc2 = Graph<RccVertex>::FindSccPred(vertex);
 #ifdef DEBUG_CODE
   RccScc& scc = Graph<TxnInfo>::FindSCC(vertex);
   std::sort(scc.begin(), scc.end());

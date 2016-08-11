@@ -25,7 +25,7 @@ class EmptyGraph : public Marshallable {
 };
 
 class RccSched;
-class RccGraph : public Graph<RccDTxn> {
+class RccGraph : public Graph<RccVertex> {
  public:
 //    Graph<PieInfo> pie_gra_;
 //  Graph <TxnInfo> txn_gra_;
@@ -34,7 +34,7 @@ class RccGraph : public Graph<RccDTxn> {
 //  std::vector<RococoProxy *> rpc_proxies_;
 //  std::vector<std::string> server_addrs_;
 
-  RccGraph() : Graph<RccDTxn>() {
+  RccGraph() : Graph<RccVertex>() {
     rtti_ = Marshallable::RCC_GRAPH;
   }
 
