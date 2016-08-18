@@ -186,7 +186,7 @@ int ClassicSched::OnCommit(cmdid_t cmd_id,
     } else {
       verify(0);
     }
-    DestroyExecutor(cmd_id);
+    if (!epoch_enabled_) DestroyExecutor(cmd_id);
   }
   return 0;
 }
@@ -206,7 +206,7 @@ int ClassicSched::CommitReplicated(TpcCommitCommand& tpc_commit_cmd) {
     verify(0);
   }
   exec->commit_reply_(SUCCESS);
-  DestroyExecutor(txn_id);
+  if (!epoch_enabled_) DestroyExecutor(txn_id);
 }
 
 void ClassicSched::OnLearn(ContainerCommand& cmd) {

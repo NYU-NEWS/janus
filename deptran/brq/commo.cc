@@ -179,39 +179,5 @@ void BrqCommo::BroadcastCommit(parid_t par_id,
 }
 
 
-void BrqCommo::SendUpgradeEpoch(epoch_t curr_epoch,
-                                const function<void(parid_t,
-                                                    siteid_t,
-                                                    int32_t&)>& callback) {
-  for (auto& pair: rpc_par_proxies_) {
-    auto& par_id = pair.first;
-    auto& proxies = pair.second;
-    for (auto& pair: proxies) {
-      FutureAttr fuattr;
-      auto& site_id = pair.first;
-      function<void(Future*)> cb = [callback, par_id, site_id] (Future* fu) {
-        int32_t res;
-        fu->get_reply() >> res;
-        callback(par_id, site_id, res);
-      };
-      fuattr.callback = cb;
-      auto proxy = (BrqProxy*) pair.second;
-      Future::safe_release(proxy->async_UpgradeEpoch(curr_epoch, fuattr));
-    }
-  }
-}
-
-void BrqCommo::SendTruncateEpoch(epoch_t old_epoch) {
-  for (auto& pair: rpc_par_proxies_) {
-    auto& par_id = pair.first;
-    auto& proxies = pair.second;
-    for (auto& pair: proxies) {
-      FutureAttr fuattr;
-      fuattr.callback = [] (Future*) {};
-      auto proxy = (BrqProxy*) pair.second;
-      Future::safe_release(proxy->async_TruncateEpoch(old_epoch));
-    }
-  }
-}
 
 } // namespace rococo

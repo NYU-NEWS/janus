@@ -24,6 +24,8 @@ DTxn* Scheduler::CreateDTxn(i64 tid, bool ro) {
     verify(txn_reg_);
     dtxn->txn_reg_ = txn_reg_;
   }
+  if (epoch_enabled_) epoch_mgr_.AddToCurrent(tid);
+  TriggerUpgradeEpoch();
   return dtxn;
 }
 
@@ -281,6 +283,60 @@ Executor* Scheduler::GetExecutor(cmdid_t cmd_id) {
   auto it = executors_.find(cmd_id);
   verify(it != executors_.end());
   return it->second;
+}
+
+void Scheduler::TriggerUpgradeEpoch() {
+  if (site_id_ == 0) {
+    auto t_now = std::time(nullptr);
+    auto d = std::difftime(t_now, last_upgrade_time_);
+    if (d < EPOCH_DURATION || in_upgrade_epoch_) {
+      return;
+    }
+    last_upgrade_time_ = t_now;
+    in_upgrade_epoch_ = true;
+    commo()->SendUpgradeEpoch(curr_epoch_, std::bind(&Scheduler::UpgradeEpochAck,
+                                                     this,
+                                                     std::placeholders::_1,
+                                                     std::placeholders::_2,
+                                                     std::placeholders::_3));
+  }
+}
+
+void Scheduler::UpgradeEpochAck(parid_t par_id,
+                               siteid_t site_id,
+                               int32_t res) {
+  auto parids = Config::GetConfig()->GetAllPartitionIds();
+  for (auto p : parids) {
+    if (epoch_replies_.count(p) == 0) {
+      epoch_replies_[p] = 0;
+    }
+  }
+  verify(res == 0);
+  epoch_replies_[par_id] ++;
+  for (auto& pair: epoch_replies_) {
+    auto par_id = pair.first;
+    auto par_size = Config::GetConfig()->GetPartitionSize(par_id);
+    verify(epoch_replies_[par_id] <= par_size);
+    if (epoch_replies_[par_id] != par_size) {
+      return;
+    }
+  }
+
+  in_upgrade_epoch_ = false;
+  epoch_replies_.clear();
+  TriggerTruncateEpoch();
+}
+
+void Scheduler::TriggerTruncateEpoch() {
+  if (curr_epoch_ > 2) {
+    commo()->SendTruncateEpoch(curr_epoch_ - 2);
+  }
+}
+
+void Scheduler::OnTruncateEpoch(uint32_t old_epoch) {
+  Log_info("truncating epochs: %d", old_epoch);
+  // TODO
+  verify(0);
 }
 
 } // namespace rococo

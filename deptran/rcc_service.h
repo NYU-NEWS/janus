@@ -10,6 +10,7 @@ namespace rococo {
 class ServerControlServiceImpl;
 class Scheduler;
 class SimpleCommand;
+class ClassicSched;
 
 class ClassicServiceImpl: public ClassicService {
 
@@ -26,9 +27,11 @@ class ClassicServiceImpl: public ClassicService {
 //                    int32_t *res,
 //                    Value *output,
 //                    int32_t *outupt_size);
+//
+  ClassicSched* dtxn_sched() {
+    return (ClassicSched*)dtxn_sched_;
+  }
 
-
- public:
   void rpc_null(DeferredReply *defer);
 //
 //  void batch_start_pie(const BatchRequestHeader &batch_header,
@@ -61,6 +64,13 @@ class ClassicServiceImpl: public ClassicService {
   void Abort(const i64 &tid,
              i32 *res,
              DeferredReply *defer) override;
+
+  void UpgradeEpoch(const uint32_t& curr_epoch,
+                    int32_t *res,
+                    DeferredReply* defer) override;
+
+  void TruncateEpoch(const uint32_t& old_epoch,
+                     DeferredReply* defer) override;
 
 #ifdef PIECE_COUNT
   typedef struct piece_count_key_t{

@@ -12,9 +12,9 @@ class Vertex {
   std::shared_ptr<T> data_{};
  public:
   set<uint64_t> parents_{};
-  map<Vertex *, int8_t> outgoing_{};
-  map<Vertex *, int8_t> incoming_{};
-  set<Vertex *> removed_children_{};
+  map<Vertex *, int8_t> outgoing_{}; // helper data structure
+  map<Vertex *, int8_t> incoming_{}; // helper data structure
+  set<Vertex *> removed_children_{}; // helper data structure
   bool walked_{false}; // flag for traversing.
   std::shared_ptr<vector<Vertex*>> scc_{};
 

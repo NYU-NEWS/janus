@@ -162,10 +162,10 @@ void ClassicServiceImpl::Dispatch(const vector<SimpleCommand>& cmd,
   // find stored procedure, and run it
   *res = SUCCESS;
   verify(cmd.size() > 0);
-  ((ClassicSched *) dtxn_sched_)->OnDispatch(cmd,
-                                             res,
-                                             output,
-                                             [defer] () {defer->reply();});
+  dtxn_sched()->OnDispatch(cmd,
+                           res,
+                           output,
+                           [defer] () {defer->reply();});
 }
 
 void ClassicServiceImpl::Prepare(const rrr::i64 &tid,
@@ -222,5 +222,22 @@ void ClassicServiceImpl::RegisterStats() {
   if (scsi_) {
     scsi_->set_recorder(recorder_);
   }
+}
+
+void ClassicServiceImpl::UpgradeEpoch(const uint32_t& curr_epoch,
+                                  int32_t *res,
+                                  DeferredReply* defer) {
+//  Coroutine::Create(std::bind(&BrqSched::OnUpgradeEpoch, dtxn_sched_));
+  *res = dtxn_sched()->OnUpgradeEpoch(curr_epoch);
+  defer->reply();
+}
+
+void ClassicServiceImpl::TruncateEpoch(const uint32_t& old_epoch,
+                                   DeferredReply* defer) {
+  std::function<void()> func = [&] () {
+    dtxn_sched()->OnTruncateEpoch(old_epoch);
+    defer->reply();
+  };
+  Coroutine::Create(func);
 }
 } // namespace rcc

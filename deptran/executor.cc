@@ -14,7 +14,7 @@ Executor::Executor(txnid_t txn_id, Scheduler *sched)
 Executor::~Executor() {
 //  verify(mdb_txn_ == nullptr);
   verify(dtxn_ != nullptr);
-  sched_->DestroyDTxn(cmd_id_);
+  sched_->DestroyDTxn(cmd_id_); // destroy workspace.
   dtxn_ = nullptr;
 }
 

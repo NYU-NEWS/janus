@@ -33,6 +33,11 @@ abstract service Classic {
 
     defer Abort(i64 tid | i32 res);
 
+    defer UpgradeEpoch(uint32_t curr_epoch |
+                       int32_t res)
+
+    defer TruncateEpoch(uint32_t old_epoch)
+
     // input: contains many pieces, each piece consist of
     // | <i32 p_type> <i64 pid> <i32 input_size> <i32 max_output_size> 
     // <input_0> <input_1> ... |

@@ -47,13 +47,6 @@ class BrqCommo: public RccCommo {
 
   bool IsGraphOrphan(RccGraph& graph, txnid_t cmd_id);
 
-
-  virtual void SendUpgradeEpoch(epoch_t curr_epoch,
-                                const function<void(parid_t,
-                                                    siteid_t,
-                                                    int32_t& graph)>& callback);
-
-  void SendTruncateEpoch(epoch_t old_epoch);
 };
 
 } // namespace
