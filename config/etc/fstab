@@ -1,1 +1,1 @@
-${server_ip}:/export   /mnt   nfs   proto=tcp,port=2049,nfsvers=3,auto  0  0
+${server_ip}:/export   /mnt   nfs   rw,proto=tcp,port=2049,auto  0  0
