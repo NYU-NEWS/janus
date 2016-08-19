@@ -56,6 +56,9 @@ def config_ssh():
     Xput('config/ssh/config', '/home/ubuntu/.ssh/config')
     Xput('config/ssh/id_rsa', '/home/ubuntu/.ssh/id_rsa')
     Xput('config/ssh/id_rsa.pub', '/home/ubuntu/.ssh/id_rsa.pub')
+    sudo('chmod 644 /home/ubuntu/.ssh/id_rsa.pub')
+    sudo('chmod 600 /home/ubuntu/.ssh/id_rsa')
+    sudo('chmod 600 /home/ubuntu/.ssh/config')
 
 
 @task
