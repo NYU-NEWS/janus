@@ -4,7 +4,7 @@
 #include "../txn_chopper.h"
 #include "txn-info.h"
 #include "graph_marshaler.h"
-#include "rcc_srpc.h"
+#include "../rcc_service.h"
 
 namespace rococo {
 
@@ -23,12 +23,12 @@ void RccCommo::SendDispatch(vector<SimpleCommand> &cmd,
       };
   fuattr.callback = cb;
   // TODO fix.
-  auto proxy = (RococoProxy*)NearestProxyForPartition(
+  auto proxy = (ClassicProxy*)NearestProxyForPartition(
       cmd[0].PartitionId()).second;
   Log_debug("dispatch to %ld", cmd[0].PartitionId());
 //  verify(cmd.type_ > 0);
 //  verify(cmd.root_type_ > 0);
-  Future::safe_release(proxy->async_Dispatch(cmd, fuattr));
+  Future::safe_release(proxy->async_RccDispatch(cmd, fuattr));
 }
 
 void RccCommo::SendHandoutRo(SimpleCommand &cmd,
@@ -49,8 +49,8 @@ void RccCommo::SendFinish(parid_t pid,
     callback(outputs);
   };
   fuattr.callback = cb;
-  auto proxy = (RococoProxy*)NearestProxyForPartition(pid).second;
-  Future::safe_release(proxy->async_Finish(tid, graph, fuattr));
+  auto proxy = (ClassicProxy*)NearestProxyForPartition(pid).second;
+  Future::safe_release(proxy->async_RccFinish(tid, graph, fuattr));
 }
 
 void RccCommo::SendInquire(parid_t pid,
@@ -63,8 +63,8 @@ void RccCommo::SendInquire(parid_t pid,
     callback(graph);
   };
   fuattr.callback = cb;
-  auto proxy = (RococoProxy*)NearestProxyForPartition(pid).second;
-  Future::safe_release(proxy->async_Inquire(tid, fuattr));
+  auto proxy = (ClassicProxy*)NearestProxyForPartition(pid).second;
+  Future::safe_release(proxy->async_RccInquire(tid, fuattr));
 }
 
 

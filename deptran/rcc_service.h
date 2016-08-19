@@ -15,6 +15,13 @@ class ClassicSched;
 class ClassicServiceImpl: public ClassicService {
 
  public:
+  AvgStat stat_sz_gra_start_;
+  AvgStat stat_sz_gra_commit_;
+  AvgStat stat_sz_gra_ask_;
+  AvgStat stat_sz_scc_;
+  AvgStat stat_n_ask_;
+  AvgStat stat_ro6_sz_vector_;
+  uint64_t n_asking_ = 0;
 
   std::mutex mtx_;
   Recorder *recorder_ = NULL;
@@ -114,6 +121,25 @@ class ClassicServiceImpl: public ClassicService {
                      rrr::PollMgr* poll_mgr,
                      ServerControlServiceImpl *scsi = NULL);
 
+  void RccDispatch(const vector<SimpleCommand>& cmd,
+                  int32_t* res,
+                  TxnOutput* output,
+                  RccGraph* graph,
+                  DeferredReply* defer) override;
+
+  void RccFinish(const cmdid_t& cmd_id,
+                const RccGraph& graph,
+                TxnOutput* output,
+                DeferredReply* defer) override;
+
+
+  void RccInquire(const cmdid_t &tid,
+                  RccGraph* graph,
+                  DeferredReply *) override;
+
+  void RccDispatchRo(const SimpleCommand& cmd,
+                     map<int32_t, Value> *output,
+                     DeferredReply *reply);
   protected:
     void RegisterStats();
   };

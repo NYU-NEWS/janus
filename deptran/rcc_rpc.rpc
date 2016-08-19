@@ -57,6 +57,22 @@ abstract service Classic {
                         i32 res);
   // works as a 2PC commit/abort with a paxos decision
   defer TapirDecide(uint64_t cmd_id, i32 commit);
+  
+
+  defer RccDispatch(vector<SimpleCommand> cmd |
+                 i32 res,
+                 TxnOutput output,
+                 RccGraph graph);
+
+  defer RccFinish(cmdid_t id,
+               RccGraph |
+               map<uint32_t, map<int32_t, Value>> outputs);
+
+  defer RccInquire(cmdid_t txn_id |
+                RccGraph res);
+
+  defer RccDispatchRo(SimpleCommand cmd |
+                      map<i32, Value> output);
 
 }
 
