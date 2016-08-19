@@ -60,9 +60,9 @@ abstract service Classic {
   
 
   defer RccDispatch(vector<SimpleCommand> cmd |
-                 i32 res,
-                 TxnOutput output,
-                 RccGraph graph);
+                    i32 res,
+                    TxnOutput output,
+                    RccGraph graph);
 
   defer RccFinish(cmdid_t id,
                RccGraph |
@@ -74,6 +74,39 @@ abstract service Classic {
   defer RccDispatchRo(SimpleCommand cmd |
                       map<i32, Value> output);
 
+
+  defer BrqDispatch(vector<SimpleCommand> cmd |
+                    i32 res,
+                    TxnOutput output,
+                    Marshallable ret_graph);
+
+  defer BrqCommit(cmdid_t id,
+                  Marshallable graph |
+                  int32_t res,
+                  TxnOutput output);
+
+  defer BrqCommitWoGraph(cmdid_t id |
+                         int32_t res,
+                         TxnOutput output);
+
+  defer BrqInquire(cmdid_t txn_id |
+                   Marshallable ret_graph);
+
+  defer BrqPreAccept(cmdid_t txn_id,
+                     vector<SimpleCommand> cmd,
+                     Marshallable graph |
+                     i32 res,
+                     Marshallable ret_graph);
+
+  defer BrqPreAcceptWoGraph(cmdid_t txn_id,
+                            vector<SimpleCommand> cmd |
+                            i32 res,
+                            Marshallable ret_graph);
+
+  defer BrqAccept(cmdid_t txn_id,
+                  ballot_t ballot,
+                  Marshallable graph |
+                  i32 res);
 }
 
 

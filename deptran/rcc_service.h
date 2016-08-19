@@ -140,6 +140,46 @@ class ClassicServiceImpl: public ClassicService {
   void RccDispatchRo(const SimpleCommand& cmd,
                      map<int32_t, Value> *output,
                      DeferredReply *reply);
+
+  void BrqDispatch(const vector<SimpleCommand>& cmd,
+                   int32_t* res,
+                   TxnOutput* output,
+                   Marshallable* res_graph,
+                   DeferredReply* defer) override;
+
+  void BrqCommit(const cmdid_t& cmd_id,
+                 const Marshallable& graph,
+                 int32_t *res,
+                 TxnOutput* output,
+                 DeferredReply* defer) override;
+
+  void BrqCommitWoGraph(const cmdid_t& cmd_id,
+                        int32_t *res,
+                        TxnOutput* output,
+                        DeferredReply* defer) override;
+
+  void BrqInquire(const cmdid_t &tid,
+                  Marshallable* graph,
+                  DeferredReply *) override;
+
+  void BrqPreAccept(const cmdid_t &txnid,
+                    const vector<SimpleCommand>& cmd,
+                    const Marshallable& graph,
+                    int32_t* res,
+                    Marshallable* res_graph,
+                    DeferredReply* defer) override;
+
+  void BrqPreAcceptWoGraph(const cmdid_t& txnid,
+                           const vector<SimpleCommand>& cmd,
+                           int32_t* res,
+                           Marshallable* res_graph,
+                           DeferredReply* defer) override;
+
+  void BrqAccept(const cmdid_t &txnid,
+                 const ballot_t& ballot,
+                 const Marshallable& graph,
+                 int32_t* res,
+                 DeferredReply* defer) override;
   protected:
     void RegisterStats();
   };

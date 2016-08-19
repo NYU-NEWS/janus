@@ -4,7 +4,6 @@
 #include "dep_graph.h"
 #include "commo.h"
 #include "marshallable.h"
-#include "brq_srpc.h"
 
 namespace rococo {
 
@@ -34,12 +33,12 @@ void BrqCommo::SendDispatch(vector<SimpleCommand> &cmd,
         }
       };
   fuattr.callback = cb;
-  auto proxy = (BrqProxy*)NearestProxyForPartition(
+  auto proxy = (ClassicProxy*)NearestProxyForPartition(
       cmd[0].PartitionId()).second;
   Log_debug("dispatch to %ld", cmd[0].PartitionId());
 //  verify(cmd.type_ > 0);
 //  verify(cmd.root_type_ > 0);
-  Future::safe_release(proxy->async_Dispatch(cmd, fuattr));
+  Future::safe_release(proxy->async_BrqDispatch(cmd, fuattr));
 }
 
 void BrqCommo::SendHandoutRo(SimpleCommand &cmd,
@@ -62,8 +61,8 @@ void BrqCommo::SendFinish(parid_t pid,
     callback(outputs);
   };
   fuattr.callback = cb;
-  auto proxy = (BrqProxy*)NearestProxyForPartition(pid).second;
-  Future::safe_release(proxy->async_Commit(tid, (BrqGraph&)graph, fuattr));
+  auto proxy = (ClassicProxy*)NearestProxyForPartition(pid).second;
+  Future::safe_release(proxy->async_BrqCommit(tid, (BrqGraph&)graph, fuattr));
 }
 
 void BrqCommo::SendInquire(parid_t pid,
@@ -77,8 +76,8 @@ void BrqCommo::SendInquire(parid_t pid,
   };
   fuattr.callback = cb;
   // TODO fix.
-  auto proxy = (BrqProxy*)NearestProxyForPartition(pid).second;
-  Future::safe_release(proxy->async_Inquire(tid, fuattr));
+  auto proxy = (ClassicProxy*)NearestProxyForPartition(pid).second;
+  Future::safe_release(proxy->async_BrqInquire(tid, fuattr));
 }
 
 bool BrqCommo::IsGraphOrphan(RccGraph& graph, txnid_t cmd_id) {
@@ -104,7 +103,7 @@ void BrqCommo::BroadcastPreAccept(parid_t par_id,
   bool skip_graph = IsGraphOrphan(graph, cmd_id);
 
   for (auto &p : rpc_par_proxies_[par_id]) {
-    auto proxy = (BrqProxy*)(p.second);
+    auto proxy = (ClassicProxy*)(p.second);
     verify(proxy != nullptr);
     FutureAttr fuattr;
     fuattr.callback = [callback] (Future* fu) {
@@ -115,11 +114,11 @@ void BrqCommo::BroadcastPreAccept(parid_t par_id,
     };
     verify(cmd_id > 0);
     if (skip_graph) {
-      Future::safe_release(proxy->async_PreAcceptWoGraph(cmd_id,
+      Future::safe_release(proxy->async_BrqPreAcceptWoGraph(cmd_id,
                                                          cmds,
                                                          fuattr));
     } else {
-      Future::safe_release(proxy->async_PreAccept(cmd_id,
+      Future::safe_release(proxy->async_BrqPreAccept(cmd_id,
                                                   cmds,
                                                   graph,
                                                   fuattr));
@@ -134,7 +133,7 @@ void BrqCommo::BroadcastAccept(parid_t par_id,
                                const function<void(int)> &callback) {
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
   for (auto &p : rpc_par_proxies_[par_id]) {
-    auto proxy = (BrqProxy*)(p.second);
+    auto proxy = (ClassicProxy*)(p.second);
     verify(proxy != nullptr);
     FutureAttr fuattr;
     fuattr.callback = [callback] (Future* fu) {
@@ -143,7 +142,7 @@ void BrqCommo::BroadcastAccept(parid_t par_id,
       callback(res);
     };
     verify(cmd_id > 0);
-    Future::safe_release(proxy->async_Accept(cmd_id,
+    Future::safe_release(proxy->async_BrqAccept(cmd_id,
                                              ballot,
                                              graph,
                                              fuattr));
@@ -160,7 +159,7 @@ void BrqCommo::BroadcastCommit(parid_t par_id,
 
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
   for (auto &p : rpc_par_proxies_[par_id]) {
-    auto proxy = (BrqProxy*)(p.second);
+    auto proxy = (ClassicProxy*)(p.second);
     verify(proxy != nullptr);
     FutureAttr fuattr;
     fuattr.callback = [callback] (Future* fu) {
@@ -171,9 +170,9 @@ void BrqCommo::BroadcastCommit(parid_t par_id,
     };
     verify(cmd_id > 0);
     if (skip_graph) {
-      Future::safe_release(proxy->async_CommitWoGraph(cmd_id, fuattr));
+      Future::safe_release(proxy->async_BrqCommitWoGraph(cmd_id, fuattr));
     } else {
-      Future::safe_release(proxy->async_Commit(cmd_id, graph, fuattr));
+      Future::safe_release(proxy->async_BrqCommit(cmd_id, graph, fuattr));
     }
   }
 }
