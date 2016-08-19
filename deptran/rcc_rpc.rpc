@@ -25,28 +25,39 @@ abstract service Classic {
                  i32 res,
                  TxnOutput output);
 
-    defer Prepare(i64 tid, 
-                  vector<i32> sids | 
-                  i32 res);
+  defer Prepare(i64 tid, 
+                vector<i32> sids | 
+                i32 res);
 
-    defer Commit(i64 tid | i32 res);
+  defer Commit(i64 tid | i32 res);
 
-    defer Abort(i64 tid | i32 res);
+  defer Abort(i64 tid | i32 res);
 
-    defer UpgradeEpoch(uint32_t curr_epoch |
-                       int32_t res)
+  defer UpgradeEpoch(uint32_t curr_epoch |
+                     int32_t res)
 
-    defer TruncateEpoch(uint32_t old_epoch)
+  defer TruncateEpoch(uint32_t old_epoch)
 
-    // input: contains many pieces, each piece consist of
-    // | <i32 p_type> <i64 pid> <i32 input_size> <i32 max_output_size> 
-    // <input_0> <input_1> ... |
-    // output: contains many pieces, each piece consist of
-    // | <i32 res> <i32 output_size> <output_0> <output_1> ... |
+  // input: contains many pieces, each piece consist of
+  // | <i32 p_type> <i64 pid> <i32 input_size> <i32 max_output_size> 
+  // <input_0> <input_1> ... |
+  // output: contains many pieces, each piece consist of
+  // | <i32 res> <i32 output_size> <output_0> <output_1> ... |
 
-    // below is for what?
+  // below is for what?
 
-    defer rpc_null( | );
+  defer rpc_null( | );
+//  defer Prepare();
+  defer TapirAccept(uint64_t cmd_id,
+                    uint64_t ballot,
+	                int32_t decision);
+  // works as 2PC prepare on a paxos fast-accept
+  defer TapirFastAccept(uint64_t cmd_id,
+                        vector<SimpleCommand> txn_cmds |
+                        i32 res);
+  // works as a 2PC commit/abort with a paxos decision
+  defer TapirDecide(uint64_t cmd_id, i32 commit);
+
 }
 
 

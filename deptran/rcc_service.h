@@ -72,6 +72,18 @@ class ClassicServiceImpl: public ClassicService {
   void TruncateEpoch(const uint32_t& old_epoch,
                      DeferredReply* defer) override;
 
+  void TapirAccept(const cmdid_t& cmd_id,
+                   const ballot_t& ballot,
+                   const int32_t& decision,
+                   rrr::DeferredReply* defer) override;
+  void TapirFastAccept(const cmdid_t& cmd_id,
+                       const vector<SimpleCommand>& txn_cmds,
+                       rrr::i32* res,
+                       rrr::DeferredReply* defer) override;
+  void TapirDecide(const cmdid_t& cmd_id,
+                   const rrr::i32& decision,
+                   rrr::DeferredReply* defer) override;
+
 #ifdef PIECE_COUNT
   typedef struct piece_count_key_t{
       i32 t_type;

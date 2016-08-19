@@ -6,6 +6,7 @@
 #include "command_marshaler.h"
 #include "rcc_service.h"
 #include "classic/sched.h"
+#include "tapir/sched.h"
 #include "benchmark_control_rpc.h"
 
 namespace rococo {
@@ -240,4 +241,29 @@ void ClassicServiceImpl::TruncateEpoch(const uint32_t& old_epoch,
   };
   Coroutine::Create(func);
 }
+
+void ClassicServiceImpl::TapirAccept(const cmdid_t& cmd_id,
+                              const ballot_t& ballot,
+                              const int32_t& decision,
+                              rrr::DeferredReply* defer) {
+  verify(0);
+}
+
+void ClassicServiceImpl::TapirFastAccept(const cmdid_t& cmd_id,
+                                  const vector<SimpleCommand>& txn_cmds,
+                                  rrr::i32* res,
+                                  rrr::DeferredReply* defer) {
+  TapirSched* sched = (TapirSched*)dtxn_sched_;
+  sched->OnFastAccept(cmd_id, txn_cmds, res,
+                       [defer] () {defer->reply();});
+}
+
+void ClassicServiceImpl::TapirDecide(const cmdid_t& cmd_id,
+                                     const rrr::i32& decision,
+                                     rrr::DeferredReply* defer) {
+  TapirSched* sched = (TapirSched*)dtxn_sched_;
+  sched->OnDecide(cmd_id, decision, [defer] () {defer->reply();});
+}
+
+
 } // namespace rcc

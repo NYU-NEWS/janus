@@ -28,7 +28,7 @@ class Scheduler {
   Frame *frame_ = nullptr;
   Frame *rep_frame_ = nullptr;
   Scheduler* rep_sched_ = nullptr;
-  Communicator* commo_ = nullptr;
+  Communicator* commo_{nullptr};
   //  Coordinator* rep_coord_ = nullptr;
   TxnRegistry* txn_reg_ = nullptr;
   parid_t partition_id_{};
@@ -38,13 +38,14 @@ class Scheduler {
   EpochMgr epoch_mgr_{};
   uint32_t curr_epoch_{1};
   std::time_t last_upgrade_time_{0};
-  map<parid_t, int32_t> epoch_replies_{};
+  map<parid_t, map<siteid_t, epoch_t>> epoch_replies_{};
   bool in_upgrade_epoch_{false};
   const int EPOCH_DURATION = 5;
   map<epoch_t, int64_t> active_epoch_{};
   map<epoch_t, unordered_set<DTxn*>> epoch_dtxn_{};
 
   RococoCommunicator* commo() {
+    verify(commo_ != nullptr);
     return (RococoCommunicator*) commo_;
   }
 
@@ -65,7 +66,8 @@ class Scheduler {
   Executor* GetExecutor(txnid_t txn_id);
   Executor* CreateExecutor(txnid_t txn_id);
   Executor* GetOrCreateExecutor(txnid_t txn_id);
-  void DestroyExecutor(txnid_t txn_id);
+  virtual void DestroyExecutor(txnid_t txn_id);
+  virtual void TrashExecutor(txnid_t txn_id);
 
   inline int get_mode() { return mode_; }
 
@@ -104,19 +106,8 @@ class Scheduler {
   // epoch related functions
   void TriggerUpgradeEpoch();
   void UpgradeEpochAck(parid_t par_id, siteid_t site_id, int res);
-  void TriggerTruncateEpoch();
-  int32_t OnUpgradeEpoch(uint32_t old_epoch) {
-    // TODO
-//    if (old_epoch == curr_epoch_) {
-//      curr_epoch_++;
-//      return 0;
-//    } else if (curr_epoch_ > old_epoch) {
-//      return 1;
-//    } else {
-//      return -1;
-//    }
-  }
-  void OnTruncateEpoch(uint32_t old_epoch);
+  virtual int32_t OnUpgradeEpoch(uint32_t old_epoch);
+  virtual void OnTruncateEpoch(uint32_t old_epoch);
 };
 
 

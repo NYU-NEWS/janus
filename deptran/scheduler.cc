@@ -24,8 +24,10 @@ DTxn* Scheduler::CreateDTxn(i64 tid, bool ro) {
     verify(txn_reg_);
     dtxn->txn_reg_ = txn_reg_;
   }
-  if (epoch_enabled_) epoch_mgr_.AddToCurrent(tid);
-  TriggerUpgradeEpoch();
+  if (epoch_enabled_) {
+    epoch_mgr_.AddToCurrent(tid);
+    TriggerUpgradeEpoch();
+  }
   return dtxn;
 }
 
@@ -269,9 +271,17 @@ Executor* Scheduler::GetOrCreateExecutor(cmdid_t txn_id) {
   return exec;
 }
 
-void Scheduler::DestroyExecutor(cmdid_t cmd_id) {
-  Log_debug("destroy tid %ld\n", cmd_id);
-  auto it = executors_.find(cmd_id);
+void Scheduler::TrashExecutor(txnid_t txn_id) {
+  if (epoch_enabled_) {
+    epoch_mgr_.Done(txn_id);
+  } else {
+    DestroyExecutor(txn_id);
+  }
+}
+
+void Scheduler::DestroyExecutor(txnid_t txn_id) {
+  Log_debug("destroy tid %ld\n", txn_id);
+  auto it = executors_.find(txn_id);
   verify(it != executors_.end());
   auto exec = it->second;
   executors_.erase(it);
@@ -306,37 +316,48 @@ void Scheduler::UpgradeEpochAck(parid_t par_id,
                                siteid_t site_id,
                                int32_t res) {
   auto parids = Config::GetConfig()->GetAllPartitionIds();
-  for (auto p : parids) {
-    if (epoch_replies_.count(p) == 0) {
-      epoch_replies_[p] = 0;
-    }
-  }
-  verify(res == 0);
-  epoch_replies_[par_id] ++;
+//  for (auto p : parids) {
+//    if (epoch_replies_.count(p) == 0) {
+//      epoch_replies_[p] = 0;
+//    }
+//  }
+  epoch_replies_[par_id][site_id] = res;
   for (auto& pair: epoch_replies_) {
     auto par_id = pair.first;
     auto par_size = Config::GetConfig()->GetPartitionSize(par_id);
-    verify(epoch_replies_[par_id] <= par_size);
-    if (epoch_replies_[par_id] != par_size) {
+    verify(epoch_replies_[par_id].size() <= par_size);
+    if (epoch_replies_[par_id].size() != par_size) {
       return;
     }
   }
 
+  epoch_t smallest_inactive = 0xFFFFFFFF;
+  for (auto& pair1 : epoch_replies_) {
+    for (auto& pair2 : pair1.second) {
+      if (smallest_inactive > pair2.second) {
+        smallest_inactive = pair2.second;
+      }
+    }
+  }
   in_upgrade_epoch_ = false;
   epoch_replies_.clear();
-  TriggerTruncateEpoch();
+  if (smallest_inactive >= 2) {
+    commo()->SendTruncateEpoch(smallest_inactive - 1);
+  }
 }
 
-void Scheduler::TriggerTruncateEpoch() {
-  if (curr_epoch_ > 2) {
-    commo()->SendTruncateEpoch(curr_epoch_ - 2);
-  }
+int32_t Scheduler::OnUpgradeEpoch(uint32_t old_epoch) {
+  epoch_mgr_.Increment();
+  return epoch_mgr_.GetMostRecentInactiveEpoch();
 }
 
 void Scheduler::OnTruncateEpoch(uint32_t old_epoch) {
   Log_info("truncating epochs: %d", old_epoch);
   // TODO
-  verify(0);
+  auto ids = epoch_mgr_.RemoveOld(old_epoch);
+  for (auto& id: ids) {
+    DestroyExecutor(id);
+  }
 }
 
 } // namespace rococo

@@ -10,6 +10,7 @@ namespace rococo {
 class TxnCommand;
 class TpcPrepareCommand;
 class TpcCommitCommand;
+class SimpleCommand;
 class ClassicSched: public Scheduler {
  using Scheduler::Scheduler;
  public:

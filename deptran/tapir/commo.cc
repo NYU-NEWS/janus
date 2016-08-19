@@ -2,9 +2,10 @@
 #include "command.h"
 #include "txn_chopper.h"
 #include "command_marshaler.h"
-#include "tapir_srpc.h"
 #include "commo.h"
 #include "../coordinator.h"
+#include "../rcc_rpc.h"
+#include "../rcc_service.h"
 
 namespace rococo {
 
@@ -15,7 +16,7 @@ void TapirCommo::SendDispatch(vector<SimpleCommand> &cmd,
                               &callback) {
   rrr::FutureAttr fuattr;
   parid_t par_id = cmd[0].PartitionId();
-  auto proxy = (TapirProxy*)
+  auto proxy = (ClassicProxy*)
       NearestProxyForPartition(cmd[0].PartitionId()).second;
   function<void(Future*)> cb =
       [coo, this, callback] (Future *fu) {
@@ -37,14 +38,14 @@ void TapirCommo::BroadcastFastAccept(parid_t par_id,
                                      const function<void(int32_t)>& cb) {
   auto proxies = rpc_par_proxies_[par_id];
   for (auto &p : proxies) {
-    auto proxy = (TapirProxy*) p.second;
+    auto proxy = (ClassicProxy*) p.second;
     FutureAttr fuattr;
     fuattr.callback = [cb] (Future* fu) {
       int32_t res;
       fu->get_reply() >> res;
       cb(res);
     };
-    Future::safe_release(proxy->async_FastAccept(cmd_id, cmds, fuattr));
+    Future::safe_release(proxy->async_TapirFastAccept(cmd_id, cmds, fuattr));
   }
 }
 
@@ -53,10 +54,10 @@ void TapirCommo::BroadcastDecide(parid_t par_id,
                                  int32_t decision) {
   auto proxies = rpc_par_proxies_[par_id];
   for (auto &p : proxies) {
-    auto proxy = (TapirProxy*) p.second;
+    auto proxy = (ClassicProxy*) p.second;
     FutureAttr fuattr;
     fuattr.callback = [] (Future* fu) {} ;
-    Future::safe_release(proxy->async_Decide(cmd_id, decision, fuattr));
+    Future::safe_release(proxy->async_TapirDecide(cmd_id, decision, fuattr));
   }
 }
 
@@ -67,13 +68,13 @@ void TapirCommo::BroadcastAccept(parid_t par_id,
                                  const function<void(Future*)>& callback) {
   auto proxies = rpc_par_proxies_[par_id];
   for (auto &p: proxies) {
-    auto proxy = (TapirProxy*) p.second;
+    auto proxy = (ClassicProxy*) p.second;
     FutureAttr fuattr;
     fuattr.callback = callback;
-    Future::safe_release(proxy->async_Accept(cmd_id,
-                                             ballot,
-                                             decision,
-                                             fuattr));
+    Future::safe_release(proxy->async_TapirAccept(cmd_id,
+                                                  ballot,
+                                                  decision,
+                                                  fuattr));
   }
 }
 

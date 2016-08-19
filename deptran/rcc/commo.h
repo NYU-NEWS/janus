@@ -1,13 +1,13 @@
 #pragma once
 #include "../__dep__.h"
-#include "../communicator.h"
+#include "../commo.h"
 
 namespace rococo {
 class SimpleCommand;
 class RccGraph;
-class RccCommo : public Communicator {
+class RccCommo : public RococoCommunicator {
  public:
-  using Communicator::Communicator;
+  using RococoCommunicator::RococoCommunicator;
   virtual void SendDispatch(vector<SimpleCommand> &cmd,
                             const function<void(int res,
                                                 TxnOutput& cmd,

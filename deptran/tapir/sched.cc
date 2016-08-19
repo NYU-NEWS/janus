@@ -38,11 +38,11 @@ int TapirSched::OnFastAccept(cmdid_t cmd_id,
   return 0;
 }
 
-int TapirSched::OnDecide(cmdid_t cmd_id,
+int TapirSched::OnDecide(txnid_t txn_id,
                          int32_t decision,
                          const function<void()>& callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  auto exec = (TapirExecutor*) GetExecutor(cmd_id);
+  auto exec = (TapirExecutor*) GetExecutor(txn_id);
   verify(exec);
   if (decision == TapirCoord::Decision::COMMIT) {
     exec->Commit();
@@ -51,7 +51,7 @@ int TapirSched::OnDecide(cmdid_t cmd_id,
   } else {
     verify(0);
   }
-  DestroyExecutor(cmd_id);
+  TrashExecutor(txn_id);
   callback();
 }
 

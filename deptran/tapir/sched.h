@@ -1,18 +1,21 @@
 #pragma once
 
-#include "../scheduler.h"
+#include "../classic/sched.h"
 
 namespace rococo {
 
 class SimpleCommand;
-class TapirSched : public Scheduler {
+class TapirSched : public ClassicSched {
  public:
-  using Scheduler::Scheduler;
+//  using Scheduler::Scheduler;
+  TapirSched(): ClassicSched() {
+    epoch_enabled_ = true;
+  }
 
   int OnDispatch(const vector<SimpleCommand> &cmd,
                  int *res,
                  TxnOutput *output,
-                 const function<void()> &callback);
+                 const function<void()> &callback) override;
 
   int OnFastAccept(cmdid_t cmd_id,
                    const vector<SimpleCommand>& txn_cmds,
