@@ -11,7 +11,7 @@ import yaml
 import boto3
 
 from fabric.api import env, task, run, sudo, local
-from fabric.api import put, execute, cd, runs_once, reboot, settings
+from fabric.api import put, execute, cd, runs_once, reboot, settings, warn_only
 from fabric.contrib.files import exists, append
 from fabric.decorators import roles, parallel, hosts
 from fabric.context_managers import prefix
@@ -144,10 +144,11 @@ def put_limits_config():
 @roles('servers', 'leaders')
 @parallel(pool_size=10)
 def mount_nfs():
-    try:
-        sudo('mount /mnt')
-    except:
-        traceback.print_exc()
+    with warn_only():
+        try:
+            sudo('mount /mnt')
+        except:
+            traceback.print_exc()
 
 
 @task

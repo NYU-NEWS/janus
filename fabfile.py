@@ -70,7 +70,7 @@ def deploy_all(regions='us-west-2', servers_per_region=[3], instance_type='t2.sm
     if isinstance(servers_per_region, basestring):
         servers_per_region = [ int(i) for i in servers_per_region.split(':') ]
 
-    success = False
+    teardown_instances = True 
     assert(len(servers_per_region) == len(regions))
 
     start = time.time()
@@ -97,15 +97,23 @@ def deploy_all(regions='us-west-2', servers_per_region=[3], instance_type='t2.sm
         execute('cluster.config_ssh')
         execute('retrieve_code')
         execute('create_work_dirs')
-        success = True
-        execute('build', args="-t")
-        execute('cluster.put_janus_config')
-        execute('cluster.put_limits_config')
-        execute('ec2.reboot_all')
+        teardown_instances = False 
+        attempts = 0
+        done = False
+        while attempts < 3 and done == False:
+            try:
+                execute('build', args="-t")
+                execute('cluster.put_janus_config')
+                execute('cluster.put_limits_config')
+                execute('ec2.reboot_all')
+                execute('cluster.mount_nfs')
+                done = True
+            except:
+                attempts = attempts + 1
 
     except Exception as e:
         traceback.print_exc()
-        if not success:
+        if teardown_instances:
             logging.info("Terminating ec2 instances...")
             ec2.terminate_instances()
     finally:
@@ -119,8 +127,8 @@ def create_virtual_env():
     venv = env.py_virtual_env
     append('/home/ubuntu/.bash_profile',
            'source {venv}/bin/activate'.format(venv=venv))
-    if exists(env.py_virtual_env):
-        return
+    #if exists(env.py_virtual_env):
+    #    return
     
     with cd(env.nfs_home):
         execute('retrieve_code')
@@ -153,6 +161,7 @@ def build(args=None, clean=True):
     execute('retrieve_code')
     execute('create_virtual_env')
     execute('install_apt_packages')
+    return
     opts = ["./waf"] 
     if args:
         opts.insert(1, args)
