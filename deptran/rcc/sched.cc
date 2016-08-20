@@ -43,7 +43,7 @@ DTxn* RccSched::GetOrCreateDTxn(txnid_t tid, bool ro) {
 //  RccDTxn* dtxn = (RccDTxn*) dep_graph_->FindOrCreateTxnInfo(tid);
   RccDTxn& dtxn = v->Get();
   if (dtxn.epoch_ == 0) {
-    dtxn.epoch_ = curr_epoch_;
+    dtxn.epoch_ = epoch_mgr_.curr_epoch_;
   }
   auto pair = epoch_dtxn_[dtxn.epoch_].insert(&dtxn);
   if (pair.second) {

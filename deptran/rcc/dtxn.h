@@ -22,9 +22,8 @@ class RccDTxn: public DTxn {
   bool committed = false;
   bool aborted = false;
   bool __debug_replied = false;
-  epoch_t epoch_{0};
 
-  RccDTxn(txnid_t tid, Scheduler *mgr, bool ro);
+  RccDTxn(epoch_t, txnid_t tid, Scheduler *mgr, bool ro);
 
   RccDTxn(txnid_t id);
 

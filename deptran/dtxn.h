@@ -46,6 +46,7 @@ class Scheduler;
 class DTxn {
  public:
   txnid_t tid_;
+  epoch_t epoch_{0};
   Scheduler *sched_;
   int phase_;
   mdb::Txn *mdb_txn_ = nullptr;
@@ -58,8 +59,9 @@ class DTxn {
 
   DTxn() = delete;
 
-  DTxn(txnid_t tid, Scheduler *mgr)
-      : tid_(tid),
+  DTxn(epoch_t epoch, txnid_t tid, Scheduler *mgr)
+      : epoch_(epoch),
+        tid_(tid),
         sched_(mgr),
         phase_(0),
         context_row_(),

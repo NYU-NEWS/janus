@@ -17,7 +17,7 @@ namespace rococo {
 DTxn* Scheduler::CreateDTxn(i64 tid, bool ro) {
   Log_debug("create tid %ld", tid);
   verify(dtxns_.find(tid) == dtxns_.end());
-  DTxn* dtxn = frame_->CreateDTxn(tid, ro, this);
+  DTxn* dtxn = frame_->CreateDTxn(tid, epoch_mgr_.curr_epoch_, ro, this);
   if (dtxn != nullptr) {
     dtxns_[tid] = dtxn;
     dtxn->recorder_ = this->recorder_;
@@ -304,11 +304,13 @@ void Scheduler::TriggerUpgradeEpoch() {
     }
     last_upgrade_time_ = t_now;
     in_upgrade_epoch_ = true;
-    commo()->SendUpgradeEpoch(curr_epoch_, std::bind(&Scheduler::UpgradeEpochAck,
-                                                     this,
-                                                     std::placeholders::_1,
-                                                     std::placeholders::_2,
-                                                     std::placeholders::_3));
+    epoch_t epoch = epoch_mgr_.curr_epoch_;
+    commo()->SendUpgradeEpoch(epoch,
+                              std::bind(&Scheduler::UpgradeEpochAck,
+                                        this,
+                                        std::placeholders::_1,
+                                        std::placeholders::_2,
+                                        std::placeholders::_3));
   }
 }
 

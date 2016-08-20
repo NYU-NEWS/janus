@@ -296,26 +296,27 @@ Communicator* Frame::CreateCommo(PollMgr* pollmgr) {
   return commo_;
 }
 
-DTxn* Frame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {
+DTxn* Frame::CreateDTxn(epoch_t epoch, txnid_t tid,
+                        bool ro, Scheduler * mgr) {
   DTxn *dtxn = nullptr;
 //  auto mode_ = Config::GetConfig()->cc_mode_;
   
   switch (mode_) {
     case MODE_2PL:
-      dtxn = new TPLDTxn(tid, mgr);
+      dtxn = new TPLDTxn(epoch, tid, mgr);
 //      verify(dtxn->mdb_txn()->rtti() == mdb::symbol_t::TXN_2PL);
       break;
     case MODE_MDCC:
       dtxn = new mdcc::MdccDTxn(tid, mgr);
       break;
     case MODE_OCC:
-      dtxn = new OccDTxn(tid, mgr);
+      dtxn = new OccDTxn(epoch, tid, mgr);
       break;
     case MODE_NONE:
-      dtxn = new TPLDTxn(tid, mgr);
+      dtxn = new TPLDTxn(epoch, tid, mgr);
       break;
     case MODE_RCC:
-      dtxn = new RccDTxn(tid, mgr, ro);
+      dtxn = new RccDTxn(epoch, tid, mgr, ro);
       break;
     case MODE_RO6:
       dtxn = new RO6DTxn(tid, mgr, ro);
@@ -443,6 +444,8 @@ vector<rrr::Service *> Frame::CreateRpcServices(uint32_t site_id,
     case MODE_OCC:
     case MODE_NONE:
     case MODE_TAPIR:
+    case MODE_JANUS:
+    case MODE_RCC:
       result.push_back(new ClassicServiceImpl(dtxn_sched, poll_mgr, scsi));
       break;
     default:

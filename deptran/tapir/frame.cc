@@ -67,8 +67,9 @@ mdb::Row* TapirFrame::CreateRow(const mdb::Schema *schema,
   return r;
 }
 
-DTxn* TapirFrame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {
-  auto dtxn = new TapirDTxn(tid, mgr);
+DTxn* TapirFrame::CreateDTxn(epoch_t epoch, txnid_t tid,
+                             bool ro, Scheduler * mgr) {
+  auto dtxn = new TapirDTxn(epoch, tid, mgr);
   return dtxn;
 }
 

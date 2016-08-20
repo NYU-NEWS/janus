@@ -53,7 +53,10 @@ class Frame {
   void GetTxnTypes(std::map<int32_t, std::string> &txn_types);
   TxnCommand* CreateTxnCommand(TxnRequest& req, TxnRegistry* reg);
   TxnCommand * CreateChopper(TxnRequest &req, TxnRegistry *reg);
-  virtual DTxn* CreateDTxn(txnid_t txn_id, bool ro, Scheduler *sch);
+  virtual DTxn* CreateDTxn(epoch_t epoch,
+                           txnid_t txn_id,
+                           bool ro,
+                           Scheduler *sch);
 
   TxnGenerator * CreateTxnGenerator();
   virtual vector<rrr::Service*> CreateRpcServices(uint32_t site_id,

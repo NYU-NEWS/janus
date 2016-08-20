@@ -12,7 +12,7 @@ class TPLDTxn: public DTxn {
   // true for requiring locks only. false for real execution.
   bool locking_ = false;
 
-  TPLDTxn(i64 tid, Scheduler *);
+  TPLDTxn(epoch_t epoch, txnid_t tid, Scheduler *);
 
 
   virtual bool ReadColumn(mdb::Row *row,

@@ -26,7 +26,8 @@ class TapirFrame : public Frame {
                       vector<Value> &row_data) override;
   Communicator* CreateCommo(PollMgr* pollmgr = nullptr) override;
 
-  DTxn* CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) override;
+  DTxn* CreateDTxn(epoch_t epoch, txnid_t tid,
+                   bool ro, Scheduler * mgr) override;
 
 };
 } // namespace rococo
