@@ -7,7 +7,6 @@
 #include "dtxn.h"
 #include "commo.h"
 #include "config.h"
-#include "service.h"
 
 namespace rococo {
 
@@ -51,11 +50,12 @@ RccFrame::CreateRpcServices(uint32_t site_id,
                             Scheduler *sched,
                             rrr::PollMgr *poll_mgr,
                             ServerControlServiceImpl* scsi) {
-  auto config = Config::GetConfig();
-  auto result = std::vector<Service *>();
-  auto s = new RococoServiceImpl(sched, poll_mgr, scsi);
-  result.push_back(s);
-  return result;
+//  auto config = Config::GetConfig();
+//  auto result = std::vector<Service *>();
+//  auto s = new RococoServiceImpl(sched, poll_mgr, scsi);
+//  result.push_back(s);
+//  return result;
+  return Frame::CreateRpcServices(site_id, sched, poll_mgr, scsi);
 }
 
 mdb::Row* RccFrame::CreateRow(const mdb::Schema *schema,

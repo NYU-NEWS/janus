@@ -12,7 +12,7 @@ import boto3
 
 from fabric.api import env, task, run, sudo, local
 from fabric.api import put, execute, cd, runs_once, reboot, settings
-from fabric.contrib.files import exists
+from fabric.contrib.files import exists, append
 from fabric.decorators import roles, parallel, hosts
 from fabric.context_managers import prefix
 from pylib.ec2 import instance_by_pub_ip, EC2_REGIONS, get_created_instances
@@ -56,7 +56,9 @@ def config_ssh():
     Xput('config/ssh/config', '/home/ubuntu/.ssh/config')
     Xput('config/ssh/id_rsa', '/home/ubuntu/.ssh/id_rsa')
     Xput('config/ssh/id_rsa.pub', '/home/ubuntu/.ssh/id_rsa.pub')
-    run('chmod 600 /home/ubuntu/.ssh/id_rsa')
+    sudo('chmod 644 /home/ubuntu/.ssh/id_rsa.pub')
+    sudo('chmod 600 /home/ubuntu/.ssh/id_rsa')
+    sudo('chmod 600 /home/ubuntu/.ssh/config')
 
 
 @task
@@ -108,35 +110,26 @@ def put_janus_config(copy_configs=[]):
 @roles('leaders')
 def config_nfs_server():
     cmds = [
-        'apt-get update -qq',
         'apt-get -y install nfs-kernel-server',
-        'service nfs-kernel-server stop',
         'mkdir -p /export',
         'chmod 777 /export',
     ]
     for c in cmds:
         sudo(c)
     
-    Xput('config/etc/hosts.deny', '/etc/hosts.deny', use_sudo=True)
     hosts_allow_fn = 'config/etc/hosts.allow'
-    template_ha = string.Template(open(hosts_allow_fn).read())
-    exports_fn = 'config/etc/exports'
-    template_e = string.Template(open(exports_fn).read())
-
-    export_options = "(rw,fsid=0,insecure,no_subtree_check,async)"
-    ip_options = []
-    for ip in env.roledefs['all']:
-        ip_options.append("{ip}{opt}".format(ip=ip, opt=export_options))
-    contents = StringIO.StringIO(template_e.substitute(host_and_options= \
-                                                       ' '.join(ip_options)))
-    Xput(contents, "/etc/exports", use_sudo=True)
-
     ip_list = ' '.join(env.roledefs['all'])
+    template_ha = string.Template(open(hosts_allow_fn).read())
     contents = StringIO.StringIO(template_ha.substitute(ip_list=ip_list))
     logging.info("/etc/hosts.allow :\n{}".format(contents.getvalue()))
+    
     Xput(contents, '/etc/hosts.allow', use_sudo=True)
+    Xput('config/etc/exports', '/etc/exports', use_sudo=True)
+    Xput('config/etc/hosts.deny', '/etc/hosts.deny', use_sudo=True)
 
+    sudo('chmod 644 /etc/exports /etc/hosts.allow /etc/hosts.deny')
     sudo('exportfs -a')
+    sudo('systemctl restart nfs-kernel-server.service')
 
 
 @task
@@ -173,7 +166,7 @@ def config_nfs_client(server_ip=None):
     fstab_fn = "config/etc/fstab"
     template = string.Template(open(fstab_fn).read())
     contents = StringIO.StringIO(template.substitute(server_ip=server_ip))
-    Xput(contents, "/etc/fstab", use_sudo=True)
+    append('/etc/fstab', contents.getvalue(), use_sudo=True)
     #try:
     #    sudo('mount /mnt')
     #except:

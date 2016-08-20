@@ -12,9 +12,9 @@ class Vertex {
   std::shared_ptr<T> data_{};
  public:
   set<uint64_t> parents_{};
-  map<Vertex *, int8_t> outgoing_{};
-  map<Vertex *, int8_t> incoming_{};
-  set<Vertex *> removed_children_{};
+  map<Vertex *, int8_t> outgoing_{}; // helper data structure
+  map<Vertex *, int8_t> incoming_{}; // helper data structure
+  set<Vertex *> removed_children_{}; // helper data structure
   bool walked_{false}; // flag for traversing.
   std::shared_ptr<vector<Vertex*>> scc_{};
 
@@ -86,14 +86,15 @@ class Vertex {
   }
 };
 
-template <typename T>
-using Scc = vector<Vertex<T>*>;
+template <typename V>
+using Scc = vector<V*>;
 
-template <typename T>
+// V is vertex type
+template <typename V>
 class Graph : public Marshallable {
  public:
-  typedef std::vector<Vertex<T> *> VertexList;
-  std::unordered_map<uint64_t, Vertex<T> *> vertex_index_ = {};
+  typedef std::vector<V*> VertexList;
+  std::unordered_map<uint64_t, V*> vertex_index_ = {};
   Graph() {}
 
   Graph(const VertexList &vertices) { AddV(vertices); }
@@ -102,7 +103,8 @@ class Graph : public Marshallable {
     for (auto p : vertex_index_) {
       auto v = p.second;
       delete v;
-    }
+  
+  }
     vertex_index_.clear();
   }
 
@@ -110,7 +112,7 @@ class Graph : public Marshallable {
     Clear();
   }
 
-  void AddV(Vertex<T> *v) { vertex_index_[v->id()] = v; }
+  void AddV(V *v) { vertex_index_[v->id()] = v; }
 
   void AddV(VertexList &l) {
     for (auto v : l) {
@@ -118,18 +120,17 @@ class Graph : public Marshallable {
     }
   }
 
-  Vertex<T> *FindV(uint64_t id) {
+  V* FindV(uint64_t id) {
     auto i = vertex_index_.find(id);
-
     if (i == vertex_index_.end()) {
-      return NULL;
+      return nullptr;
     } else {
       return i->second;
     }
   }
 
-  Vertex<T> *CreateV(uint64_t id) {
-    auto v = new Vertex<T>(id);
+  V* CreateV(uint64_t id) {
+    auto v = new V(id);
     AddV(v);
     verify(v->id() == id);
 #ifdef DEBUG_CODE
@@ -138,20 +139,20 @@ class Graph : public Marshallable {
     return v;
   }
 
-  Vertex<T> *CreateV(Vertex<T>& av) {
-    auto v = new Vertex<T>(av);
+  V* CreateV(V& av) {
+    auto v = new V(av);
     AddV(v);
     verify(v->id() == av.id());
     return v;
   }
 
-  Vertex<T> *FindOrCreateV(uint64_t id) {
+  V* FindOrCreateV(uint64_t id) {
     auto v = FindV(id);
     if (v == nullptr) v = CreateV(id);
     return v;
   }
 
-  Vertex<T> *FindOrCreateV(Vertex<T>& av) {
+  V* FindOrCreateV(V& av) {
     auto v = FindV(av.id());
     if (v == nullptr) v = CreateV(av);
     return v;
@@ -166,14 +167,14 @@ class Graph : public Marshallable {
   };
 
   // depth first search.
-  int TraversePred(Vertex<T> *vertex,
+  int TraversePred(V* vertex,
                    int64_t depth,
-                   function<int(Vertex<T> *)> &func,
-                   vector<Vertex<T> *> *walked = nullptr) {
+                   function<int(V *)> &func,
+                   vector<V*> *walked = nullptr) {
     bool to_clean = false;
     if (walked == nullptr) {
       to_clean = true;
-      walked = new vector<Vertex<T>*>;
+      walked = new vector<V*>;
       walked->reserve(100);
     }
     if (vertex->walked_) {
@@ -200,8 +201,9 @@ class Graph : public Marshallable {
       }
     }
     if (to_clean) {
-      for (Vertex<T>* v: *walked) {
+      for (V* v: *walked) {
         v->walked_ = false;
+
       }
       delete walked;
     }
@@ -210,10 +212,10 @@ class Graph : public Marshallable {
 
   // what does ret value stand for ???
   // false: aborted by user?
-  bool TraversePred(Vertex<T> *vertex,
+  bool TraversePred(V *vertex,
                     int64_t depth,
-                    function<bool(Vertex<T> *)> &func,
-                    set<Vertex<T> *> &walked) {
+                    function<bool(V*)> &func,
+                    set<V*> &walked) {
     auto pair = walked.insert(vertex);
     if (!pair.second)
       // already traversed.
@@ -231,10 +233,10 @@ class Graph : public Marshallable {
     return true;
   }
 
-  bool TraverseDescendant(Vertex<T> *vertex,
+  bool TraverseDescendant(V* vertex,
                           int64_t depth,
-                          function<bool(Vertex<T> *)> &func,
-                          set<Vertex<T> *> &walked,
+                          function<bool(V*)> &func,
+                          set<V *> &walked,
                           int edge_type = EDGE_ALL) {
     auto pair = walked.insert(vertex);
     if (!pair.second)
@@ -256,18 +258,18 @@ class Graph : public Marshallable {
     return true;
   }
 
-  Scc<T> StrongConnectPred(Vertex<T> *v,
-                           std::map<Vertex<T> *, int> &indexes,
-                           std::map<Vertex<T> *, int> &lowlinks,
+  Scc<V> StrongConnectPred(V* v,
+                           std::map<V *, int> &indexes,
+                           std::map<V *, int> &lowlinks,
                            int &index,
-                           std::vector<Vertex<T> *> &S) {
+                           std::vector<V*> &S) {
     indexes[v] = index;
     lowlinks[v] = index;
     index++;
     S.push_back(v);
 
     for (auto &kv : v->incoming_) {
-      Vertex<T> *w = kv.first;
+      V* w = kv.first;
       if (w->scc_) // opt scc already computed
         continue;
 
@@ -284,9 +286,9 @@ class Graph : public Marshallable {
       }
     }
 
-    Scc<T> ret;
+    Scc<V> ret;
     if (lowlinks[v] == indexes[v]) {
-      Vertex<T> *w;
+      V* w;
       do {
         w = S.back();
         S.pop_back();
@@ -296,18 +298,18 @@ class Graph : public Marshallable {
     return ret;
   }
 
-  std::vector<Vertex<T> *> StrongConnect(Vertex<T> *v,
-                                         std::map<Vertex<T> *, int> &indexes,
-                                         std::map<Vertex<T> *, int> &lowlinks,
-                                         int &index,
-                                         std::vector<Vertex<T> *> &S) {
+  std::vector<V*> StrongConnect(V* v,
+                                std::map<V*, int> &indexes,
+                                std::map<V*, int> &lowlinks,
+                                int &index,
+                                std::vector<V*> &S) {
     indexes[v] = index;
     lowlinks[v] = index;
     index++;
     S.push_back(v);
 
     for (auto &kv : v->outgoing_) {
-      Vertex<T> *w = kv.first;
+      V* w = kv.first;
       if (w->scc_) // opt scc already computed
         continue;
 
@@ -323,9 +325,9 @@ class Graph : public Marshallable {
       }
     }
 
-    vector<Vertex<T>*> ret;
+    vector<V*> ret;
     if (lowlinks[v] == indexes[v]) {
-      Vertex<T> *w;
+      V *w;
       do {
         w = S.back();
         S.pop_back();
@@ -335,7 +337,7 @@ class Graph : public Marshallable {
     return ret;
   }
 
-  void QuickSortVV(std::vector<Vertex<T> *> &vv, int p, int r) {
+  void QuickSortVV(std::vector<V*> &vv, int p, int r) {
     if (p >= r) {
       return;
     }
@@ -361,7 +363,7 @@ class Graph : public Marshallable {
     QuickSortVV(vv, q + 1, r);
   }
 
-  void SortVV(std::vector<Vertex<T> *> &vv, int flag) {
+  void SortVV(std::vector<V*> &vv, int flag) {
     QuickSortVV(vv, 0, vv.size() - 1);
 
     if (flag) {
@@ -369,28 +371,28 @@ class Graph : public Marshallable {
     }
   }
 
-  std::vector<Vertex<T> *> FindSortedSCC(Vertex<T> *vertex,
-                                         vector<Vertex<T> *> *ret_sorted_scc) {
-    std::map<Vertex<T> *, int> indexes;
-    std::map<Vertex<T> *, int> lowlinks;
+  std::vector<V *> FindSortedSCC(V*vertex,
+                                         vector<V*> *ret_sorted_scc) {
+    std::map<V*, int> indexes;
+    std::map<V*, int> lowlinks;
     int index = 0;
-    std::vector<Vertex<T> *> S;
-    std::vector<Vertex<T> *> &ret2 = *ret_sorted_scc;
-    std::vector<Vertex<T> *> ret =
+    std::vector<V*> S;
+    std::vector<V*> &ret2 = *ret_sorted_scc;
+    std::vector<V*> ret =
         StrongConnect(vertex, indexes, lowlinks, index, S);
     verify(ret.size() > 0);
 
-    std::set<Vertex<T> *> scc_set(ret.begin(), ret.end());
+    std::set<V*> scc_set(ret.begin(), ret.end());
     verify(scc_set.size() == ret.size());
 
-    std::vector<Vertex<T> *> start_vv;
+    std::vector<V*> start_vv;
 
     // should ignore those which are not in the SCC.
     for (auto &v : scc_set) {
       bool type2 = false;
 
       for (auto &kv : v->incoming_) {
-        Vertex<T> *vt = kv.first;
+        V* vt = kv.first;
         int8_t relation = kv.second;
 
         if (relation > WW) {
@@ -411,7 +413,7 @@ class Graph : public Marshallable {
     verify(start_vv.size() > 0);
     SortVV(start_vv, 1);
 
-    std::map<Vertex<T> *, int> dfs_status;  // 2 for visited vertex.
+    std::map<V*, int> dfs_status;  // 2 for visited vertex.
 
     while (start_vv.size() > 0) {
       auto v = start_vv.back();
@@ -421,10 +423,10 @@ class Graph : public Marshallable {
       ret2.push_back(v);
 
       // find children connected by R->W an W->R
-      std::vector<Vertex<T> *> children;
+      std::vector<V*> children;
 
       for (auto &kv : v->outgoing_) {
-        Vertex<T> *vt = kv.first;
+        V* vt = kv.first;
         int8_t relation = kv.second;
 
         // should only involve child in the scc.
@@ -463,59 +465,59 @@ class Graph : public Marshallable {
     return ret2;
   }
 
-  virtual Scc<T>& FindSccPred(Vertex<T>* vertex) {
+  virtual Scc<V>& FindSccPred(V* vertex) {
     if (vertex->scc_) {
       // already computed.
       return *vertex->scc_;
     }
-    map<Vertex<T> *, int> indexes;
-    map<Vertex<T> *, int> lowlinks;
+    map<V *, int> indexes;
+    map<V *, int> lowlinks;
     int index = 0;
-    std::vector<Vertex<T> *> S;
-    std::shared_ptr<Scc<T>> ptr(new Scc<T>);
+    std::vector<V *> S;
+    std::shared_ptr<Scc<V>> ptr(new Scc<V>);
     *ptr = StrongConnectPred(vertex, indexes, lowlinks, index, S);
-    for (Vertex<T>* v : *ptr) {
+    for (V* v : *ptr) {
       verify(!v->scc_); // FIXME
       v->scc_ = ptr;
     }
     return *ptr;
   }
 
-  virtual Scc<T>& FindSCC(Vertex<T> *vertex) {
+  virtual Scc<V>& FindSCC(V *vertex) {
     if (vertex->scc_) {
       // already computed.
       return *vertex->scc_;
     }
-    map<Vertex<T> *, int> indexes;
-    map<Vertex<T> *, int> lowlinks;
+    map<V *, int> indexes;
+    map<V *, int> lowlinks;
     int index = 0;
-    std::vector<Vertex<T> *> S;
-    std::shared_ptr<Scc<T>> ptr(new Scc<T>);
+    std::vector<V *> S;
+    std::shared_ptr<Scc<V>> ptr(new Scc<V>);
     *ptr = StrongConnect(vertex, indexes, lowlinks, index, S);
-    for (Vertex<T>* v : *ptr) {
+    for (V* v : *ptr) {
       verify(!v->scc_); // FIXME
       v->scc_ = ptr;
     }
     return *ptr;
   }
 
-  Scc<T>& FindSCC(uint64_t id) {
+  Scc<V>& FindSCC(uint64_t id) {
     std::vector<int> ret;
-    Vertex<T> *v = this->FindV(id);
+    V *v = this->FindV(id);
     verify(v != NULL);
     return FindSCC(v);
   }
 
   std::vector<VertexList> SCC() {
     std::vector<VertexList> result;
-    std::map<Vertex<T> *, int> indexes;
-    std::map<Vertex<T> *, int> lowlinks;
+    std::map<V *, int> indexes;
+    std::map<V *, int> lowlinks;
     VertexList S;
     int index = 0;
     for (auto pair : vertex_index_) {
       auto v = pair.second;
       if (indexes.find(v) == indexes.end()) {
-        std::vector<Vertex<T> *> component =
+        std::vector<V *> component =
             StrongConnect(v, indexes, lowlinks, index, S);
         result.push_back(component);
       }
@@ -523,20 +525,20 @@ class Graph : public Marshallable {
     return result;
   }
 
-  void Aggregate(const Graph<T> &gra, bool is_server = false) {
+  void Aggregate(const Graph<V> &gra, bool is_server = false) {
     verify(gra.size() > 0);
-    std::set<Vertex<T> *> new_vs;
+    std::set<V *> new_vs;
 
     for (auto &pair : gra.vertex_index_) {
       auto &v = pair.second;
       // check if i have this vertex in my graph
-      Vertex<T> *new_ov;
+      V *new_ov;
       auto i = this->vertex_index_.find(v->data_->id());
 
       if (i == vertex_index_.end()) {
         //       Log::debug("union: insert a new node in to the graph. node id:
         // %llx", v->data_.id());
-        new_ov = new Vertex<T>(v->data_->id());
+        new_ov = new V(v->data_->id());
         new_ov->data_ = v->data_;
         vertex_index_[new_ov->data_->id()] = new_ov;
       } else {
@@ -547,12 +549,12 @@ class Graph : public Marshallable {
       }
 
       for (auto &kv : v->outgoing_) {
-        Vertex<T> *tv = kv.first;
+        V *tv = kv.first;
         auto i = vertex_index_.find(tv->data_->id());
-        Vertex<T> *new_tv;
+        V *new_tv;
 
         if (i == vertex_index_.end()) {
-          new_tv = new Vertex<T>(tv->data_->id());
+          new_tv = new V(tv->data_->id());
           new_tv->data_ = tv->data_;
           vertex_index_[new_tv->data_->id()] = new_tv;
         } else {
@@ -585,7 +587,7 @@ class Graph : public Marshallable {
       m << v->Get();
       m << n_out_edge;
       for (auto &it : v->outgoing_) {
-        Vertex<T> *vv = it.first;
+        V *vv = it.first;
         verify(vv != nullptr);
         uint64_t id = vv->id();
         int8_t weight = it.second;
@@ -601,7 +603,7 @@ class Graph : public Marshallable {
     uint64_t n;
     m >> n;
     verify(n > 0 && n < 10000);
-    map<uint64_t, Vertex<T> *> ref;
+    map<uint64_t, V *> ref;
     map<uint64_t, map<int64_t, int8_t> > v_to;
 
     // Log::debug("marshalling gra, graph size: %d", (int) n);
@@ -611,7 +613,7 @@ class Graph : public Marshallable {
     while (nn-- > 0) {
       uint64_t v_id;
       m >> v_id;
-      ref[v_id] = new Vertex<T>(v_id);
+      ref[v_id] = new V(v_id);
       m >> ref[v_id]->Get();
       int32_t n_out_edge;
       m >> n_out_edge;
@@ -633,12 +635,12 @@ class Graph : public Marshallable {
     for (auto &kv : v_to) {
       uint64_t v_id = kv.first;
       map<int64_t, int8_t>& o_to = kv.second;
-      Vertex<T> *v = ref[v_id];
+      V *v = ref[v_id];
 
       for (auto &tokv : o_to) {
         uint64_t child_vid = tokv.first;
         int8_t weight = tokv.second;
-        Vertex<T> *child_v = ref[child_vid];
+        V *child_v = ref[child_vid];
         v->outgoing_[child_v] = weight;
         child_v->incoming_[v] = weight;
         child_v->parents_.insert(v->id());

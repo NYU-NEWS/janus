@@ -28,8 +28,8 @@ class RococoCommunicator : public Communicator {
                    Coordinator *coo,
                    const std::function<void(int res, TxnOutput&)>&) ;
   void SendPrepare(parid_t gid,
-                   txnid_t tid, 
-                   std::vector<int32_t> &sids, 
+                   txnid_t tid,
+                   std::vector<int32_t> &sids,
                    const std::function<void(int)> &callback) ;
   void SendCommit(parid_t pid,
                   txnid_t tid,
@@ -42,5 +42,12 @@ class RococoCommunicator : public Communicator {
   std::set<std::pair<parid_t, txnid_t>> phase_three_sent_;
 
   void ___LogSent(parid_t pid, txnid_t tid);
+
+  void SendUpgradeEpoch(epoch_t curr_epoch,
+                                const function<void(parid_t,
+                                                    siteid_t,
+                                                    int32_t& graph)>& callback);
+
+  void SendTruncateEpoch(epoch_t old_epoch);
 };
 } // namespace rococo

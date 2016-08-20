@@ -1,3 +1,6 @@
+Host *
+	StrictHostKeyChecking no
+
 Host 52.*
 	StrictHostKeyChecking no
 	UserKnownHostsFile=/dev/null

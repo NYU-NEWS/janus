@@ -8,7 +8,6 @@
 #include "coord.h"
 #include "sched.h"
 #include "dep_graph.h"
-#include "service.h"
 #include "../rcc/rcc_row.h"
 #include "../rcc/dtxn.h"
 
@@ -54,11 +53,7 @@ BrqFrame::CreateRpcServices(uint32_t site_id,
                             Scheduler *sched,
                             rrr::PollMgr *poll_mgr,
                             ServerControlServiceImpl* scsi) {
-  auto config = Config::GetConfig();
-  auto result = vector<Service *>();
-  auto s = new BrqServiceImpl(sched, poll_mgr, scsi);
-  result.push_back(s);
-  return result;
+  return Frame::CreateRpcServices(site_id, sched, poll_mgr, scsi);
 }
 
 mdb::Row* BrqFrame::CreateRow(const mdb::Schema *schema,

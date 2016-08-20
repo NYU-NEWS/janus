@@ -25,23 +25,88 @@ abstract service Classic {
                  i32 res,
                  TxnOutput output);
 
-    defer Prepare(i64 tid, 
-                  vector<i32> sids | 
+  defer Prepare(i64 tid, 
+                vector<i32> sids | 
+                i32 res);
+
+  defer Commit(i64 tid | i32 res);
+
+  defer Abort(i64 tid | i32 res);
+
+  defer UpgradeEpoch(uint32_t curr_epoch |
+                     int32_t res)
+
+  defer TruncateEpoch(uint32_t old_epoch)
+
+  // input: contains many pieces, each piece consist of
+  // | <i32 p_type> <i64 pid> <i32 input_size> <i32 max_output_size> 
+  // <input_0> <input_1> ... |
+  // output: contains many pieces, each piece consist of
+  // | <i32 res> <i32 output_size> <output_0> <output_1> ... |
+
+  // below is for what?
+
+  defer rpc_null( | );
+//  defer Prepare();
+  defer TapirAccept(uint64_t cmd_id,
+                    uint64_t ballot,
+	                int32_t decision);
+  // works as 2PC prepare on a paxos fast-accept
+  defer TapirFastAccept(uint64_t cmd_id,
+                        vector<SimpleCommand> txn_cmds |
+                        i32 res);
+  // works as a 2PC commit/abort with a paxos decision
+  defer TapirDecide(uint64_t cmd_id, i32 commit);
+  
+
+  defer RccDispatch(vector<SimpleCommand> cmd |
+                    i32 res,
+                    TxnOutput output,
+                    RccGraph graph);
+
+  defer RccFinish(cmdid_t id,
+               RccGraph |
+               map<uint32_t, map<int32_t, Value>> outputs);
+
+  defer RccInquire(cmdid_t txn_id |
+                RccGraph res);
+
+  defer RccDispatchRo(SimpleCommand cmd |
+                      map<i32, Value> output);
+
+
+  defer BrqDispatch(vector<SimpleCommand> cmd |
+                    i32 res,
+                    TxnOutput output,
+                    Marshallable ret_graph);
+
+  defer BrqCommit(cmdid_t id,
+                  Marshallable graph |
+                  int32_t res,
+                  TxnOutput output);
+
+  defer BrqCommitWoGraph(cmdid_t id |
+                         int32_t res,
+                         TxnOutput output);
+
+  defer BrqInquire(cmdid_t txn_id |
+                   Marshallable ret_graph);
+
+  defer BrqPreAccept(cmdid_t txn_id,
+                     vector<SimpleCommand> cmd,
+                     Marshallable graph |
+                     i32 res,
+                     Marshallable ret_graph);
+
+  defer BrqPreAcceptWoGraph(cmdid_t txn_id,
+                            vector<SimpleCommand> cmd |
+                            i32 res,
+                            Marshallable ret_graph);
+
+  defer BrqAccept(cmdid_t txn_id,
+                  ballot_t ballot,
+                  Marshallable graph |
                   i32 res);
-
-    defer Commit(i64 tid | i32 res);
-
-    defer Abort(i64 tid | i32 res);
-
-    // input: contains many pieces, each piece consist of
-    // | <i32 p_type> <i64 pid> <i32 input_size> <i32 max_output_size> 
-    // <input_0> <input_1> ... |
-    // output: contains many pieces, each piece consist of
-    // | <i32 res> <i32 output_size> <output_0> <output_1> ... |
-
-    // below is for what?
-
-    defer rpc_null( | );
 }
 
 

@@ -6,7 +6,6 @@
 #include "dtxn.h"
 #include "commo.h"
 #include "config.h"
-#include "service.h"
 
 namespace rococo {
 
@@ -56,11 +55,9 @@ TapirFrame::CreateRpcServices(uint32_t site_id,
                               rrr::PollMgr *poll_mgr,
                               ServerControlServiceImpl* scsi) {
   auto config = Config::GetConfig();
-  auto result = std::vector<Service *>();
   verify(config->ab_mode_ == config->cc_mode_ &&
       config->ab_mode_ == MODE_TAPIR);
-  result.push_back(new TapirServiceImpl(sched));
-  return result;
+  return Frame::CreateRpcServices(site_id, sched, poll_mgr, scsi);
 }
 
 mdb::Row* TapirFrame::CreateRow(const mdb::Schema *schema,
