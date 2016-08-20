@@ -36,7 +36,6 @@ class Scheduler {
 
   bool epoch_enabled_{false};
   EpochMgr epoch_mgr_{};
-  uint32_t curr_epoch_{1};
   std::time_t last_upgrade_time_{0};
   map<parid_t, map<siteid_t, epoch_t>> epoch_replies_{};
   bool in_upgrade_epoch_{false};

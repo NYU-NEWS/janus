@@ -4,7 +4,9 @@
 
 namespace rococo {
 
-TPLDTxn::TPLDTxn(i64 tid, Scheduler *sched) : DTxn(tid, sched) {
+TPLDTxn::TPLDTxn(epoch_t epoch,
+                 txnid_t tid,
+                 Scheduler *sched) : DTxn(epoch, tid, sched) {
 
 }
 

@@ -8,15 +8,17 @@
 
 namespace rococo {
 
-RccDTxn::RccDTxn(txnid_t tid,
+RccDTxn::RccDTxn(epoch_t epoch,
+                 txnid_t tid,
                  Scheduler *mgr,
-                 bool ro) : DTxn(tid, mgr) {
+                 bool ro) : DTxn(epoch, tid, mgr) {
   tv_ = nullptr;
   read_only_ = ro;
   mdb_txn_ = mgr->GetOrCreateMTxn(tid_);
 }
 
-RccDTxn::RccDTxn(txnid_t id) : DTxn(id, nullptr) {
+RccDTxn::RccDTxn(txnid_t id): DTxn(0, id, nullptr) {
+  // alert!! after this a lot of stuff need to be set manually.
   txn_id_ = id;
 }
 

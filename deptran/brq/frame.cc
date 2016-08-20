@@ -63,10 +63,11 @@ mdb::Row* BrqFrame::CreateRow(const mdb::Schema *schema,
   return r;
 }
 
-DTxn* BrqFrame::CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) {
+DTxn* BrqFrame::CreateDTxn(epoch_t epoch, txnid_t tid,
+                           bool ro, Scheduler *mgr) {
 //  auto dtxn = new BrqDTxn(tid, mgr, ro);
 //  return dtxn;
-  auto dtxn = new RccDTxn(tid, mgr, ro);
+  auto dtxn = new RccDTxn(epoch, tid, mgr, ro);
   return dtxn;
 }
 

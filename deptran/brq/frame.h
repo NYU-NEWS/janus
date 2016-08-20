@@ -23,7 +23,8 @@ class BrqFrame : public Frame {
   mdb::Row *CreateRow(const mdb::Schema *schema,
                       vector<Value> &row_data) override;
 
-  DTxn* CreateDTxn(txnid_t tid, bool ro, Scheduler * mgr) override;
+  DTxn* CreateDTxn(epoch_t epoch, txnid_t tid,
+                   bool ro, Scheduler * mgr) override;
 
   Communicator* CreateCommo(PollMgr* poll = nullptr) override;
 };

@@ -45,19 +45,5 @@ class BrqSched : public RccSched {
                 const function<void()> &callback) override;
   BrqCommo* commo();
 
-  void TriggerUpgradeEpoch();
-  void UpgradeEpochAck(parid_t par_id, siteid_t site_id, int res);
-  void TriggerTruncateEpoch();
-  int32_t OnUpgradeEpoch(uint32_t old_epoch) {
-    // TODO
-    if (old_epoch == curr_epoch_) {
-      curr_epoch_++;
-      return 0;
-    } else if (curr_epoch_ > old_epoch) {
-      return 1;
-    } else {
-      return -1;
-    }
-  }
 };
 } // namespace rococo
