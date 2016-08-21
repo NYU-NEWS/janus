@@ -50,7 +50,6 @@ class RccGraph : public Graph<RccVertex> {
 //  RococoProxy *get_server_proxy(uint32_t id);
 
   /** on start_req */
-  void FindOrCreateTxnInfo(txnid_t txn_id, RccVertex **tv);
   RccVertex* FindOrCreateRccVertex(txnid_t txn_id, RccSched* sched);
   void BuildEdgePointer(RccGraph &graph,
                         map<txnid_t, RccVertex*>& index);
@@ -58,7 +57,7 @@ class RccGraph : public Graph<RccVertex> {
   RccVertex* AggregateVertex(RccVertex *rhs_v);
   void UpgradeStatus(RccVertex* v, int8_t status);
 
-  void Aggregate(RccGraph& graph);
+  map<txnid_t, RccVertex*> Aggregate(epoch_t epoch, RccGraph& graph);
   void SelectGraphCmtUkn(RccVertex* vertex, RccGraph* new_graph);
   void SelectGraph(set<RccVertex*> vertexes, RccGraph* new_graph);
   RccScc& FindSCC(RccVertex *vertex) override;

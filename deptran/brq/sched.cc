@@ -18,7 +18,7 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
 //    Log_info("on pre-accept graph size: %d", graph.size());
   verify(txn_id > 0);
   verify(cmds[0].root_id_ == txn_id);
-  dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
+  dep_graph_->Aggregate(epoch_mgr_.curr_epoch_, const_cast<RccGraph&>(graph));
   TriggerCheckAfterAggregation(const_cast<RccGraph&>(graph));
   // TODO FIXME
   // add interference based on cmds.
@@ -43,6 +43,7 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
   dep_graph_->MinItfrGraph(txn_id, res_graph, false, 1);
   if (dtxn->status() >= TXN_CMT) {
     waitlist_.insert(dtxn->tv_);
+    verify(dtxn->epoch_ > 0);
   }
   *res = SUCCESS;
   callback();
@@ -84,6 +85,7 @@ void BrqSched::OnPreAcceptWoGraph(const txnid_t txn_id,
   dep_graph_->MinItfrGraph(txn_id, res_graph, false, 1);
   if (tinfo.status() >= TXN_CMT) {
     waitlist_.insert(dtxn->tv_);
+    verify(dtxn->epoch_ > 0);
   }
   *res = SUCCESS;
   callback();
@@ -138,7 +140,11 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
 //      verify(r == SUCCESS);
       callback();
     };
-    dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
+    auto index = dep_graph_->Aggregate(epoch_mgr_.curr_epoch_,
+                                       const_cast<RccGraph&> (graph));
+    for (auto& pair: index) {
+      verify(pair.second->Get().epoch_ > 0);
+    }
     TriggerCheckAfterAggregation(const_cast<RccGraph &>(graph));
     // fast path without check wait list?
 //    if (graph.size() == 1) {
@@ -192,6 +198,7 @@ void BrqSched::OnCommitWoGraph(const txnid_t cmd_id,
     };
     dep_graph_->UpgradeStatus(v, TXN_CMT);
     waitlist_.insert(v);
+    verify(v->Get().epoch_ > 0);
     CheckWaitlist();
     // fast path without check wait list?
 //    if (graph.size() == 1) {
@@ -244,6 +251,7 @@ int BrqSched::OnInquire(cmdid_t cmd_id,
     verify(info.graphs_for_inquire_.size() ==
         info.callbacks_for_inquire_.size());
     waitlist_.insert(v);
+    verify(v->Get().epoch_ > 0);
   }
 
 }

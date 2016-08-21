@@ -8,43 +8,6 @@ namespace rococo {
 rrr::PollMgr *svr_poll_mgr_g = nullptr;
 static pthread_t th_id_s = 0;
 
-//RococoProxy *RccGraph::get_server_proxy(uint32_t id) {
-//  pthread_t th_id = pthread_self();
-//  if (th_id_s == 0) {
-//    th_id_s = th_id;
-//  } else {
-//    verify(th_id_s == th_id);
-//  }
-//
-//  verify(id < rpc_proxies_.size());
-//  RococoProxy *rpc_proxy = rpc_proxies_[id];
-//  if (rpc_proxy == nullptr) {
-//    verify(svr_poll_mgr_g != nullptr);
-//    rrr::PollMgr *rpc_poll = svr_poll_mgr_g;
-//    auto &addr = server_addrs_[id];
-//    rrr::Client *rpc_cli = new rrr::Client(rpc_poll);
-//    int ret = rpc_cli->connect(addr.c_str());
-//    verify(ret == 0);
-//    rpc_proxy = new RococoProxy(rpc_cli);
-//    rpc_clients_[id] = (rpc_cli);
-//    rpc_proxies_[id] = (rpc_proxy);
-//  }
-//  return rpc_proxy;
-//}
-
-/** on start_req */
-void RccGraph::FindOrCreateTxnInfo(txnid_t txn_id,
-                                   RccVertex **tv) {
-//  verify(tv != NULL);
-//  *tv = FindOrCreateV(txn_id);
-//  verify(FindV(txn_id) != nullptr);
-//  verify(*tv != nullptr);
-//  // TODO fix.
-//  RccDTxn& dtxn = (*tv)->Get();
-//  dtxn.partition_.insert(partition_id_);
-//  dtxn.graph_ = this;
-}
-
 RccVertex* RccGraph::FindOrCreateRccVertex(txnid_t txn_id,
                                            RccSched* sched) {
   RccVertex* v = nullptr;
@@ -424,13 +387,17 @@ bool RccGraph::AllAncCmt(RccVertex *vertex) {
   return all_anc_cmt;
 }
 
-void RccGraph::Aggregate(RccGraph &graph) {
+map<txnid_t, RccVertex*> RccGraph::Aggregate(epoch_t epoch, RccGraph &graph) {
   // aggregate vertexes
   map<txnid_t, RccVertex*> index;
   for (auto& pair: graph.vertex_index_) {
     RccVertex* rhs_v = pair.second;
     verify(pair.first == rhs_v->id());
     RccVertex* vertex = AggregateVertex(rhs_v);
+    RccDTxn& dtxn = vertex->Get();
+    if (dtxn.epoch_ == 0) {
+      dtxn.epoch_ = epoch;
+    }
     verify(vertex->id() == pair.second->id());
     verify(vertex_index_.count(vertex->id()) > 0);
     index[vertex->id()] = vertex;
@@ -513,6 +480,7 @@ void RccGraph::Aggregate(RccGraph &graph) {
 
 #endif
 //  this->BuildEdgePointer(graph, index);
+  return index;
 }
 
 

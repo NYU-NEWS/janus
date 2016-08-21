@@ -117,7 +117,7 @@ int RccSched::OnCommit(cmdid_t cmd_id,
   verify(dtxn->ptr_output_repy_ == nullptr);
   dtxn->ptr_output_repy_ = output;
   dtxn->finish_reply_callback_ = [callback] (int r) {callback();};
-  dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
+  dep_graph_->Aggregate(epoch_mgr_.curr_epoch_, const_cast<RccGraph&>(graph));
   TriggerCheckAfterAggregation(const_cast<RccGraph&>(graph));
 
 //  // fast path without check wait list?
@@ -204,10 +204,12 @@ void RccSched::CheckWaitlist() {
       if (AllAncCmt(v)) {
 //        check_again = true;
         RccScc& scc = dep_graph_->FindSCC(v);
+        verify(v->Get().epoch_ > 0);
         Decide(scc);
         if (AllAncFns(scc)) {
           // FIXME
           for (auto vv : scc) {
+            verify(vv->Get().epoch_ > 0);
 #ifdef DEBUG_CODE
             verify(AllAncCmt(vv));
           verify(vv->Get().status() >= TXN_DCD);
@@ -324,12 +326,14 @@ void RccSched::AddChildrenIntoWaitlist(RccVertex* v) {
     if (!child_v->Get().IsExecuted() &&
         waitlist_.count(child_v) == 0) {
       waitlist_.insert(child_v);
+      verify(child_v->Get().epoch_ > 0);
     }
   }
   for (RccVertex* child_v : v->removed_children_) {
     if (!child_v->Get().IsExecuted() &&
         waitlist_.count(child_v) == 0) {
       waitlist_.insert(child_v);
+      verify(child_v->Get().epoch_ > 0);
     }
   }
 #ifdef DEBUG_CODE
@@ -436,7 +440,7 @@ void RccSched::InquireAck(cmdid_t cmd_id, RccGraph& graph) {
   auto v = dep_graph_->FindV(cmd_id);
   RccDTxn& tinfo = v->Get();
   tinfo.inquire_acked_ = true;
-  dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
+  dep_graph_->Aggregate(epoch_mgr_.curr_epoch_, const_cast<RccGraph&>(graph));
   TriggerCheckAfterAggregation(const_cast<RccGraph&>(graph));
   verify(tinfo.status() >= TXN_CMT);
 }
@@ -549,6 +553,7 @@ void RccSched::TriggerCheckAfterAggregation(RccGraph &graph) {
 //    if (v->Get().status() >= TXN_CMT)
     check = true;
     waitlist_.insert(v);
+    verify(v->Get().epoch_ > 0);
   }
   if (check)
     CheckWaitlist();
@@ -623,8 +628,6 @@ void RccSched::Execute(RccDTxn& dtxn) {
   dtxn.executed_ = true;
   verify(dtxn.IsDecided());
   verify(dtxn.epoch_ > 0);
-  verify(active_epoch_[dtxn.epoch_] > 0);
-  active_epoch_[dtxn.epoch_]--;
   if (dtxn.Involve(partition_id_)) {
     dtxn.CommitExecute();
     dtxn.ReplyFinishOk();

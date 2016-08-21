@@ -20,6 +20,11 @@ class RccSched : public Scheduler {
   static std::recursive_mutex __debug_mutex_s;
   static void __DebugCheckParentSetSize(txnid_t tid, int32_t sz);
 
+  class Waitlist {
+    set<RccVertex*> waitlist_ = {};
+    set<RccVertex*> fridge_ = {};
+  };
+
  public:
   RccGraph *dep_graph_ = nullptr;
   WaitlistChecker* waitlist_checker_ = nullptr;
@@ -30,8 +35,6 @@ class RccSched : public Scheduler {
   map<parid_t, int32_t> epoch_replies_{};
   bool in_upgrade_epoch_{false};
   const int EPOCH_DURATION = 5;
-  map<epoch_t, int64_t> active_epoch_{};
-  map<epoch_t, unordered_set<RccDTxn*>> epoch_dtxn_{};
 
   RccSched();
   virtual ~RccSched();
