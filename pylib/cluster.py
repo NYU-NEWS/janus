@@ -149,6 +149,10 @@ def mount_nfs():
             sudo('mount /mnt')
         except:
             traceback.print_exc()
+        try:
+            run('ln -s /mnt/janus /home/ubuntu/janus')
+        except:
+            pass
 
 @task
 @roles('servers', 'leaders')
