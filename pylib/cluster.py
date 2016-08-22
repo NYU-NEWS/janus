@@ -39,6 +39,11 @@ def ping():
             run('ping -c 3 {}'.format(ip))
 
 @task
+def sshleader():
+    execute('ec2.set_instance_roles')
+    local('ssh ubuntu@' +  env.roledefs['leaders'][0])
+
+@task
 @roles('leaders')
 def sshping():
     created_instances = get_created_instances()
