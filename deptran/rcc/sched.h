@@ -71,9 +71,11 @@ class RccSched : public Scheduler {
     verify(0);
   }
 
+  void DestroyExecutor(txnid_t tid) override;
+
 
   void InquireAbout(Vertex<RccDTxn> *av);
-  void InquireAboutIfNeeded(RccDTxn &info);
+  void InquireAboutIfNeeded(RccDTxn &dtxn);
   void AnswerIfInquired(RccDTxn &tinfo);
   void CheckWaitlist();
   void InquireAck(cmdid_t cmd_id, RccGraph& graph);
@@ -88,8 +90,6 @@ class RccSched : public Scheduler {
   void Execute(const RccScc&);
   void Execute(RccDTxn&);
   void Abort(const RccScc&);
-
-  void OnTruncateEpoch(uint32_t old_epoch);
 
   void __DebugExamineFridge();
   RccVertex* __DebugFindAnOngoingAncestor(RccVertex* vertex);

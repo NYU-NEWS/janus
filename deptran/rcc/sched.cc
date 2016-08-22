@@ -27,8 +27,10 @@ void RccSched::__DebugCheckParentSetSize(txnid_t tid, int32_t sz) {
 RccSched::RccSched() : Scheduler(), waitlist_(), mtx_() {
   verify(dep_graph_ == nullptr);
   dep_graph_ = new RccGraph();
+  dep_graph_->sched_ = this;
   dep_graph_->partition_id_ = partition_id_;
   waitlist_checker_ = new WaitlistChecker(this);
+  epoch_enabled_ = true;
 }
 
 RccSched::~RccSched() {
@@ -44,6 +46,10 @@ DTxn* RccSched::GetOrCreateDTxn(txnid_t tid, bool ro) {
   RccDTxn& dtxn = v->Get();
   if (dtxn.epoch_ == 0) {
     dtxn.epoch_ = epoch_mgr_.curr_epoch_;
+    if (epoch_enabled_) {
+      epoch_mgr_.AddToCurrent(tid);
+      TriggerUpgradeEpoch();
+    }
   }
   auto pair = epoch_dtxn_[dtxn.epoch_].insert(&dtxn);
   if (pair.second) {
@@ -402,20 +408,20 @@ void RccSched::__DebugExamineFridge() {
 #endif
 }
 
-void RccSched::InquireAboutIfNeeded(RccDTxn &tinfo) {
+void RccSched::InquireAboutIfNeeded(RccDTxn &dtxn) {
 //  Graph<RccDTxn> &txn_gra = dep_graph_->txn_gra_;
-  if (tinfo.status() <= TXN_STD &&
-      !tinfo.Involve(partition_id_) &&
-      !tinfo.during_asking) {
-    verify(!tinfo.Involve(partition_id_));
-    verify(!tinfo.during_asking);
-    parid_t par_id = *(tinfo.partition_.begin());
-    tinfo.during_asking = true;
+  if (dtxn.status() <= TXN_STD &&
+      !dtxn.Involve(partition_id_) &&
+      !dtxn.during_asking) {
+    verify(!dtxn.Involve(partition_id_));
+    verify(!dtxn.during_asking);
+    parid_t par_id = *(dtxn.partition_.begin());
+    dtxn.during_asking = true;
     commo()->SendInquire(par_id,
-                         tinfo.txn_id_,
+                         dtxn.txn_id_,
                          std::bind(&RccSched::InquireAck,
                                    this,
-                                   tinfo.id(),
+                                   dtxn.id(),
                                    std::placeholders::_1));
   }
 }
@@ -631,6 +637,7 @@ void RccSched::Execute(RccDTxn& dtxn) {
   if (dtxn.Involve(partition_id_)) {
     dtxn.CommitExecute();
     dtxn.ReplyFinishOk();
+    TrashExecutor(dtxn.txn_id_);
   }
 }
 
@@ -650,7 +657,6 @@ void RccSched::Abort(const RccScc& scc) {
   }
 }
 
-
 RccCommo* RccSched::commo() {
 //  if (commo_ == nullptr) {
 //    verify(0);
@@ -660,11 +666,10 @@ RccCommo* RccSched::commo() {
   return commo;
 }
 
-void RccSched::OnTruncateEpoch(uint32_t old_epoch) {
-  Log_info("truncating epochs: %d", old_epoch);
-  // TODO
-  verify(0);
+void RccSched::DestroyExecutor(txnid_t txn_id) {
+  if (epoch_enabled_) {
+    dep_graph_->Remove(txn_id);
+  }
 }
-
 
 } // namespace rococo

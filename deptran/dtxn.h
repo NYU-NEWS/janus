@@ -1,3 +1,12 @@
+/**
+ * This class is currently mixed with three kinds of information:
+ *   1. concurrency control metadata.
+ *   2. database transaction logic and workspace
+ *   3. temporary workspace for database transactions (version, temp values..)
+ *   4. database interface
+ * Shall we split the three into three classes? Or is this fine?
+ */
+
 #pragma once
 
 #include "__dep__.h"

@@ -29,6 +29,7 @@ class RccGraph : public Graph<RccVertex> {
  public:
 //    Graph<PieInfo> pie_gra_;
 //  Graph <TxnInfo> txn_gra_;
+  RccSched* sched_{nullptr};
   svrid_t partition_id_ = 0; // TODO
 //  std::vector<rrr::Client *> rpc_clients_;
 //  std::vector<RococoProxy *> rpc_proxies_;
@@ -51,6 +52,7 @@ class RccGraph : public Graph<RccVertex> {
 
   /** on start_req */
   RccVertex* FindOrCreateRccVertex(txnid_t txn_id, RccSched* sched);
+  void RemoveVertex(txnid_t txn_id);
   void BuildEdgePointer(RccGraph &graph,
                         map<txnid_t, RccVertex*>& index);
   void RebuildEdgePointer(map<txnid_t, RccVertex*>& index);

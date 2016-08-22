@@ -146,6 +146,13 @@ class Graph : public Marshallable {
     return v;
   }
 
+  void Remove(uint64_t id) {
+    auto v = FindV(id);
+    verify(v != nullptr);
+    vertex_index_.erase(id);
+    delete v;
+  }
+
   V* FindOrCreateV(uint64_t id) {
     auto v = FindV(id);
     if (v == nullptr) v = CreateV(id);

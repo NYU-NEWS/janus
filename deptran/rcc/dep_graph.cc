@@ -27,6 +27,10 @@ RccVertex* RccGraph::FindOrCreateRccVertex(txnid_t txn_id,
   return v;
 }
 
+void RccGraph::RemoveVertex(txnid_t txn_id) {
+  Remove(txn_id);
+}
+
 void RccGraph::SelectGraphCmtUkn(RccVertex* vertex, RccGraph* new_graph) {
   RccVertex* new_v = new_graph->FindOrCreateV(vertex->id());
   auto s = vertex->Get().status();
@@ -36,6 +40,8 @@ void RccGraph::SelectGraphCmtUkn(RccVertex* vertex, RccGraph* new_graph) {
     new_v->Get().union_status(s);
   }
   new_v->Get().partition_ = vertex->Get().partition_;
+  // TODO, verify that the parent vertex still exists.
+  // TODO, verify that the new parent has the correct epoch.
   for (auto& pair : vertex->incoming_) {
     RccVertex* parent_v = pair.first;
     auto weight = pair.second;
@@ -289,6 +295,7 @@ void RccGraph::UpgradeStatus(RccVertex *v, int8_t status) {
 
 
 RccVertex* RccGraph::AggregateVertex(RccVertex *rhs_v) {
+  // TODO: add epoch here.
   // create the dtxn if not exist.
   RccVertex* vertex = FindOrCreateV(*rhs_v);
   auto status1 = vertex->Get().get_status();
@@ -397,6 +404,9 @@ map<txnid_t, RccVertex*> RccGraph::Aggregate(epoch_t epoch, RccGraph &graph) {
     RccDTxn& dtxn = vertex->Get();
     if (dtxn.epoch_ == 0) {
       dtxn.epoch_ = epoch;
+    }
+    if (sched_) {
+      sched_->epoch_mgr_.AddToEpoch(dtxn.epoch_, dtxn.txn_id_);
     }
     verify(vertex->id() == pair.second->id());
     verify(vertex_index_.count(vertex->id()) > 0);

@@ -212,9 +212,7 @@ void BrqSched::OnCommitWoGraph(const txnid_t cmd_id,
 ////    verify(0);
 //    }
   }
-
 }
-
 
 int BrqSched::OnInquire(cmdid_t cmd_id,
                         RccGraph *graph,

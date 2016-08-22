@@ -31,6 +31,8 @@ class EpochMgr {
     AddToEpoch(curr_epoch_, id);
   }
   virtual void Done(txnid_t id) {
+    auto it = id_to_epoch_.find(id);
+    verify(it != id_to_epoch_.end());
     auto e = id_to_epoch_[id];
     epochs_[e].n_done++;
   }

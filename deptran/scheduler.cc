@@ -343,8 +343,9 @@ void Scheduler::UpgradeEpochAck(parid_t par_id,
   }
   in_upgrade_epoch_ = false;
   epoch_replies_.clear();
-  if (smallest_inactive >= 2) {
-    commo()->SendTruncateEpoch(smallest_inactive - 1);
+  int x = 5;
+  if (smallest_inactive >= x) {
+    commo()->SendTruncateEpoch(smallest_inactive - x);
   }
 }
 
