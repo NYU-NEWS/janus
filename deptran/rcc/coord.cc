@@ -105,7 +105,7 @@ void RccCoord::DispatchAck(phase_t phase,
   Log_debug("start response graph size: %d", (int)graph.size());
   verify(graph.size() > 0);
 
-  graph_.Aggregate(graph);
+  graph_.Aggregate(0, graph);
 
   // TODO?
   if (graph.size() > 1) txn().disable_early_return();

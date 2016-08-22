@@ -124,10 +124,10 @@ void BrqCoord::ChooseGraph() {
     auto& vec_graph = pair.second;
     if (fast_path_) {
       auto& g = vec_graph[0];
-      graph_.Aggregate(*g);
+      graph_.Aggregate(0, *g);
     } else {
       for (auto g : vec_graph) {
-        graph_.Aggregate(*g);
+        graph_.Aggregate(0, *g);
       }
     }
   }
