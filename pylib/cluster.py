@@ -150,7 +150,6 @@ def mount_nfs():
         except:
             traceback.print_exc()
 
-
 @task
 @roles('servers', 'leaders')
 #@parallel(pool_size=10)

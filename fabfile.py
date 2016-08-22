@@ -51,6 +51,29 @@ def environment():
 
 
 @task
+def deploy_continue():
+    execute('ec2.set_instance_roles')
+    execute('cluster.config_nfs_server')
+    execute('cluster.config_nfs_client')
+    execute('cluster.config_ssh')
+    execute('retrieve_code')
+    execute('create_work_dirs')
+    teardown_instances = False 
+    attempts = 0
+    done = False
+    while attempts < 3 and done == False:
+        try:
+            execute('build', args="-t")
+            execute('cluster.put_janus_config')
+            execute('cluster.put_limits_config')
+            execute('ec2.reboot_all')
+            execute('cluster.mount_nfs')
+            done = True
+        except:
+            attempts = attempts + 1
+
+
+@task
 @runs_once
 @hosts('localhost')
 def deploy_all(regions='us-west-2', servers_per_region=[3], instance_type='t2.small'):
