@@ -64,6 +64,8 @@ def config_ssh():
     sudo('chmod 644 /home/ubuntu/.ssh/id_rsa.pub')
     sudo('chmod 600 /home/ubuntu/.ssh/id_rsa')
     sudo('chmod 600 /home/ubuntu/.ssh/config')
+    with open('config/ssh/id_rsa.pub','r') as f:
+        append('/home/ubuntu/.ssh/authorized_keys', f.read())
 
 
 @task
@@ -276,3 +278,12 @@ def load_security_grp_ips():
         else:
             raise RuntimeError("could not load security group")
 
+@task
+@roles('leaders')
+def build_and_deploy():
+    local('./waf')
+    target_dir='/export/janus/build'
+    run('mkdir -p ' + target_dir) 
+    Xput('./build/deptran_server', target_dir + '/deptran_server')
+    run('chmod +x ' + target_dir + '/deptran_server')
+    Xput('deptran/rcc_rpc.py', '/export/janus/deptran/rcc_rpc.py')
