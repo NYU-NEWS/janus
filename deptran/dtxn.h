@@ -62,6 +62,9 @@ class DTxn {
   Recorder *recorder_ = NULL;
   TxnRegistry *txn_reg_{nullptr};
 
+  bool committed_{false};
+  bool aborted_{false};
+
   map<int64_t, mdb::Row*> context_row_;
   map<int64_t, Value> context_value_;
   map<int64_t, mdb::ResultSet> context_rs_;

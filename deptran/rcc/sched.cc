@@ -667,6 +667,8 @@ RccCommo* RccSched::commo() {
 }
 
 void RccSched::DestroyExecutor(txnid_t txn_id) {
+  RccDTxn* dtxn = (RccDTxn*) GetOrCreateDTxn(txn_id);
+  verify(dtxn->committed_ || dtxn->aborted_);
   if (epoch_enabled_) {
     dep_graph_->Remove(txn_id);
   }

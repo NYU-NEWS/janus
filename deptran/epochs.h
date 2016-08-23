@@ -58,6 +58,7 @@ class EpochMgr {
     for (; it->first <= epoch; it = epochs_.begin()) {
       epoch_t e = it->first;
       auto& info = it->second;
+      verify(info.n_done == info.ids.size());
       ret.insert(info.ids.begin(), info.ids.end());
       epochs_.erase(it);
     }

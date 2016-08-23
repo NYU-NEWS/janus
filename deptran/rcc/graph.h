@@ -150,6 +150,16 @@ class Graph : public Marshallable {
     auto v = FindV(id);
     verify(v != nullptr);
     vertex_index_.erase(id);
+    // remove its parent and children pointers.
+    for (auto& pair: v->outgoing_) {
+      auto vv  = pair.first;
+      vv->incoming_.erase(v);
+      vv->parents_.erase(v->id());
+    }
+    for (auto& pair: v->incoming_) {
+      auto vv = pair.first;
+      vv->outgoing_.erase(v);
+    }
     delete v;
   }
 
