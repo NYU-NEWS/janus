@@ -128,7 +128,6 @@ def deploy_all(regions='us-west-2', servers_per_region=[3], instance_type='t2.sm
                 execute('cluster.put_janus_config')
                 execute('cluster.put_limits_config')
                 execute('ec2.reboot_all')
-                execute('cluster.mount_nfs')
                 done = True
             except:
                 attempts = attempts + 1
@@ -167,13 +166,20 @@ def create_work_dirs():
     for d in dirs:
         dir_path = os.path.join(env.nfs_home, d)
         run("mkdir -p {}".format(dir_path))
-  
+ 
+
+@task
+@roles('leaders')
+def install_leader_apt_packages():
+    sudo('apt-get -y install gnuplot5-nox')
+ 
 @task
 @roles('all')
 @parallel
 def install_apt_packages():
     sudo('apt-get -y update')
     sudo('apt-get -y install pkg-config libgoogle-perftools-dev')
+    execute('install_leader_apt_packages')
 
 
 @task
