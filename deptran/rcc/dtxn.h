@@ -19,15 +19,19 @@ class RccDTxn: public DTxn {
   function<void(int)> finish_reply_callback_ =  [] (int) -> void {verify(0);};
   bool commit_request_received_ = false;
   bool read_only_ = false;
-  bool committed = false;
-  bool aborted = false;
   bool __debug_replied = false;
+  void** external_ref_{nullptr};
 
   RccDTxn(epoch_t, txnid_t tid, Scheduler *mgr, bool ro);
 
   RccDTxn(txnid_t id);
 
-  virtual ~RccDTxn() {}
+  virtual ~RccDTxn() {
+    if (external_ref_ != nullptr) {
+      verify(*external_ref_ == this);
+      *external_ref_ = nullptr;
+    }
+  }
 
   virtual void DispatchExecute(const SimpleCommand &cmd,
                                int *res,
@@ -113,7 +117,6 @@ class RccDTxn: public DTxn {
   std::vector<uint64_t> pieces_;
   bool fully_dispatched{false};
   bool executed_{false};
-  bool committed_{false};
   bool during_commit = false;
   bool during_asking = false;
   bool inquire_acked_ = false;

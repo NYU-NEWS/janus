@@ -58,7 +58,7 @@ void RccDTxn::DispatchExecute(const SimpleCommand &cmd,
 
 
 void RccDTxn::Abort() {
-  aborted = true;
+  aborted_ = true;
   // TODO. nullify changes in the staging area.
 }
 
@@ -74,12 +74,12 @@ void RccDTxn::CommitExecute() {
     pair.txn_handler(nullptr, this, cmd, &tmp, m);
     ws.insert(m);
   }
-  committed = true;
+  committed_ = true;
 }
 
 void RccDTxn::ReplyFinishOk() {
 //  verify(committed != aborted);
-  int r = committed ? SUCCESS : REJECT;
+  int r = committed_ ? SUCCESS : REJECT;
   if (commit_request_received_) {
     if (__debug_replied)
       return;
@@ -375,6 +375,7 @@ bool RccDTxn::WriteColumn(Row *row,
 }
 
 void RccDTxn::TraceDep(Row* row, column_id_t col_id, int hint_flag) {
+  // TODO remove pointers in outdated epoch.
   auto r = dynamic_cast<RCCRow*>(row);
   verify(r != nullptr);
   entry_t *entry = r->get_dep_entry(col_id);
@@ -391,9 +392,12 @@ void RccDTxn::TraceDep(Row* row, column_id_t col_id, int hint_flag) {
     } else {
       tv_->AddParentEdge(parent_v, edge_type);
     }
+    ((RccDTxn*)(entry->last_))->external_ref_ = nullptr;
     entry->last_ = tv_;
+    tv_->Get().external_ref_ = &(entry->last_);
   } else if (parent_v == nullptr) {
     entry->last_ = tv_;
+    tv_->Get().external_ref_ = &(entry->last_);
   } else {
     verify(0);
   }
