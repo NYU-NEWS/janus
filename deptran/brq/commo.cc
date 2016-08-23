@@ -23,7 +23,7 @@ void BrqCommo::SendDispatch(vector<SimpleCommand> &cmd,
         if (graph.rtti_ == Marshallable::EMPTY_GRAPH) {
           RccGraph rgraph;
           auto v = rgraph.CreateV(tid);
-          RccDTxn& info = v->Get();
+          RccDTxn& info = *v;
           info.partition_.insert(par_id);
           callback(res, output, rgraph);
         } else if (graph.rtti_ == Marshallable::RCC_GRAPH) {

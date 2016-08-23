@@ -6,23 +6,24 @@
 
 namespace rococo {
 
-template <typename T>
+// This is a CRTP
+template<class T>
 class Vertex {
  private:
-  std::shared_ptr<T> data_{};
+//  std::shared_ptr<T> data_{};
  public:
   set<uint64_t> parents_{};
-  map<Vertex *, int8_t> outgoing_{}; // helper data structure
-  map<Vertex *, int8_t> incoming_{}; // helper data structure
-  set<Vertex *> removed_children_{}; // helper data structure
+  map<T *, int8_t> outgoing_{}; // helper data structure
+  map<T *, int8_t> incoming_{}; // helper data structure
+  set<T *> removed_children_{}; // helper data structure
   bool walked_{false}; // flag for traversing.
-  std::shared_ptr<vector<Vertex*>> scc_{};
+  std::shared_ptr<vector<T*>> scc_{};
 
   Vertex(uint64_t id) {
-    data_ = std::shared_ptr<T>(new T(id));
+//    data_ = std::shared_ptr<T>(new T(id));
   }
-  Vertex(Vertex<T> &v): data_(v.data_), parents_(v.parents_) {
-    ;
+  Vertex(Vertex &v): parents_(v.parents_) {
+    verify(0);
   }
   set<uint64_t>& GetParentSet() {
 #ifdef DEBUG_CODE
@@ -35,36 +36,36 @@ class Vertex {
     return parents_;
   }
 
-  void AddChildEdge(Vertex<T> *other, int8_t weight) {
+  void AddChildEdge(Vertex *other, int8_t weight) {
     // printf("add edge: %d -> %d\n", this->id(), other->id());
     outgoing_[other] |= weight;
     other->incoming_[this] |= weight;
     other->parents_.insert(other->id());
   }
 
-  void AddParentEdge(Vertex<T> *other, int8_t weight) {
+  void AddParentEdge(Vertex *other, int8_t weight) {
     // printf("add edge: %d -> %d\n", this->id(), other->id());
     parents_.insert(other->id());
     incoming_[other] |= weight;
     other->outgoing_[this] |= weight;
   }
 
-  T& Get() {
-    verify(data_);
-    return *data_;
+//  T& Get() {
+//    verify(data_);
+//    return *data_;
+//  }
+
+  virtual uint64_t id() {
+    verify(0);
   }
 
-  uint64_t id() const {
-    verify(data_);
-    return data_->id();
-  }
-
-  bool operator== (Vertex<T>& rhs) const {
+  bool operator== (Vertex& rhs) const {
+    verify(0);
     for (auto& pair: incoming_) {
       auto id = pair.first->id();
       bool found = std::any_of(rhs.incoming_.begin(),
                                rhs.incoming_.end(),
-                               [id] (std::pair<Vertex<T>*, int8_t> ppp) {
+                               [id] (std::pair<Vertex*, int8_t> ppp) {
                                  return ppp.first->id() == id;
                                });
       if (!found) return false;
@@ -73,7 +74,7 @@ class Vertex {
       auto id = pair.first->id();
       bool found = std::any_of(rhs.outgoing_.begin(),
                                rhs.outgoing_.end(),
-                               [id] (std::pair<Vertex<T>*, int8_t> ppp) {
+                               [id] (std::pair<Vertex*, int8_t> ppp) {
                                  return ppp.first->id() == id;
                                });
       if (!found) return false;
@@ -81,7 +82,7 @@ class Vertex {
     return true;
   }
 
-  bool operator!= (Vertex<T>& rhs) const {
+  bool operator!= (Vertex& rhs) const {
     return !(*this == rhs);
   }
 };
@@ -326,7 +327,7 @@ class Graph : public Marshallable {
     S.push_back(v);
 
     for (auto &kv : v->outgoing_) {
-      V* w = kv.first;
+      V* w = (V*)kv.first;
       if (w->scc_) // opt scc already computed
         continue;
 
@@ -485,7 +486,7 @@ class Graph : public Marshallable {
   virtual Scc<V>& FindSccPred(V* vertex) {
     if (vertex->scc_) {
       // already computed.
-      return *vertex->scc_;
+      return (Scc<V>&)(*(vertex->scc_));
     }
     map<V *, int> indexes;
     map<V *, int> lowlinks;
@@ -600,11 +601,10 @@ class Graph : public Marshallable {
       auto &v = pair.second;
       i++;
       int32_t n_out_edge = v->outgoing_.size();
-      m << v->id();
-      m << v->Get();
+      m << *v;
       m << n_out_edge;
       for (auto &it : v->outgoing_) {
-        V *vv = it.first;
+        V* vv = static_cast<V*>(it.first);
         verify(vv != nullptr);
         uint64_t id = vv->id();
         int8_t weight = it.second;
@@ -630,8 +630,8 @@ class Graph : public Marshallable {
     while (nn-- > 0) {
       uint64_t v_id;
       m >> v_id;
-      ref[v_id] = new V(v_id);
-      m >> ref[v_id]->Get();
+      ref[v_id] = new V(v_id); // TODO? can new RccDTxn?
+      m >> *(ref[v_id]);
       int32_t n_out_edge;
       m >> n_out_edge;
 

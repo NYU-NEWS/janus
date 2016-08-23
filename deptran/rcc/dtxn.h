@@ -7,11 +7,10 @@
 #define PHASE_RCC_COMMIT (2)
 
 namespace rococo {
-class RccDTxn: public DTxn {
+class RccDTxn: public DTxn, public Vertex<RccDTxn> {
  public:
   int8_t status_ = TXN_UKN;
   vector<SimpleCommand> dreqs_ = {};
-  Vertex<RccDTxn>* tv_{nullptr};
   RccGraph* graph_{nullptr};
   TxnOutput *ptr_output_repy_ = nullptr;
   TxnOutput output_ = {};
@@ -62,30 +61,9 @@ class RccDTxn: public DTxn {
       map<int32_t, Value> *output
   );
 
-  // TODO remove
-//  virtual void start(
-//      const RequestHeader &header,
-//      const std::vector <mdb::Value> &input,
-//      bool *deferred,
-//      ChopStartResponse *res
-//  );
-
   virtual void start_ro(const SimpleCommand&,
                         map<int32_t, Value> &output,
                         rrr::DeferredReply *defer);
-
-//  virtual void commit_anc_finish(
-//      Vertex <TxnInfo> *v,
-//      rrr::DeferredReply *defer
-//  );
-//
-//  virtual void commit_scc_anc_commit(
-//      Vertex <TxnInfo> *v,
-//      rrr::DeferredReply *defer
-//  );
-//
-//  void exe_deferred(vector <std::pair<RequestHeader,
-//                                      map<int32_t, Value> > > &outputs);
 
 
   virtual mdb::Row *CreateRow(
@@ -137,6 +115,10 @@ class RccDTxn: public DTxn {
 //    txn_id_ = 0; // for debug purpose
 //  }
 
+  txnid_t id() override {
+    return txn_id_;
+  }
+
   inline int8_t get_status() const {
     return status_;
   }
@@ -183,10 +165,6 @@ class RccDTxn: public DTxn {
 
   bool operator<(const RccDTxn &rhs) const {
     return txn_id_ < rhs.txn_id_;
-  }
-
-  inline uint64_t id() {
-    return txn_id_;
   }
 
   inline void set_id(uint64_t id) {

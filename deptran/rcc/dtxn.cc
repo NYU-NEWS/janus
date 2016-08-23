@@ -151,33 +151,7 @@ bool RccDTxn::start_exe_itfr(defer_t defer_type,
 void RccDTxn::start_ro(const SimpleCommand& cmd,
                        map<int32_t, Value> &output,
                        DeferredReply *defer) {
-//
-//  conflict_txns_.clear();
-//  auto txn_handler_pair = txn_reg_->get(cmd.root_type_, cmd.type_);
-//  int res;
-//  phase_ = 1;
-//
-//  int output_size;
-//  txn_handler_pair.txn_handler(nullptr,
-//                               this,
-//                               const_cast<SimpleCommand&>(cmd),
-//                               &res,
-//                               output);
-//
-//  // get conflicting transactions
-//  std::vector<TxnInfo *> &conflict_txns = conflict_txns_;
-//  // TODO callback: read the value and return.
-//  std::function<void(void)> cb = [defer]() {
-//    defer->reply();
-//  };
-//  // wait for them become commit.
-//
-//  DragonBall *ball = new DragonBall(conflict_txns.size() + 1, cb);
-//
-//  for (auto tinfo: conflict_txns) {
-//    tinfo->register_event(TXN_DCD, ball);
-//  }
-//  ball->trigger();
+  verify(0);
 }
 
 //void RccDTxn::commit(const ChopFinishRequest &req,
@@ -304,21 +278,6 @@ void RccDTxn::start_ro(const SimpleCommand& cmd,
 
 void RccDTxn::kiss(mdb::Row *r, int col, bool immediate) {
   verify(0);
-//  entry_t *entry = ((RCCRow *) r)->get_dep_entry(col);
-//  int8_t edge_type = immediate ? EDGE_I : EDGE_D;
-//
-//  if (read_only_) {
-//    if (entry->last_) ;
-////      conflict_txns_.push_back(entry->last_->data_.get()); //FIXME
-//  } else {
-//    if (entry->last_ != NULL) {
-//      RccVertex* last = (RccVertex*)last_;
-//      last->outgoing_[tv_] |= edge_type;
-//      tv_->incoming_[last] |= edge_type;
-//    } else {
-//      entry->last_ = tv_;
-//    }
-//  }
 }
 
 bool RccDTxn::ReadColumn(mdb::Row *row,

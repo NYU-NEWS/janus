@@ -42,7 +42,7 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
   dtxn->fully_dispatched = true;
   dep_graph_->MinItfrGraph(txn_id, res_graph, false, 1);
   if (dtxn->status() >= TXN_CMT) {
-    waitlist_.insert(dtxn->tv_);
+    waitlist_.insert(dtxn);
     verify(dtxn->epoch_ > 0);
   }
   *res = SUCCESS;
@@ -84,7 +84,7 @@ void BrqSched::OnPreAcceptWoGraph(const txnid_t txn_id,
   tinfo.fully_dispatched = true;
   dep_graph_->MinItfrGraph(txn_id, res_graph, false, 1);
   if (tinfo.status() >= TXN_CMT) {
-    waitlist_.insert(dtxn->tv_);
+    waitlist_.insert(dtxn);
     verify(dtxn->epoch_ > 0);
   }
   *res = SUCCESS;
@@ -116,9 +116,7 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
   // union the graph into dep graph
   RccDTxn *dtxn = (RccDTxn*) GetOrCreateDTxn(cmd_id);
   verify(dtxn != nullptr);
-  verify(dtxn->tv_ != nullptr);
-  auto v = dtxn->tv_;
-  RccDTxn& info = v->Get();
+  RccDTxn& info = *dtxn;
 
   verify(dtxn->ptr_output_repy_ == nullptr);
   dtxn->ptr_output_repy_ = output;
@@ -143,7 +141,7 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
     auto index = dep_graph_->Aggregate(epoch_mgr_.curr_epoch_,
                                        const_cast<RccGraph&> (graph));
     for (auto& pair: index) {
-      verify(pair.second->Get().epoch_ > 0);
+      verify(pair.second->epoch_ > 0);
     }
     TriggerCheckAfterAggregation(const_cast<RccGraph &>(graph));
     // fast path without check wait list?
@@ -172,9 +170,7 @@ void BrqSched::OnCommitWoGraph(const txnid_t cmd_id,
   // union the graph into dep graph
   RccDTxn *dtxn = (RccDTxn*) GetOrCreateDTxn(cmd_id);
   verify(dtxn != nullptr);
-  verify(dtxn->tv_ != nullptr);
-  auto v = dtxn->tv_;
-  RccDTxn& info = v->Get();
+  RccDTxn& info = *dtxn;
 
   verify(dtxn->ptr_output_repy_ == nullptr);
   dtxn->ptr_output_repy_ = output;
@@ -196,9 +192,9 @@ void BrqSched::OnCommitWoGraph(const txnid_t cmd_id,
 //      verify(r == SUCCESS);
       callback();
     };
-    dep_graph_->UpgradeStatus(v, TXN_CMT);
-    waitlist_.insert(v);
-    verify(v->Get().epoch_ > 0);
+    dep_graph_->UpgradeStatus(dtxn, TXN_CMT);
+    waitlist_.insert(dtxn);
+    verify(dtxn->epoch_ > 0);
     CheckWaitlist();
     // fast path without check wait list?
 //    if (graph.size() == 1) {
@@ -219,9 +215,7 @@ int BrqSched::OnInquire(cmdid_t cmd_id,
                         const function<void()> &callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(cmd_id);
-  RccVertex* v = dtxn->tv_;
-  verify(v != nullptr);
-  RccDTxn& info = v->Get();
+  RccDTxn& info = *dtxn;
   //register an event, triggered when the status >= COMMITTING;
   verify (info.Involve(partition_id_));
 
@@ -248,8 +242,8 @@ int BrqSched::OnInquire(cmdid_t cmd_id,
     info.callbacks_for_inquire_.push_back(cb_wrapper);
     verify(info.graphs_for_inquire_.size() ==
         info.callbacks_for_inquire_.size());
-    waitlist_.insert(v);
-    verify(v->Get().epoch_ > 0);
+    waitlist_.insert(dtxn);
+    verify(dtxn->epoch_ > 0);
   }
 
 }
