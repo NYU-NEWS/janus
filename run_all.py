@@ -83,6 +83,8 @@ def create_parser():
                         action='append',
                         default=[],
                         help="path to yml config (not containing processes)")
+    parser.add_argument("-g", "--generate-graphs", dest="generate_graph",
+                        action='store_true', default=False, help="generate graphs")
     return parser
 
 
@@ -313,8 +315,7 @@ def run_experiment(config_file, name, args, benchmark, mode, num_client):
     return res
 
 def save_git_revision():
-    rev = subprocess.check_output('cat /home/ubuntu/build/revision.txt',
-                                  shell=True)
+    rev = subprocess.check_output('cat /home/ubuntu/build/revision.txt', shell=True)
     return rev
 
     log_dir = "./log/"
@@ -366,6 +367,19 @@ def scrape_data(name):
     if res!=0:
         logger.error("Error scraping data!!")
 
+def generate_graphs(args):
+    if args.generate_graph:	
+        restore_dir = os.getcwd()
+        try:
+            archive_dir = "./archive/"
+            os.chdir(archive_dir)
+            cmd = ['../scripts/make_graphs', "*.csv", ".", ".."] 
+            res=subprocess.call(cmd)
+            if res != 0:
+                logger.error('Error generating graphs!!!')
+        finally:
+            os.chdir(restore_dir)
+	
 
 def aggregate_results(name):
     restore_dir = os.getcwd()
@@ -432,6 +446,7 @@ def run_experiments(args):
             traceback.print_exc()
     
     aggregate_results(experiment_name)
+    generate_graphs(args)
 
                    
 
