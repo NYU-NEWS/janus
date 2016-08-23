@@ -147,6 +147,7 @@ def put_limits_config():
     dest_fn = "/etc/security/limits.conf"
     Xput(source_fn, dest_fn, use_sudo=True)
 
+
 @task
 @roles('servers', 'leaders')
 @parallel(pool_size=10)
@@ -162,8 +163,8 @@ def mount_nfs():
             pass
 
 @task
+@parallel(pool_size=10)
 @roles('servers', 'leaders')
-#@parallel(pool_size=10)
 def config_nfs_client(server_ip=None):
     if server_ip is None:
         execute('ec2.load_instances')
@@ -178,11 +179,6 @@ def config_nfs_client(server_ip=None):
     template = string.Template(open(fstab_fn).read())
     contents = StringIO.StringIO(template.substitute(server_ip=server_ip))
     append('/etc/fstab', contents.getvalue(), use_sudo=True)
-    #try:
-    #    sudo('mount /mnt')
-    #except:
-    #    traceback.print_exc()
-
 
 
 @task
@@ -232,7 +228,8 @@ def setup_security_groups(regions=EC2_REGIONS.keys()):
             raise RuntimeError("could not create security group.")
     
     env.security_groups = sec_groups
-    
+
+
 @task
 @hosts('localhost')
 def load_security_grp_ips():
@@ -278,14 +275,16 @@ def load_security_grp_ips():
         else:
             raise RuntimeError("could not load security group")
 
+
 @task
 @roles('leaders')
 def build_and_deploy():
+    exe_dir='/export/janus/build'
+    run('mkdir -p ' + exe_dir) 
     local('./waf')
     with cd('/home/ubuntu/janus'):
-        run('echo `git rev-parse HEAD` > log/revision.txt')
-    target_dir='/export/janus/build'
-    run('mkdir -p ' + target_dir) 
-    Xput('./build/deptran_server', target_dir + '/deptran_server')
-    run('chmod +x ' + target_dir + '/deptran_server')
+        run('echo `git rev-parse HEAD` > ' + exe_dir + '/revision.txt')
+    Xput('./build/deptran_server', exe_dir + '/deptran_server')
+    run('chmod +x ' + exe_dir + '/deptran_server')
     Xput('deptran/rcc_rpc.py', '/export/janus/deptran/rcc_rpc.py')
+
