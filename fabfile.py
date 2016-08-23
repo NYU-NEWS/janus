@@ -67,7 +67,6 @@ def deploy_continue():
             execute('cluster.put_janus_config')
             execute('cluster.put_limits_config')
             execute('ec2.reboot_all')
-            execute('cluster.mount_nfs')
             done = True
         except:
             attempts = attempts + 1

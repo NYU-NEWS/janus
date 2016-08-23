@@ -282,6 +282,8 @@ def load_security_grp_ips():
 @roles('leaders')
 def build_and_deploy():
     local('./waf')
+    with cd('/home/ubuntu/janus'):
+        run('echo `git rev-parse HEAD` > log/revision.txt')
     target_dir='/export/janus/build'
     run('mkdir -p ' + target_dir) 
     Xput('./build/deptran_server', target_dir + '/deptran_server')
