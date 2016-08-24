@@ -12,14 +12,20 @@ RccDTxn::RccDTxn(epoch_t epoch,
                  txnid_t tid,
                  Scheduler *mgr,
                  bool ro) : DTxn(epoch, tid, mgr) {
-  tv_ = nullptr;
   read_only_ = ro;
   mdb_txn_ = mgr->GetOrCreateMTxn(tid_);
 }
 
 RccDTxn::RccDTxn(txnid_t id): DTxn(0, id, nullptr) {
   // alert!! after this a lot of stuff need to be set manually.
-  txn_id_ = id;
+  tid_ = id;
+}
+
+RccDTxn::RccDTxn(RccDTxn& rhs_dtxn) :
+    Vertex<RccDTxn>(rhs_dtxn),
+    DTxn(rhs_dtxn.epoch_, rhs_dtxn.tid_, nullptr),
+    partition_(rhs_dtxn.partition_),
+    status_(rhs_dtxn.status_) {
 }
 
 void RccDTxn::DispatchExecute(const SimpleCommand &cmd,
@@ -342,21 +348,21 @@ void RccDTxn::TraceDep(Row* row, column_id_t col_id, int hint_flag) {
   // TODO optimize.
   RccVertex* parent_v = (RccVertex*)(entry->last_);
 
-  if (parent_v == tv_) {
+  if (parent_v == this) {
     // skip
   } else if (parent_v != nullptr) {
-    RccDTxn& info = parent_v->Get();
+    RccDTxn& info = *parent_v;
     if (info.IsExecuted()) {
       ;
     } else {
-      tv_->AddParentEdge(parent_v, edge_type);
+      this->AddParentEdge(parent_v, edge_type);
     }
     ((RccDTxn*)(entry->last_))->external_ref_ = nullptr;
-    entry->last_ = tv_;
-    tv_->Get().external_ref_ = &(entry->last_);
+    entry->last_ = this;
+    this->external_ref_ = &(entry->last_);
   } else if (parent_v == nullptr) {
-    entry->last_ = tv_;
-    tv_->Get().external_ref_ = &(entry->last_);
+    entry->last_ = this;
+    this->external_ref_ = &(entry->last_);
   } else {
     verify(0);
   }

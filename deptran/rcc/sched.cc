@@ -30,7 +30,7 @@ RccSched::RccSched() : Scheduler(), waitlist_(), mtx_() {
   dep_graph_->sched_ = this;
   dep_graph_->partition_id_ = partition_id_;
   waitlist_checker_ = new WaitlistChecker(this);
-  epoch_enabled_ = true;
+  epoch_enabled_ = false;
 }
 
 RccSched::~RccSched() {
@@ -43,7 +43,7 @@ DTxn* RccSched::GetOrCreateDTxn(txnid_t tid, bool ro) {
 //  RccDTxn* dtxn = (RccDTxn*) Scheduler::GetOrCreateDTxn(tid, ro);
   RccVertex* v = dep_graph_->FindOrCreateRccVertex(tid, this);
 //  RccDTxn* dtxn = (RccDTxn*) dep_graph_->FindOrCreateTxnInfo(tid);
-  RccDTxn& dtxn = v->Get();
+  RccDTxn& dtxn = *v;
   if (dtxn.epoch_ == 0) {
     dtxn.epoch_ = epoch_mgr_.curr_epoch_;
     if (epoch_enabled_) {
@@ -150,7 +150,7 @@ int RccSched::OnInquire(cmdid_t cmd_id,
   verify(0);
   RccVertex* v = dep_graph_->FindV(cmd_id);
   verify(v != nullptr);
-  RccDTxn& info = v->Get();
+  RccDTxn& info = *v;
   //register an event, triggered when the status >= COMMITTING;
   verify (info.Involve(partition_id_));
 
@@ -202,7 +202,7 @@ void RccSched::CheckWaitlist() {
     verify(v != nullptr);
 //  for (RccVertex *v : waitlist_) {
     // TODO minimize the length of the waitlist.
-    RccDTxn& tinfo = v->Get();
+    RccDTxn& tinfo = *v;
     AnswerIfInquired(tinfo);
     InquireAboutIfNeeded(tinfo); // inquire about unknown transaction.
     if (tinfo.status() >= TXN_CMT &&
@@ -210,12 +210,12 @@ void RccSched::CheckWaitlist() {
       if (AllAncCmt(v)) {
 //        check_again = true;
         RccScc& scc = dep_graph_->FindSCC(v);
-        verify(v->Get().epoch_ > 0);
+        verify(v->epoch_ > 0);
         Decide(scc);
         if (AllAncFns(scc)) {
           // FIXME
           for (auto vv : scc) {
-            verify(vv->Get().epoch_ > 0);
+            verify(vv->epoch_ > 0);
 #ifdef DEBUG_CODE
             verify(AllAncCmt(vv));
           verify(vv->Get().status() >= TXN_DCD);
@@ -324,22 +324,22 @@ void RccSched::CheckWaitlist() {
 }
 
 void RccSched::AddChildrenIntoWaitlist(RccVertex* v) {
-  RccDTxn& tinfo = v->Get();
+  RccDTxn& tinfo = *v;
   verify(tinfo.status() >= TXN_DCD && tinfo.IsExecuted());
 
   for (auto& child_pair : v->outgoing_) {
     RccVertex* child_v = child_pair.first;
-    if (!child_v->Get().IsExecuted() &&
+    if (!child_v->IsExecuted() &&
         waitlist_.count(child_v) == 0) {
       waitlist_.insert(child_v);
-      verify(child_v->Get().epoch_ > 0);
+      verify(child_v->epoch_ > 0);
     }
   }
   for (RccVertex* child_v : v->removed_children_) {
-    if (!child_v->Get().IsExecuted() &&
+    if (!child_v->IsExecuted() &&
         waitlist_.count(child_v) == 0) {
       waitlist_.insert(child_v);
-      verify(child_v->Get().epoch_ > 0);
+      verify(child_v->epoch_ > 0);
     }
   }
 #ifdef DEBUG_CODE
@@ -418,7 +418,7 @@ void RccSched::InquireAboutIfNeeded(RccDTxn &dtxn) {
     parid_t par_id = *(dtxn.partition_.begin());
     dtxn.during_asking = true;
     commo()->SendInquire(par_id,
-                         dtxn.txn_id_,
+                         dtxn.tid_,
                          std::bind(&RccSched::InquireAck,
                                    this,
                                    dtxn.id(),
@@ -426,15 +426,15 @@ void RccSched::InquireAboutIfNeeded(RccDTxn &dtxn) {
   }
 }
 
-void RccSched::InquireAbout(Vertex<RccDTxn> *av) {
+void RccSched::InquireAbout(RccVertex *av) {
 //  Graph<RccDTxn> &txn_gra = dep_graph_->txn_gra_;
-  RccDTxn &tinfo = av->Get();
+  RccDTxn &tinfo = *av;
   verify(!tinfo.Involve(partition_id_));
   verify(!tinfo.during_asking);
   parid_t par_id = *(tinfo.partition_.begin());
   tinfo.during_asking = true;
   commo()->SendInquire(par_id,
-                       tinfo.txn_id_,
+                       tinfo.tid_,
                        std::bind(&RccSched::InquireAck,
                                  this,
                                  tinfo.id(),
@@ -444,7 +444,7 @@ void RccSched::InquireAbout(Vertex<RccDTxn> *av) {
 void RccSched::InquireAck(cmdid_t cmd_id, RccGraph& graph) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto v = dep_graph_->FindV(cmd_id);
-  RccDTxn& tinfo = v->Get();
+  RccDTxn& tinfo = *v;
   tinfo.inquire_acked_ = true;
   dep_graph_->Aggregate(epoch_mgr_.curr_epoch_, const_cast<RccGraph&>(graph));
   TriggerCheckAfterAggregation(const_cast<RccGraph&>(graph));
@@ -455,7 +455,7 @@ RccVertex* RccSched::__DebugFindAnOngoingAncestor(RccVertex* vertex) {
   RccVertex* ret = nullptr;
   set<RccVertex*> walked;
   std::function<bool(RccVertex*)> func = [&ret, vertex] (RccVertex* v) -> bool {
-    RccDTxn& info = v->Get();
+    RccDTxn& info = *v;
     if (info.status() >= TXN_CMT) {
       return true;
     } else {
@@ -470,7 +470,7 @@ RccVertex* RccSched::__DebugFindAnOngoingAncestor(RccVertex* vertex) {
 bool RccSched::AllAncCmt(RccVertex *vertex) {
   bool all_anc_cmt = true;
   std::function<int(RccVertex*)> func = [&all_anc_cmt] (RccVertex* v) -> int {
-    RccDTxn& info = v->Get();
+    RccDTxn& info = *v;
     int r = 0;
     if (info.IsExecuted() || info.IsAborted()) {
       r = RccGraph::SearchHint::Skip;
@@ -488,7 +488,7 @@ bool RccSched::AllAncCmt(RccVertex *vertex) {
 
 void RccSched::Decide(const RccScc& scc) {
   for (auto v : scc) {
-    RccDTxn& info = v->Get();
+    RccDTxn& info = *v;
     dep_graph_->UpgradeStatus(v, TXN_DCD);
 //    Log_info("txnid: %llx, parent size: %d", v->id(), v->parents_.size());
   }
@@ -559,7 +559,7 @@ void RccSched::TriggerCheckAfterAggregation(RccGraph &graph) {
 //    if (v->Get().status() >= TXN_CMT)
     check = true;
     waitlist_.insert(v);
-    verify(v->Get().epoch_ > 0);
+    verify(v->epoch_ > 0);
   }
   if (check)
     CheckWaitlist();
@@ -571,7 +571,7 @@ bool RccSched::HasAbortedAncestor(const RccScc& scc) {
   bool has_aborted = false;
   std::function<int(RccVertex*)> func =
       [&has_aborted] (RccVertex* v) -> int {
-        RccDTxn& info = v->Get();
+        RccDTxn& info = *v;
         if (info.IsExecuted()) {
           return RccGraph::SearchHint::Skip;
         }
@@ -590,7 +590,7 @@ bool RccSched::FullyDispatched(const RccScc& scc) {
                          scc.end(),
                          [this] (RccVertex *v) {
                            bool r = true;
-                           RccDTxn& tinfo = v->Get();
+                           RccDTxn& tinfo = *v;
                            if (tinfo.Involve(partition_id_)) {
                              r = tinfo.fully_dispatched;
                            }
@@ -606,7 +606,7 @@ bool RccSched::AllAncFns(const RccScc& scc) {
   bool all_anc_fns = true;
   std::function<int(RccVertex*)> func =
       [&all_anc_fns, &scc_set] (RccVertex* v) -> int {
-    RccDTxn& info = v->Get();
+    RccDTxn& info = *v;
     if (info.IsExecuted()) {
       return RccGraph::SearchHint::Skip;
     } else if (info.status() >= TXN_DCD) {
@@ -625,7 +625,7 @@ bool RccSched::AllAncFns(const RccScc& scc) {
 void RccSched::Execute(const RccScc& scc) {
   verify(scc.size() > 0);
   for (auto v : scc) {
-    RccDTxn& dtxn = v->Get();
+    RccDTxn& dtxn = *v;
     Execute(dtxn);
   }
 }
@@ -637,7 +637,7 @@ void RccSched::Execute(RccDTxn& dtxn) {
   if (dtxn.Involve(partition_id_)) {
     dtxn.CommitExecute();
     dtxn.ReplyFinishOk();
-    TrashExecutor(dtxn.txn_id_);
+    TrashExecutor(dtxn.tid_);
   }
 }
 
@@ -645,7 +645,7 @@ void RccSched::Abort(const RccScc& scc) {
   verify(0);
   verify(scc.size() > 0);
   for (auto v : scc) {
-    RccDTxn& info = v->Get();
+    RccDTxn& info = *v;
     info.union_status(TXN_ABT); // FIXME, remove this.
     verify(info.IsAborted());
     RccDTxn *dtxn = (RccDTxn *) GetDTxn(info.id());

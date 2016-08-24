@@ -153,7 +153,7 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
           // TODO
           RccVertex* new_parent_v = new_graph->FindOrCreateV(parent_v->id());
           RccDTxn& tinfo = *new_parent_v;
-          tinfo.partition_ = parent_v->.partition_;
+          tinfo.partition_ = parent_v->partition_;
           verify(tinfo.status() == TXN_UKN);
           new_v->AddParentEdge(new_parent_v, weight);
         } else if (depth == -1) {
@@ -317,7 +317,7 @@ RccVertex* RccGraph::AggregateVertex(RccVertex *rhs_v) {
   /**
    * If local vertex is not yet fully dispatched, what to do?
    */
-  RccDTxn &info = vertex->;
+  RccDTxn &info = *vertex;
   RccDTxn &rhs_tinfo = *rhs_v;
 //  partition_id_;
 
@@ -400,7 +400,7 @@ map<txnid_t, RccVertex*> RccGraph::Aggregate(epoch_t epoch, RccGraph &graph) {
       dtxn.epoch_ = epoch;
     }
     if (sched_) {
-      sched_->epoch_mgr_.AddToEpoch(dtxn.epoch_, dtxn.txn_id_);
+      sched_->epoch_mgr_.AddToEpoch(dtxn.epoch_, dtxn.tid_);
     }
     verify(vertex->id() == pair.second->id());
     verify(vertex_index_.count(vertex->id()) > 0);

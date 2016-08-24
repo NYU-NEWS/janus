@@ -88,7 +88,7 @@ void RccCoord::DispatchAck(phase_t phase,
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(phase == phase_); // cannot proceed without all acks.
   verify(txn().root_id_ == txn().id_);
-  RccDTxn& info = graph.vertex_index_.at(txn().root_id_)->Get();
+  RccDTxn& info = *(graph.vertex_index_.at(txn().root_id_));
 //  verify(cmd[0].root_id_ == info.id());
 //  verify(info.partition_.find(cmd.partition_id_) != info.partition_.end());
 
@@ -133,7 +133,7 @@ void RccCoord::Finish() {
     cmd_->id_,
     graph_.size());
   RccVertex* v = graph_.FindV(cmd_->id_);
-  RccDTxn& info = v->Get();
+  RccDTxn& info = *v;
   verify(ch->partition_ids_.size() == info.partition_.size());
   graph_.UpgradeStatus(v, TXN_CMT);
 

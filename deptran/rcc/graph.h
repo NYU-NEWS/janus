@@ -19,11 +19,16 @@ class Vertex {
   bool walked_{false}; // flag for traversing.
   std::shared_ptr<vector<T*>> scc_{};
 
-  Vertex(uint64_t id) {
+  T* this_pointer() {
+    T* ret = static_cast<T*>(this);
+    verify(ret != nullptr);
+    return ret;
+  }
+
+  Vertex() {
 //    data_ = std::shared_ptr<T>(new T(id));
   }
   Vertex(Vertex &v): parents_(v.parents_) {
-    verify(0);
   }
   set<uint64_t>& GetParentSet() {
 #ifdef DEBUG_CODE
@@ -36,18 +41,18 @@ class Vertex {
     return parents_;
   }
 
-  void AddChildEdge(Vertex *other, int8_t weight) {
+  void AddChildEdge(T* other, int8_t weight) {
     // printf("add edge: %d -> %d\n", this->id(), other->id());
     outgoing_[other] |= weight;
-    other->incoming_[this] |= weight;
+    other->incoming_[this_pointer()] |= weight;
     other->parents_.insert(other->id());
   }
 
-  void AddParentEdge(Vertex *other, int8_t weight) {
+  void AddParentEdge(T *other, int8_t weight) {
     // printf("add edge: %d -> %d\n", this->id(), other->id());
     parents_.insert(other->id());
     incoming_[other] |= weight;
-    other->outgoing_[this] |= weight;
+    other->outgoing_[this_pointer()] |= weight;
   }
 
 //  T& Get() {
@@ -57,6 +62,7 @@ class Vertex {
 
   virtual uint64_t id() {
     verify(0);
+    return 0;
   }
 
   bool operator== (Vertex& rhs) const {
@@ -601,6 +607,7 @@ class Graph : public Marshallable {
       auto &v = pair.second;
       i++;
       int32_t n_out_edge = v->outgoing_.size();
+      m << v->id();
       m << *v;
       m << n_out_edge;
       for (auto &it : v->outgoing_) {

@@ -21,9 +21,9 @@ class RccDTxn: public DTxn, public Vertex<RccDTxn> {
   bool __debug_replied = false;
   void** external_ref_{nullptr};
 
-  RccDTxn(epoch_t, txnid_t tid, Scheduler *mgr, bool ro);
-
   RccDTxn(txnid_t id);
+  RccDTxn(RccDTxn& rhs_dtxn);
+  RccDTxn(epoch_t, txnid_t tid, Scheduler *mgr, bool ro);
 
   virtual ~RccDTxn() {
     if (external_ref_ != nullptr) {
@@ -54,7 +54,7 @@ class RccDTxn: public DTxn, public Vertex<RccDTxn> {
 
   void TraceDep(Row* row, column_id_t col_id, int hint_flag);
 
-    virtual bool start_exe_itfr(
+  virtual bool start_exe_itfr(
       defer_t defer,
       TxnHandler &handler,
       const SimpleCommand& cmd,
@@ -90,7 +90,6 @@ class RccDTxn: public DTxn, public Vertex<RccDTxn> {
 //  int8_t status_{TXN_UKN};
 
  public:
-  txnid_t txn_id_;
   std::set<uint32_t> partition_;
   std::vector<uint64_t> pieces_;
   bool fully_dispatched{false};
@@ -116,7 +115,7 @@ class RccDTxn: public DTxn, public Vertex<RccDTxn> {
 //  }
 
   txnid_t id() override {
-    return txn_id_;
+    return tid_;
   }
 
   inline int8_t get_status() const {
@@ -164,11 +163,11 @@ class RccDTxn: public DTxn, public Vertex<RccDTxn> {
   }
 
   bool operator<(const RccDTxn &rhs) const {
-    return txn_id_ < rhs.txn_id_;
+    return tid_ < rhs.tid_;
   }
 
   inline void set_id(uint64_t id) {
-    txn_id_ = id;
+    tid_ = id;
   }
 
   inline void union_data(const RccDTxn &ti,
@@ -230,13 +229,13 @@ class RccDTxn: public DTxn, public Vertex<RccDTxn> {
 
 
 inline rrr::Marshal &operator<<(rrr::Marshal &m, const RccDTxn &ti) {
-  m << ti.txn_id_ << ti.status() << ti.partition_ << ti.epoch_;
+  m << ti.tid_ << ti.status() << ti.partition_ << ti.epoch_;
   return m;
 }
 
 inline rrr::Marshal &operator>>(rrr::Marshal &m, RccDTxn &ti) {
   int8_t status;
-  m >> ti.txn_id_ >> status >> ti.partition_ >> ti.epoch_;
+  m >> ti.tid_ >> status >> ti.partition_ >> ti.epoch_;
   ti.union_status(status);
   return m;
 }

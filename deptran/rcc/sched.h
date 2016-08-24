@@ -74,7 +74,7 @@ class RccSched : public Scheduler {
   void DestroyExecutor(txnid_t tid) override;
 
 
-  void InquireAbout(Vertex<RccDTxn> *av);
+  void InquireAbout(RccVertex *av);
   void InquireAboutIfNeeded(RccDTxn &dtxn);
   void AnswerIfInquired(RccDTxn &tinfo);
   void CheckWaitlist();
