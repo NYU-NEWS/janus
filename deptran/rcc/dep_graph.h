@@ -1,20 +1,18 @@
 #pragma once
 
-//#include "all.h"
 #include "graph.h"
 #include "dtxn.h"
 #include "marshal-value.h"
 #include "command.h"
 #include "command_marshaler.h"
 #include "../marshallable.h"
-//#include "rcc_srpc.h"
 
 /**
  * This is NOT thread safe!!!
  */
 namespace rococo {
 
-typedef Vertex<RccDTxn> RccVertex;
+typedef RccDTxn RccVertex;
 typedef vector<RccVertex*> RccScc;
 
 class EmptyGraph : public Marshallable {
@@ -48,13 +46,11 @@ class RccGraph : public Graph<RccVertex> {
     return data_;
   };
 
-//  RococoProxy *get_server_proxy(uint32_t id);
-
   /** on start_req */
   RccVertex* FindOrCreateRccVertex(txnid_t txn_id, RccSched* sched);
   void RemoveVertex(txnid_t txn_id);
-  void BuildEdgePointer(RccGraph &graph,
-                        map<txnid_t, RccVertex*>& index);
+  virtual void BuildEdgePointer(RccGraph &graph,
+                                map<txnid_t, RccVertex*>& index);
   void RebuildEdgePointer(map<txnid_t, RccVertex*>& index);
   RccVertex* AggregateVertex(RccVertex *rhs_v);
   void UpgradeStatus(RccVertex* v, int8_t status);
@@ -64,52 +60,6 @@ class RccGraph : public Graph<RccVertex> {
   void SelectGraph(set<RccVertex*> vertexes, RccGraph* new_graph);
   RccScc& FindSCC(RccVertex *vertex) override;
   bool AllAncCmt(RccVertex *vertex);
-//  void union_txn_graph(Graph <TxnInfo> &gra) {
-//    txn_gra_.Aggregate(gra, true);
-//  }
-
-  std::vector<RccVertex*> find_txn_scc(RccDTxn &ti) {
-    verify(0);
-//    return FindSCC(ti.id());
-  }
-
-  void find_txn_anc_opt(RccVertex* source,
-                        std::unordered_set<RccVertex *> &ret_set);
-
-  void find_txn_anc_opt(uint64_t txn_id,
-                        std::unordered_set<RccVertex *> &ret_set);
-
-  void find_txn_nearest_anc(RccVertex *v,
-                            std::set<RccVertex *> &ret_set) {
-    for (auto &kv: v->incoming_) {
-      ret_set.insert(kv.first);
-    }
-  }
-//
-//  void find_txn_scc_nearest_anc(
-//      Vertex <TxnInfo> *v,
-//      std::set<Vertex < TxnInfo> *
-//  > &ret_set
-//  ) {
-//    std::vector<Vertex < TxnInfo>*> scc = FindSCC(v);
-//    for (auto v: scc) {
-//      find_txn_nearest_anc(v, ret_set);
-//    }
-//
-//    for (auto &scc_v: scc) {
-//      ret_set.erase(scc_v);
-//    }
-//
-//    //if (RandomGenerator::rand(1, 100) == 1) {
-//    //    Log::info("scc anc size: %d", ret_set.size());
-//    //}
-//  }
-//
-//  void find_txn_scc_anc_opt(
-//      uint64_t txn_id,
-//      std::unordered_set<Vertex < TxnInfo> *
-//  > &ret_set
-//  );
 
   bool operator== (RccGraph& rhs) const;
 

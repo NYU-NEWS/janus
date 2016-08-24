@@ -7,11 +7,10 @@
 #define PHASE_RCC_COMMIT (2)
 
 namespace rococo {
-class RccDTxn: public DTxn {
+class RccDTxn: public DTxn, public Vertex<RccDTxn> {
  public:
   int8_t status_ = TXN_UKN;
   vector<SimpleCommand> dreqs_ = {};
-  Vertex<RccDTxn>* tv_{nullptr};
   RccGraph* graph_{nullptr};
   TxnOutput *ptr_output_repy_ = nullptr;
   TxnOutput output_ = {};
@@ -22,9 +21,9 @@ class RccDTxn: public DTxn {
   bool __debug_replied = false;
   void** external_ref_{nullptr};
 
-  RccDTxn(epoch_t, txnid_t tid, Scheduler *mgr, bool ro);
-
   RccDTxn(txnid_t id);
+  RccDTxn(RccDTxn& rhs_dtxn);
+  RccDTxn(epoch_t, txnid_t tid, Scheduler *mgr, bool ro);
 
   virtual ~RccDTxn() {
     if (external_ref_ != nullptr) {
@@ -55,37 +54,16 @@ class RccDTxn: public DTxn {
 
   void TraceDep(Row* row, column_id_t col_id, int hint_flag);
 
-    virtual bool start_exe_itfr(
+  virtual bool start_exe_itfr(
       defer_t defer,
       TxnHandler &handler,
       const SimpleCommand& cmd,
       map<int32_t, Value> *output
   );
 
-  // TODO remove
-//  virtual void start(
-//      const RequestHeader &header,
-//      const std::vector <mdb::Value> &input,
-//      bool *deferred,
-//      ChopStartResponse *res
-//  );
-
   virtual void start_ro(const SimpleCommand&,
                         map<int32_t, Value> &output,
                         rrr::DeferredReply *defer);
-
-//  virtual void commit_anc_finish(
-//      Vertex <TxnInfo> *v,
-//      rrr::DeferredReply *defer
-//  );
-//
-//  virtual void commit_scc_anc_commit(
-//      Vertex <TxnInfo> *v,
-//      rrr::DeferredReply *defer
-//  );
-//
-//  void exe_deferred(vector <std::pair<RequestHeader,
-//                                      map<int32_t, Value> > > &outputs);
 
 
   virtual mdb::Row *CreateRow(
@@ -112,7 +90,6 @@ class RccDTxn: public DTxn {
 //  int8_t status_{TXN_UKN};
 
  public:
-  txnid_t txn_id_;
   std::set<uint32_t> partition_;
   std::vector<uint64_t> pieces_;
   bool fully_dispatched{false};
@@ -136,6 +113,10 @@ class RccDTxn: public DTxn {
 //    Log_debug("txn info destruct, id: %llx", txn_id_);
 //    txn_id_ = 0; // for debug purpose
 //  }
+
+  txnid_t id() override {
+    return tid_;
+  }
 
   inline int8_t get_status() const {
     return status_;
@@ -182,15 +163,11 @@ class RccDTxn: public DTxn {
   }
 
   bool operator<(const RccDTxn &rhs) const {
-    return txn_id_ < rhs.txn_id_;
-  }
-
-  inline uint64_t id() {
-    return txn_id_;
+    return tid_ < rhs.tid_;
   }
 
   inline void set_id(uint64_t id) {
-    txn_id_ = id;
+    tid_ = id;
   }
 
   inline void union_data(const RccDTxn &ti,
@@ -252,13 +229,13 @@ class RccDTxn: public DTxn {
 
 
 inline rrr::Marshal &operator<<(rrr::Marshal &m, const RccDTxn &ti) {
-  m << ti.txn_id_ << ti.status() << ti.partition_ << ti.epoch_;
+  m << ti.tid_ << ti.status() << ti.partition_ << ti.epoch_;
   return m;
 }
 
 inline rrr::Marshal &operator>>(rrr::Marshal &m, RccDTxn &ti) {
   int8_t status;
-  m >> ti.txn_id_ >> status >> ti.partition_ >> ti.epoch_;
+  m >> ti.tid_ >> status >> ti.partition_ >> ti.epoch_;
   ti.union_status(status);
   return m;
 }

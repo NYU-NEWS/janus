@@ -12,14 +12,20 @@ RccDTxn::RccDTxn(epoch_t epoch,
                  txnid_t tid,
                  Scheduler *mgr,
                  bool ro) : DTxn(epoch, tid, mgr) {
-  tv_ = nullptr;
   read_only_ = ro;
   mdb_txn_ = mgr->GetOrCreateMTxn(tid_);
 }
 
 RccDTxn::RccDTxn(txnid_t id): DTxn(0, id, nullptr) {
   // alert!! after this a lot of stuff need to be set manually.
-  txn_id_ = id;
+  tid_ = id;
+}
+
+RccDTxn::RccDTxn(RccDTxn& rhs_dtxn) :
+    Vertex<RccDTxn>(rhs_dtxn),
+    DTxn(rhs_dtxn.epoch_, rhs_dtxn.tid_, nullptr),
+    partition_(rhs_dtxn.partition_),
+    status_(rhs_dtxn.status_) {
 }
 
 void RccDTxn::DispatchExecute(const SimpleCommand &cmd,
@@ -151,33 +157,7 @@ bool RccDTxn::start_exe_itfr(defer_t defer_type,
 void RccDTxn::start_ro(const SimpleCommand& cmd,
                        map<int32_t, Value> &output,
                        DeferredReply *defer) {
-//
-//  conflict_txns_.clear();
-//  auto txn_handler_pair = txn_reg_->get(cmd.root_type_, cmd.type_);
-//  int res;
-//  phase_ = 1;
-//
-//  int output_size;
-//  txn_handler_pair.txn_handler(nullptr,
-//                               this,
-//                               const_cast<SimpleCommand&>(cmd),
-//                               &res,
-//                               output);
-//
-//  // get conflicting transactions
-//  std::vector<TxnInfo *> &conflict_txns = conflict_txns_;
-//  // TODO callback: read the value and return.
-//  std::function<void(void)> cb = [defer]() {
-//    defer->reply();
-//  };
-//  // wait for them become commit.
-//
-//  DragonBall *ball = new DragonBall(conflict_txns.size() + 1, cb);
-//
-//  for (auto tinfo: conflict_txns) {
-//    tinfo->register_event(TXN_DCD, ball);
-//  }
-//  ball->trigger();
+  verify(0);
 }
 
 //void RccDTxn::commit(const ChopFinishRequest &req,
@@ -304,21 +284,6 @@ void RccDTxn::start_ro(const SimpleCommand& cmd,
 
 void RccDTxn::kiss(mdb::Row *r, int col, bool immediate) {
   verify(0);
-//  entry_t *entry = ((RCCRow *) r)->get_dep_entry(col);
-//  int8_t edge_type = immediate ? EDGE_I : EDGE_D;
-//
-//  if (read_only_) {
-//    if (entry->last_) ;
-////      conflict_txns_.push_back(entry->last_->data_.get()); //FIXME
-//  } else {
-//    if (entry->last_ != NULL) {
-//      RccVertex* last = (RccVertex*)last_;
-//      last->outgoing_[tv_] |= edge_type;
-//      tv_->incoming_[last] |= edge_type;
-//    } else {
-//      entry->last_ = tv_;
-//    }
-//  }
 }
 
 bool RccDTxn::ReadColumn(mdb::Row *row,
@@ -383,21 +348,21 @@ void RccDTxn::TraceDep(Row* row, column_id_t col_id, int hint_flag) {
   // TODO optimize.
   RccVertex* parent_v = (RccVertex*)(entry->last_);
 
-  if (parent_v == tv_) {
+  if (parent_v == this) {
     // skip
   } else if (parent_v != nullptr) {
-    RccDTxn& info = parent_v->Get();
+    RccDTxn& info = *parent_v;
     if (info.IsExecuted()) {
       ;
     } else {
-      tv_->AddParentEdge(parent_v, edge_type);
+      this->AddParentEdge(parent_v, edge_type);
     }
     ((RccDTxn*)(entry->last_))->external_ref_ = nullptr;
-    entry->last_ = tv_;
-    tv_->Get().external_ref_ = &(entry->last_);
+    entry->last_ = this;
+    this->external_ref_ = &(entry->last_);
   } else if (parent_v == nullptr) {
-    entry->last_ = tv_;
-    tv_->Get().external_ref_ = &(entry->last_);
+    entry->last_ = this;
+    this->external_ref_ = &(entry->last_);
   } else {
     verify(0);
   }
