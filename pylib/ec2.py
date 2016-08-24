@@ -116,7 +116,6 @@ def load_instances():
     if 'instances_loaded' in env and env.instances_loaded:
         return
 
-    persist = False
     fn = instance_data_fn()
     
     if not os.path.exists(fn):
@@ -129,23 +128,6 @@ def load_instances():
                               for region, instance_ids in data.iteritems() }
         logging.info("created: {}".format(created_instances))
 
-    
-    if False:
-        logging.info("loaded instance data:")
-        for region, instances in created_instances.iteritems():
-            logging.info(region + ":")
-            for instance in instances:
-                try:
-                    logging.info("{iid}: public={ip}, private={pip}".format(
-                        iid=instance.id, 
-                        ip=instance.public_ip_address,
-                        pip=instance.private_ip_address))
-                except AttributeError as e:
-                    logging.info("no instance data for {iid}; removing".format(iid=instance.id))
-                    created_instances[region].remove(instance)
-                    persist = True
-    if persist:
-        persist_instances()
     env.instances_loaded = True
                  
 
