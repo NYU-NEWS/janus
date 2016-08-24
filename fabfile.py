@@ -68,6 +68,7 @@ def deploy_continue():
             execute('build', args="-t")
             execute('cluster.put_janus_config')
             execute('cluster.put_limits_config')
+            execute('cluster.mount_nfs')
             execute('ec2.reboot_all')
             done = True
         except:
@@ -130,6 +131,7 @@ def deploy_all(regions='us-west-2', servers_per_region=[3], instance_type='t2.sm
                 execute('build', args="-t")
                 execute('cluster.put_janus_config')
                 execute('cluster.put_limits_config')
+                execute('cluster.mount_nfs')
                 execute('ec2.reboot_all')
                 done = True
             except:
