@@ -18,7 +18,7 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
 //    Log_info("on pre-accept graph size: %d", graph.size());
   verify(txn_id > 0);
   verify(cmds[0].root_id_ == txn_id);
-  dep_graph_->Aggregate(epoch_mgr_.curr_epoch_, const_cast<RccGraph&>(graph));
+  Aggregate(epoch_mgr_.curr_epoch_, const_cast<RccGraph&>(graph));
   TriggerCheckAfterAggregation(const_cast<RccGraph&>(graph));
   // TODO FIXME
   // add interference based on cmds.
@@ -40,7 +40,7 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
   }
   verify(!dtxn->fully_dispatched);
   dtxn->fully_dispatched = true;
-  dep_graph_->MinItfrGraph(txn_id, res_graph, false, 1);
+  MinItfrGraph(txn_id, res_graph, false, 1);
   if (dtxn->status() >= TXN_CMT) {
     waitlist_.insert(dtxn);
     verify(dtxn->epoch_ > 0);
@@ -82,7 +82,7 @@ void BrqSched::OnPreAcceptWoGraph(const txnid_t txn_id,
   }
   verify(!tinfo.fully_dispatched);
   tinfo.fully_dispatched = true;
-  dep_graph_->MinItfrGraph(txn_id, res_graph, false, 1);
+  MinItfrGraph(txn_id, res_graph, false, 1);
   if (tinfo.status() >= TXN_CMT) {
     waitlist_.insert(dtxn);
     verify(dtxn->epoch_ > 0);
@@ -138,7 +138,7 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
 //      verify(r == SUCCESS);
       callback();
     };
-    auto index = dep_graph_->Aggregate(epoch_mgr_.curr_epoch_,
+    auto index = Aggregate(epoch_mgr_.curr_epoch_,
                                        const_cast<RccGraph&> (graph));
     for (auto& pair: index) {
       verify(pair.second->epoch_ > 0);
@@ -192,7 +192,7 @@ void BrqSched::OnCommitWoGraph(const txnid_t cmd_id,
 //      verify(r == SUCCESS);
       callback();
     };
-    dep_graph_->UpgradeStatus(dtxn, TXN_CMT);
+    UpgradeStatus(dtxn, TXN_CMT);
     waitlist_.insert(dtxn);
     verify(dtxn->epoch_ > 0);
     CheckWaitlist();
@@ -217,7 +217,7 @@ int BrqSched::OnInquire(cmdid_t cmd_id,
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(cmd_id);
   RccDTxn& info = *dtxn;
   //register an event, triggered when the status >= COMMITTING;
-  verify (info.Involve(partition_id_));
+  verify (info.Involve(Scheduler::partition_id_));
 
   auto cb_wrapper = [callback, graph] () {
 #ifdef DEBUG_CODE
@@ -235,7 +235,7 @@ int BrqSched::OnInquire(cmdid_t cmd_id,
   };
 
   if (info.status() >= TXN_CMT) {
-    dep_graph_->MinItfrGraph(cmd_id, graph, false, 1);
+    MinItfrGraph(cmd_id, graph, false, 1);
     cb_wrapper();
   } else {
     info.graphs_for_inquire_.push_back(graph);

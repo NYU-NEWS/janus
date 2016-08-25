@@ -14,7 +14,7 @@ class RccCommo;
 class TxnInfo;
 class WaitlistChecker;
 
-class RccSched : public Scheduler {
+class RccSched : public Scheduler, public RccGraph {
  public:
   static map<txnid_t, int32_t> __debug_xxx_s;
   static std::recursive_mutex __debug_mutex_s;
@@ -26,7 +26,7 @@ class RccSched : public Scheduler {
   };
 
  public:
-  RccGraph *dep_graph_ = nullptr;
+//  RccGraph *dep_graph_ = nullptr;
   WaitlistChecker* waitlist_checker_ = nullptr;
   set<RccVertex*> waitlist_ = {};
   set<RccVertex*> fridge_ = {};
@@ -42,8 +42,8 @@ class RccSched : public Scheduler {
   DTxn* GetOrCreateDTxn(txnid_t tid, bool ro = false) override ;
 
   virtual void SetPartitionId(parid_t par_id) {
-    partition_id_ = par_id;
-    dep_graph_->partition_id_ = par_id;
+    Scheduler::partition_id_ = par_id;
+    RccGraph::partition_id_ = par_id;
   }
 
   int OnDispatch(const vector<SimpleCommand> &cmd,

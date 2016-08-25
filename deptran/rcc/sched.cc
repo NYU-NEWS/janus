@@ -25,10 +25,8 @@ void RccSched::__DebugCheckParentSetSize(txnid_t tid, int32_t sz) {
 }
 
 RccSched::RccSched() : Scheduler(), waitlist_(), mtx_() {
-  verify(dep_graph_ == nullptr);
-  dep_graph_ = new RccGraph();
-  dep_graph_->sched_ = this;
-  dep_graph_->partition_id_ = partition_id_;
+  RccGraph::sched_ = this;
+  RccGraph::partition_id_ = Scheduler::partition_id_;
   waitlist_checker_ = new WaitlistChecker(this);
   epoch_enabled_ = false;
 }
@@ -41,7 +39,7 @@ RccSched::~RccSched() {
 
 DTxn* RccSched::GetOrCreateDTxn(txnid_t tid, bool ro) {
 //  RccDTxn* dtxn = (RccDTxn*) Scheduler::GetOrCreateDTxn(tid, ro);
-  RccVertex* v = dep_graph_->FindOrCreateRccVertex(tid, this);
+  RccVertex* v = FindOrCreateRccVertex(tid, this);
 //  RccDTxn* dtxn = (RccDTxn*) dep_graph_->FindOrCreateTxnInfo(tid);
   RccDTxn& dtxn = *v;
   if (dtxn.epoch_ == 0) {
@@ -71,16 +69,16 @@ int RccSched::OnDispatch(const vector<SimpleCommand> &cmd,
   verify(graph);
   txnid_t txn_id = cmd[0].root_id_;
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(txn_id);
-  verify(dep_graph_->partition_id_ == partition_id_);
+  verify(RccGraph::partition_id_ == Scheduler::partition_id_);
 //  auto job = [&cmd, res, dtxn, callback, graph, output, this, txn_id] () {
-  verify(cmd[0].partition_id_ == this->partition_id_);
+  verify(cmd[0].partition_id_ == Scheduler::partition_id_);
   for (auto&c : cmd) {
     dtxn->DispatchExecute(c, res, &(*output)[c.inn_id()]);
   }
   dtxn->UpdateStatus(TXN_STD);
   int depth = 1;
   verify(cmd[0].root_id_ == txn_id);
-  auto sz = dep_graph_->MinItfrGraph(txn_id, graph, true, depth);
+  auto sz = MinItfrGraph(txn_id, graph, true, depth);
 //#ifdef DEBUG_CODE
 //    if (sz > 4) {
 //      Log_fatal("something is wrong, graph size %d", sz);
@@ -123,7 +121,7 @@ int RccSched::OnCommit(cmdid_t cmd_id,
   verify(dtxn->ptr_output_repy_ == nullptr);
   dtxn->ptr_output_repy_ = output;
   dtxn->finish_reply_callback_ = [callback] (int r) {callback();};
-  dep_graph_->Aggregate(epoch_mgr_.curr_epoch_, const_cast<RccGraph&>(graph));
+  Aggregate(epoch_mgr_.curr_epoch_, const_cast<RccGraph&>(graph));
   TriggerCheckAfterAggregation(const_cast<RccGraph&>(graph));
 
 //  // fast path without check wait list?
@@ -148,14 +146,14 @@ int RccSched::OnInquire(cmdid_t cmd_id,
   std::lock_guard<std::recursive_mutex> guard(mtx_);
 
   verify(0);
-  RccVertex* v = dep_graph_->FindV(cmd_id);
+  RccVertex* v = FindV(cmd_id);
   verify(v != nullptr);
   RccDTxn& info = *v;
   //register an event, triggered when the status >= COMMITTING;
-  verify (info.Involve(partition_id_));
+  verify (info.Involve(Scheduler::partition_id_));
 
   if (info.status() >= TXN_CMT) {
-    dep_graph_->MinItfrGraph(cmd_id, graph, false, 1);
+    MinItfrGraph(cmd_id, graph, false, 1);
     callback();
   } else {
     info.graphs_for_inquire_.push_back(graph);
@@ -177,7 +175,7 @@ void RccSched::AnswerIfInquired(RccDTxn &tinfo) {
   if (tinfo.status() >= TXN_CMT && tinfo.graphs_for_inquire_.size() > 0) {
     for (auto& graph : tinfo.graphs_for_inquire_) {
       verify(graph != nullptr);
-      dep_graph_->MinItfrGraph(tinfo.id(), graph, false, 1);
+      MinItfrGraph(tinfo.id(), graph, false, 1);
     }
     for (auto& callback : tinfo.callbacks_for_inquire_) {
       verify(callback);
@@ -209,7 +207,7 @@ void RccSched::CheckWaitlist() {
         !tinfo.IsExecuted()) {
       if (AllAncCmt(v)) {
 //        check_again = true;
-        RccScc& scc = dep_graph_->FindSCC(v);
+        RccScc& scc = FindSCC(v);
         verify(v->epoch_ > 0);
         Decide(scc);
         if (AllAncFns(scc)) {
@@ -292,7 +290,8 @@ void RccSched::CheckWaitlist() {
 
     if (tinfo.IsExecuted() ||
         tinfo.IsAborted() ||
-        (tinfo.IsDecided() && !tinfo.Involve(partition_id_))) {
+        (tinfo.IsDecided() &&
+            !tinfo.Involve(Scheduler::partition_id_))) {
       // check for its descendants, perhaps add redundant vertex here.
 //      for (auto child_pair : v->outgoing_) {
 //        auto child_v = child_pair.first;
@@ -411,9 +410,9 @@ void RccSched::__DebugExamineFridge() {
 void RccSched::InquireAboutIfNeeded(RccDTxn &dtxn) {
 //  Graph<RccDTxn> &txn_gra = dep_graph_->txn_gra_;
   if (dtxn.status() <= TXN_STD &&
-      !dtxn.Involve(partition_id_) &&
+      !dtxn.Involve(Scheduler::partition_id_) &&
       !dtxn.during_asking) {
-    verify(!dtxn.Involve(partition_id_));
+    verify(!dtxn.Involve(Scheduler::partition_id_));
     verify(!dtxn.during_asking);
     parid_t par_id = *(dtxn.partition_.begin());
     dtxn.during_asking = true;
@@ -429,7 +428,7 @@ void RccSched::InquireAboutIfNeeded(RccDTxn &dtxn) {
 void RccSched::InquireAbout(RccVertex *av) {
 //  Graph<RccDTxn> &txn_gra = dep_graph_->txn_gra_;
   RccDTxn &tinfo = *av;
-  verify(!tinfo.Involve(partition_id_));
+  verify(!tinfo.Involve(Scheduler::partition_id_));
   verify(!tinfo.during_asking);
   parid_t par_id = *(tinfo.partition_.begin());
   tinfo.during_asking = true;
@@ -443,10 +442,10 @@ void RccSched::InquireAbout(RccVertex *av) {
 
 void RccSched::InquireAck(cmdid_t cmd_id, RccGraph& graph) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  auto v = dep_graph_->FindV(cmd_id);
+  auto v = FindV(cmd_id);
   RccDTxn& tinfo = *v;
   tinfo.inquire_acked_ = true;
-  dep_graph_->Aggregate(epoch_mgr_.curr_epoch_, const_cast<RccGraph&>(graph));
+  Aggregate(epoch_mgr_.curr_epoch_, const_cast<RccGraph&>(graph));
   TriggerCheckAfterAggregation(const_cast<RccGraph&>(graph));
   verify(tinfo.status() >= TXN_CMT);
 }
@@ -463,7 +462,7 @@ RccVertex* RccSched::__DebugFindAnOngoingAncestor(RccVertex* vertex) {
       return false; // stop traversing.
     }
   };
-  dep_graph_->TraversePred(vertex, -1, func, walked);
+  TraversePred(vertex, -1, func, walked);
   return ret;
 }
 
@@ -482,14 +481,14 @@ bool RccSched::AllAncCmt(RccVertex *vertex) {
     }
     return r;
   };
-  dep_graph_->TraversePred(vertex, -1, func);
+  TraversePred(vertex, -1, func);
   return all_anc_cmt;
 }
 
 void RccSched::Decide(const RccScc& scc) {
   for (auto v : scc) {
     RccDTxn& info = *v;
-    dep_graph_->UpgradeStatus(v, TXN_DCD);
+    UpgradeStatus(v, TXN_DCD);
 //    Log_info("txnid: %llx, parent size: %d", v->id(), v->parents_.size());
   }
 }
@@ -506,7 +505,7 @@ bool RccSched::HasICycle(const RccScc& scc) {
           }
           return true;
         };
-    dep_graph_->TraverseDescendant(vertex, -1, func, walked, EDGE_I);
+    TraverseDescendant(vertex, -1, func, walked, EDGE_I);
     if (ret) return true;
   }
   return false;
@@ -518,7 +517,7 @@ void RccSched::TriggerCheckAfterAggregation(RccGraph &graph) {
     // TODO optimize here.
     auto txnid = pair.first;
     RccVertex* rhs_v = pair.second;
-    auto v = dep_graph_->FindV(txnid);
+    auto v = FindV(txnid);
     verify(v != nullptr);
 #ifdef DEBUG_CODE
     // TODO, check the Sccs are the same.
@@ -581,7 +580,7 @@ bool RccSched::HasAbortedAncestor(const RccScc& scc) {
         }
         return RccGraph::SearchHint::Ok;
       };
-  dep_graph_->TraversePred(scc[0], -1, func);
+  TraversePred(scc[0], -1, func);
   return has_aborted;
 };
 
@@ -591,7 +590,7 @@ bool RccSched::FullyDispatched(const RccScc& scc) {
                          [this] (RccVertex *v) {
                            bool r = true;
                            RccDTxn& tinfo = *v;
-                           if (tinfo.Involve(partition_id_)) {
+                           if (tinfo.Involve(Scheduler::partition_id_)) {
                              r = tinfo.fully_dispatched;
                            }
                            return r;
@@ -618,7 +617,7 @@ bool RccSched::AllAncFns(const RccScc& scc) {
       return RccGraph::SearchHint::Exit; // abort traverse
     }
   };
-  dep_graph_->TraversePred(scc[0], -1, func);
+  TraversePred(scc[0], -1, func);
   return all_anc_fns;
 };
 
@@ -634,7 +633,7 @@ void RccSched::Execute(RccDTxn& dtxn) {
   dtxn.executed_ = true;
   verify(dtxn.IsDecided());
   verify(dtxn.epoch_ > 0);
-  if (dtxn.Involve(partition_id_)) {
+  if (dtxn.Involve(Scheduler::partition_id_)) {
     dtxn.CommitExecute();
     dtxn.ReplyFinishOk();
     TrashExecutor(dtxn.tid_);
@@ -650,7 +649,7 @@ void RccSched::Abort(const RccScc& scc) {
     verify(info.IsAborted());
     RccDTxn *dtxn = (RccDTxn *) GetDTxn(info.id());
     if (dtxn == nullptr) continue;
-    if (info.Involve(partition_id_)) {
+    if (info.Involve(Scheduler::partition_id_)) {
       dtxn->Abort();
       dtxn->ReplyFinishOk();
     }
@@ -670,7 +669,7 @@ void RccSched::DestroyExecutor(txnid_t txn_id) {
   RccDTxn* dtxn = (RccDTxn*) GetOrCreateDTxn(txn_id);
   verify(dtxn->committed_ || dtxn->aborted_);
   if (epoch_enabled_) {
-    dep_graph_->Remove(txn_id);
+    Remove(txn_id);
   }
 }
 

@@ -101,11 +101,10 @@ template <typename V>
 class Graph : public Marshallable {
  public:
   typedef std::vector<V*> VertexList;
+  bool managing_memory_{true};
   std::unordered_map<uint64_t, V*> vertex_index_ = {};
-  Graph() {}
-
-  Graph(const VertexList &vertices) { AddV(vertices); }
-
+  Graph(bool managing_memory = true) : managing_memory_(managing_memory) {}
+  Graph(const VertexList &vertices) : Graph() { AddV(vertices); }
   void Clear() {
     for (auto p : vertex_index_) {
       auto v = p.second;
@@ -119,7 +118,10 @@ class Graph : public Marshallable {
     Clear();
   }
 
-  void AddV(V *v) { vertex_index_[v->id()] = v; }
+  virtual void AddV(V *v) {
+    vertex_index_[v->id()] = v;
+    verify(managing_memory_);
+  }
 
   void AddV(VertexList &l) {
     for (auto v : l) {
@@ -127,16 +129,18 @@ class Graph : public Marshallable {
     }
   }
 
-  V* FindV(uint64_t id) {
+  virtual V* FindV(uint64_t id) {
     auto i = vertex_index_.find(id);
     if (i == vertex_index_.end()) {
       return nullptr;
     } else {
       return i->second;
     }
+    verify(managing_memory_);
   }
 
   V* CreateV(uint64_t id) {
+    verify(managing_memory_);
     auto v = new V(id);
     AddV(v);
     verify(v->id() == id);
@@ -147,6 +151,7 @@ class Graph : public Marshallable {
   }
 
   V* CreateV(V& av) {
+    verify(managing_memory_);
     auto v = new V(av);
     AddV(v);
     verify(v->id() == av.id());
@@ -154,6 +159,7 @@ class Graph : public Marshallable {
   }
 
   void Remove(uint64_t id) {
+    verify(managing_memory_);
     auto v = FindV(id);
     verify(v != nullptr);
     vertex_index_.erase(id);
@@ -171,12 +177,14 @@ class Graph : public Marshallable {
   }
 
   V* FindOrCreateV(uint64_t id) {
+    verify(managing_memory_);
     auto v = FindV(id);
     if (v == nullptr) v = CreateV(id);
     return v;
   }
 
   V* FindOrCreateV(V& av) {
+    verify(managing_memory_);
     auto v = FindV(av.id());
     if (v == nullptr) v = CreateV(av);
     return v;
@@ -550,6 +558,7 @@ class Graph : public Marshallable {
   }
 
   void Aggregate(const Graph<V> &gra, bool is_server = false) {
+    verify(0);
     verify(gra.size() > 0);
     std::set<V *> new_vs;
 

@@ -143,7 +143,7 @@ class RccDTxn: public DTxn, public Vertex<RccDTxn> {
     return executed_;
   }
 
-  bool Involve(svrid_t id) {
+  bool Involve(parid_t id) {
     auto it = partition_.find(id);
     if (it == partition_.end()) {
       return false;

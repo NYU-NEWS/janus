@@ -28,7 +28,7 @@ class RccGraph : public Graph<RccVertex> {
 //    Graph<PieInfo> pie_gra_;
 //  Graph <TxnInfo> txn_gra_;
   RccSched* sched_{nullptr};
-  svrid_t partition_id_ = 0; // TODO
+  parid_t partition_id_ = 0; // TODO
 //  std::vector<rrr::Client *> rpc_clients_;
 //  std::vector<RococoProxy *> rpc_proxies_;
 //  std::vector<std::string> server_addrs_;
@@ -79,14 +79,5 @@ class RccGraph : public Graph<RccVertex> {
 //  Marshal& ToMarshal(Marshal& m) const override;
 //  Marshal& FromMarshal(Marshal& m) override;
 
-  void write_to_marshal(rrr::Marshal &m) const;
-
-//  void marshal_help_1(rrr::Marshal &m,
-//                      const std::unordered_set<Vertex<TxnInfo> *> &ret_set,
-//                      Vertex<TxnInfo> *old_sv) const;
-//
-//  void marshal_help_2(rrr::Marshal &m,
-//                      const std::unordered_set<Vertex<TxnInfo> *> &ret_set,
-//                      Vertex<TxnInfo> *old_sv) const;
 };
 } // namespace rcc
