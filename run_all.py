@@ -315,7 +315,7 @@ def run_experiment(config_file, name, args, benchmark, mode, num_client):
     return res
 
 def save_git_revision():
-    rev = subprocess.check_output('cat /home/ubuntu/build/revision.txt', shell=True)
+    rev = subprocess.check_output('cat /home/ubuntu/janus/build/revision.txt', shell=True)
     return rev
 
     log_dir = "./log/"
