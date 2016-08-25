@@ -5,7 +5,7 @@ import copy
 import subprocess
 from string import Template
 
-default_gnuplot_exe="/usr/local/bin/gnuplot5"
+default_gnuplot_exe="gnuplot5"
 default_gnuplot_cmds="./cmds.gnuplot"
 
 args = None
