@@ -188,9 +188,10 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
 
 bool RccGraph::operator== (RccGraph& rhs) const {
   // quick check on vertex_index size
-  if (vertex_index().size() != rhs.vertex_index().size())
+  if (const_cast<RccGraph*>(this)->vertex_index().size()
+      != rhs.vertex_index().size())
     return false;
-  for (auto& pair: vertex_index()) {
+  for (auto& pair: const_cast<RccGraph*>(this)->vertex_index()) {
     auto id = pair.first;
     RccVertex* vertex = pair.second;
     auto it = rhs.vertex_index().find(id);

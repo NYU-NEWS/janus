@@ -25,6 +25,7 @@ void BrqCommo::SendDispatch(vector<SimpleCommand> &cmd,
           auto v = rgraph.CreateV(tid);
           RccDTxn& info = *v;
           info.partition_.insert(par_id);
+          verify(rgraph.vertex_index().size() > 0);
           callback(res, output, rgraph);
         } else if (graph.rtti_ == Marshallable::RCC_GRAPH) {
           callback(res, output, dynamic_cast<RccGraph&>(*graph.ptr()));

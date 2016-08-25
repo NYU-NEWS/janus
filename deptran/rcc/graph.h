@@ -104,7 +104,7 @@ class Graph : public Marshallable {
   bool managing_memory_{true};
   std::unordered_map<uint64_t, V*> vertex_index_{};
 
-  std::unordered_map<uint64_t, V*> vertex_index() const {
+  virtual std::unordered_map<uint64_t, V*>& vertex_index() {
     verify(managing_memory_);
     return vertex_index_;
   };
@@ -196,7 +196,9 @@ class Graph : public Marshallable {
     return v;
   }
 
-  uint64_t size() const { return vertex_index().size(); }
+  uint64_t size() const {
+    return const_cast<Graph*>(this)->vertex_index().size();
+  }
 
   enum SearchHint {
     Exit = 0,      // quit search
@@ -619,7 +621,7 @@ class Graph : public Marshallable {
     verify(n > 0 && n < 10000);
     m << n;
     int i = 0;
-    for (auto &pair : vertex_index()) {
+    for (auto &pair : const_cast<Graph*>(this)->vertex_index()) {
       auto &v = pair.second;
       i++;
       int32_t n_out_edge = v->outgoing_.size();

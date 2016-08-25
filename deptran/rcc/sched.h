@@ -40,6 +40,10 @@ class RccSched : public Scheduler, public RccGraph {
   virtual ~RccSched();
 
   // override graph operations
+  std::unordered_map<txnid_t, RccDTxn*>& vertex_index() override {
+    verify(managing_memory_);
+    return reinterpret_cast<std::unordered_map<txnid_t, RccDTxn*>&>(dtxns_);
+  };
   RccDTxn* FindV(txnid_t txn_id) {
     auto dtxn = (RccDTxn*) GetDTxn(txn_id);
     verify(dtxn != nullptr);
