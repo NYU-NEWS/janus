@@ -88,7 +88,8 @@ void RccCoord::DispatchAck(phase_t phase,
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(phase == phase_); // cannot proceed without all acks.
   verify(txn().root_id_ == txn().id_);
-  RccDTxn& info = *(graph.vertex_index_.at(txn().root_id_));
+  verify(graph.vertex_index().size() > 0);
+  RccDTxn& info = *(graph.vertex_index().at(txn().root_id_));
 //  verify(cmd[0].root_id_ == info.id());
 //  verify(info.partition_.find(cmd.partition_id_) != info.partition_.end());
 
@@ -225,106 +226,11 @@ void RccCoord::DispatchRoAck(phase_t phase,
   }
 }
 
-//void RccCoord::deptran_finish_ro(TxnCommand *ch) {
-//  int pi;
-//
-//  map<int32_t, Value> *input = nullptr;
-//  int32_t server_id;
-//  int     res;
-//  int     output_size;
-//
-//  SimpleCommand *subcmd = nullptr;
-//  while ((subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd()) != nullptr) {
-//    header.pid = next_pie_id();
-//
-//    rrr::FutureAttr fuattr;
-//
-//    // remember this a asynchronous call! variable funtional range is important!
-//    fuattr.callback = [ch, pi, this, header](Future * fu) {
-//      bool callback = false;
-//      {
-//        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-//
-//        int res;
-//        map<int32_t, Value> output;
-//        fu->get_reply() >> output;
-//
-//        Log::debug(
-//          "receive deptran RO start response (phase 2), tid: %llx, pid: %llx, ",
-//          header.tid,
-//          header.pid);
-//
-//        ch->n_pieces_out_++;
-//        bool do_next_piece = ch->read_only_start_callback(pi, &res, output);
-//
-//        if (do_next_piece) deptran_finish_ro(ch);
-//        else if (ch->n_pieces_out_ == ch->GetNPieceAll()) {
-//          if (res == SUCCESS) {
-//            ch->reply_.res_ = SUCCESS;
-//            callback        = true;
-//          }
-//          else if (ch->can_retry()) {
-//            ch->read_only_reset();
-//            double last_latency = ch->last_attempt_latency();
-//
-//            if (ccsi_) ccsi_->txn_retry_one(this->thread_id_,
-//                                            ch->type_,
-//                                            last_latency);
-//            this->deptran_finish_ro(ch);
-//            callback = false;
-//          }
-//          else {
-//            ch->reply_.res_ = REJECT;
-//            callback        = true;
-//          }
-//        }
-//      }
-//
-//      if (callback) {
-//        // generate a reply and callback.
-//        Log::debug("deptran RO callback, %llx", cmd_->id_);
-//        TxnReply& txn_reply_buf = ch->get_reply();
-//        double    last_latency  = ch->last_attempt_latency();
-//        this->report(txn_reply_buf, last_latency
-//#ifdef TXN_STAT
-//                     , ch
-//#endif // ifdef TXN_STAT
-//                     );
-//        ch->callback_(txn_reply_buf);
-//        delete ch;
-//      }
-//    };
-//
-//    RococoProxy *proxy = (RococoProxy*)comm()->rpc_proxies_[server_id];
-//    Log::debug("send deptran RO start request (phase 2), tid: %llx, pid: %llx",
-//               cmd_->id_,
-//               header.pid);
-//    verify(input != nullptr);
-//    Future::safe_release(proxy->async_rcc_ro_start_pie(*subcmd, fuattr));
-//  }
-//}
-
-//void RccCoord::do_one(TxnRequest& req) {
-//  // pre-process
-//  std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-//  TxnCommand *txn = frame_->CreateChopper(req, txn_reg_);
-//  verify(txn_reg_ != nullptr);
-//  cmd_ = txn;
-//  cmd_->id_ = this->next_txn_id();
-//  cmd_->root_id_ = cmd_->id_;
-//  Reset();
-//  Log_debug("do one request");
-//
-//  if (ccsi_) ccsi_->txn_start_one(thread_id_, cmd_->type_);
-//  verify((phase_ % 3) == Phase::INIT_END);
-//  GotoNextPhase();
-//}
-
 void RccCoord::Reset() {
   ClassicCoord::Reset();
   graph_.Clear();
   verify(graph_.size() == 0);
-  verify(graph_.vertex_index_.size() == 0);
+  verify(graph_.vertex_index().size() == 0);
   ro_state_ = BEGIN;
   last_vers_.clear();
   curr_vers_.clear();

@@ -14,7 +14,7 @@
 
 namespace rococo {
 
-DTxn* Scheduler::CreateDTxn(i64 tid, bool ro) {
+DTxn* Scheduler::CreateDTxn(txnid_t tid, bool ro) {
   Log_debug("create tid %ld", tid);
   verify(dtxns_.find(tid) == dtxns_.end());
   DTxn* dtxn = frame_->CreateDTxn(tid, epoch_mgr_.curr_epoch_, ro, this);
@@ -28,6 +28,7 @@ DTxn* Scheduler::CreateDTxn(i64 tid, bool ro) {
     epoch_mgr_.AddToCurrent(tid);
     TriggerUpgradeEpoch();
   }
+  dtxn->sched_ = this;
   return dtxn;
 }
 
@@ -48,7 +49,7 @@ void Scheduler::DestroyDTxn(i64 tid) {
   dtxns_.erase(it);
 }
 
-DTxn* Scheduler::GetDTxn(i64 tid) {
+DTxn* Scheduler::GetDTxn(txnid_t tid) {
   //Log_debug("DTxnMgr::get(%ld)\n", tid);
   auto it = dtxns_.find(tid);
 //  verify(it != dtxns_.end());

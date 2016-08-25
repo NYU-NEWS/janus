@@ -102,16 +102,22 @@ class Graph : public Marshallable {
  public:
   typedef std::vector<V*> VertexList;
   bool managing_memory_{true};
-  std::unordered_map<uint64_t, V*> vertex_index_ = {};
+  std::unordered_map<uint64_t, V*> vertex_index_{};
+
+  std::unordered_map<uint64_t, V*> vertex_index() const {
+    verify(managing_memory_);
+    return vertex_index_;
+  };
+
   Graph(bool managing_memory = true) : managing_memory_(managing_memory) {}
   Graph(const VertexList &vertices) : Graph() { AddV(vertices); }
   void Clear() {
-    for (auto p : vertex_index_) {
+    for (auto p : vertex_index()) {
       auto v = p.second;
       delete v;
   
   }
-    vertex_index_.clear();
+    vertex_index().clear();
   }
 
   virtual ~Graph() {
@@ -119,7 +125,7 @@ class Graph : public Marshallable {
   }
 
   virtual void AddV(V *v) {
-    vertex_index_[v->id()] = v;
+    vertex_index()[v->id()] = v;
     verify(managing_memory_);
   }
 
@@ -130,13 +136,13 @@ class Graph : public Marshallable {
   }
 
   virtual V* FindV(uint64_t id) {
-    auto i = vertex_index_.find(id);
-    if (i == vertex_index_.end()) {
+    verify(managing_memory_);
+    auto i = vertex_index().find(id);
+    if (i == vertex_index().end()) {
       return nullptr;
     } else {
       return i->second;
     }
-    verify(managing_memory_);
   }
 
   V* CreateV(uint64_t id) {
@@ -162,7 +168,7 @@ class Graph : public Marshallable {
     verify(managing_memory_);
     auto v = FindV(id);
     verify(v != nullptr);
-    vertex_index_.erase(id);
+    vertex_index().erase(id);
     // remove its parent and children pointers.
     for (auto& pair: v->outgoing_) {
       auto vv  = pair.first;
@@ -190,7 +196,7 @@ class Graph : public Marshallable {
     return v;
   }
 
-  uint64_t size() const { return vertex_index_.size(); }
+  uint64_t size() const { return vertex_index().size(); }
 
   enum SearchHint {
     Exit = 0,      // quit search
@@ -546,7 +552,7 @@ class Graph : public Marshallable {
     std::map<V *, int> lowlinks;
     VertexList S;
     int index = 0;
-    for (auto pair : vertex_index_) {
+    for (auto pair : vertex_index()) {
       auto v = pair.second;
       if (indexes.find(v) == indexes.end()) {
         std::vector<V *> component =
@@ -562,18 +568,18 @@ class Graph : public Marshallable {
     verify(gra.size() > 0);
     std::set<V *> new_vs;
 
-    for (auto &pair : gra.vertex_index_) {
+    for (auto &pair : gra.vertex_index()) {
       auto &v = pair.second;
       // check if i have this vertex in my graph
       V *new_ov;
-      auto i = this->vertex_index_.find(v->data_->id());
+      auto i = this->vertex_index().find(v->data_->id());
 
-      if (i == vertex_index_.end()) {
+      if (i == vertex_index().end()) {
         //       Log::debug("union: insert a new node in to the graph. node id:
         // %llx", v->data_.id());
         new_ov = new V(v->data_->id());
         new_ov->data_ = v->data_;
-        vertex_index_[new_ov->data_->id()] = new_ov;
+        vertex_index()[new_ov->data_->id()] = new_ov;
       } else {
         //       Log::debug("union: the node is already in the graph. node id:
         // %llx", v->data_.id());
@@ -583,13 +589,13 @@ class Graph : public Marshallable {
 
       for (auto &kv : v->outgoing_) {
         V *tv = kv.first;
-        auto i = vertex_index_.find(tv->data_->id());
+        auto i = vertex_index().find(tv->data_->id());
         V *new_tv;
 
-        if (i == vertex_index_.end()) {
+        if (i == vertex_index().end()) {
           new_tv = new V(tv->data_->id());
           new_tv->data_ = tv->data_;
-          vertex_index_[new_tv->data_->id()] = new_tv;
+          vertex_index()[new_tv->data_->id()] = new_tv;
         } else {
           new_tv = i->second;
         }
@@ -608,11 +614,12 @@ class Graph : public Marshallable {
   }
 
   Marshal& ToMarshal(Marshal &m) const override{
+    verify(managing_memory_);
     uint64_t n = size();
     verify(n > 0 && n < 10000);
     m << n;
     int i = 0;
-    for (auto &pair : vertex_index_) {
+    for (auto &pair : vertex_index()) {
       auto &v = pair.second;
       i++;
       int32_t n_out_edge = v->outgoing_.size();
@@ -632,6 +639,7 @@ class Graph : public Marshallable {
   }
 
   Marshal& FromMarshal(Marshal &m) override{
+    verify(managing_memory_);
     verify(size() == 0);
     uint64_t n;
     m >> n;
@@ -662,7 +670,7 @@ class Graph : public Marshallable {
     // insert vertexes into graph.
     verify(ref.size() == n);
     for (auto &kv : ref) {
-      vertex_index_[kv.first] = kv.second;
+      vertex_index()[kv.first] = kv.second;
     }
     // build edge pointers.
     for (auto &kv : v_to) {

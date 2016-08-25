@@ -16,9 +16,9 @@ class Scheduler {
  public:
   locid_t loc_id_ = -1;
   siteid_t site_id_ = -1;
-  unordered_map<i64, DTxn *> dtxns_ = {};
-  unordered_map<i64, mdb::Txn *> mdb_txns_ = {};
-  unordered_map<cmdid_t, Executor*> executors_ = {};
+  unordered_map<txnid_t, DTxn *> dtxns_ = {};
+  unordered_map<txnid_t, mdb::Txn *> mdb_txns_ = {};
+  unordered_map<txnid_t, Executor*> executors_ = {};
   function<void(ContainerCommand&)> learner_action_ =
       [] (ContainerCommand&) -> void {verify(0);};
 
@@ -40,8 +40,6 @@ class Scheduler {
   map<parid_t, map<siteid_t, epoch_t>> epoch_replies_{};
   bool in_upgrade_epoch_{false};
   const int EPOCH_DURATION = 5;
-  map<epoch_t, int64_t> active_epoch_{};
-  map<epoch_t, unordered_set<DTxn*>> epoch_dtxn_{};
 
   RococoCommunicator* commo() {
     verify(commo_ != nullptr);
@@ -57,8 +55,8 @@ class Scheduler {
   }
 
   Coordinator*CreateRepCoord();
-  virtual DTxn *GetDTxn(i64 tid);
-  virtual DTxn *CreateDTxn(i64 tid, bool ro = false);
+  virtual DTxn *GetDTxn(txnid_t tid);
+  virtual DTxn *CreateDTxn(txnid_t tid, bool ro = false);
   virtual DTxn *GetOrCreateDTxn(txnid_t tid, bool ro = false);
   void DestroyDTxn(i64 tid);
 

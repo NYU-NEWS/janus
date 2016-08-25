@@ -27,6 +27,7 @@ void RccSched::__DebugCheckParentSetSize(txnid_t tid, int32_t sz) {
 RccSched::RccSched() : Scheduler(), waitlist_(), mtx_() {
   RccGraph::sched_ = this;
   RccGraph::partition_id_ = Scheduler::partition_id_;
+  RccGraph::managing_memory_ = false;
   waitlist_checker_ = new WaitlistChecker(this);
   epoch_enabled_ = false;
 }
@@ -36,28 +37,10 @@ RccSched::~RccSched() {
   delete waitlist_checker_;
 }
 
-
 DTxn* RccSched::GetOrCreateDTxn(txnid_t tid, bool ro) {
-//  RccDTxn* dtxn = (RccDTxn*) Scheduler::GetOrCreateDTxn(tid, ro);
-  RccVertex* v = FindOrCreateRccVertex(tid, this);
-//  RccDTxn* dtxn = (RccDTxn*) dep_graph_->FindOrCreateTxnInfo(tid);
-  RccDTxn& dtxn = *v;
-  if (dtxn.epoch_ == 0) {
-    dtxn.epoch_ = epoch_mgr_.curr_epoch_;
-    if (epoch_enabled_) {
-      epoch_mgr_.AddToCurrent(tid);
-      TriggerUpgradeEpoch();
-    }
-  }
-  auto pair = epoch_dtxn_[dtxn.epoch_].insert(&dtxn);
-  if (pair.second) {
-    active_epoch_[dtxn.epoch_]++;
-  }
-  verify(dtxn.graph_ != nullptr);
-  if (dtxn.txn_reg_ == nullptr) {
-    dtxn.txn_reg_ = txn_reg_;
-  }
-  return &dtxn;
+  RccDTxn* dtxn = (RccDTxn*) Scheduler::GetOrCreateDTxn(tid, ro);
+  dtxn->partition_.insert(Scheduler::partition_id_);
+  return dtxn;
 }
 
 int RccSched::OnDispatch(const vector<SimpleCommand> &cmd,
@@ -513,7 +496,7 @@ bool RccSched::HasICycle(const RccScc& scc) {
 
 void RccSched::TriggerCheckAfterAggregation(RccGraph &graph) {
   bool check = false;
-  for (auto& pair: graph.vertex_index_) {
+  for (auto& pair: graph.vertex_index()) {
     // TODO optimize here.
     auto txnid = pair.first;
     RccVertex* rhs_v = pair.second;

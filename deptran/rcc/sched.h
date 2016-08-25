@@ -39,6 +39,18 @@ class RccSched : public Scheduler, public RccGraph {
   RccSched();
   virtual ~RccSched();
 
+  // override graph operations
+  RccDTxn* FindV(txnid_t txn_id) {
+    auto dtxn = (RccDTxn*) GetDTxn(txn_id);
+    verify(dtxn != nullptr);
+    return dtxn;
+  }
+  RccDTxn* FindOrCreateV(txnid_t txn_id) {
+    auto dtxn = (RccDTxn*) GetOrCreateDTxn(txn_id);
+    return dtxn;
+  }
+
+
   DTxn* GetOrCreateDTxn(txnid_t tid, bool ro = false) override ;
 
   virtual void SetPartitionId(parid_t par_id) {
@@ -63,13 +75,13 @@ class RccSched : public Scheduler, public RccGraph {
 
 //  void to_decide(Vertex<TxnInfo> *v,
 //                 rrr::DeferredReply *defer);
-  DTxn* CreateDTxn(i64 tid, bool ro) override {
-    verify(0);
-  }
-
-  DTxn* GetDTxn(i64 tid) override {
-    verify(0);
-  }
+//  DTxn* CreateDTxn(txnid_t tid, bool ro) override {
+//    verify(0);
+//  }
+//
+//  DTxn* GetDTxn(txnid_t tid) override {
+//    verify(0);
+//  }
 
   void DestroyExecutor(txnid_t tid) override;
 

@@ -11,7 +11,6 @@ class RccDTxn: public DTxn, public Vertex<RccDTxn> {
  public:
   int8_t status_ = TXN_UKN;
   vector<SimpleCommand> dreqs_ = {};
-  RccGraph* graph_{nullptr};
   TxnOutput *ptr_output_repy_ = nullptr;
   TxnOutput output_ = {};
   vector<TxnInfo *> conflict_txns_ = {}; // This is read-only transaction

@@ -16,8 +16,6 @@ RccVertex* RccGraph::FindOrCreateRccVertex(txnid_t txn_id,
   RccDTxn& dtxn = *v;
   // FIXME, set mgr and mdb_txn?
   dtxn.sched_ = sched;
-  dtxn.partition_.insert(partition_id_);
-  dtxn.graph_ = this;
   return v;
 }
 
@@ -190,13 +188,13 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
 
 bool RccGraph::operator== (RccGraph& rhs) const {
   // quick check on vertex_index size
-  if (vertex_index_.size() != rhs.vertex_index_.size())
+  if (vertex_index().size() != rhs.vertex_index().size())
     return false;
-  for (auto& pair: vertex_index_) {
+  for (auto& pair: vertex_index()) {
     auto id = pair.first;
     RccVertex* vertex = pair.second;
-    auto it = rhs.vertex_index_.find(id);
-    if (it == rhs.vertex_index_.end())
+    auto it = rhs.vertex_index().find(id);
+    if (it == rhs.vertex_index().end())
       return false;
     RccVertex* av = it->second;
     if (*vertex != *av)
@@ -208,6 +206,7 @@ bool RccGraph::operator== (RccGraph& rhs) const {
 }
 
 void RccGraph::RebuildEdgePointer(map<txnid_t, RccVertex*>& index) {
+  verify(managing_memory_);
   // TODO
   for (auto& pair : index) {
     auto id = pair.first;
@@ -239,7 +238,7 @@ void RccGraph::RebuildEdgePointer(map<txnid_t, RccVertex*>& index) {
 void RccGraph::BuildEdgePointer(RccGraph &graph,
                                 map<txnid_t, RccVertex*>& index) {
   verify(0);
-  for (auto &pair: graph.vertex_index_) {
+  for (auto &pair: graph.vertex_index()) {
     auto id = pair.first;
     RccVertex* a_vertex = pair.second;
     RccVertex* vertex = index[a_vertex->id()];
@@ -291,6 +290,7 @@ void RccGraph::UpgradeStatus(RccVertex *v, int8_t status) {
 RccVertex* RccGraph::AggregateVertex(RccVertex *rhs_v) {
   // TODO: add epoch here.
   // create the dtxn if not exist.
+  verify(managing_memory_);
   RccVertex* vertex = FindOrCreateV(*rhs_v);
   auto status1 = vertex->get_status();
   auto status2 = rhs_v->get_status();
@@ -391,7 +391,7 @@ bool RccGraph::AllAncCmt(RccVertex *vertex) {
 map<txnid_t, RccVertex*> RccGraph::Aggregate(epoch_t epoch, RccGraph &graph) {
   // aggregate vertexes
   map<txnid_t, RccVertex*> index;
-  for (auto& pair: graph.vertex_index_) {
+  for (auto& pair: graph.vertex_index()) {
     RccVertex* rhs_v = pair.second;
     verify(pair.first == rhs_v->id());
     RccVertex* vertex = AggregateVertex(rhs_v);
@@ -403,7 +403,7 @@ map<txnid_t, RccVertex*> RccGraph::Aggregate(epoch_t epoch, RccGraph &graph) {
       sched_->epoch_mgr_.AddToEpoch(dtxn.epoch_, dtxn.tid_);
     }
     verify(vertex->id() == pair.second->id());
-    verify(vertex_index_.count(vertex->id()) > 0);
+    verify(vertex_index().count(vertex->id()) > 0);
     index[vertex->id()] = vertex;
   }
   // aggregate edges.
