@@ -20,6 +20,7 @@ class RccDTxn: public DTxn, public Vertex<RccDTxn> {
   bool __debug_replied = false;
   void** external_ref_{nullptr};
 
+  RccDTxn() = delete;
   RccDTxn(txnid_t id);
   RccDTxn(RccDTxn& rhs_dtxn);
   RccDTxn(epoch_t, txnid_t tid, Scheduler *mgr, bool ro);

@@ -100,6 +100,7 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
 //  gra_m.gra = &txn_gra_;
   RccVertex* source = FindV(tid);
   verify(source != nullptr);
+  verify(source->id() == tid);
   // quick path
   if (source->incoming_.size() == 0 && quick) {
     return 0;
@@ -183,6 +184,7 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
 
   auto sz = new_graph->size();
   Log_debug("return graph size: %llx", sz);
+  verify(new_graph->FindV(tid) != nullptr);
   return sz;
 }
 

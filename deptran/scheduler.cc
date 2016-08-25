@@ -17,12 +17,15 @@ namespace rococo {
 DTxn* Scheduler::CreateDTxn(txnid_t tid, bool ro) {
   Log_debug("create tid %ld", tid);
   verify(dtxns_.find(tid) == dtxns_.end());
-  DTxn* dtxn = frame_->CreateDTxn(tid, epoch_mgr_.curr_epoch_, ro, this);
+  DTxn* dtxn = frame_->CreateDTxn(epoch_mgr_.curr_epoch_, tid, ro, this);
   if (dtxn != nullptr) {
     dtxns_[tid] = dtxn;
     dtxn->recorder_ = this->recorder_;
     verify(txn_reg_);
     dtxn->txn_reg_ = txn_reg_;
+    verify(dtxn->tid_ == tid);
+  } else {
+    verify(0);
   }
   if (epoch_enabled_) {
     epoch_mgr_.AddToCurrent(tid);
@@ -33,12 +36,16 @@ DTxn* Scheduler::CreateDTxn(txnid_t tid, bool ro) {
 }
 
 DTxn* Scheduler::GetOrCreateDTxn(txnid_t tid, bool ro) {
+  DTxn* ret = nullptr;
   auto it = dtxns_.find(tid);
   if (it == dtxns_.end()) {
-    return CreateDTxn(tid, ro);
+    ret = CreateDTxn(tid, ro);
   } else {
-    return it->second;
+    ret = it->second;
   }
+  verify(ret != nullptr);
+  verify(ret->tid_ == tid);
+  return ret;
 }
 
 void Scheduler::DestroyDTxn(i64 tid) {

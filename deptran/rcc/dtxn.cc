@@ -14,6 +14,7 @@ RccDTxn::RccDTxn(epoch_t epoch,
                  bool ro) : DTxn(epoch, tid, mgr) {
   read_only_ = ro;
   mdb_txn_ = mgr->GetOrCreateMTxn(tid_);
+  verify(id() == tid);
 }
 
 RccDTxn::RccDTxn(txnid_t id): DTxn(0, id, nullptr) {

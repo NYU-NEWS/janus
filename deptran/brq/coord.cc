@@ -72,7 +72,8 @@ void BrqCoord::PreAcceptAck(phase_t phase,
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   // if recevie more messages after already gone to next phase, ignore
   if (phase != phase_) return;
-  verify(graph);
+  verify(graph != nullptr);
+  verify(graph->FindV(txn().root_id_) != nullptr);
 //  verify(n_fast_accept_graphs_.size() == 0);
   n_fast_accept_graphs_[par_id].push_back(graph);
   if (res == SUCCESS) {

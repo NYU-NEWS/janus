@@ -136,7 +136,6 @@ class Graph : public Marshallable {
   }
 
   virtual V* FindV(uint64_t id) {
-    verify(managing_memory_);
     auto i = vertex_index().find(id);
     if (i == vertex_index().end()) {
       return nullptr;
@@ -145,7 +144,7 @@ class Graph : public Marshallable {
     }
   }
 
-  V* CreateV(uint64_t id) {
+  virtual V* CreateV(uint64_t id) {
     verify(managing_memory_);
     auto v = new V(id);
     AddV(v);
@@ -156,7 +155,7 @@ class Graph : public Marshallable {
     return v;
   }
 
-  V* CreateV(V& av) {
+  virtual V* CreateV(V& av) {
     verify(managing_memory_);
     auto v = new V(av);
     AddV(v);

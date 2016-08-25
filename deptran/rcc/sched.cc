@@ -40,6 +40,7 @@ RccSched::~RccSched() {
 DTxn* RccSched::GetOrCreateDTxn(txnid_t tid, bool ro) {
   RccDTxn* dtxn = (RccDTxn*) Scheduler::GetOrCreateDTxn(tid, ro);
   dtxn->partition_.insert(Scheduler::partition_id_);
+  verify(dtxn->id() == tid);
   return dtxn;
 }
 
@@ -49,9 +50,10 @@ int RccSched::OnDispatch(const vector<SimpleCommand> &cmd,
                          RccGraph *graph,
                          const function<void()> &callback) {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
-  verify(graph);
+  verify(graph != nullptr);
   txnid_t txn_id = cmd[0].root_id_;
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(txn_id);
+  verify(dtxn->id() == txn_id);
   verify(RccGraph::partition_id_ == Scheduler::partition_id_);
 //  auto job = [&cmd, res, dtxn, callback, graph, output, this, txn_id] () {
   verify(cmd[0].partition_id_ == Scheduler::partition_id_);
