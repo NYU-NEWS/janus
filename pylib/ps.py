@@ -29,7 +29,11 @@ def ps(hosts, grep_filter):
         t.start()
     
     for x in range(len(hosts)):
-        output.append(queue.get())
+        try:
+            output.append(queue.get(True, 1))
+        except Queue.Empty as e:
+            logging.debug("timeout waiting for value from: " + str(x))
+            pass
 
     return '\n'.join(output)
 
