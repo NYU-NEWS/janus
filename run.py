@@ -549,7 +549,7 @@ class ClientController(object):
         logger.info("killing clients ...")
         sites = ProcessInfo.get_sites(self.process_infos, SiteInfo.SiteType.Client)
         hosts = { s.process.host_address for s in sites }
-        ps.killall(hosts, "deptran_server", "-9 -w")
+        ps.killall(hosts, "deptran_server", "-9")
 
     def client_shutdown(self):
         logger.debug("Shutting down clients ...")
@@ -614,7 +614,7 @@ class ServerController(object):
         hosts = { pi.host_address for pi in self.process_infos.itervalues() }
         ps_output = ps.ps(hosts, "deptran_server")
         logger.debug("Existing Server or Client Processes:\n{}".format(ps_output))
-        ps.killall(hosts, "deptran_server", "-9 -w")
+        ps.killall(hosts, "deptran_server", "-9")
         ps_output = ps.ps(hosts, "deptran_server")
         logger.debug("Existing Server or Client After Kill:\n{}".format(ps_output))
 

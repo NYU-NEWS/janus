@@ -56,4 +56,5 @@ def killall(hosts, proc, param="-9"):
     logging.info("waiting for killall commands to finish.")
     for t in threads:
         t.join()
+    logging.info("done waiting for killall commands to finish.")
 
