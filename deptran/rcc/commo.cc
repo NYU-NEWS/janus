@@ -54,6 +54,7 @@ void RccCommo::SendFinish(parid_t pid,
 }
 
 void RccCommo::SendInquire(parid_t pid,
+                           epoch_t epoch,
                            txnid_t tid,
                            const function<void(RccGraph& graph)>& callback) {
   FutureAttr fuattr;
@@ -64,7 +65,7 @@ void RccCommo::SendInquire(parid_t pid,
   };
   fuattr.callback = cb;
   auto proxy = (ClassicProxy*)NearestProxyForPartition(pid).second;
-  Future::safe_release(proxy->async_RccInquire(tid, fuattr));
+  Future::safe_release(proxy->async_RccInquire(epoch, tid, fuattr));
 }
 
 

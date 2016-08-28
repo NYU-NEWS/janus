@@ -40,7 +40,8 @@ class BrqSched : public RccSched {
                        TxnOutput* output,
                        const function<void()>& callback);
 
-  int OnInquire(cmdid_t cmd_id,
+  int OnInquire(epoch_t epoch,
+                cmdid_t cmd_id,
                 RccGraph *graph,
                 const function<void()> &callback) override;
   BrqCommo* commo();

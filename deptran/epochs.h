@@ -7,7 +7,7 @@ namespace rococo {
 class EpochMgr {
  public:
   epoch_t curr_epoch_{1};
-//  epoch_t oldest_alive_epoch_{0};
+  epoch_t oldest_active_{1};
 
   struct EpochInfo {
     bool active{true};
@@ -23,6 +23,9 @@ class EpochMgr {
   map<epoch_t, EpochInfo> epochs_;
   map<txnid_t, epoch_t>  id_to_epoch_;
 
+  virtual bool IsActive(epoch_t e) {
+    return (oldest_active_ >= e);
+  }
   virtual void AddToEpoch(epoch_t e, txnid_t id) {
     id_to_epoch_[id] = e;
     epochs_[e].Add(id);
@@ -53,6 +56,9 @@ class EpochMgr {
     return ret;
   }
   virtual set<txnid_t> RemoveOld(epoch_t epoch) {
+    verify(epoch < curr_epoch_);
+    verify(epoch >= oldest_active_);
+    oldest_active_ = epoch + 1;
     set<txnid_t> ret;
     auto it = epochs_.begin();
     for (; it->first <= epoch; it = epochs_.begin()) {

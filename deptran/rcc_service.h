@@ -133,7 +133,8 @@ class ClassicServiceImpl: public ClassicService {
                 DeferredReply* defer) override;
 
 
-  void RccInquire(const cmdid_t &tid,
+  void RccInquire(const epoch_t& epoch,
+                  const cmdid_t &tid,
                   RccGraph* graph,
                   DeferredReply *) override;
 
@@ -158,7 +159,8 @@ class ClassicServiceImpl: public ClassicService {
                         TxnOutput* output,
                         DeferredReply* defer) override;
 
-  void BrqInquire(const cmdid_t &tid,
+  void BrqInquire(const epoch_t& epoch,
+                  const cmdid_t &tid,
                   Marshallable* graph,
                   DeferredReply *) override;
 

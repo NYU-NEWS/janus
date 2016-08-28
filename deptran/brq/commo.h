@@ -23,6 +23,7 @@ class BrqCommo: public RccCommo {
                   const function<void(TxnOutput&)>&) override;
 
   void SendInquire(parid_t pid,
+                   epoch_t epoch,
                    txnid_t tid,
                    const function<void(RccGraph &graph)> &) override;
 

@@ -25,6 +25,7 @@ class RccCommo : public RococoCommunicator {
                           output)> &callback) ;
 
   virtual void SendInquire(parid_t pid,
+                           epoch_t epoch,
                            txnid_t tid,
                            const function<void(RccGraph& graph)>&);
 

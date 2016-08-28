@@ -181,15 +181,13 @@ class Graph : public Marshallable {
     delete v;
   }
 
-  V* FindOrCreateV(uint64_t id) {
-    verify(managing_memory_);
+  virtual V* FindOrCreateV(uint64_t id) {
     auto v = FindV(id);
     if (v == nullptr) v = CreateV(id);
     return v;
   }
 
-  V* FindOrCreateV(V& av) {
-    verify(managing_memory_);
+  virtual V* FindOrCreateV(V& av) {
     auto v = FindV(av.id());
     if (v == nullptr) v = CreateV(av);
     return v;

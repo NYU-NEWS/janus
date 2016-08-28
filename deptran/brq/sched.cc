@@ -210,10 +210,12 @@ void BrqSched::OnCommitWoGraph(const txnid_t cmd_id,
   }
 }
 
-int BrqSched::OnInquire(cmdid_t cmd_id,
+int BrqSched::OnInquire(epoch_t epoch,
+                        cmdid_t cmd_id,
                         RccGraph *graph,
                         const function<void()> &callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
+  // TODO check epoch, cannot be a too old one.
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(cmd_id);
   RccDTxn& info = *dtxn;
   //register an event, triggered when the status >= COMMITTING;

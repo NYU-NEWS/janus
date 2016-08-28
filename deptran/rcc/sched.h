@@ -44,8 +44,18 @@ class RccSched : public Scheduler, public RccGraph {
     verify(!managing_memory_);
     return reinterpret_cast<std::unordered_map<txnid_t, RccDTxn*>&>(dtxns_);
   };
-  RccDTxn* FindOrCreateV(txnid_t txn_id) {
-    auto dtxn = (RccDTxn*) GetOrCreateDTxn(txn_id);
+  RccDTxn* CreateV(txnid_t txn_id) override {
+    auto dtxn = (RccDTxn*) CreateDTxn(txn_id);
+    return dtxn;
+  }
+  RccDTxn* CreateV(RccDTxn& rhs) override {
+    auto dtxn = (RccDTxn*) CreateDTxn(rhs.id());
+    if (rhs.epoch_ > 0) {
+      dtxn->epoch_ = rhs.epoch_;
+    }
+    dtxn->partition_ = rhs.partition_;
+    dtxn->status_ = rhs.status_;
+    verify(dtxn->id() == rhs.tid_);
     return dtxn;
   }
   DTxn* GetOrCreateDTxn(txnid_t tid, bool ro = false) override ;
@@ -66,7 +76,8 @@ class RccSched : public Scheduler, public RccGraph {
                TxnOutput* output,
                const function<void()> &callback);
 
-  virtual int OnInquire(cmdid_t cmd_id,
+  virtual int OnInquire(epoch_t epoch,
+                        txnid_t cmd_id,
                         RccGraph *graph,
                         const function<void()> &callback);
 
@@ -82,8 +93,6 @@ class RccSched : public Scheduler, public RccGraph {
 
   void DestroyExecutor(txnid_t tid) override;
 
-
-  void InquireAbout(RccVertex *av);
   void InquireAboutIfNeeded(RccDTxn &dtxn);
   void AnswerIfInquired(RccDTxn &tinfo);
   void CheckWaitlist();

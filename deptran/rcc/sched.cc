@@ -29,7 +29,7 @@ RccSched::RccSched() : Scheduler(), waitlist_(), mtx_() {
   RccGraph::partition_id_ = Scheduler::partition_id_;
   RccGraph::managing_memory_ = false;
   waitlist_checker_ = new WaitlistChecker(this);
-  epoch_enabled_ = false;
+  epoch_enabled_ = true;
 }
 
 RccSched::~RccSched() {
@@ -121,30 +121,27 @@ int RccSched::OnCommit(cmdid_t cmd_id,
 //  }
 }
 
-int RccSched::OnInquire(cmdid_t cmd_id,
+int RccSched::OnInquire(epoch_t epoch,
+                        txnid_t txn_id,
                         RccGraph *graph,
                         const function<void()> &callback) {
-//  DragonBall *ball = new DragonBall(2, [this, cmd_id, callback, graph] () {
-//    dep_graph_->MinItfrGraph(cmd_id, graph);
-//    callback();
-//  });
   std::lock_guard<std::recursive_mutex> guard(mtx_);
 
   verify(0);
-  RccVertex* v = FindV(cmd_id);
+  RccDTxn* v = FindV(txn_id);
   verify(v != nullptr);
-  RccDTxn& info = *v;
+  RccDTxn& dtxn = *v;
   //register an event, triggered when the status >= COMMITTING;
-  verify (info.Involve(Scheduler::partition_id_));
+  verify (dtxn.Involve(Scheduler::partition_id_));
 
-  if (info.status() >= TXN_CMT) {
-    MinItfrGraph(cmd_id, graph, false, 1);
+  if (dtxn.status() >= TXN_CMT) {
+    MinItfrGraph(txn_id, graph, false, 1);
     callback();
   } else {
-    info.graphs_for_inquire_.push_back(graph);
-    info.callbacks_for_inquire_.push_back(callback);
-    verify(info.graphs_for_inquire_.size() ==
-        info.callbacks_for_inquire_.size());
+    dtxn.graphs_for_inquire_.push_back(graph);
+    dtxn.callbacks_for_inquire_.push_back(callback);
+    verify(dtxn.graphs_for_inquire_.size() ==
+        dtxn.callbacks_for_inquire_.size());
   }
 
 }
@@ -402,6 +399,7 @@ void RccSched::InquireAboutIfNeeded(RccDTxn &dtxn) {
     parid_t par_id = *(dtxn.partition_.begin());
     dtxn.during_asking = true;
     commo()->SendInquire(par_id,
+                         dtxn.epoch_,
                          dtxn.tid_,
                          std::bind(&RccSched::InquireAck,
                                    this,
@@ -410,20 +408,6 @@ void RccSched::InquireAboutIfNeeded(RccDTxn &dtxn) {
   }
 }
 
-void RccSched::InquireAbout(RccVertex *av) {
-//  Graph<RccDTxn> &txn_gra = dep_graph_->txn_gra_;
-  RccDTxn &tinfo = *av;
-  verify(!tinfo.Involve(Scheduler::partition_id_));
-  verify(!tinfo.during_asking);
-  parid_t par_id = *(tinfo.partition_.begin());
-  tinfo.during_asking = true;
-  commo()->SendInquire(par_id,
-                       tinfo.tid_,
-                       std::bind(&RccSched::InquireAck,
-                                 this,
-                                 tinfo.id(),
-                                 std::placeholders::_1));
-}
 
 void RccSched::InquireAck(cmdid_t cmd_id, RccGraph& graph) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
@@ -654,7 +638,8 @@ void RccSched::DestroyExecutor(txnid_t txn_id) {
   RccDTxn* dtxn = (RccDTxn*) GetOrCreateDTxn(txn_id);
   verify(dtxn->committed_ || dtxn->aborted_);
   if (epoch_enabled_) {
-    Remove(txn_id);
+//    Remove(txn_id);
+    DestroyDTxn(txn_id);
   }
 }
 

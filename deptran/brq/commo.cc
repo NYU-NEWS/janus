@@ -67,6 +67,7 @@ void BrqCommo::SendFinish(parid_t pid,
 }
 
 void BrqCommo::SendInquire(parid_t pid,
+                           epoch_t epoch,
                            txnid_t tid,
                            const function<void(RccGraph& graph)>& callback) {
   FutureAttr fuattr;
@@ -78,7 +79,7 @@ void BrqCommo::SendInquire(parid_t pid,
   fuattr.callback = cb;
   // TODO fix.
   auto proxy = (ClassicProxy*)NearestProxyForPartition(pid).second;
-  Future::safe_release(proxy->async_BrqInquire(tid, fuattr));
+  Future::safe_release(proxy->async_BrqInquire(epoch, tid, fuattr));
 }
 
 bool BrqCommo::IsGraphOrphan(RccGraph& graph, txnid_t cmd_id) {

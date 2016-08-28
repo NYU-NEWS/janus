@@ -68,8 +68,9 @@ abstract service Classic {
                RccGraph |
                map<uint32_t, map<int32_t, Value>> outputs);
 
-  defer RccInquire(cmdid_t txn_id |
-                RccGraph res);
+  defer RccInquire(epoch_t epoch,
+                   txnid_t txn_id |
+                   RccGraph res);
 
   defer RccDispatchRo(SimpleCommand cmd |
                       map<i32, Value> output);
@@ -89,7 +90,8 @@ abstract service Classic {
                          int32_t res,
                          TxnOutput output);
 
-  defer BrqInquire(cmdid_t txn_id |
+  defer BrqInquire(epoch_t epoch, 
+                   txnid_t txn_id |
                    Marshallable ret_graph);
 
   defer BrqPreAccept(cmdid_t txn_id,

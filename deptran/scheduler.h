@@ -58,6 +58,8 @@ class Scheduler {
   virtual DTxn *GetDTxn(txnid_t tid);
   virtual DTxn *CreateDTxn(txnid_t tid, bool ro = false);
   virtual DTxn *GetOrCreateDTxn(txnid_t tid, bool ro = false);
+  virtual DTxn *CreateDTxn(epoch_t epoch, txnid_t txn_id, bool read_only = false);
+  virtual DTxn *GetOrCreateDTxn(epoch_t epoch, txnid_t txn_id);
   void DestroyDTxn(i64 tid);
 
   Executor* GetExecutor(txnid_t txn_id);

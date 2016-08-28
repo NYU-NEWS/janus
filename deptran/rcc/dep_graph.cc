@@ -209,7 +209,6 @@ bool RccGraph::operator== (RccGraph& rhs) const {
 }
 
 void RccGraph::RebuildEdgePointer(map<txnid_t, RccVertex*>& index) {
-  verify(managing_memory_);
   // TODO
   for (auto& pair : index) {
     auto id = pair.first;
@@ -293,7 +292,6 @@ void RccGraph::UpgradeStatus(RccVertex *v, int8_t status) {
 RccVertex* RccGraph::AggregateVertex(RccVertex *rhs_v) {
   // TODO: add epoch here.
   // create the dtxn if not exist.
-  verify(managing_memory_);
   RccVertex* vertex = FindOrCreateV(*rhs_v);
   auto status1 = vertex->get_status();
   auto status2 = rhs_v->get_status();

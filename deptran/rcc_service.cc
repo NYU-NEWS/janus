@@ -332,13 +332,14 @@ void ClassicServiceImpl::RccFinish(const cmdid_t& cmd_id,
 //  stat_sz_gra_commit_.sample(req.gra.size());
 //}
 
-void ClassicServiceImpl::RccInquire(const txnid_t &tid,
+void ClassicServiceImpl::RccInquire(const epoch_t& epoch,
+                                    const txnid_t& tid,
                                     RccGraph *graph,
                                     rrr::DeferredReply *defer) {
   verify(IS_MODE_RCC || IS_MODE_RO6);
   std::lock_guard <std::mutex> guard(mtx_);
   RccSched* sched = (RccSched*) dtxn_sched_;
-  sched->OnInquire(tid, graph, [defer]() { defer->reply(); });
+  sched->OnInquire(epoch, tid, graph, [defer]() { defer->reply(); });
 //  RccDTxn *dtxn = (RccDTxn *) dtxn_sched_->GetDTxn(tid);
 //  dtxn->inquire(res, defer);
 }
@@ -408,15 +409,18 @@ void ClassicServiceImpl::BrqCommitWoGraph(const cmdid_t& cmd_id,
                          [defer]() { defer->reply(); });
 }
 
-void ClassicServiceImpl::BrqInquire(const cmdid_t &tid,
-                             Marshallable *graph,
-                             rrr::DeferredReply *defer) {
+void ClassicServiceImpl::BrqInquire(const epoch_t& epoch,
+                                    const cmdid_t &tid,
+                                    Marshallable *graph,
+                                    rrr::DeferredReply *defer) {
   std::lock_guard <std::mutex> guard(mtx_);
   graph->rtti_ = Marshallable::RCC_GRAPH;
   graph->ptr().reset(new RccGraph());
   BrqSched* sched = (BrqSched*) dtxn_sched_;
-  sched->OnInquire(tid, dynamic_cast<RccGraph*>(graph->ptr().get()),
-                          [defer]() { defer->reply(); });
+  sched->OnInquire(epoch,
+                   tid,
+                   dynamic_cast<RccGraph*>(graph->ptr().get()),
+                   [defer]() { defer->reply(); });
 //  RccDTxn *dtxn = (RccDTxn *) dtxn_sched_->GetDTxn(tid);
 //  dtxn->inquire(res, defer);
 }
