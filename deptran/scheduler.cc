@@ -355,12 +355,10 @@ void Scheduler::UpgradeEpochAck(parid_t par_id,
                                siteid_t site_id,
                                int32_t res) {
   auto parids = Config::GetConfig()->GetAllPartitionIds();
-//  for (auto p : parids) {
-//    if (epoch_replies_.count(p) == 0) {
-//      epoch_replies_[p] = 0;
-//    }
-//  }
   epoch_replies_[par_id][site_id] = res;
+  if (epoch_replies_.size() < parids.size()) {
+    return;
+  }
   for (auto& pair: epoch_replies_) {
     auto par_id = pair.first;
     auto par_size = Config::GetConfig()->GetPartitionSize(par_id);
@@ -382,7 +380,11 @@ void Scheduler::UpgradeEpochAck(parid_t par_id,
   epoch_replies_.clear();
   int x = 5;
   if (smallest_inactive >= x) {
-    commo()->SendTruncateEpoch(smallest_inactive - x);
+    epoch_t epoch_to_truncate = smallest_inactive - x;
+    if (epoch_to_truncate >= epoch_mgr_.oldest_active_) {
+      Log_info("truncate epoch %d", epoch_to_truncate);
+      commo()->SendTruncateEpoch(epoch_to_truncate);
+    }
   }
 }
 

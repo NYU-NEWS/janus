@@ -7,7 +7,7 @@ namespace rococo {
 class EpochMgr {
  public:
   epoch_t curr_epoch_{1};
-  epoch_t oldest_active_{1};
+  epoch_t oldest_active_{0};
 
   struct EpochInfo {
     bool active{true};
