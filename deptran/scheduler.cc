@@ -49,14 +49,15 @@ DTxn* Scheduler::CreateDTxn(txnid_t tid, bool ro) {
     verify(txn_reg_);
     dtxn->txn_reg_ = txn_reg_;
     verify(dtxn->tid_ == tid);
+    if (epoch_enabled_) {
+      epoch_mgr_.AddToCurrent(tid);
+      TriggerUpgradeEpoch();
+    }
+    dtxn->sched_ = this;
   } else {
-    verify(0);
+    // for multi-paxos this would happen.
+//    verify(0);
   }
-  if (epoch_enabled_) {
-    epoch_mgr_.AddToCurrent(tid);
-    TriggerUpgradeEpoch();
-  }
-  dtxn->sched_ = this;
   return dtxn;
 }
 
