@@ -178,7 +178,7 @@ void BrqCoord::AcceptAck(phase_t phase,
 void BrqCoord::Commit() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   TxnCommand *txn = (TxnCommand*) cmd_;
-  RccVertex* v = graph_.FindV(cmd_->id_);
+  RccDTxn* v = graph_.FindV(cmd_->id_);
   RccDTxn& info = *v;
   verify(txn->partition_ids_.size() == info.partition_.size());
   graph_.UpgradeStatus(v, TXN_CMT);
@@ -315,12 +315,12 @@ int BrqCoord::FastQuorumGraphCheck(parid_t par_id) {
 //  verify(vec_graph.size() == 1);
 //  verify(vec_graph.size() >= 1);
   verify(vec_graph.size() == fast_quorum);
-  RccVertex* v = vec_graph[0]->FindV(cmd_->id_);
+  RccDTxn* v = vec_graph[0]->FindV(cmd_->id_);
   verify(v != nullptr);
   auto& parent_set = v->GetParentSet();
   for (int i = 1; i < vec_graph.size(); i++) {
     RccGraph& graph = *vec_graph[i];
-    RccVertex* vv = graph.FindV(cmd_->id_);
+    RccDTxn* vv = graph.FindV(cmd_->id_);
     auto& pp_set = vv->GetParentSet();
     if (parent_set != pp_set) {
       res = 2;

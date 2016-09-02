@@ -8,9 +8,9 @@ namespace rococo {
 rrr::PollMgr *svr_poll_mgr_g = nullptr;
 static pthread_t th_id_s = 0;
 
-RccVertex* RccGraph::FindOrCreateRccVertex(txnid_t txn_id,
+RccDTxn* RccGraph::FindOrCreateRccVertex(txnid_t txn_id,
                                            RccSched* sched) {
-  RccVertex* v = nullptr;
+  RccDTxn* v = nullptr;
   verify(sched != nullptr);
   v = FindOrCreateV(txn_id);
   RccDTxn& dtxn = *v;
@@ -23,8 +23,8 @@ void RccGraph::RemoveVertex(txnid_t txn_id) {
   Remove(txn_id);
 }
 
-void RccGraph::SelectGraphCmtUkn(RccVertex* vertex, RccGraph* new_graph) {
-  RccVertex* new_v = new_graph->FindOrCreateV(vertex->id());
+void RccGraph::SelectGraphCmtUkn(RccDTxn* vertex, RccGraph* new_graph) {
+  RccDTxn* new_v = new_graph->FindOrCreateV(vertex->id());
   auto s = vertex->status();
   if (s >= TXN_DCD) {
     new_v->union_status(TXN_CMT);
@@ -35,9 +35,9 @@ void RccGraph::SelectGraphCmtUkn(RccVertex* vertex, RccGraph* new_graph) {
   // TODO, verify that the parent vertex still exists.
   // TODO, verify that the new parent has the correct epoch.
   for (auto& pair : vertex->incoming_) {
-    RccVertex* parent_v = pair.first;
+    RccDTxn* parent_v = pair.first;
     auto weight = pair.second;
-    RccVertex* new_parent_v = new_graph->FindOrCreateV(parent_v->id());
+    RccDTxn* new_parent_v = new_graph->FindOrCreateV(parent_v->id());
     new_parent_v->partition_ = parent_v->partition_;
     verify(new_parent_v->status() == TXN_UKN);
     new_v->AddParentEdge(new_parent_v, weight);
@@ -51,13 +51,13 @@ void RccGraph::SelectGraphCmtUkn(RccVertex* vertex, RccGraph* new_graph) {
 #endif
 }
 
-void RccGraph::SelectGraph(set<RccVertex*> vertexes, RccGraph* new_graph) {
+void RccGraph::SelectGraph(set<RccDTxn*> vertexes, RccGraph* new_graph) {
   for (auto v : vertexes) {
-    RccVertex* new_v = new_graph->FindOrCreateV(*v);
+    RccDTxn* new_v = new_graph->FindOrCreateV(*v);
     for (auto &kv: v->incoming_) {
-      RccVertex* parent_v = kv.first;
+      RccDTxn* parent_v = kv.first;
       auto weight = kv.second;
-      RccVertex* new_parent_v = nullptr;
+      RccDTxn* new_parent_v = nullptr;
       if (vertexes.count(parent_v) > 0) {
         new_parent_v = new_graph->FindOrCreateV(*parent_v);
       } else {
@@ -98,7 +98,7 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
                                 int depth) {
   verify(new_graph != nullptr);
 //  gra_m.gra = &txn_gra_;
-  RccVertex* source = FindV(tid);
+  RccDTxn* source = FindV(tid);
   verify(source != nullptr);
   verify(source->id() == tid);
   // quick path
@@ -110,14 +110,14 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
     SelectGraphCmtUkn(source, new_graph);
   } else if (source->get_status() >= TXN_DCD) {
     RccScc& scc = FindSCC(source);
-    set<RccVertex*> vertex_set{};
+    set<RccDTxn*> vertex_set{};
     vertex_set.insert(scc.begin(), scc.end());
     SelectGraph(vertex_set, new_graph);
 #ifdef DEBUG_CODE
     verify(new_graph->size() >= scc.size());
 #endif
   } else if (depth == 1) {
-    set<RccVertex*> vertex_set{source};
+    set<RccDTxn*> vertex_set{source};
     SelectGraph(vertex_set, new_graph);
   } else {
     verify(0);
@@ -126,15 +126,15 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
 //  auto &ret_set = gra_m.ret_set;
 //  unordered_set<RccVertex *> ret_set;
 //  find_txn_anc_opt(source, ret_set);
-    vector<RccVertex *> search_stack;
-    set<RccVertex*> searched_set;
+    vector<RccDTxn *> search_stack;
+    set<RccDTxn*> searched_set;
     search_stack.push_back(source);
     verify(depth == 1 || depth == -1);
     while (search_stack.size() > 0) {
-      RccVertex *v = search_stack.back();
+      RccDTxn *v = search_stack.back();
       searched_set.insert(v);
       search_stack.pop_back();
-      RccVertex* new_v = new_graph->FindOrCreateV(*v);
+      RccDTxn* new_v = new_graph->FindOrCreateV(*v);
       for (auto &kv: v->incoming_) {
         auto parent_v = kv.first;
         auto weight = kv.second;
@@ -150,14 +150,14 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
         }
         if (depth == 1) {
           // TODO
-          RccVertex* new_parent_v = new_graph->FindOrCreateV(parent_v->id());
+          RccDTxn* new_parent_v = new_graph->FindOrCreateV(parent_v->id());
           RccDTxn& tinfo = *new_parent_v;
           tinfo.partition_ = parent_v->partition_;
           verify(tinfo.status() == TXN_UKN);
           new_v->AddParentEdge(new_parent_v, weight);
         } else if (depth == -1) {
           verify(0);
-          RccVertex* new_parent_v = new_graph->FindOrCreateV(*parent_v);
+          RccDTxn* new_parent_v = new_graph->FindOrCreateV(*parent_v);
           new_v->AddParentEdge(new_parent_v, weight);
           search_stack.push_back(parent_v);
         } else {
@@ -195,11 +195,11 @@ bool RccGraph::operator== (RccGraph& rhs) const {
     return false;
   for (auto& pair: const_cast<RccGraph*>(this)->vertex_index()) {
     auto id = pair.first;
-    RccVertex* vertex = pair.second;
+    RccDTxn* vertex = pair.second;
     auto it = rhs.vertex_index().find(id);
     if (it == rhs.vertex_index().end())
       return false;
-    RccVertex* av = it->second;
+    RccDTxn* av = it->second;
     if (*vertex != *av)
       return false;
   }
@@ -208,21 +208,21 @@ bool RccGraph::operator== (RccGraph& rhs) const {
   return true;
 }
 
-void RccGraph::RebuildEdgePointer(map<txnid_t, RccVertex*>& index) {
+void RccGraph::RebuildEdgePointer(map<txnid_t, RccDTxn*>& index) {
   // TODO
   for (auto& pair : index) {
     auto id = pair.first;
-    RccVertex* v = pair.second;
+    RccDTxn* v = pair.second;
     // add pointers
     for (auto& parent_id : v->parents_) {
-      RccVertex* parent_v = FindV(parent_id);
+      RccDTxn* parent_v = FindV(parent_id);
       verify(parent_v);
       v->incoming_[parent_v] = EDGE_D; // FIXME
       parent_v->outgoing_[v] = EDGE_D; // FIXME
     }
     // remove pointers
     for (auto it = v->incoming_.begin(); it != v->incoming_.end();) {
-      RccVertex* parent_v = it->first;
+      RccDTxn* parent_v = it->first;
       auto parent_id = parent_v->id();
       if (v->parents_.count(parent_id) == 0) {
         it = v->incoming_.erase(it);
@@ -238,12 +238,12 @@ void RccGraph::RebuildEdgePointer(map<txnid_t, RccVertex*>& index) {
 }
 
 void RccGraph::BuildEdgePointer(RccGraph &graph,
-                                map<txnid_t, RccVertex*>& index) {
+                                map<txnid_t, RccDTxn*>& index) {
   verify(0);
   for (auto &pair: graph.vertex_index()) {
     auto id = pair.first;
-    RccVertex* a_vertex = pair.second;
-    RccVertex* vertex = index[a_vertex->id()];
+    RccDTxn* a_vertex = pair.second;
+    RccDTxn* vertex = index[a_vertex->id()];
 
 #ifdef DEBUG_CODE
     if (vertex->Get().get_status() >= TXN_CMT &&
@@ -257,7 +257,7 @@ void RccGraph::BuildEdgePointer(RccGraph &graph,
     if (vertex->status() < TXN_CMT &&
         a_vertex->status() >= TXN_CMT) {
       for (auto pair : vertex->incoming_) {
-        RccVertex* parent_v = pair.first;
+        RccDTxn* parent_v = pair.first;
         parent_v->outgoing_.erase(vertex); // FIXME check wait list still?
       }
       vertex->incoming_.clear();
@@ -278,7 +278,7 @@ void RccGraph::BuildEdgePointer(RccGraph &graph,
   }
 }
 
-void RccGraph::UpgradeStatus(RccVertex *v, int8_t status) {
+void RccGraph::UpgradeStatus(RccDTxn *v, int8_t status) {
   auto s = v->status();
   if (s >= TXN_CMT) {
     RccSched::__DebugCheckParentSetSize(v->id(), v->parents_.size());
@@ -289,10 +289,10 @@ void RccGraph::UpgradeStatus(RccVertex *v, int8_t status) {
 }
 
 
-RccVertex* RccGraph::AggregateVertex(RccVertex *rhs_v) {
+RccDTxn* RccGraph::AggregateVertex(RccDTxn *rhs_v) {
   // TODO: add epoch here.
   // create the dtxn if not exist.
-  RccVertex* vertex = FindOrCreateV(*rhs_v);
+  RccDTxn* vertex = FindOrCreateV(*rhs_v);
   auto status1 = vertex->get_status();
   auto status2 = rhs_v->get_status();
   auto& parent_set1 = vertex->parents_;
@@ -348,8 +348,8 @@ RccVertex* RccGraph::AggregateVertex(RccVertex *rhs_v) {
   return vertex;
 }
 
-RccScc& RccGraph::FindSCC(RccVertex *vertex) {
-  RccScc& scc2 = Graph<RccVertex>::FindSccPred(vertex);
+RccScc& RccGraph::FindSCC(RccDTxn *vertex) {
+  RccScc& scc2 = Graph<RccDTxn>::FindSccPred(vertex);
 #ifdef DEBUG_CODE
   RccScc& scc = Graph<TxnInfo>::FindSCC(vertex);
   std::sort(scc.begin(), scc.end());
@@ -364,12 +364,12 @@ RccScc& RccGraph::FindSCC(RccVertex *vertex) {
   return scc2;
 }
 
-bool RccGraph::AllAncCmt(RccVertex *vertex) {
+bool RccGraph::AllAncCmt(RccDTxn *vertex) {
   if(vertex->all_anc_cmt_hint) {
     return true;
   }
   bool all_anc_cmt = true;
-  std::function<int(RccVertex*)> func = [&all_anc_cmt] (RccVertex* v) -> int {
+  std::function<int(RccDTxn*)> func = [&all_anc_cmt] (RccDTxn* v) -> int {
     RccDTxn& info = *v;
     int r = 0;
     if (info.IsExecuted() ||
@@ -389,13 +389,13 @@ bool RccGraph::AllAncCmt(RccVertex *vertex) {
   return all_anc_cmt;
 }
 
-map<txnid_t, RccVertex*> RccGraph::Aggregate(epoch_t epoch, RccGraph &graph) {
+map<txnid_t, RccDTxn*> RccGraph::Aggregate(epoch_t epoch, RccGraph &graph) {
   // aggregate vertexes
-  map<txnid_t, RccVertex*> index;
+  map<txnid_t, RccDTxn*> index;
   for (auto& pair: graph.vertex_index()) {
-    RccVertex* rhs_v = pair.second;
+    RccDTxn* rhs_v = pair.second;
     verify(pair.first == rhs_v->id());
-    RccVertex* vertex = AggregateVertex(rhs_v);
+    RccDTxn* vertex = AggregateVertex(rhs_v);
     RccDTxn& dtxn = *vertex;
     if (dtxn.epoch_ == 0) {
       dtxn.epoch_ = epoch;
@@ -491,10 +491,10 @@ map<txnid_t, RccVertex*> RccGraph::Aggregate(epoch_t epoch, RccGraph &graph) {
 
 bool RccGraph::HasICycle(const RccScc& scc) {
   for (auto& vertex : scc) {
-    set<RccVertex *> walked;
+    set<RccDTxn *> walked;
     bool ret = false;
-    std::function<bool(RccVertex *)> func =
-        [&ret, vertex](RccVertex *v) -> bool {
+    std::function<bool(RccDTxn *)> func =
+        [&ret, vertex](RccDTxn *v) -> bool {
           if (v == vertex) {
             ret = true;
             return false;

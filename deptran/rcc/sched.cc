@@ -178,7 +178,7 @@ void RccSched::CheckWaitlist() {
 //    Log_info("checking loop, length: %d, fridge size: %d",
 //             (int)waitlist_.¬size(), (int)fridge_.size());
     auto it = waitlist_.begin();
-    RccVertex* v = *it;
+    RccDTxn* v = *it;
     verify(v != nullptr);
 //  for (RccVertex *v : waitlist_) {
     // TODO minimize the length of the waitlist.
@@ -304,19 +304,19 @@ void RccSched::CheckWaitlist() {
 //  }
 }
 
-void RccSched::AddChildrenIntoWaitlist(RccVertex* v) {
+void RccSched::AddChildrenIntoWaitlist(RccDTxn* v) {
   RccDTxn& tinfo = *v;
   verify(tinfo.status() >= TXN_DCD && tinfo.IsExecuted());
 
   for (auto& child_pair : v->outgoing_) {
-    RccVertex* child_v = child_pair.first;
+    RccDTxn* child_v = child_pair.first;
     if (!child_v->IsExecuted() &&
         waitlist_.count(child_v) == 0) {
       waitlist_.insert(child_v);
       verify(child_v->epoch_ > 0);
     }
   }
-  for (RccVertex* child_v : v->removed_children_) {
+  for (RccDTxn* child_v : v->removed_children_) {
     if (!child_v->IsExecuted() &&
         waitlist_.count(child_v) == 0) {
       waitlist_.insert(child_v);
@@ -328,7 +328,7 @@ void RccSched::AddChildrenIntoWaitlist(RccVertex* v) {
 #endif
 }
 
-void RccSched::__DebugExamineGraphVerify(RccVertex *v) {
+void RccSched::__DebugExamineGraphVerify(RccDTxn *v) {
 #ifdef DEBUG_CODE
   for (auto& pair : v->incoming_) {
     verify(pair.first->outgoing_.count(v) > 0);
@@ -419,10 +419,10 @@ void RccSched::InquireAck(cmdid_t cmd_id, RccGraph& graph) {
   verify(tinfo.status() >= TXN_CMT);
 }
 
-RccVertex* RccSched::__DebugFindAnOngoingAncestor(RccVertex* vertex) {
-  RccVertex* ret = nullptr;
-  set<RccVertex*> walked;
-  std::function<bool(RccVertex*)> func = [&ret, vertex] (RccVertex* v) -> bool {
+RccDTxn* RccSched::__DebugFindAnOngoingAncestor(RccDTxn* vertex) {
+  RccDTxn* ret = nullptr;
+  set<RccDTxn*> walked;
+  std::function<bool(RccDTxn*)> func = [&ret, vertex] (RccDTxn* v) -> bool {
     RccDTxn& info = *v;
     if (info.status() >= TXN_CMT) {
       return true;
@@ -435,9 +435,9 @@ RccVertex* RccSched::__DebugFindAnOngoingAncestor(RccVertex* vertex) {
   return ret;
 }
 
-bool RccSched::AllAncCmt(RccVertex *vertex) {
+bool RccSched::AllAncCmt(RccDTxn *vertex) {
   bool all_anc_cmt = true;
-  std::function<int(RccVertex*)> func = [&all_anc_cmt] (RccVertex* v) -> int {
+  std::function<int(RccDTxn*)> func = [&all_anc_cmt] (RccDTxn* v) -> int {
     RccDTxn& info = *v;
     int r = 0;
     if (info.IsExecuted() || info.IsAborted()) {
@@ -464,10 +464,10 @@ void RccSched::Decide(const RccScc& scc) {
 
 bool RccSched::HasICycle(const RccScc& scc) {
   for (auto& vertex : scc) {
-    set<RccVertex *> walked;
+    set<RccDTxn *> walked;
     bool ret = false;
-    std::function<bool(RccVertex *)> func =
-        [&ret, vertex](RccVertex *v) -> bool {
+    std::function<bool(RccDTxn *)> func =
+        [&ret, vertex](RccDTxn *v) -> bool {
           if (v == vertex) {
             ret = true;
             return false;
@@ -485,7 +485,7 @@ void RccSched::TriggerCheckAfterAggregation(RccGraph &graph) {
   for (auto& pair: graph.vertex_index()) {
     // TODO optimize here.
     auto txnid = pair.first;
-    RccVertex* rhs_v = pair.second;
+    RccDTxn* rhs_v = pair.second;
     auto v = FindV(txnid);
     verify(v != nullptr);
 #ifdef DEBUG_CODE
@@ -537,8 +537,8 @@ void RccSched::TriggerCheckAfterAggregation(RccGraph &graph) {
 bool RccSched::HasAbortedAncestor(const RccScc& scc) {
   verify(scc.size() > 0);
   bool has_aborted = false;
-  std::function<int(RccVertex*)> func =
-      [&has_aborted] (RccVertex* v) -> int {
+  std::function<int(RccDTxn*)> func =
+      [&has_aborted] (RccDTxn* v) -> int {
         RccDTxn& info = *v;
         if (info.IsExecuted()) {
           return RccGraph::SearchHint::Skip;
@@ -556,7 +556,7 @@ bool RccSched::HasAbortedAncestor(const RccScc& scc) {
 bool RccSched::FullyDispatched(const RccScc& scc) {
   bool ret = std::all_of(scc.begin(),
                          scc.end(),
-                         [this] (RccVertex *v) {
+                         [this] (RccDTxn *v) {
                            bool r = true;
                            RccDTxn& tinfo = *v;
                            if (tinfo.Involve(Scheduler::partition_id_)) {
@@ -569,11 +569,11 @@ bool RccSched::FullyDispatched(const RccScc& scc) {
 
 bool RccSched::AllAncFns(const RccScc& scc) {
   verify(scc.size() > 0);
-  set<RccVertex*> scc_set;
+  set<RccDTxn*> scc_set;
   scc_set.insert(scc.begin(), scc.end());
   bool all_anc_fns = true;
-  std::function<int(RccVertex*)> func =
-      [&all_anc_fns, &scc_set] (RccVertex* v) -> int {
+  std::function<int(RccDTxn*)> func =
+      [&all_anc_fns, &scc_set] (RccDTxn* v) -> int {
     RccDTxn& info = *v;
     if (info.IsExecuted()) {
       return RccGraph::SearchHint::Skip;

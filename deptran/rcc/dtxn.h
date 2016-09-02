@@ -139,7 +139,9 @@ class RccDTxn: public DTxn, public Vertex<RccDTxn> {
   }
 
   inline bool IsExecuted() const {
-    if (executed_) verify(IsDecided());
+    if (executed_) {
+      verify(IsDecided());
+    }
     return executed_;
   }
 

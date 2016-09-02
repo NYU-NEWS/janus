@@ -21,15 +21,15 @@ class RccSched : public Scheduler, public RccGraph {
   static void __DebugCheckParentSetSize(txnid_t tid, int32_t sz);
 
   class Waitlist {
-    set<RccVertex*> waitlist_ = {};
-    set<RccVertex*> fridge_ = {};
+    set<RccDTxn*> waitlist_ = {};
+    set<RccDTxn*> fridge_ = {};
   };
 
  public:
 //  RccGraph *dep_graph_ = nullptr;
   WaitlistChecker* waitlist_checker_ = nullptr;
-  set<RccVertex*> waitlist_ = {};
-  set<RccVertex*> fridge_ = {};
+  set<RccDTxn*> waitlist_ = {};
+  set<RccDTxn*> fridge_ = {};
   std::recursive_mutex mtx_{};
   std::time_t last_upgrade_time_{0};
   map<parid_t, int32_t> epoch_replies_{};
@@ -98,8 +98,8 @@ class RccSched : public Scheduler, public RccGraph {
   void CheckWaitlist();
   void InquireAck(cmdid_t cmd_id, RccGraph& graph);
   void TriggerCheckAfterAggregation(RccGraph &graph);
-  void AddChildrenIntoWaitlist(RccVertex* v);
-  bool AllAncCmt(RccVertex *v);
+  void AddChildrenIntoWaitlist(RccDTxn* v);
+  bool AllAncCmt(RccDTxn *v);
   bool FullyDispatched(const RccScc& scc);
   void Decide(const RccScc&);
   bool HasICycle(const RccScc& scc);
@@ -110,8 +110,8 @@ class RccSched : public Scheduler, public RccGraph {
   void Abort(const RccScc&);
 
   void __DebugExamineFridge();
-  RccVertex* __DebugFindAnOngoingAncestor(RccVertex* vertex);
-  void __DebugExamineGraphVerify(RccVertex *v);
+  RccDTxn* __DebugFindAnOngoingAncestor(RccDTxn* vertex);
+  void __DebugExamineGraphVerify(RccDTxn *v);
   RccCommo* commo();
 };
 

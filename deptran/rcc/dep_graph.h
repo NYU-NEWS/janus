@@ -12,8 +12,8 @@
  */
 namespace rococo {
 
-typedef RccDTxn RccVertex;
-typedef vector<RccVertex*> RccScc;
+typedef RccDTxn RccDTxn;
+typedef vector<RccDTxn*> RccScc;
 
 class EmptyGraph : public Marshallable {
  public:
@@ -23,7 +23,7 @@ class EmptyGraph : public Marshallable {
 };
 
 class RccSched;
-class RccGraph : public Graph<RccVertex> {
+class RccGraph : public Graph<RccDTxn> {
  public:
 //    Graph<PieInfo> pie_gra_;
 //  Graph <TxnInfo> txn_gra_;
@@ -33,7 +33,7 @@ class RccGraph : public Graph<RccVertex> {
 //  std::vector<RococoProxy *> rpc_proxies_;
 //  std::vector<std::string> server_addrs_;
 
-  RccGraph() : Graph<RccVertex>() {
+  RccGraph() : Graph<RccDTxn>() {
     rtti_ = Marshallable::RCC_GRAPH;
   }
 
@@ -47,19 +47,19 @@ class RccGraph : public Graph<RccVertex> {
   };
 
   /** on start_req */
-  RccVertex* FindOrCreateRccVertex(txnid_t txn_id, RccSched* sched);
+  RccDTxn* FindOrCreateRccVertex(txnid_t txn_id, RccSched* sched);
   void RemoveVertex(txnid_t txn_id);
   virtual void BuildEdgePointer(RccGraph &graph,
-                                map<txnid_t, RccVertex*>& index);
-  void RebuildEdgePointer(map<txnid_t, RccVertex*>& index);
-  RccVertex* AggregateVertex(RccVertex *rhs_v);
-  void UpgradeStatus(RccVertex* v, int8_t status);
+                                map<txnid_t, RccDTxn*>& index);
+  void RebuildEdgePointer(map<txnid_t, RccDTxn*>& index);
+  RccDTxn* AggregateVertex(RccDTxn *rhs_v);
+  void UpgradeStatus(RccDTxn* v, int8_t status);
 
-  map<txnid_t, RccVertex*> Aggregate(epoch_t epoch, RccGraph& graph);
-  void SelectGraphCmtUkn(RccVertex* vertex, RccGraph* new_graph);
-  void SelectGraph(set<RccVertex*> vertexes, RccGraph* new_graph);
-  RccScc& FindSCC(RccVertex *vertex) override;
-  bool AllAncCmt(RccVertex *vertex);
+  map<txnid_t, RccDTxn*> Aggregate(epoch_t epoch, RccGraph& graph);
+  void SelectGraphCmtUkn(RccDTxn* vertex, RccGraph* new_graph);
+  void SelectGraph(set<RccDTxn*> vertexes, RccGraph* new_graph);
+  RccScc& FindSCC(RccDTxn *vertex) override;
+  bool AllAncCmt(RccDTxn *vertex);
 
   bool operator== (RccGraph& rhs) const;
 

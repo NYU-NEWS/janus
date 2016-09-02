@@ -30,6 +30,7 @@ class Vertex {
   }
   Vertex(Vertex &v): parents_(v.parents_) {
   }
+  virtual ~Vertex() {};
   set<uint64_t>& GetParentSet() {
 #ifdef DEBUG_CODE
     set<uint64_t> ret;
@@ -50,7 +51,10 @@ class Vertex {
 
   void AddParentEdge(T *other, int8_t weight) {
     // printf("add edge: %d -> %d\n", this->id(), other->id());
-    parents_.insert(other->id());
+    verify(parents_.size() >= 0);
+    auto id = other->id();
+    auto id2 = other->id();
+    parents_.insert(id);
     incoming_[other] |= weight;
     other->outgoing_[this_pointer()] |= weight;
   }

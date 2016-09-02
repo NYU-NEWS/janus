@@ -341,31 +341,29 @@ bool RccDTxn::WriteColumn(Row *row,
 }
 
 void RccDTxn::TraceDep(Row* row, column_id_t col_id, int hint_flag) {
-  // TODO remove pointers in outdated epoch.
+  // TODO remove pointers in outdated epoch ???
   auto r = dynamic_cast<RCCRow*>(row);
   verify(r != nullptr);
   entry_t *entry = r->get_dep_entry(col_id);
   int8_t edge_type = (hint_flag == TXN_INSTANT) ? EDGE_I : EDGE_D;
-  // TODO optimize.
-  RccVertex* parent_v = (RccVertex*)(entry->last_);
-
-  if (parent_v == this) {
+  RccDTxn* parent_dtxn = (RccDTxn*)(entry->last_);
+  if (parent_dtxn == this) {
     // skip
-  } else if (parent_v != nullptr) {
-    RccDTxn& info = *parent_v;
-    if (info.IsExecuted()) {
-      ;
-    } else {
-      this->AddParentEdge(parent_v, edge_type);
-    }
-    ((RccDTxn*)(entry->last_))->external_ref_ = nullptr;
-    entry->last_ = this;
-    this->external_ref_ = &(entry->last_);
-  } else if (parent_v == nullptr) {
-    entry->last_ = this;
-    this->external_ref_ = &(entry->last_);
   } else {
-    verify(0);
+    if (parent_dtxn != nullptr) {
+      if (sched_->epoch_enabled_) {
+        auto epoch1 = parent_dtxn->epoch_;
+        auto epoch2 = sched_->epoch_mgr_.oldest_active_;
+        verify(epoch1 >= epoch2);
+      }
+      if (parent_dtxn->IsExecuted()) { ;
+      } else {
+        this->AddParentEdge(parent_dtxn, edge_type);
+      }
+      parent_dtxn->external_ref_ = nullptr;
+    }
+    this->external_ref_ = &(entry->last_);
+    entry->last_ = this;
   }
 #ifdef DEBUG_CODE
   verify(graph_);
