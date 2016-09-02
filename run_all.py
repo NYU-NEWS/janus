@@ -3,17 +3,22 @@ import sys
 import copy
 import traceback
 import os
+import os.path
 import tempfile
 import subprocess
 import itertools
 import shutil
 import glob
 import signal
-from argparse import ArgumentParser
-import logging
-from logging import info, debug, error 
 
+from argparse import ArgumentParser
+from logging import info, debug, error
+from pylib.placement_strategy import ClientPlacement, BalancedPlacementStrategy, LeaderPlacementStrategy
+
+import logging
 import yaml
+
+
 
 DEFAULT_MODES = ["tpl_ww:multi_paxos",
                  "occ:multi_paxos",
@@ -35,6 +40,8 @@ APPEND_DEFAULTS = {
 TMP_DIR='./tmp'
 
 logger = logging.getLogger('')
+
+
 
 def create_parser():
     parser = ArgumentParser()
@@ -85,6 +92,9 @@ def create_parser():
                         help="path to yml config (not containing processes)")
     parser.add_argument("-g", "--generate-graphs", dest="generate_graph",
                         action='store_true', default=False, help="generate graphs")
+    parser.add_argument("-cp", "--client-placement", dest="client_placement",
+                        choices=[ClientPlacement.BALANCED, ClientPlacement.WITH_LEADER], 
+                        default=ClientPlacement.BALANCED, help="client placement strategy (with leader for multipaxos)")
     return parser
 
 
@@ -115,84 +125,16 @@ def get_range(r):
         return range(*a)
 
 
-def gen_process_and_site(experiment_name, num_c, num_s, num_replicas, hosts_config):
-    # this needs to be refactored
-    process_map = {}
-    clients = [] 
-    servers = [] 
-    hosts = hosts_config['host']	
-    
-    servers_and_clients = []
-    current_list = []
-    for x in range(num_c):
-        client ='c'+str(x) 
-        current_list.append(client)
-        if len(current_list) == num_replicas:
-            clients.append(current_list)
-            current_list = []
-        servers_and_clients.append(client)
-    if len(current_list) > 0:
-        clients.append(current_list)
-    
-    x=0
-    while x<(num_s*num_replicas):
-        l = []
-        r = 0
-        while r<num_replicas:
-            server = 's'+str(x)
-            port = str(x+10000)
-            l.append(server+':'+port)
-            servers_and_clients.append(server)
-            r += 1
-            x += 1
-        servers.append(l)
-    
-    # assign servers 1 to a process, and clients
-    # get distributed evenly to the rest of the processes.
+def gen_process_and_site(args, experiment_name, num_c, num_s, num_replicas, hosts_config):
+    hosts = hosts_config['host']
 
-    region_data_fn = 'config/aws_hosts_region.yml'
-    region_data = None 
-    region_data_original = None
-    regions = []
-    if os.path.exists(region_data_fn):
-        with open('config/aws_hosts_region.yml', 'r') as f:
-            region_data = yaml.load(f)
-            region_data_original = copy.deepcopy(region_data)
-            regions = region_data.keys()
-            logging.debug("regions: {}".format(regions))
-    else:
-        # just fake the data: 1 region contains all the hosts
-        region_data = {'region': []}
-        regions = ['region']
-        for proc, host in hosts.iteritems():
-            region_data['region'].append( (proc, host,) )
-        region_data_original = copy.deepcopy(region_data)
-    
-    for sidx in range(num_s*num_replicas):
-        region_idx = sidx % len(regions)
-        s_name = "s{}".format(sidx)
-        region_members = region_data[regions[region_idx]]
-        assign_to = region_members.pop(0)[0]
-        if len(region_members) == 0:
-            region_data[regions[region_idx]] = copy.deepcopy(region_data_original[regions[region_idx]])
-            region_members = region_data[regions[region_idx]]
-        process_map[s_name] = assign_to
-    
-    
-    process_indices = [0 for r in regions]
-    for cidx in range(num_c):
-        region_idx = cidx % len(regions)
-        region = regions[region_idx]
-        process_idx = process_indices[region_idx]
-        c_name = "c{}".format(cidx)
-        assign_to = region_data[region][process_idx][0]
-        process_map[c_name] = assign_to
-        process_indices[region_idx] = (process_indices[region_idx] + 1) % len(region_data[region])
-    
-    site_process_config = {'site': {}}
-    site_process_config['site']['client'] = clients 
-    site_process_config['site']['server'] = servers 
-    site_process_config['process'] = process_map
+    layout_strategies = {
+        ClientPlacement.BALANCED: BalancedPlacementStrategy(),
+        ClientPlacement.WITH_LEADER: LeaderPlacementStrategy(),
+    }
+    strategy = layout_strategies[args.client_placement]
+    layout = strategy.generate_layout(args, num_c, num_s, num_replicas, hosts_config)
+
     if not os.path.isdir(TMP_DIR):
         os.makedirs(TMP_DIR)
 
@@ -203,11 +145,13 @@ def gen_process_and_site(experiment_name, num_c, num_s, num_replicas, hosts_conf
         dir=TMP_DIR,
         delete=False)
                                                 
-    contents = yaml.dump(site_process_config, default_flow_style=False)
+    contents = yaml.dump(layout, default_flow_style=False)
+    
     result = None 
     with site_process_file:
         site_process_file.write(contents)
         result = site_process_file.name
+
     return result 
 
 def load_config(fn):
@@ -275,9 +219,10 @@ def generate_config(args, experiment_name, benchmark, mode, zipf, num_client,
     logger.debug("generate_config: {}, {}, {}, {}, {}".format(
         experiment_name, benchmark, mode, num_client, zipf))
     hosts_config = load_config(args.hosts_file)
-    proc_and_site_config = gen_process_and_site(experiment_name, num_client,
-                                                num_server, num_replicas, 
-                                                hosts_config)
+    proc_and_site_config = gen_process_and_site(args, experiment_name,
+                                                num_client, num_server,
+                                                num_replicas, hosts_config)
+    
     logger.debug("site and process config: %s", proc_and_site_config)
     cc_mode, ab_mode = mode.split(':')
     config_files = modify_dynamic_params(args, benchmark, cc_mode, ab_mode,
@@ -315,8 +260,11 @@ def run_experiment(config_file, name, args, benchmark, mode, num_client):
     return res
 
 def save_git_revision():
-    rev = subprocess.check_output('cat /home/ubuntu/janus/build/revision.txt', shell=True)
-    return rev
+    rev_file = "/home/ubuntu/janus/build/revision.txt"
+    if os.path.isfile(rev_file):
+        cmd = "cat {}".format(rev_file)
+        rev = subprocess.check_output(cmd, shell=True)
+        return rev
 
     log_dir = "./log/"
     rev = None
