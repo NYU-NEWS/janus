@@ -23,7 +23,6 @@ class BalancedPlacementStrategy:
 		self.generate_site(site, server_names, client_names)
 
 		result = {'site': site, 'process': process}
-		print(result)
 		return result
 
 	def generate_process(self, process, hosts, server_names, client_names):
