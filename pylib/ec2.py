@@ -16,7 +16,7 @@ EC2_REGIONS = {
     'eu-west-1': {
         'location': 'Ireland',
         'endpoint': 'ec2.eu-west-1.amazonaws.com',
-        'ami_image': 'ami-26067455',
+        'ami_image': 'ami-26067455'
     },
     'ap-northeast-2': {
         'location': 'Seoul',
@@ -72,6 +72,7 @@ def list_regions():
 @task
 @hosts('localhost')
 def create(region, num=1, instance_type=INSTANCE_TYPE):
+    print("ec2.create: ", region, num, instance_type)
     global created_instances
     if not exists('~/.aws/credentials'):
         raise RuntimeError("can't find aws credentials")
@@ -82,7 +83,8 @@ def create(region, num=1, instance_type=INSTANCE_TYPE):
     verify_region_has_image(region)
     
     security_group = [ sec_grp_name(region) ]
-    instances = ec2.create_instances(ImageId=EC2_REGIONS[region]['ami_image'], 
+    print("image id: ", EC2_REGIONS[region]['ami_image'], type(EC2_REGIONS[region]['ami_image']))
+    instances = ec2.create_instances(ImageId=EC2_REGIONS[region]['ami_image'],
                                      MinCount=num,
                                      MaxCount=num, 
                                      SecurityGroups=security_group,
