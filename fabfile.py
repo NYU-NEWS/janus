@@ -64,6 +64,7 @@ def deploy_continue():
     done = False
     while attempts < 3 and done == False:
         try:
+            execute('install_apt_packages')
             execute('install_leader_apt_packages')
             execute('build', args="-t")
             execute('cluster.put_janus_config')
@@ -177,7 +178,7 @@ def create_work_dirs():
 @runs_once
 @roles('leaders')
 def install_leader_apt_packages():
-    sudo('apt-get -y install gnuplot5-nox')
+    sudo('apt-get -y install gnuplot5')
  
 @task
 @roles('all')
