@@ -360,9 +360,9 @@ void RccDTxn::TraceDep(Row* row, column_id_t col_id, int hint_flag) {
       } else {
         this->AddParentEdge(parent_dtxn, edge_type);
       }
-      parent_dtxn->external_ref_ = nullptr;
+//      parent_dtxn->external_ref_ = nullptr;
     }
-    this->external_ref_ = &(entry->last_);
+    this->external_refs_.push_back(&(entry->last_));
     entry->last_ = this;
   }
 #ifdef DEBUG_CODE

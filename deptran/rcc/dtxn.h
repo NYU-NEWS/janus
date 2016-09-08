@@ -18,7 +18,7 @@ class RccDTxn: public DTxn, public Vertex<RccDTxn> {
   bool commit_request_received_ = false;
   bool read_only_ = false;
   bool __debug_replied = false;
-  void** external_ref_{nullptr};
+  vector<void**> external_refs_{};
 
   RccDTxn() = delete;
   RccDTxn(txnid_t id);
@@ -26,9 +26,10 @@ class RccDTxn: public DTxn, public Vertex<RccDTxn> {
   RccDTxn(epoch_t, txnid_t tid, Scheduler *mgr, bool ro);
 
   virtual ~RccDTxn() {
-    if (external_ref_ != nullptr) {
-      verify(*external_ref_ == this);
-      *external_ref_ = nullptr;
+    for (auto& ref : external_refs_) {
+      if (*ref == this) {
+        *ref = nullptr;
+      }
     }
   }
 
