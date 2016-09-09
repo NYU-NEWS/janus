@@ -26,9 +26,21 @@ class BalancedPlacementStrategy:
 		return result
 
 	def generate_process(self, process, hosts, server_names, client_names):
+		def next_host(hosts_it, saved_hosts=None):
+			v = hosts_it.next()
+			if saved_hosts is not None:
+				saved_hosts.append(v)
+			return v
+
+		server_hosts = []
+
 		hosts_it = itertools.cycle(hosts)
-		server_processes = {name: hosts_it.next() for name in server_names}
-		client_processes = {name: hosts_it.next() for name in client_names}		
+		server_processes = {name: next_host(hosts_it, server_hosts) for name in server_names}
+
+		remaining_hosts = list(set(hosts) - set(server_hosts))
+		if len(remaining_hosts)!=0:
+			hosts_it = itertools.cycle(remaining_hosts)
+		client_processes = {name: next_host(hosts_it) for name in client_names}
 		process.update(client_processes)
 		process.update(server_processes)
 
