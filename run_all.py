@@ -95,6 +95,8 @@ def create_parser():
     parser.add_argument("-cp", "--client-placement", dest="client_placement",
                         choices=[ClientPlacement.BALANCED, ClientPlacement.WITH_LEADER], 
                         default=ClientPlacement.BALANCED, help="client placement strategy (with leader for multipaxos)")
+    parser.add_argument("-u", "--cpu-count", dest="cpu_count",
+                        default=1, help="number of cores on the servers")
     return parser
 
 

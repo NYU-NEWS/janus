@@ -34,6 +34,13 @@ class BalancedPlacementStrategy:
 
 		server_hosts = []
 
+		tmp = []
+		for h in hosts:
+			for x in range(self.args.cpu_count):
+				tmp.append(h)
+		hosts = tmp
+		tmp = None
+
 		hosts_it = itertools.cycle(hosts)
 		server_processes = {name: next_host(hosts_it, server_hosts) for name in server_names}
 
