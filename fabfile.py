@@ -2,6 +2,7 @@ import logging
 import os
 import traceback
 import time
+import random
 
 
 from fabric.api import env, task, run, local, hosts
@@ -246,6 +247,21 @@ def retrieve_code():
 @hosts('localhost')
 def ping():
     execute('cluster.ping')
+
+@task
+@roles('leaders')
+def download_archive():
+    chars = 'ABCDEF'
+    id = ''.join(random.choice(chars) for _ in range(10))
+    archive_fn = "archive_{}.tgz".format(id)
+    remote_path = "/tmp/{}".format(archive_fn)
+
+    with cd('/home/ubuntu/janus/archive'):
+        tar_cmd = 'tar -czvf {} .'.format(remote_path)
+        run(tar_cmd)
+        execute('cluster.download', remote_path)
+
+    run('rm {}'.format(remote_path))
 
 
 init()

@@ -225,10 +225,6 @@ void ServerWorker::ShutDown() {
   for (auto service : services_) {
     delete service;
   }
-//  if (dtxn_commo_)
-//    delete dtxn_commo_;
-//  if (rep_commo_)
-//    delete rep_commo_;
   thread_pool_g->release();
   svr_poll_mgr_->release();
 }

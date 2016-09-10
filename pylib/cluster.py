@@ -288,3 +288,11 @@ def build_and_deploy():
     run('chmod +x ' + exe_dir + '/deptran_server')
     Xput('deptran/rcc_rpc.py', '/export/janus/deptran/rcc_rpc.py')
 
+@task
+@roles('leaders')
+def download(p):
+    leader_ip = env.roledefs['leaders'][0]
+    target_fn = os.path.basename(p)
+    scp_cmd = "scp ubuntu@{}:{} {}".format(leader_ip, p, target_fn)
+    local(scp_cmd)
+

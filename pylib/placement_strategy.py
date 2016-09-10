@@ -1,5 +1,8 @@
 import sys
 import itertools
+import logging
+
+logger = logging.getLogger('')
 
 class ClientPlacement:
     WITH_LEADER = 'with_leader'
@@ -26,27 +29,28 @@ class BalancedPlacementStrategy:
 		return result
 
 	def generate_process(self, process, hosts, server_names, client_names):
-		def next_host(hosts_it, saved_hosts=None):
-			v = hosts_it.next()
-			if saved_hosts is not None:
-				saved_hosts.append(v)
-			return v
+		def next_host(hosts_it):
+			return hosts_it.next()
 
-		server_hosts = []
+		# identify server hosts and account for extra cpu
+		tot_procs = self.num_s * self.num_replicas
+		num_server_machines = tot_procs / self.args.cpu_count
+		server_hosts = hosts[:num_server_machines]
+		logger.debug("server hosts: %s", ', '.join(server_hosts))
+		tmp = list(server_hosts)
 
-		tmp = []
-		for h in hosts:
-			for x in range(self.args.cpu_count):
+		for h in server_hosts:
+			# append extra cpu to server host lists
+			for x in range(self.args.cpu_count-1):
 				tmp.append(h)
-		hosts = tmp
-		tmp = None
-
-		hosts_it = itertools.cycle(hosts)
-		server_processes = {name: next_host(hosts_it, server_hosts) for name in server_names}
+		hosts_it = itertools.cycle(tmp)
+		server_processes = {name: next_host(hosts_it) for name in server_names}
 
 		remaining_hosts = list(set(hosts) - set(server_hosts))
 		if len(remaining_hosts)!=0:
 			hosts_it = itertools.cycle(remaining_hosts)
+			logger.debug("client hosts: %s", ', '.join(remaining_hosts))
+
 		client_processes = {name: next_host(hosts_it) for name in client_names}
 		process.update(client_processes)
 		process.update(server_processes)

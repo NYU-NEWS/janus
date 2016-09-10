@@ -3,7 +3,7 @@ bench:
     - tpcc
     - rw_benchmark
 graph:
-    using_cmd: '7:12'
+    using_cmd: '($7/1000):12'
     x_label: 'Throughput (txn/s)'
     y_label: 'Latency (ms)'
     y_range: '[0:]'
