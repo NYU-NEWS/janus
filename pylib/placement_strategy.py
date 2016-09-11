@@ -1,6 +1,7 @@
 import sys
 import itertools
 import logging
+import math
 
 logger = logging.getLogger('')
 
@@ -34,7 +35,7 @@ class BalancedPlacementStrategy:
 
 		# identify server hosts and account for extra cpu
 		tot_procs = self.num_s * self.num_replicas
-		num_server_machines = tot_procs / self.args.cpu_count
+		num_server_machines = int(math.ceil(float(tot_procs) / self.args.cpu_count))
 		server_hosts = hosts[:num_server_machines]
 		logger.debug("server hosts: %s", ', '.join(server_hosts))
 		tmp = list(server_hosts)
