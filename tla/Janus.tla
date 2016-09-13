@@ -23,8 +23,6 @@ DECIDED      == 5
 FAST_QUORUM == (X * 2) \div 3 + 1
 SLOW_QUORUM == X \div 2 + 1 
 
-id_counter == 0
-
 (* serialization graph *)
 
 IsSrzGraph(G) == (* True iff G is a srz graph *)
@@ -413,13 +411,13 @@ IsMsgValid(msg) ==
 -----------------------------------------------------
 (* Transaction model related*)
 
-IsOp(op) ==
-  /\ op.key \in {"a", "b", "c"}
-  /\ op.type \in {"r", "w"} 
+IsOpSet(opset) ==
+  \A pair \in opset:
+    /\ pair.key \in {"a", "b", "c"}
+    /\ pair.type \in {"r", "w"} 
 
 IsPieRequest(pie) == 
-  \forall i \in DOMAIN pie: /\ i \in Nat
-                            /\ IsOp(pie[i])
+  \forall i \in DOMAIN pie: /\ IsOpSet(pie.opset)
   
 
 IsTxnRequest(txn) == 
@@ -476,6 +474,7 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
             svr_mq = [i \in M .. M+N*X |-> <<>>]; \* Assume each partition has X servers, N partitions in total.
             srz;
             n_committed = 0;
+            id_counter = 0;
             
   procedure AggregateGraphForFastPath(acks) {
     xxxxx: graph := {};
@@ -553,7 +552,6 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
     partitions := {};      
     next_txn := TXN[self];
     assert(IsTxnRequest(next_txn));
-    assert(FALSE);
     id_counter := id_counter + 1;
     txn_id := id_counter;
     n_pie := Len(next_txn);    
@@ -797,30 +795,31 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
 }
 *)
 \* BEGIN TRANSLATION
-\* Label xxxxx of procedure AggregateGraphForFastPath at line 481 col 12 changed to xxxxx_
-\* Label yyyyy of procedure AggregateGraphForFastPath at line 482 col 12 changed to yyyyy_
-\* Process variable next_txn of process Coo at line 536 col 13 changed to next_txn_
-\* Process variable msg_in of process Coo at line 543 col 13 changed to msg_in_
-\* Process variable msg_out of process Coo at line 544 col 13 changed to msg_out_
+\* Label xxxxx of procedure AggregateGraphForFastPath at line 480 col 12 changed to xxxxx_
+\* Label yyyyy of procedure AggregateGraphForFastPath at line 481 col 12 changed to yyyyy_
+\* Process variable next_txn of process Coo at line 535 col 13 changed to next_txn_
+\* Process variable msg_in of process Coo at line 542 col 13 changed to msg_in_
+\* Process variable msg_out of process Coo at line 543 col 13 changed to msg_out_
 \* Process variable keyspace of process Svr at line 655 col 13 changed to keyspace_
 \* Process variable curr_pie of process Svr at line 667 col 13 changed to curr_pie_
-\* Parameter acks of procedure AggregateGraphForFastPath at line 480 col 39 changed to acks_
+\* Parameter acks of procedure AggregateGraphForFastPath at line 479 col 39 changed to acks_
 CONSTANT defaultInitValue
-VARIABLES coo_mq, svr_mq, srz, n_committed, pc, stack, acks_, acks, curr_pie, 
-          keyspace, next_txn_, next_pie, txn_id, par, partitions, n_pie, 
-          graph, msg_in_, msg_out_, pre_accept_acks, accept_acks, committed, 
-          ballot, tmp_acks, msg_in, msg_out, msg, keyspace_, dep, ya_dep, 
-          finished_map, asked_map, pie_map, last_w_tid, last_r_tid, scc, 
-          scc_set, scc_seq, curr_txn, curr_pie_, curr_op, txn_set, opset, 
-          next_txn, next_tid, anc, tmp_set, alogs
+VARIABLES coo_mq, svr_mq, srz, n_committed, id_counter, pc, stack, acks_, 
+          acks, curr_pie, keyspace, next_txn_, next_pie, txn_id, par, 
+          partitions, n_pie, graph, msg_in_, msg_out_, pre_accept_acks, 
+          accept_acks, committed, ballot, tmp_acks, msg_in, msg_out, msg, 
+          keyspace_, dep, ya_dep, finished_map, asked_map, pie_map, 
+          last_w_tid, last_r_tid, scc, scc_set, scc_seq, curr_txn, curr_pie_, 
+          curr_op, txn_set, opset, next_txn, next_tid, anc, tmp_set, alogs
 
-vars == << coo_mq, svr_mq, srz, n_committed, pc, stack, acks_, acks, curr_pie, 
-           keyspace, next_txn_, next_pie, txn_id, par, partitions, n_pie, 
-           graph, msg_in_, msg_out_, pre_accept_acks, accept_acks, committed, 
-           ballot, tmp_acks, msg_in, msg_out, msg, keyspace_, dep, ya_dep, 
-           finished_map, asked_map, pie_map, last_w_tid, last_r_tid, scc, 
-           scc_set, scc_seq, curr_txn, curr_pie_, curr_op, txn_set, opset, 
-           next_txn, next_tid, anc, tmp_set, alogs >>
+vars == << coo_mq, svr_mq, srz, n_committed, id_counter, pc, stack, acks_, 
+           acks, curr_pie, keyspace, next_txn_, next_pie, txn_id, par, 
+           partitions, n_pie, graph, msg_in_, msg_out_, pre_accept_acks, 
+           accept_acks, committed, ballot, tmp_acks, msg_in, msg_out, msg, 
+           keyspace_, dep, ya_dep, finished_map, asked_map, pie_map, 
+           last_w_tid, last_r_tid, scc, scc_set, scc_seq, curr_txn, curr_pie_, 
+           curr_op, txn_set, opset, next_txn, next_tid, anc, tmp_set, alogs
+        >>
 
 ProcSet == (1 .. M) \cup (M+1 .. M+N*X)
 
@@ -829,6 +828,7 @@ Init == (* Global variables *)
         /\ svr_mq = [i \in M .. M+N*X |-> <<>>]
         /\ srz = defaultInitValue
         /\ n_committed = 0
+        /\ id_counter = 0
         (* Procedure AggregateGraphForFastPath *)
         /\ acks_ = [ self \in ProcSet |-> defaultInitValue]
         (* Procedure AggregateGraphForAccept *)
@@ -883,16 +883,16 @@ Init == (* Global variables *)
 xxxxx_(self) == /\ pc[self] = "xxxxx_"
                 /\ graph' = [graph EXCEPT ![self] = {}]
                 /\ pc' = [pc EXCEPT ![self] = "yyyyy_"]
-                /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, stack, acks_, 
-                                acks, curr_pie, keyspace, next_txn_, next_pie, 
-                                txn_id, par, partitions, n_pie, msg_in_, 
-                                msg_out_, pre_accept_acks, accept_acks, 
-                                committed, ballot, tmp_acks, msg_in, msg_out, 
-                                msg, keyspace_, dep, ya_dep, finished_map, 
-                                asked_map, pie_map, last_w_tid, last_r_tid, 
-                                scc, scc_set, scc_seq, curr_txn, curr_pie_, 
-                                curr_op, txn_set, opset, next_txn, next_tid, 
-                                anc, tmp_set, alogs >>
+                /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, id_counter, 
+                                stack, acks_, acks, curr_pie, keyspace, 
+                                next_txn_, next_pie, txn_id, par, partitions, 
+                                n_pie, msg_in_, msg_out_, pre_accept_acks, 
+                                accept_acks, committed, ballot, tmp_acks, 
+                                msg_in, msg_out, msg, keyspace_, dep, ya_dep, 
+                                finished_map, asked_map, pie_map, last_w_tid, 
+                                last_r_tid, scc, scc_set, scc_seq, curr_txn, 
+                                curr_pie_, curr_op, txn_set, opset, next_txn, 
+                                next_tid, anc, tmp_set, alogs >>
 
 yyyyy_(self) == /\ pc[self] = "yyyyy_"
                 /\ IF acks_[self] /= {}
@@ -906,8 +906,8 @@ yyyyy_(self) == /\ pc[self] = "yyyyy_"
                            /\ acks_' = [acks_ EXCEPT ![self] = Head(stack[self]).acks_]
                            /\ stack' = [stack EXCEPT ![self] = Tail(stack[self])]
                            /\ UNCHANGED << graph, tmp_acks >>
-                /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, acks, 
-                                curr_pie, keyspace, next_txn_, next_pie, 
+                /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, id_counter, 
+                                acks, curr_pie, keyspace, next_txn_, next_pie, 
                                 txn_id, par, partitions, n_pie, msg_in_, 
                                 msg_out_, pre_accept_acks, accept_acks, 
                                 committed, ballot, msg_in, msg_out, msg, 
@@ -922,16 +922,16 @@ AggregateGraphForFastPath(self) == xxxxx_(self) \/ yyyyy_(self)
 xxxxx(self) == /\ pc[self] = "xxxxx"
                /\ graph' = [graph EXCEPT ![self] = {}]
                /\ pc' = [pc EXCEPT ![self] = "yyyyy"]
-               /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, stack, acks_, 
-                               acks, curr_pie, keyspace, next_txn_, next_pie, 
-                               txn_id, par, partitions, n_pie, msg_in_, 
-                               msg_out_, pre_accept_acks, accept_acks, 
-                               committed, ballot, tmp_acks, msg_in, msg_out, 
-                               msg, keyspace_, dep, ya_dep, finished_map, 
-                               asked_map, pie_map, last_w_tid, last_r_tid, scc, 
-                               scc_set, scc_seq, curr_txn, curr_pie_, curr_op, 
-                               txn_set, opset, next_txn, next_tid, anc, 
-                               tmp_set, alogs >>
+               /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, id_counter, 
+                               stack, acks_, acks, curr_pie, keyspace, 
+                               next_txn_, next_pie, txn_id, par, partitions, 
+                               n_pie, msg_in_, msg_out_, pre_accept_acks, 
+                               accept_acks, committed, ballot, tmp_acks, 
+                               msg_in, msg_out, msg, keyspace_, dep, ya_dep, 
+                               finished_map, asked_map, pie_map, last_w_tid, 
+                               last_r_tid, scc, scc_set, scc_seq, curr_txn, 
+                               curr_pie_, curr_op, txn_set, opset, next_txn, 
+                               next_tid, anc, tmp_set, alogs >>
 
 yyyyy(self) == /\ pc[self] = "yyyyy"
                /\ IF acks[self] /= {}
@@ -944,9 +944,9 @@ yyyyy(self) == /\ pc[self] = "yyyyy"
                           /\ acks' = [acks EXCEPT ![self] = Head(stack[self]).acks]
                           /\ stack' = [stack EXCEPT ![self] = Tail(stack[self])]
                           /\ UNCHANGED tmp_acks
-               /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, acks_, 
-                               curr_pie, keyspace, next_txn_, next_pie, txn_id, 
-                               par, partitions, n_pie, graph, msg_in_, 
+               /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, id_counter, 
+                               acks_, curr_pie, keyspace, next_txn_, next_pie, 
+                               txn_id, par, partitions, n_pie, graph, msg_in_, 
                                msg_out_, pre_accept_acks, accept_acks, 
                                committed, ballot, msg_in, msg_out, msg, 
                                keyspace_, dep, ya_dep, finished_map, asked_map, 
@@ -962,37 +962,38 @@ zzzzz(self) == /\ pc[self] = "zzzzz"
                           /\ pc' = [pc EXCEPT ![self] = "zzzzz"]
                      ELSE /\ pc' = [pc EXCEPT ![self] = "yyyyy"]
                           /\ UNCHANGED << graph, tmp_acks >>
-               /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, stack, acks_, 
-                               acks, curr_pie, keyspace, next_txn_, next_pie, 
-                               txn_id, par, partitions, n_pie, msg_in_, 
-                               msg_out_, pre_accept_acks, accept_acks, 
-                               committed, ballot, msg_in, msg_out, msg, 
-                               keyspace_, dep, ya_dep, finished_map, asked_map, 
-                               pie_map, last_w_tid, last_r_tid, scc, scc_set, 
-                               scc_seq, curr_txn, curr_pie_, curr_op, txn_set, 
-                               opset, next_txn, next_tid, anc, tmp_set, alogs >>
+               /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, id_counter, 
+                               stack, acks_, acks, curr_pie, keyspace, 
+                               next_txn_, next_pie, txn_id, par, partitions, 
+                               n_pie, msg_in_, msg_out_, pre_accept_acks, 
+                               accept_acks, committed, ballot, msg_in, msg_out, 
+                               msg, keyspace_, dep, ya_dep, finished_map, 
+                               asked_map, pie_map, last_w_tid, last_r_tid, scc, 
+                               scc_set, scc_seq, curr_txn, curr_pie_, curr_op, 
+                               txn_set, opset, next_txn, next_tid, anc, 
+                               tmp_set, alogs >>
 
 AggregateGraphForAccept(self) == xxxxx(self) \/ yyyyy(self) \/ zzzzz(self)
 
 start_exe_pie(self) == /\ pc[self] = "start_exe_pie"
                        /\ opset' = [opset EXCEPT ![self] = curr_pie[self].opset]
                        /\ Assert((opset'[self] /= {}), 
-                                 "Failure of assertion at line 512, column 5.")
+                                 "Failure of assertion at line 511, column 5.")
                        /\ Assert((FALSE), 
-                                 "Failure of assertion at line 513, column 5.")
+                                 "Failure of assertion at line 512, column 5.")
                        /\ pc' = [pc EXCEPT ![self] = "pie_add_srz"]
-                       /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, stack, 
-                                       acks_, acks, curr_pie, keyspace, 
-                                       next_txn_, next_pie, txn_id, par, 
-                                       partitions, n_pie, graph, msg_in_, 
-                                       msg_out_, pre_accept_acks, accept_acks, 
-                                       committed, ballot, tmp_acks, msg_in, 
-                                       msg_out, msg, keyspace_, dep, ya_dep, 
-                                       finished_map, asked_map, pie_map, 
-                                       last_w_tid, last_r_tid, scc, scc_set, 
-                                       scc_seq, curr_txn, curr_pie_, curr_op, 
-                                       txn_set, next_txn, next_tid, anc, 
-                                       tmp_set, alogs >>
+                       /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
+                                       id_counter, stack, acks_, acks, 
+                                       curr_pie, keyspace, next_txn_, next_pie, 
+                                       txn_id, par, partitions, n_pie, graph, 
+                                       msg_in_, msg_out_, pre_accept_acks, 
+                                       accept_acks, committed, ballot, 
+                                       tmp_acks, msg_in, msg_out, msg, 
+                                       keyspace_, dep, ya_dep, finished_map, 
+                                       asked_map, pie_map, last_w_tid, 
+                                       last_r_tid, scc, scc_set, scc_seq, 
+                                       curr_txn, curr_pie_, curr_op, txn_set, 
+                                       next_txn, next_tid, anc, tmp_set, alogs >>
 
 pie_add_srz(self) == /\ pc[self] = "pie_add_srz"
                      /\ IF opset[self] /= {}
@@ -1008,9 +1009,9 @@ pie_add_srz(self) == /\ pc[self] = "pie_add_srz"
                                 /\ keyspace' = [keyspace EXCEPT ![self] = Head(stack[self]).keyspace]
                                 /\ stack' = [stack EXCEPT ![self] = Tail(stack[self])]
                                 /\ UNCHANGED << srz, curr_op, opset, alogs >>
-                     /\ UNCHANGED << coo_mq, svr_mq, n_committed, acks_, acks, 
-                                     next_txn_, next_pie, txn_id, par, 
-                                     partitions, n_pie, graph, msg_in_, 
+                     /\ UNCHANGED << coo_mq, svr_mq, n_committed, id_counter, 
+                                     acks_, acks, next_txn_, next_pie, txn_id, 
+                                     par, partitions, n_pie, graph, msg_in_, 
                                      msg_out_, pre_accept_acks, accept_acks, 
                                      committed, ballot, tmp_acks, msg_in, 
                                      msg_out, msg, keyspace_, dep, ya_dep, 
@@ -1032,10 +1033,10 @@ scan_alogs(self) == /\ pc[self] = "scan_alogs"
                                /\ pc' = [pc EXCEPT ![self] = "scan_alogs"]
                           ELSE /\ pc' = [pc EXCEPT ![self] = "pie_add_srz"]
                                /\ UNCHANGED << srz, keyspace, alogs >>
-                    /\ UNCHANGED << coo_mq, svr_mq, n_committed, stack, acks_, 
-                                    acks, curr_pie, next_txn_, next_pie, 
-                                    txn_id, par, partitions, n_pie, graph, 
-                                    msg_in_, msg_out_, pre_accept_acks, 
+                    /\ UNCHANGED << coo_mq, svr_mq, n_committed, id_counter, 
+                                    stack, acks_, acks, curr_pie, next_txn_, 
+                                    next_pie, txn_id, par, partitions, n_pie, 
+                                    graph, msg_in_, msg_out_, pre_accept_acks, 
                                     accept_acks, committed, ballot, tmp_acks, 
                                     msg_in, msg_out, msg, keyspace_, dep, 
                                     ya_dep, finished_map, asked_map, pie_map, 
@@ -1053,14 +1054,12 @@ coo(self) == /\ pc[self] = "coo"
              /\ partitions' = [partitions EXCEPT ![self] = {}]
              /\ next_txn_' = [next_txn_ EXCEPT ![self] = TXN[self]]
              /\ Assert((IsTxnRequest(next_txn_'[self])), 
-                       "Failure of assertion at line 555, column 5.")
-             /\ Assert((FALSE), 
-                       "Failure of assertion at line 556, column 5.")
+                       "Failure of assertion at line 554, column 5.")
              /\ id_counter' = id_counter + 1
-             /\ txn_id' = [txn_id EXCEPT ![self] = id_counter]
+             /\ txn_id' = [txn_id EXCEPT ![self] = id_counter']
              /\ n_pie' = [n_pie EXCEPT ![self] = Len(next_txn_'[self])]
              /\ Assert((n_pie'[self] > 0), 
-                       "Failure of assertion at line 560, column 5.")
+                       "Failure of assertion at line 558, column 5.")
              /\ pc' = [pc EXCEPT ![self] = "pre_accept"]
              /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, stack, acks_, 
                              acks, curr_pie, keyspace, next_pie, par, msg_in_, 
@@ -1073,7 +1072,9 @@ coo(self) == /\ pc[self] = "coo"
 
 pre_accept(self) == /\ pc[self] = "pre_accept"
                     /\ IF Len(next_txn_[self]) > 0
-                          THEN /\ next_pie' = [next_pie EXCEPT ![self] = Head(next_txn_[self])]
+                          THEN /\ Assert((FALSE), 
+                                         "Failure of assertion at line 561, column 9.")
+                               /\ next_pie' = [next_pie EXCEPT ![self] = Head(next_txn_[self])]
                                /\ next_txn_' = [next_txn_ EXCEPT ![self] = Tail(next_txn_[self])]
                                /\ par' = [par EXCEPT ![self] = Shard(next_pie'[self])]
                                /\ partitions' = [partitions EXCEPT ![self] = partitions[self] \union {par'[self]}]
@@ -1092,15 +1093,16 @@ pre_accept(self) == /\ pc[self] = "pre_accept"
                                /\ pc' = [pc EXCEPT ![self] = "pre_accept_ack"]
                                /\ UNCHANGED << svr_mq, next_txn_, next_pie, 
                                                par, partitions, msg_out_ >>
-                    /\ UNCHANGED << coo_mq, srz, n_committed, stack, acks_, 
-                                    acks, curr_pie, keyspace, txn_id, n_pie, 
-                                    graph, msg_in_, accept_acks, committed, 
-                                    ballot, tmp_acks, msg_in, msg_out, msg, 
-                                    keyspace_, dep, ya_dep, finished_map, 
-                                    asked_map, pie_map, last_w_tid, last_r_tid, 
-                                    scc, scc_set, scc_seq, curr_txn, curr_pie_, 
-                                    curr_op, txn_set, opset, next_txn, 
-                                    next_tid, anc, tmp_set, alogs >>
+                    /\ UNCHANGED << coo_mq, srz, n_committed, id_counter, 
+                                    stack, acks_, acks, curr_pie, keyspace, 
+                                    txn_id, n_pie, graph, msg_in_, accept_acks, 
+                                    committed, ballot, tmp_acks, msg_in, 
+                                    msg_out, msg, keyspace_, dep, ya_dep, 
+                                    finished_map, asked_map, pie_map, 
+                                    last_w_tid, last_r_tid, scc, scc_set, 
+                                    scc_seq, curr_txn, curr_pie_, curr_op, 
+                                    txn_set, opset, next_txn, next_tid, anc, 
+                                    tmp_set, alogs >>
 
 pre_accept_ack(self) == /\ pc[self] = "pre_accept_ack"
                         /\ IF Len(pre_accept_acks[self]) < N + 1
@@ -1128,17 +1130,17 @@ pre_accept_ack(self) == /\ pc[self] = "pre_accept_ack"
                                    /\ pc' = [pc EXCEPT ![self] = "accept_phase"]
                                    /\ UNCHANGED << coo_mq, par, graph, msg_in_, 
                                                    pre_accept_acks >>
-                        /\ UNCHANGED << svr_mq, srz, n_committed, stack, acks_, 
-                                        acks, curr_pie, keyspace, next_txn_, 
-                                        next_pie, txn_id, partitions, n_pie, 
-                                        msg_out_, accept_acks, committed, 
-                                        tmp_acks, msg_in, msg_out, msg, 
-                                        keyspace_, dep, ya_dep, finished_map, 
-                                        asked_map, pie_map, last_w_tid, 
-                                        last_r_tid, scc, scc_set, scc_seq, 
-                                        curr_txn, curr_pie_, curr_op, txn_set, 
-                                        opset, next_txn, next_tid, anc, 
-                                        tmp_set, alogs >>
+                        /\ UNCHANGED << svr_mq, srz, n_committed, id_counter, 
+                                        stack, acks_, acks, curr_pie, keyspace, 
+                                        next_txn_, next_pie, txn_id, 
+                                        partitions, n_pie, msg_out_, 
+                                        accept_acks, committed, tmp_acks, 
+                                        msg_in, msg_out, msg, keyspace_, dep, 
+                                        ya_dep, finished_map, asked_map, 
+                                        pie_map, last_w_tid, last_r_tid, scc, 
+                                        scc_set, scc_seq, curr_txn, curr_pie_, 
+                                        curr_op, txn_set, opset, next_txn, 
+                                        next_tid, anc, tmp_set, alogs >>
 
 slow_path_check(self) == /\ pc[self] = "slow_path_check"
                          /\ IF SlowPathReady(pre_accept_acks[self], partitions[self])
@@ -1151,24 +1153,25 @@ slow_path_check(self) == /\ pc[self] = "slow_path_check"
                                ELSE /\ pc' = [pc EXCEPT ![self] = "pre_accept_ack"]
                                     /\ UNCHANGED << stack, acks >>
                          /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
-                                         acks_, curr_pie, keyspace, next_txn_, 
-                                         next_pie, txn_id, par, partitions, 
-                                         n_pie, graph, msg_in_, msg_out_, 
-                                         pre_accept_acks, accept_acks, 
-                                         committed, ballot, tmp_acks, msg_in, 
-                                         msg_out, msg, keyspace_, dep, ya_dep, 
-                                         finished_map, asked_map, pie_map, 
-                                         last_w_tid, last_r_tid, scc, scc_set, 
-                                         scc_seq, curr_txn, curr_pie_, curr_op, 
-                                         txn_set, opset, next_txn, next_tid, 
-                                         anc, tmp_set, alogs >>
+                                         id_counter, acks_, curr_pie, keyspace, 
+                                         next_txn_, next_pie, txn_id, par, 
+                                         partitions, n_pie, graph, msg_in_, 
+                                         msg_out_, pre_accept_acks, 
+                                         accept_acks, committed, ballot, 
+                                         tmp_acks, msg_in, msg_out, msg, 
+                                         keyspace_, dep, ya_dep, finished_map, 
+                                         asked_map, pie_map, last_w_tid, 
+                                         last_r_tid, scc, scc_set, scc_seq, 
+                                         curr_txn, curr_pie_, curr_op, txn_set, 
+                                         opset, next_txn, next_tid, anc, 
+                                         tmp_set, alogs >>
 
 goto_accept(self) == /\ pc[self] = "goto_accept"
                      /\ pc' = [pc EXCEPT ![self] = "accept_phase"]
-                     /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, stack, 
-                                     acks_, acks, curr_pie, keyspace, 
-                                     next_txn_, next_pie, txn_id, par, 
-                                     partitions, n_pie, graph, msg_in_, 
+                     /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
+                                     id_counter, stack, acks_, acks, curr_pie, 
+                                     keyspace, next_txn_, next_pie, txn_id, 
+                                     par, partitions, n_pie, graph, msg_in_, 
                                      msg_out_, pre_accept_acks, accept_acks, 
                                      committed, ballot, tmp_acks, msg_in, 
                                      msg_out, msg, keyspace_, dep, ya_dep, 
@@ -1187,10 +1190,10 @@ accept_phase(self) == /\ pc[self] = "accept_phase"
                                                                   graph |-> graph[self]
                                                                 ]]
                       /\ pc' = [pc EXCEPT ![self] = "broadcast_accept"]
-                      /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, stack, 
-                                      acks_, acks, curr_pie, keyspace, 
-                                      next_txn_, next_pie, txn_id, par, 
-                                      partitions, n_pie, graph, msg_in_, 
+                      /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
+                                      id_counter, stack, acks_, acks, curr_pie, 
+                                      keyspace, next_txn_, next_pie, txn_id, 
+                                      par, partitions, n_pie, graph, msg_in_, 
                                       pre_accept_acks, accept_acks, committed, 
                                       ballot, tmp_acks, msg_in, msg_out, msg, 
                                       keyspace_, dep, ya_dep, finished_map, 
@@ -1204,18 +1207,19 @@ broadcast_accept(self) == /\ pc[self] = "broadcast_accept"
                           /\ svr_mq' = BroadcastMsgToMultiplePartitions(svr_mq, partitions[self], msg_out_[self])
                           /\ accept_acks' = [accept_acks EXCEPT ![self] = {}]
                           /\ pc' = [pc EXCEPT ![self] = "accept_ack"]
-                          /\ UNCHANGED << coo_mq, srz, n_committed, stack, 
-                                          acks_, acks, curr_pie, keyspace, 
-                                          next_txn_, next_pie, txn_id, par, 
-                                          partitions, n_pie, graph, msg_in_, 
-                                          msg_out_, pre_accept_acks, committed, 
-                                          ballot, tmp_acks, msg_in, msg_out, 
-                                          msg, keyspace_, dep, ya_dep, 
-                                          finished_map, asked_map, pie_map, 
-                                          last_w_tid, last_r_tid, scc, scc_set, 
-                                          scc_seq, curr_txn, curr_pie_, 
-                                          curr_op, txn_set, opset, next_txn, 
-                                          next_tid, anc, tmp_set, alogs >>
+                          /\ UNCHANGED << coo_mq, srz, n_committed, id_counter, 
+                                          stack, acks_, acks, curr_pie, 
+                                          keyspace, next_txn_, next_pie, 
+                                          txn_id, par, partitions, n_pie, 
+                                          graph, msg_in_, msg_out_, 
+                                          pre_accept_acks, committed, ballot, 
+                                          tmp_acks, msg_in, msg_out, msg, 
+                                          keyspace_, dep, ya_dep, finished_map, 
+                                          asked_map, pie_map, last_w_tid, 
+                                          last_r_tid, scc, scc_set, scc_seq, 
+                                          curr_txn, curr_pie_, curr_op, 
+                                          txn_set, opset, next_txn, next_tid, 
+                                          anc, tmp_set, alogs >>
 
 accept_ack(self) == /\ pc[self] = "accept_ack"
                     /\ Len(coo_mq[self]) > 0
@@ -1229,16 +1233,17 @@ accept_ack(self) == /\ pc[self] = "accept_ack"
                                      ELSE /\ pc' = [pc EXCEPT ![self] = "accept_ack"]
                           ELSE /\ pc' = [pc EXCEPT ![self] = "accept_ack"]
                                /\ UNCHANGED << par, accept_acks >>
-                    /\ UNCHANGED << svr_mq, srz, n_committed, stack, acks_, 
-                                    acks, curr_pie, keyspace, next_txn_, 
-                                    next_pie, txn_id, partitions, n_pie, graph, 
-                                    msg_out_, pre_accept_acks, committed, 
-                                    ballot, tmp_acks, msg_in, msg_out, msg, 
-                                    keyspace_, dep, ya_dep, finished_map, 
-                                    asked_map, pie_map, last_w_tid, last_r_tid, 
-                                    scc, scc_set, scc_seq, curr_txn, curr_pie_, 
-                                    curr_op, txn_set, opset, next_txn, 
-                                    next_tid, anc, tmp_set, alogs >>
+                    /\ UNCHANGED << svr_mq, srz, n_committed, id_counter, 
+                                    stack, acks_, acks, curr_pie, keyspace, 
+                                    next_txn_, next_pie, txn_id, partitions, 
+                                    n_pie, graph, msg_out_, pre_accept_acks, 
+                                    committed, ballot, tmp_acks, msg_in, 
+                                    msg_out, msg, keyspace_, dep, ya_dep, 
+                                    finished_map, asked_map, pie_map, 
+                                    last_w_tid, last_r_tid, scc, scc_set, 
+                                    scc_seq, curr_txn, curr_pie_, curr_op, 
+                                    txn_set, opset, next_txn, next_tid, anc, 
+                                    tmp_set, alogs >>
 
 commit_phase(self) == /\ pc[self] = "commit_phase"
                       /\ msg_out_' = [msg_out_ EXCEPT ![self] =                          [
@@ -1247,10 +1252,10 @@ commit_phase(self) == /\ pc[self] = "commit_phase"
                                                                   tid |-> txn_id[self]
                                                                 ]]
                       /\ pc' = [pc EXCEPT ![self] = "broadcast_commit"]
-                      /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, stack, 
-                                      acks_, acks, curr_pie, keyspace, 
-                                      next_txn_, next_pie, txn_id, par, 
-                                      partitions, n_pie, graph, msg_in_, 
+                      /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
+                                      id_counter, stack, acks_, acks, curr_pie, 
+                                      keyspace, next_txn_, next_pie, txn_id, 
+                                      par, partitions, n_pie, graph, msg_in_, 
                                       pre_accept_acks, accept_acks, committed, 
                                       ballot, tmp_acks, msg_in, msg_out, msg, 
                                       keyspace_, dep, ya_dep, finished_map, 
@@ -1263,19 +1268,19 @@ commit_phase(self) == /\ pc[self] = "commit_phase"
 broadcast_commit(self) == /\ pc[self] = "broadcast_commit"
                           /\ svr_mq' = BroadcastMsgToMultiplePartitions(svr_mq, partitions[self], msg_out_[self])
                           /\ pc' = [pc EXCEPT ![self] = "commit_ack"]
-                          /\ UNCHANGED << coo_mq, srz, n_committed, stack, 
-                                          acks_, acks, curr_pie, keyspace, 
-                                          next_txn_, next_pie, txn_id, par, 
-                                          partitions, n_pie, graph, msg_in_, 
-                                          msg_out_, pre_accept_acks, 
-                                          accept_acks, committed, ballot, 
-                                          tmp_acks, msg_in, msg_out, msg, 
-                                          keyspace_, dep, ya_dep, finished_map, 
-                                          asked_map, pie_map, last_w_tid, 
-                                          last_r_tid, scc, scc_set, scc_seq, 
-                                          curr_txn, curr_pie_, curr_op, 
-                                          txn_set, opset, next_txn, next_tid, 
-                                          anc, tmp_set, alogs >>
+                          /\ UNCHANGED << coo_mq, srz, n_committed, id_counter, 
+                                          stack, acks_, acks, curr_pie, 
+                                          keyspace, next_txn_, next_pie, 
+                                          txn_id, par, partitions, n_pie, 
+                                          graph, msg_in_, msg_out_, 
+                                          pre_accept_acks, accept_acks, 
+                                          committed, ballot, tmp_acks, msg_in, 
+                                          msg_out, msg, keyspace_, dep, ya_dep, 
+                                          finished_map, asked_map, pie_map, 
+                                          last_w_tid, last_r_tid, scc, scc_set, 
+                                          scc_seq, curr_txn, curr_pie_, 
+                                          curr_op, txn_set, opset, next_txn, 
+                                          next_tid, anc, tmp_set, alogs >>
 
 commit_ack(self) == /\ pc[self] = "commit_ack"
                     /\ IF Len(coo_mq[self]) > 0
@@ -1291,16 +1296,17 @@ commit_ack(self) == /\ pc[self] = "commit_ack"
                           ELSE /\ pc' = [pc EXCEPT ![self] = "end_coord"]
                                /\ UNCHANGED << coo_mq, n_committed, msg_in_, 
                                                committed >>
-                    /\ UNCHANGED << svr_mq, srz, stack, acks_, acks, curr_pie, 
-                                    keyspace, next_txn_, next_pie, txn_id, par, 
-                                    partitions, n_pie, graph, msg_out_, 
-                                    pre_accept_acks, accept_acks, ballot, 
-                                    tmp_acks, msg_in, msg_out, msg, keyspace_, 
-                                    dep, ya_dep, finished_map, asked_map, 
-                                    pie_map, last_w_tid, last_r_tid, scc, 
-                                    scc_set, scc_seq, curr_txn, curr_pie_, 
-                                    curr_op, txn_set, opset, next_txn, 
-                                    next_tid, anc, tmp_set, alogs >>
+                    /\ UNCHANGED << svr_mq, srz, id_counter, stack, acks_, 
+                                    acks, curr_pie, keyspace, next_txn_, 
+                                    next_pie, txn_id, par, partitions, n_pie, 
+                                    graph, msg_out_, pre_accept_acks, 
+                                    accept_acks, ballot, tmp_acks, msg_in, 
+                                    msg_out, msg, keyspace_, dep, ya_dep, 
+                                    finished_map, asked_map, pie_map, 
+                                    last_w_tid, last_r_tid, scc, scc_set, 
+                                    scc_seq, curr_txn, curr_pie_, curr_op, 
+                                    txn_set, opset, next_txn, next_tid, anc, 
+                                    tmp_set, alogs >>
 
 end_coord(self) == /\ pc[self] = "end_coord"
                    /\ IF n_committed = M
@@ -1309,8 +1315,8 @@ end_coord(self) == /\ pc[self] = "end_coord"
                          ELSE /\ TRUE
                               /\ UNCHANGED << svr_mq, msg_out_ >>
                    /\ pc' = [pc EXCEPT ![self] = "Done"]
-                   /\ UNCHANGED << coo_mq, srz, n_committed, stack, acks_, 
-                                   acks, curr_pie, keyspace, next_txn_, 
+                   /\ UNCHANGED << coo_mq, srz, n_committed, id_counter, stack, 
+                                   acks_, acks, curr_pie, keyspace, next_txn_, 
                                    next_pie, txn_id, par, partitions, n_pie, 
                                    graph, msg_in_, pre_accept_acks, 
                                    accept_acks, committed, ballot, tmp_acks, 
@@ -1365,10 +1371,10 @@ svr_loop(self) == /\ pc[self] = "svr_loop"
                                                                          /\ dep' = dep
                                                               /\ UNCHANGED msg_out
                              /\ UNCHANGED << curr_pie_, opset >>
-                  /\ UNCHANGED << coo_mq, srz, n_committed, stack, acks_, acks, 
-                                  curr_pie, keyspace, next_txn_, next_pie, 
-                                  txn_id, par, partitions, n_pie, graph, 
-                                  msg_in_, msg_out_, pre_accept_acks, 
+                  /\ UNCHANGED << coo_mq, srz, n_committed, id_counter, stack, 
+                                  acks_, acks, curr_pie, keyspace, next_txn_, 
+                                  next_pie, txn_id, par, partitions, n_pie, 
+                                  graph, msg_in_, msg_out_, pre_accept_acks, 
                                   accept_acks, committed, ballot, tmp_acks, 
                                   msg_in, keyspace_, finished_map, asked_map, 
                                   pie_map, last_w_tid, last_r_tid, scc, 
@@ -1391,10 +1397,10 @@ pie_add_dep(self) == /\ pc[self] = "pie_add_dep"
                            ELSE /\ pc' = [pc EXCEPT ![self] = "reply_dep"]
                                 /\ UNCHANGED << keyspace_, dep, last_w_tid, 
                                                 last_r_tid, curr_op, opset >>
-                     /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, stack, 
-                                     acks_, acks, curr_pie, keyspace, 
-                                     next_txn_, next_pie, txn_id, par, 
-                                     partitions, n_pie, graph, msg_in_, 
+                     /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
+                                     id_counter, stack, acks_, acks, curr_pie, 
+                                     keyspace, next_txn_, next_pie, txn_id, 
+                                     par, partitions, n_pie, graph, msg_in_, 
                                      msg_out_, pre_accept_acks, accept_acks, 
                                      committed, ballot, tmp_acks, msg_in, 
                                      msg_out, msg, ya_dep, finished_map, 
@@ -1405,24 +1411,25 @@ pie_add_dep(self) == /\ pc[self] = "pie_add_dep"
 read_con(self) == /\ pc[self] = "read_con"
                   /\ dep' = [dep EXCEPT ![self] = NewDepAddEdge(dep[self], last_r_tid[self], curr_txn[self].tid)]
                   /\ pc' = [pc EXCEPT ![self] = "pie_add_dep"]
-                  /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, stack, 
-                                  acks_, acks, curr_pie, keyspace, next_txn_, 
-                                  next_pie, txn_id, par, partitions, n_pie, 
-                                  graph, msg_in_, msg_out_, pre_accept_acks, 
-                                  accept_acks, committed, ballot, tmp_acks, 
-                                  msg_in, msg_out, msg, keyspace_, ya_dep, 
-                                  finished_map, asked_map, pie_map, last_w_tid, 
-                                  last_r_tid, scc, scc_set, scc_seq, curr_txn, 
-                                  curr_pie_, curr_op, txn_set, opset, next_txn, 
-                                  next_tid, anc, tmp_set, alogs >>
+                  /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, id_counter, 
+                                  stack, acks_, acks, curr_pie, keyspace, 
+                                  next_txn_, next_pie, txn_id, par, partitions, 
+                                  n_pie, graph, msg_in_, msg_out_, 
+                                  pre_accept_acks, accept_acks, committed, 
+                                  ballot, tmp_acks, msg_in, msg_out, msg, 
+                                  keyspace_, ya_dep, finished_map, asked_map, 
+                                  pie_map, last_w_tid, last_r_tid, scc, 
+                                  scc_set, scc_seq, curr_txn, curr_pie_, 
+                                  curr_op, txn_set, opset, next_txn, next_tid, 
+                                  anc, tmp_set, alogs >>
 
 reply_dep(self) == /\ pc[self] = "reply_dep"
                    /\ ya_dep' = [ya_dep EXCEPT ![self] = SingleVertexNewDep(dep[self], curr_txn[self].tid)]
                    /\ msg_out' = [msg_out EXCEPT ![self] = [type |-> "ack_pre_accept", src |-> self, dep |-> ya_dep'[self]]]
                    /\ coo_mq' = [coo_mq EXCEPT ![msg[self].src] = Append(coo_mq[msg[self].src], msg_out'[self])]
                    /\ pc' = [pc EXCEPT ![self] = "goto_svr_loop"]
-                   /\ UNCHANGED << svr_mq, srz, n_committed, stack, acks_, 
-                                   acks, curr_pie, keyspace, next_txn_, 
+                   /\ UNCHANGED << svr_mq, srz, n_committed, id_counter, stack, 
+                                   acks_, acks, curr_pie, keyspace, next_txn_, 
                                    next_pie, txn_id, par, partitions, n_pie, 
                                    graph, msg_in_, msg_out_, pre_accept_acks, 
                                    accept_acks, committed, ballot, tmp_acks, 
@@ -1437,18 +1444,18 @@ aggregate_graph(self) == /\ pc[self] = "aggregate_graph"
                          /\ txn_set' = [txn_set EXCEPT ![self] = AllAncestorsLowerThanCommitting(dep'[self], msg[self].tid)]
                          /\ pc' = [pc EXCEPT ![self] = "inquire_if_needed"]
                          /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
-                                         stack, acks_, acks, curr_pie, 
-                                         keyspace, next_txn_, next_pie, txn_id, 
-                                         par, partitions, n_pie, graph, 
-                                         msg_in_, msg_out_, pre_accept_acks, 
-                                         accept_acks, committed, ballot, 
-                                         tmp_acks, msg_in, msg_out, msg, 
-                                         keyspace_, ya_dep, finished_map, 
-                                         asked_map, pie_map, last_w_tid, 
-                                         last_r_tid, scc, scc_set, scc_seq, 
-                                         curr_txn, curr_pie_, curr_op, opset, 
-                                         next_txn, next_tid, anc, tmp_set, 
-                                         alogs >>
+                                         id_counter, stack, acks_, acks, 
+                                         curr_pie, keyspace, next_txn_, 
+                                         next_pie, txn_id, par, partitions, 
+                                         n_pie, graph, msg_in_, msg_out_, 
+                                         pre_accept_acks, accept_acks, 
+                                         committed, ballot, tmp_acks, msg_in, 
+                                         msg_out, msg, keyspace_, ya_dep, 
+                                         finished_map, asked_map, pie_map, 
+                                         last_w_tid, last_r_tid, scc, scc_set, 
+                                         scc_seq, curr_txn, curr_pie_, curr_op, 
+                                         opset, next_txn, next_tid, anc, 
+                                         tmp_set, alogs >>
 
 inquire_if_needed(self) == /\ pc[self] = "inquire_if_needed"
                            /\ IF txn_set[self] /= {}
@@ -1465,28 +1472,28 @@ inquire_if_needed(self) == /\ pc[self] = "inquire_if_needed"
                                       /\ pc' = [pc EXCEPT ![self] = "inquire_if_needed"]
                                  ELSE /\ pc' = [pc EXCEPT ![self] = "choose_to_commit"]
                                       /\ UNCHANGED << svr_mq, msg_out, txn_set >>
-                           /\ UNCHANGED << coo_mq, srz, n_committed, stack, 
-                                           acks_, acks, curr_pie, keyspace, 
-                                           next_txn_, next_pie, txn_id, par, 
-                                           partitions, n_pie, graph, msg_in_, 
-                                           msg_out_, pre_accept_acks, 
-                                           accept_acks, committed, ballot, 
-                                           tmp_acks, msg_in, msg, keyspace_, 
-                                           dep, ya_dep, finished_map, 
-                                           asked_map, pie_map, last_w_tid, 
-                                           last_r_tid, scc, scc_set, scc_seq, 
-                                           curr_txn, curr_pie_, curr_op, opset, 
-                                           next_txn, next_tid, anc, tmp_set, 
-                                           alogs >>
+                           /\ UNCHANGED << coo_mq, srz, n_committed, 
+                                           id_counter, stack, acks_, acks, 
+                                           curr_pie, keyspace, next_txn_, 
+                                           next_pie, txn_id, par, partitions, 
+                                           n_pie, graph, msg_in_, msg_out_, 
+                                           pre_accept_acks, accept_acks, 
+                                           committed, ballot, tmp_acks, msg_in, 
+                                           msg, keyspace_, dep, ya_dep, 
+                                           finished_map, asked_map, pie_map, 
+                                           last_w_tid, last_r_tid, scc, 
+                                           scc_set, scc_seq, curr_txn, 
+                                           curr_pie_, curr_op, opset, next_txn, 
+                                           next_tid, anc, tmp_set, alogs >>
 
 choose_to_commit(self) == /\ pc[self] = "choose_to_commit"
                           /\ txn_set' = [txn_set EXCEPT ![self] = CommittingSubGraphWithAllAnestorsAtLeastCommitting(dep[self])]
                           /\ pc' = [pc EXCEPT ![self] = "ready_to_commit"]
                           /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
-                                          stack, acks_, acks, curr_pie, 
-                                          keyspace, next_txn_, next_pie, 
-                                          txn_id, par, partitions, n_pie, 
-                                          graph, msg_in_, msg_out_, 
+                                          id_counter, stack, acks_, acks, 
+                                          curr_pie, keyspace, next_txn_, 
+                                          next_pie, txn_id, par, partitions, 
+                                          n_pie, graph, msg_in_, msg_out_, 
                                           pre_accept_acks, accept_acks, 
                                           committed, ballot, tmp_acks, msg_in, 
                                           msg_out, msg, keyspace_, dep, ya_dep, 
@@ -1506,18 +1513,18 @@ ready_to_commit(self) == /\ pc[self] = "ready_to_commit"
                                ELSE /\ pc' = [pc EXCEPT ![self] = "find_execute"]
                                     /\ UNCHANGED << dep, scc, txn_set >>
                          /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
-                                         stack, acks_, acks, curr_pie, 
-                                         keyspace, next_txn_, next_pie, txn_id, 
-                                         par, partitions, n_pie, graph, 
-                                         msg_in_, msg_out_, pre_accept_acks, 
-                                         accept_acks, committed, ballot, 
-                                         tmp_acks, msg_in, msg_out, msg, 
-                                         keyspace_, ya_dep, finished_map, 
-                                         asked_map, pie_map, last_w_tid, 
-                                         last_r_tid, scc_set, scc_seq, 
-                                         curr_txn, curr_pie_, curr_op, opset, 
-                                         next_txn, next_tid, anc, tmp_set, 
-                                         alogs >>
+                                         id_counter, stack, acks_, acks, 
+                                         curr_pie, keyspace, next_txn_, 
+                                         next_pie, txn_id, par, partitions, 
+                                         n_pie, graph, msg_in_, msg_out_, 
+                                         pre_accept_acks, accept_acks, 
+                                         committed, ballot, tmp_acks, msg_in, 
+                                         msg_out, msg, keyspace_, ya_dep, 
+                                         finished_map, asked_map, pie_map, 
+                                         last_w_tid, last_r_tid, scc_set, 
+                                         scc_seq, curr_txn, curr_pie_, curr_op, 
+                                         opset, next_txn, next_tid, anc, 
+                                         tmp_set, alogs >>
 
 find_execute(self) == /\ pc[self] = "find_execute"
                       /\ scc_set' = [scc_set EXCEPT ![self] = ToExecuteSCCSet(dep[self], self, finished_map[self])]
@@ -1525,10 +1532,10 @@ find_execute(self) == /\ pc[self] = "find_execute"
                             THEN /\ pc' = [pc EXCEPT ![self] = "next_execute"]
                             ELSE /\ TRUE
                                  /\ pc' = [pc EXCEPT ![self] = "goto_svr_loop"]
-                      /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, stack, 
-                                      acks_, acks, curr_pie, keyspace, 
-                                      next_txn_, next_pie, txn_id, par, 
-                                      partitions, n_pie, graph, msg_in_, 
+                      /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
+                                      id_counter, stack, acks_, acks, curr_pie, 
+                                      keyspace, next_txn_, next_pie, txn_id, 
+                                      par, partitions, n_pie, graph, msg_in_, 
                                       msg_out_, pre_accept_acks, accept_acks, 
                                       committed, ballot, tmp_acks, msg_in, 
                                       msg_out, msg, keyspace_, dep, ya_dep, 
@@ -1546,10 +1553,10 @@ next_execute(self) == /\ pc[self] = "next_execute"
                                  /\ pc' = [pc EXCEPT ![self] = "exe_scc"]
                             ELSE /\ pc' = [pc EXCEPT ![self] = "find_execute"]
                                  /\ UNCHANGED << scc, scc_set >>
-                      /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, stack, 
-                                      acks_, acks, curr_pie, keyspace, 
-                                      next_txn_, next_pie, txn_id, par, 
-                                      partitions, n_pie, graph, msg_in_, 
+                      /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
+                                      id_counter, stack, acks_, acks, curr_pie, 
+                                      keyspace, next_txn_, next_pie, txn_id, 
+                                      par, partitions, n_pie, graph, msg_in_, 
                                       msg_out_, pre_accept_acks, accept_acks, 
                                       committed, ballot, tmp_acks, msg_in, 
                                       msg_out, msg, keyspace_, dep, ya_dep, 
@@ -1569,16 +1576,17 @@ exe_scc(self) == /\ pc[self] = "exe_scc"
                                   ELSE /\ pc' = [pc EXCEPT ![self] = "exe_scc"]
                        ELSE /\ pc' = [pc EXCEPT ![self] = "next_execute"]
                             /\ UNCHANGED << scc, next_tid >>
-                 /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, stack, 
-                                 acks_, acks, curr_pie, keyspace, next_txn_, 
-                                 next_pie, txn_id, par, partitions, n_pie, 
-                                 graph, msg_in_, msg_out_, pre_accept_acks, 
-                                 accept_acks, committed, ballot, tmp_acks, 
-                                 msg_in, msg_out, msg, keyspace_, dep, ya_dep, 
-                                 finished_map, asked_map, pie_map, last_w_tid, 
-                                 last_r_tid, scc_set, scc_seq, curr_txn, 
-                                 curr_pie_, curr_op, txn_set, opset, next_txn, 
-                                 anc, tmp_set, alogs >>
+                 /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, id_counter, 
+                                 stack, acks_, acks, curr_pie, keyspace, 
+                                 next_txn_, next_pie, txn_id, par, partitions, 
+                                 n_pie, graph, msg_in_, msg_out_, 
+                                 pre_accept_acks, accept_acks, committed, 
+                                 ballot, tmp_acks, msg_in, msg_out, msg, 
+                                 keyspace_, dep, ya_dep, finished_map, 
+                                 asked_map, pie_map, last_w_tid, last_r_tid, 
+                                 scc_set, scc_seq, curr_txn, curr_pie_, 
+                                 curr_op, txn_set, opset, next_txn, anc, 
+                                 tmp_set, alogs >>
 
 exe_all_deferred_pies(self) == /\ pc[self] = "exe_all_deferred_pies"
                                /\ IF pie_map[self][next_tid[self]] /= {}
@@ -1599,8 +1607,8 @@ exe_all_deferred_pies(self) == /\ pc[self] = "exe_all_deferred_pies"
                                                           keyspace, next_pie, 
                                                           pie_map >>
                                /\ UNCHANGED << coo_mq, svr_mq, srz, 
-                                               n_committed, acks_, acks, 
-                                               next_txn_, txn_id, par, 
+                                               n_committed, id_counter, acks_, 
+                                               acks, next_txn_, txn_id, par, 
                                                partitions, n_pie, graph, 
                                                msg_in_, msg_out_, 
                                                pre_accept_acks, accept_acks, 
@@ -1619,41 +1627,41 @@ inquire_ack(self) == /\ pc[self] = "inquire_ack"
                      /\ msg_out' = [msg_out EXCEPT ![self] = [type |-> "ack_inquire", src |-> self, tid |-> msg[self].tid, dep |-> ya_dep'[self]]]
                      /\ svr_mq' = [svr_mq EXCEPT ![msg[self].src] = Append(coo_mq[msg[self].src], msg_out'[self])]
                      /\ pc' = [pc EXCEPT ![self] = "goto_svr_loop"]
-                     /\ UNCHANGED << coo_mq, srz, n_committed, stack, acks_, 
-                                     acks, curr_pie, keyspace, next_txn_, 
-                                     next_pie, txn_id, par, partitions, n_pie, 
-                                     graph, msg_in_, msg_out_, pre_accept_acks, 
-                                     accept_acks, committed, ballot, tmp_acks, 
-                                     msg_in, msg, keyspace_, dep, finished_map, 
-                                     asked_map, pie_map, last_w_tid, 
-                                     last_r_tid, scc, scc_set, scc_seq, 
-                                     curr_txn, curr_pie_, curr_op, txn_set, 
-                                     opset, next_txn, next_tid, anc, tmp_set, 
-                                     alogs >>
+                     /\ UNCHANGED << coo_mq, srz, n_committed, id_counter, 
+                                     stack, acks_, acks, curr_pie, keyspace, 
+                                     next_txn_, next_pie, txn_id, par, 
+                                     partitions, n_pie, graph, msg_in_, 
+                                     msg_out_, pre_accept_acks, accept_acks, 
+                                     committed, ballot, tmp_acks, msg_in, msg, 
+                                     keyspace_, dep, finished_map, asked_map, 
+                                     pie_map, last_w_tid, last_r_tid, scc, 
+                                     scc_set, scc_seq, curr_txn, curr_pie_, 
+                                     curr_op, txn_set, opset, next_txn, 
+                                     next_tid, anc, tmp_set, alogs >>
 
 xxd(self) == /\ pc[self] = "xxd"
              /\ svr_mq' = [svr_mq EXCEPT ![msg[self].src] = Append(coo_mq[msg[self].src], msg_out[self])]
              /\ pc' = [pc EXCEPT ![self] = "goto_svr_loop"]
-             /\ UNCHANGED << coo_mq, srz, n_committed, stack, acks_, acks, 
-                             curr_pie, keyspace, next_txn_, next_pie, txn_id, 
-                             par, partitions, n_pie, graph, msg_in_, msg_out_, 
-                             pre_accept_acks, accept_acks, committed, ballot, 
-                             tmp_acks, msg_in, msg_out, msg, keyspace_, dep, 
-                             ya_dep, finished_map, asked_map, pie_map, 
-                             last_w_tid, last_r_tid, scc, scc_set, scc_seq, 
-                             curr_txn, curr_pie_, curr_op, txn_set, opset, 
-                             next_txn, next_tid, anc, tmp_set, alogs >>
+             /\ UNCHANGED << coo_mq, srz, n_committed, id_counter, stack, 
+                             acks_, acks, curr_pie, keyspace, next_txn_, 
+                             next_pie, txn_id, par, partitions, n_pie, graph, 
+                             msg_in_, msg_out_, pre_accept_acks, accept_acks, 
+                             committed, ballot, tmp_acks, msg_in, msg_out, msg, 
+                             keyspace_, dep, ya_dep, finished_map, asked_map, 
+                             pie_map, last_w_tid, last_r_tid, scc, scc_set, 
+                             scc_seq, curr_txn, curr_pie_, curr_op, txn_set, 
+                             opset, next_txn, next_tid, anc, tmp_set, alogs >>
 
 process_accept(self) == /\ pc[self] = "process_accept"
                         /\ dep' = [dep EXCEPT ![self] = NewDepAggregate(dep[self], msg[self].dep)]
                         /\ msg_out' = [msg_out EXCEPT ![self] = [type |-> "ack_accept", src |-> self, tid |-> msg[self].tid, ballot |-> msg[self].ballot]]
                         /\ svr_mq' = [svr_mq EXCEPT ![msg[self].src] = Append(coo_mq[msg[self].src], msg_out'[self])]
                         /\ pc' = [pc EXCEPT ![self] = "goto_svr_loop"]
-                        /\ UNCHANGED << coo_mq, srz, n_committed, stack, acks_, 
-                                        acks, curr_pie, keyspace, next_txn_, 
-                                        next_pie, txn_id, par, partitions, 
-                                        n_pie, graph, msg_in_, msg_out_, 
-                                        pre_accept_acks, accept_acks, 
+                        /\ UNCHANGED << coo_mq, srz, n_committed, id_counter, 
+                                        stack, acks_, acks, curr_pie, keyspace, 
+                                        next_txn_, next_pie, txn_id, par, 
+                                        partitions, n_pie, graph, msg_in_, 
+                                        msg_out_, pre_accept_acks, accept_acks, 
                                         committed, ballot, tmp_acks, msg_in, 
                                         msg, keyspace_, ya_dep, finished_map, 
                                         asked_map, pie_map, last_w_tid, 
@@ -1664,32 +1672,34 @@ process_accept(self) == /\ pc[self] = "process_accept"
 
 goto_svr_loop(self) == /\ pc[self] = "goto_svr_loop"
                        /\ pc' = [pc EXCEPT ![self] = "svr_loop"]
-                       /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, stack, 
-                                       acks_, acks, curr_pie, keyspace, 
-                                       next_txn_, next_pie, txn_id, par, 
-                                       partitions, n_pie, graph, msg_in_, 
-                                       msg_out_, pre_accept_acks, accept_acks, 
-                                       committed, ballot, tmp_acks, msg_in, 
-                                       msg_out, msg, keyspace_, dep, ya_dep, 
-                                       finished_map, asked_map, pie_map, 
-                                       last_w_tid, last_r_tid, scc, scc_set, 
-                                       scc_seq, curr_txn, curr_pie_, curr_op, 
-                                       txn_set, opset, next_txn, next_tid, anc, 
-                                       tmp_set, alogs >>
+                       /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
+                                       id_counter, stack, acks_, acks, 
+                                       curr_pie, keyspace, next_txn_, next_pie, 
+                                       txn_id, par, partitions, n_pie, graph, 
+                                       msg_in_, msg_out_, pre_accept_acks, 
+                                       accept_acks, committed, ballot, 
+                                       tmp_acks, msg_in, msg_out, msg, 
+                                       keyspace_, dep, ya_dep, finished_map, 
+                                       asked_map, pie_map, last_w_tid, 
+                                       last_r_tid, scc, scc_set, scc_seq, 
+                                       curr_txn, curr_pie_, curr_op, txn_set, 
+                                       opset, next_txn, next_tid, anc, tmp_set, 
+                                       alogs >>
 
 end_svr(self) == /\ pc[self] = "end_svr"
                  /\ TRUE
                  /\ pc' = [pc EXCEPT ![self] = "Done"]
-                 /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, stack, 
-                                 acks_, acks, curr_pie, keyspace, next_txn_, 
-                                 next_pie, txn_id, par, partitions, n_pie, 
-                                 graph, msg_in_, msg_out_, pre_accept_acks, 
-                                 accept_acks, committed, ballot, tmp_acks, 
-                                 msg_in, msg_out, msg, keyspace_, dep, ya_dep, 
-                                 finished_map, asked_map, pie_map, last_w_tid, 
-                                 last_r_tid, scc, scc_set, scc_seq, curr_txn, 
-                                 curr_pie_, curr_op, txn_set, opset, next_txn, 
-                                 next_tid, anc, tmp_set, alogs >>
+                 /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, id_counter, 
+                                 stack, acks_, acks, curr_pie, keyspace, 
+                                 next_txn_, next_pie, txn_id, par, partitions, 
+                                 n_pie, graph, msg_in_, msg_out_, 
+                                 pre_accept_acks, accept_acks, committed, 
+                                 ballot, tmp_acks, msg_in, msg_out, msg, 
+                                 keyspace_, dep, ya_dep, finished_map, 
+                                 asked_map, pie_map, last_w_tid, last_r_tid, 
+                                 scc, scc_set, scc_seq, curr_txn, curr_pie_, 
+                                 curr_op, txn_set, opset, next_txn, next_tid, 
+                                 anc, tmp_set, alogs >>
 
 Svr(self) == svr_loop(self) \/ pie_add_dep(self) \/ read_con(self)
                 \/ reply_dep(self) \/ aggregate_graph(self)
@@ -1722,6 +1732,6 @@ THEOREM Spec => Serializability
 
 =============================================================================
 \* Modification History
-\* Last modified Tue Sep 13 16:45:38 EDT 2016 by shuai
+\* Last modified Tue Sep 13 17:11:24 EDT 2016 by shuai
 \* Last modified Thu Dec 25 23:34:46 CST 2014 by Shuai
 \* Created Mon Dec 15 15:44:26 CST 2014 by Shuai
