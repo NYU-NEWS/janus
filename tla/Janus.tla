@@ -15,8 +15,8 @@ MAX(m, n) == IF m > n THEN m ELSE n
 (* status space of a transaction *)
 UNKNOWN      == 0
 PRE_ACCEPTED == 1
-PREPARED     == 2
-ACCEPTED     == 3 
+PREPARED     == 2 \* prepared and accepted  
+ACCEPTED     == 3 \* compare ballot 
 COMMITTING   == 4
 DECIDED      == 5
 
@@ -45,100 +45,228 @@ SrzAddNode(G, node) ==
 
 SrzAddEdge(G, m, n) == 
   [G EXCEPT !.edge = @ \union {<<m, n>>}]
+\*
+\*Path(G) == 
+\*  {p \in Seq(G.node) : /\ p /= <<>>
+\*                       /\ \forall i \in 1 .. (Len(p)-1) : <<p[i], p[i+1]>> \in G.edge}
+\*  
+\*Cyclic(G) == 
+\*  \exists p \in Path(G) : /\ Len(p) > 1
+\*                          /\ p[1] = p[Len(p)]
+\*                            
+\*Acyclic(G) == ~Cyclic(G)       
 
-Path(G) == 
-  {p \in Seq(G.node) : /\ p /= <<>>
-                       /\ \forall i \in 1 .. (Len(p)-1) : <<p[i], p[i+1]>> \in G.edge}
+XsXXX(g) == 
+  {(DOMAIN g) \X DOMAIN g}
 
+NewDepEdgeSet(g) == 
+  {edge \in XsXXX(g): edge[0] \in g[edge[1]].parents}
+
+NewDepPathSet(g) == 
+  {p \in Seq(DOMAIN g) : /\ p /= <<>>
+                         /\ \forall i \in 1 .. (Len(p)-1) : 
+                            <<p[i], p[i+1]>> \in NewDepEdgeSet(g)}
+
+NewDepCyclic(g) == 
+  \exists p \in NewDepPathSet(g) : /\ Len(p) > 1
+                                   /\ p[1] = p[Len(p)]                        
+
+NewDepAcyclic(g) == ~NewDepCyclic(g)
+
+IsNewDepVertex(V) == 
+  /\ V = [
+            tid |-> Nat, 
+            status |-> {UNKNOWN, PRE_ACCEPTED, PREPARED, ACCEPTED, COMMITTING, DECIDED}, 
+            max_prepared_ballot |-> Nat, 
+            max_accepted_ballot |-> Nat, 
+            parents |-> SUBSET Nat,
+            partitions |-> SUBSET Nat
+         ]
   
-Cyclic(G) == 
-  \exists p \in Path(G) : /\ Len(p) > 1
-                          /\ p[1] = p[Len(p)]
-                            
-Acyclic(G) == ~Cyclic(G)                             
+IsNewDepGraph(G) == 
+  /\ \forall v \in G: IsNewDepVertex(v)
   
-(* dependency graph *) 
+SubNewDepGraph(G) == 
+  SUBSET G
 
-IsDepGraph(G) == (* True iff G is a dep graph. *)
-  /\ G = [node |-> G.node, 
-          edge |-> G.edge, 
-          status |-> G.status, 
-          svrset |-> G.svrset, 
-          max_ballot |-> G.max_ballot]
-  /\ G.edge \subseteq (G.node \X G.node \X {"i", "d"})
-  /\ G.status \in [i \in G.node |-> {UNKNOWN, PRE_ACCEPTED, PREPARED, ACCEPTED, COMMITTING, DECIDED}]
-  /\ G.svrset \in [i \in G.node |-> SUBSET {M+1 .. M+N}]
-  /\ G.max_ballot \in [i \in G.node |-> Nat]
+NewDepExistsVertex(G, vid) == 
+  \exists v \in G: v.tid = vid
 
-SubDepGraph(G) == (* The set of all subgraphs of a dep graph. 
-                     Note: All edges that belong to the included nodes are included. *)
-  { H \in [node : SUBSET G.node, edge : SUBSET (G.node \X G.node \X {"i", "d"})] :
-      /\ IsDepGraph(H) 
-      /\ H.edge \subseteq G.edge
-      /\ \forall m \in H.node, n \in H.node: /\ <<m, n, "i">> \in G.edge => <<m, n, "i">> \in H.edge 
-                                             /\ <<m, n, "d">> \in G.edge => <<m, n, "d">> \in H.edge
-  }
-
-DepAddNode(G, node, status, svrset) == 
-  IF node \in G.node 
-    THEN [G EXCEPT !.status[node] = MAX(@, status), !.svrset[node] = @ \union svrset]
-    ELSE [G EXCEPT !.node = @ \union {node}, !.status[node] = status, !.svrset[node] = svrset]
-        
-DepAddEdge(G, edge) == 
-  [G EXCEPT !.edge = @\union edge]
-
-\* TODO    
-Aggregate(G1, G2) == 
-  [node |-> G1.node \union G2.node, edge |-> G1.edge \union G2.edge, 
-    status |-> [m \in G1.node \union G2.node |-> IF m \in G1.node THEN 
-                                                   IF m \in G2.node THEN 
-                                                     MAX(G1.status[m], G2.status[m]) 
-                                                   ELSE 
-                                                     G1.status[m] 
-                                                 ELSE
-                                                   G2.status[m]
-               ],
-    svrset |-> [m \in G1.node \union G2.node |-> IF m \in G1.node THEN
-                                                   IF m \in G2.node THEN
-                                                     G1.svrset[m] \union G2.svrset[m]
-                                                   ELSE
-                                                     G1.svrset[m]
-                                                   ELSE
-                                                     G2.svrset[m]
-               ]
-  ]
-  
-FindOrCreateTxn(dep, tid) == 
-  IF tid \in dep.node THEN 
-    [status |-> dep.status[tid], max_ballot |-> dep.max_ballot[tid]]
+NewDepAddNode(G, node) == 
+  IF NewDepExistsVertex(G, node.tid) THEN
+    FALSE \* assert 0;
   ELSE
-    [status |-> UNKNOWN, max_ballot |-> 0]
+    G \union {node}
+    
+NewDepAddEdge(g, from, to) == 
+  IF NewDepExistsVertex(g, to) THEN 
+    [g EXCEPT ![to].from = @ \union {from}]       
+  ELSE
+    FALSE \* assert 0;
+\*  
+\*(* dependency graph *) 
+\*IsDepGraph(G) == (* True iff G is a dep graph. *)
+\*  /\ G = [node |-> G.node, 
+\*          edge |-> G.edge, 
+\*          status |-> G.status, 
+\*          partitions |-> G.partitions, 
+\*          max_ballot |-> G.max_ballot]
+\*  /\ G.edge \subseteq (G.node \X G.node)
+\*  /\ G.status \in [i \in G.node |-> {UNKNOWN, PRE_ACCEPTED, PREPARED, ACCEPTED, COMMITTING, DECIDED}]
+\*  /\ G.partitions \in [i \in G.node |-> SUBSET {M+1 .. M+N}]
+\*  /\ G.max_ballot \in [i \in G.node |-> Nat]
+\*
+\*SubDepGraph(G) == (* The set of all subgraphs of a dep graph. 
+\*                     Note: All edges that belong to the included nodes are included. *)
+\*  { H \in [node : SUBSET G.node, edge : SUBSET (G.node \X G.node \X {"i", "d"})] :
+\*      /\ IsDepGraph(H) 
+\*      /\ H.edge \subseteq G.edge
+\*      /\ \forall m \in H.node, n \in H.node: /\ <<m, n, "i">> \in G.edge => <<m, n, "i">> \in H.edge 
+\*                                             /\ <<m, n, "d">> \in G.edge => <<m, n, "d">> \in H.edge
+\*  }
+\*
+\*DepAddNode(G, node, status, partitions) == 
+\*  IF node \in G.node 
+\*    THEN [G EXCEPT !.status[node] = MAX(@, status), !.partitions[node] = @ \union partitions]
+\*    ELSE [G EXCEPT !.node = @ \union {node}, !.status[node] = status, !.partitions[node] = partitions]
+\*        
+\*DepAddEdge(G, edge) == 
+\*  [G EXCEPT !.edge = @\union edge]
+
+MAX_BALLOT_STATUS(b1, s1, b2, s2) ==
+  IF (s1 = PREPARED \/ s1 = ACCEPTED) /\ (s2 = PREPARED \/ s2 = ACCEPTED) THEN
+    IF b1 > b2 THEN
+      s1
+    ELSE
+      s2
+  ELSE
+    MAX(s1, s2)
+
+NewDepAggregateVertex(v1, v2) == 
+  IF \/ v1.tid /= v2.tid 
+     \/ v1.status /= v2.status
+     \/ v1.max_prepared_ballot /= v2.max_preapred_ballot
+     \/ v1.max_accepted_ballot /= v2.max_accepted_ballot
+     \/ v1.partitions /= v2.partitions THEN
+    FALSE
+  ELSE
+    [v1 EXCEPT !.partitions = @ \union v2.partitions]
+      
+
+NewDepAggregate(g1, g2) == 
+  IF Len(g2) /= 1 THEN
+    FALSE \* do not support for now
+  ELSE
+    [
+      tid \in DOMAIN g1 \union DOMAIN g2 |->
+        IF tid \in DOMAIN g1 /\ tid \in DOMAIN g2 THEN
+          NewDepAggregateVertex(g1[tid], g2[tid])
+        ELSE IF tid \notin DOMAIN g1 THEN
+          g2[tid]
+        ELSE IF tid \notin DOMAIN g2 THEN
+          g1[tid]
+        ELSE
+          FALSE          
+    ] 
+    
+\*DepAggregate(G1, G2) == 
+\*  [
+\*    node |-> G1.node \union G2.node, 
+\*    edge |-> G1.edge \union G2.edge, 
+\*    status |-> [m \in G1.node \union G2.node |-> 
+\*                 IF m \in G1.node THEN 
+\*                   IF m \in G2.node THEN 
+\*                     MAX_BALLOT_STATUS(G1.ballot[m], 
+\*                                       G1.status[m], 
+\*                                       G2.ballot[m], 
+\*                                       G2.status[m]) 
+\*                   ELSE 
+\*                     G1.status[m] 
+\*                 ELSE
+\*                     G2.status[m]
+\*               ],
+\*    ballot |-> [m \in G1.node \union G2.node |-> 
+\*                 IF m \in G1.node THEN 
+\*                   IF m \in G2.node THEN 
+\*                     MAX(G1.ballot[m], G2.ballot[m]) 
+\*                   ELSE 
+\*                     G1.ballot[m] 
+\*                 ELSE
+\*                     G2.ballot[m]
+\*               ],           
+\*    partitions |-> [m \in G1.node \union G2.node |-> 
+\*                 IF m \in G1.node THEN
+\*                   IF m \in G2.node THEN
+\*                     G1.partitions[m] \union G2.partitions[m]
+\*                   ELSE
+\*                     G1.partitions[m]
+\*                 ELSE
+\*                   G2.partitions[m]
+\*               ]
+\*  ]
+\*  
+
+
+AreDirectlyConnectedIn(m, n, G) == 
+  \exists p \in NewDepPathSet(G) : (p[1] = m) /\ (p[Len(p)] = n) /\ Len(p) = 1
+
+AreConnectedIn(m, n, G) == 
+  \exists p \in NewDepPathSet(G) : (p[1] = m) /\ (p[Len(p)] = n)
+    
+AreStronglyConnectedIn(m, n, G) ==
+    /\ AreConnectedIn(m, n, G)
+    /\ AreConnectedIn(n, m, G)
+    
+IsStronglyConnected(G) == 
+    \forall m, n \in DOMAIN G : m /= n => AreConnectedIn(m, n, G)
+
+(* Compute the Strongly Connected Component of a node *)    
+StronglyConnectedComponent(G, node) == 
+  CHOOSE scc \in SubNewDepGraph(G) : 
+    /\ node \in DOMAIN scc
+    /\ IsStronglyConnected(scc)
+    /\ \forall m \in DOMAIN G : 
+        AreStronglyConnectedIn(m, node, G) => m \in DOMAIN scc
+
+FindOrCreateTxn(dep, tid) == 
+  IF tid \in DOMAIN dep THEN
+    dep[tid] 
+  ELSE
+    [status |-> UNKNOWN, max_prepared_ballot |-> 0]
 
 TempOp(acks) == 
   [x \in acks |-> x.dep]
 
 CommitReady(accept_acks, partitions) == 
-  IF \forall p \in partitions: Len(accept_acks[p]) >= SLOW_QUORUM THEN TRUE ELSE FALSE  
+  IF \forall p \in partitions: 
+    Len(accept_acks[p]) >= SLOW_QUORUM THEN TRUE ELSE FALSE  
 
 UpdateBallot(dep, tid, ballot, status) == 
-  [dep EXCEPT !.status[tid] = status, !.max_ballot[tid] = ballot]
+  [dep EXCEPT ![tid].status = status, ![tid].max_prepared_ballot = ballot]
 
 FastPathPossible(pre_accept_acks, partitions) == 
-  IF \exists p \in partitions: 
-       /\ Len(pre_accept_acks[p]) >= X - FAST_QUORUM
-       /\ \forall m, n \in pre_accept_acks[p]: m.dep /= n.dep
-    THEN FALSE
-  ELSE TRUE   
+  IF \exists p \in partitions: \exists acks \in SUBSET pre_accept_acks[p]:
+       /\ Len(acks) > X - FAST_QUORUM
+       /\ \forall m, n \in acks: m.dep /= n.dep THEN
+    FALSE
+  ELSE 
+    TRUE
+  
+FastPathReady(pre_accept_acks, partitions) == 
+  IF \forall p \in partitions: \exists acks \in SUBSET pre_accept_acks[p]:
+       /\ Len(acks) >= FAST_QUORUM
+       /\ \forall m, n \in acks: m.dep = n.dep THEN
+    TRUE
+  ELSE 
+    FALSE
   
 PickXXX(acks) == 
-  CHOOSE a \in acks: TRUE
+  CHOOSE a \in acks: 
+    \exists q \in SUBSET acks: 
+      /\ Len(q) >= FAST_QUORUM
+      /\ \forall m, n \in q: m.dep = n.dep
 
-FastPathReady(pre_accept_acks, partitions) == 
-  \forall p \in partitions: 
-    /\ Len(pre_accept_acks[p]) >= FAST_QUORUM
-    /\ \forall m, n \in pre_accept_acks[p]: m.dep = n.dep  
-
-SlowPathPossible(prepare_acks, partitions) == 
+SlowPathReady(prepare_acks, partitions) == 
   \forall p \in partitions: 
     /\ Len(prepare_acks[p]) >= SLOW_QUORUM
 
@@ -165,73 +293,65 @@ BroadcastMsgToMultiplePartitions(mq, partitions, msg) ==
                           ELSE mq[i]]                               
 
 GetStatus(dep, tid) == (* Retrieve the status of a transaction by its id from a dep graph *)
-  CHOOSE status : status = dep.node_prop[tid].status
+  dep[tid].status
     
 UpdateStatus(dep, tid, status) == (* Update the status of a transaction to a newer status by its id *)
-  IF dep.status[tid] < status THEN [dep EXCEPT !.status[tid] = status] ELSE dep
+  IF dep[tid].status < status THEN [dep EXCEPT ![tid].status = status] ELSE dep
     
-UpdateSubGraphStatus(G, H, status) == 
-  [ G EXCEPT !.status = [m \in G.node |-> IF m \in H.node THEN 
-                                            MAX(G.status[m], H.status[m]) 
-                                          ELSE 
-                                            G.status[m]]]
+UpdateSubGraphStatus(g1, g2, status) == 
+  IF \exists i \in (DOMAIN g2): i \notin (DOMAIN g1) THEN
+    FALSE \* do not support for now
+  ELSE
+    [
+      tid \in DOMAIN g1 |->
+        IF tid \in g2 THEN
+          [g1[tid] EXCEPT !.status = status]
+        ELSE 
+          g1[tid]
+    ] 
 
-IsInvolved(dep, tid, sid) == (* Judge if a transaction involves this server *)
-    IF sid \in dep.svrset[tid] THEN TRUE ELSE FALSE
+IsInvolved(dep, tid, par) == (* Judge if a transaction involves this server *)
+    IF par \in dep[tid].partitions THEN TRUE ELSE FALSE
 
 
-AreDirectlyConnectedIn(m, n, G) == 
-  \exists p \in Path(G) : (p[1] = m) /\ (p[Len(p)] = n) /\ Len(p) = 1
+\*UndecidedAncestor(G, tid) == 
+\*  CHOOSE anc \in SubNewDepGraph(G) : 
+\*    \forall m \in G.node : 
+\*      ( /\ AreConnectedIn(m, tid, G) 
+\*        /\ GetStatus(G, tid) < DECIDED ) 
+\*        => m \in anc.node
 
-AreConnectedIn(m, n, G) == 
-    \exists p \in Path(G) : (p[1] = m) /\ (p[Len(p)] = n)
-    
-AreStronglyConnectedIn(m, n, G) ==
-    /\ AreConnectedIn(m, n, G)
-    /\ AreConnectedIn(n, m, G)
-    
-IsStronglyConnected(G) == 
-    \forall m, n \in G.node : AreConnectedIn(m, n, G)
-    
-StronglyConnectedComponent(G, node) == (* Compute the Strongly Connected Component of a node *)
-  CHOOSE scc \in SubDepGraph(G) : /\ IsStronglyConnected(scc)
-                                  /\ node \in scc.node
-                                  /\ \forall m \in G.node : 
-                                    AreStronglyConnectedIn(m, node, G) => m \in scc.node
-
-UndecidedAncestor(G, tid) == 
-  CHOOSE anc \in SubDepGraph(G) : 
-    \forall m \in G.node : 
-      ( /\ AreConnectedIn(m, tid, G) 
-        /\ GetStatus(G, tid) < DECIDED ) 
-        => m \in anc.node
+SingleVertexNewDep(dep, tid) == 
+  [tid |-> dep[tid]]
                 
-NearestDependencies(dep, tid) == 
-  CHOOSE anc \in SubDepGraph(dep) :
-    /\ \forall m \in dep.node:
-      AreDirectlyConnectedIn(m, tid, dep) => m \in anc.node
-    /\ \forall m \in anc.node: AreDirectlyConnectedIn(m, tid, dep)  
+\*NearestDependencies(dep, tid) == 
+\*  CHOOSE anc \in SubNewDepGraph(dep) :
+\*    /\ \forall m \in dep.node:
+\*      AreDirectlyConnectedIn(m, tid, dep) => m \in anc.node
+\*    /\ \forall m \in anc.node: AreDirectlyConnectedIn(m, tid, dep)  
 
-DowngradeExcept(dep, tid) == 
-  [dep EXCEPT !.status = [m \in dep.node |-> (IF m /= tid THEN UNKNOWN ELSE dep.status[m])]]
-    
-NearestDependenciesWithDowngrade(dep, tid) == 
-  DowngradeExcept(NearestDependencies(dep, tid), tid)
+\*DowngradeExcept(dep, tid) == 
+\*  [dep EXCEPT !.status = [m \in dep.node |-> (IF m /= tid THEN UNKNOWN ELSE dep.status[m])]]
+\*    
+
+\*NearestDependenciesWithDowngrade(dep, tid) == 
+\*  DowngradeExcept(NearestDependencies(dep, tid), tid)
 
 AreAllAncestorsAtLeastCommitting(G, tid) ==
-    \forall m \in G.node : AreConnectedIn(m, tid, G) => G.status[m] >= COMMITTING
+    \forall m \in DOMAIN G : AreConnectedIn(m, tid, G) => GetStatus(G, m) >= COMMITTING
     
 AllAncestorsLowerThanCommitting(G, tid) ==
-  CHOOSE anc \in SubDepGraph(G) : 
-    \forall m \in G.node: 
+  CHOOSE anc \in SubNewDepGraph(G) : 
+    \forall m \in DOMAIN G: 
       ( /\ AreConnectedIn(m, tid, G) 
         /\ GetStatus(G, tid) < COMMITTING ) 
-        => m \in anc.node
+        => m \in DOMAIN anc
 
 
 CommittingSubGraphWithAllAnestorsAtLeastCommitting(G) == 
-  CHOOSE H \in SubDepGraph(G) : /\ \forall m \in H.node : H.status[m] = COMMITTING
-                                /\ \forall m \in H.node : AreAllAncestorsAtLeastCommitting(G, m)
+  CHOOSE H \in SubNewDepGraph(G) : 
+    /\ \forall m \in DOMAIN H : H[m].status = COMMITTING
+    /\ \forall m \in DOMAIN H : AreAllAncestorsAtLeastCommitting(G, m)
 
 Unfinished(finished_map, tid) == 
   finished_map[tid] /= TRUE
@@ -240,43 +360,46 @@ Finished(finished_map, tid) ==
   finished_map[tid] = TRUE                                         
 
 AreSubGraphAncestorsAtLeastCommitting(G, H) == 
-  \forall m \in G.node : ( /\ m \notin H.node 
-                           /\ \exists n \in H.node : AreConnectedIn(m, n, G)
-                         ) 
-                         => G.status[m] >= COMMITTING
+  \forall m \in DOMAIN G : 
+    ( /\ m \notin H.node 
+      /\ \exists n \in DOMAIN H : AreConnectedIn(m, n, G)
+    ) 
+    => G[m].status >= COMMITTING
                             
 AreSubGraphLocalAncestorsFinished(G, H, sid, finished_map) ==
-  \forall m \in G.node : ( /\ m \notin H.node 
-                           /\ \exists n \in H.node : AreConnectedIn(m, n, G)
-                           /\ sid \in G.svrset[m]
-                         ) 
-                         => finished_map[sid] = TRUE
+  \forall m \in DOMAIN G : 
+    ( /\ m \notin DOMAIN H 
+      /\ \exists n \in DOMAIN H : AreConnectedIn(m, n, G)
+      /\ sid \in G[m].partitions
+    ) 
+    => finished_map[sid] = TRUE
                                                                                                                                             
     
 \* DecidedUnfinishedLocalSCCWithAllAncestorsCommittingAndAllLocalAncestorsFinished
 ToExecuteSCC(G, sid, finished_map) == 
-  CHOOSE scc \in SubDepGraph(G) : 
+  CHOOSE scc \in SubNewDepGraph(G) : 
     /\ IsStronglyConnected(scc)
-    /\ \exists tid \in scc.node : scc = StronglyConnectedComponent(G, tid)
-    /\ \forall tid \in scc.node : scc.status[tid] = DECIDED
-    /\ \exists tid \in scc.node : IsInvolved(scc, tid, sid) /\ Unfinished(finished_map, tid) 
+    /\ \exists tid \in DOMAIN scc: scc = StronglyConnectedComponent(G, tid)
+    /\ \forall tid \in DOMAIN scc: scc[tid].status = DECIDED
+    /\ \exists tid \in DOMAIN scc: /\ IsInvolved(scc, tid, sid) 
+                                   /\ Unfinished(finished_map, tid) 
     /\ AreSubGraphAncestorsAtLeastCommitting(G, scc)
     /\ AreSubGraphLocalAncestorsFinished(G, scc, sid, finished_map)
 
-
-
 ToExecuteSCCSet(G, sid, finished_map) ==
-  { scc \in SubDepGraph(G) : 
+  { 
+    scc \in SubNewDepGraph(G) : 
       /\ IsStronglyConnected(scc)
-      /\ \exists tid \in scc.node : scc = StronglyConnectedComponent(G, tid)
-      /\ \forall tid \in scc.node : scc.status[tid] = DECIDED
-      /\ \exists tid \in scc.node : IsInvolved(scc, tid, sid) /\ Unfinished(finished_map, tid) 
+      /\ \exists tid \in DOMAIN scc: scc = StronglyConnectedComponent(G, tid)
+      /\ \forall tid \in DOMAIN scc: scc[tid].status = DECIDED
+      /\ \exists tid \in DOMAIN scc: /\ IsInvolved(scc, tid, sid) 
+                                     /\ Unfinished(finished_map, tid) 
       /\ AreSubGraphAncestorsAtLeastCommitting(G, scc)
       /\ AreSubGraphLocalAncestorsFinished(G, scc, sid, finished_map) 
   }                            
 
 NextToExe(scc) == 
-    CHOOSE t \in scc.node : \forall tid \in scc.node: tid >= t
+  CHOOSE t \in scc.node : \forall tid \in DOMAIN scc: tid >= t
 
 
 -----------------------------------------------------
@@ -336,7 +459,7 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
         acks := acks \ {a};
         tmp_acks := a;
       };
-      graph := Aggregate(graph, PickXXX(tmp_acks));
+      graph := NewDepAggregate(graph, PickXXX(tmp_acks));
     };
     return;
   }       
@@ -350,7 +473,7 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
       };
       zzzzz: while (tmp_acks /= <<>>) {
         with (a \in tmp_acks) {
-          graph := Aggregate(graph, a.dep);
+          graph := NewDepAggregate(graph, a.dep);
           tmp_acks := Tail(tmp_acks);         
         }
       }
@@ -431,14 +554,16 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
         par := ProcIdToPartitionId(msg_in.source);
         pre_accept_acks[par] := Append(pre_accept_acks[par], msg_in);
         if (FastPathPossible(pre_accept_acks, partitions)) {
-          graph := AggregateGraphForFastPath(pre_accept_acks);
-          goto commit_phase;
+          if (FastPathReady(pre_accept_acks, partitions)) {
+            graph := AggregateGraphForFastPath(pre_accept_acks);
+            goto commit_phase;          
+          }
         };
-        slow_path_check: if (SlowPathPossible(pre_accept_acks, partitions)) {
+        slow_path_check: if (SlowPathReady(pre_accept_acks, partitions)) {
           call AggregateGraphForAccept(pre_accept_acks);
-          dsfdsfd: goto accept_phase;
+          goto_accept: goto accept_phase;
         };
-        \* TODO if nothing is possible then find something to do.
+        \* if nothing is possible, waiting for more messages to arrive.
       } \* else an outdated message, do nothing.            
     };
     
@@ -518,7 +643,7 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
     \* curr_txn := [tid |-> msg.tid, status |-> "unknown", partitions |-> msg.partitions];        
     \* dep := DepAddNode(dep, curr_txn.tid, UNKNOWN, msg.partitions);
     curr_txn := FindOrCreateTxn(dep, msg.tid);
-    if (msg.type = "pre_accept" /\ curr_txn.max_ballot = 0) {
+    if (msg.type = "pre_accept" /\ curr_txn.max_prepared_ballot = 0) {
       curr_pie := msg.pie;
       opset := curr_pie.opset;
       pie_add_dep: while (opset /= {}) {
@@ -529,21 +654,21 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
         last_r_tid := keyspace[curr_op.key].last_r_tid;
         last_w_tid := keyspace[curr_op.key].last_w_tid;
         
-        dep := DepAddEdge(dep, <<last_w_tid, curr_txn.tid, curr_pie.iord>>);
+        dep := NewDepAddEdge(dep, last_w_tid, curr_txn.tid);
         if (curr_op.type = "w") {
           keyspace[curr_op.key].last_w_tid := curr_txn.tid;
-          read_con: dep := DepAddEdge(dep, <<last_r_tid, curr_txn.tid, curr_pie.iord>>);
+          read_con: dep := NewDepAddEdge(dep, last_r_tid, curr_txn.tid);
         } else {
           keyspace[curr_op.key].last_r_tid := curr_txn.tid;
         };
       };
       (* reply dependencies *)            
-      reply_dep: ya_dep := NearestDependenciesWithDowngrade(dep, curr_txn.tid);
+      reply_dep: ya_dep := SingleVertexNewDep(dep, curr_txn.tid);
       msg_out := [type |-> "ack_pre_accept", src |-> self, dep |-> ya_dep];
       coo_mq[msg.source] := Append(coo_mq[msg.src], msg_out);                         
     } else if ( \/ msg.type = "commit" 
                 \/ msg.type = "ack_inquire") {
-      aggregate_graph: dep := Aggregate(dep, msg.dep);
+      aggregate_graph: dep := NewDepAggregate(dep, msg.dep);
 
       (* send inquire request for uninvovled & uncommitted ancestors *)            
       txn_set := AllAncestorsLowerThanCommitting(dep, msg.tid);
@@ -610,16 +735,16 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
                     
     } else if (msg.type = "inquire") {
       await GetStatus(dep, msg.tid) >= COMMITTING;
-      inquire_ack: ya_dep := NearestDependenciesWithDowngrade(dep, msg.tid);                
+      inquire_ack: ya_dep := SingleVertexNewDep(dep, msg.tid);                
       msg_out := [type |-> "ack_inquire", src |-> self, tid |-> msg.tid, dep |-> ya_dep];
       svr_mq[msg.source] := Append(coo_mq[msg.source], msg_out);
-    } else if (msg.type = "prepare" /\ curr_txn.max_ballot < msg.ballot) {
+    } else if (msg.type = "prepare" /\ curr_txn.max_prepared_ballot < msg.ballot) {
       dep := UpdateBallot(dep, curr_txn.tid, msg.ballot, PREPARED);
       msg_out := [type |-> "ack_prepare", src |-> self, tid |-> msg.tid, ballot |-> msg.ballot];
       xxd: svr_mq[msg.source] := Append(coo_mq[msg.source], msg_out);        
-    } else if (msg.type = "accept" /\ curr_txn.max_ballot <= msg.ballot) {
+    } else if (msg.type = "accept" /\ curr_txn.max_prepared_ballot <= msg.ballot) {
       dep := UpdateBallot(dep, curr_txn.tid, msg.ballot, ACCEPTED);
-      dlskf: dep := Aggregate(dep, msg.dep);
+      process_accept: dep := NewDepAggregate(dep, msg.dep);
       msg_out := [type |-> "ack_accept", src |-> self, tid |-> msg.tid, ballot |-> msg.ballot];
       svr_mq[msg.source] := Append(coo_mq[msg.source], msg_out);
     }
@@ -627,14 +752,14 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
 }
 *)
 \* BEGIN TRANSLATION
-\* Label xxxxx of procedure AggregateGraphForFastPath at line 333 col 12 changed to xxxxx_
-\* Label yyyyy of procedure AggregateGraphForFastPath at line 334 col 12 changed to yyyyy_
-\* Process variable next_txn of process Coo at line 386 col 13 changed to next_txn_
-\* Process variable msg_in of process Coo at line 393 col 13 changed to msg_in_
-\* Process variable msg_out of process Coo at line 394 col 13 changed to msg_out_
-\* Process variable keyspace of process Svr at line 491 col 13 changed to keyspace_
-\* Process variable curr_pie of process Svr at line 503 col 13 changed to curr_pie_
-\* Parameter acks of procedure AggregateGraphForFastPath at line 332 col 39 changed to acks_
+\* Label xxxxx of procedure AggregateGraphForFastPath at line 456 col 12 changed to xxxxx_
+\* Label yyyyy of procedure AggregateGraphForFastPath at line 457 col 12 changed to yyyyy_
+\* Process variable next_txn of process Coo at line 509 col 13 changed to next_txn_
+\* Process variable msg_in of process Coo at line 516 col 13 changed to msg_in_
+\* Process variable msg_out of process Coo at line 517 col 13 changed to msg_out_
+\* Process variable keyspace of process Svr at line 616 col 13 changed to keyspace_
+\* Process variable curr_pie of process Svr at line 628 col 13 changed to curr_pie_
+\* Parameter acks of procedure AggregateGraphForFastPath at line 455 col 39 changed to acks_
 CONSTANT defaultInitValue
 VARIABLES coo_mq, svr_mq, srz, pc, stack, acks_, acks, curr_pie, keyspace, 
           next_txn_, next_pie, txn_id, par, partitions, n_pie, graph, msg_in_, 
@@ -728,7 +853,7 @@ yyyyy_(self) == /\ pc[self] = "yyyyy_"
                       THEN /\ \E a \in acks_[self]:
                                 /\ acks_' = [acks_ EXCEPT ![self] = acks_[self] \ {a}]
                                 /\ tmp_acks' = [tmp_acks EXCEPT ![self] = a]
-                           /\ graph' = [graph EXCEPT ![self] = Aggregate(graph[self], PickXXX(tmp_acks'[self]))]
+                           /\ graph' = [graph EXCEPT ![self] = NewDepAggregate(graph[self], PickXXX(tmp_acks'[self]))]
                            /\ pc' = [pc EXCEPT ![self] = "yyyyy_"]
                            /\ stack' = stack
                       ELSE /\ pc' = [pc EXCEPT ![self] = Head(stack[self]).pc]
@@ -784,7 +909,7 @@ yyyyy(self) == /\ pc[self] = "yyyyy"
 zzzzz(self) == /\ pc[self] = "zzzzz"
                /\ IF tmp_acks[self] /= <<>>
                      THEN /\ \E a \in tmp_acks[self]:
-                               /\ graph' = [graph EXCEPT ![self] = Aggregate(graph[self], a.dep)]
+                               /\ graph' = [graph EXCEPT ![self] = NewDepAggregate(graph[self], a.dep)]
                                /\ tmp_acks' = [tmp_acks EXCEPT ![self] = Tail(tmp_acks[self])]
                           /\ pc' = [pc EXCEPT ![self] = "zzzzz"]
                      ELSE /\ pc' = [pc EXCEPT ![self] = "yyyyy"]
@@ -924,8 +1049,11 @@ pre_accept_ack(self) == /\ pc[self] = "pre_accept_ack"
                                          THEN /\ par' = [par EXCEPT ![self] = ProcIdToPartitionId(msg_in_'[self].source)]
                                               /\ pre_accept_acks' = [pre_accept_acks EXCEPT ![self][par'[self]] = Append(pre_accept_acks[self][par'[self]], msg_in_'[self])]
                                               /\ IF FastPathPossible(pre_accept_acks'[self], partitions[self])
-                                                    THEN /\ graph' = [graph EXCEPT ![self] = AggregateGraphForFastPath(pre_accept_acks'[self])]
-                                                         /\ pc' = [pc EXCEPT ![self] = "commit_phase"]
+                                                    THEN /\ IF FastPathReady(pre_accept_acks'[self], partitions[self])
+                                                               THEN /\ graph' = [graph EXCEPT ![self] = AggregateGraphForFastPath(pre_accept_acks'[self])]
+                                                                    /\ pc' = [pc EXCEPT ![self] = "commit_phase"]
+                                                               ELSE /\ pc' = [pc EXCEPT ![self] = "slow_path_check"]
+                                                                    /\ graph' = graph
                                                     ELSE /\ pc' = [pc EXCEPT ![self] = "slow_path_check"]
                                                          /\ graph' = graph
                                          ELSE /\ pc' = [pc EXCEPT ![self] = "pre_accept_ack"]
@@ -949,10 +1077,10 @@ pre_accept_ack(self) == /\ pc[self] = "pre_accept_ack"
                                         tmp_set, alogs >>
 
 slow_path_check(self) == /\ pc[self] = "slow_path_check"
-                         /\ IF SlowPathPossible(pre_accept_acks[self], partitions[self])
+                         /\ IF SlowPathReady(pre_accept_acks[self], partitions[self])
                                THEN /\ /\ acks' = [acks EXCEPT ![self] = pre_accept_acks[self]]
                                        /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "AggregateGraphForAccept",
-                                                                                pc        |->  "dsfdsfd",
+                                                                                pc        |->  "goto_accept",
                                                                                 acks      |->  acks[self] ] >>
                                                                             \o stack[self]]
                                     /\ pc' = [pc EXCEPT ![self] = "xxxxx"]
@@ -971,18 +1099,19 @@ slow_path_check(self) == /\ pc[self] = "slow_path_check"
                                          opset, next_txn, next_tid, anc, 
                                          tmp_set, alogs >>
 
-dsfdsfd(self) == /\ pc[self] = "dsfdsfd"
-                 /\ pc' = [pc EXCEPT ![self] = "accept_phase"]
-                 /\ UNCHANGED << coo_mq, svr_mq, srz, stack, acks_, acks, 
-                                 curr_pie, keyspace, next_txn_, next_pie, 
-                                 txn_id, par, partitions, n_pie, graph, 
-                                 msg_in_, msg_out_, pre_accept_acks, 
-                                 accept_acks, committed, ballot, tmp_acks, 
-                                 msg_in, msg_out, msg, keyspace_, dep, ya_dep, 
-                                 finished_map, asked_map, pie_map, last_w_tid, 
-                                 last_r_tid, scc, scc_set, scc_seq, curr_txn, 
-                                 curr_pie_, curr_op, txn_set, opset, next_txn, 
-                                 next_tid, anc, tmp_set, alogs >>
+goto_accept(self) == /\ pc[self] = "goto_accept"
+                     /\ pc' = [pc EXCEPT ![self] = "accept_phase"]
+                     /\ UNCHANGED << coo_mq, svr_mq, srz, stack, acks_, acks, 
+                                     curr_pie, keyspace, next_txn_, next_pie, 
+                                     txn_id, par, partitions, n_pie, graph, 
+                                     msg_in_, msg_out_, pre_accept_acks, 
+                                     accept_acks, committed, ballot, tmp_acks, 
+                                     msg_in, msg_out, msg, keyspace_, dep, 
+                                     ya_dep, finished_map, asked_map, pie_map, 
+                                     last_w_tid, last_r_tid, scc, scc_set, 
+                                     scc_seq, curr_txn, curr_pie_, curr_op, 
+                                     txn_set, opset, next_txn, next_tid, anc, 
+                                     tmp_set, alogs >>
 
 accept_phase(self) == /\ pc[self] = "accept_phase"
                       /\ msg_out_' = [msg_out_ EXCEPT ![self] =                          [
@@ -1103,7 +1232,7 @@ commit_ack(self) == /\ pc[self] = "commit_ack"
                                     next_tid, anc, tmp_set, alogs >>
 
 Coo(self) == coo(self) \/ pre_accept(self) \/ pre_accept_ack(self)
-                \/ slow_path_check(self) \/ dsfdsfd(self)
+                \/ slow_path_check(self) \/ goto_accept(self)
                 \/ accept_phase(self) \/ broadcast_accept(self)
                 \/ accept_ack(self) \/ commit_phase(self)
                 \/ broadcast_commit(self) \/ commit_ack(self)
@@ -1114,7 +1243,7 @@ svr_msg_loop(self) == /\ pc[self] = "svr_msg_loop"
                       /\ svr_mq' = [svr_mq EXCEPT ![self] = Tail(svr_mq[self])]
                       /\ ya_dep' = [ya_dep EXCEPT ![self] = {}]
                       /\ curr_txn' = [curr_txn EXCEPT ![self] = FindOrCreateTxn(dep[self], msg'[self].tid)]
-                      /\ IF msg'[self].type = "pre_accept" /\ curr_txn'[self].max_ballot = 0
+                      /\ IF msg'[self].type = "pre_accept" /\ curr_txn'[self].max_prepared_ballot = 0
                             THEN /\ curr_pie_' = [curr_pie_ EXCEPT ![self] = msg'[self].pie]
                                  /\ opset' = [opset EXCEPT ![self] = curr_pie_'[self].opset]
                                  /\ pc' = [pc EXCEPT ![self] = "pie_add_dep"]
@@ -1128,13 +1257,13 @@ svr_msg_loop(self) == /\ pc[self] = "svr_msg_loop"
                                                        /\ pc' = [pc EXCEPT ![self] = "inquire_ack"]
                                                        /\ UNCHANGED << msg_out, 
                                                                        dep >>
-                                                  ELSE /\ IF msg'[self].type = "prepare" /\ curr_txn'[self].max_ballot < msg'[self].ballot
+                                                  ELSE /\ IF msg'[self].type = "prepare" /\ curr_txn'[self].max_prepared_ballot < msg'[self].ballot
                                                              THEN /\ dep' = [dep EXCEPT ![self] = UpdateBallot(dep[self], curr_txn'[self].tid, msg'[self].ballot, PREPARED)]
                                                                   /\ msg_out' = [msg_out EXCEPT ![self] = [type |-> "ack_prepare", src |-> self, tid |-> msg'[self].tid, ballot |-> msg'[self].ballot]]
                                                                   /\ pc' = [pc EXCEPT ![self] = "xxd"]
-                                                             ELSE /\ IF msg'[self].type = "accept" /\ curr_txn'[self].max_ballot <= msg'[self].ballot
+                                                             ELSE /\ IF msg'[self].type = "accept" /\ curr_txn'[self].max_prepared_ballot <= msg'[self].ballot
                                                                         THEN /\ dep' = [dep EXCEPT ![self] = UpdateBallot(dep[self], curr_txn'[self].tid, msg'[self].ballot, ACCEPTED)]
-                                                                             /\ pc' = [pc EXCEPT ![self] = "dlskf"]
+                                                                             /\ pc' = [pc EXCEPT ![self] = "process_accept"]
                                                                         ELSE /\ pc' = [pc EXCEPT ![self] = "Done"]
                                                                              /\ dep' = dep
                                                                   /\ UNCHANGED msg_out
@@ -1157,7 +1286,7 @@ pie_add_dep(self) == /\ pc[self] = "pie_add_dep"
                                      /\ curr_op' = [curr_op EXCEPT ![self] = next_op]
                                 /\ last_r_tid' = [last_r_tid EXCEPT ![self] = keyspace_[self][curr_op'[self].key].last_r_tid]
                                 /\ last_w_tid' = [last_w_tid EXCEPT ![self] = keyspace_[self][curr_op'[self].key].last_w_tid]
-                                /\ dep' = [dep EXCEPT ![self] = DepAddEdge(dep[self], <<last_w_tid'[self], curr_txn[self].tid, curr_pie_[self].iord>>)]
+                                /\ dep' = [dep EXCEPT ![self] = NewDepAddEdge(dep[self], last_w_tid'[self], curr_txn[self].tid)]
                                 /\ IF curr_op'[self].type = "w"
                                       THEN /\ keyspace_' = [keyspace_ EXCEPT ![self][curr_op'[self].key].last_w_tid = curr_txn[self].tid]
                                            /\ pc' = [pc EXCEPT ![self] = "read_con"]
@@ -1178,7 +1307,7 @@ pie_add_dep(self) == /\ pc[self] = "pie_add_dep"
                                      alogs >>
 
 read_con(self) == /\ pc[self] = "read_con"
-                  /\ dep' = [dep EXCEPT ![self] = DepAddEdge(dep[self], <<last_r_tid[self], curr_txn[self].tid, curr_pie_[self].iord>>)]
+                  /\ dep' = [dep EXCEPT ![self] = NewDepAddEdge(dep[self], last_r_tid[self], curr_txn[self].tid)]
                   /\ pc' = [pc EXCEPT ![self] = "pie_add_dep"]
                   /\ UNCHANGED << coo_mq, svr_mq, srz, stack, acks_, acks, 
                                   curr_pie, keyspace, next_txn_, next_pie, 
@@ -1192,7 +1321,7 @@ read_con(self) == /\ pc[self] = "read_con"
                                   next_tid, anc, tmp_set, alogs >>
 
 reply_dep(self) == /\ pc[self] = "reply_dep"
-                   /\ ya_dep' = [ya_dep EXCEPT ![self] = NearestDependenciesWithDowngrade(dep[self], curr_txn[self].tid)]
+                   /\ ya_dep' = [ya_dep EXCEPT ![self] = SingleVertexNewDep(dep[self], curr_txn[self].tid)]
                    /\ msg_out' = [msg_out EXCEPT ![self] = [type |-> "ack_pre_accept", src |-> self, dep |-> ya_dep'[self]]]
                    /\ coo_mq' = [coo_mq EXCEPT ![msg[self].source] = Append(coo_mq[msg[self].src], msg_out'[self])]
                    /\ pc' = [pc EXCEPT ![self] = "Done"]
@@ -1208,7 +1337,7 @@ reply_dep(self) == /\ pc[self] = "reply_dep"
                                    tmp_set, alogs >>
 
 aggregate_graph(self) == /\ pc[self] = "aggregate_graph"
-                         /\ dep' = [dep EXCEPT ![self] = Aggregate(dep[self], msg[self].dep)]
+                         /\ dep' = [dep EXCEPT ![self] = NewDepAggregate(dep[self], msg[self].dep)]
                          /\ txn_set' = [txn_set EXCEPT ![self] = AllAncestorsLowerThanCommitting(dep'[self], msg[self].tid)]
                          /\ pc' = [pc EXCEPT ![self] = "inquire_if_needed"]
                          /\ UNCHANGED << coo_mq, svr_mq, srz, stack, acks_, 
@@ -1383,7 +1512,7 @@ exe_all_deferred_pies(self) == /\ pc[self] = "exe_all_deferred_pies"
                                                tmp_set, alogs >>
 
 inquire_ack(self) == /\ pc[self] = "inquire_ack"
-                     /\ ya_dep' = [ya_dep EXCEPT ![self] = NearestDependenciesWithDowngrade(dep[self], msg[self].tid)]
+                     /\ ya_dep' = [ya_dep EXCEPT ![self] = SingleVertexNewDep(dep[self], msg[self].tid)]
                      /\ msg_out' = [msg_out EXCEPT ![self] = [type |-> "ack_inquire", src |-> self, tid |-> msg[self].tid, dep |-> ya_dep'[self]]]
                      /\ svr_mq' = [svr_mq EXCEPT ![msg[self].source] = Append(coo_mq[msg[self].source], msg_out'[self])]
                      /\ pc' = [pc EXCEPT ![self] = "Done"]
@@ -1411,20 +1540,23 @@ xxd(self) == /\ pc[self] = "xxd"
                              curr_txn, curr_pie_, curr_op, txn_set, opset, 
                              next_txn, next_tid, anc, tmp_set, alogs >>
 
-dlskf(self) == /\ pc[self] = "dlskf"
-               /\ dep' = [dep EXCEPT ![self] = Aggregate(dep[self], msg[self].dep)]
-               /\ msg_out' = [msg_out EXCEPT ![self] = [type |-> "ack_accept", src |-> self, tid |-> msg[self].tid, ballot |-> msg[self].ballot]]
-               /\ svr_mq' = [svr_mq EXCEPT ![msg[self].source] = Append(coo_mq[msg[self].source], msg_out'[self])]
-               /\ pc' = [pc EXCEPT ![self] = "Done"]
-               /\ UNCHANGED << coo_mq, srz, stack, acks_, acks, curr_pie, 
-                               keyspace, next_txn_, next_pie, txn_id, par, 
-                               partitions, n_pie, graph, msg_in_, msg_out_, 
-                               pre_accept_acks, accept_acks, committed, ballot, 
-                               tmp_acks, msg_in, msg, keyspace_, ya_dep, 
-                               finished_map, asked_map, pie_map, last_w_tid, 
-                               last_r_tid, scc, scc_set, scc_seq, curr_txn, 
-                               curr_pie_, curr_op, txn_set, opset, next_txn, 
-                               next_tid, anc, tmp_set, alogs >>
+process_accept(self) == /\ pc[self] = "process_accept"
+                        /\ dep' = [dep EXCEPT ![self] = NewDepAggregate(dep[self], msg[self].dep)]
+                        /\ msg_out' = [msg_out EXCEPT ![self] = [type |-> "ack_accept", src |-> self, tid |-> msg[self].tid, ballot |-> msg[self].ballot]]
+                        /\ svr_mq' = [svr_mq EXCEPT ![msg[self].source] = Append(coo_mq[msg[self].source], msg_out'[self])]
+                        /\ pc' = [pc EXCEPT ![self] = "Done"]
+                        /\ UNCHANGED << coo_mq, srz, stack, acks_, acks, 
+                                        curr_pie, keyspace, next_txn_, 
+                                        next_pie, txn_id, par, partitions, 
+                                        n_pie, graph, msg_in_, msg_out_, 
+                                        pre_accept_acks, accept_acks, 
+                                        committed, ballot, tmp_acks, msg_in, 
+                                        msg, keyspace_, ya_dep, finished_map, 
+                                        asked_map, pie_map, last_w_tid, 
+                                        last_r_tid, scc, scc_set, scc_seq, 
+                                        curr_txn, curr_pie_, curr_op, txn_set, 
+                                        opset, next_txn, next_tid, anc, 
+                                        tmp_set, alogs >>
 
 Svr(self) == svr_msg_loop(self) \/ pie_add_dep(self) \/ read_con(self)
                 \/ reply_dep(self) \/ aggregate_graph(self)
@@ -1432,7 +1564,7 @@ Svr(self) == svr_msg_loop(self) \/ pie_add_dep(self) \/ read_con(self)
                 \/ ready_to_commit(self) \/ find_execute(self)
                 \/ next_execute(self) \/ exe_scc(self)
                 \/ exe_all_deferred_pies(self) \/ inquire_ack(self)
-                \/ xxd(self) \/ dlskf(self)
+                \/ xxd(self) \/ process_accept(self)
 
 Next == (\E self \in ProcSet:  \/ AggregateGraphForFastPath(self)
                                \/ AggregateGraphForAccept(self)
@@ -1450,12 +1582,12 @@ Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
 -----------------------------------------------------------------------------
 
-Serializability == []Acyclic(srz)
+\*Serializability == []Acyclic(srz)
 
-THEOREM Spec => Serializability
+\*THEOREM Spec => Serializability
 
 =============================================================================
 \* Modification History
-\* Last modified Wed Sep 07 04:08:35 EDT 2016 by shuai
+\* Last modified Tue Sep 13 00:53:58 EDT 2016 by shuai
 \* Last modified Thu Dec 25 23:34:46 CST 2014 by Shuai
 \* Created Mon Dec 15 15:44:26 CST 2014 by Shuai
