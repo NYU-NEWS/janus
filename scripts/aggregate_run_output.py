@@ -10,7 +10,7 @@ ARGS = None
 labels = ['txn_name', 'cc', 'ab', 'benchmark', 'duration', 'clients',
           'tps', 'attempts', 'commits', 'start_cnt', 'total_cnt']
 lat_labels = None
-other_labels = [ 'zipf' ]
+other_labels = [ 'zipf', 'experiment_id' ]
 
 def parse_args():
     global ARGS

@@ -249,7 +249,8 @@ class TxnInfo(object):
             'attempts': tries,
             'commits': commit_txn,
             'tps': tps,
-            'zipf': zipf
+            'zipf': zipf,
+            'experiment_id': int(config['args'].experiment_id)
         }
         self.data['latency'] = {}
         self.data['latency'].update(latencies)
@@ -834,7 +835,7 @@ def create_parser():
     parser.add_argument('-n', "--name", dest="experiment_name",
                         help="name of experiment",
                         default=None)
-
+    parser.add_argument('-id', dest="experiment_id", default="-1")
     parser.add_argument("-f", "--file", dest="config_files",
             help="read config from FILE, default is sample.yml",
             action='append',

@@ -56,6 +56,9 @@ def create_parser():
                         "range builtin function.",
                         action='append',
                         default=[])
+    parser.add_argument("-cl", "--client-load", dest="client_loads",
+                        help="load generation for open clients",
+                        nargs="+", type=int, default=[-1])
     parser.add_argument("-st", "--server-timeout", dest="s_timeout", default="30")
     parser.add_argument("-s", "--server-count", dest="server_counts",
                         help="client counts; accpets " + \
@@ -108,12 +111,12 @@ def parse_commandline():
     return args
 
 
-def gen_experiment_suffix(b, m, c, z):
+def gen_experiment_suffix(b, m, c, z, cl):
     m = m.replace(':', '-')
     if z is not None:
-        return "{}_{}_{}_{}".format(b, m, c, z)
+        return "{}_{}_{}_{}_{}".format(b, m, c, z, cl)
     else:
-        return "{}_{}_{}".format(b, m, c)
+        return "{}_{}_{}_{}".format(b, m, c, cl)
 
 
 def get_range(r):
@@ -216,7 +219,7 @@ def aggregate_configs(*args):
     return config
 
 
-def generate_config(args, experiment_name, benchmark, mode, zipf, num_client,
+def generate_config(args, experiment_name, benchmark, mode, zipf, client_load, num_client,
                     num_server, num_replicas):
     logger.debug("generate_config: {}, {}, {}, {}, {}".format(
         experiment_name, benchmark, mode, num_client, zipf))
@@ -233,6 +236,14 @@ def generate_config(args, experiment_name, benchmark, mode, zipf, num_client,
     config_files.append(proc_and_site_config)
     logger.info(config_files)
     result = aggregate_configs(*config_files)
+
+    if result['client']['type'] == 'open':
+        if client_load == -1:
+            logger.fatal("must set client load param for open clients")
+            sys.exit(1)
+        else:
+            result['client']['rate'] = client_load
+
     with tempfile.NamedTemporaryFile(
         mode='w', 
         prefix='janus-final-{}'.format(args.experiment_name),
@@ -244,9 +255,12 @@ def generate_config(args, experiment_name, benchmark, mode, zipf, num_client,
     logger.info("result: %s", result)
     return result
 
-
+exp_id = 0
 def run_experiment(config_file, name, args, benchmark, mode, num_client):
+    global exp_id
+    exp_id += 1
     cmd = [args.executable]
+    cmd.extend(["-id", exp_id])
     cmd.extend(["-n", "{}".format(name)])
     cmd.extend(["-t", str(args.s_timeout)])
     cmd.extend(["-f", config_file]) 
@@ -355,16 +369,18 @@ def run_experiments(args):
                          client_counts,
                          args.modes,
                          args.benchmarks,
-                         args.zipf)
+                         args.zipf,
+                         args.client_loads)
 
     experiments = itertools.product(*experiment_params)
     for params in experiments:
-        (num_server, num_client, mode, benchmark, zipf) = params 
+        (num_server, num_client, mode, benchmark, zipf, client_load) = params
         experiment_suffix = gen_experiment_suffix(
             benchmark,
             mode,
             num_client,
-            zipf)
+            zipf,
+            client_load)
         experiment_name = "{}-{}".format(
             args.experiment_name,
             experiment_suffix)
@@ -375,6 +391,7 @@ def run_experiments(args):
             experiment_name,
             benchmark, mode,
             zipf,
+            client_load,
             num_client,
             num_server,
             args.num_replicas)
