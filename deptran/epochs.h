@@ -64,6 +64,7 @@ class EpochMgr {
     for (; it->first <= epoch; it = epochs_.begin()) {
       epoch_t e = it->first;
       auto& info = it->second;
+      // is it possible that n_done does not equal ids size?
       verify(info.n_done == info.ids.size());
       ret.insert(info.ids.begin(), info.ids.end());
       epochs_.erase(it);
