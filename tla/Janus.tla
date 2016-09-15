@@ -10,6 +10,11 @@ CONSTANT TXN
   
 CONSTANT Shard(_)
 
+(* Do you know anybody who knows anybody who knows anybody
+   who knows anybody who knows how TLC works? *)
+BoundedSeq(S, n) == UNION {[1..i -> S] : i \in 0..n}
+BSeq(S) == BoundedSeq(S, Cardinality(S)+1)
+
 MAX(m, n) == IF m > n THEN m ELSE n
 
 (* status space of a transaction *)
@@ -45,9 +50,10 @@ SrzAddEdge(G, m, n) ==
   [G EXCEPT !.edge = @ \union {<<m, n>>}]
 
 SrzPath(G) == 
-  {p \in Seq(G.node) : /\ p /= <<>>
-                       /\ \forall i \in 1 .. (Len(p)-1) : 
-                            <<p[i], p[i+1]>> \in G.edge}
+  { p \in BoundedSeq(G.node, Cardinality(G.node)+1) : 
+      /\ p /= <<>>
+      /\ \forall i \in 1 .. (Len(p)-1) : 
+           <<p[i], p[i+1]>> \in G.edge}
   
 SrzCyclic(G) == 
   \exists p \in SrzPath(G) : /\ Len(p) > 1
@@ -56,18 +62,18 @@ SrzCyclic(G) ==
 SrzAcyclic(G) == ~SrzCyclic(G)       
 
 XsXXX(g) == 
-  {(DOMAIN g) \X DOMAIN g}
+  (DOMAIN g) \X (DOMAIN g)
 
 EmptyNewDep == 
   <<>>
 
 NewDepEdgeSet(g) == 
-  {edge \in XsXXX(g): edge[0] \in g[edge[1]].parents}
+  {edge \in XsXXX(g): edge[1] \in g[edge[2]].parents}
 
 NewDepPathSet(g) == 
-  {p \in Seq(DOMAIN g) : /\ p /= <<>>
-                         /\ \forall i \in 1 .. (Len(p)-1) : 
-                            <<p[i], p[i+1]>> \in NewDepEdgeSet(g)}
+  {p \in BSeq(DOMAIN g) : /\ p /= <<>>
+                          /\ \forall i \in 1 .. (Len(p)-1) : 
+                               <<p[i], p[i+1]>> \in NewDepEdgeSet(g)}
 
 NewDepCyclic(g) == 
   \exists p \in NewDepPathSet(g) : /\ Len(p) > 1
@@ -307,7 +313,7 @@ InitAcks(partitions) ==
 
 \* proc M + (par_id-1) *X, M + par_id * X
 BroadcastMsg(mq, p, msg) == 
-  [i \in 1 .. M+N*X |-> IF i \in PartitionIdToProcIds(p) THEN 
+  [i \in M+1 .. M+N*X |-> IF i \in PartitionIdToProcIds(p) THEN 
                             Append(mq[i], msg) 
                           ELSE mq[i]]
 
@@ -387,7 +393,8 @@ SingleVertexNewDep(dep, tid) ==
 \*  DowngradeExcept(NearestDependencies(dep, tid), tid)
 
 AreAllAncestorsAtLeastCommitting(G, tid) ==
-    \forall m \in DOMAIN G : AreConnectedIn(m, tid, G) => GetStatus(G, m) >= COMMITTING
+  \forall m \in DOMAIN G : AreConnectedIn(m, tid, G) 
+                             => GetStatus(G, m) >= COMMITTING
 
 AllAncestorsLowerThanCommittingTidSet(G, tid) == 
   CHOOSE tid_set \in SUBSET (DOMAIN G):
@@ -555,6 +562,9 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
   procedure UnitTest() {
     test_label_1: tmp_partitions := PartitionsToProcIds({1});
     debug_label_dslfkj: assert(tmp_partitions = {2});
+\*    debug_label_lkjl: assert(Cardinality(Seq({1, 2})) = 4);
+\*    debug_label_ooi: tmp_partitions := Seq({1});
+\*    debug_label_dflkjlkj: assert(tmp_partitions = {<<1>>});
     return;
   }
             
@@ -929,13 +939,13 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
 }
 *)
 \* BEGIN TRANSLATION
-\* Process variable next_txn of process Coo at line 619 col 13 changed to next_txn_
-\* Process variable partitions of process Coo at line 623 col 13 changed to partitions_
-\* Process variable msg_in of process Coo at line 626 col 13 changed to msg_in_
-\* Process variable msg_out of process Coo at line 627 col 13 changed to msg_out_
-\* Process variable pre_accept_acks of process Coo at line 628 col 13 changed to pre_accept_acks_
-\* Process variable keyspace of process Svr at line 766 col 13 changed to keyspace_
-\* Process variable curr_pie of process Svr at line 778 col 13 changed to curr_pie_
+\* Process variable next_txn of process Coo at line 623 col 13 changed to next_txn_
+\* Process variable partitions of process Coo at line 627 col 13 changed to partitions_
+\* Process variable msg_in of process Coo at line 630 col 13 changed to msg_in_
+\* Process variable msg_out of process Coo at line 631 col 13 changed to msg_out_
+\* Process variable pre_accept_acks of process Coo at line 632 col 13 changed to pre_accept_acks_
+\* Process variable keyspace of process Svr at line 770 col 13 changed to keyspace_
+\* Process variable curr_pie of process Svr at line 782 col 13 changed to curr_pie_
 CONSTANT defaultInitValue
 VARIABLES coo_mq, svr_mq, srz, n_committed, id_counter, pc, stack, 
           pre_accept_acks, partitions, acks, curr_pie, keyspace, next_txn_, 
@@ -1043,7 +1053,7 @@ test_label_1(self) == /\ pc[self] = "test_label_1"
 
 debug_label_dslfkj(self) == /\ pc[self] = "debug_label_dslfkj"
                             /\ Assert((tmp_partitions[self] = {2}), 
-                                      "Failure of assertion at line 557, column 25.")
+                                      "Failure of assertion at line 558, column 25.")
                             /\ pc' = [pc EXCEPT ![self] = Head(stack[self]).pc]
                             /\ stack' = [stack EXCEPT ![self] = Tail(stack[self])]
                             /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
@@ -1180,9 +1190,9 @@ AggregateGraphForAccept(self) == xxxxx(self) \/ yyyyy(self) \/ zzzzz(self)
 start_exe_pie(self) == /\ pc[self] = "start_exe_pie"
                        /\ opset' = [opset EXCEPT ![self] = curr_pie[self].opset]
                        /\ Assert((opset'[self] /= {}), 
-                                 "Failure of assertion at line 595, column 5.")
+                                 "Failure of assertion at line 599, column 5.")
                        /\ Assert((FALSE), 
-                                 "Failure of assertion at line 596, column 5.")
+                                 "Failure of assertion at line 600, column 5.")
                        /\ pc' = [pc EXCEPT ![self] = "pie_add_srz"]
                        /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
                                        id_counter, stack, pre_accept_acks, 
@@ -1281,12 +1291,12 @@ coo(self) == /\ pc[self] = "coo"
              /\ partitions_' = [partitions_ EXCEPT ![self] = {}]
              /\ next_txn_' = [next_txn_ EXCEPT ![self] = TXN[self]]
              /\ Assert((IsTxnRequest(next_txn_'[self])), 
-                       "Failure of assertion at line 642, column 5.")
+                       "Failure of assertion at line 646, column 5.")
              /\ id_counter' = id_counter + 1
              /\ txn_id' = [txn_id EXCEPT ![self] = self]
              /\ n_pie' = [n_pie EXCEPT ![self] = Len(next_txn_'[self])]
              /\ Assert((n_pie'[self] > 0), 
-                       "Failure of assertion at line 647, column 5.")
+                       "Failure of assertion at line 651, column 5.")
              /\ pc' = [pc EXCEPT ![self] = "pre_accept"]
              /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, stack, 
                              pre_accept_acks, partitions, acks, curr_pie, 
@@ -1313,7 +1323,7 @@ pre_accept(self) == /\ pc[self] = "pre_accept"
                                                                             pie |-> next_pie'[self]
                                                                          ]]
                                /\ Assert((IsMsgValid(msg_out_'[self])), 
-                                         "Failure of assertion at line 660, column 7.")
+                                         "Failure of assertion at line 664, column 7.")
                                /\ svr_mq' = BroadcastMsg(svr_mq, par'[self], msg_out_'[self])
                                /\ pc' = [pc EXCEPT ![self] = "pre_accept"]
                                /\ UNCHANGED pre_accept_acks_
@@ -1339,12 +1349,12 @@ pre_accept_ack(self) == /\ pc[self] = "pre_accept_ack"
                         /\ msg_in_' = [msg_in_ EXCEPT ![self] = Head(coo_mq[self])]
                         /\ coo_mq' = [coo_mq EXCEPT ![self] = Tail(coo_mq[self])]
                         /\ Assert((IsMsgValid(msg_in_'[self])), 
-                                  "Failure of assertion at line 670, column 7.")
+                                  "Failure of assertion at line 674, column 7.")
                         /\ IF msg_in_'[self].type = "ack_pre_accept" /\ msg_in_'[self].tid = txn_id[self]
                               THEN /\ par' = [par EXCEPT ![self] = ProcIdToPartitionId(msg_in_'[self].src)]
                                    /\ pc' = [pc EXCEPT ![self] = "__debug_label_ououi"]
                               ELSE /\ Assert((FALSE), 
-                                             "Failure of assertion at line 695, column 9.")
+                                             "Failure of assertion at line 699, column 9.")
                                    /\ pc' = [pc EXCEPT ![self] = "pre_accept_ack"]
                                    /\ par' = par
                         /\ UNCHANGED << svr_mq, srz, n_committed, id_counter, 
@@ -1365,7 +1375,7 @@ pre_accept_ack(self) == /\ pc[self] = "pre_accept_ack"
 
 __debug_label_ououi(self) == /\ pc[self] = "__debug_label_ououi"
                              /\ Assert((par[self] \in partitions_[self]), 
-                                       "Failure of assertion at line 673, column 30.")
+                                       "Failure of assertion at line 677, column 30.")
                              /\ pre_accept_acks_' = [pre_accept_acks_ EXCEPT ![self][par[self]] = pre_accept_acks_[self][par[self]] \union {msg_in_[self]}]
                              /\ pc' = [pc EXCEPT ![self] = "__debug_label_xsdf"]
                              /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
@@ -1388,7 +1398,7 @@ __debug_label_ououi(self) == /\ pc[self] = "__debug_label_ououi"
 
 __debug_label_xsdf(self) == /\ pc[self] = "__debug_label_xsdf"
                             /\ Assert((pre_accept_acks_[self][par[self]] /= {}), 
-                                      "Failure of assertion at line 675, column 29.")
+                                      "Failure of assertion at line 679, column 29.")
                             /\ IF FastPathPossible(pre_accept_acks_[self], partitions_[self])
                                   THEN /\ IF FastPathReady(pre_accept_acks_[self], partitions_[self])
                                              THEN /\ /\ partitions' = [partitions EXCEPT ![self] = partitions_[self]]
@@ -1404,7 +1414,7 @@ __debug_label_xsdf(self) == /\ pc[self] = "__debug_label_xsdf"
                                                                   pre_accept_acks, 
                                                                   partitions >>
                                   ELSE /\ Assert((FALSE), 
-                                                 "Failure of assertion at line 686, column 11.")
+                                                 "Failure of assertion at line 690, column 11.")
                                        /\ pc' = [pc EXCEPT ![self] = "slow_path_check"]
                                        /\ UNCHANGED << stack, pre_accept_acks, 
                                                        partitions >>
@@ -1469,7 +1479,7 @@ __debug_label_xasdfasdf(self) == /\ pc[self] = "__debug_label_xasdfasdf"
 
 __debug_label_oiudsf(self) == /\ pc[self] = "__debug_label_oiudsf"
                               /\ Assert((FALSE), 
-                                        "Failure of assertion at line 683, column 35.")
+                                        "Failure of assertion at line 687, column 35.")
                               /\ pc' = [pc EXCEPT ![self] = "slow_path_check"]
                               /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
                                               id_counter, stack, 
@@ -1591,7 +1601,7 @@ accept_ack(self) == /\ pc[self] = "accept_ack"
                                /\ IF CommitReady(accept_acks'[self], partitions_[self])
                                      THEN /\ pc' = [pc EXCEPT ![self] = "commit_phase"]
                                      ELSE /\ Assert((FALSE), 
-                                                    "Failure of assertion at line 722, column 11.")
+                                                    "Failure of assertion at line 726, column 11.")
                                           /\ pc' = [pc EXCEPT ![self] = "accept_ack"]
                           ELSE /\ pc' = [pc EXCEPT ![self] = "accept_ack"]
                                /\ UNCHANGED << par, accept_acks >>
@@ -1635,9 +1645,9 @@ commit_phase(self) == /\ pc[self] = "commit_phase"
 
 __debug_label_ghjkk(self) == /\ pc[self] = "__debug_label_ghjkk"
                              /\ Assert((msg_out_[self].dep[txn_id[self]].partitions = {1}), 
-                                       "Failure of assertion at line 735, column 26.")
+                                       "Failure of assertion at line 739, column 26.")
                              /\ Assert((IsMsgValid(msg_out_[self])), 
-                                       "Failure of assertion at line 736, column 5.")
+                                       "Failure of assertion at line 740, column 5.")
                              /\ pc' = [pc EXCEPT ![self] = "__debug_label_ljhklhjk"]
                              /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
                                              id_counter, stack, 
@@ -1660,7 +1670,7 @@ __debug_label_ghjkk(self) == /\ pc[self] = "__debug_label_ghjkk"
 
 __debug_label_ljhklhjk(self) == /\ pc[self] = "__debug_label_ljhklhjk"
                                 /\ Assert((partitions_[self] = {1}), 
-                                          "Failure of assertion at line 737, column 29.")
+                                          "Failure of assertion at line 741, column 29.")
                                 /\ pc' = [pc EXCEPT ![self] = "broadcast_commit"]
                                 /\ UNCHANGED << coo_mq, svr_mq, srz, 
                                                 n_committed, id_counter, stack, 
@@ -1710,7 +1720,7 @@ commit_ack(self) == /\ pc[self] = "commit_ack"
                           THEN /\ committed' = [committed EXCEPT ![self] = TRUE]
                                /\ n_committed' = n_committed + 1
                                /\ Assert((n_committed' = M), 
-                                         "Failure of assertion at line 747, column 9.")
+                                         "Failure of assertion at line 751, column 9.")
                                /\ pc' = [pc EXCEPT ![self] = "end_coord"]
                           ELSE /\ pc' = [pc EXCEPT ![self] = "commit_ack"]
                                /\ UNCHANGED << n_committed, committed >>
@@ -1732,7 +1742,7 @@ end_coord(self) == /\ pc[self] = "end_coord"
                    /\ IF n_committed = M
                          THEN /\ msg_out_' = [msg_out_ EXCEPT ![self] = [type|->"end", src|->self]]
                               /\ Assert((PartitionsToProcIds({1}) = {2}), 
-                                        "Failure of assertion at line 755, column 7.")
+                                        "Failure of assertion at line 759, column 7.")
                               /\ svr_mq' = BroadcastMsgToMultiplePartitions(svr_mq, {1..N}, msg_out_'[self])
                               /\ pc' = [pc EXCEPT ![self] = "Done"]
                          ELSE /\ pc' = [pc EXCEPT ![self] = "__debug_label_oiueoi"]
@@ -1753,7 +1763,7 @@ end_coord(self) == /\ pc[self] = "end_coord"
 
 __debug_label_oiueoi(self) == /\ pc[self] = "__debug_label_oiueoi"
                               /\ Assert((FALSE), 
-                                        "Failure of assertion at line 758, column 29.")
+                                        "Failure of assertion at line 762, column 29.")
                               /\ pc' = [pc EXCEPT ![self] = "Done"]
                               /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
                                               id_counter, stack, 
@@ -1809,7 +1819,7 @@ _debug_label_await(self) == /\ pc[self] = "_debug_label_await"
                             /\ msg' = [msg EXCEPT ![self] = Head(svr_mq[self])]
                             /\ svr_mq' = [svr_mq EXCEPT ![self] = Tail(svr_mq[self])]
                             /\ Assert((IsMsgValid(msg'[self])), 
-                                      "Failure of assertion at line 795, column 5.")
+                                      "Failure of assertion at line 799, column 5.")
                             /\ ya_dep' = [ya_dep EXCEPT ![self] = EmptyNewDep]
                             /\ curr_txn' = [curr_txn EXCEPT ![self] = FindOrCreateTxn(dep[self], msg'[self].tid)]
                             /\ IF /\ msg'[self].type = "pre_accept"
@@ -1860,7 +1870,7 @@ proccess_pre_accept(self) == /\ pc[self] = "proccess_pre_accept"
                              /\ curr_pie_' = [curr_pie_ EXCEPT ![self] = msg[self].pie]
                              /\ opset' = [opset EXCEPT ![self] = curr_pie_'[self].opset]
                              /\ Assert((opset'[self] /= {}), 
-                                       "Failure of assertion at line 806, column 7.")
+                                       "Failure of assertion at line 810, column 7.")
                              /\ pc' = [pc EXCEPT ![self] = "pie_add_dep"]
                              /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
                                              id_counter, stack, 
@@ -2074,7 +2084,7 @@ find_execute(self) == /\ pc[self] = "find_execute"
 
 __debug_label_kzcjvli(self) == /\ pc[self] = "__debug_label_kzcjvli"
                                /\ Assert((scc_set[self] /= {}), 
-                                         "Failure of assertion at line 870, column 30.")
+                                         "Failure of assertion at line 874, column 30.")
                                /\ IF scc_set[self] /= {}
                                      THEN /\ pc' = [pc EXCEPT ![self] = "next_execute"]
                                      ELSE /\ TRUE
@@ -2106,7 +2116,7 @@ next_execute(self) == /\ pc[self] = "next_execute"
                                       /\ scc' = [scc EXCEPT ![self] = next_scc]
                                  /\ vid_set' = [vid_set EXCEPT ![self] = DOMAIN scc'[self]]
                                  /\ Assert((vid_set'[self] /= {}), 
-                                           "Failure of assertion at line 879, column 11.")
+                                           "Failure of assertion at line 883, column 11.")
                                  /\ pc' = [pc EXCEPT ![self] = "exe_scc"]
                             ELSE /\ pc' = [pc EXCEPT ![self] = "find_execute"]
                                  /\ UNCHANGED << scc, scc_set, vid_set >>
@@ -2167,7 +2177,7 @@ exe_all_deferred_pies(self) == /\ pc[self] = "exe_all_deferred_pies"
                                                                                    src |-> self]]
                                           /\ coo_mq' = [coo_mq EXCEPT ![curr_txn[self].tid] = Append(@, msg_out'[self])]
                                           /\ Assert((FALSE), 
-                                                    "Failure of assertion at line 899, column 15.")
+                                                    "Failure of assertion at line 903, column 15.")
                                           /\ TRUE
                                           /\ pc' = [pc EXCEPT ![self] = "exe_scc"]
                                           /\ UNCHANGED << stack, curr_pie, 
@@ -2316,6 +2326,6 @@ THEOREM Spec => Serializability
 
 =============================================================================
 \* Modification History
-\* Last modified Wed Sep 14 18:25:06 EDT 2016 by shuai
+\* Last modified Wed Sep 14 22:55:38 EDT 2016 by shuai
 \* Last modified Thu Dec 25 23:34:46 CST 2014 by Shuai
 \* Created Mon Dec 15 15:44:26 CST 2014 by Shuai
