@@ -1,38 +1,38 @@
 #!/bin/bash
-duration=90
-prefix="single_dc"
 
-base_options="-g -hh config/aws_hosts.yml -cc config/concurrent_10.yml -cc config/rw_fixed.yml -cc config/tpl_ww_paxos.yml -d $duration"
-protocols="-m brq:brq -m 2pl_ww:multi_paxos -m occ:multi_paxos -m tapir:tapir"
-client_nums="-c 1 -c 2 -c 4 -c 8 -c 16 -c 32"
-replica_options="-s 1 -r 3"
-
-function archive_experiment {
+function new_experiment {
 	rm -rf tmp/* log/* 
-	tar -czvf ~/${1}_graphs.tgz archive/*eps
 	tar -czvf ~/${1}.tgz archive && rm -rf archive && mkdir -p archive
 }
 
-function run_experiment() {
-	suffix=$1
-	benchmark=$2
-	
-	name=${prefix}_${suffix}
-	echo ./run_all.py -b $benchmark $base_options $protocols $client_nums $replica_options $replica_options $name 
-	eval ./run_all.py -b $benchmark $base_options $protocols $client_nums $replica_options $replica_options $name 
-	archive_experiment $name
-}
+duration=90
+prefix="single_dc"
 
-exp_name=${prefix}_zipf_graph
-scripts/aws_experiments/zipf_graph.py $exp_name -c 64 -f config/tpca_zipf.yml config/tapir.yml config/concurrent_10.yml
+# exp_name=${prefix}_zipf_graph
+# scripts/aws_experiments/zipf_graph.py $exp_name -c 64 -f config/tpca_zipf.yml config/tapir.yml config/concurrent_10.yml
+# new_experiment $exp_name
+
+#exp_name=${prefix}_rw_fixed
+#./run_all.py -hh config/aws_hosts.yml -cc config/concurrent_10.yml -cc config/rw_fixed.yml -cc config/tpl_ww_paxos.yml -b rw_benchmark -m brq:brq -m 2pl_ww:multi_paxos -m occ:multi_paxos -m tapir:tapir -c 1 -c 2 -c 4 -c 8 -c 16 -c 32 -s 1 -r 3 -d $duration $exp_name 
+#new_experiment $exp_name
+
+# exp_name=${prefix}_rw
+# ./run_all.py -hh config/aws_hosts.yml -cc config/concurrent_10.yml -cc config/rw.yml -cc config/tpl_ww_paxos.yml -b rw_benchmark -m brq:brq -m 2pl_ww:multi_paxos -m occ:multi_paxos -m tapir:tapir -c 1 -c 2 -c 4 -c 8 -c 16 -c 32 -s 1 -r 3 -d $duration $exp_name 
+# new_experiment $exp_name
+
+exp_name=${prefix}_tpcc
+./run_all.py -hh config/aws_hosts.yml -cc config/concurrent_10.yml -cc config/tpcc.yml -cc config/tapir.yml -b tpcc -m brq:brq -m 2pl_ww:multi_paxos -m occ:multi_paxos -m tapir:tapir -c 1 -c 2 -c 4 -c 8 -c 16 -c 32 -s 10 -r 3 -d $duration $exp_name 
 new_experiment $exp_name
 
-run_experiment "rw_fixed" "rw_benchmark"
-run_experiment "rw" "rw_benchmark"
-run_experiment "tpcc" "tpcc"
+# exp_name=${prefix}_tpca_fixed
+# ./run_all.py -hh config/aws_hosts.yml -cc config/concurrent_10.yml -cc config/tpca_fixed.yml -cc config/tapir.yml -b tpca -m brq:brq -m 2pl_ww:multi_paxos -m occ:multi_paxos -m tapir:tapir -c 1 -c 2 -c 4 -c 8 -c 16 -c 32 -c 64 -s 3 -r 3 -d $duration $exp_name
+# new_experiment $exp_name
 
-zipfs=( 0.0 0.25 0.5 0.75 1.0 )
-for zipf in "${zipfs[@]}"
-do
-	run_experiment "tpca_zipf_${zipf}" "tpca"
-done
+#zipfs=( 0.0 0.25 0.5 0.75 1.0 )
+#for zipf in "${zipfs[@]}"
+#do
+#	exp_name=${prefix}_tpca_zipf_${zipf}
+#	./run_all.py -hh config/aws_hosts.yml -cc config/concurrent_10.yml -cc config/tpca_zipf.yml -cc config/tapir.yml -b tpca -m brq:brq -m 2pl_ww:multi_paxos -m occ:multi_paxos -m tapir:tapir -c 1 -c 2 -c 4 -c 8 -c 16 -c 32 -c 64 -z $zipf -s 3 -r 3 -d $duration $exp_name
+#	new_experiment $exp_name
+#done
+
