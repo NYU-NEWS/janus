@@ -14,7 +14,7 @@ default_configs = [
 ]
 default_modes = [ 'brq:brq', 'tapir:tapir', '2pl_ww:multi_paxos', 'occ:multi_paxos' ]
 default_benchmark = [ 'tpca' ]
-default_options = ['-d', '90', '-s', '3', '-r', '3']
+default_options = ['-u', '2', '-d', '90', '-s', '3', '-r', '3']
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Process some integers.')
