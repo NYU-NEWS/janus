@@ -113,6 +113,7 @@ class EpochMgr {
   }
 
   virtual epoch_t CheckBufferInactive() {
+    return oldest_buffer_ - 1;
     verify(oldest_buffer_ < oldest_active_);
     EpochInfo& ei = epochs_[oldest_buffer_];
     if (ei.n_ref == 0) {
