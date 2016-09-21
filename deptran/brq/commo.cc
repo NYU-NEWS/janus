@@ -95,14 +95,14 @@ bool BrqCommo::IsGraphOrphan(RccGraph& graph, txnid_t cmd_id) {
 }
 
 void BrqCommo::BroadcastPreAccept(parid_t par_id,
-                                  txnid_t cmd_id,
+                                  txnid_t txn_id,
                                   ballot_t ballot,
                                   vector<SimpleCommand>& cmds,
                                   RccGraph& graph,
                                   const function<void(int, RccGraph*)> &callback) {
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
 
-  bool skip_graph = IsGraphOrphan(graph, cmd_id);
+  bool skip_graph = IsGraphOrphan(graph, txn_id);
 
   for (auto &p : rpc_par_proxies_[par_id]) {
     auto proxy = (ClassicProxy*)(p.second);
@@ -114,16 +114,16 @@ void BrqCommo::BroadcastPreAccept(parid_t par_id,
       fu->get_reply() >> res >> *graph;
       callback(res, dynamic_cast<RccGraph*>(graph->ptr().get()));
     };
-    verify(cmd_id > 0);
+    verify(txn_id > 0);
     if (skip_graph) {
-      Future::safe_release(proxy->async_BrqPreAcceptWoGraph(cmd_id,
-                                                         cmds,
-                                                         fuattr));
+      Future::safe_release(proxy->async_BrqPreAcceptWoGraph(txn_id,
+                                                            cmds,
+                                                            fuattr));
     } else {
-      Future::safe_release(proxy->async_BrqPreAccept(cmd_id,
-                                                  cmds,
-                                                  graph,
-                                                  fuattr));
+      Future::safe_release(proxy->async_BrqPreAccept(txn_id,
+                                                     cmds,
+                                                     graph,
+                                                     fuattr));
     }
   }
 }

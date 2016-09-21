@@ -18,7 +18,7 @@ map<txnid_t, RccDTxn*> BrqSched::Aggregate(RccGraph &graph) {
     if (dtxn.epoch_ == 0) {
       dtxn.epoch_ = epoch_mgr_.curr_epoch_;
     }
-    epoch_mgr_.AddToEpoch(dtxn.epoch_, dtxn.tid_);
+    epoch_mgr_.AddToEpoch(dtxn.epoch_, dtxn.tid_, dtxn.IsDecided());
     verify(vertex->id() == pair.second->id());
     verify(vertex_index().count(vertex->id()) > 0);
     index[vertex->id()] = vertex;

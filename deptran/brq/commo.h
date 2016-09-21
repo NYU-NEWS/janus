@@ -28,7 +28,7 @@ class BrqCommo: public RccCommo {
                    const function<void(RccGraph &graph)> &) override;
 
   void BroadcastPreAccept(parid_t par_id,
-                          txnid_t cmd_id_,
+                          txnid_t txn_id,
                           ballot_t ballot,
                           vector<SimpleCommand>& cmds,
                           RccGraph& graph,

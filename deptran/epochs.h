@@ -37,8 +37,12 @@ class EpochMgr {
     uint64_t n_done{0};
     uint64_t n_ref{0};
 
-    void Add(txnid_t id) {
-      verify(active);
+    void Add(txnid_t id, bool is_done=false) {
+      if (is_done) {
+        n_done++;
+      } else {
+        verify(active);
+      }
       ids.insert(id);
     }
 
@@ -51,8 +55,8 @@ class EpochMgr {
           break;
         case BUFFER:
           active = false;
-          buffer = false;
-          inactive = true;
+          buffer = true;
+          inactive = false;
           break;
         case ACTIVE:
           active = true;
@@ -78,9 +82,10 @@ class EpochMgr {
   virtual bool IsActive(epoch_t e) {
     return (oldest_active_ >= e);
   }
-  virtual void AddToEpoch(epoch_t e, txnid_t id) {
+  virtual void AddToEpoch(epoch_t e, txnid_t id, bool is_decided=false) {
+    verify(e > oldest_inactive_);
     id_to_epoch_[id] = e;
-    epochs_[e].Add(id);
+    epochs_[e].Add(id, is_decided);
   }
   virtual void AddToCurrent(txnid_t id) {
     AddToEpoch(curr_epoch_, id);
