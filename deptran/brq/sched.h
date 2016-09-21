@@ -10,6 +10,8 @@ class BrqSched : public RccSched {
  public:
   using RccSched::RccSched;
 
+  map<txnid_t, RccDTxn*> Aggregate(RccGraph& graph);
+
   void OnPreAccept(const txnid_t txnid,
                    const vector<SimpleCommand> &cmds,
                    const RccGraph &graph,

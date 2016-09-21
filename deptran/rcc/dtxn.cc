@@ -340,6 +340,14 @@ bool RccDTxn::WriteColumn(Row *row,
   return true;
 }
 
+void RccDTxn::AddParentEdge(RccDTxn *other, int8_t weight) {
+  Vertex::AddParentEdge(other, weight);
+  if (sched_) {
+    verify(other->epoch_ > 0);
+    sched_->epoch_mgr_.IncrementRef(other->epoch_);
+  }
+}
+
 void RccDTxn::TraceDep(Row* row, column_id_t col_id, int hint_flag) {
   // TODO remove pointers in outdated epoch ???
   auto r = dynamic_cast<RCCRow*>(row);
@@ -351,13 +359,15 @@ void RccDTxn::TraceDep(Row* row, column_id_t col_id, int hint_flag) {
     // skip
   } else {
     if (parent_dtxn != nullptr) {
-      if (sched_->epoch_enabled_) {
-        auto epoch1 = parent_dtxn->epoch_;
-        auto epoch2 = sched_->epoch_mgr_.oldest_active_;
-        verify(epoch1 >= epoch2);
-      }
       if (parent_dtxn->IsExecuted()) { ;
       } else {
+        if (sched_->epoch_enabled_) {
+          auto epoch1 = parent_dtxn->epoch_;
+          auto epoch2 = sched_->epoch_mgr_.oldest_active_;
+          // adding a parent from an inactive epoch is
+          // dangerous.
+          verify(epoch1 >= epoch2);
+        }
         this->AddParentEdge(parent_dtxn, edge_type);
       }
 //      parent_dtxn->external_ref_ = nullptr;

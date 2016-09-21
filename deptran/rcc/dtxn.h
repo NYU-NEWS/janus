@@ -55,6 +55,8 @@ class RccDTxn: public DTxn, public Vertex<RccDTxn> {
 
   void TraceDep(Row* row, column_id_t col_id, int hint_flag);
 
+  virtual void AddParentEdge(RccDTxn *other, int8_t weight) override;
+
   virtual bool start_exe_itfr(
       defer_t defer,
       TxnHandler &handler,

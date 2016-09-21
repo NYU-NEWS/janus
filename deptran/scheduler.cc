@@ -372,14 +372,15 @@ void Scheduler::UpgradeEpochAck(parid_t par_id,
 }
 
 int32_t Scheduler::OnUpgradeEpoch(uint32_t old_epoch) {
-  epoch_mgr_.Increment();
-  return epoch_mgr_.GetMostRecentInactiveEpoch();
+  epoch_mgr_.GrowActive();
+  epoch_mgr_.GrowBuffer();
+  return epoch_mgr_.CheckBufferInactive();
 }
 
 void Scheduler::OnTruncateEpoch(uint32_t old_epoch) {
   Log_info("truncating epochs: %d", old_epoch);
   // TODO
-  auto ids = epoch_mgr_.RemoveOld(old_epoch);
+  auto ids = epoch_mgr_.GrowInactive(old_epoch);
   for (auto& id: ids) {
     DestroyExecutor(id);
   }

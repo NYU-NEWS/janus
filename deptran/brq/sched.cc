@@ -6,6 +6,106 @@
 
 using namespace rococo;
 
+
+map<txnid_t, RccDTxn*> BrqSched::Aggregate(RccGraph &graph) {
+  // aggregate vertexes
+  map<txnid_t, RccDTxn*> index;
+  for (auto& pair: graph.vertex_index()) {
+    RccDTxn* rhs_v = pair.second;
+    verify(pair.first == rhs_v->id());
+    RccDTxn* vertex = AggregateVertex(rhs_v);
+    RccDTxn& dtxn = *vertex;
+    if (dtxn.epoch_ == 0) {
+      dtxn.epoch_ = epoch_mgr_.curr_epoch_;
+    }
+    epoch_mgr_.AddToEpoch(dtxn.epoch_, dtxn.tid_);
+    verify(vertex->id() == pair.second->id());
+    verify(vertex_index().count(vertex->id()) > 0);
+    index[vertex->id()] = vertex;
+  }
+  // aggregate edges.
+  RebuildEdgePointer(index);
+
+#ifdef DEBUG_CODE
+  verify(index.size() == graph.vertex_index_.size());
+  for (auto& pair: index) {
+    txnid_t txnid = pair.first;
+    RccVertex* v = pair.second;
+    verify(v->parents_.size() == v->incoming_.size());
+    auto sz = v->parents_.size();
+    if (v->Get().status() >= TXN_CMT)
+      RccSched::__DebugCheckParentSetSize(txnid, sz);
+  }
+
+  for (auto& pair: graph.vertex_index_) {
+    auto txnid = pair.first;
+    RccVertex* rhs_v = pair.second;
+    auto lhs_v = FindV(txnid);
+    verify(lhs_v != nullptr);
+    // TODO, check the Sccs are the same.
+    if (rhs_v->Get().status() >= TXN_DCD) {
+      verify(lhs_v->Get().status() >= TXN_DCD);
+      if (!AllAncCmt(rhs_v))
+        continue;
+      RccScc& rhs_scc = graph.FindSCC(rhs_v);
+      for (RccVertex* rhs_vv : rhs_scc) {
+        verify(rhs_vv->Get().status() >= TXN_DCD);
+        RccVertex* lhs_vv = FindV(rhs_vv->id());
+        verify(lhs_vv != nullptr);
+        verify(lhs_vv->Get().status() >= TXN_DCD);
+        verify(lhs_vv->GetParentSet() == rhs_vv->GetParentSet());
+      }
+      if (!AllAncCmt(lhs_v)) {
+        continue;
+      }
+      RccScc& lhs_scc = FindSCC(lhs_v);
+      for (RccVertex* lhs_vv : rhs_scc) {
+        verify(lhs_vv->Get().status() >= TXN_DCD);
+        RccVertex* rhs_vv = graph.FindV(lhs_v->id());
+        verify(rhs_vv != nullptr);
+        verify(rhs_vv->Get().status() >= TXN_DCD);
+        verify(rhs_vv->GetParentSet() == rhs_vv->GetParentSet());
+      }
+
+      auto lhs_sz = lhs_scc.size();
+      auto rhs_sz = rhs_scc.size();
+      if (lhs_sz != rhs_sz) {
+        // TODO
+        for (auto& vv : rhs_scc) {
+          auto vvv = FindV(vv->id());
+          verify(vvv->Get().status() >= TXN_DCD);
+        }
+        verify(0);
+      }
+//      verify(sz >= rhs_sz);
+//      verify(sz == rhs_sz);
+      for (auto vv : rhs_scc) {
+        bool r = std::any_of(lhs_scc.begin(),
+                             lhs_scc.end(),
+                             [vv] (RccVertex* vvv) -> bool {
+                               return vvv->id() == vv->id();
+                             }
+        );
+        verify(r);
+      }
+    }
+
+    if (lhs_v->Get().status() >= TXN_DCD && AllAncCmt(lhs_v)) {
+      RccScc& scc = FindSCC(lhs_v);
+      for (auto vv : scc) {
+        auto s = vv->Get().status();
+        verify(s >= TXN_DCD);
+      }
+    }
+  }
+
+#endif
+//  this->BuildEdgePointer(graph, index);
+  return index;
+}
+
+
+
 void BrqSched::OnPreAccept(const txnid_t txn_id,
                            const vector<SimpleCommand>& cmds,
                            const RccGraph& graph,
@@ -18,7 +118,7 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
 //    Log_info("on pre-accept graph size: %d", graph.size());
   verify(txn_id > 0);
   verify(cmds[0].root_id_ == txn_id);
-  Aggregate(epoch_mgr_.curr_epoch_, const_cast<RccGraph&>(graph));
+  Aggregate(const_cast<RccGraph&>(graph));
   TriggerCheckAfterAggregation(const_cast<RccGraph&>(graph));
   // TODO FIXME
   // add interference based on cmds.
@@ -138,8 +238,7 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
 //      verify(r == SUCCESS);
       callback();
     };
-    auto index = Aggregate(epoch_mgr_.curr_epoch_,
-                                       const_cast<RccGraph&> (graph));
+    auto index = Aggregate(const_cast<RccGraph&> (graph));
     for (auto& pair: index) {
       verify(pair.second->epoch_ > 0);
     }

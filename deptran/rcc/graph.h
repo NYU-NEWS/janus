@@ -29,6 +29,7 @@ class Vertex {
 //    data_ = std::shared_ptr<T>(new T(id));
   }
   Vertex(Vertex &v): parents_(v.parents_) {
+    verify(0);
   }
   virtual ~Vertex() {};
   set<uint64_t>& GetParentSet() {
@@ -49,7 +50,7 @@ class Vertex {
     other->parents_.insert(other->id());
   }
 
-  void AddParentEdge(T *other, int8_t weight) {
+  virtual void AddParentEdge(T *other, int8_t weight) {
     // printf("add edge: %d -> %d\n", this->id(), other->id());
     verify(parents_.size() >= 0);
     auto id = other->id();

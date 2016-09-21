@@ -389,7 +389,8 @@ bool RccGraph::AllAncCmt(RccDTxn *vertex) {
   return all_anc_cmt;
 }
 
-map<txnid_t, RccDTxn*> RccGraph::Aggregate(epoch_t epoch, RccGraph &graph) {
+map<txnid_t, RccDTxn*> RccGraph::Aggregate(epoch_t epoch,
+                                           RccGraph &graph) {
   // aggregate vertexes
   map<txnid_t, RccDTxn*> index;
   for (auto& pair: graph.vertex_index()) {
