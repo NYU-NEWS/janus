@@ -12,10 +12,9 @@ ClientWorker::~ClientWorker() {
   if (txn_generator_) {
     delete txn_generator_;
   }
-  for (auto c : coos_) {
+  for (auto c : created_coordinators_) {
     delete c;
   }
-  coos_.clear();
   dispatch_pool_->release();
 }
 
@@ -30,7 +29,10 @@ void ClientWorker::RequestDone(Coordinator* coo, TxnReply &txn_reply) {
   bool have_more_time = timer_->elapsed() < duration;
 
   Log_debug("elapsed: %2.2f; duration: %d", timer_->elapsed(), duration);
-  if (have_more_time && config_->client_type_ == Config::Closed) {
+  if (have_more_time && config_->client_type_ == Config::Open) {
+    std::lock_guard<std::mutex> lock(coordinator_mutex);
+    free_coordinators_.push_back(coo);
+  } else if (have_more_time && config_->client_type_ == Config::Closed) {
     Log_debug("there is still time to issue another request. continue.");
     DispatchRequest(coo);
   } else if (!have_more_time) {
@@ -48,7 +50,28 @@ void ClientWorker::RequestDone(Coordinator* coo, TxnReply &txn_reply) {
   }
 }
 
+
+Coordinator* ClientWorker::FindOrCreateCoordinator() {
+  std::lock_guard<std::mutex> lock(coordinator_mutex);
+
+  Coordinator* coo = nullptr;
+
+  if (free_coordinators_.size() > 0) {
+    coo = dynamic_cast<Coordinator*>(free_coordinators_.back());
+    free_coordinators_.pop_back();
+  } else {
+    if (created_coordinators_.size() == UINT16_MAX) {
+      return nullptr;
+    }
+    coo = CreateCoordinator(created_coordinators_.size());
+  }
+
+  return coo;
+}
+
+
 Coordinator* ClientWorker::CreateCoordinator(uint16_t offset_id) {
+
   cooid_t coo_id = cli_id_;
   coo_id = (coo_id << 16) + offset_id;
   auto coo = frame_->CreateCoord(coo_id,
@@ -60,13 +83,12 @@ Coordinator* ClientWorker::CreateCoordinator(uint16_t offset_id) {
   coo->loc_id_ = my_site_.locale_id;
   coo->commo_ = commo_;
   Log_debug("coordinator %d created.", coo_id);
-  //coos_.push_back(coo);
+  created_coordinators_.push_back(coo);
   return coo;
 }
 
 void ClientWorker::work() {
   Log_debug("%s", __FUNCTION__);
-  verify(coos_.size() == 0);
   txn_reg_ = new TxnRegistry();
   Piece *piece = Piece::get_piece(benchmark);
   piece->txn_reg_ = txn_reg_;
@@ -86,21 +108,20 @@ void ClientWorker::work() {
     }
   } else {
     const std::chrono::nanoseconds wait_time((int)(pow(10,9) * 1.0/(double)config_->client_rate_));
-    int16_t coo_num = 0;
     double tps = 0;
     long txn_count = 0;
     auto start = std::chrono::steady_clock::now();
     std::chrono::nanoseconds elapsed;
 
     while (timer_->elapsed() < duration) {
-      while (tps < config_->client_rate_) {
-        Coordinator *coo;
-        coo = CreateCoordinator(coo_num);
-        coo_num++;
-        DispatchRequest(coo);
-        txn_count++;
-        elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - start);
-        tps = (double)txn_count / elapsed.count() * pow(10,9);
+      while (tps < config_->client_rate_ && timer_->elapsed() < duration) {
+        auto coo = FindOrCreateCoordinator();
+        if (coo != nullptr) {
+          DispatchRequest(coo);
+          txn_count++;
+          elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - start);
+          tps = (double) txn_count / elapsed.count() * pow(10, 9);
+        }
       }
       auto next_time = std::chrono::steady_clock::now() + wait_time;
       std::this_thread::sleep_until(next_time);
