@@ -29,7 +29,7 @@ class Vertex {
 //    data_ = std::shared_ptr<T>(new T(id));
   }
   Vertex(Vertex &v): parents_(v.parents_) {
-    verify(0);
+//    verify(0);
   }
   virtual ~Vertex() {};
   set<uint64_t>& GetParentSet() {
