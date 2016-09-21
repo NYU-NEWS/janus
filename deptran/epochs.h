@@ -41,7 +41,7 @@ class EpochMgr {
       if (is_done) {
         n_done++;
       } else {
-        verify(active);
+        verify(!inactive);
       }
       ids.insert(id);
     }
@@ -125,6 +125,7 @@ class EpochMgr {
 
   // return the most recent inactive epoch.
   virtual epoch_t IncrementInactive() {
+    return oldest_buffer_ -1;
     verify(oldest_active_ < curr_epoch_);
     EpochInfo& ei = epochs_[oldest_active_];
     if (ei.n_done == ei.ids.size()) {

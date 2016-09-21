@@ -49,8 +49,6 @@ class RccGraph : public Graph<RccDTxn> {
   /** on start_req */
   RccDTxn* FindOrCreateRccVertex(txnid_t txn_id, RccSched* sched);
   void RemoveVertex(txnid_t txn_id);
-  virtual void BuildEdgePointer(RccGraph &graph,
-                                map<txnid_t, RccDTxn*>& index);
   void RebuildEdgePointer(map<txnid_t, RccDTxn*>& index);
   RccDTxn* AggregateVertex(RccDTxn *rhs_v);
   void UpgradeStatus(RccDTxn* v, int8_t status);
@@ -58,7 +56,7 @@ class RccGraph : public Graph<RccDTxn> {
   map<txnid_t, RccDTxn*> Aggregate(epoch_t epoch, RccGraph& graph);
   void SelectGraphCmtUkn(RccDTxn* vertex, RccGraph* new_graph);
   void SelectGraph(set<RccDTxn*> vertexes, RccGraph* new_graph);
-  RccScc& FindSCC(RccDTxn *vertex) override;
+//  RccScc& FindSCC(RccDTxn *vertex) override;
   bool AllAncCmt(RccDTxn *vertex);
 
   bool operator== (RccGraph& rhs) const;

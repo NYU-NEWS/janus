@@ -189,7 +189,7 @@ void RccSched::CheckWaitlist() {
         !tinfo.IsExecuted()) {
       if (AllAncCmt(v)) {
 //        check_again = true;
-        RccScc& scc = FindSCC(v);
+        RccScc& scc = FindSccPred(v);
         verify(v->epoch_ > 0);
         Decide(scc);
         if (AllAncFns(scc)) {
@@ -205,7 +205,7 @@ void RccSched::CheckWaitlist() {
           if (FullyDispatched(scc)) {
             Execute(scc);
             for (auto v : scc) {
-              AddChildrenIntoWaitlist(v);
+//              AddChildrenIntoWaitlist(v);
             }
           }
 //        check_again = true;
@@ -267,7 +267,7 @@ void RccSched::CheckWaitlist() {
     // Adjust the waitlist.
     __DebugExamineGraphVerify(v);
     if (tinfo.status() >= TXN_DCD && tinfo.IsExecuted()) {
-      AddChildrenIntoWaitlist(v);
+//      AddChildrenIntoWaitlist(v);
     }
 
     if (tinfo.IsExecuted() ||
@@ -293,7 +293,7 @@ void RccSched::CheckWaitlist() {
       }
     }
 #endif
-    waitlist_.erase(it);
+//    waitlist_.erase(it);
   }
 //  auto sz = waitlist_.size();
 //  verify(check_again == (sz > 0));
@@ -305,27 +305,28 @@ void RccSched::CheckWaitlist() {
 }
 
 void RccSched::AddChildrenIntoWaitlist(RccDTxn* v) {
-  RccDTxn& tinfo = *v;
-  verify(tinfo.status() >= TXN_DCD && tinfo.IsExecuted());
-
-  for (auto& child_pair : v->outgoing_) {
-    RccDTxn* child_v = child_pair.first;
-    if (!child_v->IsExecuted() &&
-        waitlist_.count(child_v) == 0) {
-      waitlist_.insert(child_v);
-      verify(child_v->epoch_ > 0);
-    }
-  }
-  for (RccDTxn* child_v : v->removed_children_) {
-    if (!child_v->IsExecuted() &&
-        waitlist_.count(child_v) == 0) {
-      waitlist_.insert(child_v);
-      verify(child_v->epoch_ > 0);
-    }
-  }
-#ifdef DEBUG_CODE
-    fridge_.erase(v);
-#endif
+  verify(0);
+//  RccDTxn& tinfo = *v;
+//  verify(tinfo.status() >= TXN_DCD && tinfo.IsExecuted());
+//
+//  for (auto& child_pair : v->outgoing_) {
+//    RccDTxn* child_v = child_pair.first;
+//    if (!child_v->IsExecuted() &&
+//        waitlist_.count(child_v) == 0) {
+//      waitlist_.insert(child_v);
+//      verify(child_v->epoch_ > 0);
+//    }
+//  }
+//  for (RccDTxn* child_v : v->removed_children_) {
+//    if (!child_v->IsExecuted() &&
+//        waitlist_.count(child_v) == 0) {
+//      waitlist_.insert(child_v);
+//      verify(child_v->epoch_ > 0);
+//    }
+//  }
+//#ifdef DEBUG_CODE
+//    fridge_.erase(v);
+//#endif
 }
 
 void RccSched::__DebugExamineGraphVerify(RccDTxn *v) {

@@ -86,8 +86,6 @@ bool BrqCommo::IsGraphOrphan(RccGraph& graph, txnid_t cmd_id) {
   if (graph.size() == 1) {
     RccDTxn* v = graph.FindV(cmd_id);
     verify(v);
-    verify(v->incoming_.size() == 0);
-    verify(v->outgoing_.size() == 0);
     return true;
   } else {
     return false;

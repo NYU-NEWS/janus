@@ -34,13 +34,14 @@ void RccGraph::SelectGraphCmtUkn(RccDTxn* vertex, RccGraph* new_graph) {
   new_v->partition_ = vertex->partition_;
   // TODO, verify that the parent vertex still exists.
   // TODO, verify that the new parent has the correct epoch.
-  for (auto& pair : vertex->incoming_) {
-    RccDTxn* parent_v = pair.first;
-    auto weight = pair.second;
+  for (auto& pair : vertex->parents_) {
+    RccDTxn* parent_v = FindV(pair);
+    verify(parent_v != nullptr);
+//    auto weight = pair.second;
     RccDTxn* new_parent_v = new_graph->FindOrCreateV(parent_v->id());
     new_parent_v->partition_ = parent_v->partition_;
     verify(new_parent_v->status() == TXN_UKN);
-    new_v->AddParentEdge(new_parent_v, weight);
+    new_v->AddParentEdge(new_parent_v, 0);
   }
 #ifdef DEBUG_CODE
   if (new_v->Get().status() >= TXN_CMT) {
@@ -54,9 +55,11 @@ void RccGraph::SelectGraphCmtUkn(RccDTxn* vertex, RccGraph* new_graph) {
 void RccGraph::SelectGraph(set<RccDTxn*> vertexes, RccGraph* new_graph) {
   for (auto v : vertexes) {
     RccDTxn* new_v = new_graph->FindOrCreateV(*v);
-    for (auto &kv: v->incoming_) {
-      RccDTxn* parent_v = kv.first;
-      auto weight = kv.second;
+    for (auto &kv: v->parents_) {
+      RccDTxn* parent_v = FindV(kv);
+      verify(parent_v != nullptr);
+//      auto weight = kv.second;
+      auto weight = 0;
       RccDTxn* new_parent_v = nullptr;
       if (vertexes.count(parent_v) > 0) {
         new_parent_v = new_graph->FindOrCreateV(*parent_v);
@@ -102,69 +105,69 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
   verify(source != nullptr);
   verify(source->id() == tid);
   // quick path
-  if (source->incoming_.size() == 0 && quick) {
+  if (source->parents_.size() == 0 && quick) {
     return 0;
   }
   verify(depth == 1);
   if (true) {
     SelectGraphCmtUkn(source, new_graph);
   } else if (source->get_status() >= TXN_DCD) {
-    RccScc& scc = FindSCC(source);
-    set<RccDTxn*> vertex_set{};
-    vertex_set.insert(scc.begin(), scc.end());
-    SelectGraph(vertex_set, new_graph);
-#ifdef DEBUG_CODE
-    verify(new_graph->size() >= scc.size());
-#endif
-  } else if (depth == 1) {
-    set<RccDTxn*> vertex_set{source};
-    SelectGraph(vertex_set, new_graph);
-  } else {
-    verify(0);
-// Log_debug("compute for sub graph, tid: %llx parent size: %d",
-//     tid, (int) source->from_.size());
-//  auto &ret_set = gra_m.ret_set;
-//  unordered_set<RccVertex *> ret_set;
-//  find_txn_anc_opt(source, ret_set);
-    vector<RccDTxn *> search_stack;
-    set<RccDTxn*> searched_set;
-    search_stack.push_back(source);
-    verify(depth == 1 || depth == -1);
-    while (search_stack.size() > 0) {
-      RccDTxn *v = search_stack.back();
-      searched_set.insert(v);
-      search_stack.pop_back();
-      RccDTxn* new_v = new_graph->FindOrCreateV(*v);
-      for (auto &kv: v->incoming_) {
-        auto parent_v = kv.first;
-        auto weight = kv.second;
-        RccDTxn& parent_txn = *parent_v;
-        if (parent_v == v) {
-          verify(0); // or continue?
-        }
-//        if (parent_txn.status() >= TXN_DCD || parent_txn.IsExecuted()) {
+//    RccScc& scc = FindSCC(source);
+//    set<RccDTxn*> vertex_set{};
+//    vertex_set.insert(scc.begin(), scc.end());
+//    SelectGraph(vertex_set, new_graph);
+//#ifdef DEBUG_CODE
+//    verify(new_graph->size() >= scc.size());
+//#endif
+//  } else if (depth == 1) {
+//    set<RccDTxn*> vertex_set{source};
+//    SelectGraph(vertex_set, new_graph);
+//  } else {
+//    verify(0);
+//// Log_debug("compute for sub graph, tid: %llx parent size: %d",
+////     tid, (int) source->from_.size());
+////  auto &ret_set = gra_m.ret_set;
+////  unordered_set<RccVertex *> ret_set;
+////  find_txn_anc_opt(source, ret_set);
+//    vector<RccDTxn *> search_stack;
+//    set<RccDTxn*> searched_set;
+//    search_stack.push_back(source);
+//    verify(depth == 1 || depth == -1);
+//    while (search_stack.size() > 0) {
+//      RccDTxn *v = search_stack.back();
+//      searched_set.insert(v);
+//      search_stack.pop_back();
+//      RccDTxn* new_v = new_graph->FindOrCreateV(*v);
+//      for (auto &kv: v->incoming_) {
+//        auto parent_v = kv.first;
+//        auto weight = kv.second;
+//        RccDTxn& parent_txn = *parent_v;
+//        if (parent_v == v) {
+//          verify(0); // or continue?
+//        }
+////        if (parent_txn.status() >= TXN_DCD || parent_txn.IsExecuted()) {
+////          continue;
+////        }
+//        if (searched_set.find(parent_v) != searched_set.end()) {
 //          continue;
 //        }
-        if (searched_set.find(parent_v) != searched_set.end()) {
-          continue;
-        }
-        if (depth == 1) {
-          // TODO
-          RccDTxn* new_parent_v = new_graph->FindOrCreateV(parent_v->id());
-          RccDTxn& tinfo = *new_parent_v;
-          tinfo.partition_ = parent_v->partition_;
-          verify(tinfo.status() == TXN_UKN);
-          new_v->AddParentEdge(new_parent_v, weight);
-        } else if (depth == -1) {
-          verify(0);
-          RccDTxn* new_parent_v = new_graph->FindOrCreateV(*parent_v);
-          new_v->AddParentEdge(new_parent_v, weight);
-          search_stack.push_back(parent_v);
-        } else {
-          verify(0);
-        }
-      }
-    }
+//        if (depth == 1) {
+//          // TODO
+//          RccDTxn* new_parent_v = new_graph->FindOrCreateV(parent_v->id());
+//          RccDTxn& tinfo = *new_parent_v;
+//          tinfo.partition_ = parent_v->partition_;
+//          verify(tinfo.status() == TXN_UKN);
+//          new_v->AddParentEdge(new_parent_v, weight);
+//        } else if (depth == -1) {
+//          verify(0);
+//          RccDTxn* new_parent_v = new_graph->FindOrCreateV(*parent_v);
+//          new_v->AddParentEdge(new_parent_v, weight);
+//          search_stack.push_back(parent_v);
+//        } else {
+//          verify(0);
+//        }
+//      }
+//    }
   }
 
 #ifdef DEBUG_CODE
@@ -214,67 +217,26 @@ void RccGraph::RebuildEdgePointer(map<txnid_t, RccDTxn*>& index) {
     auto id = pair.first;
     RccDTxn* v = pair.second;
     // add pointers
-    for (auto& parent_id : v->parents_) {
-      RccDTxn* parent_v = FindV(parent_id);
-      verify(parent_v);
-      v->incoming_[parent_v] = EDGE_D; // FIXME
-      parent_v->outgoing_[v] = EDGE_D; // FIXME
-    }
-    // remove pointers
-    for (auto it = v->incoming_.begin(); it != v->incoming_.end();) {
-      RccDTxn* parent_v = it->first;
-      auto parent_id = parent_v->id();
-      if (v->parents_.count(parent_id) == 0) {
-        it = v->incoming_.erase(it);
-        auto n = parent_v->outgoing_.erase(v); // FIXME
-        parent_v->removed_children_.insert(v);
-        verify(n > 0);
-      } else {
-        it++;
-      }
-    }
-    verify(v->parents_.size() == v->incoming_.size());
-  }
-}
-
-void RccGraph::BuildEdgePointer(RccGraph &graph,
-                                map<txnid_t, RccDTxn*>& index) {
-  verify(0);
-  for (auto &pair: graph.vertex_index()) {
-    auto id = pair.first;
-    RccDTxn* a_vertex = pair.second;
-    RccDTxn* vertex = index[a_vertex->id()];
-
-#ifdef DEBUG_CODE
-    if (vertex->Get().get_status() >= TXN_CMT &&
-        a_vertex->Get().get_status() >= TXN_CMT) {
-      // they should have the same parents.
-      auto set1 = vertex->GetParentSet();
-      auto set2 = a_vertex->GetParentSet();
-      verify(set1 == set2);
-    }
-#endif
-    if (vertex->status() < TXN_CMT &&
-        a_vertex->status() >= TXN_CMT) {
-      for (auto pair : vertex->incoming_) {
-        RccDTxn* parent_v = pair.first;
-        parent_v->outgoing_.erase(vertex); // FIXME check wait list still?
-      }
-      vertex->incoming_.clear();
-    }
-
-    if (vertex->status() >= TXN_CMT &&
-        a_vertex->status() < TXN_CMT) {
-      // do nothing
-    } else {
-      for (auto pair : a_vertex->incoming_) {
-        auto a_parent_vertex = pair.first;
-        auto weight = pair.second;
-        auto parent = index[a_parent_vertex->id()];
-        vertex->incoming_[parent] |= weight;
-        parent->outgoing_[vertex] |= weight;
-      }
-    }
+//    for (auto& parent_id : v->parents_) {
+//      RccDTxn* parent_v = FindV(parent_id);
+//      verify(parent_v);
+//      v->incoming_[parent_v] = EDGE_D; // FIXME
+//      parent_v->outgoing_[v] = EDGE_D; // FIXME
+//    }
+// //    remove pointers
+//    for (auto it = v->incoming_.begin(); it != v->incoming_.end();) {
+//      RccDTxn* parent_v = it->first;
+//      auto parent_id = parent_v->id();
+//      if (v->parents_.count(parent_id) == 0) {
+//        it = v->incoming_.erase(it);
+//        auto n = parent_v->outgoing_.erase(v); // FIXME
+//        parent_v->removed_children_.insert(v);
+//        verify(n > 0);
+//      } else {
+//        it++;
+//      }
+//    }
+//    verify(v->parents_.size() == v->incoming_.size());
   }
 }
 
@@ -348,21 +310,21 @@ RccDTxn* RccGraph::AggregateVertex(RccDTxn *rhs_v) {
   return vertex;
 }
 
-RccScc& RccGraph::FindSCC(RccDTxn *vertex) {
-  RccScc& scc2 = Graph<RccDTxn>::FindSccPred(vertex);
-#ifdef DEBUG_CODE
-  RccScc& scc = Graph<TxnInfo>::FindSCC(vertex);
-  std::sort(scc.begin(), scc.end());
-  std::sort(scc2.begin(), scc2.end());
-  verify(scc == scc2);
-  verify(vertex->Get().status() >= TXN_CMT);
-  for (RccVertex* v : scc) {
-    verify(v->Get().status() >= TXN_CMT);
-    verify(AllAncCmt(v));
-  }
-#endif
-  return scc2;
-}
+//RccScc& RccGraph::FindSCC(RccDTxn *vertex) {
+//  RccScc& scc2 = Graph<RccDTxn>::FindSccPred(vertex);
+//#ifdef DEBUG_CODE
+//  RccScc& scc = Graph<TxnInfo>::FindSCC(vertex);
+//  std::sort(scc.begin(), scc.end());
+//  std::sort(scc2.begin(), scc2.end());
+//  verify(scc == scc2);
+//  verify(vertex->Get().status() >= TXN_CMT);
+//  for (RccVertex* v : scc) {
+//    verify(v->Get().status() >= TXN_CMT);
+//    verify(AllAncCmt(v));
+//  }
+//#endif
+//  return scc2;
+//}
 
 bool RccGraph::AllAncCmt(RccDTxn *vertex) {
   if(vertex->all_anc_cmt_hint) {
@@ -491,21 +453,22 @@ map<txnid_t, RccDTxn*> RccGraph::Aggregate(epoch_t epoch,
 
 
 bool RccGraph::HasICycle(const RccScc& scc) {
-  for (auto& vertex : scc) {
-    set<RccDTxn *> walked;
-    bool ret = false;
-    std::function<bool(RccDTxn *)> func =
-        [&ret, vertex](RccDTxn *v) -> bool {
-          if (v == vertex) {
-            ret = true;
-            return false;
-          }
-          return true;
-        };
-    TraverseDescendant(vertex, -1, func, walked, EDGE_I);
-    if (ret) return true;
-  }
-  return false;
+  verify(0);
+//  for (auto& vertex : scc) {
+//    set<RccDTxn *> walked;
+//    bool ret = false;
+//    std::function<bool(RccDTxn *)> func =
+//        [&ret, vertex](RccDTxn *v) -> bool {
+//          if (v == vertex) {
+//            ret = true;
+//            return false;
+//          }
+//          return true;
+//        };
+//    TraverseDescendant(vertex, -1, func, walked, EDGE_I);
+//    if (ret) return true;
+//  }
+//  return false;
 };
 
 } // namespace rcc
