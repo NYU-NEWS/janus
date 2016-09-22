@@ -336,7 +336,7 @@ int BrqSched::OnInquire(epoch_t epoch,
   };
 
   if (info.status() >= TXN_CMT) {
-    MinItfrGraph(cmd_id, graph, false, 1);
+    InquiredGraph(info, graph);
     cb_wrapper();
   } else {
     info.graphs_for_inquire_.push_back(graph);

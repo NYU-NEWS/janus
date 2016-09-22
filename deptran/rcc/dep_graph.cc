@@ -305,8 +305,8 @@ RccDTxn* RccGraph::AggregateVertex(RccDTxn *rhs_v) {
     }
   }
 #endif
-
-  info.union_data(rhs_tinfo); // TODO
+  // TODO this should replace most parts in this function
+  info.union_data(rhs_tinfo);
   return vertex;
 }
 

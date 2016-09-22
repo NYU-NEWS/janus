@@ -135,7 +135,7 @@ int RccSched::OnInquire(epoch_t epoch,
   verify (dtxn.Involve(Scheduler::partition_id_));
 
   if (dtxn.status() >= TXN_CMT) {
-    MinItfrGraph(txn_id, graph, false, 1);
+    InquiredGraph(dtxn, graph);
     callback();
   } else {
     dtxn.graphs_for_inquire_.push_back(graph);
@@ -144,6 +144,21 @@ int RccSched::OnInquire(epoch_t epoch,
         dtxn.callbacks_for_inquire_.size());
   }
 
+}
+
+void RccSched::InquiredGraph(RccDTxn& dtxn, RccGraph* graph) {
+  verify(graph != nullptr);
+  if (dtxn.IsDecided()) {
+    // return scc is enough.
+    auto& scc = FindSccPred(&dtxn);
+    for (auto v : scc) {
+      RccDTxn* vv = graph->CreateV(*v);
+      verify(vv->parents_.size() == v->parents_.size());
+      verify(vv->partition_.size() == v->partition_.size());
+    }
+  } else {
+    MinItfrGraph(dtxn.id(), graph, false, 1);
+  }
 }
 
 void RccSched::AnswerIfInquired(RccDTxn &dtxn) {
@@ -155,9 +170,8 @@ void RccSched::AnswerIfInquired(RccDTxn &dtxn) {
               (int) sz1, (int) sz2);
   }
   if (dtxn.status() >= TXN_CMT && dtxn.graphs_for_inquire_.size() > 0) {
-    for (auto& graph : dtxn.graphs_for_inquire_) {
-      verify(graph != nullptr);
-      MinItfrGraph(dtxn.id(), graph, false, 1);
+    for (RccGraph* graph : dtxn.graphs_for_inquire_) {
+      InquiredGraph(dtxn, graph);
     }
     for (auto& callback : dtxn.callbacks_for_inquire_) {
       verify(callback);
@@ -183,7 +197,6 @@ void RccSched::CheckWaitlist() {
 //  for (RccVertex *v : waitlist_) {
     // TODO minimize the length of the waitlist.
     RccDTxn& tinfo = *v;
-    AnswerIfInquired(tinfo);
     InquireAboutIfNeeded(tinfo); // inquire about unknown transaction.
     if (tinfo.status() >= TXN_CMT &&
         !tinfo.IsExecuted()) {
@@ -229,6 +242,7 @@ void RccSched::CheckWaitlist() {
 //                  tinfo.inquire_acked_);
 #endif
       }
+      AnswerIfInquired(tinfo);
     } // else do nothing
 
     // Adjust the waitlist.
@@ -368,6 +382,7 @@ void RccSched::InquireAboutIfNeeded(RccDTxn &dtxn) {
 void RccSched::InquireAck(cmdid_t cmd_id, RccGraph& graph) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto v = FindV(cmd_id);
+  verify(v != nullptr);
   RccDTxn& tinfo = *v;
   tinfo.inquire_acked_ = true;
   Aggregate(epoch_mgr_.curr_epoch_, const_cast<RccGraph&>(graph));

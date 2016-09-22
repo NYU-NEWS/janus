@@ -200,6 +200,7 @@ class Graph : public Marshallable {
     int ret = SearchHint::Ok;
     for (auto& pair : vertex->parents_) {
       auto v = FindV(pair);
+      // TODO? maybe this could happen for foreign decided?
       verify(v != nullptr);
       ret = func(v);
       if (ret == SearchHint::Exit) {

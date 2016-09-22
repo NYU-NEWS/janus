@@ -19,6 +19,7 @@ class RccSched : public Scheduler, public RccGraph {
   static map<txnid_t, int32_t> __debug_xxx_s;
   static std::recursive_mutex __debug_mutex_s;
   static void __DebugCheckParentSetSize(txnid_t tid, int32_t sz);
+  AvgStat traversing_stat_{};
 
   class Waitlist {
     set<RccDTxn*> waitlist_ = {};
@@ -95,6 +96,7 @@ class RccSched : public Scheduler, public RccGraph {
 
   void InquireAboutIfNeeded(RccDTxn &dtxn);
   void AnswerIfInquired(RccDTxn &dtxn);
+  void InquiredGraph(RccDTxn& dtxn, RccGraph* graph);
   void CheckWaitlist();
   void InquireAck(cmdid_t cmd_id, RccGraph& graph);
   void TriggerCheckAfterAggregation(RccGraph &graph);
