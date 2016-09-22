@@ -146,25 +146,25 @@ int RccSched::OnInquire(epoch_t epoch,
 
 }
 
-void RccSched::AnswerIfInquired(RccDTxn &tinfo) {
+void RccSched::AnswerIfInquired(RccDTxn &dtxn) {
   // reply inquire requests if possible.
-  auto sz1 = tinfo.graphs_for_inquire_.size();
-  auto sz2 = tinfo.callbacks_for_inquire_.size();
+  auto sz1 = dtxn.graphs_for_inquire_.size();
+  auto sz2 = dtxn.callbacks_for_inquire_.size();
   if (sz1 != sz2) {
     Log_fatal("graphs for inquire sz %d, callbacks sz %d",
               (int) sz1, (int) sz2);
   }
-  if (tinfo.status() >= TXN_CMT && tinfo.graphs_for_inquire_.size() > 0) {
-    for (auto& graph : tinfo.graphs_for_inquire_) {
+  if (dtxn.status() >= TXN_CMT && dtxn.graphs_for_inquire_.size() > 0) {
+    for (auto& graph : dtxn.graphs_for_inquire_) {
       verify(graph != nullptr);
-      MinItfrGraph(tinfo.id(), graph, false, 1);
+      MinItfrGraph(dtxn.id(), graph, false, 1);
     }
-    for (auto& callback : tinfo.callbacks_for_inquire_) {
+    for (auto& callback : dtxn.callbacks_for_inquire_) {
       verify(callback);
       callback();
     }
-    tinfo.callbacks_for_inquire_.clear();
-    tinfo.graphs_for_inquire_.clear();
+    dtxn.callbacks_for_inquire_.clear();
+    dtxn.graphs_for_inquire_.clear();
   }
 }
 
@@ -174,10 +174,10 @@ void RccSched::CheckWaitlist() {
 //  Log_info("start to check waitlist, length: %d, fridge size: %d",
 //           (int)waitlist_.size(), (int)fridge_.size());
 #endif
-  while (waitlist_.size() > 0) {
+  auto it = waitlist_.begin();
+  while (it != waitlist_.end()) {
 //    Log_info("checking loop, length: %d, fridge size: %d",
 //             (int)waitlist_.¬size(), (int)fridge_.size());
-    auto it = waitlist_.begin();
     RccDTxn* v = *it;
     verify(v != nullptr);
 //  for (RccVertex *v : waitlist_) {
@@ -231,57 +231,18 @@ void RccSched::CheckWaitlist() {
       }
     } // else do nothing
 
-//    if (tinfo.status() >= TXN_DCD &&
-//        !tinfo.IsExecuted() &&
-//        dep_graph_->AllAncCmt(v) ) {
-//      RccScc& scc = dep_graph_->FindSCC(v);
-//#ifdef DEBUG_CODE
-//      for (auto vv : scc) {
-//        auto s = vv->Get().status();
-//        verify(s >= TXN_DCD);
-//      }
-//#endif
-//      if (scc.size() > 1 && HasICycle(scc)) {
-//        Abort(scc);
-//      } else if (HasAbortedAncestor(scc)) {
-//        Abort(scc);
-//      } else if (AllAncFns(scc)) {
-//        // FIXME
-//        for (auto vv : scc) {
-//#ifdef DEBUG_CODE
-//          verify(AllAncCmt(vv));
-//          verify(vv->Get().status() >= TXN_DCD);
-//#endif
-////          vv->Get().union_status(TXN_DCD);
-//        }
-//        if (FullyDispatched(scc)) {
-//          Execute(scc);
-//          for (auto v : scc) {
-//            AddChildrenIntoWaitlist(v);
-//          }
-//        }
-////        check_again = true;
-//      } // else do nothing.
-//    } // else do nothing
-
     // Adjust the waitlist.
     __DebugExamineGraphVerify(v);
-    if (tinfo.status() >= TXN_DCD && tinfo.IsExecuted()) {
-//      AddChildrenIntoWaitlist(v);
-    }
-
     if (tinfo.IsExecuted() ||
         tinfo.IsAborted() ||
         (tinfo.IsDecided() &&
             !tinfo.Involve(Scheduler::partition_id_))) {
-      // check for its descendants, perhaps add redundant vertex here.
-//      for (auto child_pair : v->outgoing_) {
-//        auto child_v = child_pair.first;
-//        waitlist_.insert(child_v);
-//      }
-//      it = waitlist_.erase(it);
+      // TODO? check for its descendants, perhaps
+      // add redundant vertex here?
+      //      AddChildrenIntoWaitlist(v);
+      it = waitlist_.erase(it);
     } else {
-//      it++;
+      it++;
     }
 #ifdef DEBUG_CODE
     if (tinfo.IsExecuted()) {
@@ -295,13 +256,7 @@ void RccSched::CheckWaitlist() {
 #endif
 //    waitlist_.erase(it);
   }
-//  auto sz = waitlist_.size();
-//  verify(check_again == (sz > 0));
-//  if (sz > 0 && check_again)
-//    CheckWaitlist();
-//  else {
   __DebugExamineFridge();
-//  }
 }
 
 void RccSched::AddChildrenIntoWaitlist(RccDTxn* v) {

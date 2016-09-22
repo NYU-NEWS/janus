@@ -94,7 +94,7 @@ class RccSched : public Scheduler, public RccGraph {
   void DestroyExecutor(txnid_t tid) override;
 
   void InquireAboutIfNeeded(RccDTxn &dtxn);
-  void AnswerIfInquired(RccDTxn &tinfo);
+  void AnswerIfInquired(RccDTxn &dtxn);
   void CheckWaitlist();
   void InquireAck(cmdid_t cmd_id, RccGraph& graph);
   void TriggerCheckAfterAggregation(RccGraph &graph);
