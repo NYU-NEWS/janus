@@ -10,19 +10,3 @@ site:
 #    - ["c02"]
 #    - ["c03"]
 # site_name - process_name map
-process:
-  s101: localhost
-  s102: localhost
-  s103: localhost
-  s201: localhost
-  s202: localhost
-  s203: localhost
-  s301: localhost
-  s302: localhost
-  s303: localhost
-  c01: localhost
-  c02: localhost
-  c03: localhost
-
-host:
-  localhost: 127.0.0.1

@@ -12,7 +12,7 @@
  */
 namespace rococo {
 
-typedef RccDTxn RccDTxn;
+//typedef RccDTxn RccDTxn;
 typedef vector<RccDTxn*> RccScc;
 
 class EmptyGraph : public Marshallable {

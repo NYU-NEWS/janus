@@ -20,6 +20,14 @@ class RccDTxn: public DTxn, public Vertex<RccDTxn> {
   bool __debug_replied = false;
   vector<void**> external_refs_{};
 
+  // hopefully this makes involve checks faster
+  enum InvolveEnum {UNKNOWN, INVOLVED, FOREIGN};
+  InvolveEnum involve_flag_{UNKNOWN};
+
+  // if any other transactions is blocked by this transaction,
+  // add it to this set to make the checking waitlist faster.
+  set<RccDTxn*> to_checks_{};
+
   RccDTxn() = delete;
   RccDTxn(txnid_t id);
   RccDTxn(RccDTxn& rhs_dtxn);
@@ -142,17 +150,28 @@ class RccDTxn: public DTxn, public Vertex<RccDTxn> {
   }
 
   inline bool IsExecuted() const {
-    if (executed_) {
-      verify(IsDecided());
-    }
+//    if (executed_) {
+//      verify(IsDecided());
+//    }
     return executed_;
   }
 
   bool Involve(parid_t id) {
+    if (involve_flag_ == INVOLVED)
+      return true;
+    if (involve_flag_ == FOREIGN)
+      return false;
+//    verify(partition_.size() > 0);
     auto it = partition_.find(id);
     if (it == partition_.end()) {
+      if (IsCommitting()) {
+        involve_flag_ = FOREIGN;
+      }
       return false;
     } else {
+      if (IsCommitting()) {
+        involve_flag_ = INVOLVED;
+      }
       return true;
     }
   }

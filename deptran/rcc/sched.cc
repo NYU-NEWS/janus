@@ -2,8 +2,8 @@
 #include "../txn_chopper.h"
 #include "graph.h"
 #include "txn-info.h"
-#include "sched.h"
 #include "dtxn.h"
+#include "sched.h"
 #include "commo.h"
 #include "waitlist_checker.h"
 #include "frame.h"
@@ -196,10 +196,10 @@ void RccSched::CheckWaitlist() {
     verify(v != nullptr);
 //  for (RccVertex *v : waitlist_) {
     // TODO minimize the length of the waitlist.
-    RccDTxn& tinfo = *v;
-    InquireAboutIfNeeded(tinfo); // inquire about unknown transaction.
-    if (tinfo.status() >= TXN_CMT &&
-        !tinfo.IsExecuted()) {
+    RccDTxn& dtxn = *v;
+    InquireAboutIfNeeded(dtxn); // inquire about unknown transaction.
+    if (dtxn.status() >= TXN_CMT &&
+        !dtxn.IsExecuted()) {
       if (AllAncCmt(v)) {
 //        check_again = true;
         RccScc& scc = FindSccPred(v);
@@ -242,21 +242,25 @@ void RccSched::CheckWaitlist() {
 //                  tinfo.inquire_acked_);
 #endif
       }
-      AnswerIfInquired(tinfo);
+      AnswerIfInquired(dtxn);
     } // else do nothing
 
     // Adjust the waitlist.
     __DebugExamineGraphVerify(v);
-    if (tinfo.IsExecuted() ||
-        tinfo.IsAborted() ||
-        (tinfo.IsDecided() &&
-            !tinfo.Involve(Scheduler::partition_id_))) {
+    if (dtxn.IsExecuted() ||
+        dtxn.IsAborted() ||
+        (dtxn.IsDecided() &&
+            !dtxn.Involve(Scheduler::partition_id_))) {
       // TODO? check for its descendants, perhaps
       // add redundant vertex here?
       //      AddChildrenIntoWaitlist(v);
-      it = waitlist_.erase(it);
+        for (auto& v: dtxn.to_checks_) {
+          waitlist_.insert(v);
+        }
+        dtxn.to_checks_.clear();
+//      it = waitlist_.erase(it);
     } else {
-      it++;
+//      it++;
     }
 #ifdef DEBUG_CODE
     if (tinfo.IsExecuted()) {
@@ -268,7 +272,7 @@ void RccSched::CheckWaitlist() {
       }
     }
 #endif
-//    waitlist_.erase(it);
+    it = waitlist_.erase(it);
   }
   __DebugExamineFridge();
 }
@@ -362,8 +366,8 @@ void RccSched::__DebugExamineFridge() {
 void RccSched::InquireAboutIfNeeded(RccDTxn &dtxn) {
 //  Graph<RccDTxn> &txn_gra = dep_graph_->txn_gra_;
   if (dtxn.status() <= TXN_STD &&
-      !dtxn.Involve(Scheduler::partition_id_) &&
-      !dtxn.during_asking) {
+      !dtxn.during_asking &&
+      !dtxn.Involve(Scheduler::partition_id_)) {
     verify(!dtxn.Involve(Scheduler::partition_id_));
     verify(!dtxn.during_asking);
     parid_t par_id = *(dtxn.partition_.begin());
@@ -408,15 +412,17 @@ RccDTxn* RccSched::__DebugFindAnOngoingAncestor(RccDTxn* vertex) {
 
 bool RccSched::AllAncCmt(RccDTxn *vertex) {
   bool all_anc_cmt = true;
-  std::function<int(RccDTxn*)> func = [&all_anc_cmt] (RccDTxn* v) -> int {
-    RccDTxn& info = *v;
+  std::function<int(RccDTxn*)> func =
+      [&all_anc_cmt, vertex] (RccDTxn* v) -> int {
+    RccDTxn& parent = *v;
     int r = 0;
-    if (info.IsExecuted() || info.IsAborted()) {
+    if (parent.IsExecuted() || parent.IsAborted()) {
       r = RccGraph::SearchHint::Skip;
-    } else if (info.status() >= TXN_CMT) {
+    } else if (parent.status() >= TXN_CMT) {
       r = RccGraph::SearchHint::Ok;
     } else {
       r = RccGraph::SearchHint::Exit;
+      parent.to_checks_.insert(vertex);
       all_anc_cmt = false;
     }
     return r;
@@ -544,7 +550,7 @@ bool RccSched::AllAncFns(const RccScc& scc) {
   scc_set.insert(scc.begin(), scc.end());
   bool all_anc_fns = true;
   std::function<int(RccDTxn*)> func =
-      [&all_anc_fns, &scc_set] (RccDTxn* v) -> int {
+      [&all_anc_fns, &scc_set, &scc] (RccDTxn* v) -> int {
     RccDTxn& info = *v;
     if (info.IsExecuted()) {
       return RccGraph::SearchHint::Skip;
@@ -554,6 +560,7 @@ bool RccSched::AllAncFns(const RccScc& scc) {
       return RccGraph::SearchHint::Ok;
     } else {
       all_anc_fns = false;
+      info.to_checks_.insert(scc[0]);
       return RccGraph::SearchHint::Exit; // abort traverse
     }
   };

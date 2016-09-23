@@ -123,6 +123,7 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
   // TODO FIXME
   // add interference based on cmds.
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(txn_id);
+  dtxn->involve_flag_ = RccDTxn::INVOLVED;
 //  TxnInfo& tinfo = dtxn->tv_->Get();
   if (dtxn->status() < TXN_CMT) {
     if (dtxn->phase_ < PHASE_RCC_DISPATCH && dtxn->status() < TXN_CMT) {

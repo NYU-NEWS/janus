@@ -1134,7 +1134,9 @@ def main():
         logger.info("shutting down...")
         if server_controller is not None:
             try:
+                #comment the following line when doing profiling
                 server_controller.server_kill()
+                pass
             except:
                 logger.error(traceback.format_exc())
         if ret != 0:
