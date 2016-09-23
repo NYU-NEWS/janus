@@ -9,6 +9,7 @@ from waflib import Logs
 from waflib import Options
 
 pargs = ['--cflags', '--libs']
+BOOST_LIBS = 'BOOST_SYSTEM BOOST_FILESYSTEM BOOST_THREAD BOOST_COROUTINE'
 
 def options(opt):
     opt.load("compiler_cxx unittest_gtest")
@@ -109,7 +110,7 @@ def build(bld):
                                        "rrr/coroutine/*.cc"),
               target="rrr",
               includes=". rrr",
-              uselib="BOOST BOOST_SYSTEM BOOST_FILESYSTEM BOOST_COROUTINE",
+              uselib=BOOST_LIBS,
               use="PTHREAD")
 
 #    bld.stlib(source=bld.path.ant_glob("rpc/*.cc"), target="simplerpc",
@@ -156,7 +157,7 @@ def build(bld):
                                          "bench/*/*.cc"),
                 target="deptran_server",
                 includes=". rrr deptran ",
-                uselib="BOOST BOOST_SYSTEM BOOST_FILESYSTEM BOOST_COROUTINE YAML-CPP",
+                uselib="YAML-CPP " + BOOST_LIBS,
                 use="rrr memdb PTHREAD PROFILER RT")
 
 #    bld.program(source=bld.path.ant_glob("deptran/c_main.cc"),
