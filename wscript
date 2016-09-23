@@ -39,8 +39,9 @@ def options(opt):
 def configure(conf):
     _choose_compiler(conf)
     _enable_pic(conf)
+
     conf.load("compiler_cxx unittest_gtest")
-    conf.load("boost")
+#    conf.load("boost")
 
     _enable_tcmalloc(conf)
     _enable_cxx11(conf)
@@ -59,13 +60,18 @@ def configure(conf):
     conf.env.append_value("CXXFLAGS", "-Wno-unused-function")
     conf.env.append_value("CXXFLAGS", "-Wno-unused-variable")
     conf.env.append_value("CXXFLAGS", "-Wno-sign-compare")
-    conf.check_boost(lib='system filesystem coroutine')
+#    conf.check_boost(lib='system filesystem coroutine')
 
     conf.env.append_value("CXXFLAGS", "-Wno-sign-compare")
     conf.env.append_value('INCLUDES', ['/usr/local/include'])
+    # in case you use linuxbrew
+    conf.env.append_value('INCLUDES', [os.path.expanduser('~') + '/.linuxbrew/include'])
+    conf.env.append_value('LIBPATH', [os.path.expanduser('~') + '/.linuxbrew/lib'])
+    conf.check_cxx(lib='boost_system', use='BOOST_SYSTEM')
+    conf.check_cxx(lib='boost_filesystem', use='BOOST_FILESYSTEM')
+    conf.check_cxx(lib='boost_coroutine', use='BOOST_COROUTINE')
 
     conf.env.LIB_PTHREAD = 'pthread'
-
     conf.check_cfg(package='yaml-cpp', uselib_store='YAML-CPP', args=pargs)
 
     if sys.platform != 'darwin':
@@ -103,7 +109,7 @@ def build(bld):
                                        "rrr/coroutine/*.cc"),
               target="rrr",
               includes=". rrr",
-              uselib="BOOST BOOST_SYSTEM BOOST_COROUTINE",
+              uselib="BOOST BOOST_SYSTEM BOOST_FILESYSTEM BOOST_COROUTINE",
               use="PTHREAD")
 
 #    bld.stlib(source=bld.path.ant_glob("rpc/*.cc"), target="simplerpc",
@@ -129,28 +135,28 @@ def build(bld):
 #                includes=". rrr",
 #                use="base simplerpc PTHREAD")
 
-    bld.stlib(source=bld.path.ant_glob("deptran/*.cc "
-                                       "deptran/*/*.cc "
-                                       "bench/*/*.cc ",
-                                       excl="deptran/*_main.c*"),
-              target="deptran",
-              includes=". rrr deptran ",
-              uselib="BOOST BOOST_SYSTEM BOOST_COROUTINE YAML-CPP",
-              use="PTHREAD memdb base simplerpc memdb PROFILER RT")
-
-    bld.program(source=bld.path.ant_glob("test/*.cc"),
-                target="tests",
-                features="gtest",
-                includes=". rrr deptran test memdb",
-                uselib="BOOST BOOST_SYSTEM BOOST_COROUTINE YAML-CPP",
-                use="PTHREAD rrr memdb deptran PROFILER RT")
+#    bld.stlib(source=bld.path.ant_glob("deptran/*.cc "
+#                                       "deptran/*/*.cc "
+#                                       "bench/*/*.cc ",
+#                                       excl="deptran/*_main.c*"),
+#              target="deptran",
+#              includes=". rrr deptran ",
+#              uselib="BOOST BOOST_SYSTEM BOOST_COROUTINE YAML-CPP",
+#              use="PTHREAD memdb base simplerpc memdb PROFILER RT")
+#
+#    bld.program(source=bld.path.ant_glob("test/*.cc"),
+#                target="tests",
+#                features="gtest",
+#                includes=". rrr deptran test memdb",
+#                uselib="BOOST BOOST_SYSTEM BOOST_COROUTINE YAML-CPP",
+#                use="PTHREAD rrr memdb deptran PROFILER RT")
 
     bld.program(source=bld.path.ant_glob("deptran/*.cc "
                                          "deptran/*/*.cc "
                                          "bench/*/*.cc"),
                 target="deptran_server",
                 includes=". rrr deptran ",
-                uselib="BOOST BOOST_SYSTEM BOOST_COROUTINE YAML-CPP",
+                uselib="BOOST BOOST_SYSTEM BOOST_FILESYSTEM BOOST_COROUTINE YAML-CPP",
                 use="rrr memdb PTHREAD PROFILER RT")
 
 #    bld.program(source=bld.path.ant_glob("deptran/c_main.cc"),
