@@ -296,3 +296,10 @@ def download(p):
     scp_cmd = "scp ubuntu@{}:{} {}".format(leader_ip, p, target_fn)
     local(scp_cmd)
 
+@task
+@roles('leaders')
+def upload(source, target_path):
+    leader_ip = env.roledefs['leaders'][0]
+    source_fn = os.path.abspath(source)
+    scp_cmd = "scp {} ubuntu@{}:{}".format(source_fn, leader_ip, target_path)
+    local(scp_cmd)
