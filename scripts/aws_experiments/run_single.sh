@@ -11,12 +11,11 @@ function run_tests {
 	# rw_fixed
 	# rw
 	# tpcc
-	
 	# zipfs
 }
 
 function write_concurrent {
-	echo 'n_concurrent: $concurrent' > /tmp/concurrent.yml
+	echo "n_concurrent: $concurrent" > /tmp/concurrent.yml
 }
 
 function new_experiment {
