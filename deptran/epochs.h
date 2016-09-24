@@ -83,6 +83,7 @@ class EpochMgr {
     return (oldest_active_ >= e);
   }
   virtual void AddToEpoch(epoch_t e, txnid_t id, bool is_decided=false) {
+    return; // TODO re-enable this.
     verify(e > oldest_inactive_);
     id_to_epoch_[id] = e;
     epochs_[e].Add(id, is_decided);

@@ -293,7 +293,7 @@ Executor* Scheduler::GetOrCreateExecutor(cmdid_t txn_id) {
 
 void Scheduler::TrashExecutor(txnid_t txn_id) {
   if (epoch_enabled_) {
-    epoch_mgr_.Done(txn_id);
+//    epoch_mgr_.Done(txn_id);
   } else {
     DestroyExecutor(txn_id);
   }
