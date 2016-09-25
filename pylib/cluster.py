@@ -290,9 +290,12 @@ def build_and_deploy():
 
 @task
 @roles('leaders')
-def download(p):
+def download(p,target=None):
     leader_ip = env.roledefs['leaders'][0]
-    target_fn = os.path.basename(p)
+    if target is not None:
+        target_fn = target 
+    else:
+        target_fn = '.'
     scp_cmd = "scp ubuntu@{}:{} {}".format(leader_ip, p, target_fn)
     local(scp_cmd)
 
