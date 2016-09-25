@@ -710,7 +710,7 @@ class ServerController(object):
                             futures.append(site.rpc_proxy.async_server_heart_beat())
                 except:
                     logger.fatal("server heart beat failure")
-                    sys.exit(1)
+                    break
 
 
                 i = 0
