@@ -366,7 +366,7 @@ void RccDTxn::TraceDep(Row* row, column_id_t col_id, int hint_flag) {
           auto epoch2 = sched_->epoch_mgr_.oldest_active_;
           // adding a parent from an inactive epoch is
           // dangerous.
-          verify(epoch1 >= epoch2);
+          // verify(epoch1 >= epoch2);
         }
         this->AddParentEdge(parent_dtxn, edge_type);
       }
