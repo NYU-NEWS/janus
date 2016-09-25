@@ -596,7 +596,7 @@ class Graph : public Marshallable {
   Marshal& ToMarshal(Marshal &m) const override{
     verify(managing_memory_);
     uint64_t n = size();
-    verify(n > 0 && n < 10000);
+    verify(n >= 0 && n < 10000);
     m << n;
     int i = 0;
     for (auto &pair : const_cast<Graph*>(this)->vertex_index()) {
@@ -614,7 +614,7 @@ class Graph : public Marshallable {
 //        m << id << weight;
 //      }
     }
-    verify(i == n);
+//    verify(i == n);
     return m;
   }
 
@@ -623,7 +623,7 @@ class Graph : public Marshallable {
     verify(size() == 0);
     uint64_t n;
     m >> n;
-    verify(n > 0 && n < 10000);
+    verify(n >= 0 && n < 10000);
     map<uint64_t, V *> ref;
 //    map<uint64_t, map<int64_t, int8_t> > v_to;
 
@@ -668,7 +668,7 @@ class Graph : public Marshallable {
 //      }
 //    }
 
-    verify(size() > 0);
+//    verify(size() > 0);
     return m;
   }
 };

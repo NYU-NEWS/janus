@@ -73,7 +73,7 @@ void BrqCoord::PreAcceptAck(phase_t phase,
   // if recevie more messages after already gone to next phase, ignore
   if (phase != phase_) return;
   verify(graph != nullptr);
-  verify(graph->FindV(txn().root_id_) != nullptr);
+//  verify(graph->FindV(txn().root_id_) != nullptr);
 //  verify(n_fast_accept_graphs_.size() == 0);
   n_fast_accept_graphs_[par_id].push_back(graph);
   if (res == SUCCESS) {

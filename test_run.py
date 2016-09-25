@@ -50,7 +50,7 @@ def run(m, s, b, c):
     res = "INIT"
     try:
         f = open(output_path, "w")
-        r = call([run_app_, "-f", pm, "-f", ps, "-f", pb, "-P", "localhost", "-d", "60"],
+        r = call([run_app_, "-f", pm, "-f", ps, "-f", pb, "-P", "localhost", "-d", "20"],
                  stdout=f, stderr=f, timeout=5*60)
         res = "OK" if r == 0 else "Failed"
     except:

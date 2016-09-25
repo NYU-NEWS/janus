@@ -183,7 +183,7 @@ void BrqSched::OnPreAcceptWoGraph(const txnid_t txn_id,
   }
   verify(!tinfo.fully_dispatched);
   tinfo.fully_dispatched = true;
-  MinItfrGraph(dtxn, res_graph, true, 1);
+  MinItfrGraph(dtxn, res_graph, false, 1);
   if (tinfo.status() >= TXN_CMT) {
     waitlist_.insert(dtxn);
     verify(dtxn->epoch_ > 0);
