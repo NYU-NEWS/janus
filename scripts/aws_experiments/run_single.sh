@@ -18,7 +18,7 @@ function run_tests {
 }
 
 function write_concurrent {
-	echo "n_concurrent: $concurrent" > /tmp/concurrent.yml
+	echo -e "n_concurrent: $concurrent\n" > /tmp/concurrent.yml
 }
 
 function new_experiment {
