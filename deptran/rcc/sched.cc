@@ -63,7 +63,7 @@ int RccSched::OnDispatch(const vector<SimpleCommand> &cmd,
   dtxn->UpdateStatus(TXN_STD);
   int depth = 1;
   verify(cmd[0].root_id_ == txn_id);
-  auto sz = MinItfrGraph(txn_id, graph, true, depth);
+  auto sz = MinItfrGraph(dtxn, graph, true, depth);
 //#ifdef DEBUG_CODE
 //    if (sz > 4) {
 //      Log_fatal("something is wrong, graph size %d", sz);
@@ -157,7 +157,7 @@ void RccSched::InquiredGraph(RccDTxn& dtxn, RccGraph* graph) {
       verify(vv->partition_.size() == v->partition_.size());
     }
   } else {
-    MinItfrGraph(dtxn.id(), graph, false, 1);
+    MinItfrGraph(&dtxn, graph, false, 1);
   }
 }
 

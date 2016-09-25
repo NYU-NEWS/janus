@@ -23,18 +23,18 @@ void RccGraph::RemoveVertex(txnid_t txn_id) {
   Remove(txn_id);
 }
 
-void RccGraph::SelectGraphCmtUkn(RccDTxn* vertex, RccGraph* new_graph) {
-  RccDTxn* new_v = new_graph->FindOrCreateV(vertex->id());
-  auto s = vertex->status();
+void RccGraph::SelectGraphCmtUkn(RccDTxn* dtxn, RccGraph* new_graph) {
+  RccDTxn* new_v = new_graph->FindOrCreateV(dtxn->id());
+  auto s = dtxn->status();
   if (s >= TXN_DCD) {
     new_v->union_status(TXN_CMT);
   } else {
     new_v->union_status(s);
   }
-  new_v->partition_ = vertex->partition_;
+  new_v->partition_ = dtxn->partition_;
   // TODO, verify that the parent vertex still exists.
   // TODO, verify that the new parent has the correct epoch.
-  for (auto& pair : vertex->parents_) {
+  for (auto& pair : dtxn->parents_) {
     RccDTxn* parent_v = FindV(pair);
     verify(parent_v != nullptr);
 //    auto weight = pair.second;
@@ -95,17 +95,17 @@ void RccGraph::SelectGraph(set<RccDTxn*> vertexes, RccGraph* new_graph) {
 #endif
 }
 
-uint64_t RccGraph::MinItfrGraph(uint64_t tid,
+uint64_t RccGraph::MinItfrGraph(RccDTxn* dtxn,
                                 RccGraph* new_graph,
                                 bool quick,
                                 int depth) {
   verify(new_graph != nullptr);
 //  gra_m.gra = &txn_gra_;
-  RccDTxn* source = FindV(tid);
+  RccDTxn* source = dtxn;
   verify(source != nullptr);
-  verify(source->id() == tid);
   // quick path
   if (source->parents_.size() == 0 && quick) {
+    new_graph->empty_ = true;
     return 0;
   }
   verify(depth == 1);
@@ -187,7 +187,7 @@ uint64_t RccGraph::MinItfrGraph(uint64_t tid,
 
   auto sz = new_graph->size();
   Log_debug("return graph size: %llx", sz);
-  verify(new_graph->FindV(tid) != nullptr);
+//  verify(new_graph->FindV(tid) != nullptr);
   return sz;
 }
 

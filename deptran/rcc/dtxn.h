@@ -214,7 +214,7 @@ class RccDTxn: public DTxn, public Vertex<RccDTxn> {
     }
   }
 
-  void union_status(int8_t status,
+  inline void union_status(int8_t status,
                     bool is_trigger = false,
                     bool is_server = false) {
 
@@ -228,9 +228,9 @@ class RccDTxn: public DTxn, public Vertex<RccDTxn> {
       status_ |= status;
 
     }
-    if (is_trigger) {
-      trigger();
-    }
+//    if (is_trigger) {
+//      trigger();
+//    }
   }
 
   void register_event(int8_t status, DragonBall *ball) {

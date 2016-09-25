@@ -28,6 +28,7 @@ class RccGraph : public Graph<RccDTxn> {
 //    Graph<PieInfo> pie_gra_;
 //  Graph <TxnInfo> txn_gra_;
   RccSched* sched_{nullptr};
+  bool empty_{false};
   parid_t partition_id_ = 0; // TODO
 //  std::vector<rrr::Client *> rpc_clients_;
 //  std::vector<RococoProxy *> rpc_proxies_;
@@ -54,7 +55,7 @@ class RccGraph : public Graph<RccDTxn> {
   void UpgradeStatus(RccDTxn* v, int8_t status);
 
   map<txnid_t, RccDTxn*> Aggregate(epoch_t epoch, RccGraph& graph);
-  void SelectGraphCmtUkn(RccDTxn* vertex, RccGraph* new_graph);
+  void SelectGraphCmtUkn(RccDTxn* dtxn, RccGraph* new_graph);
   void SelectGraph(set<RccDTxn*> vertexes, RccGraph* new_graph);
 //  RccScc& FindSCC(RccDTxn *vertex) override;
   bool AllAncCmt(RccDTxn *vertex);
@@ -66,7 +67,7 @@ class RccGraph : public Graph<RccDTxn> {
     return !(*this == rhs);
   }
 
-  uint64_t MinItfrGraph(uint64_t tid,
+  uint64_t MinItfrGraph(RccDTxn* dtxn,
                         RccGraph* gra_m,
                         bool quick = false,
                         int depth = -1);
