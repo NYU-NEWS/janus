@@ -29,7 +29,7 @@ function new_experiment {
 function zipf_graph {
 	shards=$1
 	exp_name=${prefix}_zipf_graph_${shards}
-	scripts/aws_experiments/zipf_graph.py $exp_name -s $shards -c 9 -d $duration -f config/client_closed.yml config/tpca_zipf.yml config/tapir.yml /tmp/concurrent.yml
+	scripts/aws/zipf_graph.py $exp_name -s $shards -c 9 -d $duration -f config/client_closed.yml config/tpca_zipf.yml config/tapir.yml /tmp/concurrent.yml
 	new_experiment $exp_name
 }
 

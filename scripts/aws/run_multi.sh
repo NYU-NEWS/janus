@@ -13,7 +13,7 @@ prefix="multi_dc"
 #new_experiment $exp_name
 
 # exp_name=${prefix}_zipf_graph
-# scripts/aws_experiments/zipf_graph.py $exp_name -c 64 
+# scripts/aws/zipf_graph.py $exp_name -c 64 
 # new_experiment $exp_name
 
 #exp_name=${prefix}_rw

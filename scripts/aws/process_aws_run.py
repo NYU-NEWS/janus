@@ -20,7 +20,7 @@ if os.environ.get('JANUS_HOME') is None:
 else:
     janus_home=os.environ['JANUS_HOME']
 
-csv_extractor=os.path.join(janus_home,"scripts","aws_experiments","extract_csv.sh")
+csv_extractor=os.path.join(janus_home,"scripts","aws","extract_csv.sh")
 make_graphs_cmd=os.path.join(janus_home,"scripts","make_graphs")
 
 work_dir = os.path.abspath("./.work_dir")
