@@ -1,14 +1,7 @@
 host:
-    b1: beaker-20
-    b2: beaker-20
-    b3: beaker-21
-    b4: beaker-22
-    b5: beaker-22
-    b6: beaker-22
-    b7: beaker-23
-    b8: beaker-23
-    b9: beaker-23
-    b10: beaker-24
-    b11: beaker-24
-    b11: beaker-25
-    b12: beaker-25
+    b20: beaker-20
+    b21: beaker-24
+    b22: beaker-22
+    b23: beaker-23
+    b24: beaker-24
+    b25: beaker-25

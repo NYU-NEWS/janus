@@ -6,7 +6,5 @@ site:
     - ["s103:8200", "s203:8201", "s303:8202"]
   client: # each line is a partition
     - ["c01", "c02", "c03"]
-#    - ["c01"]
-#    - ["c02"]
-#    - ["c03"]
-# site_name - process_name map
+    - ["c04", "c05", "c06"]
+    - ["c07", "c08", "c09"]

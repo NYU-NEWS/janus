@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<launchConfiguration type="org.lamport.tla.toolbox.tool.tlc.modelCheck">
+<stringAttribute key="TLCCmdLineParameters" value=""/>
+<intAttribute key="autoLockTime" value="15"/>
+<stringAttribute key="configurationName" value="SingleTxn1C1P2R"/>
+<intAttribute key="dfidDepth" value="100"/>
+<booleanAttribute key="dfidMode" value="false"/>
+<intAttribute key="distributedFPSetCount" value="0"/>
+<stringAttribute key="distributedNetworkInterface" value="128.122.140.127"/>
+<stringAttribute key="distributedTLC" value="off"/>
+<stringAttribute key="distributedTLCVMArgs" value=""/>
+<intAttribute key="fpBits" value="0"/>
+<intAttribute key="fpIndex" value="1"/>
+<intAttribute key="maxHeapSize" value="25"/>
+<intAttribute key="maxSetSize" value="1000000"/>
+<booleanAttribute key="mcMode" value="true"/>
+<stringAttribute key="modelBehaviorInit" value=""/>
+<stringAttribute key="modelBehaviorNext" value=""/>
+<stringAttribute key="modelBehaviorSpec" value="Spec"/>
+<intAttribute key="modelBehaviorSpecType" value="1"/>
+<stringAttribute key="modelBehaviorVars" value="ya_dep, tmp_ack, txn_set, acks, next_pie, next_tid, ballot, anc, curr_pie_, tmp_partitions, msg_in, stack, opset, graph, n_pie, keyspace, scc, scc_seq, scc_set, last_r_tid, tid_set, partitions, accept_acks, msg, coo_mq, txn_id, sub_graph, par, next_txn_, tmp_acks, curr_op, keyspace_, curr_txn, dep, pre_accept_acks_, finished_map, partitions_, msg_out, last_w_tid, msg_out_, pie_map, svr_mq, tmp_set, pc, committed, next_txn, tmp_par, msg_in_, vid_set, asked_map, curr_pie, srz, next_pie_, id_counter, alogs, n_committed, pre_accept_acks"/>
+<stringAttribute key="modelComments" value=""/>
+<booleanAttribute key="modelCorrectnessCheckDeadlock" value="true"/>
+<listAttribute key="modelCorrectnessInvariants"/>
+<listAttribute key="modelCorrectnessProperties">
+<listEntry value="0Termination"/>
+<listEntry value="1Serializability"/>
+</listAttribute>
+<stringAttribute key="modelExpressionEval" value=""/>
+<stringAttribute key="modelParameterActionConstraint" value=""/>
+<listAttribute key="modelParameterConstants">
+<listEntry value="defaultInitValue;;defaultInitValue;1;0"/>
+<listEntry value="TXN;;&lt;&lt; \*txn_pool&#10;  &lt;&lt; \* txn&#10;    [&#10;      opset |-&gt; {[key |-&gt; &quot;a&quot;, type |-&gt; &quot;w&quot;]}&#10;    ]&#10;  &gt;&gt;  &#10;&gt;&gt;;0;0"/>
+<listEntry value="M;;1;0;0"/>
+<listEntry value="N;;1;0;0"/>
+<listEntry value="X;;2;0;0"/>
+<listEntry value="Shard;adsfasdf:;1;0;0"/>
+</listAttribute>
+<stringAttribute key="modelParameterContraint" value=""/>
+<listAttribute key="modelParameterDefinitions"/>
+<stringAttribute key="modelParameterModelValues" value="{}"/>
+<stringAttribute key="modelParameterNewDefinitions" value=""/>
+<stringAttribute key="modelPropertiesExpand" value=""/>
+<intAttribute key="numberOfWorkers" value="12"/>
+<booleanAttribute key="recover" value="false"/>
+<stringAttribute key="result.mail.address" value=""/>
+<intAttribute key="simuAril" value="-1"/>
+<intAttribute key="simuDepth" value="100"/>
+<intAttribute key="simuSeed" value="-1"/>
+<stringAttribute key="specName" value="Janus"/>
+<stringAttribute key="view" value=""/>
+</launchConfiguration>
