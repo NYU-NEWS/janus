@@ -1,2 +1,3 @@
 #!/bin/sh
-fab --set data_dir=.ec2_single deploy_all:regions=us-west-2,servers_per_region=37,instance_type=t2.small
+data_dir=.ec2_single
+$janus/scripts/aws_experiments/build_aws.sh us-west-2 19 m4.large $data_dir
