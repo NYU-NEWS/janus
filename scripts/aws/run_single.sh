@@ -5,16 +5,16 @@ prefix="single_dc"
 
 function run_tests {
 	write_concurrent
-	
+
 	rw_fixed
 	tpca_fixed
 	tpcc
+	zipf_graph_open 6
 	zipf_graph 1
 	zipf_graph 3
 	zipf_graph 6
-
-	# rw
-	# zipfs
+	rw
+	zipfs
 }
 
 function write_concurrent {
@@ -30,6 +30,13 @@ function zipf_graph {
 	shards=$1
 	exp_name=${prefix}_zipf_graph_${shards}
 	scripts/aws/zipf_graph.py $exp_name -s $shards -c 9 -d $duration -f config/client_closed.yml config/tpca_zipf.yml config/tapir.yml /tmp/concurrent.yml
+	new_experiment $exp_name
+}
+
+function zipf_graph_open {
+	shards=$1
+	exp_name=${prefix}_zipf_graph_open_${shards}
+	scripts/aws/zipf_graph.py $exp_name -s $shards -c 9 -d $duration -f config/client_open.yml config/tpca_zipf.yml config/tapir.yml /tmp/concurrent.yml -cl 1111
 	new_experiment $exp_name
 }
 

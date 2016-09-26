@@ -38,6 +38,8 @@ def parse_args():
                         dest='modes', default=default_modes)
     parser.add_argument('-s', '--shards', dest='shards', default='6')
     parser.add_argument('-d', '--duration', dest='duration', default='90')
+    parser.add_argument('-cl', '--client-load', dest='client_load', default=None)
+	
     return parser.parse_args()
 
 def run(config, zipf):
@@ -55,6 +57,9 @@ def run(config, zipf):
     cmd.extend(config.options)
     cmd.extend(['-s', config.shards])
     cmd.extend(['-d', config.duration])
+
+    if config.client_load is not None:
+        cmd.extend(['-cl', config.client_load])
     
     logging.info('> {}'.format(' '.join(cmd)))
     logging.info(cmd)
