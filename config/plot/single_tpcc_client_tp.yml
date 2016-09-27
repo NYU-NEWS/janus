@@ -3,10 +3,10 @@ bench:
     - tpcc
     - rw_benchmark
 graph:
-    using_cmd: ($6):($7)
+    using_cmd: ($6/100):($7)
     x_label: 'Clients'
     y_label: 'Throughput (txn/s)'
     y_range: '[0:]'
-    x_range: '[0:200]'
+    x_range: '[1:]'
     output_file: 'single_tpcc_${txn}_${bench}_client_tp'
     key_location: 'top left'
