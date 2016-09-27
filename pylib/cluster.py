@@ -163,7 +163,7 @@ def mount_nfs():
             pass
 
 @task
-#@parallel(pool_size=10)
+@parallel(pool_size=10)
 @roles('servers', 'leaders')
 def config_nfs_client(server_ip=None):
     if server_ip is None:
