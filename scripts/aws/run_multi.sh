@@ -1,7 +1,7 @@
 #!/bin/bash
 duration=30
 concurrent=100
-prefix="single_dc"
+prefix="multi_dc"
 
 function run_tests {
 	write_concurrent
