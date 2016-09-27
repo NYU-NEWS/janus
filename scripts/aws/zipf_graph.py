@@ -39,6 +39,7 @@ def parse_args():
     parser.add_argument('-s', '--shards', dest='shards', default='6')
     parser.add_argument('-d', '--duration', dest='duration', default='90')
     parser.add_argument('-cl', '--client-load', dest='client_load', default=None)
+    parser.add_argument('-dc', '--data-centers', dest='data_centers', default=None)
 	
     return parser.parse_args()
 
@@ -57,6 +58,9 @@ def run(config, zipf):
     cmd.extend(config.options)
     cmd.extend(['-s', config.shards])
     cmd.extend(['-d', config.duration])
+    
+    if config.data_centers is not None:
+        cmd.extend(['-dc', config.data_centers])
 
     if config.client_load is not None:
         cmd.extend(['-cl', config.client_load])
