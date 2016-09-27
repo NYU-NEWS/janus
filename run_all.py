@@ -100,6 +100,8 @@ def create_parser():
                         default=ClientPlacement.BALANCED, help="client placement strategy (with leader for multipaxos)")
     parser.add_argument("-u", "--cpu-count", dest="cpu_count", type=int,
                         default=1, help="number of cores on the servers")
+    parser.add_argument("-dc", "--data-centers", dest="data_centers", nargs="+", type=str,
+                        default=[], help="data center names (for multi-dc setup)")
     return parser
 
 
@@ -130,14 +132,19 @@ def get_range(r):
         return range(*a)
 
 
-def gen_process_and_site(args, experiment_name, num_c, num_s, num_replicas, hosts_config):
+def gen_process_and_site(args, experiment_name, num_c, num_s, num_replicas, hosts_config, mode):
     hosts = hosts_config['host']
 
     layout_strategies = {
         ClientPlacement.BALANCED: BalancedPlacementStrategy(),
         ClientPlacement.WITH_LEADER: LeaderPlacementStrategy(),
     }
-    strategy = layout_strategies[args.client_placement]
+    
+    if mode.find('multi_paxos') >= 0:
+        strategy = layout_strategies[ClientPlacement.WITH_LEADER]
+    else:
+        strategy = layout_strategies[ClientPlacement.BALANCED]
+    
     layout = strategy.generate_layout(args, num_c, num_s, num_replicas, hosts_config)
 
     if not os.path.isdir(TMP_DIR):
@@ -226,7 +233,7 @@ def generate_config(args, experiment_name, benchmark, mode, zipf, client_load, n
     hosts_config = load_config(args.hosts_file)
     proc_and_site_config = gen_process_and_site(args, experiment_name,
                                                 num_client, num_server,
-                                                num_replicas, hosts_config)
+                                                num_replicas, hosts_config, mode)
     
     logger.debug("site and process config: %s", proc_and_site_config)
     cc_mode, ab_mode = mode.split(':')

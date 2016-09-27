@@ -2,6 +2,7 @@ import sys
 import itertools
 import logging
 import math
+import copy
 
 logger = logging.getLogger('')
 
@@ -11,12 +12,14 @@ class ClientPlacement:
 
 class BalancedPlacementStrategy:
 	def generate_layout(self, args, num_c, num_s, num_replicas, hosts_config):
+		data_centers = args.data_centers
+
 		self.args = args
 		self.num_c = num_c
 		self.num_s = num_s
 		self.num_replicas = num_replicas
 
-		hosts = [ name for name in hosts_config['host'].keys() ]
+		hosts = self.hosts_by_datacenter(hosts_config['host'].keys(), data_centers)
 		server_names = [ 's'+str(i) for i in range(num_s * num_replicas) ]
 		client_names = [ 'c'+str(i) for i in range(num_c) ]
 
@@ -29,30 +32,71 @@ class BalancedPlacementStrategy:
 		result = {'site': site, 'process': process}
 		return result
 
-	def generate_process(self, process, hosts, server_names, client_names):
-		def next_host(hosts_it):
-			return hosts_it.next()
+	def hosts_by_datacenter(self, hosts, data_centers):
+		if len(data_centers) == 0:
+			return {'': hosts}
+		else:
+			result = {}
 
+			for dc in data_centers:
+				result[dc] = []
+
+			for h in hosts:
+				for dc in data_centers:
+					if h.find(dc)==0:
+						result[dc].append(h)
+						break
+			return result
+
+	def generate_process(self, process, hosts, server_names, client_names):
 		# identify server hosts and account for extra cpu
 		tot_procs = self.num_s * self.num_replicas
 		num_server_machines = int(math.ceil(float(tot_procs) / self.args.cpu_count))
-		server_hosts = hosts[:num_server_machines]
-		logger.debug("server hosts: %s", ', '.join(server_hosts))
-		tmp = list(server_hosts)
+		data_centers = hosts.keys()
+		num_c = len(client_names)
+		servers_per_datacenter = num_server_machines / len(data_centers)
+		
+		server_hosts = {}
+		client_hosts = {}
+		for dc in data_centers:
+			server_hosts[dc] = hosts[dc][0:servers_per_datacenter]
+			client_hosts[dc] = hosts[dc][servers_per_datacenter:]
 
-		for h in server_hosts:
-			# append extra cpu to server host lists
-			for x in range(self.args.cpu_count-1):
-				tmp.append(h)
-		hosts_it = itertools.cycle(tmp)
-		server_processes = {name: next_host(hosts_it) for name in server_names}
+		# append extra cpu to server host lists
+		for dc in data_centers:
+			hosts = copy.copy(server_hosts[dc])
+			for h in hosts:
+				for x in range(self.args.cpu_count-1):
+					server_hosts[dc].append(h)
 
-		remaining_hosts = list(set(hosts) - set(server_hosts))
-		if len(remaining_hosts)!=0:
-			hosts_it = itertools.cycle(remaining_hosts)
-			logger.debug("client hosts: %s", ', '.join(remaining_hosts))
+		logger.debug("server hosts: %s", server_hosts)
 
-		client_processes = {name: next_host(hosts_it) for name in client_names}
+		# map servers to logical names
+		host_lists = zip(*[ hosts for hosts in server_hosts.values() ])
+		server_num = 0
+		server_processes = {}
+		for l in host_lists:
+			for h in l:
+				server_key = 's' + str(server_num)
+				server_num += 1
+				logger.debug("map {} to {}".format(server_key, h))
+				server_processes[server_key] = h
+
+		# map clients to logical names
+		host_lists = zip(*[ hosts for hosts in client_hosts.values() ])
+		client_num = 0
+		client_processes = {}
+		for l in host_lists:
+			for h in l:
+				client_key = 'c' + str(client_num)
+				client_num += 1
+				logger.debug("map {} to {}".format(client_key, h))
+				client_processes[client_key] = h
+				if client_num == num_c:
+					break
+			if client_num == num_c:
+				break
+
 		process.update(client_processes)
 		process.update(server_processes)
 
