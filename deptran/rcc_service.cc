@@ -387,7 +387,7 @@ void ClassicServiceImpl::BrqCommit(const cmdid_t& cmd_id,
   std::lock_guard <std::mutex> guard(mtx_);
   BrqSched* sched = (BrqSched*) dtxn_sched_;
   sched->OnCommit(cmd_id,
-                  dynamic_cast<RccGraph&>(*graph.ptr().get()),
+                  dynamic_cast<RccGraph*>(graph.ptr().get()),
                   res,
                   output,
                   [defer]() { defer->reply(); });
@@ -403,7 +403,8 @@ void ClassicServiceImpl::BrqCommitWoGraph(const cmdid_t& cmd_id,
                                        DeferredReply* defer) {
   std::lock_guard <std::mutex> guard(mtx_);
   BrqSched* sched = (BrqSched*) dtxn_sched_;
-  sched->OnCommitWoGraph(cmd_id,
+  sched->OnCommit(cmd_id,
+                         nullptr,
                          res,
                          output,
                          [defer]() { defer->reply(); });

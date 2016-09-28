@@ -31,16 +31,22 @@ class BrqSched : public RccSched {
                 int32_t* res,
                 function<void()> callback);
 
+//  void OnCommit(const txnid_t txn_id,
+//                const RccGraph &graph,
+//                int32_t *res,
+//                TxnOutput *output,
+//                const function<void()> &callback);
+
   void OnCommit(const txnid_t txn_id,
-                const RccGraph &graph,
+                RccGraph* graph,
                 int32_t *res,
                 TxnOutput *output,
                 const function<void()> &callback);
 
-  void OnCommitWoGraph(const txnid_t cmd_id,
-                       int32_t* res,
-                       TxnOutput* output,
-                       const function<void()>& callback);
+//  void OnCommitWoGraph(const txnid_t cmd_id,
+//                       int32_t* res,
+//                       TxnOutput* output,
+//                       const function<void()>& callback);
 
   int OnInquire(epoch_t epoch,
                 cmdid_t cmd_id,
