@@ -722,6 +722,7 @@ class ServerController(object):
                         r_sz_sum += ret.r_sz_sum
                         r_sz_num += ret.r_sz_num
                         cpu_util[i] = ret.cpu_util
+                        logger.info("CPU {}: {}".format(i, ret.cpu_util))
                         for k, v in ret.statistics.items():
                             if k not in statistics:
                                 statistics[k] = ServerResponse(v)
