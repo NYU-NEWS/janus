@@ -54,7 +54,11 @@ class BalancedPlacementStrategy:
 		num_server_machines = int(math.ceil(float(tot_procs) / self.args.cpu_count))
 		data_centers = hosts.keys()
 		num_c = len(client_names)
-		servers_per_datacenter = num_server_machines / len(data_centers)
+		servers_per_datacenter = int(math.ceil(float(num_server_machines) / len(data_centers)))
+		print("dc: ", data_centers)
+		print("spd: ", servers_per_datacenter)
+		print("tp, cpu, nsm: ", tot_procs, self.args.cpu_count, num_server_machines)
+		print("num_s, num_r", self.num_s, self.num_replicas)
 		
 		server_hosts = {}
 		client_hosts = {}
@@ -81,6 +85,10 @@ class BalancedPlacementStrategy:
 				server_num += 1
 				logger.debug("map {} to {}".format(server_key, h))
 				server_processes[server_key] = h
+				if server_num == self.num_s:
+					break
+			if server_num == self.num_s:
+				break
 
 		# map clients to logical names
 		host_lists = zip(*[ hosts for hosts in client_hosts.values() ])
