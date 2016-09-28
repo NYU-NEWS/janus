@@ -51,7 +51,7 @@ class RccGraph : public Graph<RccDTxn> {
   RccDTxn* FindOrCreateRccVertex(txnid_t txn_id, RccSched* sched);
   void RemoveVertex(txnid_t txn_id);
   void RebuildEdgePointer(map<txnid_t, RccDTxn*>& index);
-  RccDTxn* AggregateVertex(RccDTxn *rhs_v);
+  RccDTxn* AggregateVertex(RccDTxn *rhs_dtxn);
   void UpgradeStatus(RccDTxn* v, int8_t status);
 
   map<txnid_t, RccDTxn*> Aggregate(epoch_t epoch, RccGraph& graph);

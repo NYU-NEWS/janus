@@ -35,11 +35,13 @@ namespace rococo {
 
 // a transaction (command) status
 #define TXN_UKN (0x00)  // unknown
-#define TXN_STD (0x01)  // started
-#define TXN_CMT (0x02)  // committing
-#define TXN_DCD (0x04)  // decided
-#define TXN_FNS (0x08)  // finished
-#define TXN_ABT (0x10)  // aborted
+#define TXN_STD (0x01)  // started/dispatched
+#define TXN_PAC (0x02)  // pre-accepted
+#define TXN_ACC (0x04)  // accepted
+#define TXN_CMT (0x08)  // committing
+#define TXN_DCD (0x10)  // decided
+#define TXN_FNS (0x20)  // finished
+#define TXN_ABT (0x40)  // aborted
 
 #define SUCCESS     (0)
 #define FAILURE     (-1)

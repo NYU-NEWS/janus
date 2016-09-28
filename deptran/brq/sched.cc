@@ -116,37 +116,42 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
 //  Log_info("on preaccept: %llx par: %d", txn_id, (int)partition_id_);
 //  if (RandomGenerator::rand(1, 2000) <= 1)
 //    Log_info("on pre-accept graph size: %d", graph.size());
-  verify(txn_id > 0);
+//  verify(txn_id > 0);
   verify(cmds[0].root_id_ == txn_id);
   Aggregate(const_cast<RccGraph&>(graph));
   TriggerCheckAfterAggregation(const_cast<RccGraph&>(graph));
   // TODO FIXME
   // add interference based on cmds.
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(txn_id);
+  dtxn->UpdateStatus(TXN_PAC);
   dtxn->involve_flag_ = RccDTxn::INVOLVED;
 //  TxnInfo& tinfo = dtxn->tv_->Get();
-  if (dtxn->status() < TXN_CMT) {
-    if (dtxn->phase_ < PHASE_RCC_DISPATCH && dtxn->status() < TXN_CMT) {
-      for (auto& c: cmds) {
-        map<int32_t, Value> output;
-        dtxn->DispatchExecute(c, res, &output);
-      }
-    }
+  if (dtxn->max_seen_ballot_ > 0) {
+    *res = REJECT;
   } else {
-    if (dtxn->dreqs_.size() == 0) {
-      for (auto& c: cmds) {
-        dtxn->dreqs_.push_back(c);
+    if (dtxn->status() < TXN_CMT) {
+      if (dtxn->phase_ < PHASE_RCC_DISPATCH && dtxn->status() < TXN_CMT) {
+        for (auto& c: cmds) {
+          map<int32_t, Value> output;
+          dtxn->DispatchExecute(c, res, &output);
+        }
+      }
+    } else {
+      if (dtxn->dreqs_.size() == 0) {
+        for (auto& c: cmds) {
+          dtxn->dreqs_.push_back(c);
+        }
       }
     }
+    verify(!dtxn->fully_dispatched);
+    dtxn->fully_dispatched = true;
+    MinItfrGraph(dtxn, res_graph, false, 1);
+    if (dtxn->status() >= TXN_CMT) {
+      waitlist_.insert(dtxn);
+      verify(dtxn->epoch_ > 0);
+    }
+    *res = SUCCESS;
   }
-  verify(!dtxn->fully_dispatched);
-  dtxn->fully_dispatched = true;
-  MinItfrGraph(dtxn, res_graph, false, 1);
-  if (dtxn->status() >= TXN_CMT) {
-    waitlist_.insert(dtxn);
-    verify(dtxn->epoch_ > 0);
-  }
-  *res = SUCCESS;
   callback();
 }
 
@@ -166,29 +171,34 @@ void BrqSched::OnPreAcceptWoGraph(const txnid_t txn_id,
   // TODO FIXME
   // add interference based on cmds.
   RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(txn_id);
+  dtxn->UpdateStatus(TXN_PAC);
   RccDTxn& tinfo = *dtxn;
-  if (tinfo.status() < TXN_CMT) {
-    if (dtxn->phase_ < PHASE_RCC_DISPATCH && tinfo.status() < TXN_CMT) {
-      for (auto& c: cmds) {
-        map<int32_t, Value> output;
-        dtxn->DispatchExecute(c, res, &output);
-      }
-    }
+  if (dtxn->max_seen_ballot_ > 0) {
+    *res = REJECT;
   } else {
-    if (dtxn->dreqs_.size() == 0) {
-      for (auto& c: cmds) {
-        dtxn->dreqs_.push_back(c);
+    if (dtxn->status() < TXN_CMT) {
+      if (dtxn->phase_ < PHASE_RCC_DISPATCH && tinfo.status() < TXN_CMT) {
+        for (auto& c: cmds) {
+          map<int32_t, Value> output;
+          dtxn->DispatchExecute(c, res, &output);
+        }
+      }
+    } else {
+      if (dtxn->dreqs_.size() == 0) {
+        for (auto& c: cmds) {
+          dtxn->dreqs_.push_back(c);
+        }
       }
     }
+    verify(!tinfo.fully_dispatched);
+    tinfo.fully_dispatched = true;
+    MinItfrGraph(dtxn, res_graph, false, 1);
+    if (tinfo.status() >= TXN_CMT) {
+      waitlist_.insert(dtxn);
+      verify(dtxn->epoch_ > 0);
+    }
+    *res = SUCCESS;
   }
-  verify(!tinfo.fully_dispatched);
-  tinfo.fully_dispatched = true;
-  MinItfrGraph(dtxn, res_graph, false, 1);
-  if (tinfo.status() >= TXN_CMT) {
-    waitlist_.insert(dtxn);
-    verify(dtxn->epoch_ > 0);
-  }
-  *res = SUCCESS;
   callback();
 }
 
@@ -199,8 +209,16 @@ void BrqSched::OnAccept(const txnid_t txn_id,
                         int32_t* res,
                         function<void()> callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  // TODO
-  *res = SUCCESS;
+  RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(txn_id);
+  if (dtxn->max_seen_ballot_ > ballot) {
+    *res = REJECT;
+    verify(0); // do not support failure recovery so far.
+  } else {
+    dtxn->max_accepted_ballot_ = ballot;
+    dtxn->max_seen_ballot_ = ballot;
+    Aggregate(const_cast<RccGraph&> (graph));
+    *res = SUCCESS;
+  }
   callback();
 }
 

@@ -251,14 +251,14 @@ void RccGraph::UpgradeStatus(RccDTxn *v, int8_t status) {
 }
 
 
-RccDTxn* RccGraph::AggregateVertex(RccDTxn *rhs_v) {
+RccDTxn* RccGraph::AggregateVertex(RccDTxn *rhs_dtxn) {
   // TODO: add epoch here.
   // create the dtxn if not exist.
-  RccDTxn* vertex = FindOrCreateV(*rhs_v);
-  auto status1 = vertex->get_status();
-  auto status2 = rhs_v->get_status();
-  auto& parent_set1 = vertex->parents_;
-  auto& parent_set2 = rhs_v->GetParentSet();
+  RccDTxn* lhs_dtxn = FindOrCreateV(*rhs_dtxn);
+  auto status1 = lhs_dtxn->get_status();
+  auto status2 = rhs_dtxn->get_status();
+  auto& parent_set1 = lhs_dtxn->parents_;
+  auto& parent_set2 = rhs_dtxn->GetParentSet();
 #ifdef DEBUG_CODE
   if (status1 >= TXN_CMT) {
     RccSched::__DebugCheckParentSetSize(vertex->id(), vertex->parents_.size());
@@ -280,20 +280,33 @@ RccDTxn* RccGraph::AggregateVertex(RccDTxn *rhs_v) {
   /**
    * If local vertex is not yet fully dispatched, what to do?
    */
-  RccDTxn &info = *vertex;
-  RccDTxn &rhs_tinfo = *rhs_v;
+//  RccDTxn &info = *lhs_dtxn;
+//  RccDTxn &rhs_tinfo = *rhs_dtxn;
 //  partition_id_;
 
-  if (status1 < TXN_CMT && status2 < TXN_CMT) {
-    vertex->parents_.insert(rhs_v->parents_.begin(), rhs_v->parents_.end());
-  }
-  if (status1 < TXN_CMT && status2 >= TXN_CMT) {
-//    Log_info("aggregating, txnid: %llx, parent size: %d",
-//              rhs_v->id(), (int) rhs_v->parents_.size());
-//    if (!info.fully_dispatched) {
-//      verify(0);
-//    }
-    vertex->parents_ = rhs_v->parents_;
+  if (lhs_dtxn->max_seen_ballot_ == 0 &&
+      status1 <= TXN_STD &&
+      status2 <= TXN_STD) {
+    lhs_dtxn->parents_.insert(rhs_dtxn->parents_.begin(),
+                              rhs_dtxn->parents_.end());
+//    lhs_dtxn->partition_.insert(rhs_dtxn->partition_.begin(),
+//                                rhs_dtxn->partition_.end());
+  } else if (status2 >= TXN_CMT) {
+    if (status2 > status1) {
+//      verify(rhs_dtxn->partition_.size() >= lhs_dtxn->partition_.size());
+      lhs_dtxn->parents_ = rhs_dtxn->parents_;
+//      lhs_dtxn->partition_ = rhs_dtxn->partition_;
+    } // else do nothing.
+  } else {
+    if (status2 >= TXN_PAC && status2 >= status1) {
+      if (lhs_dtxn->max_seen_ballot_ <= rhs_dtxn->max_accepted_ballot_) {
+//        verify(rhs_dtxn->partition_.size() >= lhs_dtxn->partition_.size());
+        lhs_dtxn->max_seen_ballot_ = rhs_dtxn->max_accepted_ballot_;
+        lhs_dtxn->parents_  = rhs_dtxn->parents_;
+//        lhs_dtxn->partition_ = rhs_dtxn->partition_;
+      } // else do nothing.
+    }
+
   }
 #ifdef DEBUG_CODE
   if (status1 >= TXN_CMT) {
@@ -305,9 +318,12 @@ RccDTxn* RccGraph::AggregateVertex(RccDTxn *rhs_v) {
     }
   }
 #endif
-  // TODO this should replace most parts in this function
-  info.union_data(rhs_tinfo);
-  return vertex;
+  // TODO fix this for empty graph.
+  lhs_dtxn->partition_.insert(rhs_dtxn->partition_.begin(),
+                              rhs_dtxn->partition_.end());
+  lhs_dtxn->status_ |= rhs_dtxn->status_;
+//  lhs_dtxn->union_data(*rhs_dtxn);
+  return lhs_dtxn;
 }
 
 //RccScc& RccGraph::FindSCC(RccDTxn *vertex) {

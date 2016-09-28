@@ -49,6 +49,8 @@ void BrqCoord::PreAccept() {
 //  // generate fast accept request
   // set broadcast callback
   // broadcast
+  RccDTxn* dtxn = graph_.FindV(cmd_->id_);
+  verify(txn().partition_ids_.size() == dtxn->partition_.size());
   for (auto par_id : cmd_->GetPartitionIds()) {
     auto cmds = txn().GetCmdsByPartition(par_id);
     commo()->BroadcastPreAccept(par_id,
@@ -139,6 +141,10 @@ void BrqCoord::Accept() {
   verify(!fast_path_);
 //  Log_info("broadcast accept request for txn_id: %llx", cmd_->id_);
   ChooseGraph();
+  TxnCommand *txn = (TxnCommand*) cmd_;
+  RccDTxn* dtxn = graph_.FindV(cmd_->id_);
+  verify(txn->partition_ids_.size() == dtxn->partition_.size());
+  graph_.UpgradeStatus(dtxn, TXN_CMT);
   for (auto par_id : cmd_->GetPartitionIds()) {
     commo()->BroadcastAccept(par_id,
                              cmd_->id_,
@@ -178,10 +184,9 @@ void BrqCoord::AcceptAck(phase_t phase,
 void BrqCoord::Commit() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   TxnCommand *txn = (TxnCommand*) cmd_;
-  RccDTxn* v = graph_.FindV(cmd_->id_);
-  RccDTxn& info = *v;
-  verify(txn->partition_ids_.size() == info.partition_.size());
-  graph_.UpgradeStatus(v, TXN_CMT);
+  RccDTxn* dtxn = graph_.FindV(cmd_->id_);
+  verify(txn->partition_ids_.size() == dtxn->partition_.size());
+  graph_.UpgradeStatus(dtxn, TXN_CMT);
   for (auto par_id : cmd_->GetPartitionIds()) {
     commo()->BroadcastCommit(par_id,
                              cmd_->id_,

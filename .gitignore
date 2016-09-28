@@ -28,3 +28,4 @@ deptran/mdcc/mdcc_rpc.h
 .unittest-gtest/
 *rpc.h
 *.res
+*.prof

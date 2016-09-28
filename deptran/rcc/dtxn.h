@@ -10,6 +10,9 @@ namespace rococo {
 class RccDTxn: public DTxn, public Vertex<RccDTxn> {
  public:
   int8_t status_ = TXN_UKN;
+  ballot_t max_seen_ballot_{0};
+  ballot_t max_accepted_ballot_{0};
+
   vector<SimpleCommand> dreqs_ = {};
   TxnOutput *ptr_output_repy_ = nullptr;
   TxnOutput output_ = {};
