@@ -91,7 +91,7 @@ class BalancedPlacementStrategy:
 				break
 
 		# map clients to logical names
-		host_lists = zip(*[ hosts for hosts in client_hosts.values() ])
+		host_lists = itertools.cycle(zip(*[ hosts for hosts in client_hosts.values() ]))
 		client_num = 0
 		client_processes = {}
 		for l in host_lists:
