@@ -85,9 +85,9 @@ class BalancedPlacementStrategy:
 				server_num += 1
 				logger.debug("map {} to {}".format(server_key, h))
 				server_processes[server_key] = h
-				if server_num == self.num_s:
+				if server_num == tot_procs:
 					break
-			if server_num == self.num_s:
+			if server_num == tot_procs:
 				break
 
 		# map clients to logical names
