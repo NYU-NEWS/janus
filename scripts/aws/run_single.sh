@@ -88,7 +88,6 @@ function tpcc {
 	new_experiment $exp_name
 }
 
-
 function tpca_fixed {
 	shards=$1
 	if [[ shards -le 3 ]]
