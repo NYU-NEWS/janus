@@ -10,6 +10,7 @@ class ClientPlacement:
     WITH_LEADER = 'with_leader'
     BALANCED = 'balanced'
 
+
 class BalancedPlacementStrategy:
 	def generate_layout(self, args, num_c, num_s, num_replicas, hosts_config):
 		data_centers = args.data_centers
@@ -34,7 +35,7 @@ class BalancedPlacementStrategy:
 
 	def hosts_by_datacenter(self, hosts, data_centers):
 		if len(data_centers) == 0:
-			return {'': hosts}
+			return {'': sorted(hosts)}
 		else:
 			result = {}
 
@@ -46,67 +47,52 @@ class BalancedPlacementStrategy:
 					if h.find(dc)==0:
 						result[dc].append(h)
 						break
-			return result
+
+			sorted_result = { dc: sorted(value) for (dc, value) in result.iteritems() }
+			return sorted_result
 
 	def generate_process(self, process, hosts, server_names, client_names):
-		# identify server hosts and account for extra cpu
-		tot_procs = self.num_s * self.num_replicas
-		num_server_machines = int(math.ceil(float(tot_procs) / self.args.cpu_count))
-		data_centers = hosts.keys()
-		num_c = len(client_names)
-		servers_per_datacenter = int(math.ceil(float(num_server_machines) / len(data_centers)))
-		print("dc: ", data_centers)
-		print("spd: ", servers_per_datacenter)
-		print("tp, cpu, nsm: ", tot_procs, self.args.cpu_count, num_server_machines)
-		print("num_s, num_r", self.num_s, self.num_replicas)
-		
-		server_hosts = {}
-		client_hosts = {}
-		for dc in data_centers:
-			server_hosts[dc] = hosts[dc][0:servers_per_datacenter]
-			client_hosts[dc] = hosts[dc][servers_per_datacenter:]
+		num_datacenters = len(hosts.keys())
+		num_servers = int(math.ceil(float(len(server_names)) / float(self.args.cpu_count)))
+		num_servers_per_datacenter = int(math.ceil(float(num_servers) / float(num_datacenters)))
 
-		# append extra cpu to server host lists
-		for dc in data_centers:
-			hosts = copy.copy(server_hosts[dc])
-			for h in hosts:
-				for x in range(self.args.cpu_count-1):
-					server_hosts[dc].append(h)
+		logging.info("num_datacenters: %s", num_datacenters)
+		logging.info("num_servers: %s", num_servers)
+		logging.info("num_servers_per_datacenter: %s", num_servers_per_datacenter)
 
-		logger.debug("server hosts: %s", server_hosts)
+		# partition hosts in to servers and clients
+		server_machines = {dc: [] for dc in hosts.keys()}
+		for dc in hosts.keys():
+			server_machines[dc].extend(hosts[dc][:num_servers_per_datacenter])
 
-		# map servers to logical names
-		host_lists = zip(*[ hosts for hosts in server_hosts.values() ])
-		server_num = 0
-		server_processes = {}
-		for l in host_lists:
-			for h in l:
-				server_key = 's' + str(server_num)
-				server_num += 1
-				logger.debug("map {} to {}".format(server_key, h))
-				server_processes[server_key] = h
-				if server_num == tot_procs:
-					break
-			if server_num == tot_procs:
-				break
+		client_machines = {dc: [] for dc in hosts.keys()}
+		for dc in hosts.keys():
+			server_set = set(server_machines[dc])
+			all_set = set(hosts[dc])
+			clients = list(all_set - server_set)
+			client_machines[dc].extend(clients)
 
-		# map clients to logical names
-		host_lists = itertools.cycle(zip(*[ hosts for hosts in client_hosts.values() ]))
-		client_num = 0
-		client_processes = {}
-		for l in host_lists:
-			for h in l:
-				client_key = 'c' + str(client_num)
-				client_num += 1
-				logger.debug("map {} to {}".format(client_key, h))
-				client_processes[client_key] = h
-				if client_num == num_c:
-					break
-			if client_num == num_c:
-				break
+		# now match {server, client} names to their respective hosts
 
-		process.update(client_processes)
-		process.update(server_processes)
+		# returns each data center in a round robin fashion -- forever
+		datacenter_it = itertools.cycle(hosts.keys())
+
+		server_hosts_it = {dc: itertools.cycle(hosts) for (dc, hosts) in server_machines.iteritems()}
+		for server in server_names:
+			dc = datacenter_it.next()
+			server_host = server_hosts_it[dc].next()
+			logging.info("map %s -> %s", server, server_host)
+			process[server] = server_host
+
+		datacenter_it = itertools.cycle(hosts.keys())
+
+		client_hosts_it = {dc: itertools.cycle(hosts) for (dc, hosts) in client_machines.iteritems()}
+		for client in client_names:
+			dc = datacenter_it.next()
+			client_host = client_hosts_it[dc].next()
+			logging.info("map %s -> %s", client, client_host)
+			process[client] = client_host
+
 
 	def generate_site(self, site, server_names, client_names):
 		self.generate_site_server(site, server_names)

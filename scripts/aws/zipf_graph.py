@@ -14,7 +14,7 @@ default_configs = [
 ]
 default_modes = [ 'brq:brq', 'tapir:tapir', '2pl_ww:multi_paxos', 'occ:multi_paxos' ]
 default_benchmark = [ 'tpca' ]
-default_options = ['-u', '2', '-r', '3']
+default_options = ['-r', '3']
 
 def parse_args():
     parser = argparse.ArgumentParser(description='Process some integers.')
@@ -40,6 +40,7 @@ def parse_args():
     parser.add_argument('-d', '--duration', dest='duration', default='90')
     parser.add_argument('-cl', '--client-load', dest='client_load', default=None)
     parser.add_argument('-dc', '--data-centers', dest='data_centers', default=None, nargs='+', type=str)
+    parser.add_argument('-u', '--cpu', dest='num_cpu', default=1, type=int)
 	
     return parser.parse_args()
 
@@ -58,6 +59,7 @@ def run(config, zipf):
     cmd.extend(config.options)
     cmd.extend(['-s', config.shards])
     cmd.extend(['-d', config.duration])
+    cmd.extend(['-u', str(config.num_cpu)])
     
     if config.data_centers is not None:
         cmd.extend(['-dc'] + config.data_centers)
