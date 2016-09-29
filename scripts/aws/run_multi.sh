@@ -6,17 +6,20 @@ datacenters="us-west-2 eu-west-1 ap-northeast-2"
 
 function run_tests {
 	write_concurrent
-
-	rw_fixed
-	tpca_fixed
-	#zipf_graph_open 6
-	zipf_graph 1
+	
 	zipf_graph 3
-	zipf_graph 6
-	tpcc 3
+	tpca_fixed 3
 	tpcc 6
-#	rw
-#	zipfs
+	rw_fixed
+
+	#zipf_graph 1
+	#zipf_graph 3
+	#zipf_graph 6
+	#zipf_graph_open 6
+	#tpcc 3
+	#tpcc 6
+	#rw
+	#zipfs
 }
 
 function write_concurrent {
@@ -42,7 +45,7 @@ function zipf_graph {
 		cpu=2
 	fi
 	exp_name=${prefix}_zipf_graph_${shards}
-	scripts/aws/zipf_graph.py $exp_name -s $shards -u $cpu -c 9 -d $duration -f config/client_closed.yml config/tpca_zipf.yml config/tapir.yml /tmp/concurrent.yml -dc $datacenters
+	scripts/aws/zipf_graph.py $exp_name -s $shards -u $cpu --zipf 0.0 0.3 0.5 0.6 0.7 0.8 0.9 1.0 -c 9 -d $duration -f config/client_closed.yml config/tpca_zipf.yml config/tapir.yml /tmp/concurrent.yml -dc $datacenters
 	new_experiment $exp_name
 }
 
