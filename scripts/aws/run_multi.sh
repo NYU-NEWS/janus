@@ -1,6 +1,6 @@
 #!/bin/bash
 duration=30
-concurrent=100
+concurrent=400
 prefix="multi_dc"
 datacenters="us-west-2 eu-west-1 ap-northeast-2"
 
@@ -8,9 +8,10 @@ function run_tests {
 	write_concurrent
 	
 	zipf_graph 3
-	tpca_fixed 3
 	tpcc 6
-	rw_fixed
+	tpcc 3 
+	tpca_fixed 3
+	#rw_fixed
 
 	#zipf_graph 1
 	#zipf_graph 3
@@ -45,7 +46,7 @@ function zipf_graph {
 		cpu=2
 	fi
 	exp_name=${prefix}_zipf_graph_${shards}
-	scripts/aws/zipf_graph.py $exp_name -s $shards -u $cpu --zipf 0.0 0.3 0.5 0.6 0.7 0.8 0.9 1.0 -c 9 -d $duration -f config/client_closed.yml config/tpca_zipf.yml config/tapir.yml /tmp/concurrent.yml -dc $datacenters
+	scripts/aws/zipf_graph.py $exp_name -s $shards -u $cpu --zipf 0.0 0.3 0.5 0.6 0.7 0.8 0.9 1.0 -c 27 -d $duration -f config/client_closed.yml config/tpca_zipf.yml config/tapir.yml /tmp/concurrent.yml -dc $datacenters
 	new_experiment $exp_name
 }
 
@@ -83,7 +84,7 @@ function tpcc {
 		cpu=2
 	fi
 	exp_name=${prefix}_tpcc_${shards}
-	./run_all.py -g -hh config/aws_hosts.yml -cc config/client_closed.yml -cc /tmp/concurrent.yml -cc config/tpcc.yml -cc config/tapir.yml -b tpcc -m brq:brq -m 2pl_ww:multi_paxos -m occ:multi_paxos -m tapir:tapir -c 1 -c 2 -c 4 -c 8 -c 16 -c 32 -c 64 -s $shards -u $cpu -r 3 -d $duration $exp_name -dc $datacenters
+	./run_all.py -g -hh config/aws_hosts.yml -cc config/client_closed.yml -cc /tmp/concurrent.yml -cc config/tpcc.yml -cc config/tapir.yml -b tpcc -m brq:brq -m 2pl_ww:multi_paxos -m occ:multi_paxos -m tapir:tapir -c 1 -c 2 -c 4 -c 8 -c 16 -c 20 -c 24 -c 28 -c 32 -s $shards -u $cpu -r 3 -d $duration $exp_name -dc $datacenters
 	new_experiment $exp_name
 }
 
@@ -97,7 +98,7 @@ function tpca_fixed {
 		cpu=2
 	fi
 	exp_name=${prefix}_tpca_fixed
-	./run_all.py -g -hh config/aws_hosts.yml -cc config/client_closed.yml -cc /tmp/concurrent.yml -cc config/tpca_fixed.yml -cc config/tapir.yml -b tpca -m brq:brq -m 2pl_ww:multi_paxos -m occ:multi_paxos -m tapir:tapir -c 1 -c 2 -c 4 -c 8 -c 16 -c 32 -s $shards -u $cpu -r 3 -d $duration $exp_name -dc $datacenters
+	./run_all.py -g -hh config/aws_hosts.yml -cc config/client_closed.yml -cc /tmp/concurrent.yml -cc config/tpca_fixed.yml -cc config/tapir.yml -b tpca -m brq:brq -m 2pl_ww:multi_paxos -m occ:multi_paxos -m tapir:tapir -c 1 -c 2 -c 4 -c 8 -c 16 -c 32 -c 64 -c 72 -c 80 -s $shards -u $cpu -r 3 -d $duration $exp_name -dc $datacenters
 	new_experiment $exp_name
 }
 
