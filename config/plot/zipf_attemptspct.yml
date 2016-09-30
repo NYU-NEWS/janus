@@ -8,4 +8,4 @@ graph:
     x_range: '[0.5:1]'
     x_tics: 0,0.1
     output_file: '${txn}_${bench}_zipf_commits_attempts'
-    key_location: 'bottom left'
+    key_location: 'bottom left font ",14" spacing 4'
