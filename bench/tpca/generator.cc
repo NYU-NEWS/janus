@@ -6,6 +6,7 @@
 
 using namespace rococo;
 
+
 TpcaTxnGenerator::TpcaTxnGenerator(Config* config) : TxnGenerator(config) {
   std::map<std::string, uint64_t> table_num_rows;
   sharding_->get_number_rows(table_num_rows);
@@ -96,8 +97,10 @@ void TpcaTxnGenerator::GetTxnReq(TxnRequest *req, uint32_t cid) {
   req->txn_type_ = TPCA_PAYMENT;
 
   auto& dist = Config::GetConfig()->dist_;
+  auto& rotate = Config::GetConfig()->rotate_;
   if (fix_id_ >= 0) {
     verify(dist == "fixed");
+    // TODO, divide the key range, choose a different one each time.
     if (key_ids_.count(cid) == 0) {
       int32_t& key = key_ids_[cid];
       key = fix_id_;
@@ -140,6 +143,13 @@ void TpcaTxnGenerator::GetTxnReq(TxnRequest *req, uint32_t cid) {
     int k1 = d1(rand_gen_);
     int k2 = d2(rand_gen_);
     int k3 = d3(rand_gen_);
+    if (rotate > 0) {
+      int n1 = tpca_para_.n_customer_ / rotate;
+      int n2 = tpca_para_.n_teller_ /   rotate;
+      int n3 = tpca_para_.n_branch_ /   rotate;
+      k2 = (k2 + n2) % tpca_para_.n_teller_;
+      k3 = (k3 + n3*2) % tpca_para_.n_branch_;
+    }
     req->input_ = {
         {0, Value(k1)},
         {1, Value(k2)},

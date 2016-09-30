@@ -50,7 +50,7 @@ void ClassicCoord::do_one(TxnRequest &req) {
   n_retry_ = 0;
   Reset(); // In case of reuse.
 
-  Log_debug("do one request txn_id: %ld\n", cmd_->id_);
+  Log_debug("do one request txn_id:%"PRIx64"\n", cmd_->id_);
 
   if (ccsi_) ccsi_->txn_start_one(thread_id_, cmd->type_);
 

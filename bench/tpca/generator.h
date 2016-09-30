@@ -7,6 +7,8 @@ namespace rococo {
 
 class TpcaTxnGenerator: public TxnGenerator {
  public:
+//  static set<int32_t> __debug_key_test_{};
+
   boost::random::mt19937 rand_gen_;
   map<int32_t, int32_t> key_ids_ = {};
   TpcaTxnGenerator(Config* config);

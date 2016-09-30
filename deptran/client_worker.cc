@@ -63,6 +63,7 @@ Coordinator* ClientWorker::FindOrCreateCoordinator() {
     if (created_coordinators_.size() == UINT16_MAX) {
       return nullptr;
     }
+    verify(created_coordinators_.size() <= UINT16_MAX);
     coo = CreateCoordinator(created_coordinators_.size());
   }
 
@@ -107,7 +108,8 @@ void ClientWorker::work() {
       DispatchRequest(coo);
     }
   } else {
-    const std::chrono::nanoseconds wait_time((int)(pow(10,9) * 1.0/(double)config_->client_rate_));
+    const std::chrono::nanoseconds wait_time
+        ((int)(pow(10,9) * 1.0/(double)config_->client_rate_));
     double tps = 0;
     long txn_count = 0;
     auto start = std::chrono::steady_clock::now();
@@ -119,13 +121,15 @@ void ClientWorker::work() {
         if (coo != nullptr) {
           DispatchRequest(coo);
           txn_count++;
-          elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - start);
+          elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>
+              (std::chrono::steady_clock::now() - start);
           tps = (double) txn_count / elapsed.count() * pow(10, 9);
         }
       }
       auto next_time = std::chrono::steady_clock::now() + wait_time;
       std::this_thread::sleep_until(next_time);
-      elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(std::chrono::steady_clock::now() - start);
+      elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>
+          (std::chrono::steady_clock::now() - start);
       tps = (double)txn_count / elapsed.count() * pow(10,9);
     }
     Log_debug("exit client dispatch loop...");

@@ -61,6 +61,7 @@ class Config {
   int32_t max_retry_;
   string dist_ = "uniform";
   float coeffcient_ = 0; // "uniform"
+  int32_t rotate_{3};
 
   // TODO remove, will cause problems.
   uint32_t num_site_;
