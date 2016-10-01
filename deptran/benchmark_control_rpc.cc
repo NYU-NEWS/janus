@@ -81,7 +81,7 @@ void ServerControlServiceImpl::server_heart_beat_with_data(ServerResponse *res) 
     AvgStat r_cnt = recorder_->stat_cnt_.reset();
     AvgStat r_sz = recorder_->stat_sz_.reset();
     res->r_cnt_sum = r_cnt.sum_;
-    res->r_cnt_num = r_cnt.n_stat_; // TODO [yangc] is there something wrong here?
+    res->r_cnt_num = r_cnt.n_stat_;
     res->r_sz_sum = r_sz.sum_;
     res->r_sz_num = r_sz.n_stat_;
   }
@@ -215,6 +215,7 @@ void ClientControlServiceImpl::client_response(ClientResponse *res) {
       res->txn_info[it->first].total_txn += it->second.total_txn;
       res->txn_info[it->first].total_try += it->second.total_try;
       res->txn_info[it->first].commit_txn += it->second.commit_txn;
+      res->txn_info[it->first].retries_exhausted = it->second.retries_exhausted_ ? 1 : 0;
       res->txn_info[it->first].interval_latency.insert(
           res->txn_info[it->first].interval_latency.end(),
           it->second.interval_latency.begin(),

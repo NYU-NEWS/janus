@@ -121,6 +121,7 @@ class ClientControlServiceImpl: public ClientControlService {
     std::vector<double> *interval_attempt_latencies[2];
     std::vector<int32_t> *num_try[2];
     std::vector<double> interval_latency;
+    bool retries_exhausted_ = false;
 
     txn_info_t() {
       txn_type = -1;
@@ -158,6 +159,10 @@ class ClientControlServiceImpl: public ClientControlService {
 
     void start(bool switzh) {
       start_txn++;
+    }
+
+    void give_up() {
+      retries_exhausted_ = true;
     }
 
     void retry(bool switzh, double attempt_latency) {
@@ -237,6 +242,15 @@ class ClientControlServiceImpl: public ClientControlService {
   ~ClientControlServiceImpl();
   void wait_for_start(unsigned int id);
   void wait_for_shutdown();
+
+  inline void txn_give_up_one(txnid_t id, uint32_t txn_type, double latency) {
+    std::lock_guard<std::recursive_mutex> guard(mtx_);
+    pthread_rwlock_rdlock(&collect_lock_);
+    verify(id >= 0 && id < num_threads_);
+    verify(txn_info_[id].find(txn_type) != txn_info_[id].end());
+    txn_info_[id][txn_type].give_up();
+    pthread_rwlock_unlock(&collect_lock_);
+  }
 
   inline void txn_start_one(unsigned int id, int32_t txn_type) {
     std::lock_guard<std::recursive_mutex> guard(mtx_);

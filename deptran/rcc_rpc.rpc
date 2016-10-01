@@ -124,11 +124,13 @@ struct TxnInfoRes {
     i32 total_txn;  // total number of finished txns
     i32 total_try;  // total number of tries finished
     i32 commit_txn; // number of commit transactions
+    i32 retries_exhausted;
     vector<double> this_latency; // latencies started && finish in this period
     vector<double> last_latency; // latencies started in last period, finish in this period
     vector<double> attempt_latency; // interval latencies for each attempts
     vector<double> interval_latency; // latencies finish in this period
     vector<i32> num_try;
+
 }
 
 struct ServerResponse {
