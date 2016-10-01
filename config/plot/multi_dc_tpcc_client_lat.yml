@@ -1,0 +1,11 @@
+bench: 
+    - tpcc
+graph:
+    using_cmd: ($6):($12)
+    x_label: 'Clients'
+    y_label: 'Latency (ms)'
+    log_scale: xy 10
+    y_range: '[1:]'
+    x_range: '[1:]'
+    output_file: 'multi_dc_${bench}_${txn}_client_lat'
+    key_location: 'bottom right'

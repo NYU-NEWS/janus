@@ -4,8 +4,8 @@ graph:
     using_cmd: '18:14'
     x_label: 'Zipf Coefficient'
     y_label: 'Latency (ms)'
-    y_range: '[0:]'
+    y_range: '[0:37000]'
     x_range: '[0.5:1]'
     x_tics: 0,0.1
-    output_file: '${txn}_${bench}_zipf_lat99'
+    output_file: 'multi_dc_${bench}_${txn}_zipf_lat99'
     key_location: 'top left'

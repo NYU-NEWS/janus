@@ -8,5 +8,5 @@ graph:
     x_range: '[0.5:1]'
     x_tics: 0,0.1
     y_tics: 0,20
-    output_file: 'single_${txn}_${bench}_zipf_tp'
-    key_location: 'above left font ",14" spacing 4'
+    output_file: 'single_dc_${bench}_${txn}_zipf_tp'
+    key_location: 'above'

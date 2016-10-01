@@ -1,0 +1,12 @@
+bench: 
+    - tpca
+graph:
+    using_cmd: '18:($7/1000)'
+    x_label: 'Zipf Coefficient'
+    y_label: 'Throughput (10^3 txn/s)'
+    y_range: '[0:]'
+    x_range: '[0.5:1]'
+    x_tics: 0,0.1
+    y_tics: 0,20
+    output_file: 'multi_dc_${bench}_${txn}_zipf_tp'
+    key_location: 'above'
