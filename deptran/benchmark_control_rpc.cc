@@ -215,7 +215,7 @@ void ClientControlServiceImpl::client_response(ClientResponse *res) {
       res->txn_info[it->first].total_txn += it->second.total_txn;
       res->txn_info[it->first].total_try += it->second.total_try;
       res->txn_info[it->first].commit_txn += it->second.commit_txn;
-      res->txn_info[it->first].retries_exhausted = it->second.retries_exhausted_ ? 1 : 0;
+      res->txn_info[it->first].num_exhausted += it->second.retries_exhausted;
       res->txn_info[it->first].interval_latency.insert(
           res->txn_info[it->first].interval_latency.end(),
           it->second.interval_latency.begin(),
@@ -235,7 +235,6 @@ void ClientControlServiceImpl::client_response(ClientResponse *res) {
   for (int i = 0; i < num_threads_; i++) {
     for (std::map<int32_t, txn_info_t>::iterator it = txn_info_[i].begin();
          it != txn_info_[i].end(); it++) {
-
       res->txn_info[it->first].this_latency.insert(
           res->txn_info[it->first].this_latency.end(),
           it->second.interval_latencies[use]->begin(), it->second.interval_latencies[use]->end());
@@ -250,6 +249,7 @@ void ClientControlServiceImpl::client_response(ClientResponse *res) {
           res->txn_info[it->first].num_try.end(),
           it->second.num_try[use]->begin(), it->second.num_try[use]->end());
 
+      it->second.retries_exhausted = 0;
       it->second.num_try[use]->clear();
       it->second.interval_latencies[use]->clear();
       it->second.last_interval_latencies[use]->clear();

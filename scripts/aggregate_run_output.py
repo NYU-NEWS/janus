@@ -50,7 +50,7 @@ def extract_data(txn_data, file_data):
             format_cc_name(etxn)
             for l in labels:
                 row.append(etxn[l])
-            latencies = etxn['latency']
+            latencies = etxn['all_latency']
             global lat_labels
             lat_labels = sorted(latencies.keys())
             for l in lat_labels:

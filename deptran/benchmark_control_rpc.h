@@ -116,12 +116,12 @@ class ClientControlServiceImpl: public ClientControlService {
     int32_t start_txn;
     int32_t total_txn;
     int32_t total_try;
+    int32_t retries_exhausted;
     std::vector<double> *interval_latencies[2];
     std::vector<double> *last_interval_latencies[2];
     std::vector<double> *interval_attempt_latencies[2];
     std::vector<int32_t> *num_try[2];
     std::vector<double> interval_latency;
-    bool retries_exhausted_ = false;
 
     txn_info_t() {
       txn_type = -1;
@@ -129,6 +129,7 @@ class ClientControlServiceImpl: public ClientControlService {
       commit_txn = 0;
       total_txn = 0;
       total_try = 0;
+      retries_exhausted = 0;
       num_try[0] = new std::vector<int32_t>();
       num_try[1] = new std::vector<int32_t>();
 
@@ -162,7 +163,7 @@ class ClientControlServiceImpl: public ClientControlService {
     }
 
     void give_up() {
-      retries_exhausted_ = true;
+      retries_exhausted++;
     }
 
     void retry(bool switzh, double attempt_latency) {
@@ -243,7 +244,7 @@ class ClientControlServiceImpl: public ClientControlService {
   void wait_for_start(unsigned int id);
   void wait_for_shutdown();
 
-  inline void txn_give_up_one(txnid_t id, uint32_t txn_type, double latency) {
+  inline void txn_give_up_one(txnid_t id, int32_t txn_type) {
     std::lock_guard<std::recursive_mutex> guard(mtx_);
     pthread_rwlock_rdlock(&collect_lock_);
     verify(id >= 0 && id < num_threads_);

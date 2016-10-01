@@ -75,10 +75,12 @@ class TxnInfo(object):
         self.this_latencies = []
         self.last_latencies = []
         self.attempt_latencies = []
+        self.all_latencies = []
         self.n_try = []
         self.min_interval = 0.0
         self.update_latency = False
 
+        self.mid_retry_exhausted = 0
         self.mid_status = 0 # 0: not started, 1: ongoing, 3: end
         self.mid_pre_start_txn = 0
         self.mid_start_txn = 0
@@ -90,6 +92,7 @@ class TxnInfo(object):
         self.mid_commit_txn = 0
         self.mid_time = 0.0
         self.mid_latencies = []
+        self.mid_all_latencies = []
         self.mid_attempt_latencies = []
         self.mid_n_try = []
 
@@ -101,6 +104,7 @@ class TxnInfo(object):
         self.total_txn = 0
         self.total_try = 0
         self.commit_txn = 0
+        self.mid_retry_exhausted = 0
         self.this_latencies = []
         self.min_interval = g_max_latency
         self.attempt_latencies = []
@@ -119,7 +123,7 @@ class TxnInfo(object):
 
     def push_res(self, start_txn, total_txn, total_try, commit_txn,
             this_latencies, last_latencies, latencies,
-            attempt_latencies, interval_time, n_tried):
+            attempt_latencies, interval_time, n_tried, n_retry_exhausted):
         self.start_txn += start_txn
         self.total_txn += total_txn
         self.total_try += total_try
@@ -137,6 +141,7 @@ class TxnInfo(object):
         elif self.mid_status == 1:
             logger.debug("during recording period!!! {}".format(self.txn_type))
             self.mid_latencies.extend(latencies)
+            self.mid_all_latencies.extend(self.mid_latencies)
             self.mid_attempt_latencies.extend(attempt_latencies)
             self.mid_time += interval_time
             self.mid_n_try.extend(n_tried)
@@ -144,8 +149,9 @@ class TxnInfo(object):
             self.mid_total_txn += total_txn
             self.mid_total_try += total_try
             self.mid_commit_txn += commit_txn
-            logger.debug("mid_commit_txn (+{}): {}".format(commit_txn, self.mid_commit_txn))
-            logger.debug("self.mid_latencies: {}".format(self.mid_latencies))
+            self.mid_retry_exhausted += n_retry_exhausted
+            #logger.debug("mid_commit_txn (+{}): {}".format(commit_txn, self.mid_commit_txn))
+            #logger.debug("self.mid_latencies: {}".format(self.mid_latencies))
 
     def get_res(self, interval_time, total_time, set_max,
             all_total_commits, all_interval_commits, do_sample, do_sample_lock):
@@ -208,11 +214,19 @@ class TxnInfo(object):
         logger.info("mid_pre_commit_txn: {}".format(self.mid_pre_commit_txn))
         logger.info("mid_time = {}".format(self.mid_time))
 
+        if self.mid_retry_exhausted > 0:
+            m = [max(self.mid_latencies)]
+            self.mid_all_latencies.extend(m * self.mid_retry_exhausted)
+
         self.mid_latencies.sort()
+        self.mid_all_latencies.sort()
         self.mid_attempt_latencies.sort()
         self.mid_n_try.sort()
 
+        NO_VALUE = 999999.99
+
         latencies = {}
+        all_latencies = {}
         att_latencies = {}
         for percent in g_latencies_percentage:
             logger.info("percent: {}".format(percent))
@@ -222,13 +236,20 @@ class TxnInfo(object):
                 index = int(math.ceil(percent/100*len(self.mid_latencies)))-1
                 latencies[key] = self.mid_latencies[index]
             else:
-                latencies[key] = 9999.99
+                latencies[key] = NO_VALUE
+
+            if len(self.mid_all_latencies)>0:
+                index = int(math.ceil(percent/100*len(self.mid_all_latencies)))-1
+                all_latencies[key] = self.mid_all_latencies[index]
+            else:
+                all_latencies[key] = NO_VALUE
 
             if len(self.mid_attempt_latencies)>0:
                 att_index = int(math.ceil(percent/100*len(self.mid_attempt_latencies)))-1
                 att_latencies[key] = self.mid_attempt_latencies[att_index]
             else:
-                att_latencies[key] = 9999.99
+                att_latencies[key] = NO_VALUE
+
         num_clients = sum([len(x)
                            for x in config['site']['client']]) * \
                       config["n_concurrent"]
@@ -250,16 +271,28 @@ class TxnInfo(object):
             'commits': commit_txn,
             'tps': tps,
             'zipf': zipf,
-            'experiment_id': int(config['args'].experiment_id)
+            'experiment_id': int(config['args'].experiment_id),
+            'retries_exhausted_cnt': self.mid_retry_exhausted
         }
+
+
         self.data['latency'] = {}
         self.data['latency'].update(latencies)
         if len(self.mid_latencies)>0:
             self.data['latency']['min'] = self.mid_latencies[0]
             self.data['latency']['max'] = self.mid_latencies[len(self.mid_latencies)-1]
         else:
-            self.data['latency']['min'] = 9999.99
-            self.data['latency']['max'] = 9999.99
+            self.data['latency']['min'] = NO_VALUE
+            self.data['latency']['max'] = NO_VALUE
+
+        self.data['all_latency'] = {}
+        self.data['all_latency'].update(all_latencies)
+        if len(self.mid_all_latencies)>0:
+            self.data['all_latency']['min'] = self.mid_all_latencies[0]
+            self.data['all_latency']['max'] = self.mid_all_latencies[len(self.mid_all_latencies)-1]
+        else:
+            self.data['all_latency']['min'] = NO_VALUE
+            self.data['all_latency']['max'] = NO_VALUE
 
         self.data['att_latency'] = {}
         self.data['att_latency'].update(att_latencies)
@@ -269,8 +302,8 @@ class TxnInfo(object):
                 len(self.mid_attempt_latencies)-1
             ]
         else:
-            self.data['att_latency']['min'] = 9999.99
-            self.data['att_latency']['max'] = 9999.99
+            self.data['att_latency']['min'] = NO_VALUE
+            self.data['att_latency']['max'] = NO_VALUE
 
         logger.info("\n__Data__\n{}\n__EndData__\n".format(yaml.dump(self.data)))
 
@@ -425,6 +458,10 @@ class ClientController(object):
                     self.total_txn += res.txn_info[txn_type].total_txn
                     self.total_try += res.txn_info[txn_type].total_try
                     self.commit_txn += res.txn_info[txn_type].commit_txn
+
+                    #print("num_exhausted: ", res.txn_info[txn_type].num_exhausted)
+                    #print("num lat: ", len(res.txn_info[txn_type].attempt_latency))
+
                     self.txn_infos[txn_type].push_res(
                         res.txn_info[txn_type].start_txn,
                         res.txn_info[txn_type].total_txn,
@@ -435,7 +472,8 @@ class ClientController(object):
                         res.txn_info[txn_type].interval_latency,
                         res.txn_info[txn_type].attempt_latency,
                         period_time,
-                        res.txn_info[txn_type].num_try)
+                        res.txn_info[txn_type].num_try,
+                        res.txn_info[txn_type].num_exhausted)
 
                 logger.debug("timing from server: run_sec {:.2f}; run_nsec {:.2f}".format(res.run_sec, res.run_nsec))
                 self.run_sec += res.run_sec

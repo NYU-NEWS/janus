@@ -65,12 +65,15 @@ class BalancedPlacementStrategy:
 		for dc in hosts.keys():
 			server_machines[dc].extend(hosts[dc][:num_servers_per_datacenter])
 
+
+		num_client_hosts = 0
 		client_machines = {dc: [] for dc in hosts.keys()}
 		for dc in hosts.keys():
 			server_set = set(server_machines[dc])
 			all_set = set(hosts[dc])
 			clients = list(all_set - server_set)
 			client_machines[dc].extend(clients)
+			num_client_hosts += len(clients)
 
 		# now match {server, client} names to their respective hosts
 
@@ -85,6 +88,14 @@ class BalancedPlacementStrategy:
 			process[server] = server_host
 
 		datacenter_it = itertools.cycle(hosts.keys())
+
+		if num_client_hosts == 0:
+			if self.args.allow_client_overlap:
+				client_machines = server_machines
+			else:
+				logger.error("no client machines available. exiting program.")
+				logger.error("use --allow-client-overlap if testing locally.")
+				sys.exit(1)
 
 		client_hosts_it = {dc: itertools.cycle(hosts) for (dc, hosts) in client_machines.iteritems()}
 		for client in client_names:

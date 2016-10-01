@@ -50,7 +50,7 @@ void ClassicCoord::do_one(TxnRequest &req) {
   n_retry_ = 0;
   Reset(); // In case of reuse.
 
-  Log_debug("do one request txn_id:%"PRIx64"\n", cmd_->id_);
+  Log_debug("do one request txn_id:%\n", cmd_->id_);
 
   if (ccsi_) ccsi_->txn_start_one(thread_id_, cmd->type_);
 
@@ -164,6 +164,8 @@ void ClassicCoord::Restart() {
     ccsi_->txn_retry_one(this->thread_id_, txn->type_, last_latency);
   auto& max_retry = Config::GetConfig()->max_retry_;
   if (n_retry_ > max_retry && max_retry >= 0) {
+    if (ccsi_)
+      ccsi_->txn_give_up_one(this->thread_id_, txn->type_);
     End();
   } else {
 //    Log_info("retry count %d, max_retry: %d, this coord: %llx", n_retry_, max_retry, this);

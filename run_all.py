@@ -102,6 +102,8 @@ def create_parser():
                         default=1, help="number of cores on the servers")
     parser.add_argument("-dc", "--data-centers", dest="data_centers", nargs="+", type=str,
                         default=[], help="data center names (for multi-dc setup)")
+    parser.add_argument("--allow-client-overlap", dest="allow_client_overlap",
+                        action='store_true', default=False, help="allow clients and server to be mapped to same machine (for testing locally)")
     return parser
 
 
