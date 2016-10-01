@@ -492,7 +492,6 @@ void Config::LoadBenchYML(YAML::Node config) {
     coeffcient_ = config["coefficient"].as<float>();
   if (config["rotate"])
     rotate_ = config["rotate"].as<int32_t>();
-  }
 }
 
 void Config::LoadSchemaYML(YAML::Node config) {
