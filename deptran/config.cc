@@ -297,6 +297,9 @@ void Config::LoadYML(std::string &filename) {
     n_concurrent_ = config["n_concurrent"].as<uint16_t>();
     Log_info("# of concurrent requests: %d", n_concurrent_);
   }
+  if (config["n_parallel_dispatch"]) {
+    n_parallel_dispatch_ = config["n_parallel_dispatch"].as<int32_t>();
+  }
 }
 
 void Config::LoadSiteYML(YAML::Node config) {
@@ -394,6 +397,7 @@ void Config::InitMode(string &cc_name, string& ab_name) {
     mdb::FineLockedRow::set_wait_die();
   } else if ((cc_name == "2pl_ww") || (cc_name == "2pl_wound_die")) {
     mdb::FineLockedRow::set_wound_wait();
+    n_parallel_dispatch_ = 1;
   }
 
   ab_mode_ = Frame::Name2Mode(ab_name);
@@ -404,6 +408,7 @@ void Config::InitBench(std::string &bench_str) {
     benchmark_ = TPCA;
   } else if (bench_str == "tpcc") {
     benchmark_ = TPCC;
+    n_parallel_dispatch_ = 0;
   } else if (bench_str == "tpcc_dist_part") {
     benchmark_ = TPCC_DIST_PART;
   } else if (bench_str == "tpccd") {

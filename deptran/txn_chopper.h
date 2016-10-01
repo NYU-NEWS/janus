@@ -227,8 +227,8 @@ class TxnCommand: public ContainerCommand {
   virtual void Merge(innid_t inn_id, map<int32_t, Value>& output);
   virtual void Merge(TxnOutput& output);
   virtual bool HasMoreSubCmdReadyNotOut();
-  virtual ContainerCommand* GetNextReadySubCmd();
-  virtual map<parid_t, vector<SimpleCommand*>> GetReadyCmds();
+  virtual ContainerCommand* GetNextReadySubCmd() override;
+  virtual map<parid_t, vector<SimpleCommand*>> GetReadyCmds(int32_t max=0);
   virtual set<parid_t> GetPartitionIds();
   TxnWorkspace& GetWorkspace(innid_t inn_id) {
     verify(inn_id != 0);

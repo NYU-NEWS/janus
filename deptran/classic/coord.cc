@@ -179,7 +179,8 @@ void ClassicCoord::Dispatch() {
   auto txn = (TxnCommand*) cmd_;
 
   int cnt = 0;
-  auto cmds_by_par = txn->GetReadyCmds();
+  auto n_pd = Config::GetConfig()->n_parallel_dispatch_;
+  auto cmds_by_par = txn->GetReadyCmds(n_pd);
   for (auto& pair: cmds_by_par) {
     const parid_t& par_id = pair.first;
     vector<SimpleCommand*>& cmds = pair.second;

@@ -102,7 +102,7 @@ vector<SimpleCommand> TxnCommand::GetCmdsByPartition(parid_t par_id) {
   return cmds;
 }
 
-map<parid_t, vector<SimpleCommand*>> TxnCommand::GetReadyCmds() {
+map<parid_t, vector<SimpleCommand*>> TxnCommand::GetReadyCmds(int32_t max) {
   verify(n_pieces_dispatched_ < n_pieces_dispatchable_);
   verify(n_pieces_dispatched_ < n_pieces_all_);
   map<parid_t, vector<SimpleCommand*>> cmds;
@@ -112,7 +112,6 @@ map<parid_t, vector<SimpleCommand*>> TxnCommand::GetReadyCmds() {
   for (auto &kv : status_) {
     auto pi = kv.first;
     auto &status = kv.second;
-
 //    if (status > DISPATCHABLE)
 //
     if (status == DISPATCHABLE) {
@@ -141,6 +140,9 @@ map<parid_t, vector<SimpleCommand*>> TxnCommand::GetReadyCmds() {
       verify(cmd->root_type_ == type());
       verify(cmd->root_type_ > 0);
       n_pieces_dispatched_++;
+
+      max--;
+      if (max == 0) break;
     }
   }
 
