@@ -6,7 +6,7 @@ graph:
     y_label: 'Latency (ms)'
     log_scale: y 10
     y_range: '[10:18000]'
-    x_range: '[0.5:1]'
+    x_range: '[0.0:1]'
     x_tics: 0,0.1
     output_file: 'single_dc_${bench}_${txn}_zipf_lat99'
     key_location: 'top left'
