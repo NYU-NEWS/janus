@@ -9,3 +9,4 @@ graph:
     x_range: '[1:]'
     output_file: 'multi_dc_${bench}_${txn}_client_lat90'
     key_location: 'above'
+    y_format: '"10^%T"'
