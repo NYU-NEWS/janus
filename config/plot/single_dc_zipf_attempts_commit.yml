@@ -8,4 +8,4 @@ graph:
     x_range: '[0.0:1]'
     x_tics: 0,0.1
     output_file: 'single_dc_${bench}_${txn}_zipf_commits_attempts'
-    key_location: 'bottom left'
+    key_location: 'above'

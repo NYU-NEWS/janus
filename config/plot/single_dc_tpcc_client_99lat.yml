@@ -8,4 +8,4 @@ graph:
     y_range: '[1:]'
     x_range: '[1:]'
     output_file: 'single_dc_${bench}_${txn}_client_lat99'
-    key_location: 'top left'
+    key_location: 'above'

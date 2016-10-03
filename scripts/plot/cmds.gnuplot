@@ -52,6 +52,7 @@ if (exists("y_tics")) set ytics @y_tics
 if (exists("x_range")) set xrange @x_range
 if (exists("y_range")) set yrange @y_range
 if (exists("log_scale")) set logscale @log_scale
+if (exists("y_format")) set format y @y_format
 
 set linetype 1 lc rgb word(colors, 1)
 set linetype 2 lc rgb word(colors, 2) dashtype (5,1,5,1,5,2)
