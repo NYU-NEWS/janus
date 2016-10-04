@@ -9,4 +9,3 @@ graph:
     x_tics: 0,0.1
     output_file: 'multi_dc_${bench}_${txn}_zipf_lat99'
     key_location: 'above'
-    y_format: '"10^%T"'

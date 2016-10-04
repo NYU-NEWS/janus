@@ -168,6 +168,7 @@ class ClientControlServiceImpl: public ClientControlService {
 
     void retry(bool switzh, double attempt_latency) {
       total_try++;
+      return;
       if (switzh)
         interval_attempt_latencies[0]->push_back(attempt_latency);
       else
@@ -200,6 +201,7 @@ class ClientControlServiceImpl: public ClientControlService {
     void rej(bool switzh, latency_collection_status_t lcs, double latency, double attempt_latency, int32_t tried) {
       total_txn++;
       total_try++;
+      return;
       if (switzh)
         interval_attempt_latencies[0]->push_back(attempt_latency);
       else
