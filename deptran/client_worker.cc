@@ -34,7 +34,7 @@ void ClientWorker::RequestDone(Coordinator* coo, TxnReply &txn_reply) {
     free_coordinators_.push_back(coo);
   } else if (have_more_time && config_->client_type_ == Config::Closed) {
     Log_debug("there is still time to issue another request. continue.");
-    DispatchRequest(coo);
+    DispatchRequest(coo)  ;
   } else if (!have_more_time) {
     Log_debug("times up. stop.");
     Log_debug("n_concurrent_ = %d", n_concurrent_);

@@ -19,6 +19,11 @@ abstract service MultiPaxos {
                ContainerCommand cmd);
 }
 
+abstract service TxnProxy {
+  DispatchTxn(TxnDispatchRequest req);
+  DispatchTxnReply(TxnReply reply);
+}
+
 // below is for 2PL and OCC
 abstract service Classic {
   defer Dispatch(vector<SimpleCommand> cmd |
@@ -111,6 +116,16 @@ abstract service Classic {
                   i32 res);
 }
 
+struct TxnDispatchRequest {
+    i32 id;
+    i32 txn_type;
+    TxnWorkspace input;
+}
+
+struct TxnDispatchReply {
+    i32 id;
+    TxnReply reply;
+}
 
 // Below is for statistics
 

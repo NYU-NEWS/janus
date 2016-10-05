@@ -37,8 +37,23 @@ RococoCommunicator* ClassicCoord::commo() {
   return (RococoCommunicator*) commo_;
 }
 
+void ClassicCoord::ForwardTxnRequest(TxnRequest &req) {
+  auto config = Config::GetConfig();
+  auto clients = config->SitesByLocaleId(0, Config::CLIENT);
+  if (clients.size() > 0) {
+    auto client_site = clients[rrr::RandomGenerator::rand(0, clients.size()-1)];
+    // stopped here
+  } else {
+    verify(0);
+  }
+}
+
 /** thread safe */
 void ClassicCoord::do_one(TxnRequest &req) {
+  if (this->forward_leader_) {
+    ForwardTxnRequest(req);
+    return;
+  }
   // pre-process
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   TxnCommand *cmd = frame_->CreateTxnCommand(req, txn_reg_);

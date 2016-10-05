@@ -87,6 +87,10 @@ Marshal& operator << (Marshal& m, const TxnWorkspace &ws);
 
 Marshal& operator >> (Marshal& m, TxnWorkspace& ws);
 
+Marshal& operator << (Marshal& m, const TxnReply& reply);
+
+Marshal& operator >> (Marshal& m, TxnReply& reply);
+
 enum CommandStatus {
   WAITING=-1,
   DISPATCHABLE=0,

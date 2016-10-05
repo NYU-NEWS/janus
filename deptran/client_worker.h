@@ -51,11 +51,12 @@ class ClientWorker {
   ClientWorker() = delete;
   ~ClientWorker();
   void work();
- protected:
-  Coordinator* CreateCoordinator(uint16_t offset_id);
   Coordinator* FindOrCreateCoordinator();
   void DispatchRequest(Coordinator *coo);
+ protected:
+  Coordinator* CreateCoordinator(uint16_t offset_id);
   void RequestDone(Coordinator* coo, TxnReply &txn_reply);
+  void SetupTxnProxyService();
 
 };
 } // namespace rococo

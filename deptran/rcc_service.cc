@@ -143,6 +143,9 @@ ClassicServiceImpl::ClassicServiceImpl(Scheduler *sched,
 //}
 
 
+void TxnProxyImpl::DispatchTxn(const TxnDispatchRequest& req) { verify(0); }
+void TxnProxyImpl::DispatchTxnReply(const TxnReply& res) { verify(0); }
+
 void ClassicServiceImpl::Dispatch(const vector<SimpleCommand>& cmd,
                                   rrr::i32 *res,
                                   TxnOutput* output,

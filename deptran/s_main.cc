@@ -22,6 +22,7 @@ static vector<ServerWorker> svr_workers_g = {};
 static vector<ClientWorker*> client_workers_g = {};
 static std::vector<std::thread> client_threads_g = {};
 
+void start_client_proxy_service(vector<ClientWorker *> workers);
 void client_setup_heartbeat(int num_clients) {
   Log_info("%s", __FUNCTION__);
   std::map<int32_t, std::string> txn_types;
@@ -44,6 +45,30 @@ void client_setup_heartbeat(int num_clients) {
   }
 }
 
+void start_client_proxy_service(vector<ClientWorker *> workers) {
+  auto config = Config::GetConfig();
+  auto proxy_port = config->get_ctrl_port() + 10000;
+  char bind_addr[1024];
+
+  snprintf(bind_addr, sizeof(bind_addr), "0.0.0.0:%d", proxy_port);
+
+  const int n_io_threads = 1;
+  const uint32_t num_threads = 1;
+
+  auto poll_mgr = new rrr::PollMgr(n_io_threads);
+  auto pool = new base::ThreadPool(num_threads);
+  auto server = new rrr::Server(poll_mgr, pool);
+  auto service = new TxnProxyImpl();
+  server->reg(service);
+
+  Log_info("starting client proxy at %s", bind_addr);
+  auto ret = server->start(bind_addr);
+  if (ret != 0) {
+    Log_fatal("client proxy launch failed.");
+  }
+  Log_info("client proxy ready.");
+}
+
 void client_launch_workers(vector<Config::SiteInfo> &client_sites) {
   // load some common configuration
   // start client workers in new threads.
@@ -58,6 +83,9 @@ void client_launch_workers(vector<Config::SiteInfo> &client_sites) {
     client_threads_g.push_back(std::thread(&ClientWorker::work,
                                          worker));
     client_workers_g.push_back(worker);
+  }
+  if (workers.size() > 0) {
+    start_client_proxy_service(workers);
   }
 }
 

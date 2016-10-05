@@ -51,6 +51,8 @@ class Coordinator : public CoordinatorBase {
   Communicator* commo_ = nullptr;
   Frame* frame_ = nullptr;
 
+  bool forward_leader_ = false;
+
   // should be reset on issueing a new request
   uint32_t n_retry_ = 0;
   // below should be reset on retry.
@@ -141,4 +143,5 @@ class Coordinator : public CoordinatorBase {
   virtual void restart(TxnCommand *ch) {verify(0);};
   virtual void Restart() = 0;
 };
+
 }

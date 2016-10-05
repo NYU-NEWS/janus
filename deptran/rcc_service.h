@@ -12,6 +12,11 @@ class Scheduler;
 class SimpleCommand;
 class ClassicSched;
 
+class TxnProxyImpl: public TxnProxyService {
+    void DispatchTxn(const TxnDispatchRequest& req) override;
+    void DispatchTxnReply(const TxnReply& reply) override;
+};
+
 class ClassicServiceImpl: public ClassicService {
 
  public:
@@ -53,6 +58,7 @@ class ClassicServiceImpl: public ClassicService {
 //      std::vector<i32> *res,
 //      std::vector<vector<Value>> *output,
 //      DeferredReply *defer);
+
 
   void Dispatch(const vector<SimpleCommand> &cmd,
                 int32_t *res,

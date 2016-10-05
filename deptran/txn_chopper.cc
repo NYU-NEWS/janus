@@ -81,6 +81,13 @@ Marshal& operator >> (Marshal& m, TxnWorkspace &ws) {
   return m;
 }
 
+Marshal& operator << (Marshal& m, const TxnReply& reply) {
+  verify(0);
+}
+
+Marshal& operator >> (Marshal& m, TxnReply& reply) {
+  verify(0);
+}
 
 set<parid_t> TxnChopper::GetPartitionIds() {
   return partition_ids_;
@@ -380,5 +387,6 @@ Marshal& TxnCommand::FromMarshal(Marshal& m) {
   m >> n_try_;
   return m;
 }
+
 
 } // namespace rcc
