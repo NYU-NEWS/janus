@@ -18,6 +18,34 @@ ClientWorker::~ClientWorker() {
   dispatch_pool_->release();
 }
 
+void ClientWorker::ForwardRequestDone(Coordinator* coo,TxnReply* output, rrr::DeferredReply* defer, TxnReply &txn_reply) {
+  verify(coo != nullptr);
+  verify(output != nullptr);
+
+  *output = txn_reply;
+
+  bool have_more_time = timer_->elapsed() < duration;
+  if (have_more_time && config_->client_type_ == Config::Open) {
+    std::lock_guard<std::mutex> lock(coordinator_mutex);
+    coo->forward_status_ = NONE;
+    free_coordinators_.push_back(coo);
+  } else if (!have_more_time) {
+    Log_debug("times up. stop.");
+    Log_debug("n_concurrent_ = %d", n_concurrent_);
+    finish_mutex.lock();
+    n_concurrent_--;
+    if (n_concurrent_ == 0) {
+      Log_debug("all coordinators finished... signal done");
+      finish_cond.signal();
+    } else {
+      Log_debug("waiting for %d more coordinators to finish", n_concurrent_);
+    }
+    finish_mutex.unlock();
+  }
+
+  defer->reply();
+}
+
 void ClientWorker::RequestDone(Coordinator* coo, TxnReply &txn_reply) {
   verify(coo != nullptr);
 
@@ -83,13 +111,14 @@ Coordinator* ClientWorker::CreateCoordinator(uint16_t offset_id) {
                                  txn_reg_);
   coo->loc_id_ = my_site_.locale_id;
   coo->commo_ = commo_;
-  Log_debug("coordinator %d created.", coo_id);
+  coo->forward_status_ = forward_requests_to_leader_ ? FORWARD_TO_LEADER : NONE;
+  Log_info("coordinator %d created at site %d: forward %d", coo->coo_id_, this->my_site_.id, coo->forward_status_);
   created_coordinators_.push_back(coo);
   return coo;
 }
 
 void ClientWorker::work() {
-  Log_debug("%s", __FUNCTION__);
+  Log_debug("%s: %d", __FUNCTION__, this->cli_id_);
   txn_reg_ = new TxnRegistry();
   Piece *piece = Piece::get_piece(benchmark);
   piece->txn_reg_ = txn_reg_;
@@ -102,12 +131,15 @@ void ClientWorker::work() {
   timer_->start();
 
   if (config_->client_type_ == Config::Closed) {
+    Log_info("closed loop clients.");
     verify(n_concurrent_ > 0);
     for (uint32_t n_txn = 0; n_txn < n_concurrent_; n_txn++) {
       auto coo = CreateCoordinator(n_txn);
+      Log_debug("create coordinator %d", coo->coo_id_);
       DispatchRequest(coo);
     }
   } else {
+    Log_info("open loop clients.");
     const std::chrono::nanoseconds wait_time
         ((int)(pow(10,9) * 1.0/(double)config_->client_rate_));
     double tps = 0;
@@ -157,12 +189,40 @@ void ClientWorker::work() {
   return;
 }
 
-  void ClientWorker::DispatchRequest(Coordinator *coo) {
+
+void ClientWorker::AcceptForwardedRequest(TxnRequest &request, TxnReply* txn_reply, rrr::DeferredReply* defer) {
+  const char* f = __FUNCTION__;
+
+  // obtain free a coordinator first
+  Coordinator *coo = nullptr;
+  while (coo == nullptr) {
+    coo = FindOrCreateCoordinator();
+  }
+  coo->forward_status_ = PROCESS_FORWARD_REQUEST;
+
+  // run the task
+  std::function<void()> task = [=]() {
+      TxnRequest req(request);
+      req.callback_ = std::bind(&rococo::ClientWorker::ForwardRequestDone,
+                                    this,
+                                    coo,
+                                    txn_reply,
+                                    defer,
+                                    std::placeholders::_1);
+      Log_debug("%s: running forwarded request at site %d", f, my_site_.id);
+      coo->do_one(req);
+  };
+  dispatch_pool_->run_async(task);
+}
+
+void ClientWorker::DispatchRequest(Coordinator *coo) {
+    const char* f = __FUNCTION__;
     std::function<void()> task = [=]() {
+      Log_info("%s: %d", f, cli_id_);
       TxnRequest req;
       {
-          std::lock_guard<std::mutex> lock(this->request_gen_mutex);
-          txn_generator_->GetTxnReq(&req, coo->coo_id_);
+        std::lock_guard<std::mutex> lock(this->request_gen_mutex);
+        txn_generator_->GetTxnReq(&req, coo->coo_id_);
       }
       req.callback_ = std::bind(&rococo::ClientWorker::RequestDone,
                                 this,
@@ -171,21 +231,22 @@ void ClientWorker::work() {
       coo->do_one(req);
     };
     dispatch_pool_->run_async(task);
-  }
+}
 
-  ClientWorker::ClientWorker(uint32_t id,
-                           Config::SiteInfo &site_info,
-                           Config *config,
-                           ClientControlServiceImpl *ccsi)
-    : id(id),
-      my_site_(site_info),
-      config_(config),
-      cli_id_(site_info.id),
-      benchmark(config->get_benchmark()),
-      mode(config->get_mode()),
-      duration(config->get_duration()),
-      ccsi(ccsi),
-      n_concurrent_(config->get_concurrent_txn()) {
+ClientWorker::ClientWorker(
+    uint32_t id,
+    Config::SiteInfo &site_info,
+    Config *config,
+    ClientControlServiceImpl *ccsi) :
+    id(id),
+    my_site_(site_info),
+    config_(config),
+    cli_id_(site_info.id),
+    benchmark(config->get_benchmark()),
+    mode(config->get_mode()),
+    duration(config->get_duration()),
+    ccsi(ccsi),
+    n_concurrent_(config->get_concurrent_txn()) {
   frame_ = Frame::GetFrame(config->cc_mode_);
   txn_generator_ = frame_->CreateTxnGenerator();
   config->get_all_site_addr(servers_);
@@ -194,6 +255,8 @@ void ClientWorker::work() {
   num_try.store(0);
   commo_ = frame_->CreateCommo();
   commo_->loc_id_ = my_site_.locale_id;
+  forward_requests_to_leader_ = (config->ab_mode_ == MODE_MULTI_PAXOS && site_info.locale_id != 0) ? true : false;
+  Log_debug("client %d created; forward %d", cli_id_, forward_requests_to_leader_);
 }
 
 } // namespace rococo

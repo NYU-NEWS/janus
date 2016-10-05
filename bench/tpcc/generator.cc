@@ -142,9 +142,6 @@ void TpccTxnGenerator::get_tpcc_payment_txn_req(
 void TpccTxnGenerator::get_tpcc_stock_level_txn_req(
     TxnRequest *req, uint32_t cid) const {
   req->txn_type_ = TPCC_STOCK_LEVEL;
-//  req->input_.resize(3);
-  //req->input_[0] = Value((i32)RandomGenerator::rand(0, tpcc_para_.n_w_id_ - 1));
-  //req->input_[1] = Value((i32)RandomGenerator::rand(0, tpcc_para_.n_d_id_ - 1));
   req->input_[TPCC_VAR_W_ID] = Value((i32) (cid % tpcc_para_.n_w_id_));
   req->input_[TPCC_VAR_D_ID] = Value((i32) (cid / tpcc_para_.n_w_id_) % tpcc_para_.n_d_id_);
   req->input_[TPCC_VAR_THRESHOLD] = Value((i32) RandomGenerator::rand(10, 20));
@@ -153,13 +150,8 @@ void TpccTxnGenerator::get_tpcc_stock_level_txn_req(
 void TpccTxnGenerator::get_tpcc_delivery_txn_req(
     TxnRequest *req, uint32_t cid) const {
   req->txn_type_ = TPCC_DELIVERY;
-//  req->input_.resize(3);
-  //req->input_[0] = Value((i32)RandomGenerator::rand(0, tpcc_para_.n_w_id_ - 1));
   req->input_[TPCC_VAR_W_ID] = Value((i32) (cid % tpcc_para_.n_w_id_));
   req->input_[TPCC_VAR_O_CARRIER_ID] = Value((i32) RandomGenerator::rand(1, 10));
-  //req->input_[2] = Value((i32)tpcc_para_.delivery_d_id_++);
-  //if (tpcc_para_.delivery_d_id_ >= tpcc_para_.n_d_id_)
-  //    tpcc_para_.delivery_d_id_ = 0;
   req->input_[TPCC_VAR_D_ID] = Value((i32) (cid / tpcc_para_.n_w_id_) % tpcc_para_.n_d_id_);
 }
 
@@ -174,9 +166,6 @@ void TpccTxnGenerator::get_tpcc_order_status_txn_req(
     req->input_[TPCC_VAR_C_ID] =
         Value((i32) RandomGenerator::nu_rand(1022, 0, tpcc_para_.n_c_id_ - 1));
   }
-//  req->input_.resize(3);
-  //req->input_[0] = Value((i32)RandomGenerator::rand(0, tpcc_para_.n_w_id_ - 1));
-  //req->input_[1] = Value((i32)RandomGenerator::rand(0, tpcc_para_.n_d_id_ - 1));
   req->input_[TPCC_VAR_W_ID] = Value((i32) (cid % tpcc_para_.n_w_id_));
   req->input_[TPCC_VAR_D_ID] = Value((i32) ((cid / tpcc_para_.n_w_id_) % tpcc_para_.n_d_id_));
 

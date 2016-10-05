@@ -423,13 +423,11 @@ def run_experiments(args):
     
     aggregate_results(experiment_name)
     generate_graphs(args)
-
                    
 
 def print_args(args):
     for k,v in args.__dict__.iteritems():
         logger.debug("%s = %s", k, v)
-
 
 def main():
     logging.basicConfig(format="%(levelname)s : %(message)s")
@@ -443,7 +441,6 @@ def main():
         traceback.print_exc()
     finally:
         os.killpg(0, signal.SIGTERM)
-
 
 if __name__ == "__main__":
     main()

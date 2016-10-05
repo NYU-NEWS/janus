@@ -1,6 +1,3 @@
-//
-// Created by lamont on 12/21/15.
-//
 #pragma once
 
 #include <chrono>
@@ -8,13 +5,18 @@
 #include "constants.h"
 #include "msg.h"
 #include "config.h"
+#include "command_marshaler.h"
+#include "deptran/rcc/dep_graph.h"
+#include "rcc_rpc.h"
 
 namespace rococo {
 
 class Coordinator;
 class ClassicProxy;
+class ClientControlProxy;
 
 typedef std::pair<siteid_t, ClassicProxy*> SiteProxyPair;
+typedef std::pair<siteid_t, ClientControlProxy*> ClientSiteProxyPair;
 
 class Communicator {
  public:
@@ -26,34 +28,16 @@ class Communicator {
   map<siteid_t, ClassicProxy *> rpc_proxies_ = {};
   map<parid_t, vector<SiteProxyPair>> rpc_par_proxies_ = {};
   map<parid_t, SiteProxyPair> leader_cache_ = {};
-
-//  vector<rrr::Client*> rpc_clients_ = {};
-//  vector<RococoProxy*> rpc_proxies_ = {};
+  vector<ClientSiteProxyPair> client_leaders_;
 
   Communicator(PollMgr* poll_mgr = nullptr);
-//
-//  virtual void SendStart(SimpleCommand& cmd,
-//                         int32_t output_size,
-//                         std::function<void(Future *)> &callback) = 0;
-//  virtual void SendStart(SimpleCommand& cmd,
-//                         Coordinator *coo,
-//                         const std::function<void(rococo::StartReply&)> &) = 0;
-//  virtual void SendPrepare(parid_t gid,
-//                           txnid_t tid,
-//                           std::vector<int32_t> &sids,
-//                           const std::function<void(Future *fu)> &callback) = 0;
-//  virtual void SendCommit(parid_t pid,
-//                          txnid_t tid,
-//                          const std::function<void(Future *fu)> &callback) = 0;
-//  virtual void SendAbort(parid_t pid,
-//                         txnid_t tid,
-//                         const std::function<void(Future *fu)> &callback) = 0;
   virtual ~Communicator();
 
   SiteProxyPair RandomProxyForPartition(parid_t partition_id) const;
   SiteProxyPair LeaderProxyForPartition(parid_t) const;
   SiteProxyPair NearestProxyForPartition(parid_t) const;
   std::pair<int, ClassicProxy*> ConnectToSite(rococo::Config::SiteInfo &site, std::chrono::milliseconds timeout_ms);
+  ClientSiteProxyPair ConnectToClientSite(Config::SiteInfo &site, std::chrono::milliseconds timeout);
 };
 
 } // namespace rococo

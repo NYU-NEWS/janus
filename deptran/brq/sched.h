@@ -3,7 +3,6 @@
 #include "../rcc/sched.h"
 
 namespace rococo {
-
 class RccGraph;
 class BrqCommo;
 class BrqSched : public RccSched {

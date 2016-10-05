@@ -93,42 +93,6 @@ bool TpccTxn::CheckReady() {
     }
   }
   return ret;
-  for (auto &kv : map) {
-    innid_t pi = kv.first;
-    set<int32_t>& var_set = kv.second;
-
-    auto it = status_.find(pi);
-    if (status_.find(pi) == status_.end()) {
-      continue;
-    }
-    int32_t& status = it->second;
-    if (status != WAITING) {
-      continue;
-    }
-    bool all_found = true;
-    for (auto &var : var_set) {
-      if (ws_.count(var) == 0) {
-        // not found. input not all ready.
-        all_found = false;
-        break;
-      } else {
-        TxnWorkspace& ws = GetWorkspace(pi);
-        ws.keys_ = var_set;
-        verify(ws_[var].get_kind() != 0);
-      }
-    }
-    // all found.
-    if (all_found && status == WAITING) {
-      status = DISPATCHABLE;
-      n_pieces_dispatchable_++;
-      ret = true;
-//        for (auto &var : var_set) {
-//          inputs_[pi][var] = ws_[var];
-//          verify(ws_[var].get_kind() != 0);
-//        }
-    }
-  }
-  return ret;
 }
 
 bool TpccTxn::start_callback(int pi,
@@ -136,9 +100,6 @@ bool TpccTxn::start_callback(int pi,
                              map<int32_t, Value> &output_map) {
   bool ret;
 
-//  if (type_ == TPCC_NEW_ORDER && pi == TPCC_NEW_ORDER_0) {
-//    verify(output_map.count(TPCC_VAR_O_ID) > 0);
-//  }
   ws_.insert(output_map);
   if (type_ == TPCC_PAYMENT ||
       type_ == TPCC_ORDER_STATUS ||
@@ -157,9 +118,6 @@ bool TpccTxn::start_callback(int pi,
         verify(output_map.count(TPCC_VAR_C_ID) > 0);
         verify(ws_.count(TPCC_VAR_C_ID) > 0);
       }
-//      if (n_pieces_replied_ == 3) {
-//        verify(status_[TPCC_DELIVERY_3] == READY);
-//      }
     }
     return ret;
   }
@@ -169,11 +127,8 @@ bool TpccTxn::start_callback(int pi,
     handler = it->second;
     ret = handler(this, output_map);
   } else {
-//    ws_.insert(output_map.begin(), output_map.end());
+    // ws_.insert(output_map.begin(), output_map.end());
     bool ret = CheckReady();
-//
-//    handler = [] (TxnChopper* ch,
-//                  map<int32_t, Value>& output) -> bool { return false; };
   }
 
   // below is for debug
@@ -183,35 +138,7 @@ bool TpccTxn::start_callback(int pi,
     verify(ws.count(TPCC_VAR_D_NEXT_O_ID) > 0);
     verify(status_[TPCC_STOCK_LEVEL_1] == DISPATCHABLE);
   }
-//  if (txn_type_ == TPCC_NEW_ORDER && pi == TPCC_NEW_ORDER_0) {
-//    verify(ws_.find(TPCC_VAR_O_ID) != ws_.end());
-//    verify(inputs_[TPCC_NEW_ORDER_3].count(TPCC_VAR_O_ID) > 0);
-//    verify(inputs_[TPCC_NEW_ORDER_4].count(TPCC_VAR_O_ID) > 0);
-//
-//
-//    auto &vars = txn_reg_->input_vars_[TPCC_NEW_ORDER][TPCC_NEW_ORDER_3];
-//    for (auto v : vars) {
-//      verify(ws_.count(v) > 0);
-//    }
-//
-//    verify(status_[TPCC_NEW_ORDER_3] == READY);
-//    verify(status_[TPCC_NEW_ORDER_4] == READY);
-//
-//    for (size_t i = 0; i < new_order_dep_.ol_cnt; i++) {
-//      auto pi = TPCC_NEW_ORDER_Ith_INDEX_ORDER_LINE(i);
-//      verify(inputs_[pi].count(TPCC_VAR_O_ID) > 0);
-//      bool b2 = (ws_.find(TPCC_VAR_I_PRICE(i)) != ws_.end());
-//      bool b3 = (ws_.find(TPCC_VAR_OL_DIST_INFO(i)) != ws_.end());
-////      verify(b2 == tpcc_ch->new_order_dep_.piece_items[i]);
-////      verify(b3 == tpcc_ch->new_order_dep_.piece_stocks[i]);
-//      if (b2 && b3)
-//        verify(status_[pi] == READY);
-//    }
-//  }
   return ret;
-
-
-  return handler(this, output_map);
 }
 
 void TpccTxn::Reset() {
@@ -269,8 +196,6 @@ parid_t TpccTxn::GetPiecePartitionId(innid_t inn_id) {
     auto &pair = it->second;
     auto tb = pair.first;
     auto& var_ids = pair.second;
-//    auto cmd = (SimpleCommand*) inputs_[inn_id];
-//    verify(inputs_.find(inn_id) != inputs_.end());
     vector<Value> vars;
     for (auto var_id : var_ids) {
       verify(ws_.count(var_id) != 0);
@@ -300,11 +225,6 @@ int TpccTxn::GetNPieceAll() {
 }
 
 TpccTxn::~TpccTxn() {
-  //else if (txn_type_ == TPCC_DELIVERY) {
-  //    free(delivery_dep_.piece_new_orders);
-  //    free(delivery_dep_.piece_orders);
-  //    free(delivery_dep_.piece_order_lines);
-  //}
 }
 
 } // namespace rococo

@@ -3,6 +3,7 @@
 #include "__dep__.h"
 #include "config.h"
 #include "communicator.h"
+#include "txn_chopper.h"
 
 namespace rococo {
 
@@ -28,6 +29,7 @@ class ClientWorker {
   uint32_t n_concurrent_;
   rrr::Mutex finish_mutex;
   rrr::CondVar finish_cond;
+  bool forward_requests_to_leader_ = false;
 
   // coordinators_{mutex, cond} synchronization currently only used for open clients
   std::mutex request_gen_mutex;
@@ -51,12 +53,14 @@ class ClientWorker {
   ClientWorker() = delete;
   ~ClientWorker();
   void work();
- protected:
-  Coordinator* CreateCoordinator(uint16_t offset_id);
   Coordinator* FindOrCreateCoordinator();
   void DispatchRequest(Coordinator *coo);
-  void RequestDone(Coordinator* coo, TxnReply &txn_reply);
+  void AcceptForwardedRequest(TxnRequest &request, TxnReply* txn_reply, rrr::DeferredReply* defer);
 
+ protected:
+  Coordinator* CreateCoordinator(uint16_t offset_id);
+  void RequestDone(Coordinator* coo, TxnReply &txn_reply);
+  void ForwardRequestDone(Coordinator* coo, TxnReply* output, rrr::DeferredReply* defer, TxnReply &txn_reply);
 };
 } // namespace rococo
 

@@ -302,6 +302,8 @@ class ClientControlServiceImpl: public ClientControlService {
     txn_info_[id][txn_type].rej(txn_info_switch_, lcs, latency, attempt_latency, tried);
     pthread_rwlock_unlock(&collect_lock_);
   }
+
+  void DispatchTxn(const TxnDispatchRequest& req, TxnReply* txn_reply, rrr::DeferredReply* defer) override;
 };
 
 }

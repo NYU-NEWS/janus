@@ -26,7 +26,6 @@ class TxnReply {
   int32_t txn_type_;
 };
 
-
 class TxnWorkspace {
  public:
   set<int32_t> keys_ = {};
@@ -38,16 +37,6 @@ class TxnWorkspace {
   TxnWorkspace& operator= (const TxnWorkspace& rhs);
   void Aggregate(const TxnWorkspace& rhs);
   Value& operator[] (size_t idx);
-
-//  map<int32_t, Value>::iterator find(int32_t k) {
-//    auto it = (*values_).find(k);
-//    if (it == values_->end()) {
-//      verify(keys_.find(k) == keys_.end());
-//    } else {
-////      verify(keys_.find(k) != keys_.end());
-//    }
-//    return it;
-//  };
 
   size_t count(int32_t k) {
     auto r1 = keys_.count(k);
@@ -87,6 +76,10 @@ Marshal& operator << (Marshal& m, const TxnWorkspace &ws);
 
 Marshal& operator >> (Marshal& m, TxnWorkspace& ws);
 
+Marshal& operator << (Marshal& m, const TxnReply& reply);
+
+Marshal& operator >> (Marshal& m, TxnReply& reply);
+
 enum CommandStatus {
   WAITING=-1,
   DISPATCHABLE=0,
@@ -104,7 +97,6 @@ class SimpleCommand: public ContainerCommand {
   map<int32_t, Value> output{};
   int32_t output_size = 0;
   parid_t partition_id_ = 0xFFFFFFFF;
-//  SimpleCommand() = default;
   virtual parid_t PartitionId() const {
     verify(partition_id_ != 0xFFFFFFFF);
     return partition_id_;
@@ -176,7 +168,7 @@ class TxnCommand: public ContainerCommand {
   std::set<parid_t> partition_ids_ = {};
   std::atomic<bool> commit_ ;
 
-  /** server involved*/
+  /** server involved */
 
   int n_pieces_all_ = 0;
   int n_pieces_dispatchable_ = 0;
@@ -197,8 +189,6 @@ class TxnCommand: public ContainerCommand {
 
   TxnCommand();
 
-//  virtual cmdtype_t type() {return txn_type_;};
-
   virtual void Init(TxnRequest &req) = 0;
 
   // phase 1, res is NULL
@@ -207,11 +197,6 @@ class TxnCommand: public ContainerCommand {
   virtual bool start_callback(int pi,
                               int res,
                               map<int32_t, Value> &output) = 0;
-//  virtual bool start_callback(int pi,
-//                              ChopStartResponse &res);
-//  virtual bool start_callback(int pi,
-//                              map<int32_t, mdb::Value> &output,
-//                              bool is_defer);
   virtual bool finish_callback(ChopFinishResponse &res) { return false; }
   virtual bool IsReadOnly() = 0;
   virtual void read_only_reset();
@@ -267,8 +252,7 @@ class TxnCommand: public ContainerCommand {
   /** for retry */
   virtual void Reset();
 
-  virtual ~TxnCommand() { }
-
+  virtual ~TxnCommand() {}
 };
 
 // TODO Deprecated, tries to be compatible with old naming.

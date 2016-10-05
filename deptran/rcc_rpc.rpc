@@ -1,6 +1,5 @@
 namespace rococo;
 
-
 abstract service MultiPaxos {
 
   defer Forward(ContainerCommand cmd);
@@ -43,11 +42,10 @@ abstract service Classic {
   // <input_0> <input_1> ... |
   // output: contains many pieces, each piece consist of
   // | <i32 res> <i32 output_size> <output_0> <output_1> ... |
-
   // below is for what?
 
   defer rpc_null( | );
-//  defer Prepare();
+  //  defer Prepare();
   defer TapirAccept(uint64_t cmd_id,
                     uint64_t ballot,
 	                int32_t decision);
@@ -159,6 +157,15 @@ abstract service ServerControl {
     server_heart_beat ( | );
 }
 
+struct TxnDispatchRequest {
+    i32 id;
+    i32 txn_type;
+    vector<Value> input;
+}
+
+struct TxnDispatchResponse {
+}
+
 abstract service ClientControl {
     client_get_txn_names( | map<i32, string> txn_names);
     client_shutdown ( | );
@@ -167,4 +174,5 @@ abstract service ClientControl {
     client_ready ( | i32 res);
     defer client_ready_block ( | i32 res);
     client_start ( | );
+    defer DispatchTxn(TxnDispatchRequest req | TxnReply result);
 }

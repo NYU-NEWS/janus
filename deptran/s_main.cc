@@ -19,7 +19,7 @@ static rrr::PollMgr *cli_poll_mgr_g = nullptr;
 static rrr::Server *cli_hb_server_g = nullptr;
 
 static vector<ServerWorker> svr_workers_g = {};
-static vector<ClientWorker*> client_workers_g = {};
+vector<ClientWorker*> client_workers_g = {};
 static std::vector<std::thread> client_threads_g = {};
 
 void client_setup_heartbeat(int num_clients) {
@@ -43,6 +43,7 @@ void client_setup_heartbeat(int num_clients) {
     cli_hb_server_g->start(server_address.c_str());
   }
 }
+
 
 void client_launch_workers(vector<Config::SiteInfo> &client_sites) {
   // load some common configuration
@@ -129,7 +130,7 @@ void wait_for_clients() {
 
 int main(int argc, char *argv[]) {
   check_current_path();
-  
+  Log::set_level(Log::DEBUG);
   Log_info("starting process %ld", getpid());
 
   // read configuration
@@ -138,6 +139,12 @@ int main(int argc, char *argv[]) {
     Log_fatal("Read config failed");
     return ret;
   }
+
+  auto client_infos = Config::GetConfig()->GetMyClients();
+  if (client_infos.size() > 0) {
+    client_setup_heartbeat(client_infos.size());
+  }
+
 
   auto server_infos = Config::GetConfig()->GetMyServers();
   if (server_infos.size() > 0) {
@@ -150,9 +157,8 @@ int main(int argc, char *argv[]) {
   // start to profile
   ProfilerStart(prof_file);
 #endif // ifdef CPU_PROFILE
-  auto client_infos = Config::GetConfig()->GetMyClients();
   if (client_infos.size() > 0) {
-    client_setup_heartbeat(client_infos.size());
+    //client_setup_heartbeat(client_infos.size());
     client_launch_workers(client_infos);
     wait_for_clients();
     Log_info("all clients have shut down.");
@@ -168,7 +174,6 @@ int main(int argc, char *argv[]) {
   Log_info("all server workers have shut down.");
 
   // TODO, FIXME pending_future in rpc cause error.
-  Log_info("exit in a nasty way");
   fflush(stderr);
   fflush(stdout);
   return 0;

@@ -20,8 +20,6 @@ void RococoCommunicator::SendDispatch(vector<SimpleCommand>& cmd,
   fuattr.callback = cb;
   auto proxy = LeaderProxyForPartition(cmd[0].PartitionId());
   Log_debug("SendStart to %ld from %ld", proxy.first, coo->coo_id_);
-//  verify(cmd.type_ > 0);
-//  verify(cmd.root_type_ > 0);
   Future::safe_release(proxy.second->async_Dispatch(cmd, fuattr));
 }
 
@@ -118,5 +116,30 @@ void RococoCommunicator::SendTruncateEpoch(epoch_t old_epoch) {
     }
   }
 }
+
+
+void RococoCommunicator::SendForwardTxnRequest(TxnRequest& req, Coordinator* coo, std::function<void(const TxnReply&)> callback) {
+  Log_info("%s: %d, %d", __FUNCTION__, coo->coo_id_, coo->par_id_);
+  verify(client_leaders_.size() > 0);
+  auto p = client_leaders_[rrr::RandomGenerator::rand(0, client_leaders_.size()-1)];
+  auto leader_site_id = p.first;
+  auto leader_proxy = p.second;
+  Log_debug("send to client site %d", leader_site_id);
+  TxnDispatchRequest dispatch_request;
+  dispatch_request.id = coo->coo_id_;
+  for (size_t i=0; i<req.input_.size(); i++) {
+    dispatch_request.input.push_back(req.input_[i]);
+  }
+  dispatch_request.txn_type = req.txn_type_;
+
+  FutureAttr future;
+  future.callback = [callback] (Future* f) {
+      TxnReply reply;
+      f->get_reply() >> reply;
+      callback(reply);
+  };
+  Future::safe_release(leader_proxy->async_DispatchTxn(dispatch_request, future));
+}
+
 
 } // namespace

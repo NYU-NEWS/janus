@@ -18,7 +18,6 @@ pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
 FIND_PACKAGE(Boost COMPONENTS system filesystem coroutine REQUIRED)
 INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG_CODE")
-
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLOG_LEVEL_AS_INFO")
 #set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DLOG_LEVEL_AS_DEBUG")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCPU_PROFILE")
@@ -35,12 +34,14 @@ add_custom_command(
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/bin/rpcgen --cpp deptran/mdcc/mdcc_rpc.rpc
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/deptran/mdcc/mdcc_rpc.rpc
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/deptran/rcc_rpc.h
            ${CMAKE_CURRENT_SOURCE_DIR}/deptran/rcc_rpc.py
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/bin/rpcgen --cpp --python deptran/rcc_rpc.rpc
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/deptran/rcc_rpc.rpc
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+
 add_custom_target (gen-rpc
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/deptran/mdcc/mdcc_rpc.h
             ${CMAKE_CURRENT_SOURCE_DIR}/deptran/rcc_rpc.h

@@ -30,6 +30,17 @@ Communicator::Communicator(PollMgr* poll_mgr) {
     }
     rpc_par_proxies_.insert(std::make_pair(par_id, proxies));
   }
+
+  Log_info("%s: connect to client sites", __FUNCTION__);
+  auto client_leaders = config->SitesByLocaleId(0, Config::CLIENT);
+  for (Config::SiteInfo leader_site_info : client_leaders) {
+    Log_info("client @ leader %d", leader_site_info.id);
+    auto result = ConnectToClientSite(leader_site_info, milliseconds(CONNECT_TIMEOUT_MS));
+    verify(result.first == SUCCESS);
+    verify(result.second != nullptr);
+    Log_info("connected to client leader site: %d, %d, %p", leader_site_info.id, leader_site_info.partition_id_, result.second);
+    client_leaders_.push_back(std::make_pair(leader_site_info.id, result.second));
+  }
 }
 
 Communicator::~Communicator() {
@@ -76,6 +87,37 @@ Communicator::LeaderProxyForPartition(parid_t par_id) const {
     return *proxy_it;
   }
 }
+
+ClientSiteProxyPair
+Communicator::ConnectToClientSite(Config::SiteInfo &site,
+                            milliseconds timeout) {
+  auto config = Config::GetConfig();
+  char addr[1024];
+  snprintf(addr, sizeof(addr), "%s:%d", site.host.c_str(), config->get_ctrl_port());
+
+  auto start = steady_clock::now();
+  rrr::Client* rpc_cli = new rrr::Client(rpc_poll_);
+  double elapsed;
+  int attempt = 0;
+  do {
+    Log_info("connect to site: %s (attempt %d)", addr, attempt++);
+    auto connect_result = rpc_cli->connect(addr);
+    if (connect_result == SUCCESS) {
+      ClientControlProxy* rpc_proxy = new ClientControlProxy(rpc_cli);
+      rpc_clients_.insert(std::make_pair(site.id, rpc_cli));
+      Log_debug("connect to site: %s success!", addr);
+      return std::make_pair(SUCCESS, rpc_proxy);
+    } else {
+      std::this_thread::sleep_for(milliseconds(CONNECT_SLEEP_MS));
+    }
+    auto end = steady_clock::now();
+    elapsed = duration_cast<milliseconds>(end - start).count();
+  } while(elapsed < timeout.count());
+  Log_info("timeout connecting to %s", addr);
+  rpc_cli->close_and_release();
+  return std::make_pair(FAILURE, nullptr);
+}
+
 
 std::pair<int, ClassicProxy*>
 Communicator::ConnectToSite(Config::SiteInfo &site,

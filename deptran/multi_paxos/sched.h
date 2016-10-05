@@ -5,7 +5,6 @@
 #include "scheduler.h"
 
 namespace rococo {
-
 class Command;
 class ContainerCommand;
 class MultiPaxosSched : public Scheduler {
@@ -27,5 +26,4 @@ class MultiPaxosSched : public Scheduler {
                 const ballot_t ballot,
                 const ContainerCommand &cmd);
 };
-
 } // namespace rococo

@@ -121,6 +121,7 @@ void ServerWorker::SetupService() {
   Log_info("enter %s for %s @ %s", __FUNCTION__,
            this->site_info_->name.c_str(),
            site_info_->GetBindAddress().c_str());
+
   int ret;
   // set running mode and initialize transaction manager.
   std::string bind_addr = site_info_->GetBindAddress();

@@ -1052,6 +1052,7 @@ class ProcessInfo:
         self.sites = []
 
     def add_site(self, site_name, site_type, port):
+        logger.info("add_site: {}, {}, {}".format(site_name, site_type, port))
         obj = SiteInfo(self, site_name, site_type, port)
         self.sites.append(obj)
         return obj

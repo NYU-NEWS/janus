@@ -126,10 +126,6 @@ void TpcaTxnGenerator::GetTxnReq(TxnRequest *req, uint32_t cid) {
     int k1 = d1(rand_gen_);
     int k2 = d2(rand_gen_);
     int k3 = d3(rand_gen_);
-//    int k1 = RandomGenerator::rand(0, tpca_para_.n_customer_ - 1);
-//    int k2 = RandomGenerator::rand(0, tpca_para_.n_teller_ - 1);
-//    int k3 = RandomGenerator::rand(0, tpca_para_.n_branch_ - 1);
-//    Log_info("gen req, coo_id: %x \t k1: %x k2: %x, k3: %x", cid, k1, k2, k3);
     req->input_ = {
         {0, Value(k1)},
         {1, Value(k2)},

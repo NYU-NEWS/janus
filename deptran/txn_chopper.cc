@@ -81,6 +81,26 @@ Marshal& operator >> (Marshal& m, TxnWorkspace &ws) {
   return m;
 }
 
+Marshal& operator << (Marshal& m, const TxnReply& reply) {
+  m << reply.res_;
+  m << reply.output_;
+  m << reply.n_try_;
+  // TODO
+  //m << reply.start_time_;
+  m << reply.time_;
+  m << reply.txn_type_;
+  return m;
+}
+
+Marshal& operator >> (Marshal& m, TxnReply& reply) {
+  m >> reply.res_;
+  m >> reply.output_;
+  m >> reply.n_try_;
+  memset(&reply.start_time_, sizeof(reply.start_time_), 0);
+  m >> reply.time_;
+  m >> reply.txn_type_;
+  return m;
+}
 
 set<parid_t> TxnChopper::GetPartitionIds() {
   return partition_ids_;
@@ -380,5 +400,6 @@ Marshal& TxnCommand::FromMarshal(Marshal& m) {
   m >> n_try_;
   return m;
 }
+
 
 } // namespace rcc

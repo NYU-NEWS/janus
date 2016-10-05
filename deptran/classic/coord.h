@@ -104,6 +104,8 @@ class ClassicCoord : public Coordinator {
   void start_callback(TxnRequest *req, int pi, int res,
                       std::vector<mdb::Value> &output) { }
 
+  void ForwardTxnRequest(TxnRequest &req);
+  void ForwardTxnRequestAck(const TxnReply&);
   // for debug
   set<txnid_t> ___phase_one_tids_ = set<txnid_t>();
   set<txnid_t> ___phase_three_tids_ = set<txnid_t>();
