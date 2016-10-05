@@ -5,7 +5,7 @@ graph:
     x_label: 'Zipf Coefficient'
     y_label: 'Commit Rate'
     y_range: '[0:]'
-    x_range: '[0.0:1]'
+    x_range: '[0.5:1]'
     x_tics: 0,0.1
     output_file: 'single_dc_${bench}_${txn}_zipf_commits_attempts'
     key_location: 'above'

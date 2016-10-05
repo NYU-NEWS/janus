@@ -5,8 +5,8 @@ graph:
     x_label: 'Zipf Coefficient'
     y_label: 'Latency (ms)'
     log_scale: y 10
-    y_range: '[100:120000]'
-    x_range: '[0.0:1]'
+    y_range: '[100:100000]'
+    x_range: '[0.5:1]'
     x_tics: 0,0.1
     output_file: 'multi_dc_${bench}_${txn}_zipf_lat90'
     key_location: 'above'
