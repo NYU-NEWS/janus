@@ -8,4 +8,4 @@ graph:
     output_file: 'multi_dc_${bench}_${txn}_client_commits_attempts'
     key_location: 'above'
     y_range: '[0:]'
-    x_range: '[1:]'
+    x_range: '[1:10000]'

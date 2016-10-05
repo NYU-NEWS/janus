@@ -6,7 +6,7 @@ graph:
     y_label: 'Latency (ms)'
     log_scale: xy 10
     y_range: '[1:]'
-    x_range: '[1:]'
+    x_range: '[1:10000]'
     output_file: 'multi_dc_${bench}_${txn}_client_lat99'
     key_location: 'above'
     y_format: '"10^%T"'

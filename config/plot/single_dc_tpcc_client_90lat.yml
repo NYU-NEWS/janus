@@ -5,8 +5,8 @@ graph:
     x_label: 'Clients'
     y_label: 'Latency (ms)'
     log_scale: xy 10
-    y_range: '[1:]'
-    x_range: '[1:]'
+    y_range: '[1:10000]'
+    x_range: '[1:4000]'
     output_file: 'single_dc_${bench}_${txn}_client_lat90'
     key_location: 'above'
     y_format: '"10^%T"'
