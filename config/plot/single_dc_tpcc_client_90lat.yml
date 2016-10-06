@@ -4,9 +4,9 @@ graph:
     using_cmd: ($6):($13)
     x_label: 'Clients'
     y_label: 'Latency (ms)'
-    log_scale: xy 10
-    y_range: '[1:10000]'
+    log_scale: x 10
+    y_range: '[1:1000]'
+    y_tics: 0, 200
     x_range: '[1:4000]'
     output_file: 'single_dc_${bench}_${txn}_client_lat90'
     key_location: 'above'
-    y_format: '"10^%T"'
