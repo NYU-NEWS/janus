@@ -51,7 +51,7 @@ void ClassicCoord::ForwardTxnRequest(TxnRequest &req) {
 
 void ClassicCoord::ForwardTxnRequestAck(int res, const TxnOutput &outputs) {
   Log_info("%s: %d", __FUNCTION__, res);
-  void(0);
+  verify(0);
 }
 
 
