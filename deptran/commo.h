@@ -49,5 +49,6 @@ class RococoCommunicator : public Communicator {
                                                     int32_t& graph)>& callback);
 
   void SendTruncateEpoch(epoch_t old_epoch);
+  void SendForwardTxnRequest(TxnRequest& req, Coordinator* coo, std::function<void(int32_t, const TxnOutput&)>);
 };
 } // namespace rococo

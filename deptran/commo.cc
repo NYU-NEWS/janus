@@ -20,8 +20,6 @@ void RococoCommunicator::SendDispatch(vector<SimpleCommand>& cmd,
   fuattr.callback = cb;
   auto proxy = LeaderProxyForPartition(cmd[0].PartitionId());
   Log_debug("SendStart to %ld from %ld", proxy.first, coo->coo_id_);
-//  verify(cmd.type_ > 0);
-//  verify(cmd.root_type_ > 0);
   Future::safe_release(proxy.second->async_Dispatch(cmd, fuattr));
 }
 
@@ -118,5 +116,16 @@ void RococoCommunicator::SendTruncateEpoch(epoch_t old_epoch) {
     }
   }
 }
+
+
+void RococoCommunicator::SendForwardTxnRequest(TxnRequest& req, Coordinator* coo, std::function<void(int32_t, const TxnOutput&)> callback) {
+    auto partition_ids = static_cast<TxnCommand*>(coo->cmd_)->GetPartitionIds();
+    auto par_id = *partition_ids.begin();
+    auto leader_proxy = this->LeaderProxyForPartition(par_id);
+    verify(0);
+    // leader_proxy->SendTheMessage; // stopped here
+    // TODO: send message
+}
+
 
 } // namespace

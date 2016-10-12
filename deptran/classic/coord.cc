@@ -38,63 +38,45 @@ RococoCommunicator* ClassicCoord::commo() {
 }
 
 void ClassicCoord::ForwardTxnRequest(TxnRequest &req) {
-  auto config = Config::GetConfig();
-  auto clients = config->SitesByLocaleId(0, Config::CLIENT);
-  if (clients.size() > 0) {
-    auto client_site = clients[rrr::RandomGenerator::rand(0, clients.size()-1)];
-    // stopped here
-  } else {
-    verify(0);
-  }
+    commo()->SendForwardTxnRequest(
+        req,
+        this,
+        std::bind(&ClassicCoord::ForwardTxnRequestAck,
+                  this,
+                  std::placeholders::_1,
+                  std::placeholders::_2
+        ));
 }
+
+
+void ClassicCoord::ForwardTxnRequestAck(int res, const TxnOutput &outputs) {
+  Log_info("%s: %d", __FUNCTION__, res);
+  void(0);
+}
+
 
 /** thread safe */
 void ClassicCoord::do_one(TxnRequest &req) {
-  if (this->forward_leader_) {
-    ForwardTxnRequest(req);
-    return;
-  }
-  // pre-process
-  std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-  TxnCommand *cmd = frame_->CreateTxnCommand(req, txn_reg_);
-  verify(txn_reg_ != nullptr);
-  cmd->root_id_ = this->next_txn_id();
-  cmd->id_ = cmd->root_id_;
-  cmd->timestamp_ = cmd->root_id_;
-  cmd_ = cmd;
-  n_retry_ = 0;
-  Reset(); // In case of reuse.
+    std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+    TxnCommand *cmd = frame_->CreateTxnCommand(req, txn_reg_);
+    verify(txn_reg_ != nullptr);
+    cmd->root_id_ = this->next_txn_id();
+    cmd->id_ = cmd->root_id_;
+    cmd->timestamp_ = cmd->root_id_;
+    cmd_ = cmd;
+    n_retry_ = 0;
+    Reset(); // In case of reuse.
 
-  Log_debug("do one request txn_id:%\n", cmd_->id_);
+    Log_debug("do one request txn_id:%\n", cmd_->id_);
 
-  if (ccsi_) ccsi_->txn_start_one(thread_id_, cmd->type_);
-
-//  auto mode = Config::GetConfig()->cc_mode_;
-//  verify(mode == MODE_2PL || mode == MODE_OCC || mode == MODE_NONE);
-  GotoNextPhase();
-  // finish request is triggered in the callback of start request.
+    if (ccsi_) ccsi_->txn_start_one(thread_id_, cmd->type_);
+    if (this->forward_leader_) {
+      ForwardTxnRequest(req);
+      return;
+    } else {
+      GotoNextPhase();
+    }
 }
-
-//void ThreePhaseCoord::rpc_null_start(TxnChopper *ch) {
-//  rrr::FutureAttr fuattr;
-//
-//  fuattr.callback = [ch, this](Future *fu) {
-//    ch->reply_.res_ = SUCCESS;
-//    TxnReply &txn_reply_buf = ch->get_reply();
-//    double last_latency = ch->last_attempt_latency();
-//    this->report(txn_reply_buf, last_latency
-//#ifdef TXN_STAT
-//        , ch
-//#endif // ifdef TXN_STAT
-//    );
-//    ch->callback_(txn_reply_buf);
-//    delete ch;
-//  };
-//
-//  RococoProxy *proxy = commo_->vec_rpc_proxy_[coo_id_ % commo_->vec_rpc_proxy_.size()];
-//  Future::safe_release(proxy->async_rpc_null(fuattr));
-//}
-
 
 void ClassicCoord::GotoNextPhase() {
   int n_phase = 4;
@@ -132,25 +114,6 @@ void ClassicCoord::GotoNextPhase() {
   }
 }
 
-//void ClassicCoord::IncrementPhaseAndChangeStage(CoordinatorStage stage) {
-//  phase_++;
-//  stage_ = stage;
-//  Log_debug("moving to phase %ld; stage %d", phase_, stage_);
-//}
-//
-//bool ClassicCoord::IsPhaseOrStageStale(phase_t phase, CoordinatorStage stage) {
-//  bool result = false;
-//  if (phase_ != phase) {
-//    Log_debug("phase %d doesn't match %d\n", phase, phase_);
-//    result = true;
-//  }
-//  if (stage_ != stage) {
-//    Log_debug("stage %d doesn't match %d\n", stage, stage_);
-//    result = true;
-//  }
-//  return result;
-//}
-
 void ClassicCoord::Reset() {
   Coordinator::Reset();
   for (int i = 0; i < site_prepare_.size(); i++) {
@@ -183,7 +146,7 @@ void ClassicCoord::Restart() {
       ccsi_->txn_give_up_one(this->thread_id_, txn->type_);
     End();
   } else {
-//    Log_info("retry count %d, max_retry: %d, this coord: %llx", n_retry_, max_retry, this);
+    // Log_info("retry count %d, max_retry: %d, this coord: %llx", n_retry_, max_retry, this);
     Reset();
     txn->Reset();
     GotoNextPhase();
@@ -192,7 +155,6 @@ void ClassicCoord::Restart() {
 
 void ClassicCoord::Dispatch() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  //  ___TestPhaseOne(cmd_id_);
   auto txn = (TxnCommand*) cmd_;
 
   int cnt = 0;
