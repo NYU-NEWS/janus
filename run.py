@@ -36,7 +36,6 @@ from pylib import ps
 LOG_LEVEL = logging.INFO
 LOG_FILE_LEVEL = logging.DEBUG
 logger = logging.getLogger('janus')
-#logger.addHandler(logging.StreamHandler())
 
 cwd = os.getcwd()
 deptran_home, ff = os.path.split(os.path.realpath(__file__))
@@ -1146,7 +1145,6 @@ def main():
     server_controller = None
     client_controller = None
     config = None
-
     try:
         config = build_config(create_parser().parse_args())
         setup_experiment(config)
@@ -1167,7 +1165,7 @@ def main():
             process.join()
 
     except Exception:
-        logger.error(traceback.format_exc())
+        logging.error(traceback.format_exc())
         ret = 1
     finally:
         logger.info("shutting down...")
