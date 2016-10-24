@@ -1168,14 +1168,14 @@ def main():
         logging.error(traceback.format_exc())
         ret = 1
     finally:
-        logger.info("shutting down...")
+        logging.info("shutting down...")
         if server_controller is not None:
             try:
                 #comment the following line when doing profiling
                 server_controller.server_kill()
                 pass
             except:
-                logger.error(traceback.format_exc())
+                logging.error(traceback.format_exc())
         if ret != 0:
             sys.exit(ret)
 
