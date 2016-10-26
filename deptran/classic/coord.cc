@@ -70,7 +70,7 @@ void ClassicCoord::do_one(TxnRequest &req) {
 
     Log_debug("do one request txn_id: %d", cmd_->id_);
     auto config = Config::GetConfig();
-    bool not_forwarding = forward_status_ != PROCESS_FORWARD_REQUEST
+    bool not_forwarding = forward_status_ != PROCESS_FORWARD_REQUEST;
 
     if (ccsi_ && not_forwarding) {
       ccsi_->txn_start_one(thread_id_, cmd->type_);
@@ -382,8 +382,7 @@ void ClassicCoord::report(TxnReply &txn_reply,
 #endif // ifdef TXN_STAT
 ) {
 
-  auto config = Config::GetConfig();
-  bool not_forwarding = forward_status_ != PROCESS_FORWARD_REQUEST
+  bool not_forwarding = forward_status_ != PROCESS_FORWARD_REQUEST;
   if (ccsi_ && not_forwarding) {
     if (txn_reply.res_ == SUCCESS) {
 #ifdef TXN_STAT
