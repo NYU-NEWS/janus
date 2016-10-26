@@ -400,7 +400,15 @@ namespace rococo {
 
     void ClientControlServiceImpl::DispatchTxn(
         const TxnDispatchRequest& req, TxnReply* txn_reply, rrr::DeferredReply* defer) {
-      auto worker = client_workers_g[0];
+      // TODO: fix -- we dont need to do this everytime.
+      std::vector<ClientWorker*> locale0_workers;
+      for (auto worker : client_workers_g) {
+        Log_debug("%s worker %d; site %d; locale %d", __FUNCTION__, worker->id, worker->my_site_.id, worker->my_site_.locale_id);
+        if (worker->my_site_.locale_id == 0)
+          locale0_workers.push_back(worker);
+      }
+      verify(locale0_workers.size() > 0);
+      auto worker = locale0_workers[rrr::RandomGenerator::rand(0, locale0_workers.size()-1)];
       Log_info("%s: from coo %d; site %d", __FUNCTION__, req.id, worker->my_site_.id);
       verify(worker->my_site_.locale_id == 0);
       TxnRequest request;

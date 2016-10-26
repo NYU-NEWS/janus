@@ -124,7 +124,7 @@ void RococoCommunicator::SendForwardTxnRequest(TxnRequest& req, Coordinator* coo
   auto p = client_leaders_[rrr::RandomGenerator::rand(0, client_leaders_.size()-1)];
   auto leader_site_id = p.first;
   auto leader_proxy = p.second;
-  Log_debug("send to client site %d", leader_site_id);
+  Log_debug("%s: send to client site %d", __FUNCTION__, leader_site_id);
   TxnDispatchRequest dispatch_request;
   dispatch_request.id = coo->coo_id_;
   for (size_t i=0; i<req.input_.size(); i++) {

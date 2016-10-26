@@ -269,6 +269,9 @@ void Config::LoadYML(std::string &filename) {
   Log_info("%s: %s", __FUNCTION__, filename.c_str());
   YAML::Node config = YAML::LoadFile(filename);
 
+  if (config["process"]) {
+    BuildSiteProcMap(config["process"]);
+  }
   if (config["site"]) {
     LoadSiteYML(config["site"]);
   }
@@ -343,12 +346,48 @@ void Config::LoadSiteYML(YAML::Node config) {
       SiteInfo info(site_id++);
       info.name = site_name;
       info.type_ = CLIENT;
-      // TODO: add ability to assign clients to a locale;
-      // for now default to the position in the config array.
       info.locale_id = locale_id;
+      info.port = GetClientPort(site_name);
       par_clients_.push_back(info);
       locale_id++;
     }
+  }
+}
+
+// TODO: inefficient -- do not call during testing
+// port assignment should match run.py get_process_info function
+int Config::GetClientPort(std::string site_name) {
+  auto config = Config::GetConfig();
+  std::vector<std::string> sites;
+  for (auto site_host_pair : site_proc_map_) {
+    sites.push_back(site_host_pair.first);
+  }
+  verify(sites.size() > 0);
+  std::sort(sites.begin(), sites.end());
+  std::vector<std::string> hosts;
+  for (auto s : sites) {
+    if (std::find(hosts.begin(), hosts.end(), site_proc_map_[s]) == hosts.end()) {
+      if (s == site_name) {
+        Log_info("%s: found %s", __FUNCTION__, s.c_str());
+        // TODO: magic number
+        return 5555 + hosts.size();
+      } else {
+        Log_info("%s: add %s", __FUNCTION__, s.c_str());
+        hosts.push_back(site_proc_map_[s]);
+      }
+    }
+  }
+  verify(0);
+  return -1;
+}
+
+void Config::BuildSiteProcMap(YAML::Node process) {
+  Log_info("%s", __FUNCTION__);
+  for (auto it = process.begin(); it != process.end(); it++) {
+    auto site_name = it->first.as<string>();
+    auto proc_name = it->second.as<string>();
+
+    site_proc_map_[site_name] = proc_name;
   }
 }
 
@@ -767,8 +806,10 @@ Config::SitesByLocaleId(uint32_t locale_id, SiteInfoType type) {
     searching = &par_clients_;
   }
   std::for_each(searching->begin(), searching->end(),
-                [locale_id, &result](SiteInfo& site) mutable {
-                  if (site.locale_id==locale_id) result.push_back(site);
+                [locale_id, type, &result](SiteInfo& site) mutable {
+                  if (site.locale_id==locale_id) {
+                    result.push_back(site);
+                  }
                 });
   return result;
 }
@@ -900,6 +941,7 @@ const char * Config::log_path() {
 bool Config::retry_wait() {
   return retry_wait_;
 }
+
 
 
 }

@@ -44,6 +44,7 @@ void Communicator::ConnectClientLeaders() {
     Log_info("%s: connect to client sites", __FUNCTION__);
     auto client_leaders = config->SitesByLocaleId(0, Config::CLIENT);
     for (Config::SiteInfo leader_site_info : client_leaders) {
+      verify(leader_site_info.locale_id == 0);
       Log_info("client @ leader %d", leader_site_info.id);
       auto result = ConnectToClientSite(leader_site_info,
                                         milliseconds(CONNECT_TIMEOUT_MS));
@@ -51,7 +52,7 @@ void Communicator::ConnectClientLeaders() {
       verify(result.second != nullptr);
       Log_info("connected to client leader site: %d, %d, %p",
                leader_site_info.id,
-               leader_site_info.partition_id_,
+               leader_site_info.locale_id,
                result.second);
       client_leaders_.push_back(std::make_pair(leader_site_info.id,
                                                result.second));
@@ -118,19 +119,19 @@ Communicator::ConnectToClientSite(Config::SiteInfo &site,
                             milliseconds timeout) {
   auto config = Config::GetConfig();
   char addr[1024];
-  snprintf(addr, sizeof(addr), "%s:%d", site.host.c_str(), config->get_ctrl_port());
+  snprintf(addr, sizeof(addr), "%s:%d", site.host.c_str(), site.port);
 
   auto start = steady_clock::now();
   rrr::Client* rpc_cli = new rrr::Client(rpc_poll_);
   double elapsed;
   int attempt = 0;
   do {
-    Log_info("connect to site: %s (attempt %d)", addr, attempt++);
+    Log_info("connect to client site: %s (attempt %d)", addr, attempt++);
     auto connect_result = rpc_cli->connect(addr);
     if (connect_result == SUCCESS) {
       ClientControlProxy* rpc_proxy = new ClientControlProxy(rpc_cli);
       rpc_clients_.insert(std::make_pair(site.id, rpc_cli));
-      Log_debug("connect to site: %s success!", addr);
+      Log_debug("connect to client site: %s success!", addr);
       return std::make_pair(SUCCESS, rpc_proxy);
     } else {
       std::this_thread::sleep_for(milliseconds(CONNECT_SLEEP_MS));
@@ -138,7 +139,7 @@ Communicator::ConnectToClientSite(Config::SiteInfo &site,
     auto end = steady_clock::now();
     elapsed = duration_cast<milliseconds>(end - start).count();
   } while(elapsed < timeout.count());
-  Log_info("timeout connecting to %s", addr);
+  Log_info("timeout connecting to client %s", addr);
   rpc_cli->close_and_release();
   return std::make_pair(FAILURE, nullptr);
 }

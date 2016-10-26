@@ -126,6 +126,7 @@ class Config {
   vector<SiteInfo> sites_;
   vector<SiteInfo> par_clients_;
   map<string, string> proc_host_map_;
+  map<string, string> site_proc_map_;
 
   Sharding* sharding_;
 
@@ -143,6 +144,7 @@ class Config {
          single_server_t single_server,
          string logging_path
   );
+  int GetClientPort(std::string site_name);
 
  public:
   static int CreateConfig(int argc,
@@ -233,7 +235,9 @@ class Config {
   ~Config();
 
     map<string, double> &get_txn_weights();
-  };
+
+  void BuildSiteProcMap(YAML::Node node);
+};
 }
 
 #endif // ifndef CONFIG_H_
