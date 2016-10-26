@@ -1,4 +1,4 @@
 client:
     type: closed
     rate: -1 
-    forwarding: true
+    forwarding: false

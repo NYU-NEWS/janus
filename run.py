@@ -20,6 +20,7 @@ from multiprocessing import Value
 from multiprocessing import Lock
 import yaml
 import tempfile
+from collections import OrderedDict
 
 # third-party python modules
 from tabulate import tabulate
@@ -1050,6 +1051,7 @@ class ProcessInfo:
         self.rpc_port = rpc_port + self.id
         self.client_rpc_proxy = None
         self.sites = []
+        logger.info("process {} {} {}:{}".format(name, self.id, address, self.rpc_port))
 
     def add_site(self, site_name, site_type, port):
         logger.info("add_site: {}, {}, {}".format(site_name, site_type, port))
@@ -1090,10 +1092,17 @@ def get_process_info(config):
     processes = config['process']
     sites = config['site']
 
-    process_infos = { process_name: ProcessInfo(process_name,
-                                                hosts[process_name],
-                                                config['args'].rpc_port)
-                     for (_, process_name) in processes.iteritems() }
+    # deterministically give the processes their id -- base client ctrl port assignment on this
+    sorted_processes = OrderedDict(sorted(processes.items(), key=lambda t: t[0]))
+
+
+    process_infos = {}
+    for (_, process_name) in sorted_processes.iteritems():
+        if process_name not in process_infos:
+            process_infos[process_name] = ProcessInfo(process_name,
+                                                      hosts[process_name],
+                                                      config['args'].rpc_port)
+
     for site_type in ['server', 'client']:
         for site in itertools.chain(*sites[site_type]):
             if ':' in site:
@@ -1102,6 +1111,7 @@ def get_process_info(config):
                 port = int(config['args'].rpc_port)
             pi = process_infos[processes[site]]
             pi.add_site(site, site_type, port)
+    logging.info("process infos: {}".format(process_infos))
     return process_infos
 
 def build_config(options):
