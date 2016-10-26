@@ -604,8 +604,8 @@ void Config::LoadClientYML(YAML::Node client) {
     client_rate_ = -1;
   }
   if (client["forwarding"]) {
-    forwarding_enabled_ = client["forwarding"].as<bool>();
-    printf("client forwarding: %d", forwarding_enabled_);
+    forwarding_enabled_ = client["forwarding"].as<bool>(false);
+    Log_info("client forwarding: %d", forwarding_enabled_);
   }
 }
 
