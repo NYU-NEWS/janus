@@ -603,6 +603,10 @@ void Config::LoadClientYML(YAML::Node client) {
     client_type_ = Closed;
     client_rate_ = -1;
   }
+  if (client["forwarding"]) {
+    forwarding_enabled_ = client["forwarding"].as<bool>();
+    printf("client forwarding: %d", forwarding_enabled_);
+  }
 }
 
 void Config::InitTPCCD() {

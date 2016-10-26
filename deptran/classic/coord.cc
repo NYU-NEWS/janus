@@ -57,7 +57,6 @@ void ClassicCoord::ForwardTxnRequestAck(const TxnReply& txn_reply) {
   GotoNextPhase();
 }
 
-
 void ClassicCoord::do_one(TxnRequest &req) {
     std::lock_guard<std::recursive_mutex> lock(this->mtx_);
     TxnCommand *cmd = frame_->CreateTxnCommand(req, txn_reg_);
@@ -70,10 +69,13 @@ void ClassicCoord::do_one(TxnRequest &req) {
     Reset(); // In case of reuse.
 
     Log_debug("do one request txn_id: %d", cmd_->id_);
-    if (ccsi_ && forward_status_ != PROCESS_FORWARD_REQUEST) {
+    auto config = Config::GetConfig();
+    bool not_forwarding = forward_status_ != PROCESS_FORWARD_REQUEST
+
+    if (ccsi_ && not_forwarding) {
       ccsi_->txn_start_one(thread_id_, cmd->type_);
     }
-    if (forward_status_ == FORWARD_TO_LEADER) {
+    if (config->forwarding_enabled_ && forward_status_ == FORWARD_TO_LEADER) {
       Log_info("forward to leader: %d; cooid: %d", forward_status_, this->coo_id_);
       ForwardTxnRequest(req);
     } else {
@@ -379,8 +381,10 @@ void ClassicCoord::report(TxnReply &txn_reply,
     , TxnChopper *ch
 #endif // ifdef TXN_STAT
 ) {
-  bool not_forwarded = (forward_status_ != PROCESS_FORWARD_REQUEST);
-  if (ccsi_ && not_forwarded) {
+
+  auto config = Config::GetConfig();
+  bool not_forwarding = forward_status_ != PROCESS_FORWARD_REQUEST
+  if (ccsi_ && not_forwarding) {
     if (txn_reply.res_ == SUCCESS) {
 #ifdef TXN_STAT
       txn_stats_[ch->txn_type_].one(ch->proxies_.size(), ch->p_types_);
