@@ -1,6 +1,7 @@
 #pragma once
 
 #include <chrono>
+#include <atomic>
 #include "__dep__.h"
 #include "constants.h"
 #include "msg.h"
@@ -29,6 +30,8 @@ class Communicator {
   map<parid_t, vector<SiteProxyPair>> rpc_par_proxies_ = {};
   map<parid_t, SiteProxyPair> leader_cache_ = {};
   vector<ClientSiteProxyPair> client_leaders_;
+  std::atomic_bool client_leaders_connected_;
+  std::vector<std::thread> threads;
 
   Communicator(PollMgr* poll_mgr = nullptr);
   virtual ~Communicator();
@@ -38,6 +41,8 @@ class Communicator {
   SiteProxyPair NearestProxyForPartition(parid_t) const;
   std::pair<int, ClassicProxy*> ConnectToSite(rococo::Config::SiteInfo &site, std::chrono::milliseconds timeout_ms);
   ClientSiteProxyPair ConnectToClientSite(Config::SiteInfo &site, std::chrono::milliseconds timeout);
+  void ConnectClientLeaders();
+  void WaitConnectClientLeaders();
 };
 
 } // namespace rococo

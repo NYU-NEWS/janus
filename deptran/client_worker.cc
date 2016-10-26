@@ -124,7 +124,10 @@ void ClientWorker::work() {
   piece->txn_reg_ = txn_reg_;
   piece->reg_all();
 
-  if (ccsi) ccsi->wait_for_start(id);
+  commo_->WaitConnectClientLeaders();
+  if (ccsi) {
+    ccsi->wait_for_start(id);
+  }
   Log_debug("after wait for start");
 
   timer_ = new Timer();

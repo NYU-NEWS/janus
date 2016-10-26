@@ -30,7 +30,16 @@ Communicator::Communicator(PollMgr* poll_mgr) {
     }
     rpc_par_proxies_.insert(std::make_pair(par_id, proxies));
   }
+  client_leaders_connected_.store(false);
+  if (config->forwarding_enabled_) {
+    threads.push_back(std::thread(&Communicator::ConnectClientLeaders, this));
+  } else {
+    client_leaders_connected_.store(true);
+  }
+}
 
+void Communicator::ConnectClientLeaders() {
+  auto config = Config::GetConfig();
   if (config->forwarding_enabled_) {
     Log_info("%s: connect to client sites", __FUNCTION__);
     auto client_leaders = config->SitesByLocaleId(0, Config::CLIENT);
@@ -48,6 +57,15 @@ Communicator::Communicator(PollMgr* poll_mgr) {
                                                result.second));
     }
   }
+  client_leaders_connected_.store(true);
+}
+
+void Communicator::WaitConnectClientLeaders() {
+  bool connected;
+  do {
+    connected = client_leaders_connected_.load();
+  } while (!connected);
+  Log_info("Done waiting to connect to client leaders.");
 }
 
 Communicator::~Communicator() {

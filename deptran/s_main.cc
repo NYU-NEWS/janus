@@ -50,6 +50,7 @@ void client_launch_workers(vector<Config::SiteInfo> &client_sites) {
   // start client workers in new threads.
   Log_info("client enabled, number of sites: %d", client_sites.size());
   vector<ClientWorker*> workers;
+
   for (uint32_t client_id = 0; client_id < client_sites.size(); client_id++) {
     ClientWorker* worker = new ClientWorker(client_id,
                                             client_sites[client_id],
@@ -60,6 +61,7 @@ void client_launch_workers(vector<Config::SiteInfo> &client_sites) {
                                          worker));
     client_workers_g.push_back(worker);
   }
+
 }
 
 void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
