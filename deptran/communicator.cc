@@ -31,15 +31,22 @@ Communicator::Communicator(PollMgr* poll_mgr) {
     rpc_par_proxies_.insert(std::make_pair(par_id, proxies));
   }
 
-  Log_info("%s: connect to client sites", __FUNCTION__);
-  auto client_leaders = config->SitesByLocaleId(0, Config::CLIENT);
-  for (Config::SiteInfo leader_site_info : client_leaders) {
-    Log_info("client @ leader %d", leader_site_info.id);
-    auto result = ConnectToClientSite(leader_site_info, milliseconds(CONNECT_TIMEOUT_MS));
-    verify(result.first == SUCCESS);
-    verify(result.second != nullptr);
-    Log_info("connected to client leader site: %d, %d, %p", leader_site_info.id, leader_site_info.partition_id_, result.second);
-    client_leaders_.push_back(std::make_pair(leader_site_info.id, result.second));
+  if (config->forwarding_enabled_) {
+    Log_info("%s: connect to client sites", __FUNCTION__);
+    auto client_leaders = config->SitesByLocaleId(0, Config::CLIENT);
+    for (Config::SiteInfo leader_site_info : client_leaders) {
+      Log_info("client @ leader %d", leader_site_info.id);
+      auto result = ConnectToClientSite(leader_site_info,
+                                        milliseconds(CONNECT_TIMEOUT_MS));
+      verify(result.first == SUCCESS);
+      verify(result.second != nullptr);
+      Log_info("connected to client leader site: %d, %d, %p",
+               leader_site_info.id,
+               leader_site_info.partition_id_,
+               result.second);
+      client_leaders_.push_back(std::make_pair(leader_site_info.id,
+                                               result.second));
+    }
   }
 }
 

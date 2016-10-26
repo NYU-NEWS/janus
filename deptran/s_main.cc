@@ -95,7 +95,6 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
   }
   Log_info("done waiting for client setup threads.");
 
-
   for (ServerWorker& worker : svr_workers_g) {
     // start communicator after all servers are running
     // setup communication between controller script
