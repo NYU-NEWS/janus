@@ -70,8 +70,9 @@ void ClassicCoord::do_one(TxnRequest &req) {
     Reset(); // In case of reuse.
 
     Log_debug("do one request txn_id: %d", cmd_->id_);
-
-    if (ccsi_) ccsi_->txn_start_one(thread_id_, cmd->type_);
+    if (ccsi_ && forward_status_ != PROCESS_FORWARD_REQUEST) {
+      ccsi_->txn_start_one(thread_id_, cmd->type_);
+    }
     if (forward_status_ == FORWARD_TO_LEADER) {
       Log_info("forward to leader: %d; cooid: %d", forward_status_, this->coo_id_);
       ForwardTxnRequest(req);
