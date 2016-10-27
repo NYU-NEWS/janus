@@ -368,10 +368,8 @@ int Config::GetClientPort(std::string site_name) {
   for (auto s : sites) {
     if (std::find(hosts.begin(), hosts.end(), site_proc_map_[s]) == hosts.end()) {
       if (s == site_name) {
-        Log_info("%s: found %s", __FUNCTION__, s.c_str());
         return Config::BASE_CLIENT_CTRL_PORT + hosts.size();
       } else {
-        Log_info("%s: add %s", __FUNCTION__, s.c_str());
         hosts.push_back(site_proc_map_[s]);
       }
     }
