@@ -17,6 +17,7 @@ int ClassicSched::OnDispatch(const vector<SimpleCommand>& cmd,
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   verify(frame_);
   auto exec = (ClassicExecutor*) GetOrCreateExecutor(cmd[0].root_id_);
+  vector<int32_t> *rr = new vector<int32_t>(cmd.size());
 
   // XXX just touch in case
   for (auto c: cmd) {
