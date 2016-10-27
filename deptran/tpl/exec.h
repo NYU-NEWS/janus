@@ -13,7 +13,6 @@ class TplExecutor: public ClassicExecutor {
   bool prepared_ = false;
   bool wounded_ = false;
   std::unordered_map<i64, PieceStatus *> piece_map_ = {};
-  //  static PieceStatus *ps_cache_s; // TODO fix
   PieceStatus *ps_cache_ = nullptr;
 
   PieceStatus* ps_cache();

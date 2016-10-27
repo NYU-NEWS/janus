@@ -37,7 +37,6 @@ mdb::Txn* TPLSched::get_mdb_txn(const i64 tid) {
   mdb::Txn *txn = nullptr;
   auto it = mdb_txns_.find(tid);
   if (it == mdb_txns_.end()) {
-    //verify(IS_MODE_2PL);2
     txn = mdb_txn_mgr_->start(tid);
     //XXX using occ lazy mode: increment version at commit time
     auto ret = mdb_txns_.insert(std::pair<i64, mdb::Txn *>(tid, txn));
@@ -51,12 +50,5 @@ mdb::Txn* TPLSched::get_mdb_txn(const i64 tid) {
   verify(txn != nullptr);
   return txn;
 }
-
-//mdb::Txn* TPLSched::get_mdb_txn(const RequestHeader &header) {
-//  mdb::Txn *txn = nullptr;
-//  txn = get_mdb_txn(header.tid);
-//  return txn;
-//}
-
 
 } // namespace rococo

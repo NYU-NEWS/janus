@@ -15,7 +15,6 @@ bool TPLDTxn::ReadColumn(mdb::Row *row,
                          Value *value,
                          int hint_flag) {
   if (locking_ && hint_flag != TXN_BYPASS) {
-    //verify(0);
     locks_.push_back(mdb::column_lock_t(row, col_id, ALock::RLOCK));
   } else {
     auto ret = mdb_txn()->read_column(row, col_id, value);
@@ -29,7 +28,6 @@ bool TPLDTxn::ReadColumns(Row *row,
                           std::vector<Value> *values,
                           int hint_flag) {
   if (locking_ && hint_flag != TXN_BYPASS) {
-//    verify(0);
     for (auto col_id : col_ids) {
       locks_.push_back(mdb::column_lock_t(row, col_id, ALock::RLOCK));
     }
@@ -46,7 +44,6 @@ bool TPLDTxn::WriteColumn(Row *row,
                           const Value &value,
                           int hint_flag) {
   if (locking_  && hint_flag != TXN_BYPASS) {
-//    verify(0);
     locks_.push_back(mdb::column_lock_t(row, col_id, ALock::WLOCK));
   } else {
     auto ret = mdb_txn()->write_column(row, col_id, value);
@@ -61,7 +58,6 @@ bool TPLDTxn::WriteColumns(Row *row,
                            int hint_flag) {
 
   if (locking_  && hint_flag != TXN_BYPASS) {
-//    verify(0);
     for (auto col_id : col_ids) {
       locks_.push_back(mdb::column_lock_t(row, col_id, ALock::WLOCK));
     }
@@ -74,7 +70,6 @@ bool TPLDTxn::WriteColumns(Row *row,
 
 bool TPLDTxn::InsertRow(Table *tbl, Row *row) {
   if (locking_) {
-
   } else {
     mdb_txn()->insert_row(tbl, row);
   }

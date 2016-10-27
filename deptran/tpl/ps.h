@@ -34,9 +34,6 @@ class PieceStatus {
   bool is_rm_ = false;
   TxnHandler handler_;
 
-//  bool *wound_;
-
-//  mdb::Txn2PL *txn_;
   TplExecutor *exec_;
 
   PieceStatus() : rw_lock_group_(0), rm_lock_group_(0) {
@@ -86,12 +83,6 @@ class PieceStatus {
   }
 
   void remove_output() {
-    if (output_buf_) {
-//      verify(output_size_buf_ != NULL);
-//      *output_size_buf_ = 0;
-    } else if (output_) {
-//        output_vec_->resize(0);
-    }
   }
 
   void set_num_waiting_locks(int num) {
@@ -110,7 +101,6 @@ class PieceStatus {
     *output_map = output_;
     verify(output_buf_ == nullptr);
     *output = output_buf_;
-//    *output_size = output_size_buf_;
   }
 
   bool can_proceed() {

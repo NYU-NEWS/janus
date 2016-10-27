@@ -14,7 +14,6 @@ class TPLSched: public ClassicSched {
   TPLSched();
 
   virtual mdb::Txn *get_mdb_txn(const i64 tid);
-//  virtual mdb::Txn *get_mdb_txn(const RequestHeader &req);
   virtual mdb::Txn *del_mdb_txn(const i64 tid);
 
 };

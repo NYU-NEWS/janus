@@ -118,7 +118,6 @@ void TplExecutor::LockFailed(const SimpleCommand& cmd,
            (int64_t)cmd.root_id_, (int64_t)cmd.id_, (int)cmd.type_);
   Log::debug("fail callback: PS: %p", ps);
   verify(ps != NULL); //FIXME
-//    ((mdb::Txn2PL*)this->mdb_txn_)->ps_cache_ = ps;
   ps->start_no_callback();
 
   if (ps->can_proceed()) {
@@ -156,7 +155,6 @@ int TplExecutor::Abort() {
 }
 
 PieceStatus* TplExecutor::ps_cache() {
-//  verify(ps_cache_ == ps_cache_s);
   return ps_cache_;
 }
 
@@ -166,9 +164,8 @@ void TplExecutor::SetPsCache(PieceStatus* ps) {
 
 
 void TplExecutor::release_piece_map(bool commit) {
-
   // TODO FIXME
-//  verify(piece_map_.size() != 0);
+  // verify(piece_map_.size() != 0);
   SetPsCache(nullptr);
   if (commit) {
     for (auto &it : piece_map_) {
@@ -215,7 +212,6 @@ void TplExecutor::InitPieceStatus(const SimpleCommand &cmd,
   PieceStatus *ps = new PieceStatus(cmd,
                                     callback,
                                     output,
-//                      &this->wounded_,
                                     wound_callback,
                                     this);
   piece_map_[pid] = ps;
