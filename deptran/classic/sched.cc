@@ -18,32 +18,6 @@ int ClassicSched::OnDispatch(const vector<SimpleCommand>& cmd,
   verify(frame_);
   auto exec = (ClassicExecutor*) GetOrCreateExecutor(cmd[0].root_id_);
 
-  vector<int32_t> *rr = new vector<int32_t>(cmd.size());
-//  rrr::DragonBall* db = new rrr::DragonBall(
-//      (int32_t)cmd.size(),
-//      [callback, this, output, exec, res, rr] () {
-//        bool r = std::all_of(rr->begin(), rr->end(), [] (int xxx) -> bool{
-//          return xxx == SUCCESS;
-//        });
-//        *res = r ? SUCCESS : REJECT;
-//#ifdef DEBUG_CODE
-//        if (output->count(1000) > 0 && *res == SUCCESS) {
-//          auto& m = output->at(1000);
-//          verify(m.count(1011) > 0);
-//        }
-//        if (output->count(402) > 0 && *res == SUCCESS) {
-//          auto& m = output->at(402);
-//          verify(m.count(1013) > 0);
-//        }
-//        if (output->count(401) > 0 && *res == SUCCESS) {
-//          auto& m = output->at(401);
-//          verify(m.count(1007) > 0);
-//        }
-//#endif
-//        callback();
-//        delete rr;
-//      });
-
   // XXX just touch in case
   for (auto c: cmd) {
     (*output)[c.inn_id()];
@@ -78,11 +52,6 @@ int ClassicSched::OnDispatch(const vector<SimpleCommand>& cmd,
     if (*i == *sz) {
       callback();
       return;
-//      delete i;
-//      delete sz;
-//      delete rr;
-//      delete func;
-//      delete ws;
     } else if (*i < *sz) {
       int j = *i;
       (*i)++;
@@ -97,18 +66,6 @@ int ClassicSched::OnDispatch(const vector<SimpleCommand>& cmd,
   };
 
   (*func)();
-
-//  auto sz = cmd.size();
-//  for (int i = 0; i < sz; i++) {
-//    exec->cmds_.push_back(cmd[i]);
-//    exec->OnDispatch(cmd[i],
-//                     &(*rr)[i],
-//                     &(*output)[cmd[i].inn_id()],
-//                     [db, this] () {
-//                       std::lock_guard<std::recursive_mutex> lock(mtx_);
-//                       db->trigger();
-//                     });
-//  }
 
   return 0;
 }
@@ -128,7 +85,6 @@ int ClassicSched::OnPrepare(cmdid_t cmd_id,
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto exec = dynamic_cast<ClassicExecutor*>(GetExecutor(cmd_id));
   exec->prepare_reply_ = [res, callback] (int r) {*res = r; callback();};
-//  *res = exec->Prepare() ? SUCCESS : REJECT;
 
   if (Config::GetConfig()->IsReplicated()) {
     TpcPrepareCommand *cmd = new TpcPrepareCommand; // TODO watch out memory
@@ -149,7 +105,6 @@ int ClassicSched::OnPrepare(cmdid_t cmd_id,
 
 int ClassicSched::PrepareReplicated(TpcPrepareCommand& prepare_cmd) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-//  auto exec = dynamic_cast<ClassicExecutor*>(GetExecutor(cmd_id));
   // TODO verify it is the same leader, error if not.
   // TODO and return the prepare callback here.
   auto tid = prepare_cmd.txn_id_;

@@ -31,23 +31,6 @@ int ClassicExecutor::PrepareLaunch(const std::vector<i32> &sids,
                                    rrr::DeferredReply *defer) {
   verify(phase_ < 2);
   phase_ = 2;
-
-//  if (Config::GetConfig()->do_logging()) {
-//    string log_s;
-//    sched_->get_prepare_log(cmd_id_, sids, &log_s);
-//
-//    if (*res == SUCCESS)
-//      recorder_->submit(log_s, [this, res, defer]() {
-//        *res = this->Prepare();
-//        defer->reply();
-//      });
-//    else
-//      defer->reply();
-//  } else {
-//    *res = this->Prepare();
-//    defer->reply();
-//  }
-//  return 0;
 }
 
 bool ClassicExecutor::Prepare() {
@@ -65,8 +48,6 @@ int ClassicExecutor::AbortLaunch(rrr::i32 *res,
     memcpy((void *) log_s.data(), (void *) &abort_tag, sizeof(abort_tag));
     recorder_->submit(log_s);
   }
-  // TODO optimize
-  //  sched_->Destroy(cmd_id_);
   callback();
   Log_debug("abort finish");
   return 0;

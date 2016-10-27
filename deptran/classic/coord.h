@@ -88,8 +88,6 @@ class ClassicCoord : public Coordinator {
   }
   void End();
 
-//    bool IsPhaseOrStageStale(phase_t phase, CoordinatorStage stage);
-//  void IncrementPhaseAndChangeStage(CoordinatorStage stage);
   bool AllDispatchAcked();
   virtual void GotoNextPhase();
 

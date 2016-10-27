@@ -342,13 +342,11 @@ void ClassicCoord::CommitAck(phase_t phase) {
             cmd_->id_, n_finish_ack_, n_finish_req_);
   verify(cmd->GetPartitionIds().size() == n_finish_req_);
   if (n_finish_ack_ == cmd->GetPartitionIds().size()) {
-//    verify(cmd->can_retry());
     if ((cmd->reply_.res_ == REJECT) ) {
       aborted_ = true;
     } else {
       committed_ = true;
     }
-//    GotoNextPhase();
   }
   Log_debug("callback: %s, retry: %s",
              committed_ ? "True" : "False",
