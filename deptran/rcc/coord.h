@@ -32,8 +32,6 @@ public:
     verify(graph_.size() == 0);
   }
 
-//  void do_one(TxnRequest&) override;
-
   void PreDispatch();
   void Dispatch();
   virtual void DispatchAck(phase_t phase,

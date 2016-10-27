@@ -60,25 +60,6 @@ void RccCoord::Dispatch() {
                                     std::placeholders::_2,
                                     std::placeholders::_3));
   }
-
-//  int cnt;
-//  while (cmd_->HasMoreSubCmdReadyNotOut()) {
-//    auto subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd();
-//    subcmd->id_ = next_pie_id();
-//    verify(subcmd->root_id_ == cmd_->id_);
-//    n_dispatch_++;
-//    cnt++;
-//    Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
-//              n_dispatch_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
-//    dispatch_acks_[subcmd->inn_id()] = false;
-//    auto func = std::bind(&RccCoord::DispatchAck,
-//                          this,
-//                          phase_,
-//                          std::placeholders::_1,
-//                          std::placeholders::_2,
-//                          std::placeholders::_3);
-//    commo()->SendHandout(*subcmd, func);
-//  }
 }
 
 void RccCoord::DispatchAck(phase_t phase,
