@@ -24,7 +24,6 @@ class MultiPaxosCoord : public Coordinator {
   bool in_accept = false; // debug
  public:
   ContainerCommand* cmd_ = nullptr;
-//  using Coordinator::Coordinator;
   MultiPaxosCoord(uint32_t coo_id,
                   int32_t benchmark,
                   ClientControlServiceImpl *ccsi,

@@ -16,9 +16,6 @@ static Frame* mpf = Frame::RegFrame(MODE_MULTI_PAXOS,
                                           (MODE_MULTI_PAXOS);
                                     });
 
-//MultiPaxosDummy* MultiPaxosDummy::mpd_s = new MultiPaxosDummy();
-//static const MultiPaxosDummy mpd_g;
-
 MultiPaxosFrame::MultiPaxosFrame(int mode) : Frame(mode) {
 
 }

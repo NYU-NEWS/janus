@@ -148,7 +148,6 @@ void MultiPaxosCoord::GotoNextPhase() {
       } else {
         Prepare();
       }
-//      verify(phase_ % n_phase_ == Phase::DISPATCH);
       break;
     case Phase::ACCEPT:
       verify(phase_ % n_phase == Phase::COMMIT);

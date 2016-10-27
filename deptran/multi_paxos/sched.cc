@@ -11,7 +11,6 @@ void MultiPaxosSched::OnPrepare(slotid_t slot_id,
                                 ballot_t *max_ballot,
                                 const function<void()> &cb) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-//  auto exec = (MultiPaxosExecutor*) GetOrCreateExecutor(slot_id);
   Log_debug("multi-paxos scheduler receives prepare for slot_id: %llx",
             slot_id);
   auto exec = (MultiPaxosExecutor*) CreateExecutor(slot_id);
@@ -65,7 +64,6 @@ void MultiPaxosSched::OnCommit(const slotid_t slot_id,
     exec->committed_cmd_ = cmd.Clone();
     Log_debug("cannot execute slot %d now, remember to exec later. max_exe: %d",
              (int)slot_id, (int)max_executed_slot_);
-//    verify(0);
   }
 }
 

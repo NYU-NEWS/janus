@@ -11,7 +11,6 @@ class MultiPaxosFrame : public Frame {
  private:
   slotid_t slot_hint_ = 1;
  public:
-//  using Frame::Frame;
   MultiPaxosFrame(int mode);
   MultiPaxosCommo* commo_ = nullptr;
   Executor* CreateExecutor(cmdid_t cmd_id, Scheduler* sched) override;
@@ -28,17 +27,5 @@ class MultiPaxosFrame : public Frame {
                                            rrr::PollMgr *poll_mgr,
                                            ServerControlServiceImpl *scsi) override;
 };
-
-
-//class MultiPaxosDummy {
-// public:
-//  static MultiPaxosDummy* mpd_s;
-//  MultiPaxosDummy() {
-//    Frame* mpf = Frame::RegFrame(MODE_MULTI_PAXOS, new MultiPaxosFrame());
-//    std::cout << "hello dummy multi paxos" << std::endl;
-//  }
-//};
-//static MultiPaxosDummy dummy___;
-
 
 } // namespace rococo
