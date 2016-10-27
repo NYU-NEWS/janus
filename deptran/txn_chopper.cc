@@ -85,8 +85,11 @@ Marshal& operator << (Marshal& m, const TxnReply& reply) {
   m << reply.res_;
   m << reply.output_;
   m << reply.n_try_;
-  // TODO
-  //m << reply.start_time_;
+  // TODO -- currently this is only used when marshalling
+  // replies from forwarded requests so the source
+  // (non-leader) site correctly populates this field when
+  // reporting.
+  // m << reply.start_time_;
   m << reply.time_;
   m << reply.txn_type_;
   return m;
@@ -132,8 +135,6 @@ map<parid_t, vector<SimpleCommand*>> TxnCommand::GetReadyCmds(int32_t max) {
   for (auto &kv : status_) {
     auto pi = kv.first;
     auto &status = kv.second;
-//    if (status > DISPATCHABLE)
-//
     if (status == DISPATCHABLE) {
       status = INIT;
       SimpleCommand *cmd = new SimpleCommand();
@@ -155,7 +156,6 @@ map<parid_t, vector<SimpleCommand*>> TxnCommand::GetReadyCmds(int32_t max) {
       verify(status_[pi] == INIT);
       status_[pi] = DISPATCHED;
 
-      //verify(cmd->type_ != 0); // not sure why this should be true???
       verify(type_ == type());
       verify(cmd->root_type_ == type());
       verify(cmd->root_type_ > 0);
@@ -200,7 +200,6 @@ ContainerCommand *TxnCommand::GetNextReadySubCmd() {
       verify(status_[pi] == INIT);
       status_[pi] = DISPATCHED;
 
-      //verify(cmd->type_ != 0); // not sure why this should be true???
       verify(type_ == type());
       verify(cmd->root_type_ == type());
       verify(cmd->root_type_ > 0);
@@ -266,29 +265,6 @@ void TxnCommand::Reset() {
   outputs_.clear();
 }
 
-//bool TxnCommand::start_callback(int pi,
-//                                map<int32_t, mdb::Value> &output,
-//                                bool is_defer) {
-//  verify(0);
-//  if (is_defer && output_size_[pi] != 0)
-//    early_return_ = false;
-//  if (is_defer)
-//    return false;
-//  else
-//    return start_callback(pi, SUCCESS, output);
-//}
-//
-//bool TxnCommand::start_callback(int pi,
-//                                ChopStartResponse &res) {
-//  verify(0);
-//  if (res.is_defered && output_size_[pi] != 0)
-//    early_return_ = false;
-//  if (res.is_defered)
-//    return false;
-//  else
-//    return start_callback(pi, SUCCESS, res.output);
-//}
-
 void TxnCommand::read_only_reset() {
   read_only_failed_ = false;
   Reset();
@@ -299,20 +275,17 @@ bool TxnCommand::read_only_start_callback(int pi,
                                           map<int32_t, mdb::Value> &output) {
   verify(pi < GetNPieceAll());
   if (res == NULL) { // phase one, store outputs only
-//    outputs_.resize(n_pieces_all_);
     outputs_[pi] = output;
   }
-  else { // phase two, check if this try not failed yet
+  else {
+    // phase two, check if this try not failed yet
     // and outputs is consistent with previous stored one
     // store current outputs
     if (read_only_failed_) {
       *res = REJECT;
-//      if (n_pieces_all_ != outputs_.size())
-//        outputs_.resize(n_pieces_all_);
     }
     else if (pi >= outputs_.size()) {
       *res = REJECT;
-//      outputs_.resize(n_pieces_all_);
       read_only_failed_ = true;
     }
     else if (is_consistent(outputs_[pi], output))
@@ -367,8 +340,8 @@ Marshal& TxnCommand::ToMarshal(Marshal& m) const {
   m << p_types_;
   m << sharding_;
   m << status_;
-// FIXME
-//  m << cmd_;
+  // FIXME
+  //  m << cmd_;
   m << partition_ids_;
   m << n_pieces_all_;
   m << n_pieces_dispatchable_;
@@ -388,8 +361,8 @@ Marshal& TxnCommand::FromMarshal(Marshal& m) {
   m >> p_types_;
   m >> sharding_;
   m >> status_;
-// FIXME
-//  m >> cmd_;
+  // FIXME
+  //  m >> cmd_;
   m >> partition_ids_;
   m >> n_pieces_all_;
   m >> n_pieces_dispatchable_;
@@ -400,6 +373,5 @@ Marshal& TxnCommand::FromMarshal(Marshal& m) {
   m >> n_try_;
   return m;
 }
-
 
 } // namespace rcc

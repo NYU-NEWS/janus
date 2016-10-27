@@ -108,43 +108,6 @@ class DTxn {
 
   virtual bool InsertRow(Table *tbl, Row *row);
 
-//
-//  virtual bool ReadColumnUnsafe(mdb::Row *row,
-//                                mdb::column_id_t col_id,
-//                                Value *value);
-//
-//  virtual bool ReadColumnsUnsafe(mdb::Row *row,
-//                                 const std::vector<column_id_t> &col_ids,
-//                                 std::vector<Value> *values);
-//
-//  virtual bool WriteColumnUnsafe(Row *row,
-//                                 column_id_t col_id,
-//                                 const Value &value);
-//
-//  virtual bool WriteColumnsUnsafe(Row *row,
-//                                  const std::vector<column_id_t> &col_ids,
-//                                  const std::vector<Value> &values);
-
-
-//  virtual bool remove_row(Table *tbl, Row *row);
-
-//  virtual mdb::ResultSet query(Table *tbl, const mdb::Value &kv);
-
-//  virtual mdb::ResultSet query(Table *tbl, const mdb::MultiBlob &mb);
-
-//  virtual mdb::ResultSet query_in(
-//      Table *tbl,
-//      const mdb::SortedMultiKey &low,
-//      const mdb::SortedMultiKey &high,
-//      mdb::symbol_t order = mdb::symbol_t::ORD_ASC
-//  );
-
-
-//  virtual mdb::ResultSet Query(Table *tbl,
-//                               const mdb::Value &kv,
-//                               bool retrieve,
-//                               int64_t pid);
-
   virtual mdb::Row* Query(mdb::Table *tbl,
                           const mdb::MultiBlob &mb,
                           int64_t row_context_id = 0);

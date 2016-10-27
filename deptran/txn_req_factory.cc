@@ -29,8 +29,6 @@
 
 namespace rococo {
 
-//TxnGenerator *TxnGenerator::txn_req_factory_s = NULL;
-
 TxnGenerator::TxnGenerator(Config* config)
     : txn_weight_(config->get_txn_weight()),
       txn_weights_(config->get_txn_weights()),
@@ -74,7 +72,6 @@ TxnGenerator::TxnGenerator(Config* config)
 
 void TxnGenerator::get_micro_bench_read_req(TxnRequest *req, uint32_t cid) const {
   req->txn_type_ = MICRO_BENCH_R;
-//  req->input_.resize(4);
   req->input_[0] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_a_ - 1));
   req->input_[1] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_b_ - 1));
   req->input_[2] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_c_ - 1));
@@ -83,7 +80,6 @@ void TxnGenerator::get_micro_bench_read_req(TxnRequest *req, uint32_t cid) const
 
 void TxnGenerator::get_micro_bench_write_req(TxnRequest *req, uint32_t cid) const {
   req->txn_type_ = MICRO_BENCH_W;
-  //  req->input_.resize(8);
   req->input_[0] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_a_ - 1));
   req->input_[1] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_b_ - 1));
   req->input_[2] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_c_ - 1));
@@ -158,20 +154,6 @@ void TxnGenerator::get_txn_types(
       verify(0);
   }
 }
-//
-//void TxnGenerator::init_txn_req(TxnRequest *req, uint32_t cid) {
-//  if (txn_req_factory_s == NULL)
-//    txn_req_factory_s = new TxnGenerator();
-//  if (req)
-//    return txn_req_factory_s->get_txn_req(req, cid);
-//}
-//
-//void TxnGenerator::destroy() {
-//  if (txn_req_factory_s != NULL) {
-//    delete txn_req_factory_s;
-//    txn_req_factory_s = NULL;
-//  }
-//}
 
 TxnGenerator::~TxnGenerator() {
 }

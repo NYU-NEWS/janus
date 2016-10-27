@@ -9,7 +9,7 @@ namespace rococo {
 
 class Config {
  public:
-
+  static const int BASE_CLIENT_CTRL_PORT = 5555;
   typedef enum {
     SS_DISABLED,
     SS_THREAD_SINGLE,
@@ -210,7 +210,6 @@ class Config {
     return ret;
   }
 
-//  int32_t get_my_addr(std::string &server);
   int32_t get_threads(uint32_t &threads);
   int32_t get_mode();
   uint32_t get_num_threads();

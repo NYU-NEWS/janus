@@ -26,7 +26,7 @@ void ServerWorker::SetupHeartbeat() {
       std::to_string(port);
   hb_rpc_server_->start(addr_port.c_str());
   if (hb_rpc_server_ != nullptr) {
-//    Log_info("notify ready to control script for %s", bind_addr.c_str());
+    // Log_info("notify ready to control script for %s", bind_addr.c_str());
     scsi_->set_ready();
   }
   Log_info("heartbeat setup for %s on %s",

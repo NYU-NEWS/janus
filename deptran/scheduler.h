@@ -80,7 +80,6 @@ class Scheduler {
 
   virtual mdb::Txn* GetMTxn(const i64 tid);
   virtual mdb::Txn *GetOrCreateMTxn(const i64 tid);
-//  virtual mdb::Txn *get_mdb_txn(const RequestHeader &req);
   virtual mdb::Txn *RemoveMTxn(const i64 tid);
 
   void get_prepare_log(i64 txn_id,

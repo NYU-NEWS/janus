@@ -56,7 +56,7 @@ DTxn* Scheduler::CreateDTxn(txnid_t tid, bool ro) {
     dtxn->sched_ = this;
   } else {
     // for multi-paxos this would happen.
-//    verify(0);
+    // verify(0);
   }
   return dtxn;
 }
@@ -87,9 +87,9 @@ void Scheduler::DestroyDTxn(i64 tid) {
 }
 
 DTxn* Scheduler::GetDTxn(txnid_t tid) {
-  //Log_debug("DTxnMgr::get(%ld)\n", tid);
+  // Log_debug("DTxnMgr::get(%ld)\n", tid);
   auto it = dtxns_.find(tid);
-//  verify(it != dtxns_.end());
+  // verify(it != dtxns_.end());
   if (it != dtxns_.end()) {
     return it->second;
   } else {
@@ -121,9 +121,8 @@ mdb::Txn* Scheduler::GetOrCreateMTxn(const i64 tid) {
   mdb::Txn *txn = nullptr;
   auto it = mdb_txns_.find(tid);
   if (it == mdb_txns_.end()) {
-    //verify(IS_MODE_2PL);
     txn = mdb_txn_mgr_->start(tid);
-    //XXX using occ lazy mode: increment version at commit time
+    // using occ lazy mode: increment version at commit time
     auto mode = Config::GetConfig()->cc_mode_;
     if (mode == MODE_OCC || mode == MODE_MDCC) {
       ((mdb::TxnOCC *) txn)->set_policy(mdb::OCC_LAZY);
@@ -188,8 +187,6 @@ void Scheduler::get_prepare_log(i64 txn_id,
 }
 
 Scheduler::Scheduler() : mtx_() {
-  //  verify(DTxnMgr::txn_mgr_s == NULL);
-//  DTxnMgr::txn_mgr_s = this;
   mdb_txn_mgr_ = new mdb::TxnMgrUnsafe();
   if (Config::GetConfig()->do_logging()) {
     auto path = Config::GetConfig()->log_path();
@@ -199,7 +196,6 @@ Scheduler::Scheduler() : mtx_() {
 }
 
 Coordinator* Scheduler::CreateRepCoord() {
-//  if (rep_coord_) return rep_coord_;
   Coordinator *coord;
   static cooid_t cid = 0;
   int32_t benchmark = 0;
@@ -293,7 +289,7 @@ Executor* Scheduler::GetOrCreateExecutor(cmdid_t txn_id) {
 
 void Scheduler::TrashExecutor(txnid_t txn_id) {
   if (epoch_enabled_) {
-//    epoch_mgr_.Done(txn_id);
+    // epoch_mgr_.Done(txn_id);
   } else {
     DestroyExecutor(txn_id);
   }
@@ -309,7 +305,7 @@ void Scheduler::DestroyExecutor(txnid_t txn_id) {
 }
 
 Executor* Scheduler::GetExecutor(cmdid_t cmd_id) {
-  //Log_debug("DTxnMgr::get(%ld)\n", tid);
+  // Log_debug("DTxnMgr::get(%ld)\n", tid);
   auto it = executors_.find(cmd_id);
   verify(it != executors_.end());
   return it->second;
@@ -378,8 +374,8 @@ int32_t Scheduler::OnUpgradeEpoch(uint32_t old_epoch) {
 }
 
 void Scheduler::OnTruncateEpoch(uint32_t old_epoch) {
-  Log_info("truncating epochs: %d", old_epoch);
   // TODO
+  Log_info("truncating epochs: %d", old_epoch);
   auto ids = epoch_mgr_.GrowInactive(old_epoch);
   for (auto& id: ids) {
     DestroyExecutor(id);

@@ -29,32 +29,11 @@ class ClassicServiceImpl: public ClassicService {
   ServerControlServiceImpl *scsi_; // for statistics;
   Scheduler *dtxn_sched_;
 
-//  void do_start_pie(const RequestHeader &header,
-//                    const Value *input,
-//                    int32_t input_size,
-//                    int32_t *res,
-//                    Value *output,
-//                    int32_t *outupt_size);
-//
   ClassicSched* dtxn_sched() {
     return (ClassicSched*)dtxn_sched_;
   }
 
   void rpc_null(DeferredReply *defer);
-//
-//  void batch_start_pie(const BatchRequestHeader &batch_header,
-//                       const std::vector<Value> &input,
-//                       i32 *res,
-//                       std::vector<Value> *output);
-//
-//  void naive_batch_start_pie(
-//      const std::vector<RequestHeader> &header,
-//      const std::vector<vector<Value>> &input,
-//      const std::vector<i32> &output_size,
-//      std::vector<i32> *res,
-//      std::vector<vector<Value>> *output,
-//      DeferredReply *defer);
-
 
   void Dispatch(const vector<SimpleCommand> &cmd,
                 int32_t *res,

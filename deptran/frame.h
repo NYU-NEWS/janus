@@ -63,20 +63,6 @@ class Frame {
                                                   Scheduler *dtxn_sched,
                                                   rrr::PollMgr* poll_mgr,
                                                   ServerControlServiceImpl *scsi);
-
-
-//  Coordinator* CreateRepCoord(cooid_t coo_id,
-//                              Config* config,
-//                              int benchmark,
-//                              ClientControlServiceImpl *ccsi,
-//                              uint32_t id,
-//                              bool batch_start,
-//                              TxnRegistry* txn_reg);
-//  Scheduler* CreateRepSched();
-//  vector<rrr::Service*> CreateRepRpcServices(uint32_t site_id,
-//                                             Scheduler *dtxn_sched,
-//                                             rrr::PollMgr* poll_mgr,
-//                                             ServerControlServiceImpl *scsi);
 };
 
 

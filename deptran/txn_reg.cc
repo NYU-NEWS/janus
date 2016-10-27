@@ -9,9 +9,6 @@
 
 namespace rococo {
 
-//map<std::pair<base::i32, base::i32>,
-//    txn_handler_defer_pair_t> TxnRegistry::all_;
-//map<std::pair<base::i32, base::i32>, TxnRegistry::LockSetOracle> TxnRegistry::lck_oracle_;
 txn_handler_defer_pair_t&
 TxnRegistry::get(const SimpleCommand &cmd) {
   return get(cmd.root_type_, cmd.type_);

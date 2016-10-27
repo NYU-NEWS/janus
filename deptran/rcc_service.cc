@@ -34,116 +34,6 @@ ClassicServiceImpl::ClassicServiceImpl(Scheduler *sched,
   this->RegisterStats();
 }
 
-// TODO deprecated
-//void ClassicServiceImpl::do_start_pie(
-//    const RequestHeader &header,
-//    const Value *input,
-//    i32 input_size,
-//    rrr::i32 *res,
-//    Value *output,
-//    i32 *output_size) {
-//  verify(0);
-//  TPLDTxn *dtxn = (TPLDTxn *) dtxn_sched_->GetOrCreateDTxn(header.tid);
-//  *res = SUCCESS;
-//  if (IS_MODE_2PL) {
-//    dtxn->execute(header, input, input_size,
-//                  res, output, output_size);
-//  }
-//  else if (IS_MODE_NONE) {
-//    dtxn->execute(header, input, input_size,
-//                  res, output, output_size);
-//  }
-//  else if (IS_MODE_OCC) {
-//    dtxn->execute(header, input, input_size,
-//                  res, output, output_size);
-//  }
-//  else {
-//    verify(0);
-//  }
-//}
-
-// TODO
-//void ClasicServiceImpl::batch_start_pie(
-//    verify(0);
-//    const BatchRequestHeader &batch_header,
-//    const std::vector<Value> &input,
-//    rrr::i32 *res,
-//    std::vector<Value> *output) {
-//
-//  verify(0);
-//  RequestHeader header;
-//  header.t_type = batch_header.t_type;
-//  header.cid = batch_header.cid;
-//  header.tid = batch_header.tid;
-//  BatchStartArgsHelper bsah_input, bsah_output;
-//  int ret;
-//  ret = bsah_input.init_input(&input, batch_header.num_piece);
-//  verify(ret == 0);
-//  ret = bsah_output.init_output(output, batch_header.num_piece,
-//                                batch_header.expected_output_size);
-//  verify(ret == 0);
-//  Value const *piece_input;
-//  i32 input_size;
-//  i32 output_size;
-//  *res = SUCCESS;
-//  while (0 == bsah_input.get_next_input(&header.p_type, &header.pid,
-//                                        &piece_input, &input_size,
-//                                        &output_size)) {
-//    i32 res_buf;
-//    do_start_pie(header, piece_input, input_size, &res_buf,
-//                 bsah_output.get_output_ptr(), &output_size);
-//    ret = bsah_output.put_next_output(res_buf, output_size);
-//    verify(ret == 0);
-//    if (res_buf != SUCCESS)
-//      *res = REJECT;
-//  }
-//
-//  bsah_output.done_output();
-//}
-
-//void ClassicServiceImpl::naive_batch_start_pie(
-//    const std::vector<RequestHeader> &headers,
-//    const std::vector<vector<Value>> &inputs,
-//    const std::vector<i32> &output_sizes,
-//    std::vector<i32> *results,
-//    std::vector<vector<Value>> *outputs,
-//    rrr::DeferredReply *defer) {
-//  std::lock_guard<std::mutex> guard(mtx_);
-//
-//  verify(0);
-//
-//  DragonBall *defer_reply_db = NULL;
-//  if (IS_MODE_2PL) {
-//    defer_reply_db = new DragonBall(headers.size(), [/*&headers, */defer/*, results*/]() {
-//      //for (int i = 0; i < results->size(); i++) {
-//      //    Log::debug("tid: %ld, pid: %ld, results[%d]: %d", headers[i].tid, headers[i].pid, i, (*results)[i]);
-//      //}
-//      defer->reply();
-//    });
-//  }
-//  Log::debug("naive_batch_start_pie: tid: %ld", headers[0].tid);
-//  results->resize(headers.size());
-//  outputs->resize(headers.size());
-//  int num_pieces = headers.size();
-//  for (int i = 0; i < num_pieces; i++) {
-//    (*outputs)[i].resize(output_sizes[i]);
-//    auto dtxn = (TPLDTxn *) dtxn_sched_->GetOrCreateDTxn(headers[i].tid);
-//    if (defer_reply_db) {
-//      dtxn->pre_execute_2pl(headers[i], inputs[i],
-//                            &((*results)[i]), &((*outputs)[i]), defer_reply_db);
-//    }
-//    else {
-//      dtxn->execute(headers[i], inputs[i],
-//                    &(*results)[i], &(*outputs)[i]);
-//    }
-//  }
-//  if (!defer_reply_db)
-//    defer->reply();
-//  Log::debug("still fine");
-//}
-
-
-
 void ClassicServiceImpl::Dispatch(const vector<SimpleCommand>& cmd,
                                   rrr::i32 *res,
                                   TxnOutput* output,
@@ -227,7 +117,6 @@ void ClassicServiceImpl::rpc_null(rrr::DeferredReply *defer) {
 void ClassicServiceImpl::UpgradeEpoch(const uint32_t& curr_epoch,
                                   int32_t *res,
                                   DeferredReply* defer) {
-//  Coroutine::Create(std::bind(&BrqSched::OnUpgradeEpoch, dtxn_sched_));
   *res = dtxn_sched()->OnUpgradeEpoch(curr_epoch);
   defer->reply();
 }
@@ -278,27 +167,6 @@ void ClassicServiceImpl::RccDispatch(const vector<SimpleCommand>& cmd,
                     [defer]() { defer->reply(); });
 }
 
-//void RococoServiceImpl::rcc_start_pie(const SimpleCommand &cmd,
-//                                      ChopStartResponse *res,
-//                                      rrr::DeferredReply *defer
-//) {
-//  verify(0);
-//    Log::debug("receive start request. txn_id: %llx, pie_id: %llx", header.tid, header.pid);
-//  verify(IS_MODE_RCC || IS_MODE_RO6);
-//  verify(defer);
-//
-//  std::lock_guard <std::mutex> guard(this->mtx_);
-//  RccDTxn *dtxn = (RccDTxn *) dtxn_sched_->GetOrCreateDTxn(cmd.root_id_);
-//  dtxn->StartLaunch(cmd, res, defer);
-
-  // TODO remove the stat from here.
-//    auto sz_sub_gra = RCCDTxn::dep_s->sub_txn_graph(header.tid, res->gra_m);
-//    stat_sz_gra_start_.sample(sz_sub_gra);
-//    if (IS_MODE_RO6) {
-//        stat_ro6_sz_vector_.sample(res->read_only.size());
-//    }
-//}
-
 void ClassicServiceImpl::RccFinish(const cmdid_t& cmd_id,
                                    const RccGraph& graph,
                                    TxnOutput* output,
@@ -310,28 +178,9 @@ void ClassicServiceImpl::RccFinish(const cmdid_t& cmd_id,
                   graph,
                   output,
                   [defer]() { defer->reply(); });
-//  RccDTxn *txn = (RccDTxn *) dtxn_sched_->GetDTxn(req.txn_id);
-//  txn->commit(req, res, defer);
 
   stat_sz_gra_commit_.sample(graph.size());
 }
-
-// equivalent to commit phrase
-//void RococoServiceImpl::rcc_finish_txn(
-//    const ChopFinishRequest &req,
-//    ChopFinishResponse *res,
-//    rrr::DeferredReply *defer) {
-//  Log::debug("receive finish request. txn_id: %llx, graph size: %d", req.txn_id, req.gra.size());
-//  verify(IS_MODE_RCC || IS_MODE_RO6);
-//  verify(defer);
-//  verify(req.gra.size() > 0);
-//
-//  std::lock_guard <std::mutex> guard(mtx_);
-//  RccDTxn *txn = (RccDTxn *) dtxn_sched_->GetDTxn(req.txn_id);
-//  txn->commit(req, res, defer);
-//
-//  stat_sz_gra_commit_.sample(req.gra.size());
-//}
 
 void ClassicServiceImpl::RccInquire(const epoch_t& epoch,
                                     const txnid_t& tid,
@@ -341,8 +190,6 @@ void ClassicServiceImpl::RccInquire(const epoch_t& epoch,
   std::lock_guard <std::mutex> guard(mtx_);
   RccSched* sched = (RccSched*) dtxn_sched_;
   sched->OnInquire(epoch, tid, graph, [defer]() { defer->reply(); });
-//  RccDTxn *dtxn = (RccDTxn *) dtxn_sched_->GetDTxn(tid);
-//  dtxn->inquire(res, defer);
 }
 
 void ClassicServiceImpl::RccDispatchRo(const SimpleCommand &cmd,
@@ -392,10 +239,6 @@ void ClassicServiceImpl::BrqCommit(const cmdid_t& cmd_id,
                   res,
                   output,
                   [defer]() { defer->reply(); });
-//  RccDTxn *txn = (RccDTxn *) dtxn_sched_->GetDTxn(req.txn_id);
-//  txn->commit(req, res, defer);
-
-//  stat_sz_gra_commit_.sample(graph.size());
 }
 
 void ClassicServiceImpl::BrqCommitWoGraph(const cmdid_t& cmd_id,
@@ -423,8 +266,6 @@ void ClassicServiceImpl::BrqInquire(const epoch_t& epoch,
                    tid,
                    dynamic_cast<RccGraph*>(graph->ptr().get()),
                    [defer]() { defer->reply(); });
-//  RccDTxn *dtxn = (RccDTxn *) dtxn_sched_->GetDTxn(tid);
-//  dtxn->inquire(res, defer);
 }
 
 void ClassicServiceImpl::BrqPreAccept(const cmdid_t &txnid,

@@ -38,19 +38,6 @@ typedef std::function<bool(TxnCommand *,
                            map<int32_t, Value>&)>
     PieceCallbackHandler;
 
-//class PieceCallbackMap {
-// public:
-//  map<std::pair<txntype_t, innid_t>, PieceCallbackHandler> callbacks_ = {};
-//  virtual PieceCallbackHandler& Get(txntype_t txn_type, innid_t inn_id) {
-//    return callbacks_.at(std::make_pair(txn_type, inn_id));
-//  }
-//
-//  virtual void Set(txntype_t txn_type, innid_t inn_id,
-//                   PieceCallbackHandler& handler) {
-//    callbacks_[std::make_pair(txn_type, inn_id)] = handler;
-//  }
-//};
-
 
 /**
 * This class holds all the hard-coded transactions pieces.

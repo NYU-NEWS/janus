@@ -43,8 +43,6 @@ Coordinator::Coordinator(uint32_t coo_id,
   site_commit_.resize(addrs.size(), 0);
   site_abort_.resize(addrs.size(), 0);
   site_piece_.resize(addrs.size(), 0);
-
-//  commo_ = Frame().CreateCommo();
 }
 
 Coordinator::~Coordinator() {
@@ -54,11 +52,6 @@ Coordinator::~Coordinator() {
              coo_id_, i, site_piece_[i], site_prepare_[i],
              site_commit_[i], site_abort_[i]);
   }
-
-//  if (commo_) {
-//    delete commo_;
-//    commo_ = nullptr;
-//  }
 
   if (recorder_) delete recorder_;
 #ifdef TXN_STAT

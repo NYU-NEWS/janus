@@ -291,7 +291,6 @@ TxnCommand * Frame::CreateChopper(TxnRequest &req, TxnRegistry* reg) {
 }
 
 Communicator* Frame::CreateCommo(PollMgr* pollmgr) {
-  // Default: return null;
   commo_ = new RococoCommunicator;
   return commo_;
 }
@@ -299,12 +298,10 @@ Communicator* Frame::CreateCommo(PollMgr* pollmgr) {
 DTxn* Frame::CreateDTxn(epoch_t epoch, txnid_t tid,
                         bool ro, Scheduler * mgr) {
   DTxn *dtxn = nullptr;
-//  auto mode_ = Config::GetConfig()->cc_mode_;
-  
+
   switch (mode_) {
     case MODE_2PL:
       dtxn = new TPLDTxn(epoch, tid, mgr);
-//      verify(dtxn->mdb_txn()->rtti() == mdb::symbol_t::TXN_2PL);
       break;
     case MODE_MDCC:
       dtxn = new mdcc::MdccDTxn(tid, mgr);
@@ -321,9 +318,6 @@ DTxn* Frame::CreateDTxn(epoch_t epoch, txnid_t tid,
     case MODE_RO6:
       dtxn = new RO6DTxn(tid, mgr, ro);
       break;
-//case MODE_MDCC:
-//      ret = new mdcc::MdccTxn(tid, mgr);
-//      break;
     case MODE_MULTI_PAXOS:
       break;
     default:
@@ -381,19 +375,6 @@ Scheduler* Frame::CreateScheduler() {
   sch->frame_ = this;
   return sch;
 }
-//
-//Scheduler* Frame::CreateRepSched() {
-//  auto mode = Config::GetConfig()->ab_mode_;
-//  Scheduler *sch = nullptr;
-//  switch(mode) {
-//    case MODE_MULTI_PAXOS:
-//      sch = new MultiPaxosSched();
-//      break;
-//    default:
-//      verify(0);
-//  }
-//  return sch;
-//}
 
 TxnGenerator * Frame::CreateTxnGenerator() {
   auto benchmark = Config::config_s->benchmark_;
