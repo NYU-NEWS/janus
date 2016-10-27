@@ -131,7 +131,6 @@ void wait_for_clients() {
 
 int main(int argc, char *argv[]) {
   check_current_path();
-  Log::set_level(Log::DEBUG);
   Log_info("starting process %ld", getpid());
 
   // read configuration

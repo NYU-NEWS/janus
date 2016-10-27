@@ -142,7 +142,7 @@ def gen_process_and_site(args, experiment_name, num_c, num_s, num_replicas, host
         ClientPlacement.WITH_LEADER: LeaderPlacementStrategy(),
     }
     
-    if mode.find('multi_paxos') >= 0:
+    if False and mode.find('multi_paxos') >= 0:
         strategy = layout_strategies[ClientPlacement.WITH_LEADER]
     else:
         strategy = layout_strategies[ClientPlacement.BALANCED]
