@@ -79,9 +79,6 @@ void TapirExecutor::FastAccept(const vector<SimpleCommand>& txn_cmds,
 }
 
 void TapirExecutor::Commit() {
-  // TODO FIXME
-//  verify(dtxn()->read_vers_.size() > 0 ||
-//      dtxn()->write_bufs_.size() > 0);
   // merge write buffers into database.
   for (auto& pair1 : dtxn()->write_bufs_) {
     auto row = (mdb::VersionedRow*)pair1.first;
@@ -95,7 +92,7 @@ void TapirExecutor::Commit() {
   }
   // release all the locks.
   for (auto row : locked_rows_) {
-//    Log_info("unlock row %llx succeed", row);
+    // Log_info("unlock row %llx succeed", row);
     auto r = row->unlock_row_by(cmd_id_);
     verify(r);
   }
@@ -105,7 +102,7 @@ void TapirExecutor::Commit() {
 
 void TapirExecutor::Abort() {
   for (auto row : locked_rows_) {
-//    Log_info("unlock row %llx succeed", row);
+    // Log_info("unlock row %llx succeed", row);
     auto r = row->unlock_row_by(cmd_id_);
     verify(r);
   }

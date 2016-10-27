@@ -110,18 +110,6 @@ void TapirCoord::FastAccept() {
                                            std::placeholders::_1));
   }
   verify(sum == txn().cmds_.size());
-//
-//  while (cmd_->HasMoreSubCmdReadyNotOut()) {
-//    auto subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd();
-//    subcmd->id_ = next_pie_id();
-//    verify(subcmd->root_id_ == cmd_->id_);
-//    n_handout_++;
-//    Log_debug("send out fast accept request %ld, cmd_id: %lx, "
-//                  "inn_id: %d, pie_id: %lx",
-//              n_handout_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
-//    handout_acks_[subcmd->inn_id()] = false;
-//
-//  }
 }
 
 void TapirCoord::FastAcceptAck(phase_t phase,
@@ -230,7 +218,6 @@ bool TapirCoord::AllSlowQuorumReached() {
 
 bool TapirCoord::AllFastQuorumReached() {
   // verify(0);
-  // currently the
   auto pars = cmd_->GetPartitionIds();
   bool all_fast_quorum_reached = true;
   for (auto& par_id : pars) {
@@ -270,13 +257,6 @@ void TapirCoord::GotoNextPhase() {
     case Phase::DISPATCH:
       verify(phase_ % n_phase == Phase::FAST_ACCEPT);
       FastAccept();
-//      verify(!committed_);
-//      if (aborted_) {
-//        phase_++;
-//        Commit();
-//      } else {
-//        Prepare();
-//      }
       break;
     case Phase::FAST_ACCEPT:
       verify(phase_ % n_phase == Phase::DECIDE);
