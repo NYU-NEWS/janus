@@ -47,6 +47,8 @@ namespace rococo {
 #define FAILURE     (-1)
 #define CONTENTION  (-1)
 #define REJECT      (-10)
+#define ABSTAIN     (-10)
+#define RETRY       (-10)
 #define DELAYED     (1)
 
 #define MODE_NONE   (0x20)

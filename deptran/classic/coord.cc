@@ -63,7 +63,7 @@ void ClassicCoord::do_one(TxnRequest &req) {
     verify(txn_reg_ != nullptr);
     cmd->root_id_ = this->next_txn_id();
     cmd->id_ = cmd->root_id_;
-    cmd->timestamp_ = cmd->root_id_;
+    cmd->timestamp_ = GenerateTimestamp();
     cmd_ = cmd;
     n_retry_ = 0;
     Reset(); // In case of reuse.

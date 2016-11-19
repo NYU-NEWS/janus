@@ -140,6 +140,23 @@ class Coordinator : public CoordinatorBase {
     n_finish_req_ = 0;
     n_finish_ack_ = 0;
   }
+  virtual uint64_t GenerateTimestamp() {
+    uint64_t t;
+    switch(Config::GetConfig()->timestamp_) {
+      case Config::TimestampType::CLOCK:
+        t = std::time(nullptr);
+        t = t << 32;
+        t |= (uint64_t) coo_id_;
+        break;
+      case Config::TimestampType::COUNTER:
+        t = next_txn_id_.load();
+        t = t << 32;
+        t |= (uint64_t) coo_id_;
+      default:
+        verify(0);
+    }
+    return t;
+  }
   virtual void restart(TxnCommand *ch) {verify(0);};
   virtual void Restart() = 0;
 };

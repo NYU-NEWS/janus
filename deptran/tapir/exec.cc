@@ -9,14 +9,19 @@ set<Row*> TapirExecutor::locked_rows_s = {};
 
 void TapirExecutor::FastAccept(const vector<SimpleCommand>& txn_cmds,
                                int32_t* res) {
-  // validate read versions
+
   *res = SUCCESS;
+  if (txn_cmds.size() >= 2) {
+    verify(txn_cmds[0].timestamp_ == txn_cmds[1].timestamp_);
+  }
 
   map<int32_t, Value> output_m;
   for (auto& c: txn_cmds) {
     output_m.insert(c.output.begin(), c.output.end());
   }
 
+  // mocking dispatch if not dispatched already.
+  // some optimization on early abort.
   TxnOutput output;
   Execute(txn_cmds, &output);
   for (auto& pair : output) {
@@ -30,8 +35,9 @@ void TapirExecutor::FastAccept(const vector<SimpleCommand>& txn_cmds,
       }
     }
   }
-
-  // TODO lock read items.
+  // my understanding was that this is a wait-die locking for 2PC-prepare.
+  // but to be safe, let us follow the stock protocol.
+  // validate read versions
   auto& read_vers = dtxn()->read_vers_;
   for (auto& pair1 : read_vers) {
     Row* r = pair1.first;
@@ -44,35 +50,42 @@ void TapirExecutor::FastAccept(const vector<SimpleCommand>& txn_cmds,
       auto col_id = pair2.first;
       auto ver_read = pair2.second;
       auto ver_now = row->get_column_ver(col_id);
+      verify(col_id < row->prepared_rver_.size());
+      verify(col_id < row->prepared_wver_.size());
       if (ver_now > ver_read) {
-        // value has been updated. abort transaction
-        verify(0);
-//        *res = REJECT;
+        // value has been updated. abort transaction.
+        *res = REJECT;
         return;
-      } else {
-        // grab read lock.
-        if (!row->rlock_row_by(this->cmd_id_)) {
-          *res = REJECT;
-        } else {
-          // remember locks.
-          locked_rows_.insert(row);
-        }
-      };
+      } else if (ver_now < row->min_prepared_wver(col_id)) {
+        // abstain is not very useful for now, as we are not counting the
+        // difference between aborts. but let us have it for future.
+        *res = ABSTAIN;
+        return;
+      }
+      // record prepared read timestamp
+      row->insert_prepared_rver(col_id, ver_read);
+      prepared_rvers_[row][col_id] = ver_read;
     }
   }
-  // in debug
-//  return;
-  // grab write locks.
+  // validate write set.
+  auto ver_write = txn_cmds[0].timestamp_;
   for (auto& pair1 : dtxn()->write_bufs_) {
-    auto row = (mdb::VersionedRow*)pair1.first;
-    if (!row->wlock_row_by(cmd_id_)) {
-//        verify(0);
-      *res = REJECT;
-//      Log_info("lock row %llx failed", row);
-    } else {
-      // remember locks.
-//     Log_info("lock row %llx succeed", row);
-      locked_rows_.insert(row);
+    mdb::VersionedRow* row = dynamic_cast<mdb::VersionedRow*>(pair1.first);
+    verify(row != nullptr);
+    for (auto& pair2: pair1.second) {
+      auto col_id = pair2.first;
+      auto& value = pair2.second;
+      // value's timestamp was not set before, so set here.
+      // i do not like this hack, maybe remove the version in value later.
+      value.ver_ = ver_write;
+      if (ver_write < row->max_prepared_rver(col_id)) {
+        *res = RETRY;
+      } else if (ver_write < row->ver_[col_id]) {
+        *res = RETRY;
+      }
+      // record prepared write timestamp
+      row->insert_prepared_rver(col_id, ver_write);
+      prepared_wvers_[row][col_id] = ver_write;
     }
   }
   verify(*res == SUCCESS || *res == REJECT);
@@ -85,29 +98,36 @@ void TapirExecutor::Commit() {
     for (auto& pair2: pair1.second) {
       auto& col_id = pair2.first;
       auto& value = pair2.second;
-      row->incr_column_ver(col_id);
-      value.ver_ = row->get_column_ver(col_id);
       row->update(col_id, value);
+      row->set_column_ver(col_id, value.ver_);
     }
   }
-  // release all the locks.
-  for (auto row : locked_rows_) {
-    // Log_info("unlock row %llx succeed", row);
-    auto r = row->unlock_row_by(cmd_id_);
-    verify(r);
+  Cleanup();
+}
+
+void TapirExecutor::Cleanup() {
+  for (auto pair1 : prepared_rvers_) {
+    mdb::VersionedRow* row = dynamic_cast<mdb::VersionedRow*>(pair1.first);
+    for (auto pair2 : pair1.second) {
+      auto col_id = pair2.first;
+      auto ver = pair2.second;
+      row->remove_prepared_rver(col_id, ver);
+    }
+  }
+  for (auto pair1 : prepared_wvers_) {
+    mdb::VersionedRow* row = dynamic_cast<mdb::VersionedRow*>(pair1.first);
+    for (auto pair2 : pair1.second) {
+      auto col_id = pair2.first;
+      auto ver = pair2.second;
+      row->remove_prepared_wver(col_id, ver);
+    }
   }
   dtxn()->read_vers_.clear();
   dtxn()->write_bufs_.clear();
 }
 
 void TapirExecutor::Abort() {
-  for (auto row : locked_rows_) {
-    // Log_info("unlock row %llx succeed", row);
-    auto r = row->unlock_row_by(cmd_id_);
-    verify(r);
-  }
-  dtxn()->read_vers_.clear();
-  dtxn()->write_bufs_.clear();
+  Cleanup();
 }
 
 

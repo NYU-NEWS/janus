@@ -112,6 +112,10 @@ class DTxn {
                           const mdb::MultiBlob &mb,
                           int64_t row_context_id = 0);
 
+  virtual mdb::Row* Query(mdb::Table *tbl,
+                          vector<Value>& primary_keys,
+                          int64_t row_context_id = 0);
+
   virtual mdb::ResultSet QueryIn(Table *tbl,
                                  const mdb::MultiBlob &low,
                                  const mdb::MultiBlob &high,

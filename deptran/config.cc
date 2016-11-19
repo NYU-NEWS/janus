@@ -374,7 +374,7 @@ int Config::GetClientPort(std::string site_name) {
       }
     }
   }
-  verify(0);
+//  verify(0);
   return -1;
 }
 
@@ -492,7 +492,17 @@ void Config::LoadModeYML(YAML::Node config) {
   max_retry_ = config["retry"].as<int32_t>();
 //  concurrent_txn_ = config["ongoing"].as<uint32_t>();
   batch_start_ = config["batch"].as<bool>();
-
+  if (config["timestamp"]) {
+    string ts_str = config["cc"].as<string>();
+    boost::algorithm::to_lower(ts_str);
+    if (ts_str == "clock") {
+      timestamp_ = CLOCK;
+    } else if (ts_str == "counter") {
+      timestamp_ = COUNTER;
+    } else {
+      verify(0);
+    }
+  }
 }
 
 void Config::LoadBenchYML(YAML::Node config) {

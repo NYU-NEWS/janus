@@ -39,6 +39,15 @@ mdb::ResultSet DTxn::QueryIn(Table *tbl,
 }
 
 mdb::Row* DTxn::Query(mdb::Table *tbl,
+                      vector<Value>& primary_keys,
+                      int64_t row_context_id) {
+  mdb::MultiBlob mb(primary_keys.size());
+  for (int i = 0; i < primary_keys.size(); i++) {
+    mb[i] = primary_keys[i].get_blob();
+  }
+}
+
+mdb::Row* DTxn::Query(mdb::Table *tbl,
                       const mdb::MultiBlob &mb,
                       int64_t row_context_id) {
   verify(mdb_txn() != nullptr);

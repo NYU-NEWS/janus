@@ -23,6 +23,7 @@ class Config {
   };
 
   enum ClientType { Open, Closed };
+  enum TimestampType {CLOCK=0, COUNTER=1};
 
  public:
 
@@ -64,6 +65,7 @@ class Config {
   int32_t rotate_{3};
   int32_t n_parallel_dispatch_{0};
   bool forwarding_enabled_ = false;
+  int timestamp_{TimestampType::CLOCK};
 
   // TODO remove, will cause problems.
   uint32_t num_site_;
