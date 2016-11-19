@@ -1,14 +1,22 @@
 
+**bold** for ongoing tasks.
+
+## huge tasks (a few months)
+
+* test failure and recovery. look into the seastar framework and replace the rpc layer with it if possible. Because the current rpc layer crash on process failures, we need to either fix it or replace it if we want to test for crash and recovery.
 
 ## big tasks (a few weeks)
 
-* investigate the clock sync effects for tapir. 
-* look into the seastar framework and replace the rpc layer with it if possible. Because the current rpc layer crash on process failures, we need to either fix it or replace it if we want to test for crash and recovery.
-* test failure and recovery.
+* **investigate the clock sync effects for tapir.** 
 * implement MDCC.
 * implement EPaxos.
 * implement Granola.
 * implement Calvin.
+* implement Sinfornia
+* re-implement Rococo.
+* try different combinations, e.g. Sinfornia + EPaxos, get them work.
+* implement general transaction support for Janus.
+* support interactive transaction.
 
 ## mid tasks (one week)
 
@@ -16,8 +24,9 @@
 
 ## small tasks (a few days)
 
+* **add conflict declaration in tpcc and tpca, shrink the number of pieces in tpcc.**
+* **rewrite how janus handles pre-accept request, use the conflict delaration above**
 * write README and a guide for setup and plot.
-
 
 ## tiny tasks (less than one day)
 

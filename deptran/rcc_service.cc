@@ -280,9 +280,10 @@ void ClassicServiceImpl::BrqPreAccept(const cmdid_t &txnid,
   res_graph->rtti_ = Marshallable::RCC_GRAPH;
   res_graph->ptr().reset(new RccGraph());
   BrqSched* sched = (BrqSched*) dtxn_sched_;
+
   sched->OnPreAccept(txnid,
                      cmds,
-                     dynamic_cast<RccGraph&>(*graph.ptr().get()),
+                     dynamic_cast<RccGraph*>(graph.ptr().get()),
                      res,
                      dynamic_cast<RccGraph*>(res_graph->ptr().get()),
                      [defer] () {defer->reply();});
@@ -297,11 +298,12 @@ void ClassicServiceImpl::BrqPreAcceptWoGraph(const cmdid_t& txnid,
   res_graph->rtti_ = Marshallable::RCC_GRAPH;
   res_graph->ptr().reset(new RccGraph());
   BrqSched* sched = (BrqSched*) dtxn_sched_;
-  sched->OnPreAcceptWoGraph(txnid,
-                            cmds,
-                            res,
-                            dynamic_cast<RccGraph*>(res_graph->ptr().get()),
-                            [defer] () {defer->reply();});
+  sched->OnPreAccept(txnid,
+                     cmds,
+                     nullptr,
+                     res,
+                     dynamic_cast<RccGraph*>(res_graph->ptr().get()),
+                     [defer] () {defer->reply();});
 }
 
 
