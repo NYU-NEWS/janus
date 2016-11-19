@@ -13,19 +13,6 @@ class BrqSched : public RccSched {
 
   void OnPreAccept(const txnid_t txnid,
                    const vector<SimpleCommand> &cmds,
-                   const RccGraph &graph,
-                   int32_t *res,
-                   RccGraph *res_graph,
-                   function<void()> callback);
-
-  void OnPreAcceptWoGraph(const txnid_t txnid,
-                          const vector<SimpleCommand> &cmds,
-                          int32_t *res,
-                          RccGraph *res_graph,
-                          function<void()> callback);
-
-  void OnPreAccept(const txnid_t txnid,
-                   const vector<SimpleCommand> &cmds,
                    RccGraph* graph,
                    int32_t *res,
                    RccGraph *res_graph,

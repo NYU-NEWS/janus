@@ -46,6 +46,7 @@ struct conf_id {
   string table{};
   std::vector<int> primary_keys{};
   std::vector<int> columns{};
+  int row_context_id{};
 
   conf_id(string t, vector<int> k, vector<int> c) : table(t),
                                                  primary_keys(k),

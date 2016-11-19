@@ -108,55 +108,6 @@ map<txnid_t, RccDTxn*> BrqSched::Aggregate(RccGraph &graph) {
 
 void BrqSched::OnPreAccept(const txnid_t txn_id,
                            const vector<SimpleCommand>& cmds,
-                           const RccGraph& graph,
-                           int32_t* res,
-                           RccGraph* res_graph,
-                           function<void()> callback) {
-  std::lock_guard<std::recursive_mutex> lock(mtx_);
-//  Log_info("on preaccept: %llx par: %d", txn_id, (int)partition_id_);
-//  if (RandomGenerator::rand(1, 2000) <= 1)
-//    Log_info("on pre-accept graph size: %d", graph.size());
-//  verify(txn_id > 0);
-  verify(cmds[0].root_id_ == txn_id);
-  Aggregate(const_cast<RccGraph&>(graph));
-  TriggerCheckAfterAggregation(const_cast<RccGraph&>(graph));
-  // TODO FIXME
-  // add interference based on cmds.
-  RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(txn_id);
-  dtxn->UpdateStatus(TXN_PAC);
-  dtxn->involve_flag_ = RccDTxn::INVOLVED;
-//  TxnInfo& tinfo = dtxn->tv_->Get();
-  if (dtxn->max_seen_ballot_ > 0) {
-    *res = REJECT;
-  } else {
-    if (dtxn->status() < TXN_CMT) {
-      if (dtxn->phase_ < PHASE_RCC_DISPATCH && dtxn->status() < TXN_CMT) {
-        for (auto& c: cmds) {
-          map<int32_t, Value> output;
-          dtxn->DispatchExecute(c, res, &output);
-        }
-      }
-    } else {
-      if (dtxn->dreqs_.size() == 0) {
-        for (auto& c: cmds) {
-          dtxn->dreqs_.push_back(c);
-        }
-      }
-    }
-    verify(!dtxn->fully_dispatched);
-    dtxn->fully_dispatched = true;
-    MinItfrGraph(dtxn, res_graph, false, 1);
-    if (dtxn->status() >= TXN_CMT) {
-      waitlist_.insert(dtxn);
-      verify(dtxn->epoch_ > 0);
-    }
-    *res = SUCCESS;
-  }
-  callback();
-}
-
-void BrqSched::OnPreAccept(const txnid_t txn_id,
-                           const vector<SimpleCommand>& cmds,
                            RccGraph* graph,
                            int32_t* res,
                            RccGraph* res_graph,
@@ -184,7 +135,7 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
       if (dtxn->phase_ < PHASE_RCC_DISPATCH && tinfo.status() < TXN_CMT) {
         for (auto& c: cmds) {
           map<int32_t, Value> output;
-          dtxn->DispatchExecute(c, res, &output);
+          dtxn->DispatchExecute(const_cast<SimpleCommand&>(c), res, &output);
         }
       }
     } else {
@@ -205,54 +156,6 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
   }
   callback();
 }
-
-void BrqSched::OnPreAcceptWoGraph(const txnid_t txn_id,
-                                  const vector<SimpleCommand>& cmds,
-                                  int32_t* res,
-                                  RccGraph* res_graph,
-                                  function<void()> callback) {
-  std::lock_guard<std::recursive_mutex> lock(mtx_);
-//  Log_info("on preaccept: %llx par: %d", txn_id, (int)partition_id_);
-//  if (RandomGenerator::rand(1, 2000) <= 1)
-//    Log_info("on pre-accept graph size: %d", graph.size());
-  verify(txn_id > 0);
-  verify(cmds[0].root_id_ == txn_id);
-//  dep_graph_->Aggregate(const_cast<RccGraph&>(graph));
-//  TriggerCheckAfterAggregation(const_cast<RccGraph&>(graph));
-  // TODO FIXME
-  // add interference based on cmds.
-  RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(txn_id);
-  dtxn->UpdateStatus(TXN_PAC);
-  RccDTxn& tinfo = *dtxn;
-  if (dtxn->max_seen_ballot_ > 0) {
-    *res = REJECT;
-  } else {
-    if (dtxn->status() < TXN_CMT) {
-      if (dtxn->phase_ < PHASE_RCC_DISPATCH && tinfo.status() < TXN_CMT) {
-        for (auto& c: cmds) {
-          map<int32_t, Value> output;
-          dtxn->DispatchExecute(c, res, &output);
-        }
-      }
-    } else {
-      if (dtxn->dreqs_.size() == 0) {
-        for (auto& c: cmds) {
-          dtxn->dreqs_.push_back(c);
-        }
-      }
-    }
-    verify(!tinfo.fully_dispatched);
-    tinfo.fully_dispatched = true;
-    MinItfrGraph(dtxn, res_graph, false, 1);
-    if (tinfo.status() >= TXN_CMT) {
-      waitlist_.insert(dtxn);
-      verify(dtxn->epoch_ > 0);
-    }
-    *res = SUCCESS;
-  }
-  callback();
-}
-
 
 void BrqSched::OnAccept(const txnid_t txn_id,
                         const ballot_t& ballot,

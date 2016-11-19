@@ -29,9 +29,10 @@ RccDTxn::RccDTxn(RccDTxn& rhs_dtxn) :
     status_(rhs_dtxn.status_) {
 }
 
-void RccDTxn::DispatchExecute(const SimpleCommand &cmd,
+void RccDTxn::DispatchExecute(SimpleCommand &cmd,
                               int32_t *res,
                               map<int32_t, Value> *output) {
+  verify(0);
   for (auto& c: dreqs_) {
     if (c.inn_id() == cmd.inn_id())
       return;

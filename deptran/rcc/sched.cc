@@ -58,7 +58,8 @@ int RccSched::OnDispatch(const vector<SimpleCommand> &cmd,
 //  auto job = [&cmd, res, dtxn, callback, graph, output, this, txn_id] () {
   verify(cmd[0].partition_id_ == Scheduler::partition_id_);
   for (auto&c : cmd) {
-    dtxn->DispatchExecute(c, res, &(*output)[c.inn_id()]);
+    dtxn->DispatchExecute(const_cast<SimpleCommand&>(c),
+                          res, &(*output)[c.inn_id()]);
   }
   dtxn->UpdateStatus(TXN_STD);
   int depth = 1;

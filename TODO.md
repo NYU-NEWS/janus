@@ -1,5 +1,5 @@
 
-**bold** for ongoing tasks.
+**bold** for ongoing tasks. huge, big, mid, small, tiny for time estimation.
 
 ## huge tasks (a few months)
 
@@ -13,6 +13,7 @@
 * implement Granola.
 * implement Calvin.
 * implement Sinfornia
+* implement CLOCC
 * re-implement Rococo.
 * try different combinations, e.g. Sinfornia + EPaxos, get them work.
 * implement general transaction support for Janus.
@@ -31,3 +32,4 @@
 ## tiny tasks (less than one day)
 
 * rename all brq to janus.
+* add macros and compile options to disable all the verify

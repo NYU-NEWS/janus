@@ -9,7 +9,7 @@
 #include "sched.h"
 #include "dep_graph.h"
 #include "../rcc/rcc_row.h"
-#include "../rcc/dtxn.h"
+#include "dtxn.h"
 
 namespace rococo {
 
@@ -67,7 +67,7 @@ DTxn* BrqFrame::CreateDTxn(epoch_t epoch, txnid_t tid,
                            bool ro, Scheduler *mgr) {
 //  auto dtxn = new BrqDTxn(tid, mgr, ro);
 //  return dtxn;
-  auto dtxn = new RccDTxn(epoch, tid, mgr, ro);
+  auto dtxn = new BrqDTxn(epoch, tid, mgr, ro);
   return dtxn;
 }
 

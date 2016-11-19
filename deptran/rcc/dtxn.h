@@ -44,7 +44,7 @@ class RccDTxn: public DTxn, public Vertex<RccDTxn> {
     }
   }
 
-  virtual void DispatchExecute(const SimpleCommand &cmd,
+  virtual void DispatchExecute(SimpleCommand &cmd,
                                int *res,
                                map<int32_t, Value> *output);
 
