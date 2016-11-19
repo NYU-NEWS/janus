@@ -4,6 +4,9 @@
 #include "command.h"
 namespace rococo {
 
+#define TXN_GENERAL  (0x0)
+#define TXN_ONE_SHOT (0x1)
+
 class RequestHeader;
 class Executor;
 
@@ -39,6 +42,17 @@ typedef std::function<bool(TxnCommand *,
     PieceCallbackHandler;
 
 
+struct conf_id {
+  string table{};
+  std::vector<int> primary_keys{};
+  std::vector<int> columns{};
+
+  conf_id(string t, vector<int> k, vector<int> c) : table(t),
+                                                 primary_keys(k),
+                                                 columns(c) {
+  }
+};
+
 /**
 * This class holds all the hard-coded transactions pieces.
 */
@@ -66,14 +80,16 @@ class TxnRegistry {
  public:
   // prevent instance creation
   // TxnRegistry() { }
-  map<std::pair<base::i32, base::i32>, txn_handler_defer_pair_t> all_ = {};
-  map<std::pair<txntype_t, innid_t>, PieceCallbackHandler> callbacks_ = {};
+  map<txntype_t, int> txn_types_{};
+  map<std::pair<base::i32, base::i32>, txn_handler_defer_pair_t> all_{};
+  map<std::pair<txntype_t, innid_t>, PieceCallbackHandler> callbacks_{};
   map<std::pair<txntype_t, innid_t>,
-      std::pair<string, vector<int32_t>>> sharding_input_ = {};
-  map<txntype_t, map<innid_t, set<int32_t>>> input_vars_ = {};
-  map<txntype_t, map<innid_t, set<int32_t>>> output_vars_ = {};
-  map<txntype_t, std::function<void(TxnCommand * ch, TxnRequest& req)> > init_ = {};
-  map<txntype_t, std::function<void(TxnCommand * ch)>> retry_ = {};
+      std::pair<string, vector<int32_t>>> sharding_input_{};
+  map<txntype_t, map<innid_t, set<int32_t>>> input_vars_{};
+  map<txntype_t, map<innid_t, set<int32_t>>> output_vars_{};
+  map<txntype_t, std::function<void(TxnCommand * ch, TxnRequest& req)> > init_{};
+  map<txntype_t, std::function<void(TxnCommand * ch)>> retry_{};
+  map<txntype_t, map<innid_t, vector<conf_id>>> conflicts_{};
 
   // PieceCallbackMap callbacks_;
   // static map<std::pair<base::i32, base::i32>, LockSetOracle> lck_oracle_;

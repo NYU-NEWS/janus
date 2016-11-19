@@ -58,6 +58,12 @@ txn_reg_->input_vars_[txn][pie] = {__VA_ARGS__};
 #define OUTPUT_PIE(txn, pie, ...) \
 txn_reg_->output_vars_[txn][pie] = {__VA_ARGS__};
 
+#define CONFLICT_PIE(txn, pie, ...) \
+txn_reg_->conflicts_[txn][pie] = {__VA_ARGS__};
+
+#define TXN_TYPE(txn, type) \
+txn_reg_->txn_types_[txn] = type;
+
 //std::vector<mdb::column_lock_t>(__VA_ARGS__),
 //verify(((TPLDTxn*)dtxn)->locking_ == (output_size == nullptr));
 //#define TPL_KISS(...) \

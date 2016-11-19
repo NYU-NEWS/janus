@@ -11,8 +11,9 @@ class PieceStatus {
   friend class Txn2PL;
   //FIXME when locking thread starts to process a piece, and main thread starts to abort one txn
  public:
-  static int64_t swap_bits(int64_t num) {
-    int64_t ret = num << 32;
+  static uint64_t swap_bits(uint64_t num) {
+    return num;
+    uint64_t ret = num << 32;
     ret |= (num >> 32) & 0x00000000FFFFFFFF;
     return ret;
   }

@@ -47,11 +47,17 @@ void TpccTxn::NewOrderRetry() {
 }
 
 void TpccPiece::RegNewOrder() {
+  TXN_TYPE(TPCC_NEW_ORDER, TXN_ONE_SHOT);
+
   // Ri & W district
   INPUT_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0,
             TPCC_VAR_W_ID, TPCC_VAR_D_ID)
   OUTPUT_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0,
              TPCC_VAR_O_ID, TPCC_VAR_D_TAX)
+  CONFLICT_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0,
+               conf_id(TPCC_TB_DISTRICT,
+                       {TPCC_VAR_D_ID, TPCC_VAR_W_ID},
+                       {TPCC_COL_DISTRICT_D_NEXT_O_ID}));
   SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0,
             TPCC_TB_DISTRICT, TPCC_VAR_W_ID);
   BEGIN_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0,
@@ -94,6 +100,7 @@ void TpccPiece::RegNewOrder() {
              TPCC_VAR_W_TAX)
   SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_1,
             TPCC_TB_DISTRICT, TPCC_VAR_W_ID);
+  // No conflict
   BEGIN_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_1, DF_REAL) {
     verify(cmd.input.size() >= 1);
     Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_1);
@@ -113,6 +120,7 @@ void TpccPiece::RegNewOrder() {
              TPCC_VAR_C_LAST, TPCC_VAR_C_CREDIT, TPCC_VAR_C_DISCOUNT)
   SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_2,
             TPCC_TB_CUSTOMER, TPCC_VAR_W_ID)
+  // No conflict.
   BEGIN_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_2, DF_REAL) {
     verify(cmd.input.size() >= 3);
     Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_2);
@@ -140,6 +148,7 @@ void TpccPiece::RegNewOrder() {
             TPCC_VAR_O_CARRIER_ID, TPCC_VAR_OL_CNT, TPCC_VAR_O_ALL_LOCAL)
   SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_3,
             TPCC_TB_ORDER, TPCC_VAR_W_ID)
+  // no conflict.
   BEGIN_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_3, DF_FAKE) {
     verify(cmd.input.size() >= 6);
     Log::debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_3);
@@ -184,6 +193,7 @@ void TpccPiece::RegNewOrder() {
             TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_O_ID)
   SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_4,
             TPCC_TB_NEW_ORDER, TPCC_VAR_W_ID);
+  // no conflict.
   BEGIN_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_4, DF_FAKE) {
     verify(cmd.input.size() >= 3);
     Log_debug("TPCC_NEW_ORDER, piece: %d", TPCC_NEW_ORDER_4);
@@ -210,6 +220,7 @@ void TpccPiece::RegNewOrder() {
     SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RI(i),
               TPCC_TB_ITEM, TPCC_VAR_I_ID(i))
     INPUT_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RI(i), TPCC_VAR_I_ID(i))
+    // no conflict.
   }
 
   BEGIN_LOOP_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RI(0), 1000, DF_NO)
@@ -244,6 +255,7 @@ void TpccPiece::RegNewOrder() {
               TPCC_TB_STOCK, TPCC_VAR_S_W_ID(i))
     INPUT_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RS(i),
               TPCC_VAR_D_ID, TPCC_VAR_I_ID(i), TPCC_VAR_S_W_ID(i))
+    // no conflict.
   }
 
   BEGIN_LOOP_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RS(0), 1000, DF_NO)
@@ -280,6 +292,11 @@ void TpccPiece::RegNewOrder() {
     INPUT_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_WS(i),
               TPCC_VAR_I_ID(i), TPCC_VAR_S_W_ID(i),
               TPCC_VAR_OL_QUANTITY(i), TPCC_VAR_S_REMOTE_CNT(i))
+    CONFLICT_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_WS(i),
+                 conf_id(TPCC_TB_STOCK,
+                         {TPCC_VAR_I_ID(i), TPCC_VAR_S_W_ID(i)},
+                         {TPCC_COL_STOCK_S_QUANTITY, TPCC_COL_STOCK_S_YTD,
+                          TPCC_COL_STOCK_S_ORDER_CNT, TPCC_COL_STOCK_S_REMOTE_CNT}));
   }
 
   BEGIN_LOOP_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_WS(0), 1000, DF_REAL)
@@ -341,6 +358,7 @@ void TpccPiece::RegNewOrder() {
               TPCC_VAR_W_ID, TPCC_VAR_D_ID,
               TPCC_VAR_OL_DIST_INFO(i), TPCC_VAR_OL_QUANTITY(i),
               TPCC_VAR_OL_NUMBER(i), TPCC_VAR_OL_DELIVER_D(i))
+    // no conflict.
   }
 
   BEGIN_LOOP_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_WOL(0), 1000, DF_FAKE) {
