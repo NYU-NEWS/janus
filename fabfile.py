@@ -187,6 +187,7 @@ def install_leader_apt_packages():
 def install_apt_packages():
     sudo('apt-get -y update')
     sudo('apt-get -y install pkg-config libgoogle-perftools-dev')
+    sudo('apt-get -y install ntp ntpdate ntpstat')
 
 
 @task
