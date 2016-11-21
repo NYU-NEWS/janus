@@ -88,7 +88,7 @@ file(GLOB RRR_SRC
     "rrr/misc/*.cpp"
     "rrr/coroutine/*.h"
     "rrr/coroutine/*.cc"
-    "rrr/mq/*.cpp"
+#    "rrr/mq/*.cpp"
 #    "rrr/mq/*.h"
     "rrr/pylib/simplerpc/_pyrpc.cpp"
     "rrr/rpc/*.cpp"
