@@ -528,11 +528,19 @@ class VersionedRow: public CoarseLockedRow {
   }
 
   version_t max_prepared_rver(column_id_t column_id) {
-    return prepared_wver_[column_id].back();
+    if (prepared_wver_[column_id].size() > 0) {
+      return prepared_wver_[column_id].back();
+    } else {
+      return 0;
+    }
   }
 
   version_t min_prepared_wver(column_id_t column_id) {
-    return prepared_rver_[column_id].front();
+    if (prepared_rver_[column_id].size() > 0) {
+      return prepared_rver_[column_id].front();
+    } else {
+      return 0;
+    }
   }
 
   void insert_prepared_wver(column_id_t column_id, version_t ver) {

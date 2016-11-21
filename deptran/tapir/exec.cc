@@ -52,11 +52,11 @@ void TapirExecutor::FastAccept(const vector<SimpleCommand>& txn_cmds,
       auto ver_now = row->get_column_ver(col_id);
       verify(col_id < row->prepared_rver_.size());
       verify(col_id < row->prepared_wver_.size());
-      if (ver_now > ver_read) {
+      if (ver_read < ver_now) {
         // value has been updated. abort transaction.
         *res = REJECT;
         return;
-      } else if (ver_now < row->min_prepared_wver(col_id)) {
+      } else if (ver_read < row->min_prepared_wver(col_id)) {
         // abstain is not very useful for now, as we are not counting the
         // difference between aborts. but let us have it for future.
         *res = ABSTAIN;
