@@ -497,7 +497,7 @@ void Config::LoadModeYML(YAML::Node config) {
 //  concurrent_txn_ = config["ongoing"].as<uint32_t>();
   batch_start_ = config["batch"].as<bool>();
   if (config["timestamp"]) {
-    string ts_str = config["cc"].as<string>();
+    string ts_str = config["timestamp"].as<string>();
     boost::algorithm::to_lower(ts_str);
     if (ts_str == "clock") {
       timestamp_ = CLOCK;
