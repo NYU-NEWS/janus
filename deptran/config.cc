@@ -329,6 +329,7 @@ void Config::LoadSiteYML(YAML::Node config) {
       info.partition_id_ = replica_group.partition_id;
       info.locale_id = locale_id;
       info.type_ = SERVER;
+      info.proc_name = site_proc_map_[info.name];
       sites_.push_back(info);
       replica_group.replicas.push_back(&sites_.back());
       locale_id++;
@@ -345,6 +346,7 @@ void Config::LoadSiteYML(YAML::Node config) {
       auto site_name = group_it->as<string>();
       SiteInfo info(site_id++);
       info.name = site_name;
+      info.proc_name = site_proc_map_[info.name];
       info.type_ = CLIENT;
       info.locale_id = locale_id;
       info.port = GetClientPort(site_name);
@@ -393,8 +395,10 @@ void Config::LoadProcYML(YAML::Node config) {
     auto site_name = it->first.as<string>();
     auto proc_name = it->second.as<string>();
     auto info = SiteByName(site_name);
-    verify(info != nullptr);
-    info->proc_name = proc_name;
+//    verify(info != nullptr);
+    if (info != nullptr && proc_name != "") {
+      info->proc_name = proc_name;
+    }
   }
 }
 
@@ -833,6 +837,9 @@ Config::SitesByProcessName(string proc_name, Config::SiteInfoType type) {
 
   std::for_each(searching->begin(), searching->end(),
                 [proc_name, &result](SiteInfo& site) mutable {
+                  if (site.proc_name == "") {
+                    Log_fatal("cannot find proc name for site %s", site.name.c_str());
+                  }
                   if (site.proc_name==proc_name) {
                     result.push_back(site);
                   }

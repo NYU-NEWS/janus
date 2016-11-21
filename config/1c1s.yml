@@ -1,0 +1,22 @@
+#
+# host machine
+#   physical process as container  
+#     logical site as a thread
+# site --> process --> host
+#   
+# site: logical site (either as server/coordinator), which lives in a thread (may share thread 
+# process 
+# host is  
+
+# site - partition map
+site:
+  server: # each line is a partition, the first is the master site_name:port
+#    - ["s101:8000", "s201:8001", "s301:8002"]
+#    - ["s102:8100", "s202:8101", "s302:8102"]
+#    - ["s103:8200", "s203:8201", "s303:8202"]
+    - ["s101:8101"]
+#    - ["s102:8102"]
+#    - ["s103:8103"]
+  client: # each line is a partition
+    - ["c101"]
+#    - ["c102"]
