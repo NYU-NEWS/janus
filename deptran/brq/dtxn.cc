@@ -16,9 +16,10 @@ void BrqDTxn::DispatchExecute(SimpleCommand &cmd,
   for (auto& c: conflicts) {
     vector<Value> pkeys;
     for (int i = 0; i < c.primary_keys.size(); i++) {
-      pkeys.push_back(cmd.input[c.primary_keys[i]]);
+      pkeys.push_back(cmd.input.at(c.primary_keys[i]));
     }
     auto row = Query(GetTable(c.table), pkeys, c.row_context_id);
+    verify(row != nullptr);
     for (auto col_id : c.columns) {
       TraceDep(row, col_id, TXN_DEFERRED);
     }

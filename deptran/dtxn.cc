@@ -45,6 +45,8 @@ mdb::Row* DTxn::Query(mdb::Table *tbl,
   for (int i = 0; i < primary_keys.size(); i++) {
     mb[i] = primary_keys[i].get_blob();
   }
+  auto r = Query(tbl, mb, row_context_id);
+  return r;
 }
 
 mdb::Row* DTxn::Query(mdb::Table *tbl,

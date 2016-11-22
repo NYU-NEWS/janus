@@ -58,7 +58,8 @@ void TpccPiece::RegNewOrder() {
   CONFLICT_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0,
                conf_id(TPCC_TB_DISTRICT,
                        {TPCC_VAR_D_ID, TPCC_VAR_W_ID},
-                       {TPCC_COL_DISTRICT_D_NEXT_O_ID}));
+                       {TPCC_COL_DISTRICT_D_NEXT_O_ID},
+                       ROW_DISTRICT));
   SHARD_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0,
             TPCC_TB_DISTRICT, TPCC_VAR_W_ID);
   BEGIN_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0,
@@ -296,8 +297,11 @@ void TpccPiece::RegNewOrder() {
     CONFLICT_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_WS(i),
                  conf_id(TPCC_TB_STOCK,
                          {TPCC_VAR_I_ID(i), TPCC_VAR_S_W_ID(i)},
-                         {TPCC_COL_STOCK_S_QUANTITY, TPCC_COL_STOCK_S_YTD,
-                          TPCC_COL_STOCK_S_ORDER_CNT, TPCC_COL_STOCK_S_REMOTE_CNT}));
+                         {TPCC_COL_STOCK_S_QUANTITY,
+                          TPCC_COL_STOCK_S_YTD,
+                          TPCC_COL_STOCK_S_ORDER_CNT,
+                          TPCC_COL_STOCK_S_REMOTE_CNT},
+                         0)); // TODO optimize.
   }
 
   BEGIN_LOOP_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_WS(0), 1000, DF_REAL)

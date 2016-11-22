@@ -15,6 +15,10 @@ extern char TPCA_CUSTOMER[];
 #define TPCA_PAYMENT_2 (12)
 #define TPCA_PAYMENT_3 (13)
 
+#define TPCA_ROW_1 (21)
+#define TPCA_ROW_2 (22)
+#define TPCA_ROW_3 (23)
+
 #define TPCA_VAR_X   (0)
 #define TPCA_VAR_Y   (1)
 #define TPCA_VAR_Z   (2)
