@@ -3,6 +3,8 @@ import os
 import traceback
 import time
 import random
+from string import Template
+import StringIO
 
 
 from fabric.api import env, task, run, local, hosts
@@ -15,6 +17,7 @@ from fabric.operations import reboot
 # tasks are exported under the module names
 from pylib import ec2
 from pylib import cluster
+from pylib.cluster import Xput
 
 import pylib
 
@@ -67,6 +70,8 @@ def deploy_continue():
         try:
             execute('install_apt_packages')
             execute('install_leader_apt_packages')
+            execute('config_ntp_leaders')
+            execute('config_ntp_clients')
             execute('build', args="-t")
             execute('cluster.put_janus_config')
             execute('cluster.put_limits_config')
@@ -130,6 +135,8 @@ def deploy_all(regions='us-west-2', servers_per_region=[3], instance_type='t2.sm
         while attempts < 3 and done == False:
             try:
                 execute('install_leader_apt_packages')
+                execute('config_ntp_leaders')
+                execute('config_ntp_clients')
                 execute('build', args="-t")
                 execute('cluster.put_janus_config')
                 execute('cluster.put_limits_config')
@@ -187,8 +194,26 @@ def install_leader_apt_packages():
 def install_apt_packages():
     sudo('apt-get -y update')
     sudo('apt-get -y install pkg-config libgoogle-perftools-dev')
-    sudo('apt-get -y install ntp ntpdate ntpstat')
 
+@task
+@roles('leaders')
+@parallel
+def config_ntp_leaders():
+    sudo('apt-get -y install ntp ntpstat')
+    sudo('service ntp stop')
+    ntp_template = Template(open('config/etc/ntp.conf').read())
+    leader_ip = env.roledefs['leaders'][0]
+    ntp_conf = StringIO.StringIO(ntp_template.substitute(leader=leader_ip))
+    Xput(ntp_conf, '/etc/ntp.conf', use_sudo=True)
+    sudo('service ntp start')
+
+@task
+@roles('servers')
+@parallel
+def config_ntp_clients():
+    leader_ip = env.roledefs['leaders'][0]
+    run('sleep 2')
+    sudo('ntpdate -q ' + leader_ip)
 
 @task
 @runs_once
