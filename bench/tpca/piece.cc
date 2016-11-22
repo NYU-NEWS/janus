@@ -15,6 +15,8 @@ void TpcaPiece::reg_all() {
 void TpcaPiece::reg_pieces() {
   INPUT_PIE(TPCA_PAYMENT, TPCA_PAYMENT_1, TPCA_VAR_X)
   SHARD_PIE(TPCA_PAYMENT, TPCA_PAYMENT_1, TPCA_CUSTOMER, TPCA_VAR_X)
+  CONFLICT_PIE(TPCA_PAYMENT, TPCA_PAYMENT_1,
+               conf_id(TPCA_CUSTOMER, {TPCA_VAR_X}, {1}));
   BEGIN_PIE(TPCA_PAYMENT, TPCA_PAYMENT_1, DF_REAL) {
 //        Log::debug("output: %p, output_size: %p", output, output_size);
 //        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
@@ -37,6 +39,8 @@ void TpcaPiece::reg_pieces() {
 
   INPUT_PIE(TPCA_PAYMENT, TPCA_PAYMENT_2, TPCA_VAR_Y)
   SHARD_PIE(TPCA_PAYMENT, TPCA_PAYMENT_2, TPCA_TELLER, TPCA_VAR_Y)
+  CONFLICT_PIE(TPCA_PAYMENT, TPCA_PAYMENT_1,
+               conf_id(TPCA_CUSTOMER, {TPCA_VAR_Y}, {1}));
   BEGIN_PIE(TPCA_PAYMENT, TPCA_PAYMENT_2, DF_REAL) {
     mdb::Txn *txn = dtxn->mdb_txn_;
     Value buf;
@@ -54,6 +58,8 @@ void TpcaPiece::reg_pieces() {
 
   INPUT_PIE(TPCA_PAYMENT, TPCA_PAYMENT_3, TPCA_VAR_Z)
   SHARD_PIE(TPCA_PAYMENT, TPCA_PAYMENT_3, TPCA_BRANCH, TPCA_VAR_Z)
+  CONFLICT_PIE(TPCA_PAYMENT, TPCA_PAYMENT_1,
+               conf_id(TPCA_CUSTOMER, {TPCA_VAR_Z}, {1}));
   BEGIN_PIE(TPCA_PAYMENT, TPCA_PAYMENT_3, DF_REAL) {
     mdb::Txn *txn = dtxn->mdb_txn_;
     Value buf;
