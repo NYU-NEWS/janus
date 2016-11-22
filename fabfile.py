@@ -211,6 +211,7 @@ def config_ntp_leaders():
 @roles('servers')
 @parallel
 def config_ntp_clients():
+    sudo('apt-get -y install ntpdate')
     leader_ip = env.roledefs['leaders'][0]
     run('sleep 2')
     sudo('ntpdate -q ' + leader_ip)
