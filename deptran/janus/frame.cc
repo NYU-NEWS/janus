@@ -13,21 +13,20 @@
 
 namespace rococo {
 
-static Frame* brq_frame_s = Frame::RegFrame(MODE_BRQ,
-                                            {"brq", "baroque", "janus"},
-                                            [] () -> Frame* {
-                                              return new BrqFrame();
-                                            });
+static Frame* janus_frame_s = Frame::RegFrame(MODE_JANUS,
+                                              {"brq", "baroque", "janus"},
+                                              [] () -> Frame* {
+                                                return new JanusFrame();
+                                              });
 
-
-Coordinator* BrqFrame::CreateCoord(cooid_t coo_id,
+Coordinator* JanusFrame::CreateCoord(cooid_t coo_id,
                                    Config* config,
                                    int benchmark,
                                    ClientControlServiceImpl *ccsi,
                                    uint32_t id,
                                    TxnRegistry* txn_reg) {
   verify(config != nullptr);
-  BrqCoord* coord = new BrqCoord(coo_id,
+  JanusCoord* coord = new JanusCoord(coo_id,
                                  benchmark,
                                  ccsi,
                                  id);
@@ -36,43 +35,43 @@ Coordinator* BrqFrame::CreateCoord(cooid_t coo_id,
   return coord;
 }
 
-Executor* BrqFrame::CreateExecutor(uint64_t, Scheduler *sched) {
+Executor* JanusFrame::CreateExecutor(uint64_t, Scheduler *sched) {
   verify(0);
   return nullptr;
 }
 
 
-Scheduler* BrqFrame::CreateScheduler() {
-  Scheduler* sched = new BrqSched();
+Scheduler* JanusFrame::CreateScheduler() {
+  Scheduler* sched = new JanusSched();
   sched->frame_ = this;
   return sched;
 }
 
 vector<rrr::Service *>
-BrqFrame::CreateRpcServices(uint32_t site_id,
+JanusFrame::CreateRpcServices(uint32_t site_id,
                             Scheduler *sched,
                             rrr::PollMgr *poll_mgr,
                             ServerControlServiceImpl* scsi) {
   return Frame::CreateRpcServices(site_id, sched, poll_mgr, scsi);
 }
 
-mdb::Row* BrqFrame::CreateRow(const mdb::Schema *schema,
+mdb::Row* JanusFrame::CreateRow(const mdb::Schema *schema,
                               vector<Value>& row_data) {
 
   mdb::Row* r = RCCRow::create(schema, row_data);
   return r;
 }
 
-DTxn* BrqFrame::CreateDTxn(epoch_t epoch, txnid_t tid,
+DTxn* JanusFrame::CreateDTxn(epoch_t epoch, txnid_t tid,
                            bool ro, Scheduler *mgr) {
-//  auto dtxn = new BrqDTxn(tid, mgr, ro);
+//  auto dtxn = new JanusDTxn(tid, mgr, ro);
 //  return dtxn;
-  auto dtxn = new BrqDTxn(epoch, tid, mgr, ro);
+  auto dtxn = new JanusDTxn(epoch, tid, mgr, ro);
   return dtxn;
 }
 
-Communicator* BrqFrame::CreateCommo(PollMgr* poll) {
-  return new BrqCommo(poll);
+Communicator* JanusFrame::CreateCommo(PollMgr* poll) {
+  return new JanusCommo(poll);
 }
 
 }

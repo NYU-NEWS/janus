@@ -7,7 +7,7 @@
 
 
 namespace rococo {
-//BrqCoord::BrqCoord(
+//JanusCoord::JanusCoord(
 //  uint32_t                  coo_id,
 //  uint32_t                  thread_id,
 //  bool                      batch_optimal) : coo_id_(coo_id),
@@ -23,28 +23,28 @@ namespace rococo {
 //  }
 //}
 //
-//void BrqCoord::launch(Command &cmd) {
+//void JanusCoord::launch(Command &cmd) {
 //  cmd_ = cmd;
 //  cmd_id_ = next_cmd_id();
 //  this->FastAccept();
 //}
 
 
-BrqCommo* BrqCoord::commo() {
+JanusCommo* JanusCoord::commo() {
   if (commo_ == nullptr) {
     commo_ = frame_->CreateCommo();
     commo_->loc_id_ = loc_id_;
   }
   verify(commo_ != nullptr);
-  return dynamic_cast<BrqCommo*>(commo_);
+  return dynamic_cast<JanusCommo*>(commo_);
 }
 
-void BrqCoord::launch_recovery(cmdid_t cmd_id) {
+void JanusCoord::launch_recovery(cmdid_t cmd_id) {
   // TODO
   prepare();
 }
 
-void BrqCoord::PreAccept() {
+void JanusCoord::PreAccept() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
 //  // generate fast accept request
   // set broadcast callback
@@ -58,7 +58,7 @@ void BrqCoord::PreAccept() {
                                 magic_ballot(),
                                 cmds,
                                 graph_,
-                                std::bind(&BrqCoord::PreAcceptAck,
+                                std::bind(&JanusCoord::PreAcceptAck,
                                           this,
                                           phase_,
                                           par_id,
@@ -67,7 +67,7 @@ void BrqCoord::PreAccept() {
   }
 }
 
-void BrqCoord::PreAcceptAck(phase_t phase,
+void JanusCoord::PreAcceptAck(phase_t phase,
                             parid_t par_id,
                             int res,
                             RccGraph* graph) {
@@ -116,13 +116,13 @@ void BrqCoord::PreAcceptAck(phase_t phase,
 }
 
 /** caller should be thread_safe */
-void BrqCoord::prepare() {
+void JanusCoord::prepare() {
   // TODO
   // do not do failure recovery for now.
   verify(0);
 }
 
-void BrqCoord::ChooseGraph() {
+void JanusCoord::ChooseGraph() {
   for (auto& pair : n_fast_accept_graphs_) {
     auto& vec_graph = pair.second;
     if (fast_path_) {
@@ -136,7 +136,7 @@ void BrqCoord::ChooseGraph() {
   }
 }
 
-void BrqCoord::Accept() {
+void JanusCoord::Accept() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   verify(!fast_path_);
 //  Log_info("broadcast accept request for txn_id: %llx", cmd_->id_);
@@ -150,7 +150,7 @@ void BrqCoord::Accept() {
                              cmd_->id_,
                              ballot_,
                              graph_,
-                             std::bind(&BrqCoord::AcceptAck,
+                             std::bind(&JanusCoord::AcceptAck,
                                           this,
                                           phase_,
                                           par_id,
@@ -158,7 +158,7 @@ void BrqCoord::Accept() {
   }
 }
 
-void BrqCoord::AcceptAck(phase_t phase,
+void JanusCoord::AcceptAck(phase_t phase,
                          parid_t par_id,
                          int res) {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
@@ -181,7 +181,7 @@ void BrqCoord::AcceptAck(phase_t phase,
   // if have reached a quorum
 }
 
-void BrqCoord::Commit() {
+void JanusCoord::Commit() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   TxnCommand *txn = (TxnCommand*) cmd_;
   RccDTxn* dtxn = graph_.FindV(cmd_->id_);
@@ -191,7 +191,7 @@ void BrqCoord::Commit() {
     commo()->BroadcastCommit(par_id,
                              cmd_->id_,
                              graph_,
-                             std::bind(&BrqCoord::CommitAck,
+                             std::bind(&JanusCoord::CommitAck,
                                        this,
                                        phase_,
                                        par_id,
@@ -204,7 +204,7 @@ void BrqCoord::Commit() {
   }
 }
 
-void BrqCoord::CommitAck(phase_t phase,
+void JanusCoord::CommitAck(phase_t phase,
                          parid_t par_id,
                          int32_t res,
                          TxnOutput& output) {
@@ -232,7 +232,7 @@ void BrqCoord::CommitAck(phase_t phase,
   return;
 }
 
-bool BrqCoord::FastpathPossible() {
+bool JanusCoord::FastpathPossible() {
   auto pars = txn().GetPartitionIds();
   bool all_fast_quorum_possible = true;
   for (auto& par_id : pars) {
@@ -254,17 +254,17 @@ bool BrqCoord::FastpathPossible() {
   return all_fast_quorum_possible;
 };
 
-int32_t BrqCoord::GetFastQuorum(parid_t par_id) {
+int32_t JanusCoord::GetFastQuorum(parid_t par_id) {
   int32_t n = Config::GetConfig()->GetPartitionSize(par_id);
   return n;
 }
 
-int32_t BrqCoord::GetSlowQuorum(parid_t par_id) {
+int32_t JanusCoord::GetSlowQuorum(parid_t par_id) {
   int32_t n = Config::GetConfig()->GetPartitionSize(par_id);
   return n/2 + 1;
 }
 
-bool BrqCoord::AllFastQuorumsReached() {
+bool JanusCoord::AllFastQuorumsReached() {
   auto pars = txn().GetPartitionIds();
   for (auto &par_id : pars) {
     int r = FastQuorumGraphCheck(par_id);
@@ -282,7 +282,7 @@ bool BrqCoord::AllFastQuorumsReached() {
   return true;
 }
 
-bool BrqCoord::AcceptQuorumReached() {
+bool JanusCoord::AcceptQuorumReached() {
   auto pars = txn().GetPartitionIds();
   for (auto &par_id : pars) {
     if (n_fast_accept_oks_[par_id] < GetSlowQuorum(par_id)) {
@@ -292,7 +292,7 @@ bool BrqCoord::AcceptQuorumReached() {
   return true;
 }
 
-bool BrqCoord::PreAcceptAllSlowQuorumsReached() {
+bool JanusCoord::PreAcceptAllSlowQuorumsReached() {
   auto pars = cmd_->GetPartitionIds();
   bool all_slow_quorum_reached =
       std::all_of(pars.begin(),
@@ -307,7 +307,7 @@ bool BrqCoord::PreAcceptAllSlowQuorumsReached() {
 // 1: a fast quorum of the same
 // 2: >=(par_size - fast quorum) of different graphs. fast quorum not possible.
 // 3: less than a fast quorum graphs received.
-int BrqCoord::FastQuorumGraphCheck(parid_t par_id) {
+int JanusCoord::FastQuorumGraphCheck(parid_t par_id) {
   auto par_size = Config::GetConfig()->GetPartitionSize(par_id);
   auto& vec_graph = n_fast_accept_graphs_[par_id];
   auto fast_quorum = GetFastQuorum(par_id);
@@ -336,7 +336,7 @@ int BrqCoord::FastQuorumGraphCheck(parid_t par_id) {
   return res;
 }
 
-void BrqCoord::GotoNextPhase() {
+void JanusCoord::GotoNextPhase() {
   int n_phase = 6;
   int current_phase = phase_ % n_phase; // for debug
   switch (phase_++ % n_phase) {
@@ -380,7 +380,7 @@ void BrqCoord::GotoNextPhase() {
   }
 }
 
-void BrqCoord::Reset() {
+void JanusCoord::Reset() {
   RccCoord::Reset();
   fast_path_ = false;
   fast_commit_ = false;

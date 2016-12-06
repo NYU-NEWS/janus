@@ -103,15 +103,15 @@ class ClassicServiceImpl: public ClassicService {
                      ServerControlServiceImpl *scsi = NULL);
 
   void RccDispatch(const vector<SimpleCommand>& cmd,
-                  int32_t* res,
-                  TxnOutput* output,
-                  RccGraph* graph,
-                  DeferredReply* defer) override;
+                   int32_t* res,
+                   TxnOutput* output,
+                   RccGraph* graph,
+                   DeferredReply* defer) override;
 
   void RccFinish(const cmdid_t& cmd_id,
-                const RccGraph& graph,
-                TxnOutput* output,
-                DeferredReply* defer) override;
+                 const RccGraph& graph,
+                 TxnOutput* output,
+                 DeferredReply* defer) override;
 
 
   void RccInquire(const epoch_t& epoch,
@@ -123,46 +123,46 @@ class ClassicServiceImpl: public ClassicService {
                      map<int32_t, Value> *output,
                      DeferredReply *reply);
 
-  void BrqDispatch(const vector<SimpleCommand>& cmd,
-                   int32_t* res,
+  void JanusDispatch(const vector<SimpleCommand>& cmd,
+                     int32_t* res,
+                     TxnOutput* output,
+                     Marshallable* res_graph,
+                     DeferredReply* defer) override;
+
+  void JanusCommit(const cmdid_t& cmd_id,
+                   const Marshallable& graph,
+                   int32_t *res,
                    TxnOutput* output,
-                   Marshallable* res_graph,
                    DeferredReply* defer) override;
 
-  void BrqCommit(const cmdid_t& cmd_id,
-                 const Marshallable& graph,
-                 int32_t *res,
-                 TxnOutput* output,
-                 DeferredReply* defer) override;
+  void JanusCommitWoGraph(const cmdid_t& cmd_id,
+                          int32_t *res,
+                          TxnOutput* output,
+                          DeferredReply* defer) override;
 
-  void BrqCommitWoGraph(const cmdid_t& cmd_id,
-                        int32_t *res,
-                        TxnOutput* output,
-                        DeferredReply* defer) override;
+  void JanusInquire(const epoch_t& epoch,
+                    const cmdid_t &tid,
+                    Marshallable* graph,
+                    DeferredReply *) override;
 
-  void BrqInquire(const epoch_t& epoch,
-                  const cmdid_t &tid,
-                  Marshallable* graph,
-                  DeferredReply *) override;
+  void JanusPreAccept(const cmdid_t &txnid,
+                      const vector<SimpleCommand>& cmd,
+                      const Marshallable& graph,
+                      int32_t* res,
+                      Marshallable* res_graph,
+                      DeferredReply* defer) override;
 
-  void BrqPreAccept(const cmdid_t &txnid,
-                    const vector<SimpleCommand>& cmd,
-                    const Marshallable& graph,
-                    int32_t* res,
-                    Marshallable* res_graph,
-                    DeferredReply* defer) override;
+  void JanusPreAcceptWoGraph(const cmdid_t& txnid,
+                             const vector<SimpleCommand>& cmd,
+                             int32_t* res,
+                             Marshallable* res_graph,
+                             DeferredReply* defer) override;
 
-  void BrqPreAcceptWoGraph(const cmdid_t& txnid,
-                           const vector<SimpleCommand>& cmd,
-                           int32_t* res,
-                           Marshallable* res_graph,
-                           DeferredReply* defer) override;
-
-  void BrqAccept(const cmdid_t &txnid,
-                 const ballot_t& ballot,
-                 const Marshallable& graph,
-                 int32_t* res,
-                 DeferredReply* defer) override;
+  void JanusAccept(const cmdid_t &txnid,
+                   const ballot_t& ballot,
+                   const Marshallable& graph,
+                   int32_t* res,
+                   DeferredReply* defer) override;
   protected:
     void RegisterStats();
   };

@@ -31,5 +31,5 @@
 
 ## tiny tasks (less than one day)
 
-* rename all brq to janus.
+* ~~rename all brq to janus.~~
 * add macros and compile options to disable all the verify

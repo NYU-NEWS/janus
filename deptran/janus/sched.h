@@ -4,8 +4,8 @@
 
 namespace rococo {
 class RccGraph;
-class BrqCommo;
-class BrqSched : public RccSched {
+class JanusCommo;
+class JanusSched : public RccSched {
  public:
   using RccSched::RccSched;
 
@@ -46,7 +46,7 @@ class BrqSched : public RccSched {
                 cmdid_t cmd_id,
                 RccGraph *graph,
                 const function<void()> &callback) override;
-  BrqCommo* commo();
+  JanusCommo* commo();
 
 };
 } // namespace rococo

@@ -14,7 +14,7 @@ modes_ = [
             "occ_paxos",
             "tapir",
             "rcc",
-            "brq"
+            "janus"
         ]
 sites_ =       ["1c1s1p",
                 "2c2s1p",

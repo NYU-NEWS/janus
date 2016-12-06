@@ -8,7 +8,7 @@
 
 namespace rococo {
 
-void BrqCommo::SendDispatch(vector<SimpleCommand> &cmd,
+void JanusCommo::SendDispatch(vector<SimpleCommand> &cmd,
                             const function<void(int res,
                                                 TxnOutput& cmd,
                                                 RccGraph& graph)>& callback) {
@@ -40,17 +40,17 @@ void BrqCommo::SendDispatch(vector<SimpleCommand> &cmd,
   Log_debug("dispatch to %ld", cmd[0].PartitionId());
 //  verify(cmd.type_ > 0);
 //  verify(cmd.root_type_ > 0);
-  Future::safe_release(proxy->async_BrqDispatch(cmd, fuattr));
+  Future::safe_release(proxy->async_JanusDispatch(cmd, fuattr));
 }
 
-void BrqCommo::SendHandoutRo(SimpleCommand &cmd,
+void JanusCommo::SendHandoutRo(SimpleCommand &cmd,
                              const function<void(int res,
                                                  SimpleCommand& cmd,
                                                  map<int, mdb::version_t>& vers)>&) {
   verify(0);
 }
 
-void BrqCommo::SendFinish(parid_t pid,
+void JanusCommo::SendFinish(parid_t pid,
                           txnid_t tid,
                           RccGraph& graph,
                           const function<void(TxnOutput& output)> &callback) {
@@ -64,10 +64,10 @@ void BrqCommo::SendFinish(parid_t pid,
   };
   fuattr.callback = cb;
   auto proxy = (ClassicProxy*)NearestProxyForPartition(pid).second;
-  Future::safe_release(proxy->async_BrqCommit(tid, (BrqGraph&)graph, fuattr));
+  Future::safe_release(proxy->async_JanusCommit(tid, (JanusGraph&)graph, fuattr));
 }
 
-void BrqCommo::SendInquire(parid_t pid,
+void JanusCommo::SendInquire(parid_t pid,
                            epoch_t epoch,
                            txnid_t tid,
                            const function<void(RccGraph& graph)>& callback) {
@@ -80,10 +80,10 @@ void BrqCommo::SendInquire(parid_t pid,
   fuattr.callback = cb;
   // TODO fix.
   auto proxy = (ClassicProxy*)NearestProxyForPartition(pid).second;
-  Future::safe_release(proxy->async_BrqInquire(epoch, tid, fuattr));
+  Future::safe_release(proxy->async_JanusInquire(epoch, tid, fuattr));
 }
 
-bool BrqCommo::IsGraphOrphan(RccGraph& graph, txnid_t cmd_id) {
+bool JanusCommo::IsGraphOrphan(RccGraph& graph, txnid_t cmd_id) {
   if (graph.size() == 1) {
     RccDTxn* v = graph.FindV(cmd_id);
     verify(v);
@@ -93,7 +93,7 @@ bool BrqCommo::IsGraphOrphan(RccGraph& graph, txnid_t cmd_id) {
   }
 }
 
-void BrqCommo::BroadcastPreAccept(parid_t par_id,
+void JanusCommo::BroadcastPreAccept(parid_t par_id,
                                   txnid_t txn_id,
                                   ballot_t ballot,
                                   vector<SimpleCommand>& cmds,
@@ -115,11 +115,11 @@ void BrqCommo::BroadcastPreAccept(parid_t par_id,
     };
     verify(txn_id > 0);
     if (skip_graph) {
-      Future::safe_release(proxy->async_BrqPreAcceptWoGraph(txn_id,
+      Future::safe_release(proxy->async_JanusPreAcceptWoGraph(txn_id,
                                                             cmds,
                                                             fuattr));
     } else {
-      Future::safe_release(proxy->async_BrqPreAccept(txn_id,
+      Future::safe_release(proxy->async_JanusPreAccept(txn_id,
                                                      cmds,
                                                      graph,
                                                      fuattr));
@@ -127,7 +127,7 @@ void BrqCommo::BroadcastPreAccept(parid_t par_id,
   }
 }
 
-void BrqCommo::BroadcastAccept(parid_t par_id,
+void JanusCommo::BroadcastAccept(parid_t par_id,
                                txnid_t cmd_id,
                                ballot_t ballot,
                                RccGraph& graph,
@@ -143,7 +143,7 @@ void BrqCommo::BroadcastAccept(parid_t par_id,
       callback(res);
     };
     verify(cmd_id > 0);
-    Future::safe_release(proxy->async_BrqAccept(cmd_id,
+    Future::safe_release(proxy->async_JanusAccept(cmd_id,
                                              ballot,
                                              graph,
                                              fuattr));
@@ -151,7 +151,7 @@ void BrqCommo::BroadcastAccept(parid_t par_id,
 }
 
 
-void BrqCommo::BroadcastCommit(parid_t par_id,
+void JanusCommo::BroadcastCommit(parid_t par_id,
                                txnid_t cmd_id,
                                RccGraph& graph,
                                const function<void(int32_t, TxnOutput&)>
@@ -171,9 +171,9 @@ void BrqCommo::BroadcastCommit(parid_t par_id,
     };
     verify(cmd_id > 0);
     if (skip_graph) {
-      Future::safe_release(proxy->async_BrqCommitWoGraph(cmd_id, fuattr));
+      Future::safe_release(proxy->async_JanusCommitWoGraph(cmd_id, fuattr));
     } else {
-      Future::safe_release(proxy->async_BrqCommit(cmd_id, graph, fuattr));
+      Future::safe_release(proxy->async_JanusCommit(cmd_id, graph, fuattr));
     }
   }
 }

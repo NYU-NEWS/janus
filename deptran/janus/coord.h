@@ -5,11 +5,10 @@
 #include "../command.h"
 #include "../rcc/coord.h"
 #include "dep_graph.h"
-#include "brq-common.h"
 
 namespace rococo {
-class BrqCommo;
-class BrqCoord : public RccCoord {
+class JanusCommo;
+class JanusCoord : public RccCoord {
 public:
   enum Phase {INIT_END=0, DISPATCH=1, PREPARE=2,
     PRE_ACCEPT=3, ACCEPT=4, COMMIT=5};
@@ -38,9 +37,9 @@ public:
 
   using RccCoord::RccCoord;
 
-  virtual ~BrqCoord() {}
+  virtual ~JanusCoord() {}
 
-  BrqCommo* commo();
+  JanusCommo* commo();
   // Dispatch inherits from RccCoord;
   void DispatchRo() {Dispatch();}
 

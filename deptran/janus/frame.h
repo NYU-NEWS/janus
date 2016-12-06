@@ -4,9 +4,9 @@
 
 namespace rococo {
 
-class BrqFrame : public Frame {
+class JanusFrame : public Frame {
  public:
-  BrqFrame() : Frame(MODE_BRQ) { }
+  JanusFrame() : Frame(MODE_BRQ) { }
   Executor *CreateExecutor(cmdid_t, Scheduler *sched) override;
   Coordinator *CreateCoord(cooid_t coo_id,
                            Config *config,

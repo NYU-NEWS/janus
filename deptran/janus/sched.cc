@@ -7,7 +7,7 @@
 using namespace rococo;
 
 
-map<txnid_t, RccDTxn*> BrqSched::Aggregate(RccGraph &graph) {
+map<txnid_t, RccDTxn*> JanusSched::Aggregate(RccGraph &graph) {
   // aggregate vertexes
   map<txnid_t, RccDTxn*> index;
   for (auto& pair: graph.vertex_index()) {
@@ -106,7 +106,7 @@ map<txnid_t, RccDTxn*> BrqSched::Aggregate(RccGraph &graph) {
 
 
 
-void BrqSched::OnPreAccept(const txnid_t txn_id,
+void JanusSched::OnPreAccept(const txnid_t txn_id,
                            const vector<SimpleCommand>& cmds,
                            RccGraph* graph,
                            int32_t* res,
@@ -157,7 +157,7 @@ void BrqSched::OnPreAccept(const txnid_t txn_id,
   callback();
 }
 
-void BrqSched::OnAccept(const txnid_t txn_id,
+void JanusSched::OnAccept(const txnid_t txn_id,
                         const ballot_t& ballot,
                         const RccGraph& graph,
                         int32_t* res,
@@ -176,7 +176,7 @@ void BrqSched::OnAccept(const txnid_t txn_id,
   callback();
 }
 //
-//void BrqSched::OnCommit(const txnid_t cmd_id,
+//void JanusSched::OnCommit(const txnid_t cmd_id,
 //                        const RccGraph& graph,
 //                        int32_t* res,
 //                        TxnOutput* output,
@@ -232,7 +232,7 @@ void BrqSched::OnAccept(const txnid_t txn_id,
 //}
 
 //
-//void BrqSched::OnCommitWoGraph(const txnid_t cmd_id,
+//void JanusSched::OnCommitWoGraph(const txnid_t cmd_id,
 //                               int32_t* res,
 //                               TxnOutput* output,
 //                               const function<void()>& callback) {
@@ -272,7 +272,7 @@ void BrqSched::OnAccept(const txnid_t txn_id,
 //}
 
 
-void BrqSched::OnCommit(const txnid_t cmd_id,
+void JanusSched::OnCommit(const txnid_t cmd_id,
                         RccGraph* graph,
                         int32_t* res,
                         TxnOutput* output,
@@ -341,7 +341,7 @@ void BrqSched::OnCommit(const txnid_t cmd_id,
 }
 
 
-int BrqSched::OnInquire(epoch_t epoch,
+int JanusSched::OnInquire(epoch_t epoch,
                         cmdid_t cmd_id,
                         RccGraph *graph,
                         const function<void()> &callback) {
@@ -381,9 +381,9 @@ int BrqSched::OnInquire(epoch_t epoch,
 
 }
 
-BrqCommo* BrqSched::commo() {
+JanusCommo* JanusSched::commo() {
 
-  auto commo = dynamic_cast<BrqCommo*>(commo_);
+  auto commo = dynamic_cast<JanusCommo*>(commo_);
   verify(commo != nullptr);
   return commo;
 }

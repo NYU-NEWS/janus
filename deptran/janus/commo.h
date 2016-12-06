@@ -1,10 +1,9 @@
 #pragma once
 #include "../rcc/commo.h"
-#include "brq-common.h"
 
 namespace rococo {
 
-class BrqCommo: public RccCommo {
+class JanusCommo: public RccCommo {
  public:
   using RccCommo::RccCommo;
   void SendDispatch(vector<SimpleCommand> &cmd,

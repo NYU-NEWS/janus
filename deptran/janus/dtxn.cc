@@ -3,7 +3,7 @@
 
 namespace rococo {
 
-void BrqDTxn::DispatchExecute(SimpleCommand &cmd,
+void JanusDTxn::DispatchExecute(SimpleCommand &cmd,
                               int32_t *res,
                               map<int32_t, Value> *output) {
   for (auto& c: dreqs_) {

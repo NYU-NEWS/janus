@@ -63,8 +63,8 @@ abstract service Classic {
                     RccGraph graph);
 
   defer RccFinish(cmdid_t id,
-               RccGraph |
-               map<uint32_t, map<int32_t, Value>> outputs);
+                  RccGraph |
+                  map<uint32_t, map<int32_t, Value>> outputs);
 
   defer RccInquire(epoch_t epoch,
                    txnid_t txn_id |
@@ -74,39 +74,39 @@ abstract service Classic {
                       map<i32, Value> output);
 
 
-  defer BrqDispatch(vector<SimpleCommand> cmd |
-                    i32 res,
-                    TxnOutput output,
-                    Marshallable ret_graph);
+  defer JanusDispatch(vector<SimpleCommand> cmd |
+                      i32 res,
+                      TxnOutput output,
+                      Marshallable ret_graph);
 
-  defer BrqCommit(cmdid_t id,
-                  Marshallable graph |
-                  int32_t res,
-                  TxnOutput output);
+  defer JanusCommit(cmdid_t id,
+                    Marshallable graph |
+                    int32_t res,
+                    TxnOutput output);
 
-  defer BrqCommitWoGraph(cmdid_t id |
-                         int32_t res,
-                         TxnOutput output);
+  defer JanusCommitWoGraph(cmdid_t id |
+                           int32_t res,
+                           TxnOutput output);
 
-  defer BrqInquire(epoch_t epoch, 
-                   txnid_t txn_id |
-                   Marshallable ret_graph);
-
-  defer BrqPreAccept(cmdid_t txn_id,
-                     vector<SimpleCommand> cmd,
-                     Marshallable graph |
-                     i32 res,
+  defer JanusInquire(epoch_t epoch, 
+                     txnid_t txn_id |
                      Marshallable ret_graph);
 
-  defer BrqPreAcceptWoGraph(cmdid_t txn_id,
-                            vector<SimpleCommand> cmd |
-                            i32 res,
-                            Marshallable ret_graph);
+  defer JanusPreAccept(cmdid_t txn_id,
+                       vector<SimpleCommand> cmd,
+                       Marshallable graph |
+                       i32 res,
+                       Marshallable ret_graph);
 
-  defer BrqAccept(cmdid_t txn_id,
-                  ballot_t ballot,
-                  Marshallable graph |
-                  i32 res);
+  defer JanusPreAcceptWoGraph(cmdid_t txn_id,
+                              vector<SimpleCommand> cmd |
+                              i32 res,
+                              Marshallable ret_graph);
+
+  defer JanusAccept(cmdid_t txn_id,
+                    ballot_t ballot,
+                    Marshallable graph |
+                    i32 res);
 }
 
 

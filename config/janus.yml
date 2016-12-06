@@ -1,6 +1,6 @@
 mode:
-  cc: brq # concurrency control
-  ab: brq # atomic broadcast
+  cc: janus # concurrency control
+  ab: janus # atomic broadcast
   batch: false
   retry: 20 
   ongoing: 1 # per client

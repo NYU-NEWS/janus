@@ -7,7 +7,7 @@
 
 namespace rococo {
 
-class BrqDTxn : public RccDTxn {
+class JanusDTxn : public RccDTxn {
 public:
   using RccDTxn::RccDTxn;
 
