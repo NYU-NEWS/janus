@@ -6,7 +6,7 @@
 <intAttribute key="dfidDepth" value="100"/>
 <booleanAttribute key="dfidMode" value="false"/>
 <intAttribute key="distributedFPSetCount" value="0"/>
-<stringAttribute key="distributedNetworkInterface" value="128.122.140.127"/>
+<stringAttribute key="distributedNetworkInterface" value="10.37.129.2"/>
 <stringAttribute key="distributedTLC" value="off"/>
 <stringAttribute key="distributedTLCVMArgs" value=""/>
 <intAttribute key="fpBits" value="0"/>
@@ -18,7 +18,7 @@
 <stringAttribute key="modelBehaviorNext" value=""/>
 <stringAttribute key="modelBehaviorSpec" value="Spec"/>
 <intAttribute key="modelBehaviorSpecType" value="1"/>
-<stringAttribute key="modelBehaviorVars" value="ya_dep, tmp_ack, txn_set, next_pie, next_tid, ballot, anc, curr_pie_, tmp_partitions, msg_in, stack, opset, graph, n_pie, keyspace, scc, scc_seq, scc_set, last_r_tid, tid_set, partitions, accept_acks, partitions_A, msg, coo_mq, txn_id, sub_graph, par, next_txn_, tmp_acks, curr_op, keyspace_, curr_txn, dep, pre_accept_acks_, finished_map, partitions_, msg_out, last_w_tid, msg_out_, pie_map, svr_mq, tmp_set, pc, pre_accept_acks_A, committed, next_txn, tmp_par, msg_in_, vid_set, asked_map, curr_pie, srz, next_pie_, id_counter, alogs, n_committed, pre_accept_acks"/>
+<stringAttribute key="modelBehaviorVars" value="ya_dep, tmp_ack, txn_set, next_pie, next_tid, ballot, anc, curr_pie_, dep_c, tmp_partitions, msg_in, stack, opset, n_pie, keyspace, scc, scc_seq, scc_set, tid_set, partitions, accept_acks, coo_mq, txn_id, sub_graph, par, next_txn_, tmp_acks, curr_op, curr_txn, dep, pre_accept_acks_, finished_map, partitions_, msg_out, msg_out_, pie_map, svr_mq, tmp_set, pc, pre_accept_acks_A, committed, next_txn, tmp_par, msg_in_, vid_set, shards, asked_map, curr_pie, srz, tx_meta, next_pie_, id_counter, alogs, n_committed, tx_meta_set, pre_accept_acks"/>
 <stringAttribute key="modelComments" value=""/>
 <booleanAttribute key="modelCorrectnessCheckDeadlock" value="true"/>
 <listAttribute key="modelCorrectnessInvariants"/>
@@ -30,18 +30,18 @@
 <stringAttribute key="modelParameterActionConstraint" value=""/>
 <listAttribute key="modelParameterConstants">
 <listEntry value="defaultInitValue;;defaultInitValue;1;0"/>
-<listEntry value="TXN;;&lt;&lt; \*txn_pool&#10;  &lt;&lt; \* txn&#10;    [&#10;      opset |-&gt; {[key |-&gt; &quot;a&quot;, type |-&gt; &quot;w&quot;]}&#10;    ]&#10;  &gt;&gt;,&#10;  &lt;&lt; \* txn&#10;    [&#10;      opset |-&gt; {[key |-&gt; &quot;a&quot;, type |-&gt; &quot;w&quot;]}&#10;    ]&#10;  &gt;&gt;,&#10;  &lt;&lt; \* txn&#10;    [&#10;      opset |-&gt; {[key |-&gt; &quot;a&quot;, type |-&gt; &quot;w&quot;]}&#10;    ]&#10;  &gt;&gt;&#10;&gt;&gt;;0;0"/>
+<listEntry value="TXN;;&lt;&lt; \*txn_pool&#10;  &lt;&lt; \* txn&#10;    [&#10;      opset |-&gt; {[key |-&gt; &quot;a&quot;, type |-&gt; &quot;w&quot;]},&#10;      shard |-&gt; 1&#10;    ]&#10;  &gt;&gt;,&#10;  &lt;&lt; \* txn&#10;    [&#10;      opset |-&gt; {[key |-&gt; &quot;a&quot;, type |-&gt; &quot;w&quot;]},&#10;      shard |-&gt; 1&#10;    ]&#10;  &gt;&gt;,&#10;  &lt;&lt; \* txn&#10;    [&#10;      opset |-&gt; {[key |-&gt; &quot;a&quot;, type |-&gt; &quot;w&quot;]},&#10;      shard |-&gt; 1&#10;    ]&#10;  &gt;&gt;&#10;&gt;&gt;;0;0"/>
 <listEntry value="M;;3;0;0"/>
 <listEntry value="N;;1;0;0"/>
 <listEntry value="X;;1;0;0"/>
-<listEntry value="Shard;adsfasdf:;1;0;0"/>
+<listEntry value="Shard;x:;x.shard;0;0"/>
 </listAttribute>
 <stringAttribute key="modelParameterContraint" value=""/>
 <listAttribute key="modelParameterDefinitions"/>
 <stringAttribute key="modelParameterModelValues" value="{}"/>
 <stringAttribute key="modelParameterNewDefinitions" value=""/>
 <stringAttribute key="modelPropertiesExpand" value=""/>
-<intAttribute key="numberOfWorkers" value="12"/>
+<intAttribute key="numberOfWorkers" value="8"/>
 <booleanAttribute key="recover" value="false"/>
 <stringAttribute key="result.mail.address" value=""/>
 <intAttribute key="simuAril" value="-1"/>
