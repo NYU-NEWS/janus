@@ -556,7 +556,7 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
 
 -------------------------------------------------------------------------
 (*
---algorithm Janus {
+--fair algorithm Janus {
   variables coo_mq = [i \in 1 .. M |-> <<>>]; \* Assume there are M coordinators. 
             \* par_mq = [i \in 1 ..
             svr_mq = [i \in M .. M+N*X |-> <<>>]; \* Assume each partition has X servers, N partitions in total.
@@ -1012,6 +1012,7 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
             tx_meta_set;
             msg_in;
             msg_out;
+            svr_end=FALSE;
   {
     lbl_svr_loop: await Len(svr_mq[self]) > 0;
     msg_in := Head(svr_mq[self]);
@@ -1048,12 +1049,14 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
     } else if (msg_in.type = "accept" /\ curr_txn.max_prepared_ballot \leq msg_in.ballot) {
       call HandleAccept();
     } else if (msg_in.type = "end") {
-      goto end_svr;
+      svr_end := TRUE;
     } else {
       assert(FALSE);
     };
-    lbl_svr_loop_end: goto lbl_svr_loop;    
-    end_svr: skip;
+    lbl_svr_loop_end: 
+    if (~svr_end) { 
+      goto lbl_svr_loop;
+    };      
   } 
 }
 *)
@@ -1076,7 +1079,7 @@ VARIABLES coo_mq, svr_mq, srz, n_committed, id_counter, pc, stack,
           ya_dep, finished_map, asked_map, pie_map, tx_meta, scc, scc_set, 
           scc_seq, curr_txn, curr_pie_, curr_op, txn_set, tid_set, opset, 
           next_txn, next_tid, next_pie, anc, tmp_set, alogs, vid_set, 
-          sub_graph, tx_meta_set, msg_in, msg_out
+          sub_graph, tx_meta_set, msg_in, msg_out, svr_end
 
 vars == << coo_mq, svr_mq, srz, n_committed, id_counter, pc, stack, 
            pre_accept_acks_A, partitions_, pre_accept_acks, partitions, 
@@ -1086,7 +1089,7 @@ vars == << coo_mq, svr_mq, srz, n_committed, id_counter, pc, stack,
            keyspace, dep, ya_dep, finished_map, asked_map, pie_map, tx_meta, 
            scc, scc_set, scc_seq, curr_txn, curr_pie_, curr_op, txn_set, 
            tid_set, opset, next_txn, next_tid, next_pie, anc, tmp_set, alogs, 
-           vid_set, sub_graph, tx_meta_set, msg_in, msg_out >>
+           vid_set, sub_graph, tx_meta_set, msg_in, msg_out, svr_end >>
 
 ProcSet == (1 .. M) \cup (M+1 .. M+N*X)
 
@@ -1150,6 +1153,7 @@ Init == (* Global variables *)
         /\ tx_meta_set = [self \in M+1 .. M+N*X |-> defaultInitValue]
         /\ msg_in = [self \in M+1 .. M+N*X |-> defaultInitValue]
         /\ msg_out = [self \in M+1 .. M+N*X |-> defaultInitValue]
+        /\ svr_end = [self \in M+1 .. M+N*X |-> FALSE]
         /\ stack = [self \in ProcSet |-> << >>]
         /\ pc = [self \in ProcSet |-> CASE self \in 1 .. M -> "unit_test"
                                         [] self \in M+1 .. M+N*X -> "lbl_svr_loop"]
@@ -1175,7 +1179,8 @@ __debug_label_kldjf(self) == /\ pc[self] = "__debug_label_kldjf"
                                              txn_set, tid_set, opset, next_txn, 
                                              next_tid, next_pie, anc, tmp_set, 
                                              alogs, vid_set, sub_graph, 
-                                             tx_meta_set, msg_in, msg_out >>
+                                             tx_meta_set, msg_in, msg_out, 
+                                             svr_end >>
 
 test_label_1(self) == /\ pc[self] = "test_label_1"
                       /\ tmp_partitions' = [tmp_partitions EXCEPT ![self] = PartitionsToProcIds({1})]
@@ -1197,7 +1202,7 @@ test_label_1(self) == /\ pc[self] = "test_label_1"
                                       curr_pie_, curr_op, txn_set, tid_set, 
                                       opset, next_txn, next_tid, next_pie, anc, 
                                       tmp_set, alogs, vid_set, sub_graph, 
-                                      tx_meta_set, msg_in, msg_out >>
+                                      tx_meta_set, msg_in, msg_out, svr_end >>
 
 debug_label_dslfkj(self) == /\ pc[self] = "debug_label_dslfkj"
                             /\ Assert((tmp_partitions[self] = {2}), 
@@ -1220,7 +1225,8 @@ debug_label_dslfkj(self) == /\ pc[self] = "debug_label_dslfkj"
                                             txn_set, tid_set, opset, next_txn, 
                                             next_tid, next_pie, anc, tmp_set, 
                                             alogs, vid_set, sub_graph, 
-                                            tx_meta_set, msg_in, msg_out >>
+                                            tx_meta_set, msg_in, msg_out, 
+                                            svr_end >>
 
 debug_label_lklfkj(self) == /\ pc[self] = "debug_label_lklfkj"
                             /\ Assert((tmp_partitions[self] = {2,3}), 
@@ -1243,7 +1249,8 @@ debug_label_lklfkj(self) == /\ pc[self] = "debug_label_lklfkj"
                                             txn_set, tid_set, opset, next_txn, 
                                             next_tid, next_pie, anc, tmp_set, 
                                             alogs, vid_set, sub_graph, 
-                                            tx_meta_set, msg_in, msg_out >>
+                                            tx_meta_set, msg_in, msg_out, 
+                                            svr_end >>
 
 lbl_dbg_dksfjlas(self) == /\ pc[self] = "lbl_dbg_dksfjlas"
                           /\ pc' = [pc EXCEPT ![self] = Head(stack[self]).pc]
@@ -1263,7 +1270,8 @@ lbl_dbg_dksfjlas(self) == /\ pc[self] = "lbl_dbg_dksfjlas"
                                           curr_op, txn_set, tid_set, opset, 
                                           next_txn, next_tid, next_pie, anc, 
                                           tmp_set, alogs, vid_set, sub_graph, 
-                                          tx_meta_set, msg_in, msg_out >>
+                                          tx_meta_set, msg_in, msg_out, 
+                                          svr_end >>
 
 UnitTest(self) == __debug_label_kldjf(self) \/ test_label_1(self)
                      \/ debug_label_dslfkj(self)
@@ -1284,7 +1292,7 @@ xxxxdddx(self) == /\ pc[self] = "xxxxdddx"
                                   curr_txn, curr_pie_, curr_op, txn_set, 
                                   tid_set, opset, next_txn, next_tid, next_pie, 
                                   anc, tmp_set, alogs, vid_set, sub_graph, 
-                                  tx_meta_set, msg_in, msg_out >>
+                                  tx_meta_set, msg_in, msg_out, svr_end >>
 
 yyyyassy(self) == /\ pc[self] = "yyyyassy"
                   /\ IF tmp_partitions[self] /= {}
@@ -1312,7 +1320,8 @@ yyyyassy(self) == /\ pc[self] = "yyyyassy"
                                   scc_seq, curr_txn, curr_pie_, curr_op, 
                                   txn_set, tid_set, opset, next_txn, next_tid, 
                                   next_pie, anc, tmp_set, alogs, vid_set, 
-                                  sub_graph, tx_meta_set, msg_in, msg_out >>
+                                  sub_graph, tx_meta_set, msg_in, msg_out, 
+                                  svr_end >>
 
 AggregateGraphForFastPath(self) == xxxxdddx(self) \/ yyyyassy(self)
 
@@ -1333,7 +1342,7 @@ slowpath_init(self) == /\ pc[self] = "slowpath_init"
                                        curr_op, txn_set, tid_set, opset, 
                                        next_txn, next_tid, next_pie, anc, 
                                        tmp_set, alogs, vid_set, sub_graph, 
-                                       tx_meta_set, msg_in, msg_out >>
+                                       tx_meta_set, msg_in, msg_out, svr_end >>
 
 slowpath_scan_acks(self) == /\ pc[self] = "slowpath_scan_acks"
                             /\ IF tmp_partitions[self] /= {}
@@ -1363,7 +1372,8 @@ slowpath_scan_acks(self) == /\ pc[self] = "slowpath_scan_acks"
                                             txn_set, tid_set, opset, next_txn, 
                                             next_tid, next_pie, anc, tmp_set, 
                                             alogs, vid_set, sub_graph, 
-                                            tx_meta_set, msg_in, msg_out >>
+                                            tx_meta_set, msg_in, msg_out, 
+                                            svr_end >>
 
 zzzzz(self) == /\ pc[self] = "zzzzz"
                /\ IF tmp_acks[self] /= {}
@@ -1385,7 +1395,7 @@ zzzzz(self) == /\ pc[self] = "zzzzz"
                                curr_pie_, curr_op, txn_set, tid_set, opset, 
                                next_txn, next_tid, next_pie, anc, tmp_set, 
                                alogs, vid_set, sub_graph, tx_meta_set, msg_in, 
-                               msg_out >>
+                               msg_out, svr_end >>
 
 AggregateGraphForAccept(self) == slowpath_init(self)
                                     \/ slowpath_scan_acks(self)
@@ -1414,7 +1424,8 @@ lbl_on_pre_accept(self) == /\ pc[self] = "lbl_on_pre_accept"
                                            curr_op, txn_set, tid_set, next_txn, 
                                            next_tid, next_pie, anc, tmp_set, 
                                            alogs, vid_set, sub_graph, 
-                                           tx_meta_set, msg_in, msg_out >>
+                                           tx_meta_set, msg_in, msg_out, 
+                                           svr_end >>
 
 lbl_pie_add_dep(self) == /\ pc[self] = "lbl_pie_add_dep"
                          /\ IF opset[self] /= {}
@@ -1454,7 +1465,7 @@ lbl_pie_add_dep(self) == /\ pc[self] = "lbl_pie_add_dep"
                                          scc_seq, curr_pie_, txn_set, tid_set, 
                                          next_txn, next_tid, next_pie, anc, 
                                          tmp_set, alogs, vid_set, sub_graph, 
-                                         tx_meta_set, msg_in >>
+                                         tx_meta_set, msg_in, svr_end >>
 
 HandlePreAccept(self) == lbl_on_pre_accept(self) \/ lbl_pie_add_dep(self)
 
@@ -1476,7 +1487,8 @@ lbl_on_prepare(self) == /\ pc[self] = "lbl_on_prepare"
                                         curr_txn, curr_pie_, curr_op, txn_set, 
                                         tid_set, opset, next_txn, next_tid, 
                                         next_pie, anc, tmp_set, alogs, vid_set, 
-                                        sub_graph, tx_meta_set, msg_in >>
+                                        sub_graph, tx_meta_set, msg_in, 
+                                        svr_end >>
 
 lbl_on_prep_reply(self) == /\ pc[self] = "lbl_on_prep_reply"
                            /\ svr_mq' = [svr_mq EXCEPT ![msg_in[self].src] = Append(coo_mq[msg_in[self].src], msg_out[self])]
@@ -1498,7 +1510,8 @@ lbl_on_prep_reply(self) == /\ pc[self] = "lbl_on_prep_reply"
                                            txn_set, tid_set, opset, next_txn, 
                                            next_tid, next_pie, anc, tmp_set, 
                                            alogs, vid_set, sub_graph, 
-                                           tx_meta_set, msg_in, msg_out >>
+                                           tx_meta_set, msg_in, msg_out, 
+                                           svr_end >>
 
 HandlePrepare(self) == lbl_on_prepare(self) \/ lbl_on_prep_reply(self)
 
@@ -1520,7 +1533,7 @@ lbl_on_accept_1(self) == /\ pc[self] = "lbl_on_accept_1"
                                          tid_set, opset, next_txn, next_tid, 
                                          next_pie, anc, tmp_set, alogs, 
                                          vid_set, sub_graph, tx_meta_set, 
-                                         msg_in, msg_out >>
+                                         msg_in, msg_out, svr_end >>
 
 lbl_on_accept_2(self) == /\ pc[self] = "lbl_on_accept_2"
                          /\ dep' = [dep EXCEPT ![self][msg_in[self].tid].parents = msg_in[self].dep]
@@ -1543,7 +1556,7 @@ lbl_on_accept_2(self) == /\ pc[self] = "lbl_on_accept_2"
                                          tid_set, opset, next_txn, next_tid, 
                                          next_pie, anc, tmp_set, alogs, 
                                          vid_set, sub_graph, tx_meta_set, 
-                                         msg_in >>
+                                         msg_in, svr_end >>
 
 HandleAccept(self) == lbl_on_accept_1(self) \/ lbl_on_accept_2(self)
 
@@ -1567,7 +1580,7 @@ lbl_inquire_unknown(self) == /\ pc[self] = "lbl_inquire_unknown"
                                              txn_set, tid_set, opset, next_txn, 
                                              next_tid, next_pie, anc, tmp_set, 
                                              alogs, vid_set, sub_graph, msg_in, 
-                                             msg_out >>
+                                             msg_out, svr_end >>
 
 lbl_at_inquire(self) == /\ pc[self] = "lbl_at_inquire"
                         /\ IF tx_meta_set[self] /= {}
@@ -1605,7 +1618,7 @@ lbl_at_inquire(self) == /\ pc[self] = "lbl_at_inquire"
                                         curr_txn, curr_pie_, curr_op, txn_set, 
                                         tid_set, opset, next_txn, next_tid, 
                                         next_pie, anc, tmp_set, alogs, vid_set, 
-                                        sub_graph, msg_in >>
+                                        sub_graph, msg_in, svr_end >>
 
 InquireUnknown(self) == lbl_inquire_unknown(self) \/ lbl_at_inquire(self)
 
@@ -1629,7 +1642,8 @@ lbl_exe_scc_set_(self) == /\ pc[self] = "lbl_exe_scc_set_"
                                           curr_op, txn_set, tid_set, opset, 
                                           next_txn, next_tid, next_pie, anc, 
                                           tmp_set, alogs, sub_graph, 
-                                          tx_meta_set, msg_in, msg_out >>
+                                          tx_meta_set, msg_in, msg_out, 
+                                          svr_end >>
 
 exe_scc(self) == /\ pc[self] = "exe_scc"
                  /\ IF vid_set[self] /= {}
@@ -1659,7 +1673,7 @@ exe_scc(self) == /\ pc[self] = "exe_scc"
                                  scc_seq, curr_txn, curr_pie_, curr_op, 
                                  txn_set, tid_set, opset, next_txn, next_pie, 
                                  anc, tmp_set, alogs, sub_graph, tx_meta_set, 
-                                 msg_in, msg_out >>
+                                 msg_in, msg_out, svr_end >>
 
 __debug_label_zcxvx(self) == /\ pc[self] = "__debug_label_zcxvx"
                              /\ Assert((pie_map[self][next_tid[self]] /= {}), 
@@ -1684,7 +1698,8 @@ __debug_label_zcxvx(self) == /\ pc[self] = "__debug_label_zcxvx"
                                              txn_set, tid_set, opset, next_txn, 
                                              next_tid, next_pie, anc, tmp_set, 
                                              alogs, vid_set, sub_graph, 
-                                             tx_meta_set, msg_in, msg_out >>
+                                             tx_meta_set, msg_in, msg_out, 
+                                             svr_end >>
 
 __debug_label_kdjf(self) == /\ pc[self] = "__debug_label_kdjf"
                             /\ Assert((next_tid[self] = 1), 
@@ -1707,7 +1722,8 @@ __debug_label_kdjf(self) == /\ pc[self] = "__debug_label_kdjf"
                                             txn_set, tid_set, opset, next_txn, 
                                             next_tid, next_pie, anc, tmp_set, 
                                             alogs, vid_set, sub_graph, 
-                                            tx_meta_set, msg_in, msg_out >>
+                                            tx_meta_set, msg_in, msg_out, 
+                                            svr_end >>
 
 exe_all_deferred_pies(self) == /\ pc[self] = "exe_all_deferred_pies"
                                /\ IF pie_map[self][next_tid[self]] /= {}
@@ -1747,7 +1763,7 @@ exe_all_deferred_pies(self) == /\ pc[self] = "exe_all_deferred_pies"
                                                tid_set, opset, next_txn, 
                                                next_tid, anc, tmp_set, alogs, 
                                                vid_set, sub_graph, tx_meta_set, 
-                                               msg_in >>
+                                               msg_in, svr_end >>
 
 ExeSccSet(self) == lbl_exe_scc_set_(self) \/ exe_scc(self)
                       \/ __debug_label_zcxvx(self)
@@ -1774,7 +1790,7 @@ lbl_cmt_set_statsu(self) == /\ pc[self] = "lbl_cmt_set_statsu"
                                             tid_set, opset, next_txn, next_tid, 
                                             next_pie, anc, tmp_set, alogs, 
                                             vid_set, sub_graph, tx_meta_set, 
-                                            msg_in, msg_out >>
+                                            msg_in, msg_out, svr_end >>
 
 lbl_cmt_set_dep(self) == /\ pc[self] = "lbl_cmt_set_dep"
                          /\ dep' = [dep EXCEPT ![self][msg_in[self].tid].parents = msg_in[self].dep]
@@ -1797,7 +1813,7 @@ lbl_cmt_set_dep(self) == /\ pc[self] = "lbl_cmt_set_dep"
                                          tid_set, opset, next_txn, next_tid, 
                                          next_pie, anc, tmp_set, alogs, 
                                          vid_set, sub_graph, tx_meta_set, 
-                                         msg_in, msg_out >>
+                                         msg_in, msg_out, svr_end >>
 
 lbl_choose_to_commit(self) == /\ pc[self] = "lbl_choose_to_commit"
                               /\ txn_set' = [txn_set EXCEPT ![self] = AllAncestorsAtLeastCommittingTidSet(dep[self])]
@@ -1823,7 +1839,8 @@ lbl_choose_to_commit(self) == /\ pc[self] = "lbl_choose_to_commit"
                                               tid_set, opset, next_txn, 
                                               next_tid, next_pie, anc, tmp_set, 
                                               alogs, vid_set, sub_graph, 
-                                              tx_meta_set, msg_in, msg_out >>
+                                              tx_meta_set, msg_in, msg_out, 
+                                              svr_end >>
 
 lbl_ready_to_commit(self) == /\ pc[self] = "lbl_ready_to_commit"
                              /\ IF txn_set[self] /= {}
@@ -1851,7 +1868,7 @@ lbl_ready_to_commit(self) == /\ pc[self] = "lbl_ready_to_commit"
                                              next_txn, next_tid, next_pie, anc, 
                                              tmp_set, alogs, vid_set, 
                                              sub_graph, tx_meta_set, msg_in, 
-                                             msg_out >>
+                                             msg_out, svr_end >>
 
 lbl_find_exe(self) == /\ pc[self] = "lbl_find_exe"
                       /\ scc_set' = [scc_set EXCEPT ![self] = ToExecuteSccTidSet(dep[self], ProcIdToPartitionId(self), finished_map[self])]
@@ -1871,7 +1888,7 @@ lbl_find_exe(self) == /\ pc[self] = "lbl_find_exe"
                                       curr_pie_, curr_op, txn_set, tid_set, 
                                       opset, next_txn, next_tid, next_pie, anc, 
                                       tmp_set, alogs, vid_set, sub_graph, 
-                                      tx_meta_set, msg_in, msg_out >>
+                                      tx_meta_set, msg_in, msg_out, svr_end >>
 
 __debug_label_kdfjldf(self) == /\ pc[self] = "__debug_label_kdfjldf"
                                /\ tmp_set' = [tmp_set EXCEPT ![self] = SUBSET DOMAIN dep[self]]
@@ -1894,7 +1911,7 @@ __debug_label_kdfjldf(self) == /\ pc[self] = "__debug_label_kdfjldf"
                                                opset, next_txn, next_tid, 
                                                next_pie, anc, alogs, vid_set, 
                                                sub_graph, tx_meta_set, msg_in, 
-                                               msg_out >>
+                                               msg_out, svr_end >>
 
 __debug_label_lejrjkk(self) == /\ pc[self] = "__debug_label_lejrjkk"
                                /\ Assert((tmp_set[self] = {{}, {1}}), 
@@ -1918,7 +1935,7 @@ __debug_label_lejrjkk(self) == /\ pc[self] = "__debug_label_lejrjkk"
                                                opset, next_txn, next_tid, 
                                                next_pie, anc, tmp_set, alogs, 
                                                vid_set, sub_graph, tx_meta_set, 
-                                               msg_in, msg_out >>
+                                               msg_in, msg_out, svr_end >>
 
 __debug_label_dskfjld(self) == /\ pc[self] = "__debug_label_dskfjld"
                                /\ Assert((NewDepIsStronglyConnected(dep[self], {1})), 
@@ -1942,7 +1959,7 @@ __debug_label_dskfjld(self) == /\ pc[self] = "__debug_label_dskfjld"
                                                opset, next_txn, next_tid, 
                                                next_pie, anc, tmp_set, alogs, 
                                                vid_set, sub_graph, tx_meta_set, 
-                                               msg_in, msg_out >>
+                                               msg_in, msg_out, svr_end >>
 
 __debug_label_dsfldjk(self) == /\ pc[self] = "__debug_label_dsfldjk"
                                /\ Assert((SccTidSet(dep[self], 1) = {1}), 
@@ -1966,7 +1983,7 @@ __debug_label_dsfldjk(self) == /\ pc[self] = "__debug_label_dsfldjk"
                                                opset, next_txn, next_tid, 
                                                next_pie, anc, tmp_set, alogs, 
                                                vid_set, sub_graph, tx_meta_set, 
-                                               msg_in, msg_out >>
+                                               msg_in, msg_out, svr_end >>
 
 __debug_label_dlfjdlf(self) == /\ pc[self] = "__debug_label_dlfjdlf"
                                /\ Assert((IsInvolved(dep[self], 1, 1)), 
@@ -1990,7 +2007,7 @@ __debug_label_dlfjdlf(self) == /\ pc[self] = "__debug_label_dlfjdlf"
                                                opset, next_txn, next_tid, 
                                                next_pie, anc, tmp_set, alogs, 
                                                vid_set, sub_graph, tx_meta_set, 
-                                               msg_in, msg_out >>
+                                               msg_in, msg_out, svr_end >>
 
 lbl_exe_scc_set(self) == /\ pc[self] = "lbl_exe_scc_set"
                          /\ IF scc_set[self] /= {}
@@ -2012,7 +2029,7 @@ lbl_exe_scc_set(self) == /\ pc[self] = "lbl_exe_scc_set"
                                          txn_set, tid_set, opset, next_txn, 
                                          next_tid, next_pie, anc, tmp_set, 
                                          alogs, vid_set, sub_graph, 
-                                         tx_meta_set, msg_in, msg_out >>
+                                         tx_meta_set, msg_in, msg_out, svr_end >>
 
 lbl_next_exe(self) == /\ pc[self] = "lbl_next_exe"
                       /\ IF scc_set[self] /= {}
@@ -2038,7 +2055,7 @@ lbl_next_exe(self) == /\ pc[self] = "lbl_next_exe"
                                       curr_op, txn_set, tid_set, opset, 
                                       next_txn, next_tid, next_pie, anc, 
                                       tmp_set, alogs, vid_set, sub_graph, 
-                                      tx_meta_set, msg_in, msg_out >>
+                                      tx_meta_set, msg_in, msg_out, svr_end >>
 
 lbl_on_commit_ret(self) == /\ pc[self] = "lbl_on_commit_ret"
                            /\ pc' = [pc EXCEPT ![self] = Head(stack[self]).pc]
@@ -2059,7 +2076,8 @@ lbl_on_commit_ret(self) == /\ pc[self] = "lbl_on_commit_ret"
                                            txn_set, tid_set, opset, next_txn, 
                                            next_tid, next_pie, anc, tmp_set, 
                                            alogs, vid_set, sub_graph, 
-                                           tx_meta_set, msg_in, msg_out >>
+                                           tx_meta_set, msg_in, msg_out, 
+                                           svr_end >>
 
 HandleCommit(self) == lbl_cmt_set_statsu(self) \/ lbl_cmt_set_dep(self)
                          \/ lbl_choose_to_commit(self)
@@ -2090,7 +2108,7 @@ lbl_on_inquire(self) == /\ pc[self] = "lbl_on_inquire"
                                         txn_set, tid_set, opset, next_txn, 
                                         next_tid, next_pie, anc, tmp_set, 
                                         alogs, vid_set, sub_graph, tx_meta_set, 
-                                        msg_in, msg_out >>
+                                        msg_in, msg_out, svr_end >>
 
 HandleInquire(self) == lbl_on_inquire(self)
 
@@ -2113,7 +2131,7 @@ start_exe_pie(self) == /\ pc[self] = "start_exe_pie"
                                        curr_txn, curr_pie_, curr_op, txn_set, 
                                        tid_set, next_txn, next_tid, next_pie, 
                                        anc, tmp_set, alogs, vid_set, sub_graph, 
-                                       tx_meta_set, msg_in, msg_out >>
+                                       tx_meta_set, msg_in, msg_out, svr_end >>
 
 pie_add_srz(self) == /\ pc[self] = "pie_add_srz"
                      /\ IF opset[self] /= {}
@@ -2140,7 +2158,7 @@ pie_add_srz(self) == /\ pc[self] = "pie_add_srz"
                                      scc_seq, curr_txn, curr_pie_, txn_set, 
                                      tid_set, next_txn, next_tid, next_pie, 
                                      anc, tmp_set, vid_set, sub_graph, 
-                                     tx_meta_set, msg_in, msg_out >>
+                                     tx_meta_set, msg_in, msg_out, svr_end >>
 
 scan_alogs(self) == /\ pc[self] = "scan_alogs"
                     /\ IF alogs[self] /= {}
@@ -2167,7 +2185,8 @@ scan_alogs(self) == /\ pc[self] = "scan_alogs"
                                     scc_seq, curr_txn, curr_pie_, curr_op, 
                                     txn_set, tid_set, opset, next_txn, 
                                     next_tid, next_pie, anc, tmp_set, vid_set, 
-                                    sub_graph, tx_meta_set, msg_in, msg_out >>
+                                    sub_graph, tx_meta_set, msg_in, msg_out, 
+                                    svr_end >>
 
 ExePie(self) == start_exe_pie(self) \/ pie_add_srz(self)
                    \/ scan_alogs(self)
@@ -2190,7 +2209,7 @@ unit_test(self) == /\ pc[self] = "unit_test"
                                    curr_op, txn_set, tid_set, opset, next_txn, 
                                    next_tid, next_pie, anc, tmp_set, alogs, 
                                    vid_set, sub_graph, tx_meta_set, msg_in, 
-                                   msg_out >>
+                                   msg_out, svr_end >>
 
 coo(self) == /\ pc[self] = "coo"
              /\ dep_c' = [dep_c EXCEPT ![self] = {}]
@@ -2217,7 +2236,7 @@ coo(self) == /\ pc[self] = "coo"
                              scc_seq, curr_txn, curr_pie_, curr_op, txn_set, 
                              tid_set, opset, next_txn, next_tid, next_pie, anc, 
                              tmp_set, alogs, vid_set, sub_graph, tx_meta_set, 
-                             msg_in, msg_out >>
+                             msg_in, msg_out, svr_end >>
 
 lbl_get_shards(self) == /\ pc[self] = "lbl_get_shards"
                         /\ shards' = [shards EXCEPT ![self] = GetTxShards(next_txn_[self])]
@@ -2239,7 +2258,7 @@ lbl_get_shards(self) == /\ pc[self] = "lbl_get_shards"
                                         tid_set, opset, next_txn, next_tid, 
                                         next_pie, anc, tmp_set, alogs, vid_set, 
                                         sub_graph, tx_meta_set, msg_in, 
-                                        msg_out >>
+                                        msg_out, svr_end >>
 
 lbl_pre_accept(self) == /\ pc[self] = "lbl_pre_accept"
                         /\ IF Len(next_txn_[self]) > 0
@@ -2277,7 +2296,7 @@ lbl_pre_accept(self) == /\ pc[self] = "lbl_pre_accept"
                                         tid_set, opset, next_txn, next_tid, 
                                         next_pie, anc, tmp_set, alogs, vid_set, 
                                         sub_graph, tx_meta_set, msg_in, 
-                                        msg_out >>
+                                        msg_out, svr_end >>
 
 lbl_coord_pre_accept_ack(self) == /\ pc[self] = "lbl_coord_pre_accept_ack"
                                   /\ Len(coo_mq[self]) > 0
@@ -2312,7 +2331,7 @@ lbl_coord_pre_accept_ack(self) == /\ pc[self] = "lbl_coord_pre_accept_ack"
                                                   next_txn, next_tid, next_pie, 
                                                   anc, tmp_set, alogs, vid_set, 
                                                   sub_graph, tx_meta_set, 
-                                                  msg_in, msg_out >>
+                                                  msg_in, msg_out, svr_end >>
 
 lbl_dbg_aaaaa(self) == /\ pc[self] = "lbl_dbg_aaaaa"
                        /\ Assert((par[self] \in shards[self]), 
@@ -2332,7 +2351,8 @@ lbl_dbg_aaaaa(self) == /\ pc[self] = "lbl_dbg_aaaaa"
                                        curr_txn, curr_pie_, curr_op, txn_set, 
                                        tid_set, opset, next_txn, next_tid, 
                                        next_pie, anc, tmp_set, alogs, vid_set, 
-                                       sub_graph, tx_meta_set, msg_in, msg_out >>
+                                       sub_graph, tx_meta_set, msg_in, msg_out, 
+                                       svr_end >>
 
 lbl_deg_bbbbb(self) == /\ pc[self] = "lbl_deg_bbbbb"
                        /\ Assert((pre_accept_acks_[self][par[self]] /= {}), 
@@ -2370,7 +2390,8 @@ lbl_deg_bbbbb(self) == /\ pc[self] = "lbl_deg_bbbbb"
                                        curr_txn, curr_pie_, curr_op, txn_set, 
                                        tid_set, opset, next_txn, next_tid, 
                                        next_pie, anc, tmp_set, alogs, vid_set, 
-                                       sub_graph, tx_meta_set, msg_in, msg_out >>
+                                       sub_graph, tx_meta_set, msg_in, msg_out, 
+                                       svr_end >>
 
 lbl_coord_goto_commit(self) == /\ pc[self] = "lbl_coord_goto_commit"
                                /\ pc' = [pc EXCEPT ![self] = "commit_phase"]
@@ -2392,7 +2413,7 @@ lbl_coord_goto_commit(self) == /\ pc[self] = "lbl_coord_goto_commit"
                                                opset, next_txn, next_tid, 
                                                next_pie, anc, tmp_set, alogs, 
                                                vid_set, sub_graph, tx_meta_set, 
-                                               msg_in, msg_out >>
+                                               msg_in, msg_out, svr_end >>
 
 lbl_dbg_zzzzz(self) == /\ pc[self] = "lbl_dbg_zzzzz"
                        /\ IF N=1 /\ X=1
@@ -2414,7 +2435,8 @@ lbl_dbg_zzzzz(self) == /\ pc[self] = "lbl_dbg_zzzzz"
                                        curr_txn, curr_pie_, curr_op, txn_set, 
                                        tid_set, opset, next_txn, next_tid, 
                                        next_pie, anc, tmp_set, alogs, vid_set, 
-                                       sub_graph, tx_meta_set, msg_in, msg_out >>
+                                       sub_graph, tx_meta_set, msg_in, msg_out, 
+                                       svr_end >>
 
 lbl_coord_slow_path_check(self) == /\ pc[self] = "lbl_coord_slow_path_check"
                                    /\ IF SlowPathReady(pre_accept_acks_[self], shards[self])
@@ -2450,7 +2472,7 @@ lbl_coord_slow_path_check(self) == /\ pc[self] = "lbl_coord_slow_path_check"
                                                    next_tid, next_pie, anc, 
                                                    tmp_set, alogs, vid_set, 
                                                    sub_graph, tx_meta_set, 
-                                                   msg_in, msg_out >>
+                                                   msg_in, msg_out, svr_end >>
 
 goto_accept(self) == /\ pc[self] = "goto_accept"
                      /\ pc' = [pc EXCEPT ![self] = "accept_phase"]
@@ -2467,7 +2489,7 @@ goto_accept(self) == /\ pc[self] = "goto_accept"
                                      curr_pie_, curr_op, txn_set, tid_set, 
                                      opset, next_txn, next_tid, next_pie, anc, 
                                      tmp_set, alogs, vid_set, sub_graph, 
-                                     tx_meta_set, msg_in, msg_out >>
+                                     tx_meta_set, msg_in, msg_out, svr_end >>
 
 accept_phase(self) == /\ pc[self] = "accept_phase"
                       /\ ballot' = [ballot EXCEPT ![self] = DEFAULT_ACCEPT_BALLOT]
@@ -2492,7 +2514,7 @@ accept_phase(self) == /\ pc[self] = "accept_phase"
                                       curr_pie_, curr_op, txn_set, tid_set, 
                                       opset, next_txn, next_tid, next_pie, anc, 
                                       tmp_set, alogs, vid_set, sub_graph, 
-                                      tx_meta_set, msg_in, msg_out >>
+                                      tx_meta_set, msg_in, msg_out, svr_end >>
 
 lbl_dbg_jjjjj(self) == /\ pc[self] = "lbl_dbg_jjjjj"
                        /\ Assert((msg_out_[self].ballot \geq 0), 
@@ -2512,7 +2534,8 @@ lbl_dbg_jjjjj(self) == /\ pc[self] = "lbl_dbg_jjjjj"
                                        curr_txn, curr_pie_, curr_op, txn_set, 
                                        tid_set, opset, next_txn, next_tid, 
                                        next_pie, anc, tmp_set, alogs, vid_set, 
-                                       sub_graph, tx_meta_set, msg_in, msg_out >>
+                                       sub_graph, tx_meta_set, msg_in, msg_out, 
+                                       svr_end >>
 
 broadcast_accept(self) == /\ pc[self] = "broadcast_accept"
                           /\ svr_mq' = BroadcastMsgToMultiplePartitions(svr_mq, shards[self], msg_out_[self])
@@ -2533,7 +2556,8 @@ broadcast_accept(self) == /\ pc[self] = "broadcast_accept"
                                           txn_set, tid_set, opset, next_txn, 
                                           next_tid, next_pie, anc, tmp_set, 
                                           alogs, vid_set, sub_graph, 
-                                          tx_meta_set, msg_in, msg_out >>
+                                          tx_meta_set, msg_in, msg_out, 
+                                          svr_end >>
 
 process_accept_ack(self) == /\ pc[self] = "process_accept_ack"
                             /\ Len(coo_mq[self]) > 0
@@ -2567,7 +2591,8 @@ process_accept_ack(self) == /\ pc[self] = "process_accept_ack"
                                             txn_set, tid_set, opset, next_txn, 
                                             next_tid, next_pie, anc, tmp_set, 
                                             alogs, vid_set, sub_graph, 
-                                            tx_meta_set, msg_in, msg_out >>
+                                            tx_meta_set, msg_in, msg_out, 
+                                            svr_end >>
 
 __debug_lable_gkdjfk(self) == /\ pc[self] = "__debug_lable_gkdjfk"
                               /\ Assert((FALSE), 
@@ -2591,7 +2616,7 @@ __debug_lable_gkdjfk(self) == /\ pc[self] = "__debug_lable_gkdjfk"
                                               next_txn, next_tid, next_pie, 
                                               anc, tmp_set, alogs, vid_set, 
                                               sub_graph, tx_meta_set, msg_in, 
-                                              msg_out >>
+                                              msg_out, svr_end >>
 
 commit_phase(self) == /\ pc[self] = "commit_phase"
                       /\ msg_out_' = [msg_out_ EXCEPT ![self] =            [
@@ -2616,7 +2641,7 @@ commit_phase(self) == /\ pc[self] = "commit_phase"
                                       curr_pie_, curr_op, txn_set, tid_set, 
                                       opset, next_txn, next_tid, next_pie, anc, 
                                       tmp_set, alogs, vid_set, sub_graph, 
-                                      tx_meta_set, msg_in, msg_out >>
+                                      tx_meta_set, msg_in, msg_out, svr_end >>
 
 broadcast_commit(self) == /\ pc[self] = "broadcast_commit"
                           /\ svr_mq' = BroadcastMsgToMultiplePartitions(svr_mq, shards[self], msg_out_[self])
@@ -2636,7 +2661,8 @@ broadcast_commit(self) == /\ pc[self] = "broadcast_commit"
                                           curr_op, txn_set, tid_set, opset, 
                                           next_txn, next_tid, next_pie, anc, 
                                           tmp_set, alogs, vid_set, sub_graph, 
-                                          tx_meta_set, msg_in, msg_out >>
+                                          tx_meta_set, msg_in, msg_out, 
+                                          svr_end >>
 
 lbl_wait_commit_ack(self) == /\ pc[self] = "lbl_wait_commit_ack"
                              /\ (Len(coo_mq[self]) > 0)
@@ -2663,7 +2689,8 @@ lbl_wait_commit_ack(self) == /\ pc[self] = "lbl_wait_commit_ack"
                                              txn_set, tid_set, opset, next_txn, 
                                              next_tid, next_pie, anc, tmp_set, 
                                              alogs, vid_set, sub_graph, 
-                                             tx_meta_set, msg_in, msg_out >>
+                                             tx_meta_set, msg_in, msg_out, 
+                                             svr_end >>
 
 __debug_label_iuyuiyer(self) == /\ pc[self] = "__debug_label_iuyuiyer"
                                 /\ Assert((msg_in_[self].type /= "ack_commit"), 
@@ -2688,7 +2715,7 @@ __debug_label_iuyuiyer(self) == /\ pc[self] = "__debug_label_iuyuiyer"
                                                 next_txn, next_tid, next_pie, 
                                                 anc, tmp_set, alogs, vid_set, 
                                                 sub_graph, tx_meta_set, msg_in, 
-                                                msg_out >>
+                                                msg_out, svr_end >>
 
 end_coord(self) == /\ pc[self] = "end_coord"
                    /\ IF n_committed = M
@@ -2709,7 +2736,8 @@ end_coord(self) == /\ pc[self] = "end_coord"
                                    scc_seq, curr_txn, curr_pie_, curr_op, 
                                    txn_set, tid_set, opset, next_txn, next_tid, 
                                    next_pie, anc, tmp_set, alogs, vid_set, 
-                                   sub_graph, tx_meta_set, msg_in, msg_out >>
+                                   sub_graph, tx_meta_set, msg_in, msg_out, 
+                                   svr_end >>
 
 Coo(self) == unit_test(self) \/ coo(self) \/ lbl_get_shards(self)
                 \/ lbl_pre_accept(self) \/ lbl_coord_pre_accept_ack(self)
@@ -2740,16 +2768,16 @@ lbl_svr_loop(self) == /\ pc[self] = "lbl_svr_loop"
                                       curr_pie_, curr_op, txn_set, tid_set, 
                                       opset, next_txn, next_tid, next_pie, anc, 
                                       tmp_set, alogs, vid_set, sub_graph, 
-                                      tx_meta_set, msg_out >>
+                                      tx_meta_set, msg_out, svr_end >>
 
 lbl_dbg_msg_check(self) == /\ pc[self] = "lbl_dbg_msg_check"
                            /\ Assert((IsMsgValid(msg_in[self])), 
-                                     "Failure of assertion at line 1019, column 24.")
+                                     "Failure of assertion at line 1020, column 24.")
                            /\ ya_dep' = [ya_dep EXCEPT ![self] = EmptyNewDep]
                            /\ IF msg_in[self].tid > 0
                                  THEN /\ curr_txn' = [curr_txn EXCEPT ![self] = FindOrCreateTx(dep[self], msg_in[self].tid, msg_in[self].meta)]
                                  ELSE /\ Assert((msg_in[self].type = "end"), 
-                                                "Failure of assertion at line 1026, column 7.")
+                                                "Failure of assertion at line 1027, column 7.")
                                       /\ UNCHANGED curr_txn
                            /\ pc' = [pc EXCEPT ![self] = "lbl_debug_dkfajdksfj"]
                            /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
@@ -2768,7 +2796,8 @@ lbl_dbg_msg_check(self) == /\ pc[self] = "lbl_dbg_msg_check"
                                            txn_set, tid_set, opset, next_txn, 
                                            next_tid, next_pie, anc, tmp_set, 
                                            alogs, vid_set, sub_graph, 
-                                           tx_meta_set, msg_in, msg_out >>
+                                           tx_meta_set, msg_in, msg_out, 
+                                           svr_end >>
 
 lbl_debug_dkfajdksfj(self) == /\ pc[self] = "lbl_debug_dkfajdksfj"
                               /\ IF msg_in[self].type = "accept"
@@ -2792,11 +2821,11 @@ lbl_debug_dkfajdksfj(self) == /\ pc[self] = "lbl_debug_dkfajdksfj"
                                               next_txn, next_tid, next_pie, 
                                               anc, tmp_set, alogs, vid_set, 
                                               sub_graph, tx_meta_set, msg_in, 
-                                              msg_out >>
+                                              msg_out, svr_end >>
 
 __debug_label_kjkjdf(self) == /\ pc[self] = "__debug_label_kjkjdf"
                               /\ Assert((msg_in[self].ballot \geq 0), 
-                                        "Failure of assertion at line 1029, column 29.")
+                                        "Failure of assertion at line 1030, column 29.")
                               /\ pc' = [pc EXCEPT ![self] = "__debug_label_fdsadf"]
                               /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
                                               id_counter, stack, 
@@ -2816,11 +2845,11 @@ __debug_label_kjkjdf(self) == /\ pc[self] = "__debug_label_kjkjdf"
                                               next_txn, next_tid, next_pie, 
                                               anc, tmp_set, alogs, vid_set, 
                                               sub_graph, tx_meta_set, msg_in, 
-                                              msg_out >>
+                                              msg_out, svr_end >>
 
 __debug_label_fdsadf(self) == /\ pc[self] = "__debug_label_fdsadf"
                               /\ Assert((curr_txn[self].max_prepared_ballot \geq 0), 
-                                        "Failure of assertion at line 1030, column 29.")
+                                        "Failure of assertion at line 1031, column 29.")
                               /\ pc' = [pc EXCEPT ![self] = "lbl_msg_dispatch"]
                               /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
                                               id_counter, stack, 
@@ -2840,7 +2869,7 @@ __debug_label_fdsadf(self) == /\ pc[self] = "__debug_label_fdsadf"
                                               next_txn, next_tid, next_pie, 
                                               anc, tmp_set, alogs, vid_set, 
                                               sub_graph, tx_meta_set, msg_in, 
-                                              msg_out >>
+                                              msg_out, svr_end >>
 
 lbl_msg_dispatch(self) == /\ pc[self] = "lbl_msg_dispatch"
                           /\ IF /\ msg_in[self].type = "pre_accept"
@@ -2850,7 +2879,7 @@ lbl_msg_dispatch(self) == /\ pc[self] = "lbl_msg_dispatch"
                                                                               pc        |->  "lbl_svr_loop_end" ] >>
                                                                           \o stack[self]]
                                      /\ pc' = [pc EXCEPT ![self] = "lbl_on_pre_accept"]
-                                     /\ UNCHANGED << svr_mq, msg_out >>
+                                     /\ UNCHANGED << svr_mq, msg_out, svr_end >>
                                 ELSE /\ IF \/ msg_in[self].type = "commit"
                                            \/ msg_in[self].type = "ack_inquire"
                                            THEN /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "HandleCommit",
@@ -2858,28 +2887,33 @@ lbl_msg_dispatch(self) == /\ pc[self] = "lbl_msg_dispatch"
                                                                                      \o stack[self]]
                                                 /\ pc' = [pc EXCEPT ![self] = "lbl_cmt_set_statsu"]
                                                 /\ UNCHANGED << svr_mq, 
-                                                                msg_out >>
+                                                                msg_out, 
+                                                                svr_end >>
                                            ELSE /\ IF msg_in[self].type = "inquire"
                                                       THEN /\ GetStatus(dep[self], msg_in[self].tid) >= COMMITTING
                                                            /\ msg_out' = [msg_out EXCEPT ![self] = [type |-> "ack_inquire", src |-> self, tid |-> msg_in[self].tid, dep |-> ya_dep[self]]]
                                                            /\ svr_mq' = [svr_mq EXCEPT ![msg_in[self].src] = Append(coo_mq[msg_in[self].src], msg_out'[self])]
                                                            /\ pc' = [pc EXCEPT ![self] = "lbl_svr_loop_end"]
-                                                           /\ stack' = stack
+                                                           /\ UNCHANGED << stack, 
+                                                                           svr_end >>
                                                       ELSE /\ IF msg_in[self].type = "prepare" /\ curr_txn[self].max_prepared_ballot < msg_in[self].ballot
                                                                  THEN /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "HandlePrepare",
                                                                                                                pc        |->  "lbl_svr_loop_end" ] >>
                                                                                                            \o stack[self]]
                                                                       /\ pc' = [pc EXCEPT ![self] = "lbl_on_prepare"]
+                                                                      /\ UNCHANGED svr_end
                                                                  ELSE /\ IF msg_in[self].type = "accept" /\ curr_txn[self].max_prepared_ballot \leq msg_in[self].ballot
                                                                             THEN /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "HandleAccept",
                                                                                                                           pc        |->  "lbl_svr_loop_end" ] >>
                                                                                                                       \o stack[self]]
                                                                                  /\ pc' = [pc EXCEPT ![self] = "lbl_on_accept_1"]
+                                                                                 /\ UNCHANGED svr_end
                                                                             ELSE /\ IF msg_in[self].type = "end"
-                                                                                       THEN /\ pc' = [pc EXCEPT ![self] = "end_svr"]
+                                                                                       THEN /\ svr_end' = [svr_end EXCEPT ![self] = TRUE]
                                                                                        ELSE /\ Assert((FALSE), 
-                                                                                                      "Failure of assertion at line 1053, column 7.")
-                                                                                            /\ pc' = [pc EXCEPT ![self] = "lbl_svr_loop_end"]
+                                                                                                      "Failure of assertion at line 1054, column 7.")
+                                                                                            /\ UNCHANGED svr_end
+                                                                                 /\ pc' = [pc EXCEPT ![self] = "lbl_svr_loop_end"]
                                                                                  /\ stack' = stack
                                                            /\ UNCHANGED << svr_mq, 
                                                                            msg_out >>
@@ -2901,7 +2935,9 @@ lbl_msg_dispatch(self) == /\ pc[self] = "lbl_msg_dispatch"
                                           tx_meta_set, msg_in >>
 
 lbl_svr_loop_end(self) == /\ pc[self] = "lbl_svr_loop_end"
-                          /\ pc' = [pc EXCEPT ![self] = "lbl_svr_loop"]
+                          /\ IF ~svr_end[self]
+                                THEN /\ pc' = [pc EXCEPT ![self] = "lbl_svr_loop"]
+                                ELSE /\ pc' = [pc EXCEPT ![self] = "Done"]
                           /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
                                           id_counter, stack, pre_accept_acks_A, 
                                           partitions_, pre_accept_acks, 
@@ -2917,29 +2953,13 @@ lbl_svr_loop_end(self) == /\ pc[self] = "lbl_svr_loop_end"
                                           curr_op, txn_set, tid_set, opset, 
                                           next_txn, next_tid, next_pie, anc, 
                                           tmp_set, alogs, vid_set, sub_graph, 
-                                          tx_meta_set, msg_in, msg_out >>
-
-end_svr(self) == /\ pc[self] = "end_svr"
-                 /\ TRUE
-                 /\ pc' = [pc EXCEPT ![self] = "Done"]
-                 /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, id_counter, 
-                                 stack, pre_accept_acks_A, partitions_, 
-                                 pre_accept_acks, partitions, curr_pie, 
-                                 next_txn_, next_pie_, txn_id, dep_c, par, 
-                                 n_pie, pre_accept_acks_, accept_acks, 
-                                 committed, ballot, tmp_ack, tmp_acks, tmp_par, 
-                                 tmp_partitions, shards, msg_in_, msg_out_, 
-                                 keyspace, dep, ya_dep, finished_map, 
-                                 asked_map, pie_map, tx_meta, scc, scc_set, 
-                                 scc_seq, curr_txn, curr_pie_, curr_op, 
-                                 txn_set, tid_set, opset, next_txn, next_tid, 
-                                 next_pie, anc, tmp_set, alogs, vid_set, 
-                                 sub_graph, tx_meta_set, msg_in, msg_out >>
+                                          tx_meta_set, msg_in, msg_out, 
+                                          svr_end >>
 
 Svr(self) == lbl_svr_loop(self) \/ lbl_dbg_msg_check(self)
                 \/ lbl_debug_dkfajdksfj(self) \/ __debug_label_kjkjdf(self)
                 \/ __debug_label_fdsadf(self) \/ lbl_msg_dispatch(self)
-                \/ lbl_svr_loop_end(self) \/ end_svr(self)
+                \/ lbl_svr_loop_end(self)
 
 Next == (\E self \in ProcSet:  \/ UnitTest(self)
                                \/ AggregateGraphForFastPath(self)
@@ -2954,7 +2974,8 @@ Next == (\E self \in ProcSet:  \/ UnitTest(self)
            \/ (* Disjunct to prevent deadlock on termination *)
               ((\A self \in ProcSet: pc[self] = "Done") /\ UNCHANGED vars)
 
-Spec == Init /\ [][Next]_vars
+Spec == /\ Init /\ [][Next]_vars
+        /\ WF_vars(Next)
 
 Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
@@ -2962,7 +2983,7 @@ Termination == <>(\A self \in ProcSet: pc[self] = "Done")
 
 -----------------------------------------------------------------------------
 
-Serializability == []SrzAcyclic(srz)
+Serializability == <>SrzAcyclic(srz)
 
 Progress == n_committed = M
 
@@ -2970,6 +2991,6 @@ THEOREM Spec => Serializability
 
 =============================================================================
 \* Modification History
-\* Last modified Fri Dec 30 12:06:48 EST 2016 by shuai
+\* Last modified Fri Dec 30 13:23:01 EST 2016 by shuai
 \* Last modified Thu Dec 25 23:34:46 CST 2014 by Shuai
 \* Created Mon Dec 15 15:44:26 CST 2014 by Shuai
