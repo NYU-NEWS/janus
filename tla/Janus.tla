@@ -1053,7 +1053,7 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
       assert(FALSE);
     };
     lbl_svr_loop_end: goto lbl_svr_loop;    
-    end_svr: assert(TRUE);
+    end_svr: skip;
   } 
 }
 *)
@@ -2920,8 +2920,7 @@ lbl_svr_loop_end(self) == /\ pc[self] = "lbl_svr_loop_end"
                                           tx_meta_set, msg_in, msg_out >>
 
 end_svr(self) == /\ pc[self] = "end_svr"
-                 /\ Assert((TRUE), 
-                           "Failure of assertion at line 1056, column 14.")
+                 /\ TRUE
                  /\ pc' = [pc EXCEPT ![self] = "Done"]
                  /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, id_counter, 
                                  stack, pre_accept_acks_A, partitions_, 
@@ -2971,6 +2970,6 @@ THEOREM Spec => Serializability
 
 =============================================================================
 \* Modification History
-\* Last modified Wed Dec 28 22:47:59 EST 2016 by shuai
+\* Last modified Fri Dec 30 12:06:48 EST 2016 by shuai
 \* Last modified Thu Dec 25 23:34:46 CST 2014 by Shuai
 \* Created Mon Dec 15 15:44:26 CST 2014 by Shuai

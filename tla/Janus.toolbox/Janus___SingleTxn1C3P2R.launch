@@ -2,7 +2,7 @@
 <launchConfiguration type="org.lamport.tla.toolbox.tool.tlc.modelCheck">
 <stringAttribute key="TLCCmdLineParameters" value=""/>
 <intAttribute key="autoLockTime" value="15"/>
-<stringAttribute key="configurationName" value="SingleTxn1C3P3R"/>
+<stringAttribute key="configurationName" value="SingleTxn1C3P2R"/>
 <intAttribute key="dfidDepth" value="100"/>
 <booleanAttribute key="dfidMode" value="false"/>
 <intAttribute key="distributedFPSetCount" value="0"/>
@@ -18,30 +18,30 @@
 <stringAttribute key="modelBehaviorNext" value=""/>
 <stringAttribute key="modelBehaviorSpec" value="Spec"/>
 <intAttribute key="modelBehaviorSpecType" value="1"/>
-<stringAttribute key="modelBehaviorVars" value="ya_dep, tmp_ack, txn_set, next_pie, next_tid, ballot, anc, curr_pie_, dep_c, tmp_partitions, msg_in, stack, opset, n_pie, keyspace, scc, scc_seq, scc_set, tid_set, partitions, accept_acks, coo_mq, txn_id, sub_graph, par, next_txn_, tmp_acks, curr_op, curr_txn, dep, pre_accept_acks_, finished_map, partitions_, msg_out, msg_out_, pie_map, svr_mq, tmp_set, pc, pre_accept_acks_A, committed, next_txn, tmp_par, msg_in_, vid_set, shards, asked_map, curr_pie, srz, tx_meta, next_pie_, id_counter, alogs, n_committed, tx_meta_set, pre_accept_acks"/>
+<stringAttribute key="modelBehaviorVars" value="ya_dep, tmp_ack, txn_set, next_pie, next_tid, ballot, anc, curr_pie_, tmp_partitions, msg_in, stack, opset, graph, n_pie, keyspace, scc, scc_seq, scc_set, last_r_tid, tid_set, partitions, accept_acks, partitions_A, msg, coo_mq, txn_id, sub_graph, par, next_txn_, tmp_acks, curr_op, keyspace_, curr_txn, dep, pre_accept_acks_, finished_map, partitions_, msg_out, last_w_tid, msg_out_, pie_map, svr_mq, tmp_set, pc, pre_accept_acks_A, committed, next_txn, tmp_par, msg_in_, vid_set, asked_map, curr_pie, srz, next_pie_, id_counter, alogs, n_committed, pre_accept_acks"/>
 <stringAttribute key="modelComments" value=""/>
 <booleanAttribute key="modelCorrectnessCheckDeadlock" value="true"/>
 <listAttribute key="modelCorrectnessInvariants"/>
 <listAttribute key="modelCorrectnessProperties">
-<listEntry value="1Termination"/>
+<listEntry value="0Termination"/>
 <listEntry value="0Serializability"/>
 </listAttribute>
 <stringAttribute key="modelExpressionEval" value=""/>
 <stringAttribute key="modelParameterActionConstraint" value=""/>
 <listAttribute key="modelParameterConstants">
 <listEntry value="defaultInitValue;;defaultInitValue;1;0"/>
-<listEntry value="TXN;;&lt;&lt; \*txn_pool&#10;  &lt;&lt; \* txn&#10;    [&#10;      opset |-&gt; {               &#10;                  [key |-&gt; &quot;a&quot;, type |-&gt; &quot;w&quot;] &#10;                },&#10;      shard |-&gt; 1                &#10;    ], &#10;    [&#10;      opset |-&gt; {&#10;                  [key |-&gt; &quot;b&quot;, type |-&gt; &quot;w&quot;] &#10;                },&#10;      shard |-&gt; 2                &#10;    ], &#10;    [&#10;      opset |-&gt; {&#10;                  [key |-&gt; &quot;c&quot;, type |-&gt; &quot;w&quot;] &#10;                },&#10;      shard |-&gt; 3&#10;    ]     &#10;  &gt;&gt;  &#10;&gt;&gt;;0;0"/>
+<listEntry value="TXN;;&lt;&lt; \*txn_pool&#10;  &lt;&lt; \* txn&#10;    [&#10;      opset |-&gt; {               &#10;                  [key |-&gt; &quot;a&quot;, type |-&gt; &quot;w&quot;] &#10;                },&#10;      partition |-&gt; 1                &#10;    ], &#10;    [&#10;      opset |-&gt; {&#10;                  [key |-&gt; &quot;b&quot;, type |-&gt; &quot;w&quot;] &#10;                },&#10;      partition |-&gt; 2                &#10;    ], &#10;    [&#10;      opset |-&gt; {&#10;                  [key |-&gt; &quot;c&quot;, type |-&gt; &quot;w&quot;] &#10;                },&#10;      partition |-&gt; 3&#10;    ]     &#10;  &gt;&gt;  &#10;&gt;&gt;;0;0"/>
 <listEntry value="M;;1;0;0"/>
 <listEntry value="N;;3;0;0"/>
-<listEntry value="X;;3;0;0"/>
-<listEntry value="Shard;x:;x.shard;0;0"/>
+<listEntry value="X;;2;0;0"/>
+<listEntry value="Shard;x:;x.partition;0;0"/>
 </listAttribute>
 <stringAttribute key="modelParameterContraint" value=""/>
 <listAttribute key="modelParameterDefinitions"/>
 <stringAttribute key="modelParameterModelValues" value="{}"/>
 <stringAttribute key="modelParameterNewDefinitions" value=""/>
 <stringAttribute key="modelPropertiesExpand" value=""/>
-<intAttribute key="numberOfWorkers" value="8"/>
+<intAttribute key="numberOfWorkers" value="12"/>
 <booleanAttribute key="recover" value="false"/>
 <stringAttribute key="result.mail.address" value=""/>
 <intAttribute key="simuAril" value="-1"/>
