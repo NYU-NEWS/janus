@@ -11,13 +11,15 @@ Install dependencies:
 
 ```
 sudo apt-get update
-sudo apt-get install -y build-essential
-sudo apt-get install -y clang
-sudo apt-get install -y libapr1-dev libaprutil1-dev
-sudo apt-get install -y libboost-all-dev
-sudo apt-get install -y libyaml-cpp-dev
-sudo apt-get install -y python-dev
-sudo apt-get install -y python-pip
+sudo apt-get install -y \
+    build-essential \
+    clang \
+    libapr1-dev libaprutil1-dev \
+    libboost-all-dev \
+    libyaml-cpp-dev \
+    python-dev \
+    python-pip \
+    libgoogle-perftools-dev
 sudo pip install -r requirements.txt
 ```
 
