@@ -12,6 +12,8 @@ Install dependencies:
 ```
 sudo apt-get update
 sudo apt-get install -y \
+    git \
+    pkg-config \
     build-essential \
     clang \
     libapr1-dev libaprutil1-dev \
