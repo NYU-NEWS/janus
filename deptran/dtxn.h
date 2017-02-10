@@ -62,6 +62,10 @@ class DTxn {
   Recorder *recorder_ = NULL;
   TxnRegistry *txn_reg_{nullptr};
 
+#ifdef CHECK_ISO
+  map<Row*, map<column_id_t, int>> deltas_;
+#endif
+
   bool committed_{false};
   bool aborted_{false};
 

@@ -30,10 +30,13 @@ void TpcaPiece::reg_pieces() {
 
     r = dtxn->Query(dtxn->GetTable(TPCA_CUSTOMER), mb, TPCA_ROW_1);
     dtxn->ReadColumn(r, 1, &buf, TXN_BYPASS);
+                                                     output[TPCA_VAR_OX] = buf;
     buf.set_i32(buf.get_i32() + 1/*input[1].get_i32()*/);
     dtxn->WriteColumn(r, 1, buf, TXN_DEFERRED);
 
-    output[TPCA_VAR_X] = buf;
+#ifdef CHECK_ISO
+    dtxn->deltas_[r][1] = 1;
+#endif
     *res = SUCCESS;
   } END_PIE
 
@@ -51,9 +54,13 @@ void TpcaPiece::reg_pieces() {
 
     r = dtxn->Query(dtxn->GetTable(TPCA_TELLER), mb, TPCA_ROW_2);
     dtxn->ReadColumn(r, 1, &buf, TXN_BYPASS);
+                                                     output[TPCA_VAR_OY] = buf;
     buf.set_i32(buf.get_i32() + 1/*input[1].get_i32()*/);
     dtxn->WriteColumn(r, 1, buf, TXN_DEFERRED);
     *res = SUCCESS;
+#ifdef CHECK_ISO
+                                                     dtxn->deltas_[r][1] = 1;
+#endif
   } END_PIE
 
   INPUT_PIE(TPCA_PAYMENT, TPCA_PAYMENT_3, TPCA_VAR_Z)
@@ -72,10 +79,13 @@ void TpcaPiece::reg_pieces() {
 
     r = dtxn->Query(dtxn->GetTable(TPCA_BRANCH), mb, TPCA_ROW_3);
     dtxn->ReadColumn(r, 1, &buf, TXN_BYPASS);
+                                                     output[TPCA_VAR_OZ] = buf;
     buf.set_i32(buf.get_i32() + 1/*input[1].get_i32()*/);
     dtxn->WriteColumn(r, 1, buf, TXN_DEFERRED);
-
     *res = SUCCESS;
+#ifdef CHECK_ISO
+                                                     dtxn->deltas_[r][1] = 1;
+#endif
   } END_PIE
 }
 

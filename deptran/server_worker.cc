@@ -185,6 +185,7 @@ void ServerWorker::WaitForShutdown() {
     hb_thread_pool_g->release();
 
     for (auto service : services_) {
+      this->dtxn_sched_->CheckDeltas();
       if (DepTranServiceImpl *s = dynamic_cast<DepTranServiceImpl*>(service)) {
         auto &recorder = s->recorder_;
         if (recorder) {
@@ -197,6 +198,11 @@ void ServerWorker::WaitForShutdown() {
       }
     }
   }
+#ifdef CHECK_ISO
+  for (auto service : services_) {
+    this->dtxn_sched_->CheckDeltas();
+  }
+#endif
 
   Log_debug("exit %s", __FUNCTION__);
 }

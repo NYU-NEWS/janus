@@ -24,7 +24,7 @@
 <listAttribute key="modelCorrectnessInvariants"/>
 <listAttribute key="modelCorrectnessProperties">
 <listEntry value="1Termination"/>
-<listEntry value="1Serializability"/>
+<listEntry value="0Serializability"/>
 </listAttribute>
 <stringAttribute key="modelExpressionEval" value=""/>
 <stringAttribute key="modelParameterActionConstraint" value=""/>

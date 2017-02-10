@@ -20,11 +20,12 @@ schema:
   - name: teller
     column:
       - {name: teller_id,   type: integer, primary: true}
-      - {name: branch_id,   type: integer, foreign: branch.branch_id }
+        #- {name: branch_id,   type: integer, foreign: branch.branch_id }
+      - {name: balance,     type: integer} 
   - name: customer
     column:
       - {name: customer_id, type: integer, primary: true}
-      - {name: branch_id,   type: integer, foreign: branch.branch_id}
+        #      - {name: branch_id,   type: integer, foreign: branch.branch_id}
       - {name: balance,     type: integer}
 
 sharding:

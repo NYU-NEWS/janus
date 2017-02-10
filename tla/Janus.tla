@@ -618,7 +618,8 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
     pie_map[msg_in.tid] := @ \union {msg_in.pie};
     opset := curr_pie.opset;
     assert(opset /= {});
-    lbl_pie_add_dep: while (opset /= {}) {
+    lbl_pie_add_dep: 
+    while (opset /= {}) {
       with (next_op \in opset) {
         opset := opset \ {next_op};
         curr_op := next_op;      
@@ -673,6 +674,7 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
         if (ProcIdToPartitionId(self) \in meta.shards) {
           skip;
         } else {
+          assert(FALSE);
           with (dst \in meta.shards) {
             msg_out := [type |-> "inquire", tid |-> meta.id, src |-> self];
             svr_mq := BroadcastMsg(svr_mq, dst, msg_out);
@@ -689,7 +691,7 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
     lbl_exe_scc_set:
     vid_set := scc;
     assert(vid_set /= {});        
-    exe_scc: 
+    lbl_exe_scc: 
     while (vid_set /= {}) {
       next_tid := MinVid(scc);
       vid_set := vid_set \ {next_tid};
@@ -727,20 +729,21 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
   }
   
   procedure HandleCommit() {
-    \* lbl_on_commit:
-    lbl_cmt_set_statsu: 
-    dep[msg_in.tid].status := COMMITTING; \* TODO upgrade instead of set.
-    lbl_cmt_set_dep: 
-    dep[msg_in.tid].parents := msg_in.dep;
+    lbl_on_commit:
+\*    lbl_cmt_set_statsu: 
+\*    dep[msg_in.tid].status := COMMITTING; \* TODO upgrade instead of set.
+\*    lbl_cmt_set_dep: 
+\*    dep[msg_in.tid].parents := msg_in.dep;
+    dep[msg_in.tid] := [@ EXCEPT !.status = COMMITTING, !.parents = msg_in.dep];
     (* send inquire request for uninvovled & uncommitted ancestors *)              
     call InquireUnknown(); \* disable for now.      
     (* Trigger decision for those transactions whose status are COMMITTING 
        and their ancestors all become at least committing *)            
     lbl_choose_to_commit: 
     txn_set := AllAncestorsAtLeastCommittingTidSet(dep);
-    if (M=1) {
-      assert(txn_set /= {});
-    };
+\*    if (M=1) {
+\*      assert(txn_set /= {});
+\*    };
     lbl_ready_to_commit: 
     while (txn_set /= {}) {
       with (txn \in txn_set) {
@@ -750,16 +753,15 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
         dep := UpdateSubGraphStatus(dep, tid_set, DECIDED);
       }            
     };            
-        
-      lbl_find_exe: 
-      scc_set := ToExecuteSccTidSet(dep, ProcIdToPartitionId(self), finished_map);
-      if ( M = 1 /\ N = 1 /\ X = 1) {
-        __debug_label_kdfjldf: tmp_set := SUBSET DOMAIN dep;      
-        __debug_label_lejrjkk: assert(tmp_set = {{}, {1}});
-        __debug_label_dskfjld: assert(NewDepIsStronglyConnected(dep, {1})); 
-        __debug_label_dsfldjk: assert(SccTidSet(dep, 1) = {1});
-        __debug_label_dlfjdlf: assert(IsInvolved(dep, 1, 1));
-      };
+    lbl_find_exe: 
+    scc_set := ToExecuteSccTidSet(dep, ProcIdToPartitionId(self), finished_map);
+\*      if ( M = 1 /\ N = 1 /\ X = 1) {
+\*        __debug_label_kdfjldf: tmp_set := SUBSET DOMAIN dep;      
+\*        __debug_label_lejrjkk: assert(tmp_set = {{}, {1}});
+\*        __debug_label_dskfjld: assert(NewDepIsStronglyConnected(dep, {1})); 
+\*        __debug_label_dsfldjk: assert(SccTidSet(dep, 1) = {1});
+\*        __debug_label_dlfjdlf: assert(IsInvolved(dep, 1, 1));
+\*      };
 \*      __debug_label_dlfjlfk: assert(Unfinished(finished_map, 1));
 \*      __debug_label_dlfjldf: assert(AreSubGraphAncestorsAtLeastCommitting(dep, {1}));
 \*      __debug_label_ljkdjfj: assert(AreSubGraphLocalAncestorsFinished(dep, {1}, 1, finished_map));
@@ -770,22 +772,23 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
 \*      /\ AreSubGraphLocalAncestorsFinished(G, scc, par, finished_map) 
       
 \*      __debug_label_kzcjvli: assert(scc_set /= {});  
-      lbl_exe_scc_set: 
-      if (scc_set /= {}) {
-        lbl_next_exe: 
-        while (scc_set /= {}) {                
-          with (next_scc \in scc_set) {
-            scc_set := scc_set \ {next_scc};
-            scc := next_scc;
-          };                          
-          call ExeSccSet();
-        };
-\*        __debug_label_sdkfj: assert(Finished(finished_map, 1));
-        goto lbl_find_exe;
-      } else {
-        skip;               
-      };                    
-    lbl_on_commit_ret: return;
+\*      lbl_exe_scc_set: 
+    if (scc_set /= {}) {
+      lbl_next_exe: 
+      while (scc_set /= {}) {                
+        with (next_scc \in scc_set) {
+          scc_set := scc_set \ {next_scc};
+          scc := next_scc;
+        };                          
+        call ExeSccSet();
+      };
+\*      __debug_label_sdkfj: assert(Finished(finished_map, 1));
+      goto lbl_find_exe;
+    } else {
+      skip;               
+    };                    
+    lbl_on_commit_ret: 
+    return;
   }
   
   procedure HandleInquire() {
@@ -795,17 +798,20 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
   
   procedure ExePie(curr_pie)
   {
-    start_exe_pie: opset := curr_pie.opset;
+    lbl_exe_pie: 
+    opset := curr_pie.opset;
     assert(opset /= {});
 \*    assert(FALSE);              
-    pie_add_srz: while (opset /= {}) {
+    lbl_pie_add_srz: 
+    while (opset /= {}) {
       with (next_op \in opset) {
         curr_op := next_op;
         opset := opset \ {next_op};                   
       };  
       srz := SrzAddNode(srz, curr_txn.tid);
       alogs := keyspace[curr_op.key].alogs;                       
-      scan_alogs: while (alogs /= {}) {
+      lbl_scan_alogs: 
+      while (alogs /= {}) {
         with (next_access \in alogs) {
           alogs := alogs \ {next_access};
           if ( \/ next_access.type /= curr_op.type 
@@ -838,9 +844,8 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
             msg_in;
             msg_out;
   {
-    unit_test: call UnitTest();
-       
-    coo: 
+\*    unit_test: call UnitTest();       
+    lbl_coord_begin: 
     (* cleanup work *)
     dep_c := {};
     shards := {};  
@@ -875,7 +880,7 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
     };
     \* wait for acks. 
     pre_accept_acks := InitAcks(shards);
-    assert(pre_accept_acks = [i \in shards |-> {}]);
+\*    assert(pre_accept_acks = [i \in shards |-> {}]);
     lbl_coord_pre_accept_ack: 
     while (TRUE) { \* this is a dead loop
       await Len(coo_mq[self]) > 0;
@@ -884,14 +889,15 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
       assert(IsMsgValid(msg_in));
       if (msg_in.type = "ack_pre_accept" /\ msg_in.tid = txn_id) {
         par := ProcIdToPartitionId(msg_in.src);
-        lbl_dbg_aaaaa: assert(par \in shards);
+\*        lbl_dbg_aaaaa: assert(par \in shards);
         pre_accept_acks[par] := pre_accept_acks[par] \union {msg_in};
-        lbl_deg_bbbbb: assert(pre_accept_acks[par] /= {});
+\*        lbl_deg_bbbbb: assert(pre_accept_acks[par] /= {});
 \*        assert(pre_accept_acks[par] /= <<>>);
         if (FastPathPossible(pre_accept_acks, shards)) {
           if (FastPathReady(pre_accept_acks, shards)) {
             call AggregateGraphForFastPath(pre_accept_acks, shards);
-            lbl_coord_goto_commit: goto commit_phase;
+            lbl_coord_goto_commit: 
+            goto commit_phase;
           } else {
             lbl_dbg_zzzzz: 
             if (N=1 /\ X=1) {
@@ -899,15 +905,16 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
             }
           };
         } else {
-          if (N=1 /\ X=1) {
+          if (M = 1) {
             assert(FALSE);          
           }
         };
 \*        lbl_dbg_yyyyy: assert(FALSE);
-        lbl_coord_slow_path_check: if (SlowPathReady(pre_accept_acks, shards)) {
-          call AggregateGraphForAccept(pre_accept_acks, shards);
-          goto_accept: goto accept_phase;
-        };
+\*        disable accept phase for now. TODO perhaps bugs here.
+\*        lbl_coord_slow_path_check: if (SlowPathReady(pre_accept_acks, shards)) {
+\*          call AggregateGraphForAccept(pre_accept_acks, shards);
+\*          goto_accept: goto accept_phase;
+\*        };
         \* if nothing is possible, waiting for more messages to arrive.
       } else {
         \* impossible
@@ -960,8 +967,10 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
 \*    __debug_label_ghjkk: assert(msg_out.dep[txn_id].partitions = {1});
     assert(IsMsgValid(msg_out));
 \*    __debug_label_ljhklhjk: assert(partitions = {1});
-    broadcast_commit: svr_mq := BroadcastMsgToMultiplePartitions(svr_mq, shards, msg_out);            
-    lbl_wait_commit_ack: while (TRUE) { 
+\*    broadcast_commit: 
+    svr_mq := BroadcastMsgToMultiplePartitions(svr_mq, shards, msg_out);            
+    lbl_wait_commit_ack: 
+    while (TRUE) { 
       await (Len(coo_mq[self]) > 0);
       msg_in := Head(coo_mq[self]);
       coo_mq[self] := Tail(coo_mq[self]);                 
@@ -972,12 +981,14 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
         \* assert(n_committed = M);
         goto end_coord;
       } else {
-        __debug_label_iuyuiyer: assert(msg_in.type /= "ack_commit");
+        lbl_dbg_kkkkk: 
+        assert(msg_in.type /= "ack_commit");
       }
     };       
         
    \* end server loop to avoid eventual deadlock.
-    end_coord: if (n_committed = M) {
+    end_coord: 
+    if (n_committed = M) {
       msg_out := [type|->"end", src|->self, tid |-> 0];
       \* assert(PartitionsToProcIds({1}) = {2});
       svr_mq := BroadcastMsgToMultiplePartitions(svr_mq, 1..N, msg_out);
@@ -1014,10 +1025,11 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
             msg_out;
             svr_end=FALSE;
   {
-    lbl_svr_loop: await Len(svr_mq[self]) > 0;
+    lbl_svr_loop: 
+    await Len(svr_mq[self]) > 0;
     msg_in := Head(svr_mq[self]);
     svr_mq[self] := Tail(svr_mq[self]);
-    lbl_dbg_msg_check: assert(IsMsgValid(msg_in));
+    \* lbl_dbg_msg_check: assert(IsMsgValid(msg_in));
     ya_dep := EmptyNewDep;
     \* curr_txn := [tid |-> msg.tid, status |-> "unknown", partitions |-> msg.partitions];        
     \* dep := DepAddNode(dep, curr_txn.tid, UNKNOWN, msg.partitions);
@@ -1026,12 +1038,12 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
     } else {
       assert(msg_in.type = "end");
     };
-    lbl_debug_dkfajdksfj: if (msg_in.type = "accept") {
-      __debug_label_kjkjdf: assert(msg_in.ballot \geq 0);
-      __debug_label_fdsadf: assert(curr_txn.max_prepared_ballot \geq 0);
-    };
+\*    if (msg_in.type = "accept") {
+\*      __debug_label_kjkjdf: assert(msg_in.ballot \geq 0);
+\*      __debug_label_fdsadf: assert(curr_txn.max_prepared_ballot \geq 0);
+\*    };
 \*    lbl_dbg_ddddd: assert(msg_in.tid /= 2);   \* TODO errors might happen here (message layer)              
-    lbl_msg_dispatch: 
+\*    lbl_msg_dispatch: 
     if ( /\ msg_in.type = "pre_accept" 
          /\ curr_txn.max_prepared_ballot = 0 
          /\ curr_txn.status = UNKNOWN) {
@@ -1040,10 +1052,11 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
                 \/ msg_in.type = "ack_inquire") {
       call HandleCommit();
     } else if (msg_in.type = "inquire") {
-      await GetStatus(dep, msg_in.tid) >= COMMITTING;
-\*      inquire_ack: ya_dep := SingleVertexNewDep(dep, msg.tid);                
-      msg_out := [type |-> "ack_inquire", src |-> self, tid |-> msg_in.tid, dep |-> ya_dep];
-      svr_mq[msg_in.src] := Append(coo_mq[msg_in.src], msg_out);
+      skip; \* enable inquire later;
+\*      await GetStatus(dep, msg_in.tid) >= COMMITTING;
+\*\*      inquire_ack: ya_dep := SingleVertexNewDep(dep, msg.tid);                
+\*      msg_out := [type |-> "ack_inquire", src |-> self, tid |-> msg_in.tid, dep |-> ya_dep];
+\*      svr_mq[msg_in.src] := Append(coo_mq[msg_in.src], msg_out);
     } else if (msg_in.type = "prepare" /\ curr_txn.max_prepared_ballot < msg_in.ballot) {
       call HandlePrepare();   
     } else if (msg_in.type = "accept" /\ curr_txn.max_prepared_ballot \leq msg_in.ballot) {
@@ -1061,13 +1074,12 @@ OfflineCheck(TxnSet) == /\ ImmediacyProp(TxnSet)
 }
 *)
 \* BEGIN TRANSLATION
-\* Label lbl_exe_scc_set of procedure ExeSccSet at line 690 col 5 changed to lbl_exe_scc_set_
-\* Process variable next_txn of process Coo at line 823 col 13 changed to next_txn_
-\* Process variable next_pie of process Coo at line 824 col 13 changed to next_pie_
-\* Process variable pre_accept_acks of process Coo at line 829 col 13 changed to pre_accept_acks_
-\* Process variable msg_in of process Coo at line 838 col 13 changed to msg_in_
-\* Process variable msg_out of process Coo at line 839 col 13 changed to msg_out_
-\* Process variable curr_pie of process Svr at line 999 col 13 changed to curr_pie_
+\* Process variable next_txn of process Coo at line 829 col 13 changed to next_txn_
+\* Process variable next_pie of process Coo at line 830 col 13 changed to next_pie_
+\* Process variable pre_accept_acks of process Coo at line 835 col 13 changed to pre_accept_acks_
+\* Process variable msg_in of process Coo at line 844 col 13 changed to msg_in_
+\* Process variable msg_out of process Coo at line 845 col 13 changed to msg_out_
+\* Process variable curr_pie of process Svr at line 1010 col 13 changed to curr_pie_
 \* Parameter pre_accept_acks of procedure AggregateGraphForFastPath at line 581 col 39 changed to pre_accept_acks_A
 \* Parameter partitions of procedure AggregateGraphForFastPath at line 581 col 56 changed to partitions_
 CONSTANT defaultInitValue
@@ -1155,7 +1167,7 @@ Init == (* Global variables *)
         /\ msg_out = [self \in M+1 .. M+N*X |-> defaultInitValue]
         /\ svr_end = [self \in M+1 .. M+N*X |-> FALSE]
         /\ stack = [self \in ProcSet |-> << >>]
-        /\ pc = [self \in ProcSet |-> CASE self \in 1 .. M -> "unit_test"
+        /\ pc = [self \in ProcSet |-> CASE self \in 1 .. M -> "lbl_coord_begin"
                                         [] self \in M+1 .. M+N*X -> "lbl_svr_loop"]
 
 __debug_label_kldjf(self) == /\ pc[self] = "__debug_label_kldjf"
@@ -1586,17 +1598,19 @@ lbl_at_inquire(self) == /\ pc[self] = "lbl_at_inquire"
                         /\ IF tx_meta_set[self] /= {}
                               THEN /\ \E meta \in tx_meta_set[self]:
                                         /\ Assert((meta.id > 0), 
-                                                  "Failure of assertion at line 671, column 9.")
+                                                  "Failure of assertion at line 672, column 9.")
                                         /\ tx_meta_set' = [tx_meta_set EXCEPT ![self] = @ \ {meta}]
                                         /\ IF ProcIdToPartitionId(self) \in meta.shards
                                               THEN /\ TRUE
                                                    /\ UNCHANGED << svr_mq, 
                                                                    msg_out >>
-                                              ELSE /\ \E dst \in meta.shards:
+                                              ELSE /\ Assert((FALSE), 
+                                                             "Failure of assertion at line 677, column 11.")
+                                                   /\ \E dst \in meta.shards:
                                                         /\ msg_out' = [msg_out EXCEPT ![self] = [type |-> "inquire", tid |-> meta.id, src |-> self]]
                                                         /\ svr_mq' = BroadcastMsg(svr_mq, dst, msg_out'[self])
                                                         /\ Assert((FALSE), 
-                                                                  "Failure of assertion at line 679, column 13.")
+                                                                  "Failure of assertion at line 681, column 13.")
                                                         /\ TRUE
                                    /\ pc' = [pc EXCEPT ![self] = "lbl_at_inquire"]
                                    /\ stack' = stack
@@ -1622,62 +1636,62 @@ lbl_at_inquire(self) == /\ pc[self] = "lbl_at_inquire"
 
 InquireUnknown(self) == lbl_inquire_unknown(self) \/ lbl_at_inquire(self)
 
-lbl_exe_scc_set_(self) == /\ pc[self] = "lbl_exe_scc_set_"
-                          /\ vid_set' = [vid_set EXCEPT ![self] = scc[self]]
-                          /\ Assert((vid_set'[self] /= {}), 
-                                    "Failure of assertion at line 691, column 5.")
-                          /\ pc' = [pc EXCEPT ![self] = "exe_scc"]
-                          /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
-                                          id_counter, stack, pre_accept_acks_A, 
-                                          partitions_, pre_accept_acks, 
-                                          partitions, curr_pie, next_txn_, 
-                                          next_pie_, txn_id, dep_c, par, n_pie, 
-                                          pre_accept_acks_, accept_acks, 
-                                          committed, ballot, tmp_ack, tmp_acks, 
-                                          tmp_par, tmp_partitions, shards, 
-                                          msg_in_, msg_out_, keyspace, dep, 
-                                          ya_dep, finished_map, asked_map, 
-                                          pie_map, tx_meta, scc, scc_set, 
-                                          scc_seq, curr_txn, curr_pie_, 
-                                          curr_op, txn_set, tid_set, opset, 
-                                          next_txn, next_tid, next_pie, anc, 
-                                          tmp_set, alogs, sub_graph, 
-                                          tx_meta_set, msg_in, msg_out, 
-                                          svr_end >>
+lbl_exe_scc_set(self) == /\ pc[self] = "lbl_exe_scc_set"
+                         /\ vid_set' = [vid_set EXCEPT ![self] = scc[self]]
+                         /\ Assert((vid_set'[self] /= {}), 
+                                   "Failure of assertion at line 693, column 5.")
+                         /\ pc' = [pc EXCEPT ![self] = "lbl_exe_scc"]
+                         /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
+                                         id_counter, stack, pre_accept_acks_A, 
+                                         partitions_, pre_accept_acks, 
+                                         partitions, curr_pie, next_txn_, 
+                                         next_pie_, txn_id, dep_c, par, n_pie, 
+                                         pre_accept_acks_, accept_acks, 
+                                         committed, ballot, tmp_ack, tmp_acks, 
+                                         tmp_par, tmp_partitions, shards, 
+                                         msg_in_, msg_out_, keyspace, dep, 
+                                         ya_dep, finished_map, asked_map, 
+                                         pie_map, tx_meta, scc, scc_set, 
+                                         scc_seq, curr_txn, curr_pie_, curr_op, 
+                                         txn_set, tid_set, opset, next_txn, 
+                                         next_tid, next_pie, anc, tmp_set, 
+                                         alogs, sub_graph, tx_meta_set, msg_in, 
+                                         msg_out, svr_end >>
 
-exe_scc(self) == /\ pc[self] = "exe_scc"
-                 /\ IF vid_set[self] /= {}
-                       THEN /\ next_tid' = [next_tid EXCEPT ![self] = MinVid(scc[self])]
-                            /\ vid_set' = [vid_set EXCEPT ![self] = vid_set[self] \ {next_tid'[self]}]
-                            /\ IF /\ IsInvolved(dep[self], next_tid'[self], ProcIdToPartitionId(self))
-                                  /\ Unfinished(finished_map[self], next_tid'[self])
-                                  THEN /\ pc' = [pc EXCEPT ![self] = "__debug_label_zcxvx"]
-                                  ELSE /\ IF M=1
-                                             THEN /\ Assert((FALSE), 
-                                                            "Failure of assertion at line 722, column 11.")
-                                             ELSE /\ TRUE
-                                       /\ pc' = [pc EXCEPT ![self] = "exe_scc"]
-                            /\ stack' = stack
-                       ELSE /\ pc' = [pc EXCEPT ![self] = Head(stack[self]).pc]
-                            /\ stack' = [stack EXCEPT ![self] = Tail(stack[self])]
-                            /\ UNCHANGED << next_tid, vid_set >>
-                 /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, id_counter, 
-                                 pre_accept_acks_A, partitions_, 
-                                 pre_accept_acks, partitions, curr_pie, 
-                                 next_txn_, next_pie_, txn_id, dep_c, par, 
-                                 n_pie, pre_accept_acks_, accept_acks, 
-                                 committed, ballot, tmp_ack, tmp_acks, tmp_par, 
-                                 tmp_partitions, shards, msg_in_, msg_out_, 
-                                 keyspace, dep, ya_dep, finished_map, 
-                                 asked_map, pie_map, tx_meta, scc, scc_set, 
-                                 scc_seq, curr_txn, curr_pie_, curr_op, 
-                                 txn_set, tid_set, opset, next_txn, next_pie, 
-                                 anc, tmp_set, alogs, sub_graph, tx_meta_set, 
-                                 msg_in, msg_out, svr_end >>
+lbl_exe_scc(self) == /\ pc[self] = "lbl_exe_scc"
+                     /\ IF vid_set[self] /= {}
+                           THEN /\ next_tid' = [next_tid EXCEPT ![self] = MinVid(scc[self])]
+                                /\ vid_set' = [vid_set EXCEPT ![self] = vid_set[self] \ {next_tid'[self]}]
+                                /\ IF /\ IsInvolved(dep[self], next_tid'[self], ProcIdToPartitionId(self))
+                                      /\ Unfinished(finished_map[self], next_tid'[self])
+                                      THEN /\ pc' = [pc EXCEPT ![self] = "__debug_label_zcxvx"]
+                                      ELSE /\ IF M=1
+                                                 THEN /\ Assert((FALSE), 
+                                                                "Failure of assertion at line 724, column 11.")
+                                                 ELSE /\ TRUE
+                                           /\ pc' = [pc EXCEPT ![self] = "lbl_exe_scc"]
+                                /\ stack' = stack
+                           ELSE /\ pc' = [pc EXCEPT ![self] = Head(stack[self]).pc]
+                                /\ stack' = [stack EXCEPT ![self] = Tail(stack[self])]
+                                /\ UNCHANGED << next_tid, vid_set >>
+                     /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
+                                     id_counter, pre_accept_acks_A, 
+                                     partitions_, pre_accept_acks, partitions, 
+                                     curr_pie, next_txn_, next_pie_, txn_id, 
+                                     dep_c, par, n_pie, pre_accept_acks_, 
+                                     accept_acks, committed, ballot, tmp_ack, 
+                                     tmp_acks, tmp_par, tmp_partitions, shards, 
+                                     msg_in_, msg_out_, keyspace, dep, ya_dep, 
+                                     finished_map, asked_map, pie_map, tx_meta, 
+                                     scc, scc_set, scc_seq, curr_txn, 
+                                     curr_pie_, curr_op, txn_set, tid_set, 
+                                     opset, next_txn, next_pie, anc, tmp_set, 
+                                     alogs, sub_graph, tx_meta_set, msg_in, 
+                                     msg_out, svr_end >>
 
 __debug_label_zcxvx(self) == /\ pc[self] = "__debug_label_zcxvx"
                              /\ Assert((pie_map[self][next_tid[self]] /= {}), 
-                                       "Failure of assertion at line 699, column 30.")
+                                       "Failure of assertion at line 701, column 30.")
                              /\ IF M = 1
                                    THEN /\ pc' = [pc EXCEPT ![self] = "__debug_label_kdjf"]
                                    ELSE /\ pc' = [pc EXCEPT ![self] = "exe_all_deferred_pies"]
@@ -1703,7 +1717,7 @@ __debug_label_zcxvx(self) == /\ pc[self] = "__debug_label_zcxvx"
 
 __debug_label_kdjf(self) == /\ pc[self] = "__debug_label_kdjf"
                             /\ Assert((next_tid[self] = 1), 
-                                      "Failure of assertion at line 701, column 31.")
+                                      "Failure of assertion at line 703, column 31.")
                             /\ pc' = [pc EXCEPT ![self] = "exe_all_deferred_pies"]
                             /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
                                             id_counter, stack, 
@@ -1735,7 +1749,7 @@ exe_all_deferred_pies(self) == /\ pc[self] = "exe_all_deferred_pies"
                                                                                       pc        |->  "exe_all_deferred_pies",
                                                                                       curr_pie  |->  curr_pie[self] ] >>
                                                                                   \o stack[self]]
-                                          /\ pc' = [pc EXCEPT ![self] = "start_exe_pie"]
+                                          /\ pc' = [pc EXCEPT ![self] = "lbl_exe_pie"]
                                           /\ UNCHANGED << coo_mq, finished_map, 
                                                           msg_out >>
                                      ELSE /\ finished_map' = [finished_map EXCEPT ![self][next_tid[self]] = TRUE]
@@ -1744,7 +1758,7 @@ exe_all_deferred_pies(self) == /\ pc[self] = "exe_all_deferred_pies"
                                                                                    src |-> self]]
                                           /\ coo_mq' = [coo_mq EXCEPT ![next_tid[self]] = Append(@, msg_out'[self])]
                                           /\ TRUE
-                                          /\ pc' = [pc EXCEPT ![self] = "exe_scc"]
+                                          /\ pc' = [pc EXCEPT ![self] = "lbl_exe_scc"]
                                           /\ UNCHANGED << stack, curr_pie, 
                                                           pie_map, next_pie >>
                                /\ UNCHANGED << svr_mq, srz, n_committed, 
@@ -1765,62 +1779,36 @@ exe_all_deferred_pies(self) == /\ pc[self] = "exe_all_deferred_pies"
                                                vid_set, sub_graph, tx_meta_set, 
                                                msg_in, svr_end >>
 
-ExeSccSet(self) == lbl_exe_scc_set_(self) \/ exe_scc(self)
+ExeSccSet(self) == lbl_exe_scc_set(self) \/ lbl_exe_scc(self)
                       \/ __debug_label_zcxvx(self)
                       \/ __debug_label_kdjf(self)
                       \/ exe_all_deferred_pies(self)
 
-lbl_cmt_set_statsu(self) == /\ pc[self] = "lbl_cmt_set_statsu"
-                            /\ dep' = [dep EXCEPT ![self][msg_in[self].tid].status = COMMITTING]
-                            /\ pc' = [pc EXCEPT ![self] = "lbl_cmt_set_dep"]
-                            /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
-                                            id_counter, stack, 
-                                            pre_accept_acks_A, partitions_, 
-                                            pre_accept_acks, partitions, 
-                                            curr_pie, next_txn_, next_pie_, 
-                                            txn_id, dep_c, par, n_pie, 
-                                            pre_accept_acks_, accept_acks, 
-                                            committed, ballot, tmp_ack, 
-                                            tmp_acks, tmp_par, tmp_partitions, 
-                                            shards, msg_in_, msg_out_, 
-                                            keyspace, ya_dep, finished_map, 
-                                            asked_map, pie_map, tx_meta, scc, 
-                                            scc_set, scc_seq, curr_txn, 
-                                            curr_pie_, curr_op, txn_set, 
-                                            tid_set, opset, next_txn, next_tid, 
-                                            next_pie, anc, tmp_set, alogs, 
-                                            vid_set, sub_graph, tx_meta_set, 
-                                            msg_in, msg_out, svr_end >>
-
-lbl_cmt_set_dep(self) == /\ pc[self] = "lbl_cmt_set_dep"
-                         /\ dep' = [dep EXCEPT ![self][msg_in[self].tid].parents = msg_in[self].dep]
-                         /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "InquireUnknown",
-                                                                  pc        |->  "lbl_choose_to_commit" ] >>
-                                                              \o stack[self]]
-                         /\ pc' = [pc EXCEPT ![self] = "lbl_inquire_unknown"]
-                         /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
-                                         id_counter, pre_accept_acks_A, 
-                                         partitions_, pre_accept_acks, 
-                                         partitions, curr_pie, next_txn_, 
-                                         next_pie_, txn_id, dep_c, par, n_pie, 
-                                         pre_accept_acks_, accept_acks, 
-                                         committed, ballot, tmp_ack, tmp_acks, 
-                                         tmp_par, tmp_partitions, shards, 
-                                         msg_in_, msg_out_, keyspace, ya_dep, 
-                                         finished_map, asked_map, pie_map, 
-                                         tx_meta, scc, scc_set, scc_seq, 
-                                         curr_txn, curr_pie_, curr_op, txn_set, 
-                                         tid_set, opset, next_txn, next_tid, 
-                                         next_pie, anc, tmp_set, alogs, 
-                                         vid_set, sub_graph, tx_meta_set, 
-                                         msg_in, msg_out, svr_end >>
+lbl_on_commit(self) == /\ pc[self] = "lbl_on_commit"
+                       /\ dep' = [dep EXCEPT ![self][msg_in[self].tid] = [@ EXCEPT !.status = COMMITTING, !.parents = msg_in[self].dep]]
+                       /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "InquireUnknown",
+                                                                pc        |->  "lbl_choose_to_commit" ] >>
+                                                            \o stack[self]]
+                       /\ pc' = [pc EXCEPT ![self] = "lbl_inquire_unknown"]
+                       /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
+                                       id_counter, pre_accept_acks_A, 
+                                       partitions_, pre_accept_acks, 
+                                       partitions, curr_pie, next_txn_, 
+                                       next_pie_, txn_id, dep_c, par, n_pie, 
+                                       pre_accept_acks_, accept_acks, 
+                                       committed, ballot, tmp_ack, tmp_acks, 
+                                       tmp_par, tmp_partitions, shards, 
+                                       msg_in_, msg_out_, keyspace, ya_dep, 
+                                       finished_map, asked_map, pie_map, 
+                                       tx_meta, scc, scc_set, scc_seq, 
+                                       curr_txn, curr_pie_, curr_op, txn_set, 
+                                       tid_set, opset, next_txn, next_tid, 
+                                       next_pie, anc, tmp_set, alogs, vid_set, 
+                                       sub_graph, tx_meta_set, msg_in, msg_out, 
+                                       svr_end >>
 
 lbl_choose_to_commit(self) == /\ pc[self] = "lbl_choose_to_commit"
                               /\ txn_set' = [txn_set EXCEPT ![self] = AllAncestorsAtLeastCommittingTidSet(dep[self])]
-                              /\ IF M=1
-                                    THEN /\ Assert((txn_set'[self] /= {}), 
-                                                   "Failure of assertion at line 742, column 7.")
-                                    ELSE /\ TRUE
                               /\ pc' = [pc EXCEPT ![self] = "lbl_ready_to_commit"]
                               /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
                                               id_counter, stack, 
@@ -1872,9 +1860,10 @@ lbl_ready_to_commit(self) == /\ pc[self] = "lbl_ready_to_commit"
 
 lbl_find_exe(self) == /\ pc[self] = "lbl_find_exe"
                       /\ scc_set' = [scc_set EXCEPT ![self] = ToExecuteSccTidSet(dep[self], ProcIdToPartitionId(self), finished_map[self])]
-                      /\ IF M = 1 /\ N = 1 /\ X = 1
-                            THEN /\ pc' = [pc EXCEPT ![self] = "__debug_label_kdfjldf"]
-                            ELSE /\ pc' = [pc EXCEPT ![self] = "lbl_exe_scc_set"]
+                      /\ IF scc_set'[self] /= {}
+                            THEN /\ pc' = [pc EXCEPT ![self] = "lbl_next_exe"]
+                            ELSE /\ TRUE
+                                 /\ pc' = [pc EXCEPT ![self] = "lbl_on_commit_ret"]
                       /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
                                       id_counter, stack, pre_accept_acks_A, 
                                       partitions_, pre_accept_acks, partitions, 
@@ -1890,147 +1879,6 @@ lbl_find_exe(self) == /\ pc[self] = "lbl_find_exe"
                                       tmp_set, alogs, vid_set, sub_graph, 
                                       tx_meta_set, msg_in, msg_out, svr_end >>
 
-__debug_label_kdfjldf(self) == /\ pc[self] = "__debug_label_kdfjldf"
-                               /\ tmp_set' = [tmp_set EXCEPT ![self] = SUBSET DOMAIN dep[self]]
-                               /\ pc' = [pc EXCEPT ![self] = "__debug_label_lejrjkk"]
-                               /\ UNCHANGED << coo_mq, svr_mq, srz, 
-                                               n_committed, id_counter, stack, 
-                                               pre_accept_acks_A, partitions_, 
-                                               pre_accept_acks, partitions, 
-                                               curr_pie, next_txn_, next_pie_, 
-                                               txn_id, dep_c, par, n_pie, 
-                                               pre_accept_acks_, accept_acks, 
-                                               committed, ballot, tmp_ack, 
-                                               tmp_acks, tmp_par, 
-                                               tmp_partitions, shards, msg_in_, 
-                                               msg_out_, keyspace, dep, ya_dep, 
-                                               finished_map, asked_map, 
-                                               pie_map, tx_meta, scc, scc_set, 
-                                               scc_seq, curr_txn, curr_pie_, 
-                                               curr_op, txn_set, tid_set, 
-                                               opset, next_txn, next_tid, 
-                                               next_pie, anc, alogs, vid_set, 
-                                               sub_graph, tx_meta_set, msg_in, 
-                                               msg_out, svr_end >>
-
-__debug_label_lejrjkk(self) == /\ pc[self] = "__debug_label_lejrjkk"
-                               /\ Assert((tmp_set[self] = {{}, {1}}), 
-                                         "Failure of assertion at line 758, column 32.")
-                               /\ pc' = [pc EXCEPT ![self] = "__debug_label_dskfjld"]
-                               /\ UNCHANGED << coo_mq, svr_mq, srz, 
-                                               n_committed, id_counter, stack, 
-                                               pre_accept_acks_A, partitions_, 
-                                               pre_accept_acks, partitions, 
-                                               curr_pie, next_txn_, next_pie_, 
-                                               txn_id, dep_c, par, n_pie, 
-                                               pre_accept_acks_, accept_acks, 
-                                               committed, ballot, tmp_ack, 
-                                               tmp_acks, tmp_par, 
-                                               tmp_partitions, shards, msg_in_, 
-                                               msg_out_, keyspace, dep, ya_dep, 
-                                               finished_map, asked_map, 
-                                               pie_map, tx_meta, scc, scc_set, 
-                                               scc_seq, curr_txn, curr_pie_, 
-                                               curr_op, txn_set, tid_set, 
-                                               opset, next_txn, next_tid, 
-                                               next_pie, anc, tmp_set, alogs, 
-                                               vid_set, sub_graph, tx_meta_set, 
-                                               msg_in, msg_out, svr_end >>
-
-__debug_label_dskfjld(self) == /\ pc[self] = "__debug_label_dskfjld"
-                               /\ Assert((NewDepIsStronglyConnected(dep[self], {1})), 
-                                         "Failure of assertion at line 759, column 32.")
-                               /\ pc' = [pc EXCEPT ![self] = "__debug_label_dsfldjk"]
-                               /\ UNCHANGED << coo_mq, svr_mq, srz, 
-                                               n_committed, id_counter, stack, 
-                                               pre_accept_acks_A, partitions_, 
-                                               pre_accept_acks, partitions, 
-                                               curr_pie, next_txn_, next_pie_, 
-                                               txn_id, dep_c, par, n_pie, 
-                                               pre_accept_acks_, accept_acks, 
-                                               committed, ballot, tmp_ack, 
-                                               tmp_acks, tmp_par, 
-                                               tmp_partitions, shards, msg_in_, 
-                                               msg_out_, keyspace, dep, ya_dep, 
-                                               finished_map, asked_map, 
-                                               pie_map, tx_meta, scc, scc_set, 
-                                               scc_seq, curr_txn, curr_pie_, 
-                                               curr_op, txn_set, tid_set, 
-                                               opset, next_txn, next_tid, 
-                                               next_pie, anc, tmp_set, alogs, 
-                                               vid_set, sub_graph, tx_meta_set, 
-                                               msg_in, msg_out, svr_end >>
-
-__debug_label_dsfldjk(self) == /\ pc[self] = "__debug_label_dsfldjk"
-                               /\ Assert((SccTidSet(dep[self], 1) = {1}), 
-                                         "Failure of assertion at line 760, column 32.")
-                               /\ pc' = [pc EXCEPT ![self] = "__debug_label_dlfjdlf"]
-                               /\ UNCHANGED << coo_mq, svr_mq, srz, 
-                                               n_committed, id_counter, stack, 
-                                               pre_accept_acks_A, partitions_, 
-                                               pre_accept_acks, partitions, 
-                                               curr_pie, next_txn_, next_pie_, 
-                                               txn_id, dep_c, par, n_pie, 
-                                               pre_accept_acks_, accept_acks, 
-                                               committed, ballot, tmp_ack, 
-                                               tmp_acks, tmp_par, 
-                                               tmp_partitions, shards, msg_in_, 
-                                               msg_out_, keyspace, dep, ya_dep, 
-                                               finished_map, asked_map, 
-                                               pie_map, tx_meta, scc, scc_set, 
-                                               scc_seq, curr_txn, curr_pie_, 
-                                               curr_op, txn_set, tid_set, 
-                                               opset, next_txn, next_tid, 
-                                               next_pie, anc, tmp_set, alogs, 
-                                               vid_set, sub_graph, tx_meta_set, 
-                                               msg_in, msg_out, svr_end >>
-
-__debug_label_dlfjdlf(self) == /\ pc[self] = "__debug_label_dlfjdlf"
-                               /\ Assert((IsInvolved(dep[self], 1, 1)), 
-                                         "Failure of assertion at line 761, column 32.")
-                               /\ pc' = [pc EXCEPT ![self] = "lbl_exe_scc_set"]
-                               /\ UNCHANGED << coo_mq, svr_mq, srz, 
-                                               n_committed, id_counter, stack, 
-                                               pre_accept_acks_A, partitions_, 
-                                               pre_accept_acks, partitions, 
-                                               curr_pie, next_txn_, next_pie_, 
-                                               txn_id, dep_c, par, n_pie, 
-                                               pre_accept_acks_, accept_acks, 
-                                               committed, ballot, tmp_ack, 
-                                               tmp_acks, tmp_par, 
-                                               tmp_partitions, shards, msg_in_, 
-                                               msg_out_, keyspace, dep, ya_dep, 
-                                               finished_map, asked_map, 
-                                               pie_map, tx_meta, scc, scc_set, 
-                                               scc_seq, curr_txn, curr_pie_, 
-                                               curr_op, txn_set, tid_set, 
-                                               opset, next_txn, next_tid, 
-                                               next_pie, anc, tmp_set, alogs, 
-                                               vid_set, sub_graph, tx_meta_set, 
-                                               msg_in, msg_out, svr_end >>
-
-lbl_exe_scc_set(self) == /\ pc[self] = "lbl_exe_scc_set"
-                         /\ IF scc_set[self] /= {}
-                               THEN /\ pc' = [pc EXCEPT ![self] = "lbl_next_exe"]
-                               ELSE /\ TRUE
-                                    /\ pc' = [pc EXCEPT ![self] = "lbl_on_commit_ret"]
-                         /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
-                                         id_counter, stack, pre_accept_acks_A, 
-                                         partitions_, pre_accept_acks, 
-                                         partitions, curr_pie, next_txn_, 
-                                         next_pie_, txn_id, dep_c, par, n_pie, 
-                                         pre_accept_acks_, accept_acks, 
-                                         committed, ballot, tmp_ack, tmp_acks, 
-                                         tmp_par, tmp_partitions, shards, 
-                                         msg_in_, msg_out_, keyspace, dep, 
-                                         ya_dep, finished_map, asked_map, 
-                                         pie_map, tx_meta, scc, scc_set, 
-                                         scc_seq, curr_txn, curr_pie_, curr_op, 
-                                         txn_set, tid_set, opset, next_txn, 
-                                         next_tid, next_pie, anc, tmp_set, 
-                                         alogs, vid_set, sub_graph, 
-                                         tx_meta_set, msg_in, msg_out, svr_end >>
-
 lbl_next_exe(self) == /\ pc[self] = "lbl_next_exe"
                       /\ IF scc_set[self] /= {}
                             THEN /\ \E next_scc \in scc_set[self]:
@@ -2039,7 +1887,7 @@ lbl_next_exe(self) == /\ pc[self] = "lbl_next_exe"
                                  /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "ExeSccSet",
                                                                           pc        |->  "lbl_next_exe" ] >>
                                                                       \o stack[self]]
-                                 /\ pc' = [pc EXCEPT ![self] = "lbl_exe_scc_set_"]
+                                 /\ pc' = [pc EXCEPT ![self] = "lbl_exe_scc_set"]
                             ELSE /\ pc' = [pc EXCEPT ![self] = "lbl_find_exe"]
                                  /\ UNCHANGED << stack, scc, scc_set >>
                       /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
@@ -2079,16 +1927,9 @@ lbl_on_commit_ret(self) == /\ pc[self] = "lbl_on_commit_ret"
                                            tx_meta_set, msg_in, msg_out, 
                                            svr_end >>
 
-HandleCommit(self) == lbl_cmt_set_statsu(self) \/ lbl_cmt_set_dep(self)
-                         \/ lbl_choose_to_commit(self)
+HandleCommit(self) == lbl_on_commit(self) \/ lbl_choose_to_commit(self)
                          \/ lbl_ready_to_commit(self) \/ lbl_find_exe(self)
-                         \/ __debug_label_kdfjldf(self)
-                         \/ __debug_label_lejrjkk(self)
-                         \/ __debug_label_dskfjld(self)
-                         \/ __debug_label_dsfldjk(self)
-                         \/ __debug_label_dlfjdlf(self)
-                         \/ lbl_exe_scc_set(self) \/ lbl_next_exe(self)
-                         \/ lbl_on_commit_ret(self)
+                         \/ lbl_next_exe(self) \/ lbl_on_commit_ret(self)
 
 lbl_on_inquire(self) == /\ pc[self] = "lbl_on_inquire"
                         /\ pc' = [pc EXCEPT ![self] = Head(stack[self]).pc]
@@ -2112,136 +1953,122 @@ lbl_on_inquire(self) == /\ pc[self] = "lbl_on_inquire"
 
 HandleInquire(self) == lbl_on_inquire(self)
 
-start_exe_pie(self) == /\ pc[self] = "start_exe_pie"
-                       /\ opset' = [opset EXCEPT ![self] = curr_pie[self].opset]
-                       /\ Assert((opset'[self] /= {}), 
-                                 "Failure of assertion at line 799, column 5.")
-                       /\ pc' = [pc EXCEPT ![self] = "pie_add_srz"]
-                       /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
-                                       id_counter, stack, pre_accept_acks_A, 
-                                       partitions_, pre_accept_acks, 
-                                       partitions, curr_pie, next_txn_, 
-                                       next_pie_, txn_id, dep_c, par, n_pie, 
-                                       pre_accept_acks_, accept_acks, 
-                                       committed, ballot, tmp_ack, tmp_acks, 
-                                       tmp_par, tmp_partitions, shards, 
-                                       msg_in_, msg_out_, keyspace, dep, 
-                                       ya_dep, finished_map, asked_map, 
-                                       pie_map, tx_meta, scc, scc_set, scc_seq, 
-                                       curr_txn, curr_pie_, curr_op, txn_set, 
-                                       tid_set, next_txn, next_tid, next_pie, 
-                                       anc, tmp_set, alogs, vid_set, sub_graph, 
-                                       tx_meta_set, msg_in, msg_out, svr_end >>
-
-pie_add_srz(self) == /\ pc[self] = "pie_add_srz"
-                     /\ IF opset[self] /= {}
-                           THEN /\ \E next_op \in opset[self]:
-                                     /\ curr_op' = [curr_op EXCEPT ![self] = next_op]
-                                     /\ opset' = [opset EXCEPT ![self] = opset[self] \ {next_op}]
-                                /\ srz' = SrzAddNode(srz, curr_txn[self].tid)
-                                /\ alogs' = [alogs EXCEPT ![self] = keyspace[self][curr_op'[self].key].alogs]
-                                /\ pc' = [pc EXCEPT ![self] = "scan_alogs"]
-                                /\ UNCHANGED << stack, curr_pie >>
-                           ELSE /\ pc' = [pc EXCEPT ![self] = Head(stack[self]).pc]
-                                /\ curr_pie' = [curr_pie EXCEPT ![self] = Head(stack[self]).curr_pie]
-                                /\ stack' = [stack EXCEPT ![self] = Tail(stack[self])]
-                                /\ UNCHANGED << srz, curr_op, opset, alogs >>
-                     /\ UNCHANGED << coo_mq, svr_mq, n_committed, id_counter, 
-                                     pre_accept_acks_A, partitions_, 
-                                     pre_accept_acks, partitions, next_txn_, 
-                                     next_pie_, txn_id, dep_c, par, n_pie, 
-                                     pre_accept_acks_, accept_acks, committed, 
-                                     ballot, tmp_ack, tmp_acks, tmp_par, 
-                                     tmp_partitions, shards, msg_in_, msg_out_, 
-                                     keyspace, dep, ya_dep, finished_map, 
-                                     asked_map, pie_map, tx_meta, scc, scc_set, 
-                                     scc_seq, curr_txn, curr_pie_, txn_set, 
-                                     tid_set, next_txn, next_tid, next_pie, 
-                                     anc, tmp_set, vid_set, sub_graph, 
+lbl_exe_pie(self) == /\ pc[self] = "lbl_exe_pie"
+                     /\ opset' = [opset EXCEPT ![self] = curr_pie[self].opset]
+                     /\ Assert((opset'[self] /= {}), 
+                               "Failure of assertion at line 803, column 5.")
+                     /\ pc' = [pc EXCEPT ![self] = "lbl_pie_add_srz"]
+                     /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
+                                     id_counter, stack, pre_accept_acks_A, 
+                                     partitions_, pre_accept_acks, partitions, 
+                                     curr_pie, next_txn_, next_pie_, txn_id, 
+                                     dep_c, par, n_pie, pre_accept_acks_, 
+                                     accept_acks, committed, ballot, tmp_ack, 
+                                     tmp_acks, tmp_par, tmp_partitions, shards, 
+                                     msg_in_, msg_out_, keyspace, dep, ya_dep, 
+                                     finished_map, asked_map, pie_map, tx_meta, 
+                                     scc, scc_set, scc_seq, curr_txn, 
+                                     curr_pie_, curr_op, txn_set, tid_set, 
+                                     next_txn, next_tid, next_pie, anc, 
+                                     tmp_set, alogs, vid_set, sub_graph, 
                                      tx_meta_set, msg_in, msg_out, svr_end >>
 
-scan_alogs(self) == /\ pc[self] = "scan_alogs"
-                    /\ IF alogs[self] /= {}
-                          THEN /\ \E next_access \in alogs[self]:
-                                    /\ alogs' = [alogs EXCEPT ![self] = alogs[self] \ {next_access}]
-                                    /\ IF \/ next_access.type /= curr_op[self].type
-                                          \/ next_access.type = "w"
-                                          THEN /\ srz' = SrzAddEdge(srz, next_access.tid, curr_txn[self].tid)
-                                          ELSE /\ TRUE
-                                               /\ srz' = srz
-                                    /\ keyspace' = [keyspace EXCEPT ![self][curr_op[self].key].logs = @ \union {<<curr_txn[self].tid, curr_op[self].type>>}]
-                               /\ pc' = [pc EXCEPT ![self] = "scan_alogs"]
-                          ELSE /\ pc' = [pc EXCEPT ![self] = "pie_add_srz"]
-                               /\ UNCHANGED << srz, keyspace, alogs >>
-                    /\ UNCHANGED << coo_mq, svr_mq, n_committed, id_counter, 
-                                    stack, pre_accept_acks_A, partitions_, 
-                                    pre_accept_acks, partitions, curr_pie, 
-                                    next_txn_, next_pie_, txn_id, dep_c, par, 
-                                    n_pie, pre_accept_acks_, accept_acks, 
-                                    committed, ballot, tmp_ack, tmp_acks, 
-                                    tmp_par, tmp_partitions, shards, msg_in_, 
-                                    msg_out_, dep, ya_dep, finished_map, 
-                                    asked_map, pie_map, tx_meta, scc, scc_set, 
-                                    scc_seq, curr_txn, curr_pie_, curr_op, 
-                                    txn_set, tid_set, opset, next_txn, 
-                                    next_tid, next_pie, anc, tmp_set, vid_set, 
-                                    sub_graph, tx_meta_set, msg_in, msg_out, 
-                                    svr_end >>
+lbl_pie_add_srz(self) == /\ pc[self] = "lbl_pie_add_srz"
+                         /\ IF opset[self] /= {}
+                               THEN /\ \E next_op \in opset[self]:
+                                         /\ curr_op' = [curr_op EXCEPT ![self] = next_op]
+                                         /\ opset' = [opset EXCEPT ![self] = opset[self] \ {next_op}]
+                                    /\ srz' = SrzAddNode(srz, curr_txn[self].tid)
+                                    /\ alogs' = [alogs EXCEPT ![self] = keyspace[self][curr_op'[self].key].alogs]
+                                    /\ pc' = [pc EXCEPT ![self] = "lbl_scan_alogs"]
+                                    /\ UNCHANGED << stack, curr_pie >>
+                               ELSE /\ pc' = [pc EXCEPT ![self] = Head(stack[self]).pc]
+                                    /\ curr_pie' = [curr_pie EXCEPT ![self] = Head(stack[self]).curr_pie]
+                                    /\ stack' = [stack EXCEPT ![self] = Tail(stack[self])]
+                                    /\ UNCHANGED << srz, curr_op, opset, alogs >>
+                         /\ UNCHANGED << coo_mq, svr_mq, n_committed, 
+                                         id_counter, pre_accept_acks_A, 
+                                         partitions_, pre_accept_acks, 
+                                         partitions, next_txn_, next_pie_, 
+                                         txn_id, dep_c, par, n_pie, 
+                                         pre_accept_acks_, accept_acks, 
+                                         committed, ballot, tmp_ack, tmp_acks, 
+                                         tmp_par, tmp_partitions, shards, 
+                                         msg_in_, msg_out_, keyspace, dep, 
+                                         ya_dep, finished_map, asked_map, 
+                                         pie_map, tx_meta, scc, scc_set, 
+                                         scc_seq, curr_txn, curr_pie_, txn_set, 
+                                         tid_set, next_txn, next_tid, next_pie, 
+                                         anc, tmp_set, vid_set, sub_graph, 
+                                         tx_meta_set, msg_in, msg_out, svr_end >>
 
-ExePie(self) == start_exe_pie(self) \/ pie_add_srz(self)
-                   \/ scan_alogs(self)
+lbl_scan_alogs(self) == /\ pc[self] = "lbl_scan_alogs"
+                        /\ IF alogs[self] /= {}
+                              THEN /\ \E next_access \in alogs[self]:
+                                        /\ alogs' = [alogs EXCEPT ![self] = alogs[self] \ {next_access}]
+                                        /\ IF \/ next_access.type /= curr_op[self].type
+                                              \/ next_access.type = "w"
+                                              THEN /\ srz' = SrzAddEdge(srz, next_access.tid, curr_txn[self].tid)
+                                              ELSE /\ TRUE
+                                                   /\ srz' = srz
+                                        /\ keyspace' = [keyspace EXCEPT ![self][curr_op[self].key].logs = @ \union {<<curr_txn[self].tid, curr_op[self].type>>}]
+                                   /\ pc' = [pc EXCEPT ![self] = "lbl_scan_alogs"]
+                              ELSE /\ pc' = [pc EXCEPT ![self] = "lbl_pie_add_srz"]
+                                   /\ UNCHANGED << srz, keyspace, alogs >>
+                        /\ UNCHANGED << coo_mq, svr_mq, n_committed, 
+                                        id_counter, stack, pre_accept_acks_A, 
+                                        partitions_, pre_accept_acks, 
+                                        partitions, curr_pie, next_txn_, 
+                                        next_pie_, txn_id, dep_c, par, n_pie, 
+                                        pre_accept_acks_, accept_acks, 
+                                        committed, ballot, tmp_ack, tmp_acks, 
+                                        tmp_par, tmp_partitions, shards, 
+                                        msg_in_, msg_out_, dep, ya_dep, 
+                                        finished_map, asked_map, pie_map, 
+                                        tx_meta, scc, scc_set, scc_seq, 
+                                        curr_txn, curr_pie_, curr_op, txn_set, 
+                                        tid_set, opset, next_txn, next_tid, 
+                                        next_pie, anc, tmp_set, vid_set, 
+                                        sub_graph, tx_meta_set, msg_in, 
+                                        msg_out, svr_end >>
 
-unit_test(self) == /\ pc[self] = "unit_test"
-                   /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "UnitTest",
-                                                            pc        |->  "coo" ] >>
-                                                        \o stack[self]]
-                   /\ pc' = [pc EXCEPT ![self] = "__debug_label_kldjf"]
-                   /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
-                                   id_counter, pre_accept_acks_A, partitions_, 
-                                   pre_accept_acks, partitions, curr_pie, 
-                                   next_txn_, next_pie_, txn_id, dep_c, par, 
-                                   n_pie, pre_accept_acks_, accept_acks, 
-                                   committed, ballot, tmp_ack, tmp_acks, 
-                                   tmp_par, tmp_partitions, shards, msg_in_, 
-                                   msg_out_, keyspace, dep, ya_dep, 
-                                   finished_map, asked_map, pie_map, tx_meta, 
-                                   scc, scc_set, scc_seq, curr_txn, curr_pie_, 
-                                   curr_op, txn_set, tid_set, opset, next_txn, 
-                                   next_tid, next_pie, anc, tmp_set, alogs, 
-                                   vid_set, sub_graph, tx_meta_set, msg_in, 
-                                   msg_out, svr_end >>
+ExePie(self) == lbl_exe_pie(self) \/ lbl_pie_add_srz(self)
+                   \/ lbl_scan_alogs(self)
 
-coo(self) == /\ pc[self] = "coo"
-             /\ dep_c' = [dep_c EXCEPT ![self] = {}]
-             /\ shards' = [shards EXCEPT ![self] = {}]
-             /\ id_counter' = id_counter + 1
-             /\ txn_id' = [txn_id EXCEPT ![self] = self]
-             /\ Assert((txn_id'[self] > 0), 
-                       "Failure of assertion at line 850, column 5.")
-             /\ committed' = [committed EXCEPT ![self] = FALSE]
-             /\ next_txn_' = [next_txn_ EXCEPT ![self] = TXN[self]]
-             /\ Assert((IsTxnRequest(next_txn_'[self])), 
-                       "Failure of assertion at line 854, column 5.")
-             /\ n_pie' = [n_pie EXCEPT ![self] = Len(next_txn_'[self])]
-             /\ Assert((n_pie'[self] > 0), 
-                       "Failure of assertion at line 856, column 5.")
-             /\ pc' = [pc EXCEPT ![self] = "lbl_get_shards"]
-             /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, stack, 
-                             pre_accept_acks_A, partitions_, pre_accept_acks, 
-                             partitions, curr_pie, next_pie_, par, 
-                             pre_accept_acks_, accept_acks, ballot, tmp_ack, 
-                             tmp_acks, tmp_par, tmp_partitions, msg_in_, 
-                             msg_out_, keyspace, dep, ya_dep, finished_map, 
-                             asked_map, pie_map, tx_meta, scc, scc_set, 
-                             scc_seq, curr_txn, curr_pie_, curr_op, txn_set, 
-                             tid_set, opset, next_txn, next_tid, next_pie, anc, 
-                             tmp_set, alogs, vid_set, sub_graph, tx_meta_set, 
-                             msg_in, msg_out, svr_end >>
+lbl_coord_begin(self) == /\ pc[self] = "lbl_coord_begin"
+                         /\ dep_c' = [dep_c EXCEPT ![self] = {}]
+                         /\ shards' = [shards EXCEPT ![self] = {}]
+                         /\ id_counter' = id_counter + 1
+                         /\ txn_id' = [txn_id EXCEPT ![self] = self]
+                         /\ Assert((txn_id'[self] > 0), 
+                                   "Failure of assertion at line 855, column 5.")
+                         /\ committed' = [committed EXCEPT ![self] = FALSE]
+                         /\ next_txn_' = [next_txn_ EXCEPT ![self] = TXN[self]]
+                         /\ Assert((IsTxnRequest(next_txn_'[self])), 
+                                   "Failure of assertion at line 859, column 5.")
+                         /\ n_pie' = [n_pie EXCEPT ![self] = Len(next_txn_'[self])]
+                         /\ Assert((n_pie'[self] > 0), 
+                                   "Failure of assertion at line 861, column 5.")
+                         /\ pc' = [pc EXCEPT ![self] = "lbl_get_shards"]
+                         /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
+                                         stack, pre_accept_acks_A, partitions_, 
+                                         pre_accept_acks, partitions, curr_pie, 
+                                         next_pie_, par, pre_accept_acks_, 
+                                         accept_acks, ballot, tmp_ack, 
+                                         tmp_acks, tmp_par, tmp_partitions, 
+                                         msg_in_, msg_out_, keyspace, dep, 
+                                         ya_dep, finished_map, asked_map, 
+                                         pie_map, tx_meta, scc, scc_set, 
+                                         scc_seq, curr_txn, curr_pie_, curr_op, 
+                                         txn_set, tid_set, opset, next_txn, 
+                                         next_tid, next_pie, anc, tmp_set, 
+                                         alogs, vid_set, sub_graph, 
+                                         tx_meta_set, msg_in, msg_out, svr_end >>
 
 lbl_get_shards(self) == /\ pc[self] = "lbl_get_shards"
                         /\ shards' = [shards EXCEPT ![self] = GetTxShards(next_txn_[self])]
                         /\ Assert((shards'[self] /= {}), 
-                                  "Failure of assertion at line 859, column 5.")
+                                  "Failure of assertion at line 864, column 5.")
                         /\ pc' = [pc EXCEPT ![self] = "lbl_pre_accept"]
                         /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
                                         id_counter, stack, pre_accept_acks_A, 
@@ -2273,13 +2100,11 @@ lbl_pre_accept(self) == /\ pc[self] = "lbl_pre_accept"
                                                                                 meta |-> GenTxMeta(txn_id[self], shards[self])
                                                                              ]]
                                    /\ Assert((IsMsgValid(msg_out_'[self])), 
-                                             "Failure of assertion at line 873, column 7.")
+                                             "Failure of assertion at line 878, column 7.")
                                    /\ svr_mq' = BroadcastMsg(svr_mq, par'[self], msg_out_'[self])
                                    /\ pc' = [pc EXCEPT ![self] = "lbl_pre_accept"]
                                    /\ UNCHANGED pre_accept_acks_
                               ELSE /\ pre_accept_acks_' = [pre_accept_acks_ EXCEPT ![self] = InitAcks(shards[self])]
-                                   /\ Assert((pre_accept_acks_'[self] = [i \in shards[self] |-> {}]), 
-                                             "Failure of assertion at line 878, column 5.")
                                    /\ pc' = [pc EXCEPT ![self] = "lbl_coord_pre_accept_ack"]
                                    /\ UNCHANGED << svr_mq, next_txn_, 
                                                    next_pie_, par, msg_out_ >>
@@ -2303,27 +2128,49 @@ lbl_coord_pre_accept_ack(self) == /\ pc[self] = "lbl_coord_pre_accept_ack"
                                   /\ msg_in_' = [msg_in_ EXCEPT ![self] = Head(coo_mq[self])]
                                   /\ coo_mq' = [coo_mq EXCEPT ![self] = Tail(coo_mq[self])]
                                   /\ Assert((IsMsgValid(msg_in_'[self])), 
-                                            "Failure of assertion at line 884, column 7.")
+                                            "Failure of assertion at line 889, column 7.")
                                   /\ IF msg_in_'[self].type = "ack_pre_accept" /\ msg_in_'[self].tid = txn_id[self]
                                         THEN /\ par' = [par EXCEPT ![self] = ProcIdToPartitionId(msg_in_'[self].src)]
-                                             /\ pc' = [pc EXCEPT ![self] = "lbl_dbg_aaaaa"]
+                                             /\ pre_accept_acks_' = [pre_accept_acks_ EXCEPT ![self][par'[self]] = pre_accept_acks_[self][par'[self]] \union {msg_in_'[self]}]
+                                             /\ IF FastPathPossible(pre_accept_acks_'[self], shards[self])
+                                                   THEN /\ IF FastPathReady(pre_accept_acks_'[self], shards[self])
+                                                              THEN /\ /\ partitions_' = [partitions_ EXCEPT ![self] = shards[self]]
+                                                                      /\ pre_accept_acks_A' = [pre_accept_acks_A EXCEPT ![self] = pre_accept_acks_'[self]]
+                                                                      /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "AggregateGraphForFastPath",
+                                                                                                               pc        |->  "lbl_coord_goto_commit",
+                                                                                                               pre_accept_acks_A |->  pre_accept_acks_A[self],
+                                                                                                               partitions_ |->  partitions_[self] ] >>
+                                                                                                           \o stack[self]]
+                                                                   /\ pc' = [pc EXCEPT ![self] = "xxxxdddx"]
+                                                              ELSE /\ pc' = [pc EXCEPT ![self] = "lbl_dbg_zzzzz"]
+                                                                   /\ UNCHANGED << stack, 
+                                                                                   pre_accept_acks_A, 
+                                                                                   partitions_ >>
+                                                   ELSE /\ IF M = 1
+                                                              THEN /\ Assert((FALSE), 
+                                                                             "Failure of assertion at line 909, column 13.")
+                                                              ELSE /\ TRUE
+                                                        /\ pc' = [pc EXCEPT ![self] = "lbl_coord_pre_accept_ack"]
+                                                        /\ UNCHANGED << stack, 
+                                                                        pre_accept_acks_A, 
+                                                                        partitions_ >>
                                         ELSE /\ Assert((FALSE), 
-                                                       "Failure of assertion at line 914, column 9.")
+                                                       "Failure of assertion at line 921, column 9.")
                                              /\ pc' = [pc EXCEPT ![self] = "lbl_coord_pre_accept_ack"]
-                                             /\ par' = par
+                                             /\ UNCHANGED << stack, 
+                                                             pre_accept_acks_A, 
+                                                             partitions_, par, 
+                                                             pre_accept_acks_ >>
                                   /\ UNCHANGED << svr_mq, srz, n_committed, 
-                                                  id_counter, stack, 
-                                                  pre_accept_acks_A, 
-                                                  partitions_, pre_accept_acks, 
+                                                  id_counter, pre_accept_acks, 
                                                   partitions, curr_pie, 
                                                   next_txn_, next_pie_, txn_id, 
-                                                  dep_c, n_pie, 
-                                                  pre_accept_acks_, 
-                                                  accept_acks, committed, 
-                                                  ballot, tmp_ack, tmp_acks, 
-                                                  tmp_par, tmp_partitions, 
-                                                  shards, msg_out_, keyspace, 
-                                                  dep, ya_dep, finished_map, 
+                                                  dep_c, n_pie, accept_acks, 
+                                                  committed, ballot, tmp_ack, 
+                                                  tmp_acks, tmp_par, 
+                                                  tmp_partitions, shards, 
+                                                  msg_out_, keyspace, dep, 
+                                                  ya_dep, finished_map, 
                                                   asked_map, pie_map, tx_meta, 
                                                   scc, scc_set, scc_seq, 
                                                   curr_txn, curr_pie_, curr_op, 
@@ -2332,66 +2179,6 @@ lbl_coord_pre_accept_ack(self) == /\ pc[self] = "lbl_coord_pre_accept_ack"
                                                   anc, tmp_set, alogs, vid_set, 
                                                   sub_graph, tx_meta_set, 
                                                   msg_in, msg_out, svr_end >>
-
-lbl_dbg_aaaaa(self) == /\ pc[self] = "lbl_dbg_aaaaa"
-                       /\ Assert((par[self] \in shards[self]), 
-                                 "Failure of assertion at line 887, column 24.")
-                       /\ pre_accept_acks_' = [pre_accept_acks_ EXCEPT ![self][par[self]] = pre_accept_acks_[self][par[self]] \union {msg_in_[self]}]
-                       /\ pc' = [pc EXCEPT ![self] = "lbl_deg_bbbbb"]
-                       /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
-                                       id_counter, stack, pre_accept_acks_A, 
-                                       partitions_, pre_accept_acks, 
-                                       partitions, curr_pie, next_txn_, 
-                                       next_pie_, txn_id, dep_c, par, n_pie, 
-                                       accept_acks, committed, ballot, tmp_ack, 
-                                       tmp_acks, tmp_par, tmp_partitions, 
-                                       shards, msg_in_, msg_out_, keyspace, 
-                                       dep, ya_dep, finished_map, asked_map, 
-                                       pie_map, tx_meta, scc, scc_set, scc_seq, 
-                                       curr_txn, curr_pie_, curr_op, txn_set, 
-                                       tid_set, opset, next_txn, next_tid, 
-                                       next_pie, anc, tmp_set, alogs, vid_set, 
-                                       sub_graph, tx_meta_set, msg_in, msg_out, 
-                                       svr_end >>
-
-lbl_deg_bbbbb(self) == /\ pc[self] = "lbl_deg_bbbbb"
-                       /\ Assert((pre_accept_acks_[self][par[self]] /= {}), 
-                                 "Failure of assertion at line 889, column 24.")
-                       /\ IF FastPathPossible(pre_accept_acks_[self], shards[self])
-                             THEN /\ IF FastPathReady(pre_accept_acks_[self], shards[self])
-                                        THEN /\ /\ partitions_' = [partitions_ EXCEPT ![self] = shards[self]]
-                                                /\ pre_accept_acks_A' = [pre_accept_acks_A EXCEPT ![self] = pre_accept_acks_[self]]
-                                                /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "AggregateGraphForFastPath",
-                                                                                         pc        |->  "lbl_coord_goto_commit",
-                                                                                         pre_accept_acks_A |->  pre_accept_acks_A[self],
-                                                                                         partitions_ |->  partitions_[self] ] >>
-                                                                                     \o stack[self]]
-                                             /\ pc' = [pc EXCEPT ![self] = "xxxxdddx"]
-                                        ELSE /\ pc' = [pc EXCEPT ![self] = "lbl_dbg_zzzzz"]
-                                             /\ UNCHANGED << stack, 
-                                                             pre_accept_acks_A, 
-                                                             partitions_ >>
-                             ELSE /\ IF N=1 /\ X=1
-                                        THEN /\ Assert((FALSE), 
-                                                       "Failure of assertion at line 903, column 13.")
-                                        ELSE /\ TRUE
-                                  /\ pc' = [pc EXCEPT ![self] = "lbl_coord_slow_path_check"]
-                                  /\ UNCHANGED << stack, pre_accept_acks_A, 
-                                                  partitions_ >>
-                       /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
-                                       id_counter, pre_accept_acks, partitions, 
-                                       curr_pie, next_txn_, next_pie_, txn_id, 
-                                       dep_c, par, n_pie, pre_accept_acks_, 
-                                       accept_acks, committed, ballot, tmp_ack, 
-                                       tmp_acks, tmp_par, tmp_partitions, 
-                                       shards, msg_in_, msg_out_, keyspace, 
-                                       dep, ya_dep, finished_map, asked_map, 
-                                       pie_map, tx_meta, scc, scc_set, scc_seq, 
-                                       curr_txn, curr_pie_, curr_op, txn_set, 
-                                       tid_set, opset, next_txn, next_tid, 
-                                       next_pie, anc, tmp_set, alogs, vid_set, 
-                                       sub_graph, tx_meta_set, msg_in, msg_out, 
-                                       svr_end >>
 
 lbl_coord_goto_commit(self) == /\ pc[self] = "lbl_coord_goto_commit"
                                /\ pc' = [pc EXCEPT ![self] = "commit_phase"]
@@ -2418,9 +2205,9 @@ lbl_coord_goto_commit(self) == /\ pc[self] = "lbl_coord_goto_commit"
 lbl_dbg_zzzzz(self) == /\ pc[self] = "lbl_dbg_zzzzz"
                        /\ IF N=1 /\ X=1
                              THEN /\ Assert((FALSE), 
-                                            "Failure of assertion at line 898, column 15.")
+                                            "Failure of assertion at line 904, column 15.")
                              ELSE /\ TRUE
-                       /\ pc' = [pc EXCEPT ![self] = "lbl_coord_slow_path_check"]
+                       /\ pc' = [pc EXCEPT ![self] = "lbl_coord_pre_accept_ack"]
                        /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
                                        id_counter, stack, pre_accept_acks_A, 
                                        partitions_, pre_accept_acks, 
@@ -2437,59 +2224,6 @@ lbl_dbg_zzzzz(self) == /\ pc[self] = "lbl_dbg_zzzzz"
                                        next_pie, anc, tmp_set, alogs, vid_set, 
                                        sub_graph, tx_meta_set, msg_in, msg_out, 
                                        svr_end >>
-
-lbl_coord_slow_path_check(self) == /\ pc[self] = "lbl_coord_slow_path_check"
-                                   /\ IF SlowPathReady(pre_accept_acks_[self], shards[self])
-                                         THEN /\ /\ partitions' = [partitions EXCEPT ![self] = shards[self]]
-                                                 /\ pre_accept_acks' = [pre_accept_acks EXCEPT ![self] = pre_accept_acks_[self]]
-                                                 /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "AggregateGraphForAccept",
-                                                                                          pc        |->  "goto_accept",
-                                                                                          pre_accept_acks |->  pre_accept_acks[self],
-                                                                                          partitions |->  partitions[self] ] >>
-                                                                                      \o stack[self]]
-                                              /\ pc' = [pc EXCEPT ![self] = "slowpath_init"]
-                                         ELSE /\ pc' = [pc EXCEPT ![self] = "lbl_coord_pre_accept_ack"]
-                                              /\ UNCHANGED << stack, 
-                                                              pre_accept_acks, 
-                                                              partitions >>
-                                   /\ UNCHANGED << coo_mq, svr_mq, srz, 
-                                                   n_committed, id_counter, 
-                                                   pre_accept_acks_A, 
-                                                   partitions_, curr_pie, 
-                                                   next_txn_, next_pie_, 
-                                                   txn_id, dep_c, par, n_pie, 
-                                                   pre_accept_acks_, 
-                                                   accept_acks, committed, 
-                                                   ballot, tmp_ack, tmp_acks, 
-                                                   tmp_par, tmp_partitions, 
-                                                   shards, msg_in_, msg_out_, 
-                                                   keyspace, dep, ya_dep, 
-                                                   finished_map, asked_map, 
-                                                   pie_map, tx_meta, scc, 
-                                                   scc_set, scc_seq, curr_txn, 
-                                                   curr_pie_, curr_op, txn_set, 
-                                                   tid_set, opset, next_txn, 
-                                                   next_tid, next_pie, anc, 
-                                                   tmp_set, alogs, vid_set, 
-                                                   sub_graph, tx_meta_set, 
-                                                   msg_in, msg_out, svr_end >>
-
-goto_accept(self) == /\ pc[self] = "goto_accept"
-                     /\ pc' = [pc EXCEPT ![self] = "accept_phase"]
-                     /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
-                                     id_counter, stack, pre_accept_acks_A, 
-                                     partitions_, pre_accept_acks, partitions, 
-                                     curr_pie, next_txn_, next_pie_, txn_id, 
-                                     dep_c, par, n_pie, pre_accept_acks_, 
-                                     accept_acks, committed, ballot, tmp_ack, 
-                                     tmp_acks, tmp_par, tmp_partitions, shards, 
-                                     msg_in_, msg_out_, keyspace, dep, ya_dep, 
-                                     finished_map, asked_map, pie_map, tx_meta, 
-                                     scc, scc_set, scc_seq, curr_txn, 
-                                     curr_pie_, curr_op, txn_set, tid_set, 
-                                     opset, next_txn, next_tid, next_pie, anc, 
-                                     tmp_set, alogs, vid_set, sub_graph, 
-                                     tx_meta_set, msg_in, msg_out, svr_end >>
 
 accept_phase(self) == /\ pc[self] = "accept_phase"
                       /\ ballot' = [ballot EXCEPT ![self] = DEFAULT_ACCEPT_BALLOT]
@@ -2518,7 +2252,7 @@ accept_phase(self) == /\ pc[self] = "accept_phase"
 
 lbl_dbg_jjjjj(self) == /\ pc[self] = "lbl_dbg_jjjjj"
                        /\ Assert((msg_out_[self].ballot \geq 0), 
-                                 "Failure of assertion at line 928, column 20.")
+                                 "Failure of assertion at line 935, column 20.")
                        /\ pc' = [pc EXCEPT ![self] = "broadcast_accept"]
                        /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
                                        id_counter, stack, pre_accept_acks_A, 
@@ -2596,7 +2330,7 @@ process_accept_ack(self) == /\ pc[self] = "process_accept_ack"
 
 __debug_lable_gkdjfk(self) == /\ pc[self] = "__debug_lable_gkdjfk"
                               /\ Assert((FALSE), 
-                                        "Failure of assertion at line 947, column 33.")
+                                        "Failure of assertion at line 954, column 33.")
                               /\ pc' = [pc EXCEPT ![self] = "process_accept_ack"]
                               /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
                                               id_counter, stack, 
@@ -2626,43 +2360,23 @@ commit_phase(self) == /\ pc[self] = "commit_phase"
                                                                   dep |-> dep_c[self]
                                                                 ]]
                       /\ Assert((IsMsgValid(msg_out_'[self])), 
-                                "Failure of assertion at line 961, column 5.")
-                      /\ pc' = [pc EXCEPT ![self] = "broadcast_commit"]
-                      /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
-                                      id_counter, stack, pre_accept_acks_A, 
-                                      partitions_, pre_accept_acks, partitions, 
-                                      curr_pie, next_txn_, next_pie_, txn_id, 
-                                      dep_c, par, n_pie, pre_accept_acks_, 
-                                      accept_acks, committed, ballot, tmp_ack, 
-                                      tmp_acks, tmp_par, tmp_partitions, 
-                                      shards, msg_in_, keyspace, dep, ya_dep, 
-                                      finished_map, asked_map, pie_map, 
-                                      tx_meta, scc, scc_set, scc_seq, curr_txn, 
-                                      curr_pie_, curr_op, txn_set, tid_set, 
-                                      opset, next_txn, next_tid, next_pie, anc, 
+                                "Failure of assertion at line 968, column 5.")
+                      /\ svr_mq' = BroadcastMsgToMultiplePartitions(svr_mq, shards[self], msg_out_'[self])
+                      /\ pc' = [pc EXCEPT ![self] = "lbl_wait_commit_ack"]
+                      /\ UNCHANGED << coo_mq, srz, n_committed, id_counter, 
+                                      stack, pre_accept_acks_A, partitions_, 
+                                      pre_accept_acks, partitions, curr_pie, 
+                                      next_txn_, next_pie_, txn_id, dep_c, par, 
+                                      n_pie, pre_accept_acks_, accept_acks, 
+                                      committed, ballot, tmp_ack, tmp_acks, 
+                                      tmp_par, tmp_partitions, shards, msg_in_, 
+                                      keyspace, dep, ya_dep, finished_map, 
+                                      asked_map, pie_map, tx_meta, scc, 
+                                      scc_set, scc_seq, curr_txn, curr_pie_, 
+                                      curr_op, txn_set, tid_set, opset, 
+                                      next_txn, next_tid, next_pie, anc, 
                                       tmp_set, alogs, vid_set, sub_graph, 
                                       tx_meta_set, msg_in, msg_out, svr_end >>
-
-broadcast_commit(self) == /\ pc[self] = "broadcast_commit"
-                          /\ svr_mq' = BroadcastMsgToMultiplePartitions(svr_mq, shards[self], msg_out_[self])
-                          /\ pc' = [pc EXCEPT ![self] = "lbl_wait_commit_ack"]
-                          /\ UNCHANGED << coo_mq, srz, n_committed, id_counter, 
-                                          stack, pre_accept_acks_A, 
-                                          partitions_, pre_accept_acks, 
-                                          partitions, curr_pie, next_txn_, 
-                                          next_pie_, txn_id, dep_c, par, n_pie, 
-                                          pre_accept_acks_, accept_acks, 
-                                          committed, ballot, tmp_ack, tmp_acks, 
-                                          tmp_par, tmp_partitions, shards, 
-                                          msg_in_, msg_out_, keyspace, dep, 
-                                          ya_dep, finished_map, asked_map, 
-                                          pie_map, tx_meta, scc, scc_set, 
-                                          scc_seq, curr_txn, curr_pie_, 
-                                          curr_op, txn_set, tid_set, opset, 
-                                          next_txn, next_tid, next_pie, anc, 
-                                          tmp_set, alogs, vid_set, sub_graph, 
-                                          tx_meta_set, msg_in, msg_out, 
-                                          svr_end >>
 
 lbl_wait_commit_ack(self) == /\ pc[self] = "lbl_wait_commit_ack"
                              /\ (Len(coo_mq[self]) > 0)
@@ -2672,7 +2386,7 @@ lbl_wait_commit_ack(self) == /\ pc[self] = "lbl_wait_commit_ack"
                                    THEN /\ committed' = [committed EXCEPT ![self] = TRUE]
                                         /\ n_committed' = n_committed + 1
                                         /\ pc' = [pc EXCEPT ![self] = "end_coord"]
-                                   ELSE /\ pc' = [pc EXCEPT ![self] = "__debug_label_iuyuiyer"]
+                                   ELSE /\ pc' = [pc EXCEPT ![self] = "lbl_dbg_kkkkk"]
                                         /\ UNCHANGED << n_committed, committed >>
                              /\ UNCHANGED << svr_mq, srz, id_counter, stack, 
                                              pre_accept_acks_A, partitions_, 
@@ -2692,30 +2406,26 @@ lbl_wait_commit_ack(self) == /\ pc[self] = "lbl_wait_commit_ack"
                                              tx_meta_set, msg_in, msg_out, 
                                              svr_end >>
 
-__debug_label_iuyuiyer(self) == /\ pc[self] = "__debug_label_iuyuiyer"
-                                /\ Assert((msg_in_[self].type /= "ack_commit"), 
-                                          "Failure of assertion at line 975, column 33.")
-                                /\ pc' = [pc EXCEPT ![self] = "lbl_wait_commit_ack"]
-                                /\ UNCHANGED << coo_mq, svr_mq, srz, 
-                                                n_committed, id_counter, stack, 
-                                                pre_accept_acks_A, partitions_, 
-                                                pre_accept_acks, partitions, 
-                                                curr_pie, next_txn_, next_pie_, 
-                                                txn_id, dep_c, par, n_pie, 
-                                                pre_accept_acks_, accept_acks, 
-                                                committed, ballot, tmp_ack, 
-                                                tmp_acks, tmp_par, 
-                                                tmp_partitions, shards, 
-                                                msg_in_, msg_out_, keyspace, 
-                                                dep, ya_dep, finished_map, 
-                                                asked_map, pie_map, tx_meta, 
-                                                scc, scc_set, scc_seq, 
-                                                curr_txn, curr_pie_, curr_op, 
-                                                txn_set, tid_set, opset, 
-                                                next_txn, next_tid, next_pie, 
-                                                anc, tmp_set, alogs, vid_set, 
-                                                sub_graph, tx_meta_set, msg_in, 
-                                                msg_out, svr_end >>
+lbl_dbg_kkkkk(self) == /\ pc[self] = "lbl_dbg_kkkkk"
+                       /\ Assert((msg_in_[self].type /= "ack_commit"), 
+                                 "Failure of assertion at line 985, column 9.")
+                       /\ pc' = [pc EXCEPT ![self] = "lbl_wait_commit_ack"]
+                       /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
+                                       id_counter, stack, pre_accept_acks_A, 
+                                       partitions_, pre_accept_acks, 
+                                       partitions, curr_pie, next_txn_, 
+                                       next_pie_, txn_id, dep_c, par, n_pie, 
+                                       pre_accept_acks_, accept_acks, 
+                                       committed, ballot, tmp_ack, tmp_acks, 
+                                       tmp_par, tmp_partitions, shards, 
+                                       msg_in_, msg_out_, keyspace, dep, 
+                                       ya_dep, finished_map, asked_map, 
+                                       pie_map, tx_meta, scc, scc_set, scc_seq, 
+                                       curr_txn, curr_pie_, curr_op, txn_set, 
+                                       tid_set, opset, next_txn, next_tid, 
+                                       next_pie, anc, tmp_set, alogs, vid_set, 
+                                       sub_graph, tx_meta_set, msg_in, msg_out, 
+                                       svr_end >>
 
 end_coord(self) == /\ pc[self] = "end_coord"
                    /\ IF n_committed = M
@@ -2739,200 +2449,77 @@ end_coord(self) == /\ pc[self] = "end_coord"
                                    sub_graph, tx_meta_set, msg_in, msg_out, 
                                    svr_end >>
 
-Coo(self) == unit_test(self) \/ coo(self) \/ lbl_get_shards(self)
+Coo(self) == lbl_coord_begin(self) \/ lbl_get_shards(self)
                 \/ lbl_pre_accept(self) \/ lbl_coord_pre_accept_ack(self)
-                \/ lbl_dbg_aaaaa(self) \/ lbl_deg_bbbbb(self)
                 \/ lbl_coord_goto_commit(self) \/ lbl_dbg_zzzzz(self)
-                \/ lbl_coord_slow_path_check(self) \/ goto_accept(self)
                 \/ accept_phase(self) \/ lbl_dbg_jjjjj(self)
                 \/ broadcast_accept(self) \/ process_accept_ack(self)
                 \/ __debug_lable_gkdjfk(self) \/ commit_phase(self)
-                \/ broadcast_commit(self) \/ lbl_wait_commit_ack(self)
-                \/ __debug_label_iuyuiyer(self) \/ end_coord(self)
+                \/ lbl_wait_commit_ack(self) \/ lbl_dbg_kkkkk(self)
+                \/ end_coord(self)
 
 lbl_svr_loop(self) == /\ pc[self] = "lbl_svr_loop"
                       /\ Len(svr_mq[self]) > 0
                       /\ msg_in' = [msg_in EXCEPT ![self] = Head(svr_mq[self])]
                       /\ svr_mq' = [svr_mq EXCEPT ![self] = Tail(svr_mq[self])]
-                      /\ pc' = [pc EXCEPT ![self] = "lbl_dbg_msg_check"]
+                      /\ ya_dep' = [ya_dep EXCEPT ![self] = EmptyNewDep]
+                      /\ IF msg_in'[self].tid > 0
+                            THEN /\ curr_txn' = [curr_txn EXCEPT ![self] = FindOrCreateTx(dep[self], msg_in'[self].tid, msg_in'[self].meta)]
+                            ELSE /\ Assert((msg_in'[self].type = "end"), 
+                                           "Failure of assertion at line 1039, column 7.")
+                                 /\ UNCHANGED curr_txn
+                      /\ IF /\ msg_in'[self].type = "pre_accept"
+                            /\ curr_txn'[self].max_prepared_ballot = 0
+                            /\ curr_txn'[self].status = UNKNOWN
+                            THEN /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "HandlePreAccept",
+                                                                          pc        |->  "lbl_svr_loop_end" ] >>
+                                                                      \o stack[self]]
+                                 /\ pc' = [pc EXCEPT ![self] = "lbl_on_pre_accept"]
+                                 /\ UNCHANGED svr_end
+                            ELSE /\ IF \/ msg_in'[self].type = "commit"
+                                       \/ msg_in'[self].type = "ack_inquire"
+                                       THEN /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "HandleCommit",
+                                                                                     pc        |->  "lbl_svr_loop_end" ] >>
+                                                                                 \o stack[self]]
+                                            /\ pc' = [pc EXCEPT ![self] = "lbl_on_commit"]
+                                            /\ UNCHANGED svr_end
+                                       ELSE /\ IF msg_in'[self].type = "inquire"
+                                                  THEN /\ TRUE
+                                                       /\ pc' = [pc EXCEPT ![self] = "lbl_svr_loop_end"]
+                                                       /\ UNCHANGED << stack, 
+                                                                       svr_end >>
+                                                  ELSE /\ IF msg_in'[self].type = "prepare" /\ curr_txn'[self].max_prepared_ballot < msg_in'[self].ballot
+                                                             THEN /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "HandlePrepare",
+                                                                                                           pc        |->  "lbl_svr_loop_end" ] >>
+                                                                                                       \o stack[self]]
+                                                                  /\ pc' = [pc EXCEPT ![self] = "lbl_on_prepare"]
+                                                                  /\ UNCHANGED svr_end
+                                                             ELSE /\ IF msg_in'[self].type = "accept" /\ curr_txn'[self].max_prepared_ballot \leq msg_in'[self].ballot
+                                                                        THEN /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "HandleAccept",
+                                                                                                                      pc        |->  "lbl_svr_loop_end" ] >>
+                                                                                                                  \o stack[self]]
+                                                                             /\ pc' = [pc EXCEPT ![self] = "lbl_on_accept_1"]
+                                                                             /\ UNCHANGED svr_end
+                                                                        ELSE /\ IF msg_in'[self].type = "end"
+                                                                                   THEN /\ svr_end' = [svr_end EXCEPT ![self] = TRUE]
+                                                                                   ELSE /\ Assert((FALSE), 
+                                                                                                  "Failure of assertion at line 1067, column 7.")
+                                                                                        /\ UNCHANGED svr_end
+                                                                             /\ pc' = [pc EXCEPT ![self] = "lbl_svr_loop_end"]
+                                                                             /\ stack' = stack
                       /\ UNCHANGED << coo_mq, srz, n_committed, id_counter, 
-                                      stack, pre_accept_acks_A, partitions_, 
+                                      pre_accept_acks_A, partitions_, 
                                       pre_accept_acks, partitions, curr_pie, 
                                       next_txn_, next_pie_, txn_id, dep_c, par, 
                                       n_pie, pre_accept_acks_, accept_acks, 
                                       committed, ballot, tmp_ack, tmp_acks, 
                                       tmp_par, tmp_partitions, shards, msg_in_, 
-                                      msg_out_, keyspace, dep, ya_dep, 
-                                      finished_map, asked_map, pie_map, 
-                                      tx_meta, scc, scc_set, scc_seq, curr_txn, 
-                                      curr_pie_, curr_op, txn_set, tid_set, 
-                                      opset, next_txn, next_tid, next_pie, anc, 
-                                      tmp_set, alogs, vid_set, sub_graph, 
-                                      tx_meta_set, msg_out, svr_end >>
-
-lbl_dbg_msg_check(self) == /\ pc[self] = "lbl_dbg_msg_check"
-                           /\ Assert((IsMsgValid(msg_in[self])), 
-                                     "Failure of assertion at line 1020, column 24.")
-                           /\ ya_dep' = [ya_dep EXCEPT ![self] = EmptyNewDep]
-                           /\ IF msg_in[self].tid > 0
-                                 THEN /\ curr_txn' = [curr_txn EXCEPT ![self] = FindOrCreateTx(dep[self], msg_in[self].tid, msg_in[self].meta)]
-                                 ELSE /\ Assert((msg_in[self].type = "end"), 
-                                                "Failure of assertion at line 1027, column 7.")
-                                      /\ UNCHANGED curr_txn
-                           /\ pc' = [pc EXCEPT ![self] = "lbl_debug_dkfajdksfj"]
-                           /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
-                                           id_counter, stack, 
-                                           pre_accept_acks_A, partitions_, 
-                                           pre_accept_acks, partitions, 
-                                           curr_pie, next_txn_, next_pie_, 
-                                           txn_id, dep_c, par, n_pie, 
-                                           pre_accept_acks_, accept_acks, 
-                                           committed, ballot, tmp_ack, 
-                                           tmp_acks, tmp_par, tmp_partitions, 
-                                           shards, msg_in_, msg_out_, keyspace, 
-                                           dep, finished_map, asked_map, 
-                                           pie_map, tx_meta, scc, scc_set, 
-                                           scc_seq, curr_pie_, curr_op, 
-                                           txn_set, tid_set, opset, next_txn, 
-                                           next_tid, next_pie, anc, tmp_set, 
-                                           alogs, vid_set, sub_graph, 
-                                           tx_meta_set, msg_in, msg_out, 
-                                           svr_end >>
-
-lbl_debug_dkfajdksfj(self) == /\ pc[self] = "lbl_debug_dkfajdksfj"
-                              /\ IF msg_in[self].type = "accept"
-                                    THEN /\ pc' = [pc EXCEPT ![self] = "__debug_label_kjkjdf"]
-                                    ELSE /\ pc' = [pc EXCEPT ![self] = "lbl_msg_dispatch"]
-                              /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
-                                              id_counter, stack, 
-                                              pre_accept_acks_A, partitions_, 
-                                              pre_accept_acks, partitions, 
-                                              curr_pie, next_txn_, next_pie_, 
-                                              txn_id, dep_c, par, n_pie, 
-                                              pre_accept_acks_, accept_acks, 
-                                              committed, ballot, tmp_ack, 
-                                              tmp_acks, tmp_par, 
-                                              tmp_partitions, shards, msg_in_, 
-                                              msg_out_, keyspace, dep, ya_dep, 
-                                              finished_map, asked_map, pie_map, 
-                                              tx_meta, scc, scc_set, scc_seq, 
-                                              curr_txn, curr_pie_, curr_op, 
-                                              txn_set, tid_set, opset, 
-                                              next_txn, next_tid, next_pie, 
-                                              anc, tmp_set, alogs, vid_set, 
-                                              sub_graph, tx_meta_set, msg_in, 
-                                              msg_out, svr_end >>
-
-__debug_label_kjkjdf(self) == /\ pc[self] = "__debug_label_kjkjdf"
-                              /\ Assert((msg_in[self].ballot \geq 0), 
-                                        "Failure of assertion at line 1030, column 29.")
-                              /\ pc' = [pc EXCEPT ![self] = "__debug_label_fdsadf"]
-                              /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
-                                              id_counter, stack, 
-                                              pre_accept_acks_A, partitions_, 
-                                              pre_accept_acks, partitions, 
-                                              curr_pie, next_txn_, next_pie_, 
-                                              txn_id, dep_c, par, n_pie, 
-                                              pre_accept_acks_, accept_acks, 
-                                              committed, ballot, tmp_ack, 
-                                              tmp_acks, tmp_par, 
-                                              tmp_partitions, shards, msg_in_, 
-                                              msg_out_, keyspace, dep, ya_dep, 
-                                              finished_map, asked_map, pie_map, 
-                                              tx_meta, scc, scc_set, scc_seq, 
-                                              curr_txn, curr_pie_, curr_op, 
-                                              txn_set, tid_set, opset, 
-                                              next_txn, next_tid, next_pie, 
-                                              anc, tmp_set, alogs, vid_set, 
-                                              sub_graph, tx_meta_set, msg_in, 
-                                              msg_out, svr_end >>
-
-__debug_label_fdsadf(self) == /\ pc[self] = "__debug_label_fdsadf"
-                              /\ Assert((curr_txn[self].max_prepared_ballot \geq 0), 
-                                        "Failure of assertion at line 1031, column 29.")
-                              /\ pc' = [pc EXCEPT ![self] = "lbl_msg_dispatch"]
-                              /\ UNCHANGED << coo_mq, svr_mq, srz, n_committed, 
-                                              id_counter, stack, 
-                                              pre_accept_acks_A, partitions_, 
-                                              pre_accept_acks, partitions, 
-                                              curr_pie, next_txn_, next_pie_, 
-                                              txn_id, dep_c, par, n_pie, 
-                                              pre_accept_acks_, accept_acks, 
-                                              committed, ballot, tmp_ack, 
-                                              tmp_acks, tmp_par, 
-                                              tmp_partitions, shards, msg_in_, 
-                                              msg_out_, keyspace, dep, ya_dep, 
-                                              finished_map, asked_map, pie_map, 
-                                              tx_meta, scc, scc_set, scc_seq, 
-                                              curr_txn, curr_pie_, curr_op, 
-                                              txn_set, tid_set, opset, 
-                                              next_txn, next_tid, next_pie, 
-                                              anc, tmp_set, alogs, vid_set, 
-                                              sub_graph, tx_meta_set, msg_in, 
-                                              msg_out, svr_end >>
-
-lbl_msg_dispatch(self) == /\ pc[self] = "lbl_msg_dispatch"
-                          /\ IF /\ msg_in[self].type = "pre_accept"
-                                /\ curr_txn[self].max_prepared_ballot = 0
-                                /\ curr_txn[self].status = UNKNOWN
-                                THEN /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "HandlePreAccept",
-                                                                              pc        |->  "lbl_svr_loop_end" ] >>
-                                                                          \o stack[self]]
-                                     /\ pc' = [pc EXCEPT ![self] = "lbl_on_pre_accept"]
-                                     /\ UNCHANGED << svr_mq, msg_out, svr_end >>
-                                ELSE /\ IF \/ msg_in[self].type = "commit"
-                                           \/ msg_in[self].type = "ack_inquire"
-                                           THEN /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "HandleCommit",
-                                                                                         pc        |->  "lbl_svr_loop_end" ] >>
-                                                                                     \o stack[self]]
-                                                /\ pc' = [pc EXCEPT ![self] = "lbl_cmt_set_statsu"]
-                                                /\ UNCHANGED << svr_mq, 
-                                                                msg_out, 
-                                                                svr_end >>
-                                           ELSE /\ IF msg_in[self].type = "inquire"
-                                                      THEN /\ GetStatus(dep[self], msg_in[self].tid) >= COMMITTING
-                                                           /\ msg_out' = [msg_out EXCEPT ![self] = [type |-> "ack_inquire", src |-> self, tid |-> msg_in[self].tid, dep |-> ya_dep[self]]]
-                                                           /\ svr_mq' = [svr_mq EXCEPT ![msg_in[self].src] = Append(coo_mq[msg_in[self].src], msg_out'[self])]
-                                                           /\ pc' = [pc EXCEPT ![self] = "lbl_svr_loop_end"]
-                                                           /\ UNCHANGED << stack, 
-                                                                           svr_end >>
-                                                      ELSE /\ IF msg_in[self].type = "prepare" /\ curr_txn[self].max_prepared_ballot < msg_in[self].ballot
-                                                                 THEN /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "HandlePrepare",
-                                                                                                               pc        |->  "lbl_svr_loop_end" ] >>
-                                                                                                           \o stack[self]]
-                                                                      /\ pc' = [pc EXCEPT ![self] = "lbl_on_prepare"]
-                                                                      /\ UNCHANGED svr_end
-                                                                 ELSE /\ IF msg_in[self].type = "accept" /\ curr_txn[self].max_prepared_ballot \leq msg_in[self].ballot
-                                                                            THEN /\ stack' = [stack EXCEPT ![self] = << [ procedure |->  "HandleAccept",
-                                                                                                                          pc        |->  "lbl_svr_loop_end" ] >>
-                                                                                                                      \o stack[self]]
-                                                                                 /\ pc' = [pc EXCEPT ![self] = "lbl_on_accept_1"]
-                                                                                 /\ UNCHANGED svr_end
-                                                                            ELSE /\ IF msg_in[self].type = "end"
-                                                                                       THEN /\ svr_end' = [svr_end EXCEPT ![self] = TRUE]
-                                                                                       ELSE /\ Assert((FALSE), 
-                                                                                                      "Failure of assertion at line 1054, column 7.")
-                                                                                            /\ UNCHANGED svr_end
-                                                                                 /\ pc' = [pc EXCEPT ![self] = "lbl_svr_loop_end"]
-                                                                                 /\ stack' = stack
-                                                           /\ UNCHANGED << svr_mq, 
-                                                                           msg_out >>
-                          /\ UNCHANGED << coo_mq, srz, n_committed, id_counter, 
-                                          pre_accept_acks_A, partitions_, 
-                                          pre_accept_acks, partitions, 
-                                          curr_pie, next_txn_, next_pie_, 
-                                          txn_id, dep_c, par, n_pie, 
-                                          pre_accept_acks_, accept_acks, 
-                                          committed, ballot, tmp_ack, tmp_acks, 
-                                          tmp_par, tmp_partitions, shards, 
-                                          msg_in_, msg_out_, keyspace, dep, 
-                                          ya_dep, finished_map, asked_map, 
-                                          pie_map, tx_meta, scc, scc_set, 
-                                          scc_seq, curr_txn, curr_pie_, 
-                                          curr_op, txn_set, tid_set, opset, 
-                                          next_txn, next_tid, next_pie, anc, 
-                                          tmp_set, alogs, vid_set, sub_graph, 
-                                          tx_meta_set, msg_in >>
+                                      msg_out_, keyspace, dep, finished_map, 
+                                      asked_map, pie_map, tx_meta, scc, 
+                                      scc_set, scc_seq, curr_pie_, curr_op, 
+                                      txn_set, tid_set, opset, next_txn, 
+                                      next_tid, next_pie, anc, tmp_set, alogs, 
+                                      vid_set, sub_graph, tx_meta_set, msg_out >>
 
 lbl_svr_loop_end(self) == /\ pc[self] = "lbl_svr_loop_end"
                           /\ IF ~svr_end[self]
@@ -2956,10 +2543,7 @@ lbl_svr_loop_end(self) == /\ pc[self] = "lbl_svr_loop_end"
                                           tx_meta_set, msg_in, msg_out, 
                                           svr_end >>
 
-Svr(self) == lbl_svr_loop(self) \/ lbl_dbg_msg_check(self)
-                \/ lbl_debug_dkfajdksfj(self) \/ __debug_label_kjkjdf(self)
-                \/ __debug_label_fdsadf(self) \/ lbl_msg_dispatch(self)
-                \/ lbl_svr_loop_end(self)
+Svr(self) == lbl_svr_loop(self) \/ lbl_svr_loop_end(self)
 
 Next == (\E self \in ProcSet:  \/ UnitTest(self)
                                \/ AggregateGraphForFastPath(self)
@@ -2991,6 +2575,6 @@ THEOREM Spec => Serializability
 
 =============================================================================
 \* Modification History
-\* Last modified Fri Dec 30 13:23:01 EST 2016 by shuai
+\* Last modified Sat Dec 31 04:04:57 EST 2016 by shuai
 \* Last modified Thu Dec 25 23:34:46 CST 2014 by Shuai
 \* Created Mon Dec 15 15:44:26 CST 2014 by Shuai

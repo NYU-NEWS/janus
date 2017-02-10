@@ -45,6 +45,9 @@ int TapirSched::OnDecide(txnid_t txn_id,
   auto exec = (TapirExecutor*) GetExecutor(txn_id);
   verify(exec);
   if (decision == TapirCoord::Decision::COMMIT) {
+#ifdef CHECK_ISO
+    MergeDeltas(exec->dtxn_->deltas_);
+#endif
     exec->Commit();
   } else if (decision == TapirCoord::Decision::ABORT) {
     exec->Abort();

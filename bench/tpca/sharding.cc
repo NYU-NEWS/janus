@@ -51,7 +51,8 @@ int TpcaSharding::PopulateTable(tb_info_t *tb_info_ptr, parid_t par_id) {
       else {
         Value v_buf;
         // TODO (ycui) use RandomGenerator
-        v_buf = random_value(tb_info_ptr->columns[col_index].type);
+//        v_buf = random_value(tb_info_ptr->columns[col_index].type);
+        v_buf.set_i32(0);
         row_data.push_back(v_buf);
 
         //std::cerr << tb_info_ptr->columns[col_index].name << ":" << v_buf << "; ";

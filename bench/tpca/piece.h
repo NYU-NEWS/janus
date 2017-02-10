@@ -22,7 +22,10 @@ extern char TPCA_CUSTOMER[];
 #define TPCA_VAR_X   (0)
 #define TPCA_VAR_Y   (1)
 #define TPCA_VAR_Z   (2)
-#define TPCA_VAR_AMOUNT    (3)
+#define TPCA_VAR_OX  (3)
+#define TPCA_VAR_OY  (4)
+#define TPCA_VAR_OZ  (5)
+#define TPCA_VAR_AMOUNT    (10)
 
 class TpcaPiece : public Piece {
 

@@ -583,6 +583,9 @@ void RccSched::Execute(RccDTxn& dtxn) {
   verify(dtxn.epoch_ > 0);
   if (dtxn.Involve(Scheduler::partition_id_)) {
     dtxn.CommitExecute();
+#ifdef CHECK_ISO
+    MergeDeltas(dtxn.deltas_);
+#endif
     dtxn.ReplyFinishOk();
     TrashExecutor(dtxn.tid_);
   }

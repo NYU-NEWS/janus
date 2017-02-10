@@ -136,6 +136,9 @@ int ClassicSched::OnCommit(cmdid_t cmd_id,
     verify(exec->phase_ < 3);
     exec->phase_ = 3;
     if (commit_or_abort == SUCCESS) {
+#ifdef CHECK_ISO
+      MergeDeltas(exec->dtxn_->deltas_);
+#endif
       exec->CommitLaunch(res, callback);
     } else if (commit_or_abort == REJECT) {
       exec->AbortLaunch(res, callback);
@@ -155,6 +158,9 @@ int ClassicSched::CommitReplicated(TpcCommitCommand& tpc_commit_cmd) {
   exec->phase_ = 3;
   int commit_or_abort = tpc_commit_cmd.res_;
   if (commit_or_abort == SUCCESS) {
+#ifdef CHECK_ISO
+    MergeDeltas(exec->dtxn_->deltas_);
+#endif
     exec->Commit();
   } else if (commit_or_abort == REJECT) {
     exec->Abort();
