@@ -63,6 +63,7 @@ using std::function;
 using namespace rrr;
 
 #define deptran rococo
+#define janus rococo
 
 using rrr::NoCopy;
 using rrr::Log;

@@ -42,7 +42,7 @@ def configure(conf):
     _enable_pic(conf)
 
     conf.load("compiler_cxx unittest_gtest")
-#    conf.load("boost")
+    conf.load("boost")
 
     _enable_tcmalloc(conf)
     _enable_cxx11(conf)
@@ -61,7 +61,7 @@ def configure(conf):
     conf.env.append_value("CXXFLAGS", "-Wno-unused-function")
     conf.env.append_value("CXXFLAGS", "-Wno-unused-variable")
     conf.env.append_value("CXXFLAGS", "-Wno-sign-compare")
-#    conf.check_boost(lib='system filesystem coroutine')
+    conf.check_boost(lib='system filesystem coroutine')
 
     conf.env.append_value("CXXFLAGS", "-Wno-sign-compare")
     conf.env.append_value('INCLUDES', ['/usr/local/include'])
