@@ -20,6 +20,7 @@ class AbstractKvDb {
   virtual void Put(string& key, mdb::Value& val) = 0;
   virtual mdb::Value&& Get(string& key) = 0;
   virtual bool TransInsert(DTxn& dtxn, string& key, mdb::Value& val) = 0;
+  virtual bool TransRemove(DTxn& dtxn, string& key) = 0;
   virtual void TransPut(DTxn& dtxn, string& key, mdb::Value& val) = 0;
   virtual mdb::Value&& TransGet(DTxn& dtxn, string& key) = 0;
 };
@@ -41,6 +42,16 @@ class SimpleKvDb : public AbstractKvDb {
     return ret;
   }
 
+  virtual bool Remove(string& key) override {
+    auto it = sorted_index_.find(key);
+    if (it == sorted_index_.end()) {
+      return false;
+    } else {
+      sorted_index_.erase(it);
+      return true;
+    }
+  };
+
   virtual void Put(string& key, mdb::Value& val) override {
     Value* v = new Value();
     *v = val;
@@ -57,11 +68,15 @@ class SimpleKvDb : public AbstractKvDb {
     }
   }
 
-  virtual bool TransInsert(DTxn& dtxn, string& key, mdb::Value& val) {
+  virtual bool TransInsert(DTxn& dtxn, string& key, mdb::Value& val) override{
     verify(0);
   }
 
-  virtual void TransPut(DTxn& dtxn, string& key, mdb::Value& val) {
+  virtual bool TransRemove(DTxn& dtxn, string& key) override {
+    verify(0);
+  }
+
+  virtual void TransPut(DTxn& dtxn, string& key, mdb::Value& val) override {
     verify(0);
   }
 

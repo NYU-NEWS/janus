@@ -131,7 +131,7 @@ add_library(MEMDB
 add_executable(ROCOCO_SERVER
 #        deptran/s_main.cc
         ${DEPTRAN_SRC}
-        ${BENCH_SRC} deptran/kvdb.h)
+        ${BENCH_SRC} deptran/kvdb.h deptran/procedure.h)
 #add_executable(ROCOCO_CLIENT deptran/c_main.cc)
 add_dependencies(ROCOCO_SERVER gen-rpc)
 
