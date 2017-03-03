@@ -231,7 +231,7 @@ bool Txn2PL::commit() {
       // batch update all values
       auto it_end = updates_.upper_bound(row);
       while (it != it_end) {
-        column_id_t column_id = it->second.first;
+        colid_t column_id = it->second.first;
         Value &value = it->second.second;
         new_row->update(column_id, value);
         ++it;
@@ -243,7 +243,7 @@ bool Txn2PL::commit() {
 
       //redirect_locks(alocks_, new_row, row);
     } else {
-      column_id_t column_id = it->second.first;
+      colid_t column_id = it->second.first;
       Value &value = it->second.second;
       row->update(column_id, value);
       ++it;
@@ -265,7 +265,7 @@ bool Txn2PL::commit() {
   return true;
 }
 
-bool Txn2PL::read_column(Row *row, column_id_t col_id, Value *value) {
+bool Txn2PL::read_column(Row *row, colid_t col_id, Value *value) {
   verify(this->rtti() == symbol_t::TXN_2PL);
   assert(debug_check_row_valid(row));
   verify(outcome_ == symbol_t::NONE);
@@ -290,7 +290,7 @@ bool Txn2PL::read_column(Row *row, column_id_t col_id, Value *value) {
   return true;
 }
 
-bool Txn2PL::write_column(Row *row, column_id_t col_id, const Value &value) {
+bool Txn2PL::write_column(Row *row, colid_t col_id, const Value &value) {
   verify(this->rtti() == symbol_t::TXN_2PL);
   assert(debug_check_row_valid(row));
   verify(outcome_ == symbol_t::NONE);

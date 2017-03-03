@@ -112,14 +112,14 @@ class Txn: public NoCopy {
     return ret;
   }
 
-  virtual bool read_column(Row *row, column_id_t col_id, Value *value) = 0;
+  virtual bool read_column(Row *row, colid_t col_id, Value *value) = 0;
   virtual bool
-      write_column(Row *row, column_id_t col_id, const Value &value) = 0;
+      write_column(Row *row, colid_t col_id, const Value &value) = 0;
   virtual bool insert_row(Table *tbl, Row *row) = 0;
   virtual bool remove_row(Table *tbl, Row *row) = 0;
 
   bool read_columns(Row *row,
-                    const std::vector<column_id_t> &col_ids,
+                    const std::vector<colid_t> &col_ids,
                     std::vector<Value> *values) {
     for (auto col_id : col_ids) {
       Value v;
@@ -133,7 +133,7 @@ class Txn: public NoCopy {
   }
 
   bool write_columns(Row *row,
-                     const std::vector<column_id_t> &col_ids,
+                     const std::vector<colid_t> &col_ids,
                      const std::vector<Value> &values) {
     verify(col_ids.size() == values.size());
     for (size_t i = 0; i < col_ids.size(); i++) {
@@ -313,9 +313,9 @@ struct table_row_pair {
 
 struct column_lock_t {
   Row *row;
-  column_id_t column_id;
+  colid_t column_id;
   rrr::ALock::type_t type;
-  column_lock_t(Row *_row, column_id_t _column_id,
+  column_lock_t(Row *_row, colid_t _column_id,
                 rrr::ALock::type_t _type) :
       row(_row), column_id(_column_id), type(_type) { }
 };
@@ -486,11 +486,11 @@ class MergedCursor: public NoCopy, public Enumerator<const Row *> {
   }
 };
 
-static void redirect_locks(std::unordered_multimap<Row *, column_id_t> &locks,
+static void redirect_locks(std::unordered_multimap<Row *, colid_t> &locks,
                            Row *new_row,
                            Row *old_row) {
   auto it_pair = locks.equal_range(old_row);
-  std::vector<column_id_t> locked_columns;
+  std::vector<colid_t> locked_columns;
   for (auto it_lock = it_pair.first; it_lock != it_pair.second; ++it_lock) {
     locked_columns.push_back(it_lock->second);
   }

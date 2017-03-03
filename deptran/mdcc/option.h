@@ -18,12 +18,12 @@ namespace mdcc {
   typedef std::map<RowId, OptionSet*> RecordOptionMap;
 
   struct Option {
-    mdb::column_id_t col_id=-1;
+    mdb::colid_t col_id=-1;
     mdb::Value value;
     version_t version=-1;
     Option() {}
     Option(const Option&) = default;
-    Option(mdb::column_id_t col_id, const mdb::Value& value, version_t version) :
+    Option(mdb::colid_t col_id, const mdb::Value& value, version_t version) :
         col_id(col_id), value(value), version(version) {}
 
     friend bool operator==(const Option& l, const Option& r);

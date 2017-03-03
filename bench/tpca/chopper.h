@@ -5,7 +5,7 @@
 
 namespace rococo {
 
-class TpcaPaymentChopper: public TxnCommand {
+class TpcaPaymentChopper: public Procedure {
 
  public:
 
@@ -13,15 +13,11 @@ class TpcaPaymentChopper: public TxnCommand {
 
   virtual void Init(TxnRequest &req);
 
-  virtual bool start_callback(const std::vector<int> &pi,
-                              int res,
-                              BatchStartArgsHelper &bsah) {
-    return false;
-  }
-
   virtual bool start_callback(int pi,
                               int res,
-                              map<int32_t, Value> &output) { return false; }
+                              map<int32_t, Value> &output) override {
+    return false;
+  }
 
   virtual bool IsReadOnly() { return false; }
 

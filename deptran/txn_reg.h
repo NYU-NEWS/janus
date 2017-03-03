@@ -15,7 +15,7 @@ typedef std::map<
     mdb::Row *> row_map_t;
 
 class DTxn;
-class TxnCommand;
+class Procedure;
 class TxnRequest;
 class SimpleCommand;
 
@@ -37,7 +37,7 @@ typedef struct {
   defer_t defer;
 } txn_handler_defer_pair_t;
 
-typedef std::function<bool(TxnCommand *,
+typedef std::function<bool(Procedure *,
                            map<int32_t, Value>&)>
     PieceCallbackHandler;
 
@@ -92,8 +92,8 @@ class TxnRegistry {
       std::pair<string, vector<int32_t>>> sharding_input_{};
   map<txntype_t, map<innid_t, set<int32_t>>> input_vars_{};
   map<txntype_t, map<innid_t, set<int32_t>>> output_vars_{};
-  map<txntype_t, std::function<void(TxnCommand * ch, TxnRequest& req)> > init_{};
-  map<txntype_t, std::function<void(TxnCommand * ch)>> retry_{};
+  map<txntype_t, std::function<void(Procedure * ch, TxnRequest& req)> > init_{};
+  map<txntype_t, std::function<void(Procedure * ch)>> retry_{};
   map<txntype_t, map<innid_t, vector<conf_id>>> conflicts_{};
 
   // PieceCallbackMap callbacks_;

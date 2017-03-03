@@ -7,7 +7,7 @@
 
 namespace rococo {
 
-class TxnCommand;
+class Procedure;
 class TpcPrepareCommand;
 class TpcCommitCommand;
 class SimpleCommand;

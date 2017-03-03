@@ -358,26 +358,26 @@ Row* Row::create(Row* raw_row, const Schema* schema, const std::vector<const Val
 
 // **** deprecated **** //
 FineLockedRow::type_2pl_t FineLockedRow::type_2pl_ = FineLockedRow::TIMEOUT;
-uint64_t FineLockedRow::reg_rlock(column_id_t column_id,
+uint64_t FineLockedRow::reg_rlock(colid_t column_id,
         std::function<void(uint64_t)> succ_callback,
         std::function<void(void)> fail_callback) {
     verify(0);
     //return lock_[column_id]->lock(succ_callback, fail_callback, rrr::ALock::RLOCK);
 }
 
-uint64_t FineLockedRow::reg_wlock(column_id_t column_id,
+uint64_t FineLockedRow::reg_wlock(colid_t column_id,
         std::function<void(uint64_t)> succ_callback,
         std::function<void(void)> fail_callback) {
     verify(0);
     //return lock_[column_id]->lock(succ_callback, fail_callback, rrr::ALock::WLOCK);
 }
 
-void FineLockedRow::abort_lock_req(column_id_t column_id, uint64_t lock_req_id) {
+void FineLockedRow::abort_lock_req(colid_t column_id, uint64_t lock_req_id) {
     verify(0);
     //lock_[column_id]->abort(lock_req_id);
 }
 
-void FineLockedRow::unlock_column_by(column_id_t column_id, uint64_t lock_req_id) {
+void FineLockedRow::unlock_column_by(colid_t column_id, uint64_t lock_req_id) {
     verify(0);
     //lock_[column_id]->abort(lock_req_id);
 }

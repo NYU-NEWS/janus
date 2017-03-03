@@ -5,7 +5,7 @@
 #include "../__dep__.h"
 #include "../constants.h"
 #include "../dtxn.h"
-#include "../txn_chopper.h"
+#include "deptran/procedure.h"
 #include "../scheduler.h"
 #include "../rcc/graph.h"
 #include "../rcc/graph_marshaler.h"

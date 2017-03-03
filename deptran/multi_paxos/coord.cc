@@ -103,7 +103,7 @@ void MultiPaxosCoord::Accept() {
 void MultiPaxosCoord::AcceptAck(phase_t phase, Future *fu) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   if (phase_ > phase) return;
-  TxnCommand *cmd = (TxnCommand *) cmd_;
+  Procedure *cmd = (Procedure *) cmd_;
   ballot_t max_ballot;
   fu->get_reply() >> max_ballot;
   if (max_ballot == curr_ballot_) {

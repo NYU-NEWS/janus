@@ -2,7 +2,7 @@
 
 #include "__dep__.h"
 #include "constants.h"
-#include "txn_chopper.h"
+#include "procedure.h"
 //#include "all.h"
 #include "msg.h"
 #include "commo.h"
@@ -24,7 +24,7 @@ public:
   // TODO do_one should be replaced with Submit.
   virtual void do_one(TxnRequest &) = 0;
   virtual void Reset() = 0;
-  virtual void restart(TxnCommand *ch) = 0;
+  virtual void restart(Procedure *ch) = 0;
 };
 
 class Coordinator : public CoordinatorBase {
@@ -157,7 +157,7 @@ class Coordinator : public CoordinatorBase {
     }
     return t;
   }
-  virtual void restart(TxnCommand *ch) {verify(0);};
+  virtual void restart(Procedure *ch) {verify(0);};
   virtual void Restart() = 0;
 };
 

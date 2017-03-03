@@ -7,7 +7,7 @@
 #include "deptran/multi_value.h"
 
 namespace mdcc {
-  OptionSet* mdcc::MdccDTxn::CreateUpdateOption(VersionedRow *row, column_id_t col_id, const Value &value) {
+  OptionSet* mdcc::MdccDTxn::CreateUpdateOption(VersionedRow *row, colid_t col_id, const Value &value) {
     auto table = row->get_table();
     auto locator = std::pair<string, size_t>(table->Name(), MultiBlob::hash()(row->get_key()));
     OptionSet* option_set;
@@ -28,7 +28,7 @@ namespace mdcc {
     return option_set;
   }
 
-  bool MdccDTxn::WriteColumn(Row *row, column_id_t col_id, const Value &value, int hint_flag) {
+  bool MdccDTxn::WriteColumn(Row *row, colid_t col_id, const Value &value, int hint_flag) {
     auto versioned_row = dynamic_cast<VersionedRow*>(row);
     assert(versioned_row);
     if (DTxn::WriteColumn(row, col_id, value, hint_flag)) {

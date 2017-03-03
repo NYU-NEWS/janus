@@ -11,7 +11,7 @@ TapirDTxn::~TapirDTxn() {
 }
 
 bool TapirDTxn::ReadColumn(mdb::Row *row,
-                           mdb::column_id_t col_id,
+                           mdb::colid_t col_id,
                            Value *value,
                            int hint_flag) {
   // Ignore hint flags.
@@ -26,14 +26,14 @@ bool TapirDTxn::ReadColumn(mdb::Row *row,
 }
 
 bool TapirDTxn::ReadColumns(Row *row,
-                            const std::vector<column_id_t> &col_ids,
+                            const std::vector<colid_t> &col_ids,
                             std::vector<Value> *values,
                             int hint_flag) {
   verify(0);
 }
 
 bool TapirDTxn::WriteColumn(Row *row,
-                            column_id_t col_id,
+                            colid_t col_id,
                             const Value &value,
                             int hint_flag) {
   row->ref_copy(); // TODO
@@ -42,7 +42,7 @@ bool TapirDTxn::WriteColumn(Row *row,
 }
 
 bool TapirDTxn::WriteColumns(Row *row,
-                             const std::vector<column_id_t> &col_ids,
+                             const std::vector<colid_t> &col_ids,
                              const std::vector<Value> &values,
                              int hint_flag) {
   for (int i = 0; i < col_ids.size(); i++) {

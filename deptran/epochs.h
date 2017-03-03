@@ -1,5 +1,5 @@
 
-
+#pragma once
 #include "__dep__.h"
 
 namespace rococo {

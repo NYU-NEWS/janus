@@ -1,7 +1,7 @@
 #pragma once
 #include "../__dep__.h"
 #include "../dtxn.h"
-#include "../txn_chopper.h"
+#include "deptran/procedure.h"
 
 #define PHASE_RCC_DISPATCH (1)
 #define PHASE_RCC_COMMIT (2)
@@ -55,16 +55,16 @@ class RccDTxn: public DTxn, public Vertex<RccDTxn> {
   virtual void ReplyFinishOk();
 
   bool ReadColumn(mdb::Row *row,
-                  mdb::column_id_t col_id,
+                  mdb::colid_t col_id,
                   Value *value,
                   int hint_flag) override;
 
   bool WriteColumn(Row *row,
-                   column_id_t col_id,
+                   colid_t col_id,
                    const Value &value,
                    int hint_flag = TXN_INSTANT) override;
 
-  void TraceDep(Row* row, column_id_t col_id, int hint_flag);
+  void TraceDep(Row* row, colid_t col_id, int hint_flag);
 
   virtual void AddParentEdge(RccDTxn *other, int8_t weight) override;
 

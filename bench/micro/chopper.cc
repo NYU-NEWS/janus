@@ -98,13 +98,6 @@ void MicroTxnCmd::InitR(TxnRequest &req) {
 //  };
 }
 
-bool MicroTxnCmd::start_callback(const std::vector<int> &pi,
-                                       int res,
-                                       BatchStartArgsHelper &bsah) {
-  return false;
-}
-
-
 bool MicroTxnCmd::start_callback(int pi,
                                        int res,
                                        map<int32_t, Value> &output) {

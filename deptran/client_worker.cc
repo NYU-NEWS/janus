@@ -1,7 +1,7 @@
 #include <cmath>
 #include "client_worker.h"
 #include "frame.h"
-#include "txn_chopper.h"
+#include "procedure.h"
 #include "coordinator.h"
 #include "piece.h"
 #include "benchmark_control_rpc.h"

@@ -19,7 +19,7 @@ namespace rococo {
 
 using mdb::Row;
 using mdb::Table;
-using mdb::column_id_t;
+using mdb::colid_t;
 
 #define TXN_BYPASS   (0x01)
 #define TXN_SAFE     (0x02)
@@ -63,7 +63,7 @@ class DTxn {
   TxnRegistry *txn_reg_{nullptr};
 
 #ifdef CHECK_ISO
-  map<Row*, map<column_id_t, int>> deltas_;
+  map<Row*, map<colid_t, int>> deltas_;
 #endif
 
   bool committed_{false};
@@ -91,22 +91,22 @@ class DTxn {
                               const std::vector<mdb::Value> &values);
 
   virtual bool ReadColumn(mdb::Row *row,
-                          mdb::column_id_t col_id,
+                          mdb::colid_t col_id,
                           Value *value,
                           int hint_flag = TXN_INSTANT);
 
   virtual bool ReadColumns(Row *row,
-                           const std::vector<column_id_t> &col_ids,
+                           const std::vector<colid_t> &col_ids,
                            std::vector<Value> *values,
                            int hint_flag = TXN_INSTANT);
 
   virtual bool WriteColumn(Row *row,
-                           column_id_t col_id,
+                           colid_t col_id,
                            const Value &value,
                            int hint_flag = TXN_INSTANT);
 
   virtual bool WriteColumns(Row *row,
-                            const std::vector<column_id_t> &col_ids,
+                            const std::vector<colid_t> &col_ids,
                             const std::vector<Value> &values,
                             int hint_flag = TXN_INSTANT);
 

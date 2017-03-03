@@ -3,7 +3,7 @@
 #include "__dep__.h"
 #include "frame.h"
 #include "client_worker.h"
-#include "txn_chopper.h"
+#include "procedure.h"
 #include "command_marshaler.h"
 #include "benchmark_control_rpc.h"
 #include "server_worker.h"

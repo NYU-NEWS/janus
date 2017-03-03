@@ -41,8 +41,8 @@ namespace mdcc {
       Log_fatal("implement %s!!", __FUNCTION__);
     }
 
-    virtual bool WriteColumn(Row *row, column_id_t col_id, const Value &value, int hint_flag) override;
-    OptionSet* CreateUpdateOption(VersionedRow *row, column_id_t col_id, const Value &value);
+    virtual bool WriteColumn(Row *row, colid_t col_id, const Value &value, int hint_flag) override;
+    OptionSet* CreateUpdateOption(VersionedRow *row, colid_t col_id, const Value &value);
     const RecordOptionMap& UpdateOptions() const { return update_options_; };
   };
 }

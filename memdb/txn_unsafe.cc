@@ -9,13 +9,13 @@
 
 namespace mdb {
 
-bool TxnUnsafe::read_column(Row *row, column_id_t col_id, Value *value) {
+bool TxnUnsafe::read_column(Row *row, colid_t col_id, Value *value) {
   *value = row->get_column(col_id);
   // always allowed
   return true;
 }
 
-bool TxnUnsafe::write_column(Row *row, column_id_t col_id, const Value &value) {
+bool TxnUnsafe::write_column(Row *row, colid_t col_id, const Value &value) {
   row->update(col_id, value);
   // always allowed
   return true;

@@ -5,7 +5,7 @@
 #include "rcc/graph.h"
 #include "rcc/graph_marshaler.h"
 #include "marshal-value.h"
-#include "txn_chopper.h"
+#include "procedure.h"
 #include "rcc_rpc.h"
 #include "frame.h"
 #include "bench/tpcc/piece.h"

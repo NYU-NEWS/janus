@@ -1,6 +1,6 @@
 #include "MdccScheduler.h"
 #include "deptran/frame.h"
-#include "deptran/txn_chopper.h"
+#include "deptran/procedure.h"
 #include "executor.h"
 #include "option.h"
 #include "MdccDTxn.h"
@@ -31,7 +31,8 @@ namespace mdcc {
     }
   }
 
-  bool MdccScheduler::LaunchNextPiece(txnid_t txn_id, rococo::TxnChopper *chopper, i8 *result, rrr::DeferredReply *defer) {
+  bool MdccScheduler::LaunchNextPiece(txnid_t txn_id, rococo::Procedure
+  *chopper, i8 *result, rrr::DeferredReply *defer) {
     std::lock_guard<std::mutex> l(mtx_);
     if (chopper->HasMoreSubCmdReadyNotOut()) {
       auto cmd = static_cast<rococo::SimpleCommand*>(chopper->GetNextReadySubCmd());

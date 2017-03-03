@@ -214,9 +214,9 @@ class RO6Row: public RCCRow {
    */
  private:
   // data structure to keep all old versions for a row
-  std::map<mdb::column_id_t, std::map<i64, Value> > old_values_;
+  std::map<mdb::colid_t, std::map<i64, Value> > old_values_;
   // data structure to keep real time for each 100 versions. used for GC
-  std::map<mdb::column_id_t, std::map<i64, std::map<i64, Value>::iterator> > time_segment;
+  std::map<mdb::colid_t, std::map<i64, std::map<i64, Value>::iterator> > time_segment;
 };
 
 } // namespace rococo

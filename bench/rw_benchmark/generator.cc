@@ -2,7 +2,7 @@
 // Created by lamont on 5/6/16.
 //
 
-#include <deptran/txn_chopper.h>
+#include <deptran/procedure.h>
 #include "generator.h"
 #include "piece.h"
 

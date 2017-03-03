@@ -279,7 +279,7 @@ void TpccRealDistPiece::RegPayment() {
                       + to_string(cmd.input[TPCC_VAR_H_AMOUNT])
                       + buf[15].get_str()
       ).substr(0, 500));
-      std::vector<mdb::column_id_t> col_ids = {
+      std::vector<mdb::colid_t> col_ids = {
           TPCC_COL_CUSTOMER_C_BALANCE,
           TPCC_COL_CUSTOMER_C_YTD_PAYMENT,
           TPCC_COL_CUSTOMER_C_DATA
@@ -291,7 +291,7 @@ void TpccRealDistPiece::RegPayment() {
       });
       dtxn->WriteColumns(r, col_ids, col_data, TXN_DEFERRED);
     } else {
-      std::vector<mdb::column_id_t> col_ids({
+      std::vector<mdb::colid_t> col_ids({
               TPCC_COL_CUSTOMER_C_BALANCE,
               TPCC_COL_CUSTOMER_C_YTD_PAYMENT
       });

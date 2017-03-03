@@ -9,7 +9,7 @@ class TxnOCC: public Txn2PL {
  public:
   // when ever a read/write is performed, record its version
   // check at commit time if all version values are not changed
-  std::unordered_multimap<Row *, column_id_t> locks_;
+  std::unordered_multimap<Row *, colid_t> locks_;
   std::unordered_map<row_column_pair, version_t, row_column_pair::hash>
       ver_check_read_;
   std::unordered_map<row_column_pair, version_t, row_column_pair::hash>
@@ -87,8 +87,8 @@ class TxnOCC: public Txn2PL {
     return ret;
   }
 
-  virtual bool read_column(Row *row, column_id_t col_id, Value *value);
-  virtual bool write_column(Row *row, column_id_t col_id, const Value &value);
+  virtual bool read_column(Row *row, colid_t col_id, Value *value);
+  virtual bool write_column(Row *row, colid_t col_id, const Value &value);
   virtual bool insert_row(Table *tbl, Row *row);
   virtual bool remove_row(Table *tbl, Row *row);
 

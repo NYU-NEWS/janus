@@ -18,8 +18,8 @@ class ClassicCoord : public Coordinator {
 
   virtual ~ClassicCoord() { }
 
-  inline TxnCommand& txn() {
-    return *(TxnCommand*)cmd_;
+  inline Procedure& txn() {
+    return *(Procedure*)cmd_;
   }
 
   RococoCommunicator* commo();

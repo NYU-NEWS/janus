@@ -5,7 +5,7 @@
 
 namespace deptran {
 
-class MicroTxnCmd : public TxnCommand {
+class MicroTxnCmd : public Procedure {
 
 public:
 
@@ -16,9 +16,6 @@ public:
     virtual void InitR(TxnRequest &req);
 
     virtual void InitW(TxnRequest &req);
-
-    virtual bool start_callback(const std::vector<int> &pi, int res,
-                                BatchStartArgsHelper &bsah);
 
     virtual bool start_callback(int pi, int res,
                                 map<int32_t, Value> &output);

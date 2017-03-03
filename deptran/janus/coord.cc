@@ -1,6 +1,6 @@
 
 #include "../__dep__.h"
-#include "../txn_chopper.h"
+#include "deptran/procedure.h"
 #include "frame.h"
 #include "commo.h"
 #include "coord.h"
@@ -141,7 +141,7 @@ void JanusCoord::Accept() {
   verify(!fast_path_);
 //  Log_info("broadcast accept request for txn_id: %llx", cmd_->id_);
   ChooseGraph();
-  TxnCommand *txn = (TxnCommand*) cmd_;
+  Procedure *txn = (Procedure*) cmd_;
   RccDTxn* dtxn = graph_.FindV(cmd_->id_);
   verify(txn->partition_ids_.size() == dtxn->partition_.size());
   graph_.UpgradeStatus(dtxn, TXN_CMT);
@@ -183,7 +183,7 @@ void JanusCoord::AcceptAck(phase_t phase,
 
 void JanusCoord::Commit() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
-  TxnCommand *txn = (TxnCommand*) cmd_;
+  Procedure *txn = (Procedure*) cmd_;
   RccDTxn* dtxn = graph_.FindV(cmd_->id_);
   verify(txn->partition_ids_.size() == dtxn->partition_.size());
   graph_.UpgradeStatus(dtxn, TXN_CMT);

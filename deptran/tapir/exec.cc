@@ -1,5 +1,5 @@
 #include "../__dep__.h"
-#include "../txn_chopper.h"
+#include "deptran/procedure.h"
 #include "exec.h"
 #include "dtxn.h"
 

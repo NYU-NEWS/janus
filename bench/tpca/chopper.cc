@@ -49,7 +49,7 @@ void TpcaPaymentChopper::Init(TxnRequest &req) {
 }
 
 void TpcaPaymentChopper::Reset() {
-  TxnCommand::Reset();
+  Procedure::Reset();
   n_pieces_dispatchable_ = 3;
   status_ = {
       {TPCA_PAYMENT_1, DISPATCHABLE},

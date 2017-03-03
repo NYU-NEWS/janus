@@ -22,7 +22,7 @@ TapirCommo* TapirCoord::commo() {
 void TapirCoord::Dispatch() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   //  ___TestPhaseOne(cmd_id_);
-  auto txn = (TxnCommand*) cmd_;
+  auto txn = (Procedure*) cmd_;
 
   int cnt = 0;
   auto cmds_by_par = txn->GetReadyCmds();
@@ -55,7 +55,7 @@ void TapirCoord::DispatchAck(phase_t phase,
                              TxnOutput& outputs) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   if (phase != phase_) return;
-  TxnCommand *txn = (TxnCommand *) cmd_;
+  Procedure *txn = (Procedure *) cmd_;
   for (auto& pair : outputs) {
     n_dispatch_ack_++;
     const innid_t& inn_id = pair.first;

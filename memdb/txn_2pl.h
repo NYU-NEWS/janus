@@ -9,8 +9,8 @@ class Txn2PL: public Txn {
 
  public:
   symbol_t outcome_;
-  std::multimap<Row *, column_id_t> reads_;
-  std::multimap<Row *, std::pair<column_id_t, Value>> updates_;
+  std::multimap<Row *, colid_t> reads_;
+  std::multimap<Row *, std::pair<colid_t, Value>> updates_;
   std::multiset<table_row_pair> inserts_;
   std::unordered_set<table_row_pair, table_row_pair::hash> removes_;
 
@@ -83,15 +83,15 @@ class Txn2PL: public Txn {
 //            const std::function<void(void)> &fail_callback);
 //
   void reg_read_column(Row *row,
-                       column_id_t col_id,
+                       colid_t col_id,
                        std::function<void(void)> succ_callback,
                        std::function<void(void)> fail_callback);
   void reg_write_column(Row *row,
-                        column_id_t col_id,
+                        colid_t col_id,
                         std::function<void(void)> succ_callback,
                         std::function<void(void)> fail_callback);
-  virtual bool read_column(Row *row, column_id_t col_id, Value *value);
-  virtual bool write_column(Row *row, column_id_t col_id, const Value &value);
+  virtual bool read_column(Row *row, colid_t col_id, Value *value);
+  virtual bool write_column(Row *row, colid_t col_id, const Value &value);
   virtual bool insert_row(Table *tbl, Row *row);
   virtual bool remove_row(Table *tbl, Row *row);
 
@@ -194,7 +194,7 @@ class Txn2PL: public Txn {
 
 
 class TxnMgr2PL: public TxnMgr {
-  std::multimap<Row *, std::pair<column_id_t, version_t>> vers_;
+  std::multimap<Row *, std::pair<colid_t, version_t>> vers_;
  public:
   virtual Txn *start(txn_id_t txnid) {
     return new Txn2PL(this, txnid);
@@ -207,9 +207,9 @@ class TxnMgr2PL: public TxnMgr {
 
 struct row_column_pair {
   Row *row;
-  column_id_t col_id;
+  colid_t col_id;
 
-  row_column_pair(Row *r, column_id_t c) : row(r), col_id(c) { }
+  row_column_pair(Row *r, colid_t c) : row(r), col_id(c) { }
 
   bool operator==(const row_column_pair &o) const {
     return row == o.row && col_id == o.col_id;

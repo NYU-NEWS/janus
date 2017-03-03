@@ -59,7 +59,7 @@ void ClassicCoord::ForwardTxnRequestAck(const TxnReply& txn_reply) {
 
 void ClassicCoord::do_one(TxnRequest &req) {
     std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-    TxnCommand *cmd = frame_->CreateTxnCommand(req, txn_reg_);
+    Procedure *cmd = frame_->CreateTxnCommand(req, txn_reg_);
     verify(txn_reg_ != nullptr);
     cmd->root_id_ = this->next_txn_id();
     cmd->id_ = cmd->root_id_;
@@ -142,7 +142,7 @@ void ClassicCoord::Restart() {
   n_retry_++;
   cmd_->root_id_ = this->next_txn_id();
   cmd_->id_ = cmd_->root_id_;
-  TxnCommand *txn = (TxnCommand*) cmd_;
+  Procedure *txn = (Procedure*) cmd_;
   double last_latency = txn->last_attempt_latency();
   if (ccsi_)
     ccsi_->txn_retry_one(this->thread_id_, txn->type_, last_latency);
@@ -161,7 +161,7 @@ void ClassicCoord::Restart() {
 
 void ClassicCoord::Dispatch() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  auto txn = (TxnCommand*) cmd_;
+  auto txn = (Procedure*) cmd_;
 
   int cnt = 0;
   auto n_pd = Config::GetConfig()->n_parallel_dispatch_;
@@ -205,7 +205,7 @@ void ClassicCoord::DispatchAck(phase_t phase,
                                TxnOutput &outputs) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   if (phase != phase_) return;
-  TxnCommand *txn = (TxnCommand *) cmd_;
+  Procedure *txn = (Procedure *) cmd_;
   if (res == REJECT) {
     Log_debug("got REJECT reply for cmd_id: %llx NOT COMMITING",
               txn->root_id_);
@@ -244,7 +244,7 @@ void ClassicCoord::DispatchAck(phase_t phase,
 
 /** caller should be thread_safe */
 void ClassicCoord::Prepare() {
-  TxnCommand *cmd = (TxnCommand *) cmd_;
+  Procedure *cmd = (Procedure *) cmd_;
   auto mode = Config::GetConfig()->cc_mode_;
   verify(mode == MODE_OCC || mode == MODE_2PL);
 
@@ -271,7 +271,7 @@ void ClassicCoord::Prepare() {
 void ClassicCoord::PrepareAck(phase_t phase, int res) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   if (phase != phase_) return;
-  TxnCommand* cmd = (TxnCommand*) cmd_;
+  Procedure* cmd = (Procedure*) cmd_;
   n_prepare_ack_++;
 
   if (res == REJECT) {
@@ -336,7 +336,7 @@ void ClassicCoord::Commit() {
 void ClassicCoord::CommitAck(phase_t phase) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   if (phase != phase_) return;
-  TxnCommand* cmd = (TxnCommand*)cmd_;
+  Procedure* cmd = (Procedure*)cmd_;
   n_finish_ack_++;
   Log_debug("finish cmd_id_: %ld; n_finish_ack_: %ld; n_finish_req_: %ld",
             cmd_->id_, n_finish_ack_, n_finish_req_);
@@ -354,7 +354,7 @@ void ClassicCoord::CommitAck(phase_t phase) {
 }
 
 void ClassicCoord::End() {
-  TxnCommand* txn = (TxnCommand*) cmd_;
+  Procedure* txn = (Procedure*) cmd_;
   TxnReply& txn_reply_buf = txn->get_reply();
   double last_latency  = txn->last_attempt_latency();
   if (committed_) {

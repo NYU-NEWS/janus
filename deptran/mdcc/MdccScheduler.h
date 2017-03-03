@@ -5,14 +5,14 @@
 #include <memory>
 #include "deptran/scheduler.h"
 #include "deptran/executor.h"
-#include "deptran/txn_chopper.h"
+#include "deptran/procedure.h"
 #include "communicator.h"
 #include "option.h"
 
 namespace mdcc {
   using rococo::Scheduler;
   using rococo::Executor;
-  using rococo::TxnChopper;
+  using rococo::Procedure;
   using rococo::SimpleCommand;
 
   class TxnOptionResult {
@@ -145,7 +145,9 @@ namespace mdcc {
     void init(Config *config, uint32_t site_id);
     void StartPiece(const rococo::SimpleCommand& cmd, int32_t* result, DeferredReply *defer);
 
-    bool LaunchNextPiece(txnid_t txn_id, rococo::TxnChopper *chopper, i8 *result, rrr::DeferredReply *defer);
+    bool LaunchNextPiece(txnid_t txn_id, rococo::Procedure *chopper, i8
+    *result,
+                         rrr::DeferredReply *defer);
     void SendUpdateProposal(txnid_t txn_id, const SimpleCommand &cmd, int32_t *result, DeferredReply *defer);
     void Phase2aClassic(const Ballot ballot, OptionSet option_set);
     void Phase2bClassic(const Ballot ballot, const std::vector<OptionSet>& values);

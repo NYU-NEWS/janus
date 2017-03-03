@@ -184,7 +184,7 @@ void RO6DTxn::start_ro(const SimpleCommand &cmd,
 //  RccDTxn::commit(req, res, defer);
 //}
 
-bool RO6DTxn::read_column(mdb::Row *r, mdb::column_id_t col_id, Value *value) {
+bool RO6DTxn::read_column(mdb::Row *r, mdb::colid_t col_id, Value *value) {
 
   if (read_only_) {
 //        if (false) {

@@ -4,11 +4,11 @@
 
 namespace rococo {
 
-class TxnCommand;
+class Procedure;
 class TxnRequest;
 class BatchStartArgsHelper;
 
-class TpccTxn: public TxnCommand {
+class TpccTxn: public Procedure {
  public:
   map<innid_t, set<int32_t>> input_vars_ = {};
   typedef struct {

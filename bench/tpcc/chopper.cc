@@ -1,5 +1,5 @@
 #include "deptran/__dep__.h"
-#include "deptran/txn_chopper.h"
+#include "deptran/procedure.h"
 #include "chopper.h"
 #include "piece.h"
 
@@ -142,7 +142,7 @@ bool TpccTxn::start_callback(int pi,
 }
 
 void TpccTxn::Reset() {
-  TxnCommand::Reset();
+  Procedure::Reset();
   ws_ = ws_init_;
   partition_ids_.clear();
   n_try_++;

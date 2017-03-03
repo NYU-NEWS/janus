@@ -585,7 +585,7 @@ public:
         }
         const Row* next() {
             Row* index_row = base_cur_.next();
-            column_id_t last_column_id = index_row->schema()->columns_count() - 1;
+            colid_t last_column_id = index_row->schema()->columns_count() - 1;
             verify(last_column_id >= 0);
             Value pointer_value = index_row->get_column(last_column_id);
             master_index* master_idx = (master_index *) pointer_value.get_i64();

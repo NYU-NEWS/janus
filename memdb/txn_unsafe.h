@@ -29,8 +29,8 @@ class TxnUnsafe: public Txn {
     // always allowed
     return true;
   }
-  virtual bool read_column(Row *row, column_id_t col_id, Value *value);
-  virtual bool write_column(Row *row, column_id_t col_id, const Value &value);
+  virtual bool read_column(Row *row, colid_t col_id, Value *value);
+  virtual bool write_column(Row *row, colid_t col_id, const Value &value);
   virtual bool insert_row(Table *tbl, Row *row);
   virtual bool remove_row(Table *tbl, Row *row);
 

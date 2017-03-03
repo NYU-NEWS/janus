@@ -8,7 +8,7 @@ using namespace std;
 namespace mdb {
 
 int Schema::do_add_column(const char* name, Value::kind type, bool key) {
-    column_id_t this_column_id = col_name_to_id_.size();
+    colid_t this_column_id = col_name_to_id_.size();
     if (col_name_to_id_.find(name) != col_name_to_id_.end()) {
         return -1;
     }
@@ -52,15 +52,15 @@ int Schema::do_add_column(const char* name, Value::kind type, bool key) {
     return col_info.id;
 }
 
-void IndexedSchema::index_sanity_check(const std::vector<column_id_t>& idx) {
-    set<column_id_t> s(idx.begin(), idx.end());
+void IndexedSchema::index_sanity_check(const std::vector<colid_t>& idx) {
+    set<colid_t> s(idx.begin(), idx.end());
     verify(s.size() == idx.size());
     for (auto& column_id : idx) {
-        verify(column_id >= 0 && column_id < (column_id_t) columns_count());
+        verify(column_id >= 0 && column_id < (colid_t) columns_count());
     }
 }
 
-int IndexedSchema::add_index(const char* name, const std::vector<column_id_t>& idx) {
+int IndexedSchema::add_index(const char* name, const std::vector<colid_t>& idx) {
     index_sanity_check(idx);
     int this_idx_id = all_idx_.size();
     if (idx_name_.find(name) != idx_name_.end()) {
@@ -76,9 +76,9 @@ int IndexedSchema::add_index(const char* name, const std::vector<column_id_t>& i
 }
 
 int IndexedSchema::add_index_by_column_names(const char* name, const std::vector<std::string>& named_idx) {
-    std::vector<column_id_t> idx;
+    std::vector<colid_t> idx;
     for (auto& col_name : named_idx) {
-        column_id_t col_id = this->get_column_id(col_name);
+        colid_t col_id = this->get_column_id(col_name);
         verify(col_id >= 0);
         idx.push_back(col_id);
     }

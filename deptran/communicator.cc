@@ -4,7 +4,7 @@
 #include "rcc/graph_marshaler.h"
 #include "command.h"
 #include "command_marshaler.h"
-#include "txn_chopper.h"
+#include "procedure.h"
 #include "rcc_rpc.h"
 
 

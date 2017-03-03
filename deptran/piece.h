@@ -44,7 +44,7 @@ map<int32_t, Value> &output) \
 
 #define BEGIN_CB(txn_type, inn_id) \
 txn_reg_->callbacks_[std::make_pair(txn_type, inn_id)] = \
-[] (TxnCommand *ch, std::map<int32_t, Value> output) -> bool {
+[] (Procedure *ch, std::map<int32_t, Value> output) -> bool {
 
 #define END_CB  };
 

@@ -101,7 +101,7 @@ using mdb::Row;
 using mdb::VersionedRow;
 using mdb::symbol_t;
 using mdb::Table;
-using mdb::column_id_t;
+using mdb::colid_t;
 using mdb::SnapshotTable;
 
 

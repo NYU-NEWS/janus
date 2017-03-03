@@ -4,7 +4,7 @@
 #include "dtxn.h"
 #include "bench/tpcc/piece.h"
 #include "dep_graph.h"
-#include "txn_chopper.h"
+#include "procedure.h"
 
 namespace rococo {
 
@@ -289,7 +289,7 @@ void RccDTxn::kiss(mdb::Row *r, int col, bool immediate) {
 }
 
 bool RccDTxn::ReadColumn(mdb::Row *row,
-                         mdb::column_id_t col_id,
+                         mdb::colid_t col_id,
                          Value *value,
                          int hint_flag) {
   verify(!read_only_);
@@ -317,7 +317,7 @@ bool RccDTxn::ReadColumn(mdb::Row *row,
 
 
 bool RccDTxn::WriteColumn(Row *row,
-                          column_id_t col_id,
+                          colid_t col_id,
                           const Value &value,
                           int hint_flag) {
   verify(!read_only_);
@@ -349,7 +349,7 @@ void RccDTxn::AddParentEdge(RccDTxn *other, int8_t weight) {
   }
 }
 
-void RccDTxn::TraceDep(Row* row, column_id_t col_id, int hint_flag) {
+void RccDTxn::TraceDep(Row* row, colid_t col_id, int hint_flag) {
   // TODO remove pointers in outdated epoch ???
   auto r = dynamic_cast<RCCRow*>(row);
   verify(r != nullptr);

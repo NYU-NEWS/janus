@@ -1,7 +1,7 @@
 
 #include "../constants.h"
 #include "../dtxn.h"
-#include "../txn_chopper.h"
+#include "deptran/procedure.h"
 #include "../coordinator.h"
 #include "sched.h"
 #include "../tpl/tpl.h"

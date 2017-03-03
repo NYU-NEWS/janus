@@ -9,7 +9,7 @@ class TxnRegistry;
 class Scheduler;
 class DTxn;
 class SimpleCommand;
-class TxnCommand;
+class Procedure;
 class Executor {
  public:
   Recorder* recorder_ = nullptr;
@@ -17,7 +17,7 @@ class Executor {
   mdb::Txn *mdb_txn_ = nullptr;
   Scheduler* sched_ = nullptr;
   DTxn* dtxn_ = nullptr;
-  TxnCommand* txn_cmd_ = nullptr;
+  Procedure* txn_cmd_ = nullptr;
   cmdid_t cmd_id_ = 0;
   int phase_ = -1;
 

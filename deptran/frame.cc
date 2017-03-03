@@ -252,9 +252,9 @@ void Frame::GetTxnTypes(std::map<int32_t, std::string> &txn_types) {
   }
 }
 
-TxnCommand* Frame::CreateTxnCommand(TxnRequest& req, TxnRegistry* reg) {
+Procedure* Frame::CreateTxnCommand(TxnRequest& req, TxnRegistry* reg) {
   auto benchmark = Config::config_s->benchmark_;
-  TxnCommand *cmd = NULL;
+  Procedure *cmd = NULL;
   switch (benchmark) {
     case TPCA:
       verify(req.txn_type_ == TPCA_PAYMENT);
@@ -286,7 +286,7 @@ TxnCommand* Frame::CreateTxnCommand(TxnRequest& req, TxnRegistry* reg) {
   return cmd;
 }
 
-TxnCommand * Frame::CreateChopper(TxnRequest &req, TxnRegistry* reg) {
+Procedure * Frame::CreateChopper(TxnRequest &req, TxnRegistry* reg) {
   return CreateTxnCommand(req, reg);
 }
 

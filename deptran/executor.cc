@@ -2,7 +2,7 @@
 #include "executor.h"
 #include "scheduler.h"
 #include "txn_reg.h"
-#include "txn_chopper.h"
+#include "procedure.h"
 
 namespace rococo {
 

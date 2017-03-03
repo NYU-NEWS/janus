@@ -1,6 +1,6 @@
 #include <deptran/rcc/dtxn.h>
 #include "../rcc/dtxn.h"
-#include "../txn_chopper.h"
+#include "deptran/procedure.h"
 #include "../rcc/graph_marshaler.h"
 #include "dep_graph.h"
 #include "commo.h"

@@ -19,7 +19,7 @@ RccCommo* RccCoord::commo() {
 
 void RccCoord::PreDispatch() {
   verify(ro_state_ == BEGIN);
-  TxnCommand* txn = dynamic_cast<TxnCommand*>(cmd_);
+  Procedure* txn = dynamic_cast<Procedure*>(cmd_);
 //  auto dispatch = txn->is_read_only() ?
 //                  std::bind(&RccCoord::DispatchRo, this) :
 //                  std::bind(&RccCoord::Dispatch, this);
@@ -37,7 +37,7 @@ void RccCoord::PreDispatch() {
 
 void RccCoord::Dispatch() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  auto txn = (TxnCommand*) cmd_;
+  auto txn = (Procedure*) cmd_;
   verify(txn->root_id_ == txn->id_);
   int cnt = 0;
   auto cmds_by_par = txn->GetReadyCmds();
@@ -107,7 +107,7 @@ void RccCoord::DispatchAck(phase_t phase,
 /** caller should be thread safe */
 void RccCoord::Finish() {
   verify(0);
-  TxnCommand *ch = (TxnCommand*) cmd_;
+  Procedure *ch = (Procedure*) cmd_;
   // commit or abort piece
   Log_debug(
     "send rcc finish requests to %d servers, tid: %llx, graph size: %d",
@@ -184,7 +184,7 @@ void RccCoord::DispatchRoAck(phase_t phase,
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(phase == phase_);
 
-  auto ch = (TxnCommand*) cmd_;
+  auto ch = (Procedure*) cmd_;
   cmd_->Merge(cmd);
   curr_vers_.insert(vers.begin(), vers.end());
 

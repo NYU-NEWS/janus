@@ -18,7 +18,7 @@ using base::insert_into_map;
 using base::format_decimal;
 
 typedef uint64_t version_t;
-typedef int column_id_t;
+typedef int colid_t;
 
 typedef enum {
     NONE,

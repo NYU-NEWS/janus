@@ -11,7 +11,7 @@ TPLDTxn::TPLDTxn(epoch_t epoch,
 }
 
 bool TPLDTxn::ReadColumn(mdb::Row *row,
-                         mdb::column_id_t col_id,
+                         mdb::colid_t col_id,
                          Value *value,
                          int hint_flag) {
   if (locking_ && hint_flag != TXN_BYPASS) {
@@ -24,7 +24,7 @@ bool TPLDTxn::ReadColumn(mdb::Row *row,
 }
 
 bool TPLDTxn::ReadColumns(Row *row,
-                          const std::vector<column_id_t> &col_ids,
+                          const std::vector<colid_t> &col_ids,
                           std::vector<Value> *values,
                           int hint_flag) {
   if (locking_ && hint_flag != TXN_BYPASS) {
@@ -40,7 +40,7 @@ bool TPLDTxn::ReadColumns(Row *row,
 }
 
 bool TPLDTxn::WriteColumn(Row *row,
-                          column_id_t col_id,
+                          colid_t col_id,
                           const Value &value,
                           int hint_flag) {
   if (locking_  && hint_flag != TXN_BYPASS) {
@@ -53,7 +53,7 @@ bool TPLDTxn::WriteColumn(Row *row,
 }
 
 bool TPLDTxn::WriteColumns(Row *row,
-                           const std::vector<column_id_t> &col_ids,
+                           const std::vector<colid_t> &col_ids,
                            const std::vector<Value> &values,
                            int hint_flag) {
 

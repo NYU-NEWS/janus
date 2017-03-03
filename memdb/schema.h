@@ -19,7 +19,7 @@ public:
     struct column_info {
         column_info(): id(-1), indexed(false), type(Value::UNKNOWN), fixed_size_offst(-1) {}
 
-        column_id_t id;
+        colid_t id;
         std::string name;
         bool indexed;   // primary index or secondary index
         Value::kind type;
@@ -46,7 +46,7 @@ public:
         return add_column(name, type, true);
     }
 
-    column_id_t get_column_id(const std::string& name) const {
+    colid_t get_column_id(const std::string& name) const {
         auto it = col_name_to_id_.find(name);
         if (it != std::end(col_name_to_id_)) {
             assert(col_info_[it->second].id == it->second);
@@ -54,20 +54,20 @@ public:
         }
         return -1;
     }
-    const std::vector<column_id_t>& key_columns_id() const {
+    const std::vector<colid_t>& key_columns_id() const {
         // key: primary index only
         return key_cols_id_;
     }
 
     const column_info* get_column_info(const std::string& name) const {
-        column_id_t col_id = get_column_id(name);
+        colid_t col_id = get_column_id(name);
         if (col_id < 0) {
             return nullptr;
         } else {
             return &col_info_[col_id];
         }
     }
-    const column_info* get_column_info(column_id_t column_id) const {
+    const column_info* get_column_info(colid_t column_id) const {
         return &col_info_[column_id];
     }
 
@@ -99,9 +99,9 @@ protected:
         return ret;
     }
 
-    std::unordered_map<std::string, column_id_t> col_name_to_id_;
+    std::unordered_map<std::string, colid_t> col_name_to_id_;
     std::vector<column_info> col_info_;
-    std::vector<column_id_t> key_cols_id_;  // key: primary index only
+    std::vector<colid_t> key_cols_id_;  // key: primary index only
 
     // number of variable size cols (lookup table on row data)
     int var_size_cols_;
@@ -121,10 +121,10 @@ private:
 class IndexedSchema: public Schema {
     int idx_col_;
 
-    std::vector<std::vector<column_id_t>> all_idx_;
+    std::vector<std::vector<colid_t>> all_idx_;
     std::map<std::string, int> idx_name_;
 
-    void index_sanity_check(const std::vector<column_id_t>& idx);
+    void index_sanity_check(const std::vector<colid_t>& idx);
 
 public:
     IndexedSchema(): idx_col_(-1) {}
@@ -133,7 +133,7 @@ public:
         return idx_col_;
     }
 
-    int add_index(const char* name, const std::vector<column_id_t>& idx);
+    int add_index(const char* name, const std::vector<colid_t>& idx);
     int add_index_by_column_names(const char* name, const std::vector<std::string>& named_idx);
 
     int get_index_id(const std::string& name) {
@@ -141,10 +141,10 @@ public:
         verify(it != idx_name_.end());
         return it->second;
     }
-    const std::vector<column_id_t>& get_index(const std::string& name) {
+    const std::vector<colid_t>& get_index(const std::string& name) {
         return get_index(get_index_id(name));
     }
-    const std::vector<column_id_t>& get_index(int idx_id) {
+    const std::vector<colid_t>& get_index(int idx_id) {
         return all_idx_[idx_id];
     }
 
@@ -156,11 +156,11 @@ public:
         Schema::freeze();
     }
 
-    std::vector<std::vector<column_id_t>>::const_iterator index_begin() const {
+    std::vector<std::vector<colid_t>>::const_iterator index_begin() const {
         return all_idx_.begin();
     }
 
-    std::vector<std::vector<column_id_t>>::const_iterator index_end() const {
+    std::vector<std::vector<colid_t>>::const_iterator index_end() const {
         return all_idx_.end();
     }
 };

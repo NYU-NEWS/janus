@@ -3,6 +3,7 @@
 #include "constants.h"
 #include "command.h"
 #include "epochs.h"
+#include "kvdb.h"
 namespace rococo {
 
 class DTxn;
@@ -42,7 +43,7 @@ class Scheduler {
   const int EPOCH_DURATION = 5;
 
 #ifdef CHECK_ISO
-  typedef map<Row*, map<column_id_t, int>> deltas_t;
+  typedef map<Row*, map<colid_t, int>> deltas_t;
   deltas_t deltas_{};
 
   void MergeDeltas(deltas_t deltas) {
@@ -50,7 +51,7 @@ class Scheduler {
     for (auto& pair1: deltas) {
       Row* r = pair1.first;
       for (auto& pair2: pair1.second) {
-        column_id_t c = pair2.first;
+        colid_t c = pair2.first;
         int delta = pair2.second;
         deltas_[r][c] += delta;
         int v = r->get_column(c).get_i32();
@@ -64,7 +65,7 @@ class Scheduler {
     for (auto& pair1: deltas_) {
       Row* r = pair1.first;
       for (auto& pair2: pair1.second) {
-        column_id_t c = pair2.first;
+        colid_t c = pair2.first;
         int delta = pair2.second;
         int v = r->get_column(c).get_i32();
         verify(delta == v);

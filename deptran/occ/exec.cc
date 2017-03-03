@@ -1,7 +1,7 @@
 #include "__dep__.h"
 #include "../config.h"
 #include "../multi_value.h"
-#include "../txn_chopper.h"
+#include "deptran/procedure.h"
 #include "../rcc/dep_graph.h"
 #include "../rcc/graph_marshaler.h"
 #include "exec.h"
@@ -116,7 +116,7 @@ int OCCExecutor::Commit() {
       // batch update all values
       auto it_end = txn->updates_.upper_bound(row);
       while (it != it_end) {
-        column_id_t column_id = it->second.first;
+        colid_t column_id = it->second.first;
         Value &value = it->second.second;
         new_row->update(column_id, value);
         if (txn->policy_ == symbol_t::OCC_LAZY) {
@@ -144,7 +144,7 @@ int OCCExecutor::Commit() {
         txn->accessed_rows_.insert(new_row);
       }
     } else {
-      column_id_t column_id = it->second.first;
+      colid_t column_id = it->second.first;
       Value &value = it->second.second;
       row->update(column_id, value);
       if (txn->policy_ == symbol_t::OCC_LAZY) {

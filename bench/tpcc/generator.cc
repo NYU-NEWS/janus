@@ -1,7 +1,7 @@
 
 #include "generator.h"
 #include "piece.h"
-#include "deptran/txn_chopper.h"
+#include "deptran/procedure.h"
 
 namespace rococo {
 

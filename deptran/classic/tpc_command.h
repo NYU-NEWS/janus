@@ -1,12 +1,12 @@
 #pragma once
 #include "../__dep__.h"
 #include "../command.h"
-#include "../txn_chopper.h"
+#include "deptran/procedure.h"
 
 namespace rococo {
 
 
-class TxnCommand;
+class Procedure;
 class TpcPrepareCommand : public ContainerCommand {
  public:
   TpcPrepareCommand() {

@@ -24,7 +24,7 @@ bool TxnNested::commit() {
   }
   for (auto &it : updates_) {
     Row *row = it.first;
-    column_id_t column_id = it.second.first;
+    colid_t column_id = it.second.first;
     Value &value = it.second.second;
     base_->write_column(row, column_id, value);
   }
@@ -35,7 +35,7 @@ bool TxnNested::commit() {
   return true;
 }
 
-bool TxnNested::read_column(Row *row, column_id_t col_id, Value *value) {
+bool TxnNested::read_column(Row *row, colid_t col_id, Value *value) {
   assert(debug_check_row_valid(row));
   verify(outcome_ == symbol_t::NONE);
 
@@ -60,7 +60,7 @@ bool TxnNested::read_column(Row *row, column_id_t col_id, Value *value) {
   return base_->read_column(row, col_id, value);
 }
 
-bool TxnNested::write_column(Row *row, column_id_t col_id, const Value &value) {
+bool TxnNested::write_column(Row *row, colid_t col_id, const Value &value) {
   assert(debug_check_row_valid(row));
   verify(outcome_ == symbol_t::NONE);
 

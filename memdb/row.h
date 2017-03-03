@@ -462,7 +462,7 @@ class FineLockedRow: public Row {
     return symbol_t::ROW_FINE;
   }
 
-  rrr::ALock *get_alock(column_id_t column_id) {
+  rrr::ALock *get_alock(colid_t column_id) {
     //return lock_[column_id];
     switch (type_2pl_) {
       case WAIT_DIE:
@@ -476,17 +476,17 @@ class FineLockedRow: public Row {
     }
   }
 
-  uint64_t reg_wlock(column_id_t column_id,
+  uint64_t reg_wlock(colid_t column_id,
                      std::function<void(uint64_t)> succ_callback,
                      std::function<void(void)> fail_callback);
 
-  uint64_t reg_rlock(column_id_t column_id,
+  uint64_t reg_rlock(colid_t column_id,
                      std::function<void(uint64_t)> succ_callback,
                      std::function<void(void)> fail_callback);
 
-  void abort_lock_req(column_id_t column_id, uint64_t lock_req_id);
+  void abort_lock_req(colid_t column_id, uint64_t lock_req_id);
 
-  void unlock_column_by(column_id_t column_id, uint64_t lock_req_id);
+  void unlock_column_by(colid_t column_id, uint64_t lock_req_id);
 
   virtual Row *copy() const {
     FineLockedRow *row = new FineLockedRow();
@@ -527,7 +527,7 @@ class VersionedRow: public CoarseLockedRow {
     prepared_wver_.resize(n_columns, {});
   }
 
-  version_t max_prepared_rver(column_id_t column_id) {
+  version_t max_prepared_rver(colid_t column_id) {
     if (prepared_wver_[column_id].size() > 0) {
       return prepared_wver_[column_id].back();
     } else {
@@ -535,7 +535,7 @@ class VersionedRow: public CoarseLockedRow {
     }
   }
 
-  version_t min_prepared_wver(column_id_t column_id) {
+  version_t min_prepared_wver(colid_t column_id) {
     if (prepared_rver_[column_id].size() > 0) {
       return prepared_rver_[column_id].front();
     } else {
@@ -543,21 +543,21 @@ class VersionedRow: public CoarseLockedRow {
     }
   }
 
-  void insert_prepared_wver(column_id_t column_id, version_t ver) {
+  void insert_prepared_wver(colid_t column_id, version_t ver) {
     prepared_wver_[column_id].push_back(ver);
     prepared_rver_[column_id].sort(); // TODO optimize
   }
 
-  void remove_prepared_wver(column_id_t column_id, version_t ver) {
+  void remove_prepared_wver(colid_t column_id, version_t ver) {
     prepared_wver_[column_id].remove(ver);
   }
 
-  void insert_prepared_rver(column_id_t column_id, version_t ver) {
+  void insert_prepared_rver(colid_t column_id, version_t ver) {
     prepared_rver_[column_id].push_back(ver);
     prepared_rver_[column_id].sort(); // TODO optimize
   }
 
-  void remove_prepared_rver(column_id_t column_id, version_t ver) {
+  void remove_prepared_rver(colid_t column_id, version_t ver) {
     prepared_rver_[column_id].remove(ver);
   }
 
@@ -583,17 +583,17 @@ class VersionedRow: public CoarseLockedRow {
     return symbol_t::ROW_VERSIONED;
   }
 
-  version_t get_column_ver(column_id_t column_id) const {
+  version_t get_column_ver(colid_t column_id) const {
     verify(ver_.size() > 0);
     verify(column_id < ver_.size());
     return ver_[column_id];
   }
 
-  void set_column_ver(column_id_t column_id, version_t ver) {
+  void set_column_ver(colid_t column_id, version_t ver) {
     ver_[column_id] = ver;
   }
 
-  void incr_column_ver(column_id_t column_id) {
+  void incr_column_ver(colid_t column_id) {
     ver_[column_id] ++;
   }
 

@@ -1,7 +1,7 @@
 #include "__dep__.h"
 #include "marshal-value.h"
 #include "coordinator.h"
-#include "txn_chopper.h"
+#include "procedure.h"
 #include "benchmark_control_rpc.h"
 
 // deprecated below
@@ -49,7 +49,7 @@ Value& TxnWorkspace::operator[](size_t idx) {
   return (*values_)[idx];
 }
 
-TxnCommand::TxnCommand() {
+Procedure::Procedure() {
   clock_gettime(&start_time_);
   read_only_failed_ = false;
   pre_time_ = timespec2ms(start_time_);
@@ -105,15 +105,15 @@ Marshal& operator >> (Marshal& m, TxnReply& reply) {
   return m;
 }
 
-set<parid_t> TxnChopper::GetPartitionIds() {
+set<parid_t> Procedure::GetPartitionIds() {
   return partition_ids_;
 }
 
-bool TxnCommand::IsOneRound() {
+bool Procedure::IsOneRound() {
   return false;
 }
 
-vector<SimpleCommand> TxnCommand::GetCmdsByPartition(parid_t par_id) {
+vector<SimpleCommand> Procedure::GetCmdsByPartition(parid_t par_id) {
   vector<SimpleCommand> cmds;
   for (auto& pair: cmds_) {
     SimpleCommand* cmd = dynamic_cast<SimpleCommand*>(pair.second);
@@ -125,7 +125,7 @@ vector<SimpleCommand> TxnCommand::GetCmdsByPartition(parid_t par_id) {
   return cmds;
 }
 
-map<parid_t, vector<SimpleCommand*>> TxnCommand::GetReadyCmds(int32_t max) {
+map<parid_t, vector<SimpleCommand*>> Procedure::GetReadyCmds(int32_t max) {
   verify(n_pieces_dispatched_ < n_pieces_dispatchable_);
   verify(n_pieces_dispatched_ < n_pieces_all_);
   map<parid_t, vector<SimpleCommand*>> cmds;
@@ -170,7 +170,7 @@ map<parid_t, vector<SimpleCommand*>> TxnCommand::GetReadyCmds(int32_t max) {
   return cmds;
 }
 
-ContainerCommand *TxnCommand::GetNextReadySubCmd() {
+ContainerCommand *Procedure::GetNextReadySubCmd() {
   verify(0);
   verify(n_pieces_dispatched_ < n_pieces_dispatchable_);
   verify(n_pieces_dispatched_ < n_pieces_all_);
@@ -212,7 +212,7 @@ ContainerCommand *TxnCommand::GetNextReadySubCmd() {
   return cmd;
 }
 
-bool TxnCommand::OutputReady() {
+bool Procedure::OutputReady() {
   if (n_pieces_all_ == n_pieces_dispatch_acked_) {
     return true;
   } else {
@@ -220,13 +220,13 @@ bool TxnCommand::OutputReady() {
   }
 }
 
-void TxnCommand::Merge(TxnOutput& output) {
+void Procedure::Merge(TxnOutput& output) {
   for (auto& pair: output) {
     Merge(pair.first, pair.second);
   }
 }
 
-void TxnCommand::Merge(innid_t inn_id, map<int32_t, Value>& output) {
+void Procedure::Merge(innid_t inn_id, map<int32_t, Value>& output) {
   verify(outputs_.find(inn_id) == outputs_.end());
   n_pieces_dispatch_acked_++;
   verify(n_pieces_all_ >= n_pieces_dispatchable_);
@@ -237,14 +237,14 @@ void TxnCommand::Merge(innid_t inn_id, map<int32_t, Value>& output) {
   this->start_callback(inn_id, SUCCESS, output);
 }
 
-void TxnCommand::Merge(ContainerCommand &cmd) {
+void Procedure::Merge(ContainerCommand &cmd) {
   auto simple_cmd = (SimpleCommand *) &cmd;
   auto pi = cmd.inn_id();
   auto &output = simple_cmd->output;
   Merge(pi, output);
 }
 
-bool TxnCommand::HasMoreSubCmdReadyNotOut() {
+bool Procedure::HasMoreSubCmdReadyNotOut() {
   verify(n_pieces_all_ >= n_pieces_dispatchable_);
   verify(n_pieces_dispatchable_ >= n_pieces_dispatched_);
   verify(n_pieces_dispatched_ >= n_pieces_dispatch_acked_);
@@ -258,48 +258,48 @@ bool TxnCommand::HasMoreSubCmdReadyNotOut() {
   }
 }
 
-void TxnCommand::Reset() {
+void Procedure::Reset() {
   n_pieces_dispatchable_ = 0;
   n_pieces_dispatch_acked_ = 0;
   n_pieces_dispatched_ = 0;
   outputs_.clear();
 }
 
-void TxnCommand::read_only_reset() {
+void Procedure::read_only_reset() {
   read_only_failed_ = false;
   Reset();
 }
+//
+//bool Procedure::read_only_start_callback(int pi,
+//                                          int *res,
+//                                          map<int32_t, mdb::Value> &output) {
+//  verify(pi < GetNPieceAll());
+//  if (res == NULL) { // phase one, store outputs only
+//    outputs_[pi] = output;
+//  }
+//  else {
+//    // phase two, check if this try not failed yet
+//    // and outputs is consistent with previous stored one
+//    // store current outputs
+//    if (read_only_failed_) {
+//      *res = REJECT;
+//    }
+//    else if (pi >= outputs_.size()) {
+//      *res = REJECT;
+//      read_only_failed_ = true;
+//    }
+//    else if (is_consistent(outputs_[pi], output))
+//      *res = SUCCESS;
+//    else {
+//      *res = REJECT;
+//      read_only_failed_ = true;
+//    }
+//    outputs_[pi] = output;
+//  }
+//  return start_callback(pi, SUCCESS, output);
+//}
 
-bool TxnCommand::read_only_start_callback(int pi,
-                                          int *res,
-                                          map<int32_t, mdb::Value> &output) {
-  verify(pi < GetNPieceAll());
-  if (res == NULL) { // phase one, store outputs only
-    outputs_[pi] = output;
-  }
-  else {
-    // phase two, check if this try not failed yet
-    // and outputs is consistent with previous stored one
-    // store current outputs
-    if (read_only_failed_) {
-      *res = REJECT;
-    }
-    else if (pi >= outputs_.size()) {
-      *res = REJECT;
-      read_only_failed_ = true;
-    }
-    else if (is_consistent(outputs_[pi], output))
-      *res = SUCCESS;
-    else {
-      *res = REJECT;
-      read_only_failed_ = true;
-    }
-    outputs_[pi] = output;
-  }
-  return start_callback(pi, SUCCESS, output);
-}
-
-double TxnCommand::last_attempt_latency() {
+double Procedure::last_attempt_latency() {
   double tmp = pre_time_;
   struct timespec t_buf;
   clock_gettime(&t_buf);
@@ -307,7 +307,7 @@ double TxnCommand::last_attempt_latency() {
   return pre_time_ - tmp;
 }
 
-TxnReply &TxnCommand::get_reply() {
+TxnReply &Procedure::get_reply() {
   reply_.start_time_ = start_time_;
   reply_.n_try_ = n_try_;
   struct timespec t_buf;
@@ -332,7 +332,7 @@ void TxnRequest::get_log(i64 tid, std::string &log) {
   }
 }
 
-Marshal& TxnCommand::ToMarshal(Marshal& m) const {
+Marshal& Procedure::ToMarshal(Marshal& m) const {
   m << ws_;
   m << ws_init_;
   m << inputs_;
@@ -353,7 +353,7 @@ Marshal& TxnCommand::ToMarshal(Marshal& m) const {
   return m;
 }
 
-Marshal& TxnCommand::FromMarshal(Marshal& m) {
+Marshal& Procedure::FromMarshal(Marshal& m) {
   m >> ws_;
   m >> ws_init_;
   m >> inputs_;

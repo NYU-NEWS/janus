@@ -8,8 +8,8 @@ namespace rococo {
 
 class TapirDTxn : public DTxn {
  public:
-  map<Row*, map<column_id_t, mdb::version_t>> read_vers_ = {};
-  map<Row*, map<column_id_t, Value>> write_bufs_ = {};
+  map<Row*, map<colid_t, mdb::version_t>> read_vers_ = {};
+  map<Row*, map<colid_t, Value>> write_bufs_ = {};
 
   using DTxn::DTxn;
 
@@ -21,22 +21,22 @@ class TapirDTxn : public DTxn {
   }
 
   bool ReadColumn(mdb::Row *row,
-                  mdb::column_id_t col_id,
+                  mdb::colid_t col_id,
                   Value *value,
                   int hint_flag = TXN_SAFE) override;
 
   virtual bool ReadColumns(Row *row,
-                           const std::vector<column_id_t> &col_ids,
+                           const std::vector<colid_t> &col_ids,
                            std::vector<Value> *values,
                            int hint_flag = TXN_SAFE) override;
 
   virtual bool WriteColumn(Row *row,
-                           column_id_t col_id,
+                           colid_t col_id,
                            const Value &value,
                            int hint_flag = TXN_SAFE) override;
 
   virtual bool WriteColumns(Row *row,
-                            const std::vector<column_id_t> &col_ids,
+                            const std::vector<colid_t> &col_ids,
                             const std::vector<Value> &values,
                             int hint_flag = TXN_SAFE) override;
 

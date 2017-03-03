@@ -3,7 +3,7 @@
 //
 #include <deptran/dtxn.h>
 #include <deptran/txn_reg.h>
-#include "deptran/txn_chopper.h"
+#include "deptran/procedure.h"
 #include "deptran/frame.h"
 #include "executor.h"
 #include "memdb/row.h"

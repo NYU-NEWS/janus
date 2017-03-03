@@ -10,7 +10,7 @@ namespace rococo {
 class Sharding;
 class Coordinator;
 class CoordinatorBase;
-class TxnCommand;
+class Procedure;
 class TxnRequest;
 class DTxn;
 class Executor;
@@ -51,8 +51,8 @@ class Frame {
   virtual mdb::Row* CreateRow(const mdb::Schema *schema,
                               std::vector<Value> &row_data);
   void GetTxnTypes(std::map<int32_t, std::string> &txn_types);
-  TxnCommand* CreateTxnCommand(TxnRequest& req, TxnRegistry* reg);
-  TxnCommand * CreateChopper(TxnRequest &req, TxnRegistry *reg);
+  Procedure* CreateTxnCommand(TxnRequest& req, TxnRegistry* reg);
+  Procedure * CreateChopper(TxnRequest &req, TxnRegistry *reg);
   virtual DTxn* CreateDTxn(epoch_t epoch,
                            txnid_t txn_id,
                            bool ro,

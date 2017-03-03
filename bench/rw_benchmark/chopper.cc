@@ -1,7 +1,7 @@
 
 
 #include "deptran/__dep__.h"
-#include "deptran/txn_chopper.h"
+#include "deptran/procedure.h"
 #include "chopper.h"
 #include "piece.h"
 
@@ -58,11 +58,6 @@ void RWChopper::Init(TxnRequest &req) {
   }
 }
 
-bool RWChopper::start_callback(const std::vector<int> &pi,
-                               int res, BatchStartArgsHelper &bsah) {
-  return false;
-}
-
 bool RWChopper::start_callback(int pi,
                                int res,
                                map<int32_t, Value> &output) {
@@ -79,7 +74,7 @@ bool RWChopper::IsReadOnly() {
 }
 
 void RWChopper::Reset() {
-  TxnChopper::Reset();
+  Procedure::Reset();
   for (auto& pair : status_) {
     pair.second = DISPATCHABLE;
   }

@@ -4,7 +4,7 @@
 #ifndef ROCOCO_MDCC_COORD_H
 #define ROCOCO_MDCC_COORD_H
 
-#include "deptran/txn_chopper.h"
+#include "deptran/procedure.h"
 #include "deptran/classic/coord.h"
 #include "./communicator.h"
 
@@ -36,7 +36,7 @@ public:
   virtual ~MdccCoordinator() { delete communicator_; }
   virtual void do_one(TxnRequest&) override;
   void Reset() override {}
-  void restart(TxnCommand *ch) override {}
+  void restart(Procedure *ch) override {}
 
   uint64_t NextTxnId();
 };

@@ -225,7 +225,7 @@ Row* IndexedTable::make_index_row(Row* base, int idx_id, master_index* master_id
     vector<Value> idx_keys;
 
     // pick columns from base row into the index
-    for (column_id_t col_id : ((IndexedSchema *) schema_)->get_index(idx_id)) {
+    for (colid_t col_id : ((IndexedSchema *) schema_)->get_index(idx_id)) {
         Value picked_value = base->get_column(col_id);
         idx_keys.push_back(picked_value);
     }
@@ -331,7 +331,7 @@ void IndexedTable::notify_before_update(Row* row, int updated_column_id) {
     // remove the affected secondary indices
     for (size_t idx_id = 0; idx_id < indices_.size(); idx_id++) {
         bool affected = false;
-        for (column_id_t col_id : ((IndexedSchema *) schema_)->get_index(idx_id)) {
+        for (colid_t col_id : ((IndexedSchema *) schema_)->get_index(idx_id)) {
             if (updated_column_id == col_id) {
                 affected = true;
                 break;
@@ -362,7 +362,7 @@ void IndexedTable::notify_after_update(Row* row, int updated_column_id) {
     // re-insert the affected secondary indices
     for (size_t idx_id = 0; idx_id < indices_.size(); idx_id++) {
         bool affected = false;
-        for (column_id_t col_id : ((IndexedSchema *) schema_)->get_index(idx_id)) {
+        for (colid_t col_id : ((IndexedSchema *) schema_)->get_index(idx_id)) {
             if (updated_column_id == col_id) {
                 affected = true;
                 break;

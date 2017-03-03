@@ -47,7 +47,7 @@ class RO6DTxn: public RccDTxn {
 
   virtual bool read_column(
       mdb::Row *row,
-      mdb::column_id_t col_id,
+      mdb::colid_t col_id,
       Value *value
   );
 

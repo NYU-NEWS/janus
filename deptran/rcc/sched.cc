@@ -1,5 +1,5 @@
 
-#include "../txn_chopper.h"
+#include "deptran/procedure.h"
 #include "graph.h"
 #include "txn-info.h"
 #include "dtxn.h"

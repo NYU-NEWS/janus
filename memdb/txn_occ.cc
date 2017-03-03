@@ -65,7 +65,7 @@ bool TxnOCC::version_check(const std::unordered_map<row_column_pair,
                                                     row_column_pair::hash> &ver_info) {
   for (auto &it : ver_info) {
     Row *row = it.first.row;
-    column_id_t col_id = it.first.col_id;
+    colid_t col_id = it.first.col_id;
     version_t ver = it.second;
     verify(row->rtti() == ROW_VERSIONED);
     VersionedRow *v_row = (VersionedRow *) row;
@@ -144,7 +144,7 @@ verify(0);
 }
 
 
-bool TxnOCC::read_column(Row *row, column_id_t col_id, Value *value) {
+bool TxnOCC::read_column(Row *row, colid_t col_id, Value *value) {
   if (is_readonly()) {
     *value = row->get_column(col_id);
     return true;
@@ -197,7 +197,7 @@ bool TxnOCC::__DebugCheckReadVersion(row_column_pair row_col,
   return true;
 }
 
-bool TxnOCC::write_column(Row *row, column_id_t col_id, const Value &value) {
+bool TxnOCC::write_column(Row *row, colid_t col_id, const Value &value) {
   verify(!is_readonly());
   assert(debug_check_row_valid(row));
   verify(outcome_ == symbol_t::NONE);
