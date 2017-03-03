@@ -27,7 +27,7 @@ DEFAULT_MODES = ["tpl_ww:multi_paxos",
 
 DEFAULT_CLIENTS = ["1:2"]
 DEFAULT_SERVERS = ["1:2"]
-DEFAULT_BENCHMARKS = [ "rw_benchmark", "tpccd" ]
+DEFAULT_BENCHMARKS = [ "rw", "tpccd" ]
 DEFAULT_TRIAL_DURATION = 30
 DEFAULT_EXECUTABLE = "./run.py"
 

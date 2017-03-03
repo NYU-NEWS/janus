@@ -1,12 +1,10 @@
 
+#include "workload.h"
 
-#include "generator.h"
-#include "piece.h"
+namespace rococo {
 
-using namespace rococo;
-
-TpccdTxnGenerator::TpccdTxnGenerator(Config* config)
-    : TpccTxnGenerator(config) {
+TpccRdWorkload::TpccRdWorkload(Config* config)
+    : TpccWorkload(config) {
   std::map<std::string, uint64_t> table_num_rows;
   sharding_->get_number_rows(table_num_rows);
 
@@ -37,3 +35,29 @@ TpccdTxnGenerator::TpccdTxnGenerator(Config* config)
   }
 }
 
+
+void TpccRdWorkload::RegOrderStatus() {
+  TpccWorkload::RegOrderStatus();
+  SHARD_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_0, TPCC_TB_CUSTOMER,
+            TPCC_VAR_D_ID, TPCC_VAR_W_ID);
+  SHARD_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_1, TPCC_TB_CUSTOMER,
+            TPCC_VAR_D_ID, TPCC_VAR_W_ID)
+  SHARD_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_2, TPCC_TB_ORDER,
+            TPCC_VAR_D_ID, TPCC_VAR_W_ID)
+  SHARD_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_3, TPCC_TB_ORDER_LINE,
+            TPCC_VAR_D_ID, TPCC_VAR_W_ID)
+}
+
+void TpccRdWorkload::RegStockLevel() {
+  TpccWorkload::RegStockLevel();
+  SHARD_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_0, TPCC_TB_DISTRICT,
+            TPCC_VAR_D_ID, TPCC_VAR_W_ID)
+  SHARD_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_1, TPCC_TB_ORDER_LINE,
+            TPCC_VAR_D_ID, TPCC_VAR_W_ID)
+  for (int i = (0); i < (1000); i++) {
+    SHARD_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_RS(i), TPCC_TB_STOCK,
+              TPCC_VAR_OL_I_ID(i), TPCC_VAR_W_ID)
+  }
+}
+
+} // namespace rococo

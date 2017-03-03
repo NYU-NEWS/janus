@@ -1,10 +1,10 @@
 
-#include "chopper.h"
+#include "procedure.h"
 
 namespace rococo {
 
 
-void TpccTxn::StockLevelInit(TxnRequest &req) {
+void TpccProcedure::StockLevelInit(TxnRequest &req) {
 
   n_pieces_all_ = 2;
   n_pieces_dispatchable_ = 1;
@@ -33,7 +33,7 @@ void TpccTxn::StockLevelInit(TxnRequest &req) {
   // piece 2 - n, R stock init in stock_level_callback
 }
 
-void TpccTxn::StockLevelRetry() {
+void TpccProcedure::StockLevelRetry() {
   n_pieces_all_ = 2;
   n_pieces_dispatchable_ = 1;
   // inputs_.resize(n_pieces_all_);
@@ -46,7 +46,7 @@ void TpccTxn::StockLevelRetry() {
 }
 
 
-void TpccPiece::RegStockLevel() {
+void TpccWorkload::RegStockLevel() {
   // Ri district
   INPUT_PIE(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_0,
             TPCC_VAR_W_ID, TPCC_VAR_D_ID)
@@ -125,7 +125,7 @@ void TpccPiece::RegStockLevel() {
   } END_PIE
 
   BEGIN_CB(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_1)
-    TpccTxn *tpcc_ch = (TpccTxn*) ch;
+    TpccProcedure *tpcc_ch = (TpccProcedure*) ch;
     Log_debug("tid %llx: stock_level: outptu_size: %u",
               tpcc_ch->txn_id_, output.size());
     // verify(output_size >= 20 * 5);

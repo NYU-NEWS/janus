@@ -8,7 +8,7 @@
 #include "procedure.h"
 #include "rcc_rpc.h"
 #include "frame.h"
-#include "bench/tpcc/piece.h"
+#include "bench/tpcc/workload.h"
 #include "executor.h"
 #include "coordinator.h"
 

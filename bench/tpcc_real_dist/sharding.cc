@@ -3,7 +3,7 @@
 #include "config.h"
 #include "dtxn.h"
 #include "bench/tpcc_real_dist/sharding.h"
-#include "bench/tpcc/piece.h"
+#include "bench/tpcc/workload.h"
 #include "frame.h"
 #include "scheduler.h"
 

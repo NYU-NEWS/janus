@@ -107,14 +107,14 @@ void ServerWorker::PopTable() {
   verify(ret > 0);
 }
 
-void ServerWorker::RegPiece() {
+void ServerWorker::RegisterWorkload() {
   auto benchmark = Config::GetConfig()->get_benchmark();
-  Piece *piece = Piece::get_piece(benchmark);
+  Workload* workload = Workload::CreateWorkload(benchmark);
   verify(txn_reg_ != nullptr);
   verify(sharding_ != nullptr);
-  piece->sss_ = sharding_;
-  piece->txn_reg_ = txn_reg_;
-  piece->reg_all();
+  workload->sss_ = sharding_;
+  workload->txn_reg_ = txn_reg_;
+  workload->RegisterPrecedures();
 }
 
 void ServerWorker::SetupService() {

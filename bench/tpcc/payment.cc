@@ -1,10 +1,10 @@
-#include "chopper.h"
+#include "procedure.h"
 #include "bench/tpcc_real_dist/sharding.h"
-#include "generator.h"
+#include "workload.h"
 
 namespace rococo {
 
-void TpccTxn::PaymentInit(TxnRequest &req) {
+void TpccProcedure::PaymentInit(TxnRequest &req) {
 
   n_pieces_all_ = 6;
 
@@ -59,7 +59,7 @@ void TpccTxn::PaymentInit(TxnRequest &req) {
   CheckReady();
 }
 
-void TpccTxn::PaymentRetry() {
+void TpccProcedure::PaymentRetry() {
   status_[TPCC_PAYMENT_0] = WAITING;
   status_[TPCC_PAYMENT_1] = WAITING;
   status_[TPCC_PAYMENT_2] = WAITING;
@@ -80,7 +80,7 @@ void TpccTxn::PaymentRetry() {
   CheckReady();
 }
 
-void TpccPiece::RegPayment() {
+void TpccWorkload::RegPayment() {
 
   // piece 0, Ri & W warehouse
   INPUT_PIE(TPCC_PAYMENT, TPCC_PAYMENT_0,

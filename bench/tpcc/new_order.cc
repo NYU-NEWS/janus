@@ -1,16 +1,15 @@
-#include "chopper.h"
-#include "piece.h"
-#include "generator.h"
+#include "procedure.h"
+#include "workload.h"
 
-namespace rococo {
+namespace janus {
 
 static uint32_t TXN_TYPE = TPCC_NEW_ORDER;
 
-void TpccTxn::NewOrderInit(TxnRequest &req) {
+void TpccProcedure::NewOrderInit(TxnRequest &req) {
   NewOrderRetry();
 }
 
-void TpccTxn::NewOrderRetry() {
+void TpccProcedure::NewOrderRetry() {
   status_[TPCC_NEW_ORDER_0] = WAITING;
   status_[TPCC_NEW_ORDER_1] = WAITING;
   status_[TPCC_NEW_ORDER_2] = WAITING;
@@ -47,7 +46,7 @@ void TpccTxn::NewOrderRetry() {
   CheckReady();
 }
 
-void TpccPiece::RegNewOrder() {
+void TpccWorkload::RegNewOrder() {
   TXN_TYPE(TPCC_NEW_ORDER, TXN_ONE_SHOT);
 
   // Ri & W district
@@ -394,4 +393,4 @@ void TpccPiece::RegNewOrder() {
     return;
   } END_LOOP_PIE
 }
-} // namespace rococo
+} // namespace janus

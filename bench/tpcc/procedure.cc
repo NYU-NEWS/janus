@@ -1,7 +1,7 @@
 #include "deptran/__dep__.h"
 #include "deptran/procedure.h"
-#include "chopper.h"
-#include "piece.h"
+#include "procedure.h"
+#include "workload.h"
 
 namespace rococo {
 
@@ -23,10 +23,10 @@ namespace rococo {
 #define TPCC_DELIVERY_INDEX_ORDER_LINE_TO_CNT(i)        ((i - 2) / 4)
 #define TPCC_DELIVERY_INDEX_ORDER_LINE_TO_CUSTOMER(i)   (i + 1)
 
-TpccTxn::TpccTxn() {
+TpccProcedure::TpccProcedure() {
 }
 
-void TpccTxn::Init(TxnRequest &req) {
+void TpccProcedure::Init(TxnRequest &req) {
   ws_init_ = req.input_;
   ws_ = ws_init_;
   type_ = req.txn_type_;
@@ -58,7 +58,7 @@ void TpccTxn::Init(TxnRequest &req) {
 }
 
 // This is sort of silly. We should have a better way.
-bool TpccTxn::CheckReady() {
+bool TpccProcedure::CheckReady() {
   bool ret = false;
   map<innid_t, set<int32_t>>& map = input_vars_;
   for (auto &pair : status_) {
@@ -95,7 +95,7 @@ bool TpccTxn::CheckReady() {
   return ret;
 }
 
-bool TpccTxn::start_callback(int pi,
+bool TpccProcedure::start_callback(int pi,
                              int res,
                              map<int32_t, Value> &output_map) {
   bool ret;
@@ -141,7 +141,7 @@ bool TpccTxn::start_callback(int pi,
   return ret;
 }
 
-void TpccTxn::Reset() {
+void TpccProcedure::Reset() {
   Procedure::Reset();
   ws_ = ws_init_;
   partition_ids_.clear();
@@ -172,7 +172,7 @@ void TpccTxn::Reset() {
   verify(n_pieces_dispatchable_ > 0);
 }
 
-bool TpccTxn::IsReadOnly() {
+bool TpccProcedure::IsReadOnly() {
   switch (type_) {
     case TPCC_NEW_ORDER:
       return false;
@@ -189,7 +189,7 @@ bool TpccTxn::IsReadOnly() {
   }
 }
 
-parid_t TpccTxn::GetPiecePartitionId(innid_t inn_id) {
+parid_t TpccProcedure::GetPiecePartitionId(innid_t inn_id) {
   parid_t partition_id = 0;
   auto it = txn_reg_->sharding_input_.find(std::make_pair(type_, inn_id));
   if (it != txn_reg_->sharding_input_.end()) {
@@ -210,7 +210,7 @@ parid_t TpccTxn::GetPiecePartitionId(innid_t inn_id) {
   return partition_id;
 }
 
-int TpccTxn::GetNPieceAll() {
+int TpccProcedure::GetNPieceAll() {
   if (type_ == TPCC_STOCK_LEVEL) {
     verify(ws_.count(TPCC_VAR_OL_AMOUNT) > 0 == ws_.count(TPCC_VAR_N_PIECE_ALL) > 0);
     if (ws_.count(TPCC_VAR_OL_AMOUNT) > 0) {
@@ -224,7 +224,7 @@ int TpccTxn::GetNPieceAll() {
   return n_pieces_all_;
 }
 
-TpccTxn::~TpccTxn() {
+TpccProcedure::~TpccProcedure() {
 }
 
 } // namespace rococo

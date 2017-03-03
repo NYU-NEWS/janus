@@ -1,10 +1,9 @@
-#ifndef TPCC_PIECE_H_
-#define TPCC_PIECE_H_
+#pragma once
 
-#include "deptran/piece.h"
+#include "deptran/workload.h"
+#include "sharding.h"
 
-namespace rococo {
-
+namespace janus {
 
 // ======= New order txn =======
 #define TPCC_NEW_ORDER              10
@@ -250,7 +249,7 @@ extern char TPCC_TB_ORDER_LINE[];
 extern char TPCC_TB_ORDER_C_ID_SECONDARY[];
 
 
-class TpccPiece: public Piece {
+class TpccWorkload: public Workload {
  protected:
   // new order
   virtual void RegNewOrder();
@@ -276,14 +275,41 @@ class TpccPiece: public Piece {
   virtual void RegStockLevel();
 
  public:
-  virtual void reg_all();
+  virtual void RegisterPrecedures();
 
-  TpccPiece();
+  TpccWorkload();
 
-  virtual ~TpccPiece();
+  virtual ~TpccWorkload();
 
+  typedef struct {
+    int n_w_id_;
+    int n_d_id_;
+    int n_c_id_;
+    int n_i_id_;
+    int const_home_w_id_;
+    int delivery_d_id_;
+  } tpcc_para_t;
+  tpcc_para_t tpcc_para_;
+
+ public:
+  TpccWorkload(rococo::Config *config);
+
+  // tpcc
+  virtual void GetTxnReq(TxnRequest *req, uint32_t cid) override;
+  // tpcc new_order
+  void GetNewOrderTxnReq(TxnRequest *req, uint32_t cid) const;
+  // tpcc payment
+  void get_tpcc_payment_txn_req(TxnRequest *req, uint32_t cid) const;
+  // tpcc stock_level
+  void get_tpcc_stock_level_txn_req(TxnRequest *req, uint32_t cid) const;
+  // tpcc delivery
+  void get_tpcc_delivery_txn_req(TxnRequest *req, uint32_t cid) const;
+  // tpcc order_status
+  void get_tpcc_order_status_txn_req(TxnRequest *req, uint32_t cid) const;
 };
 
-}
+} // namespace janus
 
-#endif
+#define C_LAST_SCHEMA (((TpccSharding*)(this->sss_))->g_c_last_schema)
+#define C_LAST2ID (((TpccSharding*)(this->sss_))->g_c_last2id)
+

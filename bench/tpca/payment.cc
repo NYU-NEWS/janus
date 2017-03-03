@@ -1,6 +1,6 @@
 
-#include "./bench/tpca/piece.h"
-#include "./bench/tpca/chopper.h"
+#include "bench/tpca/workload.h"
+#include "bench/tpca/payment.h"
 
 namespace rococo {
 void TpcaPaymentChopper::Init(TxnRequest &req) {

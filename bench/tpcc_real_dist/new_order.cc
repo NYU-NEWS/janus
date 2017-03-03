@@ -1,16 +1,15 @@
-#include "chopper.h"
-#include "piece.h"
-#include "generator.h"
+#include "procedure.h"
+#include "workload.h"
 
 namespace rococo {
 
 static uint32_t TXN_TYPE = TPCCD_NEW_ORDER;
 
-void TpccRealDistChopper::NewOrderInit(TxnRequest &req) {
+void TpccRdProcedure::NewOrderInit(TxnRequest &req) {
   NewOrderRetry();
 }
 
-void TpccRealDistChopper::NewOrderRetry() {
+void TpccRdProcedure::NewOrderRetry() {
   status_[TPCCD_NEW_ORDER_0] = WAITING;
   status_[TPCCD_NEW_ORDER_1] = WAITING;
   status_[TPCCD_NEW_ORDER_2] = WAITING;
@@ -30,7 +29,7 @@ void TpccRealDistChopper::NewOrderRetry() {
   CheckReady();
 }
 
-void TpccRealDistPiece::RegNewOrder() {
+void TpccRdWorkload::RegNewOrder() {
   // Ri & W district
   INPUT_PIE(TPCCD_NEW_ORDER, TPCCD_NEW_ORDER_0,
             TPCC_VAR_W_ID, TPCC_VAR_D_ID)

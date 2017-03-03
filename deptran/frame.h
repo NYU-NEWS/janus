@@ -1,7 +1,6 @@
 #pragma once
 //#include "__dep__.h"
 #include "constants.h"
-#include "txn_req_factory.h"
 #include "txn_reg.h"
 #include "config.h"
 
@@ -19,6 +18,7 @@ class ClientControlServiceImpl;
 class ServerControlServiceImpl;
 class TxnRegistry;
 class Communicator;
+class Workload;
 class Frame {
  public:
   Communicator* commo_ = nullptr;
@@ -58,7 +58,7 @@ class Frame {
                            bool ro,
                            Scheduler *sch);
 
-  TxnGenerator * CreateTxnGenerator();
+  Workload* CreateTxnGenerator();
   virtual vector<rrr::Service*> CreateRpcServices(uint32_t site_id,
                                                   Scheduler *dtxn_sched,
                                                   rrr::PollMgr* poll_mgr,

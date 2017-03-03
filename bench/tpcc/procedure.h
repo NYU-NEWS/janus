@@ -1,6 +1,6 @@
 #pragma once
 #include "deptran/__dep__.h"
-#include "./bench/tpcc/piece.h"
+#include "bench/tpcc/workload.h"
 
 namespace rococo {
 
@@ -8,7 +8,7 @@ class Procedure;
 class TxnRequest;
 class BatchStartArgsHelper;
 
-class TpccTxn: public Procedure {
+class TpccProcedure: public Procedure {
  public:
   map<innid_t, set<int32_t>> input_vars_ = {};
   typedef struct {
@@ -88,7 +88,7 @@ class TpccTxn: public Procedure {
   virtual void OrderStatusRetry();
 
  public:
-  TpccTxn();
+  TpccProcedure();
 
   virtual parid_t GetPiecePartitionId(innid_t inn_id);
 
@@ -104,7 +104,7 @@ class TpccTxn: public Procedure {
 
   virtual int GetNPieceAll();
 
-  virtual ~TpccTxn();
+  virtual ~TpccProcedure();
 };
 
 }

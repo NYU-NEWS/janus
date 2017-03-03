@@ -1,35 +1,55 @@
+
 #include "config.h"
 #include "constants.h"
 #include "sharding.h"
-#include "txn_req_factory.h"
 
 // for tpca benchmark
-#include "bench/tpca/piece.h"
-#include "bench/tpca/chopper.h"
+#include "bench/tpca/workload.h"
+#include "bench/tpca/payment.h"
 
 // tpcc benchmark
-#include "bench/tpcc/piece.h"
-#include "bench/tpcc/chopper.h"
+#include "bench/tpcc/workload.h"
+#include "bench/tpcc/procedure.h"
 
 // tpcc dist partition benchmark
-#include "bench/tpcc_dist/piece.h"
-#include "bench/tpcc_dist/chopper.h"
+#include "bench/tpcc_dist/procedure.h"
 
 // tpcc real dist partition benchmark
-#include "bench/tpcc_real_dist/piece.h"
-#include "bench/tpcc_real_dist/chopper.h"
+#include "bench/tpcc_real_dist/workload.h"
+#include "bench/tpcc_real_dist/procedure.h"
 
 // rw benchmark
-#include "bench/rw_benchmark/piece.h"
-#include "bench/rw_benchmark/chopper.h"
+#include "bench/rw/workload.h"
+#include "bench/rw/procedure.h"
 
 // micro bench
 #include "bench/micro/piece.h"
 #include "bench/micro/chopper.h"
 
-namespace rococo {
+namespace janus {
 
-TxnGenerator::TxnGenerator(Config* config)
+Workload* Workload::CreateWorkload(int benchmark) {
+  switch (benchmark) {
+    case TPCA:
+      return new TpcaWorkload();
+    case TPCC:
+      return new TpccWorkload();
+    case TPCC_DIST_PART:
+      verify(0);
+      return new TpccWorkload();
+    case TPCC_REAL_DIST_PART:
+      return new TpccRdWorkload();
+    case RW_BENCHMARK:
+      return new RwWorkload();
+    case MICRO_BENCH:
+      return new MicroWorkload();
+    default:
+      verify(0);
+      return NULL;
+  }
+}
+
+Workload::Workload(Config* config)
     : txn_weight_(config->get_txn_weight()),
       txn_weights_(config->get_txn_weights()),
       sharding_(config->sharding_) {
@@ -70,7 +90,7 @@ TxnGenerator::TxnGenerator(Config* config)
 }
 
 
-void TxnGenerator::get_micro_bench_read_req(TxnRequest *req, uint32_t cid) const {
+void Workload::get_micro_bench_read_req(TxnRequest *req, uint32_t cid) const {
   req->txn_type_ = MICRO_BENCH_R;
   req->input_[0] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_a_ - 1));
   req->input_[1] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_b_ - 1));
@@ -78,7 +98,7 @@ void TxnGenerator::get_micro_bench_read_req(TxnRequest *req, uint32_t cid) const
   req->input_[3] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_d_ - 1));
 }
 
-void TxnGenerator::get_micro_bench_write_req(TxnRequest *req, uint32_t cid) const {
+void Workload::get_micro_bench_write_req(TxnRequest *req, uint32_t cid) const {
   req->txn_type_ = MICRO_BENCH_W;
   req->input_[0] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_a_ - 1));
   req->input_[1] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_b_ - 1));
@@ -90,7 +110,7 @@ void TxnGenerator::get_micro_bench_write_req(TxnRequest *req, uint32_t cid) cons
   req->input_[7] = Value((i64) RandomGenerator::rand(0, 1000));
 }
 
-void TxnGenerator::get_micro_bench_txn_req(
+void Workload::get_micro_bench_txn_req(
     TxnRequest *req, uint32_t cid) const {
   req->n_try_ = n_try_;
   if (txn_weight_.size() != 2)
@@ -107,7 +127,7 @@ void TxnGenerator::get_micro_bench_txn_req(
 
 }
 
-void TxnGenerator::GetTxnReq(TxnRequest *req, uint32_t cid) {
+void Workload::GetTxnReq(TxnRequest *req, uint32_t cid) {
   switch (benchmark_) {
     case TPCA:
     case TPCC:
@@ -125,7 +145,7 @@ void TxnGenerator::GetTxnReq(TxnRequest *req, uint32_t cid) {
   }
 }
 
-void TxnGenerator::get_txn_types(
+void Workload::get_txn_types(
     std::map<int32_t, std::string> &txn_types) {
   txn_types.clear();
   switch (benchmark_) {
@@ -155,7 +175,8 @@ void TxnGenerator::get_txn_types(
   }
 }
 
-TxnGenerator::~TxnGenerator() {
+Workload::~Workload() {
 }
 
-} // namespace rcc
+} // namespace janus
+

@@ -8,7 +8,7 @@
 namespace rococo {
 
 class ClientControlServiceImpl;
-class TxnGenerator;
+class Workload;
 class CoordinatorBase;
 class Frame;
 class Coordinator;
@@ -39,7 +39,7 @@ class ClientWorker {
   rrr::ThreadPool* dispatch_pool_ = new rrr::ThreadPool();
 
   std::atomic<uint32_t> num_txn, success, num_try;
-  TxnGenerator * txn_generator_;
+  Workload * txn_generator_;
   Timer *timer_;
   TxnRegistry* txn_reg_ = nullptr;
   Config* config_;

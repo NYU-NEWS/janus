@@ -13,7 +13,7 @@ namespace rococo {
 
 class Coordinator;
 class Sharding;
-class ChopStartResponse;
+//class ChopStartResponse;
 
 class TxnReply {
  public:
@@ -109,6 +109,12 @@ class SimpleCommand: public ContainerCommand {
   virtual ~SimpleCommand() {};
 };
 
+/**
+ * input ready levels:
+ *   1. shard ready
+ *   2. conflict ready
+ *   3. all (execute) ready
+ */
 class Procedure: public ContainerCommand {
  private:
   static inline bool is_consistent(map<int32_t, Value> &previous,

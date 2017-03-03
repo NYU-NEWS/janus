@@ -1,13 +1,13 @@
 #include "deptran/__dep__.h"
-#include "chopper.h"
-#include "piece.h"
+#include "procedure.h"
+#include "workload.h"
 
 namespace rococo {
 
-TpccRealDistChopper::TpccRealDistChopper() {
+TpccRdProcedure::TpccRdProcedure() {
 }
 
-siteid_t TpccRealDistChopper::GetPiecePar(innid_t inn_id) {
+siteid_t TpccRdProcedure::GetPiecePar(innid_t inn_id) {
   parid_t partition_id;
   if (type_ == TPCC_NEW_ORDER ||
       type_ == TPCC_PAYMENT ||
@@ -17,11 +17,11 @@ siteid_t TpccRealDistChopper::GetPiecePar(innid_t inn_id) {
   } else {
     verify(0);
   }
-  partition_id = TpccTxn::GetPiecePartitionId(inn_id);
+  partition_id = TpccProcedure::GetPiecePartitionId(inn_id);
   return partition_id;
 }
 
-bool TpccRealDistChopper::IsOneRound() {
+bool TpccRdProcedure::IsOneRound() {
   switch (type_) {
     case TPCC_NEW_ORDER:
     case TPCC_PAYMENT:
@@ -32,7 +32,7 @@ bool TpccRealDistChopper::IsOneRound() {
   }
 }
 
-TpccRealDistChopper::~TpccRealDistChopper() {
+TpccRdProcedure::~TpccRdProcedure() {
 }
 
 } // namespace rococo

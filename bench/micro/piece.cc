@@ -1,6 +1,6 @@
 
 #include "deptran/__dep__.h"
-#include "deptran/piece.h"
+#include "deptran/workload.h"
 #include "piece.h"
 
 namespace rococo {
@@ -10,11 +10,11 @@ char MICRO_BENCH_TABLE_B[] = "table_b";
 char MICRO_BENCH_TABLE_C[] = "table_c";
 char MICRO_BENCH_TABLE_D[] = "table_d";
 
-void MicroBenchPiece::reg_all() {
+void MicroWorkload::RegisterPrecedures() {
     reg_pieces();
 }
 
-void MicroBenchPiece::reg_pieces() {
+void MicroWorkload::reg_pieces() {
   SHARD_PIE(MICRO_BENCH_W, MICRO_BENCH_W_0,
             MICRO_BENCH_TABLE_A, MICRO_VAR_K_0);
   BEGIN_PIE(MICRO_BENCH_W, MICRO_BENCH_W_0, DF_REAL) {

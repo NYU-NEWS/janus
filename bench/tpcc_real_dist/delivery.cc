@@ -1,10 +1,10 @@
 #include "deptran/__dep__.h"
-#include "chopper.h"
-#include "piece.h"
+#include "procedure.h"
+#include "workload.h"
 
 namespace rococo {
 
-void TpccRealDistChopper::DeliveryInit(TxnRequest &req) {
+void TpccRdProcedure::DeliveryInit(TxnRequest &req) {
   n_pieces_all_ = 4;
 
   // piece 0, Ri & W new_order
@@ -28,7 +28,7 @@ void TpccRealDistChopper::DeliveryInit(TxnRequest &req) {
   CheckReady();
 }
 
-void TpccRealDistChopper::DeliveryRetry() {
+void TpccRdProcedure::DeliveryRetry() {
   status_[TPCC_DELIVERY_0] = WAITING;
   status_[TPCC_DELIVERY_1] = WAITING;
   status_[TPCC_DELIVERY_2] = WAITING;
@@ -37,7 +37,7 @@ void TpccRealDistChopper::DeliveryRetry() {
 }
 
 
-void TpccRealDistPiece::RegDelivery() {
+void TpccRdWorkload::RegDelivery() {
   // Ri & W new_order
   INPUT_PIE(TPCC_DELIVERY, TPCC_DELIVERY_0,
             TPCC_VAR_W_ID, TPCC_VAR_D_ID)

@@ -1,13 +1,13 @@
 #ifndef TPCC_DIST_CHOPPER_H_
 #define TPCC_DIST_CHOPPER_H_
 
-#include "../tpcc/chopper.h"
+#include "bench/tpcc/procedure.h"
 
 namespace rococo {
 
-class TpccTxn;
+class TpccProcedure;
 
-class TpccDistChopper: public TpccTxn {
+class TpccDistChopper: public TpccProcedure {
  protected:
   virtual void new_order_shard(const char *tb,
                                const std::vector<mdb::Value> &input,

@@ -1,5 +1,5 @@
 #include "sharding.h"
-#include "piece.h"
+#include "workload.h"
 #include "deptran/frame.h"
 
 namespace rococo {

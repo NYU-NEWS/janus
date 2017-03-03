@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../tpcc/piece.h"
+#include "bench/tpcc/workload.h"
 
 namespace rococo {
 
@@ -18,15 +18,15 @@ namespace rococo {
 #define TPCCD_NEW_ORDER_WS(i)           (17000+i)
 #define TPCCD_NEW_ORDER_WOL(i)          (18000+i)
 
-class TpccRealDistPiece: public TpccPiece {
+class TpccRdWorkload: public TpccWorkload {
  public:
-  using TpccPiece::TpccPiece;
+  TpccRdWorkload(rococo::Config *config);
   void RegNewOrder() override;
   void RegPayment() override;
   void RegDelivery() override;
   void RegOrderStatus() override;
   void RegStockLevel() override;
-  virtual ~TpccRealDistPiece() { }
+  virtual ~TpccRdWorkload() { }
 };
 
 } // namespace rococo

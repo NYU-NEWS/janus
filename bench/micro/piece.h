@@ -1,10 +1,10 @@
 #pragma once
 
-#include "deptran/piece.h"
+#include "deptran/workload.h"
 
 namespace rococo {
 
-class Piece;
+class TmpName;
 
 extern char MICRO_BENCH_TABLE_A[];
 extern char MICRO_BENCH_TABLE_B[];
@@ -36,10 +36,10 @@ extern char MICRO_BENCH_TABLE_D[];
 #define MICRO_VAR_V_2       (2002)
 #define MICRO_VAR_V_3       (2003)
 
-class MicroBenchPiece : public Piece {
+class MicroWorkload : public Workload {
 
 public:
-    void reg_all();
+    void RegisterPrecedures() override;
     void reg_pieces();
 };
 

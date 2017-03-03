@@ -1,6 +1,6 @@
 #pragma once
 
-#include "deptran/piece.h"
+#include "deptran/workload.h"
 
 namespace rococo {
 
@@ -27,13 +27,16 @@ extern char TPCA_CUSTOMER[];
 #define TPCA_VAR_OZ  (5)
 #define TPCA_VAR_AMOUNT    (10)
 
-class TpcaPiece : public Piece {
-
-public:
-
-    void reg_all();
-
-    void reg_pieces();
+class TpcaWorkload : public Workload {
+ public:
+  void RegisterPrecedures() override;
+  boost::random::mt19937 rand_gen_;
+  map<int32_t, int32_t> key_ids_ = {};
+  TpcaWorkload(Config* config);
+  virtual void GetTxnReq(TxnRequest *req, uint32_t cid) override;
+  virtual void GetTxnReq(TxnRequest *req,
+                         uint32_t i_client,
+                         uint32_t n_client) override;
 };
 
 } // namespace rococo

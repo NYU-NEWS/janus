@@ -10,13 +10,66 @@ namespace rococo {
 
 class TxnRegistry;
 
-class Piece {
+class TxnRequest;
+class Sharding;
+class Config;
+
+class Workload {
+ public:
+  typedef struct {
+    int n_branch_;
+    int n_teller_;
+    int n_customer_;
+  } tpca_para_t;
+
+
+  typedef struct {
+    int n_table_;
+  } rw_benchmark_para_t;
+
+  typedef struct {
+    int n_table_a_;
+    int n_table_b_;
+    int n_table_c_;
+    int n_table_d_;
+  } micro_bench_para_t;
+
+  union {
+    tpca_para_t tpca_para_;
+    rw_benchmark_para_t rw_benchmark_para_;
+    micro_bench_para_t micro_bench_para_;
+  };
+
+  int benchmark_;
+  int n_try_;
+  int single_server_;
+  int fix_id_ = -1;
+  std::vector<double>& txn_weight_;
+  std::map<string, double>& txn_weights_;
+  Sharding* sharding_;
+
+ public:
+  Workload() = delete;
+  Workload(Config* config);
+
+  virtual void GetTxnReq(TxnRequest* req,
+                         uint32_t i_client,
+                         uint32_t n_client) {
+    verify(0);
+  }
+  virtual void GetTxnReq(TxnRequest *req, uint32_t cid) ;
+
+  void get_micro_bench_read_req(TxnRequest *req, uint32_t cid) const;
+  void get_micro_bench_write_req(TxnRequest *req, uint32_t cid) const;
+  void get_micro_bench_txn_req(TxnRequest *req, uint32_t cid) const;
+  void get_txn_types(std::map<int32_t, std::string> &txn_types);
+
+  virtual ~Workload();
  public:
   Sharding* sss_ = nullptr;
   TxnRegistry *txn_reg_ = nullptr;
-  static Piece *get_piece(int benchmark);
-  virtual void reg_all() = 0;
-  virtual ~Piece() { }
+  static Workload *CreateWorkload(int benchmark);
+  virtual void RegisterPrecedures() = 0;
 };
 
 #define BEGIN_LOOP_PIE(txn, pie, max_i, iod) \
@@ -165,9 +218,5 @@ txn_reg_->txn_types_[txn] = type;
 #define TPL_PHASE_1 (output_size == nullptr)
 #define RO6_RO_PHASE_1 ((Config::GetConfig()->get_mode() == MODE_RO6) && ((RO6DTxn*)dtxn)->read_only_ && dtxn->phase_ == 1)
 
-
-#define C_LAST_SCHEMA (((TpccSharding*)(this->sss_))->g_c_last_schema)
-
-#define C_LAST2ID (((TpccSharding*)(this->sss_))->g_c_last2id)
 
 } // namespace rcc

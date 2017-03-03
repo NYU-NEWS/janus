@@ -3,7 +3,7 @@
 #include "frame.h"
 #include "procedure.h"
 #include "coordinator.h"
-#include "piece.h"
+#include "workload.h"
 #include "benchmark_control_rpc.h"
 
 namespace rococo {
@@ -120,9 +120,9 @@ Coordinator* ClientWorker::CreateCoordinator(uint16_t offset_id) {
 void ClientWorker::work() {
   Log_debug("%s: %d", __FUNCTION__, this->cli_id_);
   txn_reg_ = new TxnRegistry();
-  Piece *piece = Piece::get_piece(benchmark);
-  piece->txn_reg_ = txn_reg_;
-  piece->reg_all();
+  Workload* workload = Workload::CreateWorkload(benchmark);
+  workload->txn_reg_ = txn_reg_;
+  workload->RegisterPrecedures();
 
   commo_->WaitConnectClientLeaders();
   if (ccsi) {

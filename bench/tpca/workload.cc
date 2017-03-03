@@ -1,13 +1,16 @@
-#include <deptran/txn_req_factory.h>
-#include "../../deptran/config.h"
-#include "generator.h"
-#include "piece.h"
+
+#include "deptran/__dep__.h"
+#include "deptran/config.h"
+#include "workload.h"
 #include "zipf.h"
 
-using namespace rococo;
+namespace janus {
 
+char TPCA_BRANCH[] = "branch";
+char TPCA_TELLER[] = "teller";
+char TPCA_CUSTOMER[] = "customer";
 
-TpcaTxnGenerator::TpcaTxnGenerator(Config* config) : TxnGenerator(config) {
+TpcaWorkload::TpcaWorkload(Config* config) : Workload(config) {
   std::map<std::string, uint64_t> table_num_rows;
   sharding_->get_number_rows(table_num_rows);
   tpca_para_.n_branch_ = table_num_rows[std::string(TPCA_BRANCH)];
@@ -35,9 +38,9 @@ TpcaTxnGenerator::TpcaTxnGenerator(Config* config) : TxnGenerator(config) {
   rand_gen_.seed((int)std::time(0) + (uint64_t)pthread_self());
 }
 
-void TpcaTxnGenerator::GetTxnReq(TxnRequest* req,
-                                 uint32_t i_client,
-                                 uint32_t n_client) {
+void TpcaWorkload::GetTxnReq(TxnRequest* req,
+                             uint32_t i_client,
+                             uint32_t n_client) {
   Value amount((i64) RandomGenerator::rand(0, 10000));
   req->n_try_ = n_try_;
   req->txn_type_ = TPCA_PAYMENT;
@@ -91,7 +94,7 @@ void TpcaTxnGenerator::GetTxnReq(TxnRequest* req,
       {3, amount}};
 }
 
-void TpcaTxnGenerator::GetTxnReq(TxnRequest *req, uint32_t cid) {
+void TpcaWorkload::GetTxnReq(TxnRequest *req, uint32_t cid) {
   Value amount((i64) RandomGenerator::rand(0, 10000));
   req->n_try_ = n_try_;
   req->txn_type_ = TPCA_PAYMENT;
@@ -155,4 +158,84 @@ void TpcaTxnGenerator::GetTxnReq(TxnRequest *req, uint32_t cid) {
     verify(0);
   }
 }
+
+
+void TpcaWorkload::RegisterPrecedures() {
+  INPUT_PIE(TPCA_PAYMENT, TPCA_PAYMENT_1, TPCA_VAR_X)
+  SHARD_PIE(TPCA_PAYMENT, TPCA_PAYMENT_1, TPCA_CUSTOMER, TPCA_VAR_X)
+  CONFLICT_PIE(TPCA_PAYMENT, TPCA_PAYMENT_1,
+               conf_id(TPCA_CUSTOMER, {TPCA_VAR_X}, {1}, TPCA_ROW_1));
+  BEGIN_PIE(TPCA_PAYMENT, TPCA_PAYMENT_1, DF_REAL) {
+//        Log::debug("output: %p, output_size: %p", output, output_size);
+//        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
+    mdb::Txn *txn = dtxn->mdb_txn_;
+    Value buf;
+    verify(cmd.input.size() >= 1);
+
+    mdb::Row *r = NULL;
+    mdb::MultiBlob mb(1);
+    mb[0] = cmd.input.at(TPCA_VAR_X).get_blob();
+
+    r = dtxn->Query(dtxn->GetTable(TPCA_CUSTOMER), mb, TPCA_ROW_1);
+    dtxn->ReadColumn(r, 1, &buf, TXN_BYPASS);
+                                                     output[TPCA_VAR_OX] = buf;
+    buf.set_i32(buf.get_i32() + 1/*input[1].get_i32()*/);
+    dtxn->WriteColumn(r, 1, buf, TXN_DEFERRED);
+
+#ifdef CHECK_ISO
+    dtxn->deltas_[r][1] = 1;
+#endif
+    *res = SUCCESS;
+  } END_PIE
+
+  INPUT_PIE(TPCA_PAYMENT, TPCA_PAYMENT_2, TPCA_VAR_Y)
+  SHARD_PIE(TPCA_PAYMENT, TPCA_PAYMENT_2, TPCA_TELLER, TPCA_VAR_Y)
+  CONFLICT_PIE(TPCA_PAYMENT, TPCA_PAYMENT_2,
+               conf_id(TPCA_CUSTOMER, {TPCA_VAR_Y}, {1}, TPCA_ROW_2));
+  BEGIN_PIE(TPCA_PAYMENT, TPCA_PAYMENT_2, DF_REAL) {
+    mdb::Txn *txn = dtxn->mdb_txn_;
+    Value buf;
+    verify(cmd.input.size() >= 1);
+    mdb::Row *r = NULL;
+    mdb::MultiBlob mb(1);
+    mb[0] = cmd.input.at(TPCA_VAR_Y).get_blob();
+
+    r = dtxn->Query(dtxn->GetTable(TPCA_TELLER), mb, TPCA_ROW_2);
+    dtxn->ReadColumn(r, 1, &buf, TXN_BYPASS);
+                                                     output[TPCA_VAR_OY] = buf;
+    buf.set_i32(buf.get_i32() + 1/*input[1].get_i32()*/);
+    dtxn->WriteColumn(r, 1, buf, TXN_DEFERRED);
+    *res = SUCCESS;
+#ifdef CHECK_ISO
+                                                     dtxn->deltas_[r][1] = 1;
+#endif
+  } END_PIE
+
+  INPUT_PIE(TPCA_PAYMENT, TPCA_PAYMENT_3, TPCA_VAR_Z)
+  SHARD_PIE(TPCA_PAYMENT, TPCA_PAYMENT_3, TPCA_BRANCH, TPCA_VAR_Z)
+  CONFLICT_PIE(TPCA_PAYMENT, TPCA_PAYMENT_3,
+               conf_id(TPCA_CUSTOMER, {TPCA_VAR_Z}, {1}, TPCA_ROW_3));
+  BEGIN_PIE(TPCA_PAYMENT, TPCA_PAYMENT_3, DF_REAL) {
+    mdb::Txn *txn = dtxn->mdb_txn_;
+    Value buf;
+    verify(cmd.input.size() >= 1);
+    i32 output_index = 0;
+
+    mdb::Row *r = NULL;
+    mdb::MultiBlob mb(1);
+    mb[0] = cmd.input.at(TPCA_VAR_Z).get_blob();
+
+    r = dtxn->Query(dtxn->GetTable(TPCA_BRANCH), mb, TPCA_ROW_3);
+    dtxn->ReadColumn(r, 1, &buf, TXN_BYPASS);
+                                                     output[TPCA_VAR_OZ] = buf;
+    buf.set_i32(buf.get_i32() + 1/*input[1].get_i32()*/);
+    dtxn->WriteColumn(r, 1, buf, TXN_DEFERRED);
+    *res = SUCCESS;
+#ifdef CHECK_ISO
+                                                     dtxn->deltas_[r][1] = 1;
+#endif
+  } END_PIE
+}
+
+} // namespace janus
 

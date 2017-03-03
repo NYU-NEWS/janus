@@ -79,7 +79,7 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
       worker.site_info_ = const_cast<Config::SiteInfo*>(&config->SiteById(site_info.id));
       worker.SetupBase();
       // register txn piece logic
-      worker.RegPiece();
+      worker.RegisterWorkload();
       // populate table according to benchmarks
       worker.PopTable();
       Log_info("table popped for site %d", (int)worker.site_info_->id);

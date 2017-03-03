@@ -2,10 +2,10 @@
 
 #include "deptran/__dep__.h"
 #include "deptran/procedure.h"
-#include "chopper.h"
-#include "piece.h"
+#include "procedure.h"
+#include "workload.h"
 
-namespace deptran {
+namespace janus {
 
 void RWChopper::W_txn_init(TxnRequest &req) {
 //  inputs_.clear();
@@ -87,4 +87,4 @@ void RWChopper::Reset() {
 RWChopper::~RWChopper() {
 }
 
-}
+} // namespace janus

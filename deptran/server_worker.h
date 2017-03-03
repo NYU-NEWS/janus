@@ -11,7 +11,7 @@
 #include "rcc_service.h"
 #include "sharding.h"
 #include "dtxn.h"
-#include "piece.h"
+#include "workload.h"
 
 namespace rococo {
 
@@ -45,7 +45,7 @@ class ServerWorker {
   void SetupBase();
   void SetupService();
   void SetupCommo();
-  void RegPiece();
+  void RegisterWorkload();
   void ShutDown();
 
   static const uint32_t CtrlPortDelta = 10000;

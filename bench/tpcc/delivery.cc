@@ -1,9 +1,9 @@
 #include "deptran/__dep__.h"
-#include "chopper.h"
+#include "procedure.h"
 
 namespace rococo {
 
-void TpccTxn::DeliveryInit(TxnRequest &req) {
+void TpccProcedure::DeliveryInit(TxnRequest &req) {
   n_pieces_all_ = 4;
 
   // piece 0, Ri & W new_order
@@ -27,7 +27,7 @@ void TpccTxn::DeliveryInit(TxnRequest &req) {
   CheckReady();
 }
 
-void TpccTxn::DeliveryRetry() {
+void TpccProcedure::DeliveryRetry() {
   status_[TPCC_DELIVERY_0] = WAITING;
   status_[TPCC_DELIVERY_1] = WAITING;
   status_[TPCC_DELIVERY_2] = WAITING;
@@ -36,7 +36,7 @@ void TpccTxn::DeliveryRetry() {
 }
 
 
-void TpccPiece::RegDelivery() {
+void TpccWorkload::RegDelivery() {
   // Ri & W new_order
   INPUT_PIE(TPCC_DELIVERY, TPCC_DELIVERY_0,
             TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_O_CARRIER_ID)

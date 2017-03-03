@@ -3,7 +3,7 @@
 #include "frame.h"
 #include "constants.h"
 #include "sharding.h"
-#include "txn_req_factory.h"
+#include "workload.h"
 #include "benchmark_control_rpc.h"
 
 /**

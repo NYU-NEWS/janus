@@ -96,8 +96,6 @@ class TxnRegistry {
   map<txntype_t, std::function<void(Procedure * ch)>> retry_{};
   map<txntype_t, map<innid_t, vector<conf_id>>> conflicts_{};
 
-  // PieceCallbackMap callbacks_;
-  // static map<std::pair<base::i32, base::i32>, LockSetOracle> lck_oracle_;
 };
 
 } // namespace rococo

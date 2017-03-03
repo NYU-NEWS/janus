@@ -1,4 +1,3 @@
-#include <bench/rw_benchmark/generator.h>
 #include "__dep__.h"
 #include "frame.h"
 #include "config.h"
@@ -20,33 +19,31 @@
 #include "occ/exec.h"
 
 #include "bench/tpcc_real_dist/sharding.h"
-#include "bench/tpcc/generator.h"
+#include "bench/tpcc/workload.h"
 
 
 // for tpca benchmark
-#include "bench/tpca/piece.h"
-#include "bench/tpca/chopper.h"
+#include "bench/tpca/workload.h"
+#include "bench/tpca/payment.h"
 #include "bench/tpca/sharding.h"
-#include "bench/tpca/generator.h"
+#include "bench/tpca/workload.h"
 
 // tpcc benchmark
-#include "bench/tpcc/piece.h"
-#include "bench/tpcc/chopper.h"
+#include "bench/tpcc/workload.h"
+#include "bench/tpcc/procedure.h"
 #include "bench/tpcc/sharding.h"
 
 // tpcc dist partition benchmark
-#include "bench/tpcc_dist/piece.h"
-#include "bench/tpcc_dist/chopper.h"
+#include "bench/tpcc_dist/procedure.h"
 
 // tpcc real dist partition benchmark
-#include "bench/tpcc_real_dist/piece.h"
-#include "bench/tpcc_real_dist/chopper.h"
-#include "bench/tpcc_real_dist/generator.h"
+#include "bench/tpcc_real_dist/workload.h"
+#include "bench/tpcc_real_dist/procedure.h"
 
 // rw benchmark
-#include "bench/rw_benchmark/piece.h"
-#include "bench/rw_benchmark/chopper.h"
-#include "bench/rw_benchmark/sharding.h"
+#include "bench/rw/workload.h"
+#include "bench/rw/procedure.h"
+#include "bench/rw/sharding.h"
 
 // micro bench
 #include "bench/micro/piece.h"
@@ -261,13 +258,13 @@ Procedure* Frame::CreateTxnCommand(TxnRequest& req, TxnRegistry* reg) {
       cmd = new TpcaPaymentChopper();
       break;
     case TPCC:
-      cmd = new TpccTxn();
+      cmd = new TpccProcedure();
       break;
     case TPCC_DIST_PART:
       cmd = new TpccDistChopper();
       break;
     case TPCC_REAL_DIST_PART:
-      cmd = new TpccRealDistChopper();
+      cmd = new TpccRdProcedure();
       break;
     case RW_BENCHMARK:
       cmd = new RWChopper();
@@ -376,26 +373,26 @@ Scheduler* Frame::CreateScheduler() {
   return sch;
 }
 
-TxnGenerator * Frame::CreateTxnGenerator() {
+Workload * Frame::CreateTxnGenerator() {
   auto benchmark = Config::config_s->benchmark_;
-  TxnGenerator * gen = nullptr;
+  Workload * gen = nullptr;
   switch (benchmark) {
     case TPCC:
-      gen = new TpccTxnGenerator(Config::GetConfig());
+      gen = new TpccWorkload(Config::GetConfig());
       break;
     case TPCC_DIST_PART:
     case TPCC_REAL_DIST_PART:
-      gen = new TpccdTxnGenerator(Config::GetConfig());
+      gen = new TpccRdWorkload(Config::GetConfig());
       break;
     case TPCA:
-      gen = new TpcaTxnGenerator(Config::GetConfig());
+      gen = new TpcaWorkload(Config::GetConfig());
       break;
     case RW_BENCHMARK:
-      gen = new RWTxnGenerator(Config::GetConfig());
+      gen = new RwWorkload(Config::GetConfig());
       break;
     case MICRO_BENCH:
     default:
-      gen = new TxnGenerator(Config::GetConfig());
+      verify(0);
   }
   return gen;
 }

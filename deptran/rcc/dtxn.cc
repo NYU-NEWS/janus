@@ -2,7 +2,7 @@
 #include "../__dep__.h"
 #include "../scheduler.h"
 #include "dtxn.h"
-#include "bench/tpcc/piece.h"
+#include "bench/tpcc/workload.h"
 #include "dep_graph.h"
 #include "procedure.h"
 

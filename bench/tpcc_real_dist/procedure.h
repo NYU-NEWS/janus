@@ -1,15 +1,15 @@
 #pragma once
 
-#include "../tpcc/chopper.h"
+#include "bench/tpcc/procedure.h"
 
 namespace rococo {
 
-class TpccRealDistChopper: public TpccTxn {
+class TpccRdProcedure: public TpccProcedure {
  protected:
   virtual siteid_t GetPiecePar(innid_t inn_id);
 
  public:
-  TpccRealDistChopper();
+  TpccRdProcedure();
   bool IsOneRound() override;
   virtual void NewOrderInit(TxnRequest &req) override;
   virtual void NewOrderRetry() override;
@@ -17,7 +17,7 @@ class TpccRealDistChopper: public TpccTxn {
   virtual void PaymentRetry() override;
   virtual void DeliveryInit(TxnRequest &req) override;
   virtual void DeliveryRetry() override;
-  virtual ~TpccRealDistChopper();
+  virtual ~TpccRdProcedure();
 };
 
 } // namespace rococo

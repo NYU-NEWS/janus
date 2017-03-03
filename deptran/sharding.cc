@@ -2,24 +2,23 @@
 #include "sharding.h"
 
 // for tpca benchmark
-#include "bench/tpca/piece.h"
-#include "bench/tpca/chopper.h"
+#include "bench/tpca/workload.h"
+#include "bench/tpca/payment.h"
 
 // tpcc benchmark
-#include "bench/tpcc/piece.h"
-#include "bench/tpcc/chopper.h"
+#include "bench/tpcc/workload.h"
+#include "bench/tpcc/procedure.h"
 
 // tpcc dist partition benchmark
-#include "bench/tpcc_dist/piece.h"
-#include "bench/tpcc_dist/chopper.h"
+#include "bench/tpcc_dist/procedure.h"
 
 // tpcc real dist partition benchmark
-#include "bench/tpcc_real_dist/piece.h"
-#include "bench/tpcc_real_dist/chopper.h"
+#include "bench/tpcc_real_dist/workload.h"
+#include "bench/tpcc_real_dist/procedure.h"
 
 // rw benchmark
-#include "bench/rw_benchmark/piece.h"
-#include "bench/rw_benchmark/chopper.h"
+#include "bench/rw/workload.h"
+#include "bench/rw/procedure.h"
 
 // micro bench
 #include "bench/micro/piece.h"

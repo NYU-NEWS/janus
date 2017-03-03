@@ -1,11 +1,8 @@
-#include "chopper.h"
-#include "bench/tpcc_real_dist/sharding.h"
+#include "procedure.h"
 
 namespace rococo {
 
-
-
-void TpccTxn::OrderStatusInit(TxnRequest &req) {
+void TpccProcedure::OrderStatusInit(TxnRequest &req) {
   order_status_dep_.piece_order = false;
   /**
    * req.input_
@@ -93,7 +90,7 @@ void TpccTxn::OrderStatusInit(TxnRequest &req) {
 //}
 
 
-void TpccTxn::OrderStatusRetry() {
+void TpccProcedure::OrderStatusRetry() {
   order_status_dep_.piece_last2id = order_status_dep_.piece_ori_last2id;
   order_status_dep_.piece_order = false;
 
@@ -115,7 +112,7 @@ void TpccTxn::OrderStatusRetry() {
 }
 
 
-void TpccPiece::RegOrderStatus() {
+void TpccWorkload::RegOrderStatus() {
   // piece 0, R customer secondary index, c_last -> c_id
   INPUT_PIE(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_0,
             TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_C_LAST)

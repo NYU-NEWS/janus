@@ -1,7 +1,7 @@
 #pragma once
 
 #include "coordinator.h"
-#include "./bench/tpca/piece.h"
+#include "bench/tpca/workload.h"
 
 namespace rococo {
 
