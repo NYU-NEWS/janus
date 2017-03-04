@@ -68,7 +68,7 @@ class Workload {
  public:
   Sharding* sss_ = nullptr;
   TxnRegistry *txn_reg_ = nullptr;
-  static Workload *CreateWorkload(int benchmark);
+  static Workload *CreateWorkload(Config *config);
   virtual void RegisterPrecedures() = 0;
 };
 

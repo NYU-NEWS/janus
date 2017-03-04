@@ -21,8 +21,8 @@
 #include "bench/rw/procedure.h"
 
 // micro bench
-#include "bench/micro/piece.h"
-#include "bench/micro/chopper.h"
+#include "bench/micro/workload.h"
+#include "bench/micro/procedure.h"
 
 namespace rococo {
 Sharding::Sharding() { }
@@ -72,7 +72,7 @@ void Sharding::BuildTableInfoPtr() {
 parid_t Sharding::PartitionFromKey(const MultiValue &key,
                                    const tb_info_t *tb_info) {
   const MultiValue &key_buf =
-      Config::GetConfig()->get_benchmark() != TPCC_REAL_DIST_PART ?
+      Config::GetConfig()->benchmark() != TPCC_REAL_DIST_PART ?
       key :
       (tb_info->tb_name == TPCC_TB_STOCK
            || tb_info->tb_name == TPCC_TB_ITEM ?

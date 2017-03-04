@@ -93,9 +93,9 @@ class TpccProcedure: public Procedure {
   virtual parid_t GetPiecePartitionId(innid_t inn_id);
 
   virtual void Init(TxnRequest &req);
-  virtual bool start_callback(int pi,
-                              int res,
-                              map<int32_t, Value> &output);
+  virtual bool HandleOutput(int pi,
+                            int res,
+                            map<int32_t, Value> &output) override;
   virtual bool IsReadOnly();
 
   virtual void Reset();

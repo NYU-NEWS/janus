@@ -277,8 +277,6 @@ class TpccWorkload: public Workload {
  public:
   virtual void RegisterPrecedures();
 
-  TpccWorkload();
-
   virtual ~TpccWorkload();
 
   typedef struct {

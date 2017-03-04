@@ -23,26 +23,26 @@
 #include "bench/rw/procedure.h"
 
 // micro bench
-#include "bench/micro/piece.h"
-#include "bench/micro/chopper.h"
+#include "bench/micro/workload.h"
+#include "bench/micro/procedure.h"
 
 namespace janus {
 
-Workload* Workload::CreateWorkload(int benchmark) {
-  switch (benchmark) {
+Workload* Workload::CreateWorkload(Config *config) {
+  switch (config->benchmark()) {
     case TPCA:
-      return new TpcaWorkload();
+      return new TpcaWorkload(config);
     case TPCC:
-      return new TpccWorkload();
+      return new TpccWorkload(config);
     case TPCC_DIST_PART:
       verify(0);
-      return new TpccWorkload();
+      return new TpccWorkload(config);
     case TPCC_REAL_DIST_PART:
-      return new TpccRdWorkload();
+      return new TpccRdWorkload(config);
     case RW_BENCHMARK:
-      return new RwWorkload();
+      return new RwWorkload(config);
     case MICRO_BENCH:
-      return new MicroWorkload();
+      return new MicroWorkload(config);
     default:
       verify(0);
       return NULL;
@@ -53,7 +53,7 @@ Workload::Workload(Config* config)
     : txn_weight_(config->get_txn_weight()),
       txn_weights_(config->get_txn_weights()),
       sharding_(config->sharding_) {
-  benchmark_ = Config::GetConfig()->get_benchmark();
+  benchmark_ = Config::GetConfig()->benchmark();
   n_try_ = Config::GetConfig()->get_max_retry();
   single_server_ = Config::GetConfig()->get_single_server();
 

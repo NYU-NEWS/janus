@@ -175,10 +175,9 @@ class Procedure: public ContainerCommand {
 
   // phase 1, res is NULL
   // phase 2, res returns SUCCESS is output is consistent with previous value
-
-  virtual bool start_callback(int pi,
-                              int res,
-                              map<int32_t, Value> &output) = 0;
+  virtual bool HandleOutput(int pi,
+                            int res,
+                            map<int32_t, Value> &output) = 0;
   virtual bool IsReadOnly() = 0;
   virtual void read_only_reset();
   virtual int GetNPieceAll() {

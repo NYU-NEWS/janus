@@ -46,8 +46,8 @@
 #include "bench/rw/sharding.h"
 
 // micro bench
-#include "bench/micro/piece.h"
-#include "bench/micro/chopper.h"
+#include "bench/micro/workload.h"
+#include "bench/micro/procedure.h"
 
 #include "tpl/sched.h"
 #include "occ/sched.h"
@@ -270,7 +270,7 @@ Procedure* Frame::CreateTxnCommand(TxnRequest& req, TxnRegistry* reg) {
       cmd = new RWChopper();
       break;
     case MICRO_BENCH:
-      cmd = new MicroTxnCmd();
+      cmd = new MicroProcedure();
       break;
     default:
       verify(0);

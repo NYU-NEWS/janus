@@ -95,9 +95,9 @@ bool TpccProcedure::CheckReady() {
   return ret;
 }
 
-bool TpccProcedure::start_callback(int pi,
-                             int res,
-                             map<int32_t, Value> &output_map) {
+bool TpccProcedure::HandleOutput(int pi,
+                                 int res,
+                                 map<int32_t, Value> &output_map) {
   bool ret;
 
   ws_.insert(output_map);

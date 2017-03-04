@@ -1,15 +1,15 @@
 #pragma once
 
 #include "coordinator.h"
-#include "./bench/micro/piece.h"
+#include "bench/micro/workload.h"
 
 namespace deptran {
 
-class MicroTxnCmd : public Procedure {
+class MicroProcedure : public Procedure {
 
 public:
 
-    MicroTxnCmd();
+    MicroProcedure();
 
     virtual void Init(TxnRequest &req);
 
@@ -17,14 +17,14 @@ public:
 
     virtual void InitW(TxnRequest &req);
 
-    virtual bool start_callback(int pi, int res,
-                                map<int32_t, Value> &output);
+    virtual bool HandleOutput(int pi, int res,
+                              map<int32_t, Value> &output) override;
 
     virtual bool IsReadOnly();
 
     virtual void Reset() override;
 
-    virtual ~MicroTxnCmd();
+    virtual ~MicroProcedure();
 
 };
 

@@ -1,11 +1,11 @@
-#include "chopper.h"
+#include "procedure.h"
 
 namespace rococo {
 
-MicroTxnCmd::MicroTxnCmd() {
+MicroProcedure::MicroProcedure() {
 }
 
-void MicroTxnCmd::InitW(TxnRequest &req) {
+void MicroProcedure::InitW(TxnRequest &req) {
 //  verify(req.txn_type_ == MICRO_BENCH_W);
 //  type_ = MICRO_BENCH_W;
 //  inputs_.clear();
@@ -41,7 +41,7 @@ void MicroTxnCmd::InitW(TxnRequest &req) {
 //  };
 }
 
-void MicroTxnCmd::Init(TxnRequest &req) {
+void MicroProcedure::Init(TxnRequest &req) {
   ws_init_ = req.input_;
   ws_ = req.input_;
 
@@ -75,7 +75,7 @@ void MicroTxnCmd::Init(TxnRequest &req) {
   sss_->GetPartition(MICRO_BENCH_TABLE_D, req.input_[3], sharding_[3]);
 }
 
-void MicroTxnCmd::InitR(TxnRequest &req) {
+void MicroProcedure::InitR(TxnRequest &req) {
   verify(req.txn_type_ == MICRO_BENCH_R);
   type_ = MICRO_BENCH_R;
 //  inputs_[MICRO_BENCH_R_0] = {{MICRO_VAR_K_0, req.input_[0]}};
@@ -98,17 +98,17 @@ void MicroTxnCmd::InitR(TxnRequest &req) {
 //  };
 }
 
-bool MicroTxnCmd::start_callback(int pi,
-                                       int res,
-                                       map<int32_t, Value> &output) {
+bool MicroProcedure::HandleOutput(int pi,
+                                  int res,
+                                  map<int32_t, Value> &output) {
   return false;
 }
 
-bool MicroTxnCmd::IsReadOnly() {
+bool MicroProcedure::IsReadOnly() {
   return false;
 }
 
-void MicroTxnCmd::Reset() {
+void MicroProcedure::Reset() {
   n_pieces_dispatched_ = 0;
   n_pieces_dispatchable_ = 4;
   for (auto& pair :status_) {
@@ -119,6 +119,6 @@ void MicroTxnCmd::Reset() {
   n_try_++;
 }
 
-MicroTxnCmd::~MicroTxnCmd() { }
+MicroProcedure::~MicroProcedure() { }
 
 } // namespace rococo

@@ -1,7 +1,7 @@
 
 #include "deptran/__dep__.h"
 #include "deptran/workload.h"
-#include "piece.h"
+#include "workload.h"
 
 namespace rococo {
 

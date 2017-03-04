@@ -58,9 +58,9 @@ void RWChopper::Init(TxnRequest &req) {
   }
 }
 
-bool RWChopper::start_callback(int pi,
-                               int res,
-                               map<int32_t, Value> &output) {
+bool RWChopper::HandleOutput(int pi,
+                             int res,
+                             map<int32_t, Value> &output) {
   return false;
 }
 

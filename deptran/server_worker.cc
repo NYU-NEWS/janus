@@ -108,8 +108,7 @@ void ServerWorker::PopTable() {
 }
 
 void ServerWorker::RegisterWorkload() {
-  auto benchmark = Config::GetConfig()->get_benchmark();
-  Workload* workload = Workload::CreateWorkload(benchmark);
+  Workload* workload = Workload::CreateWorkload(Config::GetConfig());
   verify(txn_reg_ != nullptr);
   verify(sharding_ != nullptr);
   workload->sss_ = sharding_;

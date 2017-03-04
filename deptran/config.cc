@@ -33,8 +33,8 @@
 #include "bench/rw/procedure.h"
 
 // micro bench
-#include "bench/micro/piece.h"
-#include "bench/micro/chopper.h"
+#include "bench/micro/workload.h"
+#include "bench/micro/procedure.h"
 
 
 namespace rococo {
@@ -890,7 +890,7 @@ unsigned int Config::get_start_coordinator_id() {
   return start_coordinator_id_;
 }
 
-int Config::get_benchmark() {
+int Config::benchmark() {
   return benchmark_;
 }
 

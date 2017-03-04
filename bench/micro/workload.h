@@ -37,10 +37,10 @@ extern char MICRO_BENCH_TABLE_D[];
 #define MICRO_VAR_V_3       (2003)
 
 class MicroWorkload : public Workload {
-
-public:
-    void RegisterPrecedures() override;
-    void reg_pieces();
+ public:
+  using Workload::Workload;
+  void RegisterPrecedures() override;
+  void reg_pieces();
 };
 
 } // namespace rococo

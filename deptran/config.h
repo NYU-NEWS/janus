@@ -216,7 +216,7 @@ class Config {
   int32_t get_mode();
   uint32_t get_num_threads();
   uint32_t get_start_coordinator_id();
-  int32_t get_benchmark();
+  int32_t benchmark();
   uint32_t GetNumPartition();
   uint32_t get_scale_factor();
   int32_t get_max_retry();

@@ -120,7 +120,7 @@ Coordinator* ClientWorker::CreateCoordinator(uint16_t offset_id) {
 void ClientWorker::work() {
   Log_debug("%s: %d", __FUNCTION__, this->cli_id_);
   txn_reg_ = new TxnRegistry();
-  Workload* workload = Workload::CreateWorkload(benchmark);
+  Workload* workload = Workload::CreateWorkload(config_);
   workload->txn_reg_ = txn_reg_;
   workload->RegisterPrecedures();
 
@@ -245,7 +245,7 @@ ClientWorker::ClientWorker(
     my_site_(site_info),
     config_(config),
     cli_id_(site_info.id),
-    benchmark(config->get_benchmark()),
+    benchmark(config->benchmark()),
     mode(config->get_mode()),
     duration(config->get_duration()),
     ccsi(ccsi),

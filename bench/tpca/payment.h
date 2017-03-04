@@ -13,9 +13,9 @@ class TpcaPaymentChopper: public Procedure {
 
   virtual void Init(TxnRequest &req);
 
-  virtual bool start_callback(int pi,
-                              int res,
-                              map<int32_t, Value> &output) override {
+  virtual bool HandleOutput(int pi,
+                            int res,
+                            map<int32_t, Value> &output) override {
     return false;
   }
 

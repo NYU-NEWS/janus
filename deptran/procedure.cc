@@ -234,7 +234,7 @@ void Procedure::Merge(innid_t inn_id, map<int32_t, Value>& output) {
   verify(n_pieces_dispatched_ >= n_pieces_dispatch_acked_);
   outputs_[inn_id] = output;
   cmds_[inn_id]->output = output;
-  this->start_callback(inn_id, SUCCESS, output);
+  this->HandleOutput(inn_id, SUCCESS, output);
 }
 
 void Procedure::Merge(ContainerCommand &cmd) {
