@@ -1,5 +1,6 @@
 #pragma once
 #include "deptran/__dep__.h"
+#include "deptran/txn_reg.h"
 #include "bench/tpcc/workload.h"
 
 namespace rococo {
@@ -10,7 +11,8 @@ class BatchStartArgsHelper;
 
 class TpccProcedure: public Procedure {
  public:
-  map<innid_t, set<int32_t>> input_vars_ = {};
+  map<innid_t, LeafProcedure> leaf_procs_{};
+//  map<innid_t, set<int32_t>> input_vars_{};
   typedef struct {
     size_t ol_cnt;
     bool piece_0_dist;

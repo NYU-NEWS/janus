@@ -9,7 +9,7 @@
 
 namespace rococo {
 
-txn_handler_defer_pair_t&
+ProcHandlerPair&
 TxnRegistry::get(const SimpleCommand &cmd) {
   return get(cmd.root_type_, cmd.type_);
 }

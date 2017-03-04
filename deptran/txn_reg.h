@@ -24,7 +24,7 @@ typedef std::function<void(Executor* exec,
                            SimpleCommand& cmd,
                            rrr::i32 *res,
                            map<int32_t, Value> &output
-)> TxnHandler;
+)> ProcHandler;
 
 typedef enum {
   DF_REAL,
@@ -33,9 +33,9 @@ typedef enum {
 } defer_t;
 
 typedef struct {
-  TxnHandler txn_handler;
+  ProcHandler txn_handler;
   defer_t defer;
-} txn_handler_defer_pair_t;
+} ProcHandlerPair;
 
 typedef std::function<bool(Procedure *,
                            map<int32_t, Value>&)>
@@ -58,44 +58,54 @@ struct conf_id {
   }
 };
 
+class LeafProcedure {
+ public:
+  ProcHandlerPair proc_handler_pair_{};
+  PieceCallbackHandler callback_{};
+  pair<string, vector<int32_t>> sharding_input_{};
+  set<int32_t> input_vars_{};
+  set<int32_t> output_vars_{};
+  vector<conf_id> conflicts_{};
+};
+
 /**
 * This class holds all the hard-coded transactions pieces.
 */
 class TxnRegistry {
  public:
 
-  TxnRegistry() : callbacks_() {};
+  TxnRegistry() {};
 
-  void reg(base::i32 t_type, base::i32 p_type,
-           defer_t defer, const TxnHandler &txn_handler) {
-    auto func_key = std::make_pair(t_type, p_type);
-    auto it = all_.find(func_key);
-    verify(it == all_.end());
-    all_[func_key] = (txn_handler_defer_pair_t) {txn_handler, defer};
+  void reg(txntype_t t_type,
+           innid_t p_type,
+           defer_t defer,
+           const ProcHandler &txn_handler) {
+    regs_[t_type][p_type].proc_handler_pair_ =
+        (ProcHandlerPair) {txn_handler, defer};
   }
 
-  txn_handler_defer_pair_t& get(const base::i32 t_type,
-                               const base::i32 p_type) {
-    auto it = all_.find(std::make_pair(t_type, p_type));
-    verify(it != all_.end());
-    return it->second;
+  ProcHandlerPair& get(const txntype_t t_type,
+                       const innid_t p_type) {
+    auto& pair = regs_[t_type][p_type].proc_handler_pair_;
+    verify(pair.txn_handler);
+    return pair;
   }
-  txn_handler_defer_pair_t& get(const SimpleCommand &);
+  ProcHandlerPair& get(const SimpleCommand &);
 
  public:
   // prevent instance creation
   // TxnRegistry() { }
   map<txntype_t, int> txn_types_{};
-  map<std::pair<base::i32, base::i32>, txn_handler_defer_pair_t> all_{};
-  map<std::pair<txntype_t, innid_t>, PieceCallbackHandler> callbacks_{};
-  map<std::pair<txntype_t, innid_t>,
-      std::pair<string, vector<int32_t>>> sharding_input_{};
-  map<txntype_t, map<innid_t, set<int32_t>>> input_vars_{};
-  map<txntype_t, map<innid_t, set<int32_t>>> output_vars_{};
-  map<txntype_t, std::function<void(Procedure * ch, TxnRequest& req)> > init_{};
-  map<txntype_t, std::function<void(Procedure * ch)>> retry_{};
-  map<txntype_t, map<innid_t, vector<conf_id>>> conflicts_{};
-
+//  map<std::pair<base::i32, base::i32>, ProcHandlerPair> all_{};
+//  map<std::pair<txntype_t, innid_t>, PieceCallbackHandler> callbacks_{};
+//  map<std::pair<txntype_t, innid_t>,
+//      std::pair<string, vector<int32_t>>> sharding_input_{};
+//  map<txntype_t, map<innid_t, set<int32_t>>> input_vars_{};
+//  map<txntype_t, map<innid_t, set<int32_t>>> output_vars_{};
+//  map<txntype_t, std::function<void(Procedure * ch, TxnRequest& req)> > init_{};
+//  map<txntype_t, std::function<void(Procedure * ch)>> retry_{};
+//  map<txntype_t, map<innid_t, vector<conf_id>>> conflicts_{};
+  map<txntype_t, map<innid_t, LeafProcedure>> regs_{};
 };
 
 } // namespace rococo

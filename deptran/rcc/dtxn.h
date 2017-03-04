@@ -70,7 +70,7 @@ class RccDTxn: public DTxn, public Vertex<RccDTxn> {
 
   virtual bool start_exe_itfr(
       defer_t defer,
-      TxnHandler &handler,
+      ProcHandler &handler,
       const SimpleCommand& cmd,
       map<int32_t, Value> *output
   );

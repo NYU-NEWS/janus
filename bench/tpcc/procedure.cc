@@ -34,7 +34,7 @@ void TpccProcedure::Init(TxnRequest &req) {
   max_try_ = req.n_try_;
   n_try_ = 1;
   commit_.store(true);
-  input_vars_ = txn_reg_->input_vars_[type_];
+  leaf_procs_ = txn_reg_->regs_[type_];
   switch (type_) {
     case TPCC_NEW_ORDER:
       NewOrderInit(req);
@@ -60,14 +60,13 @@ void TpccProcedure::Init(TxnRequest &req) {
 // This is sort of silly. We should have a better way.
 bool TpccProcedure::CheckReady() {
   bool ret = false;
-  map<innid_t, set<int32_t>>& map = input_vars_;
   for (auto &pair : status_) {
     const innid_t& pi = pair.first;
     int32_t& status = pair.second;
     if (status != WAITING) {
       continue;
     }
-    set<int32_t>& var_set = map[pi];
+    set<int32_t>& var_set = leaf_procs_[pi].input_vars_;
     bool all_found = true;
     for (auto &var : var_set) {
       if (ws_.count(var) == 0) {
@@ -122,10 +121,9 @@ bool TpccProcedure::HandleOutput(int pi,
     return ret;
   }
   PieceCallbackHandler handler;
-  auto it = txn_reg_->callbacks_.find(std::make_pair(type_, pi));
-  if (it != txn_reg_->callbacks_.end()) {
-    handler = it->second;
-    ret = handler(this, output_map);
+  auto& callback = txn_reg_->regs_[type_][pi].callback_;
+  if (callback) {
+    ret = callback(this, output_map);
   } else {
     // ws_.insert(output_map.begin(), output_map.end());
     bool ret = CheckReady();
@@ -191,9 +189,8 @@ bool TpccProcedure::IsReadOnly() {
 
 parid_t TpccProcedure::GetPiecePartitionId(innid_t inn_id) {
   parid_t partition_id = 0;
-  auto it = txn_reg_->sharding_input_.find(std::make_pair(type_, inn_id));
-  if (it != txn_reg_->sharding_input_.end()) {
-    auto &pair = it->second;
+  auto& pair = txn_reg_->regs_[type_][inn_id].sharding_input_;
+  if (true) {
     auto tb = pair.first;
     auto& var_ids = pair.second;
     vector<Value> vars;

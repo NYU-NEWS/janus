@@ -33,7 +33,7 @@ class PieceStatus {
   rrr::ALockGroup rm_lock_group_;
   bool is_rw_;
   bool is_rm_ = false;
-  TxnHandler handler_;
+  ProcHandler handler_;
 
   TplExecutor *exec_;
 

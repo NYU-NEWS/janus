@@ -47,8 +47,6 @@ void TpccProcedure::NewOrderRetry() {
 }
 
 void TpccWorkload::RegNewOrder() {
-  TXN_TYPE(TPCC_NEW_ORDER, TXN_ONE_SHOT);
-
   // Ri & W district
   INPUT_PIE(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0,
             TPCC_VAR_W_ID, TPCC_VAR_D_ID)

@@ -99,7 +99,7 @@ void RccDTxn::ReplyFinishOk() {
 }
 
 bool RccDTxn::start_exe_itfr(defer_t defer_type,
-                             TxnHandler &handler,
+                             ProcHandler &handler,
                              const SimpleCommand& cmd,
                              map<int32_t, Value> *output) {
   verify(0);

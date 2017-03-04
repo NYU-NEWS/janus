@@ -96,26 +96,26 @@ map<int32_t, Value> &output) \
 #define END_PIE );
 
 #define BEGIN_CB(txn_type, inn_id) \
-txn_reg_->callbacks_[std::make_pair(txn_type, inn_id)] = \
+txn_reg_->regs_[txn_type][inn_id].callback_ = \
 [] (Procedure *ch, std::map<int32_t, Value> output) -> bool {
 
 #define END_CB  };
 
 #define SHARD_PIE(txn, pie, tb, ...) \
-txn_reg_->sharding_input_[std::make_pair(txn, pie)] \
+txn_reg_->regs_[txn][pie].sharding_input_ \
 = std::make_pair(tb, vector<int32_t>({__VA_ARGS__}));
 
 #define INPUT_PIE(txn, pie, ...) \
-txn_reg_->input_vars_[txn][pie] = {__VA_ARGS__};
+txn_reg_->regs_[txn][pie].input_vars_ \
+= {__VA_ARGS__};
 
 #define OUTPUT_PIE(txn, pie, ...) \
-txn_reg_->output_vars_[txn][pie] = {__VA_ARGS__};
+txn_reg_->regs_[txn][pie].output_vars_ \
+= {__VA_ARGS__};
 
 #define CONFLICT_PIE(txn, pie, ...) \
-txn_reg_->conflicts_[txn][pie] = {__VA_ARGS__};
-
-#define TXN_TYPE(txn, type) \
-txn_reg_->txn_types_[txn] = type;
+txn_reg_->regs_[txn][pie].conflicts_ \
+= {__VA_ARGS__};
 
 //std::vector<mdb::column_lock_t>(__VA_ARGS__),
 //verify(((TPLDTxn*)dtxn)->locking_ == (output_size == nullptr));
