@@ -23,13 +23,13 @@ Marshal& TpcPrepareCommand::ToMarshal(Marshal& m) const {
   m << cmds_;
   return m;
 }
+
 Marshal& TpcPrepareCommand::FromMarshal(Marshal& m) {
   m >> txn_id_;
   m >> res_;
   m >> cmds_;
   return m;
 }
-
 
 Marshal& TpcCommitCommand::ToMarshal(Marshal& m) const {
   m << txn_id_;

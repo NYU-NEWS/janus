@@ -3,6 +3,10 @@
 
 namespace rococo {
 
+/**
+ * TODO: merge this with ContainerCommand, both of which works as a marshalling
+ * proxy.
+ */
 class Marshallable : public std::enable_shared_from_this<Marshallable> {
  protected:
   std::shared_ptr<Marshallable> data_{};

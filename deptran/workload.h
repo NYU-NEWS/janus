@@ -47,28 +47,19 @@ class Workload {
   std::vector<double>& txn_weight_;
   std::map<string, double>& txn_weights_;
   Sharding* sharding_;
+  Sharding* sss_ = nullptr;
+  TxnRegistry *txn_reg_ = nullptr;
+
+ public:
+  static Workload *CreateWorkload(Config *config);
 
  public:
   Workload() = delete;
   Workload(Config* config);
-
-  virtual void GetTxnReq(TxnRequest* req,
-                         uint32_t i_client,
-                         uint32_t n_client) {
-    verify(0);
-  }
-  virtual void GetTxnReq(TxnRequest *req, uint32_t cid) ;
-
-  void get_micro_bench_read_req(TxnRequest *req, uint32_t cid) const;
-  void get_micro_bench_write_req(TxnRequest *req, uint32_t cid) const;
-  void get_micro_bench_txn_req(TxnRequest *req, uint32_t cid) const;
-  void get_txn_types(std::map<int32_t, std::string> &txn_types);
-
   virtual ~Workload();
- public:
-  Sharding* sss_ = nullptr;
-  TxnRegistry *txn_reg_ = nullptr;
-  static Workload *CreateWorkload(Config *config);
+
+  virtual void GetTxnReq(TxnRequest *req, uint32_t cid) = 0;
+  virtual void GetProcedureTypes(std::map<int32_t, std::string> &txn_types);
   virtual void RegisterPrecedures() = 0;
 };
 

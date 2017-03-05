@@ -9,25 +9,11 @@
 
 namespace rococo {
 /**
- * This is the command context to exchange between
- * coordinator and servers, or server to server.
+ * TODO: maybe re-write this into a marshalling proxy?
+ * Reason why need such a helper: it is possible to marshall an object
+ * without knowing its actual type; but it is difficult to unmarshal from
+ * stream without knowing its actual type (only know the base type).
  */
-class SequentialCommand {
-
-};
-
-class ParallelCommand {
-
-};
-
-class ConditionalCommand {
-
-};
-
-class ForCommand {
-
-};
-
 class ContainerCommand {
  public:
   static map<cmdtype_t, function<ContainerCommand*()>>& Initializers();
@@ -39,7 +25,7 @@ class ContainerCommand {
   innid_t inn_id_ = 0;
   cmdid_t root_id_ = 0;
   cmdtype_t root_type_ = 0;
-  ContainerCommand* self_cmd_ = nullptr;
+  ContainerCommand* self_cmd_ = nullptr; // point to actual stuff.
 
  public:
   virtual innid_t inn_id() const {return inn_id_;}

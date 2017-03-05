@@ -38,61 +38,61 @@ TpcaWorkload::TpcaWorkload(Config* config) : Workload(config) {
   rand_gen_.seed((int)std::time(0) + (uint64_t)pthread_self());
 }
 
-void TpcaWorkload::GetTxnReq(TxnRequest* req,
-                             uint32_t i_client,
-                             uint32_t n_client) {
-  Value amount((i64) RandomGenerator::rand(0, 10000));
-  req->n_try_ = n_try_;
-  req->txn_type_ = TPCA_PAYMENT;
-  verify(i_client < n_client);
-  int k1, k2, k3;
-  auto& dist = Config::GetConfig()->dist_;
-  if (fix_id_ >= 0) {
-    verify(dist == "fixed");
-    k1 = tpca_para_.n_customer_ * i_client / n_client;
-    k2 = tpca_para_.n_teller_ * i_client / n_client;
-    k3 = tpca_para_.n_branch_ * i_client / n_client;
-  } else if (dist == "disjoint") {
-    //
-    int r1 = tpca_para_.n_customer_ / n_client;
-    int r2 = tpca_para_.n_teller_ / n_client;
-    int r3 = tpca_para_.n_teller_ / n_client;
-    boost::random::uniform_int_distribution<> d1(0, r1-1);
-    boost::random::uniform_int_distribution<> d2(0, r2-1);
-    boost::random::uniform_int_distribution<> d3(0, r3-1);
-    k1 = r1 + d1(rand_gen_);
-    k2 = r2 + d2(rand_gen_);
-    k3 = r3 + d3(rand_gen_);
+//void TpcaWorkload::GetTxnReq(TxnRequest* req,
+//                             uint32_t i_client,
+//                             uint32_t n_client) {
+//  Value amount((i64) RandomGenerator::rand(0, 10000));
+//  req->n_try_ = n_try_;
+//  req->txn_type_ = TPCA_PAYMENT;
+//  verify(i_client < n_client);
+//  int k1, k2, k3;
+//  auto& dist = Config::GetConfig()->dist_;
+//  if (fix_id_ >= 0) {
+//    verify(dist == "fixed");
+//    k1 = tpca_para_.n_customer_ * i_client / n_client;
+//    k2 = tpca_para_.n_teller_ * i_client / n_client;
+//    k3 = tpca_para_.n_branch_ * i_client / n_client;
+//  } else if (dist == "disjoint") {
+//    //
+//    int r1 = tpca_para_.n_customer_ / n_client;
+//    int r2 = tpca_para_.n_teller_ / n_client;
+//    int r3 = tpca_para_.n_teller_ / n_client;
+//    boost::random::uniform_int_distribution<> d1(0, r1-1);
+//    boost::random::uniform_int_distribution<> d2(0, r2-1);
+//    boost::random::uniform_int_distribution<> d3(0, r3-1);
+//    k1 = r1 + d1(rand_gen_);
+//    k2 = r2 + d2(rand_gen_);
+//    k3 = r3 + d3(rand_gen_);
+//
+//  } else if (dist == "uniform") {
+//    boost::random::uniform_int_distribution<> d1(0, tpca_para_.n_customer_-1);
+//    boost::random::uniform_int_distribution<> d2(0, tpca_para_.n_teller_-1);
+//    boost::random::uniform_int_distribution<> d3(0, tpca_para_.n_branch_-1);
+//    k1 = d1(rand_gen_);
+//    k2 = d2(rand_gen_);
+//    k3 = d3(rand_gen_);
+////    int k1 = RandomGenerator::rand(0, tpca_para_.n_customer_ - 1);
+////    int k2 = RandomGenerator::rand(0, tpca_para_.n_teller_ - 1);
+////    int k3 = RandomGenerator::rand(0, tpca_para_.n_branch_ - 1);
+////    Log_info("gen req, coo_id: %x \t k1: %x k2: %x, k3: %x", cid, k1, k2, k3);
+//  } else if (dist == "zipf") {
+//    static auto alpha = Config::GetConfig()->coeffcient_;
+//    static ZipfDist d1(alpha, tpca_para_.n_customer_);
+//    static ZipfDist d2(alpha, tpca_para_.n_teller_);
+//    static ZipfDist d3(alpha, tpca_para_.n_branch_);
+//    k1 = d1(rand_gen_);
+//    k2 = d2(rand_gen_);
+//    k3 = d3(rand_gen_);
+//  } else {
+//    verify(0);
+//  }
 
-  } else if (dist == "uniform") {
-    boost::random::uniform_int_distribution<> d1(0, tpca_para_.n_customer_-1);
-    boost::random::uniform_int_distribution<> d2(0, tpca_para_.n_teller_-1);
-    boost::random::uniform_int_distribution<> d3(0, tpca_para_.n_branch_-1);
-    k1 = d1(rand_gen_);
-    k2 = d2(rand_gen_);
-    k3 = d3(rand_gen_);
-//    int k1 = RandomGenerator::rand(0, tpca_para_.n_customer_ - 1);
-//    int k2 = RandomGenerator::rand(0, tpca_para_.n_teller_ - 1);
-//    int k3 = RandomGenerator::rand(0, tpca_para_.n_branch_ - 1);
-//    Log_info("gen req, coo_id: %x \t k1: %x k2: %x, k3: %x", cid, k1, k2, k3);
-  } else if (dist == "zipf") {
-    static auto alpha = Config::GetConfig()->coeffcient_;
-    static ZipfDist d1(alpha, tpca_para_.n_customer_);
-    static ZipfDist d2(alpha, tpca_para_.n_teller_);
-    static ZipfDist d3(alpha, tpca_para_.n_branch_);
-    k1 = d1(rand_gen_);
-    k2 = d2(rand_gen_);
-    k3 = d3(rand_gen_);
-  } else {
-    verify(0);
-  }
-
-  req->input_ = {
-      {0, Value(k1)},
-      {1, Value(k2)},
-      {2, Value(k3)},
-      {3, amount}};
-}
+//  req->input_ = {
+//      {0, Value(k1)},
+//      {1, Value(k2)},
+//      {2, Value(k3)},
+//      {3, amount}};
+//}
 
 void TpcaWorkload::GetTxnReq(TxnRequest *req, uint32_t cid) {
   Value amount((i64) RandomGenerator::rand(0, 10000));

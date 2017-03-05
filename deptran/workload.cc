@@ -89,64 +89,7 @@ Workload::Workload(Config* config)
   }
 }
 
-
-void Workload::get_micro_bench_read_req(TxnRequest *req, uint32_t cid) const {
-  req->txn_type_ = MICRO_BENCH_R;
-  req->input_[0] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_a_ - 1));
-  req->input_[1] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_b_ - 1));
-  req->input_[2] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_c_ - 1));
-  req->input_[3] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_d_ - 1));
-}
-
-void Workload::get_micro_bench_write_req(TxnRequest *req, uint32_t cid) const {
-  req->txn_type_ = MICRO_BENCH_W;
-  req->input_[0] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_a_ - 1));
-  req->input_[1] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_b_ - 1));
-  req->input_[2] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_c_ - 1));
-  req->input_[3] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_d_ - 1));
-  req->input_[4] = Value((i64) RandomGenerator::rand(0, 1000));
-  req->input_[5] = Value((i64) RandomGenerator::rand(0, 1000));
-  req->input_[6] = Value((i64) RandomGenerator::rand(0, 1000));
-  req->input_[7] = Value((i64) RandomGenerator::rand(0, 1000));
-}
-
-void Workload::get_micro_bench_txn_req(
-    TxnRequest *req, uint32_t cid) const {
-  req->n_try_ = n_try_;
-  if (txn_weight_.size() != 2)
-    get_micro_bench_read_req(req, cid);
-  else
-    switch (RandomGenerator::weighted_select(txn_weight_)) {
-      case 0: // read
-        get_micro_bench_read_req(req, cid);
-        break;
-      case 1: // write
-        get_micro_bench_write_req(req, cid);
-        break;
-    }
-
-}
-
-void Workload::GetTxnReq(TxnRequest *req, uint32_t cid) {
-  switch (benchmark_) {
-    case TPCA:
-    case TPCC:
-    case TPCC_DIST_PART:
-    case TPCC_REAL_DIST_PART:
-      // should be called in sub-classes.
-      verify(0);
-      break;
-    case MICRO_BENCH:
-      get_micro_bench_txn_req(req, cid);
-      break;
-    default:
-      Log_fatal("benchmark not implemented");
-      verify(0);
-  }
-}
-
-void Workload::get_txn_types(
-    std::map<int32_t, std::string> &txn_types) {
+void Workload::GetProcedureTypes(map<int32_t, string> &txn_types) {
   txn_types.clear();
   switch (benchmark_) {
     case TPCA:
