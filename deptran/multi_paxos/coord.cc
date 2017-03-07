@@ -26,7 +26,7 @@ void MultiPaxosCoord::Submit(ContainerCommand& cmd,
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   verify(!in_submission_);
   verify(cmd_ == nullptr);
-  verify(cmd.self_cmd_ != nullptr);
+//  verify(cmd.self_cmd_ != nullptr);
   in_submission_ = true;
   cmd_ = &cmd;
   commit_callback_ = func;

@@ -18,7 +18,7 @@ class MultiPaxosServiceImpl : public MultiPaxosService {
  public:
   MultiPaxosSched* sched_;
   MultiPaxosServiceImpl(Scheduler* sched);
-  void Forward(const ContainerCommand& cmd,
+  void Forward(const Marshallable& cmd,
                rrr::DeferredReply* defer) override;
 
   void Prepare(const uint64_t& slot,
@@ -28,13 +28,13 @@ class MultiPaxosServiceImpl : public MultiPaxosService {
 
   void Accept(const uint64_t& slot,
               const ballot_t& ballot,
-              const ContainerCommand& cmd,
+              const Marshallable& cmd,
               uint64_t* max_ballot,
               rrr::DeferredReply* defer) override;
 
   void Decide(const uint64_t& slot,
               const ballot_t& ballot,
-              const ContainerCommand& cmd,
+              const Marshallable& cmd,
               rrr::DeferredReply* defer) override;
 
 };

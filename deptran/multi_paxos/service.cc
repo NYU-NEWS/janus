@@ -9,7 +9,7 @@ MultiPaxosServiceImpl::MultiPaxosServiceImpl(Scheduler *sched)
 
 }
 
-void MultiPaxosServiceImpl::Forward(const ContainerCommand& cmd,
+void MultiPaxosServiceImpl::Forward(const Marshallable& cmd,
                                     rrr::DeferredReply* defer) {
 }
 
@@ -26,25 +26,25 @@ void MultiPaxosServiceImpl::Prepare(const uint64_t& slot,
 
 void MultiPaxosServiceImpl::Accept(const uint64_t& slot,
                                    const ballot_t& ballot,
-                                   const ContainerCommand& cmd,
+                                   const Marshallable& cmd,
                                    uint64_t* max_ballot,
                                    rrr::DeferredReply* defer) {
   verify(sched_ != nullptr);
   sched_->OnAccept(slot,
                    ballot,
-                   cmd,
+                   dynamic_cast<const ContainerCommand&>(cmd),
                    max_ballot,
                    std::bind(&rrr::DeferredReply::reply, defer));
 }
 
 void MultiPaxosServiceImpl::Decide(const uint64_t& slot,
                                    const ballot_t& ballot,
-                                   const ContainerCommand& cmd,
+                                   const Marshallable& cmd,
                                    rrr::DeferredReply* defer) {
   verify(sched_ != nullptr);
   sched_->OnCommit(slot,
                    ballot,
-                   cmd);
+                   dynamic_cast<const ContainerCommand&>(cmd));
   defer->reply();
 }
 

@@ -172,11 +172,11 @@ int ClassicSched::CommitReplicated(TpcCommitCommand& tpc_commit_cmd) {
 }
 
 void ClassicSched::OnLearn(ContainerCommand& cmd) {
-  if (cmd.type_ == CMD_TPC_PREPARE) {
-    TpcPrepareCommand& c = dynamic_cast<TpcPrepareCommand&>(*cmd.self_cmd_);
+  if (cmd.type_ == Marshallable::CMD_TPC_PREPARE) {
+    TpcPrepareCommand& c = dynamic_cast<TpcPrepareCommand&>(cmd);
     PrepareReplicated(c);
-  } else if (cmd.type_ == CMD_TPC_COMMIT) {
-    TpcCommitCommand& c = dynamic_cast<TpcCommitCommand&>(*cmd.self_cmd_);
+  } else if (cmd.type_ == Marshallable::CMD_TPC_COMMIT) {
+    TpcCommitCommand& c = dynamic_cast<TpcCommitCommand&>(cmd);
     CommitReplicated(c);
   } else {
     verify(0);

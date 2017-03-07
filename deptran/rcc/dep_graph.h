@@ -17,7 +17,7 @@ typedef vector<RccDTxn*> RccScc;
 
 class EmptyGraph : public Marshallable {
  public:
-  EmptyGraph() {rtti_ = Marshallable::Kind::EMPTY_GRAPH;};
+  EmptyGraph() : Marshallable(EMPTY_GRAPH) {};
   virtual Marshal& ToMarshal(Marshal& m) const {return m;};
   virtual Marshal& FromMarshal(Marshal& m) {return m;};
 };
