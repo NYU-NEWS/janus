@@ -13,6 +13,11 @@ endif()
 
 conan_basic_setup()
 
+if(UNIX AND NOT APPLE)
+#    target_link_libraries(target_name rt)
+    set(RT, "rt")
+endif()
+
 set(CMAKE_VERBOSE_MAKEFILE on)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
@@ -143,14 +148,14 @@ add_executable(JANUS_PROCESS
 add_dependencies(JANUS_PROCESS gen-rpc)
 
 target_link_libraries(MEMDB
-    RRR rt)
+    RRR ${RT})
 
 
 target_link_libraries(
     JANUS_PROCESS
     RRR
     MEMDB
-    rt
+    ${RT}
 #    ROCOCO
     ${CONAN_LIBS}
     ${CMAKE_THREAD_LIBS_INIT}
