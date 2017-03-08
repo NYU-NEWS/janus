@@ -13,7 +13,7 @@ endif()
 
 conan_basic_setup()
 
-if(UNIX AND NOT APPLE)
+if(NOT APPLE)
 #    target_link_libraries(target_name rt)
     set(RT, "rt")
 endif()
