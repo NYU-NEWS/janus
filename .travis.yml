@@ -1,6 +1,6 @@
 sudo: false
 language: cpp
-compiler: clang
+#compiler: clang
 addons:
   apt:
     sources:
