@@ -3,20 +3,26 @@
 
 namespace janus {
 
-/**
- * TODO: merge this with ContainerCommand, both of which works as a marshalling
- * proxy.
- */
-class Marshallable : public std::enable_shared_from_this<Marshallable> {
+class Marshallable {
+ public:
+  int32_t kind_{0};
+  Marshallable(int32_t k): kind_(k) {};
+  virtual ~Marshallable() {};
+  virtual Marshal& ToMarshal(Marshal& m) const;
+  virtual Marshal& FromMarshal(Marshal& m);
+};
+
+
+class MarshallDeputy {
  public:
   static map<int32_t, function<Marshallable*()>>& Initializers();
   static int RegInitializer(int32_t, function<Marshallable*()>);
   static function<Marshallable*()>& GetInitializer(int32_t);
 
- protected:
-  std::shared_ptr<Marshallable> data_{};
  public:
-  int32_t rtti_;
+  Marshallable* data_{nullptr};
+  bool manage_memory_{false};
+  int32_t kind_;
   enum Kind {
     UNKNOWN=0,
     EMPTY_GRAPH=1,
@@ -25,37 +31,43 @@ class Marshallable : public std::enable_shared_from_this<Marshallable> {
     CMD_TPC_PREPARE=4,
     CMD_TPC_COMMIT=5
   };
-
   /**
    * This should be called by the rpc layer.
    */
-  Marshallable() : rtti_(UNKNOWN){}
+  MarshallDeputy() : kind_(UNKNOWN){}
   /**
    * This should be called by inherited class as instructor.
-   * @param rtti
+   * @param kind
    */
-  Marshallable(int32_t rtti) : rtti_(rtti) {
-
+  MarshallDeputy(Marshallable* m, bool manage_memory): data_(m) {
+    manage_memory_ = manage_memory;
   }
 
-  virtual ~Marshallable() {};
+
   Marshal& CreateActuallObjectFrom(Marshal &m);
-  virtual Marshal& ToMarshal(Marshal& m) const;
-  virtual Marshal& FromMarshal(Marshal& m);
-  virtual std::shared_ptr<Marshallable>& ptr() {return data_;};
-  virtual std::shared_ptr<Marshallable> ptr() const {return data_;};
+  void SetMarshallable(Marshallable* m, bool manage_memory) {
+    verify(data_ == nullptr);
+    data_ = m;
+    manage_memory_ = manage_memory;
+  }
+
+  ~MarshallDeputy() {
+    if (manage_memory_) {
+      delete data_;
+    }
+  }
 };
 
-inline Marshal& operator>>(Marshal& m, Marshallable& rhs) {
-  m >> rhs.rtti_;
-  // TODO
+inline Marshal& operator>>(Marshal& m, MarshallDeputy& rhs) {
+  m >> rhs.kind_;
   rhs.CreateActuallObjectFrom(m);
   return m;
 }
 
-inline Marshal& operator<<(Marshal& m, const Marshallable& rhs) {
-  m << rhs.rtti_;
-  rhs.ToMarshal(m);
+inline Marshal& operator<<(Marshal& m, const MarshallDeputy& rhs) {
+  m << rhs.kind_;
+  verify(rhs.data_); // must be non-empty
+  rhs.data_->ToMarshal(m);
   return m;
 }
 

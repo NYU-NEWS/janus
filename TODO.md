@@ -31,5 +31,9 @@
 
 ## tiny tasks (less than one day)
 
-* ~~rename all brq to janus.~~
 * add macros and compile options to disable all the verify
+* remove dependency on librt
+* ~~write a new marshall deputy~~
+* ~~a new external database interface~~
+* ~~enable travis-ci (container mode)~~
+* ~~rename all brq to janus.~~

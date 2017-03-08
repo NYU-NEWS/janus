@@ -2,14 +2,14 @@
 #include "service.h"
 #include "sched.h"
 
-namespace rococo {
+namespace janus {
 
 MultiPaxosServiceImpl::MultiPaxosServiceImpl(Scheduler *sched)
     : sched_((MultiPaxosSched*)sched) {
 
 }
 
-void MultiPaxosServiceImpl::Forward(const Marshallable& cmd,
+void MultiPaxosServiceImpl::Forward(const MarshallDeputy& cmd,
                                     rrr::DeferredReply* defer) {
 }
 
@@ -26,27 +26,29 @@ void MultiPaxosServiceImpl::Prepare(const uint64_t& slot,
 
 void MultiPaxosServiceImpl::Accept(const uint64_t& slot,
                                    const ballot_t& ballot,
-                                   const Marshallable& cmd,
+                                   const MarshallDeputy& md_cmd,
                                    uint64_t* max_ballot,
                                    rrr::DeferredReply* defer) {
   verify(sched_ != nullptr);
+  auto& cmd = dynamic_cast<ContainerCommand&>(*md_cmd.data_);
   sched_->OnAccept(slot,
                    ballot,
-                   dynamic_cast<const ContainerCommand&>(cmd),
+                   cmd,
                    max_ballot,
                    std::bind(&rrr::DeferredReply::reply, defer));
 }
 
 void MultiPaxosServiceImpl::Decide(const uint64_t& slot,
                                    const ballot_t& ballot,
-                                   const Marshallable& cmd,
+                                   const MarshallDeputy& md_cmd,
                                    rrr::DeferredReply* defer) {
   verify(sched_ != nullptr);
+  auto& cmd = dynamic_cast<ContainerCommand&>(*md_cmd.data_);
   sched_->OnCommit(slot,
                    ballot,
-                   dynamic_cast<const ContainerCommand&>(cmd));
+                   cmd);
   defer->reply();
 }
 
 
-} // namespace rococo;
+} // namespace janus;

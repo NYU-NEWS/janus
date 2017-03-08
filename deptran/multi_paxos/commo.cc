@@ -39,9 +39,10 @@ void MultiPaxosCommo::BroadcastAccept(parid_t par_id,
     auto proxy = (MultiPaxosProxy*) p.second;
     FutureAttr fuattr;
     fuattr.callback = cb;
+    MarshallDeputy md(&cmd, false);
     Future::safe_release(proxy->async_Accept(slot_id,
                                              ballot,
-                                             cmd,
+                                             md,
                                              fuattr));
   }
 //  verify(0);
@@ -57,9 +58,11 @@ void MultiPaxosCommo::BroadcastDecide(const parid_t par_id,
     auto proxy = (MultiPaxosProxy*) p.second;
     FutureAttr fuattr;
     fuattr.callback = [](Future* fu) {};
+    ContainerCommand& tmp_cmd = const_cast<ContainerCommand&>(cmd);
+    MarshallDeputy md(&tmp_cmd, false);
     Future::safe_release(proxy->async_Decide(slot_id,
                                              ballot,
-                                             cmd,
+                                             md,
                                              fuattr));
   }
 }

@@ -13,6 +13,7 @@ endif()
 
 conan_basic_setup()
 
+# TODO remove rt
 if(NOT APPLE)
 #    target_link_libraries(target_name rt)
     set(RT, "rt")
@@ -69,30 +70,18 @@ add_custom_target (gen-rpc
 include_directories(
     ${PYTHON2_INCLUDE_DIRS}
 #    ${APR_INCLUDE_DIRS}
-    ${YAML_CPP_INCLUDE_DIRS}
+#    ${YAML_CPP_INCLUDE_DIRS}
 #    ${PROFILER_INCLUDE_DIRS}
     .
     rrr
     memdb
     deptran
-#    deptran/tpl
-#    deptran/rcc
-#    deptran/ro6
-#    deptran/brq
-#    deptran/none
-#    bench
-#    bench/micro
-#    bench/rw_benchmark
-#    bench/tpca
-#    bench/tpcc
-#    bench/tpcc_dist
-#    bench/tpcc_real_dist
 )
 
 link_directories(
     ${PYTHON2_LIBRARY_DIRS}
 #    ${APR_LIBRARY_DIRS}
-    ${YAML_CPP_LIBRARY_DIRS}
+#    ${YAML_CPP_LIBRARY_DIRS}
 #    ${PROFILER_LIBRARY_DIRS}
 )
 
@@ -144,23 +133,22 @@ add_library(MEMDB
 add_executable(JANUS_PROCESS
 #        deptran/s_main.cc
         ${DEPTRAN_SRC}
-        ${BENCH_SRC} deptran/kvdb.h)
+        ${BENCH_SRC})
 add_dependencies(JANUS_PROCESS gen-rpc)
 
 target_link_libraries(MEMDB
-    RRR ${RT})
+    RRR rt)
 
 
 target_link_libraries(
     JANUS_PROCESS
     RRR
     MEMDB
-    ${RT}
-#    ROCOCO
+    rt
     ${CONAN_LIBS}
     ${CMAKE_THREAD_LIBS_INIT}
     ${PYTHON2_LIBRARIES}
 #    ${APR_LIBRARIES}
-    ${APRUTIL_LIBRARIES}
+#    ${APRUTIL_LIBRARIES}
 #    ${PROFILER_LIBRARIES}
 )

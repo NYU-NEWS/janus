@@ -10,8 +10,8 @@ class Procedure;
 class TpcPrepareCommand : public ContainerCommand {
  public:
   TpcPrepareCommand() {
-    type_ = CMD_TPC_PREPARE;
-    rtti_ = CMD_TPC_PREPARE;
+    type_ = MarshallDeputy::CMD_TPC_PREPARE;
+    kind_ = MarshallDeputy::CMD_TPC_PREPARE;
   }
   txnid_t txn_id_ = 0;
   int32_t res_ = -1;
@@ -25,8 +25,8 @@ class TpcPrepareCommand : public ContainerCommand {
 class TpcCommitCommand : public ContainerCommand {
  public:
   TpcCommitCommand() {
-    type_ = CMD_TPC_COMMIT;
-    rtti_ = CMD_TPC_COMMIT;
+    type_ = MarshallDeputy::CMD_TPC_COMMIT;
+    kind_ = MarshallDeputy::CMD_TPC_COMMIT;
   }
   txnid_t txn_id_ = 0;
   int res_ = -1;

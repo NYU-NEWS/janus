@@ -85,7 +85,9 @@ class Graph : public Marshallable {
     return vertex_index_;
   };
 
-  Graph(bool managing_memory = true) : managing_memory_(managing_memory) {}
+  Graph(bool managing_memory = true) : Marshallable(MarshallDeputy::UNKNOWN),
+                                       managing_memory_
+  (managing_memory) {}
   Graph(const VertexList &vertices) : Graph() { AddV(vertices); }
   void Clear() {
     for (auto p : vertex_index()) {

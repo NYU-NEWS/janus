@@ -47,7 +47,7 @@ class ContainerCommand : public Marshallable {
 //    return c;
   };
 
-  ContainerCommand() : Marshallable(CONTAINER_CMD) {}
+  ContainerCommand() : Marshallable(MarshallDeputy::CONTAINER_CMD) {}
   virtual ~ContainerCommand() {};
   virtual Marshal& ToMarshal(Marshal&) const override;
   virtual Marshal& FromMarshal(Marshal&) override;

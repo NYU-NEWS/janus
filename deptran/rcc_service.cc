@@ -156,21 +156,23 @@ void ClassicServiceImpl::TapirDecide(const cmdid_t& cmd_id,
 void ClassicServiceImpl::RccDispatch(const vector<SimpleCommand>& cmd,
                                     int32_t* res,
                                     TxnOutput* output,
-                                    RccGraph* graph,
+                                    MarshallDeputy* p_md_graph,
                                     DeferredReply* defer) {
   std::lock_guard <std::mutex> guard(this->mtx_);
   RccSched* sched = (RccSched*) dtxn_sched_;
+  p_md_graph->SetMarshallable(new RccGraph(), true);
   sched->OnDispatch(cmd,
                     res,
                     output,
-                    graph,
+                    dynamic_cast<RccGraph*>(p_md_graph->data_),
                     [defer]() { defer->reply(); });
 }
 
 void ClassicServiceImpl::RccFinish(const cmdid_t& cmd_id,
-                                   const RccGraph& graph,
+                                   const MarshallDeputy& md_graph,
                                    TxnOutput* output,
                                    DeferredReply* defer) {
+  const RccGraph& graph = dynamic_cast<const RccGraph&>(*md_graph.data_);
   verify(graph.size() > 0);
   std::lock_guard <std::mutex> guard(mtx_);
   RccSched* sched = (RccSched*) dtxn_sched_;
@@ -184,12 +186,16 @@ void ClassicServiceImpl::RccFinish(const cmdid_t& cmd_id,
 
 void ClassicServiceImpl::RccInquire(const epoch_t& epoch,
                                     const txnid_t& tid,
-                                    RccGraph *graph,
+                                    MarshallDeputy *p_md_graph,
                                     rrr::DeferredReply *defer) {
   verify(IS_MODE_RCC || IS_MODE_RO6);
   std::lock_guard <std::mutex> guard(mtx_);
-  RccSched* sched = (RccSched*) dtxn_sched_;
-  sched->OnInquire(epoch, tid, graph, [defer]() { defer->reply(); });
+  RccSched* p_sched = (RccSched*) dtxn_sched_;
+  p_md_graph->SetMarshallable(new RccGraph(), true);
+  p_sched->OnInquire(epoch,
+                     tid,
+                     dynamic_cast<RccGraph*>(p_md_graph->data_),
+                     [defer]() { defer->reply(); });
 }
 
 void ClassicServiceImpl::RccDispatchRo(const SimpleCommand &cmd,
@@ -202,43 +208,41 @@ void ClassicServiceImpl::RccDispatchRo(const SimpleCommand &cmd,
 }
 
 void ClassicServiceImpl::JanusDispatch(const vector<SimpleCommand>& cmd,
-                                     int32_t* res,
-                                     TxnOutput* output,
-                                     Marshallable* res_graph,
-                                     DeferredReply* defer) {
+                                     int32_t* p_res,
+                                     TxnOutput* p_output,
+                                     MarshallDeputy* p_md_res_graph,
+                                     DeferredReply* p_defer) {
   std::lock_guard <std::mutex> guard(this->mtx_);
-
-  RccGraph* tmp_graph = new RccGraph();
+  RccGraph* p_res_graph = new RccGraph();
   JanusSched* sched = (JanusSched*) dtxn_sched_;
   sched->OnDispatch(cmd,
-                    res,
-                    output,
-                    tmp_graph,
-                    [defer, tmp_graph, res_graph] () {
-                      if (tmp_graph->size() <= 1) {
-                        res_graph->rtti_ = Marshallable::EMPTY_GRAPH;
-                        res_graph->ptr().reset(new EmptyGraph);
-                        delete tmp_graph;
+                    p_res,
+                    p_output,
+                    p_res_graph,
+                    [p_defer, p_res_graph, p_md_res_graph] () {
+                      if (p_res_graph->size() <= 1) {
+                        p_md_res_graph->SetMarshallable(new EmptyGraph, true);
+                        delete p_res_graph;
                       } else {
-                        res_graph->rtti_ = Marshallable::RCC_GRAPH;
-                        res_graph->ptr().reset(tmp_graph);
+                        p_md_res_graph->SetMarshallable(p_res_graph, true);
                       }
-                      defer->reply();
+                      p_defer->reply();
                     });
 }
 
 void ClassicServiceImpl::JanusCommit(const cmdid_t& cmd_id,
-                                   const Marshallable& graph,
-                                   int32_t *res,
-                                   TxnOutput* output,
-                                   DeferredReply* defer) {
+                                     const MarshallDeputy& graph,
+                                     int32_t *res,
+                                     TxnOutput* output,
+                                     DeferredReply* defer) {
   std::lock_guard <std::mutex> guard(mtx_);
-  JanusSched* sched = (JanusSched*) dtxn_sched_;
-  sched->OnCommit(cmd_id,
-                  dynamic_cast<RccGraph*>(graph.ptr().get()),
-                  res,
-                  output,
-                  [defer]() { defer->reply(); });
+  RccGraph* p_graph = dynamic_cast<RccGraph*>(graph.data_);
+  JanusSched* p_sched = (JanusSched*) dtxn_sched_;
+  p_sched->OnCommit(cmd_id,
+                    p_graph,
+                    res,
+                    output,
+                    [defer]() { defer->reply(); });
 }
 
 void ClassicServiceImpl::JanusCommitWoGraph(const cmdid_t& cmd_id,
@@ -255,69 +259,66 @@ void ClassicServiceImpl::JanusCommitWoGraph(const cmdid_t& cmd_id,
 }
 
 void ClassicServiceImpl::JanusInquire(const epoch_t& epoch,
-                                    const cmdid_t &tid,
-                                    Marshallable *graph,
-                                    rrr::DeferredReply *defer) {
+                                      const cmdid_t &tid,
+                                      MarshallDeputy *p_md_graph,
+                                      rrr::DeferredReply *defer) {
   std::lock_guard <std::mutex> guard(mtx_);
-  graph->rtti_ = Marshallable::RCC_GRAPH;
-  graph->ptr().reset(new RccGraph());
-  JanusSched* sched = (JanusSched*) dtxn_sched_;
-  sched->OnInquire(epoch,
-                   tid,
-                   dynamic_cast<RccGraph*>(graph->ptr().get()),
-                   [defer]() { defer->reply(); });
+  p_md_graph->SetMarshallable(new RccGraph(), true);
+  JanusSched* p_sched = (JanusSched*) dtxn_sched_;
+  p_sched->OnInquire(epoch,
+                     tid,
+                     dynamic_cast<RccGraph*>(p_md_graph->data_),
+                     [defer]() { defer->reply(); });
 }
 
 void ClassicServiceImpl::JanusPreAccept(const cmdid_t &txnid,
-                                      const vector<SimpleCommand>& cmds,
-                                      const Marshallable& graph,
-                                      int32_t* res,
-                                      Marshallable* res_graph,
-                                      DeferredReply* defer) {
+                                        const vector<SimpleCommand>& cmds,
+                                        const MarshallDeputy& md_graph,
+                                        int32_t* res,
+                                        MarshallDeputy* p_md_res_graph,
+                                        DeferredReply* defer) {
   std::lock_guard <std::mutex> guard(mtx_);
-  verify(dynamic_cast<RccGraph*>(graph.ptr().get()));
-  verify(graph.rtti_ == Marshallable::RCC_GRAPH);
-  res_graph->rtti_ = Marshallable::RCC_GRAPH;
-  res_graph->ptr().reset(new RccGraph());
+  RccGraph* p_graph = dynamic_cast<RccGraph*>(md_graph.data_);
+  verify(p_graph);
+  p_md_res_graph->SetMarshallable(new RccGraph(), true);
   JanusSched* sched = (JanusSched*) dtxn_sched_;
-
   sched->OnPreAccept(txnid,
                      cmds,
-                     dynamic_cast<RccGraph*>(graph.ptr().get()),
+                     p_graph,
                      res,
-                     dynamic_cast<RccGraph*>(res_graph->ptr().get()),
+                     dynamic_cast<RccGraph*>(p_md_res_graph->data_),
                      [defer] () {defer->reply();});
 }
 
 void ClassicServiceImpl::JanusPreAcceptWoGraph(const cmdid_t& txnid,
                                              const vector<SimpleCommand>& cmds,
                                              int32_t* res,
-                                             Marshallable* res_graph,
+                                             MarshallDeputy* res_graph,
                                              DeferredReply* defer) {
   std::lock_guard <std::mutex> guard(mtx_);
-  res_graph->rtti_ = Marshallable::RCC_GRAPH;
-  res_graph->ptr().reset(new RccGraph());
-  JanusSched* sched = (JanusSched*) dtxn_sched_;
-  sched->OnPreAccept(txnid,
-                     cmds,
-                     nullptr,
-                     res,
-                     dynamic_cast<RccGraph*>(res_graph->ptr().get()),
-                     [defer] () {defer->reply();});
+  res_graph->SetMarshallable(new RccGraph(), true);
+  JanusSched* p_sched = (JanusSched*) dtxn_sched_;
+  p_sched->OnPreAccept(txnid,
+                       cmds,
+                       nullptr,
+                       res,
+                       dynamic_cast<RccGraph*>(res_graph->data_),
+                       [defer] () {defer->reply();});
 }
 
 
 void ClassicServiceImpl::JanusAccept(const cmdid_t &txnid,
                                    const ballot_t& ballot,
-                                   const Marshallable& graph,
+                                   const MarshallDeputy& md_graph,
                                    int32_t* res,
                                    DeferredReply* defer) {
-  verify(dynamic_cast<RccGraph*>(graph.ptr().get()));
-  verify(graph.rtti_ == Marshallable::RCC_GRAPH);
+  RccGraph* graph = dynamic_cast<RccGraph*>(md_graph.data_);
+  verify(graph);
+  verify(md_graph.kind_ == MarshallDeputy::RCC_GRAPH);
   JanusSched* sched = (JanusSched*) dtxn_sched_;
   sched->OnAccept(txnid,
                   ballot,
-                  dynamic_cast<RccGraph&>(*graph.ptr().get()),
+                  *graph,
                   res,
                   [defer] () {defer->reply();});
 }

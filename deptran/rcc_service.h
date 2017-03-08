@@ -105,18 +105,18 @@ class ClassicServiceImpl: public ClassicService {
   void RccDispatch(const vector<SimpleCommand>& cmd,
                    int32_t* res,
                    TxnOutput* output,
-                   RccGraph* graph,
+                   MarshallDeputy* p_md_graph,
                    DeferredReply* defer) override;
 
   void RccFinish(const cmdid_t& cmd_id,
-                 const RccGraph& graph,
+                 const MarshallDeputy& md_graph,
                  TxnOutput* output,
                  DeferredReply* defer) override;
 
 
   void RccInquire(const epoch_t& epoch,
                   const cmdid_t &tid,
-                  RccGraph* graph,
+                  MarshallDeputy* p_md_graph,
                   DeferredReply *) override;
 
   void RccDispatchRo(const SimpleCommand& cmd,
@@ -124,13 +124,13 @@ class ClassicServiceImpl: public ClassicService {
                      DeferredReply *reply);
 
   void JanusDispatch(const vector<SimpleCommand>& cmd,
-                     int32_t* res,
-                     TxnOutput* output,
-                     Marshallable* res_graph,
-                     DeferredReply* defer) override;
+                     int32_t* p_res,
+                     TxnOutput* p_output,
+                     MarshallDeputy* p_md_res_graph,
+                     DeferredReply* p_defer) override;
 
   void JanusCommit(const cmdid_t& cmd_id,
-                   const Marshallable& graph,
+                   const MarshallDeputy& graph,
                    int32_t *res,
                    TxnOutput* output,
                    DeferredReply* defer) override;
@@ -142,25 +142,25 @@ class ClassicServiceImpl: public ClassicService {
 
   void JanusInquire(const epoch_t& epoch,
                     const cmdid_t &tid,
-                    Marshallable* graph,
+                    MarshallDeputy* p_md_graph,
                     DeferredReply *) override;
 
   void JanusPreAccept(const cmdid_t &txnid,
                       const vector<SimpleCommand>& cmd,
-                      const Marshallable& graph,
+                      const MarshallDeputy& md_graph,
                       int32_t* res,
-                      Marshallable* res_graph,
+                      MarshallDeputy* p_md_res_graph,
                       DeferredReply* defer) override;
 
   void JanusPreAcceptWoGraph(const cmdid_t& txnid,
                              const vector<SimpleCommand>& cmd,
                              int32_t* res,
-                             Marshallable* res_graph,
+                             MarshallDeputy* res_graph,
                              DeferredReply* defer) override;
 
   void JanusAccept(const cmdid_t &txnid,
                    const ballot_t& ballot,
-                   const Marshallable& graph,
+                   const MarshallDeputy& md_graph,
                    int32_t* res,
                    DeferredReply* defer) override;
   protected:

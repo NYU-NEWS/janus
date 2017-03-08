@@ -17,8 +17,9 @@ void RccCommo::SendDispatch(vector<SimpleCommand> &cmd,
       [callback] (Future *fu) {
         int res;
         TxnOutput output;
-        RccGraph graph;
-        fu->get_reply() >> res >> output >> graph;
+        MarshallDeputy md;
+        fu->get_reply() >> res >> output >> md;
+        RccGraph& graph = dynamic_cast<RccGraph&>(*md.data_);
         callback(res, output, graph);
       };
   fuattr.callback = cb;
@@ -49,8 +50,9 @@ void RccCommo::SendFinish(parid_t pid,
     callback(outputs);
   };
   fuattr.callback = cb;
-  auto proxy = (ClassicProxy*)NearestProxyForPartition(pid).second;
-  Future::safe_release(proxy->async_RccFinish(tid, graph, fuattr));
+  auto proxy = NearestProxyForPartition(pid).second;
+  MarshallDeputy md(&graph, false);
+  Future::safe_release(proxy->async_RccFinish(tid, md, fuattr));
 }
 
 void RccCommo::SendInquire(parid_t pid,
@@ -59,8 +61,9 @@ void RccCommo::SendInquire(parid_t pid,
                            const function<void(RccGraph& graph)>& callback) {
   FutureAttr fuattr;
   function<void(Future*)> cb = [callback] (Future* fu) {
-    RccGraph graph;
-    fu->get_reply() >> graph;
+    MarshallDeputy md;
+    fu->get_reply() >> md;
+    RccGraph& graph = dynamic_cast<RccGraph&>(*md.data_);
     callback(graph);
   };
   fuattr.callback = cb;

@@ -10,7 +10,7 @@
 #include "../rcc_rpc.h"
 
 class SimpleCommand;
-namespace rococo {
+namespace janus {
 
 class Scheduler;
 class MultiPaxosSched;
@@ -18,7 +18,7 @@ class MultiPaxosServiceImpl : public MultiPaxosService {
  public:
   MultiPaxosSched* sched_;
   MultiPaxosServiceImpl(Scheduler* sched);
-  void Forward(const Marshallable& cmd,
+  void Forward(const MarshallDeputy& cmd,
                rrr::DeferredReply* defer) override;
 
   void Prepare(const uint64_t& slot,
@@ -28,15 +28,15 @@ class MultiPaxosServiceImpl : public MultiPaxosService {
 
   void Accept(const uint64_t& slot,
               const ballot_t& ballot,
-              const Marshallable& cmd,
+              const MarshallDeputy& cmd,
               uint64_t* max_ballot,
               rrr::DeferredReply* defer) override;
 
   void Decide(const uint64_t& slot,
               const ballot_t& ballot,
-              const Marshallable& cmd,
+              const MarshallDeputy& cmd,
               rrr::DeferredReply* defer) override;
 
 };
 
-} // namespace rococo
+} // namespace janus

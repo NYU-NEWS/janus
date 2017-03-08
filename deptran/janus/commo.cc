@@ -19,24 +19,24 @@ void JanusCommo::SendDispatch(vector<SimpleCommand> &cmd,
       [callback, tid, par_id] (Future *fu) {
         int res;
         TxnOutput output;
-        Marshallable graph;
-        fu->get_reply() >> res >> output >> graph;
-        if (graph.rtti_ == Marshallable::EMPTY_GRAPH) {
+        MarshallDeputy md;
+        fu->get_reply() >> res >> output >> md;
+        if (md.kind_ == MarshallDeputy::EMPTY_GRAPH) {
           RccGraph rgraph;
           auto v = rgraph.CreateV(tid);
           RccDTxn& info = *v;
           info.partition_.insert(par_id);
           verify(rgraph.vertex_index().size() > 0);
           callback(res, output, rgraph);
-        } else if (graph.rtti_ == Marshallable::RCC_GRAPH) {
-          callback(res, output, dynamic_cast<RccGraph&>(*graph.ptr()));
+        } else if (md.kind_ == MarshallDeputy::RCC_GRAPH) {
+          RccGraph& graph = dynamic_cast<RccGraph&>(*md.data_);
+          callback(res, output, graph);
         } else {
 
         }
       };
   fuattr.callback = cb;
-  auto proxy = (ClassicProxy*)NearestProxyForPartition(
-      cmd[0].PartitionId()).second;
+  auto proxy = NearestProxyForPartition(cmd[0].PartitionId()).second;
   Log_debug("dispatch to %ld", cmd[0].PartitionId());
 //  verify(cmd.type_ > 0);
 //  verify(cmd.root_type_ > 0);
@@ -51,9 +51,9 @@ void JanusCommo::SendHandoutRo(SimpleCommand &cmd,
 }
 
 void JanusCommo::SendFinish(parid_t pid,
-                          txnid_t tid,
-                          RccGraph& graph,
-                          const function<void(TxnOutput& output)> &callback) {
+                            txnid_t tid,
+                            RccGraph& graph,
+                            const function<void(TxnOutput& output)> &callback) {
   verify(0);
   FutureAttr fuattr;
   function<void(Future*)> cb = [callback] (Future* fu) {
@@ -63,8 +63,9 @@ void JanusCommo::SendFinish(parid_t pid,
     callback(outputs);
   };
   fuattr.callback = cb;
-  auto proxy = (ClassicProxy*)NearestProxyForPartition(pid).second;
-  Future::safe_release(proxy->async_JanusCommit(tid, (JanusGraph&)graph, fuattr));
+  auto proxy = NearestProxyForPartition(pid).second;
+  MarshallDeputy md(&graph, false);
+  Future::safe_release(proxy->async_JanusCommit(tid, md, fuattr));
 }
 
 void JanusCommo::SendInquire(parid_t pid,
@@ -73,13 +74,14 @@ void JanusCommo::SendInquire(parid_t pid,
                            const function<void(RccGraph& graph)>& callback) {
   FutureAttr fuattr;
   function<void(Future*)> cb = [callback] (Future* fu) {
-    Marshallable graph;
-    fu->get_reply() >> graph;
-    callback(dynamic_cast<RccGraph&>(*graph.ptr()));
+    MarshallDeputy md;
+    fu->get_reply() >> md;
+    auto graph = dynamic_cast<RccGraph&>(*md.data_);
+    callback(graph);
   };
   fuattr.callback = cb;
   // TODO fix.
-  auto proxy = (ClassicProxy*)NearestProxyForPartition(pid).second;
+  auto proxy = NearestProxyForPartition(pid).second;
   Future::safe_release(proxy->async_JanusInquire(epoch, tid, fuattr));
 }
 
@@ -104,14 +106,15 @@ void JanusCommo::BroadcastPreAccept(parid_t par_id,
   bool skip_graph = IsGraphOrphan(graph, txn_id);
 
   for (auto &p : rpc_par_proxies_[par_id]) {
-    auto proxy = (ClassicProxy*)(p.second);
+    auto proxy = (p.second);
     verify(proxy != nullptr);
     FutureAttr fuattr;
     fuattr.callback = [callback] (Future* fu) {
       int32_t res;
-      Marshallable* graph = new Marshallable;
-      fu->get_reply() >> res >> *graph;
-      callback(res, dynamic_cast<RccGraph*>(graph->ptr().get()));
+      MarshallDeputy md;
+      fu->get_reply() >> res >> md;
+      auto p_graph = dynamic_cast<RccGraph*>(md.data_);
+      callback(res, p_graph);
     };
     verify(txn_id > 0);
     if (skip_graph) {
@@ -119,10 +122,11 @@ void JanusCommo::BroadcastPreAccept(parid_t par_id,
                                                             cmds,
                                                             fuattr));
     } else {
+      MarshallDeputy md(&graph, false);
       Future::safe_release(proxy->async_JanusPreAccept(txn_id,
-                                                     cmds,
-                                                     graph,
-                                                     fuattr));
+                                                       cmds,
+                                                       md,
+                                                       fuattr));
     }
   }
 }
@@ -134,7 +138,7 @@ void JanusCommo::BroadcastAccept(parid_t par_id,
                                const function<void(int)> &callback) {
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
   for (auto &p : rpc_par_proxies_[par_id]) {
-    auto proxy = (ClassicProxy*)(p.second);
+    auto proxy = (p.second);
     verify(proxy != nullptr);
     FutureAttr fuattr;
     fuattr.callback = [callback] (Future* fu) {
@@ -143,9 +147,10 @@ void JanusCommo::BroadcastAccept(parid_t par_id,
       callback(res);
     };
     verify(cmd_id > 0);
+    MarshallDeputy md(&graph, false);
     Future::safe_release(proxy->async_JanusAccept(cmd_id,
                                              ballot,
-                                             graph,
+                                             md,
                                              fuattr));
   }
 }
@@ -160,7 +165,7 @@ void JanusCommo::BroadcastCommit(parid_t par_id,
 
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
   for (auto &p : rpc_par_proxies_[par_id]) {
-    auto proxy = (ClassicProxy*)(p.second);
+    auto proxy = (p.second);
     verify(proxy != nullptr);
     FutureAttr fuattr;
     fuattr.callback = [callback] (Future* fu) {
@@ -173,7 +178,8 @@ void JanusCommo::BroadcastCommit(parid_t par_id,
     if (skip_graph) {
       Future::safe_release(proxy->async_JanusCommitWoGraph(cmd_id, fuattr));
     } else {
-      Future::safe_release(proxy->async_JanusCommit(cmd_id, graph, fuattr));
+      MarshallDeputy md(&graph, false);
+      Future::safe_release(proxy->async_JanusCommit(cmd_id, md, fuattr));
     }
   }
 }

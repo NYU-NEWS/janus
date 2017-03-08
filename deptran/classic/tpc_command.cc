@@ -5,13 +5,13 @@
 using namespace rococo;
 
 static int volatile x1 =
-    Marshallable::RegInitializer(Marshallable::CMD_TPC_PREPARE,
+    MarshallDeputy::RegInitializer(MarshallDeputy::CMD_TPC_PREPARE,
                                      [] () -> ContainerCommand* {
                                        return new TpcPrepareCommand;
                                      });
 
 static int volatile x2 =
-    Marshallable::RegInitializer(Marshallable::CMD_TPC_COMMIT,
+    MarshallDeputy::RegInitializer(MarshallDeputy::CMD_TPC_COMMIT,
                                      [] () -> ContainerCommand* {
                                        return new TpcCommitCommand;
                                      });

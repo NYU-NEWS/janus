@@ -2,7 +2,7 @@ namespace rococo;
 
 abstract service MultiPaxos {
 
-  defer Forward(Marshallable cmd);
+  defer Forward(MarshallDeputy cmd);
 
   defer Prepare(uint64_t slot,
                 uint64_t ballot |
@@ -10,12 +10,12 @@ abstract service MultiPaxos {
 
   defer Accept(uint64_t slot,
                uint64_t ballot,
-               Marshallable cmd |
+               MarshallDeputy cmd |
                uint64_t max_ballot);
 
   defer Decide(uint64_t slot,
                uint64_t ballot,
-               Marshallable cmd);
+               MarshallDeputy cmd);
 }
 
 // below is for 2PL and OCC
@@ -60,15 +60,15 @@ abstract service Classic {
   defer RccDispatch(vector<SimpleCommand> cmd |
                     i32 res,
                     TxnOutput output,
-                    RccGraph graph);
+                    MarshallDeputy md_graph);
 
   defer RccFinish(cmdid_t id,
-                  RccGraph |
+                  MarshallDeputy md_graph |
                   map<uint32_t, map<int32_t, Value>> outputs);
 
   defer RccInquire(epoch_t epoch,
                    txnid_t txn_id |
-                   RccGraph res);
+                   MarshallDeputy md_res_graph);
 
   defer RccDispatchRo(SimpleCommand cmd |
                       map<i32, Value> output);
@@ -77,10 +77,10 @@ abstract service Classic {
   defer JanusDispatch(vector<SimpleCommand> cmd |
                       i32 res,
                       TxnOutput output,
-                      Marshallable ret_graph);
+                      MarshallDeputy ret_graph);
 
   defer JanusCommit(cmdid_t id,
-                    Marshallable graph |
+                    MarshallDeputy graph |
                     int32_t res,
                     TxnOutput output);
 
@@ -90,22 +90,22 @@ abstract service Classic {
 
   defer JanusInquire(epoch_t epoch, 
                      txnid_t txn_id |
-                     Marshallable ret_graph);
+                     MarshallDeputy ret_graph);
 
   defer JanusPreAccept(cmdid_t txn_id,
                        vector<SimpleCommand> cmd,
-                       Marshallable graph |
+                       MarshallDeputy graph |
                        i32 res,
-                       Marshallable ret_graph);
+                       MarshallDeputy ret_graph);
 
   defer JanusPreAcceptWoGraph(cmdid_t txn_id,
                               vector<SimpleCommand> cmd |
                               i32 res,
-                              Marshallable ret_graph);
+                              MarshallDeputy ret_graph);
 
   defer JanusAccept(cmdid_t txn_id,
                     ballot_t ballot,
-                    Marshallable graph |
+                    MarshallDeputy graph |
                     i32 res);
 }
 
