@@ -3,5 +3,5 @@ yaml-cpp/0.5.3@moonforged/stable
 Boost/1.60.0@lasote/stable
 
 [generators]
-txt
+cmake
 

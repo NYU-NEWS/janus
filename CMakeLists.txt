@@ -1,5 +1,18 @@
 cmake_minimum_required(VERSION 2.8.4)
-project(rococo)
+project(janus)
+
+# run this after clone in the build_cmake directory:
+# conan install --build=missing ..
+
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/build_cmake/conanbuildinfo.cmake) #Clion,
+#    with conanbuildinfo.cmake in build folder
+    include(${CMAKE_CURRENT_SOURCE_DIR}/build_cmake/conanbuildinfo.cmake)
+else()
+    include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake) # Not CLion
+endif()
+
+conan_basic_setup()
+
 set(CMAKE_VERBOSE_MAKEFILE on)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
@@ -10,8 +23,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCHECK_ISO")
 
 find_package(Threads)
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(APR REQUIRED apr-1)
-pkg_check_modules(APRUTIL REQUIRED apr-util-1)
+#pkg_check_modules(APR REQUIRED apr-1)
+#pkg_check_modules(APRUTIL REQUIRED apr-util-1)
 pkg_check_modules(PYTHON2 REQUIRED python2)
 pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
 #pkg_check_modules(PROFILER REQUIRED libprofiler)
@@ -50,7 +63,7 @@ add_custom_target (gen-rpc
 
 include_directories(
     ${PYTHON2_INCLUDE_DIRS}
-    ${APR_INCLUDE_DIRS}
+#    ${APR_INCLUDE_DIRS}
     ${YAML_CPP_INCLUDE_DIRS}
 #    ${PROFILER_INCLUDE_DIRS}
     .
@@ -73,7 +86,7 @@ include_directories(
 
 link_directories(
     ${PYTHON2_LIBRARY_DIRS}
-    ${APR_LIBRARY_DIRS}
+#    ${APR_LIBRARY_DIRS}
     ${YAML_CPP_LIBRARY_DIRS}
 #    ${PROFILER_LIBRARY_DIRS}
 )
@@ -122,47 +135,26 @@ add_library(RRR
 add_library(MEMDB
     ${MEMDB_SRC})
 
-#add_library(ROCOCO
-##    ${RRR_SRC}
-##    ${MEMDB_SRC}
-#    ${BENCH_SRC}
-#    ${DEPTRAN_SRC})
 
-add_executable(ROCOCO_SERVER
+add_executable(JANUS_PROCESS
 #        deptran/s_main.cc
         ${DEPTRAN_SRC}
         ${BENCH_SRC} deptran/kvdb.h)
-#add_executable(ROCOCO_CLIENT deptran/c_main.cc)
-add_dependencies(ROCOCO_SERVER gen-rpc)
+add_dependencies(JANUS_PROCESS gen-rpc)
 
 target_link_libraries(MEMDB
     RRR)
 
-#target_link_libraries(ROCOCO
-#    RRR
-#    MEMDB)
 
 target_link_libraries(
-    ROCOCO_SERVER
+    JANUS_PROCESS
     RRR
     MEMDB
 #    ROCOCO
+    ${CONAN_LIBS}
     ${CMAKE_THREAD_LIBS_INIT}
-    ${YAML_CPP_LIBRARIES}
-    ${Boost_LIBRARIES}
     ${PYTHON2_LIBRARIES}
-    ${APR_LIBRARIES}
+#    ${APR_LIBRARIES}
     ${APRUTIL_LIBRARIES}
 #    ${PROFILER_LIBRARIES}
 )
-#
-#target_link_libraries(
-#    ROCOCO_CLIENT
-#    ROCOCO
-#    ${CMAKE_THREAD_LIBS_INIT}
-#    ${YAML_CPP_LIBRARIES}
-#
-#)
-
-#add_executable(ROCOCO_SERVER, deptran/s_main.cc)
-#add_executable(ROCOCO_CLIENT ${SOURCE_FILES})
