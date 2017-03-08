@@ -26,7 +26,7 @@ find_package(PkgConfig REQUIRED)
 #pkg_check_modules(APR REQUIRED apr-1)
 #pkg_check_modules(APRUTIL REQUIRED apr-util-1)
 pkg_check_modules(PYTHON2 REQUIRED python2)
-pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
+#pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
 #pkg_check_modules(PROFILER REQUIRED libprofiler)
 
 #FIND_PACKAGE(Boost COMPONENTS system filesystem coroutine REQUIRED)
