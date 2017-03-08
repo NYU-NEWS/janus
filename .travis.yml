@@ -5,6 +5,7 @@ addons:
   apt:
     sources:
     - ubuntu-toolchain-r-test
+    - kalakris-cmake
       #    - llvm-toolchain-precise
       #    - boost-latest
       #    - kubuntu-backports
@@ -17,6 +18,7 @@ addons:
     - python-dev
     - python-pip
     - python-virtualenv
+    - cmake
 before_install:
     - virtualenv venv
     - source venv/bin/activate
@@ -31,5 +33,6 @@ install:
 script:
     - mkdir build_cmake && cd build_cmake
     - conan install .. --build=missing
-    - cmake .. && make -j 2
+    - cmake .. 
+    - make -j 2
 
