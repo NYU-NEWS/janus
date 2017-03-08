@@ -22,7 +22,7 @@ before_install:
 install:
     - wget https://github.com/jbeder/yaml-cpp/archive/yaml-cpp-0.5.3.tar.gz
     - tar -xzf yaml-cpp-0.5.3.tar.gz
-    - cd yaml-cpp-yaml-cpp-0.5.3 && mkdir build && cd build && cmake -DCMAKE_INSTALL_PREFIX=$PWD .. && make -j 2
+    - cd yaml-cpp-yaml-cpp-0.5.3 && mkdir build && cd build && cmake -DCMAKE_INSTALL_PREFIX=$PWD .. && make -j 2 && cd ../../
     - export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$PWD/yaml-cpp-yaml-cpp-0.5.3/build/lib/pkgconfig
 script:
     - ./waf configure build -j 2
