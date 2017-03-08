@@ -17,9 +17,9 @@ class Scheduler {
  public:
   locid_t loc_id_ = -1;
   siteid_t site_id_ = -1;
-  unordered_map<txnid_t, DTxn *> dtxns_ = {};
-  unordered_map<txnid_t, mdb::Txn *> mdb_txns_ = {};
-  unordered_map<txnid_t, Executor*> executors_ = {};
+  unordered_map<txnid_t, DTxn *> dtxns_{};
+  unordered_map<txnid_t, mdb::Txn *> mdb_txns_{};
+  unordered_map<txnid_t, Executor*> executors_{};
   function<void(ContainerCommand&)> learner_action_ =
       [] (ContainerCommand&) -> void {verify(0);};
 
