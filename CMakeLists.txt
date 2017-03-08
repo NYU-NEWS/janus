@@ -143,13 +143,14 @@ add_executable(JANUS_PROCESS
 add_dependencies(JANUS_PROCESS gen-rpc)
 
 target_link_libraries(MEMDB
-    RRR)
+    RRR RT)
 
 
 target_link_libraries(
     JANUS_PROCESS
     RRR
     MEMDB
+    RT
 #    ROCOCO
     ${CONAN_LIBS}
     ${CMAKE_THREAD_LIBS_INIT}
