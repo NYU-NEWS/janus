@@ -6,7 +6,7 @@ addons:
     sources:
     - ubuntu-toolchain-r-test
       #    - llvm-toolchain-precise
-    - boost-latest
+      #    - boost-latest
       #    - kubuntu-backports
     packages:
     - build-essential
@@ -16,7 +16,10 @@ addons:
       #    - libboost1.55-all-dev
     - python-dev
     - python-pip
+    - python-virtualenv
 before_install:
+    - virtualenv venv
+    - source venv/bin/activate
     - pip install conan
     - pip install tabulate 
     - export CXX="g++-4.9" CC="gcc-4.9"
