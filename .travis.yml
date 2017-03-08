@@ -18,6 +18,7 @@ addons:
     - python-dev
     - python-pip
     - python-virtualenv
+    - cmake-data
     - cmake
 before_install:
     - virtualenv venv
