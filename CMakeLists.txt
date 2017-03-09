@@ -26,6 +26,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Weffc++")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCHECK_ISO")
+# this makes gcc>=5 support conan.io libraries, e.g. yaml-cpp
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
 
 find_package(Threads)
 find_package(PkgConfig REQUIRED)
@@ -134,11 +136,14 @@ add_executable(JANUS_PROCESS
 #        deptran/s_main.cc
         ${DEPTRAN_SRC}
         ${BENCH_SRC})
+
 add_dependencies(JANUS_PROCESS gen-rpc)
 
-target_link_libraries(MEMDB
-    RRR rt)
-
+target_link_libraries(
+        MEMDB
+        RRR
+        ${CONAN_LIBS}
+        rt)
 
 target_link_libraries(
     JANUS_PROCESS
@@ -152,3 +157,4 @@ target_link_libraries(
 #    ${APRUTIL_LIBRARIES}
 #    ${PROFILER_LIBRARIES}
 )
+MESSAGE(${CONAN_LIBS})
