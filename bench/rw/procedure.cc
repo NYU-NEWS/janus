@@ -2,6 +2,7 @@
 
 #include "deptran/__dep__.h"
 #include "deptran/procedure.h"
+#include "deptran/sharding.h"
 #include "procedure.h"
 #include "workload.h"
 

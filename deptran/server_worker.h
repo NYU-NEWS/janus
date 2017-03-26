@@ -12,8 +12,9 @@
 #include "sharding.h"
 #include "dtxn.h"
 #include "workload.h"
+#include "config.h"
 
-namespace rococo {
+namespace janus {
 
 class Communicator;
 class Frame;
