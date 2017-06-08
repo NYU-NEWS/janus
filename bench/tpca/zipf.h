@@ -1,4 +1,5 @@
 #pragma once
+#include <random>
 #include <math.h>
 #include "deptran/__dep__.h"
 
@@ -50,7 +51,7 @@ class ZipfDist {
     get_zipf(alpha, N);          /* generate the distribution */
   }
 
-  int operator() (boost::random::mt19937& rand_gen) {
+  int operator() (std::mt19937& rand_gen) {
 //    for (int i = 0; i < zdist.size()-1; i++) {
 //      auto& z1 = zdist[i];
 //      auto& z2 = zdist[i+1];

@@ -30,8 +30,8 @@ extern char TPCA_CUSTOMER[];
 class TpcaWorkload : public Workload {
  public:
   void RegisterPrecedures() override;
-  boost::random::mt19937 rand_gen_;
-  map<int32_t, int32_t> key_ids_ = {};
+  std::mt19937 rand_gen_{};
+  map<int32_t, int32_t> key_ids_{};
   TpcaWorkload(Config* config);
   virtual void GetTxnReq(TxnRequest *req, uint32_t cid) override;
 //  virtual void GetTxnReq(TxnRequest *req,

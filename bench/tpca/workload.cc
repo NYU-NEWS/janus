@@ -123,9 +123,9 @@ void TpcaWorkload::GetTxnReq(TxnRequest *req, uint32_t cid) {
     //
 
   } else if (dist == "uniform") {
-    boost::random::uniform_int_distribution<> d1(0, tpca_para_.n_customer_-1);
-    boost::random::uniform_int_distribution<> d2(0, tpca_para_.n_teller_-1);
-    boost::random::uniform_int_distribution<> d3(0, tpca_para_.n_branch_-1);
+    std::uniform_int_distribution<> d1(0, tpca_para_.n_customer_-1);
+    std::uniform_int_distribution<> d2(0, tpca_para_.n_teller_-1);
+    std::uniform_int_distribution<> d3(0, tpca_para_.n_branch_-1);
     int k1 = d1(rand_gen_);
     int k2 = d2(rand_gen_);
     int k3 = d3(rand_gen_);
