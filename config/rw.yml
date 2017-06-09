@@ -1,6 +1,6 @@
 
 bench:
-  workload: rw_benchmark
+  workload: rw
   scale: 1
   weight:
     read: 0 
