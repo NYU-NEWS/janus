@@ -33,6 +33,9 @@ install:
     #    - export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$PWD/yaml-cpp-yaml-cpp-0.5.3/build/lib/pkgconfig
 script:
     - mkdir build_cmake && cd build_cmake
+    - conan remote remove conan.io
+    - conan remote add conan-center https://conan.bintray.com
+    - conan remote add conan-transit https://conan-transit.bintray.com
     - conan install .. --build=missing
     - cmake .. 
     - make -j 2
