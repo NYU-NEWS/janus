@@ -9,7 +9,7 @@
 #include "command_marshaler.h"
 #include "txn_reg.h"
 
-namespace rococo {
+namespace janus {
 
 class Coordinator;
 class Sharding;

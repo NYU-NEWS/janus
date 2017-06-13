@@ -16,11 +16,12 @@ int NoneSched::OnDispatch(const vector<SimpleCommand> &cmd,
   auto dtxn = GetOrCreateDTxn(cmd[0].root_id_);
   verify(partition_id_ == cmd[0].partition_id_);
   for (auto& c : cmd) {
-    txn_reg_->get(c).txn_handler(nullptr,
-                                 dtxn,
-                                 const_cast<SimpleCommand&>(c),
-                                 res,
-                                 (*output)[c.inn_id()]);
+    TxnPieceDef& p = txn_reg_->get(c.root_type_, c.type_);
+    p.proc_handler_(nullptr,
+                    dtxn,
+                    const_cast<SimpleCommand&>(c),
+                    res,
+                    (*output)[c.inn_id()]);
   }
 
   *res = SUCCESS;

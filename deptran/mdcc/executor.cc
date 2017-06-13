@@ -20,9 +20,9 @@ namespace mdcc {
 
   void MdccExecutor::StartPiece(const rococo::SimpleCommand &cmd, int *result, DeferredReply *defer) {
     Log_info("%s type: %d; piece_id: %d;", __FUNCTION__, cmd.type_, cmd.inn_id_);
-    auto handler_pair = this->txn_reg_->get(cmd);
+    auto& p = txn_reg_->get(cmd.root_type_, cmd.type_);
     auto& c = const_cast<SimpleCommand&>(cmd);
-    handler_pair.txn_handler(this, dtxn_, c, result, c.output);
+    p.proc_handler_(this, dtxn_, c, result, c.output);
     sched_->SendUpdateProposal(cmd_id_, cmd, result, defer);
   }
 

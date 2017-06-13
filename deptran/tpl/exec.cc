@@ -28,18 +28,18 @@ int TplExecutor::OnDispatch(const SimpleCommand &cmd,
     InitPieceStatus(cmd, callback, output);
     Log_debug("get txn handler and start reg lock, txn_id: %lx, pie_id: %lx",
               cmd.root_id_, cmd.id_);
-    auto entry = txn_reg_->get(cmd);
+    TxnPieceDef& p = txn_reg_->get(cmd.root_type_, cmd.type_);
     map<int32_t, Value> no_use;
     // pre execute to establish interference.
     TPLDTxn *dtxn = (TPLDTxn*) dtxn_;
     dtxn->locks_.clear();
     dtxn->row_lock_ = nullptr;
     dtxn->locking_ = true;
-    entry.txn_handler(this,
-                      dtxn_,
-                      const_cast<SimpleCommand&>(cmd),
-                      res,
-                      no_use/*output*/);
+    p.proc_handler_(this,
+                    dtxn_,
+                    const_cast<SimpleCommand&>(cmd),
+                    res,
+                    no_use/*output*/);
     // try to require all the locks.
     dtxn->locking_ = false;
     PieceStatus *ps = get_piece_status(cmd.id_);
@@ -86,11 +86,12 @@ void TplExecutor::LockSucceeded(const SimpleCommand& cmd,
     rrr::i32 *output_size;
     ps->get_output(&output, &output_value, &output_size);
     output->clear();
-    txn_reg_->get(cmd).txn_handler(this,
-                                   dtxn_,
-                                   const_cast<SimpleCommand&>(cmd),
-                                   res,
-                                   *output);
+    TxnPieceDef& p = txn_reg_->get(cmd.root_type_, cmd.type_);
+    p.proc_handler_(this,
+                    dtxn_,
+                    const_cast<SimpleCommand&>(cmd),
+                    res,
+                    *output);
     verify(*res == SUCCESS);
     // ____debug purpose
     for (auto &kv : *output) {

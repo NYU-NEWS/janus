@@ -11,8 +11,8 @@ void JanusDTxn::DispatchExecute(SimpleCommand &cmd,
       return;
   }
   verify(txn_reg_);
-  auto pair = txn_reg_->get(cmd);
-  auto& conflicts = txn_reg_->regs_[cmd.root_type_][cmd.type()].conflicts_;
+  TxnPieceDef& piece = txn_reg_->get(cmd.root_type_, cmd.type_);
+  auto& conflicts = piece.conflicts_;
   for (auto& c: conflicts) {
     vector<Value> pkeys;
     for (int i = 0; i < c.primary_keys.size(); i++) {

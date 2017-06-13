@@ -189,7 +189,7 @@ bool TpccProcedure::IsReadOnly() {
 
 parid_t TpccProcedure::GetPiecePartitionId(innid_t inn_id) {
   parid_t partition_id = 0;
-  auto& pair = txn_reg_->regs_[type_][inn_id].sharding_input_;
+  auto& pair = txn_reg_->regs_[type_][inn_id].sharder_;
   if (true) {
     auto tb = pair.first;
     auto& var_ids = pair.second;

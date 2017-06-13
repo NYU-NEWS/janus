@@ -26,7 +26,7 @@ PieceStatus::PieceStatus(const SimpleCommand& cmd,
       rm_lock_group_(swap_bits(cmd.timestamp_), wound_callback),
       is_rw_(false),
       exec_(exec) {
-  handler_ = exec_->txn_reg_->get(cmd).txn_handler;
+  handler_ = exec_->txn_reg_->get(cmd.root_type_, cmd.type_).proc_handler_;
 }
 
 void PieceStatus::start_yes_callback() {

@@ -11,7 +11,7 @@ class BatchStartArgsHelper;
 
 class TpccProcedure: public Procedure {
  public:
-  map<innid_t, LeafProcedure> leaf_procs_{};
+  map<innid_t, TxnPieceDef> leaf_procs_{};
 //  map<innid_t, set<int32_t>> input_vars_{};
   typedef struct {
     size_t ol_cnt;

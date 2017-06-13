@@ -17,6 +17,8 @@ conan_basic_setup()
 if(NOT APPLE)
 #    target_link_libraries(target_name rt)
     set(RT, "rt")
+else()
+    set(RT, "")
 endif()
 
 set(CMAKE_VERBOSE_MAKEFILE on)
@@ -143,13 +145,13 @@ target_link_libraries(
         MEMDB
         RRR
         ${CONAN_LIBS}
-        rt)
+        ${RT})
 
 target_link_libraries(
     JANUS_PROCESS
     RRR
     MEMDB
-    rt
+    ${RT}
     ${CONAN_LIBS}
     ${CMAKE_THREAD_LIBS_INIT}
     ${PYTHON2_LIBRARIES}

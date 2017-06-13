@@ -161,80 +161,89 @@ void TpcaWorkload::GetTxnReq(TxnRequest *req, uint32_t cid) {
 
 
 void TpcaWorkload::RegisterPrecedures() {
-  INPUT_PIE(TPCA_PAYMENT, TPCA_PAYMENT_1, TPCA_VAR_X)
-  SHARD_PIE(TPCA_PAYMENT, TPCA_PAYMENT_1, TPCA_CUSTOMER, TPCA_VAR_X)
-  CONFLICT_PIE(TPCA_PAYMENT, TPCA_PAYMENT_1,
-               conf_id(TPCA_CUSTOMER, {TPCA_VAR_X}, {1}, TPCA_ROW_1));
-  BEGIN_PIE(TPCA_PAYMENT, TPCA_PAYMENT_1, DF_REAL) {
+  RegP(TPCA_PAYMENT, TPCA_PAYMENT_1,
+       {TPCA_VAR_X}, // i
+       {}, // TODO o
+       {conf_id(TPCA_CUSTOMER, {TPCA_VAR_X}, {1}, TPCA_ROW_1)}, // c
+       {TPCA_CUSTOMER, {TPCA_VAR_X}}, // s
+       DF_REAL,
+       PROC {
 //        Log::debug("output: %p, output_size: %p", output, output_size);
 //        mdb::Txn *txn = DTxnMgr::get_sole_mgr()->get_mdb_txn(header);
-    mdb::Txn *txn = dtxn->mdb_txn_;
-    Value buf;
-    verify(cmd.input.size() >= 1);
+         mdb::Txn *txn = dtxn->mdb_txn_;
+         Value buf;
+         verify(cmd.input.size() >= 1);
 
-    mdb::Row *r = NULL;
-    mdb::MultiBlob mb(1);
-    mb[0] = cmd.input.at(TPCA_VAR_X).get_blob();
+         mdb::Row *r = NULL;
+         mdb::MultiBlob mb(1);
+         mb[0] = cmd.input.at(TPCA_VAR_X).get_blob();
 
-    r = dtxn->Query(dtxn->GetTable(TPCA_CUSTOMER), mb, TPCA_ROW_1);
-    dtxn->ReadColumn(r, 1, &buf, TXN_BYPASS);
-                                                     output[TPCA_VAR_OX] = buf;
-    buf.set_i32(buf.get_i32() + 1/*input[1].get_i32()*/);
-    dtxn->WriteColumn(r, 1, buf, TXN_DEFERRED);
+         r = dtxn->Query(dtxn->GetTable(TPCA_CUSTOMER), mb, TPCA_ROW_1);
+         dtxn->ReadColumn(r, 1, &buf, TXN_BYPASS);
+         output[TPCA_VAR_OX] = buf;
+         buf.set_i32(buf.get_i32() + 1/*input[1].get_i32()*/);
+         dtxn->WriteColumn(r, 1, buf, TXN_DEFERRED);
 
 #ifdef CHECK_ISO
-    dtxn->deltas_[r][1] = 1;
+         dtxn->deltas_[r][1] = 1;
 #endif
-    *res = SUCCESS;
-  } END_PIE
+         *res = SUCCESS;
+       }
+  );
 
-  INPUT_PIE(TPCA_PAYMENT, TPCA_PAYMENT_2, TPCA_VAR_Y)
-  SHARD_PIE(TPCA_PAYMENT, TPCA_PAYMENT_2, TPCA_TELLER, TPCA_VAR_Y)
-  CONFLICT_PIE(TPCA_PAYMENT, TPCA_PAYMENT_2,
-               conf_id(TPCA_CUSTOMER, {TPCA_VAR_Y}, {1}, TPCA_ROW_2));
-  BEGIN_PIE(TPCA_PAYMENT, TPCA_PAYMENT_2, DF_REAL) {
-    mdb::Txn *txn = dtxn->mdb_txn_;
-    Value buf;
-    verify(cmd.input.size() >= 1);
-    mdb::Row *r = NULL;
-    mdb::MultiBlob mb(1);
-    mb[0] = cmd.input.at(TPCA_VAR_Y).get_blob();
+  RegP(TPCA_PAYMENT, TPCA_PAYMENT_2,
+       {TPCA_VAR_Y}, // i
+       {}, // o
+       {conf_id(TPCA_CUSTOMER, {TPCA_VAR_Y}, {1}, TPCA_ROW_2)}, // c
+       {TPCA_TELLER, {TPCA_VAR_Y} }, // s
+       DF_REAL,
+       PROC {
+         mdb::Txn *txn = dtxn->mdb_txn_;
+         Value buf;
+         verify(cmd.input.size() >= 1);
+         mdb::Row *r = NULL;
+         mdb::MultiBlob mb(1);
+         mb[0] = cmd.input.at(TPCA_VAR_Y).get_blob();
 
-    r = dtxn->Query(dtxn->GetTable(TPCA_TELLER), mb, TPCA_ROW_2);
-    dtxn->ReadColumn(r, 1, &buf, TXN_BYPASS);
-                                                     output[TPCA_VAR_OY] = buf;
-    buf.set_i32(buf.get_i32() + 1/*input[1].get_i32()*/);
-    dtxn->WriteColumn(r, 1, buf, TXN_DEFERRED);
-    *res = SUCCESS;
+         r = dtxn->Query(dtxn->GetTable(TPCA_TELLER), mb, TPCA_ROW_2);
+         dtxn->ReadColumn(r, 1, &buf, TXN_BYPASS);
+         output[TPCA_VAR_OY] = buf;
+         buf.set_i32(buf.get_i32() + 1/*input[1].get_i32()*/);
+         dtxn->WriteColumn(r, 1, buf, TXN_DEFERRED);
+         *res = SUCCESS;
 #ifdef CHECK_ISO
-                                                     dtxn->deltas_[r][1] = 1;
+         dtxn->deltas_[r][1] = 1;
 #endif
-  } END_PIE
+       }
+  );
 
-  INPUT_PIE(TPCA_PAYMENT, TPCA_PAYMENT_3, TPCA_VAR_Z)
-  SHARD_PIE(TPCA_PAYMENT, TPCA_PAYMENT_3, TPCA_BRANCH, TPCA_VAR_Z)
-  CONFLICT_PIE(TPCA_PAYMENT, TPCA_PAYMENT_3,
-               conf_id(TPCA_CUSTOMER, {TPCA_VAR_Z}, {1}, TPCA_ROW_3));
-  BEGIN_PIE(TPCA_PAYMENT, TPCA_PAYMENT_3, DF_REAL) {
-    mdb::Txn *txn = dtxn->mdb_txn_;
-    Value buf;
-    verify(cmd.input.size() >= 1);
-    i32 output_index = 0;
+  RegP(TPCA_PAYMENT, TPCA_PAYMENT_3,
+       {TPCA_VAR_Z}, // i
+       {}, // o
+       {conf_id(TPCA_CUSTOMER, {TPCA_VAR_Z}, {1}, TPCA_ROW_3)}, // c
+       {TPCA_BRANCH, {TPCA_VAR_Z}},
+       DF_REAL,
+       PROC {
+         mdb::Txn *txn = dtxn->mdb_txn_;
+         Value buf;
+         verify(cmd.input.size() >= 1);
+         i32 output_index = 0;
 
-    mdb::Row *r = NULL;
-    mdb::MultiBlob mb(1);
-    mb[0] = cmd.input.at(TPCA_VAR_Z).get_blob();
+         mdb::Row *r = NULL;
+         mdb::MultiBlob mb(1);
+         mb[0] = cmd.input.at(TPCA_VAR_Z).get_blob();
 
-    r = dtxn->Query(dtxn->GetTable(TPCA_BRANCH), mb, TPCA_ROW_3);
-    dtxn->ReadColumn(r, 1, &buf, TXN_BYPASS);
-                                                     output[TPCA_VAR_OZ] = buf;
-    buf.set_i32(buf.get_i32() + 1/*input[1].get_i32()*/);
-    dtxn->WriteColumn(r, 1, buf, TXN_DEFERRED);
-    *res = SUCCESS;
+         r = dtxn->Query(dtxn->GetTable(TPCA_BRANCH), mb, TPCA_ROW_3);
+         dtxn->ReadColumn(r, 1, &buf, TXN_BYPASS);
+         output[TPCA_VAR_OZ] = buf;
+         buf.set_i32(buf.get_i32() + 1/*input[1].get_i32()*/);
+         dtxn->WriteColumn(r, 1, buf, TXN_DEFERRED);
+         *res = SUCCESS;
 #ifdef CHECK_ISO
-                                                     dtxn->deltas_[r][1] = 1;
+         dtxn->deltas_[r][1] = 1;
 #endif
-  } END_PIE
+       }
+  );
 }
 
 } // namespace janus

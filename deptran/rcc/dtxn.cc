@@ -33,35 +33,35 @@ void RccDTxn::DispatchExecute(SimpleCommand &cmd,
                               int32_t *res,
                               map<int32_t, Value> *output) {
   verify(0);
-  for (auto& c: dreqs_) {
-    if (c.inn_id() == cmd.inn_id())
-      return;
-  }
-  verify(phase_ <= PHASE_RCC_DISPATCH);
-  phase_ = PHASE_RCC_DISPATCH;
-  // execute the IR actions.
-  verify(txn_reg_);
-  auto pair = txn_reg_->get(cmd);
-  // To tolerate deprecated codes
-  int xxx, *yyy;
-  if (pair.defer == DF_REAL) {
-    yyy = &xxx;
-    dreqs_.push_back(cmd);
-  } else if (pair.defer == DF_NO) {
-    yyy = &xxx;
-  } else if (pair.defer == DF_FAKE) {
-    dreqs_.push_back(cmd);
-    return;
+//  for (auto& c: dreqs_) {
+//    if (c.inn_id() == cmd.inn_id())
+//      return;
+//  }
+//  verify(phase_ <= PHASE_RCC_DISPATCH);
+//  phase_ = PHASE_RCC_DISPATCH;
+//  // execute the IR actions.
+//  verify(txn_reg_);
+//  auto pair = txn_reg_->get(cmd);
+//  // To tolerate deprecated codes
+//  int xxx, *yyy;
+//  if (pair.defer == DF_REAL) {
+//    yyy = &xxx;
+//    dreqs_.push_back(cmd);
+//  } else if (pair.defer == DF_NO) {
+//    yyy = &xxx;
+//  } else if (pair.defer == DF_FAKE) {
+//    dreqs_.push_back(cmd);
+//    return;
+////    verify(0);
+//  } else {
 //    verify(0);
-  } else {
-    verify(0);
-  }
-  pair.txn_handler(nullptr,
-                   this,
-                   const_cast<SimpleCommand&>(cmd),
-                   yyy,
-                   *output);
-  *res = pair.defer;
+//  }
+//  pair.txn_handler(nullptr,
+//                   this,
+//                   const_cast<SimpleCommand&>(cmd),
+//                   yyy,
+//                   *output);
+//  *res = pair.defer;
 }
 
 
@@ -75,11 +75,11 @@ void RccDTxn::CommitExecute() {
   phase_ = PHASE_RCC_COMMIT;
   TxnWorkspace ws;
   for (auto &cmd: dreqs_) {
-    auto pair = txn_reg_->get(cmd);
+    TxnPieceDef& p = txn_reg_->get(cmd.root_type_, cmd.type_);
     int tmp;
     cmd.input.Aggregate(ws);
     auto& m = output_[cmd.inn_id_];
-    pair.txn_handler(nullptr, this, cmd, &tmp, m);
+    p.proc_handler_(nullptr, this, cmd, &tmp, m);
     ws.insert(m);
   }
   committed_ = true;

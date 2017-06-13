@@ -68,9 +68,9 @@ def configure(conf):
     # in case you use linuxbrew
     conf.env.append_value('INCLUDES', [os.path.expanduser('~') + '/.linuxbrew/include'])
     conf.env.append_value('LIBPATH', [os.path.expanduser('~') + '/.linuxbrew/lib'])
-    conf.check_cxx(lib='boost_system', use='BOOST_SYSTEM')
-    conf.check_cxx(lib='boost_filesystem', use='BOOST_FILESYSTEM')
-    conf.check_cxx(lib='boost_coroutine', use='BOOST_COROUTINE')
+#    conf.check_cxx(lib='boost_system', use='BOOST_SYSTEM')
+#    conf.check_cxx(lib='boost_filesystem', use='BOOST_FILESYSTEM')
+#    conf.check_cxx(lib='boost_coroutine', use='BOOST_COROUTINE')
 
     conf.env.LIB_PTHREAD = 'pthread'
     conf.check_cfg(package='yaml-cpp', uselib_store='YAML-CPP', args=pargs)

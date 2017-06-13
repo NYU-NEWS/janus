@@ -22,7 +22,8 @@ void Executor::Execute(const SimpleCommand &cmd,
                        map<int32_t, Value> &output) {
   verify(output.size() == 0);
   *res = SUCCESS;
-  const auto &handler = txn_reg_->get(cmd).txn_handler;
+  TxnPieceDef& p = txn_reg_->get(cmd.root_type_, cmd.type_);
+  const auto &handler = p.proc_handler_;
   handler(this,
           dtxn_,
           const_cast<SimpleCommand&>(cmd),
@@ -39,7 +40,8 @@ void Executor::Execute(const vector<SimpleCommand>& cmds,
   TxnWorkspace ws;
   for (const SimpleCommand& c: cmds) {
     auto& cmd = const_cast<SimpleCommand&>(c);
-    const auto &handler = txn_reg_->get(c).txn_handler;
+    TxnPieceDef& p = txn_reg_->get(c.root_type_, c.type_);
+    const auto &handler = p.proc_handler_;
     auto& m = (*output)[c.inn_id_];
     int res;
     cmd.input.Aggregate(ws);

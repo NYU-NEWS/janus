@@ -87,23 +87,24 @@ void ClassicExecutor::execute(const SimpleCommand &cmd,
                                  map<int32_t, Value> &output,
                                  rrr::i32 *output_size) {
   verify(0);
-  txn_reg_->get(cmd).txn_handler(this,
-                                 dtxn_,
-                                 const_cast<SimpleCommand&>(cmd),
-                                 res,
-                                 output);
+  TxnPieceDef& p = txn_reg_->get(cmd.root_type_, cmd.type_);
+  p.proc_handler_(this,
+                  dtxn_,
+                  const_cast<SimpleCommand&>(cmd),
+                  res,
+                  output);
 }
 
 void ClassicExecutor::Execute(const SimpleCommand &cmd,
                                  rrr::i32 *res,
                                  map<int32_t, Value> &output) {
 
-  const auto& handler = txn_reg_->get(cmd).txn_handler;
-  handler(this,
-          dtxn_,
-          const_cast<SimpleCommand&>(cmd),
-          res,
-          output);
+  TxnPieceDef& p = txn_reg_->get(cmd.root_type_, cmd.type_);
+  p.proc_handler_(this,
+                  dtxn_,
+                  const_cast<SimpleCommand&>(cmd),
+                  res,
+                  output);
 }
 
 } // namespace rococo;

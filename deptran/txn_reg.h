@@ -2,7 +2,7 @@
 #include "__dep__.h"
 #include "constants.h"
 #include "command.h"
-namespace rococo {
+namespace janus {
 
 #define TXN_GENERAL  (0x0)
 #define TXN_ONE_SHOT (0x1)
@@ -32,15 +32,9 @@ typedef enum {
   DF_FAKE
 } defer_t;
 
-typedef struct {
-  ProcHandler txn_handler;
-  defer_t defer;
-} ProcHandlerPair;
-
 typedef std::function<bool(Procedure *,
                            map<int32_t, Value>&)>
     PieceCallbackHandler;
-
 
 struct conf_id {
   string table{};
@@ -58,11 +52,14 @@ struct conf_id {
   }
 };
 
-class LeafProcedure {
+typedef std::pair<string, vector<int32_t> > sharder_t;
+
+class TxnPieceDef {
  public:
-  ProcHandlerPair proc_handler_pair_{};
+  ProcHandler proc_handler_{};
   PieceCallbackHandler callback_{};
-  pair<string, vector<int32_t>> sharding_input_{};
+  sharder_t sharder_{};
+  defer_t defer_{};
   set<int32_t> input_vars_{};
   set<int32_t> output_vars_{};
   vector<conf_id> conflicts_{};
@@ -76,36 +73,18 @@ class TxnRegistry {
 
   TxnRegistry() {};
 
-  void reg(txntype_t t_type,
-           innid_t p_type,
-           defer_t defer,
-           const ProcHandler &txn_handler) {
-    regs_[t_type][p_type].proc_handler_pair_ =
-        (ProcHandlerPair) {txn_handler, defer};
+  /*
+   * return the piece definition, so maybe change a name?
+   */
+  TxnPieceDef& get(const txntype_t t_type, const innid_t p_type) {
+    return regs_[t_type][p_type];
   }
-
-  ProcHandlerPair& get(const txntype_t t_type,
-                       const innid_t p_type) {
-    auto& pair = regs_[t_type][p_type].proc_handler_pair_;
-    verify(pair.txn_handler);
-    return pair;
-  }
-  ProcHandlerPair& get(const SimpleCommand &);
 
  public:
   // prevent instance creation
   // TxnRegistry() { }
   map<txntype_t, int> txn_types_{};
-//  map<std::pair<base::i32, base::i32>, ProcHandlerPair> all_{};
-//  map<std::pair<txntype_t, innid_t>, PieceCallbackHandler> callbacks_{};
-//  map<std::pair<txntype_t, innid_t>,
-//      std::pair<string, vector<int32_t>>> sharding_input_{};
-//  map<txntype_t, map<innid_t, set<int32_t>>> input_vars_{};
-//  map<txntype_t, map<innid_t, set<int32_t>>> output_vars_{};
-//  map<txntype_t, std::function<void(Procedure * ch, TxnRequest& req)> > init_{};
-//  map<txntype_t, std::function<void(Procedure * ch)>> retry_{};
-//  map<txntype_t, map<innid_t, vector<conf_id>>> conflicts_{};
-  map<txntype_t, map<innid_t, LeafProcedure>> regs_{};
+  map<txntype_t, map<innid_t, TxnPieceDef>> regs_{};
 };
 
 } // namespace rococo

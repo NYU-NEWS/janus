@@ -1,15 +1,15 @@
 #pragma once
 
 #include "__dep__.h"
+#include "constants.h"
 #include "config.h"
+#include "txn_reg.h"
 #include "tpl/exec.h"
 #include "tpl/tpl.h"
 #include "ro6/ro6.h"
 #include "tpl/ps.h"
 
 namespace rococo {
-
-class TxnRegistry;
 
 class TxnRequest;
 class Sharding;
@@ -61,6 +61,28 @@ class Workload {
   virtual void GetTxnReq(TxnRequest *req, uint32_t cid) = 0;
   virtual void GetProcedureTypes(std::map<int32_t, std::string> &txn_types);
   virtual void RegisterPrecedures() = 0;
+
+  /*
+   * inn_id is piece_type for now. better change in the future.
+   */
+  void RegP(txntype_t txn_type,
+            innid_t inn_id,
+            const set<int32_t>& ivars,
+            const set<int32_t>& ovars,
+            const vector<conf_id>& conflicts,
+            const sharder_t& sharder,
+            const defer_t& defer,
+            const ProcHandler& handler
+  ) {
+    auto& piece = txn_reg_->regs_[txn_type][inn_id];
+    piece.input_vars_ = ivars;
+    piece.output_vars_ = ovars;
+    piece.conflicts_ = conflicts;
+    piece.sharder_ = sharder;
+    piece.defer_ = defer;
+    piece.proc_handler_ = handler;
+  }
+
 };
 
 #define BEGIN_LOOP_PIE(txn, pie, max_i, iod) \
@@ -76,25 +98,19 @@ map<int32_t, Value> &output) \
 
 #define END_LOOP_PIE });}
 
-#define BEGIN_PIE(txn, pie, iod) \
-  txn_reg_->reg(txn, pie, iod, \
-        [this] (Executor* exec, \
-                DTxn *dtxn, \
-                SimpleCommand &cmd, \
-                i32 *res, \
-                map<int32_t, Value> &output)
+#define PROC \
+  [this] (Executor* exec, DTxn *dtxn, SimpleCommand &cmd, \
+          int32_t *res, map<int32_t, Value> &output)
 
-#define END_PIE );
+#define LPROC \
+  [this, i] (Executor* exec, DTxn *dtxn, SimpleCommand &cmd, \
+          int32_t *res, map<int32_t, Value> &output)
 
 #define BEGIN_CB(txn_type, inn_id) \
 txn_reg_->regs_[txn_type][inn_id].callback_ = \
 [] (Procedure *ch, std::map<int32_t, Value> output) -> bool {
 
 #define END_CB  };
-
-#define SHARD_PIE(txn, pie, tb, ...) \
-txn_reg_->regs_[txn][pie].sharding_input_ \
-= std::make_pair(tb, vector<int32_t>({__VA_ARGS__}));
 
 #define INPUT_PIE(txn, pie, ...) \
 txn_reg_->regs_[txn][pie].input_vars_ \
@@ -107,6 +123,11 @@ txn_reg_->regs_[txn][pie].output_vars_ \
 #define CONFLICT_PIE(txn, pie, ...) \
 txn_reg_->regs_[txn][pie].conflicts_ \
 = {__VA_ARGS__};
+
+#define SHARD_PIE(txn, pie, tb, ...) \
+txn_reg_->regs_[txn][pie].sharder_ \
+= std::make_pair(tb, vector<int32_t>({__VA_ARGS__}));
+
 
 //std::vector<mdb::column_lock_t>(__VA_ARGS__),
 //verify(((TPLDTxn*)dtxn)->locking_ == (output_size == nullptr));
