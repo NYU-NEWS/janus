@@ -10,7 +10,6 @@ namespace rococo {
 void NoneCoord::GotoNextPhase() {
 
   int n_phase = 2;
-  int current_phase = phase_ % n_phase;
   switch (phase_++ % n_phase) {
     case Phase::INIT_END:
       Dispatch();

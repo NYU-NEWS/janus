@@ -87,7 +87,7 @@ enum CommandStatus {
   INIT=3
 };
 
-
+// TODO rename to TxnPiece?
 class SimpleCommand: public ContainerCommand {
  public:
   ContainerCommand* root_ = nullptr;
@@ -108,6 +108,8 @@ class SimpleCommand: public ContainerCommand {
   }
   virtual ~SimpleCommand() {};
 };
+
+typedef SimpleCommand TxnPieceData;
 
 /**
  * input ready levels:

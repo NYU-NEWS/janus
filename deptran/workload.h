@@ -69,7 +69,7 @@ class Workload {
             innid_t inn_id,
             const set<int32_t>& ivars,
             const set<int32_t>& ovars,
-            const vector<conf_id>& conflicts,
+            const vector<conf_id_t>& conflicts,
             const sharder_t& sharder,
             const defer_t& defer,
             const ProcHandler& handler

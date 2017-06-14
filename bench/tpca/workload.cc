@@ -164,7 +164,7 @@ void TpcaWorkload::RegisterPrecedures() {
   RegP(TPCA_PAYMENT, TPCA_PAYMENT_1,
        {TPCA_VAR_X}, // i
        {}, // TODO o
-       {conf_id(TPCA_CUSTOMER, {TPCA_VAR_X}, {1}, TPCA_ROW_1)}, // c
+       {conf_id_t(TPCA_CUSTOMER, {TPCA_VAR_X}, {1}, TPCA_ROW_1)}, // c
        {TPCA_CUSTOMER, {TPCA_VAR_X}}, // s
        DF_REAL,
        PROC {
@@ -194,7 +194,7 @@ void TpcaWorkload::RegisterPrecedures() {
   RegP(TPCA_PAYMENT, TPCA_PAYMENT_2,
        {TPCA_VAR_Y}, // i
        {}, // o
-       {conf_id(TPCA_CUSTOMER, {TPCA_VAR_Y}, {1}, TPCA_ROW_2)}, // c
+       {conf_id_t(TPCA_CUSTOMER, {TPCA_VAR_Y}, {1}, TPCA_ROW_2)}, // c
        {TPCA_TELLER, {TPCA_VAR_Y} }, // s
        DF_REAL,
        PROC {
@@ -220,7 +220,7 @@ void TpcaWorkload::RegisterPrecedures() {
   RegP(TPCA_PAYMENT, TPCA_PAYMENT_3,
        {TPCA_VAR_Z}, // i
        {}, // o
-       {conf_id(TPCA_CUSTOMER, {TPCA_VAR_Z}, {1}, TPCA_ROW_3)}, // c
+       {conf_id_t(TPCA_CUSTOMER, {TPCA_VAR_Z}, {1}, TPCA_ROW_3)}, // c
        {TPCA_BRANCH, {TPCA_VAR_Z}},
        DF_REAL,
        PROC {

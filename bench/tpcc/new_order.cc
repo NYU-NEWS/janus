@@ -51,7 +51,7 @@ void TpccWorkload::RegNewOrder() {
   RegP(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0,
        {TPCC_VAR_W_ID, TPCC_VAR_D_ID}, // input
        {TPCC_VAR_O_ID, TPCC_VAR_D_TAX}, // output
-       {conf_id(TPCC_TB_DISTRICT,
+       {conf_id_t(TPCC_TB_DISTRICT,
                {TPCC_VAR_D_ID, TPCC_VAR_W_ID},
                {TPCC_COL_DISTRICT_D_NEXT_O_ID},
                ROW_DISTRICT)},
@@ -297,7 +297,7 @@ void TpccWorkload::RegNewOrder() {
          {TPCC_VAR_I_ID(i), TPCC_VAR_S_W_ID(i),
           TPCC_VAR_OL_QUANTITY(i), TPCC_VAR_S_REMOTE_CNT(i)}, // i
          {}, // o
-         {conf_id(TPCC_TB_STOCK,
+         {conf_id_t(TPCC_TB_STOCK,
                  {TPCC_VAR_I_ID(i), TPCC_VAR_S_W_ID(i)},
                  {TPCC_COL_STOCK_S_QUANTITY,
                   TPCC_COL_STOCK_S_YTD,

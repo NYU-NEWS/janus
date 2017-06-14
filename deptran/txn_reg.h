@@ -36,13 +36,13 @@ typedef std::function<bool(Procedure *,
                            map<int32_t, Value>&)>
     PieceCallbackHandler;
 
-struct conf_id {
+struct conf_id_t {
   string table{};
   std::vector<int> primary_keys{};
   std::vector<int> columns{};
   int row_context_id{};
 
-  conf_id(string t,
+  conf_id_t(string t,
           vector<int> k,
           vector<int> c,
           int rc_id) : table(t),
@@ -62,7 +62,7 @@ class TxnPieceDef {
   defer_t defer_{};
   set<int32_t> input_vars_{};
   set<int32_t> output_vars_{};
-  vector<conf_id> conflicts_{};
+  vector<conf_id_t> conflicts_{};
 };
 
 /**

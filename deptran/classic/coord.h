@@ -99,9 +99,6 @@ class ClassicCoord : public Coordinator {
 #endif /* ifdef TXN_STAT */
              );
 
-  void start_callback(TxnRequest *req, int pi, int res,
-                      std::vector<mdb::Value> &output) { }
-
   void ForwardTxnRequest(TxnRequest &req);
   void ForwardTxnRequestAck(const TxnReply&);
   // for debug
