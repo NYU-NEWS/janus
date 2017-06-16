@@ -11,18 +11,15 @@ class Event {
  public:
   enum EventStatus {INIT=0, WAIT=1, READY=2, TRIGGERED=3};
   EventStatus status_{INIT};
-  CoroScheduler* sched_{nullptr};
-  Coroutine* coro_{nullptr};
-  Event(Coroutine* coro=nullptr) {
-    if (coro == nullptr) {
-      // TODO
-//      coro_ = Coroutine::GetCurrentCoroutine();
-    } else {
-      coro_ = coro;
-    }
-    // TODO
-//    sched_ = coro_->sched_;
+
+  // An event is usually allocated on a coroutine stack, thus it cannot own a
+  // shared_ptr to the coroutine it is. There is no shared pointer to the event.
+  std::weak_ptr<Coroutine> wp_coro_{};
+
+  Event(std::shared_ptr<Coroutine> coro = {}) {
+    wp_coro_ = coro;
   };
+
   virtual void Wait();
   virtual bool IsReady() {return false;}
 };

@@ -10,7 +10,9 @@ void Event::Wait() {
   if (IsReady()) {
     return;
   } else {
-    coro_->Yield();
+    auto sp_coro = wp_coro_.lock();
+    verify(sp_coro);
+    sp_coro->Yield();
   }
   verify(0);
 }
@@ -20,7 +22,7 @@ bool IntEvent::TestTrigger() {
   verify(status_ <= WAIT);
   if (value_ == target_) {
     status_ = READY;
-    sched_->AddReadyEvent(this);
+    CoroScheduler::CurrentScheduler()->AddReadyEvent(*this);
     return true;
   }
   return false;

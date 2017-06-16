@@ -1,22 +1,26 @@
 #pragma once
-#include <boost/coroutine/all.hpp>
+#include <set>
+#include "coroutine.h"
 
 namespace rrr {
-
-typedef boost::coroutines::coroutine<void()> coro_t;
 
 class Event;
 class Coroutine;
 class CoroScheduler {
  public:
-  static CoroScheduler* CurrentScheduler();
-  std::list<Event*> ready_events_{};
-  std::list<Coroutine*> new_coros_{};
+  static std::shared_ptr<CoroScheduler> CurrentScheduler();
+  std::list<boost::optional<Event&>> ready_events_{};
+  std::set<std::shared_ptr<Coroutine>> active_coros_{};
+//  std::set<std::shared_ptr<Coroutine>> idle_coros_{};
 
-  void AddReadyEvent(Event *ev);
-  Coroutine* GetCoroutine(const std::function<void()>& func);
-  void ReturnCoroutine(Coroutine* coro);
+  /**
+   *
+   * @param ev. is usually allocated on coroutine stack. memory managed by user.
+   */
+  void AddReadyEvent(Event& ev);
+  std::shared_ptr<Coroutine> CreateRunCoroutine(const std::function<void()> &func);
   void Loop(bool infinite = false);
+  void RunCoro(std::shared_ptr<Coroutine> sp_coro);
 };
 
 } // namespace rrr
