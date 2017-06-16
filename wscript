@@ -9,10 +9,12 @@ from waflib import Logs
 from waflib import Options
 
 pargs = ['--cflags', '--libs']
-BOOST_LIBS = 'BOOST_SYSTEM BOOST_FILESYSTEM BOOST_THREAD BOOST_COROUTINE'
+#BOOST_LIBS = 'BOOST_SYSTEM BOOST_FILESYSTEM BOOST_THREAD BOOST_COROUTINE'
 
 def options(opt):
     opt.load("compiler_cxx unittest_gtest")
+    opt.load(['boost'],
+             tooldir=['.waf-tools'])
     opt.add_option('-g', '--use-gxx', dest='cxx',
                    default=False, action='store_true')
     opt.add_option('-c', '--use-clang', dest='clang',
@@ -61,7 +63,7 @@ def configure(conf):
     conf.env.append_value("CXXFLAGS", "-Wno-unused-function")
     conf.env.append_value("CXXFLAGS", "-Wno-unused-variable")
     conf.env.append_value("CXXFLAGS", "-Wno-sign-compare")
-    conf.check_boost(lib='system filesystem coroutines2')
+    conf.check_boost(lib='system filesystem coroutine')
 
     conf.env.append_value("CXXFLAGS", "-Wno-sign-compare")
     conf.env.append_value('INCLUDES', ['/usr/local/include'])
@@ -110,7 +112,7 @@ def build(bld):
                                        "rrr/coroutine/*.cc"),
               target="rrr",
               includes=". rrr",
-              uselib=BOOST_LIBS,
+              uselib="BOOST",
               use="PTHREAD")
 
 #    bld.stlib(source=bld.path.ant_glob("rpc/*.cc"), target="simplerpc",
@@ -157,7 +159,7 @@ def build(bld):
                                          "bench/*/*.cc"),
                 target="deptran_server",
                 includes=". rrr deptran ",
-                uselib="YAML-CPP " + BOOST_LIBS,
+                uselib="YAML-CPP BOOST",
                 use="rrr memdb PTHREAD PROFILER RT")
 
 #    bld.program(source=bld.path.ant_glob("deptran/c_main.cc"),
