@@ -7,7 +7,7 @@
 
 namespace rrr {
 
-thread_local Scheduler coro_sched_{};
+thread_local CoroScheduler coro_sched_{};
 thread_local Coroutine* curr_coro_{nullptr};
 
 Coroutine* Coroutine::CurrentCoroutine() {
@@ -16,7 +16,7 @@ Coroutine* Coroutine::CurrentCoroutine() {
 }
 
 void Coroutine::Create(const std::function<void()>& func) {
-  auto sched = Scheduler::CurrentScheduler();
+  auto sched = CoroScheduler::CurrentScheduler();
   auto coro = sched->GetCoroutine(func);
   // TODO
 //  coro->Run(func);
@@ -25,24 +25,24 @@ void Coroutine::Create(const std::function<void()>& func) {
   sched->ReturnCoroutine(coro);
 }
 
-Scheduler* Scheduler::CurrentScheduler() {
+CoroScheduler* CoroScheduler::CurrentScheduler() {
   return &coro_sched_;
 }
 
-void Scheduler::AddReadyEvent(Event *ev) {
+void CoroScheduler::AddReadyEvent(Event *ev) {
   ready_events_.push_back(ev);
 }
 
-Coroutine* Scheduler::GetCoroutine(const std::function<void()>& func) {
+Coroutine* CoroScheduler::GetCoroutine(const std::function<void()>& func) {
   Coroutine* c = new Coroutine(func);
   return c;
 }
 
-void Scheduler::ReturnCoroutine(Coroutine* coro) {
+void CoroScheduler::ReturnCoroutine(Coroutine* coro) {
   delete coro;
 }
 
-void Scheduler::Loop(bool infinite) {
+void CoroScheduler::Loop(bool infinite) {
 
   do {
     while (ready_events_.size() > 0) {

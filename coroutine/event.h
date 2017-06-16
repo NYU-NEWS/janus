@@ -5,13 +5,13 @@
 
 namespace rrr {
 
-class Scheduler;
+class CoroScheduler;
 class Coroutine;
 class Event {
  public:
   enum EventStatus {INIT=0, WAIT=1, READY=2, TRIGGERED=3};
   EventStatus status_{INIT};
-  Scheduler* sched_{nullptr};
+  CoroScheduler* sched_{nullptr};
   Coroutine* coro_{nullptr};
   Event(Coroutine* coro=nullptr) {
     if (coro == nullptr) {
@@ -30,9 +30,11 @@ class Event {
 class IntEvent : public Event {
  public:
   int value_{0};
-  int target_{0};
+  int target_{1};
 
 //  IntEvent() = delete;
+  IntEvent() = default;
+
   IntEvent(int n, int t) : value_(n), target_(t) {
 
   }

@@ -6,7 +6,7 @@
 namespace rrr {
 
 Coroutine::Coroutine(const std::function<void()>& func) : func_(func) {
-  sched_ = Scheduler::CurrentScheduler();
+  sched_ = CoroScheduler::CurrentScheduler();
 //  auto func = [] (boost_coro_yield_t& yield) -> void {yield();};
 //  boost_coro_task_t task(func);
 //  task();

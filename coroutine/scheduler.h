@@ -7,9 +7,9 @@ typedef boost::coroutines::coroutine<void()> coro_t;
 
 class Event;
 class Coroutine;
-class Scheduler {
+class CoroScheduler {
  public:
-  static Scheduler* CurrentScheduler();
+  static CoroScheduler* CurrentScheduler();
   std::list<Event*> ready_events_{};
   std::list<Coroutine*> new_coros_{};
 
