@@ -55,11 +55,11 @@ void ClassicServiceImpl::Dispatch(const vector<SimpleCommand>& cmd,
 
 //  output->resize(output_size);
   // find stored procedure, and run it
-  Coroutine::Create([&]() {
+  Coroutine::CreateRun([&]() {
     *res = SUCCESS;
     verify(cmd.size() > 0);
-    for (auto& c: cmd) {
-      dtxn_sched()->OnDispatch(const_cast<TxnPieceData&>(c), *output);
+    for (auto &c: cmd) {
+      dtxn_sched()->OnDispatch(const_cast<TxnPieceData &>(c), *output);
     }
     defer->reply();
   });
@@ -129,7 +129,7 @@ void ClassicServiceImpl::TruncateEpoch(const uint32_t& old_epoch,
     dtxn_sched()->OnTruncateEpoch(old_epoch);
     defer->reply();
   };
-  Coroutine::Create(func);
+  Coroutine::CreateRun(func);
 }
 
 void ClassicServiceImpl::TapirAccept(const cmdid_t& cmd_id,
