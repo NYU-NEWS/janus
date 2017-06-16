@@ -35,7 +35,7 @@ ClassicServiceImpl::ClassicServiceImpl(Scheduler *sched,
 }
 
 void ClassicServiceImpl::Dispatch(const vector<SimpleCommand>& cmd,
-                                  rrr::i32 *res,
+                                  int32_t *res,
                                   TxnOutput* output,
                                   rrr::DeferredReply *defer) {
   std::lock_guard<std::mutex> guard(mtx_);
@@ -55,12 +55,14 @@ void ClassicServiceImpl::Dispatch(const vector<SimpleCommand>& cmd,
 
 //  output->resize(output_size);
   // find stored procedure, and run it
-  *res = SUCCESS;
-  verify(cmd.size() > 0);
-  dtxn_sched()->OnDispatch(cmd,
-                           res,
-                           output,
-                           [defer] () {defer->reply();});
+  Coroutine::Create([&]() {
+    *res = SUCCESS;
+    verify(cmd.size() > 0);
+    for (auto& c: cmd) {
+      dtxn_sched()->OnDispatch(const_cast<TxnPieceData&>(c), *output);
+    }
+    defer->reply();
+  });
 }
 
 void ClassicServiceImpl::Prepare(const rrr::i64 &tid,

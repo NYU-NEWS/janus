@@ -1,7 +1,6 @@
 [requires]
 Boost/1.60.0@lasote/stable
 yaml-cpp/0.5.3@moonforged/stable
-gperftools/2.5@lasote/stable
 
 [generators]
 cmake

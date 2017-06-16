@@ -27,10 +27,11 @@ class ClassicServiceImpl: public ClassicService {
   std::mutex mtx_;
   Recorder *recorder_ = NULL;
   ServerControlServiceImpl *scsi_; // for statistics;
+
   Scheduler *dtxn_sched_;
 
-  ClassicSched* dtxn_sched() {
-    return (ClassicSched*)dtxn_sched_;
+  Scheduler* dtxn_sched() {
+    return dtxn_sched_;
   }
 
   void rpc_null(DeferredReply *defer);

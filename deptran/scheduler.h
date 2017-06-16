@@ -4,9 +4,11 @@
 #include "command.h"
 #include "epochs.h"
 #include "kvdb.h"
-namespace rococo {
+#include "procedure.h"
+#include "dtxn.h"
 
-class DTxn;
+namespace janus {
+
 class TxnRegistry;
 class Executor;
 class Coordinator;
@@ -86,6 +88,16 @@ class Scheduler {
   virtual void SetPartitionId(parid_t par_id) {
     partition_id_ = par_id;
   }
+
+  // runs in a coroutine.
+  virtual void OnDispatch(TxnPieceData& piece_data,
+                          TxnOutput& ret_output);
+
+  virtual bool HandleConflicts(DTxn& dtxn,
+                               innid_t inn_id,
+                               vector<string>& conflicts) = 0;
+  virtual void Execute(TxnBox& txn_box,
+                       innid_t inn_id);
 
   Coordinator*CreateRepCoord();
   virtual DTxn *GetDTxn(txnid_t tid);

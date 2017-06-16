@@ -1,5 +1,6 @@
 #include "constants.h"
 #include "sharding.h"
+#include "scheduler.h"
 
 // for tpca benchmark
 #include "bench/tpca/workload.h"
@@ -24,7 +25,8 @@
 #include "bench/micro/workload.h"
 #include "bench/micro/procedure.h"
 
-namespace rococo {
+namespace janus {
+
 Sharding::Sharding() { }
 
 Sharding::Sharding(const Sharding &sharding)

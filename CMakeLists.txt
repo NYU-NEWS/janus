@@ -13,12 +13,10 @@ endif()
 
 conan_basic_setup()
 
-# TODO remove rt
-if(NOT APPLE)
-#    target_link_libraries(target_name rt)
-    set(RT, "rt")
-else()
+if(APPLE)
     set(RT, "")
+else()
+    set(RT, "rt")
 endif()
 
 set(CMAKE_VERBOSE_MAKEFILE on)

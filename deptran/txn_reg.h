@@ -63,6 +63,10 @@ class TxnPieceDef {
   set<int32_t> input_vars_{};
   set<int32_t> output_vars_{};
   vector<conf_id_t> conflicts_{};
+  vector<string> conflicts_str() {
+    // TODO
+    return {};
+  };
 };
 
 /**

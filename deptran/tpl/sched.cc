@@ -15,7 +15,7 @@
 #include "exec.h"
 #include "tpl.h"
 
-namespace rococo {
+namespace janus {
 
 TPLSched::TPLSched() : ClassicSched() {
   mdb_txn_mgr_ = new mdb::TxnMgr2PL();

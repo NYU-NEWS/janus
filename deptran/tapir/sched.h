@@ -25,6 +25,13 @@ class TapirSched : public ClassicSched {
   int OnDecide(cmdid_t cmd_id,
                int32_t decision,
                const function<void()>& callback);
+
+  virtual bool HandleConflicts(DTxn& dtxn,
+                               innid_t inn_id,
+                               vector<string>& conflicts) {
+    verify(0);
+  };
+
 };
 
 } // namespace rococo

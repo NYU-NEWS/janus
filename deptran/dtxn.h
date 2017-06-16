@@ -14,8 +14,8 @@
 #include "ro6/ro6_row.h"
 #include "multi_value.h"
 #include "txn_reg.h"
-#include "deptran/scheduler.h"
-namespace rococo {
+
+namespace janus {
 
 using mdb::Row;
 using mdb::Table;
@@ -52,6 +52,12 @@ struct entry_t {
 
 class Scheduler;
 
+/**
+ * This is the data structure storing information used by
+ * concurrency control; it does not store the transaction
+ * (stored procedure) logic.
+ * // maybe rename to "control unit", or "txn box"?
+ */
 class DTxn {
  public:
   txnid_t tid_;
@@ -69,6 +75,7 @@ class DTxn {
   bool committed_{false};
   bool aborted_{false};
 
+  map<innid_t, std::unique_ptr<IntEvent>> paused_pieces_{};
   map<int64_t, mdb::Row*> context_row_;
   map<int64_t, Value> context_value_;
   map<int64_t, mdb::ResultSet> context_rs_;
@@ -130,5 +137,7 @@ class DTxn {
 
   virtual ~DTxn();
 };
+
+typedef DTxn TxnBox;
 
 } // namespace rococo

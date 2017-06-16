@@ -1,6 +1,7 @@
 #include "sharding.h"
 #include "workload.h"
 #include "deptran/frame.h"
+#include "deptran/scheduler.h"
 
 namespace rococo {
 

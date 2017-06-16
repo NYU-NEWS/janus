@@ -38,6 +38,7 @@ mdb::Txn* OCCSched::get_mdb_txn(const i64 tid) {
   verify(txn->rtti() == mdb::symbol_t::TXN_OCC);
   verify(txn != nullptr);
   return txn;
+
 }
 
 } // namespace rococo

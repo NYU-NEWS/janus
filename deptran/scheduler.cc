@@ -244,6 +244,53 @@ Scheduler::~Scheduler() {
   mdb_txn_mgr_ = NULL;
 }
 
+void Scheduler::OnDispatch(TxnPieceData& piece_data,
+                           TxnOutput& ret_output) {
+  TxnBox& txn_box = *GetOrCreateDTxn(piece_data.root_id_);
+  verify(partition_id_ == piece_data.partition_id_);
+  TxnPieceDef& piece_def = txn_reg_->get(piece_data.root_type_,
+                                         piece_data.type_);
+  vector<string> conflicts = piece_def.conflicts_str();
+  bool pause = HandleConflicts(txn_box, piece_data.inn_id(), conflicts);
+  if (pause) {
+    auto& up_pause = txn_box.paused_pieces_[piece_data.inn_id()];
+    verify(!up_pause);
+    up_pause.reset(new IntEvent(0, 1));
+    up_pause->Wait();
+  }
+
+  // TODO do this in a coroutine?
+  // wait for an execution signal.
+  int ret_code;
+  piece_def.proc_handler_(nullptr,
+                          &txn_box,
+                          const_cast<TxnPieceData&>(piece_data),
+                          &ret_code,
+                          ret_output[piece_data.inn_id()]);
+}
+
+/**
+ *
+ * @param txn_box
+ * @param inn_id, if 0, execute all pieces.
+ */
+void Scheduler::Execute(TxnBox& txn_box,
+                        innid_t inn_id) {
+  if (inn_id == 0) {
+    for (auto& pair : txn_box.paused_pieces_) {
+      auto& up_pause = pair.second;
+      verify(up_pause);
+      up_pause->set(1);
+    }
+    txn_box.paused_pieces_.clear();
+  } else {
+    auto& up_pause = txn_box.paused_pieces_[inn_id];
+    verify(up_pause);
+    up_pause->set(1);
+    txn_box.paused_pieces_.erase(inn_id);
+  }
+}
+
 void Scheduler::reg_table(const std::string &name,
                           mdb::Table *tbl) {
   verify(mdb_txn_mgr_ != NULL);

@@ -366,7 +366,8 @@ Scheduler* Frame::CreateScheduler() {
       verify(0);
       break;
     default:
-      sch = new Scheduler(mode);
+      verify(0);
+//      sch = new CustomSched();
   }
   verify(sch);
   sch->frame_ = this;

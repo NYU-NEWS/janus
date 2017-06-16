@@ -82,6 +82,13 @@ class RccSched : public Scheduler, public RccGraph {
                         RccGraph *graph,
                         const function<void()> &callback);
 
+  virtual bool HandleConflicts(DTxn& dtxn,
+                               innid_t inn_id,
+                               vector<string>& conflicts) {
+    verify(0);
+  };
+
+
 //  void to_decide(Vertex<TxnInfo> *v,
 //                 rrr::DeferredReply *defer);
 //  DTxn* CreateDTxn(txnid_t tid, bool ro) override {

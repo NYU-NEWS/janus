@@ -3,17 +3,16 @@
 //
 #pragma once
 #include <memory>
-#include "deptran/scheduler.h"
-#include "deptran/executor.h"
-#include "deptran/procedure.h"
+#include "../dtxn.h"
+#include "../scheduler.h"
+#include "../executor.h"
+#include "../procedure.h"
 #include "communicator.h"
 #include "option.h"
 
+using namespace janus;
+
 namespace mdcc {
-  using rococo::Scheduler;
-  using rococo::Executor;
-  using rococo::Procedure;
-  using rococo::SimpleCommand;
 
   class TxnOptionResult {
   protected:
@@ -158,5 +157,12 @@ namespace mdcc {
     void Phase2bFast(Ballot ballot, const OptionSet &option_set);
 
     vector<OptionSet> ComputeLearned(const unique_ptr<TxnOptionResult>& option_results);
+
+    virtual bool HandleConflicts(DTxn& dtxn,
+                                 innid_t inn_id,
+                                 vector<string>& conflicts) {
+      verify(0);
+    };
+
   };
 }
