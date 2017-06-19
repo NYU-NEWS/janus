@@ -14,9 +14,9 @@ endif()
 conan_basic_setup()
 
 if(APPLE)
-    set(RT, "")
+    set(RT "")
 else()
-    set(RT, "rt")
+    set(RT "rt")
 endif()
 
 set(CMAKE_VERBOSE_MAKEFILE on)
