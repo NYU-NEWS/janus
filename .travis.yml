@@ -37,7 +37,7 @@ script:
       #    - conan remote add conan-center https://conan.bintray.com
       #    - conan remote add conan-transit https://conan-transit.bintray.com
     - conan install .. --build=missing
-    - cmake .. 
+    - cmake ..
     - make -j 2
-      cd ..
+    - cd ..
 
