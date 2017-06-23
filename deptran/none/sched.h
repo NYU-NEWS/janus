@@ -11,6 +11,7 @@ class NoneSched: public Scheduler {
                                innid_t inn_id,
                                vector<string>& conflicts) {
     // do nothing for none.
+    return false;
   };
 
 };

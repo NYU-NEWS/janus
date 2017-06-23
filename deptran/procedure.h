@@ -45,7 +45,9 @@ class TxnWorkspace {
   }
 
   Value& at(int32_t k) {
-    return (*values_).at(k);
+    auto it = values_->find(k);
+    verify(it != values_->end());
+    return it->second;
   }
 
   size_t size() const {

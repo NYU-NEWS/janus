@@ -55,14 +55,16 @@ void ClassicServiceImpl::Dispatch(const vector<SimpleCommand>& cmd,
 
 //  output->resize(output_size);
   // find stored procedure, and run it
-  Coroutine::CreateRun([&]() {
+  const auto& func = [&]() {
     *res = SUCCESS;
     verify(cmd.size() > 0);
     for (auto &c: cmd) {
       dtxn_sched()->OnDispatch(const_cast<TxnPieceData &>(c), *output);
     }
     defer->reply();
-  });
+  };
+//  Coroutine::CreateRun(func);
+  func();
 }
 
 void ClassicServiceImpl::Prepare(const rrr::i64 &tid,

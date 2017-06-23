@@ -12,7 +12,7 @@
 #include "executor.h"
 #include "coordinator.h"
 
-namespace rococo {
+namespace janus {
 
 DTxn* Scheduler::CreateDTxn(epoch_t epoch, txnid_t tid, bool read_only) {
   Log_debug("create tid %ld", tid);
@@ -257,6 +257,7 @@ void Scheduler::OnDispatch(TxnPieceData& piece_data,
     verify(!up_pause);
     up_pause.reset(new IntEvent(0, 1));
     up_pause->Wait();
+    verify(false);
   }
 
   // TODO do this in a coroutine?

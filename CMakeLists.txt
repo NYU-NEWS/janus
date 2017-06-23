@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 2.8.12)
 project(janus)
 
+set (CMAKE_CXX_STANDARD 14)
+
 # run this after clone in the build_cmake directory:
 # conan install --build=missing ..
 
@@ -20,7 +22,7 @@ else()
 endif()
 
 set(CMAKE_VERBOSE_MAKEFILE on)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
