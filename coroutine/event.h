@@ -17,7 +17,11 @@ class Event {
   std::weak_ptr<Coroutine> wp_coro_{};
 
   Event(std::shared_ptr<Coroutine> coro = {}) {
-    wp_coro_ = coro;
+    if (coro) {
+      wp_coro_ = coro;
+    } else {
+      wp_coro_ = Coroutine::CurrentCoroutine();
+    }
   };
 
   virtual void Wait();

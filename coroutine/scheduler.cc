@@ -34,13 +34,17 @@ void CoroScheduler::AddReadyEvent(Event& ev) {
   ready_events_.push_back(e);
 }
 
-std::shared_ptr<Coroutine>
-CoroScheduler::CreateRunCoroutine(const std::function<void()> &func) {
+void CoroScheduler::CreateRunCoroutine(const std::function<void()> &func) {
   std::shared_ptr<Coroutine> sp_coro(new Coroutine(func));
+  verify(!curr_coro_);
+  curr_coro_ = sp_coro;
+  sp_coro->Run();
+  verify(sp_coro->Finished());
   if (!sp_coro->Finished()) {
     active_coros_.insert(sp_coro);
   }
-  return sp_coro;
+  curr_coro_.reset();
+  return;
 }
 
 
@@ -58,12 +62,14 @@ void CoroScheduler::Loop(bool infinite) {
 }
 
 void CoroScheduler::RunCoro(std::shared_ptr<Coroutine> sp_coro) {
+  verify(!curr_coro_);
   curr_coro_ = sp_coro;
   verify(!curr_coro_->Finished());
   curr_coro_->Continue();
   if (curr_coro_->Finished()) {
     active_coros_.erase(curr_coro_);
   }
+  curr_coro_.reset();
 }
 
 } // namespace rrr

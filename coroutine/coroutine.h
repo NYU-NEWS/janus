@@ -1,6 +1,7 @@
 #pragma once
 
-//#define BOOST_COROUTINES_NO_DEPRECATION_WARNING 1
+#define BOOST_COROUTINE_NO_DEPRECATION_WARNING 1
+#define BOOST_COROUTINES_NO_DEPRECATION_WARNING 1
 #include <boost/coroutine/all.hpp>
 #include <boost/optional.hpp>
 
@@ -28,7 +29,7 @@ class Coroutine {
   Coroutine(const std::function<void()>& func);
   ~Coroutine();
   void BoostRunWrapper(boost_coro_yield_t& yield);
-  void Run(const std::function<void()> &func, bool defer = false);
+  void Run();
   void Yield();
   void Continue();
   bool Finished();
