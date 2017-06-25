@@ -260,14 +260,15 @@ void Scheduler::OnDispatch(TxnPieceData& piece_data,
     verify(false);
   }
 
-  // TODO do this in a coroutine?
   // wait for an execution signal.
   int ret_code;
+  piece_data.input.Aggregate(txn_box.ws_);
   piece_def.proc_handler_(nullptr,
                           &txn_box,
                           const_cast<TxnPieceData&>(piece_data),
                           &ret_code,
                           ret_output[piece_data.inn_id()]);
+  txn_box.ws_.insert(ret_output[piece_data.inn_id()]);
 }
 
 /**

@@ -47,7 +47,7 @@ def configure(conf):
     conf.load("boost")
 
     _enable_tcmalloc(conf)
-    _enable_cxx11(conf)
+    _enable_cxx14(conf)
     _enable_debug(conf)
     _enable_profile(conf)
     _enable_rpc_s(conf)
@@ -238,12 +238,12 @@ def _enable_pic(conf):
     conf.env.append_value("CXXFLAGS", "-fPIC")
     conf.env.append_value("LINKFLAGS", "-fPIC")
 
-def _enable_cxx11(conf):
-    Logs.pprint("PINK", "C++11 features enabled")
+def _enable_cxx14(conf):
+    Logs.pprint("PINK", "C++14 features enabled")
     if sys.platform == "darwin":
         conf.env.append_value("CXXFLAGS", "-stdlib=libc++")
         conf.env.append_value("LINKFLAGS", "-stdlib=libc++")
-    conf.env.append_value("CXXFLAGS", "-std=c++11")
+    conf.env.append_value("CXXFLAGS", "-std=c++14")
 
 def _enable_profile(conf):
     if Options.options.prof:

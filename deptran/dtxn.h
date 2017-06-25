@@ -14,6 +14,7 @@
 #include "ro6/ro6_row.h"
 #include "multi_value.h"
 #include "txn_reg.h"
+#include "procedure.h"
 
 namespace janus {
 
@@ -57,6 +58,8 @@ class Scheduler;
  * concurrency control; it does not store the transaction
  * (stored procedure) logic.
  * // maybe rename to "control unit", or "txn box"?
+ * It now contains a workspace for procedure data as a
+ * temporary solution.
  */
 class DTxn {
  public:
@@ -67,6 +70,7 @@ class DTxn {
   mdb::Txn *mdb_txn_ = nullptr;
   Recorder *recorder_ = NULL;
   TxnRegistry *txn_reg_{nullptr};
+  TxnWorkspace ws_{};
 
 #ifdef CHECK_ISO
   map<Row*, map<colid_t, int>> deltas_;
