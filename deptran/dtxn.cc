@@ -123,10 +123,9 @@ mdb::Row* DTxn::CreateRow(const mdb::Schema *schema,
       break;
     case MODE_OCC:
     case MODE_NONE:
+    default:
       r = mdb::VersionedRow::create(schema, row_data);
       break;
-    default:
-      verify(0);
   }
   return r;
 }

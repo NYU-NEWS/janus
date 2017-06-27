@@ -7,6 +7,12 @@
 
 using namespace janus;
 
+//static volatile Frame* externc_frame_s = Frame::RegFrame(MODE_EXTERNC,
+//                                              {"externc", "extern_c"},
+//                                              [] () -> Frame* {
+//                                                return new ExternCFrame();
+//                                              });
+
 Scheduler* ExternCFrame::CreateScheduler() {
   Scheduler* sched = new ExternCScheduler();
   sched->frame_ = this;

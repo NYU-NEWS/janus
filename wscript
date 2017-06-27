@@ -160,13 +160,24 @@ def build(bld):
 #                uselib="BOOST BOOST_SYSTEM BOOST_COROUTINE YAML-CPP",
 #                use="PTHREAD rrr memdb deptran PROFILER RT")
 
-    bld.program(source=bld.path.ant_glob("deptran/*.cc "
-                                         "deptran/*/*.cc "
-                                         "bench/*/*.cc"),
+    bld.stlib(source=bld.path.ant_glob("deptran/*.cc "
+                                       "deptran/*/*.cc "
+                                       "bench/*/*.cc"),
+              target="janus",
+              includes=". rrr deptran ",
+              use="externc rrr memdb PTHREAD PROFILER RT BOOST YAML-CPP")
+
+    bld.program(source="deptran/empty.cc",
                 target="deptran_server",
-                includes=". rrr deptran ",
-                uselib="YAML-CPP BOOST",
-                use="externc rrr memdb PTHREAD PROFILER RT")
+                use="janus")
+
+#    bld.program(source=bld.path.ant_glob("deptran/*.cc "
+#                                         "deptran/*/*.cc "
+#                                         "bench/*/*.cc"),
+#                target="deptran_server",
+#                includes=". rrr deptran ",
+#                uselib="YAML-CPP BOOST",
+#                use="externc rrr memdb PTHREAD PROFILER RT")
 
 #    bld.program(source=bld.path.ant_glob("deptran/c_main.cc"),
 #                target="deptran_client",

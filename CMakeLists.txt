@@ -144,13 +144,19 @@ add_library(RRR
 add_library(MEMDB
     ${MEMDB_SRC})
 
+add_library(JANUS
+        ${DEPTRAN_SRC}
+        ${BENCH_SRC})
+
+#add_executable(JANUS_PROCESS
+#        ${DEPTRAN_SRC}
+#        ${BENCH_SRC)
+
+
+add_dependencies(JANUS gen-rpc)
 
 add_executable(JANUS_PROCESS
-#        deptran/s_main.cc
-        ${DEPTRAN_SRC}
-        ${BENCH_SRC} deptran/extern_c/sched.h deptran/extern_c/frame.h deptran/extern_c/frame.cc deptran/extern_c/sched.cc)
-
-add_dependencies(JANUS_PROCESS gen-rpc)
+        "deptran/empty.cc")
 
 target_link_libraries(
         MEMDB
@@ -159,7 +165,7 @@ target_link_libraries(
         ${RT})
 
 target_link_libraries(
-        JANUS_PROCESS
+        JANUS
         RRR
         MEMDB
         EXTERN_C
@@ -171,4 +177,10 @@ target_link_libraries(
 #    ${APRUTIL_LIBRARIES}
 #    ${PROFILER_LIBRARIES}
 )
+
+target_link_libraries(
+        JANUS_PROCESS
+        JANUS
+)
+
 MESSAGE(${CONAN_LIBS})

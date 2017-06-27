@@ -57,8 +57,10 @@
 #include "deptran/mdcc/services.h"
 #include "deptran/mdcc/MdccDTxn.h"
 
+#include "extern_c/frame.h"
 
-namespace rococo {
+
+namespace janus {
 
 Frame* Frame::RegFrame(int mode,
                        function<Frame*()> frame_init) {
@@ -79,6 +81,9 @@ Frame* Frame::GetFrame(int mode) {
     case MODE_OCC:
       frame = new Frame(mode);
       break;
+    case MODE_EXTERNC:
+      frame = new ExternCFrame();
+      break;
     default:
       auto& mode_to_frame = Frame::ModeToFrame();
       auto it = mode_to_frame.find(mode);
@@ -91,7 +96,9 @@ Frame* Frame::GetFrame(int mode) {
 
 int Frame::Name2Mode(string name) {
   auto &m = Frame::FrameNameToMode();
-  return m.at(name);
+  auto it = m.find(name);
+  verify(it != m.end());
+  return it->second;
 }
 
 Frame* Frame::GetFrame(string name) {
@@ -148,16 +155,15 @@ mdb::Row* Frame::CreateRow(const mdb::Schema *schema,
     case MODE_2PL:
       r = mdb::FineLockedRow::create(schema, row_data);
       break;
-    case MODE_NONE: // FIXME
-    case MODE_MDCC:
-    case MODE_OCC:
-      r = mdb::VersionedRow::create(schema, row_data);
-      break;
     case MODE_RO6:
       r = RO6Row::create(schema, row_data);
       break;
+    case MODE_NONE: // FIXME
+    case MODE_MDCC:
+    case MODE_OCC:
     default:
-      verify(0);
+      r = mdb::VersionedRow::create(schema, row_data);
+      break;
   }
   return r;
 }
@@ -203,18 +209,17 @@ Coordinator* Frame::CreateCoord(cooid_t coo_id,
                          id);
       ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
+    case MODE_MDCC:
+      coo = (Coordinator*)new mdcc::MdccCoordinator(coo_id, id, config, ccsi);
+      break;
     case MODE_NONE:
+    default:
       coo = new NoneCoord(coo_id,
                           benchmark,
                           ccsi,
                           id);
       ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
-    case MODE_MDCC:
-      coo = (Coordinator*)new mdcc::MdccCoordinator(coo_id, id, config, ccsi);
-      break;
-    default:
-      verify(0);
   }
   coo->frame_ = this;
   return coo;
@@ -306,9 +311,6 @@ DTxn* Frame::CreateDTxn(epoch_t epoch, txnid_t tid,
     case MODE_OCC:
       dtxn = new OccDTxn(epoch, tid, mgr);
       break;
-    case MODE_NONE:
-      dtxn = new TPLDTxn(epoch, tid, mgr);
-      break;
     case MODE_RCC:
       dtxn = new RccDTxn(epoch, tid, mgr, ro);
       break;
@@ -317,8 +319,10 @@ DTxn* Frame::CreateDTxn(epoch_t epoch, txnid_t tid,
       break;
     case MODE_MULTI_PAXOS:
       break;
+    case MODE_NONE:
     default:
-      verify(0);
+      dtxn = new TPLDTxn(epoch, tid, mgr);
+      break;
   }
   return dtxn;
 }
@@ -425,10 +429,9 @@ vector<rrr::Service *> Frame::CreateRpcServices(uint32_t site_id,
     case MODE_TAPIR:
     case MODE_JANUS:
     case MODE_RCC:
+    default:
       result.push_back(new ClassicServiceImpl(dtxn_sched, poll_mgr, scsi));
       break;
-    default:
-      verify(0);
   }
   return result;
 }
@@ -446,6 +449,8 @@ map<string, int> &Frame::FrameNameToMode() {
       {"2pl_wd",        MODE_2PL},
       {"2pl_ww",        MODE_2PL},
       {"2pl_wound_die", MODE_2PL},
+      {"externc",       MODE_EXTERNC},
+      {"extern_c",      MODE_EXTERNC},
       {"mdcc",          MODE_MDCC},
       {"multi_paxos",   MODE_MULTI_PAXOS},
       {"epaxos",        MODE_NOT_READY},

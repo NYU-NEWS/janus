@@ -1,0 +1,8 @@
+
+mode:
+  cc: externc # concurrency control
+  ab: externc # atomic broadcast
+  batch: false
+  retry: 0
+  ongoing: 2 # per client
+
