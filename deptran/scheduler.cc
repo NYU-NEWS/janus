@@ -257,7 +257,6 @@ void Scheduler::OnDispatch(TxnPieceData& piece_data,
     verify(!up_pause);
     up_pause.reset(new IntEvent(0, 1));
     up_pause->Wait();
-    verify(false);
   }
 
   // wait for an execution signal.

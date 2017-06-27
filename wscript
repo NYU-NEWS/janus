@@ -12,6 +12,7 @@ pargs = ['--cflags', '--libs']
 #BOOST_LIBS = 'BOOST_SYSTEM BOOST_FILESYSTEM BOOST_THREAD BOOST_COROUTINE'
 
 def options(opt):
+    opt.load("compiler_c")
     opt.load("compiler_cxx unittest_gtest")
     opt.load(['boost'],
              tooldir=['.waf-tools'])
@@ -42,7 +43,7 @@ def options(opt):
 def configure(conf):
     _choose_compiler(conf)
     _enable_pic(conf)
-
+    conf.load("compiler_c")
     conf.load("compiler_cxx unittest_gtest")
     conf.load("boost")
 
@@ -106,6 +107,11 @@ def build(bld):
     _depend("old-test/benchmark_service.h", "old-test/benchmark_service.rpc",
             "bin/rpcgen --cpp old-test/benchmark_service.rpc")
 
+    bld.stlib(source=bld.path.ant_glob("extern_interface/scheduler.c"),
+              target="externc",
+              includes="",
+              use="")
+
     bld.stlib(source=bld.path.ant_glob("rrr/base/*.cpp "
                                        "rrr/misc/*.cpp "
                                        "rrr/rpc/*.cpp "
@@ -160,7 +166,7 @@ def build(bld):
                 target="deptran_server",
                 includes=". rrr deptran ",
                 uselib="YAML-CPP BOOST",
-                use="rrr memdb PTHREAD PROFILER RT")
+                use="externc rrr memdb PTHREAD PROFILER RT")
 
 #    bld.program(source=bld.path.ant_glob("deptran/c_main.cc"),
 #                target="deptran_client",

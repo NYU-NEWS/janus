@@ -2,7 +2,8 @@
 #pragma once
 #include "../rcc/sched.h"
 
-namespace rococo {
+namespace janus {
+
 class RccGraph;
 class JanusCommo;
 class JanusSched : public RccSched {

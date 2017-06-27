@@ -59,6 +59,7 @@ namespace rococo {
 #define MODE_BRQ    (0x10)
 #define MODE_JANUS    (0x10)
 #define MODE_MDCC   (0x12)
+#define MODE_EXTERNC   (0x14)
 #define MODE_RPC_NULL   (64)
 
     // deprecated.

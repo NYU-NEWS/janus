@@ -2,7 +2,7 @@
 
 #include "../frame.h"
 
-namespace rococo {
+namespace janus {
 
 class JanusFrame : public Frame {
  public:

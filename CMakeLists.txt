@@ -13,6 +13,7 @@ else()
     include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake) # Not CLion
 endif()
 
+
 conan_basic_setup()
 
 if(APPLE)
@@ -20,6 +21,16 @@ if(APPLE)
 else()
     set(RT "rt")
 endif()
+
+# for c build
+
+add_library(
+        EXTERN_C
+        extern_interface/scheduler.c
+        extern_interface/scheduler.h
+)
+
+# for cxx build
 
 set(CMAKE_VERBOSE_MAKEFILE on)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
@@ -137,7 +148,7 @@ add_library(MEMDB
 add_executable(JANUS_PROCESS
 #        deptran/s_main.cc
         ${DEPTRAN_SRC}
-        ${BENCH_SRC})
+        ${BENCH_SRC} deptran/extern_c/sched.h deptran/extern_c/frame.h deptran/extern_c/frame.cc deptran/extern_c/sched.cc)
 
 add_dependencies(JANUS_PROCESS gen-rpc)
 
@@ -148,13 +159,14 @@ target_link_libraries(
         ${RT})
 
 target_link_libraries(
-    JANUS_PROCESS
-    RRR
-    MEMDB
-    ${RT}
-    ${CONAN_LIBS}
-    ${CMAKE_THREAD_LIBS_INIT}
-    ${PYTHON2_LIBRARIES}
+        JANUS_PROCESS
+        RRR
+        MEMDB
+        EXTERN_C
+        ${RT}
+        ${CONAN_LIBS}
+        ${CMAKE_THREAD_LIBS_INIT}
+        ${PYTHON2_LIBRARIES}
 #    ${APR_LIBRARIES}
 #    ${APRUTIL_LIBRARIES}
 #    ${PROFILER_LIBRARIES}

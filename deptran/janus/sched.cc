@@ -4,7 +4,7 @@
 #include "commo.h"
 #include "../rcc/dtxn.h"
 
-using namespace rococo;
+using namespace janus;
 
 
 map<txnid_t, RccDTxn*> JanusSched::Aggregate(RccGraph &graph) {
