@@ -134,7 +134,7 @@ def build(bld):
 #              use="simplerpc base PTHREAD")
 
     bld.shlib(features="pyext",
-              source=bld.path.ant_glob("rrr/pylib/simplerpc/*.cc"),
+              source=bld.path.ant_glob("rrr/pylib/simplerpc/*.cpp"),
               target="_pyrpc",
               includes=". rrr rrr/rpc",
               use="rrr simplerpc PYTHON")
