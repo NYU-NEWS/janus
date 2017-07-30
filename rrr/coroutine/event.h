@@ -14,6 +14,7 @@ class Event {
 
   // An event is usually allocated on a coroutine stack, thus it cannot own a
   // shared_ptr to the coroutine it is. There is no shared pointer to the event.
+  // When the stack that contains the event frees, the event frees.
   std::weak_ptr<Coroutine> wp_coro_{};
 
   Event(std::shared_ptr<Coroutine> coro = {}) {
@@ -36,7 +37,7 @@ class IntEvent : public Event {
 //  IntEvent() = delete;
   IntEvent() = default;
 
-  IntEvent(int n, int t) : value_(n), target_(t) {
+  IntEvent(int n, int t) :  Event(), value_(n), target_(t) {
 
   }
 

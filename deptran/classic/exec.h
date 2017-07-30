@@ -35,8 +35,8 @@ class ClassicExecutor: public Executor {
 
   virtual bool Prepare();
 
-  int CommitLaunch(int32_t *res,
-                   const function<void()> &callback);
+//  int CommitLaunch(int32_t *res,
+//                   const function<void()> &callback);
 
   virtual int Commit();
 

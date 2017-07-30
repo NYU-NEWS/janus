@@ -59,12 +59,15 @@ void ClassicServiceImpl::Dispatch(const vector<SimpleCommand>& cmd,
     *res = SUCCESS;
     verify(cmd.size() > 0);
     for (auto &c: cmd) {
-      dtxn_sched()->OnDispatch(const_cast<TxnPieceData &>(c), *output);
+      if (!dtxn_sched()->OnDispatch(const_cast<TxnPieceData &>(c), *output)) {
+        *res = REJECT;
+        break;
+      }
     }
     defer->reply();
   };
-//  Coroutine::CreateRun(func);
-  func();
+  Coroutine::CreateRun(func);
+//  func();
 }
 
 void ClassicServiceImpl::Prepare(const rrr::i64 &tid,
@@ -72,10 +75,13 @@ void ClassicServiceImpl::Prepare(const rrr::i64 &tid,
                                  rrr::i32 *res,
                                  rrr::DeferredReply *defer) {
   std::lock_guard<std::mutex> guard(mtx_);
-  auto sched = (ClassicSched*)dtxn_sched_;
-  sched->OnPrepare(tid, sids, res, [defer] () {defer->reply();});
-//  auto *dtxn = (TPLDTxn *) dtxn_sched_->get(tid);
-//  dtxn->prepare_launch(sids, res, defer);
+  const auto& func = [&]() {
+    auto sched = (ClassicSched*)dtxn_sched_;
+    bool ret = sched->OnPrepare(tid, sids);
+    *res = ret ? SUCCESS : REJECT;
+    defer->reply();
+  };
+  Coroutine::CreateRun(func);
 // TODO move the stat to somewhere else.
 #ifdef PIECE_COUNT
   std::map<piece_count_key_t, uint64_t>::iterator pc_it;
@@ -99,16 +105,27 @@ void ClassicServiceImpl::Commit(const rrr::i64 &tid,
                                 rrr::i32 *res,
                                 rrr::DeferredReply *defer) {
   std::lock_guard<std::mutex> guard(mtx_);
-  auto sched = (ClassicSched*) dtxn_sched_;
-  sched->OnCommit(tid, SUCCESS, res, [defer] () {defer->reply();});
+  const auto& func = [&]() {
+    auto sched = (ClassicSched*) dtxn_sched_;
+    sched->OnCommit(tid, SUCCESS);
+    * res = SUCCESS;
+    defer->reply();
+  };
+  Coroutine::CreateRun(func);
 }
 
 void ClassicServiceImpl::Abort(const rrr::i64 &tid,
                                rrr::i32 *res,
                                rrr::DeferredReply *defer) {
   Log::debug("get abort_txn: tid: %ld", tid);
-  auto sched = (ClassicSched*) dtxn_sched_;
-  sched->OnCommit(tid, REJECT, res, [defer] () {defer->reply();});
+  std::lock_guard<std::mutex> guard(mtx_);
+  const auto& func = [&]() {
+    auto sched = (ClassicSched*) dtxn_sched_;
+    sched->OnCommit(tid, REJECT);
+    * res = SUCCESS;
+    defer->reply();
+  };
+  Coroutine::CreateRun(func);
 }
 
 

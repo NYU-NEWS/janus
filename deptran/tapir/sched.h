@@ -12,10 +12,11 @@ class TapirSched : public ClassicSched {
     epoch_enabled_ = true;
   }
 
+  // TODO rewrite this.
   int OnDispatch(const vector<SimpleCommand> &cmd,
                  int *res,
                  TxnOutput *output,
-                 const function<void()> &callback) override;
+                 const function<void()> &callback);
 
   int OnFastAccept(cmdid_t cmd_id,
                    const vector<SimpleCommand>& txn_cmds,

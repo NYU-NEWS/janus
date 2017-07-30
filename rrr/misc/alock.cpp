@@ -1,9 +1,45 @@
 
 
 #include "alock.hpp"
+#include "coroutine/coroutine.h"
+#include "coroutine/event.h"
 
 
 namespace rrr {
+
+
+uint64_t ALock::Lock(uint64_t owner,
+                     type_t type,
+                     uint64_t priority) {
+
+  IntEvent proceed; // init 0, 1 as ready
+  uint64_t ret_id = 0;
+  std::function<void(uint64_t)> _yes_callback
+      = [&proceed, &ret_id](uint64_t id) {
+        proceed.set(1);
+        ret_id = id;
+        verify(id > 0);
+      };
+  std::function<void()> _no_callback
+      = []() {
+      };
+  std::function<int()> _wound_callback
+      = []() {
+        return 0;
+      };
+  vlock(owner,
+        _yes_callback,
+        _no_callback,
+        type,
+        priority,
+        _wound_callback);
+  proceed.Wait();
+  return ret_id;
+}
+
+void ALock::DisableWound(uint64_t lock_req_id) {
+  // TODO
+}
 
 WaitDieALock::~WaitDieALock() {
     verify(!done_);
@@ -17,11 +53,12 @@ WaitDieALock::~WaitDieALock() {
     requests_.clear();
 }
 
-uint64_t WaitDieALock::vlock(const std::function<void(uint64_t)> &yes_callback,
-        const std::function<void(void)>& no_callback,
-        type_t type,
-        int64_t priority,
-        const std::function<int(void)> &) {
+uint64_t WaitDieALock::vlock(uint64_t owner,
+                             const std::function<void(uint64_t)> &yes_callback,
+                             const std::function<void(void)>& no_callback,
+                             type_t type,
+                             uint64_t priority,
+                             const std::function<int(void)> &) {
     uint64_t id = get_next_id();
     if (done_) {
         no_callback();
@@ -234,11 +271,12 @@ void WoundDieALock::wound_die(type_t type, int64_t priority) {
     }
 }
 
-uint64_t WoundDieALock::vlock(const std::function<void(uint64_t)> &yes_callback,
-        const std::function<void(void)>& no_callback,
-        type_t type,
-        int64_t priority,
-        const std::function<int(void)> &wound_callback) {
+uint64_t WoundDieALock::vlock(uint64_t owner,
+                              const std::function<void(uint64_t)> &yes_callback,
+                              const std::function<void(void)>& no_callback,
+                              type_t type,
+                              uint64_t priority,
+                              const std::function<int(void)> &wound_callback) {
 
     uint64_t id = get_next_id();
 
@@ -380,11 +418,12 @@ void WoundDieALock::abort(uint64_t id) {
     //sanity_check();
 }
 
-uint64_t TimeoutALock::vlock(const std::function<void(uint64_t)>& yes_callback,
-        const std::function<void(void)>& no_callback,
-        type_t type,
-        int64_t,
-        const std::function<int(void)> &) {
+uint64_t TimeoutALock::vlock(uint64_t owner,
+                             const std::function<void(uint64_t)>& yes_callback,
+                             const std::function<void(void)>& no_callback,
+                             type_t type,
+                             uint64_t priority,
+                             const std::function<int(void)>& wound_callback) {
 
 
     //        safe_check();
@@ -617,15 +656,10 @@ TimeoutALock::~TimeoutALock() {
 
 void ALockGroup::lock_all(const std::function<void(void)>& yes_cb,
         const std::function<void(void)>& no_cb) {
-
-
-
-
     verify(cas_status(INIT, WAIT) || cas_status(LOCK, WAIT));
 
     yes_callback_ = yes_cb;
     no_callback_ = no_cb;
-
 
     db_ = new DragonBall(tolock_.size(), [this] () {
             if (this->cas_status(WAIT, LOCK)) {
@@ -665,7 +699,7 @@ void ALockGroup::lock_all(const std::function<void(void)>& yes_cb,
         };
 
         /*auto areq_id = */
-        alock->lock(y_cb, n_cb, type, priority_, _wound_callback);
+//        alock->lock(0, y_cb, n_cb, type, priority_, _wound_callback);
         //            alocks_[alock] = areq_id;
     }
     //        mtx_locks_.unlock();

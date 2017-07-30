@@ -14,6 +14,12 @@ class OCCSched: public ClassicSched {
                                vector<string>& conflicts) {
     verify(0);
   };
+  virtual bool BeforeAccess(TxBox& tx_box, Row* row, int col_id) {
+    Log_fatal("before access not implemented for occ");
+  };
+  virtual bool DoPrepare(txnid_t tx_id) {
+    Log_fatal("doprepare not implemented for occ");
+  };
 };
 
 } // namespace rococo

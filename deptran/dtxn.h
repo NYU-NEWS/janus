@@ -63,6 +63,8 @@ class Scheduler;
  */
 class DTxn {
  public:
+  bool inuse = false;
+
   txnid_t tid_;
   epoch_t epoch_{0};
   Scheduler *sched_;
@@ -71,6 +73,8 @@ class DTxn {
   Recorder *recorder_ = NULL;
   TxnRegistry *txn_reg_{nullptr};
   TxnWorkspace ws_{};
+  // TODO at most one active coroutine runnable for a tx at a time
+  IntEvent running_{};
 
 #ifdef CHECK_ISO
   map<Row*, map<colid_t, int>> deltas_;
@@ -142,6 +146,6 @@ class DTxn {
   virtual ~DTxn();
 };
 
-typedef DTxn TxnBox;
+typedef DTxn TxBox;
 
 } // namespace rococo

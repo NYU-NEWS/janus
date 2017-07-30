@@ -22,7 +22,13 @@ class TPLSched: public ClassicSched {
     verify(0);
   };
 
+  virtual bool BeforeAccess(TxBox& tx_box, Row* row, int col_idx) override;
 
+  virtual bool DoPrepare(txnid_t tx_id) override;
+
+  virtual void DoCommit(TxBox& tx_box) override;
+
+  virtual void DoAbort(TxBox& tx_box) override;
 };
 
 } // namespace rococo

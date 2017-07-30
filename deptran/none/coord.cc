@@ -3,7 +3,7 @@
 #include "frame.h"
 #include "benchmark_control_rpc.h"
 
-namespace rococo {
+namespace janus {
 
 /** thread safe */
 
@@ -25,4 +25,4 @@ void NoneCoord::GotoNextPhase() {
   }
 }
 
-} // namespace rococo
+} // namespace janus

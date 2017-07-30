@@ -2,7 +2,7 @@
 
 #include "../classic/sched.h"
 
-namespace rococo {
+namespace janus {
 
 class NoneSched: public Scheduler {
  using Scheduler::Scheduler;
@@ -16,4 +16,4 @@ class NoneSched: public Scheduler {
 
 };
 
-}
+} // janus

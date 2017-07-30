@@ -32,6 +32,7 @@ class ALock {
   enum type_t { RLOCK, WLOCK };
  private:
   uint64_t next_id_ = 1;
+  uint64_t owner_{0};
 
  protected:
   enum status_t { FREE, WLOCKED, RLOCKED };
@@ -42,10 +43,11 @@ class ALock {
     return next_id_++;
   }
 
-  virtual uint64_t vlock(const std::function<void(uint64_t)> &yes_callback,
+  virtual uint64_t vlock(uint64_t owner,
+                         const std::function<void(uint64_t)> &yes_callback,
                          const std::function<void(void)> &no_callback,
                          type_t type,
-                         int64_t priority, // lower value has higher priority
+                         uint64_t priority, // lower value has higher priority
                          const std::function<int(void)> &wound_callback) = 0;
 
   bool done_;
@@ -57,35 +59,33 @@ class ALock {
       done_(false) {
   }
 
-  virtual uint64_t lock(const std::function<void(uint64_t)> &yes_callback,
+  virtual uint64_t lock(uint64_t owner,
+                        const std::function<void(void)> &yes_callback,
                         const std::function<void(void)> &no_callback,
                         type_t type = WLOCK,
                         int64_t priority = 0, // lower value has higher priority
-                        const std::function<int(void)> &wound_callback
-                        = std::function<int(void)>()) {
-    return vlock(yes_callback,
+                        const std::function<int(void)> &wound_callback = [] ()->int {return 0;}) {
+    std::function<void(uint64_t)> _yes_callback
+        = [yes_callback](uint64_t id) {
+          yes_callback();
+        };
+    return vlock(owner,
+                 _yes_callback,
                  no_callback,
                  type,
                  priority,
                  wound_callback);
   }
 
-  virtual uint64_t lock(const std::function<void(void)> &yes_callback,
-                        const std::function<void(void)> &no_callback,
+  /**
+   *
+   * @return 0 for failed, >0 for a lock id.
+   */
+  virtual uint64_t Lock(uint64_t owner = 0,
                         type_t type = WLOCK,
-                        int64_t priority = 0, // lower value has higher priority
-                        const std::function<int(void)> &wound_callback
-                        = std::function<int(void)>()) {
-    std::function<void(uint64_t)> _yes_callback
-        = [yes_callback](uint64_t id) {
-          yes_callback();
-        };
-    return vlock(_yes_callback,
-                 no_callback,
-                 type,
-                 priority,
-                 wound_callback);
-  }
+                        uint64_t priority = 0);
+
+  virtual void DisableWound(uint64_t req_id);
 
   virtual void abort(uint64_t id) = 0;
 
@@ -192,11 +192,12 @@ class WaitDieALock: public ALock {
     }
   }
 
-  virtual uint64_t vlock(const std::function<void(uint64_t)> &yes_callback,
+  virtual uint64_t vlock(uint64_t owner,
+                         const std::function<void(uint64_t)> &yes_callback,
                          const std::function<void(void)> &no_callback,
                          type_t type,
-                         int64_t priority,
-                         const std::function<int(void)> &);
+                         uint64_t priority,
+                         const std::function<int(void)> &) override;
 
   void sanity_check() {
     bool acquired_check = false;
@@ -391,11 +392,12 @@ class WoundDieALock: public ALock {
     }
   }
 
-  virtual uint64_t vlock(const std::function<void(uint64_t)> &yes_callback,
+  virtual uint64_t vlock(uint64_t owner,
+                         const std::function<void(uint64_t)> &yes_callback,
                          const std::function<void(void)> &no_callback,
                          type_t type,
-                         int64_t priority,
-                         const std::function<int(void)> &wound_callback);
+                         uint64_t priority,
+                         const std::function<int(void)> &wound_callback) override;
 
   void sanity_check() {
     bool acquired_check = false;
@@ -461,11 +463,12 @@ class WoundDieALock: public ALock {
 
 class TimeoutALock: public ALock {
  protected:
-  virtual uint64_t vlock(const std::function<void(uint64_t)> &yes_callback,
+  virtual uint64_t vlock(uint64_t owner,
+                         const std::function<void(uint64_t)> &yes_callback,
                          const std::function<void(void)> &no_callback,
                          type_t type,
-                         int64_t,
-                         const std::function<int(void)> &);
+                         uint64_t priority,
+                         const std::function<int(void)> &) override;
 
  public:
   enum mode_t { TIMEOUT, PROMPT };
@@ -596,7 +599,7 @@ class ALockGroup {
   std::map<ALock *, uint64_t> locked_;
   std::map<ALock *, ALock::type_t> tolock_;
 
-  int64_t priority_;
+  uint64_t priority_;
   std::function<int(void)> wound_callback_;
 
 
@@ -698,4 +701,4 @@ class ALockGroup {
 
 };
 
-} // namespace deptran
+} // namespace rrr

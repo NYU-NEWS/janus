@@ -244,9 +244,9 @@ Scheduler::~Scheduler() {
   mdb_txn_mgr_ = NULL;
 }
 
-void Scheduler::OnDispatch(TxnPieceData& piece_data,
+bool Scheduler::OnDispatch(TxnPieceData& piece_data,
                            TxnOutput& ret_output) {
-  TxnBox& txn_box = *GetOrCreateDTxn(piece_data.root_id_);
+  TxBox& txn_box = *GetOrCreateDTxn(piece_data.root_id_);
   verify(partition_id_ == piece_data.partition_id_);
   TxnPieceDef& piece_def = txn_reg_->get(piece_data.root_type_,
                                          piece_data.type_);
@@ -275,7 +275,7 @@ void Scheduler::OnDispatch(TxnPieceData& piece_data,
  * @param txn_box
  * @param inn_id, if 0, execute all pieces.
  */
-void Scheduler::Execute(TxnBox& txn_box,
+void Scheduler::Execute(TxBox& txn_box,
                         innid_t inn_id) {
   if (inn_id == 0) {
     for (auto& pair : txn_box.paused_pieces_) {

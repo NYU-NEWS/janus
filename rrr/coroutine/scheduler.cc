@@ -39,8 +39,8 @@ void CoroScheduler::CreateRunCoroutine(const std::function<void()> &func) {
   verify(!curr_coro_);
   curr_coro_ = sp_coro;
   sp_coro->Run();
-  verify(sp_coro->Finished());
   if (!sp_coro->Finished()) {
+    // got yielded.
     active_coros_.insert(sp_coro);
   }
   curr_coro_.reset();

@@ -8,7 +8,7 @@
 #include "waitlist_checker.h"
 #include "frame.h"
 
-namespace rococo {
+namespace janus {
 
 map<txnid_t, int32_t> RccSched::__debug_xxx_s{};
 std::recursive_mutex RccSched::__debug_mutex_s{};
@@ -625,4 +625,4 @@ void RccSched::DestroyExecutor(txnid_t txn_id) {
   }
 }
 
-} // namespace rococo
+} // namespace janus

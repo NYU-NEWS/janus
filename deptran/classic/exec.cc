@@ -63,20 +63,20 @@ int ClassicExecutor::Abort() {
   return SUCCESS;
 }
 
-int ClassicExecutor::CommitLaunch(rrr::i32 *res,
-                                  const function<void()> &callback) {
-  *res = this->Commit();
-  if (Config::GetConfig()->do_logging()) {
-    const char commit_tag = 'c';
-    std::string log_s;
-    log_s.resize(sizeof(cmd_id_) + sizeof(commit_tag));
-    memcpy((void *) log_s.data(), (void *) &cmd_id_, sizeof(cmd_id_));
-    memcpy((void *) log_s.data(), (void *) &commit_tag, sizeof(commit_tag));
-    recorder_->submit(log_s);
-  }
-  callback();
-  return 0;
-}
+//int ClassicExecutor::CommitLaunch(rrr::i32 *res,
+//                                  const function<void()> &callback) {
+//  *res = this->Commit();
+//  if (Config::GetConfig()->do_logging()) {
+//    const char commit_tag = 'c';
+//    std::string log_s;
+//    log_s.resize(sizeof(cmd_id_) + sizeof(commit_tag));
+//    memcpy((void *) log_s.data(), (void *) &cmd_id_, sizeof(cmd_id_));
+//    memcpy((void *) log_s.data(), (void *) &commit_tag, sizeof(commit_tag));
+//    recorder_->submit(log_s);
+//  }
+//  callback();
+//  return 0;
+//}
 
 int ClassicExecutor::Commit() {
   verify(0);

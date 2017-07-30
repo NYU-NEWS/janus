@@ -15,101 +15,101 @@ int TplExecutor::OnDispatch(const SimpleCommand &cmd,
                             rrr::i32 *res,
                             map<int32_t, Value> *output,
                             const function<void()> &callback) {
-  verify(mdb_txn()->rtti() == mdb::symbol_t::TXN_2PL);
-  verify(phase_ <= 1);
-  mdb::Txn2PL *txn = (mdb::Txn2PL *) mdb_txn();
-  verify(mdb_txn_ != nullptr);
-  if (wounded_) {
-    // other pieces have already been wounded. so cannot proceed.
-    Log_debug("wounded");
-    *res = REJECT;
-    callback();
-  } else {
-    InitPieceStatus(cmd, callback, output);
-    Log_debug("get txn handler and start reg lock, txn_id: %lx, pie_id: %lx",
-              cmd.root_id_, cmd.id_);
-    TxnPieceDef& p = txn_reg_->get(cmd.root_type_, cmd.type_);
-    map<int32_t, Value> no_use;
-    // pre execute to establish interference.
-    TPLDTxn *dtxn = (TPLDTxn*) dtxn_;
-    dtxn->locks_.clear();
-    dtxn->row_lock_ = nullptr;
-    dtxn->locking_ = true;
-    p.proc_handler_(this,
-                    dtxn_,
-                    const_cast<SimpleCommand&>(cmd),
-                    res,
-                    no_use/*output*/);
-    // try to require all the locks.
-    dtxn->locking_ = false;
-    PieceStatus *ps = get_piece_status(cmd.id_);
-    verify(ps_cache_ == ps);
-    auto succ_callback = std::bind(&TplExecutor::LockSucceeded,
-                                   this, cmd, res, ps);
-    auto fail_callback = std::bind(&TplExecutor::LockFailed,
-                                   this, cmd, res, ps);
-    if (dtxn->locks_.size() > 0) {
-      if (cmd.type_ == 1000) {
-        Log_debug("lock size for tpcc new order piece 1000, %d",
-                 dtxn->locks_.size());
-      }
-      ps->reg_rw_lock(dtxn->locks_, succ_callback, fail_callback);
-    } else if (dtxn->row_lock_ != nullptr) {
-      ps->reg_rm_lock(dtxn->row_lock_, succ_callback, fail_callback);
-    } else {
-      succ_callback();
-    }
-  }
-  return 0;
+//  verify(mdb_txn()->rtti() == mdb::symbol_t::TXN_2PL);
+//  verify(phase_ <= 1);
+//  mdb::Txn2PL *txn = (mdb::Txn2PL *) mdb_txn();
+//  verify(mdb_txn_ != nullptr);
+//  if (wounded_) {
+//    // other pieces have already been wounded. so cannot proceed.
+//    Log_debug("wounded");
+//    *res = REJECT;
+//    callback();
+//  } else {
+//    InitPieceStatus(cmd, callback, output);
+//    Log_debug("get txn handler and start reg lock, txn_id: %lx, pie_id: %lx",
+//              cmd.root_id_, cmd.id_);
+//    TxnPieceDef& p = txn_reg_->get(cmd.root_type_, cmd.type_);
+//    map<int32_t, Value> no_use;
+//    // pre execute to establish interference.
+//    TplTxBox *dtxn = (TplTxBox*) dtxn_;
+//    dtxn->locks_.clear();
+//    dtxn->row_lock_ = nullptr;
+//    dtxn->locking_ = true;
+//    p.proc_handler_(this,
+//                    dtxn_,
+//                    const_cast<SimpleCommand&>(cmd),
+//                    res,
+//                    no_use/*output*/);
+//    // try to require all the locks.
+//    dtxn->locking_ = false;
+//    PieceStatus *ps = get_piece_status(cmd.id_);
+//    verify(ps_cache_ == ps);
+//    auto succ_callback = std::bind(&TplExecutor::LockSucceeded,
+//                                   this, cmd, res, ps);
+//    auto fail_callback = std::bind(&TplExecutor::LockFailed,
+//                                   this, cmd, res, ps);
+//    if (dtxn->locks_.size() > 0) {
+//      if (cmd.type_ == 1000) {
+//        Log_debug("lock size for tpcc new order piece 1000, %d",
+//                 dtxn->locks_.size());
+//      }
+//      ps->reg_rw_lock(dtxn->locks_, succ_callback, fail_callback);
+//    } else if (dtxn->row_lock_ != nullptr) {
+//      ps->reg_rm_lock(dtxn->row_lock_, succ_callback, fail_callback);
+//    } else {
+//      succ_callback();
+//    }
+//  }
+//  return 0;
 }
 
 void TplExecutor::LockSucceeded(const SimpleCommand& cmd,
                                 rrr::i32 *res,
                                 PieceStatus *ps) {
-  Log_debug("lock acquired call back, txn_id: %lx, pie_id: %lx, p_type: %d, ",
-            cmd.root_id_, cmd.id_, cmd.type_);
-  Log_debug("succ 1 callback: PS: %p", ps);
-  verify(ps != NULL);
-  ps->start_yes_callback();
-  TPLDTxn *dtxn = (TPLDTxn*) dtxn_;
-  Log_debug("tid: %lx, pid: %lx, p_type: %d, get lock",
-            cmd.root_id_, cmd.id_, cmd.type_);
-  Log::debug("proceed");
-  dtxn->locking_ = false;
-  if (ps->is_rejected()) {
-    *res = REJECT;
-    ps->remove_output();
-    Log::debug("rejected");
-  } else {
-    std::map <int32_t, mdb::Value> *output;
-    mdb::Value *output_value;
-    rrr::i32 *output_size;
-    ps->get_output(&output, &output_value, &output_size);
-    output->clear();
-    TxnPieceDef& p = txn_reg_->get(cmd.root_type_, cmd.type_);
-    p.proc_handler_(this,
-                    dtxn_,
-                    const_cast<SimpleCommand&>(cmd),
-                    res,
-                    *output);
-    verify(*res == SUCCESS);
-    // ____debug purpose
-    for (auto &kv : *output) {
-      auto &v = kv.second;
-      auto k = v.get_kind();
-      if (k == Value::I32 || k == Value::I64
-          || k == Value::STR || k == Value::DOUBLE) {
-
-      } else {
-        Log_fatal("xxx: %d", cmd.type_);
-        verify(0);
-      }
-    }
-  }
-
-  Log_debug("set finish on tid %ld\n", cmd.root_id_);
-  ps->set_finish();
-  ps->callback_();
+//  Log_debug("lock acquired call back, txn_id: %lx, pie_id: %lx, p_type: %d, ",
+//            cmd.root_id_, cmd.id_, cmd.type_);
+//  Log_debug("succ 1 callback: PS: %p", ps);
+//  verify(ps != NULL);
+//  ps->start_yes_callback();
+//  TplTxBox *dtxn = (TplTxBox*) dtxn_;
+//  Log_debug("tid: %lx, pid: %lx, p_type: %d, get lock",
+//            cmd.root_id_, cmd.id_, cmd.type_);
+//  Log::debug("proceed");
+//  dtxn->locking_ = false;
+//  if (ps->is_rejected()) {
+//    *res = REJECT;
+//    ps->remove_output();
+//    Log::debug("rejected");
+//  } else {
+//    std::map <int32_t, mdb::Value> *output;
+//    mdb::Value *output_value;
+//    rrr::i32 *output_size;
+//    ps->get_output(&output, &output_value, &output_size);
+//    output->clear();
+//    TxnPieceDef& p = txn_reg_->get(cmd.root_type_, cmd.type_);
+//    p.proc_handler_(this,
+//                    dtxn_,
+//                    const_cast<SimpleCommand&>(cmd),
+//                    res,
+//                    *output);
+//    verify(*res == SUCCESS);
+//    // ____debug purpose
+//    for (auto &kv : *output) {
+//      auto &v = kv.second;
+//      auto k = v.get_kind();
+//      if (k == Value::I32 || k == Value::I64
+//          || k == Value::STR || k == Value::DOUBLE) {
+//
+//      } else {
+//        Log_fatal("xxx: %d", cmd.type_);
+//        verify(0);
+//      }
+//    }
+//  }
+//
+//  Log_debug("set finish on tid %ld\n", cmd.root_id_);
+//  ps->set_finish();
+//  ps->callback_();
 }
 
 void TplExecutor::LockFailed(const SimpleCommand& cmd,

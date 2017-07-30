@@ -303,7 +303,7 @@ DTxn* Frame::CreateDTxn(epoch_t epoch, txnid_t tid,
 
   switch (mode_) {
     case MODE_2PL:
-      dtxn = new TPLDTxn(epoch, tid, mgr);
+      dtxn = new TplTxBox(epoch, tid, mgr);
       break;
     case MODE_MDCC:
       dtxn = new mdcc::MdccDTxn(tid, mgr);
@@ -321,7 +321,7 @@ DTxn* Frame::CreateDTxn(epoch_t epoch, txnid_t tid,
       break;
     case MODE_NONE:
     default:
-      dtxn = new TPLDTxn(epoch, tid, mgr);
+      dtxn = new TplTxBox(epoch, tid, mgr);
       break;
   }
   return dtxn;

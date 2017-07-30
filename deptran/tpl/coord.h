@@ -2,10 +2,10 @@
 
 #include "../classic/coord.h"
 
-namespace rococo {
+namespace janus {
 
 class TPLCoord: public ClassicCoord {
   using ClassicCoord::ClassicCoord;
 };
 
-} // namespace rococo
+} // namespace janus

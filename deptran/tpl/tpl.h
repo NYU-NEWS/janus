@@ -2,40 +2,17 @@
 
 #include "dtxn.h"
 
-namespace rococo {
+namespace janus {
 
-class PieceStatus;
-class TPLDTxn: public DTxn {
+using rrr::ALockGroup;
+
+class TplTxBox: public TxBox {
  public:
-  vector<mdb::column_lock_t> locks_ = {};
-  mdb::Row* row_lock_ = nullptr;
-  // true for requiring locks only. false for real execution.
-  bool locking_ = false;
+  vector<std::pair<ALock*, uint64_t>> locked_locks_ = {};
+  bool prepared_{false};
+  bool wounded_{false};
 
-  TPLDTxn(epoch_t epoch, txnid_t tid, Scheduler *);
-
-
-  virtual bool ReadColumn(mdb::Row *row,
-                          mdb::colid_t col_id,
-                          Value *value,
-                          int hint_flag = TXN_SAFE);
-
-  virtual bool ReadColumns(Row *row,
-                           const std::vector<colid_t> &col_ids,
-                           std::vector<Value> *values,
-                           int hint_flag = TXN_SAFE);
-
-  virtual bool WriteColumn(Row *row,
-                           colid_t col_id,
-                           const Value &value,
-                           int hint_flag = TXN_SAFE);
-
-  virtual bool WriteColumns(Row *row,
-                            const std::vector<colid_t> &col_ids,
-                            const std::vector<Value> &values,
-                            int hint_flag = TXN_SAFE);
-
-  virtual bool InsertRow(Table *tbl, Row *row);
+  TplTxBox(epoch_t epoch, txnid_t tid, Scheduler *);
 };
 
-} // namespace rococo
+} // namespace janus

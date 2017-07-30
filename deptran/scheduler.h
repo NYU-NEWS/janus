@@ -90,13 +90,18 @@ class Scheduler {
   }
 
   // runs in a coroutine.
-  virtual void OnDispatch(TxnPieceData& piece_data,
+  virtual bool OnDispatch(TxnPieceData& piece_data,
                           TxnOutput& ret_output);
 
   virtual bool HandleConflicts(DTxn& dtxn,
                                innid_t inn_id,
                                vector<string>& conflicts) = 0;
-  virtual void Execute(TxnBox& txn_box,
+  virtual bool HandleConflicts(DTxn& dtxn,
+                               innid_t inn_id,
+                               vector<conf_id_t>& conflicts) {
+    Log_fatal("unimplemnted feature: handle conflicts!");
+  };
+  virtual void Execute(TxBox& txn_box,
                        innid_t inn_id);
 
   Coordinator*CreateRepCoord();
@@ -154,4 +159,4 @@ class Scheduler {
 };
 
 
-} // namespace rococo
+} // namespace janus

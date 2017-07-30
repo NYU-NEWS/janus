@@ -130,9 +130,9 @@ txn_reg_->regs_[txn][pie].sharder_ \
 
 
 //std::vector<mdb::column_lock_t>(__VA_ARGS__),
-//verify(((TPLDTxn*)dtxn)->locking_ == (output_size == nullptr));
+//verify(((TplTxBox*)dtxn)->locking_ == (output_size == nullptr));
 //#define TPL_KISS(...) \
-//  if (IS_MODE_2PL && ((TPLDTxn*)dtxn)->locking_) { \
+//  if (IS_MODE_2PL && ((TplTxBox*)dtxn)->locking_) { \
 //    PieceStatus *ps \
 //        = ((TPLExecutor*)exec)->get_piece_status(header.pid); \
 //    std::function<void(void)> succ_callback = \
@@ -145,7 +145,7 @@ txn_reg_->regs_[txn][pie].sharder_ \
 //    return; \
 //  }
 //#define TPL_KISS_ROW(r) \
-//  if (IS_MODE_2PL && ((TPLDTxn*)dtxn)->locking_) { \
+//  if (IS_MODE_2PL && ((TplTxBox*)dtxn)->locking_) { \
 //    PieceStatus *ps = ((TPLExecutor*)exec)->get_piece_status(header.pid); \
 //    std::function<void(void)> succ_callback = \
 //      ((TPLExecutor*) exec)->get_2pl_succ_callback( \
@@ -158,7 +158,7 @@ txn_reg_->regs_[txn][pie].sharder_ \
 //}
 
 //#define TPL_KISS_NONE \
-//  if (IS_MODE_2PL && ((TPLDTxn*)dtxn)->locking_) { \
+//  if (IS_MODE_2PL && ((TplTxBox*)dtxn)->locking_) { \
 //    PieceStatus *ps = ((TPLExecutor*)exec)->get_piece_status(header.pid); \
 //    ((TPLExecutor*)exec)->get_2pl_succ_callback(header, input, res, ps)(); \
 //    return; \
@@ -168,8 +168,8 @@ txn_reg_->regs_[txn][pie].sharder_ \
 #define TPL_KISS_NONE (0)
 #define TPL_KISS_ROW  (0)
 //#define TPL_KISS_ROW(r) \
-//  if (IS_MODE_2PL && ((TPLDTxn*)dtxn)->locking_) { \
-//    ((TPLDTxn*)dtxn)->row_lock_ = r; \
+//  if (IS_MODE_2PL && ((TplTxBox*)dtxn)->locking_) { \
+//    ((TplTxBox*)dtxn)->row_lock_ = r; \
 //    return; \
 //}
 

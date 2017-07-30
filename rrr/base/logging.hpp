@@ -1,12 +1,15 @@
 #pragma once
 
+#include <string.h>
 #include "threading.hpp"
 
-#define Log_debug(msg, ...) ::rrr::Log::debug(__LINE__, __FILE__, msg, ## __VA_ARGS__)
-#define Log_info(msg, ...) ::rrr::Log::info(__LINE__, __FILE__, msg, ## __VA_ARGS__)
-#define Log_warn(msg, ...) ::rrr::Log::warn(__LINE__, __FILE__, msg, ## __VA_ARGS__)
-#define Log_error(msg, ...) ::rrr::Log::error(__LINE__, __FILE__, msg, ## __VA_ARGS__)
-#define Log_fatal(msg, ...) ::rrr::Log::fatal(__LINE__, __FILE__, msg, ## __VA_ARGS__)
+#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+
+#define Log_debug(msg, ...) ::rrr::Log::debug(__LINE__, __FILENAME__, msg, ## __VA_ARGS__)
+#define Log_info(msg, ...) ::rrr::Log::info(__LINE__, __FILENAME__, msg, ## __VA_ARGS__)
+#define Log_warn(msg, ...) ::rrr::Log::warn(__LINE__, __FILENAME__, msg, ## __VA_ARGS__)
+#define Log_error(msg, ...) ::rrr::Log::error(__LINE__, __FILENAME__, msg, ## __VA_ARGS__)
+#define Log_fatal(msg, ...) ::rrr::Log::fatal(__LINE__, __FILENAME__, msg, ## __VA_ARGS__)
 
 namespace rrr {
 
