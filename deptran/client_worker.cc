@@ -55,6 +55,7 @@ void ClientWorker::RequestDone(Coordinator* coo, TxnReply &txn_reply) {
   num_try.fetch_add(txn_reply.n_try_);
 
   bool have_more_time = timer_->elapsed() < duration;
+  Log_debug("received callback from tx_id %" PRIx64, txn_reply.tx_id_);
 
   Log_debug("elapsed: %2.2f; duration: %d", timer_->elapsed(), duration);
   if (have_more_time && config_->client_type_ == Config::Open) {
@@ -73,8 +74,17 @@ void ClientWorker::RequestDone(Coordinator* coo, TxnReply &txn_reply) {
       finish_cond.signal();
     } else {
       Log_debug("waiting for %d more coordinators to finish", n_concurrent_);
+      Log_debug("transactions they are processing:");
+      // for debug purpose, print ongoing transaction ids.
+      for (auto c : created_coordinators_) {
+        if (c->ongoing_tx_id_ > 0) {
+          Log_debug("\t %" PRIx64, c->ongoing_tx_id_);
+        }
+      }
     }
     finish_mutex.unlock();
+  } else {
+    verify(0);
   }
 }
 

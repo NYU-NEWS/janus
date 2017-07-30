@@ -51,6 +51,7 @@ class Coordinator : public CoordinatorBase {
   Communicator* commo_ = nullptr;
   Frame* frame_ = nullptr;
 
+  txnid_t ongoing_tx_id_{0};
   ForwardRequestState forward_status_ = NONE;
 
   // should be reset on issuing a new request

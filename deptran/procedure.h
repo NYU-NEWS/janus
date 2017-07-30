@@ -23,6 +23,7 @@ class TxnReply {
   double time_;
   map<int32_t, Value> output_;
   int32_t txn_type_;
+  txnid_t tx_id_;
 };
 
 class TxnWorkspace {

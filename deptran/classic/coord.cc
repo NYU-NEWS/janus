@@ -58,30 +58,32 @@ void ClassicCoord::ForwardTxnRequestAck(const TxnReply& txn_reply) {
 }
 
 void ClassicCoord::do_one(TxnRequest &req) {
-    std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-    Procedure *cmd = frame_->CreateTxnCommand(req, txn_reg_);
-    verify(txn_reg_ != nullptr);
-    cmd->root_id_ = this->next_txn_id();
-    cmd->id_ = cmd->root_id_;
-    cmd->timestamp_ = GenerateTimestamp();
-    cmd_ = cmd;
-    n_retry_ = 0;
-    Reset(); // In case of reuse.
+  std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+  Procedure *cmd = frame_->CreateTxnCommand(req, txn_reg_);
+  verify(txn_reg_ != nullptr);
+  cmd->root_id_ = this->next_txn_id();
+  cmd->id_ = cmd->root_id_;
+  ongoing_tx_id_ = cmd->id_;
+  Log_debug("assigning tx id: %" PRIx64, ongoing_tx_id_);
+  cmd->timestamp_ = GenerateTimestamp();
+  cmd_ = cmd;
+  n_retry_ = 0;
+  Reset(); // In case of reuse.
 
-    Log_debug("do one request txn_id: %d", cmd_->id_);
-    auto config = Config::GetConfig();
-    bool not_forwarding = forward_status_ != PROCESS_FORWARD_REQUEST;
+  Log_debug("do one request txn_id: %d", cmd_->id_);
+  auto config = Config::GetConfig();
+  bool not_forwarding = forward_status_ != PROCESS_FORWARD_REQUEST;
 
-    if (ccsi_ && not_forwarding) {
-      ccsi_->txn_start_one(thread_id_, cmd->type_);
-    }
-    if (config->forwarding_enabled_ && forward_status_ == FORWARD_TO_LEADER) {
-      Log_info("forward to leader: %d; cooid: %d", forward_status_, this->coo_id_);
-      ForwardTxnRequest(req);
-    } else {
-      Log_info("start txn!!! : %d", forward_status_);
-      GotoNextPhase();
-    }
+  if (ccsi_ && not_forwarding) {
+    ccsi_->txn_start_one(thread_id_, cmd->type_);
+  }
+  if (config->forwarding_enabled_ && forward_status_ == FORWARD_TO_LEADER) {
+    Log_info("forward to leader: %d; cooid: %d", forward_status_, this->coo_id_);
+    ForwardTxnRequest(req);
+  } else {
+    Log_info("start txn!!! : %d", forward_status_);
+    GotoNextPhase();
+  }
 }
 
 void ClassicCoord::GotoNextPhase() {
@@ -142,6 +144,8 @@ void ClassicCoord::Restart() {
   n_retry_++;
   cmd_->root_id_ = this->next_txn_id();
   cmd_->id_ = cmd_->root_id_;
+  ongoing_tx_id_ = cmd_->root_id_;
+  Log_debug("assigning tx_id: %" PRIx64, ongoing_tx_id_);
   Procedure *txn = (Procedure*) cmd_;
   double last_latency = txn->last_attempt_latency();
   if (ccsi_)
@@ -167,6 +171,7 @@ void ClassicCoord::Dispatch() {
   auto n_pd = Config::GetConfig()->n_parallel_dispatch_;
   n_pd = 1;
   auto cmds_by_par = txn->GetReadyCmds(n_pd);
+  Log_debug("Dispatch for tx_id: %" PRIx64, txn->root_id_);
   for (auto& pair: cmds_by_par) {
     const parid_t& par_id = pair.first;
     vector<SimpleCommand*>& cmds = pair.second;
@@ -186,7 +191,7 @@ void ClassicCoord::Dispatch() {
                                     std::placeholders::_1,
                                     std::placeholders::_2));
   }
-  Log_debug("sent %d subcmds\n", cnt);
+  Log_debug("Dispatch cnt: %d for tx_id: %" PRIx64, cnt, txn->root_id_);
 }
 
 bool ClassicCoord::AllDispatchAcked() {
@@ -215,30 +220,31 @@ void ClassicCoord::DispatchAck(phase_t phase,
   n_dispatch_ack_ += outputs.size();
   if (aborted_) {
     if (n_dispatch_ack_ == n_dispatch_) {
-      Log_debug("received all start acks (at least one is REJECT); calling "
-                    "Finish()");
+      // wait until all ongoing dispatch to finish before aborting.
+      Log_debug("received all start acks (at least one is REJECT);"
+                    "tx_id: %" PRIx64, txn->root_id_);
       GotoNextPhase();
       return;
     }
-  } else {
-    for (auto& pair : outputs) {
-      const innid_t& inn_id = pair.first;
-      verify(dispatch_acks_.at(inn_id) == false);
-      dispatch_acks_[inn_id] = true;
-      Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
-                n_dispatch_ack_, n_dispatch_, cmd_->id_, inn_id);
-      txn->Merge(pair.first, pair.second);
-    }
-    if (txn->HasMoreSubCmdReadyNotOut()) {
-      Log_debug("command has more sub-cmd, cmd_id: %llx,"
-                    " n_started_: %d, n_pieces: %d",
-                txn->id_, txn->n_pieces_dispatched_, txn->GetNPieceAll());
-      Dispatch();
-    } else if (AllDispatchAcked()) {
-      Log_debug("receive all start acks, txn_id: %llx; START PREPARE",
-                txn->id_);
-      GotoNextPhase();
-    }
+  }
+
+  for (auto& pair : outputs) {
+    const innid_t& inn_id = pair.first;
+    verify(dispatch_acks_.at(inn_id) == false);
+    dispatch_acks_[inn_id] = true;
+    Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
+              n_dispatch_ack_, n_dispatch_, cmd_->id_, inn_id);
+    txn->Merge(pair.first, pair.second);
+  }
+  if (txn->HasMoreSubCmdReadyNotOut()) {
+    Log_debug("command has more sub-cmd, cmd_id: %llx,"
+                  " n_started_: %d, n_pieces: %d",
+              txn->id_, txn->n_pieces_dispatched_, txn->GetNPieceAll());
+    Dispatch();
+  } else if (AllDispatchAcked()) {
+    Log_debug("receive all start acks, txn_id: %llx; START PREPARE",
+              txn->id_);
+    GotoNextPhase();
   }
 }
 
@@ -298,7 +304,7 @@ void ClassicCoord::Commit() {
   ___TestPhaseThree(cmd_->id_);
   auto mode = Config::GetConfig()->cc_mode_;
   verify(mode == MODE_OCC || mode == MODE_2PL);
-  Log_debug("send out finish request, cmd_id: %lx, %ld",
+  Log_debug("send out finish request, cmd_id: %" PRIx64", %d",
             txn().id_, n_finish_req_);
 
   verify(txn().commit_.load() == committed_);
@@ -307,7 +313,7 @@ void ClassicCoord::Commit() {
     txn().reply_.res_ = SUCCESS;
     for (auto &rp : txn().partition_ids_) {
       n_finish_req_ ++;
-      Log_debug("send commit for txn_id %ld to %ld\n", txn().id_, rp);
+      Log_debug("send commit for txn_id %" PRIx64" to %d", txn().id_, rp);
       commo()->SendCommit(rp,
                          txn().id_,
                           std::bind(&ClassicCoord::CommitAck,
@@ -319,7 +325,7 @@ void ClassicCoord::Commit() {
     txn().reply_.res_ = REJECT;
     for (auto &rp : txn().partition_ids_) {
       n_finish_req_ ++;
-      Log_debug("send abort for txn_id %ld to %ld\n", txn().id_, rp);
+      Log_debug("send abort for txn_id %" PRIx64" to %d", txn().id_, rp);
       commo()->SendAbort(rp,
                         cmd_->id_,
                          std::bind(&ClassicCoord::CommitAck,
@@ -368,9 +374,11 @@ void ClassicCoord::End() {
     txn->reply_.res_ = REJECT;
   } else
     verify(0);
+  txn_reply_buf.tx_id_ = ongoing_tx_id_;
+  Log_debug("call reply for tx_id: %" PRIx64, ongoing_tx_id_);
   txn->callback_(txn_reply_buf);
+  ongoing_tx_id_ = 0;
   delete txn;
-
 }
 
 void ClassicCoord::report(TxnReply &txn_reply,

@@ -30,6 +30,8 @@ bool ClassicSched::OnDispatch(TxnPieceData& piece_data,
     verify(row != nullptr);
     for (auto col_id : c.columns) {
       if (!BeforeAccess(tx_box, row, col_id)) {
+        tx_box.inuse = false;
+        ret_output[piece_data.inn_id()] = {}; // the client use this to identify ack.
         return false; // abort
       }
     }
@@ -116,7 +118,7 @@ int ClassicSched::OnDispatchOld(const vector<SimpleCommand>& cmd,
 //      dispatch the transaction command with paxos instance
 bool ClassicSched::OnPrepare(txnid_t tx_id,
                              const std::vector<i32> &sids) {
-  Log_debug("%s: at site %d", __FUNCTION__, this->site_id_);
+  Log_debug("%s: at site %d, tx: %" PRIx64, __FUNCTION__, this->site_id_, tx_id);
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 //  auto exec = dynamic_cast<ClassicExecutor*>(GetExecutor(cmd_id));
 //  exec->prepare_reply_ = [res, callback] (int r) {*res = r; callback();};
@@ -158,6 +160,7 @@ int ClassicSched::PrepareReplicated(TpcPrepareCommand& prepare_cmd) {
 int ClassicSched::OnCommit(txnid_t tx_id,
                            int commit_or_abort) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
+  Log_debug("%s: at site %d, tx: %" PRIx64, __FUNCTION__, this->site_id_, tx_id);
   TxBox* tx_box = GetOrCreateDTxn(tx_id);
   verify(!tx_box->inuse);
   tx_box->inuse = true;

@@ -55,11 +55,12 @@ void ClassicServiceImpl::Dispatch(const vector<SimpleCommand>& cmd,
 
 //  output->resize(output_size);
   // find stored procedure, and run it
-  const auto& func = [&]() {
+  const auto& func = [defer, &cmd, res, output, this]() {
+    vector<TxnPieceData> vec_piece_data = cmd; // remove this copy.
     *res = SUCCESS;
     verify(cmd.size() > 0);
-    for (auto &c: cmd) {
-      if (!dtxn_sched()->OnDispatch(const_cast<TxnPieceData &>(c), *output)) {
+    for (auto &c: vec_piece_data) {
+      if (!dtxn_sched()->OnDispatch(c, *output)) {
         *res = REJECT;
         break;
       }
@@ -75,7 +76,7 @@ void ClassicServiceImpl::Prepare(const rrr::i64 &tid,
                                  rrr::i32 *res,
                                  rrr::DeferredReply *defer) {
   std::lock_guard<std::mutex> guard(mtx_);
-  const auto& func = [&]() {
+  const auto& func = [res, defer, tid, &sids, this]() {
     auto sched = (ClassicSched*)dtxn_sched_;
     bool ret = sched->OnPrepare(tid, sids);
     *res = ret ? SUCCESS : REJECT;
@@ -105,7 +106,7 @@ void ClassicServiceImpl::Commit(const rrr::i64 &tid,
                                 rrr::i32 *res,
                                 rrr::DeferredReply *defer) {
   std::lock_guard<std::mutex> guard(mtx_);
-  const auto& func = [&]() {
+  const auto& func = [tid, res, defer, this]() {
     auto sched = (ClassicSched*) dtxn_sched_;
     sched->OnCommit(tid, SUCCESS);
     * res = SUCCESS;
@@ -119,7 +120,7 @@ void ClassicServiceImpl::Abort(const rrr::i64 &tid,
                                rrr::DeferredReply *defer) {
   Log::debug("get abort_txn: tid: %ld", tid);
   std::lock_guard<std::mutex> guard(mtx_);
-  const auto& func = [&]() {
+  const auto& func = [tid, res, defer, this]() {
     auto sched = (ClassicSched*) dtxn_sched_;
     sched->OnCommit(tid, REJECT);
     * res = SUCCESS;
