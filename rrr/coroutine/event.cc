@@ -10,13 +10,13 @@ void Event::Wait() {
   if (IsReady()) {
     return;
   } else {
+    status_ = WAIT;
     // for now, only the coroutine where the event was created can wait on the event.
     auto sp_coro = wp_coro_.lock();
     verify(sp_coro);
     verify(sp_coro == Coroutine::CurrentCoroutine());
     sp_coro->Yield();
   }
-  verify(0);
 }
 
 

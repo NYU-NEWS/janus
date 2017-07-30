@@ -42,6 +42,8 @@ void Coroutine::Yield() {
 void Coroutine::Continue() {
   verify(up_boost_coro_task_);
   (*up_boost_coro_task_)();
+  // some events might have been triggered from last coroutine
+  CoroScheduler::CurrentScheduler()->Loop();
 }
 
 bool Coroutine::Finished() {

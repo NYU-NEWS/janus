@@ -131,7 +131,6 @@ file(GLOB BENCH_SRC
 )
 
 file(GLOB DEPTRAN_SRC
-
     "deptran/*.h"
     "deptran/*.cc"
     "deptran/*/*.cc"
@@ -158,6 +157,9 @@ add_dependencies(JANUS gen-rpc)
 add_executable(JANUS_PROCESS
         "deptran/empty.cc")
 
+add_executable(TEST
+        "test/coroutine.cc")
+
 target_link_libraries(
         MEMDB
         RRR
@@ -181,6 +183,13 @@ target_link_libraries(
 target_link_libraries(
         JANUS_PROCESS
         JANUS
+)
+
+target_link_libraries(
+        TEST
+        RRR
+        ${CONAN_LIBS}
+        ${CMAKE_THREAD_LIBS_INIT}
 )
 
 MESSAGE(${CONAN_LIBS})

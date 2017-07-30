@@ -15,10 +15,13 @@ std::shared_ptr<Coroutine> Coroutine::CurrentCoroutine() {
   return curr_coro_;
 }
 
-void Coroutine::CreateRun(const std::function<void()> &func) {
+std::shared_ptr<Coroutine>
+Coroutine::CreateRun(const std::function<void()> &func) {
   auto sched = CoroScheduler::CurrentScheduler();
-  sched->CreateRunCoroutine(func);
+  auto coro = sched->CreateRunCoroutine(func);
+  // some events might be triggered in the last coroutine.
   sched->Loop();
+  return coro;
 }
 
 std::shared_ptr<CoroScheduler>
@@ -34,7 +37,8 @@ void CoroScheduler::AddReadyEvent(Event& ev) {
   ready_events_.push_back(e);
 }
 
-void CoroScheduler::CreateRunCoroutine(const std::function<void()> &func) {
+std::shared_ptr<Coroutine>
+CoroScheduler::CreateRunCoroutine(const std::function<void()> &func) {
   std::shared_ptr<Coroutine> sp_coro(new Coroutine(func));
   verify(!curr_coro_);
   curr_coro_ = sp_coro;
@@ -44,7 +48,7 @@ void CoroScheduler::CreateRunCoroutine(const std::function<void()> &func) {
     active_coros_.insert(sp_coro);
   }
   curr_coro_.reset();
-  return;
+  return sp_coro;
 }
 
 

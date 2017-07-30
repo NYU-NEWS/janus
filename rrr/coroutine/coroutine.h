@@ -15,7 +15,7 @@ class CoroScheduler;
 class Coroutine {
  public:
   static std::shared_ptr<Coroutine> CurrentCoroutine();
-  static void CreateRun(const std::function<void()> &func);
+  static std::shared_ptr<Coroutine> CreateRun(const std::function<void()> &func);
 
   std::weak_ptr<CoroScheduler> sched_{};
   bool finished_{false}; //

@@ -16,12 +16,13 @@ uint64_t ALock::Lock(uint64_t owner,
   uint64_t ret_id = 0;
   std::function<void(uint64_t)> _yes_callback
       = [&proceed, &ret_id](uint64_t id) {
-        proceed.set(1);
         ret_id = id;
         verify(id > 0);
+        proceed.set(1);
       };
   std::function<void()> _no_callback
-      = []() {
+      = [&]() {
+        proceed.set(1);
       };
   std::function<int()> _wound_callback
       = []() {

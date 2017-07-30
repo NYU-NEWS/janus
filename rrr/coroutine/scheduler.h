@@ -18,7 +18,7 @@ class CoroScheduler {
    * @param ev. is usually allocated on coroutine stack. memory managed by user.
    */
   void AddReadyEvent(Event& ev);
-  void CreateRunCoroutine(const std::function<void()> &func);
+  std::shared_ptr<Coroutine> CreateRunCoroutine(const std::function<void()> &func);
   void Loop(bool infinite = false);
   void RunCoro(std::shared_ptr<Coroutine> sp_coro);
 };
