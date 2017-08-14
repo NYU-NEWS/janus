@@ -40,7 +40,7 @@ void CoroScheduler::AddReadyEvent(Event& ev) {
 std::shared_ptr<Coroutine>
 CoroScheduler::CreateRunCoroutine(const std::function<void()> &func) {
   std::shared_ptr<Coroutine> sp_coro(new Coroutine(func));
-  verify(!curr_coro_);
+//  verify(!curr_coro_); // Create a coroutine from another?
   curr_coro_ = sp_coro;
   sp_coro->Run();
   if (!sp_coro->Finished()) {

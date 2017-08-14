@@ -11,7 +11,7 @@
 #include "../rcc/rcc_row.h"
 #include "dtxn.h"
 
-namespace rococo {
+namespace janus {
 
 static Frame* janus_frame_s = Frame::RegFrame(MODE_JANUS,
                                               {"brq", "baroque", "janus"},
@@ -74,4 +74,4 @@ Communicator* JanusFrame::CreateCommo(PollMgr* poll) {
   return new JanusCommo(poll);
 }
 
-}
+} // namespace janus

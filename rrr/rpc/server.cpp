@@ -10,6 +10,7 @@
 #include <netinet/tcp.h>
 
 #include "server.hpp"
+#include "../coroutine/coroutine.h"
 
 using namespace std;
 
@@ -183,7 +184,9 @@ void ServerConnection::handle_read() {
         auto it = server_->handlers_.find(rpc_id);
         if (it != server_->handlers_.end()) {
             // the handler should delete req, and release server_connection refcopy.
-            it->second(req, (ServerConnection *) this->ref_copy());
+            Coroutine::CreateRun([&it, &req, this] () {
+              it->second(req, (ServerConnection *) this->ref_copy());
+            });
         } else {
             rpc_id_missing_l_s.lock();
             bool surpress_warning = false;

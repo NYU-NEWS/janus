@@ -48,6 +48,7 @@ class MarshallDeputy {
   void SetMarshallable(Marshallable* m, bool manage_memory) {
     verify(data_ == nullptr);
     data_ = m;
+    kind_ = m->kind_;
     manage_memory_ = manage_memory;
   }
 

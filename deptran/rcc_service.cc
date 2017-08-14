@@ -234,22 +234,28 @@ void ClassicServiceImpl::JanusDispatch(const vector<SimpleCommand>& cmd,
                                      TxnOutput* p_output,
                                      MarshallDeputy* p_md_res_graph,
                                      DeferredReply* p_defer) {
-  std::lock_guard <std::mutex> guard(this->mtx_);
-  RccGraph* p_res_graph = new RccGraph();
-  JanusSched* sched = (JanusSched*) dtxn_sched_;
-  sched->OnDispatch(cmd,
-                    p_res,
-                    p_output,
-                    p_res_graph,
-                    [p_defer, p_res_graph, p_md_res_graph] () {
-                      if (p_res_graph->size() <= 1) {
-                        p_md_res_graph->SetMarshallable(new EmptyGraph, true);
-                        delete p_res_graph;
-                      } else {
-                        p_md_res_graph->SetMarshallable(p_res_graph, true);
-                      }
-                      p_defer->reply();
-                    });
+  std::function<void()> func =
+      [&cmd, p_res, p_output, p_md_res_graph, p_defer, this] () {
+    std::lock_guard <std::mutex> guard(this->mtx_);
+    RccGraph* p_res_graph = new RccGraph();
+    JanusSched* sched = (JanusSched*) dtxn_sched_;
+    sched->OnDispatch(cmd,
+                      p_res,
+                      p_output,
+                      p_res_graph,
+                      [p_defer, p_res_graph, p_md_res_graph] () {
+                        if (p_res_graph->size() <= 1) {
+                          p_md_res_graph->SetMarshallable(new EmptyGraph, true);
+                          delete p_res_graph;
+                        } else {
+                          p_md_res_graph->SetMarshallable(p_res_graph, true);
+                        }
+                        verify(p_md_res_graph->kind_ != MarshallDeputy::UNKNOWN);
+                        p_defer->reply();
+                      });
+  };
+  Coroutine::CreateRun(func);
+
 }
 
 void ClassicServiceImpl::JanusCommit(const cmdid_t& cmd_id,

@@ -6,12 +6,12 @@
 #include "commo.h"
 #include "marshallable.h"
 
-namespace rococo {
+namespace janus {
 
 void JanusCommo::SendDispatch(vector<SimpleCommand> &cmd,
-                            const function<void(int res,
-                                                TxnOutput& cmd,
-                                                RccGraph& graph)>& callback) {
+                              const function<void(int res,
+                                                  TxnOutput& cmd,
+                                                  RccGraph& graph)>& callback) {
   rrr::FutureAttr fuattr;
   auto tid = cmd[0].root_id_;
   auto par_id = cmd[0].partition_id_;
@@ -32,7 +32,7 @@ void JanusCommo::SendDispatch(vector<SimpleCommand> &cmd,
           RccGraph& graph = dynamic_cast<RccGraph&>(*md.data_);
           callback(res, output, graph);
         } else {
-
+          verify(0);
         }
       };
   fuattr.callback = cb;
@@ -184,6 +184,4 @@ void JanusCommo::BroadcastCommit(parid_t par_id,
   }
 }
 
-
-
-} // namespace rococo
+} // namespace janus

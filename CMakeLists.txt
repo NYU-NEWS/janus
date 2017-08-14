@@ -38,7 +38,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Weffc++")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCHECK_ISO")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCHECK_ISO")
 # this makes gcc>=5 support conan.io libraries, e.g. yaml-cpp
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
 
@@ -143,19 +143,19 @@ add_library(RRR
 add_library(MEMDB
     ${MEMDB_SRC})
 
-add_library(JANUS
+#add_library(JANUS
+#        ${DEPTRAN_SRC}
+#        ${BENCH_SRC})
+
+add_executable(JANUS_PROCESS
         ${DEPTRAN_SRC}
         ${BENCH_SRC})
 
+
+add_dependencies(JANUS_PROCESS gen-rpc)
+
 #add_executable(JANUS_PROCESS
-#        ${DEPTRAN_SRC}
-#        ${BENCH_SRC)
-
-
-add_dependencies(JANUS gen-rpc)
-
-add_executable(JANUS_PROCESS
-        "deptran/empty.cc")
+#        "deptran/empty.cc")
 
 add_executable(TEST
         "test/coroutine.cc")
@@ -167,7 +167,7 @@ target_link_libraries(
         ${RT})
 
 target_link_libraries(
-        JANUS
+        JANUS_PROCESS
         RRR
         MEMDB
         EXTERN_C
@@ -180,10 +180,10 @@ target_link_libraries(
 #    ${PROFILER_LIBRARIES}
 )
 
-target_link_libraries(
-        JANUS_PROCESS
-        JANUS
-)
+#target_link_libraries(
+#        JANUS_PROCESS
+#        JANUS
+#)
 
 target_link_libraries(
         TEST

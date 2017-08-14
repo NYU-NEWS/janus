@@ -6,7 +6,7 @@ namespace janus {
 
 class JanusFrame : public Frame {
  public:
-  JanusFrame() : Frame(MODE_BRQ) { }
+  JanusFrame(int mode = MODE_JANUS) : Frame(mode) { }
   Executor *CreateExecutor(cmdid_t, Scheduler *sched) override;
   Coordinator *CreateCoord(cooid_t coo_id,
                            Config *config,
@@ -29,4 +29,4 @@ class JanusFrame : public Frame {
   Communicator* CreateCommo(PollMgr* poll = nullptr) override;
 };
 
-} // namespace rococo
+} // namespace janus
