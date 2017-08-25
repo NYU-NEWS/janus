@@ -3,9 +3,9 @@
 #include "../classic/coord.h"
 
 namespace janus {
-class NoneCoord : public ClassicCoord {
+class NoneCoord : public CoordinatorClassic {
  public:
-  using ClassicCoord::ClassicCoord;
+  using CoordinatorClassic::CoordinatorClassic;
   enum Phase {INIT_END=0, DISPATCH=1};
   void GotoNextPhase() override;
 };

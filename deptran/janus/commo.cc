@@ -1,7 +1,6 @@
-#include <deptran/rcc/dtxn.h>
-#include "../rcc/dtxn.h"
-#include "deptran/procedure.h"
-#include "../rcc/graph_marshaler.h"
+#include "../procedure.h"
+#include "../rococo/dtxn.h"
+#include "../rococo/graph_marshaler.h"
 #include "dep_graph.h"
 #include "commo.h"
 #include "marshallable.h"

@@ -10,7 +10,7 @@ namespace rococo {
 class ServerControlServiceImpl;
 class Scheduler;
 class SimpleCommand;
-class ClassicSched;
+class SchedulerClassic;
 
 
 class ClassicServiceImpl: public ClassicService {

@@ -5,23 +5,23 @@
 #include "../__dep__.h"
 #include "../constants.h"
 #include "../dtxn.h"
-#include "deptran/procedure.h"
+#include "../procedure.h"
 #include "../scheduler.h"
-#include "../rcc/graph.h"
-#include "../rcc/graph_marshaler.h"
 #include "../marshal-value.h"
 #include "../rcc_rpc.h"
-#include "sched.h"
+#include "../rococo/graph.h"
+#include "../rococo/graph_marshaler.h"
+#include "scheduler.h"
 #include "exec.h"
-#include "tpl.h"
+#include "tx_box.h"
 
 namespace janus {
 
-TPLSched::TPLSched() : ClassicSched() {
+Scheduler2pl::Scheduler2pl() : SchedulerClassic() {
   mdb_txn_mgr_ = new mdb::TxnMgr2PL();
 }
 
-mdb::Txn* TPLSched::del_mdb_txn(const i64 tid) {
+mdb::Txn* Scheduler2pl::del_mdb_txn(const i64 tid) {
   mdb::Txn *txn = NULL;
   auto it = mdb_txns_.find(tid);
   if (it == mdb_txns_.end()) {
@@ -33,7 +33,7 @@ mdb::Txn* TPLSched::del_mdb_txn(const i64 tid) {
   return txn;
 }
 
-mdb::Txn* TPLSched::get_mdb_txn(const i64 tid) {
+mdb::Txn* Scheduler2pl::get_mdb_txn(const i64 tid) {
   mdb::Txn *txn = nullptr;
   auto it = mdb_txns_.find(tid);
   if (it == mdb_txns_.end()) {
@@ -52,7 +52,7 @@ mdb::Txn* TPLSched::get_mdb_txn(const i64 tid) {
 }
 
 
-bool TPLSched::BeforeAccess(TxBox& tx_box, Row* row, int col_idx) {
+bool Scheduler2pl::BeforeAccess(TxBox& tx_box, Row* row, int col_idx) {
   mdb::FineLockedRow* fl_row = (mdb::FineLockedRow*) row;
   ALock* lock = fl_row->get_alock(col_idx);
   TplTxBox& tpl_tx_box = dynamic_cast<TplTxBox&>(tx_box);
@@ -65,7 +65,7 @@ bool TPLSched::BeforeAccess(TxBox& tx_box, Row* row, int col_idx) {
   }
 }
 
-bool TPLSched::DoPrepare(txnid_t tx_id) {
+bool Scheduler2pl::DoPrepare(txnid_t tx_id) {
   // do nothing here?
   TplTxBox* tx_box = (TplTxBox*)GetOrCreateDTxn(tx_id);
   verify(!tx_box->inuse);
@@ -84,7 +84,7 @@ bool TPLSched::DoPrepare(txnid_t tx_id) {
   return !tx_box->wounded_;
 }
 
-void TPLSched::DoCommit(TxBox& tx_box) {
+void Scheduler2pl::DoCommit(TxBox& tx_box) {
   TplTxBox& tpl_tx_box = dynamic_cast<TplTxBox&>(tx_box);
   for (auto& pair : tpl_tx_box.locked_locks_) {
     pair.first->abort(pair.second);
@@ -95,7 +95,7 @@ void TPLSched::DoCommit(TxBox& tx_box) {
   delete mdb_txn;
 }
 
-void TPLSched::DoAbort(TxBox& tx_box) {
+void Scheduler2pl::DoAbort(TxBox& tx_box) {
   TplTxBox& tpl_tx_box = dynamic_cast<TplTxBox&>(tx_box);
   for (auto& pair : tpl_tx_box.locked_locks_) {
     pair.first->abort(pair.second);

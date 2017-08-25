@@ -1,15 +1,14 @@
 
 #include "../config.h"
 #include "../multi_value.h"
-#include "deptran/procedure.h"
-#include "../rcc/dep_graph.h"
-#include "../rcc/graph_marshaler.h"
+#include "../procedure.h"
+#include "../rococo/dep_graph.h"
+#include "../rococo/graph_marshaler.h"
 #include "exec.h"
-#include "sched.h"
-#include "ps.h"
-#include "tpl.h"
+#include "scheduler.h"
+#include "tx_box.h"
 
-namespace rococo {
+namespace janus {
 
 int TplExecutor::OnDispatch(const SimpleCommand &cmd,
                             rrr::i32 *res,
@@ -115,18 +114,18 @@ void TplExecutor::LockSucceeded(const SimpleCommand& cmd,
 void TplExecutor::LockFailed(const SimpleCommand& cmd,
                              rrr::i32 *res,
                              PieceStatus *ps) {
-  Log_debug("tid: %llx, pid: %llx, p_type: %d, lock reject call back",
-           (int64_t)cmd.root_id_, (int64_t)cmd.id_, (int)cmd.type_);
-  Log::debug("fail callback: PS: %p", ps);
-  verify(ps != NULL); //FIXME
-  ps->start_no_callback();
-
-  if (ps->can_proceed()) {
-    *res = REJECT;
-    ps->remove_output();
-    ps->set_finish();
-    ps->callback_();
-  }
+//  Log_debug("tid: %llx, pid: %llx, p_type: %d, lock reject call back",
+//           (int64_t)cmd.root_id_, (int64_t)cmd.id_, (int)cmd.type_);
+//  Log::debug("fail callback: PS: %p", ps);
+//  verify(ps != NULL); //FIXME
+//  ps->start_no_callback();
+//
+//  if (ps->can_proceed()) {
+//    *res = REJECT;
+//    ps->remove_output();
+//    ps->set_finish();
+//    ps->callback_();
+//  }
 }
 
 bool TplExecutor::Prepare() {
@@ -167,56 +166,55 @@ void TplExecutor::SetPsCache(PieceStatus* ps) {
 void TplExecutor::release_piece_map(bool commit) {
   // TODO FIXME
   // verify(piece_map_.size() != 0);
-  SetPsCache(nullptr);
-  if (commit) {
-    for (auto &it : piece_map_) {
-      it.second->commit();
-      delete it.second;
-    }
-    piece_map_.clear();
-  }
-  else {
-    for (auto &it : piece_map_) {
-      it.second->abort();
-      delete it.second;
-    }
-    piece_map_.clear();
-  }
+//  SetPsCache(nullptr);
+//  if (commit) {
+//    for (auto &it : piece_map_) {
+//      it.second->commit();
+//      delete it.second;
+//    }
+//    piece_map_.clear();
+//  }
+//  else {
+//    for (auto &it : piece_map_) {
+//      it.second->abort();
+//      delete it.second;
+//    }
+//    piece_map_.clear();
+//  }
 }
 
 PieceStatus* TplExecutor::get_piece_status(i64 pid) {
-  auto ps = ps_cache();
-  if (ps == nullptr || ps->pid_ != pid) {
-    verify(piece_map_.find(pid) != piece_map_.end());
-    ps = piece_map_[pid];
-    SetPsCache(ps);
-  }
-  return ps;
+//  auto ps = ps_cache();
+//  if (ps == nullptr || ps->pid_ != pid) {
+//    verify(piece_map_.find(pid) != piece_map_.end());
+//    ps = piece_map_[pid];
+//    SetPsCache(ps);
+//  }
+//  return ps;
 }
 
 void TplExecutor::InitPieceStatus(const SimpleCommand &cmd,
                                   const function<void()>& callback,
                                   map<int32_t, Value> *output) {
-
-  auto tid = cmd.root_id_;
-  auto pid = cmd.id_;
-  std::function<int(void)> wound_callback =
-      [this, tid, pid]() -> int {
-        if (this->prepared_) {
-          // can't wound
-          return 1;
-        } else {
-          this->wounded_ = true;
-          return 0;
-        }
-      };
-  PieceStatus *ps = new PieceStatus(cmd,
-                                    callback,
-                                    output,
-                                    wound_callback,
-                                    this);
-  piece_map_[pid] = ps;
-  SetPsCache(ps);
+//  auto tid = cmd.root_id_;
+//  auto pid = cmd.id_;
+//  std::function<int(void)> wound_callback =
+//      [this, tid, pid]() -> int {
+//        if (this->prepared_) {
+//          // can't wound
+//          return 1;
+//        } else {
+//          this->wounded_ = true;
+//          return 0;
+//        }
+//      };
+//  PieceStatus *ps = new PieceStatus(cmd,
+//                                    callback,
+//                                    output,
+//                                    wound_callback,
+//                                    this);
+//  piece_map_[pid] = ps;
+//  SetPsCache(ps);
 }
 
-} // namespace rococo
+} // namespace janus

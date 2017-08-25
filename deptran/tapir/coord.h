@@ -8,7 +8,7 @@ namespace rococo {
 #define MAGIC_SACCEPT_BALLOT 2;
 
 class TapirCommo;
-class TapirCoord : public ClassicCoord {
+class TapirCoord : public CoordinatorClassic {
  public:
   enum Phase {INIT_END=0, DISPATCH=1, FAST_ACCEPT=2, DECIDE=3};
   enum Decision { UNKNOWN = 0, COMMIT = 1, ABORT = 2};
@@ -16,7 +16,7 @@ class TapirCoord : public ClassicCoord {
   map<parid_t, int> n_accpet_rejects_ = {};
   map<parid_t, int> n_fast_accept_oks_ = {};
   map<parid_t, int> n_fast_accept_rejects_ = {};
-  using ClassicCoord::ClassicCoord;
+  using CoordinatorClassic::CoordinatorClassic;
 
 //  void do_one(TxnRequest &) override;
   void Reset() override;

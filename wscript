@@ -181,7 +181,7 @@ def build(bld):
 
 #    bld.program(source=bld.path.ant_glob("deptran/c_main.cc"),
 #                target="deptran_client",
-#                includes=". rrr bench deptran deptran/ro6 deptran/rcc deptran/tpl deptran/brq deptran/none",
+#                includes=". rrr bench deptran deptran/snow deptran/rcc deptran/2pl deptran/brq deptran/none",
 #                use="rrr memdb deptran YAML-CPP PTHREAD RT")
 
 #    bld.program(source="old-test/rpcbench.cc old-test/benchmark_service.cc",

@@ -14,7 +14,7 @@ class RccCommo;
 class TxnInfo;
 class WaitlistChecker;
 
-class RccSched : public Scheduler, public RccGraph {
+class SchedulerRococo : public Scheduler, public RccGraph {
  public:
   static map<txnid_t, int32_t> __debug_xxx_s;
   static std::recursive_mutex __debug_mutex_s;
@@ -37,8 +37,8 @@ class RccSched : public Scheduler, public RccGraph {
   bool in_upgrade_epoch_{false};
   const int EPOCH_DURATION = 5;
 
-  RccSched();
-  virtual ~RccSched();
+  SchedulerRococo();
+  virtual ~SchedulerRococo();
 
   // override graph operations
   std::unordered_map<txnid_t, RccDTxn*>& vertex_index() override {

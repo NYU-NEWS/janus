@@ -202,7 +202,7 @@ void RO6Coord::ro6_start_ro(Procedure *ch) {
 //          ch->reply_.res_ = SUCCESS;
 //
 //          // generate a reply and callback.
-//          Log::debug("ro6 RO callback, %llx", cmd_->id_);
+//          Log::debug("snow RO callback, %llx", cmd_->id_);
 //          TxnReply& txn_reply_buf = ch->get_reply();
 //          double    last_latency  = ch->last_attempt_latency();
 //          this->report(txn_reply_buf, last_latency

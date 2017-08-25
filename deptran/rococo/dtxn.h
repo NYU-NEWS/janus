@@ -6,7 +6,7 @@
 #define PHASE_RCC_DISPATCH (1)
 #define PHASE_RCC_COMMIT (2)
 
-namespace rococo {
+namespace janus {
 class RccDTxn: public DTxn, public Vertex<RccDTxn> {
  public:
   int8_t status_ = TXN_UKN;
@@ -267,4 +267,4 @@ inline rrr::Marshal &operator>>(rrr::Marshal &m, RccDTxn &ti) {
   return m;
 }
 
-} // namespace rococo
+} // namespace janus

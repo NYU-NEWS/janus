@@ -110,7 +110,7 @@ void RccCoord::Finish() {
   Procedure *ch = (Procedure*) cmd_;
   // commit or abort piece
   Log_debug(
-    "send rcc finish requests to %d servers, tid: %llx, graph size: %d",
+    "send rococo finish requests to %d servers, tid: %llx, graph size: %d",
     (int)ch->partition_ids_.size(),
     cmd_->id_,
     graph_.size());
@@ -208,7 +208,7 @@ void RccCoord::DispatchRoAck(phase_t phase,
 }
 
 void RccCoord::Reset() {
-  ClassicCoord::Reset();
+  CoordinatorClassic::Reset();
   graph_.Clear();
   verify(graph_.size() == 0);
   verify(graph_.vertex_index().size() == 0);

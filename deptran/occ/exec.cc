@@ -1,9 +1,9 @@
 #include "__dep__.h"
 #include "../config.h"
 #include "../multi_value.h"
-#include "deptran/procedure.h"
-#include "../rcc/dep_graph.h"
-#include "../rcc/graph_marshaler.h"
+#include "../procedure.h"
+#include "../rococo/dep_graph.h"
+#include "../rococo/graph_marshaler.h"
 #include "exec.h"
 #include "sched.h"
 

@@ -1,7 +1,7 @@
 #pragma once
-#include "../rcc/coord.h"
+#include "../rococo/coord.h"
 
-namespace rococo {
+namespace janus {
 class RO6Coord : public RccCoord {
   using RccCoord::RccCoord;
 public:
@@ -23,4 +23,4 @@ public:
 
   void         ro6_start_ro(Procedure *ch);
 };
-} // namespace rococo
+} // namespace janus

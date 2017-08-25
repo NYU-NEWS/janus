@@ -2,8 +2,8 @@
 
 #include "__dep__.h"
 #include "constants.h"
-#include "rcc/graph.h"
-#include "rcc/graph_marshaler.h"
+#include "rococo/graph.h"
+#include "rococo/graph_marshaler.h"
 #include "command.h"
 #include "command_marshaler.h"
 #include "procedure.h"

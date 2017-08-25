@@ -18,7 +18,7 @@
 
 namespace rococo {
 
-ClassicCoord::ClassicCoord(uint32_t coo_id,
+CoordinatorClassic::CoordinatorClassic(uint32_t coo_id,
                            int benchmark,
                            ClientControlServiceImpl *ccsi,
                            uint32_t thread_id)
@@ -29,7 +29,7 @@ ClassicCoord::ClassicCoord(uint32_t coo_id,
   verify(commo_ == nullptr);
 }
 
-RococoCommunicator* ClassicCoord::commo() {
+RococoCommunicator* CoordinatorClassic::commo() {
   if (commo_ == nullptr) {
     commo_ = new RococoCommunicator;
   }
@@ -37,19 +37,19 @@ RococoCommunicator* ClassicCoord::commo() {
   return (RococoCommunicator*) commo_;
 }
 
-void ClassicCoord::ForwardTxnRequest(TxnRequest &req) {
+void CoordinatorClassic::ForwardTxnRequest(TxnRequest &req) {
   auto comm = commo();
   comm->SendForwardTxnRequest(
       req,
       this,
-      std::bind(&ClassicCoord::ForwardTxnRequestAck,
+      std::bind(&CoordinatorClassic::ForwardTxnRequestAck,
                 this,
                 std::placeholders::_1
       ));
 }
 
 
-void ClassicCoord::ForwardTxnRequestAck(const TxnReply& txn_reply) {
+void CoordinatorClassic::ForwardTxnRequestAck(const TxnReply& txn_reply) {
   Log_info("%s: %d", __FUNCTION__, txn_reply.res_);
   committed_ = (txn_reply.res_ == REJECT) ? false : true;
   aborted_ = !committed_;
@@ -57,7 +57,7 @@ void ClassicCoord::ForwardTxnRequestAck(const TxnReply& txn_reply) {
   GotoNextPhase();
 }
 
-void ClassicCoord::do_one(TxnRequest &req) {
+void CoordinatorClassic::do_one(TxnRequest &req) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   Procedure *cmd = frame_->CreateTxnCommand(req, txn_reg_);
   verify(txn_reg_ != nullptr);
@@ -86,7 +86,7 @@ void ClassicCoord::do_one(TxnRequest &req) {
   }
 }
 
-void ClassicCoord::GotoNextPhase() {
+void CoordinatorClassic::GotoNextPhase() {
   int n_phase = 4;
   int current_phase = phase_ % n_phase;
   switch (phase_++ % n_phase) {
@@ -122,7 +122,7 @@ void ClassicCoord::GotoNextPhase() {
   }
 }
 
-void ClassicCoord::Reset() {
+void CoordinatorClassic::Reset() {
   Coordinator::Reset();
   for (int i = 0; i < site_prepare_.size(); i++) {
     site_prepare_[i] = 0;
@@ -138,7 +138,7 @@ void ClassicCoord::Reset() {
   aborted_ = false;
 }
 
-void ClassicCoord::Restart() {
+void CoordinatorClassic::Restart() {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(aborted_);
   n_retry_++;
@@ -163,7 +163,7 @@ void ClassicCoord::Restart() {
   }
 }
 
-void ClassicCoord::Dispatch() {
+void CoordinatorClassic::Dispatch() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto txn = (Procedure*) cmd_;
 
@@ -185,7 +185,7 @@ void ClassicCoord::Dispatch() {
     }
     commo()->SendDispatch(cc,
                           this,
-                          std::bind(&ClassicCoord::DispatchAck,
+                          std::bind(&CoordinatorClassic::DispatchAck,
                                     this,
                                     phase_,
                                     std::placeholders::_1,
@@ -194,7 +194,7 @@ void ClassicCoord::Dispatch() {
   Log_debug("Dispatch cnt: %d for tx_id: %" PRIx64, cnt, txn->root_id_);
 }
 
-bool ClassicCoord::AllDispatchAcked() {
+bool CoordinatorClassic::AllDispatchAcked() {
   bool ret1 = std::all_of(dispatch_acks_.begin(),
                           dispatch_acks_.end(),
                           [] (std::pair<innid_t, bool> pair){
@@ -205,7 +205,7 @@ bool ClassicCoord::AllDispatchAcked() {
   return ret1;
 }
 
-void ClassicCoord::DispatchAck(phase_t phase,
+void CoordinatorClassic::DispatchAck(phase_t phase,
                                int res,
                                TxnOutput &outputs) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
@@ -249,7 +249,7 @@ void ClassicCoord::DispatchAck(phase_t phase,
 }
 
 /** caller should be thread_safe */
-void ClassicCoord::Prepare() {
+void CoordinatorClassic::Prepare() {
   Procedure *cmd = (Procedure *) cmd_;
   auto mode = Config::GetConfig()->cc_mode_;
   verify(mode == MODE_OCC || mode == MODE_2PL);
@@ -264,7 +264,7 @@ void ClassicCoord::Prepare() {
     commo()->SendPrepare(partition_id,
                          cmd_->id_,
                          sids,
-                         std::bind(&ClassicCoord::PrepareAck,
+                         std::bind(&CoordinatorClassic::PrepareAck,
                                   this,
                                   phase_,
                                   std::placeholders::_1));
@@ -274,7 +274,7 @@ void ClassicCoord::Prepare() {
   }
 }
 
-void ClassicCoord::PrepareAck(phase_t phase, int res) {
+void CoordinatorClassic::PrepareAck(phase_t phase, int res) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   if (phase != phase_) return;
   Procedure* cmd = (Procedure*) cmd_;
@@ -299,7 +299,7 @@ void ClassicCoord::PrepareAck(phase_t phase, int res) {
   }
 }
 
-void ClassicCoord::Commit() {
+void CoordinatorClassic::Commit() {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   ___TestPhaseThree(cmd_->id_);
   auto mode = Config::GetConfig()->cc_mode_;
@@ -316,7 +316,7 @@ void ClassicCoord::Commit() {
       Log_debug("send commit for txn_id %" PRIx64" to %d", txn().id_, rp);
       commo()->SendCommit(rp,
                          txn().id_,
-                          std::bind(&ClassicCoord::CommitAck,
+                          std::bind(&CoordinatorClassic::CommitAck,
                                     this,
                                     phase_));
       site_commit_[rp]++;
@@ -328,7 +328,7 @@ void ClassicCoord::Commit() {
       Log_debug("send abort for txn_id %" PRIx64" to %d", txn().id_, rp);
       commo()->SendAbort(rp,
                         cmd_->id_,
-                         std::bind(&ClassicCoord::CommitAck,
+                         std::bind(&CoordinatorClassic::CommitAck,
                                    this,
                                    phase_));
       site_abort_[rp]++;
@@ -339,7 +339,7 @@ void ClassicCoord::Commit() {
   GotoNextPhase();
 }
 
-void ClassicCoord::CommitAck(phase_t phase) {
+void CoordinatorClassic::CommitAck(phase_t phase) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   if (phase != phase_) return;
   Procedure* cmd = (Procedure*)cmd_;
@@ -359,7 +359,7 @@ void ClassicCoord::CommitAck(phase_t phase) {
              aborted_ ? "True" : "False");
 }
 
-void ClassicCoord::End() {
+void CoordinatorClassic::End() {
   Procedure* txn = (Procedure*) cmd_;
   TxnReply& txn_reply_buf = txn->get_reply();
   double last_latency  = txn->last_attempt_latency();
@@ -381,7 +381,7 @@ void ClassicCoord::End() {
   delete txn;
 }
 
-void ClassicCoord::report(TxnReply &txn_reply,
+void CoordinatorClassic::report(TxnReply &txn_reply,
                           double last_latency
 #ifdef TXN_STAT
     , TxnChopper *ch
@@ -410,13 +410,13 @@ void ClassicCoord::report(TxnReply &txn_reply,
   }
 }
 
-void ClassicCoord::___TestPhaseThree(txnid_t txn_id) {
+void CoordinatorClassic::___TestPhaseThree(txnid_t txn_id) {
   auto it = ___phase_three_tids_.find(txn_id);
 //  verify(it == ___phase_three_tids_.end());
   ___phase_three_tids_.insert(txn_id);
 }
 
-void ClassicCoord::___TestPhaseOne(txnid_t txn_id) {
+void CoordinatorClassic::___TestPhaseOne(txnid_t txn_id) {
   auto it = ___phase_one_tids_.find(txn_id);
   verify(it == ___phase_one_tids_.end());
   ___phase_one_tids_.insert(txn_id);

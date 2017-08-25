@@ -5,10 +5,10 @@
 namespace rococo {
 
 class SimpleCommand;
-class TapirSched : public ClassicSched {
+class TapirSched : public SchedulerClassic {
  public:
 //  using Scheduler::Scheduler;
-  TapirSched(): ClassicSched() {
+  TapirSched(): SchedulerClassic() {
     epoch_enabled_ = true;
   }
 

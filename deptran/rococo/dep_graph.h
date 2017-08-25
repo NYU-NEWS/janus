@@ -22,12 +22,12 @@ class EmptyGraph : public Marshallable {
   virtual Marshal& FromMarshal(Marshal& m) {return m;};
 };
 
-class RccSched;
+class SchedulerRococo;
 class RccGraph : public Graph<RccDTxn> {
  public:
 //    Graph<PieInfo> pie_gra_;
 //  Graph <TxnInfo> txn_gra_;
-  RccSched* sched_{nullptr};
+  SchedulerRococo* sched_{nullptr};
   bool empty_{false};
   parid_t partition_id_ = 0; // TODO
 //  std::vector<rrr::Client *> rpc_clients_;
@@ -43,7 +43,7 @@ class RccGraph : public Graph<RccDTxn> {
   }
 
   /** on start_req */
-  RccDTxn* FindOrCreateRccVertex(txnid_t txn_id, RccSched* sched);
+  RccDTxn* FindOrCreateRccVertex(txnid_t txn_id, SchedulerRococo* sched);
   void RemoveVertex(txnid_t txn_id);
   void RebuildEdgePointer(map<txnid_t, RccDTxn*>& index);
   RccDTxn* AggregateVertex(RccDTxn *rhs_dtxn);
@@ -74,4 +74,4 @@ class RccGraph : public Graph<RccDTxn> {
 //  Marshal& FromMarshal(Marshal& m) override;
 
 };
-} // namespace rcc
+} // namespace rococo

@@ -1,14 +1,14 @@
 
 #pragma once
-#include "../rcc/sched.h"
+#include "../rococo/sched.h"
 
 namespace janus {
 
 class RccGraph;
 class JanusCommo;
-class JanusSched : public RccSched {
+class SchedulerJanus : public SchedulerRococo {
  public:
-  using RccSched::RccSched;
+  using SchedulerRococo::SchedulerRococo;
 
   map<txnid_t, RccDTxn*> Aggregate(RccGraph& graph);
 

@@ -9,8 +9,8 @@
 #include "sharding.h"
 #include "frame.h"
 #include "sharding.h"
-#include "rcc/dep_graph.h"
-#include "rcc/graph_marshaler.h"
+#include "rococo/dep_graph.h"
+#include "rococo/graph_marshaler.h"
 #include "workload.h"
 
 // for tpca benchmark
@@ -424,7 +424,7 @@ void Config::LoadHostYML(YAML::Node config) {
 void Config::InitMode(string &cc_name, string& ab_name) {
   cc_mode_ = Frame::Name2Mode(cc_name);
 
-  if ((cc_name == "rcc") || (cc_name == "deptran")) {
+  if ((cc_name == "rococo") || (cc_name == "deptran")) {
     // deprecated
     early_return_ = false;
   } else if (cc_name == "deptran_er") {

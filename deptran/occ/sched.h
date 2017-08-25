@@ -4,7 +4,7 @@
 
 namespace rococo {
 
-class OCCSched: public ClassicSched {
+class OCCSched: public SchedulerClassic {
  public:
   OCCSched();
   virtual mdb::Txn *get_mdb_txn(const i64 tid);

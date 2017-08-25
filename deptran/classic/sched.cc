@@ -1,16 +1,16 @@
 
 #include "../constants.h"
 #include "../dtxn.h"
-#include "deptran/procedure.h"
+#include "../procedure.h"
 #include "../coordinator.h"
 #include "sched.h"
-#include "../tpl/tpl.h"
 #include "exec.h"
 #include "tpc_command.h"
+#include "../2pl/tx_box.h"
 
-namespace rococo {
+namespace janus {
 
-bool ClassicSched::OnDispatch(TxnPieceData& piece_data,
+bool SchedulerClassic::OnDispatch(TxnPieceData& piece_data,
                               TxnOutput& ret_output) {
 
   TxBox& tx_box = *GetOrCreateDTxn(piece_data.root_id_);
@@ -49,7 +49,7 @@ bool ClassicSched::OnDispatch(TxnPieceData& piece_data,
   return true;
 }
 
-int ClassicSched::OnDispatchOld(const vector<SimpleCommand>& cmd,
+int SchedulerClassic::OnDispatchOld(const vector<SimpleCommand>& cmd,
                                 int32_t *res,
                                 TxnOutput* output,
                                 const function<void()>& callback) {
@@ -116,7 +116,7 @@ int ClassicSched::OnDispatchOld(const vector<SimpleCommand>& cmd,
 //   3. after that, run the function to prepare.
 //   0. an non-optimized version would be.
 //      dispatch the transaction command with paxos instance
-bool ClassicSched::OnPrepare(txnid_t tx_id,
+bool SchedulerClassic::OnPrepare(txnid_t tx_id,
                              const std::vector<i32> &sids) {
   Log_debug("%s: at site %d, tx: %" PRIx64, __FUNCTION__, this->site_id_, tx_id);
   std::lock_guard<std::recursive_mutex> lock(mtx_);
@@ -139,7 +139,7 @@ bool ClassicSched::OnPrepare(txnid_t tx_id,
 }
 
 
-int ClassicSched::PrepareReplicated(TpcPrepareCommand& prepare_cmd) {
+int SchedulerClassic::PrepareReplicated(TpcPrepareCommand& prepare_cmd) {
   // TODO, disable for now
   verify(0);
   std::lock_guard<std::recursive_mutex> lock(mtx_);
@@ -157,7 +157,7 @@ int ClassicSched::PrepareReplicated(TpcPrepareCommand& prepare_cmd) {
   return 0;
 }
 
-int ClassicSched::OnCommit(txnid_t tx_id,
+int SchedulerClassic::OnCommit(txnid_t tx_id,
                            int commit_or_abort) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   Log_debug("%s: at site %d, tx: %" PRIx64, __FUNCTION__, this->site_id_, tx_id);
@@ -192,21 +192,21 @@ int ClassicSched::OnCommit(txnid_t tx_id,
   return 0;
 }
 
-void ClassicSched::DoCommit(TxBox& tx_box) {
+void SchedulerClassic::DoCommit(TxBox& tx_box) {
   auto mdb_txn = RemoveMTxn(tx_box.tid_);
   verify(mdb_txn == tx_box.mdb_txn_);
   mdb_txn->commit();
   delete mdb_txn; // TODO remove this
 }
 
-void ClassicSched::DoAbort(TxBox& tx_box) {
+void SchedulerClassic::DoAbort(TxBox& tx_box) {
   auto mdb_txn = RemoveMTxn(tx_box.tid_);
   verify(mdb_txn == tx_box.mdb_txn_);
   mdb_txn->abort();
   delete mdb_txn; // TODO remove this
 }
 
-int ClassicSched::CommitReplicated(TpcCommitCommand& tpc_commit_cmd) {
+int SchedulerClassic::CommitReplicated(TpcCommitCommand& tpc_commit_cmd) {
   // TODO disable for now.
   verify(0);
   std::lock_guard<std::recursive_mutex> lock(mtx_);
@@ -229,7 +229,7 @@ int ClassicSched::CommitReplicated(TpcCommitCommand& tpc_commit_cmd) {
   TrashExecutor(txn_id);
 }
 
-void ClassicSched::OnLearn(ContainerCommand& cmd) {
+void SchedulerClassic::OnLearn(ContainerCommand& cmd) {
   if (cmd.type_ == MarshallDeputy::CMD_TPC_PREPARE) {
     TpcPrepareCommand& c = dynamic_cast<TpcPrepareCommand&>(cmd);
     PrepareReplicated(c);
@@ -241,4 +241,4 @@ void ClassicSched::OnLearn(ContainerCommand& cmd) {
   }
 }
 
-} // namespace rococo
+} // namespace janus

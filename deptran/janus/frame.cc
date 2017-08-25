@@ -3,12 +3,12 @@
 #include "../command.h"
 #include "../command_marshaler.h"
 #include "../communicator.h"
+#include "../rococo/rcc_row.h"
 #include "commo.h"
 #include "frame.h"
 #include "coord.h"
 #include "sched.h"
 #include "dep_graph.h"
-#include "../rcc/rcc_row.h"
 #include "dtxn.h"
 
 namespace janus {
@@ -42,7 +42,7 @@ Executor* JanusFrame::CreateExecutor(uint64_t, Scheduler *sched) {
 
 
 Scheduler* JanusFrame::CreateScheduler() {
-  Scheduler* sched = new JanusSched();
+  Scheduler* sched = new SchedulerJanus();
   sched->frame_ = this;
   return sched;
 }

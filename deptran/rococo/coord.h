@@ -7,7 +7,7 @@ namespace rococo {
 
 class RccCommo;
 
-class RccCoord: public ClassicCoord {
+class RccCoord: public CoordinatorClassic {
 
 public:
   RccCommo* commo();
@@ -25,7 +25,7 @@ public:
            int benchmark,
            ClientControlServiceImpl *ccsi,
            uint32_t thread_id)
-      : ClassicCoord(coo_id,
+      : CoordinatorClassic(coo_id,
                               benchmark,
                               ccsi,
                               thread_id), graph_() {

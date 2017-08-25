@@ -47,6 +47,6 @@ public:
     }
 };
 
-} // namespace rcc
+} // namespace rococo
 
 #endif // DEP_ROW_H_

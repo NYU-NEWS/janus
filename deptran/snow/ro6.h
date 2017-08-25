@@ -1,7 +1,7 @@
 #pragma once
 
-#include "rcc/dtxn.h"
-namespace rococo {
+#include "../rococo/dtxn.h"
+namespace janus {
 
 class RO6DTxn: public RccDTxn {
  private:
@@ -59,4 +59,4 @@ class RO6DTxn: public RccDTxn {
   Value do_ro(i64 txn_id, MultiVersionedRow *row, int col_id);
 };
 
-} // namespace rococo
+} // namespace janus

@@ -4,7 +4,7 @@
 #include "../constants.h"
 #include "../classic/exec.h"
 
-namespace rococo {
+namespace janus {
 
 class PieceStatus;
 class TplExecutor: public ClassicExecutor {
@@ -46,4 +46,4 @@ class TplExecutor: public ClassicExecutor {
 
 };
 
-} // namespace rococo
+} // namespace janus

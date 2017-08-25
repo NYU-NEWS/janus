@@ -4,7 +4,7 @@
 #include "exec.h"
 #include "coord.h"
 
-namespace rococo {
+namespace janus {
 
 int TapirSched::OnDispatch(const vector<SimpleCommand> &cmds,
                            int32_t* res,
@@ -58,4 +58,4 @@ int TapirSched::OnDecide(txnid_t txn_id,
   callback();
 }
 
-} // namespace rococo
+} // namespace janus

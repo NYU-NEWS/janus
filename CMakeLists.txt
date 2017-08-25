@@ -149,7 +149,7 @@ add_library(MEMDB
 
 add_executable(JANUS_PROCESS
         ${DEPTRAN_SRC}
-        ${BENCH_SRC})
+        ${BENCH_SRC} deptran/februus/scheduler.cc deptran/februus/scheduler.h)
 
 
 add_dependencies(JANUS_PROCESS gen-rpc)

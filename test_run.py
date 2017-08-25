@@ -13,7 +13,7 @@ modes_ = [
     "tpl_ww_paxos",
     "occ_paxos",
     "tapir",
-    "rcc",
+    "rococo",
     "janus"
 ]
 sites_ = [

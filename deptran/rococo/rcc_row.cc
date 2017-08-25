@@ -1,7 +1,7 @@
 #include "rcc_row.h"
 #include "../dtxn.h"
 
-namespace rococo {
+namespace janus {
 
 void RCCRow::init_dep(int n_columns) {
     dep_entry_ = new entry_t[n_columns];
@@ -23,4 +23,4 @@ entry_t *RCCRow::get_dep_entry(int col_id) {
     return dep_entry_ + col_id;
 }
 
-} // namespace rcc
+} // namespace janus

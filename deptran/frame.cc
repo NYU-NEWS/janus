@@ -1,8 +1,8 @@
 #include "__dep__.h"
 #include "frame.h"
 #include "config.h"
-#include "rcc/rcc_row.h"
-#include "ro6/ro6_row.h"
+#include "rococo/rcc_row.h"
+#include "snow/ro6_row.h"
 #include "marshal-value.h"
 #include "coordinator.h"
 #include "dtxn.h"
@@ -10,10 +10,10 @@
 #include "scheduler.h"
 #include "none/coord.h"
 #include "none/sched.h"
-#include "rcc/coord.h"
-#include "ro6/ro6_coord.h"
-#include "tpl/coord.h"
-#include "tpl/exec.h"
+#include "rococo/coord.h"
+#include "snow/ro6_coord.h"
+#include "deptran/2pl/coordinator.h"
+#include "2pl/exec.h"
 #include "occ/dtxn.h"
 #include "occ/coord.h"
 #include "occ/exec.h"
@@ -49,7 +49,7 @@
 #include "bench/micro/workload.h"
 #include "bench/micro/procedure.h"
 
-#include "tpl/sched.h"
+#include "deptran/2pl/scheduler.h"
 #include "occ/sched.h"
 
 #include "deptran/mdcc/coordinator.h"
@@ -181,7 +181,7 @@ Coordinator* Frame::CreateCoord(cooid_t coo_id,
   auto mode = mode_;
   switch (mode) {
     case MODE_2PL:
-      coo = new TPLCoord(coo_id,
+      coo = new Coordinator2pl(coo_id,
                          benchmark,
                          ccsi,
                          id);
@@ -353,7 +353,7 @@ Scheduler* Frame::CreateScheduler() {
   Scheduler *sch = nullptr;
   switch(mode) {
     case MODE_2PL:
-      sch = new TPLSched();
+      sch = new Scheduler2pl();
       break;
     case MODE_OCC:
       sch = new OCCSched();
@@ -440,7 +440,7 @@ map<string, int> &Frame::FrameNameToMode() {
       {"none",          MODE_NONE},
       {"2pl",           MODE_2PL},
       {"occ",           MODE_OCC},
-      {"ro6",           MODE_RO6},
+      {"snow",           MODE_RO6},
       {"rpc_null",      MODE_RPC_NULL},
       {"deptran",       MODE_DEPTRAN},
       {"deptran_er",    MODE_DEPTRAN},

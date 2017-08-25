@@ -1,7 +1,7 @@
 
 #include "commo.h"
-#include "../rcc/graph.h"
-#include "../rcc/graph_marshaler.h"
+#include "../rococo/graph.h"
+#include "../rococo/graph_marshaler.h"
 #include "../command.h"
 #include "deptran/procedure.h"
 #include "../command_marshaler.h"

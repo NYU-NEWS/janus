@@ -9,9 +9,9 @@
 namespace rococo {
 
 class Executor;
-class TPLSched: public ClassicSched {
+class Scheduler2pl: public SchedulerClassic {
  public:
-  TPLSched();
+  Scheduler2pl();
 
   virtual mdb::Txn *get_mdb_txn(const i64 tid);
   virtual mdb::Txn *del_mdb_txn(const i64 tid);

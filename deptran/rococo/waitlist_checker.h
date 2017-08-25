@@ -4,13 +4,13 @@
 
 
 namespace rococo {
-class RccSched;
+class SchedulerRococo;
 class WaitlistChecker : public FrequentJob {
  public:
-  RccSched *sched_ = nullptr;
+  SchedulerRococo *sched_ = nullptr;
 
   WaitlistChecker() = delete;
-  WaitlistChecker(RccSched* sched);
+  WaitlistChecker(SchedulerRococo* sched);
 
   void run() override;
 

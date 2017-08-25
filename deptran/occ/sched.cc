@@ -8,16 +8,16 @@
 #include "../constants.h"
 #include "../dtxn.h"
 #include "../scheduler.h"
-#include "../rcc/graph.h"
-#include "deptran/procedure.h"
-#include "../rcc/graph_marshaler.h"
+#include "../procedure.h"
 #include "../marshal-value.h"
 #include "../rcc_rpc.h"
+#include "../rococo/graph.h"
+#include "../rococo/graph_marshaler.h"
 #include "sched.h"
 
 namespace rococo {
 
-OCCSched::OCCSched() : ClassicSched() {
+OCCSched::OCCSched() : SchedulerClassic() {
   mdb_txn_mgr_ = new mdb::TxnMgrOCC();
 }
 

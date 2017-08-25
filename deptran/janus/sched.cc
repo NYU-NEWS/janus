@@ -2,12 +2,12 @@
 
 #include "sched.h"
 #include "commo.h"
-#include "../rcc/dtxn.h"
+#include "../rococo/dtxn.h"
 
 using namespace janus;
 
 
-map<txnid_t, RccDTxn*> JanusSched::Aggregate(RccGraph &graph) {
+map<txnid_t, RccDTxn*> SchedulerJanus::Aggregate(RccGraph &graph) {
   // aggregate vertexes
   map<txnid_t, RccDTxn*> index;
   for (auto& pair: graph.vertex_index()) {
@@ -106,7 +106,7 @@ map<txnid_t, RccDTxn*> JanusSched::Aggregate(RccGraph &graph) {
 
 
 
-void JanusSched::OnPreAccept(const txnid_t txn_id,
+void SchedulerJanus::OnPreAccept(const txnid_t txn_id,
                            const vector<SimpleCommand>& cmds,
                            RccGraph* graph,
                            int32_t* res,
@@ -157,7 +157,7 @@ void JanusSched::OnPreAccept(const txnid_t txn_id,
   callback();
 }
 
-void JanusSched::OnAccept(const txnid_t txn_id,
+void SchedulerJanus::OnAccept(const txnid_t txn_id,
                         const ballot_t& ballot,
                         const RccGraph& graph,
                         int32_t* res,
@@ -176,7 +176,7 @@ void JanusSched::OnAccept(const txnid_t txn_id,
   callback();
 }
 //
-//void JanusSched::OnCommit(const txnid_t cmd_id,
+//void SchedulerJanus::OnCommit(const txnid_t cmd_id,
 //                        const RccGraph& graph,
 //                        int32_t* res,
 //                        TxnOutput* output,
@@ -232,7 +232,7 @@ void JanusSched::OnAccept(const txnid_t txn_id,
 //}
 
 //
-//void JanusSched::OnCommitWoGraph(const txnid_t cmd_id,
+//void SchedulerJanus::OnCommitWoGraph(const txnid_t cmd_id,
 //                               int32_t* res,
 //                               TxnOutput* output,
 //                               const function<void()>& callback) {
@@ -272,7 +272,7 @@ void JanusSched::OnAccept(const txnid_t txn_id,
 //}
 
 
-void JanusSched::OnCommit(const txnid_t cmd_id,
+void SchedulerJanus::OnCommit(const txnid_t cmd_id,
                         RccGraph* graph,
                         int32_t* res,
                         TxnOutput* output,
@@ -341,7 +341,7 @@ void JanusSched::OnCommit(const txnid_t cmd_id,
 }
 
 
-int JanusSched::OnInquire(epoch_t epoch,
+int SchedulerJanus::OnInquire(epoch_t epoch,
                         cmdid_t cmd_id,
                         RccGraph *graph,
                         const function<void()> &callback) {
@@ -381,7 +381,7 @@ int JanusSched::OnInquire(epoch_t epoch,
 
 }
 
-JanusCommo* JanusSched::commo() {
+JanusCommo* SchedulerJanus::commo() {
 
   auto commo = dynamic_cast<JanusCommo*>(commo_);
   verify(commo != nullptr);

@@ -9,7 +9,7 @@ rrr::PollMgr *svr_poll_mgr_g = nullptr;
 static pthread_t th_id_s = 0;
 
 RccDTxn* RccGraph::FindOrCreateRccVertex(txnid_t txn_id,
-                                           RccSched* sched) {
+                                           SchedulerRococo* sched) {
   RccDTxn* v = nullptr;
   verify(sched != nullptr);
   v = FindOrCreateV(txn_id);
@@ -243,9 +243,9 @@ void RccGraph::RebuildEdgePointer(map<txnid_t, RccDTxn*>& index) {
 void RccGraph::UpgradeStatus(RccDTxn *v, int8_t status) {
   auto s = v->status();
   if (s >= TXN_CMT) {
-    RccSched::__DebugCheckParentSetSize(v->id(), v->parents_.size());
+    SchedulerRococo::__DebugCheckParentSetSize(v->id(), v->parents_.size());
   } else if (status >= TXN_CMT) {
-    RccSched::__DebugCheckParentSetSize(v->id(), v->parents_.size());
+    SchedulerRococo::__DebugCheckParentSetSize(v->id(), v->parents_.size());
   }
   v->union_status(status);
 }
@@ -487,4 +487,4 @@ bool RccGraph::HasICycle(const RccScc& scc) {
 //  return false;
 };
 
-} // namespace rcc
+} // namespace rococo

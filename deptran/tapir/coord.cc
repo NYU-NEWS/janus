@@ -5,7 +5,7 @@
 #include "benchmark_control_rpc.h"
 #include "exec.h"
 
-namespace rococo {
+namespace janus {
 
 TapirCommo* TapirCoord::commo() {
 //  verify(commo_ != nullptr);
@@ -40,7 +40,7 @@ void TapirCoord::Dispatch() {
     }
     commo()->SendDispatch(cc,
                           this,
-                          std::bind(&ClassicCoord::DispatchAck,
+                          std::bind(&CoordinatorClassic::DispatchAck,
                                     this,
                                     phase_,
                                     std::placeholders::_1,
@@ -79,7 +79,7 @@ void TapirCoord::DispatchAck(phase_t phase,
 }
 
 void TapirCoord::Reset() {
-  ClassicCoord::Reset();
+  CoordinatorClassic::Reset();
   dispatch_acks_.clear();
   n_accept_oks_.clear();
   n_fast_accept_oks_.clear();
@@ -187,7 +187,7 @@ void TapirCoord::Restart() {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   cmd_->root_id_ = this->next_txn_id();
   cmd_->id_ = cmd_->root_id_;
-  ClassicCoord::Restart();
+  CoordinatorClassic::Restart();
 }
 
 int TapirCoord::GetFastQuorum(parid_t par_id) {
@@ -276,4 +276,4 @@ void TapirCoord::GotoNextPhase() {
   }
 }
 
-} // namespace rococo
+} // namespace janus

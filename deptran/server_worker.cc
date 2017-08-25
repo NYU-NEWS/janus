@@ -7,7 +7,7 @@
 #include "communicator.h"
 
 
-namespace rococo {
+namespace janus {
 
 
 void ServerWorker::SetupHeartbeat() {
@@ -236,4 +236,4 @@ void ServerWorker::ShutDown() {
   thread_pool_g->release();
   svr_poll_mgr_->release();
 }
-} // namespace rococo
+} // namespace janus

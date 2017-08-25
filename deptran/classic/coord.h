@@ -8,15 +8,15 @@
 namespace rococo {
 class ClientControlServiceImpl;
 
-class ClassicCoord : public Coordinator {
+class CoordinatorClassic : public Coordinator {
  public:
   enum Phase {INIT_END=0, DISPATCH=1, PREPARE=2, COMMIT=3};
-  ClassicCoord(uint32_t coo_id,
+  CoordinatorClassic(uint32_t coo_id,
                int benchmark,
                ClientControlServiceImpl *ccsi,
                uint32_t thread_id);
 
-  virtual ~ClassicCoord() { }
+  virtual ~CoordinatorClassic() { }
 
   inline Procedure& txn() {
     return *(Procedure*)cmd_;

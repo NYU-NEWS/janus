@@ -10,8 +10,8 @@
 #pragma once
 
 #include "__dep__.h"
-#include "rcc/rcc_row.h"
-#include "ro6/ro6_row.h"
+#include "rococo/rcc_row.h"
+#include "snow/ro6_row.h"
 #include "multi_value.h"
 #include "txn_reg.h"
 #include "procedure.h"

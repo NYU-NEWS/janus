@@ -11,7 +11,7 @@
 namespace rococo {
 
 static Frame* rcc_frame_s = Frame::RegFrame(MODE_RCC,
-                                            {"rcc", "rococo"},
+                                            {"rococo", "rococo"},
                                             [] () -> Frame* {
                                               return new RccFrame();
                                             });
@@ -40,7 +40,7 @@ Coordinator* RccFrame::CreateCoord(cooid_t coo_id,
 }
 
 Scheduler* RccFrame::CreateScheduler() {
-  Scheduler* sched = new RccSched();
+  Scheduler* sched = new SchedulerRococo();
   sched->frame_ = this;
   return sched;
 }

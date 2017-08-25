@@ -4,10 +4,9 @@
 #include "constants.h"
 #include "config.h"
 #include "txn_reg.h"
-#include "tpl/exec.h"
-#include "tpl/tpl.h"
-#include "ro6/ro6.h"
-#include "tpl/ps.h"
+#include "2pl/exec.h"
+#include "2pl/tx_box.h"
+#include "snow/ro6.h"
 
 namespace rococo {
 
@@ -231,4 +230,4 @@ txn_reg_->regs_[txn][pie].sharder_ \
 #define RO6_RO_PHASE_1 ((Config::GetConfig()->get_mode() == MODE_RO6) && ((RO6DTxn*)dtxn)->read_only_ && dtxn->phase_ == 1)
 
 
-} // namespace rcc
+} // namespace rococo

@@ -3,7 +3,7 @@
 #include "../__dep__.h"
 #include "../constants.h"
 #include "../command.h"
-#include "../rcc/coord.h"
+#include "../rococo/coord.h"
 #include "dep_graph.h"
 
 namespace rococo {

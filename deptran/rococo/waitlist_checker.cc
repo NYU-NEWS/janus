@@ -5,7 +5,7 @@
 
 using namespace rococo;
 
-WaitlistChecker::WaitlistChecker(RccSched* sched) {
+WaitlistChecker::WaitlistChecker(SchedulerRococo* sched) {
   this->set_period(2000000); // 2s
   verify(sched_ == nullptr);
   sched_ = sched;

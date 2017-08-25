@@ -11,7 +11,7 @@ class Procedure;
 class TpcPrepareCommand;
 class TpcCommitCommand;
 class SimpleCommand;
-class ClassicSched: public Scheduler {
+class SchedulerClassic: public Scheduler {
  using Scheduler::Scheduler;
  public:
   virtual bool OnDispatch(TxnPieceData& piece_data,
