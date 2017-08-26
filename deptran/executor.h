@@ -7,7 +7,7 @@ namespace rococo {
 
 class TxnRegistry;
 class Scheduler;
-class DTxn;
+class TxBox;
 class SimpleCommand;
 class Procedure;
 class Executor {
@@ -16,7 +16,7 @@ class Executor {
   TxnRegistry* txn_reg_ = nullptr;
   mdb::Txn *mdb_txn_ = nullptr;
   Scheduler* sched_ = nullptr;
-  DTxn* dtxn_ = nullptr;
+  TxBox* dtxn_ = nullptr;
   Procedure* txn_cmd_ = nullptr;
   cmdid_t cmd_id_ = 0;
   int phase_ = -1;

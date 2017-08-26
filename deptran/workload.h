@@ -4,7 +4,6 @@
 #include "constants.h"
 #include "config.h"
 #include "txn_reg.h"
-#include "2pl/exec.h"
 #include "2pl/tx_box.h"
 #include "snow/ro6.h"
 
@@ -98,11 +97,11 @@ map<int32_t, Value> &output) \
 #define END_LOOP_PIE });}
 
 #define PROC \
-  [this] (Executor* exec, DTxn *dtxn, SimpleCommand &cmd, \
+  [this] (Executor* exec, TxBox *dtxn, SimpleCommand &cmd, \
           int32_t *res, map<int32_t, Value> &output)
 
 #define LPROC \
-  [this, i] (Executor* exec, DTxn *dtxn, SimpleCommand &cmd, \
+  [this, i] (Executor* exec, TxBox *dtxn, SimpleCommand &cmd, \
           int32_t *res, map<int32_t, Value> &output)
 
 #define BEGIN_CB(txn_type, inn_id) \

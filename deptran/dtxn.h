@@ -61,7 +61,7 @@ class Scheduler;
  * It now contains a workspace for procedure data as a
  * temporary solution.
  */
-class DTxn {
+class TxBox {
  public:
   bool inuse = false;
 
@@ -88,9 +88,9 @@ class DTxn {
   map<int64_t, Value> context_value_;
   map<int64_t, mdb::ResultSet> context_rs_;
 
-  DTxn() = delete;
+  TxBox() = delete;
 
-  DTxn(epoch_t epoch, txnid_t tid, Scheduler *mgr)
+  TxBox(epoch_t epoch, txnid_t tid, Scheduler *mgr)
       : epoch_(epoch),
         tid_(tid),
         sched_(mgr),
@@ -143,9 +143,8 @@ class DTxn {
 
   virtual mdb::Table *GetTable(const std::string &tbl_name) const;
 
-  virtual ~DTxn();
+  virtual ~TxBox();
 };
 
-typedef DTxn TxBox;
 
 } // namespace rococo

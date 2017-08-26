@@ -124,7 +124,7 @@ void SchedulerJanus::OnPreAccept(const txnid_t txn_id,
   }
   // TODO FIXME
   // add interference based on cmds.
-  RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(txn_id);
+  RccDTxn *dtxn = (RccDTxn *) GetOrCreateTxBox(txn_id);
   dtxn->UpdateStatus(TXN_PAC);
   dtxn->involve_flag_ = RccDTxn::INVOLVED;
   RccDTxn& tinfo = *dtxn;
@@ -163,7 +163,7 @@ void SchedulerJanus::OnAccept(const txnid_t txn_id,
                         int32_t* res,
                         function<void()> callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(txn_id);
+  RccDTxn *dtxn = (RccDTxn *) GetOrCreateTxBox(txn_id);
   if (dtxn->max_seen_ballot_ > ballot) {
     *res = REJECT;
     verify(0); // do not support failure recovery so far.
@@ -283,7 +283,7 @@ void SchedulerJanus::OnCommit(const txnid_t cmd_id,
 //    Log_info("on commit graph size: %d", graph.size());
   *res = SUCCESS;
   // union the graph into dep graph
-  RccDTxn *dtxn = (RccDTxn*) GetOrCreateDTxn(cmd_id);
+  RccDTxn *dtxn = (RccDTxn*) GetOrCreateTxBox(cmd_id);
 //  verify(dtxn != nullptr);
   verify(dtxn->ptr_output_repy_ == nullptr);
   dtxn->ptr_output_repy_ = output;
@@ -347,7 +347,7 @@ int SchedulerJanus::OnInquire(epoch_t epoch,
                         const function<void()> &callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   // TODO check epoch, cannot be a too old one.
-  RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(cmd_id);
+  RccDTxn *dtxn = (RccDTxn *) GetOrCreateTxBox(cmd_id);
   RccDTxn& info = *dtxn;
   //register an event, triggered when the status >= COMMITTING;
   verify (info.Involve(Scheduler::partition_id_));

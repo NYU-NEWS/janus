@@ -1,7 +1,7 @@
 
 #include "dtxn.h"
 
-namespace rococo {
+namespace janus {
 
 
 bool OccDTxn::ReadColumn(mdb::Row *row,
@@ -50,4 +50,4 @@ bool OccDTxn::InsertRow(Table *tbl, Row *row) {
   return mdb_txn()->insert_row(tbl, row);
 }
 
-} // namespace rococo;
+} // namespace janus;

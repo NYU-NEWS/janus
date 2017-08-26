@@ -4,7 +4,7 @@
 #include "txn_reg.h"
 #include "procedure.h"
 
-namespace rococo {
+namespace janus {
 
 Executor::Executor(txnid_t txn_id, Scheduler *sched)
     : cmd_id_(txn_id), sched_(sched) {
@@ -22,11 +22,11 @@ void Executor::Execute(const SimpleCommand &cmd,
                        map<int32_t, Value> &output) {
   verify(output.size() == 0);
   *res = SUCCESS;
-  TxnPieceDef& p = txn_reg_->get(cmd.root_type_, cmd.type_);
+  TxnPieceDef &p = txn_reg_->get(cmd.root_type_, cmd.type_);
   const auto &handler = p.proc_handler_;
   handler(this,
           dtxn_,
-          const_cast<SimpleCommand&>(cmd),
+          const_cast<SimpleCommand &>(cmd),
           res,
           output);
   // for debug;
@@ -35,14 +35,14 @@ void Executor::Execute(const SimpleCommand &cmd,
   }
 }
 
-void Executor::Execute(const vector<SimpleCommand>& cmds,
-                       TxnOutput* output) {
+void Executor::Execute(const vector<SimpleCommand> &cmds,
+                       TxnOutput *output) {
   TxnWorkspace ws;
-  for (const SimpleCommand& c: cmds) {
-    auto& cmd = const_cast<SimpleCommand&>(c);
-    TxnPieceDef& p = txn_reg_->get(c.root_type_, c.type_);
+  for (const SimpleCommand &c: cmds) {
+    auto &cmd = const_cast<SimpleCommand &>(c);
+    TxnPieceDef &p = txn_reg_->get(c.root_type_, c.type_);
     const auto &handler = p.proc_handler_;
-    auto& m = (*output)[c.inn_id_];
+    auto &m = (*output)[c.inn_id_];
     int res;
     cmd.input.Aggregate(ws);
     handler(this,
@@ -59,8 +59,7 @@ void Executor::Execute(const vector<SimpleCommand>& cmds,
   }
 }
 
-
-mdb::Txn* Executor::mdb_txn() {
+mdb::Txn *Executor::mdb_txn() {
   if (mdb_txn_ != nullptr) return mdb_txn_;
   verify(sched_ != nullptr);
   mdb::Txn *txn = sched_->GetOrCreateMTxn(cmd_id_);
@@ -69,4 +68,4 @@ mdb::Txn* Executor::mdb_txn() {
   return mdb_txn_;
 }
 
-} // namespace rococo
+} // namespace janus

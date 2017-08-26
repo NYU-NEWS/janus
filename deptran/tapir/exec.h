@@ -4,7 +4,7 @@
 #include "../executor.h"
 
 namespace rococo {
-class TapirDTxn;
+class TxBoxTapir;
 class TapirExecutor : public Executor {
  public:
   using Executor::Executor;
@@ -20,7 +20,7 @@ class TapirExecutor : public Executor {
   void Abort();
   void Cleanup();
 
-  TapirDTxn* dtxn();
+  TxBoxTapir* dtxn();
 };
 
 } // namespace rococo

@@ -5,17 +5,17 @@
 
 namespace rococo {
 
-DTxn::~DTxn() {
+TxBox::~TxBox() {
 }
 
-mdb::Txn* DTxn::mdb_txn() {
+mdb::Txn* TxBox::mdb_txn() {
   if (mdb_txn_) return mdb_txn_;
   mdb_txn_ = sched_->GetOrCreateMTxn(tid_);
   verify(mdb_txn_ != nullptr);
   return mdb_txn_;
 }
 
-mdb::ResultSet DTxn::QueryIn(Table *tbl,
+mdb::ResultSet TxBox::QueryIn(Table *tbl,
                              const mdb::MultiBlob &low,
                              const mdb::MultiBlob &high,
                              mdb::symbol_t order,
@@ -38,7 +38,7 @@ mdb::ResultSet DTxn::QueryIn(Table *tbl,
   }
 }
 
-mdb::Row* DTxn::Query(mdb::Table *tbl,
+mdb::Row* TxBox::Query(mdb::Table *tbl,
                       vector<Value>& primary_keys,
                       int64_t row_context_id) {
   mdb::MultiBlob mb(primary_keys.size());
@@ -49,7 +49,7 @@ mdb::Row* DTxn::Query(mdb::Table *tbl,
   return r;
 }
 
-mdb::Row* DTxn::Query(mdb::Table *tbl,
+mdb::Row* TxBox::Query(mdb::Table *tbl,
                       const mdb::MultiBlob &mb,
                       int64_t row_context_id) {
   verify(mdb_txn() != nullptr);
@@ -71,7 +71,7 @@ mdb::Row* DTxn::Query(mdb::Table *tbl,
   return ret_row;
 }
 
-bool DTxn::ReadColumn(mdb::Row *row,
+bool TxBox::ReadColumn(mdb::Row *row,
                       mdb::colid_t col_id,
                       Value *value,
                       int hint_flag) {
@@ -81,7 +81,7 @@ bool DTxn::ReadColumn(mdb::Row *row,
   return true;
 }
 
-bool DTxn::ReadColumns(Row *row,
+bool TxBox::ReadColumns(Row *row,
                        const std::vector<colid_t> &col_ids,
                        std::vector<Value> *values,
                        int hint_flag) {
@@ -91,7 +91,7 @@ bool DTxn::ReadColumns(Row *row,
   return true;
 }
 
-bool DTxn::WriteColumn(Row *row,
+bool TxBox::WriteColumn(Row *row,
                        colid_t col_id,
                        const Value &value,
                        int hint_flag) {
@@ -101,7 +101,7 @@ bool DTxn::WriteColumn(Row *row,
   return true;
 }
 
-bool DTxn::WriteColumns(Row *row,
+bool TxBox::WriteColumns(Row *row,
                         const std::vector<colid_t> &col_ids,
                         const std::vector<Value> &values,
                         int hint_flag) {
@@ -114,7 +114,7 @@ bool DTxn::WriteColumns(Row *row,
   return true;
 }
 
-mdb::Row* DTxn::CreateRow(const mdb::Schema *schema,
+mdb::Row* TxBox::CreateRow(const mdb::Schema *schema,
                           const std::vector<mdb::Value> &row_data) {
   Row* r;
   switch (Config::config_s->cc_mode_) {
@@ -130,13 +130,13 @@ mdb::Row* DTxn::CreateRow(const mdb::Schema *schema,
   return r;
 }
 
-bool DTxn::InsertRow(Table *tbl, Row *row) {
+bool TxBox::InsertRow(Table *tbl, Row *row) {
   verify(mdb_txn() != nullptr);
   return mdb_txn()->insert_row(tbl, row);
 }
 
 // TODO remove
-mdb::Table *DTxn::GetTable(const std::string &tbl_name) const {
+mdb::Table *TxBox::GetTable(const std::string &tbl_name) const {
   return sched_->get_table(tbl_name);
 }
 

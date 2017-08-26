@@ -11,7 +11,7 @@ namespace janus {
 class ExternCScheduler : public Scheduler {
   using Scheduler::Scheduler;
  public:
-  virtual bool HandleConflicts(DTxn& dtxn,
+  virtual bool HandleConflicts(TxBox& dtxn,
                                innid_t inn_id,
                                vector<string>& conflicts) override;
 

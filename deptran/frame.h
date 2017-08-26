@@ -4,14 +4,14 @@
 #include "txn_reg.h"
 #include "config.h"
 
-namespace rococo {
+namespace janus {
 
 class Sharding;
 class Coordinator;
 class CoordinatorBase;
 class Procedure;
 class TxnRequest;
-class DTxn;
+class TxBox;
 class Executor;
 class Scheduler;
 class ClientControlServiceImpl;
@@ -53,7 +53,7 @@ class Frame {
   void GetTxnTypes(std::map<int32_t, std::string> &txn_types);
   Procedure* CreateTxnCommand(TxnRequest& req, TxnRegistry* reg);
   Procedure * CreateChopper(TxnRequest &req, TxnRegistry *reg);
-  virtual DTxn* CreateDTxn(epoch_t epoch,
+  virtual TxBox* CreateDTxn(epoch_t epoch,
                            txnid_t txn_id,
                            bool ro,
                            Scheduler *sch);

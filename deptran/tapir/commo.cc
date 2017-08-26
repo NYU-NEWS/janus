@@ -7,7 +7,7 @@
 #include "../rcc_rpc.h"
 #include "../rcc_service.h"
 
-namespace rococo {
+namespace janus {
 
 void TapirCommo::SendDispatch(vector<SimpleCommand> &cmd,
                               Coordinator *coo,
@@ -78,5 +78,4 @@ void TapirCommo::BroadcastAccept(parid_t par_id,
   }
 }
 
-
-} // namespace rococo
+} // namespace janus

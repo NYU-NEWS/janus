@@ -14,14 +14,14 @@
 
 namespace janus {
 
-DTxn* Scheduler::CreateDTxn(epoch_t epoch, txnid_t tid, bool read_only) {
+TxBox* Scheduler::CreateDTxn(epoch_t epoch, txnid_t tid, bool read_only) {
   Log_debug("create tid %ld", tid);
   verify(dtxns_.find(tid) == dtxns_.end());
   if (epoch == 0) {
     epoch = epoch_mgr_.curr_epoch_;
   }
   verify(epoch_mgr_.IsActive(epoch));
-  DTxn* dtxn = frame_->CreateDTxn(epoch, tid, read_only, this);
+  TxBox* dtxn = frame_->CreateDTxn(epoch, tid, read_only, this);
   if (dtxn != nullptr) {
     dtxns_[tid] = dtxn;
     dtxn->recorder_ = this->recorder_;
@@ -39,10 +39,10 @@ DTxn* Scheduler::CreateDTxn(epoch_t epoch, txnid_t tid, bool read_only) {
   return dtxn;
 }
 
-DTxn* Scheduler::CreateDTxn(txnid_t tid, bool ro) {
+TxBox* Scheduler::CreateDTxn(txnid_t tid, bool ro) {
   Log_debug("create tid %ld", tid);
   verify(dtxns_.find(tid) == dtxns_.end());
-  DTxn* dtxn = frame_->CreateDTxn(epoch_mgr_.curr_epoch_, tid, ro, this);
+  TxBox* dtxn = frame_->CreateDTxn(epoch_mgr_.curr_epoch_, tid, ro, this);
   if (dtxn != nullptr) {
     dtxns_[tid] = dtxn;
     dtxn->recorder_ = this->recorder_;
@@ -61,8 +61,8 @@ DTxn* Scheduler::CreateDTxn(txnid_t tid, bool ro) {
   return dtxn;
 }
 
-DTxn* Scheduler::GetOrCreateDTxn(txnid_t tid, bool ro) {
-  DTxn* ret = nullptr;
+TxBox* Scheduler::GetOrCreateTxBox(txnid_t tid, bool ro) {
+  TxBox* ret = nullptr;
   auto it = dtxns_.find(tid);
   if (it == dtxns_.end()) {
     ret = CreateDTxn(tid, ro);
@@ -74,7 +74,7 @@ DTxn* Scheduler::GetOrCreateDTxn(txnid_t tid, bool ro) {
   return ret;
 }
 
-DTxn* Scheduler::GetOrCreateDTxn(epoch_t epoch, txnid_t txn_id) {
+TxBox* Scheduler::GetOrCreateDTxn(epoch_t epoch, txnid_t txn_id) {
 
 }
 
@@ -86,7 +86,7 @@ void Scheduler::DestroyDTxn(i64 tid) {
   dtxns_.erase(it);
 }
 
-DTxn* Scheduler::GetDTxn(txnid_t tid) {
+TxBox* Scheduler::GetDTxn(txnid_t tid) {
   // Log_debug("DTxnMgr::get(%ld)\n", tid);
   auto it = dtxns_.find(tid);
   // verify(it != dtxns_.end());
@@ -244,9 +244,9 @@ Scheduler::~Scheduler() {
   mdb_txn_mgr_ = NULL;
 }
 
-bool Scheduler::OnDispatch(TxnPieceData& piece_data,
+bool Scheduler::OnDispatch(TxPieceData& piece_data,
                            TxnOutput& ret_output) {
-  TxBox& txn_box = *GetOrCreateDTxn(piece_data.root_id_);
+  TxBox& txn_box = *GetOrCreateTxBox(piece_data.root_id_);
   verify(partition_id_ == piece_data.partition_id_);
   TxnPieceDef& piece_def = txn_reg_->get(piece_data.root_type_,
                                          piece_data.type_);
@@ -264,7 +264,7 @@ bool Scheduler::OnDispatch(TxnPieceData& piece_data,
   piece_data.input.Aggregate(txn_box.ws_);
   piece_def.proc_handler_(nullptr,
                           &txn_box,
-                          const_cast<TxnPieceData&>(piece_data),
+                          const_cast<TxPieceData&>(piece_data),
                           &ret_code,
                           ret_output[piece_data.inn_id()]);
   txn_box.ws_.insert(ret_output[piece_data.inn_id()]);
@@ -314,7 +314,7 @@ Executor* Scheduler::CreateExecutor(cmdid_t txn_id) {
   verify(executors_.find(txn_id) == executors_.end());
   Executor *exec = frame_->CreateExecutor(txn_id, this);
   verify(exec->sched_);
-  DTxn* dtxn = CreateDTxn(txn_id);
+  TxBox* dtxn = CreateDTxn(txn_id);
   exec->dtxn_ = dtxn;
   executors_[txn_id] = exec;
   exec->recorder_ = this->recorder_;

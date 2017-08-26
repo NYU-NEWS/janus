@@ -1,16 +1,16 @@
 #include "../__dep__.h"
-#include "dtxn.h"
+#include "tx_box.h"
 #include "frame.h"
-#include "sched.h"
+#include "scheduler.h"
 
 namespace rococo {
 
 using mdb::Value;
 
-TapirDTxn::~TapirDTxn() {
+TxBoxTapir::~TxBoxTapir() {
 }
 
-bool TapirDTxn::ReadColumn(mdb::Row *row,
+bool TxBoxTapir::ReadColumn(mdb::Row *row,
                            mdb::colid_t col_id,
                            Value *value,
                            int hint_flag) {
@@ -25,14 +25,14 @@ bool TapirDTxn::ReadColumn(mdb::Row *row,
   return true;
 }
 
-bool TapirDTxn::ReadColumns(Row *row,
+bool TxBoxTapir::ReadColumns(Row *row,
                             const std::vector<colid_t> &col_ids,
                             std::vector<Value> *values,
                             int hint_flag) {
   verify(0);
 }
 
-bool TapirDTxn::WriteColumn(Row *row,
+bool TxBoxTapir::WriteColumn(Row *row,
                             colid_t col_id,
                             const Value &value,
                             int hint_flag) {
@@ -41,7 +41,7 @@ bool TapirDTxn::WriteColumn(Row *row,
   return true;
 }
 
-bool TapirDTxn::WriteColumns(Row *row,
+bool TxBoxTapir::WriteColumns(Row *row,
                              const std::vector<colid_t> &col_ids,
                              const std::vector<Value> &values,
                              int hint_flag) {

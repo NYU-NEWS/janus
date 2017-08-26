@@ -13,7 +13,7 @@ extern "C" {
 
 namespace janus {
 
-bool ExternCScheduler::HandleConflicts(DTxn &dtxn,
+bool ExternCScheduler::HandleConflicts(TxBox &dtxn,
                                        innid_t inn_id,
                                        vector<string> &conflicts) {
   // TODO call C interface

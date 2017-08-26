@@ -64,7 +64,7 @@ mdb::Row* RccFrame::CreateRow(const mdb::Schema *schema,
   return r;
 }
 
-DTxn* RccFrame::CreateDTxn(epoch_t epoch, txnid_t tid,
+TxBox* RccFrame::CreateDTxn(epoch_t epoch, txnid_t tid,
                            bool ro, Scheduler *mgr) {
   auto dtxn = new RccDTxn(epoch, tid, mgr, ro);
   return dtxn;

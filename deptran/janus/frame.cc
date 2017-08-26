@@ -62,7 +62,7 @@ mdb::Row* JanusFrame::CreateRow(const mdb::Schema *schema,
   return r;
 }
 
-DTxn* JanusFrame::CreateDTxn(epoch_t epoch, txnid_t tid,
+TxBox* JanusFrame::CreateDTxn(epoch_t epoch, txnid_t tid,
                            bool ro, Scheduler *mgr) {
 //  auto dtxn = new JanusDTxn(tid, mgr, ro);
 //  return dtxn;

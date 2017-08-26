@@ -59,7 +59,7 @@ class SchedulerRococo : public Scheduler, public RccGraph {
     verify(dtxn->id() == rhs.tid_);
     return dtxn;
   }
-  DTxn* GetOrCreateDTxn(txnid_t tid, bool ro = false) override ;
+  TxBox* GetOrCreateTxBox(txnid_t tid, bool ro = false) override ;
 
   virtual void SetPartitionId(parid_t par_id) {
     Scheduler::partition_id_ = par_id;
@@ -82,7 +82,7 @@ class SchedulerRococo : public Scheduler, public RccGraph {
                         RccGraph *graph,
                         const function<void()> &callback);
 
-  virtual bool HandleConflicts(DTxn& dtxn,
+  virtual bool HandleConflicts(TxBox& dtxn,
                                innid_t inn_id,
                                vector<string>& conflicts) {
     verify(0);

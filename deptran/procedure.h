@@ -112,7 +112,7 @@ class SimpleCommand: public ContainerCommand {
   virtual ~SimpleCommand() {};
 };
 
-typedef SimpleCommand TxnPieceData;
+typedef SimpleCommand TxPieceData;
 
 /**
  * input ready levels:

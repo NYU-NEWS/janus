@@ -49,7 +49,7 @@ class SchedulerJanus : public SchedulerRococo {
                 const function<void()> &callback) override;
   JanusCommo* commo();
 
-  virtual bool HandleConflicts(DTxn& dtxn,
+  virtual bool HandleConflicts(TxBox& dtxn,
                                innid_t inn_id,
                                vector<string>& conflicts) {
     verify(0);

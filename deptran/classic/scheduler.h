@@ -14,18 +14,14 @@ class SimpleCommand;
 class SchedulerClassic: public Scheduler {
  using Scheduler::Scheduler;
  public:
-  virtual bool OnDispatch(TxnPieceData& piece_data,
+  virtual bool OnDispatch(TxPieceData& piece_data,
                           TxnOutput& ret_output) override;
 
-  virtual bool BeforeAccess(TxBox& tx_box, Row* row, int col_id) {
+  virtual bool Guard(TxBox &tx_box, Row *row, int col_id) {
     Log_fatal("feature not implemented: before_access");
     return false;
   };
 
-  virtual int OnDispatchOld(const vector<SimpleCommand> &cmds,
-                            int32_t *res,
-                            TxnOutput* output,
-                            const function<void()>& callback);
   // PrepareRequest
   virtual bool OnPrepare(txnid_t tx_id,
                          const std::vector<i32> &sids);

@@ -13,10 +13,8 @@
 #include "rococo/coord.h"
 #include "snow/ro6_coord.h"
 #include "deptran/2pl/coordinator.h"
-#include "2pl/exec.h"
 #include "occ/dtxn.h"
 #include "occ/coord.h"
-#include "occ/exec.h"
 
 #include "bench/tpcc_real_dist/sharding.h"
 #include "bench/tpcc/workload.h"
@@ -51,11 +49,6 @@
 
 #include "deptran/2pl/scheduler.h"
 #include "occ/sched.h"
-
-#include "deptran/mdcc/coordinator.h"
-#include "deptran/mdcc/executor.h"
-#include "deptran/mdcc/services.h"
-#include "deptran/mdcc/MdccDTxn.h"
 
 #include "extern_c/frame.h"
 
@@ -210,7 +203,7 @@ Coordinator* Frame::CreateCoord(cooid_t coo_id,
       ((Coordinator*)coo)->txn_reg_ = txn_reg;
       break;
     case MODE_MDCC:
-      coo = (Coordinator*)new mdcc::MdccCoordinator(coo_id, id, config, ccsi);
+//      coo = (Coordinator*)new mdcc::MdccCoordinator(coo_id, id, config, ccsi);
       break;
     case MODE_NONE:
     default:
@@ -297,16 +290,13 @@ Communicator* Frame::CreateCommo(PollMgr* pollmgr) {
   return commo_;
 }
 
-DTxn* Frame::CreateDTxn(epoch_t epoch, txnid_t tid,
+TxBox* Frame::CreateDTxn(epoch_t epoch, txnid_t tid,
                         bool ro, Scheduler * mgr) {
-  DTxn *dtxn = nullptr;
+  TxBox *dtxn = nullptr;
 
   switch (mode_) {
     case MODE_2PL:
       dtxn = new TplTxBox(epoch, tid, mgr);
-      break;
-    case MODE_MDCC:
-      dtxn = new mdcc::MdccDTxn(tid, mgr);
       break;
     case MODE_OCC:
       dtxn = new OccDTxn(epoch, tid, mgr);
@@ -329,22 +319,19 @@ DTxn* Frame::CreateDTxn(epoch_t epoch, txnid_t tid,
 
 Executor* Frame::CreateExecutor(cmdid_t cmd_id, Scheduler* sched) {
   Executor* exec = nullptr;
-  auto mode = Config::GetConfig()->cc_mode_;
-  switch (mode) {
-    case MODE_NONE:
-      verify(0);
-    case MODE_2PL:
-      exec = new TplExecutor(cmd_id, sched);
-      break;
-    case MODE_OCC:
-      exec = new OCCExecutor(cmd_id, sched);
-      break;
-    case MODE_MDCC:
-      exec = new mdcc::MdccExecutor(cmd_id, sched);
-      break;
-    default:
-      verify(0);
-  }
+//  auto mode = Config::GetConfig()->cc_mode_;
+//  switch (mode) {
+//    case MODE_NONE:
+//      verify(0);
+//    case MODE_2PL:
+//      exec = new TplExecutor(cmd_id, sched);
+//      break;
+//    case MODE_OCC:
+//      exec = new OCCExecutor(cmd_id, sched);
+//      break;
+//    default:
+//      verify(0);
+//  }
   return exec;
 }
 
@@ -359,7 +346,7 @@ Scheduler* Frame::CreateScheduler() {
       sch = new OCCSched();
       break;
     case MODE_MDCC:
-      sch = new mdcc::MdccScheduler();
+//      sch = new mdcc::MdccScheduler();
       break;
     case MODE_NONE:
       sch = new NoneSched();
@@ -410,18 +397,18 @@ vector<rrr::Service *> Frame::CreateRpcServices(uint32_t site_id,
   auto result = std::vector<Service *>();
   switch(mode_) {
     case MODE_MDCC:
-      result.push_back(new mdcc::MdccClientServiceImpl(config,
-                                                       site_id,
-                                                       dtxn_sched));
-      result.push_back(new mdcc::MdccLeaderServiceImpl(config,
-                                                       site_id,
-                                                       dtxn_sched));
-      result.push_back(new mdcc::MdccAcceptorServiceImpl(config, 
-                                                         site_id, 
-                                                         dtxn_sched));
-      result.push_back(new mdcc::MdccLearnerServiceImpl(config,
-                                                        site_id,
-                                                        dtxn_sched));
+//      result.push_back(new mdcc::MdccClientServiceImpl(config,
+//                                                       site_id,
+//                                                       dtxn_sched));
+//      result.push_back(new mdcc::MdccLeaderServiceImpl(config,
+//                                                       site_id,
+//                                                       dtxn_sched));
+//      result.push_back(new mdcc::MdccAcceptorServiceImpl(config,
+//                                                         site_id,
+//                                                         dtxn_sched));
+//      result.push_back(new mdcc::MdccLearnerServiceImpl(config,
+//                                                        site_id,
+//                                                        dtxn_sched));
       break;
     case MODE_2PL:
     case MODE_OCC:

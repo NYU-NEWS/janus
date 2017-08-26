@@ -5,17 +5,11 @@
 //
 
 #include "../__dep__.h"
-#include "../constants.h"
 #include "../dtxn.h"
 #include "../scheduler.h"
-#include "../procedure.h"
-#include "../marshal-value.h"
-#include "../rcc_rpc.h"
-#include "../rococo/graph.h"
-#include "../rococo/graph_marshaler.h"
 #include "sched.h"
 
-namespace rococo {
+namespace janus {
 
 OCCSched::OCCSched() : SchedulerClassic() {
   mdb_txn_mgr_ = new mdb::TxnMgrOCC();
@@ -41,4 +35,4 @@ mdb::Txn* OCCSched::get_mdb_txn(const i64 tid) {
 
 }
 
-} // namespace rococo
+} // namespace janus

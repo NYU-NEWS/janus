@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "../classic/sched.h"
+#include "deptran/classic/scheduler.h"
 
 namespace rococo {
 
@@ -16,13 +16,13 @@ class Scheduler2pl: public SchedulerClassic {
   virtual mdb::Txn *get_mdb_txn(const i64 tid);
   virtual mdb::Txn *del_mdb_txn(const i64 tid);
 
-  virtual bool HandleConflicts(DTxn& dtxn,
+  virtual bool HandleConflicts(TxBox& dtxn,
                                innid_t inn_id,
                                vector<string>& conflicts) {
     verify(0);
   };
 
-  virtual bool BeforeAccess(TxBox& tx_box, Row* row, int col_idx) override;
+  virtual bool Guard(TxBox &tx_box, Row *row, int col_idx) override;
 
   virtual bool DoPrepare(txnid_t tx_id) override;
 

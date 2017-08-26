@@ -12,7 +12,6 @@
 #include "../rococo/graph.h"
 #include "../rococo/graph_marshaler.h"
 #include "scheduler.h"
-#include "exec.h"
 #include "tx_box.h"
 
 namespace janus {
@@ -52,7 +51,7 @@ mdb::Txn* Scheduler2pl::get_mdb_txn(const i64 tid) {
 }
 
 
-bool Scheduler2pl::BeforeAccess(TxBox& tx_box, Row* row, int col_idx) {
+bool Scheduler2pl::Guard(TxBox &tx_box, Row *row, int col_idx) {
   mdb::FineLockedRow* fl_row = (mdb::FineLockedRow*) row;
   ALock* lock = fl_row->get_alock(col_idx);
   TplTxBox& tpl_tx_box = dynamic_cast<TplTxBox&>(tx_box);
@@ -67,7 +66,7 @@ bool Scheduler2pl::BeforeAccess(TxBox& tx_box, Row* row, int col_idx) {
 
 bool Scheduler2pl::DoPrepare(txnid_t tx_id) {
   // do nothing here?
-  TplTxBox* tx_box = (TplTxBox*)GetOrCreateDTxn(tx_id);
+  TplTxBox* tx_box = (TplTxBox*) GetOrCreateTxBox(tx_id);
   verify(!tx_box->inuse);
   tx_box->inuse = true;
   if (tx_box->wounded_) {

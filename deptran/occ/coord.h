@@ -2,10 +2,10 @@
 
 #include "../classic/coord.h"
 
-namespace rococo {
+namespace janus {
 
 class OCCCoord: public CoordinatorClassic {
   using CoordinatorClassic::CoordinatorClassic;
 };
 
-} //namespace rococo
+} //namespace janus

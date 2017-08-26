@@ -7,7 +7,7 @@
 #define PHASE_RCC_COMMIT (2)
 
 namespace janus {
-class RccDTxn: public DTxn, public Vertex<RccDTxn> {
+class RccDTxn: public TxBox, public Vertex<RccDTxn> {
  public:
   int8_t status_ = TXN_UKN;
   ballot_t max_seen_ballot_{0};

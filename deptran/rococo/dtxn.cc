@@ -11,20 +11,20 @@ namespace rococo {
 RccDTxn::RccDTxn(epoch_t epoch,
                  txnid_t tid,
                  Scheduler *mgr,
-                 bool ro) : DTxn(epoch, tid, mgr) {
+                 bool ro) : TxBox(epoch, tid, mgr) {
   read_only_ = ro;
   mdb_txn_ = mgr->GetOrCreateMTxn(tid_);
   verify(id() == tid);
 }
 
-RccDTxn::RccDTxn(txnid_t id): DTxn(0, id, nullptr) {
+RccDTxn::RccDTxn(txnid_t id): TxBox(0, id, nullptr) {
   // alert!! after this a lot of stuff need to be set manually.
   tid_ = id;
 }
 
 RccDTxn::RccDTxn(RccDTxn& rhs_dtxn) :
     Vertex<RccDTxn>(rhs_dtxn),
-    DTxn(rhs_dtxn.epoch_, rhs_dtxn.tid_, nullptr),
+    TxBox(rhs_dtxn.epoch_, rhs_dtxn.tid_, nullptr),
     partition_(rhs_dtxn.partition_),
     status_(rhs_dtxn.status_) {
 }

@@ -37,8 +37,8 @@ SchedulerRococo::~SchedulerRococo() {
   delete waitlist_checker_;
 }
 
-DTxn* SchedulerRococo::GetOrCreateDTxn(txnid_t tid, bool ro) {
-  RccDTxn* dtxn = (RccDTxn*) Scheduler::GetOrCreateDTxn(tid, ro);
+TxBox* SchedulerRococo::GetOrCreateTxBox(txnid_t tid, bool ro) {
+  RccDTxn* dtxn = (RccDTxn*) Scheduler::GetOrCreateTxBox(tid, ro);
   dtxn->partition_.insert(Scheduler::partition_id_);
   verify(dtxn->id() == tid);
   return dtxn;
@@ -52,7 +52,7 @@ int SchedulerRococo::OnDispatch(const vector<SimpleCommand> &cmd,
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   verify(graph != nullptr);
   txnid_t txn_id = cmd[0].root_id_;
-  RccDTxn *dtxn = (RccDTxn *) GetOrCreateDTxn(txn_id);
+  RccDTxn *dtxn = (RccDTxn *) GetOrCreateTxBox(txn_id);
   verify(dtxn->id() == txn_id);
   verify(RccGraph::partition_id_ == Scheduler::partition_id_);
 //  auto job = [&cmd, res, dtxn, callback, graph, output, this, txn_id] () {
@@ -617,7 +617,7 @@ RccCommo* SchedulerRococo::commo() {
 }
 
 void SchedulerRococo::DestroyExecutor(txnid_t txn_id) {
-  RccDTxn* dtxn = (RccDTxn*) GetOrCreateDTxn(txn_id);
+  RccDTxn* dtxn = (RccDTxn*) GetOrCreateTxBox(txn_id);
   verify(dtxn->committed_ || dtxn->aborted_);
   if (epoch_enabled_) {
 //    Remove(txn_id);

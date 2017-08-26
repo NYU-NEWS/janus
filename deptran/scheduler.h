@@ -19,7 +19,7 @@ class Scheduler {
  public:
   locid_t loc_id_ = -1;
   siteid_t site_id_ = -1;
-  unordered_map<txnid_t, DTxn *> dtxns_{};
+  unordered_map<txnid_t, TxBox *> dtxns_{};
   unordered_map<txnid_t, mdb::Txn *> mdb_txns_{};
   unordered_map<txnid_t, Executor*> executors_{};
   function<void(ContainerCommand&)> learner_action_ =
@@ -90,13 +90,13 @@ class Scheduler {
   }
 
   // runs in a coroutine.
-  virtual bool OnDispatch(TxnPieceData& piece_data,
+  virtual bool OnDispatch(TxPieceData& piece_data,
                           TxnOutput& ret_output);
 
-  virtual bool HandleConflicts(DTxn& dtxn,
+  virtual bool HandleConflicts(TxBox& dtxn,
                                innid_t inn_id,
                                vector<string>& conflicts) = 0;
-  virtual bool HandleConflicts(DTxn& dtxn,
+  virtual bool HandleConflicts(TxBox& dtxn,
                                innid_t inn_id,
                                vector<conf_id_t>& conflicts) {
     Log_fatal("unimplemnted feature: handle conflicts!");
@@ -105,11 +105,11 @@ class Scheduler {
                        innid_t inn_id);
 
   Coordinator*CreateRepCoord();
-  virtual DTxn *GetDTxn(txnid_t tid);
-  virtual DTxn *CreateDTxn(txnid_t tid, bool ro = false);
-  virtual DTxn *GetOrCreateDTxn(txnid_t tid, bool ro = false);
-  virtual DTxn *CreateDTxn(epoch_t epoch, txnid_t txn_id, bool read_only = false);
-  virtual DTxn *GetOrCreateDTxn(epoch_t epoch, txnid_t txn_id);
+  virtual TxBox *GetDTxn(txnid_t tid);
+  virtual TxBox *CreateDTxn(txnid_t tid, bool ro = false);
+  virtual TxBox *GetOrCreateTxBox(txnid_t tid, bool ro = false);
+  virtual TxBox *CreateDTxn(epoch_t epoch, txnid_t txn_id, bool read_only = false);
+  virtual TxBox *GetOrCreateDTxn(epoch_t epoch, txnid_t txn_id);
   void DestroyDTxn(i64 tid);
 
   Executor* GetExecutor(txnid_t txn_id);

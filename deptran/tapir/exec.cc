@@ -1,7 +1,7 @@
 #include "../__dep__.h"
 #include "deptran/procedure.h"
 #include "exec.h"
-#include "dtxn.h"
+#include "tx_box.h"
 
 namespace rococo {
 
@@ -132,9 +132,9 @@ void TapirExecutor::Abort() {
 
 
 
-TapirDTxn* TapirExecutor::dtxn() {
+TxBoxTapir* TapirExecutor::dtxn() {
   verify(dtxn_ != nullptr);
-  auto d = dynamic_cast<TapirDTxn*>(dtxn_);
+  auto d = dynamic_cast<TxBoxTapir*>(dtxn_);
   verify(d);
   return d;
 }

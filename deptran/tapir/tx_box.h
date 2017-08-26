@@ -3,15 +3,15 @@
 #include "../__dep__.h"
 #include "../dtxn.h"
 
-namespace rococo {
+namespace janus {
 
 
-class TapirDTxn : public DTxn {
+class TxBoxTapir : public TxBox {
  public:
   map<Row*, map<colid_t, mdb::version_t>> read_vers_ = {};
   map<Row*, map<colid_t, Value>> write_bufs_ = {};
 
-  using DTxn::DTxn;
+  using TxBox::TxBox;
 
   mdb::Txn* mdb_txn();
 
@@ -40,7 +40,7 @@ class TapirDTxn : public DTxn {
                             const std::vector<Value> &values,
                             int hint_flag = TXN_SAFE) override;
 
-  virtual ~TapirDTxn();
+  virtual ~TxBoxTapir();
 };
 
 } // namespace rococo
