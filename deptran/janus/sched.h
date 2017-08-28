@@ -10,7 +10,7 @@ class SchedulerJanus : public SchedulerRococo {
  public:
   using SchedulerRococo::SchedulerRococo;
 
-  map<txnid_t, RccDTxn*> Aggregate(RccGraph& graph);
+  map<txnid_t, shared_ptr<RccDTxn>> Aggregate(RccGraph& graph);
 
   void OnPreAccept(const txnid_t txnid,
                    const vector<SimpleCommand> &cmds,
@@ -49,7 +49,7 @@ class SchedulerJanus : public SchedulerRococo {
                 const function<void()> &callback) override;
   JanusCommo* commo();
 
-  virtual bool HandleConflicts(TxBox& dtxn,
+  virtual bool HandleConflicts(Tx& dtxn,
                                innid_t inn_id,
                                vector<string>& conflicts) {
     verify(0);

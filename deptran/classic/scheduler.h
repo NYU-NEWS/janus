@@ -17,7 +17,7 @@ class SchedulerClassic: public Scheduler {
   virtual bool OnDispatch(TxPieceData& piece_data,
                           TxnOutput& ret_output) override;
 
-  virtual bool Guard(TxBox &tx_box, Row *row, int col_id) {
+  virtual bool Guard(Tx &tx_box, Row *row, int col_id, bool write=true) {
     Log_fatal("feature not implemented: before_access");
     return false;
   };
@@ -33,9 +33,9 @@ class SchedulerClassic: public Scheduler {
   virtual int OnCommit(cmdid_t cmd_id,
                        int commit_or_abort);
 
-  virtual void DoCommit(TxBox& tx_box);
+  virtual void DoCommit(Tx& tx_box);
 
-  virtual void DoAbort(TxBox& tx_box);
+  virtual void DoAbort(Tx& tx_box);
 
   void OnLearn(ContainerCommand&) override;
 

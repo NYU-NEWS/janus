@@ -34,23 +34,6 @@ using mdb::colid_t;
 #define IS_MODE_OCC (Config::GetConfig()->get_mode() == MODE_OCC)
 #define IS_MODE_NONE (Config::GetConfig()->get_mode() == MODE_NONE)
 
-struct entry_t {
-  void* last_{nullptr}; // last transaction(write) that touches this
-  // item. (arriving order)
-
-  const entry_t &operator=(const entry_t &rhs) {
-    last_ = rhs.last_;
-    return *this;
-  }
-
-  entry_t() {
-  }
-
-  entry_t(const entry_t &o) {
-    last_ = o.last_;
-  }
-};
-
 class Scheduler;
 
 /**
@@ -61,7 +44,7 @@ class Scheduler;
  * It now contains a workspace for procedure data as a
  * temporary solution.
  */
-class TxBox {
+class Tx {
  public:
   bool inuse = false;
 
@@ -88,9 +71,9 @@ class TxBox {
   map<int64_t, Value> context_value_;
   map<int64_t, mdb::ResultSet> context_rs_;
 
-  TxBox() = delete;
+  Tx() = delete;
 
-  TxBox(epoch_t epoch, txnid_t tid, Scheduler *mgr)
+  Tx(epoch_t epoch, txnid_t tid, Scheduler *mgr)
       : epoch_(epoch),
         tid_(tid),
         sched_(mgr),
@@ -143,8 +126,25 @@ class TxBox {
 
   virtual mdb::Table *GetTable(const std::string &tbl_name) const;
 
-  virtual ~TxBox();
+  virtual ~Tx();
+};
+
+struct entry_t {
+  shared_ptr<Tx> last_{nullptr}; // last transaction(write) that touches this
+  // item. (arriving order)
+
+  const entry_t &operator=(const entry_t &rhs) {
+    last_ = rhs.last_;
+    return *this;
+  }
+
+  entry_t() {
+  }
+
+  entry_t(const entry_t &o) {
+    last_ = o.last_;
+  }
 };
 
 
-} // namespace rococo
+} // namespace janus

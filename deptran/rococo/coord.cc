@@ -114,10 +114,10 @@ void RccCoord::Finish() {
     (int)ch->partition_ids_.size(),
     cmd_->id_,
     graph_.size());
-  RccDTxn* v = graph_.FindV(cmd_->id_);
+  auto v = graph_.FindV(cmd_->id_);
   RccDTxn& info = *v;
   verify(ch->partition_ids_.size() == info.partition_.size());
-  graph_.UpgradeStatus(v, TXN_CMT);
+  graph_.UpgradeStatus(*v, TXN_CMT);
 
   verify(graph_.size() > 0);
 

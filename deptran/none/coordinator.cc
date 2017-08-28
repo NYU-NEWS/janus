@@ -1,5 +1,5 @@
 
-#include "none/coord.h"
+#include "none/coordinator.h"
 #include "frame.h"
 #include "benchmark_control_rpc.h"
 
@@ -7,7 +7,7 @@ namespace janus {
 
 /** thread safe */
 
-void NoneCoord::GotoNextPhase() {
+void CoordinatorNone::GotoNextPhase() {
 
   int n_phase = 2;
   switch (phase_++ % n_phase) {

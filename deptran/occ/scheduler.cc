@@ -7,15 +7,15 @@
 #include "../__dep__.h"
 #include "../dtxn.h"
 #include "../scheduler.h"
-#include "sched.h"
+#include "scheduler.h"
 
 namespace janus {
 
-OCCSched::OCCSched() : SchedulerClassic() {
+SchedulerOcc::SchedulerOcc() : SchedulerClassic() {
   mdb_txn_mgr_ = new mdb::TxnMgrOCC();
 }
 
-mdb::Txn* OCCSched::get_mdb_txn(const i64 tid) {
+mdb::Txn* SchedulerOcc::get_mdb_txn(const i64 tid) {
   mdb::Txn *txn = nullptr;
   auto it = mdb_txns_.find(tid);
   if (it == mdb_txns_.end()) {

@@ -55,18 +55,17 @@ void TpccWorkload::RegStockLevel() {
        {TPCC_TB_DISTRICT, {TPCC_VAR_W_ID}}, // s
        DF_NO,
        PROC {
-         verify(dtxn != nullptr);
 //    verify(input.size() == 2);
          mdb::MultiBlob mb(2);
          //cell_locator_t cl(TPCC_TB_DISTRICT, 2);
          mb[0] = cmd.input[TPCC_VAR_D_ID].get_blob();
          mb[1] = cmd.input[TPCC_VAR_W_ID].get_blob();
 
-         auto tbl_district = dtxn->GetTable(TPCC_TB_DISTRICT);
-         mdb::Row *r = dtxn->Query(tbl_district,
+         auto tbl_district = tx.GetTable(TPCC_TB_DISTRICT);
+         mdb::Row *r = tx.Query(tbl_district,
                                    mb,
                                    ROW_DISTRICT);
-         dtxn->ReadColumn(r, TPCC_COL_DISTRICT_D_NEXT_O_ID,
+         tx.ReadColumn(r, TPCC_COL_DISTRICT_D_NEXT_O_ID,
                           &output[TPCC_VAR_D_NEXT_O_ID], TXN_BYPASS);
          *res = SUCCESS;
        }
@@ -95,7 +94,7 @@ void TpccWorkload::RegStockLevel() {
          mbl[3] = ol_number_low.get_blob();
          mbh[3] = ol_number_high.get_blob();
 
-         mdb::ResultSet rs = dtxn->QueryIn(dtxn->GetTable(TPCC_TB_ORDER_LINE),
+         mdb::ResultSet rs = tx.QueryIn(tx.GetTable(TPCC_TB_ORDER_LINE),
                                            mbl,
                                            mbh,
                                            mdb::ORD_ASC,
@@ -121,7 +120,7 @@ void TpccWorkload::RegStockLevel() {
          column_locks.reserve(row_list.size());
 
          for (int i = 0; i < row_list.size(); i++) {
-           dtxn->ReadColumn(row_list[i],
+           tx.ReadColumn(row_list[i],
                             TPCC_COL_ORDER_LINE_OL_I_ID,
                             &output[TPCC_VAR_OL_I_ID(i)],
                             TXN_BYPASS);
@@ -171,8 +170,8 @@ void TpccWorkload::RegStockLevel() {
            mb[0] = cmd.input[TPCC_VAR_OL_I_ID(i)].get_blob();
            mb[1] = cmd.input[TPCC_VAR_W_ID].get_blob();
 
-           mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_STOCK), mb, ROW_STOCK);
-           dtxn->ReadColumn(r, TPCC_COL_STOCK_S_QUANTITY, &buf, TXN_BYPASS);
+           mdb::Row *r = tx.Query(tx.GetTable(TPCC_TB_STOCK), mb, ROW_STOCK);
+           tx.ReadColumn(r, TPCC_COL_STOCK_S_QUANTITY, &buf, TXN_BYPASS);
 
            if (buf.get_i32() < cmd.input[TPCC_VAR_THRESHOLD].get_i32())
              output[TPCC_VAR_UNKOWN] = Value((i32) 1);

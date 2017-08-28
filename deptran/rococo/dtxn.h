@@ -7,7 +7,7 @@
 #define PHASE_RCC_COMMIT (2)
 
 namespace janus {
-class RccDTxn: public TxBox, public Vertex<RccDTxn> {
+class RccDTxn: public Tx, public Vertex<RccDTxn> {
  public:
   int8_t status_ = TXN_UKN;
   ballot_t max_seen_ballot_{0};
@@ -66,7 +66,7 @@ class RccDTxn: public TxBox, public Vertex<RccDTxn> {
 
   void TraceDep(Row* row, colid_t col_id, int hint_flag);
 
-  virtual void AddParentEdge(RccDTxn *other, int8_t weight) override;
+  virtual void AddParentEdge(shared_ptr<RccDTxn> other, int8_t weight) override;
 
   virtual bool start_exe_itfr(
       defer_t defer,

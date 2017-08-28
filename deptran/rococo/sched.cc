@@ -37,8 +37,9 @@ SchedulerRococo::~SchedulerRococo() {
   delete waitlist_checker_;
 }
 
-TxBox* SchedulerRococo::GetOrCreateTxBox(txnid_t tid, bool ro) {
-  RccDTxn* dtxn = (RccDTxn*) Scheduler::GetOrCreateTxBox(tid, ro);
+shared_ptr<Tx> SchedulerRococo::GetOrCreateTxBox(txnid_t tid, bool ro) {
+  auto dtxn = dynamic_pointer_cast<RccDTxn>(
+      Scheduler::GetOrCreateTxBox(tid, ro));
   dtxn->partition_.insert(Scheduler::partition_id_);
   verify(dtxn->id() == tid);
   return dtxn;
@@ -52,7 +53,7 @@ int SchedulerRococo::OnDispatch(const vector<SimpleCommand> &cmd,
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   verify(graph != nullptr);
   txnid_t txn_id = cmd[0].root_id_;
-  RccDTxn *dtxn = (RccDTxn *) GetOrCreateTxBox(txn_id);
+  auto dtxn = dynamic_pointer_cast<RccDTxn>(GetOrCreateTxBox(txn_id));
   verify(dtxn->id() == txn_id);
   verify(RccGraph::partition_id_ == Scheduler::partition_id_);
 //  auto job = [&cmd, res, dtxn, callback, graph, output, this, txn_id] () {
@@ -64,7 +65,7 @@ int SchedulerRococo::OnDispatch(const vector<SimpleCommand> &cmd,
   dtxn->UpdateStatus(TXN_STD);
   int depth = 1;
   verify(cmd[0].root_id_ == txn_id);
-  auto sz = MinItfrGraph(dtxn, graph, true, depth);
+  auto sz = MinItfrGraph(*dtxn, graph, true, depth);
 //#ifdef DEBUG_CODE
 //    if (sz > 4) {
 //      Log_fatal("something is wrong, graph size %d", sz);
@@ -102,7 +103,7 @@ int SchedulerRococo::OnCommit(cmdid_t cmd_id,
                        const function<void()> &callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   // union the graph into dep graph
-  RccDTxn *dtxn = (RccDTxn*) GetDTxn(cmd_id);
+  auto dtxn = dynamic_pointer_cast<RccDTxn>(GetDTxn(cmd_id));
   verify(dtxn != nullptr);
   verify(dtxn->ptr_output_repy_ == nullptr);
   dtxn->ptr_output_repy_ = output;
@@ -129,7 +130,7 @@ int SchedulerRococo::OnInquire(epoch_t epoch,
   std::lock_guard<std::recursive_mutex> guard(mtx_);
 
   verify(0);
-  RccDTxn* v = FindV(txn_id);
+  auto v = FindV(txn_id);
   verify(v != nullptr);
   RccDTxn& dtxn = *v;
   //register an event, triggered when the status >= COMMITTING;
@@ -151,14 +152,14 @@ void SchedulerRococo::InquiredGraph(RccDTxn& dtxn, RccGraph* graph) {
   verify(graph != nullptr);
   if (dtxn.IsDecided()) {
     // return scc is enough.
-    auto& scc = FindSccPred(&dtxn);
+    auto& scc = FindSccPred(dtxn);
     for (auto v : scc) {
-      RccDTxn* vv = graph->CreateV(*v);
+      auto vv = graph->CreateV(*v);
       verify(vv->parents_.size() == v->parents_.size());
       verify(vv->partition_.size() == v->partition_.size());
     }
   } else {
-    MinItfrGraph(&dtxn, graph, false, 1);
+    MinItfrGraph(dtxn, graph, false, 1);
   }
 }
 
@@ -193,17 +194,16 @@ void SchedulerRococo::CheckWaitlist() {
   while (it != waitlist_.end()) {
 //    Log_info("checking loop, length: %d, fridge size: %d",
 //             (int)waitlist_.¬size(), (int)fridge_.size());
-    RccDTxn* v = *it;
+    auto v = *it;
     verify(v != nullptr);
 //  for (RccVertex *v : waitlist_) {
     // TODO minimize the length of the waitlist.
-    RccDTxn& dtxn = *v;
-    InquireAboutIfNeeded(dtxn); // inquire about unknown transaction.
-    if (dtxn.status() >= TXN_CMT &&
-        !dtxn.IsExecuted()) {
-      if (AllAncCmt(v)) {
+    InquireAboutIfNeeded(*v); // inquire about unknown transaction.
+    if (v->status() >= TXN_CMT &&
+        !v->IsExecuted()) {
+      if (AllAncCmt(*v)) {
 //        check_again = true;
-        RccScc& scc = FindSccPred(v);
+        RccScc& scc = FindSccPred(*v);
         verify(v->epoch_ > 0);
         Decide(scc);
         if (AllAncFns(scc)) {
@@ -243,22 +243,22 @@ void SchedulerRococo::CheckWaitlist() {
 //                  tinfo.inquire_acked_);
 #endif
       }
-      AnswerIfInquired(dtxn);
+      AnswerIfInquired(*v);
     } // else do nothing
 
     // Adjust the waitlist.
-    __DebugExamineGraphVerify(v);
-    if (dtxn.IsExecuted() ||
-        dtxn.IsAborted() ||
-        (dtxn.IsDecided() &&
-            !dtxn.Involve(Scheduler::partition_id_))) {
+    __DebugExamineGraphVerify(*v);
+    if (v->IsExecuted() ||
+        v->IsAborted() ||
+        (v->IsDecided() &&
+            !v->Involve(Scheduler::partition_id_))) {
       // TODO? check for its descendants, perhaps
       // add redundant vertex here?
       //      AddChildrenIntoWaitlist(v);
-        for (auto& v: dtxn.to_checks_) {
-          waitlist_.insert(v);
+        for (auto& vv: v->to_checks_) {
+          waitlist_.insert(vv);
         }
-        dtxn.to_checks_.clear();
+        v->to_checks_.clear();
 //      it = waitlist_.erase(it);
     } else {
 //      it++;
@@ -303,7 +303,7 @@ void SchedulerRococo::AddChildrenIntoWaitlist(RccDTxn* v) {
 //#endif
 }
 
-void SchedulerRococo::__DebugExamineGraphVerify(RccDTxn *v) {
+void SchedulerRococo::__DebugExamineGraphVerify(RccDTxn& v) {
 #ifdef DEBUG_CODE
   for (auto& pair : v->incoming_) {
     verify(pair.first->outgoing_.count(v) > 0);
@@ -395,27 +395,27 @@ void SchedulerRococo::InquireAck(cmdid_t cmd_id, RccGraph& graph) {
   verify(tinfo.status() >= TXN_CMT);
 }
 
-RccDTxn* SchedulerRococo::__DebugFindAnOngoingAncestor(RccDTxn* vertex) {
+RccDTxn& SchedulerRococo::__DebugFindAnOngoingAncestor(RccDTxn& vertex) {
   RccDTxn* ret = nullptr;
   set<RccDTxn*> walked;
-  std::function<bool(RccDTxn*)> func = [&ret, vertex] (RccDTxn* v) -> bool {
-    RccDTxn& info = *v;
+  std::function<bool(RccDTxn&)> func = [&ret, &vertex] (RccDTxn& v) -> bool {
+    RccDTxn& info = v;
     if (info.status() >= TXN_CMT) {
       return true;
     } else {
-      ret = v;
+      ret = &v;
       return false; // stop traversing.
     }
   };
   TraversePred(vertex, -1, func, walked);
-  return ret;
+  return *ret;
 }
 
-bool SchedulerRococo::AllAncCmt(RccDTxn *vertex) {
+bool SchedulerRococo::AllAncCmt(RccDTxn& vertex) {
   bool all_anc_cmt = true;
-  std::function<int(RccDTxn*)> func =
-      [&all_anc_cmt, vertex] (RccDTxn* v) -> int {
-    RccDTxn& parent = *v;
+  std::function<int(RccDTxn&)> func =
+      [&all_anc_cmt, &vertex] (RccDTxn& v) -> int {
+    RccDTxn& parent = v;
     int r = 0;
     if (parent.IsExecuted() || parent.IsAborted()) {
       r = RccGraph::SearchHint::Skip;
@@ -423,7 +423,7 @@ bool SchedulerRococo::AllAncCmt(RccDTxn *vertex) {
       r = RccGraph::SearchHint::Ok;
     } else {
       r = RccGraph::SearchHint::Exit;
-      parent.to_checks_.insert(vertex);
+      parent.to_checks_.insert(&vertex);
       all_anc_cmt = false;
     }
     return r;
@@ -434,8 +434,7 @@ bool SchedulerRococo::AllAncCmt(RccDTxn *vertex) {
 
 void SchedulerRococo::Decide(const RccScc& scc) {
   for (auto v : scc) {
-    RccDTxn& info = *v;
-    UpgradeStatus(v, TXN_DCD);
+    UpgradeStatus(*v, TXN_DCD);
 //    Log_info("txnid: %llx, parent size: %d", v->id(), v->parents_.size());
   }
 }
@@ -452,7 +451,7 @@ bool SchedulerRococo::HasICycle(const RccScc& scc) {
           }
           return true;
         };
-    TraverseDescendant(vertex, -1, func, walked, EDGE_I);
+    TraverseDescendant(*vertex, -1, func, walked, EDGE_I);
     if (ret) return true;
   }
   return false;
@@ -463,7 +462,7 @@ void SchedulerRococo::TriggerCheckAfterAggregation(RccGraph &graph) {
   for (auto& pair: graph.vertex_index()) {
     // TODO optimize here.
     auto txnid = pair.first;
-    RccDTxn* rhs_v = pair.second;
+    auto rhs_v = pair.second;
     auto v = FindV(txnid);
     verify(v != nullptr);
 #ifdef DEBUG_CODE
@@ -504,7 +503,7 @@ void SchedulerRococo::TriggerCheckAfterAggregation(RccGraph &graph) {
 #endif
 //    if (v->Get().status() >= TXN_CMT)
     check = true;
-    waitlist_.insert(v);
+    waitlist_.insert(v.get());
     verify(v->epoch_ > 0);
   }
   if (check)
@@ -515,9 +514,9 @@ void SchedulerRococo::TriggerCheckAfterAggregation(RccGraph &graph) {
 bool SchedulerRococo::HasAbortedAncestor(const RccScc& scc) {
   verify(scc.size() > 0);
   bool has_aborted = false;
-  std::function<int(RccDTxn*)> func =
-      [&has_aborted] (RccDTxn* v) -> int {
-        RccDTxn& info = *v;
+  std::function<int(RccDTxn&)> func =
+      [&has_aborted] (RccDTxn& v) -> int {
+        RccDTxn& info = v;
         if (info.IsExecuted()) {
           return RccGraph::SearchHint::Skip;
         }
@@ -527,7 +526,7 @@ bool SchedulerRococo::HasAbortedAncestor(const RccScc& scc) {
         }
         return RccGraph::SearchHint::Ok;
       };
-  TraversePred(scc[0], -1, func);
+  TraversePred(*scc[0], -1, func);
   return has_aborted;
 };
 
@@ -550,14 +549,14 @@ bool SchedulerRococo::AllAncFns(const RccScc& scc) {
   set<RccDTxn*> scc_set;
   scc_set.insert(scc.begin(), scc.end());
   bool all_anc_fns = true;
-  std::function<int(RccDTxn*)> func =
-      [&all_anc_fns, &scc_set, &scc] (RccDTxn* v) -> int {
-    RccDTxn& info = *v;
+  std::function<int(RccDTxn&)> func =
+      [&all_anc_fns, &scc_set, &scc] (RccDTxn& v) -> int {
+    RccDTxn& info = v;
     if (info.IsExecuted()) {
       return RccGraph::SearchHint::Skip;
     } else if (info.status() >= TXN_DCD) {
       return RccGraph::SearchHint::Ok;
-    } else if (scc_set.find(v) != scc_set.end()) {
+    } else if (scc_set.find(&v) != scc_set.end()) {
       return RccGraph::SearchHint::Ok;
     } else {
       all_anc_fns = false;
@@ -565,7 +564,7 @@ bool SchedulerRococo::AllAncFns(const RccScc& scc) {
       return RccGraph::SearchHint::Exit; // abort traverse
     }
   };
-  TraversePred(scc[0], -1, func);
+  TraversePred(*scc[0], -1, func);
   return all_anc_fns;
 };
 
@@ -598,7 +597,7 @@ void SchedulerRococo::Abort(const RccScc& scc) {
     RccDTxn& info = *v;
     info.union_status(TXN_ABT); // FIXME, remove this.
     verify(info.IsAborted());
-    RccDTxn *dtxn = (RccDTxn *) GetDTxn(info.id());
+    auto dtxn = dynamic_pointer_cast<RccDTxn>(GetDTxn(info.id()));
     if (dtxn == nullptr) continue;
     if (info.Involve(Scheduler::partition_id_)) {
       dtxn->Abort();
@@ -617,7 +616,7 @@ RccCommo* SchedulerRococo::commo() {
 }
 
 void SchedulerRococo::DestroyExecutor(txnid_t txn_id) {
-  RccDTxn* dtxn = (RccDTxn*) GetOrCreateTxBox(txn_id);
+  auto dtxn = dynamic_pointer_cast<RccDTxn>(GetOrCreateTxBox(txn_id));
   verify(dtxn->committed_ || dtxn->aborted_);
   if (epoch_enabled_) {
 //    Remove(txn_id);

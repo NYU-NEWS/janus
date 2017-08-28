@@ -5,6 +5,7 @@ namespace rococo {
 
 #define ballot_t uint64_t
 #define cooid_t uint32_t
+#define txid_t uint64_t
 #define txnid_t uint64_t
 #define cmdid_t uint64_t // txnid and cmdid are the same thing
 #define innid_t uint32_t

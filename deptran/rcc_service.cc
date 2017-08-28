@@ -156,13 +156,13 @@ void ClassicServiceImpl::TapirAccept(const cmdid_t &cmd_id,
   verify(0);
 }
 
-void ClassicServiceImpl::TapirFastAccept(const cmdid_t &cmd_id,
+void ClassicServiceImpl::TapirFastAccept(const txid_t &tx_id,
                                          const vector<SimpleCommand> &txn_cmds,
                                          rrr::i32 *res,
                                          rrr::DeferredReply *defer) {
   SchedulerTapir *sched = (SchedulerTapir *) dtxn_sched_;
-  sched->OnFastAccept(cmd_id, txn_cmds, res,
-                      [defer]() { defer->reply(); });
+  *res = sched->OnFastAccept(tx_id, txn_cmds);
+  defer->reply();
 }
 
 void ClassicServiceImpl::TapirDecide(const cmdid_t &cmd_id,
@@ -222,7 +222,8 @@ void ClassicServiceImpl::RccDispatchRo(const SimpleCommand &cmd,
                                        rrr::DeferredReply *defer) {
   std::lock_guard<std::mutex> guard(mtx_);
   verify(0);
-  RccDTxn *dtxn = (RccDTxn *) dtxn_sched_->GetOrCreateTxBox(cmd.root_id_, true);
+  auto tx = dtxn_sched_->GetOrCreateTxBox(cmd.root_id_, true);
+  auto dtxn = dynamic_pointer_cast<RccDTxn>(tx);
   dtxn->start_ro(cmd, *output, defer);
 }
 

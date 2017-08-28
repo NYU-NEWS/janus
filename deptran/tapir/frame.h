@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../__dep__.h"
 #include "../frame.h"
 #include "../constants.h"
 #include "commo.h"
@@ -21,8 +22,8 @@ class FrameTapir : public Frame {
                       vector<Value> &row_data) override;
   Communicator* CreateCommo(PollMgr* pollmgr = nullptr) override;
 
-  TxBox* CreateDTxn(epoch_t epoch, txnid_t tid,
-                   bool ro, Scheduler * mgr) override;
+  shared_ptr<Tx> CreateTx(epoch_t epoch, txnid_t tid,
+                          bool ro, Scheduler *mgr) override;
 
 };
 } // namespace rococo

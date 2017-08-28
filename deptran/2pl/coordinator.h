@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../classic/coord.h"
+#include "deptran/classic/coordinator.h"
 
 namespace janus {
 

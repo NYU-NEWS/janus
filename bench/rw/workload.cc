@@ -18,9 +18,9 @@ void RwWorkload::RegisterPrecedures() {
            verify(cmd.input.size() == 1);
            auto id = cmd.input[0].get_i64();
            buf[0] = cmd.input[0].get_blob();
-           auto tbl = dtxn->GetTable(RW_BENCHMARK_TABLE);
-           auto row = dtxn->Query(tbl, buf);
-           dtxn->ReadColumn(row, 1, &result, TXN_BYPASS);
+           auto tbl = tx.GetTable(RW_BENCHMARK_TABLE);
+           auto row = tx.Query(tbl, buf);
+           tx.ReadColumn(row, 1, &result, TXN_BYPASS);
            output[0] = result;
            *res = SUCCESS;
            return;
@@ -39,11 +39,11 @@ void RwWorkload::RegisterPrecedures() {
          verify(cmd.input.size() == 1);
          auto id = cmd.input[0].get_i64();
          buf[0] = cmd.input[0].get_blob();
-         auto tbl = dtxn->GetTable(RW_BENCHMARK_TABLE);
-         auto row = dtxn->Query(tbl, buf);
-         dtxn->ReadColumn(row, 1, &result, TXN_BYPASS);
+         auto tbl = tx.GetTable(RW_BENCHMARK_TABLE);
+         auto row = tx.Query(tbl, buf);
+         tx.ReadColumn(row, 1, &result, TXN_BYPASS);
          result.set_i32(result.get_i32() + 1);
-         dtxn->WriteColumn(row, 1, result, TXN_DEFERRED);
+         tx.WriteColumn(row, 1, result, TXN_DEFERRED);
          *res = SUCCESS;
          return;
        }

@@ -86,7 +86,7 @@ void JanusCommo::SendInquire(parid_t pid,
 
 bool JanusCommo::IsGraphOrphan(RccGraph& graph, txnid_t cmd_id) {
   if (graph.size() == 1) {
-    RccDTxn* v = graph.FindV(cmd_id);
+    auto v = graph.FindV(cmd_id);
     verify(v);
     return true;
   } else {

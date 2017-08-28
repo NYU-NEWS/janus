@@ -1,7 +1,7 @@
 #pragma once
 
 #include "dep_graph.h"
-#include "../classic/coord.h"
+#include "deptran/classic/coordinator.h"
 
 namespace rococo {
 

@@ -16,19 +16,19 @@ class Scheduler2pl: public SchedulerClassic {
   virtual mdb::Txn *get_mdb_txn(const i64 tid);
   virtual mdb::Txn *del_mdb_txn(const i64 tid);
 
-  virtual bool HandleConflicts(TxBox& dtxn,
+  virtual bool HandleConflicts(Tx& dtxn,
                                innid_t inn_id,
                                vector<string>& conflicts) {
     verify(0);
   };
 
-  virtual bool Guard(TxBox &tx_box, Row *row, int col_idx) override;
+  virtual bool Guard(Tx &tx_box, Row *row, int col_idx, bool write) override;
 
   virtual bool DoPrepare(txnid_t tx_id) override;
 
-  virtual void DoCommit(TxBox& tx_box) override;
+  virtual void DoCommit(Tx& tx_box) override;
 
-  virtual void DoAbort(TxBox& tx_box) override;
+  virtual void DoAbort(Tx& tx_box) override;
 };
 
 } // namespace rococo

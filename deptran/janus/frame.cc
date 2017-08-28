@@ -62,12 +62,12 @@ mdb::Row* JanusFrame::CreateRow(const mdb::Schema *schema,
   return r;
 }
 
-TxBox* JanusFrame::CreateDTxn(epoch_t epoch, txnid_t tid,
+shared_ptr<Tx> JanusFrame::CreateTx(epoch_t epoch, txnid_t tid,
                            bool ro, Scheduler *mgr) {
 //  auto dtxn = new JanusDTxn(tid, mgr, ro);
 //  return dtxn;
-  auto dtxn = new JanusDTxn(epoch, tid, mgr, ro);
-  return dtxn;
+  shared_ptr<Tx> sp_tx(new JanusDTxn(epoch, tid, mgr, ro));
+  return sp_tx;
 }
 
 Communicator* JanusFrame::CreateCommo(PollMgr* poll) {

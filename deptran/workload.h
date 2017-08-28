@@ -4,7 +4,7 @@
 #include "constants.h"
 #include "config.h"
 #include "txn_reg.h"
-#include "2pl/tx_box.h"
+#include "2pl/tx.h"
 #include "snow/ro6.h"
 
 namespace rococo {
@@ -97,11 +97,11 @@ map<int32_t, Value> &output) \
 #define END_LOOP_PIE });}
 
 #define PROC \
-  [this] (Executor* exec, TxBox *dtxn, SimpleCommand &cmd, \
+  [this] (Executor* exec, Tx& tx, SimpleCommand &cmd, \
           int32_t *res, map<int32_t, Value> &output)
 
 #define LPROC \
-  [this, i] (Executor* exec, TxBox *dtxn, SimpleCommand &cmd, \
+  [this, i] (Executor* exec, Tx& tx, SimpleCommand &cmd, \
           int32_t *res, map<int32_t, Value> &output)
 
 #define BEGIN_CB(txn_type, inn_id) \
@@ -213,13 +213,13 @@ txn_reg_->regs_[txn][pie].sharder_ \
         r = mdb::VersionedRow::create(schema, row_data); \
         break; \
     case MODE_RCC: \
-        r = dtxn->CreateRow(schema, row_data); \
+        r = tx.CreateRow(schema, row_data); \
         break; \
     case MODE_RO6: \
-        r = dtxn->CreateRow(schema, row_data); \
+        r = tx.CreateRow(schema, row_data); \
         break; \
     default: \
-        r = dtxn->CreateRow(schema, row_data); \
+        r = tx.CreateRow(schema, row_data); \
         break; \
     }
 

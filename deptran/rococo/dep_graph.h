@@ -43,17 +43,18 @@ class RccGraph : public Graph<RccDTxn> {
   }
 
   /** on start_req */
-  RccDTxn* FindOrCreateRccVertex(txnid_t txn_id, SchedulerRococo* sched);
+  shared_ptr<RccDTxn> FindOrCreateRccVertex(txnid_t txn_id,
+                                            SchedulerRococo* sched);
   void RemoveVertex(txnid_t txn_id);
-  void RebuildEdgePointer(map<txnid_t, RccDTxn*>& index);
-  RccDTxn* AggregateVertex(RccDTxn *rhs_dtxn);
-  void UpgradeStatus(RccDTxn* v, int8_t status);
+  void RebuildEdgePointer(map<txnid_t, shared_ptr<RccDTxn>>& index);
+  shared_ptr<RccDTxn> AggregateVertex(shared_ptr<RccDTxn> rhs_dtxn);
+  void UpgradeStatus(RccDTxn& v, int8_t status);
 
-  map<txnid_t, RccDTxn*> Aggregate(epoch_t epoch, RccGraph& graph);
-  void SelectGraphCmtUkn(RccDTxn* dtxn, RccGraph* new_graph);
-  void SelectGraph(set<RccDTxn*> vertexes, RccGraph* new_graph);
+  map<txnid_t, shared_ptr<RccDTxn>> Aggregate(epoch_t epoch, RccGraph& graph);
+  void SelectGraphCmtUkn(RccDTxn& dtxn, RccGraph* new_graph);
+  void SelectGraph(set<shared_ptr<RccDTxn>> vertexes, RccGraph* new_graph);
 //  RccScc& FindSCC(RccDTxn *vertex) override;
-  bool AllAncCmt(RccDTxn *vertex);
+  bool AllAncCmt(RccDTxn& vertex);
 
   bool operator== (RccGraph& rhs) const;
 
@@ -62,7 +63,7 @@ class RccGraph : public Graph<RccDTxn> {
     return !(*this == rhs);
   }
 
-  uint64_t MinItfrGraph(RccDTxn* dtxn,
+  uint64_t MinItfrGraph(RccDTxn& dtxn,
                         RccGraph* gra_m,
                         bool quick = false,
                         int depth = -1);

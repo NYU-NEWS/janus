@@ -1,10 +1,10 @@
 
-#include "dtxn.h"
+#include "tx.h"
 
 namespace janus {
 
 
-bool OccDTxn::ReadColumn(mdb::Row *row,
+bool TxOcc::ReadColumn(mdb::Row *row,
                       mdb::colid_t col_id,
                       Value *value,
                       int hint_flag) {
@@ -14,7 +14,7 @@ bool OccDTxn::ReadColumn(mdb::Row *row,
   return true;
 }
 
-bool OccDTxn::ReadColumns(Row *row,
+bool TxOcc::ReadColumns(Row *row,
                           const std::vector<colid_t> &col_ids,
                           std::vector<Value> *values,
                           int hint_flag) {
@@ -24,7 +24,7 @@ bool OccDTxn::ReadColumns(Row *row,
   return true;
 }
 
-bool OccDTxn::WriteColumn(Row *row,
+bool TxOcc::WriteColumn(Row *row,
                           colid_t col_id,
                           const Value &value,
                           int hint_flag) {
@@ -34,7 +34,7 @@ bool OccDTxn::WriteColumn(Row *row,
   return true;
 }
 
-bool OccDTxn::WriteColumns(Row *row,
+bool TxOcc::WriteColumns(Row *row,
                            const std::vector<colid_t> &col_ids,
                            const std::vector<Value> &values,
                            int hint_flag) {
@@ -45,7 +45,7 @@ bool OccDTxn::WriteColumns(Row *row,
 }
 
 
-bool OccDTxn::InsertRow(Table *tbl, Row *row) {
+bool TxOcc::InsertRow(Table *tbl, Row *row) {
   verify(mdb_txn() != nullptr);
   return mdb_txn()->insert_row(tbl, row);
 }

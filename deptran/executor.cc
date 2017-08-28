@@ -25,7 +25,7 @@ void Executor::Execute(const SimpleCommand &cmd,
   TxnPieceDef &p = txn_reg_->get(cmd.root_type_, cmd.type_);
   const auto &handler = p.proc_handler_;
   handler(this,
-          dtxn_,
+          *dtxn_,
           const_cast<SimpleCommand &>(cmd),
           res,
           output);
@@ -46,7 +46,7 @@ void Executor::Execute(const vector<SimpleCommand> &cmds,
     int res;
     cmd.input.Aggregate(ws);
     handler(this,
-            dtxn_,
+            *dtxn_,
             cmd,
             &res,
             m);

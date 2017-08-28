@@ -1,5 +1,5 @@
 #include "../__dep__.h"
-#include "coord.h"
+#include "coordinator.h"
 #include "frame.h"
 #include "commo.h"
 #include "benchmark_control_rpc.h"
@@ -7,7 +7,7 @@
 
 namespace janus {
 
-TapirCommo* TapirCoord::commo() {
+TapirCommo* CoordinatorTapir::commo() {
 //  verify(commo_ != nullptr);
   if (commo_ == nullptr) {
     commo_ = new TapirCommo();
@@ -19,7 +19,7 @@ TapirCommo* TapirCoord::commo() {
   return commo;
 }
 
-void TapirCoord::Dispatch() {
+void CoordinatorTapir::Dispatch() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   //  ___TestPhaseOne(cmd_id_);
   auto txn = (Procedure*) cmd_;
@@ -50,7 +50,7 @@ void TapirCoord::Dispatch() {
 }
 
 
-void TapirCoord::DispatchAck(phase_t phase,
+void CoordinatorTapir::DispatchAck(phase_t phase,
                              int32_t res,
                              TxnOutput& outputs) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
@@ -78,7 +78,7 @@ void TapirCoord::DispatchAck(phase_t phase,
   }
 }
 
-void TapirCoord::Reset() {
+void CoordinatorTapir::Reset() {
   CoordinatorClassic::Reset();
   dispatch_acks_.clear();
   n_accept_oks_.clear();
@@ -86,7 +86,7 @@ void TapirCoord::Reset() {
   n_fast_accept_rejects_.clear();
 }
 
-void TapirCoord::FastAccept() {
+void CoordinatorTapir::FastAccept() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 
   Log_debug("send out fast accept for cmd_id: %llx", cmd_->id_);
@@ -103,7 +103,7 @@ void TapirCoord::FastAccept() {
     commo()->BroadcastFastAccept(par_id,
                                  txn().id_,
                                  txn_cmds,
-                                 std::bind(&TapirCoord::FastAcceptAck,
+                                 std::bind(&CoordinatorTapir::FastAcceptAck,
                                            this,
                                            phase_,
                                            par_id,
@@ -112,7 +112,7 @@ void TapirCoord::FastAccept() {
   verify(sum == txn().cmds_.size());
 }
 
-void TapirCoord::FastAcceptAck(phase_t phase,
+void CoordinatorTapir::FastAcceptAck(phase_t phase,
                                parid_t par_id,
                                int32_t res) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
@@ -140,7 +140,7 @@ void TapirCoord::FastAcceptAck(phase_t phase,
   }
 }
 
-bool TapirCoord::FastQuorumPossible() {
+bool CoordinatorTapir::FastQuorumPossible() {
   auto pars = cmd_->GetPartitionIds();
   bool all_fast_quorum_possible = true;
   for (auto& par_id : pars) {
@@ -153,7 +153,7 @@ bool TapirCoord::FastQuorumPossible() {
   return all_fast_quorum_possible;
 }
 
-void TapirCoord::Accept() {
+void CoordinatorTapir::Accept() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   ballot_t ballot = MAGIC_SACCEPT_BALLOT;
   auto decision = ABORT;
@@ -162,7 +162,7 @@ void TapirCoord::Accept() {
                              cmd_->id_,
                              ballot,
                              decision,
-                             std::bind(&TapirCoord::AcceptAck,
+                             std::bind(&CoordinatorTapir::AcceptAck,
                                        this,
                                        phase_,
                                        par_id,
@@ -170,7 +170,7 @@ void TapirCoord::Accept() {
   }
 }
 
-void TapirCoord::AcceptAck(phase_t phase, parid_t pid, Future* fu) {
+void CoordinatorTapir::AcceptAck(phase_t phase, parid_t pid, Future* fu) {
   if (phase_ != phase) return;
   int res;
   fu->get_reply() >> res;
@@ -183,25 +183,25 @@ void TapirCoord::AcceptAck(phase_t phase, parid_t pid, Future* fu) {
   }
 }
 
-void TapirCoord::Restart() {
+void CoordinatorTapir::Restart() {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   cmd_->root_id_ = this->next_txn_id();
   cmd_->id_ = cmd_->root_id_;
   CoordinatorClassic::Restart();
 }
 
-int TapirCoord::GetFastQuorum(parid_t par_id) {
+int CoordinatorTapir::GetFastQuorum(parid_t par_id) {
   int n = Config::GetConfig()->GetPartitionSize(par_id);
   return n;
 }
 
-int TapirCoord::GetSlowQuorum(parid_t par_id) {
+int CoordinatorTapir::GetSlowQuorum(parid_t par_id) {
   int n = Config::GetConfig()->GetPartitionSize(par_id);
   return n/2 + 1;
 }
 
 
-bool TapirCoord::AllSlowQuorumReached() {
+bool CoordinatorTapir::AllSlowQuorumReached() {
   // verify(0);
   // currently the
   auto pars = cmd_->GetPartitionIds();
@@ -216,7 +216,7 @@ bool TapirCoord::AllSlowQuorumReached() {
 }
 
 
-bool TapirCoord::AllFastQuorumReached() {
+bool CoordinatorTapir::AllFastQuorumReached() {
   // verify(0);
   auto pars = cmd_->GetPartitionIds();
   bool all_fast_quorum_reached = true;
@@ -229,7 +229,7 @@ bool TapirCoord::AllFastQuorumReached() {
   return all_fast_quorum_reached;
 }
 
-void TapirCoord::Decide() {
+void CoordinatorTapir::Decide() {
   verify(committed_ != aborted_);
   int32_t d = 0;
   if (committed_) {
@@ -247,7 +247,7 @@ void TapirCoord::Decide() {
   GotoNextPhase();
 }
 
-void TapirCoord::GotoNextPhase() {
+void CoordinatorTapir::GotoNextPhase() {
   int n_phase = 4;
   switch (phase_++ % n_phase) {
     case Phase::INIT_END:

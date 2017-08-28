@@ -4,7 +4,7 @@
 #include "../procedure.h"
 #include "../rococo/dep_graph.h"
 #include "../rococo/graph_marshaler.h"
-#include "sched.h"
+#include "scheduler.h"
 
 namespace janus {
 

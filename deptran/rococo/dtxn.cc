@@ -11,20 +11,20 @@ namespace rococo {
 RccDTxn::RccDTxn(epoch_t epoch,
                  txnid_t tid,
                  Scheduler *mgr,
-                 bool ro) : TxBox(epoch, tid, mgr) {
+                 bool ro) : Tx(epoch, tid, mgr) {
   read_only_ = ro;
   mdb_txn_ = mgr->GetOrCreateMTxn(tid_);
   verify(id() == tid);
 }
 
-RccDTxn::RccDTxn(txnid_t id): TxBox(0, id, nullptr) {
+RccDTxn::RccDTxn(txnid_t id): Tx(0, id, nullptr) {
   // alert!! after this a lot of stuff need to be set manually.
   tid_ = id;
 }
 
 RccDTxn::RccDTxn(RccDTxn& rhs_dtxn) :
     Vertex<RccDTxn>(rhs_dtxn),
-    TxBox(rhs_dtxn.epoch_, rhs_dtxn.tid_, nullptr),
+    Tx(rhs_dtxn.epoch_, rhs_dtxn.tid_, nullptr),
     partition_(rhs_dtxn.partition_),
     status_(rhs_dtxn.status_) {
 }
@@ -79,7 +79,7 @@ void RccDTxn::CommitExecute() {
     int tmp;
     cmd.input.Aggregate(ws);
     auto& m = output_[cmd.inn_id_];
-    p.proc_handler_(nullptr, this, cmd, &tmp, m);
+    p.proc_handler_(nullptr, *this, cmd, &tmp, m);
     ws.insert(m);
   }
   committed_ = true;
@@ -341,7 +341,7 @@ bool RccDTxn::WriteColumn(Row *row,
   return true;
 }
 
-void RccDTxn::AddParentEdge(RccDTxn *other, int8_t weight) {
+void RccDTxn::AddParentEdge(shared_ptr<RccDTxn> other, int8_t weight) {
   Vertex::AddParentEdge(other, weight);
   if (sched_) {
     verify(other->epoch_ > 0);
@@ -355,8 +355,10 @@ void RccDTxn::TraceDep(Row* row, colid_t col_id, int hint_flag) {
   verify(r != nullptr);
   entry_t *entry = r->get_dep_entry(col_id);
   int8_t edge_type = (hint_flag == TXN_INSTANT) ? EDGE_I : EDGE_D;
-  RccDTxn* parent_dtxn = (RccDTxn*)(entry->last_);
-  if (parent_dtxn == this) {
+  auto parent_dtxn = dynamic_pointer_cast<RccDTxn>(entry->last_);
+  if (parent_dtxn == nullptr) {
+
+  } else if (parent_dtxn.get() == this) {
     // skip
   } else {
     if (parent_dtxn != nullptr) {
@@ -373,8 +375,8 @@ void RccDTxn::TraceDep(Row* row, colid_t col_id, int hint_flag) {
       }
 //      parent_dtxn->external_ref_ = nullptr;
     }
-    this->external_refs_.push_back(&(entry->last_));
-    entry->last_ = this;
+//    this->external_refs_.push_back((void**)(&(entry->last_)));
+//    entry->last_ = this; // TODO FIXME
   }
 #ifdef DEBUG_CODE
   verify(graph_);
@@ -388,4 +390,4 @@ void RccDTxn::TraceDep(Row* row, colid_t col_id, int hint_flag) {
 #endif
 }
 
-} // namespace rococo
+} // namespace janus

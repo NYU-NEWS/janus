@@ -8,13 +8,13 @@
 #include "dtxn.h"
 #include "rcc_service.h"
 #include "scheduler.h"
-#include "none/coord.h"
-#include "none/sched.h"
+#include "none/coordinator.h"
+#include "none/scheduler.h"
 #include "rococo/coord.h"
 #include "snow/ro6_coord.h"
 #include "deptran/2pl/coordinator.h"
-#include "occ/dtxn.h"
-#include "occ/coord.h"
+#include "occ/tx.h"
+#include "occ/coordinator.h"
 
 #include "bench/tpcc_real_dist/sharding.h"
 #include "bench/tpcc/workload.h"
@@ -48,7 +48,7 @@
 #include "bench/micro/procedure.h"
 
 #include "deptran/2pl/scheduler.h"
-#include "occ/sched.h"
+#include "occ/scheduler.h"
 
 #include "extern_c/frame.h"
 
@@ -182,7 +182,7 @@ Coordinator* Frame::CreateCoord(cooid_t coo_id,
       break;
     case MODE_OCC:
     case MODE_RPC_NULL:
-      coo = new OCCCoord(coo_id,
+      coo = new CoordinatorOcc(coo_id,
                          benchmark,
                          ccsi,
                          id);
@@ -207,7 +207,7 @@ Coordinator* Frame::CreateCoord(cooid_t coo_id,
       break;
     case MODE_NONE:
     default:
-      coo = new NoneCoord(coo_id,
+      coo = new CoordinatorNone(coo_id,
                           benchmark,
                           ccsi,
                           id);
@@ -290,31 +290,31 @@ Communicator* Frame::CreateCommo(PollMgr* pollmgr) {
   return commo_;
 }
 
-TxBox* Frame::CreateDTxn(epoch_t epoch, txnid_t tid,
-                        bool ro, Scheduler * mgr) {
-  TxBox *dtxn = nullptr;
+shared_ptr<Tx> Frame::CreateTx(epoch_t epoch, txnid_t tid,
+                    bool ro, Scheduler *mgr) {
+  shared_ptr<Tx> sp_tx;
 
   switch (mode_) {
     case MODE_2PL:
-      dtxn = new TplTxBox(epoch, tid, mgr);
+      sp_tx.reset(new Tx2pl(epoch, tid, mgr));
       break;
     case MODE_OCC:
-      dtxn = new OccDTxn(epoch, tid, mgr);
+      sp_tx.reset(new TxOcc(epoch, tid, mgr));
       break;
     case MODE_RCC:
-      dtxn = new RccDTxn(epoch, tid, mgr, ro);
+      sp_tx.reset(new RccDTxn(epoch, tid, mgr, ro));
       break;
     case MODE_RO6:
-      dtxn = new RO6DTxn(tid, mgr, ro);
+      sp_tx.reset(new RO6DTxn(tid, mgr, ro));
       break;
     case MODE_MULTI_PAXOS:
       break;
     case MODE_NONE:
     default:
-      dtxn = new TplTxBox(epoch, tid, mgr);
+      sp_tx.reset(new Tx2pl(epoch, tid, mgr));
       break;
   }
-  return dtxn;
+  return sp_tx;
 }
 
 Executor* Frame::CreateExecutor(cmdid_t cmd_id, Scheduler* sched) {
@@ -343,13 +343,13 @@ Scheduler* Frame::CreateScheduler() {
       sch = new Scheduler2pl();
       break;
     case MODE_OCC:
-      sch = new OCCSched();
+      sch = new SchedulerOcc();
       break;
     case MODE_MDCC:
 //      sch = new mdcc::MdccScheduler();
       break;
     case MODE_NONE:
-      sch = new NoneSched();
+      sch = new SchedulerNone();
       break;
     case MODE_RPC_NULL:
     case MODE_RCC:

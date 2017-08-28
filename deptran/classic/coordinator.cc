@@ -12,11 +12,11 @@
  *
  */
 
-#include "coord.h"
+#include "coordinator.h"
 #include "../frame.h"
 #include "../benchmark_control_rpc.h"
 
-namespace rococo {
+namespace janus {
 
 CoordinatorClassic::CoordinatorClassic(uint32_t coo_id,
                            int benchmark,
@@ -423,4 +423,4 @@ void CoordinatorClassic::___TestPhaseOne(txnid_t txn_id) {
 }
 
 
-} // namespace rococo
+} // namespace janus

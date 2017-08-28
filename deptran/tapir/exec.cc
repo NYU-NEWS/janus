@@ -1,16 +1,14 @@
 #include "../__dep__.h"
-#include "deptran/procedure.h"
+#include "../procedure.h"
 #include "exec.h"
-#include "tx_box.h"
+#include "tx.h"
 
-namespace rococo {
+namespace janus {
 
 set<Row*> TapirExecutor::locked_rows_s = {};
 
-void TapirExecutor::FastAccept(const vector<SimpleCommand>& txn_cmds,
-                               int32_t* res) {
-
-  *res = SUCCESS;
+int TapirExecutor::FastAccept(const vector<SimpleCommand>& txn_cmds) {
+  int ret = SUCCESS;
   if (txn_cmds.size() >= 2) {
     verify(txn_cmds[0].timestamp_ == txn_cmds[1].timestamp_);
   }
@@ -30,8 +28,7 @@ void TapirExecutor::FastAccept(const vector<SimpleCommand>& txn_cmds,
       Value& value = ppair.second;
       if (output_m.count(idx) == 0 ||
           value.ver_ != output_m.at(idx).ver_) {
-        *res = REJECT;
-        return;
+        return REJECT;
       }
     }
   }
@@ -54,13 +51,11 @@ void TapirExecutor::FastAccept(const vector<SimpleCommand>& txn_cmds,
       verify(col_id < row->prepared_wver_.size());
       if (ver_read < ver_now) {
         // value has been updated. abort transaction.
-        *res = REJECT;
-        return;
+        return REJECT;
       } else if (ver_read < row->min_prepared_wver(col_id)) {
         // abstain is not very useful for now, as we are not counting the
         // difference between aborts. but let us have it for future.
-        *res = ABSTAIN;
-        return;
+        return ABSTAIN;
       }
       // record prepared read timestamp
       row->insert_prepared_rver(col_id, ver_read);
@@ -79,16 +74,16 @@ void TapirExecutor::FastAccept(const vector<SimpleCommand>& txn_cmds,
       // i do not like this hack, maybe remove the version in value later.
       value.ver_ = ver_write;
       if (ver_write < row->max_prepared_rver(col_id)) {
-        *res = RETRY;
+        ret = RETRY;
       } else if (ver_write < row->ver_[col_id]) {
-        *res = RETRY;
+        ret = RETRY;
       }
       // record prepared write timestamp
       row->insert_prepared_rver(col_id, ver_write);
       prepared_wvers_[row][col_id] = ver_write;
     }
   }
-  verify(*res == SUCCESS || *res == REJECT);
+  return ret;
 }
 
 void TapirExecutor::Commit() {
@@ -132,11 +127,11 @@ void TapirExecutor::Abort() {
 
 
 
-TxBoxTapir* TapirExecutor::dtxn() {
+shared_ptr<TxTapir> TapirExecutor::dtxn() {
   verify(dtxn_ != nullptr);
-  auto d = dynamic_cast<TxBoxTapir*>(dtxn_);
+  auto d = std::dynamic_pointer_cast<TxTapir>(dtxn_);
   verify(d);
   return d;
 }
 
-} // namespace rococo
+} // namespace janus

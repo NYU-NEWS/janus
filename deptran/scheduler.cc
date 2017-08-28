@@ -14,14 +14,15 @@
 
 namespace janus {
 
-TxBox* Scheduler::CreateDTxn(epoch_t epoch, txnid_t tid, bool read_only) {
+shared_ptr<Tx> Scheduler::CreateDTxn(epoch_t epoch, txnid_t tid, bool
+read_only) {
   Log_debug("create tid %ld", tid);
   verify(dtxns_.find(tid) == dtxns_.end());
   if (epoch == 0) {
     epoch = epoch_mgr_.curr_epoch_;
   }
   verify(epoch_mgr_.IsActive(epoch));
-  TxBox* dtxn = frame_->CreateDTxn(epoch, tid, read_only, this);
+  auto dtxn = frame_->CreateTx(epoch, tid, read_only, this);
   if (dtxn != nullptr) {
     dtxns_[tid] = dtxn;
     dtxn->recorder_ = this->recorder_;
@@ -39,10 +40,10 @@ TxBox* Scheduler::CreateDTxn(epoch_t epoch, txnid_t tid, bool read_only) {
   return dtxn;
 }
 
-TxBox* Scheduler::CreateDTxn(txnid_t tid, bool ro) {
+shared_ptr<Tx> Scheduler::CreateDTxn(txnid_t tid, bool ro) {
   Log_debug("create tid %ld", tid);
   verify(dtxns_.find(tid) == dtxns_.end());
-  TxBox* dtxn = frame_->CreateDTxn(epoch_mgr_.curr_epoch_, tid, ro, this);
+  auto dtxn = frame_->CreateTx(epoch_mgr_.curr_epoch_, tid, ro, this);
   if (dtxn != nullptr) {
     dtxns_[tid] = dtxn;
     dtxn->recorder_ = this->recorder_;
@@ -61,8 +62,8 @@ TxBox* Scheduler::CreateDTxn(txnid_t tid, bool ro) {
   return dtxn;
 }
 
-TxBox* Scheduler::GetOrCreateTxBox(txnid_t tid, bool ro) {
-  TxBox* ret = nullptr;
+shared_ptr<Tx> Scheduler::GetOrCreateTxBox(txnid_t tid, bool ro) {
+  shared_ptr<Tx> ret = nullptr;
   auto it = dtxns_.find(tid);
   if (it == dtxns_.end()) {
     ret = CreateDTxn(tid, ro);
@@ -74,7 +75,7 @@ TxBox* Scheduler::GetOrCreateTxBox(txnid_t tid, bool ro) {
   return ret;
 }
 
-TxBox* Scheduler::GetOrCreateDTxn(epoch_t epoch, txnid_t txn_id) {
+Tx *Scheduler::GetOrCreateDTxn(epoch_t epoch, txnid_t txn_id) {
 
 }
 
@@ -82,11 +83,10 @@ void Scheduler::DestroyDTxn(i64 tid) {
   Log_debug("destroy tid %ld\n", tid);
   auto it = dtxns_.find(tid);
   verify(it != dtxns_.end());
-  delete it->second;
   dtxns_.erase(it);
 }
 
-TxBox* Scheduler::GetDTxn(txnid_t tid) {
+shared_ptr<Tx> Scheduler::GetDTxn(txnid_t tid) {
   // Log_debug("DTxnMgr::get(%ld)\n", tid);
   auto it = dtxns_.find(tid);
   // verify(it != dtxns_.end());
@@ -97,7 +97,7 @@ TxBox* Scheduler::GetDTxn(txnid_t tid) {
   }
 }
 
-mdb::Txn* Scheduler::GetMTxn(const i64 tid) {
+mdb::Txn *Scheduler::GetMTxn(const i64 tid) {
   mdb::Txn *txn = nullptr;
   auto it = mdb_txns_.find(tid);
   if (it == mdb_txns_.end()) {
@@ -108,7 +108,7 @@ mdb::Txn* Scheduler::GetMTxn(const i64 tid) {
   return txn;
 }
 
-mdb::Txn* Scheduler::RemoveMTxn(const i64 tid) {
+mdb::Txn *Scheduler::RemoveMTxn(const i64 tid) {
   mdb::Txn *txn = nullptr;
   auto it = mdb_txns_.find(tid);
   verify(it != mdb_txns_.end());
@@ -117,7 +117,7 @@ mdb::Txn* Scheduler::RemoveMTxn(const i64 tid) {
   return txn;
 }
 
-mdb::Txn* Scheduler::GetOrCreateMTxn(const i64 tid) {
+mdb::Txn *Scheduler::GetOrCreateMTxn(const i64 tid) {
   mdb::Txn *txn = nullptr;
   auto it = mdb_txns_.find(tid);
   if (it == mdb_txns_.end()) {
@@ -161,14 +161,18 @@ void Scheduler::get_prepare_log(i64 txn_id,
   // p denotes prepare log
   const char prepare_tag = 'p';
   str->resize(len + sizeof(prepare_tag));
-  memcpy((void *) (str->data() + len), (void *) &prepare_tag, sizeof(prepare_tag));
+  memcpy((void *) (str->data() + len),
+         (void *) &prepare_tag,
+         sizeof(prepare_tag));
   len += sizeof(prepare_tag);
   verify(len == str->size());
 
   // marshal related servers
   uint32_t num_servers = sids.size();
   str->resize(len + sizeof(num_servers) + sizeof(i32) * num_servers);
-  memcpy((void *) (str->data() + len), (void *) &num_servers, sizeof(num_servers));
+  memcpy((void *) (str->data() + len),
+         (void *) &num_servers,
+         sizeof(num_servers));
   len += sizeof(num_servers);
   for (uint32_t i = 0; i < num_servers; i++) {
     memcpy((void *) (str->data() + len), (void *) (&(sids[i])), sizeof(i32));
@@ -178,11 +182,9 @@ void Scheduler::get_prepare_log(i64 txn_id,
 
   switch (mode_) {
     case MODE_2PL:
-    case MODE_OCC:
-      ((mdb::Txn2PL *) it->second)->marshal_stage(*str);
+    case MODE_OCC:((mdb::Txn2PL *) it->second)->marshal_stage(*str);
       break;
-    default:
-      verify(0);
+    default:verify(0);
   }
 }
 
@@ -195,7 +197,7 @@ Scheduler::Scheduler() : mtx_() {
   }
 }
 
-Coordinator* Scheduler::CreateRepCoord() {
+Coordinator *Scheduler::CreateRepCoord() {
   Coordinator *coord;
   static cooid_t cid = 0;
   int32_t benchmark = 0;
@@ -216,17 +218,16 @@ Scheduler::Scheduler(int mode) : Scheduler() {
   mode_ = mode;
   switch (mode) {
     case MODE_MDCC:
-    case MODE_OCC:
-      mdb_txn_mgr_ = new mdb::TxnMgrOCC();
+    case MODE_OCC:mdb_txn_mgr_ = new mdb::TxnMgrOCC();
       break;
     case MODE_NONE:
     case MODE_RPC_NULL:
     case MODE_RCC:
     case MODE_RO6:
-      mdb_txn_mgr_ = new mdb::TxnMgrUnsafe(); //XXX is it OK to use unsafe for deptran
+      mdb_txn_mgr_ =
+          new mdb::TxnMgrUnsafe(); //XXX is it OK to use unsafe for deptran
       break;
-    default:
-      verify(0);
+    default:verify(0);
   }
 }
 
@@ -244,16 +245,16 @@ Scheduler::~Scheduler() {
   mdb_txn_mgr_ = NULL;
 }
 
-bool Scheduler::OnDispatch(TxPieceData& piece_data,
-                           TxnOutput& ret_output) {
-  TxBox& txn_box = *GetOrCreateTxBox(piece_data.root_id_);
+bool Scheduler::OnDispatch(TxPieceData &piece_data,
+                           TxnOutput &ret_output) {
+  Tx &tx = *GetOrCreateTxBox(piece_data.root_id_);
   verify(partition_id_ == piece_data.partition_id_);
-  TxnPieceDef& piece_def = txn_reg_->get(piece_data.root_type_,
+  TxnPieceDef &piece_def = txn_reg_->get(piece_data.root_type_,
                                          piece_data.type_);
   vector<string> conflicts = piece_def.conflicts_str();
-  bool pause = HandleConflicts(txn_box, piece_data.inn_id(), conflicts);
+  bool pause = HandleConflicts(tx, piece_data.inn_id(), conflicts);
   if (pause) {
-    auto& up_pause = txn_box.paused_pieces_[piece_data.inn_id()];
+    auto &up_pause = tx.paused_pieces_[piece_data.inn_id()];
     verify(!up_pause);
     up_pause.reset(new IntEvent(0, 1));
     up_pause->Wait();
@@ -261,13 +262,13 @@ bool Scheduler::OnDispatch(TxPieceData& piece_data,
 
   // wait for an execution signal.
   int ret_code;
-  piece_data.input.Aggregate(txn_box.ws_);
+  piece_data.input.Aggregate(tx.ws_);
   piece_def.proc_handler_(nullptr,
-                          &txn_box,
-                          const_cast<TxPieceData&>(piece_data),
+                          tx,
+                          const_cast<TxPieceData &>(piece_data),
                           &ret_code,
                           ret_output[piece_data.inn_id()]);
-  txn_box.ws_.insert(ret_output[piece_data.inn_id()]);
+  tx.ws_.insert(ret_output[piece_data.inn_id()]);
 }
 
 /**
@@ -275,17 +276,17 @@ bool Scheduler::OnDispatch(TxPieceData& piece_data,
  * @param txn_box
  * @param inn_id, if 0, execute all pieces.
  */
-void Scheduler::Execute(TxBox& txn_box,
+void Scheduler::Execute(Tx &txn_box,
                         innid_t inn_id) {
   if (inn_id == 0) {
-    for (auto& pair : txn_box.paused_pieces_) {
-      auto& up_pause = pair.second;
+    for (auto &pair : txn_box.paused_pieces_) {
+      auto &up_pause = pair.second;
       verify(up_pause);
       up_pause->set(1);
     }
     txn_box.paused_pieces_.clear();
   } else {
-    auto& up_pause = txn_box.paused_pieces_[inn_id];
+    auto &up_pause = txn_box.paused_pieces_[inn_id];
     verify(up_pause);
     up_pause->set(1);
     txn_box.paused_pieces_.erase(inn_id);
@@ -301,8 +302,9 @@ void Scheduler::reg_table(const std::string &name,
     const mdb::Schema *o_schema = tbl->schema();
     mdb::Schema::iterator it = o_schema->begin();
     for (; it != o_schema->end(); it++)
-      if (it->indexed) if (it->name != "o_id")
-        schema->add_column(it->name.c_str(), it->type, true);
+      if (it->indexed)
+        if (it->name != "o_id")
+          schema->add_column(it->name.c_str(), it->type, true);
     schema->add_column("o_c_id", Value::I32, true);
     schema->add_column("o_id", Value::I32, false);
     mdb_txn_mgr_->reg_table(TPCC_TB_ORDER_C_ID_SECONDARY,
@@ -310,11 +312,11 @@ void Scheduler::reg_table(const std::string &name,
   }
 }
 
-Executor* Scheduler::CreateExecutor(cmdid_t txn_id) {
+Executor *Scheduler::CreateExecutor(txid_t txn_id) {
   verify(executors_.find(txn_id) == executors_.end());
   Executor *exec = frame_->CreateExecutor(txn_id, this);
   verify(exec->sched_);
-  TxBox* dtxn = CreateDTxn(txn_id);
+  auto dtxn = CreateDTxn(txn_id);
   exec->dtxn_ = dtxn;
   executors_[txn_id] = exec;
   exec->recorder_ = this->recorder_;
@@ -323,8 +325,8 @@ Executor* Scheduler::CreateExecutor(cmdid_t txn_id) {
   return exec;
 }
 
-Executor* Scheduler::GetOrCreateExecutor(cmdid_t txn_id) {
-  Executor* exec = nullptr;
+Executor *Scheduler::GetOrCreateExecutor(txid_t txn_id) {
+  Executor *exec = nullptr;
   auto it = executors_.find(txn_id);
   if (it == executors_.end()) {
     exec = CreateExecutor(txn_id);
@@ -335,7 +337,7 @@ Executor* Scheduler::GetOrCreateExecutor(cmdid_t txn_id) {
   return exec;
 }
 
-void Scheduler::TrashExecutor(txnid_t txn_id) {
+void Scheduler::TrashExecutor(txid_t txn_id) {
   if (epoch_enabled_) {
     // epoch_mgr_.Done(txn_id);
   } else {
@@ -352,7 +354,7 @@ void Scheduler::DestroyExecutor(txnid_t txn_id) {
   delete exec;
 }
 
-Executor* Scheduler::GetExecutor(cmdid_t cmd_id) {
+Executor *Scheduler::GetExecutor(cmdid_t cmd_id) {
   // Log_debug("DTxnMgr::get(%ld)\n", tid);
   auto it = executors_.find(cmd_id);
   verify(it != executors_.end());
@@ -379,14 +381,14 @@ void Scheduler::TriggerUpgradeEpoch() {
 }
 
 void Scheduler::UpgradeEpochAck(parid_t par_id,
-                               siteid_t site_id,
-                               int32_t res) {
+                                siteid_t site_id,
+                                int32_t res) {
   auto parids = Config::GetConfig()->GetAllPartitionIds();
   epoch_replies_[par_id][site_id] = res;
   if (epoch_replies_.size() < parids.size()) {
     return;
   }
-  for (auto& pair: epoch_replies_) {
+  for (auto &pair: epoch_replies_) {
     auto par_id = pair.first;
     auto par_size = Config::GetConfig()->GetPartitionSize(par_id);
     verify(epoch_replies_[par_id].size() <= par_size);
@@ -396,8 +398,8 @@ void Scheduler::UpgradeEpochAck(parid_t par_id,
   }
 
   epoch_t smallest_inactive = 0xFFFFFFFF;
-  for (auto& pair1 : epoch_replies_) {
-    for (auto& pair2 : pair1.second) {
+  for (auto &pair1 : epoch_replies_) {
+    for (auto &pair2 : pair1.second) {
       if (smallest_inactive > pair2.second) {
         smallest_inactive = pair2.second;
       }
@@ -425,7 +427,7 @@ void Scheduler::OnTruncateEpoch(uint32_t old_epoch) {
   // TODO
   Log_info("truncating epochs: %d", old_epoch);
   auto ids = epoch_mgr_.GrowInactive(old_epoch);
-  for (auto& id: ids) {
+  for (auto &id: ids) {
     DestroyExecutor(id);
   }
 }

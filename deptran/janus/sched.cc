@@ -6,15 +6,14 @@
 
 using namespace janus;
 
-
-map<txnid_t, RccDTxn*> SchedulerJanus::Aggregate(RccGraph &graph) {
+map<txnid_t, shared_ptr<RccDTxn>> SchedulerJanus::Aggregate(RccGraph &graph) {
   // aggregate vertexes
-  map<txnid_t, RccDTxn*> index;
-  for (auto& pair: graph.vertex_index()) {
-    RccDTxn* rhs_v = pair.second;
+  map<txnid_t, shared_ptr<RccDTxn>> index;
+  for (auto &pair: graph.vertex_index()) {
+    auto rhs_v = pair.second;
     verify(pair.first == rhs_v->id());
-    RccDTxn* vertex = AggregateVertex(rhs_v);
-    RccDTxn& dtxn = *vertex;
+    auto vertex = AggregateVertex(rhs_v);
+    RccDTxn &dtxn = *vertex;
     if (dtxn.epoch_ == 0) {
       dtxn.epoch_ = epoch_mgr_.curr_epoch_;
     }
@@ -104,14 +103,12 @@ map<txnid_t, RccDTxn*> SchedulerJanus::Aggregate(RccGraph &graph) {
   return index;
 }
 
-
-
-void SchedulerJanus::OnPreAccept(const txnid_t txn_id,
-                           const vector<SimpleCommand>& cmds,
-                           RccGraph* graph,
-                           int32_t* res,
-                           RccGraph* res_graph,
-                           function<void()> callback) {
+void SchedulerJanus::OnPreAccept(const txid_t txn_id,
+                                 const vector<SimpleCommand> &cmds,
+                                 RccGraph *graph,
+                                 int32_t *res,
+                                 RccGraph *res_graph,
+                                 function<void()> callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 //  Log_info("on preaccept: %llx par: %d", txn_id, (int)partition_id_);
 //  if (RandomGenerator::rand(1, 2000) <= 1)
@@ -124,32 +121,32 @@ void SchedulerJanus::OnPreAccept(const txnid_t txn_id,
   }
   // TODO FIXME
   // add interference based on cmds.
-  RccDTxn *dtxn = (RccDTxn *) GetOrCreateTxBox(txn_id);
+  auto dtxn = dynamic_pointer_cast<RccDTxn>(GetOrCreateTxBox(txn_id));
   dtxn->UpdateStatus(TXN_PAC);
   dtxn->involve_flag_ = RccDTxn::INVOLVED;
-  RccDTxn& tinfo = *dtxn;
+  RccDTxn &tinfo = *dtxn;
   if (dtxn->max_seen_ballot_ > 0) {
     *res = REJECT;
   } else {
     if (dtxn->status() < TXN_CMT) {
       if (dtxn->phase_ < PHASE_RCC_DISPATCH && tinfo.status() < TXN_CMT) {
-        for (auto& c: cmds) {
+        for (auto &c: cmds) {
           map<int32_t, Value> output;
-          dtxn->DispatchExecute(const_cast<SimpleCommand&>(c), res, &output);
+          dtxn->DispatchExecute(const_cast<SimpleCommand &>(c), res, &output);
         }
       }
     } else {
       if (dtxn->dreqs_.size() == 0) {
-        for (auto& c: cmds) {
+        for (auto &c: cmds) {
           dtxn->dreqs_.push_back(c);
         }
       }
     }
     verify(!tinfo.fully_dispatched);
     tinfo.fully_dispatched = true;
-    MinItfrGraph(dtxn, res_graph, false, 1);
+    MinItfrGraph(*dtxn, res_graph, false, 1);
     if (tinfo.status() >= TXN_CMT) {
-      waitlist_.insert(dtxn);
+      waitlist_.insert(dtxn.get());
       verify(dtxn->epoch_ > 0);
     }
     *res = SUCCESS;
@@ -158,19 +155,19 @@ void SchedulerJanus::OnPreAccept(const txnid_t txn_id,
 }
 
 void SchedulerJanus::OnAccept(const txnid_t txn_id,
-                        const ballot_t& ballot,
-                        const RccGraph& graph,
-                        int32_t* res,
-                        function<void()> callback) {
+                              const ballot_t &ballot,
+                              const RccGraph &graph,
+                              int32_t *res,
+                              function<void()> callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  RccDTxn *dtxn = (RccDTxn *) GetOrCreateTxBox(txn_id);
+  auto dtxn = dynamic_pointer_cast<RccDTxn>(GetOrCreateTxBox(txn_id));
   if (dtxn->max_seen_ballot_ > ballot) {
     *res = REJECT;
     verify(0); // do not support failure recovery so far.
   } else {
     dtxn->max_accepted_ballot_ = ballot;
     dtxn->max_seen_ballot_ = ballot;
-    Aggregate(const_cast<RccGraph&> (graph));
+    Aggregate(const_cast<RccGraph &> (graph));
     *res = SUCCESS;
   }
   callback();
@@ -273,17 +270,17 @@ void SchedulerJanus::OnAccept(const txnid_t txn_id,
 
 
 void SchedulerJanus::OnCommit(const txnid_t cmd_id,
-                        RccGraph* graph,
-                        int32_t* res,
-                        TxnOutput* output,
-                        const function<void()>& callback) {
+                              RccGraph *graph,
+                              int32_t *res,
+                              TxnOutput *output,
+                              const function<void()> &callback) {
   // TODO to support cascade abort
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 //  if (RandomGenerator::rand(1, 2000) <= 1)
 //    Log_info("on commit graph size: %d", graph.size());
   *res = SUCCESS;
   // union the graph into dep graph
-  RccDTxn *dtxn = (RccDTxn*) GetOrCreateTxBox(cmd_id);
+  auto dtxn = dynamic_pointer_cast<RccDTxn>(GetOrCreateTxBox(cmd_id));
 //  verify(dtxn != nullptr);
   verify(dtxn->ptr_output_repy_ == nullptr);
   dtxn->ptr_output_repy_ = output;
@@ -300,7 +297,7 @@ void SchedulerJanus::OnCommit(const txnid_t cmd_id,
   } else {
 //    Log_info("on commit: %llx par: %d", cmd_id, (int)partition_id_);
     dtxn->commit_request_received_ = true;
-    dtxn->finish_reply_callback_ = [callback, res] (int r) {
+    dtxn->finish_reply_callback_ = [callback, res](int r) {
       *res = r;
 //      verify(r == SUCCESS);
       callback();
@@ -308,7 +305,7 @@ void SchedulerJanus::OnCommit(const txnid_t cmd_id,
     if (graph == nullptr) {
       // quick path without graph, no contention.
       verify(dtxn->fully_dispatched); //cannot handle non-dispatched now.
-      UpgradeStatus(dtxn, TXN_DCD);
+      UpgradeStatus(*dtxn, TXN_DCD);
       Execute(*dtxn);
       if (dtxn->to_checks_.size() > 0) {
         for (auto child : dtxn->to_checks_) {
@@ -340,19 +337,18 @@ void SchedulerJanus::OnCommit(const txnid_t cmd_id,
 
 }
 
-
 int SchedulerJanus::OnInquire(epoch_t epoch,
-                        cmdid_t cmd_id,
-                        RccGraph *graph,
-                        const function<void()> &callback) {
+                              cmdid_t cmd_id,
+                              RccGraph *graph,
+                              const function<void()> &callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   // TODO check epoch, cannot be a too old one.
-  RccDTxn *dtxn = (RccDTxn *) GetOrCreateTxBox(cmd_id);
-  RccDTxn& info = *dtxn;
+  auto dtxn = dynamic_pointer_cast<RccDTxn>(GetOrCreateTxBox(cmd_id));
+  RccDTxn &info = *dtxn;
   //register an event, triggered when the status >= COMMITTING;
   verify (info.Involve(Scheduler::partition_id_));
 
-  auto cb_wrapper = [callback, graph] () {
+  auto cb_wrapper = [callback, graph]() {
 #ifdef DEBUG_CODE
     for (auto pair : graph->vertex_index_) {
       RccVertex* v = pair.second;
@@ -375,15 +371,15 @@ int SchedulerJanus::OnInquire(epoch_t epoch,
     info.callbacks_for_inquire_.push_back(cb_wrapper);
     verify(info.graphs_for_inquire_.size() ==
         info.callbacks_for_inquire_.size());
-    waitlist_.insert(dtxn);
+    waitlist_.insert(dtxn.get());
     verify(dtxn->epoch_ > 0);
   }
 
 }
 
-JanusCommo* SchedulerJanus::commo() {
+JanusCommo *SchedulerJanus::commo() {
 
-  auto commo = dynamic_cast<JanusCommo*>(commo_);
+  auto commo = dynamic_cast<JanusCommo *>(commo_);
   verify(commo != nullptr);
   return commo;
 }

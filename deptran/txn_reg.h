@@ -14,13 +14,13 @@ typedef std::map<
     int,
     mdb::Row *> row_map_t;
 
-class TxBox;
+class Tx;
 class Procedure;
 class TxnRequest;
 class SimpleCommand;
 
 typedef std::function<void(Executor* exec,
-                           TxBox *dtxn,
+                           Tx& tx,
                            SimpleCommand& cmd,
                            rrr::i32 *res,
                            map<int32_t, Value> &output

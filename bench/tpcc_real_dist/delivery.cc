@@ -56,7 +56,7 @@ void TpccRdWorkload::RegDelivery() {
          Value buf;
          //cell_locator_t cl(TPCC_TB_NEW_ORDER, 3);
          mdb::Row *r = NULL;
-         mdb::Table *tbl = dtxn->GetTable(TPCC_TB_NEW_ORDER);
+         mdb::Table *tbl = tx.GetTable(TPCC_TB_NEW_ORDER);
 
          mdb::MultiBlob mbl(3), mbh(3);
          mbl[0] = cmd.input[TPCC_VAR_D_ID].get_blob();
@@ -68,7 +68,7 @@ void TpccRdWorkload::RegDelivery() {
          mbl[2] = no_o_id_low.get_blob();
          mbh[2] = no_o_id_high.get_blob();
 
-         mdb::ResultSet rs = dtxn->QueryIn(tbl,
+         mdb::ResultSet rs = tx.QueryIn(tbl,
                                            mbl,
                                            mbh,
                                            mdb::ORD_ASC,
@@ -76,7 +76,7 @@ void TpccRdWorkload::RegDelivery() {
          if (rs.has_next()) {
            r = rs.next();
 //      TPL_KISS_ROW(r);
-           dtxn->ReadColumn(r, TPCC_COL_NEW_ORDER_NO_W_ID, &buf);
+           tx.ReadColumn(r, TPCC_COL_NEW_ORDER_NO_W_ID, &buf);
            output[TPCC_VAR_O_ID] = buf;
          } else {
 //      verify(0);
@@ -85,7 +85,7 @@ void TpccRdWorkload::RegDelivery() {
          }
          // TODO FIXME
 //    if (r) {
-//      mdb::Txn *txn = dtxn->mdb_txn();
+//      mdb::Txn *txn = tx.mdb_txn();
 //      txn->remove_row(tbl, r);
 //    }
 
@@ -105,7 +105,7 @@ void TpccRdWorkload::RegDelivery() {
        PROC {
          Log_debug("TPCC_DELIVERY, piece: %d", TPCC_DELIVERY_1);
          verify(cmd.input.size() == 4);
-         mdb::Txn *txn = dtxn->mdb_txn_;
+         mdb::Txn *txn = tx.mdb_txn_;
          mdb::MultiBlob mb(3);
          //cell_locator_t cl(TPCC_TB_ORDER, 3);
          mb[0] = cmd.input[TPCC_VAR_D_ID].get_blob();
@@ -113,12 +113,12 @@ void TpccRdWorkload::RegDelivery() {
          mb[2] = cmd.input[TPCC_VAR_O_ID].get_blob();
          //Log::debug("Delivery: o_d_id: %d, o_w_id: %d, o_id: %d, hash: %u", input[2].get_i32(), input[1].get_i32(), input[0].get_i32(), mdb::MultiBlob::hash()(cl.primary_key));
          mdb::Row *row_order =
-             dtxn->Query(txn->get_table(TPCC_TB_ORDER), mb, ROW_ORDER);
-         dtxn->ReadColumn(row_order,
+             tx.Query(txn->get_table(TPCC_TB_ORDER), mb, ROW_ORDER);
+         tx.ReadColumn(row_order,
                           TPCC_COL_ORDER_O_C_ID,
                           &output[TPCC_VAR_C_ID],
                           TXN_BYPASS); // read o_c_id
-         dtxn->WriteColumn(row_order,
+         tx.WriteColumn(row_order,
                            TPCC_COL_ORDER_O_CARRIER_ID,
                            cmd.input[TPCC_VAR_O_CARRIER_ID],
                            TXN_INSTANT); // write o_carrier_id
@@ -149,7 +149,7 @@ void TpccRdWorkload::RegDelivery() {
          mbl[3] = ol_number_low.get_blob();
          mbh[3] = ol_number_high.get_blob();
 
-         mdb::ResultSet rs = dtxn->QueryIn(dtxn->GetTable(TPCC_TB_ORDER_LINE),
+         mdb::ResultSet rs = tx.QueryIn(tx.GetTable(TPCC_TB_ORDER_LINE),
                                            mbl,
                                            mbh,
                                            mdb::ORD_ASC,
@@ -175,10 +175,10 @@ void TpccRdWorkload::RegDelivery() {
          while (i < row_list.size()) {
            r = row_list[i++];
            Value buf(0.0);
-           dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_AMOUNT,
+           tx.ReadColumn(r, TPCC_COL_ORDER_LINE_OL_AMOUNT,
                             &buf, TXN_INSTANT); // read ol_amount
            ol_amount_buf += buf.get_double();
-           dtxn->WriteColumn(r, TPCC_COL_ORDER_LINE_OL_DELIVERY_D,
+           tx.WriteColumn(r, TPCC_COL_ORDER_LINE_OL_DELIVERY_D,
                              Value(std::to_string(time(NULL))),
                              TXN_INSTANT);
          }
@@ -207,20 +207,20 @@ void TpccRdWorkload::RegDelivery() {
          mb[2] = cmd.input[TPCC_VAR_W_ID].get_blob();
 
          row_customer =
-             dtxn->Query(dtxn->GetTable(TPCC_TB_CUSTOMER), mb, ROW_CUSTOMER);
+             tx.Query(tx.GetTable(TPCC_TB_CUSTOMER), mb, ROW_CUSTOMER);
          Value buf(0.0);
-         dtxn->ReadColumn(row_customer,
+         tx.ReadColumn(row_customer,
                           TPCC_COL_CUSTOMER_C_BALANCE,
                           &buf,
                           TXN_DEFERRED);
          buf.set_double(
              buf.get_double() + cmd.input[TPCC_VAR_OL_AMOUNT].get_double());
-         dtxn->WriteColumn(row_customer, TPCC_COL_CUSTOMER_C_BALANCE,
+         tx.WriteColumn(row_customer, TPCC_COL_CUSTOMER_C_BALANCE,
                            buf, TXN_DEFERRED);
-         dtxn->ReadColumn(row_customer, TPCC_COL_CUSTOMER_C_DELIVERY_CNT,
+         tx.ReadColumn(row_customer, TPCC_COL_CUSTOMER_C_DELIVERY_CNT,
                           &buf, TXN_BYPASS);
          buf.set_i32(buf.get_i32() + (i32) 1);
-         dtxn->WriteColumn(row_customer, TPCC_COL_CUSTOMER_C_DELIVERY_CNT,
+         tx.WriteColumn(row_customer, TPCC_COL_CUSTOMER_C_DELIVERY_CNT,
                            buf, TXN_DEFERRED);
          *res = SUCCESS;
        }

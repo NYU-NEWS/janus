@@ -181,29 +181,29 @@ void TpccWorkload::RegOrderStatus() {
          Log_debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_1);
          verify(cmd.input.size() >= 3);
 
-         mdb::Table *tbl = dtxn->GetTable(TPCC_TB_CUSTOMER);
+         mdb::Table *tbl = tx.GetTable(TPCC_TB_CUSTOMER);
          // R customer
          Value buf;
          mdb::MultiBlob mb(3);
          mb[0] = cmd.input[TPCC_VAR_C_ID].get_blob();
          mb[1] = cmd.input[TPCC_VAR_D_ID].get_blob();
          mb[2] = cmd.input[TPCC_VAR_W_ID].get_blob();
-         mdb::Row *r = dtxn->Query(tbl, mb, ROW_CUSTOMER);
+         mdb::Row *r = tx.Query(tbl, mb, ROW_CUSTOMER);
 
          i32 oi = 0;
-         dtxn->ReadColumn(r,
+         tx.ReadColumn(r,
                           TPCC_COL_CUSTOMER_C_FIRST,
                           &output[TPCC_VAR_C_FIRST],
                           TXN_BYPASS);// read c_first
-         dtxn->ReadColumn(r,
+         tx.ReadColumn(r,
                           TPCC_COL_CUSTOMER_C_MIDDLE,
                           &output[TPCC_VAR_C_MIDDLE],
                           TXN_BYPASS);// read c_middle
-         dtxn->ReadColumn(r,
+         tx.ReadColumn(r,
                           TPCC_COL_CUSTOMER_C_LAST,
                           &output[TPCC_VAR_C_LAST],
                           TXN_BYPASS);// read c_last
-         dtxn->ReadColumn(r,
+         tx.ReadColumn(r,
                           TPCC_COL_CUSTOMER_C_BALANCE,
                           &output[TPCC_VAR_C_BALANCE],
                           TXN_BYPASS);// read c_balance
@@ -228,7 +228,7 @@ void TpccWorkload::RegOrderStatus() {
          mb_0[1] = cmd.input[TPCC_VAR_W_ID].get_blob();
          mb_0[2] = cmd.input[TPCC_VAR_C_ID].get_blob();
          mdb::Row
-             *r_0 = dtxn->Query(dtxn->GetTable(TPCC_TB_ORDER_C_ID_SECONDARY),
+             *r_0 = tx.Query(tx.GetTable(TPCC_TB_ORDER_C_ID_SECONDARY),
                                 mb_0,
                                 ROW_ORDER_SEC);
 
@@ -237,18 +237,18 @@ void TpccWorkload::RegOrderStatus() {
          mb[1] = cmd.input[TPCC_VAR_W_ID].get_blob();
          mb[2] = r_0->get_blob(3); // FIXME add lock before reading
 
-         mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_ORDER),
+         mdb::Row *r = tx.Query(tx.GetTable(TPCC_TB_ORDER),
                                    mb,
                                    ROW_ORDER);
-         dtxn->ReadColumn(r,
+         tx.ReadColumn(r,
                           TPCC_COL_ORDER_O_ID,
                           &output[TPCC_VAR_O_ID],
                           TXN_BYPASS); // output[0] ==> o_id
-         dtxn->ReadColumn(r,
+         tx.ReadColumn(r,
                           TPCC_COL_ORDER_O_ENTRY_D,
                           &output[TPCC_VAR_O_ENTRY_D],
                           TXN_BYPASS); // output[1] ==> o_entry_d
-         dtxn->ReadColumn(r,
+         tx.ReadColumn(r,
                           TPCC_COL_ORDER_O_CARRIER_ID,
                           &output[TPCC_VAR_O_CARRIER_ID],
                           TXN_BYPASS); // output[2] ==> o_carrier_id
@@ -283,7 +283,7 @@ void TpccWorkload::RegOrderStatus() {
          mbl[3] = ol_number_low.get_blob();
          mbh[3] = ol_number_high.get_blob();
 
-         mdb::ResultSet rs = dtxn->QueryIn(dtxn->GetTable(TPCC_TB_ORDER_LINE),
+         mdb::ResultSet rs = tx.QueryIn(tx.GetTable(TPCC_TB_ORDER_LINE),
                                            mbl,
                                            mbh,
                                            mdb::ORD_DESC,
@@ -311,15 +311,15 @@ void TpccWorkload::RegOrderStatus() {
          i32 oi = 0;
          while (i < row_list.size()) {
            r = row_list[i++];
-           dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_I_ID,
+           tx.ReadColumn(r, TPCC_COL_ORDER_LINE_OL_I_ID,
                             &output[TPCC_VAR_OL_I_ID(i)], TXN_BYPASS);
-           dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_SUPPLY_W_ID,
+           tx.ReadColumn(r, TPCC_COL_ORDER_LINE_OL_SUPPLY_W_ID,
                             &output[TPCC_VAR_OL_W_ID(i)], TXN_BYPASS);
-           dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_DELIVERY_D,
+           tx.ReadColumn(r, TPCC_COL_ORDER_LINE_OL_DELIVERY_D,
                             &output[TPCC_VAR_OL_DELIVER_D(i)], TXN_BYPASS);
-           dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_QUANTITY,
+           tx.ReadColumn(r, TPCC_COL_ORDER_LINE_OL_QUANTITY,
                             &output[TPCC_VAR_OL_QUANTITY(i)], TXN_BYPASS);
-           dtxn->ReadColumn(r, TPCC_COL_ORDER_LINE_OL_AMOUNT,
+           tx.ReadColumn(r, TPCC_COL_ORDER_LINE_OL_AMOUNT,
                             &output[TPCC_VAR_OL_AMOUNTS(i)], TXN_BYPASS);
          }
 

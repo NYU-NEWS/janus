@@ -1,10 +1,10 @@
 #pragma once
 
-#include "../classic/coord.h"
+#include "deptran/classic/coordinator.h"
 
 namespace janus {
 
-class OCCCoord: public CoordinatorClassic {
+class CoordinatorOcc: public CoordinatorClassic {
   using CoordinatorClassic::CoordinatorClassic;
 };
 

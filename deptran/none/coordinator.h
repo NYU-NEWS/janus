@@ -1,9 +1,9 @@
 #pragma once
 
-#include "../classic/coord.h"
+#include "deptran/classic/coordinator.h"
 
 namespace janus {
-class NoneCoord : public CoordinatorClassic {
+class CoordinatorNone : public CoordinatorClassic {
  public:
   using CoordinatorClassic::CoordinatorClassic;
   enum Phase {INIT_END=0, DISPATCH=1};

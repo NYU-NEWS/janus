@@ -46,23 +46,23 @@ void TpccRdWorkload::RegNewOrder() {
          Log_debug("new order d_id: %x w_id: %x",
                    cmd.input[TPCC_VAR_D_ID].get_i32(),
                    cmd.input[TPCC_VAR_W_ID].get_i32());
-         mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_DISTRICT),
+         mdb::Row *r = tx.Query(tx.GetTable(TPCC_TB_DISTRICT),
                                    mb,
                                    ROW_DISTRICT);
          Value buf(0);
          // R district
-         dtxn->ReadColumn(r,
+         tx.ReadColumn(r,
                           TPCC_COL_DISTRICT_D_TAX,
                           &output[TPCC_VAR_D_TAX],
                           TXN_BYPASS);
-         dtxn->ReadColumn(r,
+         tx.ReadColumn(r,
                           TPCC_COL_DISTRICT_D_NEXT_O_ID,
                           &buf,
                           TXN_BYPASS); // read d_next_o_id
          output[TPCC_VAR_O_ID] = buf;
          // read d_next_o_id, increment by 1
          buf.set_i32((i32) (buf.get_i32() + 1));
-         dtxn->WriteColumn(r,
+         tx.WriteColumn(r,
                            TPCC_COL_DISTRICT_D_NEXT_O_ID,
                            buf,
                            TXN_INSTANT);
@@ -81,11 +81,11 @@ void TpccRdWorkload::RegNewOrder() {
          verify(cmd.input.size() == 1);
          Log::debug("TPCCD_NEW_ORDER, piece: %d", TPCCD_NEW_ORDER_1);
          mdb::Row
-             *row_warehouse = dtxn->Query(dtxn->GetTable(TPCC_TB_WAREHOUSE),
+             *row_warehouse = tx.Query(tx.GetTable(TPCC_TB_WAREHOUSE),
                                           cmd.input[TPCC_VAR_W_ID].get_blob(),
                                           ROW_WAREHOUSE);
          // R warehouse
-         dtxn->ReadColumn(row_warehouse, TPCC_COL_WAREHOUSE_W_TAX,
+         tx.ReadColumn(row_warehouse, TPCC_COL_WAREHOUSE_W_TAX,
                           &output[TPCC_VAR_W_TAX], TXN_BYPASS); // read w_tax
          return;
        }
@@ -106,14 +106,14 @@ void TpccRdWorkload::RegNewOrder() {
          mb[0] = cmd.input[TPCC_VAR_C_ID].get_blob();
          mb[1] = cmd.input[TPCC_VAR_D_ID].get_blob();
          mb[2] = cmd.input[TPCC_VAR_W_ID].get_blob();
-         auto table = dtxn->GetTable(TPCC_TB_CUSTOMER);
-         mdb::Row *row_customer = dtxn->Query(table, mb, ROW_CUSTOMER);
+         auto table = tx.GetTable(TPCC_TB_CUSTOMER);
+         mdb::Row *row_customer = tx.Query(table, mb, ROW_CUSTOMER);
          // R customer
-         dtxn->ReadColumn(row_customer, TPCC_COL_CUSTOMER_C_LAST,
+         tx.ReadColumn(row_customer, TPCC_COL_CUSTOMER_C_LAST,
                           &output[TPCC_VAR_C_LAST], TXN_BYPASS);
-         dtxn->ReadColumn(row_customer, TPCC_COL_CUSTOMER_C_CREDIT,
+         tx.ReadColumn(row_customer, TPCC_COL_CUSTOMER_C_CREDIT,
                           &output[TPCC_VAR_C_CREDIT], TXN_BYPASS);
-         dtxn->ReadColumn(row_customer, TPCC_COL_CUSTOMER_C_DISCOUNT,
+         tx.ReadColumn(row_customer, TPCC_COL_CUSTOMER_C_DISCOUNT,
                           &output[TPCC_VAR_C_DISCOUNT], TXN_BYPASS);
 
          return;
@@ -134,14 +134,14 @@ void TpccRdWorkload::RegNewOrder() {
          verify(cmd.input.size() == 7);
          Log::debug("TPCCD_NEW_ORDER, piece: %d", TPCCD_NEW_ORDER_3);
          i32 oi = 0;
-         mdb::Table *tbl = dtxn->GetTable(TPCC_TB_ORDER);
+         mdb::Table *tbl = tx.GetTable(TPCC_TB_ORDER);
 
          mdb::MultiBlob mb(3);
          mb[0] = cmd.input[TPCC_VAR_D_ID].get_blob();
          mb[1] = cmd.input[TPCC_VAR_W_ID].get_blob();
          mb[2] = cmd.input[TPCC_VAR_C_ID].get_blob();
 
-         mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_ORDER_C_ID_SECONDARY),
+         mdb::Row *r = tx.Query(tx.GetTable(TPCC_TB_ORDER_C_ID_SECONDARY),
                                    mb,
                                    ROW_ORDER_SEC);
          verify(r);
@@ -160,12 +160,12 @@ void TpccRdWorkload::RegNewOrder() {
          };
          CREATE_ROW(tbl->schema(), row_data);
          verify(r->schema_);
-         dtxn->InsertRow(tbl, r);
+         tx.InsertRow(tbl, r);
 
-         r = dtxn->Query(dtxn->GetTable(TPCC_TB_ORDER_C_ID_SECONDARY),
+         r = tx.Query(tx.GetTable(TPCC_TB_ORDER_C_ID_SECONDARY),
                          mb,
                          ROW_ORDER_SEC);
-         dtxn->WriteColumn(r, 3, cmd.input[TPCC_VAR_W_ID], TXN_DEFERRED);
+         tx.WriteColumn(r, 3, cmd.input[TPCC_VAR_W_ID], TXN_DEFERRED);
          return;
        }
   );
@@ -181,7 +181,7 @@ void TpccRdWorkload::RegNewOrder() {
          verify(cmd.input.size() == 3);
          Log_debug("TPCCD_NEW_ORDER, piece: %d", TPCCD_NEW_ORDER_4);
 
-         mdb::Table *tbl = dtxn->GetTable(TPCC_TB_NEW_ORDER);
+         mdb::Table *tbl = tx.GetTable(TPCC_TB_NEW_ORDER);
          mdb::Row *r = NULL;
 
          // W new_order
@@ -194,7 +194,7 @@ void TpccRdWorkload::RegNewOrder() {
 
          CREATE_ROW(tbl->schema(), row_data);
 
-         dtxn->InsertRow(tbl, r);
+         tx.InsertRow(tbl, r);
          *res = SUCCESS;
          return;
        }
@@ -211,19 +211,19 @@ void TpccRdWorkload::RegNewOrder() {
          LPROC {
            verify(cmd.input.size() == 1);
            Log_debug("TPCCD_NEW_ORDER, piece: %d", TPCCD_NEW_ORDER_RI(i));
-           mdb::Row *r = dtxn->Query(dtxn->GetTable(TPCC_TB_ITEM),
+           mdb::Row *r = tx.Query(tx.GetTable(TPCC_TB_ITEM),
                                      cmd.input[TPCC_VAR_I_ID(i)].get_blob(),
                                      ROW_ITEM);
            // Ri item
-           dtxn->ReadColumn(r,
+           tx.ReadColumn(r,
                             TPCC_COL_ITEM_I_NAME,
                             &output[TPCC_VAR_I_NAME(i)],
                             TXN_BYPASS);
-           dtxn->ReadColumn(r,
+           tx.ReadColumn(r,
                             TPCC_COL_ITEM_I_PRICE,
                             &output[TPCC_VAR_I_PRICE(i)],
                             TXN_BYPASS);
-           dtxn->ReadColumn(r,
+           tx.ReadColumn(r,
                             TPCC_COL_ITEM_I_DATA,
                             &output[TPCC_VAR_I_DATA(i)],
                             TXN_BYPASS);
@@ -250,16 +250,16 @@ void TpccRdWorkload::RegNewOrder() {
            Log_debug("new order read stock. item_id: %x, s_w_id: %x",
                      i_id,
                      w_id);
-           auto tbl_stock = dtxn->GetTable(TPCC_TB_STOCK);
-           mdb::Row *r = dtxn->Query(tbl_stock, mb, ROW_STOCK);
+           auto tbl_stock = tx.GetTable(TPCC_TB_STOCK);
+           mdb::Row *r = tx.Query(tbl_stock, mb, ROW_STOCK);
            verify(r->schema_);
            //i32 s_dist_col = 3 + input[2].get_i32();
            // Ri stock
            // FIXME compress all s_dist_xx into one column
-           dtxn->ReadColumn(r, TPCC_COL_STOCK_S_DIST_XX,
+           tx.ReadColumn(r, TPCC_COL_STOCK_S_DIST_XX,
                             &output[TPCC_VAR_OL_DIST_INFO(i)],
                             TXN_BYPASS); // 0 ==> s_dist_xx
-           dtxn->ReadColumn(r, TPCC_COL_STOCK_S_DATA,
+           tx.ReadColumn(r, TPCC_COL_STOCK_S_DATA,
                             &output[TPCC_VAR_S_DATA(i)],
                             TXN_BYPASS); // 1 ==> s_data
            *res = SUCCESS;
@@ -282,22 +282,22 @@ void TpccRdWorkload::RegNewOrder() {
            mb[0] = cmd.input[TPCC_VAR_I_ID(i)].get_blob();
            mb[1] = cmd.input[TPCC_VAR_S_W_ID(i)].get_blob();
 
-           r = dtxn->Query(dtxn->GetTable(TPCC_TB_STOCK), mb, ROW_STOCK_TEMP);
+           r = tx.Query(tx.GetTable(TPCC_TB_STOCK), mb, ROW_STOCK_TEMP);
            verify(r->schema_);
            // Ri stock
            Value buf(0);
-           dtxn->ReadColumn(r, TPCC_COL_STOCK_S_QUANTITY, &buf, TXN_DEFERRED);
+           tx.ReadColumn(r, TPCC_COL_STOCK_S_QUANTITY, &buf, TXN_DEFERRED);
            int32_t new_ol_quantity = buf.get_i32() -
                cmd.input[TPCC_VAR_OL_QUANTITY(i)].get_i32();
 
-           dtxn->ReadColumn(r, TPCC_COL_STOCK_S_YTD, &buf, TXN_DEFERRED);
+           tx.ReadColumn(r, TPCC_COL_STOCK_S_YTD, &buf, TXN_DEFERRED);
            Value new_s_ytd(buf.get_i32() +
                cmd.input[TPCC_VAR_OL_QUANTITY(i)].get_i32());
 
-           dtxn->ReadColumn(r, TPCC_COL_STOCK_S_ORDER_CNT, &buf, TXN_DEFERRED);
+           tx.ReadColumn(r, TPCC_COL_STOCK_S_ORDER_CNT, &buf, TXN_DEFERRED);
            Value new_s_order_cnt((i32)(buf.get_i32() + 1));
 
-           dtxn->ReadColumn(r, TPCC_COL_STOCK_S_REMOTE_CNT, &buf, TXN_DEFERRED);
+           tx.ReadColumn(r, TPCC_COL_STOCK_S_REMOTE_CNT, &buf, TXN_DEFERRED);
            Value new_s_remote_cnt(buf.get_i32() +
                cmd.input[TPCC_VAR_S_REMOTE_CNT(i)].get_i32());
 
@@ -305,7 +305,7 @@ void TpccRdWorkload::RegNewOrder() {
              new_ol_quantity += 91;
            Value new_ol_quantity_value(new_ol_quantity);
 
-           dtxn->WriteColumns(r,
+           tx.WriteColumns(r,
                               {
                                   TPCC_COL_STOCK_S_QUANTITY,
                                   TPCC_COL_STOCK_S_YTD,
@@ -339,7 +339,7 @@ void TpccRdWorkload::RegNewOrder() {
            Log_debug("TPCCD_NEW_ORDER, piece: %d",
                      TPCCD_NEW_ORDER_WOL(i));
 
-           mdb::Table *tbl = dtxn->GetTable(TPCC_TB_ORDER_LINE);
+           mdb::Table *tbl = tx.GetTable(TPCC_TB_ORDER_LINE);
            mdb::Row *r = NULL;
 
            Value amount = Value((double) (
@@ -361,7 +361,7 @@ void TpccRdWorkload::RegNewOrder() {
                }
            ));
 
-           dtxn->InsertRow(tbl, r);
+           tx.InsertRow(tbl, r);
            *res = SUCCESS;
            return;
 

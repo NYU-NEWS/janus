@@ -6,7 +6,7 @@ namespace janus {
 
 class JanusFrame : public Frame {
  public:
-  JanusFrame(int mode = MODE_JANUS) : Frame(mode) { }
+  JanusFrame(int mode = MODE_JANUS) : Frame(mode) {}
   Executor *CreateExecutor(cmdid_t, Scheduler *sched) override;
   Coordinator *CreateCoord(cooid_t coo_id,
                            Config *config,
@@ -19,14 +19,14 @@ class JanusFrame : public Frame {
                                            Scheduler *dtxn_sched,
                                            rrr::PollMgr *poll_mgr,
                                            ServerControlServiceImpl *scsi)
-      override;
+  override;
   mdb::Row *CreateRow(const mdb::Schema *schema,
                       vector<Value> &row_data) override;
 
-  TxBox* CreateDTxn(epoch_t epoch, txnid_t tid,
-                   bool ro, Scheduler * mgr) override;
+  shared_ptr<Tx> CreateTx(epoch_t epoch, txnid_t tid,
+                          bool ro, Scheduler *mgr) override;
 
-  Communicator* CreateCommo(PollMgr* poll = nullptr) override;
+  Communicator *CreateCommo(PollMgr *poll = nullptr) override;
 };
 
 } // namespace janus

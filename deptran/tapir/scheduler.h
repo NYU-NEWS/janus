@@ -12,19 +12,19 @@ class SchedulerTapir : public SchedulerClassic {
     epoch_enabled_ = true;
   }
 
-  bool OnDispatch(TxPieceData& piece_data,
-                  TxnOutput& ret_output) override;
+  virtual bool Guard(Tx &tx_box, Row *row, int col_id, bool write) override;
 
-  int OnFastAccept(cmdid_t cmd_id,
-                   const vector<SimpleCommand> &txn_cmds,
-                   int32_t *res,
-                   const function<void()> &callback);
+  bool OnDispatch(TxPieceData &piece_data,
+                  TxnOutput &ret_output) override;
 
-  int OnDecide(cmdid_t cmd_id,
+  int OnFastAccept(txid_t tx_id,
+                   const vector<SimpleCommand> &txn_cmds);
+
+  int OnDecide(txid_t tx_id,
                int32_t decision,
                const function<void()> &callback);
 
-  virtual bool HandleConflicts(TxBox &dtxn,
+  virtual bool HandleConflicts(Tx &dtxn,
                                innid_t inn_id,
                                vector<string> &conflicts) {
     verify(0);

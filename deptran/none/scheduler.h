@@ -4,10 +4,10 @@
 
 namespace janus {
 
-class NoneSched: public Scheduler {
+class SchedulerNone: public Scheduler {
  using Scheduler::Scheduler;
  public:
-  virtual bool HandleConflicts(TxBox& dtxn,
+  virtual bool HandleConflicts(Tx& dtxn,
                                innid_t inn_id,
                                vector<string>& conflicts) {
     // do nothing for none.

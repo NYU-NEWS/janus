@@ -26,7 +26,7 @@ class MultiPaxosSched : public Scheduler {
                 const ballot_t ballot,
                 const ContainerCommand &cmd);
 
-  virtual bool HandleConflicts(TxBox& dtxn,
+  virtual bool HandleConflicts(Tx& dtxn,
                                innid_t inn_id,
                                vector<string>& conflicts) {
     verify(0);

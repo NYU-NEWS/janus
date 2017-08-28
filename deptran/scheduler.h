@@ -19,21 +19,21 @@ class Scheduler {
  public:
   locid_t loc_id_ = -1;
   siteid_t site_id_ = -1;
-  unordered_map<txnid_t, TxBox *> dtxns_{};
-  unordered_map<txnid_t, mdb::Txn *> mdb_txns_{};
-  unordered_map<txnid_t, Executor*> executors_{};
-  function<void(ContainerCommand&)> learner_action_ =
-      [] (ContainerCommand&) -> void {verify(0);};
+  unordered_map<txid_t, shared_ptr<Tx>> dtxns_{};
+  unordered_map<txid_t, mdb::Txn *> mdb_txns_{};
+  unordered_map<txid_t, Executor *> executors_{};
+  function<void(ContainerCommand &)> learner_action_ =
+      [](ContainerCommand &) -> void { verify(0); };
 
   mdb::TxnMgr *mdb_txn_mgr_;
   int mode_;
   Recorder *recorder_ = nullptr;
   Frame *frame_ = nullptr;
   Frame *rep_frame_ = nullptr;
-  Scheduler* rep_sched_ = nullptr;
-  Communicator* commo_{nullptr};
+  Scheduler *rep_sched_ = nullptr;
+  Communicator *commo_{nullptr};
   //  Coordinator* rep_coord_ = nullptr;
-  TxnRegistry* txn_reg_ = nullptr;
+  TxnRegistry *txn_reg_ = nullptr;
   parid_t partition_id_{};
   std::recursive_mutex mtx_{};
 
@@ -76,9 +76,9 @@ class Scheduler {
   }
 #endif
 
-  RococoCommunicator* commo() {
+  RococoCommunicator *commo() {
     verify(commo_ != nullptr);
-    return (RococoCommunicator*) commo_;
+    return (RococoCommunicator *) commo_;
   }
 
   Scheduler();
@@ -90,31 +90,33 @@ class Scheduler {
   }
 
   // runs in a coroutine.
-  virtual bool OnDispatch(TxPieceData& piece_data,
-                          TxnOutput& ret_output);
+  virtual bool OnDispatch(TxPieceData &piece_data,
+                          TxnOutput &ret_output);
 
-  virtual bool HandleConflicts(TxBox& dtxn,
+  virtual bool HandleConflicts(Tx &dtxn,
                                innid_t inn_id,
-                               vector<string>& conflicts) = 0;
-  virtual bool HandleConflicts(TxBox& dtxn,
+                               vector<string> &conflicts) = 0;
+  virtual bool HandleConflicts(Tx &dtxn,
                                innid_t inn_id,
-                               vector<conf_id_t>& conflicts) {
+                               vector<conf_id_t> &conflicts) {
     Log_fatal("unimplemnted feature: handle conflicts!");
   };
-  virtual void Execute(TxBox& txn_box,
+  virtual void Execute(Tx &txn_box,
                        innid_t inn_id);
 
-  Coordinator*CreateRepCoord();
-  virtual TxBox *GetDTxn(txnid_t tid);
-  virtual TxBox *CreateDTxn(txnid_t tid, bool ro = false);
-  virtual TxBox *GetOrCreateTxBox(txnid_t tid, bool ro = false);
-  virtual TxBox *CreateDTxn(epoch_t epoch, txnid_t txn_id, bool read_only = false);
-  virtual TxBox *GetOrCreateDTxn(epoch_t epoch, txnid_t txn_id);
+  Coordinator *CreateRepCoord();
+  virtual shared_ptr<Tx> GetDTxn(txnid_t tid);
+  virtual shared_ptr<Tx> CreateDTxn(txnid_t tid, bool ro = false);
+  virtual shared_ptr<Tx> GetOrCreateTxBox(txnid_t tid, bool ro = false);
+  virtual shared_ptr<Tx> CreateDTxn(epoch_t epoch,
+                                    txnid_t txn_id,
+                                    bool read_only = false);
+  virtual Tx *GetOrCreateDTxn(epoch_t epoch, txnid_t txn_id);
   void DestroyDTxn(i64 tid);
 
-  Executor* GetExecutor(txnid_t txn_id);
-  Executor* CreateExecutor(txnid_t txn_id);
-  Executor* GetOrCreateExecutor(txnid_t txn_id);
+  Executor *GetExecutor(txnid_t txn_id);
+  Executor *CreateExecutor(txnid_t txn_id);
+  Executor *GetOrCreateExecutor(txnid_t txn_id);
   virtual void DestroyExecutor(txnid_t txn_id);
   virtual void TrashExecutor(txnid_t txn_id);
 
@@ -128,7 +130,7 @@ class Scheduler {
     return mdb_txn_mgr_->get_table(name);
   }
 
-  virtual mdb::Txn* GetMTxn(const i64 tid);
+  virtual mdb::Txn *GetMTxn(const i64 tid);
   virtual mdb::Txn *GetOrCreateMTxn(const i64 tid);
   virtual mdb::Txn *RemoveMTxn(const i64 tid);
 
@@ -137,7 +139,6 @@ class Scheduler {
                        std::string *str
   );
 
-
   // TODO: (Shuai: I am not sure this is supposed to be here.)
   // I think it used to initialized the database?
   // So it should be somewhere else?
@@ -145,11 +146,11 @@ class Scheduler {
                  mdb::Table *tbl
   );
 
-  void RegLearnerAction(function<void(ContainerCommand&)> learner_action) {
+  void RegLearnerAction(function<void(ContainerCommand &)> learner_action) {
     learner_action_ = learner_action;
   }
 
-  virtual void OnLearn(ContainerCommand& cmd) {verify(0);};
+  virtual void OnLearn(ContainerCommand &cmd) { verify(0); };
 
   // epoch related functions
   void TriggerUpgradeEpoch();
@@ -157,6 +158,5 @@ class Scheduler {
   virtual int32_t OnUpgradeEpoch(uint32_t old_epoch);
   virtual void OnTruncateEpoch(uint32_t old_epoch);
 };
-
 
 } // namespace janus

@@ -12,7 +12,7 @@
 #include "../rococo/graph.h"
 #include "../rococo/graph_marshaler.h"
 #include "scheduler.h"
-#include "tx_box.h"
+#include "tx.h"
 
 namespace janus {
 
@@ -51,10 +51,10 @@ mdb::Txn* Scheduler2pl::get_mdb_txn(const i64 tid) {
 }
 
 
-bool Scheduler2pl::Guard(TxBox &tx_box, Row *row, int col_idx) {
+bool Scheduler2pl::Guard(Tx &tx_box, Row *row, int col_idx, bool write) {
   mdb::FineLockedRow* fl_row = (mdb::FineLockedRow*) row;
   ALock* lock = fl_row->get_alock(col_idx);
-  TplTxBox& tpl_tx_box = dynamic_cast<TplTxBox&>(tx_box);
+  Tx2pl& tpl_tx_box = dynamic_cast<Tx2pl&>(tx_box);
   uint64_t lock_req_id = lock->Lock(0, ALock::WLOCK, tx_box.tid_);
   if (lock_req_id > 0) {
     tpl_tx_box.locked_locks_.push_back(std::pair<ALock*, uint64_t>(lock, lock_req_id));
@@ -66,7 +66,7 @@ bool Scheduler2pl::Guard(TxBox &tx_box, Row *row, int col_idx) {
 
 bool Scheduler2pl::DoPrepare(txnid_t tx_id) {
   // do nothing here?
-  TplTxBox* tx_box = (TplTxBox*) GetOrCreateTxBox(tx_id);
+  auto tx_box = dynamic_pointer_cast<Tx2pl>(GetOrCreateTxBox(tx_id));
   verify(!tx_box->inuse);
   tx_box->inuse = true;
   if (tx_box->wounded_) {
@@ -83,8 +83,8 @@ bool Scheduler2pl::DoPrepare(txnid_t tx_id) {
   return !tx_box->wounded_;
 }
 
-void Scheduler2pl::DoCommit(TxBox& tx_box) {
-  TplTxBox& tpl_tx_box = dynamic_cast<TplTxBox&>(tx_box);
+void Scheduler2pl::DoCommit(Tx& tx_box) {
+  Tx2pl& tpl_tx_box = dynamic_cast<Tx2pl&>(tx_box);
   for (auto& pair : tpl_tx_box.locked_locks_) {
     pair.first->abort(pair.second);
   }
@@ -94,8 +94,8 @@ void Scheduler2pl::DoCommit(TxBox& tx_box) {
   delete mdb_txn;
 }
 
-void Scheduler2pl::DoAbort(TxBox& tx_box) {
-  TplTxBox& tpl_tx_box = dynamic_cast<TplTxBox&>(tx_box);
+void Scheduler2pl::DoAbort(Tx& tx_box) {
+  Tx2pl& tpl_tx_box = dynamic_cast<Tx2pl&>(tx_box);
   for (auto& pair : tpl_tx_box.locked_locks_) {
     pair.first->abort(pair.second);
   }

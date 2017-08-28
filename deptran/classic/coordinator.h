@@ -5,7 +5,7 @@
 
 #include "../coordinator.h"
 
-namespace rococo {
+namespace janus {
 class ClientControlServiceImpl;
 
 class CoordinatorClassic : public Coordinator {
@@ -107,4 +107,4 @@ class CoordinatorClassic : public Coordinator {
   void ___TestPhaseOne(txnid_t txn_id);
   void ___TestPhaseThree(txnid_t txn_id);
 };
-}
+} // namespace janus

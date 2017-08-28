@@ -5,9 +5,9 @@
 
 namespace rococo {
 
-class OccDTxn : public TxBox {
+class TxOcc : public Tx {
 public:
-  using TxBox::TxBox;
+  using Tx::Tx;
 
   virtual bool ReadColumn(mdb::Row *row,
                           mdb::colid_t col_id,

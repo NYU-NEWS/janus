@@ -3,7 +3,7 @@
 #include "../dtxn.h"
 #include "../procedure.h"
 #include "../coordinator.h"
-#include "../2pl/tx_box.h"
+#include "deptran/2pl/tx.h"
 #include "scheduler.h"
 #include "tpc_command.h"
 
@@ -12,10 +12,10 @@ namespace janus {
 bool SchedulerClassic::OnDispatch(TxPieceData &piece_data,
                                   TxnOutput &ret_output) {
 
-  TxBox &tx_box = *GetOrCreateTxBox(piece_data.root_id_);
+  Tx &tx = *GetOrCreateTxBox(piece_data.root_id_);
   verify(partition_id_ == piece_data.partition_id_);
-  verify(!tx_box.inuse);
-  tx_box.inuse = true;
+  verify(!tx.inuse);
+  tx.inuse = true;
   TxnPieceDef &piece_def = txn_reg_->get(piece_data.root_type_,
                                          piece_data.type_);
   auto &conflicts = piece_def.conflicts_;
@@ -25,11 +25,11 @@ bool SchedulerClassic::OnDispatch(TxPieceData &piece_data,
     for (int i = 0; i < c.primary_keys.size(); i++) {
       pkeys.push_back(piece_data.input.at(c.primary_keys[i]));
     }
-    auto row = tx_box.Query(tx_box.GetTable(c.table), pkeys, c.row_context_id);
+    auto row = tx.Query(tx.GetTable(c.table), pkeys, c.row_context_id);
     verify(row != nullptr);
     for (auto col_id : c.columns) {
-      if (!Guard(tx_box, row, col_id)) {
-        tx_box.inuse = false;
+      if (!Guard(tx, row, col_id)) {
+        tx.inuse = false;
         ret_output[piece_data.inn_id()] =
             {}; // the client use this to identify ack.
         return false; // abort
@@ -38,14 +38,14 @@ bool SchedulerClassic::OnDispatch(TxPieceData &piece_data,
   }
   // wait for an execution signal.
   int ret_code;
-  piece_data.input.Aggregate(tx_box.ws_);
+  piece_data.input.Aggregate(tx.ws_);
   piece_def.proc_handler_(nullptr,
-                          &tx_box,
+                          tx,
                           const_cast<TxPieceData &>(piece_data),
                           &ret_code,
                           ret_output[piece_data.inn_id()]);
-  tx_box.ws_.insert(ret_output[piece_data.inn_id()]);
-  tx_box.inuse = false;
+  tx.ws_.insert(ret_output[piece_data.inn_id()]);
+  tx.inuse = false;
   return true;
 }
 
@@ -101,7 +101,7 @@ int SchedulerClassic::OnCommit(txnid_t tx_id,
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   Log_debug("%s: at site %d, tx: %"
                 PRIx64, __FUNCTION__, this->site_id_, tx_id);
-  TxBox *tx_box = GetOrCreateTxBox(tx_id);
+  auto tx_box = GetOrCreateTxBox(tx_id);
   verify(!tx_box->inuse);
   tx_box->inuse = true;
 //  auto exec = (ClassicExecutor*)GetExecutor(cmd_id);
@@ -132,14 +132,14 @@ int SchedulerClassic::OnCommit(txnid_t tx_id,
   return 0;
 }
 
-void SchedulerClassic::DoCommit(TxBox &tx_box) {
+void SchedulerClassic::DoCommit(Tx &tx_box) {
   auto mdb_txn = RemoveMTxn(tx_box.tid_);
   verify(mdb_txn == tx_box.mdb_txn_);
   mdb_txn->commit();
   delete mdb_txn; // TODO remove this
 }
 
-void SchedulerClassic::DoAbort(TxBox &tx_box) {
+void SchedulerClassic::DoAbort(Tx &tx_box) {
   auto mdb_txn = RemoveMTxn(tx_box.tid_);
   verify(mdb_txn == tx_box.mdb_txn_);
   mdb_txn->abort();

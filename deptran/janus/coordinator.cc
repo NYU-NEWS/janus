@@ -49,7 +49,7 @@ void JanusCoord::PreAccept() {
 //  // generate fast accept request
   // set broadcast callback
   // broadcast
-  RccDTxn* dtxn = graph_.FindV(cmd_->id_);
+  auto dtxn = graph_.FindV(cmd_->id_);
   verify(txn().partition_ids_.size() == dtxn->partition_.size());
   for (auto par_id : cmd_->GetPartitionIds()) {
     auto cmds = txn().GetCmdsByPartition(par_id);
@@ -142,9 +142,9 @@ void JanusCoord::Accept() {
 //  Log_info("broadcast accept request for txn_id: %llx", cmd_->id_);
   ChooseGraph();
   Procedure *txn = (Procedure*) cmd_;
-  RccDTxn* dtxn = graph_.FindV(cmd_->id_);
+  auto dtxn = graph_.FindV(cmd_->id_);
   verify(txn->partition_ids_.size() == dtxn->partition_.size());
-  graph_.UpgradeStatus(dtxn, TXN_CMT);
+  graph_.UpgradeStatus(*dtxn, TXN_CMT);
   for (auto par_id : cmd_->GetPartitionIds()) {
     commo()->BroadcastAccept(par_id,
                              cmd_->id_,
@@ -184,9 +184,9 @@ void JanusCoord::AcceptAck(phase_t phase,
 void JanusCoord::Commit() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   Procedure *txn = (Procedure*) cmd_;
-  RccDTxn* dtxn = graph_.FindV(cmd_->id_);
+  auto dtxn = graph_.FindV(cmd_->id_);
   verify(txn->partition_ids_.size() == dtxn->partition_.size());
-  graph_.UpgradeStatus(dtxn, TXN_CMT);
+  graph_.UpgradeStatus(*dtxn, TXN_CMT);
   for (auto par_id : cmd_->GetPartitionIds()) {
     commo()->BroadcastCommit(par_id,
                              cmd_->id_,
@@ -320,12 +320,12 @@ int JanusCoord::FastQuorumGraphCheck(parid_t par_id) {
 //  verify(vec_graph.size() == 1);
 //  verify(vec_graph.size() >= 1);
   verify(vec_graph.size() == fast_quorum);
-  RccDTxn* v = vec_graph[0]->FindV(cmd_->id_);
+  auto v = vec_graph[0]->FindV(cmd_->id_);
   verify(v != nullptr);
   auto& parent_set = v->GetParentSet();
   for (int i = 1; i < vec_graph.size(); i++) {
     RccGraph& graph = *vec_graph[i];
-    RccDTxn* vv = graph.FindV(cmd_->id_);
+    auto vv = graph.FindV(cmd_->id_);
     auto& pp_set = vv->GetParentSet();
     if (parent_set != pp_set) {
       res = 2;

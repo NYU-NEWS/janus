@@ -6,7 +6,7 @@
 #include "graph.h"
 #include "dep_graph.h"
 
-namespace rococo {
+namespace janus {
 
 class SimpleCommand;
 class RccGraph;
@@ -30,7 +30,7 @@ class SchedulerRococo : public Scheduler, public RccGraph {
 //  RccGraph *dep_graph_ = nullptr;
   WaitlistChecker* waitlist_checker_ = nullptr;
   set<RccDTxn*> waitlist_ = {};
-  set<RccDTxn*> fridge_ = {};
+  set<shared_ptr<RccDTxn>> fridge_ = {};
   std::recursive_mutex mtx_{};
   std::time_t last_upgrade_time_{0};
   map<parid_t, int32_t> epoch_replies_{};
@@ -41,16 +41,17 @@ class SchedulerRococo : public Scheduler, public RccGraph {
   virtual ~SchedulerRococo();
 
   // override graph operations
-  std::unordered_map<txnid_t, RccDTxn*>& vertex_index() override {
+  unordered_map<txnid_t, shared_ptr<RccDTxn>>& vertex_index() override {
     verify(!managing_memory_);
-    return reinterpret_cast<std::unordered_map<txnid_t, RccDTxn*>&>(dtxns_);
+    return reinterpret_cast<
+        std::unordered_map<txnid_t, shared_ptr<RccDTxn>>&>(dtxns_);
   };
-  RccDTxn* CreateV(txnid_t txn_id) override {
-    auto dtxn = (RccDTxn*) CreateDTxn(txn_id);
-    return dtxn;
+  shared_ptr<RccDTxn> CreateV(txnid_t txn_id) override {
+    auto sp_tx = CreateDTxn(txn_id);
+    return dynamic_pointer_cast<RccDTxn>(sp_tx);
   }
-  RccDTxn* CreateV(RccDTxn& rhs) override {
-    auto dtxn = (RccDTxn*) CreateDTxn(rhs.id());
+  shared_ptr<RccDTxn> CreateV(RccDTxn& rhs) override {
+    auto dtxn = dynamic_pointer_cast<RccDTxn>(CreateDTxn(rhs.id()));
     if (rhs.epoch_ > 0) {
       dtxn->epoch_ = rhs.epoch_;
     }
@@ -59,7 +60,7 @@ class SchedulerRococo : public Scheduler, public RccGraph {
     verify(dtxn->id() == rhs.tid_);
     return dtxn;
   }
-  TxBox* GetOrCreateTxBox(txnid_t tid, bool ro = false) override ;
+  shared_ptr<Tx> GetOrCreateTxBox(txnid_t tid, bool ro = false) override ;
 
   virtual void SetPartitionId(parid_t par_id) {
     Scheduler::partition_id_ = par_id;
@@ -82,7 +83,7 @@ class SchedulerRococo : public Scheduler, public RccGraph {
                         RccGraph *graph,
                         const function<void()> &callback);
 
-  virtual bool HandleConflicts(TxBox& dtxn,
+  virtual bool HandleConflicts(Tx& dtxn,
                                innid_t inn_id,
                                vector<string>& conflicts) {
     verify(0);
@@ -108,7 +109,7 @@ class SchedulerRococo : public Scheduler, public RccGraph {
   void InquireAck(cmdid_t cmd_id, RccGraph& graph);
   void TriggerCheckAfterAggregation(RccGraph &graph);
   void AddChildrenIntoWaitlist(RccDTxn* v);
-  bool AllAncCmt(RccDTxn *v);
+  bool AllAncCmt(RccDTxn& v);
   bool FullyDispatched(const RccScc& scc);
   void Decide(const RccScc&);
   bool HasICycle(const RccScc& scc);
@@ -119,9 +120,9 @@ class SchedulerRococo : public Scheduler, public RccGraph {
   void Abort(const RccScc&);
 
   void __DebugExamineFridge();
-  RccDTxn* __DebugFindAnOngoingAncestor(RccDTxn* vertex);
-  void __DebugExamineGraphVerify(RccDTxn *v);
+  RccDTxn& __DebugFindAnOngoingAncestor(RccDTxn& vertex);
+  void __DebugExamineGraphVerify(RccDTxn& v);
   RccCommo* commo();
 };
 
-} // namespace rococo
+} // namespace janus

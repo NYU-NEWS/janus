@@ -57,9 +57,9 @@ void MicroWorkload::RegisterPrecedures() {
          verify(cmd.input.size() == 2);
          mdb::MultiBlob buf(1);
          buf[0] = cmd.input[0].get_blob();
-         auto tbl = dtxn->GetTable(MICRO_BENCH_TABLE_A);
-         mdb::Row *r = dtxn->Query(tbl, buf);
-         dtxn->WriteColumn(r, 1, cmd.input[MICRO_VAR_V_0]);
+         auto tbl = tx.GetTable(MICRO_BENCH_TABLE_A);
+         mdb::Row *r = tx.Query(tbl, buf);
+         tx.WriteColumn(r, 1, cmd.input[MICRO_VAR_V_0]);
        }
   );
 
@@ -73,9 +73,9 @@ void MicroWorkload::RegisterPrecedures() {
          verify(cmd.input.size() == 2);
          mdb::MultiBlob buf(1);
          buf[0] = cmd.input[0].get_blob();
-         auto tbl = dtxn->GetTable(MICRO_BENCH_TABLE_C);
-         mdb::Row *r = dtxn->Query(tbl, buf);
-         dtxn->WriteColumn(r, 1, cmd.input[MICRO_VAR_V_2]);
+         auto tbl = tx.GetTable(MICRO_BENCH_TABLE_C);
+         mdb::Row *r = tx.Query(tbl, buf);
+         tx.WriteColumn(r, 1, cmd.input[MICRO_VAR_V_2]);
        }
   );
 

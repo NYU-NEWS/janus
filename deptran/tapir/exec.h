@@ -3,8 +3,8 @@
 #include "../__dep__.h"
 #include "../executor.h"
 
-namespace rococo {
-class TxBoxTapir;
+namespace janus {
+class TxTapir;
 class TapirExecutor : public Executor {
  public:
   using Executor::Executor;
@@ -14,13 +14,12 @@ class TapirExecutor : public Executor {
 
   static set<Row*> locked_rows_s; // only for debug.
 
-  void FastAccept(const vector<SimpleCommand>& txn_cmds,
-                  int32_t *res);
+  int FastAccept(const vector<SimpleCommand>& txn_cmds);
   void Commit();
   void Abort();
   void Cleanup();
 
-  TxBoxTapir* dtxn();
+  shared_ptr<TxTapir> dtxn();
 };
 
-} // namespace rococo
+} // namespace janus

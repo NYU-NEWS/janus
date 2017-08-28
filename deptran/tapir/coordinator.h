@@ -1,14 +1,14 @@
 #pragma once
 
-#include "../none/coord.h"
+#include "deptran/none/coordinator.h"
 
-namespace rococo {
+namespace janus {
 
 #define MAGIC_FACCEPT_BALLOT 1;
 #define MAGIC_SACCEPT_BALLOT 2;
 
 class TapirCommo;
-class TapirCoord : public CoordinatorClassic {
+class CoordinatorTapir : public CoordinatorClassic {
  public:
   enum Phase {INIT_END=0, DISPATCH=1, FAST_ACCEPT=2, DECIDE=3};
   enum Decision { UNKNOWN = 0, COMMIT = 1, ABORT = 2};
@@ -46,4 +46,4 @@ class TapirCoord : public CoordinatorClassic {
   bool FastQuorumPossible();
 };
 
-} // namespace rococo
+} // namespace janus
