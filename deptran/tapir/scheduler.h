@@ -14,9 +14,6 @@ class SchedulerTapir : public SchedulerClassic {
 
   virtual bool Guard(Tx &tx_box, Row *row, int col_id, bool write) override;
 
-  bool OnDispatch(TxPieceData &piece_data,
-                  TxnOutput &ret_output) override;
-
   int OnFastAccept(txid_t tx_id,
                    const vector<SimpleCommand> &txn_cmds);
 

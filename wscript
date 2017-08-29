@@ -13,8 +13,8 @@ pargs = ['--cflags', '--libs']
 
 def options(opt):
     opt.load("compiler_c")
-    opt.load("compiler_cxx unittest_gtest")
-    opt.load(['boost'],
+    opt.load("compiler_cxx")
+    opt.load(['boost', 'unittest_gtest'],
              tooldir=['.waf-tools'])
     opt.add_option('-g', '--use-gxx', dest='cxx',
                    default=False, action='store_true')

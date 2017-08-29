@@ -6,18 +6,6 @@
 
 namespace janus {
 
-bool SchedulerTapir::OnDispatch(TxPieceData &piece_data,
-                                TxnOutput &ret_output) {
-  std::lock_guard<std::recursive_mutex> lock(mtx_);
-//  auto exec = GetOrCreateExecutor(cmds[0].root_id_);
-//  verify(exec->mdb_txn());
-//  exec->Execute(cmds, output);
-//  *res = SUCCESS;
-//  callback();
-//  return 0;
-  return true;
-}
-
 bool SchedulerTapir::Guard(Tx &tx, Row *row, int col_id, bool write) {
   // do nothing
 }
