@@ -22,15 +22,15 @@ class SchedulerRococo : public Scheduler, public RccGraph {
   AvgStat traversing_stat_{};
 
   class Waitlist {
-    set<RccDTxn*> waitlist_ = {};
-    set<RccDTxn*> fridge_ = {};
+    set<TxRococo*> waitlist_ = {};
+    set<TxRococo*> fridge_ = {};
   };
 
  public:
 //  RccGraph *dep_graph_ = nullptr;
   WaitlistChecker* waitlist_checker_ = nullptr;
-  set<RccDTxn*> waitlist_ = {};
-  set<shared_ptr<RccDTxn>> fridge_ = {};
+  set<TxRococo*> waitlist_ = {};
+  set<shared_ptr<TxRococo>> fridge_ = {};
   std::recursive_mutex mtx_{};
   std::time_t last_upgrade_time_{0};
   map<parid_t, int32_t> epoch_replies_{};
@@ -41,17 +41,17 @@ class SchedulerRococo : public Scheduler, public RccGraph {
   virtual ~SchedulerRococo();
 
   // override graph operations
-  unordered_map<txnid_t, shared_ptr<RccDTxn>>& vertex_index() override {
+  unordered_map<txnid_t, shared_ptr<TxRococo>>& vertex_index() override {
     verify(!managing_memory_);
     return reinterpret_cast<
-        std::unordered_map<txnid_t, shared_ptr<RccDTxn>>&>(dtxns_);
+        std::unordered_map<txnid_t, shared_ptr<TxRococo>>&>(dtxns_);
   };
-  shared_ptr<RccDTxn> CreateV(txnid_t txn_id) override {
-    auto sp_tx = CreateDTxn(txn_id);
-    return dynamic_pointer_cast<RccDTxn>(sp_tx);
+  shared_ptr<TxRococo> CreateV(txnid_t txn_id) override {
+    auto sp_tx = CreateTx(txn_id);
+    return dynamic_pointer_cast<TxRococo>(sp_tx);
   }
-  shared_ptr<RccDTxn> CreateV(RccDTxn& rhs) override {
-    auto dtxn = dynamic_pointer_cast<RccDTxn>(CreateDTxn(rhs.id()));
+  shared_ptr<TxRococo> CreateV(TxRococo& rhs) override {
+    auto dtxn = dynamic_pointer_cast<TxRococo>(CreateTx(rhs.id()));
     if (rhs.epoch_ > 0) {
       dtxn->epoch_ = rhs.epoch_;
     }
@@ -60,7 +60,7 @@ class SchedulerRococo : public Scheduler, public RccGraph {
     verify(dtxn->id() == rhs.tid_);
     return dtxn;
   }
-  shared_ptr<Tx> GetOrCreateTxBox(txnid_t tid, bool ro = false) override ;
+  shared_ptr<Tx> GetOrCreateTx(txnid_t tid, bool ro = false) override ;
 
   virtual void SetPartitionId(parid_t par_id) {
     Scheduler::partition_id_ = par_id;
@@ -102,26 +102,26 @@ class SchedulerRococo : public Scheduler, public RccGraph {
 
   void DestroyExecutor(txnid_t tid) override;
 
-  void InquireAboutIfNeeded(RccDTxn &dtxn);
-  void AnswerIfInquired(RccDTxn &dtxn);
-  void InquiredGraph(RccDTxn& dtxn, RccGraph* graph);
+  void InquireAboutIfNeeded(TxRococo &dtxn);
+  void AnswerIfInquired(TxRococo &dtxn);
+  void InquiredGraph(TxRococo& dtxn, RccGraph* graph);
   void CheckWaitlist();
   void InquireAck(cmdid_t cmd_id, RccGraph& graph);
   void TriggerCheckAfterAggregation(RccGraph &graph);
-  void AddChildrenIntoWaitlist(RccDTxn* v);
-  bool AllAncCmt(RccDTxn& v);
+  void AddChildrenIntoWaitlist(TxRococo* v);
+  bool AllAncCmt(TxRococo& v);
   bool FullyDispatched(const RccScc& scc);
   void Decide(const RccScc&);
   bool HasICycle(const RccScc& scc);
   bool HasAbortedAncestor(const RccScc& scc);
   bool AllAncFns(const RccScc&);
   void Execute(const RccScc&);
-  void Execute(RccDTxn&);
+  void Execute(TxRococo&);
   void Abort(const RccScc&);
 
   void __DebugExamineFridge();
-  RccDTxn& __DebugFindAnOngoingAncestor(RccDTxn& vertex);
-  void __DebugExamineGraphVerify(RccDTxn& v);
+  TxRococo& __DebugFindAnOngoingAncestor(TxRococo& vertex);
+  void __DebugExamineGraphVerify(TxRococo& v);
   RccCommo* commo();
 };
 

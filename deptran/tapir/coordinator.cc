@@ -3,62 +3,60 @@
 #include "frame.h"
 #include "commo.h"
 #include "benchmark_control_rpc.h"
-#include "exec.h"
 
 namespace janus {
 
-TapirCommo* CoordinatorTapir::commo() {
+TapirCommo *CoordinatorTapir::commo() {
 //  verify(commo_ != nullptr);
   if (commo_ == nullptr) {
     commo_ = new TapirCommo();
     commo_->loc_id_ = loc_id_;
     verify(loc_id_ < 100);
   }
-  auto commo = dynamic_cast<TapirCommo*>(commo_);
+  auto commo = dynamic_cast<TapirCommo *>(commo_);
   verify(commo != nullptr);
   return commo;
 }
 
-void CoordinatorTapir::Dispatch() {
+void CoordinatorTapir::DispatchAsync() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   //  ___TestPhaseOne(cmd_id_);
-  auto txn = (Procedure*) cmd_;
+  auto tx_data = (Procedure *) cmd_;
 
   int cnt = 0;
-  auto cmds_by_par = txn->GetReadyCmds();
+  auto cmds_by_par = tx_data->GetReadyCmds();
 
-  for (auto& pair: cmds_by_par) {
-    const parid_t& par_id = pair.first;
-    vector<SimpleCommand*>& cmds = pair.second;
+  for (auto &pair: cmds_by_par) {
+    const parid_t &par_id = pair.first;
+    vector<TxPieceData *> &cmds = pair.second;
     n_dispatch_ += cmds.size();
     cnt += cmds.size();
-    vector<SimpleCommand> cc;
-    for (SimpleCommand* c: cmds) {
+    vector<TxPieceData> cc;
+    for (TxPieceData *c: cmds) {
       c->id_ = next_pie_id();
       dispatch_acks_[c->inn_id_] = false;
       cc.push_back(*c);
     }
-    commo()->SendDispatch(cc,
-                          this,
-                          std::bind(&CoordinatorClassic::DispatchAck,
-                                    this,
-                                    phase_,
-                                    std::placeholders::_1,
-                                    std::placeholders::_2));
+    commo()->BroadcastDispatch(cc,
+                               this,
+                               std::bind(&CoordinatorClassic::DispatchAck,
+                                         this,
+                                         phase_,
+                                         std::placeholders::_1,
+                                         std::placeholders::_2));
   }
   Log_debug("sent %d SubCmds\n", cnt);
 }
 
-
 void CoordinatorTapir::DispatchAck(phase_t phase,
-                             int32_t res,
-                             TxnOutput& outputs) {
+                                   int32_t res,
+                                   TxnOutput &outputs) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   if (phase != phase_) return;
   Procedure *txn = (Procedure *) cmd_;
-  for (auto& pair : outputs) {
+  for (auto &pair : outputs) {
     n_dispatch_ack_++;
-    const innid_t& inn_id = pair.first;
+    const innid_t &inn_id = pair.first;
     verify(dispatch_acks_[inn_id] == false);
     dispatch_acks_[inn_id] = true;
     Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
@@ -70,7 +68,7 @@ void CoordinatorTapir::DispatchAck(phase_t phase,
     Log_debug("command has more sub-cmd, cmd_id: %llx,"
                   " n_started_: %d, n_pieces: %d",
               txn->id_, txn->n_pieces_dispatched_, txn->GetNPieceAll());
-    Dispatch();
+    DispatchAsync();
   } else if (AllDispatchAcked()) {
     Log_debug("receive all start acks, txn_id: %llx; START PREPARE",
               txn->id_);
@@ -113,8 +111,8 @@ void CoordinatorTapir::FastAccept() {
 }
 
 void CoordinatorTapir::FastAcceptAck(phase_t phase,
-                               parid_t par_id,
-                               int32_t res) {
+                                     parid_t par_id,
+                                     int32_t res) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   if (phase_ > phase) return;
   // if for every partition, get fast quorum of OK, go into decide.
@@ -143,9 +141,9 @@ void CoordinatorTapir::FastAcceptAck(phase_t phase,
 bool CoordinatorTapir::FastQuorumPossible() {
   auto pars = cmd_->GetPartitionIds();
   bool all_fast_quorum_possible = true;
-  for (auto& par_id : pars) {
+  for (auto &par_id : pars) {
     auto par_size = Config::GetConfig()->GetPartitionSize(par_id);
-    if (n_fast_accept_rejects_[par_id] > par_size-GetFastQuorum(par_id)) {
+    if (n_fast_accept_rejects_[par_id] > par_size - GetFastQuorum(par_id)) {
       all_fast_quorum_possible = false;
       break;
     }
@@ -170,7 +168,7 @@ void CoordinatorTapir::Accept() {
   }
 }
 
-void CoordinatorTapir::AcceptAck(phase_t phase, parid_t pid, Future* fu) {
+void CoordinatorTapir::AcceptAck(phase_t phase, parid_t pid, Future *fu) {
   if (phase_ != phase) return;
   int res;
   fu->get_reply() >> res;
@@ -197,16 +195,15 @@ int CoordinatorTapir::GetFastQuorum(parid_t par_id) {
 
 int CoordinatorTapir::GetSlowQuorum(parid_t par_id) {
   int n = Config::GetConfig()->GetPartitionSize(par_id);
-  return n/2 + 1;
+  return n / 2 + 1;
 }
-
 
 bool CoordinatorTapir::AllSlowQuorumReached() {
   // verify(0);
   // currently the
   auto pars = cmd_->GetPartitionIds();
   bool all_slow_quorum_reached = true;
-  for (auto& par_id : pars) {
+  for (auto &par_id : pars) {
     if (n_fast_accept_oks_[par_id] < GetSlowQuorum(par_id)) {
       all_slow_quorum_reached = false;
       break;
@@ -215,12 +212,11 @@ bool CoordinatorTapir::AllSlowQuorumReached() {
   return all_slow_quorum_reached;
 }
 
-
 bool CoordinatorTapir::AllFastQuorumReached() {
   // verify(0);
   auto pars = cmd_->GetPartitionIds();
   bool all_fast_quorum_reached = true;
-  for (auto& par_id : pars) {
+  for (auto &par_id : pars) {
     if (n_fast_accept_oks_[par_id] < GetFastQuorum(par_id)) {
       all_fast_quorum_reached = false;
       break;
@@ -250,20 +246,16 @@ void CoordinatorTapir::Decide() {
 void CoordinatorTapir::GotoNextPhase() {
   int n_phase = 4;
   switch (phase_++ % n_phase) {
-    case Phase::INIT_END:
-      Dispatch();
+    case Phase::INIT_END:DispatchAsync();
       verify(phase_ % n_phase == Phase::DISPATCH);
       break;
-    case Phase::DISPATCH:
-      verify(phase_ % n_phase == Phase::FAST_ACCEPT);
+    case Phase::DISPATCH:verify(phase_ % n_phase == Phase::FAST_ACCEPT);
       FastAccept();
       break;
-    case Phase::FAST_ACCEPT:
-      verify(phase_ % n_phase == Phase::DECIDE);
+    case Phase::FAST_ACCEPT:verify(phase_ % n_phase == Phase::DECIDE);
       Decide();
       break;
-    case Phase::DECIDE:
-      verify(phase_ % n_phase == Phase::INIT_END);
+    case Phase::DECIDE:verify(phase_ % n_phase == Phase::INIT_END);
       if (committed_)
         End();
       else if (aborted_)
@@ -271,8 +263,7 @@ void CoordinatorTapir::GotoNextPhase() {
       else
         verify(0);
       break;
-    default:
-      verify(0);
+    default:verify(0);
   }
 }
 

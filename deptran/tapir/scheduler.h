@@ -1,6 +1,6 @@
 #pragma once
 
-#include "deptran/classic/scheduler.h"
+#include "../classic/scheduler.h"
 
 namespace janus {
 

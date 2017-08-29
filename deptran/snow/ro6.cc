@@ -90,7 +90,7 @@ void commit(
 //}
 
 void RO6DTxn::kiss(mdb::Row *r, int col, bool immediate) {
-  RccDTxn::kiss(r, col, immediate);
+  TxRococo::kiss(r, col, immediate);
 
   if (!read_only_) {
     // We only query cell's rxn table for non-read txns

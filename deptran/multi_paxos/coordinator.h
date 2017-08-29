@@ -53,7 +53,7 @@ class MultiPaxosCoord : public Coordinator {
     return n_replica() / 2 + 1;
   }
 
-  void do_one(TxnRequest &req) override {}
+  void DoTxAsync(TxnRequest &req) override {}
   void Submit(ContainerCommand& cmd,
               const std::function<void()>& func = [] () {},
               const std::function<void()>& exe_callback = [] () {}) override;

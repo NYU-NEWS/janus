@@ -3,7 +3,7 @@
 
 namespace rococo {
 
-using rococo::RccDTxn;
+using rococo::TxRococo;
 
 char TPCC_TB_WAREHOUSE[] = "warehouse";
 char TPCC_TB_DISTRICT[] = "district";

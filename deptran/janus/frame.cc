@@ -6,7 +6,7 @@
 #include "../rococo/rcc_row.h"
 #include "commo.h"
 #include "frame.h"
-#include "coord.h"
+#include "coordinator.h"
 #include "sched.h"
 #include "dep_graph.h"
 #include "dtxn.h"

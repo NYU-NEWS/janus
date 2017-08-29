@@ -1,15 +1,15 @@
 #pragma once
 
-#include "../rococo/dtxn.h"
+#include "deptran/rococo/tx.h"
 #include "../command.h"
 #include "dep_graph.h"
 #include "brq-common.h"
 
 namespace rococo {
 
-class JanusDTxn : public RccDTxn {
+class JanusDTxn : public TxRococo {
 public:
-  using RccDTxn::RccDTxn;
+  using TxRococo::TxRococo;
 
   void DispatchExecute(SimpleCommand &cmd,
                        int *res,

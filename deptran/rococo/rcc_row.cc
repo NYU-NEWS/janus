@@ -1,5 +1,5 @@
 #include "rcc_row.h"
-#include "../dtxn.h"
+#include "deptran/tx.h"
 
 namespace janus {
 

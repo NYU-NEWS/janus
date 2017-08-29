@@ -19,7 +19,7 @@
  *
  */
 
-namespace rococo {
+namespace janus {
 Coordinator::Coordinator(uint32_t coo_id,
                          int32_t benchmark,
                          ClientControlServiceImpl *ccsi,
@@ -67,4 +67,4 @@ Coordinator::~Coordinator() {
   mtx_.unlock();
 // TODO (shuai) destroy all the rpc clients and proxies.
 }
-} // namespace rococo
+} // namespace janus

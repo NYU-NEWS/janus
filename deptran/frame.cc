@@ -5,12 +5,12 @@
 #include "snow/ro6_row.h"
 #include "marshal-value.h"
 #include "coordinator.h"
-#include "dtxn.h"
+#include "tx.h"
 #include "rcc_service.h"
 #include "scheduler.h"
 #include "none/coordinator.h"
 #include "none/scheduler.h"
-#include "rococo/coord.h"
+#include "rococo/coordinator.h"
 #include "snow/ro6_coord.h"
 #include "deptran/2pl/coordinator.h"
 #include "occ/tx.h"
@@ -302,7 +302,7 @@ shared_ptr<Tx> Frame::CreateTx(epoch_t epoch, txnid_t tid,
       sp_tx.reset(new TxOcc(epoch, tid, mgr));
       break;
     case MODE_RCC:
-      sp_tx.reset(new RccDTxn(epoch, tid, mgr, ro));
+      sp_tx.reset(new TxRococo(epoch, tid, mgr, ro));
       break;
     case MODE_RO6:
       sp_tx.reset(new RO6DTxn(tid, mgr, ro));

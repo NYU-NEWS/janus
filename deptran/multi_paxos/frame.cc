@@ -2,7 +2,7 @@
 #include "../constants.h"
 #include "frame.h"
 #include "exec.h"
-#include "coord.h"
+#include "coordinator.h"
 #include "sched.h"
 #include "service.h"
 #include "commo.h"

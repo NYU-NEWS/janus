@@ -10,7 +10,7 @@ class SchedulerJanus : public SchedulerRococo {
  public:
   using SchedulerRococo::SchedulerRococo;
 
-  map<txnid_t, shared_ptr<RccDTxn>> Aggregate(RccGraph& graph);
+  map<txnid_t, shared_ptr<TxRococo>> Aggregate(RccGraph& graph);
 
   void OnPreAccept(const txnid_t txnid,
                    const vector<SimpleCommand> &cmds,

@@ -1,14 +1,14 @@
 #include <deptran/txn_reg.h>
 #include "../__dep__.h"
 #include "../scheduler.h"
-#include "dtxn.h"
+#include "tx.h"
 #include "bench/tpcc/workload.h"
 #include "dep_graph.h"
 #include "procedure.h"
 
 namespace rococo {
 
-RccDTxn::RccDTxn(epoch_t epoch,
+TxRococo::TxRococo(epoch_t epoch,
                  txnid_t tid,
                  Scheduler *mgr,
                  bool ro) : Tx(epoch, tid, mgr) {
@@ -17,19 +17,19 @@ RccDTxn::RccDTxn(epoch_t epoch,
   verify(id() == tid);
 }
 
-RccDTxn::RccDTxn(txnid_t id): Tx(0, id, nullptr) {
+TxRococo::TxRococo(txnid_t id): Tx(0, id, nullptr) {
   // alert!! after this a lot of stuff need to be set manually.
   tid_ = id;
 }
 
-RccDTxn::RccDTxn(RccDTxn& rhs_dtxn) :
-    Vertex<RccDTxn>(rhs_dtxn),
+TxRococo::TxRococo(TxRococo& rhs_dtxn) :
+    Vertex<TxRococo>(rhs_dtxn),
     Tx(rhs_dtxn.epoch_, rhs_dtxn.tid_, nullptr),
     partition_(rhs_dtxn.partition_),
     status_(rhs_dtxn.status_) {
 }
 
-void RccDTxn::DispatchExecute(SimpleCommand &cmd,
+void TxRococo::DispatchExecute(SimpleCommand &cmd,
                               int32_t *res,
                               map<int32_t, Value> *output) {
   verify(0);
@@ -65,12 +65,12 @@ void RccDTxn::DispatchExecute(SimpleCommand &cmd,
 }
 
 
-void RccDTxn::Abort() {
+void TxRococo::Abort() {
   aborted_ = true;
   // TODO. nullify changes in the staging area.
 }
 
-void RccDTxn::CommitExecute() {
+void TxRococo::CommitExecute() {
 //  verify(phase_ == PHASE_RCC_START);
   phase_ = PHASE_RCC_COMMIT;
   TxnWorkspace ws;
@@ -85,7 +85,7 @@ void RccDTxn::CommitExecute() {
   committed_ = true;
 }
 
-void RccDTxn::ReplyFinishOk() {
+void TxRococo::ReplyFinishOk() {
 //  verify(committed != aborted);
   int r = committed_ ? SUCCESS : REJECT;
   if (commit_request_received_) {
@@ -98,7 +98,7 @@ void RccDTxn::ReplyFinishOk() {
   }
 }
 
-bool RccDTxn::start_exe_itfr(defer_t defer_type,
+bool TxRococo::start_exe_itfr(defer_t defer_type,
                              ProcHandler &handler,
                              const SimpleCommand& cmd,
                              map<int32_t, Value> *output) {
@@ -156,7 +156,7 @@ bool RccDTxn::start_exe_itfr(defer_t defer_type,
 //  verify(0);
 //}
 
-void RccDTxn::start_ro(const SimpleCommand& cmd,
+void TxRococo::start_ro(const SimpleCommand& cmd,
                        map<int32_t, Value> &output,
                        DeferredReply *defer) {
   verify(0);
@@ -284,11 +284,11 @@ void RccDTxn::start_ro(const SimpleCommand& cmd,
 //}
 //
 
-void RccDTxn::kiss(mdb::Row *r, int col, bool immediate) {
+void TxRococo::kiss(mdb::Row *r, int col, bool immediate) {
   verify(0);
 }
 
-bool RccDTxn::ReadColumn(mdb::Row *row,
+bool TxRococo::ReadColumn(mdb::Row *row,
                          mdb::colid_t col_id,
                          Value *value,
                          int hint_flag) {
@@ -316,7 +316,7 @@ bool RccDTxn::ReadColumn(mdb::Row *row,
 }
 
 
-bool RccDTxn::WriteColumn(Row *row,
+bool TxRococo::WriteColumn(Row *row,
                           colid_t col_id,
                           const Value &value,
                           int hint_flag) {
@@ -341,7 +341,7 @@ bool RccDTxn::WriteColumn(Row *row,
   return true;
 }
 
-void RccDTxn::AddParentEdge(shared_ptr<RccDTxn> other, int8_t weight) {
+void TxRococo::AddParentEdge(shared_ptr<TxRococo> other, int8_t weight) {
   Vertex::AddParentEdge(other, weight);
   if (sched_) {
     verify(other->epoch_ > 0);
@@ -349,13 +349,13 @@ void RccDTxn::AddParentEdge(shared_ptr<RccDTxn> other, int8_t weight) {
   }
 }
 
-void RccDTxn::TraceDep(Row* row, colid_t col_id, int hint_flag) {
+void TxRococo::TraceDep(Row* row, colid_t col_id, int hint_flag) {
   // TODO remove pointers in outdated epoch ???
   auto r = dynamic_cast<RCCRow*>(row);
   verify(r != nullptr);
   entry_t *entry = r->get_dep_entry(col_id);
   int8_t edge_type = (hint_flag == TXN_INSTANT) ? EDGE_I : EDGE_D;
-  auto parent_dtxn = dynamic_pointer_cast<RccDTxn>(entry->last_);
+  auto parent_dtxn = dynamic_pointer_cast<TxRococo>(entry->last_);
   if (parent_dtxn == nullptr) {
 
   } else if (parent_dtxn.get() == this) {

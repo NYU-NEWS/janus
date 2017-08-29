@@ -3,7 +3,7 @@
 #include "../__dep__.h"
 #include "../constants.h"
 #include "../command.h"
-#include "../rococo/coord.h"
+#include "deptran/rococo/coordinator.h"
 #include "dep_graph.h"
 
 namespace rococo {
@@ -41,7 +41,7 @@ public:
 
   JanusCommo* commo();
   // Dispatch inherits from RccCoord;
-  void DispatchRo() {Dispatch();}
+  void DispatchRo() { DispatchAsync();}
 
   void PreAccept();
   void PreAcceptAck(phase_t phase,

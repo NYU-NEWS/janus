@@ -1,18 +1,18 @@
 #pragma once
 
 #include "../__dep__.h"
-#include "../communicator.h"
+#include "../commo.h"
 
-namespace rococo {
+namespace janus {
 
 class Simplecommand;
-class TapirCommo : public Communicator {
+class TapirCommo : public RococoCommunicator {
  public:
-  using Communicator::Communicator;
+  using RococoCommunicator::RococoCommunicator;
 
-  void SendDispatch(vector<SimpleCommand> &cmd,
-                    Coordinator *coo,
-                    const function<void(int, TxnOutput &)> &callback);
+//  void SendDispatch(vector<SimpleCommand> &cmd,
+//                    Coordinator *coo,
+//                    const function<void(int, TxnOutput &)> &callback);
   void BroadcastFastAccept(parid_t par_id,
                            cmdid_t cmd_id,
                            vector<SimpleCommand>& cmds,
@@ -25,6 +25,10 @@ class TapirCommo : public Communicator {
                        ballot_t,
                        int decision,
                        const function<void(Future*)>&);
+  virtual SiteProxyPair DispatchProxyForPartition(parid_t par_id) const
+  override {
+    return NearestProxyForPartition(par_id);
+  };
 };
 
-}
+} // namespace janus

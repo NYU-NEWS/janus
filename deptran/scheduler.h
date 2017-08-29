@@ -5,7 +5,7 @@
 #include "epochs.h"
 #include "kvdb.h"
 #include "procedure.h"
-#include "dtxn.h"
+#include "tx.h"
 
 namespace janus {
 
@@ -105,14 +105,14 @@ class Scheduler {
                        innid_t inn_id);
 
   Coordinator *CreateRepCoord();
-  virtual shared_ptr<Tx> GetDTxn(txnid_t tid);
-  virtual shared_ptr<Tx> CreateDTxn(txnid_t tid, bool ro = false);
-  virtual shared_ptr<Tx> GetOrCreateTxBox(txnid_t tid, bool ro = false);
-  virtual shared_ptr<Tx> CreateDTxn(epoch_t epoch,
-                                    txnid_t txn_id,
-                                    bool read_only = false);
-  virtual Tx *GetOrCreateDTxn(epoch_t epoch, txnid_t txn_id);
-  void DestroyDTxn(i64 tid);
+  virtual shared_ptr<Tx> GetTx(txnid_t tx_id);
+  virtual shared_ptr<Tx> CreateTx(txnid_t tx_id,
+                                  bool ro = false);
+  virtual shared_ptr<Tx> CreateTx(epoch_t epoch,
+                                  txnid_t txn_id,
+                                  bool read_only = false);
+  virtual shared_ptr<Tx> GetOrCreateTx(txnid_t tid, bool ro = false);
+  void DestroyTx(i64 tid);
 
   Executor *GetExecutor(txnid_t txn_id);
   Executor *CreateExecutor(txnid_t txn_id);

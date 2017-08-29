@@ -2,9 +2,9 @@
 #include "frame.h"
 //#include "exec.h"
 //#include "coord.h"
-#include "coord.h"
+#include "coordinator.h"
 #include "sched.h"
-#include "dtxn.h"
+#include "tx.h"
 #include "commo.h"
 #include "config.h"
 
@@ -66,7 +66,7 @@ mdb::Row *RccFrame::CreateRow(const mdb::Schema *schema,
 
 shared_ptr<Tx> RccFrame::CreateTx(epoch_t epoch, txnid_t tid,
                                   bool ro, Scheduler *mgr) {
-  shared_ptr<Tx> sp_tx(new RccDTxn(epoch, tid, mgr, ro));
+  shared_ptr<Tx> sp_tx(new TxRococo(epoch, tid, mgr, ro));
   return sp_tx;
 }
 

@@ -4,7 +4,7 @@
 
 #include "../__dep__.h"
 #include "../constants.h"
-#include "../dtxn.h"
+#include "deptran/tx.h"
 #include "../procedure.h"
 #include "../scheduler.h"
 #include "../marshal-value.h"
@@ -66,7 +66,7 @@ bool Scheduler2pl::Guard(Tx &tx_box, Row *row, int col_idx, bool write) {
 
 bool Scheduler2pl::DoPrepare(txnid_t tx_id) {
   // do nothing here?
-  auto tx_box = dynamic_pointer_cast<Tx2pl>(GetOrCreateTxBox(tx_id));
+  auto tx_box = dynamic_pointer_cast<Tx2pl>(GetOrCreateTx(tx_id));
   verify(!tx_box->inuse);
   tx_box->inuse = true;
   if (tx_box->wounded_) {

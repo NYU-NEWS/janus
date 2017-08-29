@@ -1,7 +1,7 @@
 #pragma once
 
 #include "graph.h"
-#include "dtxn.h"
+#include "tx.h"
 #include "marshal-value.h"
 #include "command.h"
 #include "command_marshaler.h"
@@ -13,7 +13,7 @@
 namespace rococo {
 
 //typedef RccDTxn RccDTxn;
-typedef vector<RccDTxn*> RccScc;
+typedef vector<TxRococo*> RccScc;
 
 class EmptyGraph : public Marshallable {
  public:
@@ -23,7 +23,7 @@ class EmptyGraph : public Marshallable {
 };
 
 class SchedulerRococo;
-class RccGraph : public Graph<RccDTxn> {
+class RccGraph : public Graph<TxRococo> {
  public:
 //    Graph<PieInfo> pie_gra_;
 //  Graph <TxnInfo> txn_gra_;
@@ -34,7 +34,7 @@ class RccGraph : public Graph<RccDTxn> {
 //  std::vector<RococoProxy *> rpc_proxies_;
 //  std::vector<std::string> server_addrs_;
 
-  RccGraph() : Graph<RccDTxn>() {
+  RccGraph() : Graph<TxRococo>() {
     kind_ = MarshallDeputy::RCC_GRAPH;
   }
 
@@ -43,18 +43,18 @@ class RccGraph : public Graph<RccDTxn> {
   }
 
   /** on start_req */
-  shared_ptr<RccDTxn> FindOrCreateRccVertex(txnid_t txn_id,
+  shared_ptr<TxRococo> FindOrCreateRccVertex(txnid_t txn_id,
                                             SchedulerRococo* sched);
   void RemoveVertex(txnid_t txn_id);
-  void RebuildEdgePointer(map<txnid_t, shared_ptr<RccDTxn>>& index);
-  shared_ptr<RccDTxn> AggregateVertex(shared_ptr<RccDTxn> rhs_dtxn);
-  void UpgradeStatus(RccDTxn& v, int8_t status);
+  void RebuildEdgePointer(map<txnid_t, shared_ptr<TxRococo>>& index);
+  shared_ptr<TxRococo> AggregateVertex(shared_ptr<TxRococo> rhs_dtxn);
+  void UpgradeStatus(TxRococo& v, int8_t status);
 
-  map<txnid_t, shared_ptr<RccDTxn>> Aggregate(epoch_t epoch, RccGraph& graph);
-  void SelectGraphCmtUkn(RccDTxn& dtxn, RccGraph* new_graph);
-  void SelectGraph(set<shared_ptr<RccDTxn>> vertexes, RccGraph* new_graph);
+  map<txnid_t, shared_ptr<TxRococo>> Aggregate(epoch_t epoch, RccGraph& graph);
+  void SelectGraphCmtUkn(TxRococo& dtxn, RccGraph* new_graph);
+  void SelectGraph(set<shared_ptr<TxRococo>> vertexes, RccGraph* new_graph);
 //  RccScc& FindSCC(RccDTxn *vertex) override;
-  bool AllAncCmt(RccDTxn& vertex);
+  bool AllAncCmt(TxRococo& vertex);
 
   bool operator== (RccGraph& rhs) const;
 
@@ -63,7 +63,7 @@ class RccGraph : public Graph<RccDTxn> {
     return !(*this == rhs);
   }
 
-  uint64_t MinItfrGraph(RccDTxn& dtxn,
+  uint64_t MinItfrGraph(TxRococo& dtxn,
                         RccGraph* gra_m,
                         bool quick = false,
                         int depth = -1);

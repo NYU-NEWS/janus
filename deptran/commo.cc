@@ -4,12 +4,13 @@
 
 namespace rococo {
 
-void RococoCommunicator::SendDispatch(vector<SimpleCommand>& cmd,
-                                      Coordinator *coo,
-                                      const function<void(int,
-                                                          TxnOutput&)>
-                                      &callback) {
+void RococoCommunicator::BroadcastDispatch(vector<TxPieceData> &vec_piece_data,
+                                           Coordinator *coo,
+                                           const function<void(int,
+                                                               TxnOutput &)>
+                                           &callback) {
   rrr::FutureAttr fuattr;
+  auto par_id = vec_piece_data[0].PartitionId();
   std::function<void(Future*)> cb =
       [coo, this, callback] (Future *fu) {
         int res;
@@ -18,9 +19,14 @@ void RococoCommunicator::SendDispatch(vector<SimpleCommand>& cmd,
         callback(res, outputs);
   };
   fuattr.callback = cb;
-  auto proxy = LeaderProxyForPartition(cmd[0].PartitionId());
-  Log_debug("SendStart to %ld from %ld", proxy.first, coo->coo_id_);
-  Future::safe_release(proxy.second->async_Dispatch(cmd, fuattr));
+  auto pair_leader_proxy = DispatchProxyForPartition(par_id);
+  Log_debug("SendStart to %ld from %ld", pair_leader_proxy.first, coo->coo_id_);
+  Future::safe_release(pair_leader_proxy.second->async_Dispatch(vec_piece_data, fuattr));
+  for (auto& pair : rpc_par_proxies_[par_id]) {
+    if (pair.first != pair_leader_proxy.first) {
+      Future::safe_release(pair.second->async_Dispatch(vec_piece_data));
+    }
+  }
 }
 
 void RococoCommunicator::SendStart(SimpleCommand &cmd,

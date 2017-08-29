@@ -57,7 +57,7 @@ void CoordinatorClassic::ForwardTxnRequestAck(const TxnReply& txn_reply) {
   GotoNextPhase();
 }
 
-void CoordinatorClassic::do_one(TxnRequest &req) {
+void CoordinatorClassic::DoTxAsync(TxnRequest &req) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   Procedure *cmd = frame_->CreateTxnCommand(req, txn_reg_);
   verify(txn_reg_ != nullptr);
@@ -90,8 +90,7 @@ void CoordinatorClassic::GotoNextPhase() {
   int n_phase = 4;
   int current_phase = phase_ % n_phase;
   switch (phase_++ % n_phase) {
-    case Phase::INIT_END:
-      Dispatch();
+    case Phase::INIT_END:DispatchAsync();
       verify(phase_ % n_phase == Phase::DISPATCH);
       break;
     case Phase::DISPATCH:
@@ -163,7 +162,7 @@ void CoordinatorClassic::Restart() {
   }
 }
 
-void CoordinatorClassic::Dispatch() {
+void CoordinatorClassic::DispatchAsync() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto txn = (Procedure*) cmd_;
 
@@ -183,13 +182,13 @@ void CoordinatorClassic::Dispatch() {
       dispatch_acks_[c->inn_id_] = false;
       cc.push_back(*c);
     }
-    commo()->SendDispatch(cc,
-                          this,
-                          std::bind(&CoordinatorClassic::DispatchAck,
-                                    this,
-                                    phase_,
-                                    std::placeholders::_1,
-                                    std::placeholders::_2));
+    commo()->BroadcastDispatch(cc,
+                               this,
+                               std::bind(&CoordinatorClassic::DispatchAck,
+                                         this,
+                                         phase_,
+                                         std::placeholders::_1,
+                                         std::placeholders::_2));
   }
   Log_debug("Dispatch cnt: %d for tx_id: %" PRIx64, cnt, txn->root_id_);
 }
@@ -240,7 +239,7 @@ void CoordinatorClassic::DispatchAck(phase_t phase,
     Log_debug("command has more sub-cmd, cmd_id: %llx,"
                   " n_started_: %d, n_pieces: %d",
               txn->id_, txn->n_pieces_dispatched_, txn->GetNPieceAll());
-    Dispatch();
+    DispatchAsync();
   } else if (AllDispatchAcked()) {
     Log_debug("receive all start acks, txn_id: %llx; START PREPARE",
               txn->id_);

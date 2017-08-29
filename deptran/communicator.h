@@ -39,6 +39,9 @@ class Communicator {
   SiteProxyPair RandomProxyForPartition(parid_t partition_id) const;
   SiteProxyPair LeaderProxyForPartition(parid_t) const;
   SiteProxyPair NearestProxyForPartition(parid_t) const;
+  virtual SiteProxyPair DispatchProxyForPartition(parid_t par_id) const {
+    return LeaderProxyForPartition(par_id);
+  };
   std::pair<int, ClassicProxy*> ConnectToSite(rococo::Config::SiteInfo &site, std::chrono::milliseconds timeout_ms);
   ClientSiteProxyPair ConnectToClientSite(Config::SiteInfo &site, std::chrono::milliseconds timeout);
   void ConnectClientLeaders();

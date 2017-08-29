@@ -223,7 +223,7 @@ void ClientWorker::AcceptForwardedRequest(TxnRequest &request, TxnReply* txn_rep
                                     defer,
                                     std::placeholders::_1);
       Log_debug("%s: running forwarded request at site %d", f, my_site_.id);
-      coo->do_one(req);
+    coo->DoTxAsync(req);
   };
   dispatch_pool_->run_async(task);
 }
@@ -241,7 +241,7 @@ void ClientWorker::DispatchRequest(Coordinator *coo) {
                                 this,
                                 coo,
                                 std::placeholders::_1);
-      coo->do_one(req);
+      coo->DoTxAsync(req);
     };
     dispatch_pool_->run_async(task);
 }

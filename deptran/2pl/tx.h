@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../dtxn.h"
+#include "deptran/tx.h"
 
 namespace janus {
 

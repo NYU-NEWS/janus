@@ -1,7 +1,7 @@
 #include "marshal-value.h"
-#include "coord.h"
+#include "coordinator.h"
 #include "frame.h"
-#include "dtxn.h"
+#include "tx.h"
 #include "dep_graph.h"
 #include "../benchmark_control_rpc.h"
 
@@ -23,7 +23,7 @@ void RccCoord::PreDispatch() {
 //  auto dispatch = txn->is_read_only() ?
 //                  std::bind(&RccCoord::DispatchRo, this) :
 //                  std::bind(&RccCoord::Dispatch, this);
-  auto dispatch = std::bind(&RccCoord::Dispatch, this);
+  auto dispatch = std::bind(&RccCoord::DispatchAsync, this);
   if (recorder_) {
     std::string log_s;
     // TODO get appropriate log
@@ -35,7 +35,7 @@ void RccCoord::PreDispatch() {
 }
 
 
-void RccCoord::Dispatch() {
+void RccCoord::DispatchAsync() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto txn = (Procedure*) cmd_;
   verify(txn->root_id_ == txn->id_);
@@ -70,7 +70,7 @@ void RccCoord::DispatchAck(phase_t phase,
   verify(phase == phase_); // cannot proceed without all acks.
   verify(txn().root_id_ == txn().id_);
   verify(graph.vertex_index().size() > 0);
-  RccDTxn& info = *(graph.vertex_index().at(txn().root_id_));
+  TxRococo& info = *(graph.vertex_index().at(txn().root_id_));
 //  verify(cmd[0].root_id_ == info.id());
 //  verify(info.partition_.find(cmd.partition_id_) != info.partition_.end());
 
@@ -96,7 +96,7 @@ void RccCoord::DispatchAck(phase_t phase,
     Log_debug("command has more sub-cmd, cmd_id: %lx,"
                   " n_started_: %d, n_pieces: %d",
               txn().id_, txn().n_pieces_dispatched_, txn().GetNPieceAll());
-    Dispatch();
+    DispatchAsync();
   } else if (AllDispatchAcked()) {
     Log_debug("receive all start acks, txn_id: %llx; START PREPARE", cmd_->id_);
     verify(!txn().do_early_return());
@@ -115,7 +115,7 @@ void RccCoord::Finish() {
     cmd_->id_,
     graph_.size());
   auto v = graph_.FindV(cmd_->id_);
-  RccDTxn& info = *v;
+  TxRococo& info = *v;
   verify(ch->partition_ids_.size() == info.partition_.size());
   graph_.UpgradeStatus(*v, TXN_CMT);
 
@@ -202,7 +202,7 @@ void RccCoord::DispatchRoAck(phase_t phase,
       ch->read_only_reset();
       last_vers_ = curr_vers_;
       curr_vers_.clear();
-      this->Dispatch();
+      this->DispatchAsync();
     }
   }
 }

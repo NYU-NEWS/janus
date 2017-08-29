@@ -33,7 +33,7 @@ public:
   }
 
   void PreDispatch();
-  void Dispatch();
+  void DispatchAsync();
   virtual void DispatchAck(phase_t phase,
                            int res,
                            TxnOutput &cmd,

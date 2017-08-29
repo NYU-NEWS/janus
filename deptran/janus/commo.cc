@@ -1,5 +1,5 @@
 #include "../procedure.h"
-#include "../rococo/dtxn.h"
+#include "deptran/rococo/tx.h"
 #include "../rococo/graph_marshaler.h"
 #include "dep_graph.h"
 #include "commo.h"
@@ -7,15 +7,15 @@
 
 namespace janus {
 
-void JanusCommo::SendDispatch(vector<SimpleCommand> &cmd,
+void JanusCommo::SendDispatch(vector<TxPieceData> &cmd,
                               const function<void(int res,
-                                                  TxnOutput& cmd,
-                                                  RccGraph& graph)>& callback) {
+                                                  TxnOutput &cmd,
+                                                  RccGraph &graph)> &callback) {
   rrr::FutureAttr fuattr;
   auto tid = cmd[0].root_id_;
   auto par_id = cmd[0].partition_id_;
-  std::function<void(Future*)> cb =
-      [callback, tid, par_id] (Future *fu) {
+  std::function<void(Future *)> cb =
+      [callback, tid, par_id](Future *fu) {
         int res;
         TxnOutput output;
         MarshallDeputy md;
@@ -23,12 +23,12 @@ void JanusCommo::SendDispatch(vector<SimpleCommand> &cmd,
         if (md.kind_ == MarshallDeputy::EMPTY_GRAPH) {
           RccGraph rgraph;
           auto v = rgraph.CreateV(tid);
-          RccDTxn& info = *v;
+          TxRococo &info = *v;
           info.partition_.insert(par_id);
           verify(rgraph.vertex_index().size() > 0);
           callback(res, output, rgraph);
         } else if (md.kind_ == MarshallDeputy::RCC_GRAPH) {
-          RccGraph& graph = dynamic_cast<RccGraph&>(*md.data_);
+          RccGraph &graph = dynamic_cast<RccGraph &>(*md.data_);
           callback(res, output, graph);
         } else {
           verify(0);
@@ -43,19 +43,20 @@ void JanusCommo::SendDispatch(vector<SimpleCommand> &cmd,
 }
 
 void JanusCommo::SendHandoutRo(SimpleCommand &cmd,
-                             const function<void(int res,
-                                                 SimpleCommand& cmd,
-                                                 map<int, mdb::version_t>& vers)>&) {
+                               const function<void(int res,
+                                                   SimpleCommand &cmd,
+                                                   map<int,
+                                                       mdb::version_t> &vers)> &) {
   verify(0);
 }
 
 void JanusCommo::SendFinish(parid_t pid,
                             txnid_t tid,
-                            RccGraph& graph,
-                            const function<void(TxnOutput& output)> &callback) {
+                            RccGraph &graph,
+                            const function<void(TxnOutput &output)> &callback) {
   verify(0);
   FutureAttr fuattr;
-  function<void(Future*)> cb = [callback] (Future* fu) {
+  function<void(Future *)> cb = [callback](Future *fu) {
     int32_t res;
     TxnOutput outputs;
     fu->get_reply() >> res >> outputs;
@@ -68,14 +69,14 @@ void JanusCommo::SendFinish(parid_t pid,
 }
 
 void JanusCommo::SendInquire(parid_t pid,
-                           epoch_t epoch,
-                           txnid_t tid,
-                           const function<void(RccGraph& graph)>& callback) {
+                             epoch_t epoch,
+                             txnid_t tid,
+                             const function<void(RccGraph &graph)> &callback) {
   FutureAttr fuattr;
-  function<void(Future*)> cb = [callback] (Future* fu) {
+  function<void(Future *)> cb = [callback](Future *fu) {
     MarshallDeputy md;
     fu->get_reply() >> md;
-    auto graph = dynamic_cast<RccGraph&>(*md.data_);
+    auto graph = dynamic_cast<RccGraph &>(*md.data_);
     callback(graph);
   };
   fuattr.callback = cb;
@@ -84,7 +85,7 @@ void JanusCommo::SendInquire(parid_t pid,
   Future::safe_release(proxy->async_JanusInquire(epoch, tid, fuattr));
 }
 
-bool JanusCommo::IsGraphOrphan(RccGraph& graph, txnid_t cmd_id) {
+bool JanusCommo::IsGraphOrphan(RccGraph &graph, txnid_t cmd_id) {
   if (graph.size() == 1) {
     auto v = graph.FindV(cmd_id);
     verify(v);
@@ -95,11 +96,12 @@ bool JanusCommo::IsGraphOrphan(RccGraph& graph, txnid_t cmd_id) {
 }
 
 void JanusCommo::BroadcastPreAccept(parid_t par_id,
-                                  txnid_t txn_id,
-                                  ballot_t ballot,
-                                  vector<SimpleCommand>& cmds,
-                                  RccGraph& graph,
-                                  const function<void(int, RccGraph*)> &callback) {
+                                    txnid_t txn_id,
+                                    ballot_t ballot,
+                                    vector<TxPieceData> &cmds,
+                                    RccGraph &graph,
+                                    const function<void(int,
+                                                        RccGraph *)> &callback) {
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
 
   bool skip_graph = IsGraphOrphan(graph, txn_id);
@@ -108,18 +110,18 @@ void JanusCommo::BroadcastPreAccept(parid_t par_id,
     auto proxy = (p.second);
     verify(proxy != nullptr);
     FutureAttr fuattr;
-    fuattr.callback = [callback] (Future* fu) {
+    fuattr.callback = [callback](Future *fu) {
       int32_t res;
       MarshallDeputy md;
       fu->get_reply() >> res >> md;
-      auto p_graph = dynamic_cast<RccGraph*>(md.data_);
+      auto p_graph = dynamic_cast<RccGraph *>(md.data_);
       callback(res, p_graph);
     };
     verify(txn_id > 0);
     if (skip_graph) {
       Future::safe_release(proxy->async_JanusPreAcceptWoGraph(txn_id,
-                                                            cmds,
-                                                            fuattr));
+                                                              cmds,
+                                                              fuattr));
     } else {
       MarshallDeputy md(&graph, false);
       Future::safe_release(proxy->async_JanusPreAccept(txn_id,
@@ -131,16 +133,16 @@ void JanusCommo::BroadcastPreAccept(parid_t par_id,
 }
 
 void JanusCommo::BroadcastAccept(parid_t par_id,
-                               txnid_t cmd_id,
-                               ballot_t ballot,
-                               RccGraph& graph,
-                               const function<void(int)> &callback) {
+                                 txnid_t cmd_id,
+                                 ballot_t ballot,
+                                 RccGraph &graph,
+                                 const function<void(int)> &callback) {
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
   for (auto &p : rpc_par_proxies_[par_id]) {
     auto proxy = (p.second);
     verify(proxy != nullptr);
     FutureAttr fuattr;
-    fuattr.callback = [callback] (Future* fu) {
+    fuattr.callback = [callback](Future *fu) {
       int32_t res;
       fu->get_reply() >> res;
       callback(res);
@@ -148,18 +150,17 @@ void JanusCommo::BroadcastAccept(parid_t par_id,
     verify(cmd_id > 0);
     MarshallDeputy md(&graph, false);
     Future::safe_release(proxy->async_JanusAccept(cmd_id,
-                                             ballot,
-                                             md,
-                                             fuattr));
+                                                  ballot,
+                                                  md,
+                                                  fuattr));
   }
 }
 
-
 void JanusCommo::BroadcastCommit(parid_t par_id,
-                               txnid_t cmd_id,
-                               RccGraph& graph,
-                               const function<void(int32_t, TxnOutput&)>
-                               &callback) {
+                                 txnid_t cmd_id,
+                                 RccGraph &graph,
+                                 const function<void(int32_t, TxnOutput &)>
+                                 &callback) {
   bool skip_graph = IsGraphOrphan(graph, cmd_id);
 
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
@@ -167,7 +168,7 @@ void JanusCommo::BroadcastCommit(parid_t par_id,
     auto proxy = (p.second);
     verify(proxy != nullptr);
     FutureAttr fuattr;
-    fuattr.callback = [callback] (Future* fu) {
+    fuattr.callback = [callback](Future *fu) {
       int32_t res;
       TxnOutput output;
       fu->get_reply() >> res >> output;

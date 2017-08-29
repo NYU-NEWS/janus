@@ -10,7 +10,6 @@ namespace janus {
 class FrameTapir : public Frame {
  public:
   FrameTapir() : Frame(MODE_TAPIR) { }
-  Executor *CreateExecutor(cmdid_t, Scheduler *sched) override;
   Coordinator *CreateCoord(cooid_t coo_id,
                            Config *config,
                            int benchmark,

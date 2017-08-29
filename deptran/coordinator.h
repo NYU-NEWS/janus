@@ -8,8 +8,7 @@
 #include "commo.h"
 #include "client_worker.h"
 
-
-namespace rococo {
+namespace janus {
 class ClientControlServiceImpl;
 
 enum ForwardRequestState { NONE=0, PROCESS_FORWARD_REQUEST, FORWARD_TO_LEADER };
@@ -22,7 +21,7 @@ public:
   locid_t loc_id_ = -1;
   virtual ~CoordinatorBase() = default;
   // TODO do_one should be replaced with Submit.
-  virtual void do_one(TxnRequest &) = 0;
+  virtual void DoTxAsync(TxnRequest &) = 0;
   virtual void Reset() = 0;
   virtual void restart(Procedure *ch) = 0;
 };
@@ -125,7 +124,7 @@ class Coordinator : public CoordinatorBase {
     return this->next_txn_id_++;
   }
 
-  virtual void do_one(TxnRequest &) = 0;
+  virtual void DoTxAsync(TxnRequest &) = 0;
   virtual void Submit(ContainerCommand& cmd,
                       const std::function<void()>& commit_callback = [](){},
                       const std::function<void()>& exe_callback = [](){}) {
@@ -162,4 +161,4 @@ class Coordinator : public CoordinatorBase {
   virtual void Restart() = 0;
 };
 
-}
+} // namespace janus

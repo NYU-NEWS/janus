@@ -1,7 +1,7 @@
 #include "marshal-value.h"
 #include "ro6_coord.h"
 #include "frame.h"
-#include "dtxn.h"
+#include "tx.h"
 #include "compress.h"
 #include "benchmark_control_rpc.h"
 

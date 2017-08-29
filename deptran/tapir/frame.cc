@@ -1,7 +1,6 @@
 #include "../__dep__.h"
 #include "../constants.h"
 #include "frame.h"
-#include "exec.h"
 #include "coordinator.h"
 #include "scheduler.h"
 #include "tx.h"
@@ -15,11 +14,6 @@ static Frame *tapir_frame_s = Frame::RegFrame(MODE_TAPIR,
                                               []() -> Frame * {
                                                 return new FrameTapir();
                                               });
-
-Executor *FrameTapir::CreateExecutor(cmdid_t cmd_id, Scheduler *sched) {
-  Executor *exec = new TapirExecutor(cmd_id, sched);
-  return exec;
-}
 
 Coordinator *FrameTapir::CreateCoord(cooid_t coo_id,
                                      Config *config,

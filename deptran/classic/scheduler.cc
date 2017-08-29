@@ -1,6 +1,6 @@
 
 #include "../constants.h"
-#include "../dtxn.h"
+#include "deptran/tx.h"
 #include "../procedure.h"
 #include "../coordinator.h"
 #include "deptran/2pl/tx.h"
@@ -11,8 +11,8 @@ namespace janus {
 
 bool SchedulerClassic::OnDispatch(TxPieceData &piece_data,
                                   TxnOutput &ret_output) {
-
-  Tx &tx = *GetOrCreateTxBox(piece_data.root_id_);
+  // TODO optimize
+  Tx &tx = *GetOrCreateTx(piece_data.root_id_);
   verify(partition_id_ == piece_data.partition_id_);
   verify(!tx.inuse);
   tx.inuse = true;
@@ -101,7 +101,7 @@ int SchedulerClassic::OnCommit(txnid_t tx_id,
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   Log_debug("%s: at site %d, tx: %"
                 PRIx64, __FUNCTION__, this->site_id_, tx_id);
-  auto tx_box = GetOrCreateTxBox(tx_id);
+  auto tx_box = GetOrCreateTx(tx_id);
   verify(!tx_box->inuse);
   tx_box->inuse = true;
 //  auto exec = (ClassicExecutor*)GetExecutor(cmd_id);

@@ -1,6 +1,6 @@
 #include "__dep__.h"
 #include "constants.h"
-#include "dtxn.h"
+#include "tx.h"
 #include "scheduler.h"
 #include "rococo/graph.h"
 #include "rococo/graph_marshaler.h"
@@ -14,7 +14,7 @@
 
 namespace janus {
 
-shared_ptr<Tx> Scheduler::CreateDTxn(epoch_t epoch, txnid_t tid, bool
+shared_ptr<Tx> Scheduler::CreateTx(epoch_t epoch, txnid_t tid, bool
 read_only) {
   Log_debug("create tid %ld", tid);
   verify(dtxns_.find(tid) == dtxns_.end());
@@ -40,7 +40,7 @@ read_only) {
   return dtxn;
 }
 
-shared_ptr<Tx> Scheduler::CreateDTxn(txnid_t tid, bool ro) {
+shared_ptr<Tx> Scheduler::CreateTx(txnid_t tid, bool ro) {
   Log_debug("create tid %ld", tid);
   verify(dtxns_.find(tid) == dtxns_.end());
   auto dtxn = frame_->CreateTx(epoch_mgr_.curr_epoch_, tid, ro, this);
@@ -62,11 +62,11 @@ shared_ptr<Tx> Scheduler::CreateDTxn(txnid_t tid, bool ro) {
   return dtxn;
 }
 
-shared_ptr<Tx> Scheduler::GetOrCreateTxBox(txnid_t tid, bool ro) {
+shared_ptr<Tx> Scheduler::GetOrCreateTx(txnid_t tid, bool ro) {
   shared_ptr<Tx> ret = nullptr;
   auto it = dtxns_.find(tid);
   if (it == dtxns_.end()) {
-    ret = CreateDTxn(tid, ro);
+    ret = CreateTx(tid, ro);
   } else {
     ret = it->second;
   }
@@ -75,18 +75,14 @@ shared_ptr<Tx> Scheduler::GetOrCreateTxBox(txnid_t tid, bool ro) {
   return ret;
 }
 
-Tx *Scheduler::GetOrCreateDTxn(epoch_t epoch, txnid_t txn_id) {
-
-}
-
-void Scheduler::DestroyDTxn(i64 tid) {
+void Scheduler::DestroyTx(i64 tid) {
   Log_debug("destroy tid %ld\n", tid);
   auto it = dtxns_.find(tid);
   verify(it != dtxns_.end());
   dtxns_.erase(it);
 }
 
-shared_ptr<Tx> Scheduler::GetDTxn(txnid_t tid) {
+shared_ptr<Tx> Scheduler::GetTx(txnid_t tid) {
   // Log_debug("DTxnMgr::get(%ld)\n", tid);
   auto it = dtxns_.find(tid);
   // verify(it != dtxns_.end());
@@ -247,7 +243,7 @@ Scheduler::~Scheduler() {
 
 bool Scheduler::OnDispatch(TxPieceData &piece_data,
                            TxnOutput &ret_output) {
-  Tx &tx = *GetOrCreateTxBox(piece_data.root_id_);
+  Tx &tx = *GetOrCreateTx(piece_data.root_id_);
   verify(partition_id_ == piece_data.partition_id_);
   TxnPieceDef &piece_def = txn_reg_->get(piece_data.root_type_,
                                          piece_data.type_);
@@ -316,7 +312,7 @@ Executor *Scheduler::CreateExecutor(txid_t txn_id) {
   verify(executors_.find(txn_id) == executors_.end());
   Executor *exec = frame_->CreateExecutor(txn_id, this);
   verify(exec->sched_);
-  auto dtxn = CreateDTxn(txn_id);
+  auto dtxn = CreateTx(txn_id);
   exec->dtxn_ = dtxn;
   executors_[txn_id] = exec;
   exec->recorder_ = this->recorder_;

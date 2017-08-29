@@ -222,8 +222,8 @@ void ClassicServiceImpl::RccDispatchRo(const SimpleCommand &cmd,
                                        rrr::DeferredReply *defer) {
   std::lock_guard<std::mutex> guard(mtx_);
   verify(0);
-  auto tx = dtxn_sched_->GetOrCreateTxBox(cmd.root_id_, true);
-  auto dtxn = dynamic_pointer_cast<RccDTxn>(tx);
+  auto tx = dtxn_sched_->GetOrCreateTx(cmd.root_id_, true);
+  auto dtxn = dynamic_pointer_cast<TxRococo>(tx);
   dtxn->start_ro(cmd, *output, defer);
 }
 

@@ -1,7 +1,7 @@
 
 #include "../__dep__.h"
 #include "../constants.h"
-#include "coord.h"
+#include "coordinator.h"
 #include "commo.h"
 
 namespace rococo {

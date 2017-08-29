@@ -1,6 +1,6 @@
 #pragma once
 
-#include "deptran/none/coordinator.h"
+#include "../none/coordinator.h"
 
 namespace janus {
 
@@ -22,7 +22,7 @@ class CoordinatorTapir : public CoordinatorClassic {
   void Reset() override;
   TapirCommo* commo();
 
-  void Dispatch() override;
+  void DispatchAsync() override;
   void DispatchAck(phase_t, int32_t res, TxnOutput& output) override;
 
   void FastAccept();

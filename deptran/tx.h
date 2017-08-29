@@ -40,14 +40,14 @@ class Scheduler;
  * This is the data structure storing information used by
  * concurrency control; it does not store the transaction
  * (stored procedure) logic.
- * // maybe rename to "control unit", or "txn box"?
  * It now contains a workspace for procedure data as a
  * temporary solution.
  */
 class Tx {
  public:
+  IntEvent fully_dispatched_{};
+  bool aborted_in_dispatch_{false};
   bool inuse = false;
-
   txnid_t tid_;
   epoch_t epoch_{0};
   Scheduler *sched_;

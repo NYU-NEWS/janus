@@ -10,7 +10,7 @@
 #include "rcc_rpc.h"
 #include "rcc_service.h"
 #include "sharding.h"
-#include "dtxn.h"
+#include "tx.h"
 #include "workload.h"
 #include "config.h"
 

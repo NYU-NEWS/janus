@@ -1,7 +1,7 @@
 #include "__dep__.h"
 #include "constants.h"
 #include "config.h"
-#include "dtxn.h"
+#include "tx.h"
 #include "bench/tpcc_real_dist/sharding.h"
 #include "bench/tpcc/workload.h"
 #include "frame.h"

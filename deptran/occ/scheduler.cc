@@ -5,7 +5,7 @@
 //
 
 #include "../__dep__.h"
-#include "../dtxn.h"
+#include "deptran/tx.h"
 #include "../scheduler.h"
 #include "scheduler.h"
 

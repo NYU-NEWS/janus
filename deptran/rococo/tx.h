@@ -1,13 +1,13 @@
 #pragma once
 #include "../__dep__.h"
-#include "../dtxn.h"
+#include "deptran/tx.h"
 #include "deptran/procedure.h"
 
 #define PHASE_RCC_DISPATCH (1)
 #define PHASE_RCC_COMMIT (2)
 
 namespace janus {
-class RccDTxn: public Tx, public Vertex<RccDTxn> {
+class TxRococo: public Tx, public Vertex<TxRococo> {
  public:
   int8_t status_ = TXN_UKN;
   ballot_t max_seen_ballot_{0};
@@ -29,14 +29,14 @@ class RccDTxn: public Tx, public Vertex<RccDTxn> {
 
   // if any other transactions is blocked by this transaction,
   // add it to this set to make the checking waitlist faster.
-  set<RccDTxn*> to_checks_{};
+  set<TxRococo*> to_checks_{};
 
-  RccDTxn() = delete;
-  RccDTxn(txnid_t id);
-  RccDTxn(RccDTxn& rhs_dtxn);
-  RccDTxn(epoch_t, txnid_t tid, Scheduler *mgr, bool ro);
+  TxRococo() = delete;
+  TxRococo(txnid_t id);
+  TxRococo(TxRococo& rhs_dtxn);
+  TxRococo(epoch_t, txnid_t tid, Scheduler *mgr, bool ro);
 
-  virtual ~RccDTxn() {
+  virtual ~TxRococo() {
     for (auto& ref : external_refs_) {
       if (*ref == this) {
         *ref = nullptr;
@@ -66,7 +66,7 @@ class RccDTxn: public Tx, public Vertex<RccDTxn> {
 
   void TraceDep(Row* row, colid_t col_id, int hint_flag);
 
-  virtual void AddParentEdge(shared_ptr<RccDTxn> other, int8_t weight) override;
+  virtual void AddParentEdge(shared_ptr<TxRococo> other, int8_t weight) override;
 
   virtual bool start_exe_itfr(
       defer_t defer,
@@ -189,7 +189,7 @@ class RccDTxn: public Tx, public Vertex<RccDTxn> {
     return id;
   }
 
-  bool operator<(const RccDTxn &rhs) const {
+  bool operator<(const TxRococo &rhs) const {
     return tid_ < rhs.tid_;
   }
 
@@ -197,7 +197,7 @@ class RccDTxn: public Tx, public Vertex<RccDTxn> {
     tid_ = id;
   }
 
-  inline void union_data(const RccDTxn &ti,
+  inline void union_data(const TxRococo &ti,
                          bool trigger = false,
                          bool server = false) {
     partition_.insert(ti.partition_.begin(), ti.partition_.end());
@@ -255,12 +255,12 @@ class RccDTxn: public Tx, public Vertex<RccDTxn> {
 };
 
 
-inline rrr::Marshal &operator<<(rrr::Marshal &m, const RccDTxn &ti) {
+inline rrr::Marshal &operator<<(rrr::Marshal &m, const TxRococo &ti) {
   m << ti.tid_ << ti.status() << ti.partition_ << ti.epoch_;
   return m;
 }
 
-inline rrr::Marshal &operator>>(rrr::Marshal &m, RccDTxn &ti) {
+inline rrr::Marshal &operator>>(rrr::Marshal &m, TxRococo &ti) {
   int8_t status;
   m >> ti.tid_ >> status >> ti.partition_ >> ti.epoch_;
   ti.union_status(status);

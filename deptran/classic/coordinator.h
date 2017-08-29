@@ -71,11 +71,11 @@ class CoordinatorClassic : public Coordinator {
   }
 
   /** do it asynchronously, thread safe. */
-  virtual void do_one(TxnRequest &);
+  virtual void DoTxAsync(TxnRequest &);
   virtual void Reset() override;
   void Restart();
 
-  virtual void Dispatch();
+  virtual void DispatchAsync();
   virtual void DispatchAck(phase_t phase,
                            int res,
                            map<innid_t, map<int32_t, Value>> &outputs);

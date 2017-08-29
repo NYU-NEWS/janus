@@ -3,10 +3,10 @@
 #include "deptran/procedure.h"
 #include "frame.h"
 #include "commo.h"
-#include "coord.h"
+#include "coordinator.h"
 
 
-namespace rococo {
+namespace janus {
 //JanusCoord::JanusCoord(
 //  uint32_t                  coo_id,
 //  uint32_t                  thread_id,
@@ -391,4 +391,4 @@ void JanusCoord::Reset() {
   fast_accept_graph_check_caches_.clear();
   n_commit_oks_.clear();
 }
-} // namespace rococo
+} // namespace janus
