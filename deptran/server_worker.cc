@@ -1,14 +1,12 @@
 #include "server_worker.h"
-#include "rcc_service.h"
+#include "service.h"
 #include "benchmark_control_rpc.h"
 #include "sharding.h"
 #include "scheduler.h"
 #include "frame.h"
 #include "communicator.h"
 
-
 namespace janus {
-
 
 void ServerWorker::SetupHeartbeat() {
   bool hb = Config::GetConfig()->do_heart_beat();
@@ -35,36 +33,36 @@ void ServerWorker::SetupHeartbeat() {
 
 void ServerWorker::SetupBase() {
   auto config = Config::GetConfig();
-  dtxn_frame_ = Frame::GetFrame(config->cc_mode_);
-  dtxn_frame_->site_info_ = site_info_;
+  tx_frame_ = Frame::GetFrame(config->cc_mode_);
+  tx_frame_->site_info_ = site_info_;
 
   // this needs to be done before poping table
-  sharding_ = dtxn_frame_->CreateSharding(Config::GetConfig()->sharding_);
+  sharding_ = tx_frame_->CreateSharding(Config::GetConfig()->sharding_);
   sharding_->BuildTableInfoPtr();
 
-  verify(txn_reg_ == nullptr);
-  txn_reg_ = new TxnRegistry();
-  dtxn_sched_ = dtxn_frame_->CreateScheduler();
-  dtxn_sched_->txn_reg_ = txn_reg_;
-  dtxn_sched_->SetPartitionId(site_info_->partition_id_);
-  dtxn_sched_->loc_id_ = site_info_->locale_id;
-  dtxn_sched_->site_id_ = site_info_->id;
-  sharding_->dtxn_sched_ = dtxn_sched_;
+  verify(tx_reg_ == nullptr);
+  tx_reg_ = new TxnRegistry();
+  tx_sched_ = tx_frame_->CreateScheduler();
+  tx_sched_->txn_reg_ = tx_reg_;
+  tx_sched_->SetPartitionId(site_info_->partition_id_);
+  tx_sched_->loc_id_ = site_info_->locale_id;
+  tx_sched_->site_id_ = site_info_->id;
+  sharding_->tx_sched_ = tx_sched_;
 
   if (config->IsReplicated() &&
       config->ab_mode_ != config->cc_mode_) {
     rep_frame_ = Frame::GetFrame(config->ab_mode_);
     rep_frame_->site_info_ = site_info_;
     rep_sched_ = rep_frame_->CreateScheduler();
-    rep_sched_->txn_reg_ = txn_reg_;
+    rep_sched_->txn_reg_ = tx_reg_;
     rep_sched_->loc_id_ = site_info_->locale_id;
-    dtxn_sched_->rep_frame_ = rep_frame_;
-    dtxn_sched_->rep_sched_ = rep_sched_;
+    tx_sched_->rep_frame_ = rep_frame_;
+    tx_sched_->rep_sched_ = rep_sched_;
   }
   // add callbacks to execute commands to rep_sched_
-  if (rep_sched_ && dtxn_sched_) {
+  if (rep_sched_ && tx_sched_) {
     rep_sched_->RegLearnerAction(std::bind(&Scheduler::OnLearn,
-                                           dtxn_sched_,
+                                           tx_sched_,
                                            std::placeholders::_1));
   }
 }
@@ -80,10 +78,10 @@ void ServerWorker::PopTable() {
   verify(ret > 0);
 
   for (auto table_name : table_names) {
-    mdb::Schema *schema = new mdb::Schema();
+    mdb::Schema* schema = new mdb::Schema();
     mdb::symbol_t symbol;
     sharding_->init_schema(table_name, schema, &symbol);
-    mdb::Table *tb;
+    mdb::Table* tb;
 
     switch (symbol) {
       case mdb::TBL_SORTED:
@@ -98,7 +96,7 @@ void ServerWorker::PopTable() {
       default:
         verify(0);
     }
-    dtxn_sched_->reg_table(table_name, tb);
+    tx_sched_->reg_table(table_name, tb);
   }
   verify(sharding_);
   sharding_->PopulateTables(site_info_->partition_id_);
@@ -109,10 +107,10 @@ void ServerWorker::PopTable() {
 
 void ServerWorker::RegisterWorkload() {
   Workload* workload = Workload::CreateWorkload(Config::GetConfig());
-  verify(txn_reg_ != nullptr);
+  verify(tx_reg_ != nullptr);
   verify(sharding_ != nullptr);
   workload->sss_ = sharding_;
-  workload->txn_reg_ = txn_reg_;
+  workload->txn_reg_ = tx_reg_;
   workload->RegisterPrecedures();
 }
 
@@ -131,11 +129,11 @@ void ServerWorker::SetupService() {
 
   // init service implementation
 
-  if (dtxn_frame_ != nullptr) {
-    services_ = dtxn_frame_->CreateRpcServices(site_info_->id,
-                                               dtxn_sched_,
-                                               svr_poll_mgr_,
-                                               scsi_);
+  if (tx_frame_ != nullptr) {
+    services_ = tx_frame_->CreateRpcServices(site_info_->id,
+                                             tx_sched_,
+                                             svr_poll_mgr_,
+                                             scsi_);
   }
 
   if (rep_frame_ != nullptr) {
@@ -147,8 +145,8 @@ void ServerWorker::SetupService() {
     services_.insert(services_.end(), s2.begin(), s2.end());
   }
 
-  auto &alarm = TimeoutALock::get_alarm_s();
-  ServerWorker::svr_poll_mgr_->add(&alarm);
+//  auto& alarm = TimeoutALock::get_alarm_s();
+//  ServerWorker::svr_poll_mgr_->add(&alarm);
 
   uint32_t num_threads = 1;
   thread_pool_g = new base::ThreadPool(num_threads);
@@ -185,10 +183,10 @@ void ServerWorker::WaitForShutdown() {
 
     for (auto service : services_) {
 #ifdef CHECK_ISO
-      this->dtxn_sched_->CheckDeltas();
+      this->tx_sched_->CheckDeltas();
 #endif
-      if (DepTranServiceImpl *s = dynamic_cast<DepTranServiceImpl*>(service)) {
-        auto &recorder = s->recorder_;
+      if (DepTranServiceImpl* s = dynamic_cast<DepTranServiceImpl*>(service)) {
+        auto& recorder = s->recorder_;
         if (recorder) {
           auto n_flush_avg_ = recorder->stat_cnt_.peek().avg_;
           auto sz_flush_avg_ = recorder->stat_sz_.peek().avg_;
@@ -200,9 +198,9 @@ void ServerWorker::WaitForShutdown() {
     }
   }
 #ifdef CHECK_ISO
-  for (auto service : services_) {
-    this->dtxn_sched_->CheckDeltas();
-  }
+    for (auto service : services_) {
+      this->tx_sched_->CheckDeltas();
+    }
 #endif
 
   Log_debug("exit %s", __FUNCTION__);
@@ -210,12 +208,12 @@ void ServerWorker::WaitForShutdown() {
 
 void ServerWorker::SetupCommo() {
   verify(svr_poll_mgr_ != nullptr);
-  if (dtxn_frame_) {
-    dtxn_commo_ = dtxn_frame_->CreateCommo();
-    if (dtxn_commo_) {
-      dtxn_commo_->loc_id_ = site_info_->locale_id;
+  if (tx_frame_) {
+    tx_commo_ = tx_frame_->CreateCommo();
+    if (tx_commo_) {
+      tx_commo_->loc_id_ = site_info_->locale_id;
     }
-    dtxn_sched_->commo_ = dtxn_commo_;
+    tx_sched_->commo_ = tx_commo_;
   }
   if (rep_frame_) {
     rep_commo_ = rep_frame_->CreateCommo();

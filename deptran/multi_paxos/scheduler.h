@@ -1,13 +1,13 @@
 #pragma once
 
-#include "__dep__.h"
-#include "constants.h"
-#include "scheduler.h"
+#include "../__dep__.h"
+#include "../constants.h"
+#include "../scheduler.h"
 
-namespace rococo {
+namespace janus {
 class Command;
-class ContainerCommand;
-class MultiPaxosSched : public Scheduler {
+class TxData;
+class SchedulerMultiPaxos : public Scheduler {
  public:
   slotid_t max_executed_slot_ = 0;
   slotid_t max_committed_slot_ = 0;
@@ -18,13 +18,13 @@ class MultiPaxosSched : public Scheduler {
 
   void OnAccept(const slotid_t slot_id,
                 const ballot_t ballot,
-                const ContainerCommand &cmd,
+                const TxData &cmd,
                 ballot_t *max_ballot,
                 const function<void()> &cb);
 
   void OnCommit(const slotid_t slot_id,
                 const ballot_t ballot,
-                const ContainerCommand &cmd);
+                const TxData &cmd);
 
   virtual bool HandleConflicts(Tx& dtxn,
                                innid_t inn_id,
@@ -32,4 +32,4 @@ class MultiPaxosSched : public Scheduler {
     verify(0);
   };
 };
-} // namespace rococo
+} // namespace janus

@@ -6,16 +6,16 @@
 
 namespace janus {
 
-class RccFrame : public Frame {
+class FrameRococo : public Frame {
  public:
-  RccFrame() : Frame(MODE_RCC) {}
+  FrameRococo() : Frame(MODE_RCC) {}
   Executor *CreateExecutor(cmdid_t, Scheduler *sched) override;
-  Coordinator *CreateCoord(cooid_t coo_id,
-                           Config *config,
-                           int benchmark,
-                           ClientControlServiceImpl *ccsi,
-                           uint32_t id,
-                           TxnRegistry *txn_reg) override;
+  Coordinator *CreateCoordinator(cooid_t coo_id,
+                                 Config *config,
+                                 int benchmark,
+                                 ClientControlServiceImpl *ccsi,
+                                 uint32_t id,
+                                 TxnRegistry *txn_reg) override;
   Scheduler *CreateScheduler() override;
   vector<rrr::Service *> CreateRpcServices(uint32_t site_id,
                                            Scheduler *dtxn_sched,

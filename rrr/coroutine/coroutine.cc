@@ -9,23 +9,20 @@ namespace rrr {
 Coroutine::Coroutine(const std::function<void()>& func) : func_(func) {
   finished_ = false;
   verify(!finished_);
-  sched_ = CoroScheduler::CurrentScheduler();
+  scheduler_ = CoroScheduler::CurrentScheduler();
 }
 
 Coroutine::~Coroutine() {
   verify(up_boost_coro_task_ != nullptr);
 }
 
-void Coroutine::BoostRunWrapper(boost_coro_yield_t &yield) {
+void Coroutine::BoostRunWrapper(boost_coro_yield_t& yield) {
   boost_coro_yield_ = yield;
-//  while (true) {
-    verify(func_);
-    func_();
-    finished_ = true;
-    func_ = {};
+  verify(func_);
+  func_();
+  finished_ = true;
+  func_ = {};
   boost_coro_yield_.reset();
-//    yield(); // for potential reuse in future.
-//  }
 }
 
 void Coroutine::Run() {

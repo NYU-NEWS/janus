@@ -20,12 +20,12 @@ class RwWorkload : public Workload {
   void RegisterPrecedures();
   map<cooid_t, int32_t> key_ids_ = {};
   RwWorkload(Config *config);
-  virtual void GetTxnReq(TxnRequest *req, uint32_t cid) override;
+  virtual void GetTxRequest(TxRequest* req, uint32_t cid) override;
 
  protected:
   int32_t GetId(uint32_t cid);
-  void GenerateWriteRequest(TxnRequest *req, uint32_t cid);
-  void GenerateReadRequest(TxnRequest *req, uint32_t cid);
+  void GenerateWriteRequest(TxRequest *req, uint32_t cid);
+  void GenerateReadRequest(TxRequest *req, uint32_t cid);
 };
 
 } // namespace janus

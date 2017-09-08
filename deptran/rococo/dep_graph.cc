@@ -1,7 +1,7 @@
 #include "../__dep__.h"
 #include "../constants.h"
 #include "dep_graph.h"
-#include "sched.h"
+#include "scheduler.h"
 
 namespace rococo {
 

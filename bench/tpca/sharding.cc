@@ -6,7 +6,7 @@ namespace rococo {
 
 int TpcaSharding::PopulateTable(tb_info_t *tb_info_ptr, parid_t par_id) {
 //        ---------------------------------------------------------
-  mdb::Table *const table_ptr = dtxn_sched_->get_table(tb_info_ptr->tb_name);
+  mdb::Table *const table_ptr = tx_sched_->get_table(tb_info_ptr->tb_name);
   const mdb::Schema *schema = table_ptr->schema();
 //  verify(schema->columns_count() == tb_info_ptr->columns.size());
 

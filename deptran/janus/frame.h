@@ -8,12 +8,12 @@ class JanusFrame : public Frame {
  public:
   JanusFrame(int mode = MODE_JANUS) : Frame(mode) {}
   Executor *CreateExecutor(cmdid_t, Scheduler *sched) override;
-  Coordinator *CreateCoord(cooid_t coo_id,
-                           Config *config,
-                           int benchmark,
-                           ClientControlServiceImpl *ccsi,
-                           uint32_t id,
-                           TxnRegistry *txn_reg) override;
+  Coordinator *CreateCoordinator(cooid_t coo_id,
+                                 Config *config,
+                                 int benchmark,
+                                 ClientControlServiceImpl *ccsi,
+                                 uint32_t id,
+                                 TxnRegistry *txn_reg) override;
   Scheduler *CreateScheduler() override;
   vector<rrr::Service *> CreateRpcServices(uint32_t site_id,
                                            Scheduler *dtxn_sched,

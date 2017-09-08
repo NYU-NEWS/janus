@@ -10,7 +10,7 @@
 #include "deptran/rococo/dep_graph.h"
 #include "rcc_rpc.h"
 
-namespace rococo {
+namespace janus {
 
 class Coordinator;
 class ClassicProxy;
@@ -25,9 +25,9 @@ class Communicator {
   const int CONNECT_SLEEP_MS = 1000;
   rrr::PollMgr *rpc_poll_ = nullptr;
   locid_t loc_id_ = -1;
-  map<siteid_t, rrr::Client *> rpc_clients_ = {};
-  map<siteid_t, ClassicProxy *> rpc_proxies_ = {};
-  map<parid_t, vector<SiteProxyPair>> rpc_par_proxies_ = {};
+  map<siteid_t, rrr::Client *> rpc_clients_{};
+  map<siteid_t, ClassicProxy *> rpc_proxies_{};
+  map<parid_t, vector<SiteProxyPair>> rpc_par_proxies_{};
   map<parid_t, SiteProxyPair> leader_cache_ = {};
   vector<ClientSiteProxyPair> client_leaders_;
   std::atomic_bool client_leaders_connected_;
@@ -42,10 +42,12 @@ class Communicator {
   virtual SiteProxyPair DispatchProxyForPartition(parid_t par_id) const {
     return LeaderProxyForPartition(par_id);
   };
-  std::pair<int, ClassicProxy*> ConnectToSite(rococo::Config::SiteInfo &site, std::chrono::milliseconds timeout_ms);
-  ClientSiteProxyPair ConnectToClientSite(Config::SiteInfo &site, std::chrono::milliseconds timeout);
+  std::pair<int, ClassicProxy*> ConnectToSite(Config::SiteInfo &site,
+                                              std::chrono::milliseconds timeout_ms);
+  ClientSiteProxyPair ConnectToClientSite(Config::SiteInfo &site,
+                                          std::chrono::milliseconds timeout);
   void ConnectClientLeaders();
   void WaitConnectClientLeaders();
 };
 
-} // namespace rococo
+} // namespace janus

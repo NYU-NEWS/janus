@@ -3,7 +3,7 @@
 
 namespace rococo {
 
-void TpccProcedure::DeliveryInit(TxnRequest &req) {
+void TpccProcedure::DeliveryInit(TxRequest &req) {
   n_pieces_all_ = 4;
 
   // piece 0, Ri & W new_order

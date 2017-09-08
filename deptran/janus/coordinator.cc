@@ -5,9 +5,8 @@
 #include "commo.h"
 #include "coordinator.h"
 
-
 namespace janus {
-//JanusCoord::JanusCoord(
+//CoordinatorJanus::CoordinatorJanus(
 //  uint32_t                  coo_id,
 //  uint32_t                  thread_id,
 //  bool                      batch_optimal) : coo_id_(coo_id),
@@ -23,14 +22,14 @@ namespace janus {
 //  }
 //}
 //
-//void JanusCoord::launch(Command &cmd) {
+//void CoordinatorJanus::launch(Command &cmd) {
 //  cmd_ = cmd;
 //  cmd_id_ = next_cmd_id();
 //  this->FastAccept();
 //}
 
 
-JanusCommo* JanusCoord::commo() {
+JanusCommo* CoordinatorJanus::commo() {
   if (commo_ == nullptr) {
     commo_ = frame_->CreateCommo();
     commo_->loc_id_ = loc_id_;
@@ -39,26 +38,26 @@ JanusCommo* JanusCoord::commo() {
   return dynamic_cast<JanusCommo*>(commo_);
 }
 
-void JanusCoord::launch_recovery(cmdid_t cmd_id) {
+void CoordinatorJanus::launch_recovery(cmdid_t cmd_id) {
   // TODO
   prepare();
 }
 
-void JanusCoord::PreAccept() {
+void CoordinatorJanus::PreAccept() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
 //  // generate fast accept request
   // set broadcast callback
   // broadcast
-  auto dtxn = graph_.FindV(cmd_->id_);
-  verify(txn().partition_ids_.size() == dtxn->partition_.size());
+  auto dtxn = sp_graph_->FindV(cmd_->id_);
+  verify(tx_data().partition_ids_.size() == dtxn->partition_.size());
   for (auto par_id : cmd_->GetPartitionIds()) {
-    auto cmds = txn().GetCmdsByPartition(par_id);
+    auto cmds = tx_data().GetCmdsByPartition(par_id);
     commo()->BroadcastPreAccept(par_id,
                                 cmd_->id_,
                                 magic_ballot(),
                                 cmds,
-                                graph_,
-                                std::bind(&JanusCoord::PreAcceptAck,
+                                sp_graph_,
+                                std::bind(&CoordinatorJanus::PreAcceptAck,
                                           this,
                                           phase_,
                                           par_id,
@@ -67,10 +66,10 @@ void JanusCoord::PreAccept() {
   }
 }
 
-void JanusCoord::PreAcceptAck(phase_t phase,
-                            parid_t par_id,
-                            int res,
-                            RccGraph* graph) {
+void CoordinatorJanus::PreAcceptAck(phase_t phase,
+                                    parid_t par_id,
+                                    int res,
+                                    RccGraph* graph) {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   // if recevie more messages after already gone to next phase, ignore
   if (phase != phase_) return;
@@ -116,51 +115,51 @@ void JanusCoord::PreAcceptAck(phase_t phase,
 }
 
 /** caller should be thread_safe */
-void JanusCoord::prepare() {
+void CoordinatorJanus::prepare() {
   // TODO
   // do not do failure recovery for now.
   verify(0);
 }
 
-void JanusCoord::ChooseGraph() {
+void CoordinatorJanus::ChooseGraph() {
   for (auto& pair : n_fast_accept_graphs_) {
     auto& vec_graph = pair.second;
     if (fast_path_) {
       auto& g = vec_graph[0];
-      graph_.Aggregate(0, *g);
+      sp_graph_->Aggregate(0, *g);
     } else {
       for (auto g : vec_graph) {
-        graph_.Aggregate(0, *g);
+        sp_graph_->Aggregate(0, *g);
       }
     }
   }
 }
 
-void JanusCoord::Accept() {
+void CoordinatorJanus::Accept() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   verify(!fast_path_);
 //  Log_info("broadcast accept request for txn_id: %llx", cmd_->id_);
   ChooseGraph();
-  Procedure *txn = (Procedure*) cmd_;
-  auto dtxn = graph_.FindV(cmd_->id_);
+  Procedure* txn = (Procedure*) cmd_;
+  auto dtxn = sp_graph_->FindV(cmd_->id_);
   verify(txn->partition_ids_.size() == dtxn->partition_.size());
-  graph_.UpgradeStatus(*dtxn, TXN_CMT);
+  sp_graph_->UpgradeStatus(*dtxn, TXN_CMT);
   for (auto par_id : cmd_->GetPartitionIds()) {
     commo()->BroadcastAccept(par_id,
                              cmd_->id_,
                              ballot_,
-                             graph_,
-                             std::bind(&JanusCoord::AcceptAck,
-                                          this,
-                                          phase_,
-                                          par_id,
-                                          std::placeholders::_1));
+                             sp_graph_,
+                             std::bind(&CoordinatorJanus::AcceptAck,
+                                       this,
+                                       phase_,
+                                       par_id,
+                                       std::placeholders::_1));
   }
 }
 
-void JanusCoord::AcceptAck(phase_t phase,
-                         parid_t par_id,
-                         int res) {
+void CoordinatorJanus::AcceptAck(phase_t phase,
+                                 parid_t par_id,
+                                 int res) {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   if (phase_ != phase) {
     return;
@@ -181,17 +180,17 @@ void JanusCoord::AcceptAck(phase_t phase,
   // if have reached a quorum
 }
 
-void JanusCoord::Commit() {
+void CoordinatorJanus::Commit() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
-  Procedure *txn = (Procedure*) cmd_;
-  auto dtxn = graph_.FindV(cmd_->id_);
+  Procedure* txn = (Procedure*) cmd_;
+  auto dtxn = sp_graph_->FindV(cmd_->id_);
   verify(txn->partition_ids_.size() == dtxn->partition_.size());
-  graph_.UpgradeStatus(*dtxn, TXN_CMT);
+  sp_graph_->UpgradeStatus(*dtxn, TXN_CMT);
   for (auto par_id : cmd_->GetPartitionIds()) {
     commo()->BroadcastCommit(par_id,
                              cmd_->id_,
-                             graph_,
-                             std::bind(&JanusCoord::CommitAck,
+                             sp_graph_,
+                             std::bind(&CoordinatorJanus::CommitAck,
                                        this,
                                        phase_,
                                        par_id,
@@ -204,10 +203,10 @@ void JanusCoord::Commit() {
   }
 }
 
-void JanusCoord::CommitAck(phase_t phase,
-                         parid_t par_id,
-                         int32_t res,
-                         TxnOutput& output) {
+void CoordinatorJanus::CommitAck(phase_t phase,
+                                 parid_t par_id,
+                                 int32_t res,
+                                 TxnOutput& output) {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   if (phase != phase_) return;
   if (fast_commit_) return;
@@ -232,8 +231,8 @@ void JanusCoord::CommitAck(phase_t phase,
   return;
 }
 
-bool JanusCoord::FastpathPossible() {
-  auto pars = txn().GetPartitionIds();
+bool CoordinatorJanus::FastpathPossible() {
+  auto pars = tx_data().GetPartitionIds();
   bool all_fast_quorum_possible = true;
   for (auto& par_id : pars) {
     auto par_size = Config::GetConfig()->GetPartitionSize(par_id);
@@ -254,19 +253,19 @@ bool JanusCoord::FastpathPossible() {
   return all_fast_quorum_possible;
 };
 
-int32_t JanusCoord::GetFastQuorum(parid_t par_id) {
+int32_t CoordinatorJanus::GetFastQuorum(parid_t par_id) {
   int32_t n = Config::GetConfig()->GetPartitionSize(par_id);
   return n;
 }
 
-int32_t JanusCoord::GetSlowQuorum(parid_t par_id) {
+int32_t CoordinatorJanus::GetSlowQuorum(parid_t par_id) {
   int32_t n = Config::GetConfig()->GetPartitionSize(par_id);
-  return n/2 + 1;
+  return n / 2 + 1;
 }
 
-bool JanusCoord::AllFastQuorumsReached() {
-  auto pars = txn().GetPartitionIds();
-  for (auto &par_id : pars) {
+bool CoordinatorJanus::AllFastQuorumsReached() {
+  auto pars = tx_data().GetPartitionIds();
+  for (auto& par_id : pars) {
     int r = FastQuorumGraphCheck(par_id);
     if (r == 2) {
       return false;
@@ -282,9 +281,9 @@ bool JanusCoord::AllFastQuorumsReached() {
   return true;
 }
 
-bool JanusCoord::AcceptQuorumReached() {
-  auto pars = txn().GetPartitionIds();
-  for (auto &par_id : pars) {
+bool CoordinatorJanus::AcceptQuorumReached() {
+  auto pars = tx_data().GetPartitionIds();
+  for (auto& par_id : pars) {
     if (n_fast_accept_oks_[par_id] < GetSlowQuorum(par_id)) {
       return false;
     }
@@ -292,12 +291,12 @@ bool JanusCoord::AcceptQuorumReached() {
   return true;
 }
 
-bool JanusCoord::PreAcceptAllSlowQuorumsReached() {
+bool CoordinatorJanus::PreAcceptAllSlowQuorumsReached() {
   auto pars = cmd_->GetPartitionIds();
   bool all_slow_quorum_reached =
       std::all_of(pars.begin(),
                   pars.end(),
-                  [this] (parid_t par_id) {
+                  [this](parid_t par_id) {
                     return n_fast_accept_oks_[par_id] >= GetSlowQuorum(par_id);
                   });
   return all_slow_quorum_reached;
@@ -307,7 +306,7 @@ bool JanusCoord::PreAcceptAllSlowQuorumsReached() {
 // 1: a fast quorum of the same
 // 2: >=(par_size - fast quorum) of different graphs. fast quorum not possible.
 // 3: less than a fast quorum graphs received.
-int JanusCoord::FastQuorumGraphCheck(parid_t par_id) {
+int CoordinatorJanus::FastQuorumGraphCheck(parid_t par_id) {
   auto par_size = Config::GetConfig()->GetPartitionSize(par_id);
   auto& vec_graph = n_fast_accept_graphs_[par_id];
   auto fast_quorum = GetFastQuorum(par_id);
@@ -336,7 +335,7 @@ int JanusCoord::FastQuorumGraphCheck(parid_t par_id) {
   return res;
 }
 
-void JanusCoord::GotoNextPhase() {
+void CoordinatorJanus::GotoNextPhase() {
   int n_phase = 6;
   int current_phase = phase_ % n_phase; // for debug
   switch (phase_++ % n_phase) {
@@ -380,7 +379,7 @@ void JanusCoord::GotoNextPhase() {
   }
 }
 
-void JanusCoord::Reset() {
+void CoordinatorJanus::Reset() {
   RccCoord::Reset();
   fast_path_ = false;
   fast_commit_ = false;

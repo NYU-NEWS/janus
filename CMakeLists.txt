@@ -3,8 +3,13 @@ project(janus)
 
 set (CMAKE_CXX_STANDARD 14)
 
-# run this after clone in the build_cmake directory:
-# conan install --build=missing ..
+#
+# do the following after git clone:
+#   1. install conan package manage tool
+#   2. create build_cmake directory:
+#   3. in build_cmake, run `conan install --build=missing ..`
+# after a compiler upgrade in the system, re-execute above.
+#
 
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/build_cmake/conanbuildinfo.cmake) #Clion,
 #    with conanbuildinfo.cmake in build folder
@@ -40,7 +45,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Weffc++")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCHECK_ISO")
 # this makes gcc>=5 support conan.io libraries, e.g. yaml-cpp
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
 
 find_package(Threads)
 find_package(PkgConfig REQUIRED)
@@ -148,7 +153,7 @@ add_library(MEMDB
 
 add_executable(JANUS_PROCESS
         ${DEPTRAN_SRC}
-        ${BENCH_SRC} deptran/februus/scheduler.cc deptran/februus/scheduler.h)
+        ${BENCH_SRC})
 
 
 add_dependencies(JANUS_PROCESS gen-rpc)

@@ -1,0 +1,6 @@
+mode:
+  cc: februus # concurrency control
+  ab: februus # atomic broadcast
+  batch: false
+  retry: 20 
+  ongoing: 1 # per client

@@ -148,7 +148,7 @@ class Sharding {
   std::map<std::string, tb_info_t> tb_infos_;
   std::map<MultiValue, MultiValue> dist2sid_;
   std::map<MultiValue, MultiValue> stock2sid_;
-  Scheduler *dtxn_sched_;
+  Scheduler *tx_sched_;
   Frame* frame_;
 
   // below is used for table populater

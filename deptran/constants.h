@@ -52,7 +52,7 @@ namespace rococo {
 #define RETRY       (-10)
 #define DELAYED     (1)
 
-#define MODE_NONE   (0x20)
+#define MODE_NONE   (0x00)
 #define MODE_2PL    (0x01)
 #define MODE_OCC    (0x02)
 #define MODE_RCC    (0x04)

@@ -8,7 +8,7 @@
 #include "procedure.h"
 #include "command_marshaler.h"
 #include "rcc_rpc.h"
-#include "rcc_service.h"
+#include "service.h"
 #include "sharding.h"
 #include "tx.h"
 #include "workload.h"
@@ -30,15 +30,15 @@ class ServerWorker {
   rrr::Server *hb_rpc_server_ = nullptr;
   base::ThreadPool *hb_thread_pool_g = nullptr;
 
-  Frame* dtxn_frame_ = nullptr;
+  Frame* tx_frame_ = nullptr;
   Frame* rep_frame_ = nullptr;
   Config::SiteInfo *site_info_ = nullptr;
   Sharding *sharding_ = nullptr;
-  Scheduler *dtxn_sched_ = nullptr;
+  Scheduler *tx_sched_ = nullptr;
   Scheduler *rep_sched_ = nullptr;
-  TxnRegistry *txn_reg_ = nullptr;
+  TxnRegistry *tx_reg_ = nullptr;
 
-  Communicator *dtxn_commo_ = nullptr;
+  Communicator *tx_commo_ = nullptr;
   Communicator *rep_commo_ = nullptr;
 
   void SetupHeartbeat();

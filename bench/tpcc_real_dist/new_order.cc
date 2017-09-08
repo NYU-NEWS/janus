@@ -5,7 +5,7 @@ namespace rococo {
 
 static uint32_t TXN_TYPE = TPCCD_NEW_ORDER;
 
-void TpccRdProcedure::NewOrderInit(TxnRequest &req) {
+void TpccRdProcedure::NewOrderInit(TxRequest &req) {
   NewOrderRetry();
 }
 

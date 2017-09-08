@@ -330,12 +330,12 @@ void TpccdSharding::PreparePrimaryColumn(tb_info_t *tb_info,
 
 int TpccdSharding::PopulateTable(tb_info_t *tb_info, parid_t partition_id) {
   // find table and secondary table
-  mdb::Table *const table_ptr = dtxn_sched_->get_table(tb_info->tb_name);
+  mdb::Table *const table_ptr = tx_sched_->get_table(tb_info->tb_name);
   const mdb::Schema *schema = table_ptr->schema();
   mdb::SortedTable *tbl_sec_ptr = nullptr;
 
   if (tb_info->tb_name == TPCC_TB_ORDER) {
-    tbl_sec_ptr = (mdb::SortedTable *) dtxn_sched_->get_table(
+    tbl_sec_ptr = (mdb::SortedTable *) tx_sched_->get_table(
             TPCC_TB_ORDER_C_ID_SECONDARY);
   }
   verify(schema->columns_count() == tb_info->columns.size());

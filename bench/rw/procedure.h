@@ -9,13 +9,13 @@ class Coordinator;
 
 class RWChopper : public Procedure {
 private:
-    void W_txn_init(TxnRequest &req);
-    void R_txn_init(TxnRequest &req);
+    void W_txn_init(TxRequest &req);
+    void R_txn_init(TxRequest &req);
 
 public:
     RWChopper();
 
-    virtual void Init(TxnRequest &req);
+    virtual void Init(TxRequest &req);
 
     virtual bool HandleOutput(int pi,
                               int res,

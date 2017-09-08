@@ -53,7 +53,7 @@ void RwWorkload::RegisterPrecedures() {
 RwWorkload::RwWorkload(Config *config) : Workload(config) {
 }
 
-void RwWorkload::GetTxnReq(TxnRequest *req, uint32_t cid) {
+void RwWorkload::GetTxRequest(TxRequest* req, uint32_t cid) {
   req->n_try_ = n_try_;
   std::vector<double> weights = {txn_weights_["read"], txn_weights_["write"]};
   switch (RandomGenerator::weighted_select(weights)) {
@@ -69,9 +69,9 @@ void RwWorkload::GetTxnReq(TxnRequest *req, uint32_t cid) {
 }
 
 void RwWorkload::GenerateWriteRequest(
-    TxnRequest *req, uint32_t cid) {
+    TxRequest *req, uint32_t cid) {
   auto id = this->GetId(cid);
-  req->txn_type_ = RW_BENCHMARK_W_TXN;
+  req->tx_type_ = RW_BENCHMARK_W_TXN;
   req->input_ = {
       {0, Value((i32) id)},
       {1, Value((i32) RandomGenerator::rand(0, 10000))}
@@ -79,9 +79,9 @@ void RwWorkload::GenerateWriteRequest(
 }
 
 void RwWorkload::GenerateReadRequest(
-    TxnRequest *req, uint32_t cid) {
+    TxRequest *req, uint32_t cid) {
   auto id = GetId(cid);
-  req->txn_type_ = RW_BENCHMARK_R_TXN;
+  req->tx_type_ = RW_BENCHMARK_R_TXN;
   req->input_ = {
       {0, Value((i32) id)}
   };

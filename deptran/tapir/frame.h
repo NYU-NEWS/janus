@@ -9,17 +9,17 @@ namespace janus {
 
 class FrameTapir : public Frame {
  public:
-  FrameTapir() : Frame(MODE_TAPIR) { }
-  Coordinator *CreateCoord(cooid_t coo_id,
-                           Config *config,
-                           int benchmark,
-                           ClientControlServiceImpl *ccsi,
-                           uint32_t id,
-                           TxnRegistry *txn_reg) override;
+  FrameTapir() : Frame(MODE_TAPIR) {}
+  Coordinator *CreateCoordinator(cooid_t coo_id,
+                                 Config *config,
+                                 int benchmark,
+                                 ClientControlServiceImpl *ccsi,
+                                 uint32_t id,
+                                 TxnRegistry *txn_reg) override;
   Scheduler *CreateScheduler() override;
   mdb::Row *CreateRow(const mdb::Schema *schema,
                       vector<Value> &row_data) override;
-  Communicator* CreateCommo(PollMgr* pollmgr = nullptr) override;
+  Communicator *CreateCommo(PollMgr *pollmgr = nullptr) override;
 
   shared_ptr<Tx> CreateTx(epoch_t epoch, txnid_t tid,
                           bool ro, Scheduler *mgr) override;

@@ -27,7 +27,6 @@ using mdb::colid_t;
 #define TXN_INSTANT  (0x02)
 #define TXN_DEFERRED (0x04)
 
-
 #define IS_MODE_RCC (Config::GetConfig()->get_mode() == MODE_RCC)
 #define IS_MODE_RO6 (Config::GetConfig()->get_mode() == MODE_RO6)
 #define IS_MODE_2PL (Config::GetConfig()->get_mode() == MODE_2PL)
@@ -46,6 +45,7 @@ class Scheduler;
 class Tx {
  public:
   IntEvent fully_dispatched_{};
+  IntEvent ev_execute_ready_{};
   bool aborted_in_dispatch_{false};
   bool inuse = false;
   txnid_t tid_;
@@ -55,7 +55,7 @@ class Tx {
   mdb::Txn *mdb_txn_ = nullptr;
   Recorder *recorder_ = NULL;
   TxnRegistry *txn_reg_{nullptr};
-  TxnWorkspace ws_{};
+  TxWorkspace ws_{};
   // TODO at most one active coroutine runnable for a tx at a time
   IntEvent running_{};
 
@@ -67,7 +67,7 @@ class Tx {
   bool aborted_{false};
 
   map<innid_t, std::unique_ptr<IntEvent>> paused_pieces_{};
-  map<int64_t, mdb::Row*> context_row_;
+  map<int64_t, mdb::Row *> context_row_;
   map<int64_t, Value> context_value_;
   map<int64_t, mdb::ResultSet> context_rs_;
 
@@ -83,7 +83,7 @@ class Tx {
         context_rs_(),
         mdb_txn_(nullptr) {}
 
-  mdb::Txn* mdb_txn();
+  mdb::Txn *mdb_txn();
 
   virtual mdb::Row *CreateRow(const mdb::Schema *schema,
                               const std::vector<mdb::Value> &values);
@@ -110,12 +110,12 @@ class Tx {
 
   virtual bool InsertRow(Table *tbl, Row *row);
 
-  virtual mdb::Row* Query(mdb::Table *tbl,
+  virtual mdb::Row *Query(mdb::Table *tbl,
                           const mdb::MultiBlob &mb,
                           int64_t row_context_id = 0);
 
-  virtual mdb::Row* Query(mdb::Table *tbl,
-                          vector<Value>& primary_keys,
+  virtual mdb::Row *Query(mdb::Table *tbl,
+                          vector<Value> &primary_keys,
                           int64_t row_context_id = 0);
 
   virtual mdb::ResultSet QueryIn(Table *tbl,
@@ -145,6 +145,5 @@ struct entry_t {
     last_ = o.last_;
   }
 };
-
 
 } // namespace janus

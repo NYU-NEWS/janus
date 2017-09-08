@@ -40,18 +40,18 @@ read_only) {
   return dtxn;
 }
 
-shared_ptr<Tx> Scheduler::CreateTx(txnid_t tid, bool ro) {
-  Log_debug("create tid %ld", tid);
-  verify(dtxns_.find(tid) == dtxns_.end());
-  auto dtxn = frame_->CreateTx(epoch_mgr_.curr_epoch_, tid, ro, this);
+shared_ptr<Tx> Scheduler::CreateTx(txnid_t tx_id, bool ro) {
+  Log_debug("create tid %" PRIx64, tx_id);
+  verify(dtxns_.find(tx_id) == dtxns_.end());
+  auto dtxn = frame_->CreateTx(epoch_mgr_.curr_epoch_, tx_id, ro, this);
   if (dtxn != nullptr) {
-    dtxns_[tid] = dtxn;
+    dtxns_[tx_id] = dtxn;
     dtxn->recorder_ = this->recorder_;
     verify(txn_reg_);
     dtxn->txn_reg_ = txn_reg_;
-    verify(dtxn->tid_ == tid);
+    verify(dtxn->tid_ == tx_id);
     if (epoch_enabled_) {
-      epoch_mgr_.AddToCurrent(tid);
+      epoch_mgr_.AddToCurrent(tx_id);
       TriggerUpgradeEpoch();
     }
     dtxn->sched_ = this;
@@ -189,7 +189,7 @@ Scheduler::Scheduler() : mtx_() {
   if (Config::GetConfig()->do_logging()) {
     auto path = Config::GetConfig()->log_path();
     // TODO free this
-    recorder_ = new Recorder(path);
+//    recorder_ = new Recorder(path);
   }
 }
 
@@ -199,12 +199,12 @@ Coordinator *Scheduler::CreateRepCoord() {
   int32_t benchmark = 0;
   static id_t id = 0;
   verify(rep_frame_ != nullptr);
-  coord = rep_frame_->CreateCoord(cid++,
-                                  Config::GetConfig(),
-                                  benchmark,
-                                  nullptr,
-                                  id++,
-                                  txn_reg_);
+  coord = rep_frame_->CreateCoordinator(cid++,
+                                        Config::GetConfig(),
+                                        benchmark,
+                                        nullptr,
+                                        id++,
+                                        txn_reg_);
   coord->par_id_ = partition_id_;
   coord->loc_id_ = this->loc_id_;
   return coord;
@@ -278,13 +278,13 @@ void Scheduler::Execute(Tx &txn_box,
     for (auto &pair : txn_box.paused_pieces_) {
       auto &up_pause = pair.second;
       verify(up_pause);
-      up_pause->set(1);
+      up_pause->Set(1);
     }
     txn_box.paused_pieces_.clear();
   } else {
     auto &up_pause = txn_box.paused_pieces_[inn_id];
     verify(up_pause);
-    up_pause->set(1);
+    up_pause->Set(1);
     txn_box.paused_pieces_.erase(inn_id);
   }
 }

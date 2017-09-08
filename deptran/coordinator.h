@@ -21,7 +21,7 @@ public:
   locid_t loc_id_ = -1;
   virtual ~CoordinatorBase() = default;
   // TODO do_one should be replaced with Submit.
-  virtual void DoTxAsync(TxnRequest &) = 0;
+  virtual void DoTxAsync(TxRequest &) = 0;
   virtual void Reset() = 0;
   virtual void restart(Procedure *ch) = 0;
 };
@@ -41,7 +41,7 @@ class Coordinator : public CoordinatorBase {
 
   std::recursive_mutex mtx_;
   Recorder *recorder_;
-  ContainerCommand *cmd_ = nullptr;
+  TxData *cmd_ = nullptr;
   phase_t phase_ = 0;
   map<innid_t, bool> dispatch_acks_ = {};
   map<innid_t, bool> handout_outs_ = {};
@@ -50,7 +50,7 @@ class Coordinator : public CoordinatorBase {
   Communicator* commo_ = nullptr;
   Frame* frame_ = nullptr;
 
-  txnid_t ongoing_tx_id_{0};
+  txid_t ongoing_tx_id_{0};
   ForwardRequestState forward_status_ = NONE;
 
   // should be reset on issuing a new request
@@ -124,8 +124,8 @@ class Coordinator : public CoordinatorBase {
     return this->next_txn_id_++;
   }
 
-  virtual void DoTxAsync(TxnRequest &) = 0;
-  virtual void Submit(ContainerCommand& cmd,
+  virtual void DoTxAsync(TxRequest &) = 0;
+  virtual void Submit(shared_ptr<Marshallable>& cmd,
                       const std::function<void()>& commit_callback = [](){},
                       const std::function<void()>& exe_callback = [](){}) {
     verify(0);

@@ -6,7 +6,7 @@
 namespace rococo {
 
 class Procedure;
-class TxnRequest;
+class TxRequest;
 class BatchStartArgsHelper;
 
 class TpccProcedure: public Procedure {
@@ -58,7 +58,7 @@ class TpccProcedure: public Procedure {
     stock_level_dep_t stock_level_dep_;
   };
 
-  virtual void NewOrderInit(TxnRequest &req);
+  virtual void NewOrderInit(TxRequest &req);
 
   virtual void NewOrderRetry();
 
@@ -67,16 +67,16 @@ class TpccProcedure: public Procedure {
 //                             map<int32_t, Value> &input,
 //                             uint32_t &site);
 
-  virtual void PaymentInit(TxnRequest &req);
+  virtual void PaymentInit(TxRequest &req);
 
   virtual void PaymentRetry();
 
-  virtual void StockLevelInit(TxnRequest &req);
+  virtual void StockLevelInit(TxRequest &req);
 
   virtual void StockLevelRetry();
 
   // delivery
-  virtual void DeliveryInit(TxnRequest &req);
+  virtual void DeliveryInit(TxRequest &req);
 
   virtual void DeliveryRetry();
 
@@ -85,7 +85,7 @@ class TpccProcedure: public Procedure {
 //                                  map<int32_t, Value> &input,
 //                                  uint32_t &site);
 
-  virtual void OrderStatusInit(TxnRequest &req);
+  virtual void OrderStatusInit(TxRequest &req);
 
   virtual void OrderStatusRetry();
 
@@ -94,7 +94,7 @@ class TpccProcedure: public Procedure {
 
   virtual parid_t GetPiecePartitionId(innid_t inn_id);
 
-  virtual void Init(TxnRequest &req);
+  virtual void Init(TxRequest &req);
   virtual bool HandleOutput(int pi,
                             int res,
                             map<int32_t, Value> &output) override;

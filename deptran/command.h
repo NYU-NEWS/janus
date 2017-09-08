@@ -4,26 +4,26 @@
 #include "marshallable.h"
 
 
-namespace rococo {
-class ContainerCommand : public Marshallable {
+namespace janus {
+class TxData : public Marshallable {
  public:
-//  static map<cmdtype_t, function<ContainerCommand*()>>& Initializers();
-//  static int RegInitializer(cmdtype_t, function<ContainerCommand*()>);
-//  static function<ContainerCommand*()> GetInitializer(cmdtype_t);
+//  static map<cmdtype_t, function<TxData*()>>& Initializers();
+//  static int RegInitializer(cmdtype_t, function<TxData*()>);
+//  static function<TxData*()> GetInitializer(cmdtype_t);
 
   cmdid_t id_ = 0;
   cmdtype_t type_ = 0;
   innid_t inn_id_ = 0;
   cmdid_t root_id_ = 0;
   cmdtype_t root_type_ = 0;
-//  ContainerCommand* self_cmd_ = nullptr; // point to actual stuff.
+//  TxData* self_cmd_ = nullptr; // point to actual stuff.
 
  public:
   virtual innid_t inn_id() const {return inn_id_;}
   virtual cmdtype_t type() {return type_;};
   virtual void Arrest() {verify(0);};
-  virtual ContainerCommand& Execute() {verify(0);};
-  virtual void Merge(ContainerCommand&){verify(0);};;
+  virtual TxData& Execute() {verify(0);};
+  virtual void Merge(TxData&){verify(0);};;
   virtual bool IsFinished(){verify(0);};
 
   virtual set<parid_t> GetPartitionIds() {
@@ -36,20 +36,20 @@ class ContainerCommand : public Marshallable {
     return false;
   }
 
-  virtual ContainerCommand* GetNextReadySubCmd(){verify(0);};
-  virtual ContainerCommand* GetRootCmd() {return this;};
+  virtual TxData* GetNextReadySubCmd(){verify(0);};
+  virtual TxData* GetRootCmd() {return this;};
   virtual void Reset() {verify(0);};
-  virtual ContainerCommand* Clone() const  {
+  virtual TxData* Clone() const  {
     verify(0);
-//    ContainerCommand* c = GetInitializer(type_)();
+//    TxData* c = GetInitializer(type_)();
 //    *c = *this;
 //    c->self_cmd_ = c;
 //    return c;
   };
 
-  ContainerCommand() : Marshallable(MarshallDeputy::CONTAINER_CMD) {}
-  virtual ~ContainerCommand() {};
+  TxData() : Marshallable(MarshallDeputy::CONTAINER_CMD) {}
+  virtual ~TxData() {};
   virtual Marshal& ToMarshal(Marshal&) const override;
   virtual Marshal& FromMarshal(Marshal&) override;
 };
-} // namespace rococo
+} // namespace janus

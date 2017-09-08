@@ -8,6 +8,7 @@
 #include "utils.hpp"
 
 using rrr::FrequentJob;
+using std::shared_ptr;
 
 namespace rrr {
 
@@ -53,8 +54,8 @@ public:
     void update_mode(Pollable*, int new_mode);
     
     // Frequent Job
-    void add(FrequentJob*);
-    void remove(FrequentJob*);
+    void add(shared_ptr<Job> sp_job);
+    void remove(shared_ptr<Job> sp_job);
 };
 
 } // namespace rrr

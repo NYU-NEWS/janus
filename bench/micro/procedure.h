@@ -11,11 +11,11 @@ public:
 
     MicroProcedure();
 
-    virtual void Init(TxnRequest &req);
+    virtual void Init(TxRequest &req);
 
-    virtual void InitR(TxnRequest &req);
+    virtual void InitR(TxRequest &req);
 
-    virtual void InitW(TxnRequest &req);
+    virtual void InitW(TxRequest &req);
 
     virtual bool HandleOutput(int pi, int res,
                               map<int32_t, Value> &output) override;

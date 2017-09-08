@@ -107,6 +107,17 @@ abstract service Classic {
                     ballot_t ballot,
                     MarshallDeputy graph |
                     i32 res);
+
+  defer PreAcceptFebruus(txid_t tx_id |
+                         i32 ret,
+                         uint64_t timestamp);
+
+  defer AcceptFebruus(txid_t tx_id,
+                      ballot_t ballot,
+                      uint64_t timestamp |
+                      i32 ret);
+
+  defer CommitFebruus(txid_t tx_id, uint64_t timestamp | i32 ret);
 }
 
 
@@ -157,9 +168,9 @@ abstract service ServerControl {
     server_heart_beat ( | );
 }
 
-struct TxnDispatchRequest {
+struct TxDispatchRequest {
     i32 id;
-    i32 txn_type;
+    i32 tx_type;
     vector<Value> input;
 }
 
@@ -174,5 +185,5 @@ abstract service ClientControl {
     client_ready ( | i32 res);
     defer client_ready_block ( | i32 res);
     client_start ( | );
-    defer DispatchTxn(TxnDispatchRequest req | TxnReply result);
+    defer DispatchTxn(TxDispatchRequest req | TxReply result);
 }

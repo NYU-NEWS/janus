@@ -29,26 +29,25 @@ Marshal &Marshallable::FromMarshal(Marshal &m) {
 }
 
 Marshal &MarshallDeputy::CreateActuallObjectFrom(Marshal &m) {
-  verify(data_ == nullptr);
-  manage_memory_ = true;
+  verify(sp_data_ == nullptr);
   switch (kind_) {
     case RCC_GRAPH:
-      data_ = new RccGraph();
+      sp_data_.reset(new RccGraph());
       break;
     case EMPTY_GRAPH:
-      data_ = new EmptyGraph();
+      sp_data_.reset(new EmptyGraph());
       break;
     case UNKNOWN:
       verify(0);
       break;
     default:
       auto &func = GetInitializer(kind_);
-      data_ = func();
+      sp_data_.reset(func());
       verify(0);
       break;
   }
-  data_->FromMarshal(m);
-  data_->kind_ = kind_;
+  sp_data_->FromMarshal(m);
+  sp_data_->kind_ = kind_;
 }
 
 Marshal &Marshallable::ToMarshal(Marshal &m) const {

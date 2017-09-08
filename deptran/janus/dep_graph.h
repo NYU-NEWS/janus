@@ -3,7 +3,7 @@
 #include "../rococo/dep_graph.h"
 
 namespace rococo {
-class JanusDTxn;
+class TxJanus;
 class CommitReply;
 
 typedef Vertex<TxnInfo> JanusVertex;

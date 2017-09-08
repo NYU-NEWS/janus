@@ -8,23 +8,25 @@
 
 namespace rococo {
 class JanusCommo;
-class JanusCoord : public RccCoord {
-public:
-  enum Phase {INIT_END=0, DISPATCH=1, PREPARE=2,
-    PRE_ACCEPT=3, ACCEPT=4, COMMIT=5};
+class CoordinatorJanus : public RccCoord {
+ public:
+  enum Phase {
+    INIT_END = 0, DISPATCH = 1, PREPARE = 2,
+    PRE_ACCEPT = 3, ACCEPT = 4, COMMIT = 5
+  };
 
-  cooid_t  coo_id_;
+  cooid_t coo_id_;
 //  phase_t  phase_; // a phase identifier
   uint32_t thread_id_;
   uint32_t cmdid_prefix_c_;
   Recorder *recorder_;
   ballot_t ballot_ = 0; // the ballot I am holding
   // data structures for saving replies.
-  struct reply_cnt_t {int yes; int no;};
+  struct reply_cnt_t { int yes; int no; };
   map<parid_t, int> n_fast_accept_oks_{};
   map<parid_t, int> n_accept_oks_{};
 //  map<parid_t, int> n_fast_accept_rejects_ = {};
-  map<parid_t, vector<RccGraph*>> n_fast_accept_graphs_ {};
+  map<parid_t, vector<RccGraph *>> n_fast_accept_graphs_{};
   map<parid_t, int> fast_accept_graph_check_caches_{};
   map<parid_t, int> n_commit_oks_ = {};
   bool fast_path_ = false;
@@ -37,21 +39,21 @@ public:
 
   using RccCoord::RccCoord;
 
-  virtual ~JanusCoord() {}
+  virtual ~CoordinatorJanus() {}
 
-  JanusCommo* commo();
+  JanusCommo *commo();
   // Dispatch inherits from RccCoord;
-  void DispatchRo() { DispatchAsync();}
+  void DispatchRo() { DispatchAsync(); }
 
   void PreAccept();
   void PreAcceptAck(phase_t phase,
                     parid_t par_id,
                     int res,
-                    RccGraph* graph);
+                    RccGraph *graph);
 
   // do_one inherits from RccCoord;
 
-  void restart() {verify(0);};
+  void restart() { verify(0); };
   // functions needed in the fast accept phase.
   bool FastpathPossible();
   bool AllFastQuorumsReached();
@@ -77,7 +79,7 @@ public:
   void CommitAck(phase_t phase,
                  parid_t par_id,
                  int32_t res,
-                 TxnOutput& output);
+                 TxnOutput &output);
   bool check_commit() {
     verify(0);
     return false;

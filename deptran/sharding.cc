@@ -316,7 +316,7 @@ bool Sharding::Ready2Populate(tb_info_t *tb_info) {
 int Sharding::PopulateTable(tb_info_t *tb_info,
                             parid_t par_id) {
   // find table and secondary table
-  mdb::Table *const table_ptr = dtxn_sched_->get_table(tb_info->tb_name);
+  mdb::Table *const table_ptr = tx_sched_->get_table(tb_info->tb_name);
   const mdb::Schema *schema = table_ptr->schema();
   mdb::SortedTable *tbl_sec_ptr = nullptr;
 

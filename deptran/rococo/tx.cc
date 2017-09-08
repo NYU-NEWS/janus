@@ -73,7 +73,7 @@ void TxRococo::Abort() {
 void TxRococo::CommitExecute() {
 //  verify(phase_ == PHASE_RCC_START);
   phase_ = PHASE_RCC_COMMIT;
-  TxnWorkspace ws;
+  TxWorkspace ws;
   for (auto &cmd: dreqs_) {
     TxnPieceDef& p = txn_reg_->get(cmd.root_type_, cmd.type_);
     int tmp;

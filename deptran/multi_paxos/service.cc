@@ -1,11 +1,11 @@
 
 #include "service.h"
-#include "sched.h"
+#include "scheduler.h"
 
 namespace janus {
 
 MultiPaxosServiceImpl::MultiPaxosServiceImpl(Scheduler *sched)
-    : sched_((MultiPaxosSched*)sched) {
+    : sched_((SchedulerMultiPaxos*)sched) {
 
 }
 
@@ -30,7 +30,7 @@ void MultiPaxosServiceImpl::Accept(const uint64_t& slot,
                                    uint64_t* max_ballot,
                                    rrr::DeferredReply* defer) {
   verify(sched_ != nullptr);
-  auto& cmd = dynamic_cast<ContainerCommand&>(*md_cmd.data_);
+  auto& cmd = dynamic_cast<TxData&>(*md_cmd.sp_data_);
   sched_->OnAccept(slot,
                    ballot,
                    cmd,
@@ -43,7 +43,7 @@ void MultiPaxosServiceImpl::Decide(const uint64_t& slot,
                                    const MarshallDeputy& md_cmd,
                                    rrr::DeferredReply* defer) {
   verify(sched_ != nullptr);
-  auto& cmd = dynamic_cast<ContainerCommand&>(*md_cmd.data_);
+  auto& cmd = dynamic_cast<TxData&>(*md_cmd.sp_data_);
   sched_->OnCommit(slot,
                    ballot,
                    cmd);

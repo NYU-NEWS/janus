@@ -3,8 +3,8 @@
 #include "bench/tpca/payment.h"
 
 namespace rococo {
-void TpcaPaymentChopper::Init(TxnRequest &req) {
-  verify(req.txn_type_ == TPCA_PAYMENT);
+void TpcaPaymentChopper::Init(TxRequest &req) {
+  verify(req.tx_type_ == TPCA_PAYMENT);
   type_ = TPCA_PAYMENT;
   ws_init_ = req.input_;
   ws_ = ws_init_;

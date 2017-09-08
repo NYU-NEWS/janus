@@ -4,7 +4,7 @@
 #include "deptran/procedure.h"
 #include "txn-info.h"
 #include "graph_marshaler.h"
-#include "../rcc_service.h"
+#include "deptran/service.h"
 
 namespace rococo {
 
@@ -19,7 +19,7 @@ void RccCommo::SendDispatch(vector<SimpleCommand> &cmd,
         TxnOutput output;
         MarshallDeputy md;
         fu->get_reply() >> res >> output >> md;
-        RccGraph& graph = dynamic_cast<RccGraph&>(*md.data_);
+        RccGraph& graph = dynamic_cast<RccGraph&>(*md.sp_data_);
         callback(res, output, graph);
       };
   fuattr.callback = cb;
@@ -41,7 +41,7 @@ void RccCommo::SendHandoutRo(SimpleCommand &cmd,
 
 void RccCommo::SendFinish(parid_t pid,
                           txnid_t tid,
-                          RccGraph& graph,
+                          shared_ptr<RccGraph> graph,
                           const function<void(TxnOutput& output)> &callback) {
   FutureAttr fuattr;
   function<void(Future*)> cb = [callback] (Future* fu) {
@@ -51,7 +51,7 @@ void RccCommo::SendFinish(parid_t pid,
   };
   fuattr.callback = cb;
   auto proxy = NearestProxyForPartition(pid).second;
-  MarshallDeputy md(&graph, false);
+  MarshallDeputy md(graph);
   Future::safe_release(proxy->async_RccFinish(tid, md, fuattr));
 }
 
@@ -63,7 +63,7 @@ void RccCommo::SendInquire(parid_t pid,
   function<void(Future*)> cb = [callback] (Future* fu) {
     MarshallDeputy md;
     fu->get_reply() >> md;
-    RccGraph& graph = dynamic_cast<RccGraph&>(*md.data_);
+    RccGraph& graph = dynamic_cast<RccGraph&>(*md.sp_data_);
     callback(graph);
   };
   fuattr.callback = cb;

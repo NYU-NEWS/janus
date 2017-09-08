@@ -15,17 +15,17 @@ static Frame *tapir_frame_s = Frame::RegFrame(MODE_TAPIR,
                                                 return new FrameTapir();
                                               });
 
-Coordinator *FrameTapir::CreateCoord(cooid_t coo_id,
-                                     Config *config,
-                                     int benchmark,
-                                     ClientControlServiceImpl *ccsi,
-                                     uint32_t id,
-                                     TxnRegistry *txn_reg) {
+Coordinator *FrameTapir::CreateCoordinator(cooid_t coo_id,
+                                           Config *config,
+                                           int benchmark,
+                                           ClientControlServiceImpl *ccsi,
+                                           uint32_t id,
+                                           TxnRegistry *txn_reg) {
   verify(config != nullptr);
   CoordinatorTapir *coord = new CoordinatorTapir(coo_id,
-                                     benchmark,
-                                     ccsi,
-                                     id);
+                                                 benchmark,
+                                                 ccsi,
+                                                 id);
   coord->txn_reg_ = txn_reg;
   coord->frame_ = this;
   return coord;
@@ -51,7 +51,7 @@ mdb::Row *FrameTapir::CreateRow(const mdb::Schema *schema,
 }
 
 shared_ptr<Tx> FrameTapir::CreateTx(epoch_t epoch, txnid_t tid,
-                         bool ro, Scheduler *mgr) {
+                                    bool ro, Scheduler *mgr) {
   shared_ptr<Tx> sp_tx(new TxTapir(epoch, tid, mgr));
   return sp_tx;
 }

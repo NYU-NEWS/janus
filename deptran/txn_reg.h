@@ -16,7 +16,7 @@ typedef std::map<
 
 class Tx;
 class Procedure;
-class TxnRequest;
+class TxRequest;
 class SimpleCommand;
 
 typedef std::function<void(Executor* exec,

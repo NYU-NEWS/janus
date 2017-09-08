@@ -61,9 +61,9 @@ TpccWorkload::TpccWorkload(Config *config)
 }
 
 
-void TpccWorkload::GetNewOrderTxnReq(TxnRequest *req,
+void TpccWorkload::GetNewOrderTxnReq(TxRequest *req,
                                      uint32_t cid) const {
-  req->txn_type_ = TPCC_NEW_ORDER;
+  req->tx_type_ = TPCC_NEW_ORDER;
   //int home_w_id = RandomGenerator::rand(0, tpcc_para_.n_w_id_ - 1);
   int home_w_id = cid % tpcc_para_.n_w_id_;
   Value w_id((i32) home_w_id);
@@ -127,8 +127,8 @@ void TpccWorkload::GetNewOrderTxnReq(TxnRequest *req,
 
 
 void TpccWorkload::get_tpcc_payment_txn_req(
-    TxnRequest *req, uint32_t cid) const {
-  req->txn_type_ = TPCC_PAYMENT;
+    TxRequest *req, uint32_t cid) const {
+  req->tx_type_ = TPCC_PAYMENT;
   //int home_w_id = RandomGenerator::rand(0, tpcc_para_.n_w_id_ - 1);
   int home_w_id = cid % tpcc_para_.n_w_id_;
   Value c_w_id, c_d_id;
@@ -166,8 +166,8 @@ void TpccWorkload::get_tpcc_payment_txn_req(
 }
 
 void TpccWorkload::get_tpcc_stock_level_txn_req(
-    TxnRequest *req, uint32_t cid) const {
-  req->txn_type_ = TPCC_STOCK_LEVEL;
+    TxRequest *req, uint32_t cid) const {
+  req->tx_type_ = TPCC_STOCK_LEVEL;
   req->input_[TPCC_VAR_W_ID] = Value((i32) (cid % tpcc_para_.n_w_id_));
   req->input_[TPCC_VAR_D_ID] =
       Value((i32) (cid / tpcc_para_.n_w_id_) % tpcc_para_.n_d_id_);
@@ -175,8 +175,8 @@ void TpccWorkload::get_tpcc_stock_level_txn_req(
 }
 
 void TpccWorkload::get_tpcc_delivery_txn_req(
-    TxnRequest *req, uint32_t cid) const {
-  req->txn_type_ = TPCC_DELIVERY;
+    TxRequest *req, uint32_t cid) const {
+  req->tx_type_ = TPCC_DELIVERY;
   req->input_[TPCC_VAR_W_ID] = Value((i32) (cid % tpcc_para_.n_w_id_));
   req->input_[TPCC_VAR_O_CARRIER_ID] =
       Value((i32) RandomGenerator::rand(1, 10));
@@ -185,8 +185,8 @@ void TpccWorkload::get_tpcc_delivery_txn_req(
 }
 
 void TpccWorkload::get_tpcc_order_status_txn_req(
-    TxnRequest *req, uint32_t cid) const {
-  req->txn_type_ = TPCC_ORDER_STATUS;
+    TxRequest *req, uint32_t cid) const {
+  req->tx_type_ = TPCC_ORDER_STATUS;
   if (RandomGenerator::percentage_true(60)) {//XXX 60% by c_last
     req->input_[TPCC_VAR_C_LAST] =
         Value(RandomGenerator::int2str_n(RandomGenerator::nu_rand(255, 0, 999),
@@ -202,7 +202,7 @@ void TpccWorkload::get_tpcc_order_status_txn_req(
 }
 
 
-void TpccWorkload::GetTxnReq(TxnRequest *req, uint32_t cid) {
+void TpccWorkload::GetTxRequest(TxRequest* req, uint32_t cid) {
   req->n_try_ = n_try_;
   if (txn_weight_.size() != 5) {
     verify(0);

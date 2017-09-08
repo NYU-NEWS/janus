@@ -40,9 +40,9 @@ class MicroWorkload : public Workload {
  public:
   using Workload::Workload;
   void RegisterPrecedures() override;
-  virtual void GetTxnReq(TxnRequest *req, uint32_t cid) override;
-  void GetReadReq(TxnRequest *req, uint32_t cid) const;
-  void GetWriteReq(TxnRequest *req, uint32_t cid) const;
+  virtual void GetTxRequest(TxRequest* req, uint32_t cid) override;
+  void GetReadReq(TxRequest *req, uint32_t cid) const;
+  void GetWriteReq(TxRequest *req, uint32_t cid) const;
 };
 
 } // namespace rococo

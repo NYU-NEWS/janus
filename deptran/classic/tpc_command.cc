@@ -2,46 +2,42 @@
 #include "../command.h"
 #include "../command_marshaler.h"
 
-using namespace rococo;
+using namespace janus;
 
 static int volatile x1 =
     MarshallDeputy::RegInitializer(MarshallDeputy::CMD_TPC_PREPARE,
-                                     [] () -> ContainerCommand* {
+                                     [] () -> Marshallable* {
                                        return new TpcPrepareCommand;
                                      });
 
 static int volatile x2 =
     MarshallDeputy::RegInitializer(MarshallDeputy::CMD_TPC_COMMIT,
-                                     [] () -> ContainerCommand* {
+                                     [] () -> Marshallable* {
                                        return new TpcCommitCommand;
                                      });
 
 
 Marshal& TpcPrepareCommand::ToMarshal(Marshal& m) const {
-  ContainerCommand::ToMarshal(m);
-  m << txn_id_;
-  m << res_;
+  m << tx_id_;
+  m << ret_;
   m << cmds_;
   return m;
 }
 
 Marshal& TpcPrepareCommand::FromMarshal(Marshal& m) {
-  ContainerCommand::FromMarshal(m);
-  m >> txn_id_;
-  m >> res_;
+  m >> tx_id_;
+  m >> ret_;
   m >> cmds_;
   return m;
 }
 
 Marshal& TpcCommitCommand::ToMarshal(Marshal& m) const {
-  ContainerCommand::ToMarshal(m);
-  m << txn_id_;
-  m << res_;
+  m << tx_id_;
+  m << ret_;
   return m;
 }
 Marshal& TpcCommitCommand::FromMarshal(Marshal& m) {
-  ContainerCommand::FromMarshal(m);
-  m >> txn_id_;
-  m >> res_;
+  m >> tx_id_;
+  m >> ret_;
   return m;
 }

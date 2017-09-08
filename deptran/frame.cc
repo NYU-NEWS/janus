@@ -6,7 +6,7 @@
 #include "marshal-value.h"
 #include "coordinator.h"
 #include "tx.h"
-#include "rcc_service.h"
+#include "service.h"
 #include "scheduler.h"
 #include "none/coordinator.h"
 #include "none/scheduler.h"
@@ -161,12 +161,12 @@ mdb::Row* Frame::CreateRow(const mdb::Schema *schema,
   return r;
 }
 
-Coordinator* Frame::CreateCoord(cooid_t coo_id,
-                                Config* config,
-                                int benchmark,
-                                ClientControlServiceImpl *ccsi,
-                                uint32_t id,
-                                TxnRegistry* txn_reg) {
+Coordinator* Frame::CreateCoordinator(cooid_t coo_id,
+                                      Config *config,
+                                      int benchmark,
+                                      ClientControlServiceImpl *ccsi,
+                                      uint32_t id,
+                                      TxnRegistry *txn_reg) {
   // TODO: clean this up; make Coordinator subclasses assign txn_reg_
   Coordinator *coo;
   auto attr = this;
@@ -218,7 +218,7 @@ Coordinator* Frame::CreateCoord(cooid_t coo_id,
   return coo;
 }
 
-void Frame::GetTxnTypes(std::map<int32_t, std::string> &txn_types) {
+void Frame::GetTxTypes(std::map<int32_t, std::string>& txn_types) {
   auto benchmark_ = Config::config_s->benchmark_;
   switch (benchmark_) {
     case TPCA:
@@ -247,12 +247,12 @@ void Frame::GetTxnTypes(std::map<int32_t, std::string> &txn_types) {
   }
 }
 
-Procedure* Frame::CreateTxnCommand(TxnRequest& req, TxnRegistry* reg) {
+Procedure* Frame::CreateTxnCommand(TxRequest& req, TxnRegistry* reg) {
   auto benchmark = Config::config_s->benchmark_;
   Procedure *cmd = NULL;
   switch (benchmark) {
     case TPCA:
-      verify(req.txn_type_ == TPCA_PAYMENT);
+      verify(req.tx_type_ == TPCA_PAYMENT);
       cmd = new TpcaPaymentChopper();
       break;
     case TPCC:
@@ -281,12 +281,12 @@ Procedure* Frame::CreateTxnCommand(TxnRequest& req, TxnRegistry* reg) {
   return cmd;
 }
 
-Procedure * Frame::CreateChopper(TxnRequest &req, TxnRegistry* reg) {
+Procedure * Frame::CreateChopper(TxRequest &req, TxnRegistry* reg) {
   return CreateTxnCommand(req, reg);
 }
 
 Communicator* Frame::CreateCommo(PollMgr* pollmgr) {
-  commo_ = new RococoCommunicator;
+  commo_ = new RococoCommunicator(pollmgr);
   return commo_;
 }
 
@@ -305,7 +305,7 @@ shared_ptr<Tx> Frame::CreateTx(epoch_t epoch, txnid_t tid,
       sp_tx.reset(new TxRococo(epoch, tid, mgr, ro));
       break;
     case MODE_RO6:
-      sp_tx.reset(new RO6DTxn(tid, mgr, ro));
+      sp_tx.reset(new TxSnow(tid, mgr, ro));
       break;
     case MODE_MULTI_PAXOS:
       break;
@@ -365,7 +365,7 @@ Scheduler* Frame::CreateScheduler() {
   return sch;
 }
 
-Workload * Frame::CreateTxnGenerator() {
+Workload * Frame::CreateTxGenerator() {
   auto benchmark = Config::config_s->benchmark_;
   Workload * gen = nullptr;
   switch (benchmark) {

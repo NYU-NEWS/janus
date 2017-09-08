@@ -27,6 +27,7 @@ using std::unordered_set;
 using std::pair;
 using std::function;
 using std::shared_ptr;
+using std::unique_ptr;
 
 // system library
 #include <sys/types.h>

@@ -1,7 +1,7 @@
 #include "ro6.h"
 #include "memdb/row.h"
 /*
- * RO-6: Define class members for RO6DTxn in dtxn.hpp
+ * RO-6: Define class members for TxSnow in dtxn.hpp
  * For each member, we add RO-6 specific logics, and then call super class's
  * corresponding method
  */
@@ -11,7 +11,7 @@ namespace rococo {
  * Pseudo code here
  *
 // start phase only used for write txns
-void RO6DTxn::start(
+void TxSnow::start(
         const RequestHeader &header,
         const std::vector<mdb::Value> &input,
         bool *deferred,
@@ -22,7 +22,7 @@ void RO6DTxn::start(
         // call super class's original method
 
         // TODO: for Shuai cell_map is the information we need.
-        // This should not be declared here. Instead, cell_map should be a private member of RO6DTxn class,
+        // This should not be declared here. Instead, cell_map should be a private member of TxSnow class,
         // we can just reference it here. I declare it here just in order to show its structure.
         // It's a vector of pairs, for each pair, first element is a pointer to a row with type
         // mdb::MultiVersionedRow, the second element is the column id this txn is querying for that row.
@@ -71,7 +71,7 @@ void commit(
 
 */
 //
-//void RO6DTxn::start(
+//void TxSnow::start(
 //    const RequestHeader &header,
 //    const std::vector<mdb::Value> &input,
 //    bool *deferred,
@@ -89,7 +89,7 @@ void commit(
 ////    Log::debug("read only tx list size %d carried in start_ack.", ro_.size());
 //}
 
-void RO6DTxn::kiss(mdb::Row *r, int col, bool immediate) {
+void TxSnow::kiss(mdb::Row *r, int col, bool immediate) {
   TxRococo::kiss(r, col, immediate);
 
   if (!read_only_) {
@@ -108,7 +108,7 @@ void RO6DTxn::kiss(mdb::Row *r, int col, bool immediate) {
   }
 }
 
-void RO6DTxn::start_ro(const SimpleCommand &cmd,
+void TxSnow::start_ro(const SimpleCommand &cmd,
                        map<int32_t, Value> &output,
                        rrr::DeferredReply *defer) {
 //    RCCDTxn::start_ro(header, input, output, defer);
@@ -161,7 +161,7 @@ void RO6DTxn::start_ro(const SimpleCommand &cmd,
   /*Value result = do_ro(txn_id, &row, col_id);*/
 }
 
-//void RO6DTxn::commit(
+//void TxSnow::commit(
 //    const ChopFinishRequest &req,
 //    ChopFinishResponse *res,
 //    rrr::DeferredReply *defer) {
@@ -184,7 +184,7 @@ void RO6DTxn::start_ro(const SimpleCommand &cmd,
 //  RccDTxn::commit(req, res, defer);
 //}
 
-bool RO6DTxn::read_column(mdb::Row *r, mdb::colid_t col_id, Value *value) {
+bool TxSnow::read_column(mdb::Row *r, mdb::colid_t col_id, Value *value) {
 
   if (read_only_) {
 //        if (false) {
@@ -201,7 +201,7 @@ bool RO6DTxn::read_column(mdb::Row *r, mdb::colid_t col_id, Value *value) {
 // TODO (for haonan) is this read only for read_only transaction or all transactions?
 // I assume this is only for the read_only transaction, am I correct?
 // Please see the above read_column funtion, check whether I am using it correctly.
-Value RO6DTxn::do_ro(i64 txn_id, RO6Row *row, int col_id) {
+Value TxSnow::do_ro(i64 txn_id, RO6Row *row, int col_id) {
   Value ret_value = row->get_column(col_id, txn_id);
   return ret_value;
 }

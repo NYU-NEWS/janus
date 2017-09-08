@@ -7,7 +7,6 @@
 #include "procedure.h"
 #include "rcc_rpc.h"
 
-
 namespace rococo {
 
 using namespace std::chrono;
@@ -20,10 +19,10 @@ Communicator::Communicator(PollMgr* poll_mgr) {
     rpc_poll_ = poll_mgr;
   auto config = Config::GetConfig();
   vector<parid_t> partitions = config->GetAllPartitionIds();
-  for (auto &par_id : partitions) {
+  for (auto& par_id : partitions) {
     auto site_infos = config->SitesByPartitionId(par_id);
     vector<std::pair<siteid_t, ClassicProxy*>> proxies;
-    for (auto &si : site_infos) {
+    for (auto& si : site_infos) {
       auto result = ConnectToSite(si, milliseconds(CONNECT_TIMEOUT_MS));
       verify(result.first == SUCCESS);
       proxies.push_back(std::make_pair(si.id, result.second));
@@ -71,8 +70,8 @@ void Communicator::WaitConnectClientLeaders() {
 
 Communicator::~Communicator() {
   verify(rpc_clients_.size() > 0);
-  for (auto &pair : rpc_clients_) {
-    rrr::Client *rpc_cli = pair.second;
+  for (auto& pair : rpc_clients_) {
+    rrr::Client* rpc_cli = pair.second;
     rpc_cli->close_and_release();
   }
   rpc_clients_.clear();
@@ -89,34 +88,38 @@ Communicator::RandomProxyForPartition(parid_t par_id) const {
 
 std::pair<siteid_t, ClassicProxy*>
 Communicator::LeaderProxyForPartition(parid_t par_id) const {
-  auto leader_cache = const_cast<map<parid_t, SiteProxyPair>&>(this->leader_cache_);
+  auto leader_cache =
+      const_cast<map<parid_t, SiteProxyPair>&>(this->leader_cache_);
   auto leader_it = leader_cache.find(par_id);
   if (leader_it != leader_cache.end()) {
     return leader_it->second;
   } else {
     auto it = rpc_par_proxies_.find(par_id);
     verify(it != rpc_par_proxies_.end());
-    auto &partition_proxies = it->second;
+    auto& partition_proxies = it->second;
     auto config = Config::GetConfig();
-    auto proxy_it = std::find_if(partition_proxies.begin(),
-                                 partition_proxies.end(),
-                                 [config](const std::pair<siteid_t, ClassicProxy *> &p) {
-                                   auto &site = config->SiteById(p.first);
-                                   return site.locale_id == 0;
-                                 });
+    auto proxy_it = std::find_if(
+        partition_proxies.begin(),
+        partition_proxies.end(),
+        [config](const std::pair<siteid_t, ClassicProxy*>& p) {
+          verify(p.second != nullptr);
+          auto& site = config->SiteById(p.first);
+          return site.locale_id == 0;
+        });
     if (proxy_it == partition_proxies.end()) {
       Log_fatal("could not find leader for partition %d", par_id);
     } else {
       leader_cache[par_id] = *proxy_it;
       Log_debug("leader site for parition %d is %d", par_id, proxy_it->first);
     }
+    verify(proxy_it->second != nullptr);
     return *proxy_it;
   }
 }
 
 ClientSiteProxyPair
-Communicator::ConnectToClientSite(Config::SiteInfo &site,
-                            milliseconds timeout) {
+Communicator::ConnectToClientSite(Config::SiteInfo& site,
+                                  milliseconds timeout) {
   auto config = Config::GetConfig();
   char addr[1024];
   snprintf(addr, sizeof(addr), "%s:%d", site.host.c_str(), site.port);
@@ -138,15 +141,14 @@ Communicator::ConnectToClientSite(Config::SiteInfo &site,
     }
     auto end = steady_clock::now();
     elapsed = duration_cast<milliseconds>(end - start).count();
-  } while(elapsed < timeout.count());
+  } while (elapsed < timeout.count());
   Log_info("timeout connecting to client %s", addr);
   rpc_cli->close_and_release();
   return std::make_pair(FAILURE, nullptr);
 }
 
-
 std::pair<int, ClassicProxy*>
-Communicator::ConnectToSite(Config::SiteInfo &site,
+Communicator::ConnectToSite(Config::SiteInfo& site,
                             milliseconds timeout) {
   string addr = site.GetHostAddr();
   auto start = steady_clock::now();
@@ -157,7 +159,7 @@ Communicator::ConnectToSite(Config::SiteInfo &site,
     Log_info("connect to site: %s (attempt %d)", addr.c_str(), attempt++);
     auto connect_result = rpc_cli->connect(addr.c_str());
     if (connect_result == SUCCESS) {
-      ClassicProxy *rpc_proxy = new ClassicProxy(rpc_cli);
+      ClassicProxy* rpc_proxy = new ClassicProxy(rpc_cli);
       rpc_clients_.insert(std::make_pair(site.id, rpc_cli));
       rpc_proxies_.insert(std::make_pair(site.id, rpc_proxy));
       Log_debug("connect to site: %s success!", addr.c_str());
@@ -167,7 +169,7 @@ Communicator::ConnectToSite(Config::SiteInfo &site,
     }
     auto end = steady_clock::now();
     elapsed = duration_cast<milliseconds>(end - start).count();
-  } while(elapsed < timeout.count());
+  } while (elapsed < timeout.count());
   Log_info("timeout connecting to %s", addr.c_str());
   rpc_cli->close_and_release();
   return std::make_pair(FAILURE, nullptr);

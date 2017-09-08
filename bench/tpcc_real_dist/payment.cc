@@ -4,7 +4,7 @@
 
 namespace rococo {
 
-void TpccRdProcedure::PaymentInit(TxnRequest &req) {
+void TpccRdProcedure::PaymentInit(TxRequest &req) {
 
   n_pieces_all_ = 6;
 

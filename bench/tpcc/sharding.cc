@@ -7,7 +7,7 @@ namespace rococo {
 
 int TpccSharding::PopulateTable(tb_info_t *tb_info_ptr, parid_t par_id) {
 
-  mdb::Table *const table_ptr = dtxn_sched_->get_table(tb_info_ptr->tb_name);
+  mdb::Table *const table_ptr = tx_sched_->get_table(tb_info_ptr->tb_name);
   const mdb::Schema *schema = table_ptr->schema();
   verify(schema->columns_count() == tb_info_ptr->columns.size());
 
@@ -72,7 +72,7 @@ int TpccSharding::PopulateTable(tb_info_t *tb_info_ptr, parid_t par_id) {
 
     mdb::SortedTable *tbl_sec_ptr = NULL;
     if (tb_info_ptr->tb_name == TPCC_TB_ORDER)
-      tbl_sec_ptr =(mdb::SortedTable *) dtxn_sched_->get_table(
+      tbl_sec_ptr =(mdb::SortedTable *) tx_sched_->get_table(
           TPCC_TB_ORDER_C_ID_SECONDARY);
     for (col_index = 0; col_index < tb_info_ptr->columns.size(); col_index++) {
       verify(col_it != schema->end());

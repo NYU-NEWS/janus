@@ -293,17 +293,17 @@ class TpccWorkload: public Workload {
   TpccWorkload(rococo::Config *config);
 
   // tpcc
-  virtual void GetTxnReq(TxnRequest *req, uint32_t cid) override;
+  virtual void GetTxRequest(TxRequest* req, uint32_t cid) override;
   // tpcc new_order
-  void GetNewOrderTxnReq(TxnRequest *req, uint32_t cid) const;
+  void GetNewOrderTxnReq(TxRequest *req, uint32_t cid) const;
   // tpcc payment
-  void get_tpcc_payment_txn_req(TxnRequest *req, uint32_t cid) const;
+  void get_tpcc_payment_txn_req(TxRequest *req, uint32_t cid) const;
   // tpcc stock_level
-  void get_tpcc_stock_level_txn_req(TxnRequest *req, uint32_t cid) const;
+  void get_tpcc_stock_level_txn_req(TxRequest *req, uint32_t cid) const;
   // tpcc delivery
-  void get_tpcc_delivery_txn_req(TxnRequest *req, uint32_t cid) const;
+  void get_tpcc_delivery_txn_req(TxRequest *req, uint32_t cid) const;
   // tpcc order_status
-  void get_tpcc_order_status_txn_req(TxnRequest *req, uint32_t cid) const;
+  void get_tpcc_order_status_txn_req(TxRequest *req, uint32_t cid) const;
 };
 
 } // namespace janus

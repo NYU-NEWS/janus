@@ -1,7 +1,7 @@
 
 
 #include "waitlist_checker.h"
-#include "sched.h"
+#include "scheduler.h"
 
 using namespace rococo;
 
@@ -11,6 +11,6 @@ WaitlistChecker::WaitlistChecker(SchedulerRococo* sched) {
   sched_ = sched;
 }
 
-void WaitlistChecker::run() {
+void WaitlistChecker::Work() {
   sched_->CheckWaitlist();
 }

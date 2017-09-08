@@ -12,7 +12,7 @@ class WaitlistChecker : public FrequentJob {
   WaitlistChecker() = delete;
   WaitlistChecker(SchedulerRococo* sched);
 
-  void run() override;
+  void Work() override;
 
 };
 

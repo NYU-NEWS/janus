@@ -5,9 +5,9 @@
 #include "command_marshaler.h"
 #include "procedure.h"
 
-namespace rococo {
+namespace janus {
 
-Marshal& ContainerCommand::ToMarshal(Marshal& m) const {
+Marshal& TxData::ToMarshal(Marshal& m) const {
   m << id_;
   m << type_;
   m << inn_id_;
@@ -16,7 +16,7 @@ Marshal& ContainerCommand::ToMarshal(Marshal& m) const {
   return m;
 };
 
-Marshal& ContainerCommand::FromMarshal(Marshal& m) {
+Marshal& TxData::FromMarshal(Marshal& m) {
   m >> id_;
   m >> type_;
   m >> inn_id_;
@@ -55,4 +55,4 @@ rrr::Marshal &operator>>(rrr::Marshal &m, SimpleCommand &cmd) {
 }
 
 
-} // namespace rococo
+} // namespace janus

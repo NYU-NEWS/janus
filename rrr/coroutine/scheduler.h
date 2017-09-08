@@ -10,7 +10,8 @@ class CoroScheduler {
  public:
   static std::shared_ptr<CoroScheduler> CurrentScheduler();
   std::list<boost::optional<Event&>> ready_events_{};
-  std::set<std::shared_ptr<Coroutine>> active_coros_{};
+  std::set<std::shared_ptr<Coroutine>> yielded_coros_{};
+  std::set<Coroutine*> __debug_set_all_coro_{};
 //  std::set<std::shared_ptr<Coroutine>> idle_coros_{};
 
   /**

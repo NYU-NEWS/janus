@@ -11,11 +11,11 @@ class TpccRdProcedure: public TpccProcedure {
  public:
   TpccRdProcedure();
   bool IsOneRound() override;
-  virtual void NewOrderInit(TxnRequest &req) override;
+  virtual void NewOrderInit(TxRequest &req) override;
   virtual void NewOrderRetry() override;
-  virtual void PaymentInit(TxnRequest &req) override;
+  virtual void PaymentInit(TxRequest &req) override;
   virtual void PaymentRetry() override;
-  virtual void DeliveryInit(TxnRequest &req) override;
+  virtual void DeliveryInit(TxRequest &req) override;
   virtual void DeliveryRetry() override;
   virtual ~TpccRdProcedure();
 };

@@ -70,7 +70,7 @@ void RO6Coord::deptran_start(Procedure *ch) {
 //
 //      if (early_return) {
 //        ch->reply_.res_ = SUCCESS;
-//        TxnReply& txn_reply_buf = ch->get_reply();
+//        TxReply& txn_reply_buf = ch->get_reply();
 //        double    last_latency  = ch->last_attempt_latency();
 //        this->report(txn_reply_buf, last_latency
 //#ifdef TXN_STAT
@@ -123,7 +123,7 @@ void RO6Coord::deptran_finish(Procedure *ch) {
 //
 //      if (!ch->do_early_return()) {
 //        ch->reply_.res_ = SUCCESS;
-//        TxnReply& txn_reply_buf = ch->get_reply();
+//        TxReply& txn_reply_buf = ch->get_reply();
 //        double    last_latency  = ch->last_attempt_latency();
 //        this->report(txn_reply_buf, last_latency
 //#ifdef TXN_STAT
@@ -203,7 +203,7 @@ void RO6Coord::ro6_start_ro(Procedure *ch) {
 //
 //          // generate a reply and callback.
 //          Log::debug("snow RO callback, %llx", cmd_->id_);
-//          TxnReply& txn_reply_buf = ch->get_reply();
+//          TxReply& txn_reply_buf = ch->get_reply();
 //          double    last_latency  = ch->last_attempt_latency();
 //          this->report(txn_reply_buf, last_latency
 //#ifdef TXN_STAT
@@ -229,7 +229,7 @@ void RO6Coord::ro6_start_ro(Procedure *ch) {
 //  }
 }
 
-void RO6Coord::do_one(TxnRequest & req) {
+void RO6Coord::do_one(TxRequest & req) {
   // pre-process
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
 

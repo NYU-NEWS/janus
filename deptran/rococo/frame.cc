@@ -3,7 +3,7 @@
 //#include "exec.h"
 //#include "coord.h"
 #include "coordinator.h"
-#include "sched.h"
+#include "scheduler.h"
 #include "tx.h"
 #include "commo.h"
 #include "config.h"
@@ -13,22 +13,22 @@ namespace rococo {
 static Frame *rcc_frame_s = Frame::RegFrame(MODE_RCC,
                                             {"rococo", "rococo"},
                                             []() -> Frame * {
-                                              return new RccFrame();
+                                              return new FrameRococo();
                                             });
 
-Executor *RccFrame::CreateExecutor(cmdid_t cmd_id, Scheduler *sched) {
+Executor *FrameRococo::CreateExecutor(cmdid_t cmd_id, Scheduler *sched) {
   verify(0);
   Executor *exec = nullptr;
 //  Executor* exec = new TapirExecutor(cmd_id, sched);
   return exec;
 }
 
-Coordinator *RccFrame::CreateCoord(cooid_t coo_id,
-                                   Config *config,
-                                   int benchmark,
-                                   ClientControlServiceImpl *ccsi,
-                                   uint32_t id,
-                                   TxnRegistry *txn_reg) {
+Coordinator *FrameRococo::CreateCoordinator(cooid_t coo_id,
+                                         Config *config,
+                                         int benchmark,
+                                         ClientControlServiceImpl *ccsi,
+                                         uint32_t id,
+                                         TxnRegistry *txn_reg) {
   verify(config != nullptr);
   RccCoord *coord = new RccCoord(coo_id,
                                  benchmark,
@@ -39,14 +39,14 @@ Coordinator *RccFrame::CreateCoord(cooid_t coo_id,
   return coord;
 }
 
-Scheduler *RccFrame::CreateScheduler() {
+Scheduler *FrameRococo::CreateScheduler() {
   Scheduler *sched = new SchedulerRococo();
   sched->frame_ = this;
   return sched;
 }
 
 vector<rrr::Service *>
-RccFrame::CreateRpcServices(uint32_t site_id,
+FrameRococo::CreateRpcServices(uint32_t site_id,
                             Scheduler *sched,
                             rrr::PollMgr *poll_mgr,
                             ServerControlServiceImpl *scsi) {
@@ -58,19 +58,19 @@ RccFrame::CreateRpcServices(uint32_t site_id,
   return Frame::CreateRpcServices(site_id, sched, poll_mgr, scsi);
 }
 
-mdb::Row *RccFrame::CreateRow(const mdb::Schema *schema,
+mdb::Row *FrameRococo::CreateRow(const mdb::Schema *schema,
                               vector<Value> &row_data) {
   mdb::Row *r = RCCRow::create(schema, row_data);
   return r;
 }
 
-shared_ptr<Tx> RccFrame::CreateTx(epoch_t epoch, txnid_t tid,
+shared_ptr<Tx> FrameRococo::CreateTx(epoch_t epoch, txnid_t tid,
                                   bool ro, Scheduler *mgr) {
   shared_ptr<Tx> sp_tx(new TxRococo(epoch, tid, mgr, ro));
   return sp_tx;
 }
 
-Communicator *RccFrame::CreateCommo(PollMgr *poll) {
+Communicator *FrameRococo::CreateCommo(PollMgr *poll) {
   return new RccCommo(poll);
 }
 

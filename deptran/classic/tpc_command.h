@@ -3,36 +3,30 @@
 #include "../command.h"
 #include "deptran/procedure.h"
 
-namespace rococo {
+namespace janus {
 
 
 class Procedure;
-class TpcPrepareCommand : public ContainerCommand {
+class TpcPrepareCommand : public Marshallable {
  public:
-  TpcPrepareCommand() {
-    type_ = MarshallDeputy::CMD_TPC_PREPARE;
-    kind_ = MarshallDeputy::CMD_TPC_PREPARE;
+  TpcPrepareCommand() : Marshallable(MarshallDeputy::CMD_TPC_PREPARE) {
   }
-  txnid_t txn_id_ = 0;
-  int32_t res_ = -1;
-  vector<SimpleCommand> cmds_ = {};
+  txnid_t tx_id_ = 0;
+  int32_t ret_ = -1;
+  vector<SimpleCommand> cmds_ = {}; // TODO remove.
 
   Marshal& ToMarshal(Marshal&) const override;
   Marshal& FromMarshal(Marshal&) override;
-  virtual ContainerCommand& Execute() {verify(0);};
 };
 
-class TpcCommitCommand : public ContainerCommand {
+class TpcCommitCommand : public Marshallable {
  public:
-  TpcCommitCommand() {
-    type_ = MarshallDeputy::CMD_TPC_COMMIT;
-    kind_ = MarshallDeputy::CMD_TPC_COMMIT;
+  TpcCommitCommand() : Marshallable(MarshallDeputy::CMD_TPC_COMMIT) {
   }
-  txnid_t txn_id_ = 0;
-  int res_ = -1;
-  virtual Marshal& ToMarshal(Marshal&) const;
-  virtual Marshal& FromMarshal(Marshal&);
-  virtual ContainerCommand& Execute() {verify(0);};
+  txnid_t tx_id_ = 0;
+  int ret_ = -1;
+  virtual Marshal& ToMarshal(Marshal&) const override;
+  virtual Marshal& FromMarshal(Marshal&) override;
 };
 
-} // namespace rococo
+} // namespace janus

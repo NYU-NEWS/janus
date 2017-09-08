@@ -303,7 +303,7 @@ class ClientControlServiceImpl: public ClientControlService {
     pthread_rwlock_unlock(&collect_lock_);
   }
 
-  void DispatchTxn(const TxnDispatchRequest& req, TxnReply* txn_reply, rrr::DeferredReply* defer) override;
+  void DispatchTxn(const TxDispatchRequest& req, TxReply* txn_reply, rrr::DeferredReply* defer) override;
 };
 
 }

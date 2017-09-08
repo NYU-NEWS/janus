@@ -88,18 +88,18 @@ void CoordinatorTapir::FastAccept() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 
   Log_debug("send out fast accept for cmd_id: %llx", cmd_->id_);
-  auto pars = txn().GetPartitionIds();
+  auto pars = tx_data().GetPartitionIds();
   verify(pars.size() > 0);
   int32_t sum = 0;
   for (auto par_id : pars) {
-    vector<SimpleCommand> txn_cmds = txn().GetCmdsByPartition(par_id);
+    vector<SimpleCommand> txn_cmds = tx_data().GetCmdsByPartition(par_id);
     sum += txn_cmds.size();
     verify(txn_cmds.size() > 0);
     verify(txn_cmds.size() < 10000);
     n_fast_accept_oks_[par_id] = 0;
     n_fast_accept_rejects_[par_id] = 0;
     commo()->BroadcastFastAccept(par_id,
-                                 txn().id_,
+                                 tx_data().id_,
                                  txn_cmds,
                                  std::bind(&CoordinatorTapir::FastAcceptAck,
                                            this,
@@ -107,7 +107,7 @@ void CoordinatorTapir::FastAccept() {
                                            par_id,
                                            std::placeholders::_1));
   }
-  verify(sum == txn().cmds_.size());
+  verify(sum == tx_data().cmds_.size());
 }
 
 void CoordinatorTapir::FastAcceptAck(phase_t phase,

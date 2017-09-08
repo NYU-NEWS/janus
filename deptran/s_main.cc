@@ -1,5 +1,4 @@
 
-#include <unistd.h>
 #include "__dep__.h"
 #include "frame.h"
 #include "client_worker.h"
@@ -12,21 +11,21 @@
 # include <google/profiler.h>
 #endif // ifdef CPU_PROFILE
 
-using namespace rococo;
+using namespace janus;
 
 static ClientControlServiceImpl *ccsi_g = nullptr;
 static rrr::PollMgr *cli_poll_mgr_g = nullptr;
 static rrr::Server *cli_hb_server_g = nullptr;
 
 static vector<ServerWorker> svr_workers_g = {};
-vector<ClientWorker*> client_workers_g = {};
-static std::vector<std::thread> client_threads_g = {};
+vector<unique_ptr<ClientWorker>> client_workers_g = {};
+static std::vector<std::thread> client_threads_g = {}; // TODO remove this?
 
 void client_setup_heartbeat(int num_clients) {
   Log_info("%s", __FUNCTION__);
   std::map<int32_t, std::string> txn_types;
   Frame* f = Frame::GetFrame(Config::GetConfig()->cc_mode_);
-  f->GetTxnTypes(txn_types);
+  f->GetTxTypes(txn_types);
   delete f;
   bool hb = Config::GetConfig()->do_heart_beat();
   if (hb) {
@@ -44,7 +43,6 @@ void client_setup_heartbeat(int num_clients) {
   }
 }
 
-
 void client_launch_workers(vector<Config::SiteInfo> &client_sites) {
   // load some common configuration
   // start client workers in new threads.
@@ -57,9 +55,8 @@ void client_launch_workers(vector<Config::SiteInfo> &client_sites) {
                                             Config::GetConfig(),
                                             ccsi_g);
     workers.push_back(worker);
-    client_threads_g.push_back(std::thread(&ClientWorker::work,
-                                         worker));
-    client_workers_g.push_back(worker);
+    client_threads_g.push_back(std::thread(&ClientWorker::Work, worker));
+    client_workers_g.push_back(std::unique_ptr<ClientWorker>(worker));
   }
 
 }
@@ -106,9 +103,7 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
 }
 
 void client_shutdown() {
-  for (auto& worker : client_workers_g) {
-    delete worker;
-  }
+  client_workers_g.clear();
 }
 
 void server_shutdown() {

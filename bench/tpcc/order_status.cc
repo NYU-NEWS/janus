@@ -2,7 +2,7 @@
 
 namespace rococo {
 
-void TpccProcedure::OrderStatusInit(TxnRequest &req) {
+void TpccProcedure::OrderStatusInit(TxRequest &req) {
   order_status_dep_.piece_order = false;
   /**
    * req.input_

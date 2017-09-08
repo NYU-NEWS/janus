@@ -13,10 +13,10 @@ class SimpleCommand;
 namespace janus {
 
 class Scheduler;
-class MultiPaxosSched;
+class SchedulerMultiPaxos;
 class MultiPaxosServiceImpl : public MultiPaxosService {
  public:
-  MultiPaxosSched* sched_;
+  SchedulerMultiPaxos* sched_;
   MultiPaxosServiceImpl(Scheduler* sched);
   void Forward(const MarshallDeputy& cmd,
                rrr::DeferredReply* defer) override;

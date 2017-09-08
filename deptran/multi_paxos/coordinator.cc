@@ -4,20 +4,18 @@
 #include "coordinator.h"
 #include "commo.h"
 
-namespace rococo {
+namespace janus {
 
-
-MultiPaxosCoord::MultiPaxosCoord(uint32_t coo_id,
-                                 int32_t benchmark,
-                                 ClientControlServiceImpl *ccsi,
-                                 uint32_t thread_id)
+CoordinatorMultiPaxos::CoordinatorMultiPaxos(uint32_t coo_id,
+                                             int32_t benchmark,
+                                             ClientControlServiceImpl* ccsi,
+                                             uint32_t thread_id)
     : Coordinator(coo_id, benchmark, ccsi, thread_id) {
 }
 
-
-void MultiPaxosCoord::Submit(ContainerCommand& cmd,
-                             const function<void()>& func,
-                             const std::function<void()>& exe_callback) {
+void CoordinatorMultiPaxos::Submit(shared_ptr<Marshallable>& cmd,
+                                   const function<void()>& func,
+                                   const function<void()>& exe_callback) {
   if (!IsLeader()) {
     Log_fatal("i am not the leader; site %d; locale %d",
               frame_->site_info_->id, loc_id_);
@@ -28,16 +26,16 @@ void MultiPaxosCoord::Submit(ContainerCommand& cmd,
   verify(cmd_ == nullptr);
 //  verify(cmd.self_cmd_ != nullptr);
   in_submission_ = true;
-  cmd_ = &cmd;
+  cmd_ = cmd;
   commit_callback_ = func;
   GotoNextPhase();
 }
 
-ballot_t MultiPaxosCoord::PickBallot() {
-  return curr_ballot_+1;
+ballot_t CoordinatorMultiPaxos::PickBallot() {
+  return curr_ballot_ + 1;
 }
 
-void MultiPaxosCoord::Prepare() {
+void CoordinatorMultiPaxos::Prepare() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   verify(0); // for debug;
   verify(!in_prepare_);
@@ -52,13 +50,13 @@ void MultiPaxosCoord::Prepare() {
   commo()->BroadcastPrepare(par_id_,
                             slot_id_,
                             curr_ballot_,
-                            std::bind(&MultiPaxosCoord::PrepareAck,
+                            std::bind(&CoordinatorMultiPaxos::PrepareAck,
                                       this,
                                       phase_,
                                       std::placeholders::_1));
 }
 
-void MultiPaxosCoord::PrepareAck(phase_t phase, Future *fu) {
+void CoordinatorMultiPaxos::PrepareAck(phase_t phase, Future* fu) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   if (phase_ != phase) return;
   ballot_t max_ballot;
@@ -82,28 +80,26 @@ void MultiPaxosCoord::PrepareAck(phase_t phase, Future *fu) {
   }
 }
 
-void MultiPaxosCoord::Accept() {
+void CoordinatorMultiPaxos::Accept() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   verify(!in_accept);
   in_accept = true;
   Log_debug("multi-paxos coordinator broadcasts accept, "
                 "par_id_: %lx, slot_id: %llx",
             par_id_, slot_id_);
-  auto cmd = (ContainerCommand*) cmd_;
   commo()->BroadcastAccept(par_id_,
-                          slot_id_,
-                          curr_ballot_,
-                          *cmd,
-                          std::bind(&MultiPaxosCoord::AcceptAck,
-                                    this,
-                                    phase_,
-                                    std::placeholders::_1));
+                           slot_id_,
+                           curr_ballot_,
+                           cmd_,
+                           std::bind(&CoordinatorMultiPaxos::AcceptAck,
+                                     this,
+                                     phase_,
+                                     std::placeholders::_1));
 }
 
-void MultiPaxosCoord::AcceptAck(phase_t phase, Future *fu) {
+void CoordinatorMultiPaxos::AcceptAck(phase_t phase, Future* fu) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   if (phase_ > phase) return;
-  Procedure *cmd = (Procedure *) cmd_;
   ballot_t max_ballot;
   fu->get_reply() >> max_ballot;
   if (max_ballot == curr_ballot_) {
@@ -125,19 +121,17 @@ void MultiPaxosCoord::AcceptAck(phase_t phase, Future *fu) {
   }
 }
 
-void MultiPaxosCoord::Commit() {
+void CoordinatorMultiPaxos::Commit() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   commit_callback_();
-  auto cmd = (ContainerCommand*) cmd_;
   Log_debug("multi-paxos broadcast commit for partition: %d, slot %d",
-           (int)par_id_, (int)slot_id_);
-  commo()->BroadcastDecide(par_id_, slot_id_, curr_ballot_, *cmd);
+            (int) par_id_, (int) slot_id_);
+  commo()->BroadcastDecide(par_id_, slot_id_, curr_ballot_, cmd_);
   verify(phase_ == Phase::COMMIT);
   GotoNextPhase();
 }
 
-
-void MultiPaxosCoord::GotoNextPhase() {
+void CoordinatorMultiPaxos::GotoNextPhase() {
   int n_phase = 4;
   int current_phase = phase_ % n_phase;
   switch (phase_++ % n_phase) {
@@ -169,4 +163,4 @@ void MultiPaxosCoord::GotoNextPhase() {
   }
 }
 
-} // namespace rococo
+} // namespace janus

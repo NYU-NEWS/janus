@@ -12,8 +12,7 @@ class Scheduler;
 class SimpleCommand;
 class SchedulerClassic;
 
-
-class ClassicServiceImpl: public ClassicService {
+class ClassicServiceImpl : public ClassicService {
 
  public:
   AvgStat stat_sz_gra_start_;
@@ -25,51 +24,51 @@ class ClassicServiceImpl: public ClassicService {
   uint64_t n_asking_ = 0;
 
   std::mutex mtx_;
-  Recorder *recorder_ = NULL;
-  ServerControlServiceImpl *scsi_; // for statistics;
+  Recorder* recorder_ = NULL;
+  ServerControlServiceImpl* scsi_; // for statistics;
 
-  Scheduler *dtxn_sched_;
+  Scheduler* dtxn_sched_;
 
   Scheduler* dtxn_sched() {
     return dtxn_sched_;
   }
 
-  void rpc_null(DeferredReply *defer);
+  void rpc_null(DeferredReply* defer);
 
-  void Dispatch(const vector<SimpleCommand> &cmd,
-                int32_t *res,
+  void Dispatch(const vector<SimpleCommand>& cmd,
+                int32_t* res,
                 TxnOutput* output,
-                DeferredReply *defer_reply) override;
+                DeferredReply* defer_reply) override;
 
-  void Prepare(const i64 &tid,
-               const std::vector<i32> &sids,
-               i32 *res,
-               DeferredReply *defer) override;
+  void Prepare(const i64& tid,
+               const std::vector<i32>& sids,
+               i32* res,
+               DeferredReply* defer) override;
 
-  void Commit(const i64 &tid,
-              i32 *res,
-              DeferredReply *defer) override;
+  void Commit(const i64& tid,
+              i32* res,
+              DeferredReply* defer) override;
 
-  void Abort(const i64 &tid,
-             i32 *res,
-             DeferredReply *defer) override;
+  void Abort(const i64& tid,
+             i32* res,
+             DeferredReply* defer) override;
 
   void UpgradeEpoch(const uint32_t& curr_epoch,
-                    int32_t *res,
+                    int32_t* res,
                     DeferredReply* defer) override;
 
   void TruncateEpoch(const uint32_t& old_epoch,
                      DeferredReply* defer) override;
 
-  void TapirAccept(const cmdid_t& cmd_id,
+  void TapirAccept(const txid_t& cmd_id,
                    const ballot_t& ballot,
                    const int32_t& decision,
                    rrr::DeferredReply* defer) override;
-  void TapirFastAccept(const cmdid_t& cmd_id,
+  void TapirFastAccept(const txid_t& cmd_id,
                        const vector<SimpleCommand>& txn_cmds,
                        rrr::i32* res,
                        rrr::DeferredReply* defer) override;
-  void TapirDecide(const cmdid_t& cmd_id,
+  void TapirDecide(const txid_t& cmd_id,
                    const rrr::i32& decision,
                    rrr::DeferredReply* defer) override;
 
@@ -99,9 +98,9 @@ class ClassicServiceImpl: public ClassicService {
 
   ClassicServiceImpl() = delete;
 
-  ClassicServiceImpl(Scheduler *sched,
+  ClassicServiceImpl(Scheduler* sched,
                      rrr::PollMgr* poll_mgr,
-                     ServerControlServiceImpl *scsi = NULL);
+                     ServerControlServiceImpl* scsi = NULL);
 
   void RccDispatch(const vector<SimpleCommand>& cmd,
                    int32_t* res,
@@ -109,20 +108,19 @@ class ClassicServiceImpl: public ClassicService {
                    MarshallDeputy* p_md_graph,
                    DeferredReply* defer) override;
 
-  void RccFinish(const cmdid_t& cmd_id,
+  void RccFinish(const txid_t& cmd_id,
                  const MarshallDeputy& md_graph,
                  TxnOutput* output,
                  DeferredReply* defer) override;
 
-
   void RccInquire(const epoch_t& epoch,
-                  const cmdid_t &tid,
+                  const txid_t& tid,
                   MarshallDeputy* p_md_graph,
-                  DeferredReply *) override;
+                  DeferredReply*) override;
 
   void RccDispatchRo(const SimpleCommand& cmd,
-                     map<int32_t, Value> *output,
-                     DeferredReply *reply);
+                     map<int32_t, Value>* output,
+                     DeferredReply* reply);
 
   void JanusDispatch(const vector<SimpleCommand>& cmd,
                      int32_t* p_res,
@@ -130,43 +128,58 @@ class ClassicServiceImpl: public ClassicService {
                      MarshallDeputy* p_md_res_graph,
                      DeferredReply* p_defer) override;
 
-  void JanusCommit(const cmdid_t& cmd_id,
+  void JanusCommit(const txid_t& cmd_id,
                    const MarshallDeputy& graph,
-                   int32_t *res,
+                   int32_t* res,
                    TxnOutput* output,
                    DeferredReply* defer) override;
 
-  void JanusCommitWoGraph(const cmdid_t& cmd_id,
-                          int32_t *res,
+  void JanusCommitWoGraph(const txid_t& cmd_id,
+                          int32_t* res,
                           TxnOutput* output,
                           DeferredReply* defer) override;
 
   void JanusInquire(const epoch_t& epoch,
-                    const cmdid_t &tid,
+                    const txid_t& tid,
                     MarshallDeputy* p_md_graph,
-                    DeferredReply *) override;
+                    DeferredReply*) override;
 
-  void JanusPreAccept(const cmdid_t &txnid,
+  void JanusPreAccept(const txid_t& txnid,
                       const vector<SimpleCommand>& cmd,
                       const MarshallDeputy& md_graph,
                       int32_t* res,
                       MarshallDeputy* p_md_res_graph,
                       DeferredReply* defer) override;
 
-  void JanusPreAcceptWoGraph(const cmdid_t& txnid,
+  void JanusPreAcceptWoGraph(const txid_t& txnid,
                              const vector<SimpleCommand>& cmd,
                              int32_t* res,
                              MarshallDeputy* res_graph,
                              DeferredReply* defer) override;
 
-  void JanusAccept(const cmdid_t &txnid,
+  void JanusAccept(const txid_t& txnid,
                    const ballot_t& ballot,
                    const MarshallDeputy& md_graph,
                    int32_t* res,
                    DeferredReply* defer) override;
-  protected:
-    void RegisterStats();
-  };
+
+  void PreAcceptFebruus(const txid_t& tx_id,
+                        int32_t* res,
+                        uint64_t* timestamp,
+                        DeferredReply* defer) override;
+
+  void AcceptFebruus(const txid_t& tx_id,
+                     const ballot_t& ballot,
+                     const uint64_t& timestamp,
+                     int32_t* res,
+                     DeferredReply* defer) override;
+
+  void CommitFebruus(const txid_t& tx_id,
+                     const uint64_t& timestamp,
+                     int32_t* res, DeferredReply* defer) override;
+ protected:
+  void RegisterStats();
+};
 
 } // namespace rcc
 

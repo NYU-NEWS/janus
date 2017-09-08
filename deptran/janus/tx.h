@@ -3,11 +3,10 @@
 #include "deptran/rococo/tx.h"
 #include "../command.h"
 #include "dep_graph.h"
-#include "brq-common.h"
 
-namespace rococo {
+namespace janus {
 
-class JanusDTxn : public TxRococo {
+class TxJanus : public TxRococo {
 public:
   using TxRococo::TxRococo;
 
@@ -17,4 +16,4 @@ public:
 
 };
 
-} // namespace rococo
+} // namespace janus

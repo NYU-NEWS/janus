@@ -8,7 +8,7 @@
 
 namespace janus {
 
-void RWChopper::W_txn_init(TxnRequest &req) {
+void RWChopper::W_txn_init(TxRequest &req) {
 //  inputs_.clear();
 //  inputs_[RW_BENCHMARK_W_TXN_0] = map<int32_t, Value>({{0, req.input_[0]}});
   GetWorkspace(RW_BENCHMARK_W_TXN_0).keys_ = {0};
@@ -22,7 +22,7 @@ void RWChopper::W_txn_init(TxnRequest &req) {
   n_pieces_all_ = 1;
 }
 
-void RWChopper::R_txn_init(TxnRequest &req) {
+void RWChopper::R_txn_init(TxRequest &req) {
 //  inputs_.clear();
 //  inputs_[RW_BENCHMARK_R_TXN_0] = map<int32_t, Value>({{0, req.input_[0]}});
   GetWorkspace(RW_BENCHMARK_R_TXN_0).keys_ = {0};
@@ -39,15 +39,15 @@ void RWChopper::R_txn_init(TxnRequest &req) {
 RWChopper::RWChopper() {
 }
 
-void RWChopper::Init(TxnRequest &req) {
+void RWChopper::Init(TxRequest &req) {
   ws_init_ = req.input_;
   ws_ = req.input_;
-  type_ = req.txn_type_;
+  type_ = req.tx_type_;
   callback_ = req.callback_;
   max_try_ = req.n_try_;
   n_try_ = 1;
   commit_.store(true);
-  switch (req.txn_type_) {
+  switch (req.tx_type_) {
     case RW_BENCHMARK_W_TXN:
       W_txn_init(req);
       break;

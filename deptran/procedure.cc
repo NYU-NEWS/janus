@@ -10,32 +10,32 @@
 
 namespace rococo {
 
-TxnWorkspace::TxnWorkspace() {
+TxWorkspace::TxWorkspace() {
   values_ = std::make_shared<map<int32_t, Value>>();
 }
 
-TxnWorkspace::~TxnWorkspace() {
+TxWorkspace::~TxWorkspace() {
 //  delete values_;
 }
 
-TxnWorkspace::TxnWorkspace(const TxnWorkspace& rhs)
+TxWorkspace::TxWorkspace(const TxWorkspace& rhs)
     : keys_(rhs.keys_), values_{rhs.values_} {
 }
 
-void TxnWorkspace::Aggregate(const TxnWorkspace& rhs) {
+void TxWorkspace::Aggregate(const TxWorkspace& rhs) {
   keys_.insert(rhs.keys_.begin(), rhs.keys_.end());
   if (values_ != rhs.values_) {
     values_->insert(rhs.values_->begin(), rhs.values_->end());
   }
 }
 
-TxnWorkspace& TxnWorkspace::operator=(const TxnWorkspace& rhs) {
+TxWorkspace& TxWorkspace::operator=(const TxWorkspace& rhs) {
   keys_ = rhs.keys_;
   values_ = rhs.values_;
   return *this;
 }
 
-TxnWorkspace& TxnWorkspace::operator=(const map<int32_t, Value>& rhs) {
+TxWorkspace& TxWorkspace::operator=(const map<int32_t, Value>& rhs) {
   keys_.clear();
   for (const auto& pair: rhs) {
     keys_.insert(pair.first);
@@ -44,7 +44,7 @@ TxnWorkspace& TxnWorkspace::operator=(const map<int32_t, Value>& rhs) {
   return *this;
 }
 
-Value& TxnWorkspace::operator[](size_t idx) {
+Value& TxWorkspace::operator[](size_t idx) {
   keys_.insert(idx);
   return (*values_)[idx];
 }
@@ -56,7 +56,7 @@ Procedure::Procedure() {
   early_return_ = Config::GetConfig()->do_early_return();
 }
 
-Marshal& operator << (Marshal& m, const TxnWorkspace &ws) {
+Marshal& operator << (Marshal& m, const TxWorkspace &ws) {
 //  m << (ws.keys_);
   uint64_t sz = ws.keys_.size();
   m << sz;
@@ -68,7 +68,7 @@ Marshal& operator << (Marshal& m, const TxnWorkspace &ws) {
   return m;
 }
 
-Marshal& operator >> (Marshal& m, TxnWorkspace &ws) {
+Marshal& operator >> (Marshal& m, TxWorkspace &ws) {
   uint64_t sz;
   m >> sz;
   for (uint64_t i = 0; i < sz; i++) {
@@ -81,7 +81,7 @@ Marshal& operator >> (Marshal& m, TxnWorkspace &ws) {
   return m;
 }
 
-Marshal& operator << (Marshal& m, const TxnReply& reply) {
+Marshal& operator << (Marshal& m, const TxReply& reply) {
   m << reply.res_;
   m << reply.output_;
   m << reply.n_try_;
@@ -95,7 +95,7 @@ Marshal& operator << (Marshal& m, const TxnReply& reply) {
   return m;
 }
 
-Marshal& operator >> (Marshal& m, TxnReply& reply) {
+Marshal& operator >> (Marshal& m, TxReply& reply) {
   m >> reply.res_;
   m >> reply.output_;
   m >> reply.n_try_;
@@ -170,7 +170,7 @@ map<parid_t, vector<SimpleCommand*>> Procedure::GetReadyCmds(int32_t max) {
   return cmds;
 }
 
-ContainerCommand *Procedure::GetNextReadySubCmd() {
+TxData *Procedure::GetNextReadySubCmd() {
   verify(0);
   verify(n_pieces_dispatched_ < n_pieces_dispatchable_);
   verify(n_pieces_dispatched_ < n_pieces_all_);
@@ -237,7 +237,7 @@ void Procedure::Merge(innid_t inn_id, map<int32_t, Value>& output) {
   this->HandleOutput(inn_id, SUCCESS, output);
 }
 
-void Procedure::Merge(ContainerCommand &cmd) {
+void Procedure::Merge(TxData &cmd) {
   auto simple_cmd = (SimpleCommand *) &cmd;
   auto pi = cmd.inn_id();
   auto &output = simple_cmd->output;
@@ -307,7 +307,7 @@ double Procedure::last_attempt_latency() {
   return pre_time_ - tmp;
 }
 
-TxnReply &Procedure::get_reply() {
+TxReply &Procedure::get_reply() {
   reply_.start_time_ = start_time_;
   reply_.n_try_ = n_try_;
   struct timespec t_buf;
@@ -317,16 +317,16 @@ TxnReply &Procedure::get_reply() {
   return reply_;
 }
 
-void TxnRequest::get_log(i64 tid, std::string &log) {
+void TxRequest::get_log(i64 tid, std::string &log) {
   uint32_t len = 0;
   len += sizeof(tid);
-  len += sizeof(txn_type_);
+  len += sizeof(tx_type_);
   uint32_t input_size = input_.size();
   len += sizeof(input_size);
   log.resize(len);
   memcpy((void *) log.data(), (void *) &tid, sizeof(tid));
-  memcpy((void *) log.data(), (void *) &txn_type_, sizeof(txn_type_));
-  memcpy((void *) (log.data() + sizeof(txn_type_)), (void *) &input_size, sizeof(input_size));
+  memcpy((void *) log.data(), (void *) &tx_type_, sizeof(tx_type_));
+  memcpy((void *) (log.data() + sizeof(tx_type_)), (void *) &input_size, sizeof(input_size));
   for (int i = 0; i < input_size; i++) {
     log.append(mdb::to_string(input_[i]));
   }

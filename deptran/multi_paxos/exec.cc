@@ -15,7 +15,7 @@ ballot_t MultiPaxosExecutor::Prepare(const ballot_t ballot) {
 }
 
 ballot_t MultiPaxosExecutor::Accept(const ballot_t ballot,
-                                    const ContainerCommand& cmd) {
+                                    const TxData& cmd) {
   verify(max_ballot_accepted_ < ballot);
   if (max_ballot_seen_ <= ballot) {
     max_ballot_seen_ = ballot;
@@ -27,7 +27,7 @@ ballot_t MultiPaxosExecutor::Accept(const ballot_t ballot,
   return max_ballot_seen_;
 }
 
-ballot_t MultiPaxosExecutor::Decide(ballot_t ballot, ContainerCommand& cmd) {
+ballot_t MultiPaxosExecutor::Decide(ballot_t ballot, TxData& cmd) {
   verify(max_ballot_seen_ <= ballot);
   max_ballot_seen_ = ballot;
   max_ballot_accepted_ = ballot;

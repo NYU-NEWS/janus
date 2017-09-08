@@ -18,7 +18,7 @@ class CoordinatorClassic : public Coordinator {
 
   virtual ~CoordinatorClassic() { }
 
-  inline Procedure& txn() {
+  inline Procedure& tx_data() {
     return *(Procedure*)cmd_;
   }
 
@@ -71,7 +71,7 @@ class CoordinatorClassic : public Coordinator {
   }
 
   /** do it asynchronously, thread safe. */
-  virtual void DoTxAsync(TxnRequest &);
+  virtual void DoTxAsync(TxRequest &);
   virtual void Reset() override;
   void Restart();
 
@@ -91,16 +91,16 @@ class CoordinatorClassic : public Coordinator {
   bool AllDispatchAcked();
   virtual void GotoNextPhase();
 
-  void report(TxnReply &txn_reply,
+  void Report(TxReply &txn_reply,
               double last_latency
 #ifdef                                  TXN_STAT
-              ,
-              TxnChopper *ch
+  ,
+  TxnChopper *ch
 #endif /* ifdef TXN_STAT */
-             );
+  );
 
-  void ForwardTxnRequest(TxnRequest &req);
-  void ForwardTxnRequestAck(const TxnReply&);
+  void ForwardTxnRequest(TxRequest &req);
+  void ForwardTxRequestAck(const TxReply&);
   // for debug
   set<txnid_t> ___phase_one_tids_ = set<txnid_t>();
   set<txnid_t> ___phase_three_tids_ = set<txnid_t>();

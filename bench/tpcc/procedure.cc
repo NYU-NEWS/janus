@@ -26,10 +26,10 @@ namespace rococo {
 TpccProcedure::TpccProcedure() {
 }
 
-void TpccProcedure::Init(TxnRequest &req) {
+void TpccProcedure::Init(TxRequest &req) {
   ws_init_ = req.input_;
   ws_ = ws_init_;
-  type_ = req.txn_type_;
+  type_ = req.tx_type_;
   callback_ = req.callback_;
   max_try_ = req.n_try_;
   n_try_ = 1;
@@ -75,7 +75,7 @@ bool TpccProcedure::CheckReady() {
         break;
       } else {
 #ifdef DEBUG_CODE
-    TxnWorkspace& ws = GetWorkspace(pi);
+    TxWorkspace& ws = GetWorkspace(pi);
     if (ws.keys_.size() == 0)
       ws.keys_ = var_set;
     verify(ws_[var].get_kind() != 0);
@@ -85,7 +85,7 @@ bool TpccProcedure::CheckReady() {
     // all found.
     if (all_found && status == WAITING) {
       status = DISPATCHABLE;
-      TxnWorkspace& ws = GetWorkspace(pi);
+      TxWorkspace& ws = GetWorkspace(pi);
       ws.keys_ = var_set;
       n_pieces_dispatchable_++;
       ret = true;
@@ -132,7 +132,7 @@ bool TpccProcedure::HandleOutput(int pi,
   // below is for debug
   if (type_ == TPCC_STOCK_LEVEL && pi == TPCC_STOCK_LEVEL_0) {
     verify(ws_.count(TPCC_VAR_D_NEXT_O_ID) > 0);
-    TxnWorkspace& ws = GetWorkspace(TPCC_STOCK_LEVEL_1);
+    TxWorkspace& ws = GetWorkspace(TPCC_STOCK_LEVEL_1);
     verify(ws.count(TPCC_VAR_D_NEXT_O_ID) > 0);
     verify(status_[TPCC_STOCK_LEVEL_1] == DISPATCHABLE);
   }

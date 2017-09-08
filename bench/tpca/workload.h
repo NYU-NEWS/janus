@@ -33,8 +33,8 @@ class TpcaWorkload : public Workload {
   std::mt19937 rand_gen_{};
   map<int32_t, int32_t> key_ids_{};
   TpcaWorkload(Config* config);
-  virtual void GetTxnReq(TxnRequest *req, uint32_t cid) override;
-//  virtual void GetTxnReq(TxnRequest *req,
+  virtual void GetTxRequest(TxRequest* req, uint32_t cid) override;
+//  virtual void GetTxRequest(TxnRequest *req,
 //                         uint32_t i_client,
 //                         uint32_t n_client) override;
 };

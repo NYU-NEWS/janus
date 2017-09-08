@@ -165,7 +165,7 @@ std::vector<i64> ReadTxnIdTracker::getReadTxnIds(int column_id) {
 
 /*
  * Comment this out here, but we need this functionality when move all implementation to upper level
- * -> RO6DTxn
+ * -> TxSnow
  */
 Value RO6Row::get_column(int column_id, i64 txnId) {
   version_t version_number = rtxn_tracker.checkIfTxnIdBeenRecorded(column_id, txnId, false, 0);

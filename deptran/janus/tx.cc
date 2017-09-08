@@ -1,9 +1,9 @@
 
-#include "dtxn.h"
+#include "tx.h"
 
 namespace rococo {
 
-void JanusDTxn::DispatchExecute(SimpleCommand &cmd,
+void TxJanus::DispatchExecute(SimpleCommand &cmd,
                               int32_t *res,
                               map<int32_t, Value> *output) {
   for (auto& c: dreqs_) {

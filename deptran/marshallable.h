@@ -6,12 +6,12 @@ namespace janus {
 class Marshallable {
  public:
   int32_t kind_{0};
-  Marshallable(int32_t k): kind_(k) {};
-  virtual ~Marshallable() {};
+  Marshallable() = delete;
+  explicit Marshallable(int32_t k): kind_(k) {};
+  virtual ~Marshallable() = default;
   virtual Marshal& ToMarshal(Marshal& m) const;
   virtual Marshal& FromMarshal(Marshal& m);
 };
-
 
 class MarshallDeputy {
  public:
@@ -20,9 +20,8 @@ class MarshallDeputy {
   static function<Marshallable*()>& GetInitializer(int32_t);
 
  public:
-  Marshallable* data_{nullptr};
-  bool manage_memory_{false};
-  int32_t kind_;
+  shared_ptr<Marshallable> sp_data_{nullptr};
+  int32_t kind_{0};
   enum Kind {
     UNKNOWN=0,
     EMPTY_GRAPH=1,
@@ -39,24 +38,17 @@ class MarshallDeputy {
    * This should be called by inherited class as instructor.
    * @param kind
    */
-  MarshallDeputy(Marshallable* m, bool manage_memory): data_(m) {
-    manage_memory_ = manage_memory;
+  MarshallDeputy(shared_ptr<Marshallable> m): sp_data_(m) {
   }
-
 
   Marshal& CreateActuallObjectFrom(Marshal &m);
-  void SetMarshallable(Marshallable* m, bool manage_memory) {
-    verify(data_ == nullptr);
-    data_ = m;
+  void SetMarshallable(shared_ptr<Marshallable> m) {
+    verify(sp_data_ == nullptr);
+    sp_data_ = m;
     kind_ = m->kind_;
-    manage_memory_ = manage_memory;
   }
 
-  ~MarshallDeputy() {
-    if (manage_memory_) {
-      delete data_;
-    }
-  }
+  ~MarshallDeputy() = default;
 };
 
 inline Marshal& operator>>(Marshal& m, MarshallDeputy& rhs) {
@@ -67,8 +59,8 @@ inline Marshal& operator>>(Marshal& m, MarshallDeputy& rhs) {
 
 inline Marshal& operator<<(Marshal& m, const MarshallDeputy& rhs) {
   m << rhs.kind_;
-  verify(rhs.data_); // must be non-empty
-  rhs.data_->ToMarshal(m);
+  verify(rhs.sp_data_); // must be non-empty
+  rhs.sp_data_->ToMarshal(m);
   return m;
 }
 

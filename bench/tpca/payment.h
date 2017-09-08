@@ -11,7 +11,7 @@ class TpcaPaymentChopper: public Procedure {
 
   TpcaPaymentChopper() {}
 
-  virtual void Init(TxnRequest &req);
+  virtual void Init(TxRequest &req);
 
   virtual bool HandleOutput(int pi,
                             int res,

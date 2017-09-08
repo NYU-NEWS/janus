@@ -37,9 +37,9 @@ class Alarm: public FrequentJob {
            std::function<void(void)> > idx_time_;
 
   Alarm() : th_(), waiting_(), idx_time_()
-//	th_([this] () { 
+//	th_([this] () {
 //		this->alarm_loop();
-//	    }) 
+//	    })
   {
     period_ = 50 * 1000; // 50ms;
   }
@@ -48,14 +48,9 @@ class Alarm: public FrequentJob {
   Alarm& operator=(const Alarm&) = delete;
 
   ~Alarm() {
-    if (holder) {
-      holder->remove(this);
-    }
   }
 
   void set_holder(rrr::PollMgr *mgr) {
-    holder = mgr;
-    holder->add(this);
   }
 
   bool exe_next() {
@@ -75,7 +70,12 @@ class Alarm: public FrequentJob {
     return ret;
   }
 
-  void run() {
+  bool Done() override {
+    verify(0);
+    return true;
+  }
+
+  void Work() override {
     while (exe_next()) { }
   }
 
@@ -110,4 +110,4 @@ class Alarm: public FrequentJob {
 
 };
 
-} // namespace deptran
+} // namespace rrr

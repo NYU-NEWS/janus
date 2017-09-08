@@ -15,7 +15,7 @@ class Coordinator;
 class Sharding;
 //class ChopStartResponse;
 
-class TxnReply {
+class TxReply {
  public:
   int32_t res_;
   int32_t n_try_;
@@ -26,16 +26,16 @@ class TxnReply {
   txnid_t tx_id_;
 };
 
-class TxnWorkspace {
+class TxWorkspace {
  public:
   set<int32_t> keys_ = {};
   std::shared_ptr<map<int32_t, Value>> values_{};
-  TxnWorkspace();
-  ~TxnWorkspace();
-  TxnWorkspace(const TxnWorkspace& rhs);
-  TxnWorkspace& operator= (const map<int32_t, Value> &rhs);
-  TxnWorkspace& operator= (const TxnWorkspace& rhs);
-  void Aggregate(const TxnWorkspace& rhs);
+  TxWorkspace();
+  ~TxWorkspace();
+  TxWorkspace(const TxWorkspace& rhs);
+  TxWorkspace& operator= (const map<int32_t, Value> &rhs);
+  TxWorkspace& operator= (const TxWorkspace& rhs);
+  void Aggregate(const TxWorkspace& rhs);
   Value& operator[] (size_t idx);
 
   size_t count(int32_t k) {
@@ -64,23 +64,23 @@ class TxnWorkspace {
   }
 };
 
-class TxnRequest {
+class TxRequest {
  public:
-  uint32_t txn_type_ = ~0;
-  TxnWorkspace input_{};    // the inputs for the transactions.
+  uint32_t tx_type_ = ~0;
+  TxWorkspace input_{};    // the inputs for the transactions.
   int n_try_ = 20;
-  function<void(TxnReply &)> callback_ = [] (TxnReply&)->void {verify(0);};
+  function<void(TxReply &)> callback_ = [] (TxReply&)->void {verify(0);};
   function<void()> fail_callback_ = [] () {verify(0);};
   void get_log(i64 tid, std::string &log);
 };
 
-Marshal& operator << (Marshal& m, const TxnWorkspace &ws);
+Marshal& operator << (Marshal& m, const TxWorkspace &ws);
 
-Marshal& operator >> (Marshal& m, TxnWorkspace& ws);
+Marshal& operator >> (Marshal& m, TxWorkspace& ws);
 
-Marshal& operator << (Marshal& m, const TxnReply& reply);
+Marshal& operator << (Marshal& m, const TxReply& reply);
 
-Marshal& operator >> (Marshal& m, TxnReply& reply);
+Marshal& operator >> (Marshal& m, TxReply& reply);
 
 enum CommandStatus {
   WAITING=-1,
@@ -91,11 +91,11 @@ enum CommandStatus {
 };
 
 // TODO rename to TxnPiece?
-class SimpleCommand: public ContainerCommand {
+class SimpleCommand: public TxData {
  public:
-  ContainerCommand* root_ = nullptr;
+  TxData* root_ = nullptr;
   uint64_t timestamp_{0};
-  TxnWorkspace input{};
+  TxWorkspace input{};
   map<int32_t, Value> output{};
   int32_t output_size = 0;
   parid_t partition_id_ = 0xFFFFFFFF;
@@ -103,8 +103,8 @@ class SimpleCommand: public ContainerCommand {
     verify(partition_id_ != 0xFFFFFFFF);
     return partition_id_;
   }
-  virtual ContainerCommand* RootCmd() const {return root_;}
-  virtual ContainerCommand* Clone() const override {
+  virtual TxData* RootCmd() const {return root_;}
+  virtual TxData* Clone() const override {
     SimpleCommand* cmd = new SimpleCommand();
     *cmd = *this;
     return cmd;
@@ -120,7 +120,7 @@ typedef SimpleCommand TxPieceData;
  *   2. conflict ready
  *   3. all (execute) ready
  */
-class Procedure: public ContainerCommand {
+class Procedure: public TxData {
  private:
   static inline bool is_consistent(map<int32_t, Value> &previous,
                                    map<int32_t, Value> &current) {
@@ -131,7 +131,7 @@ class Procedure: public ContainerCommand {
         return false;
     return true;
   }
-  map<innid_t, TxnWorkspace> inputs_ = {};  // input of each piece.
+  map<innid_t, TxWorkspace> inputs_ = {};  // input of each piece.
  public:
   bool read_only_failed_ = false;
   double pre_time_ = 0.0;
@@ -144,8 +144,8 @@ class Procedure: public ContainerCommand {
  public:
   txnid_t txn_id_; // TODO obsolete
   uint64_t timestamp_ = 0;
-  TxnWorkspace ws_ = {}; // workspace.
-  TxnWorkspace ws_init_ = {};
+  TxWorkspace ws_ = {}; // workspace.
+  TxWorkspace ws_init_ = {};
   TxnOutput outputs_ = {};
   map<int32_t, int32_t> output_size_ = {};
   map<int32_t, cmdtype_t> p_types_ = {};                  // types of each piece.
@@ -170,13 +170,13 @@ class Procedure: public ContainerCommand {
   TxnRegistry *txn_reg_ = nullptr;
   Sharding *sss_ = nullptr;
 
-  std::function<void(TxnReply &)> callback_;
-  TxnReply reply_;
+  std::function<void(TxReply &)> callback_;
+  TxReply reply_;
   struct timespec start_time_;
 
   Procedure();
 
-  virtual void Init(TxnRequest &req) = 0;
+  virtual void Init(TxRequest &req) = 0;
 
   // phase 1, res is NULL
   // phase 2, res returns SUCCESS is output is consistent with previous value
@@ -190,16 +190,16 @@ class Procedure: public ContainerCommand {
   }
   virtual bool OutputReady();
   virtual bool IsFinished(){verify(0);}
-  virtual void Merge(ContainerCommand&);
+  virtual void Merge(TxData&);
   virtual void Merge(innid_t inn_id, map<int32_t, Value>& output);
   virtual void Merge(TxnOutput& output);
   virtual bool HasMoreSubCmdReadyNotOut();
-  virtual ContainerCommand* GetNextReadySubCmd() override;
+  virtual TxData* GetNextReadySubCmd() override;
   virtual map<parid_t, vector<SimpleCommand*>> GetReadyCmds(int32_t max=0);
   virtual set<parid_t> GetPartitionIds();
-  TxnWorkspace& GetWorkspace(innid_t inn_id) {
+  TxWorkspace& GetWorkspace(innid_t inn_id) {
     verify(inn_id != 0);
-    TxnWorkspace& ws = inputs_[inn_id];
+    TxWorkspace& ws = inputs_[inn_id];
     if (ws.values_->size() == 0)
       ws.values_ = ws_.values_;
     return ws;
@@ -229,7 +229,7 @@ class Procedure: public ContainerCommand {
 
   double last_attempt_latency();
 
-  TxnReply &get_reply();
+  TxReply &get_reply();
 
   /** for retry */
   virtual void Reset();

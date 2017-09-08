@@ -2,7 +2,7 @@
 #include "../__dep__.h"
 #include "../constants.h"
 #include "dep_graph.h"
-#include "dtxn.h"
+#include "tx.h"
 
 namespace rococo {
 

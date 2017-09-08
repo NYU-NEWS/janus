@@ -4,7 +4,7 @@
 namespace rococo {
 
 
-void TpccProcedure::StockLevelInit(TxnRequest &req) {
+void TpccProcedure::StockLevelInit(TxRequest &req) {
 
   n_pieces_all_ = 2;
   n_pieces_dispatchable_ = 1;

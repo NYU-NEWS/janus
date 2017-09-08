@@ -399,7 +399,7 @@ namespace rococo {
     }
 
     void ClientControlServiceImpl::DispatchTxn(
-        const TxnDispatchRequest& req, TxnReply* txn_reply, rrr::DeferredReply* defer) {
+        const TxDispatchRequest& req, TxReply* txn_reply, rrr::DeferredReply* defer) {
       // TODO: fix -- we dont need to do this everytime.
       std::vector<ClientWorker*> locale0_workers;
       for (auto worker : client_workers_g) {
@@ -411,14 +411,14 @@ namespace rococo {
       auto worker = locale0_workers[rrr::RandomGenerator::rand(0, locale0_workers.size()-1)];
       Log_info("%s: from coo %d; site %d", __FUNCTION__, req.id, worker->my_site_.id);
       verify(worker->my_site_.locale_id == 0);
-      TxnRequest request;
+      TxRequest request;
       size_t i = 0;
       for (auto &v : req.input) {
         request.input_[i] = v;
         i++;
       }
       request.n_try_ = 0;
-      request.txn_type_ = req.txn_type;
+      request.tx_type_ = req.tx_type;
       worker->AcceptForwardedRequest(request, txn_reply, defer);
     }
 }

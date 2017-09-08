@@ -13,7 +13,7 @@
 #include "communicator.h"
 
 
-namespace rococo {
+namespace janus {
 
 class Coordinator;
 
@@ -49,6 +49,6 @@ class RococoCommunicator : public Communicator {
                                                     int32_t& graph)>& callback);
 
   void SendTruncateEpoch(epoch_t old_epoch);
-  void SendForwardTxnRequest(TxnRequest& req, Coordinator* coo, std::function<void(const TxnReply&)> callback);
+  void SendForwardTxnRequest(TxRequest& req, Coordinator* coo, std::function<void(const TxReply&)> callback);
 };
-} // namespace rococo
+} // namespace janus

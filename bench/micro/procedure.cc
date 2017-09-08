@@ -5,8 +5,8 @@ namespace rococo {
 MicroProcedure::MicroProcedure() {
 }
 
-void MicroProcedure::InitW(TxnRequest &req) {
-//  verify(req.txn_type_ == MICRO_BENCH_W);
+void MicroProcedure::InitW(TxRequest &req) {
+//  verify(req.tx_type_ == MICRO_BENCH_W);
 //  type_ = MICRO_BENCH_W;
 //  inputs_.clear();
 //  inputs_[MICRO_BENCH_W_0] = {
@@ -41,11 +41,11 @@ void MicroProcedure::InitW(TxnRequest &req) {
 //  };
 }
 
-void MicroProcedure::Init(TxnRequest &req) {
+void MicroProcedure::Init(TxRequest &req) {
   ws_init_ = req.input_;
   ws_ = req.input_;
 
-  switch (req.txn_type_) {
+  switch (req.tx_type_) {
     case MICRO_BENCH_R:
       InitR(req);
       break;
@@ -75,8 +75,8 @@ void MicroProcedure::Init(TxnRequest &req) {
   sss_->GetPartition(MICRO_BENCH_TABLE_D, req.input_[3], sharding_[3]);
 }
 
-void MicroProcedure::InitR(TxnRequest &req) {
-  verify(req.txn_type_ == MICRO_BENCH_R);
+void MicroProcedure::InitR(TxRequest &req) {
+  verify(req.tx_type_ == MICRO_BENCH_R);
   type_ = MICRO_BENCH_R;
 //  inputs_[MICRO_BENCH_R_0] = {{MICRO_VAR_K_0, req.input_[0]}};
 //  inputs_[MICRO_BENCH_R_1] = {{MICRO_VAR_K_1, req.input_[1]}};

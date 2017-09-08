@@ -36,7 +36,9 @@ bool SchedulerClassic::OnDispatch(TxPieceData &piece_data,
       }
     }
   }
+  tx.fully_dispatched_.Set(1);
   // wait for an execution signal.
+  tx.ev_execute_ready_.Wait();
   int ret_code;
   piece_data.input.Aggregate(tx.ws_);
   piece_def.proc_handler_(nullptr,
@@ -65,7 +67,7 @@ bool SchedulerClassic::OnPrepare(txnid_t tx_id,
 
   if (Config::GetConfig()->IsReplicated()) {
 //    TpcPrepareCommand *cmd = new TpcPrepareCommand; // TODO watch out memory
-//    cmd->txn_id_ = tx_id;
+//    cmd->tx_id_ = tx_id;
 //    cmd->cmds_ = exec->cmds_;
 //    CreateRepCoord()->Submit(*cmd);
   } else if (Config::GetConfig()->do_logging()) {
@@ -84,7 +86,7 @@ int SchedulerClassic::PrepareReplicated(TpcPrepareCommand &prepare_cmd) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   // TODO verify it is the same leader, error if not.
   // TODO and return the prepare callback here.
-//  auto tid = prepare_cmd.txn_id_;
+//  auto tid = prepare_cmd.tx_id_;
 //  auto exec = dynamic_cast<ClassicExecutor *>(GetOrCreateExecutor(tid));
 //  verify(prepare_cmd.cmds_.size() > 0);
 //  if (exec->cmds_.size() == 0)
@@ -108,7 +110,7 @@ int SchedulerClassic::OnCommit(txnid_t tx_id,
   if (Config::GetConfig()->IsReplicated()) {
 //    exec->commit_reply_ = [callback] (int r) {callback();};
 //    TpcCommitCommand* cmd = new TpcCommitCommand;
-//    cmd->txn_id_ = cmd_id;
+//    cmd->tx_id_ = cmd_id;
 //    cmd->res_ = commit_or_abort;
 //    CreateRepCoord()->Submit(*cmd);
   } else {
@@ -150,7 +152,7 @@ int SchedulerClassic::CommitReplicated(TpcCommitCommand &tpc_commit_cmd) {
   // TODO disable for now.
   verify(0);
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  auto txn_id = tpc_commit_cmd.txn_id_;
+  auto txn_id = tpc_commit_cmd.tx_id_;
 //  auto exec = (ClassicExecutor *) GetOrCreateExecutor(txn_id);
 //  verify(exec->phase_ < 3);
 //  exec->phase_ = 3;
@@ -169,7 +171,7 @@ int SchedulerClassic::CommitReplicated(TpcCommitCommand &tpc_commit_cmd) {
 //  TrashExecutor(txn_id);
 }
 
-void SchedulerClassic::OnLearn(ContainerCommand &cmd) {
+void SchedulerClassic::OnLearn(TxData &cmd) {
   if (cmd.type_ == MarshallDeputy::CMD_TPC_PREPARE) {
     TpcPrepareCommand &c = dynamic_cast<TpcPrepareCommand &>(cmd);
     PrepareReplicated(c);

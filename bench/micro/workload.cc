@@ -10,16 +10,16 @@ char MICRO_BENCH_TABLE_B[] = "table_b";
 char MICRO_BENCH_TABLE_C[] = "table_c";
 char MICRO_BENCH_TABLE_D[] = "table_d";
 
-void MicroWorkload::GetReadReq(TxnRequest *req, uint32_t cid) const {
-  req->txn_type_ = MICRO_BENCH_R;
+void MicroWorkload::GetReadReq(TxRequest *req, uint32_t cid) const {
+  req->tx_type_ = MICRO_BENCH_R;
   req->input_[0] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_a_ - 1));
   req->input_[1] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_b_ - 1));
   req->input_[2] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_c_ - 1));
   req->input_[3] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_d_ - 1));
 }
 
-void MicroWorkload::GetWriteReq(TxnRequest *req, uint32_t cid) const {
-  req->txn_type_ = MICRO_BENCH_W;
+void MicroWorkload::GetWriteReq(TxRequest *req, uint32_t cid) const {
+  req->tx_type_ = MICRO_BENCH_W;
   req->input_[0] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_a_ - 1));
   req->input_[1] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_b_ - 1));
   req->input_[2] = Value((i32) RandomGenerator::rand(0, micro_bench_para_.n_table_c_ - 1));
@@ -30,7 +30,7 @@ void MicroWorkload::GetWriteReq(TxnRequest *req, uint32_t cid) const {
   req->input_[7] = Value((i64) RandomGenerator::rand(0, 1000));
 }
 
-void MicroWorkload::GetTxnReq(TxnRequest *req, uint32_t cid) {
+void MicroWorkload::GetTxRequest(TxRequest* req, uint32_t cid) {
   req->n_try_ = n_try_;
   if (txn_weight_.size() != 2)
     GetReadReq(req, cid);

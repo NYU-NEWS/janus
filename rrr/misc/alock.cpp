@@ -18,11 +18,11 @@ uint64_t ALock::Lock(uint64_t owner,
       = [&proceed, &ret_id](uint64_t id) {
         ret_id = id;
         verify(id > 0);
-        proceed.set(1);
+        proceed.Set(1);
       };
   std::function<void()> _no_callback
       = [&]() {
-        proceed.set(1);
+        proceed.Set(1);
       };
   std::function<int()> _wound_callback
       = []() {

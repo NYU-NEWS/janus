@@ -5,7 +5,7 @@ namespace janus {
 
 static uint32_t TXN_TYPE = TPCC_NEW_ORDER;
 
-void TpccProcedure::NewOrderInit(TxnRequest &req) {
+void TpccProcedure::NewOrderInit(TxRequest &req) {
   NewOrderRetry();
 }
 

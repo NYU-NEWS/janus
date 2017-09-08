@@ -38,12 +38,12 @@ TpcaWorkload::TpcaWorkload(Config* config) : Workload(config) {
   rand_gen_.seed((int)std::time(0) + (uint64_t)pthread_self());
 }
 
-//void TpcaWorkload::GetTxnReq(TxnRequest* req,
+//void TpcaWorkload::GetTxRequest(TxnRequest* req,
 //                             uint32_t i_client,
 //                             uint32_t n_client) {
 //  Value amount((i64) RandomGenerator::rand(0, 10000));
 //  req->n_try_ = n_try_;
-//  req->txn_type_ = TPCA_PAYMENT;
+//  req->tx_type_ = TPCA_PAYMENT;
 //  verify(i_client < n_client);
 //  int k1, k2, k3;
 //  auto& dist = Config::GetConfig()->dist_;
@@ -94,10 +94,10 @@ TpcaWorkload::TpcaWorkload(Config* config) : Workload(config) {
 //      {3, amount}};
 //}
 
-void TpcaWorkload::GetTxnReq(TxnRequest *req, uint32_t cid) {
+void TpcaWorkload::GetTxRequest(TxRequest* req, uint32_t cid) {
   Value amount((i64) RandomGenerator::rand(0, 10000));
   req->n_try_ = n_try_;
-  req->txn_type_ = TPCA_PAYMENT;
+  req->tx_type_ = TPCA_PAYMENT;
 
   auto& dist = Config::GetConfig()->dist_;
   auto& rotate = Config::GetConfig()->rotate_;

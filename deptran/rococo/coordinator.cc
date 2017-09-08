@@ -26,9 +26,10 @@ void RccCoord::PreDispatch() {
   auto dispatch = std::bind(&RccCoord::DispatchAsync, this);
   if (recorder_) {
     std::string log_s;
+    verify(0);
     // TODO get appropriate log
 //    req.get_log(cmd_->id_, log_s);
-    recorder_->submit(log_s, dispatch);
+    //recorder_->submit(log_s, dispatch);
   } else {
     dispatch();
   }
@@ -68,9 +69,9 @@ void RccCoord::DispatchAck(phase_t phase,
                            RccGraph &graph) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(phase == phase_); // cannot proceed without all acks.
-  verify(txn().root_id_ == txn().id_);
+  verify(tx_data().root_id_ == tx_data().id_);
   verify(graph.vertex_index().size() > 0);
-  TxRococo& info = *(graph.vertex_index().at(txn().root_id_));
+  TxRococo& info = *(graph.vertex_index().at(tx_data().root_id_));
 //  verify(cmd[0].root_id_ == info.id());
 //  verify(info.partition_.find(cmd.partition_id_) != info.partition_.end());
 
@@ -78,28 +79,29 @@ void RccCoord::DispatchAck(phase_t phase,
     n_dispatch_ack_++;
     verify(dispatch_acks_[pair.first] == false);
     dispatch_acks_[pair.first] = true;
-    txn().Merge(pair.first, pair.second);
+    tx_data().Merge(pair.first, pair.second);
     Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
-              n_dispatch_ack_, n_dispatch_, txn().id_, pair.first);
+              n_dispatch_ack_, n_dispatch_, tx_data().id_, pair.first);
   }
 
   // where should I store this graph?
   Log_debug("start response graph size: %d", (int)graph.size());
   verify(graph.size() > 0);
 
-  graph_.Aggregate(0, graph);
+  sp_graph_->Aggregate(0, graph);
 
   // TODO?
-  if (graph.size() > 1) txn().disable_early_return();
+  if (graph.size() > 1) tx_data().disable_early_return();
 
-  if (txn().HasMoreSubCmdReadyNotOut()) {
+  if (tx_data().HasMoreSubCmdReadyNotOut()) {
     Log_debug("command has more sub-cmd, cmd_id: %lx,"
                   " n_started_: %d, n_pieces: %d",
-              txn().id_, txn().n_pieces_dispatched_, txn().GetNPieceAll());
+              tx_data().id_,
+              tx_data().n_pieces_dispatched_, tx_data().GetNPieceAll());
     DispatchAsync();
   } else if (AllDispatchAcked()) {
     Log_debug("receive all start acks, txn_id: %llx; START PREPARE", cmd_->id_);
-    verify(!txn().do_early_return());
+    verify(!tx_data().do_early_return());
     GotoNextPhase();
   }
 }
@@ -111,26 +113,22 @@ void RccCoord::Finish() {
   // commit or abort piece
   Log_debug(
     "send rococo finish requests to %d servers, tid: %llx, graph size: %d",
-    (int)ch->partition_ids_.size(),
-    cmd_->id_,
-    graph_.size());
-  auto v = graph_.FindV(cmd_->id_);
+    (int)ch->partition_ids_.size(), cmd_->id_, sp_graph_->size());
+  auto v = sp_graph_->FindV(cmd_->id_);
   TxRococo& info = *v;
   verify(ch->partition_ids_.size() == info.partition_.size());
-  graph_.UpgradeStatus(*v, TXN_CMT);
-
-  verify(graph_.size() > 0);
+  sp_graph_->UpgradeStatus(*v, TXN_CMT);
+  verify(sp_graph_->size() > 0);
 
   for (auto& rp : ch->partition_ids_) {
     commo()->SendFinish(rp,
                         cmd_->id_,
-                        graph_,
+                        sp_graph_,
                         std::bind(&RccCoord::FinishAck,
                                   this,
                                   phase_,
                                   SUCCESS,
                                   std::placeholders::_1));
-//    Future::safe_release(proxy->async_rcc_finish_txn(req, fuattr));
   }
 }
 
@@ -142,10 +140,10 @@ void RccCoord::FinishAck(phase_t phase,
   n_finish_ack_++;
 
   Log_debug("receive finish response. tid: %llx", cmd_->id_);
-  txn().outputs_.insert(output.begin(), output.end());
+  tx_data().outputs_.insert(output.begin(), output.end());
 
-  verify(!txn().do_early_return());
-  bool all_acked = (n_finish_ack_ == txn().GetPartitionIds().size());
+  verify(!tx_data().do_early_return());
+  bool all_acked = (n_finish_ack_ == tx_data().GetPartitionIds().size());
 //  verify(all_acked == txn().OutputReady());
   if (all_acked) {
     // generate a reply and callback.
@@ -209,9 +207,9 @@ void RccCoord::DispatchRoAck(phase_t phase,
 
 void RccCoord::Reset() {
   CoordinatorClassic::Reset();
-  graph_.Clear();
-  verify(graph_.size() == 0);
-  verify(graph_.vertex_index().size() == 0);
+  sp_graph_->Clear();
+  verify(sp_graph_->size() == 0);
+  verify(sp_graph_->vertex_index().size() == 0);
   ro_state_ = BEGIN;
   last_vers_.clear();
   curr_vers_.clear();

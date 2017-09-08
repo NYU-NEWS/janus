@@ -37,7 +37,7 @@ class SchedulerClassic: public Scheduler {
 
   virtual void DoAbort(Tx& tx_box);
 
-  void OnLearn(ContainerCommand&) override;
+  void OnLearn(TxData&) override;
 
   int PrepareReplicated(TpcPrepareCommand& prepare_cmd);
   int CommitReplicated(TpcCommitCommand& commit_cmd);

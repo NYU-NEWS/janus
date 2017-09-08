@@ -6,11 +6,11 @@
 #include "workload.h"
 #include "benchmark_control_rpc.h"
 
-namespace rococo {
+namespace janus {
 
 ClientWorker::~ClientWorker() {
-  if (txn_generator_) {
-    delete txn_generator_;
+  if (tx_generator_) {
+    delete tx_generator_;
   }
   for (auto c : created_coordinators_) {
     delete c;
@@ -18,7 +18,10 @@ ClientWorker::~ClientWorker() {
   dispatch_pool_->release();
 }
 
-void ClientWorker::ForwardRequestDone(Coordinator* coo,TxnReply* output, rrr::DeferredReply* defer, TxnReply &txn_reply) {
+void ClientWorker::ForwardRequestDone(Coordinator* coo,
+                                      TxReply* output,
+                                      DeferredReply* defer,
+                                      TxReply& txn_reply) {
   verify(coo != nullptr);
   verify(output != nullptr);
 
@@ -46,7 +49,7 @@ void ClientWorker::ForwardRequestDone(Coordinator* coo,TxnReply* output, rrr::De
   defer->reply();
 }
 
-void ClientWorker::RequestDone(Coordinator* coo, TxnReply &txn_reply) {
+void ClientWorker::RequestDone(Coordinator* coo, TxReply& txn_reply) {
   verify(coo != nullptr);
 
   if (txn_reply.res_ == SUCCESS)
@@ -56,7 +59,6 @@ void ClientWorker::RequestDone(Coordinator* coo, TxnReply &txn_reply) {
 
   bool have_more_time = timer_->elapsed() < duration;
   Log_debug("received callback from tx_id %" PRIx64, txn_reply.tx_id_);
-
   Log_debug("elapsed: %2.2f; duration: %d", timer_->elapsed(), duration);
   if (have_more_time && config_->client_type_ == Config::Open) {
     std::lock_guard<std::mutex> lock(coordinator_mutex);
@@ -78,7 +80,8 @@ void ClientWorker::RequestDone(Coordinator* coo, TxnReply &txn_reply) {
       // for debug purpose, print ongoing transaction ids.
       for (auto c : created_coordinators_) {
         if (c->ongoing_tx_id_ > 0) {
-          Log_debug("\t %" PRIx64, c->ongoing_tx_id_);
+          Log_debug("\t %"
+                        PRIx64, c->ongoing_tx_id_);
         }
       }
     }
@@ -87,7 +90,6 @@ void ClientWorker::RequestDone(Coordinator* coo, TxnReply &txn_reply) {
     verify(0);
   }
 }
-
 
 Coordinator* ClientWorker::FindOrCreateCoordinator() {
   std::lock_guard<std::mutex> lock(coordinator_mutex);
@@ -108,28 +110,31 @@ Coordinator* ClientWorker::FindOrCreateCoordinator() {
   return coo;
 }
 
-
 Coordinator* ClientWorker::CreateCoordinator(uint16_t offset_id) {
 
   cooid_t coo_id = cli_id_;
   coo_id = (coo_id << 16) + offset_id;
-  auto coo = frame_->CreateCoord(coo_id,
-                                 config_,
-                                 benchmark,
-                                 ccsi,
-                                 id,
-                                 txn_reg_);
+  auto coo = frame_->CreateCoordinator(coo_id,
+                                       config_,
+                                       benchmark,
+                                       ccsi,
+                                       id,
+                                       txn_reg_);
   coo->loc_id_ = my_site_.locale_id;
   coo->commo_ = commo_;
   coo->forward_status_ = forward_requests_to_leader_ ? FORWARD_TO_LEADER : NONE;
-  Log_info("coordinator %d created at site %d: forward %d", coo->coo_id_, this->my_site_.id, coo->forward_status_);
+  Log_info("coordinator %d created at site %d: forward %d",
+           coo->coo_id_,
+           this->my_site_.id,
+           coo->forward_status_);
   created_coordinators_.push_back(coo);
   return coo;
 }
 
-void ClientWorker::work() {
+void ClientWorker::Work() {
   Log_debug("%s: %d", __FUNCTION__, this->cli_id_);
   txn_reg_ = new TxnRegistry();
+  verify(config_ != nullptr);
   Workload* workload = Workload::CreateWorkload(config_);
   workload->txn_reg_ = txn_reg_;
   workload->RegisterPrecedures();
@@ -146,15 +151,19 @@ void ClientWorker::work() {
   if (config_->client_type_ == Config::Closed) {
     Log_info("closed loop clients.");
     verify(n_concurrent_ > 0);
-    for (uint32_t n_txn = 0; n_txn < n_concurrent_; n_txn++) {
-      auto coo = CreateCoordinator(n_txn);
+    for (uint32_t n_tx = 0; n_tx < n_concurrent_; n_tx++) {
+      auto coo = CreateCoordinator(n_tx);
       Log_debug("create coordinator %d", coo->coo_id_);
-      DispatchRequest(coo);
+      auto p_job = (Job*)new OneTimeJob([this, coo] () {
+        this->DispatchRequest(coo);
+      });
+      shared_ptr<Job> sp_job(p_job);
+      poll_mgr_->add(sp_job);
     }
   } else {
     Log_info("open loop clients.");
     const std::chrono::nanoseconds wait_time
-        ((int)(pow(10,9) * 1.0/(double)config_->client_rate_));
+        ((int) (pow(10, 9) * 1.0 / (double) config_->client_rate_));
     double tps = 0;
     long txn_count = 0;
     auto start = std::chrono::steady_clock::now();
@@ -164,7 +173,11 @@ void ClientWorker::work() {
       while (tps < config_->client_rate_ && timer_->elapsed() < duration) {
         auto coo = FindOrCreateCoordinator();
         if (coo != nullptr) {
-          DispatchRequest(coo);
+          auto p_job = (Job*)new OneTimeJob([this, coo] () {
+            this->DispatchRequest(coo);
+          });
+          shared_ptr<Job> sp_job(p_job);
+          poll_mgr_->add(sp_job);
           txn_count++;
           elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>
               (std::chrono::steady_clock::now() - start);
@@ -175,7 +188,7 @@ void ClientWorker::work() {
       std::this_thread::sleep_until(next_time);
       elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>
           (std::chrono::steady_clock::now() - start);
-      tps = (double)txn_count / elapsed.count() * pow(10,9);
+      tps = (double) txn_count / elapsed.count() * pow(10, 9);
     }
     Log_debug("exit client dispatch loop...");
   }
@@ -202,12 +215,13 @@ void ClientWorker::work() {
   return;
 }
 
-
-void ClientWorker::AcceptForwardedRequest(TxnRequest &request, TxnReply* txn_reply, rrr::DeferredReply* defer) {
+void ClientWorker::AcceptForwardedRequest(TxRequest& request,
+                                          TxReply* txn_reply,
+                                          rrr::DeferredReply* defer) {
   const char* f = __FUNCTION__;
 
   // obtain free a coordinator first
-  Coordinator *coo = nullptr;
+  Coordinator* coo = nullptr;
   while (coo == nullptr) {
     coo = FindOrCreateCoordinator();
   }
@@ -215,42 +229,44 @@ void ClientWorker::AcceptForwardedRequest(TxnRequest &request, TxnReply* txn_rep
 
   // run the task
   std::function<void()> task = [=]() {
-      TxnRequest req(request);
-      req.callback_ = std::bind(&rococo::ClientWorker::ForwardRequestDone,
-                                    this,
-                                    coo,
-                                    txn_reply,
-                                    defer,
-                                    std::placeholders::_1);
-      Log_debug("%s: running forwarded request at site %d", f, my_site_.id);
+    TxRequest req(request);
+    req.callback_ = std::bind(&rococo::ClientWorker::ForwardRequestDone,
+                              this,
+                              coo,
+                              txn_reply,
+                              defer,
+                              std::placeholders::_1);
+    Log_debug("%s: running forwarded request at site %d", f, my_site_.id);
     coo->DoTxAsync(req);
   };
-  dispatch_pool_->run_async(task);
+  task();
+//  dispatch_pool_->run_async(task); // this causes bug
 }
 
-void ClientWorker::DispatchRequest(Coordinator *coo) {
-    const char* f = __FUNCTION__;
-    std::function<void()> task = [=]() {
-      Log_info("%s: %d", f, cli_id_);
-      TxnRequest req;
-      {
-        std::lock_guard<std::mutex> lock(this->request_gen_mutex);
-        txn_generator_->GetTxnReq(&req, coo->coo_id_);
-      }
-      req.callback_ = std::bind(&rococo::ClientWorker::RequestDone,
-                                this,
-                                coo,
-                                std::placeholders::_1);
-      coo->DoTxAsync(req);
-    };
-    dispatch_pool_->run_async(task);
+void ClientWorker::DispatchRequest(Coordinator* coo) {
+  const char* f = __FUNCTION__;
+  std::function<void()> task = [=]() {
+    Log_info("%s: %d", f, cli_id_);
+    TxRequest req;
+    {
+      std::lock_guard<std::mutex> lock(this->request_gen_mutex);
+      tx_generator_->GetTxRequest(&req, coo->coo_id_);
+    }
+    req.callback_ = std::bind(&rococo::ClientWorker::RequestDone,
+                              this,
+                              coo,
+                              std::placeholders::_1);
+    coo->DoTxAsync(req);
+  };
+  task();
+//  dispatch_pool_->run_async(task); // this causes bug
 }
 
 ClientWorker::ClientWorker(
     uint32_t id,
-    Config::SiteInfo &site_info,
-    Config *config,
-    ClientControlServiceImpl *ccsi) :
+    Config::SiteInfo& site_info,
+    Config* config,
+    ClientControlServiceImpl* ccsi) :
     id(id),
     my_site_(site_info),
     config_(config),
@@ -260,18 +276,22 @@ ClientWorker::ClientWorker(
     duration(config->get_duration()),
     ccsi(ccsi),
     n_concurrent_(config->get_concurrent_txn()) {
+  poll_mgr_ = new PollMgr(1);
   frame_ = Frame::GetFrame(config->cc_mode_);
-  txn_generator_ = frame_->CreateTxnGenerator();
+  tx_generator_ = frame_->CreateTxGenerator();
   config->get_all_site_addr(servers_);
   num_txn.store(0);
   success.store(0);
   num_try.store(0);
-  commo_ = frame_->CreateCommo();
+  commo_ = frame_->CreateCommo(poll_mgr_);
   commo_->loc_id_ = my_site_.locale_id;
-  forward_requests_to_leader_ = (config->ab_mode_ == MODE_MULTI_PAXOS && site_info.locale_id != 0) ? true : false;
-  Log_debug("client %d created; forward %d", cli_id_, forward_requests_to_leader_);
+  forward_requests_to_leader_ =
+      (config->ab_mode_ == MODE_MULTI_PAXOS && site_info.locale_id != 0) ? true
+                                                                         : false;
+  Log_debug("client %d created; forward %d",
+            cli_id_,
+            forward_requests_to_leader_);
 }
 
-} // namespace rococo
-
+} // namespace janus
 

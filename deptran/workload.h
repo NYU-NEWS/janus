@@ -9,7 +9,7 @@
 
 namespace rococo {
 
-class TxnRequest;
+class TxRequest;
 class Sharding;
 
 class Workload {
@@ -56,7 +56,7 @@ class Workload {
   Workload(Config* config);
   virtual ~Workload();
 
-  virtual void GetTxnReq(TxnRequest *req, uint32_t cid) = 0;
+  virtual void GetTxRequest(TxRequest* req, uint32_t cid) = 0;
   virtual void GetProcedureTypes(std::map<int32_t, std::string> &txn_types);
   virtual void RegisterPrecedures() = 0;
 

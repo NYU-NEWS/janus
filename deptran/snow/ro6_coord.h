@@ -15,7 +15,7 @@ public:
   };
   std::set<i64> ro_txn_;
 
-  virtual void do_one(TxnRequest&);
+  virtual void do_one(TxRequest&);
 
   void         deptran_start(Procedure *ch);
 

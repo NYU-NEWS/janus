@@ -37,7 +37,7 @@ void Executor::Execute(const SimpleCommand &cmd,
 
 void Executor::Execute(const vector<SimpleCommand> &cmds,
                        TxnOutput *output) {
-  TxnWorkspace ws;
+  TxWorkspace ws;
   for (const SimpleCommand &c: cmds) {
     auto &cmd = const_cast<SimpleCommand &>(c);
     TxnPieceDef &p = txn_reg_->get(c.root_type_, c.type_);
