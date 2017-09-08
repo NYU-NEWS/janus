@@ -6,7 +6,7 @@
 
 namespace janus {
 class Command;
-class TxData;
+class CmdData;
 class SchedulerMultiPaxos : public Scheduler {
  public:
   slotid_t max_executed_slot_ = 0;
@@ -18,13 +18,13 @@ class SchedulerMultiPaxos : public Scheduler {
 
   void OnAccept(const slotid_t slot_id,
                 const ballot_t ballot,
-                const TxData &cmd,
+                const CmdData &cmd,
                 ballot_t *max_ballot,
                 const function<void()> &cb);
 
   void OnCommit(const slotid_t slot_id,
                 const ballot_t ballot,
-                const TxData &cmd);
+                const CmdData &cmd);
 
   virtual bool HandleConflicts(Tx& dtxn,
                                innid_t inn_id,

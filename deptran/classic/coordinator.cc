@@ -57,12 +57,13 @@ void CoordinatorClassic::ForwardTxRequestAck(const TxReply& txn_reply) {
 
 void CoordinatorClassic::DoTxAsync(TxRequest& req) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-  Procedure* cmd = frame_->CreateTxnCommand(req, txn_reg_);
+  Txdata* cmd = frame_->CreateTxnCommand(req, txn_reg_);
   verify(txn_reg_ != nullptr);
   cmd->root_id_ = this->next_txn_id();
   cmd->id_ = cmd->root_id_;
   ongoing_tx_id_ = cmd->id_;
-  Log_debug("assigning tx id: %" PRIx64, ongoing_tx_id_);
+  Log_debug("assigning tx id: %"
+                PRIx64, ongoing_tx_id_);
   cmd->timestamp_ = GenerateTimestamp();
   cmd_ = cmd;
   n_retry_ = 0;
@@ -82,7 +83,7 @@ void CoordinatorClassic::DoTxAsync(TxRequest& req) {
     ForwardTxnRequest(req);
   } else {
     Log_info("start txn!!! : %d", forward_status_);
-    Coroutine::CreateRun([this] () {GotoNextPhase();});
+    Coroutine::CreateRun([this]() { GotoNextPhase(); });
   }
 }
 
@@ -147,7 +148,7 @@ void CoordinatorClassic::Restart() {
   ongoing_tx_id_ = cmd_->root_id_;
   Log_debug("assigning tx_id: %"
                 PRIx64, ongoing_tx_id_);
-  Procedure* txn = (Procedure*) cmd_;
+  Txdata* txn = (Txdata*) cmd_;
   double last_latency = txn->last_attempt_latency();
   if (ccsi_)
     ccsi_->txn_retry_one(this->thread_id_, txn->type_, last_latency);
@@ -166,14 +167,13 @@ void CoordinatorClassic::Restart() {
 
 void CoordinatorClassic::DispatchAsync() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  auto txn = (Procedure*) cmd_;
+  auto txn = (Txdata*) cmd_;
 
   int cnt = 0;
   auto n_pd = Config::GetConfig()->n_parallel_dispatch_;
   n_pd = 1;
   auto cmds_by_par = txn->GetReadyCmds(n_pd);
-  Log_debug("Dispatch for tx_id: %"
-                PRIx64, txn->root_id_);
+  Log_debug("Dispatch for tx_id: %" PRIx64, txn->root_id_);
   for (auto& pair: cmds_by_par) {
     const parid_t& par_id = pair.first;
     vector<TxPieceData*>& cmds = pair.second;
@@ -193,8 +193,7 @@ void CoordinatorClassic::DispatchAsync() {
                                          std::placeholders::_1,
                                          std::placeholders::_2));
   }
-  Log_debug("Dispatch cnt: %d for tx_id: %"
-                PRIx64, cnt, txn->root_id_);
+  Log_debug("Dispatch cnt: %d for tx_id: %" PRIx64, cnt, txn->root_id_);
 }
 
 bool CoordinatorClassic::AllDispatchAcked() {
@@ -213,7 +212,7 @@ void CoordinatorClassic::DispatchAck(phase_t phase,
                                      TxnOutput& outputs) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   if (phase != phase_) return;
-  Procedure* txn = (Procedure*) cmd_;
+  Txdata* txn = (Txdata*) cmd_;
   if (res == REJECT) {
     Log_debug("got REJECT reply for cmd_id: %llx NOT COMMITING",
               txn->root_id_);
@@ -254,7 +253,7 @@ void CoordinatorClassic::DispatchAck(phase_t phase,
 
 /** caller should be thread_safe */
 void CoordinatorClassic::Prepare() {
-  Procedure* cmd = (Procedure*) cmd_;
+  Txdata* cmd = (Txdata*) cmd_;
   auto mode = Config::GetConfig()->cc_mode_;
   verify(mode == MODE_OCC || mode == MODE_2PL);
 
@@ -283,7 +282,7 @@ void CoordinatorClassic::Prepare() {
 void CoordinatorClassic::PrepareAck(phase_t phase, int res) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   if (phase != phase_) return;
-  Procedure* cmd = (Procedure*) cmd_;
+  Txdata* cmd = (Txdata*) cmd_;
   n_prepare_ack_++;
 
   if (res == REJECT) {
@@ -354,7 +353,7 @@ void CoordinatorClassic::Commit() {
 void CoordinatorClassic::CommitAck(phase_t phase) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   if (phase != phase_) return;
-  Procedure* cmd = (Procedure*) cmd_;
+  Txdata* cmd = (Txdata*) cmd_;
   n_finish_ack_++;
   Log_debug("finish cmd_id_: %ld; n_finish_ack_: %ld; n_finish_req_: %ld",
             cmd_->id_, n_finish_ack_, n_finish_req_);
@@ -372,7 +371,7 @@ void CoordinatorClassic::CommitAck(phase_t phase) {
 }
 
 void CoordinatorClassic::End() {
-  Procedure* tx_data = (Procedure*) cmd_;
+  Txdata* tx_data = (Txdata*) cmd_;
   TxReply& tx_reply_buf = tx_data->get_reply();
   double last_latency = tx_data->last_attempt_latency();
   if (committed_) {
@@ -388,7 +387,8 @@ void CoordinatorClassic::End() {
     verify(0);
   }
   tx_reply_buf.tx_id_ = ongoing_tx_id_;
-  Log_debug("call reply for tx_id: %" PRIx64, ongoing_tx_id_);
+  Log_debug("call reply for tx_id: %"
+                PRIx64, ongoing_tx_id_);
   tx_data->callback_(tx_reply_buf);
   ongoing_tx_id_ = 0;
   delete tx_data;

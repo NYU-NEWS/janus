@@ -140,7 +140,7 @@ bool TpccProcedure::HandleOutput(int pi,
 }
 
 void TpccProcedure::Reset() {
-  Procedure::Reset();
+  Txdata::Reset();
   ws_ = ws_init_;
   partition_ids_.clear();
   n_try_++;

@@ -86,14 +86,11 @@ void CoordinatorFebruus::Commit() {
 
 void CoordinatorFebruus::DispatchAsync() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  auto txn = (Procedure*) cmd_;
+  auto txn = (Txdata*) cmd_;
 
   int cnt = 0;
-  auto n_pd = Config::GetConfig()->n_parallel_dispatch_;
-  n_pd = 1;
-  auto cmds_by_par = txn->GetReadyCmds(n_pd);
-  Log_debug("Dispatch for tx_id: %"
-                PRIx64, txn->root_id_);
+  auto cmds_by_par = txn->GetReadyCmds(INFINITY);
+  Log_debug("dispatch for tx id: %" PRIx64, txn->root_id_);
   for (auto& pair: cmds_by_par) {
     const parid_t& par_id = pair.first;
     vector<TxPieceData*>& cmds = pair.second;
@@ -137,11 +134,11 @@ void CoordinatorFebruus::DispatchAck(phase_t phase,
     // handle outdated message.
     return;
   }
-  Procedure* tx = (Procedure*) cmd_;
+  Txdata* tx_data = (Txdata*) cmd_;
   if (ret == REJECT) {
-    Log_debug("got REJECT reply for cmd_id: %llx NOT COMMITING", tx->root_id_);
+    Log_debug("got REJECT reply for cmd_id: %llx NOT COMMITING", tx_data->root_id_);
     aborted_ = true;
-    tx->commit_.store(false);
+    tx_data->commit_.store(false);
     verify(0);
   }
   verify(ret == SUCCESS);
@@ -150,7 +147,7 @@ void CoordinatorFebruus::DispatchAck(phase_t phase,
     if (n_dispatch_ack_ == n_dispatch_) {
       // wait until all ongoing dispatch to finish before aborting.
       Log_debug("received all start acks (at least one is REJECT); tx_id: %"
-                    PRIx64, tx->root_id_);
+                    PRIx64, tx_data->root_id_);
       verify(0); // TODO handle aborts.
       return;
     }
@@ -162,16 +159,15 @@ void CoordinatorFebruus::DispatchAck(phase_t phase,
     dispatch_acks_[inn_id] = true;
     Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
               n_dispatch_ack_, n_dispatch_, cmd_->id_, inn_id);
-    tx->Merge(pair.first, pair.second);
+    tx_data->Merge(pair.first, pair.second);
   }
-  if (tx->HasMoreSubCmdReadyNotOut()) {
+  if (tx_data->HasMoreSubCmdReadyNotOut()) {
     Log_debug("command has more sub-cmd, cmd_id: %llx,"
                   " n_started_: %d, n_pieces: %d",
-              tx->id_, tx->n_pieces_dispatched_, tx->GetNPieceAll());
+              tx_data->id_, tx_data->n_pieces_dispatched_, tx_data->GetNPieceAll());
     verify(0); // TODO
   } else if (AllDispatchAcked()) {
-    Log_debug("receive all start acks, txn_id: %llx; START PREPARE",
-              tx->id_);
+    Log_debug("receive all dispatch acks for tx id: %" PRIx64, tx_data->id_);
     // transaction finished successfully, callback.
     committed_ = true;
     End();

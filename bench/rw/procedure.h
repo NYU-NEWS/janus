@@ -7,7 +7,7 @@ namespace deptran {
 
 class Coordinator;
 
-class RWChopper : public Procedure {
+class RWChopper : public Txdata {
 private:
     void W_txn_init(TxRequest &req);
     void R_txn_init(TxRequest &req);

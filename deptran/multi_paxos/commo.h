@@ -6,7 +6,7 @@
 
 namespace rococo {
 
-class Procedure;
+class Txdata;
 class MultiPaxosCommo : public Communicator {
  public:
   MultiPaxosCommo() = delete;

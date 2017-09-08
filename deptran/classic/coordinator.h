@@ -18,8 +18,8 @@ class CoordinatorClassic : public Coordinator {
 
   virtual ~CoordinatorClassic() { }
 
-  inline Procedure& tx_data() {
-    return *(Procedure*)cmd_;
+  inline Txdata& tx_data() {
+    return *(Txdata*)cmd_;
   }
 
   RococoCommunicator* commo();

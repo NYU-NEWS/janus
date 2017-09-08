@@ -14,7 +14,8 @@ modes_ = [
     "occ_paxos",
     "tapir",
     "rococo",
-    "janus"
+    "janus",
+    "februus"
 ]
 sites_ = [
     "1c1s1p",
@@ -46,7 +47,7 @@ def run(m, s, b, c):
     pb = config_path_ + b + ".yml"
     pc = config_path_ + c + ".yml"
 
-    output_path = m + '-' + s + '-' + b + ".res"
+    output_path = 'tmp/' + m + '-' + s + '-' + b + ".res"
     t1 = time();
     res = "INIT"
     try:

@@ -49,7 +49,7 @@ Value& TxWorkspace::operator[](size_t idx) {
   return (*values_)[idx];
 }
 
-Procedure::Procedure() {
+Txdata::Txdata() {
   clock_gettime(&start_time_);
   read_only_failed_ = false;
   pre_time_ = timespec2ms(start_time_);
@@ -105,15 +105,15 @@ Marshal& operator >> (Marshal& m, TxReply& reply) {
   return m;
 }
 
-set<parid_t> Procedure::GetPartitionIds() {
+set<parid_t> Txdata::GetPartitionIds() {
   return partition_ids_;
 }
 
-bool Procedure::IsOneRound() {
+bool Txdata::IsOneRound() {
   return false;
 }
 
-vector<SimpleCommand> Procedure::GetCmdsByPartition(parid_t par_id) {
+vector<SimpleCommand> Txdata::GetCmdsByPartition(parid_t par_id) {
   vector<SimpleCommand> cmds;
   for (auto& pair: cmds_) {
     SimpleCommand* cmd = dynamic_cast<SimpleCommand*>(pair.second);
@@ -125,7 +125,7 @@ vector<SimpleCommand> Procedure::GetCmdsByPartition(parid_t par_id) {
   return cmds;
 }
 
-map<parid_t, vector<SimpleCommand*>> Procedure::GetReadyCmds(int32_t max) {
+map<parid_t, vector<SimpleCommand*>> Txdata::GetReadyCmds(int32_t max) {
   verify(n_pieces_dispatched_ < n_pieces_dispatchable_);
   verify(n_pieces_dispatched_ < n_pieces_all_);
   map<parid_t, vector<SimpleCommand*>> cmds;
@@ -170,7 +170,7 @@ map<parid_t, vector<SimpleCommand*>> Procedure::GetReadyCmds(int32_t max) {
   return cmds;
 }
 
-TxData *Procedure::GetNextReadySubCmd() {
+CmdData *Txdata::GetNextReadySubCmd() {
   verify(0);
   verify(n_pieces_dispatched_ < n_pieces_dispatchable_);
   verify(n_pieces_dispatched_ < n_pieces_all_);
@@ -212,7 +212,7 @@ TxData *Procedure::GetNextReadySubCmd() {
   return cmd;
 }
 
-bool Procedure::OutputReady() {
+bool Txdata::OutputReady() {
   if (n_pieces_all_ == n_pieces_dispatch_acked_) {
     return true;
   } else {
@@ -220,13 +220,13 @@ bool Procedure::OutputReady() {
   }
 }
 
-void Procedure::Merge(TxnOutput& output) {
+void Txdata::Merge(TxnOutput& output) {
   for (auto& pair: output) {
     Merge(pair.first, pair.second);
   }
 }
 
-void Procedure::Merge(innid_t inn_id, map<int32_t, Value>& output) {
+void Txdata::Merge(innid_t inn_id, map<int32_t, Value>& output) {
   verify(outputs_.find(inn_id) == outputs_.end());
   n_pieces_dispatch_acked_++;
   verify(n_pieces_all_ >= n_pieces_dispatchable_);
@@ -237,14 +237,14 @@ void Procedure::Merge(innid_t inn_id, map<int32_t, Value>& output) {
   this->HandleOutput(inn_id, SUCCESS, output);
 }
 
-void Procedure::Merge(TxData &cmd) {
+void Txdata::Merge(CmdData &cmd) {
   auto simple_cmd = (SimpleCommand *) &cmd;
   auto pi = cmd.inn_id();
   auto &output = simple_cmd->output;
   Merge(pi, output);
 }
 
-bool Procedure::HasMoreSubCmdReadyNotOut() {
+bool Txdata::HasMoreSubCmdReadyNotOut() {
   verify(n_pieces_all_ >= n_pieces_dispatchable_);
   verify(n_pieces_dispatchable_ >= n_pieces_dispatched_);
   verify(n_pieces_dispatched_ >= n_pieces_dispatch_acked_);
@@ -258,14 +258,14 @@ bool Procedure::HasMoreSubCmdReadyNotOut() {
   }
 }
 
-void Procedure::Reset() {
+void Txdata::Reset() {
   n_pieces_dispatchable_ = 0;
   n_pieces_dispatch_acked_ = 0;
   n_pieces_dispatched_ = 0;
   outputs_.clear();
 }
 
-void Procedure::read_only_reset() {
+void Txdata::read_only_reset() {
   read_only_failed_ = false;
   Reset();
 }
@@ -299,7 +299,7 @@ void Procedure::read_only_reset() {
 //  return start_callback(pi, SUCCESS, output);
 //}
 
-double Procedure::last_attempt_latency() {
+double Txdata::last_attempt_latency() {
   double tmp = pre_time_;
   struct timespec t_buf;
   clock_gettime(&t_buf);
@@ -307,7 +307,7 @@ double Procedure::last_attempt_latency() {
   return pre_time_ - tmp;
 }
 
-TxReply &Procedure::get_reply() {
+TxReply &Txdata::get_reply() {
   reply_.start_time_ = start_time_;
   reply_.n_try_ = n_try_;
   struct timespec t_buf;
@@ -332,7 +332,7 @@ void TxRequest::get_log(i64 tid, std::string &log) {
   }
 }
 
-Marshal& Procedure::ToMarshal(Marshal& m) const {
+Marshal& Txdata::ToMarshal(Marshal& m) const {
   m << ws_;
   m << ws_init_;
   m << inputs_;
@@ -353,7 +353,7 @@ Marshal& Procedure::ToMarshal(Marshal& m) const {
   return m;
 }
 
-Marshal& Procedure::FromMarshal(Marshal& m) {
+Marshal& Txdata::FromMarshal(Marshal& m) {
   m >> ws_;
   m >> ws_init_;
   m >> inputs_;

@@ -23,7 +23,7 @@ public:
   // TODO do_one should be replaced with Submit.
   virtual void DoTxAsync(TxRequest &) = 0;
   virtual void Reset() = 0;
-  virtual void restart(Procedure *ch) = 0;
+  virtual void restart(Txdata *ch) = 0;
 };
 
 class Coordinator : public CoordinatorBase {
@@ -41,7 +41,7 @@ class Coordinator : public CoordinatorBase {
 
   std::recursive_mutex mtx_;
   Recorder *recorder_;
-  TxData *cmd_ = nullptr;
+  CmdData *cmd_ = nullptr;
   phase_t phase_ = 0;
   map<innid_t, bool> dispatch_acks_ = {};
   map<innid_t, bool> handout_outs_ = {};
@@ -157,7 +157,7 @@ class Coordinator : public CoordinatorBase {
     }
     return t;
   }
-  virtual void restart(Procedure *ch) {verify(0);};
+  virtual void restart(Txdata *ch) {verify(0);};
   virtual void Restart() = 0;
 };
 

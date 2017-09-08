@@ -5,7 +5,7 @@
 
 
 namespace janus {
-class TxData : public Marshallable {
+class CmdData : public Marshallable {
  public:
 //  static map<cmdtype_t, function<TxData*()>>& Initializers();
 //  static int RegInitializer(cmdtype_t, function<TxData*()>);
@@ -22,8 +22,8 @@ class TxData : public Marshallable {
   virtual innid_t inn_id() const {return inn_id_;}
   virtual cmdtype_t type() {return type_;};
   virtual void Arrest() {verify(0);};
-  virtual TxData& Execute() {verify(0);};
-  virtual void Merge(TxData&){verify(0);};;
+  virtual CmdData& Execute() {verify(0);};
+  virtual void Merge(CmdData&){verify(0);};;
   virtual bool IsFinished(){verify(0);};
 
   virtual set<parid_t> GetPartitionIds() {
@@ -36,10 +36,10 @@ class TxData : public Marshallable {
     return false;
   }
 
-  virtual TxData* GetNextReadySubCmd(){verify(0);};
-  virtual TxData* GetRootCmd() {return this;};
+  virtual CmdData* GetNextReadySubCmd(){verify(0);};
+  virtual CmdData* GetRootCmd() {return this;};
   virtual void Reset() {verify(0);};
-  virtual TxData* Clone() const  {
+  virtual CmdData* Clone() const  {
     verify(0);
 //    TxData* c = GetInitializer(type_)();
 //    *c = *this;
@@ -47,8 +47,8 @@ class TxData : public Marshallable {
 //    return c;
   };
 
-  TxData() : Marshallable(MarshallDeputy::CONTAINER_CMD) {}
-  virtual ~TxData() {};
+  CmdData() : Marshallable(MarshallDeputy::CONTAINER_CMD) {}
+  virtual ~CmdData() {};
   virtual Marshal& ToMarshal(Marshal&) const override;
   virtual Marshal& FromMarshal(Marshal&) override;
 };

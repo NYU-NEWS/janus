@@ -20,7 +20,7 @@ void SchedulerMultiPaxos::OnPrepare(slotid_t slot_id,
 
 void SchedulerMultiPaxos::OnAccept(const slotid_t slot_id,
                                    const ballot_t ballot,
-                                   const TxData &cmd,
+                                   const CmdData &cmd,
                                    ballot_t *max_ballot,
                                    const function<void()> &cb) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
@@ -33,7 +33,7 @@ void SchedulerMultiPaxos::OnAccept(const slotid_t slot_id,
 
 void SchedulerMultiPaxos::OnCommit(const slotid_t slot_id,
                                    const ballot_t ballot,
-                                   const TxData &cmd) {
+                                   const CmdData &cmd) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   Log_debug("multi-paxos scheduler decide for slot: %lx", slot_id);
   if (slot_id > max_committed_slot_) {
@@ -42,7 +42,7 @@ void SchedulerMultiPaxos::OnCommit(const slotid_t slot_id,
   verify(slot_id > max_executed_slot_);
   if (slot_id == max_executed_slot_ + 1) {
     max_executed_slot_++;
-    learner_action_(const_cast<TxData &>(cmd));
+    learner_action_(const_cast<CmdData &>(cmd));
     Log_debug("execute slot %d now", slot_id);
     // TODO check later cmds
     for (slotid_t next_slot = slot_id + 1;

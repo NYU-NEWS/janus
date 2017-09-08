@@ -11,8 +11,8 @@ namespace janus {
 
 bool SchedulerClassic::OnDispatch(TxPieceData &piece_data,
                                   TxnOutput &ret_output) {
-  // TODO optimize
   Tx &tx = *GetOrCreateTx(piece_data.root_id_);
+  Log_debug("received dispatch for tx id: %" PRIx64, tx.tid_);
   verify(partition_id_ == piece_data.partition_id_);
   verify(!tx.inuse);
   tx.inuse = true;
@@ -36,6 +36,7 @@ bool SchedulerClassic::OnDispatch(TxPieceData &piece_data,
       }
     }
   }
+  // TODO bug here. what if multiple pieces for a tx.
   tx.fully_dispatched_.Set(1);
   // wait for an execution signal.
   tx.ev_execute_ready_.Wait();
@@ -171,7 +172,7 @@ int SchedulerClassic::CommitReplicated(TpcCommitCommand &tpc_commit_cmd) {
 //  TrashExecutor(txn_id);
 }
 
-void SchedulerClassic::OnLearn(TxData &cmd) {
+void SchedulerClassic::OnLearn(CmdData &cmd) {
   if (cmd.type_ == MarshallDeputy::CMD_TPC_PREPARE) {
     TpcPrepareCommand &c = dynamic_cast<TpcPrepareCommand &>(cmd);
     PrepareReplicated(c);

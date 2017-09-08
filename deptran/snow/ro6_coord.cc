@@ -7,7 +7,7 @@
 
 namespace rococo {
 
-void RO6Coord::deptran_start(Procedure *ch) {
+void RO6Coord::deptran_start(Txdata *ch) {
   // new txn id for every new and retry.
 //  RequestHeader header = gen_header(ch);
 
@@ -91,7 +91,7 @@ void RO6Coord::deptran_start(Procedure *ch) {
 }
 
 /** caller should be thread safe */
-void RO6Coord::deptran_finish(Procedure *ch) {
+void RO6Coord::deptran_finish(Txdata *ch) {
 //  Log::debug("deptran finish, %llx", cmd_->id_);
 //
 //  // commit or abort piece
@@ -164,7 +164,7 @@ void RO6Coord::deptran_finish(Procedure *ch) {
 //  }
 }
 
-void RO6Coord::ro6_start_ro(Procedure *ch) {
+void RO6Coord::ro6_start_ro(Txdata *ch) {
 //  // new txn id for every new and retry.
 //  RequestHeader header = gen_header(ch);
 //
@@ -233,7 +233,7 @@ void RO6Coord::do_one(TxRequest & req) {
   // pre-process
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
 
-  Procedure *ch = frame_->CreateChopper(req, txn_reg_);
+  Txdata *ch = frame_->CreateChopper(req, txn_reg_);
   cmd_->id_ = this->next_txn_id();
 
   Log::debug("do one request");

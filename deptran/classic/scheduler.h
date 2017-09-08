@@ -7,7 +7,7 @@
 
 namespace janus {
 
-class Procedure;
+class Txdata;
 class TpcPrepareCommand;
 class TpcCommitCommand;
 class SimpleCommand;
@@ -37,7 +37,7 @@ class SchedulerClassic: public Scheduler {
 
   virtual void DoAbort(Tx& tx_box);
 
-  void OnLearn(TxData&) override;
+  void OnLearn(CmdData&) override;
 
   int PrepareReplicated(TpcPrepareCommand& prepare_cmd);
   int CommitReplicated(TpcCommitCommand& commit_cmd);

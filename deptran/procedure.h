@@ -91,9 +91,9 @@ enum CommandStatus {
 };
 
 // TODO rename to TxnPiece?
-class SimpleCommand: public TxData {
+class SimpleCommand: public CmdData {
  public:
-  TxData* root_ = nullptr;
+  CmdData* root_ = nullptr;
   uint64_t timestamp_{0};
   TxWorkspace input{};
   map<int32_t, Value> output{};
@@ -103,8 +103,8 @@ class SimpleCommand: public TxData {
     verify(partition_id_ != 0xFFFFFFFF);
     return partition_id_;
   }
-  virtual TxData* RootCmd() const {return root_;}
-  virtual TxData* Clone() const override {
+  virtual CmdData* RootCmd() const {return root_;}
+  virtual CmdData* Clone() const override {
     SimpleCommand* cmd = new SimpleCommand();
     *cmd = *this;
     return cmd;
@@ -120,7 +120,7 @@ typedef SimpleCommand TxPieceData;
  *   2. conflict ready
  *   3. all (execute) ready
  */
-class Procedure: public TxData {
+class Txdata: public CmdData {
  private:
   static inline bool is_consistent(map<int32_t, Value> &previous,
                                    map<int32_t, Value> &current) {
@@ -174,7 +174,7 @@ class Procedure: public TxData {
   TxReply reply_;
   struct timespec start_time_;
 
-  Procedure();
+  Txdata();
 
   virtual void Init(TxRequest &req) = 0;
 
@@ -190,11 +190,11 @@ class Procedure: public TxData {
   }
   virtual bool OutputReady();
   virtual bool IsFinished(){verify(0);}
-  virtual void Merge(TxData&);
+  virtual void Merge(CmdData&);
   virtual void Merge(innid_t inn_id, map<int32_t, Value>& output);
   virtual void Merge(TxnOutput& output);
   virtual bool HasMoreSubCmdReadyNotOut();
-  virtual TxData* GetNextReadySubCmd() override;
+  virtual CmdData* GetNextReadySubCmd() override;
   virtual map<parid_t, vector<SimpleCommand*>> GetReadyCmds(int32_t max=0);
   virtual set<parid_t> GetPartitionIds();
   TxWorkspace& GetWorkspace(innid_t inn_id) {
@@ -234,7 +234,7 @@ class Procedure: public TxData {
   /** for retry */
   virtual void Reset();
 
-  virtual ~Procedure() {}
+  virtual ~Txdata() {}
 };
 
 } // namespace rcc

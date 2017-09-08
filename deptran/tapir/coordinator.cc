@@ -21,7 +21,7 @@ TapirCommo *CoordinatorTapir::commo() {
 void CoordinatorTapir::DispatchAsync() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   //  ___TestPhaseOne(cmd_id_);
-  auto tx_data = (Procedure *) cmd_;
+  auto tx_data = (Txdata *) cmd_;
 
   int cnt = 0;
   auto cmds_by_par = tx_data->GetReadyCmds();
@@ -53,7 +53,7 @@ void CoordinatorTapir::DispatchAck(phase_t phase,
                                    TxnOutput &outputs) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   if (phase != phase_) return;
-  Procedure *txn = (Procedure *) cmd_;
+  Txdata *txn = (Txdata *) cmd_;
   for (auto &pair : outputs) {
     n_dispatch_ack_++;
     const innid_t &inn_id = pair.first;

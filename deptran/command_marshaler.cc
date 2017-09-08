@@ -7,7 +7,7 @@
 
 namespace janus {
 
-Marshal& TxData::ToMarshal(Marshal& m) const {
+Marshal& CmdData::ToMarshal(Marshal& m) const {
   m << id_;
   m << type_;
   m << inn_id_;
@@ -16,7 +16,7 @@ Marshal& TxData::ToMarshal(Marshal& m) const {
   return m;
 };
 
-Marshal& TxData::FromMarshal(Marshal& m) {
+Marshal& CmdData::FromMarshal(Marshal& m) {
   m >> id_;
   m >> type_;
   m >> inn_id_;

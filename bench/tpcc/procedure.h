@@ -5,11 +5,11 @@
 
 namespace rococo {
 
-class Procedure;
+class Txdata;
 class TxRequest;
 class BatchStartArgsHelper;
 
-class TpccProcedure: public Procedure {
+class TpccProcedure: public Txdata {
  public:
   map<innid_t, TxnPieceDef> leaf_procs_{};
 //  map<innid_t, set<int32_t>> input_vars_{};

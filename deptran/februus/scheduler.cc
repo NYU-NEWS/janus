@@ -65,6 +65,7 @@ void SchedulerFebruus::UpdateQueue(shared_ptr<TxFebruus> sp_tx) {
       it = queue_.erase(it);
       break;
     }
+    it++;
   }
 
   // insert again to the right place.
@@ -74,6 +75,7 @@ void SchedulerFebruus::UpdateQueue(shared_ptr<TxFebruus> sp_tx) {
     if ((*it)->timestamp_ > sp_tx->timestamp_) {
       break; // TODO handle the case where txs have the same timestamp
     }
+    it++;
   }
   queue_.insert(it, sp_tx);
 
