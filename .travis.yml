@@ -1,8 +1,10 @@
 os: osx
 language: cpp
 before_install:
+    - brew update
     - brew install boost || true 
     - brew install yaml-cpp || true
+    - brew install pip || true
     - pip install tabulate
 install:
 script:
