@@ -3,7 +3,8 @@ language: cpp
 before_install:
     - virtualenv venv
     - source venv/bin/activate
-    - brew install boost yaml-cpp
+    - brew install boost || true 
+    - brew install yaml-cpp || true
 install:
 script:
     - ./waf configure build
