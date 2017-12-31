@@ -1,10 +1,9 @@
 os: osx
 language: cpp
 before_install:
-    - virtualenv venv
-    - source venv/bin/activate
     - brew install boost || true 
     - brew install yaml-cpp || true
+    - pip install tabulate
 install:
 script:
     - ./waf configure build
