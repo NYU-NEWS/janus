@@ -5,7 +5,7 @@ before_install:
     - brew install boost || true 
     - brew install yaml-cpp || true
     - brew install python || true
-    - pip install tabulate
+    - pip2 install tabulate
 install:
 script:
     - ./waf configure build
