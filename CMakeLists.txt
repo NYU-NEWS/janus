@@ -3,6 +3,10 @@ project(janus)
 
 set (CMAKE_CXX_STANDARD 14)
 
+find_package(Threads)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(PYTHON2 REQUIRED python2)
+
 #
 # do the following after git clone:
 #   1. install conan package manage tool
@@ -12,15 +16,30 @@ set (CMAKE_CXX_STANDARD 14)
 # after a compiler upgrade in the system, re-execute above.
 #
 
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/build_cmake/conanbuildinfo.cmake) #Clion,
-#    with conanbuildinfo.cmake in build folder
+if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/build_cmake/conanbuildinfo.cmake)
+    #Clion, using conan, with conanbuildinfo.cmake in build folder
     include(${CMAKE_CURRENT_SOURCE_DIR}/build_cmake/conanbuildinfo.cmake)
+    conan_basic_setup()
+    MESSAGE(${CONAN_LIBS})
+elseif(EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake )
+    # Not CLion, but using conan
+    include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake)
+    conan_basic_setup()
+    MESSAGE(${CONAN_LIBS})
 else()
-    include(${CMAKE_BINARY_DIR}/conanbuildinfo.cmake) # Not CLion
+    # not using conan
+    FIND_PACKAGE(Boost COMPONENTS system filesystem coroutine REQUIRED)
+    pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
+    include_directories(
+            ${Boost_INCLUDE_DIR}
+            ${YAML_CPP_INCLUDE_DIRS}
+    )
+    link_directories(
+            ${PYTHON2_LIBRARY_DIRS}
+            ${Boost_LIBRARY_DIRS}
+            ${YAML_CPP_LIBRARY_DIRS}
+    )
 endif()
-
-
-conan_basic_setup()
 
 if(APPLE)
     set(RT "")
@@ -37,9 +56,7 @@ add_library(
 )
 
 # for cxx build
-
 set(CMAKE_VERBOSE_MAKEFILE on)
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
@@ -48,16 +65,10 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 # this makes gcc>=5 support conan.io libraries, e.g. yaml-cpp
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
 
-find_package(Threads)
-find_package(PkgConfig REQUIRED)
 #pkg_check_modules(APR REQUIRED apr-1)
 #pkg_check_modules(APRUTIL REQUIRED apr-util-1)
-pkg_check_modules(PYTHON2 REQUIRED python2)
-#pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
 #pkg_check_modules(PROFILER REQUIRED libprofiler)
 
-#FIND_PACKAGE(Boost COMPONENTS system filesystem coroutine REQUIRED)
-#INCLUDE_DIRECTORIES(${Boost_INCLUDE_DIR})
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG_CODE")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLOG_LEVEL_AS_INFO")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DLOG_LEVEL_AS_DEBUG")
@@ -90,7 +101,6 @@ add_custom_target (gen-rpc
 include_directories(
     ${PYTHON2_INCLUDE_DIRS}
 #    ${APR_INCLUDE_DIRS}
-#    ${YAML_CPP_INCLUDE_DIRS}
 #    ${PROFILER_INCLUDE_DIRS}
     .
     rrr
@@ -101,7 +111,6 @@ include_directories(
 link_directories(
     ${PYTHON2_LIBRARY_DIRS}
 #    ${APR_LIBRARY_DIRS}
-#    ${YAML_CPP_LIBRARY_DIRS}
 #    ${PROFILER_LIBRARY_DIRS}
 )
 
@@ -169,6 +178,8 @@ target_link_libraries(
         MEMDB
         RRR
         ${CONAN_LIBS}
+        ${Boost_LIBRARIES}
+        ${YAML_CPP_LIBRARIES}
         ${RT})
 
 target_link_libraries(
@@ -178,6 +189,8 @@ target_link_libraries(
         EXTERN_C
         ${RT}
         ${CONAN_LIBS}
+        ${Boost_LIBRARIES}
+        ${YAML_CPP_LIBRARIES}
         ${CMAKE_THREAD_LIBS_INIT}
         ${PYTHON2_LIBRARIES}
 #    ${APR_LIBRARIES}
@@ -197,4 +210,3 @@ target_link_libraries(
         ${CMAKE_THREAD_LIBS_INIT}
 )
 
-MESSAGE(${CONAN_LIBS})
