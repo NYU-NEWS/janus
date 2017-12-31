@@ -1,18 +1,18 @@
 sudo: false
+dist: trusty
 language: cpp
-#compiler: clang
 addons:
   apt:
     sources:
     - ubuntu-toolchain-r-test
-    - george-edison55-precise-backports
+      #    - george-edison55-precise-backports
       #    - llvm-toolchain-precise
       #    - boost-latest
       #    - kubuntu-backports
     packages:
     - build-essential
-    - g++-4.9
-    - gcc-4.9
+    - g++-6
+    - gcc-6
       #    - clang-3.8
       #    - libboost1.55-all-dev
     - python-dev
@@ -25,18 +25,11 @@ before_install:
     - source venv/bin/activate
     - pip install conan
     - pip install tabulate 
-    - conan remote add conan-community https://api.bintray.com/conan/conan-community/conan
-    - export CXX="g++-4.9" CC="gcc-4.9"
+    - export CXX="g++-6" CC="gcc-6"
 install:
-    #    - wget https://github.com/jbeder/yaml-cpp/archive/yaml-cpp-0.5.3.tar.gz
-    #    - tar -xzf yaml-cpp-0.5.3.tar.gz
-    #    - cd yaml-cpp-yaml-cpp-0.5.3 && mkdir build && cd build && cmake -DCMAKE_INSTALL_PREFIX=$PWD .. && make -j 2 && cd ../../
-    #    - export PKG_CONFIG_PATH=$PKG_CONFIG_PATH:$PWD/yaml-cpp-yaml-cpp-0.5.3/build/lib/pkgconfig
 script:
     - mkdir build_cmake && cd build_cmake
-      #    - conan remote remove conan.io
-      #    - conan remote add conan-center https://conan.bintray.com
-      #    - conan remote add conan-transit https://conan-transit.bintray.com
+    - conan remote add conan-community https://api.bintray.com/conan/conan-community/conan
     - conan install .. --build=missing
     - cmake ..
     - make -j 2
