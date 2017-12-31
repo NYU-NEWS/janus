@@ -9,7 +9,7 @@ namespace janus {
 class Sharding;
 class Coordinator;
 class CoordinatorBase;
-class Txdata;
+class TxData;
 class TxRequest;
 class Tx;
 class Executor;
@@ -51,8 +51,8 @@ class Frame {
   virtual mdb::Row *CreateRow(const mdb::Schema *schema,
                               std::vector<Value> &row_data);
   void GetTxTypes(std::map<int32_t, std::string>& txn_types);
-  Txdata *CreateTxnCommand(TxRequest &req, TxnRegistry *reg);
-  Txdata *CreateChopper(TxRequest &req, TxnRegistry *reg);
+  TxData *CreateTxnCommand(TxRequest &req, TxnRegistry *reg);
+  TxData *CreateChopper(TxRequest &req, TxnRegistry *reg);
   virtual shared_ptr<Tx> CreateTx(epoch_t epoch,
                                   txnid_t txn_id,
                                   bool ro,

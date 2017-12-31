@@ -5,7 +5,7 @@
 
 namespace deptran {
 
-class MicroProcedure : public Txdata {
+class MicroProcedure : public TxData {
 
 public:
 

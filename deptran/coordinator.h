@@ -23,7 +23,7 @@ public:
   // TODO do_one should be replaced with Submit.
   virtual void DoTxAsync(TxRequest &) = 0;
   virtual void Reset() = 0;
-  virtual void restart(Txdata *ch) = 0;
+  virtual void restart(TxData *ch) = 0;
 };
 
 class Coordinator : public CoordinatorBase {
@@ -157,7 +157,7 @@ class Coordinator : public CoordinatorBase {
     }
     return t;
   }
-  virtual void restart(Txdata *ch) {verify(0);};
+  virtual void restart(TxData *ch) {verify(0);};
   virtual void Restart() = 0;
 };
 

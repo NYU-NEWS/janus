@@ -55,6 +55,15 @@ class TxWorkspace {
     return keys_.size();
   }
 
+  bool Ready() {
+    for (auto k: keys_) {
+      if (values_->count(k) == 0) {
+        return false;
+      }
+    }
+    return true;
+  }
+
   void insert(map<int32_t, Value>& m) {
     // TODO
     for (auto& pair : m) {
@@ -90,7 +99,7 @@ enum CommandStatus {
   INIT=3
 };
 
-// TODO rename to TxnPiece?
+// TODO rename to TxPieceData?
 class SimpleCommand: public CmdData {
  public:
   CmdData* root_ = nullptr;
@@ -114,13 +123,14 @@ class SimpleCommand: public CmdData {
 
 typedef SimpleCommand TxPieceData;
 
+typedef map<parid_t, vector<shared_ptr<TxPieceData>>> ReadyPiecesData;
 /**
  * input ready levels:
  *   1. shard ready
  *   2. conflict ready
  *   3. all (execute) ready
  */
-class Txdata: public CmdData {
+class TxData: public CmdData {
  private:
   static inline bool is_consistent(map<int32_t, Value> &previous,
                                    map<int32_t, Value> &current) {
@@ -152,7 +162,7 @@ class Txdata: public CmdData {
   map<int32_t, parid_t> sharding_ = {};
   map<int32_t, int32_t> status_ = {}; // -1 waiting; 0 ready; 1 ongoing; 2
   // finished;
-  map<int32_t, SimpleCommand*> cmds_ = {};
+  map<int32_t, shared_ptr<TxPieceData>> map_piece_data_ = {};
   std::set<parid_t> partition_ids_ = {};
   std::atomic<bool> commit_ ;
 
@@ -174,7 +184,7 @@ class Txdata: public CmdData {
   TxReply reply_;
   struct timespec start_time_;
 
-  Txdata();
+  TxData();
 
   virtual void Init(TxRequest &req) = 0;
 
@@ -193,9 +203,9 @@ class Txdata: public CmdData {
   virtual void Merge(CmdData&);
   virtual void Merge(innid_t inn_id, map<int32_t, Value>& output);
   virtual void Merge(TxnOutput& output);
-  virtual bool HasMoreSubCmdReadyNotOut();
-  virtual CmdData* GetNextReadySubCmd() override;
-  virtual map<parid_t, vector<SimpleCommand*>> GetReadyCmds(int32_t max=0);
+  virtual bool HasMoreUnsentPiece();
+  virtual shared_ptr<TxPieceData> GetNextReadySubCmd();
+  virtual ReadyPiecesData GetReadyPiecesData(int32_t max = 0);
   virtual set<parid_t> GetPartitionIds();
   TxWorkspace& GetWorkspace(innid_t inn_id) {
     verify(inn_id != 0);
@@ -234,7 +244,7 @@ class Txdata: public CmdData {
   /** for retry */
   virtual void Reset();
 
-  virtual ~Txdata() {}
+  virtual ~TxData() {}
 };
 
 } // namespace rcc

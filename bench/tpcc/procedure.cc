@@ -58,6 +58,7 @@ void TpccProcedure::Init(TxRequest &req) {
 }
 
 // This is sort of silly. We should have a better way.
+// TODO check_shards_ready?
 bool TpccProcedure::CheckReady() {
   bool ret = false;
   for (auto &pair : status_) {
@@ -66,9 +67,10 @@ bool TpccProcedure::CheckReady() {
     if (status != WAITING) {
       continue;
     }
-    set<int32_t>& var_set = leaf_procs_[pi].input_vars_;
+    set<int32_t>& input_vars = leaf_procs_[pi].input_vars_;
+    auto& sharding_vars = leaf_procs_[pi].sharder_.second;
     bool all_found = true;
-    for (auto &var : var_set) {
+    for (auto &var : sharding_vars) {
       if (ws_.count(var) == 0) {
         // not found. input not all ready.
         all_found = false;
@@ -82,11 +84,11 @@ bool TpccProcedure::CheckReady() {
 #endif
       }
     }
-    // all found.
+    // sharding variables all found.
     if (all_found && status == WAITING) {
       status = DISPATCHABLE;
       TxWorkspace& ws = GetWorkspace(pi);
-      ws.keys_ = var_set;
+      ws.keys_ = input_vars;
       n_pieces_dispatchable_++;
       ret = true;
     }
@@ -140,7 +142,7 @@ bool TpccProcedure::HandleOutput(int pi,
 }
 
 void TpccProcedure::Reset() {
-  Txdata::Reset();
+  TxData::Reset();
   ws_ = ws_init_;
   partition_ids_.clear();
   n_try_++;

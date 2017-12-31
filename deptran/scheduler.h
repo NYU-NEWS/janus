@@ -90,7 +90,7 @@ class Scheduler {
   }
 
   // runs in a coroutine.
-  virtual bool OnDispatch(TxPieceData &piece_data,
+  virtual bool OnDispatch(vector<TxPieceData> &piece_data,
                           TxnOutput &ret_output);
 
   virtual bool HandleConflicts(Tx &dtxn,

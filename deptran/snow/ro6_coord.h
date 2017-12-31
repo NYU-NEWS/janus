@@ -17,10 +17,10 @@ public:
 
   virtual void do_one(TxRequest&);
 
-  void         deptran_start(Txdata *ch);
+  void         deptran_start(TxData *ch);
 
-  void         deptran_finish(Txdata *ch);
+  void         deptran_finish(TxData *ch);
 
-  void         ro6_start_ro(Txdata *ch);
+  void         ro6_start_ro(TxData *ch);
 };
 } // namespace janus

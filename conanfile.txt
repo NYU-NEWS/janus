@@ -1,12 +1,15 @@
 [requires]
-Boost/1.60.0@lasote/stable
-yaml-cpp/0.5.3@moonforged/stable
-gtest/1.8.0@eliaskousk/stable
+#zlib/1.2.8@conan/stable
+Boost/1.64.0@conan/stable
+gtest/1.8.0@conan/stable
+#yaml-cpp/0.5.3@moonforged/stable #this version no longer works
+yaml-cpp/latest@signal9/stable
+
 
 [options]
 Boost:shared=False
-yaml-cpp:shared=False
 gtest:shared=False
+#yaml-cpp:shared=False
 
 [generators]
 cmake

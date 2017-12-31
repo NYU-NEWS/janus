@@ -97,16 +97,16 @@ map<int32_t, Value> &output) \
 #define END_LOOP_PIE });}
 
 #define PROC \
-  [this] (Executor* exec, Tx& tx, SimpleCommand &cmd, \
+  [this] (Executor* exec, Tx& tx, TxPieceData& cmd, \
           int32_t *res, map<int32_t, Value> &output)
 
 #define LPROC \
-  [this, i] (Executor* exec, Tx& tx, SimpleCommand &cmd, \
+  [this, i] (Executor* exec, Tx& tx, TxPieceData& cmd, \
           int32_t *res, map<int32_t, Value> &output)
 
 #define BEGIN_CB(txn_type, inn_id) \
 txn_reg_->regs_[txn_type][inn_id].callback_ = \
-[] (Txdata *ch, std::map<int32_t, Value> output) -> bool {
+[] (TxData *ch, std::map<int32_t, Value> output) -> bool {
 
 #define END_CB  };
 

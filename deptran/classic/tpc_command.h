@@ -6,7 +6,7 @@
 namespace janus {
 
 
-class Txdata;
+class TxData;
 class TpcPrepareCommand : public Marshallable {
  public:
   TpcPrepareCommand() : Marshallable(MarshallDeputy::CMD_TPC_PREPARE) {

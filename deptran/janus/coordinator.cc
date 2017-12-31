@@ -140,7 +140,7 @@ void CoordinatorJanus::Accept() {
   verify(!fast_path_);
 //  Log_info("broadcast accept request for txn_id: %llx", cmd_->id_);
   ChooseGraph();
-  Txdata* txn = (Txdata*) cmd_;
+  TxData* txn = (TxData*) cmd_;
   auto dtxn = sp_graph_->FindV(cmd_->id_);
   verify(txn->partition_ids_.size() == dtxn->partition_.size());
   sp_graph_->UpgradeStatus(*dtxn, TXN_CMT);
@@ -182,7 +182,7 @@ void CoordinatorJanus::AcceptAck(phase_t phase,
 
 void CoordinatorJanus::Commit() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
-  Txdata* txn = (Txdata*) cmd_;
+  TxData* txn = (TxData*) cmd_;
   auto dtxn = sp_graph_->FindV(cmd_->id_);
   verify(txn->partition_ids_.size() == dtxn->partition_.size());
   sp_graph_->UpgradeStatus(*dtxn, TXN_CMT);

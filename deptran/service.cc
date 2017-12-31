@@ -17,8 +17,8 @@ namespace janus {
 
 ClassicServiceImpl::ClassicServiceImpl(Scheduler* sched,
                                        rrr::PollMgr* poll_mgr,
-                                       ServerControlServiceImpl* scsi)
-    : scsi_(scsi), dtxn_sched_(sched) {
+                                       ServerControlServiceImpl* scsi) : scsi_(
+    scsi), dtxn_sched_(sched) {
 
 #ifdef PIECE_COUNT
   piece_count_timer_.start();
@@ -58,14 +58,11 @@ void ClassicServiceImpl::Dispatch(const vector<SimpleCommand>& cmd,
 //  output->resize(output_size);
   // find stored procedure, and run it
   const auto& func = [defer, &cmd, res, output, this]() {
-    vector<TxPieceData> vec_piece_data = cmd; // remove this copy.
-    *res = SUCCESS;
     verify(cmd.size() > 0);
-    for (auto& c: vec_piece_data) {
-      if (!dtxn_sched()->OnDispatch(c, *output)) {
-        *res = REJECT;
-        break;
-      }
+    vector<TxPieceData> vec_piece_data = cmd; // TODO remove this copy.
+    *res = SUCCESS;
+    if (!dtxn_sched()->OnDispatch(vec_piece_data, *output)) {
+      *res = REJECT;
     }
     defer->reply();
   };
@@ -197,10 +194,7 @@ void ClassicServiceImpl::RccFinish(const cmdid_t& cmd_id,
   verify(graph.size() > 0);
   std::lock_guard<std::mutex> guard(mtx_);
   SchedulerRococo* sched = (SchedulerRococo*) dtxn_sched_;
-  sched->OnCommit(cmd_id,
-                  graph,
-                  output,
-                  [defer]() { defer->reply(); });
+  sched->OnCommit(cmd_id, graph, output, [defer]() { defer->reply(); });
 
   stat_sz_gra_commit_.sample(graph.size());
 }
@@ -234,26 +228,27 @@ void ClassicServiceImpl::JanusDispatch(const vector<SimpleCommand>& cmd,
                                        TxnOutput* p_output,
                                        MarshallDeputy* p_md_res_graph,
                                        DeferredReply* p_defer) {
-  std::function<void()> func =
-      [&cmd, p_res, p_output, p_md_res_graph, p_defer, this]() {
-        std::lock_guard<std::mutex> guard(this->mtx_);
-        auto sp_graph = std::make_shared<RccGraph>();
-        SchedulerJanus* sched = (SchedulerJanus*) dtxn_sched_;
-        sched->OnDispatch(
-            cmd,
-            p_res,
-            p_output,
-            sp_graph.get(),
-            [p_defer, sp_graph, p_md_res_graph] () {
-              if (sp_graph->size() <= 1) {
-                p_md_res_graph->SetMarshallable(std::make_shared<EmptyGraph>());
-              } else {
-                p_md_res_graph->SetMarshallable(sp_graph);
-              }
-              verify(p_md_res_graph->kind_ != MarshallDeputy::UNKNOWN);
-              p_defer->reply();
-            });
-      };
+  std::function<void()>
+      func = [&cmd, p_res, p_output, p_md_res_graph, p_defer, this]() {
+    std::lock_guard<std::mutex> guard(this->mtx_);
+    auto sp_graph = std::make_shared<RccGraph>();
+    SchedulerJanus* sched = (SchedulerJanus*) dtxn_sched_;
+    sched->OnDispatch(cmd,
+                      p_res,
+                      p_output,
+                      sp_graph.get(),
+                      [p_defer, sp_graph, p_md_res_graph]() {
+                        if (sp_graph->size() <= 1) {
+                          p_md_res_graph->SetMarshallable(std::make_shared<
+                              EmptyGraph>());
+                        } else {
+                          p_md_res_graph->SetMarshallable(sp_graph);
+                        }
+                        verify(
+                            p_md_res_graph->kind_ != MarshallDeputy::UNKNOWN);
+                        p_defer->reply();
+                      });
+  };
   Coroutine::CreateRun(func);
 
 }
@@ -279,11 +274,7 @@ void ClassicServiceImpl::JanusCommitWoGraph(const cmdid_t& cmd_id,
                                             DeferredReply* defer) {
   std::lock_guard<std::mutex> guard(mtx_);
   SchedulerJanus* sched = (SchedulerJanus*) dtxn_sched_;
-  sched->OnCommit(cmd_id,
-                  nullptr,
-                  res,
-                  output,
-                  [defer]() { defer->reply(); });
+  sched->OnCommit(cmd_id, nullptr, res, output, [defer]() { defer->reply(); });
 }
 
 void ClassicServiceImpl::JanusInquire(const epoch_t& epoch,
@@ -343,11 +334,7 @@ void ClassicServiceImpl::JanusAccept(const cmdid_t& txnid,
   verify(graph);
   verify(md_graph.kind_ == MarshallDeputy::RCC_GRAPH);
   SchedulerJanus* sched = (SchedulerJanus*) dtxn_sched_;
-  sched->OnAccept(txnid,
-                  ballot,
-                  *graph,
-                  res,
-                  [defer]() { defer->reply(); });
+  sched->OnAccept(txnid, ballot, *graph, res, [defer]() { defer->reply(); });
 }
 
 void ClassicServiceImpl::PreAcceptFebruus(const txid_t& tx_id,
@@ -383,16 +370,14 @@ void ClassicServiceImpl::RegisterStats() {
   if (scsi_) {
     scsi_->set_recorder(recorder_);
     scsi_->set_recorder(recorder_);
-    scsi_->set_stat(ServerControlServiceImpl::STAT_SZ_SCC,
-                    &stat_sz_scc_);
+    scsi_->set_stat(ServerControlServiceImpl::STAT_SZ_SCC, &stat_sz_scc_);
     scsi_->set_stat(ServerControlServiceImpl::STAT_SZ_GRAPH_START,
                     &stat_sz_gra_start_);
     scsi_->set_stat(ServerControlServiceImpl::STAT_SZ_GRAPH_COMMIT,
                     &stat_sz_gra_commit_);
     scsi_->set_stat(ServerControlServiceImpl::STAT_SZ_GRAPH_ASK,
                     &stat_sz_gra_ask_);
-    scsi_->set_stat(ServerControlServiceImpl::STAT_N_ASK,
-                    &stat_n_ask_);
+    scsi_->set_stat(ServerControlServiceImpl::STAT_N_ASK, &stat_n_ask_);
     scsi_->set_stat(ServerControlServiceImpl::STAT_RO6_SZ_VECTOR,
                     &stat_ro6_sz_vector_);
   }

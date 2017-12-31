@@ -10,16 +10,16 @@ class ClientControlServiceImpl;
 
 class CoordinatorClassic : public Coordinator {
  public:
-  enum Phase {INIT_END=0, DISPATCH=1, PREPARE=2, COMMIT=3};
+  enum Phase { INIT_END = 0, DISPATCH = 1, PREPARE = 2, COMMIT = 3 };
   CoordinatorClassic(uint32_t coo_id,
-               int benchmark,
-               ClientControlServiceImpl *ccsi,
-               uint32_t thread_id);
+                     int benchmark,
+                     ClientControlServiceImpl* ccsi,
+                     uint32_t thread_id);
 
-  virtual ~CoordinatorClassic() { }
+  virtual ~CoordinatorClassic() {}
 
-  inline Txdata& tx_data() {
-    return *(Txdata*)cmd_;
+  inline TxData& tx_data() {
+    return *(TxData*) cmd_;
   }
 
   RococoCommunicator* commo();
@@ -71,14 +71,14 @@ class CoordinatorClassic : public Coordinator {
   }
 
   /** do it asynchronously, thread safe. */
-  virtual void DoTxAsync(TxRequest &);
+  virtual void DoTxAsync(TxRequest&);
   virtual void Reset() override;
   void Restart();
 
   virtual void DispatchAsync();
   virtual void DispatchAck(phase_t phase,
                            int res,
-                           map<innid_t, map<int32_t, Value>> &outputs);
+                           map<innid_t, map<int32_t, Value>>& outputs);
   void Prepare();
   void PrepareAck(phase_t phase, int res);
   virtual void Commit();
@@ -91,15 +91,14 @@ class CoordinatorClassic : public Coordinator {
   bool AllDispatchAcked();
   virtual void GotoNextPhase();
 
-  void Report(TxReply &txn_reply,
-              double last_latency
+  void Report(TxReply& txn_reply, double last_latency
 #ifdef                                  TXN_STAT
   ,
   TxnChopper *ch
 #endif /* ifdef TXN_STAT */
   );
 
-  void ForwardTxnRequest(TxRequest &req);
+  void ForwardTxnRequest(TxRequest& req);
   void ForwardTxRequestAck(const TxReply&);
   // for debug
   set<txnid_t> ___phase_one_tids_ = set<txnid_t>();

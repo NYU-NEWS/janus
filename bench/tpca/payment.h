@@ -5,7 +5,7 @@
 
 namespace rococo {
 
-class TpcaPaymentChopper: public Txdata {
+class TpcaPaymentChopper: public TxData {
 
  public:
 

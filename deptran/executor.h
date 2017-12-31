@@ -9,7 +9,7 @@ class TxnRegistry;
 class Scheduler;
 class Tx;
 class SimpleCommand;
-class Txdata;
+class TxData;
 class Executor {
  public:
   Recorder* recorder_ = nullptr;
@@ -17,7 +17,7 @@ class Executor {
   mdb::Txn *mdb_txn_ = nullptr;
   Scheduler* sched_ = nullptr;
   shared_ptr<Tx> dtxn_ = nullptr;
-  Txdata* txn_cmd_ = nullptr;
+  TxData* txn_cmd_ = nullptr;
   cmdid_t cmd_id_ = 0;
   int phase_ = -1;
 

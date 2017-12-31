@@ -7,14 +7,14 @@
 
 namespace janus {
 
-class Txdata;
+class TxData;
 class TpcPrepareCommand;
 class TpcCommitCommand;
 class SimpleCommand;
 class SchedulerClassic: public Scheduler {
  using Scheduler::Scheduler;
  public:
-  virtual bool OnDispatch(TxPieceData& piece_data,
+  virtual bool OnDispatch(vector<TxPieceData>& piece_data,
                           TxnOutput& ret_output) override;
 
   virtual bool Guard(Tx &tx_box, Row *row, int col_id, bool write=true) {

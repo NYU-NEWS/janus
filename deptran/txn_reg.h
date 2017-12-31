@@ -15,7 +15,7 @@ typedef std::map<
     mdb::Row *> row_map_t;
 
 class Tx;
-class Txdata;
+class TxData;
 class TxRequest;
 class SimpleCommand;
 
@@ -32,7 +32,7 @@ typedef enum {
   DF_FAKE
 } defer_t;
 
-typedef std::function<bool(Txdata *,
+typedef std::function<bool(TxData *,
                            map<int32_t, Value>&)>
     PieceCallbackHandler;
 

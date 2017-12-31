@@ -19,7 +19,7 @@ RccCommo* RccCoord::commo() {
 
 void RccCoord::PreDispatch() {
   verify(ro_state_ == BEGIN);
-  Txdata* txn = dynamic_cast<Txdata*>(cmd_);
+  TxData* txn = dynamic_cast<TxData*>(cmd_);
 //  auto dispatch = txn->is_read_only() ?
 //                  std::bind(&RccCoord::DispatchRo, this) :
 //                  std::bind(&RccCoord::Dispatch, this);
@@ -38,17 +38,17 @@ void RccCoord::PreDispatch() {
 
 void RccCoord::DispatchAsync() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  auto txn = (Txdata*) cmd_;
+  auto txn = (TxData*) cmd_;
   verify(txn->root_id_ == txn->id_);
   int cnt = 0;
-  auto cmds_by_par = txn->GetReadyCmds();
+  auto cmds_by_par = txn->GetReadyPiecesData();
   for (auto& pair: cmds_by_par) {
     const parid_t& par_id = pair.first;
-    vector<SimpleCommand*>& cmds = pair.second;
+    auto& cmds = pair.second;
     n_dispatch_ += cmds.size();
     cnt += cmds.size();
     vector<SimpleCommand> cc;
-    for (SimpleCommand* c: cmds) {
+    for (auto c: cmds) {
       c->id_ = next_pie_id();
       dispatch_acks_[c->inn_id_] = false;
       cc.push_back(*c);
@@ -93,7 +93,7 @@ void RccCoord::DispatchAck(phase_t phase,
   // TODO?
   if (graph.size() > 1) tx_data().disable_early_return();
 
-  if (tx_data().HasMoreSubCmdReadyNotOut()) {
+  if (tx_data().HasMoreUnsentPiece()) {
     Log_debug("command has more sub-cmd, cmd_id: %lx,"
                   " n_started_: %d, n_pieces: %d",
               tx_data().id_,
@@ -109,7 +109,7 @@ void RccCoord::DispatchAck(phase_t phase,
 /** caller should be thread safe */
 void RccCoord::Finish() {
   verify(0);
-  Txdata *ch = (Txdata*) cmd_;
+  TxData *ch = (TxData*) cmd_;
   // commit or abort piece
   Log_debug(
     "send rococo finish requests to %d servers, tid: %llx, graph size: %d",
@@ -156,23 +156,24 @@ void RccCoord::FinishAck(phase_t phase,
 void RccCoord::DispatchRo() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   int cnt;
-  while (cmd_->HasMoreSubCmdReadyNotOut()) {
-    auto subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd();
-    subcmd->id_ = next_pie_id();
-    verify(subcmd->root_id_ == cmd_->id_);
-    n_dispatch_++;
-    cnt++;
-    Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
-              n_dispatch_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
-    dispatch_acks_[subcmd->inn_id()] = false;
-    commo()->SendHandoutRo(*subcmd,
-                           std::bind(&RccCoord::DispatchRoAck,
-                                     this,
-                                     phase_,
-                                     std::placeholders::_1,
-                                     std::placeholders::_2,
-                                     std::placeholders::_3));
-  }
+  verify(0); // TODO
+//  while (cmd_->HasMoreSubCmdReadyNotOut()) {
+//    auto subcmd = (SimpleCommand*) cmd_->GetNextReadySubCmd();
+//    subcmd->id_ = next_pie_id();
+//    verify(subcmd->root_id_ == cmd_->id_);
+//    n_dispatch_++;
+//    cnt++;
+//    Log_debug("send out start request %ld, cmd_id: %lx, inn_id: %d, pie_id: %lx",
+//              n_dispatch_, cmd_->id_, subcmd->inn_id_, subcmd->id_);
+//    dispatch_acks_[subcmd->inn_id()] = false;
+//    commo()->SendHandoutRo(*subcmd,
+//                           std::bind(&RccCoord::DispatchRoAck,
+//                                     this,
+//                                     phase_,
+//                                     std::placeholders::_1,
+//                                     std::placeholders::_2,
+//                                     std::placeholders::_3));
+//  }
 }
 
 void RccCoord::DispatchRoAck(phase_t phase,
@@ -182,7 +183,7 @@ void RccCoord::DispatchRoAck(phase_t phase,
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   verify(phase == phase_);
 
-  auto ch = (Txdata*) cmd_;
+  auto ch = (TxData*) cmd_;
   cmd_->Merge(cmd);
   curr_vers_.insert(vers.begin(), vers.end());
 
@@ -191,18 +192,19 @@ void RccCoord::DispatchRoAck(phase_t phase,
              cmd.inn_id_);
 
   ch->n_pieces_dispatched_++;
-  if (cmd_->HasMoreSubCmdReadyNotOut()) {
-    DispatchRo();
-  } else if (ch->n_pieces_dispatched_ == ch->GetNPieceAll()) {
-    if (last_vers_ == curr_vers_) {
-      // TODO
-    } else {
-      ch->read_only_reset();
-      last_vers_ = curr_vers_;
-      curr_vers_.clear();
-      this->DispatchAsync();
-    }
-  }
+  verify(0); // TODO
+//  if (cmd_->HasMoreSubCmdReadyNotOut()) {
+//    DispatchRo();
+//  } else if (ch->n_pieces_dispatched_ == ch->GetNPieceAll()) {
+//    if (last_vers_ == curr_vers_) {
+//      // TODO
+//    } else {
+//      ch->read_only_reset();
+//      last_vers_ = curr_vers_;
+//      curr_vers_.clear();
+//      this->DispatchAsync();
+//    }
+//  }
 }
 
 void RccCoord::Reset() {

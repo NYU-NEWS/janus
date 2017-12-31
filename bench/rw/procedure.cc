@@ -75,7 +75,7 @@ bool RWChopper::IsReadOnly() {
 }
 
 void RWChopper::Reset() {
-  Txdata::Reset();
+  TxData::Reset();
   for (auto& pair : status_) {
     pair.second = DISPATCHABLE;
   }

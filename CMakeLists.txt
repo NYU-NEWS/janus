@@ -7,7 +7,8 @@ set (CMAKE_CXX_STANDARD 14)
 # do the following after git clone:
 #   1. install conan package manage tool
 #   2. create build_cmake directory:
-#   3. in build_cmake, run `conan install --build=missing ..`
+#   3. run `conan remote add conan-community https://api.bintray.com/conan/conan-community/conan`
+#   4. in build_cmake, run `conan install --build=missing ..`
 # after a compiler upgrade in the system, re-execute above.
 #
 

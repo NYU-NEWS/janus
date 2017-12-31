@@ -1,4 +1,3 @@
-
 #include "../constants.h"
 #include "deptran/tx.h"
 #include "../procedure.h"
@@ -9,45 +8,53 @@
 
 namespace janus {
 
-bool SchedulerClassic::OnDispatch(TxPieceData &piece_data,
-                                  TxnOutput &ret_output) {
-  Tx &tx = *GetOrCreateTx(piece_data.root_id_);
-  Log_debug("received dispatch for tx id: %" PRIx64, tx.tid_);
-  verify(partition_id_ == piece_data.partition_id_);
+bool SchedulerClassic::OnDispatch(vector<TxPieceData>& vec_piece_data,
+                                  TxnOutput& ret_output) {
+  Tx& tx = *GetOrCreateTx(vec_piece_data[0].root_id_);
+  Log_debug("received dispatch for tx id: %"
+                PRIx64, tx.tid_);
+//  verify(partition_id_ == piece_data.partition_id_);
   verify(!tx.inuse);
   tx.inuse = true;
-  TxnPieceDef &piece_def = txn_reg_->get(piece_data.root_type_,
-                                         piece_data.type_);
-  auto &conflicts = piece_def.conflicts_;
+  for (auto& piece_data : vec_piece_data) {
+    TxnPieceDef
+        & piece_def = txn_reg_->get(piece_data.root_type_, piece_data.type_);
+    auto& conflicts = piece_def.conflicts_;
 
-  for (auto &c: conflicts) {
-    vector<Value> pkeys;
-    for (int i = 0; i < c.primary_keys.size(); i++) {
-      pkeys.push_back(piece_data.input.at(c.primary_keys[i]));
-    }
-    auto row = tx.Query(tx.GetTable(c.table), pkeys, c.row_context_id);
-    verify(row != nullptr);
-    for (auto col_id : c.columns) {
-      if (!Guard(tx, row, col_id)) {
-        tx.inuse = false;
-        ret_output[piece_data.inn_id()] =
-            {}; // the client use this to identify ack.
-        return false; // abort
+    for (auto& c: conflicts) {
+      vector<Value> pkeys;
+      for (int i = 0; i < c.primary_keys.size(); i++) {
+        pkeys.push_back(piece_data.input.at(c.primary_keys[i]));
+      }
+      auto row = tx.Query(tx.GetTable(c.table), pkeys, c.row_context_id);
+      verify(row != nullptr);
+      for (auto col_id : c.columns) {
+        if (!Guard(tx, row, col_id)) {
+          tx.inuse = false;
+          ret_output[piece_data.inn_id()] =
+              {}; // the client use this to identify ack.
+          return false; // abort
+        }
       }
     }
   }
-  // TODO bug here. what if multiple pieces for a tx.
-  tx.fully_dispatched_.Set(1);
+  tx.fully_dispatched_.Set(1); // TODO here, support aborts with multiple goals?
   // wait for an execution signal.
   tx.ev_execute_ready_.Wait();
   int ret_code;
-  piece_data.input.Aggregate(tx.ws_);
-  piece_def.proc_handler_(nullptr,
-                          tx,
-                          const_cast<TxPieceData &>(piece_data),
-                          &ret_code,
-                          ret_output[piece_data.inn_id()]);
-  tx.ws_.insert(ret_output[piece_data.inn_id()]);
+  for (auto& piece_data : vec_piece_data) {
+    TxnPieceDef
+        & piece_def = txn_reg_->get(piece_data.root_type_, piece_data.type_);
+    auto& conflicts = piece_def.conflicts_;
+    verify(piece_data.input.Ready());
+    piece_data.input.Aggregate(tx.ws_);
+    piece_def.proc_handler_(nullptr,
+                            tx,
+                            const_cast<TxPieceData&>(piece_data),
+                            &ret_code,
+                            ret_output[piece_data.inn_id()]);
+    tx.ws_.insert(ret_output[piece_data.inn_id()]);
+  }
   tx.inuse = false;
   return true;
 }
@@ -58,8 +65,7 @@ bool SchedulerClassic::OnDispatch(TxPieceData &piece_data,
 //   3. after that, run the function to prepare.
 //   0. an non-optimized version would be.
 //      dispatch the transaction command with paxos instance
-bool SchedulerClassic::OnPrepare(txnid_t tx_id,
-                                 const std::vector<i32> &sids) {
+bool SchedulerClassic::OnPrepare(txnid_t tx_id, const std::vector<i32>& sids) {
   Log_debug("%s: at site %d, tx: %"
                 PRIx64, __FUNCTION__, this->site_id_, tx_id);
   std::lock_guard<std::recursive_mutex> lock(mtx_);
@@ -81,7 +87,7 @@ bool SchedulerClassic::OnPrepare(txnid_t tx_id,
   return false;
 }
 
-int SchedulerClassic::PrepareReplicated(TpcPrepareCommand &prepare_cmd) {
+int SchedulerClassic::PrepareReplicated(TpcPrepareCommand& prepare_cmd) {
   // TODO, disable for now
   verify(0);
   std::lock_guard<std::recursive_mutex> lock(mtx_);
@@ -99,8 +105,7 @@ int SchedulerClassic::PrepareReplicated(TpcPrepareCommand &prepare_cmd) {
   return 0;
 }
 
-int SchedulerClassic::OnCommit(txnid_t tx_id,
-                               int commit_or_abort) {
+int SchedulerClassic::OnCommit(txnid_t tx_id, int commit_or_abort) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   Log_debug("%s: at site %d, tx: %"
                 PRIx64, __FUNCTION__, this->site_id_, tx_id);
@@ -135,21 +140,21 @@ int SchedulerClassic::OnCommit(txnid_t tx_id,
   return 0;
 }
 
-void SchedulerClassic::DoCommit(Tx &tx_box) {
+void SchedulerClassic::DoCommit(Tx& tx_box) {
   auto mdb_txn = RemoveMTxn(tx_box.tid_);
   verify(mdb_txn == tx_box.mdb_txn_);
   mdb_txn->commit();
   delete mdb_txn; // TODO remove this
 }
 
-void SchedulerClassic::DoAbort(Tx &tx_box) {
+void SchedulerClassic::DoAbort(Tx& tx_box) {
   auto mdb_txn = RemoveMTxn(tx_box.tid_);
   verify(mdb_txn == tx_box.mdb_txn_);
   mdb_txn->abort();
   delete mdb_txn; // TODO remove this
 }
 
-int SchedulerClassic::CommitReplicated(TpcCommitCommand &tpc_commit_cmd) {
+int SchedulerClassic::CommitReplicated(TpcCommitCommand& tpc_commit_cmd) {
   // TODO disable for now.
   verify(0);
   std::lock_guard<std::recursive_mutex> lock(mtx_);
@@ -172,12 +177,12 @@ int SchedulerClassic::CommitReplicated(TpcCommitCommand &tpc_commit_cmd) {
 //  TrashExecutor(txn_id);
 }
 
-void SchedulerClassic::OnLearn(CmdData &cmd) {
+void SchedulerClassic::OnLearn(CmdData& cmd) {
   if (cmd.type_ == MarshallDeputy::CMD_TPC_PREPARE) {
-    TpcPrepareCommand &c = dynamic_cast<TpcPrepareCommand &>(cmd);
+    TpcPrepareCommand& c = dynamic_cast<TpcPrepareCommand&>(cmd);
     PrepareReplicated(c);
   } else if (cmd.type_ == MarshallDeputy::CMD_TPC_COMMIT) {
-    TpcCommitCommand &c = dynamic_cast<TpcCommitCommand &>(cmd);
+    TpcCommitCommand& c = dynamic_cast<TpcCommitCommand&>(cmd);
     CommitReplicated(c);
   } else {
     verify(0);

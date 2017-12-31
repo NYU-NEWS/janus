@@ -21,18 +21,18 @@ TapirCommo *CoordinatorTapir::commo() {
 void CoordinatorTapir::DispatchAsync() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   //  ___TestPhaseOne(cmd_id_);
-  auto tx_data = (Txdata *) cmd_;
+  auto tx_data = (TxData *) cmd_;
 
   int cnt = 0;
-  auto cmds_by_par = tx_data->GetReadyCmds();
+  auto cmds_by_par = tx_data->GetReadyPiecesData();
 
   for (auto &pair: cmds_by_par) {
     const parid_t &par_id = pair.first;
-    vector<TxPieceData *> &cmds = pair.second;
+    auto& cmds = pair.second;
     n_dispatch_ += cmds.size();
     cnt += cmds.size();
     vector<TxPieceData> cc;
-    for (TxPieceData *c: cmds) {
+    for (auto& c: cmds) {
       c->id_ = next_pie_id();
       dispatch_acks_[c->inn_id_] = false;
       cc.push_back(*c);
@@ -53,7 +53,7 @@ void CoordinatorTapir::DispatchAck(phase_t phase,
                                    TxnOutput &outputs) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   if (phase != phase_) return;
-  Txdata *txn = (Txdata *) cmd_;
+  TxData *txn = (TxData *) cmd_;
   for (auto &pair : outputs) {
     n_dispatch_ack_++;
     const innid_t &inn_id = pair.first;
@@ -64,7 +64,7 @@ void CoordinatorTapir::DispatchAck(phase_t phase,
 
     txn->Merge(pair.first, pair.second);
   }
-  if (txn->HasMoreSubCmdReadyNotOut()) {
+  if (txn->HasMoreUnsentPiece()) {
     Log_debug("command has more sub-cmd, cmd_id: %llx,"
                   " n_started_: %d, n_pieces: %d",
               txn->id_, txn->n_pieces_dispatched_, txn->GetNPieceAll());
@@ -107,7 +107,7 @@ void CoordinatorTapir::FastAccept() {
                                            par_id,
                                            std::placeholders::_1));
   }
-  verify(sum == tx_data().cmds_.size());
+  verify(sum == tx_data().map_piece_data_.size());
 }
 
 void CoordinatorTapir::FastAcceptAck(phase_t phase,

@@ -86,18 +86,19 @@ void CoordinatorFebruus::Commit() {
 
 void CoordinatorFebruus::DispatchAsync() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  auto txn = (Txdata*) cmd_;
+  auto txn = (TxData*) cmd_;
 
   int cnt = 0;
-  auto cmds_by_par = txn->GetReadyCmds(INFINITY);
+  auto cmds_by_par = txn->GetReadyPiecesData(INFINITY);
   Log_debug("dispatch for tx id: %" PRIx64, txn->root_id_);
   for (auto& pair: cmds_by_par) {
     const parid_t& par_id = pair.first;
-    vector<TxPieceData*>& cmds = pair.second;
-    n_dispatch_ += cmds.size();
-    cnt += cmds.size();
+    auto& vec_sp_piece_data = pair.second;
+    n_dispatch_ += vec_sp_piece_data.size();
+    cnt += vec_sp_piece_data.size();
+    // TODO optimize?
     vector<TxPieceData> cc;
-    for (SimpleCommand* c: cmds) {
+    for (auto c: vec_sp_piece_data) {
       c->id_ = next_pie_id();
       dispatch_acks_[c->inn_id_] = false;
       cc.push_back(*c);
@@ -134,7 +135,7 @@ void CoordinatorFebruus::DispatchAck(phase_t phase,
     // handle outdated message.
     return;
   }
-  Txdata* tx_data = (Txdata*) cmd_;
+  TxData* tx_data = (TxData*) cmd_;
   if (ret == REJECT) {
     Log_debug("got REJECT reply for cmd_id: %llx NOT COMMITING", tx_data->root_id_);
     aborted_ = true;
@@ -161,7 +162,7 @@ void CoordinatorFebruus::DispatchAck(phase_t phase,
               n_dispatch_ack_, n_dispatch_, cmd_->id_, inn_id);
     tx_data->Merge(pair.first, pair.second);
   }
-  if (tx_data->HasMoreSubCmdReadyNotOut()) {
+  if (tx_data->HasMoreUnsentPiece()) {
     Log_debug("command has more sub-cmd, cmd_id: %llx,"
                   " n_started_: %d, n_pieces: %d",
               tx_data->id_, tx_data->n_pieces_dispatched_, tx_data->GetNPieceAll());

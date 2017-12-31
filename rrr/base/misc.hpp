@@ -1,9 +1,9 @@
 #pragma once
 
-#include <stdio.h>
-#include <inttypes.h>
-
+#include <cstdio>
+#include <cinttypes>
 #include <string>
+#include <functional>
 
 #include "basetypes.hpp"
 
