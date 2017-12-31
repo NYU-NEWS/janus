@@ -87,8 +87,8 @@ def configure(conf):
         conf.load("python")
         conf.check_python_headers()
         # check python modules
-        conf.check_python_module('tabulate')
-        conf.check_python_module('yaml')
+#        conf.check_python_module('tabulate')
+#        conf.check_python_module('yaml')
 
 def build(bld):
     _depend("rrr/pylib/simplerpcgen/rpcgen.py",
