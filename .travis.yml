@@ -25,6 +25,7 @@ before_install:
     - source venv/bin/activate
     - pip install conan
     - pip install tabulate 
+    - conan remote add conan-community https://api.bintray.com/conan/conan-community/conan
     - export CXX="g++-4.9" CC="gcc-4.9"
 install:
     #    - wget https://github.com/jbeder/yaml-cpp/archive/yaml-cpp-0.5.3.tar.gz
