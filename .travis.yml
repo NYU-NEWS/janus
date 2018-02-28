@@ -1,12 +1,35 @@
-os: osx
+matrix:
+    include:
+        - os: osx
+        - os: linux
+          dist: xenial
+          sudo: required
+
 language: cpp
+
+addons:
+    apt:
+        packages:
+            - pkg-config
+            - build-essential
+            - clang
+            - libapr1-dev
+            - libaprutil1-dev
+            - libboost-all-dev
+            - libyaml-cpp-dev
+            - python-dev
+            - python-pip
+            - libgoogle-perftools-dev
+
 before_install:
-    - brew update
-    - brew install boost || true 
-    - brew install yaml-cpp || true
-    - brew install python || true
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install boost || true; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install yaml-cpp || true; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install python || true; fi
     - pip2 install tabulate
+
 install:
+
 script:
     - ./waf configure build
 
