@@ -26,7 +26,8 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install boost || true; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install yaml-cpp || true; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install python || true; fi
-    - pip2 install tabulate
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip2 install tabulate; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo pip2 install tabulate; fi
 
 install:
 
