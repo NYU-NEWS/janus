@@ -28,7 +28,7 @@ before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install python || true; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip2 install tabulate; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo pip2 install tabulate; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo sudo apt-get install -y libboost-all-dev; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y libboost-all-dev; fi
 
 install:
 
