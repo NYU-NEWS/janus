@@ -1,4 +1,5 @@
 #include <string>
+#include <memory>
 
 #include <errno.h>
 #include <string.h>

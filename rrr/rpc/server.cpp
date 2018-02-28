@@ -1,5 +1,6 @@
 #include <string>
 #include <sstream>
+#include <memory>
 
 #include <sys/select.h>
 #include <errno.h>

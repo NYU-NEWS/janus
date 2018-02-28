@@ -164,7 +164,7 @@ void PollMgr::PollThread::poll_loop() {
         break;
     }
 
-trigger_fjob();
+    TriggerJob();
 
     for (int i = 0; i < nev; i++) {
         Pollable* poll = (Pollable *) evlist[i].data.ptr;
@@ -183,7 +183,7 @@ trigger_fjob();
         }
     }
 
-trigger_fjob();
+    TriggerJob();
 
 #endif
 
