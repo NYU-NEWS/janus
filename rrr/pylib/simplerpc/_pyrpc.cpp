@@ -1,6 +1,7 @@
 #include <Python.h>
 
 #include <string>
+#include <memory>
 
 #include "rpc/server.hpp"
 #include "rpc/client.hpp"
