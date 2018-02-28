@@ -2,36 +2,44 @@ matrix:
     include:
         - os: osx
         - os: linux
-          dist: xenial
+          dist: trusty
           sudo: required
+          services: docker
 
 language: cpp
-
-addons:
-    apt:
-        packages:
-            - pkg-config
-            - build-essential
-            - clang
-            - libapr1-dev
-            - libaprutil1-dev
-            - libboost-all-dev
-            - libyaml-cpp-dev
-            - python-dev
-            - python-pip
-            - libgoogle-perftools-dev
 
 before_install:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew update; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install boost || true; fi
-    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install yaml-cpp || true; fi
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then
+        brew install yaml-cpp || true;
+      fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then brew install python || true; fi
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then pip2 install tabulate; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo pip2 install tabulate; fi
-    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then sudo apt-get install -y libboost-all-dev; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+        docker pull ubuntu:16.04;
+      fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+        docker run -w /root --name test -d ubuntu:16.04 sleep infinity;
+      fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+        docker cp . test:/root/janus;
+      fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+        docker exec test apt-get update -qq;
+      fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+        docker exec test apt-get install -y git pkg-config build-essential clang libapr1-dev libaprutil1-dev libboost-all-dev libyaml-cpp-dev python-dev python-pip libgoogle-perftools-dev;
+      fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+        docker exec test pip install -r requirements.txt;
+      fi
 
 install:
 
 script:
-    - ./waf configure build
+    - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then ./waf configure build; fi
+    - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
+        docker exec test ./waf configure build;
+      fi
 
