@@ -40,6 +40,6 @@ install:
 script:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then ./waf configure build; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-        docker exec test ./waf configure build;
+        docker exec test sh -c 'cd janus && ./waf configure build';
       fi
 
