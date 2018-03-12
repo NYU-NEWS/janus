@@ -18,13 +18,13 @@ class SchedulerMultiPaxos : public Scheduler {
 
   void OnAccept(const slotid_t slot_id,
                 const ballot_t ballot,
-                const CmdData &cmd,
+                shared_ptr<Marshallable> &cmd,
                 ballot_t *max_ballot,
                 const function<void()> &cb);
 
   void OnCommit(const slotid_t slot_id,
                 const ballot_t ballot,
-                const CmdData &cmd);
+                shared_ptr<Marshallable> &cmd);
 
   virtual bool HandleConflicts(Tx& dtxn,
                                innid_t inn_id,

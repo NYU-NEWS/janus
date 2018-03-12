@@ -117,7 +117,7 @@ bool Tx::WriteColumns(Row *row,
 mdb::Row* Tx::CreateRow(const mdb::Schema *schema,
                           const std::vector<mdb::Value> &row_data) {
   Row* r;
-  switch (Config::config_s->cc_mode_) {
+  switch (Config::config_s->tx_proto_) {
     case MODE_2PL:
       r = mdb::FineLockedRow::create(schema, row_data);
       break;

@@ -33,7 +33,7 @@ void ServerWorker::SetupHeartbeat() {
 
 void ServerWorker::SetupBase() {
   auto config = Config::GetConfig();
-  tx_frame_ = Frame::GetFrame(config->cc_mode_);
+  tx_frame_ = Frame::GetFrame(config->tx_proto_);
   tx_frame_->site_info_ = site_info_;
 
   // this needs to be done before poping table
@@ -50,8 +50,8 @@ void ServerWorker::SetupBase() {
   sharding_->tx_sched_ = tx_sched_;
 
   if (config->IsReplicated() &&
-      config->ab_mode_ != config->cc_mode_) {
-    rep_frame_ = Frame::GetFrame(config->ab_mode_);
+      config->replica_proto_ != config->tx_proto_) {
+    rep_frame_ = Frame::GetFrame(config->replica_proto_);
     rep_frame_->site_info_ = site_info_;
     rep_sched_ = rep_frame_->CreateScheduler();
     rep_sched_->txn_reg_ = tx_reg_;

@@ -73,7 +73,7 @@ MultiPaxosFrame::CreateRpcServices(uint32_t site_id,
                                    ServerControlServiceImpl *scsi) {
   auto config = Config::GetConfig();
   auto result = std::vector<Service *>();
-  switch (config->ab_mode_) {
+  switch (config->replica_proto_) {
     case MODE_MULTI_PAXOS:result.push_back(new MultiPaxosServiceImpl(rep_sched));
     default:break;
   }

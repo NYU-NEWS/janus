@@ -224,7 +224,7 @@ Config::Config(char           *ctrl_hostname,
   ctrl_init_(ctrl_init),
   duration_(duration),
   config_paths_(vector<string>()),
-  cc_mode_(0),
+  tx_proto_(0),
   proc_id_(0),
   benchmark_(0),
   scale_factor_(1),
@@ -422,7 +422,7 @@ void Config::LoadHostYML(YAML::Node config) {
 }
 
 void Config::InitMode(string &cc_name, string& ab_name) {
-  cc_mode_ = Frame::Name2Mode(cc_name);
+  tx_proto_ = Frame::Name2Mode(cc_name);
 
   if ((cc_name == "rococo") || (cc_name == "deptran")) {
     // deprecated
@@ -439,7 +439,7 @@ void Config::InitMode(string &cc_name, string& ab_name) {
     n_parallel_dispatch_ = 1;
   }
 
-  ab_mode_ = Frame::Name2Mode(ab_name);
+  replica_proto_ = Frame::Name2Mode(ab_name);
 }
 
 void Config::InitBench(std::string &bench_str) {
@@ -878,7 +878,7 @@ bool Config::do_heart_beat() {
 }
 
 int Config::get_mode() {
-  return cc_mode_;
+  return tx_proto_;
 }
 
 unsigned int Config::get_num_threads() {
@@ -943,7 +943,7 @@ bool Config::do_logging() {
 
 bool Config::IsReplicated() {
   // TODO
-  return (ab_mode_ != MODE_NONE);
+  return (replica_proto_ != MODE_NONE);
   return true;
 }
 

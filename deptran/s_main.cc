@@ -24,7 +24,7 @@ static std::vector<std::thread> client_threads_g = {}; // TODO remove this?
 void client_setup_heartbeat(int num_clients) {
   Log_info("%s", __FUNCTION__);
   std::map<int32_t, std::string> txn_types;
-  Frame* f = Frame::GetFrame(Config::GetConfig()->cc_mode_);
+  Frame* f = Frame::GetFrame(Config::GetConfig()->tx_proto_);
   f->GetTxTypes(txn_types);
   delete f;
   bool hb = Config::GetConfig()->do_heart_beat();

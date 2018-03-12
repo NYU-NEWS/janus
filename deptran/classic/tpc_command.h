@@ -13,7 +13,8 @@ class TpcPrepareCommand : public Marshallable {
   }
   txnid_t tx_id_ = 0;
   int32_t ret_ = -1;
-  vector<SimpleCommand> cmds_ = {}; // TODO remove.
+  // TODO remove for performance?
+  shared_ptr<vector<SimpleCommand>> pieces_{nullptr};
 
   Marshal& ToMarshal(Marshal&) const override;
   Marshal& FromMarshal(Marshal&) override;

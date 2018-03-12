@@ -6,7 +6,7 @@ namespace janus {
 
 Tx2pl::Tx2pl(epoch_t epoch,
              txnid_t tid,
-             Scheduler *sched) : Tx(epoch, tid, sched) {
+             Scheduler *sched) : TxClassic(epoch, tid, sched) {
 
 }
 

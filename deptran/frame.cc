@@ -336,7 +336,7 @@ Executor* Frame::CreateExecutor(cmdid_t cmd_id, Scheduler* sched) {
 }
 
 Scheduler* Frame::CreateScheduler() {
-  auto mode = Config::GetConfig()->cc_mode_;
+  auto mode = Config::GetConfig()->tx_proto_;
   Scheduler *sch = nullptr;
   switch(mode) {
     case MODE_2PL:

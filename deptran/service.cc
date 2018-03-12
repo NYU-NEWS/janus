@@ -37,7 +37,7 @@ ClassicServiceImpl::ClassicServiceImpl(Scheduler* sched,
   this->RegisterStats();
 }
 
-void ClassicServiceImpl::Dispatch(const vector<SimpleCommand>& cmd,
+void ClassicServiceImpl::Dispatch(const vector<TxPieceData>& cmd,
                                   int32_t* res,
                                   TxnOutput* output,
                                   rrr::DeferredReply* defer) {
@@ -60,9 +60,10 @@ void ClassicServiceImpl::Dispatch(const vector<SimpleCommand>& cmd,
   // find stored procedure, and run it
   const auto& func = [defer, &cmd, res, output, this]() {
     verify(cmd.size() > 0);
-    vector<TxPieceData> vec_piece_data = cmd; // TODO remove this copy.
+    // TODO remove this copy.
+    auto sp_pieces = std::make_shared<vector<TxPieceData>>(cmd);
     *res = SUCCESS;
-    if (!dtxn_sched()->OnDispatch(vec_piece_data, *output)) {
+    if (!dtxn_sched()->OnDispatch(sp_pieces, *output)) {
       *res = REJECT;
     }
     defer->reply();

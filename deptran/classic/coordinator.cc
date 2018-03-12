@@ -254,7 +254,7 @@ void CoordinatorClassic::DispatchAck(phase_t phase,
 /** caller should be thread_safe */
 void CoordinatorClassic::Prepare() {
   TxData* cmd = (TxData*) cmd_;
-  auto mode = Config::GetConfig()->cc_mode_;
+  auto mode = Config::GetConfig()->tx_proto_;
   verify(mode == MODE_OCC || mode == MODE_2PL);
 
   std::vector<i32> sids;
@@ -307,7 +307,7 @@ void CoordinatorClassic::PrepareAck(phase_t phase, int res) {
 void CoordinatorClassic::Commit() {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   ___TestPhaseThree(cmd_->id_);
-  auto mode = Config::GetConfig()->cc_mode_;
+  auto mode = Config::GetConfig()->tx_proto_;
   verify(mode == MODE_OCC || mode == MODE_2PL);
   Log_debug("send out finish request, cmd_id: %"
                 PRIx64

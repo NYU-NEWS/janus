@@ -21,8 +21,8 @@ class Scheduler {
   unordered_map<txid_t, shared_ptr<Tx>> dtxns_{};
   unordered_map<txid_t, mdb::Txn *> mdb_txns_{};
   unordered_map<txid_t, Executor *> executors_{};
-  function<void(CmdData &)> learner_action_ =
-      [](CmdData &) -> void { verify(0); };
+  function<void(Marshallable &)> learner_action_ =
+      [](Marshallable &) -> void { verify(0); };
 
   mdb::TxnMgr *mdb_txn_mgr_;
   int mode_;
@@ -89,7 +89,7 @@ class Scheduler {
   }
 
   // runs in a coroutine.
-  virtual bool OnDispatch(vector<TxPieceData> &piece_data,
+  virtual bool OnDispatch(shared_ptr<vector<TxPieceData>> pieces,
                           TxnOutput &ret_output);
 
   virtual bool HandleConflicts(Tx &dtxn,
@@ -146,11 +146,11 @@ class Scheduler {
                  mdb::Table *tbl
   );
 
-  void RegLearnerAction(function<void(CmdData &)> learner_action) {
+  void RegLearnerAction(function<void(Marshallable &)> learner_action) {
     learner_action_ = learner_action;
   }
 
-  virtual void OnLearn(CmdData &cmd) { verify(0); };
+  virtual void OnLearn(Marshallable &cmd) { verify(0); };
 
   // epoch related functions
   void TriggerUpgradeEpoch();

@@ -27,6 +27,7 @@ void CoordinatorMultiPaxos::Submit(shared_ptr<Marshallable>& cmd,
 //  verify(cmd.self_cmd_ != nullptr);
   in_submission_ = true;
   cmd_ = cmd;
+  verify(cmd_->kind_ != MarshallDeputy::UNKNOWN);
   commit_callback_ = func;
   GotoNextPhase();
 }

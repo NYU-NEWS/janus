@@ -277,7 +277,7 @@ ClientWorker::ClientWorker(
     ccsi(ccsi),
     n_concurrent_(config->get_concurrent_txn()) {
   poll_mgr_ = new PollMgr(1);
-  frame_ = Frame::GetFrame(config->cc_mode_);
+  frame_ = Frame::GetFrame(config->tx_proto_);
   tx_generator_ = frame_->CreateTxGenerator();
   config->get_all_site_addr(servers_);
   num_txn.store(0);
@@ -286,7 +286,7 @@ ClientWorker::ClientWorker(
   commo_ = frame_->CreateCommo(poll_mgr_);
   commo_->loc_id_ = my_site_.locale_id;
   forward_requests_to_leader_ =
-      (config->ab_mode_ == MODE_MULTI_PAXOS && site_info.locale_id != 0) ? true
+      (config->replica_proto_ == MODE_MULTI_PAXOS && site_info.locale_id != 0) ? true
                                                                          : false;
   Log_debug("client %d created; forward %d",
             cli_id_,

@@ -15,7 +15,7 @@ ballot_t MultiPaxosExecutor::Prepare(const ballot_t ballot) {
 }
 
 ballot_t MultiPaxosExecutor::Accept(const ballot_t ballot,
-                                    const CmdData& cmd) {
+                                    shared_ptr<Marshallable> cmd) {
   verify(max_ballot_accepted_ < ballot);
   if (max_ballot_seen_ <= ballot) {
     max_ballot_seen_ = ballot;

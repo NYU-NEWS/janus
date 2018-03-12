@@ -39,9 +39,10 @@ class MarshallDeputy {
    * @param kind
    */
   MarshallDeputy(shared_ptr<Marshallable> m): sp_data_(m) {
+    kind_ = sp_data_->kind_;
   }
 
-  Marshal& CreateActuallObjectFrom(Marshal &m);
+  Marshal& CreateActualObjectFrom(Marshal& m);
   void SetMarshallable(shared_ptr<Marshallable> m) {
     verify(sp_data_ == nullptr);
     sp_data_ = m;
@@ -53,11 +54,12 @@ class MarshallDeputy {
 
 inline Marshal& operator>>(Marshal& m, MarshallDeputy& rhs) {
   m >> rhs.kind_;
-  rhs.CreateActuallObjectFrom(m);
+  rhs.CreateActualObjectFrom(m);
   return m;
 }
 
 inline Marshal& operator<<(Marshal& m, const MarshallDeputy& rhs) {
+  verify(rhs.kind_ != MarshallDeputy::UNKNOWN);
   m << rhs.kind_;
   verify(rhs.sp_data_); // must be non-empty
   rhs.sp_data_->ToMarshal(m);

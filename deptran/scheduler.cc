@@ -119,7 +119,7 @@ mdb::Txn *Scheduler::GetOrCreateMTxn(const i64 tid) {
   if (it == mdb_txns_.end()) {
     txn = mdb_txn_mgr_->start(tid);
     // using occ lazy mode: increment version at commit time
-    auto mode = Config::GetConfig()->cc_mode_;
+    auto mode = Config::GetConfig()->tx_proto_;
     if (mode == MODE_OCC || mode == MODE_MDCC) {
       ((mdb::TxnOCC *) txn)->set_policy(mdb::OCC_LAZY);
     }
@@ -241,7 +241,7 @@ Scheduler::~Scheduler() {
   mdb_txn_mgr_ = NULL;
 }
 
-bool Scheduler::OnDispatch(vector<TxPieceData> &piece_data,
+bool Scheduler::OnDispatch(shared_ptr<vector<TxPieceData>> pieces,
                            TxnOutput &ret_output) {
   verify(0);
   return false;

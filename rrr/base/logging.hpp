@@ -3,7 +3,9 @@
 #include <string.h>
 #include "threading.hpp"
 
-#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+//#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
+
+#define __FILENAME__ __FILE__
 
 #define Log_debug(msg, ...) ::rrr::Log::debug(__LINE__, __FILENAME__, msg, ## __VA_ARGS__)
 #define Log_info(msg, ...) ::rrr::Log::info(__LINE__, __FILENAME__, msg, ## __VA_ARGS__)

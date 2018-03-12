@@ -1,12 +1,12 @@
 #pragma once
 
-#include "deptran/tx.h"
+#include "../classic/tx.h"
 
 namespace janus {
 
 using rrr::ALockGroup;
 
-class Tx2pl: public Tx {
+class Tx2pl: public TxClassic {
  public:
   vector<std::pair<ALock*, uint64_t>> locked_locks_ = {};
   bool prepared_{false};

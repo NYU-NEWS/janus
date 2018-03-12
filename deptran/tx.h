@@ -58,6 +58,8 @@ class Tx {
   TxWorkspace ws_{};
   // TODO at most one active coroutine runnable for a tx at a time
   IntEvent running_{};
+  shared_ptr<vector<TxPieceData>> pieces_{nullptr}; // TODO change this to a
+  // shared pointer
 
 #ifdef CHECK_ISO
   map<Row*, map<colid_t, int>> deltas_;

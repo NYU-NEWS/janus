@@ -1,22 +1,27 @@
 #include "../constants.h"
-#include "deptran/tx.h"
+#include "../tx.h"
 #include "../procedure.h"
 #include "../coordinator.h"
-#include "deptran/2pl/tx.h"
+#include "../2pl/tx.h"
 #include "scheduler.h"
 #include "tpc_command.h"
+#include "tx.h"
 
 namespace janus {
 
-bool SchedulerClassic::OnDispatch(vector<TxPieceData>& vec_piece_data,
+bool SchedulerClassic::OnDispatch(shared_ptr<vector<TxPieceData>> sp_pieces,
                                   TxnOutput& ret_output) {
-  Tx& tx = *GetOrCreateTx(vec_piece_data[0].root_id_);
-  Log_debug("received dispatch for tx id: %"
-                PRIx64, tx.tid_);
+  Tx& tx = *GetOrCreateTx(sp_pieces->at(0).root_id_);
+  if (tx.pieces_) {
+    verify(0);
+  } else {
+    tx.pieces_ = sp_pieces;
+  }
+  Log_debug("received dispatch for tx id: %" PRIx64, tx.tid_);
 //  verify(partition_id_ == piece_data.partition_id_);
   verify(!tx.inuse);
   tx.inuse = true;
-  for (auto& piece_data : vec_piece_data) {
+  for (auto& piece_data : *sp_pieces) {
     TxnPieceDef
         & piece_def = txn_reg_->get(piece_data.root_type_, piece_data.type_);
     auto& conflicts = piece_def.conflicts_;
@@ -40,9 +45,11 @@ bool SchedulerClassic::OnDispatch(vector<TxPieceData>& vec_piece_data,
   }
   tx.fully_dispatched_.Set(1); // TODO here, support aborts with multiple goals?
   // wait for an execution signal.
-  tx.ev_execute_ready_.Wait();
+//  Log_debug("entered waiting for tx id: %" PRIx64, tx.tid_);
+//  tx.ev_execute_ready_.Wait();
+//  Log_debug("finished waiting for tx id: %" PRIx64, tx.tid_);
   int ret_code;
-  for (auto& piece_data : vec_piece_data) {
+  for (auto& piece_data : *sp_pieces) {
     TxnPieceDef
         & piece_def = txn_reg_->get(piece_data.root_type_, piece_data.type_);
     auto& conflicts = piece_def.conflicts_;
@@ -65,7 +72,10 @@ bool SchedulerClassic::OnDispatch(vector<TxPieceData>& vec_piece_data,
 //   3. after that, run the function to prepare.
 //   0. an non-optimized version would be.
 //      dispatch the transaction command with paxos instance
-bool SchedulerClassic::OnPrepare(txnid_t tx_id, const std::vector<i32>& sids) {
+bool SchedulerClassic::OnPrepare(txnid_t tx_id,
+                                 const std::vector<i32>& sids) {
+  auto sp_tx = dynamic_pointer_cast<TxClassic>(GetOrCreateTx(tx_id));
+  verify(sp_tx);
   Log_debug("%s: at site %d, tx: %"
                 PRIx64, __FUNCTION__, this->site_id_, tx_id);
   std::lock_guard<std::recursive_mutex> lock(mtx_);
@@ -73,10 +83,16 @@ bool SchedulerClassic::OnPrepare(txnid_t tx_id, const std::vector<i32>& sids) {
 //  exec->prepare_reply_ = [res, callback] (int r) {*res = r; callback();};
 
   if (Config::GetConfig()->IsReplicated()) {
-//    TpcPrepareCommand *cmd = new TpcPrepareCommand; // TODO watch out memory
-//    cmd->tx_id_ = tx_id;
-//    cmd->cmds_ = exec->cmds_;
-//    CreateRepCoord()->Submit(*cmd);
+    auto sp_prepare_cmd = std::make_shared<TpcPrepareCommand>();
+    verify(sp_prepare_cmd->kind_ == MarshallDeputy::CMD_TPC_PREPARE);
+    sp_prepare_cmd->tx_id_ = tx_id;
+    sp_prepare_cmd->pieces_ = sp_tx->pieces_;
+    auto sp_m = dynamic_pointer_cast<Marshallable>(sp_prepare_cmd);
+    CreateRepCoord()->Submit(sp_m);
+    Log_debug("wait for prepare command replicated");
+    sp_tx->ev_prepare_.Wait();
+    Log_debug("finished prepare command replication");
+    return sp_tx->result_prepare;
   } else if (Config::GetConfig()->do_logging()) {
     string log;
     this->get_prepare_log(tx_id, sids, &log);
@@ -88,37 +104,36 @@ bool SchedulerClassic::OnPrepare(txnid_t tx_id, const std::vector<i32>& sids) {
 }
 
 int SchedulerClassic::PrepareReplicated(TpcPrepareCommand& prepare_cmd) {
-  // TODO, disable for now
-  verify(0);
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   // TODO verify it is the same leader, error if not.
   // TODO and return the prepare callback here.
-//  auto tid = prepare_cmd.tx_id_;
-//  auto exec = dynamic_cast<ClassicExecutor *>(GetOrCreateExecutor(tid));
-//  verify(prepare_cmd.cmds_.size() > 0);
-//  if (exec->cmds_.size() == 0)
-//    exec->cmds_ = prepare_cmd.cmds_;
-//  // else: is the leader.
-//  verify(exec->cmds_.size() > 0);
-//  int r = exec->Prepare() ? SUCCESS : REJECT;
-//  exec->prepare_reply_(r);
+  Log_debug("prepare request replicated");
+  auto tx_id = prepare_cmd.tx_id_;
+  auto sp_tx = dynamic_pointer_cast<TxClassic>(GetOrCreateTx(tx_id));
+  verify(prepare_cmd.pieces_->size() > 0);
+  if (sp_tx->pieces_ == nullptr)
+    sp_tx->pieces_ = prepare_cmd.pieces_;
+  // else: is the leader.
+  sp_tx->result_prepare = DoPrepare(sp_tx->tid_);
+  sp_tx->ev_prepare_.Set(1);
+  Log_debug("triggering prepare replication callback %" PRIx64, sp_tx->tid_);
   return 0;
 }
 
 int SchedulerClassic::OnCommit(txnid_t tx_id, int commit_or_abort) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  Log_debug("%s: at site %d, tx: %"
-                PRIx64, __FUNCTION__, this->site_id_, tx_id);
-  auto tx_box = GetOrCreateTx(tx_id);
-  verify(!tx_box->inuse);
-  tx_box->inuse = true;
-//  auto exec = (ClassicExecutor*)GetExecutor(cmd_id);
+  Log_debug("%s: at site %d, tx: %" PRIx64,
+            __FUNCTION__, this->site_id_, tx_id);
+  auto sp_tx = dynamic_pointer_cast<TxClassic>(GetOrCreateTx(tx_id));
+  verify(!sp_tx->inuse);
+  sp_tx->inuse = true;
   if (Config::GetConfig()->IsReplicated()) {
-//    exec->commit_reply_ = [callback] (int r) {callback();};
-//    TpcCommitCommand* cmd = new TpcCommitCommand;
-//    cmd->tx_id_ = cmd_id;
-//    cmd->res_ = commit_or_abort;
-//    CreateRepCoord()->Submit(*cmd);
+    auto cmd = std::make_shared<TpcCommitCommand>();
+    cmd->tx_id_ = tx_id;
+    cmd->ret_ = commit_or_abort;
+    auto sp_m = dynamic_pointer_cast<Marshallable>(cmd);
+    CreateRepCoord()->Submit(sp_m);
+    sp_tx->ev_commit_.Wait();
   } else {
 //    verify(exec->phase_ < 3);
 //    exec->phase_ = 3;
@@ -127,16 +142,16 @@ int SchedulerClassic::OnCommit(txnid_t tx_id, int commit_or_abort) {
       //      MergeDeltas(exec->dtxn_->deltas_);
 #endif
 //      exec->CommitLaunch(res, callback);
-      DoCommit(*tx_box);
+      DoCommit(*sp_tx);
     } else if (commit_or_abort == REJECT) {
 //      exec->AbortLaunch(res, callback);
-      DoAbort(*tx_box);
+      DoAbort(*sp_tx);
     } else {
       verify(0);
     }
 //    TrashExecutor(cmd_id);
   }
-  tx_box->inuse = false;
+  sp_tx->inuse = false;
   return 0;
 }
 
@@ -155,33 +170,30 @@ void SchedulerClassic::DoAbort(Tx& tx_box) {
 }
 
 int SchedulerClassic::CommitReplicated(TpcCommitCommand& tpc_commit_cmd) {
-  // TODO disable for now.
-  verify(0);
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  auto txn_id = tpc_commit_cmd.tx_id_;
-//  auto exec = (ClassicExecutor *) GetOrCreateExecutor(txn_id);
-//  verify(exec->phase_ < 3);
-//  exec->phase_ = 3;
-//  int commit_or_abort = tpc_commit_cmd.res_;
-//  if (commit_or_abort == SUCCESS) {
-//#ifdef CHECK_ISO
-//    MergeDeltas(exec->dtxn_->deltas_);
-//#endif
-//    exec->Commit();
-//  } else if (commit_or_abort == REJECT) {
-//    exec->Abort();
-//  } else {
-//    verify(0);
-//  }
-//  exec->commit_reply_(SUCCESS);
-//  TrashExecutor(txn_id);
+  auto tx_id = tpc_commit_cmd.tx_id_;
+  auto sp_tx = dynamic_pointer_cast<TxClassic>(GetOrCreateTx(tx_id));
+  int commit_or_abort = tpc_commit_cmd.ret_;
+  if (commit_or_abort == SUCCESS) {
+#ifdef CHECK_ISO
+    MergeDeltas(exec->dtxn_->deltas_);
+#endif
+    sp_tx->committed_ = true;
+  } else if (commit_or_abort == REJECT) {
+    sp_tx->aborted_ = false;
+  } else {
+    verify(0);
+  }
+  sp_tx->ev_commit_.Set(1);
+  sp_tx->ev_execute_ready_.Set(1);
+//  TrashExecutor(tx_id);
 }
 
-void SchedulerClassic::OnLearn(CmdData& cmd) {
-  if (cmd.type_ == MarshallDeputy::CMD_TPC_PREPARE) {
+void SchedulerClassic::OnLearn(Marshallable& cmd) {
+  if (cmd.kind_ == MarshallDeputy::CMD_TPC_PREPARE) {
     TpcPrepareCommand& c = dynamic_cast<TpcPrepareCommand&>(cmd);
     PrepareReplicated(c);
-  } else if (cmd.type_ == MarshallDeputy::CMD_TPC_COMMIT) {
+  } else if (cmd.kind_ == MarshallDeputy::CMD_TPC_COMMIT) {
     TpcCommitCommand& c = dynamic_cast<TpcCommitCommand&>(cmd);
     CommitReplicated(c);
   } else {
