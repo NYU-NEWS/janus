@@ -1,5 +1,6 @@
 
 #include "communicator.h"
+#include "coordinator.h"
 #include "rococo/graph.h"
 #include "rococo/graph_marshaler.h"
 #include "command.h"
@@ -7,7 +8,7 @@
 #include "procedure.h"
 #include "rcc_rpc.h"
 
-namespace rococo {
+namespace janus {
 
 using namespace std::chrono;
 
@@ -186,4 +187,202 @@ Communicator::NearestProxyForPartition(parid_t par_id) const {
   return partition_proxies[index];
 };
 
-} // namespace rococo
+void Communicator::BroadcastDispatch(
+    vector<TxPieceData>& vec_piece_data,
+    Coordinator* coo,
+    const function<void(int, TxnOutput&)> & callback) {
+  auto par_id = vec_piece_data[0].PartitionId();
+  rrr::FutureAttr fuattr;
+  fuattr.callback =
+      [coo, this, callback](Future* fu) {
+        int32_t ret;
+        TxnOutput outputs;
+        fu->get_reply() >> ret >> outputs;
+        callback(ret, outputs);
+      };
+  auto pair_leader_proxy = LeaderProxyForPartition(par_id);
+  Log_debug("send dispatch to site %ld",
+            pair_leader_proxy.first);
+  auto proxy = pair_leader_proxy.second;
+  auto future = proxy->async_Dispatch(vec_piece_data, fuattr);
+  Future::safe_release(future);
+  for (auto& pair : rpc_par_proxies_[par_id]) {
+    if (pair.first != pair_leader_proxy.first) {
+      rrr::FutureAttr fuattr;
+      fuattr.callback =
+          [coo, this, callback](Future* fu) {
+            int32_t ret;
+            TxnOutput outputs;
+            fu->get_reply() >> ret >> outputs;
+            // do nothing
+          };
+      Future::safe_release(pair.second->async_Dispatch(vec_piece_data, fuattr));
+    }
+  }
+}
+
+void Communicator::SendStart(SimpleCommand& cmd,
+                             int32_t output_size,
+                             std::function<void(Future* fu)>& callback) {
+  verify(0);
+}
+
+void Communicator::SendPrepare(groupid_t gid,
+                               txnid_t tid,
+                               std::vector<int32_t>& sids,
+                               const function<void(int)>& callback) {
+  FutureAttr fuattr;
+  std::function<void(Future*)> cb =
+      [this, callback](Future* fu) {
+        int res;
+        fu->get_reply() >> res;
+        callback(res);
+      };
+  fuattr.callback = cb;
+  ClassicProxy* proxy = LeaderProxyForPartition(gid).second;
+  Log_debug("SendPrepare to %ld sites gid:%ld, tid:%ld\n",
+            sids.size(),
+            gid,
+            tid);
+  Future::safe_release(proxy->async_Prepare(tid, sids, fuattr));
+}
+
+void Communicator::___LogSent(parid_t pid, txnid_t tid) {
+  auto value = std::make_pair(pid, tid);
+  auto it = phase_three_sent_.find(value);
+  if (it != phase_three_sent_.end()) {
+    Log_fatal("phase 3 sent exists: %d %x", it->first, it->second);
+  } else {
+    phase_three_sent_.insert(value);
+    Log_debug("phase 3 sent: pid: %d; tid: %x", value.first, value.second);
+  }
+}
+
+void Communicator::SendCommit(parid_t pid,
+                              txnid_t tid,
+                              const function<void()>& callback) {
+#ifdef LOG_LEVEL_AS_DEBUG
+  ___LogSent(pid, tid);
+#endif
+  FutureAttr fuattr;
+  fuattr.callback = [callback](Future*) { callback(); };
+  ClassicProxy* proxy = LeaderProxyForPartition(pid).second;
+  Log_debug("SendCommit to %ld tid:%ld\n", pid, tid);
+  Future::safe_release(proxy->async_Commit(tid, fuattr));
+}
+
+void Communicator::SendAbort(parid_t pid, txnid_t tid,
+                             const function<void()>& callback) {
+#ifdef LOG_LEVEL_AS_DEBUG
+  ___LogSent(pid, tid);
+#endif
+  FutureAttr fuattr;
+  fuattr.callback = [callback](Future*) { callback(); };
+  ClassicProxy* proxy = LeaderProxyForPartition(pid).second;
+  Log_debug("SendAbort to %ld tid:%ld\n", pid, tid);
+  Future::safe_release(proxy->async_Abort(tid, fuattr));
+}
+
+void Communicator::SendUpgradeEpoch(epoch_t curr_epoch,
+                                    const function<void(parid_t,
+                                                        siteid_t,
+                                                        int32_t&)>& callback) {
+  for (auto& pair: rpc_par_proxies_) {
+    auto& par_id = pair.first;
+    auto& proxies = pair.second;
+    for (auto& pair: proxies) {
+      FutureAttr fuattr;
+      auto& site_id = pair.first;
+      function<void(Future*)> cb = [callback, par_id, site_id](Future* fu) {
+        int32_t res;
+        fu->get_reply() >> res;
+        callback(par_id, site_id, res);
+      };
+      fuattr.callback = cb;
+      auto proxy = (ClassicProxy*) pair.second;
+      Future::safe_release(proxy->async_UpgradeEpoch(curr_epoch, fuattr));
+    }
+  }
+}
+
+void Communicator::SendTruncateEpoch(epoch_t old_epoch) {
+  for (auto& pair: rpc_par_proxies_) {
+    auto& par_id = pair.first;
+    auto& proxies = pair.second;
+    for (auto& pair: proxies) {
+      FutureAttr fuattr;
+      fuattr.callback = [](Future*) {};
+      auto proxy = (ClassicProxy*) pair.second;
+      Future::safe_release(proxy->async_TruncateEpoch(old_epoch));
+    }
+  }
+}
+
+void Communicator::SendForwardTxnRequest(
+    TxRequest& req,
+    Coordinator* coo,
+    std::function<void(const TxReply&)> callback) {
+  Log_info("%s: %d, %d", __FUNCTION__, coo->coo_id_, coo->par_id_);
+  verify(client_leaders_.size() > 0);
+  auto idx = rrr::RandomGenerator::rand(0, client_leaders_.size() - 1);
+  auto p = client_leaders_[idx];
+  auto leader_site_id = p.first;
+  auto leader_proxy = p.second;
+  Log_debug("%s: send to client site %d", __FUNCTION__, leader_site_id);
+  TxDispatchRequest dispatch_request;
+  dispatch_request.id = coo->coo_id_;
+  for (size_t i = 0; i < req.input_.size(); i++) {
+    dispatch_request.input.push_back(req.input_[i]);
+  }
+  dispatch_request.tx_type = req.tx_type_;
+
+  FutureAttr future;
+  future.callback = [callback](Future* f) {
+    TxReply reply;
+    f->get_reply() >> reply;
+    callback(reply);
+  };
+  Future::safe_release(leader_proxy->async_DispatchTxn(dispatch_request,
+                                                       future));
+}
+
+vector<shared_ptr<MessageEvent>>
+Communicator::BroadcastMessage(shardid_t shard_id,
+                               svrid_t svr_id,
+                               string& msg) {
+  verify(0);
+  // TODO
+  vector<shared_ptr<MessageEvent>> events;
+
+  for (auto& p : rpc_par_proxies_[shard_id]) {
+    auto site_id = p.first;
+    auto proxy = (p.second);
+    verify(proxy != nullptr);
+    FutureAttr fuattr;
+    auto msg_ev = std::make_shared<MessageEvent>(shard_id, site_id);
+    events.push_back(msg_ev);
+    fuattr.callback = [msg_ev] (Future* fu) {
+      auto& marshal = fu->get_reply();
+      marshal >> msg_ev->msg_;
+      msg_ev->Set(1);
+    };
+    Future* f = nullptr;
+    Future::safe_release(f);
+  }
+  return events;
+}
+
+shared_ptr<MessageEvent>
+Communicator::SendMessage(siteid_t site_id,
+                          string& msg) {
+  verify(0);
+  // TODO
+  auto ev = std::make_shared<MessageEvent>(site_id);
+  return ev;
+}
+
+void Communicator::AddMessageHandler(
+    function<bool(const string&, string&)> f) {
+  msg_handlers_.push_back(f);
+}
+} // namespace janus

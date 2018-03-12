@@ -1,14 +1,14 @@
 #pragma once
 
 #include "../__dep__.h"
-#include "../commo.h"
+#include "../communicator.h"
 
 namespace janus {
 
 class Simplecommand;
-class TapirCommo : public RococoCommunicator {
+class TapirCommo : public Communicator {
  public:
-  using RococoCommunicator::RococoCommunicator;
+  using Communicator::Communicator;
 
 //  void SendDispatch(vector<SimpleCommand> &cmd,
 //                    Coordinator *coo,

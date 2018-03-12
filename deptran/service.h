@@ -5,11 +5,12 @@
 
 #define DepTranServiceImpl ClassicServiceImpl
 
-namespace rococo {
+namespace janus {
 
 class ServerControlServiceImpl;
 class Scheduler;
 class SimpleCommand;
+class Communicator;
 class SchedulerClassic;
 
 class ClassicServiceImpl : public ClassicService {
@@ -24,8 +25,9 @@ class ClassicServiceImpl : public ClassicService {
   uint64_t n_asking_ = 0;
 
   std::mutex mtx_;
-  Recorder* recorder_ = NULL;
+  Recorder* recorder_{nullptr};
   ServerControlServiceImpl* scsi_; // for statistics;
+  Communicator* comm_{nullptr};
 
   Scheduler* dtxn_sched_;
 
@@ -71,6 +73,10 @@ class ClassicServiceImpl : public ClassicService {
   void TapirDecide(const txid_t& cmd_id,
                    const rrr::i32& decision,
                    rrr::DeferredReply* defer) override;
+
+  void MsgString(const string& arg,
+                 string* ret,
+                 rrr::DeferredReply* defer) override;
 
 #ifdef PIECE_COUNT
   typedef struct piece_count_key_t{
@@ -181,5 +187,5 @@ class ClassicServiceImpl : public ClassicService {
   void RegisterStats();
 };
 
-} // namespace rcc
+} // namespace janus
 

@@ -17,17 +17,19 @@
 #include <algorithm>
 #include <set>
 
-using std::map;
-using std::unordered_map;
-using std::string;
-using std::vector;
-using std::list;
-using std::set;
-using std::unordered_set;
-using std::pair;
-using std::function;
-using std::shared_ptr;
-using std::unique_ptr;
+using namespace std;
+// using the following will trigger errors in CLion (<= 2017.3)
+// using std::map;
+// using std::unordered_map;
+// using std::string;
+// using std::vector;
+// using std::list;
+// using std::set;
+// using std::unordered_set;
+// using std::pair;
+// using std::function;
+// using std::shared_ptr;
+// using std::unique_ptr;
 
 // system library
 #include <sys/types.h>

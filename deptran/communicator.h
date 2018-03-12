@@ -19,6 +19,22 @@ class ClientControlProxy;
 typedef std::pair<siteid_t, ClassicProxy*> SiteProxyPair;
 typedef std::pair<siteid_t, ClientControlProxy*> ClientSiteProxyPair;
 
+class MessageEvent : public IntEvent {
+ public:
+  shardid_t shard_id_;
+  svrid_t svr_id_;
+  string msg_;
+  MessageEvent(svrid_t svr_id) : IntEvent(), svr_id_(svr_id) {
+
+  }
+
+  MessageEvent(shardid_t shard_id, svrid_t svr_id)
+      : IntEvent(), shard_id_(shard_id), svr_id_(svr_id) {
+
+  }
+};
+
+
 class Communicator {
  public:
   const int CONNECT_TIMEOUT_MS = 120*1000;
@@ -48,6 +64,51 @@ class Communicator {
                                           std::chrono::milliseconds timeout);
   void ConnectClientLeaders();
   void WaitConnectClientLeaders();
+
+  vector<function<bool(const string& arg, string& ret)> > msg_handlers_{};
+
+  void SendStart(SimpleCommand& cmd,
+                 int32_t output_size,
+                 std::function<void(Future *fu)> &callback);
+  void BroadcastDispatch(vector<SimpleCommand> &vec_piece_data,
+                         Coordinator *coo,
+                         const std::function<void(int res, TxnOutput &)> &) ;
+  void SendPrepare(parid_t gid,
+                   txnid_t tid,
+                   std::vector<int32_t> &sids,
+                   const std::function<void(int)> &callback) ;
+  void SendCommit(parid_t pid,
+                  txnid_t tid,
+                  const std::function<void()> &callback) ;
+  void SendAbort(parid_t pid,
+                 txnid_t tid,
+                 const std::function<void()> &callback) ;
+
+  // for debug
+  std::set<std::pair<parid_t, txnid_t>> phase_three_sent_;
+
+  void ___LogSent(parid_t pid, txnid_t tid);
+
+  void SendUpgradeEpoch(epoch_t curr_epoch,
+                        const function<void(parid_t,
+                                            siteid_t,
+                                            int32_t& graph)>& callback);
+
+  void SendTruncateEpoch(epoch_t old_epoch);
+  void SendForwardTxnRequest(TxRequest& req, Coordinator* coo, std::function<void(const TxReply&)> callback);
+
+  /**
+   *
+   * @param shard_id 0 means broadcast to all shards.
+   * @param svr_id 0 means broadcast to all replicas in that shard.
+   * @param msg
+   */
+  vector<shared_ptr<MessageEvent>> BroadcastMessage(shardid_t shard_id,
+                                                    svrid_t svr_id,
+                                                    string& msg);
+  std::shared_ptr<MessageEvent> SendMessage(svrid_t svr_id, string& msg);
+
+  void AddMessageHandler(std::function<bool(const string&, string&)>);
 };
 
 } // namespace janus

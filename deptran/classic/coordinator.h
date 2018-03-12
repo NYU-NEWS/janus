@@ -22,7 +22,7 @@ class CoordinatorClassic : public Coordinator {
     return *(TxData*) cmd_;
   }
 
-  RococoCommunicator* commo();
+  Communicator* commo();
 
 #ifdef TXN_STAT
   typedef struct txn_stat_t {

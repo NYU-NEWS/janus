@@ -3,6 +3,7 @@
 #include "scheduler.h"
 #include "command.h"
 #include "procedure.h"
+#include "communicator.h"
 #include "command_marshaler.h"
 #include "rococo/dep_graph.h"
 #include "service.h"
@@ -381,6 +382,21 @@ void ClassicServiceImpl::RegisterStats() {
     scsi_->set_stat(ServerControlServiceImpl::STAT_RO6_SZ_VECTOR,
                     &stat_ro6_sz_vector_);
   }
+}
+
+void ClassicServiceImpl::MsgString(const string& arg,
+                                   string* ret,
+                                   rrr::DeferredReply* defer) {
+
+  verify(comm_ != nullptr);
+  for (auto& f : comm_->msg_handlers_) {
+    if (f(arg, *ret)) {
+      defer->reply();
+      return;
+    }
+  }
+  verify(0);
+  return;
 }
 
 } // namespace janus

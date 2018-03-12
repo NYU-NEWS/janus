@@ -14,7 +14,8 @@ class Event {
   void* _dbg_p_scheduler_{nullptr};
 
   // An event is usually allocated on a coroutine stack, thus it cannot own a
-  // shared_ptr to the coroutine it is. There is no shared pointer to the event.
+  //   shared_ptr to the coroutine it is.
+  // In this case there is no shared pointer to the event.
   // When the stack that contains the event frees, the event frees.
   std::weak_ptr<Coroutine> wp_coro_{};
 

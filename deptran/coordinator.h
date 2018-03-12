@@ -5,7 +5,7 @@
 #include "procedure.h"
 //#include "all.h"
 #include "msg.h"
-#include "commo.h"
+#include "communicator.h"
 #include "client_worker.h"
 
 namespace janus {

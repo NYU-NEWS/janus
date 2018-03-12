@@ -14,7 +14,6 @@ class Executor;
 class Coordinator;
 class Frame;
 class Communicator;
-class RococoCommunicator;
 class Scheduler {
  public:
   locid_t loc_id_ = -1;
@@ -76,9 +75,9 @@ class Scheduler {
   }
 #endif
 
-  RococoCommunicator *commo() {
+  Communicator *commo() {
     verify(commo_ != nullptr);
-    return (RococoCommunicator *) commo_;
+    return commo_;
   }
 
   Scheduler();
@@ -100,6 +99,7 @@ class Scheduler {
                                innid_t inn_id,
                                vector<conf_id_t> &conflicts) {
     Log_fatal("unimplemnted feature: handle conflicts!");
+    return false;
   };
   virtual void Execute(Tx &txn_box,
                        innid_t inn_id);

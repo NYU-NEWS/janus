@@ -242,7 +242,7 @@ class TxData: public CmdData {
   TxReply &get_reply();
 
   /** for retry */
-  virtual void Reset();
+  virtual void Reset() override;
 
   virtual ~TxData() {}
 };

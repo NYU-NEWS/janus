@@ -1,11 +1,11 @@
 #pragma once
 
-#include "../commo.h"
+#include "../communicator.h"
 
 namespace janus {
 
 class QuorumEvent;
-class CommoFebruus : public RococoCommunicator {
+class CommoFebruus : public Communicator {
  public:
   void BroadcastPreAccept(QuorumEvent& e, parid_t, txid_t);
   void BroadcastAccept(QuorumEvent& e,

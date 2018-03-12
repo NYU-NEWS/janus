@@ -286,7 +286,7 @@ TxData * Frame::CreateChopper(TxRequest &req, TxnRegistry* reg) {
 }
 
 Communicator* Frame::CreateCommo(PollMgr* pollmgr) {
-  commo_ = new RococoCommunicator(pollmgr);
+  commo_ = new Communicator(pollmgr);
   return commo_;
 }
 

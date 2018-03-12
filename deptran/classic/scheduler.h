@@ -28,6 +28,7 @@ class SchedulerClassic: public Scheduler {
 
   virtual bool DoPrepare(txnid_t tx_id) {
     Log_fatal("feature not implemented: do prepare");
+    return false;
   };
 
   virtual int OnCommit(cmdid_t cmd_id,

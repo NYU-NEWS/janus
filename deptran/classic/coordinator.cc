@@ -28,12 +28,12 @@ CoordinatorClassic::CoordinatorClassic(uint32_t coo_id,
   verify(commo_ == nullptr);
 }
 
-RococoCommunicator* CoordinatorClassic::commo() {
+Communicator* CoordinatorClassic::commo() {
   if (commo_ == nullptr) {
-    commo_ = new RococoCommunicator;
+    commo_ = new Communicator;
   }
   verify(commo_ != nullptr);
-  return (RococoCommunicator*) commo_;
+  return commo_;
 }
 
 void CoordinatorClassic::ForwardTxnRequest(TxRequest& req) {
