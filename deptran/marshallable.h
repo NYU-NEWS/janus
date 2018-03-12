@@ -15,9 +15,10 @@ class Marshallable {
 
 class MarshallDeputy {
  public:
-  static map<int32_t, function<Marshallable*()>>& Initializers();
+  typedef unordered_map<int32_t, function<Marshallable*()>> MarContainer;
+  static MarContainer& Initializers();
   static int RegInitializer(int32_t, function<Marshallable*()>);
-  static function<Marshallable*()>& GetInitializer(int32_t);
+  static function<Marshallable*()> GetInitializer(int32_t);
 
  public:
   shared_ptr<Marshallable> sp_data_{nullptr};
@@ -66,4 +67,4 @@ inline Marshal& operator<<(Marshal& m, const MarshallDeputy& rhs) {
   return m;
 }
 
-} // namespace rococo;
+} // namespace janus;

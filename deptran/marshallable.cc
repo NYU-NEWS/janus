@@ -1,12 +1,14 @@
 
-
+#include <unordered_map>
 #include <mutex>
 #include "marshallable.h"
 #include "rococo/dep_graph.h"
 
 namespace janus {
 
-static std::mutex md_mutex_g;
+std::mutex md_mutex_g;
+std::mutex mdi_mutex_g;
+shared_ptr<MarshallDeputy::MarContainer> mc_{nullptr};
 
 int MarshallDeputy::RegInitializer(int32_t cmd_type,
                                    function<Marshallable * ()> init) {
@@ -17,24 +19,26 @@ int MarshallDeputy::RegInitializer(int32_t cmd_type,
   return 0;
 }
 
-function<Marshallable * ()> &
+function<Marshallable * ()>
 MarshallDeputy::GetInitializer(int32_t type) {
   md_mutex_g.lock();
-  auto it = Initializers().find(type);
-  verify(it != Initializers().end());
-  auto& f = it->second;
+  auto f = Initializers().at(type);
   md_mutex_g.unlock();
   return f;
 }
 
-map <int32_t, function<Marshallable * ()>> &
+MarshallDeputy::MarContainer&
 MarshallDeputy::Initializers() {
-  static map <int32_t, function<Marshallable * ()>> m;
-  return m;
+  mdi_mutex_g.lock();
+  if (!mc_)
+    mc_.reset(new MarshallDeputy::MarContainer);
+  mdi_mutex_g.unlock();
+  return *mc_;
 };
 
 Marshal &Marshallable::FromMarshal(Marshal &m) {
   verify(0);
+  return m;
 }
 
 Marshal& MarshallDeputy::CreateActualObjectFrom(Marshal& m) {
@@ -50,7 +54,7 @@ Marshal& MarshallDeputy::CreateActualObjectFrom(Marshal& m) {
       verify(0);
       break;
     default:
-      auto &func = GetInitializer(kind_);
+      auto func = GetInitializer(kind_);
       verify(func);
       sp_data_.reset(func());
       break;
