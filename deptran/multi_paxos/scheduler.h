@@ -22,9 +22,9 @@ class SchedulerMultiPaxos : public Scheduler {
   map<slotid_t, shared_ptr<PaxosData>> logs_{};
 
   shared_ptr<PaxosData> GetInstance(slotid_t id) {
-    auto sp_instance = logs_[id];
+    auto& sp_instance = logs_[id];
     if(!sp_instance)
-      sp_instance = std::make_shared<PaxosData>();
+      sp_instance.reset(new PaxosData);
     return sp_instance;
   }
 
