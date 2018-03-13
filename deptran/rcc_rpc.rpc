@@ -22,6 +22,8 @@ abstract service MultiPaxos {
 abstract service Classic {
   defer MsgString(string arg | string ret);
 
+  defer MsgMarshall(MarshallDeputy arg | MarshallDeputy ret);
+
   defer Dispatch(vector<SimpleCommand> cmd |
                  i32 res,
                  TxnOutput output);

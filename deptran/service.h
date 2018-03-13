@@ -78,6 +78,10 @@ class ClassicServiceImpl : public ClassicService {
                  string* ret,
                  rrr::DeferredReply* defer) override;
 
+  void MsgMarshall(const MarshallDeputy& arg,
+                   MarshallDeputy* ret,
+                   rrr::DeferredReply* defer) override;
+
 #ifdef PIECE_COUNT
   typedef struct piece_count_key_t{
       i32 t_type;

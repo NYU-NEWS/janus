@@ -12,10 +12,16 @@ void SchedulerMultiPaxos::OnPrepare(slotid_t slot_id,
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   Log_debug("multi-paxos scheduler receives prepare for slot_id: %llx",
             slot_id);
-  auto exec = (MultiPaxosExecutor *) CreateExecutor(slot_id);
-  *max_ballot = exec->Prepare(ballot);
+  auto instance = GetInstance(slot_id);
+  verify(ballot != instance->max_ballot_seen_);
+  if (instance->max_ballot_seen_ < ballot) {
+    instance->max_ballot_seen_ = ballot;
+  } else {
+    // TODO if accepted anything, return;
+    verify(0);
+  }
+  *max_ballot = instance->max_ballot_seen_;
   cb();
-  verify(0); // for debug.
 }
 
 void SchedulerMultiPaxos::OnAccept(const slotid_t slot_id,
@@ -25,9 +31,16 @@ void SchedulerMultiPaxos::OnAccept(const slotid_t slot_id,
                                    const function<void()> &cb) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   Log_debug("multi-paxos scheduler accept for slot_id: %llx", slot_id);
-  auto exec = (MultiPaxosExecutor *) GetOrCreateExecutor(slot_id);
-  verify(exec != nullptr);
-  *max_ballot = exec->Accept(ballot, cmd);
+  auto instance = GetInstance(slot_id);
+  verify(instance->max_ballot_accepted_ < ballot);
+  if (instance->max_ballot_seen_ <= ballot) {
+    instance->max_ballot_seen_ = ballot;
+    instance->max_ballot_accepted_ = ballot;
+  } else {
+    // TODO
+    verify(0);
+  }
+  *max_ballot = instance->max_ballot_seen_;
   cb();
 }
 
@@ -36,33 +49,19 @@ void SchedulerMultiPaxos::OnCommit(const slotid_t slot_id,
                                    shared_ptr<Marshallable> &cmd) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   Log_debug("multi-paxos scheduler decide for slot: %lx", slot_id);
+  auto instance = GetInstance(slot_id);
+  instance->committed_cmd_ = cmd;
   if (slot_id > max_committed_slot_) {
     max_committed_slot_ = slot_id;
   }
   verify(slot_id > max_executed_slot_);
-  if (slot_id == max_executed_slot_ + 1) {
-    max_executed_slot_++;
-    learner_action_(*cmd);
-    Log_debug("execute slot %d now", slot_id);
-    // TODO check later cmds
-    for (slotid_t next_slot = slot_id + 1;
-         next_slot <= max_committed_slot_;
-         next_slot++) {
-      auto exec = (MultiPaxosExecutor *) GetOrCreateExecutor(next_slot);
-      if (exec->committed_cmd_) {
-        Log_debug("execute slot %d now", next_slot);
-        learner_action_(*exec->committed_cmd_);
-        max_executed_slot_++;
-      } else {
-        break;
-      }
+  for (slotid_t id = max_executed_slot_ + 1; id <= max_committed_slot_; id++) {
+    auto next_instance = GetInstance(id);
+    if (next_instance->committed_cmd_) {
+      app_next_(*next_instance->committed_cmd_);
+      Log_debug("multi-paxos executed slot %d now", id);
     }
-  } else {
-    // remember commands for later execution.
-    auto exec = (MultiPaxosExecutor *) GetOrCreateExecutor(slot_id);
-    exec->committed_cmd_ = cmd;
-    Log_debug("cannot execute slot %d now, remember to exec later. max_exe: %d",
-              (int) slot_id, (int) max_executed_slot_);
+    max_executed_slot_++;
   }
 }
 

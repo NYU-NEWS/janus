@@ -21,8 +21,9 @@ class Scheduler {
   unordered_map<txid_t, shared_ptr<Tx>> dtxns_{};
   unordered_map<txid_t, mdb::Txn *> mdb_txns_{};
   unordered_map<txid_t, Executor *> executors_{};
-  function<void(Marshallable &)> learner_action_ =
-      [](Marshallable &) -> void { verify(0); };
+
+  function<void(Marshallable &)> app_next_ =
+      [] (Marshallable &) -> void { verify(0); };
 
   mdb::TxnMgr *mdb_txn_mgr_;
   int mode_;
@@ -147,10 +148,10 @@ class Scheduler {
   );
 
   void RegLearnerAction(function<void(Marshallable &)> learner_action) {
-    learner_action_ = learner_action;
+    app_next_ = learner_action;
   }
 
-  virtual void OnLearn(Marshallable &cmd) { verify(0); };
+  virtual void Next(Marshallable& cmd) { verify(0); };
 
   // epoch related functions
   void TriggerUpgradeEpoch();

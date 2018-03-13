@@ -7,10 +7,27 @@
 namespace janus {
 class Command;
 class CmdData;
+
+struct PaxosData {
+  ballot_t max_ballot_seen_ = 0;
+  ballot_t max_ballot_accepted_ = 0;
+  shared_ptr<Marshallable> accepted_cmd_{nullptr};
+  shared_ptr<Marshallable> committed_cmd_{nullptr};
+};
+
 class SchedulerMultiPaxos : public Scheduler {
  public:
   slotid_t max_executed_slot_ = 0;
   slotid_t max_committed_slot_ = 0;
+  map<slotid_t, shared_ptr<PaxosData>> logs_{};
+
+  shared_ptr<PaxosData> GetInstance(slotid_t id) {
+    auto sp_instance = logs_[id];
+    if(!sp_instance)
+      sp_instance = std::make_shared<PaxosData>();
+    return sp_instance;
+  }
+
   void OnPrepare(slotid_t slot_id,
                  ballot_t ballot,
                  ballot_t *max_ballot,

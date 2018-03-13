@@ -10,10 +10,6 @@ class MultiPaxosExecutor: public Executor {
  public:
   using Executor::Executor;
 
-  ballot_t max_ballot_seen_ = 0;
-  ballot_t max_ballot_accepted_ = 0;
-  shared_ptr<Marshallable> cmd_ = nullptr;
-  shared_ptr<Marshallable> committed_cmd_ = nullptr;
   /**
    * return max_ballot
    */

@@ -61,7 +61,7 @@ void ServerWorker::SetupBase() {
   }
   // add callbacks to execute commands to rep_sched_
   if (rep_sched_ && tx_sched_) {
-    rep_sched_->RegLearnerAction(std::bind(&Scheduler::OnLearn,
+    rep_sched_->RegLearnerAction(std::bind(&Scheduler::Next,
                                            tx_sched_,
                                            std::placeholders::_1));
   }

@@ -390,7 +390,22 @@ void ClassicServiceImpl::MsgString(const string& arg,
                                    rrr::DeferredReply* defer) {
 
   verify(comm_ != nullptr);
-  for (auto& f : comm_->msg_handlers_) {
+  for (auto& f : comm_->msg_string_handlers_) {
+    if (f(arg, *ret)) {
+      defer->reply();
+      return;
+    }
+  }
+  verify(0);
+  return;
+}
+
+void ClassicServiceImpl::MsgMarshall(const MarshallDeputy& arg,
+                                     MarshallDeputy* ret,
+                                     rrr::DeferredReply* defer) {
+
+  verify(comm_ != nullptr);
+  for (auto& f : comm_->msg_marshall_handlers_) {
     if (f(arg, *ret)) {
       defer->reply();
       return;

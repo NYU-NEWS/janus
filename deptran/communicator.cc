@@ -383,6 +383,11 @@ Communicator::SendMessage(siteid_t site_id,
 
 void Communicator::AddMessageHandler(
     function<bool(const string&, string&)> f) {
-  msg_handlers_.push_back(f);
+  msg_string_handlers_.push_back(f);
+}
+
+void Communicator::AddMessageHandler(
+    function<bool(const MarshallDeputy&, MarshallDeputy&)> f) {
+  msg_marshall_handlers_.push_back(f);
 }
 } // namespace janus

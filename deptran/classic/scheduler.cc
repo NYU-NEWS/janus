@@ -189,7 +189,7 @@ int SchedulerClassic::CommitReplicated(TpcCommitCommand& tpc_commit_cmd) {
 //  TrashExecutor(tx_id);
 }
 
-void SchedulerClassic::OnLearn(Marshallable& cmd) {
+void SchedulerClassic::Next(Marshallable& cmd) {
   if (cmd.kind_ == MarshallDeputy::CMD_TPC_PREPARE) {
     TpcPrepareCommand& c = dynamic_cast<TpcPrepareCommand&>(cmd);
     PrepareReplicated(c);

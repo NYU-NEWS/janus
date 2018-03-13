@@ -65,7 +65,10 @@ class Communicator {
   void ConnectClientLeaders();
   void WaitConnectClientLeaders();
 
-  vector<function<bool(const string& arg, string& ret)> > msg_handlers_{};
+  vector<function<bool(const string& arg, string& ret)> >
+      msg_string_handlers_{};
+  vector<function<bool(const MarshallDeputy& arg,
+                       MarshallDeputy& ret)> > msg_marshall_handlers_{};
 
   void SendStart(SimpleCommand& cmd,
                  int32_t output_size,
@@ -109,6 +112,8 @@ class Communicator {
   std::shared_ptr<MessageEvent> SendMessage(svrid_t svr_id, string& msg);
 
   void AddMessageHandler(std::function<bool(const string&, string&)>);
+  void AddMessageHandler(std::function<bool(const MarshallDeputy&,
+                                            MarshallDeputy&)>);
 };
 
 } // namespace janus
