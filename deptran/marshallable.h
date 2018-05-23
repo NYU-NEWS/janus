@@ -29,7 +29,8 @@ class MarshallDeputy {
     RCC_GRAPH=2,
     CONTAINER_CMD=3,
     CMD_TPC_PREPARE=4,
-    CMD_TPC_COMMIT=5
+    CMD_TPC_COMMIT=5,
+    CMD_VEC_PIECE=6
   };
   /**
    * This should be called by the rpc layer.

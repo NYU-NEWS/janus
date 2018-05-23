@@ -31,13 +31,13 @@ void CoordinatorTapir::DispatchAsync() {
     auto& cmds = pair.second;
     n_dispatch_ += cmds.size();
     cnt += cmds.size();
-    vector<TxPieceData> cc;
+    auto sp_vec_pieces = std::make_shared<vector<TxPieceData>>();
     for (auto& c: cmds) {
       c->id_ = next_pie_id();
       dispatch_acks_[c->inn_id_] = false;
-      cc.push_back(*c);
+      sp_vec_pieces->push_back(*c);
     }
-    commo()->BroadcastDispatch(cc,
+    commo()->BroadcastDispatch(sp_vec_pieces,
                                this,
                                std::bind(&CoordinatorClassic::DispatchAck,
                                          this,

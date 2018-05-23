@@ -14,8 +14,9 @@ class SimpleCommand;
 class SchedulerClassic: public Scheduler {
  using Scheduler::Scheduler;
  public:
-  virtual bool OnDispatch(shared_ptr<vector<TxPieceData>>,
-                          TxnOutput& ret_output) override;
+  virtual bool Dispatch(cmdid_t cmd_id,
+                        shared_ptr<Marshallable> cmd,
+                        TxnOutput& ret_output) override;
 
   virtual bool Guard(Tx &tx_box, Row *row, int col_id, bool write=true) {
     Log_fatal("feature not implemented: before_access");

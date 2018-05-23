@@ -20,17 +20,18 @@ static int volatile x2 =
 Marshal& TpcPrepareCommand::ToMarshal(Marshal& m) const {
   m << tx_id_;
   m << ret_;
-  verify(pieces_);
-  m << *pieces_;
+  MarshallDeputy md(cmd_);
+  m << md;
   return m;
 }
 
 Marshal& TpcPrepareCommand::FromMarshal(Marshal& m) {
   m >> tx_id_;
   m >> ret_;
-  if (!pieces_)
-    pieces_ = std::make_shared<vector<TxPieceData>>();
-  m >> *pieces_;
+  MarshallDeputy md;
+  m >> md;
+  if (!cmd_)
+    cmd_ = md.sp_data_;
   return m;
 }
 

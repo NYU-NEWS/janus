@@ -22,7 +22,10 @@ int MarshallDeputy::RegInitializer(int32_t cmd_type,
 function<Marshallable * ()>
 MarshallDeputy::GetInitializer(int32_t type) {
   md_mutex_g.lock();
-  auto f = Initializers().at(type);
+  auto& inits =  Initializers();
+  auto it = inits.find(type);
+  verify(it != inits.end());
+  auto f = it->second;
   md_mutex_g.unlock();
   return f;
 }

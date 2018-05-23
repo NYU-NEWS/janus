@@ -5,7 +5,6 @@
 #include "rococo/graph.h"
 #include "rococo/txn-info.h"
 #include "rococo/graph.h"
-//#include "rcc/graph_marshaler.h"
 #include "command_marshaler.h"
 #include "txn_reg.h"
 
@@ -124,6 +123,29 @@ class SimpleCommand: public CmdData {
 typedef SimpleCommand TxPieceData;
 
 typedef map<parid_t, vector<shared_ptr<TxPieceData>>> ReadyPiecesData;
+
+class VecPieceData : public Marshallable {
+ public:
+  shared_ptr<vector<TxPieceData>> sp_vec_piece_data_;
+  VecPieceData() : Marshallable(MarshallDeputy::CMD_VEC_PIECE) {
+
+  }
+
+  Marshal& ToMarshal(Marshal& m) const override {
+    verify(sp_vec_piece_data_);
+    m << *sp_vec_piece_data_;
+    return m;
+  }
+
+  Marshal& FromMarshal(Marshal& m) override {
+    verify(!sp_vec_piece_data_);
+    sp_vec_piece_data_.reset(new vector<TxPieceData>);
+    m >> *sp_vec_piece_data_;
+    return m;
+
+  }
+};
+
 /**
  * input ready levels:
  *   1. shard ready

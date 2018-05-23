@@ -24,6 +24,7 @@ class Scheduler {
 
   function<void(Marshallable &)> app_next_ =
       [] (Marshallable &) -> void { verify(0); };
+  function<shared_ptr<vector<MultiValue>>(Marshallable&)> key_deps_{};
 
   mdb::TxnMgr *mdb_txn_mgr_;
   int mode_;
@@ -90,8 +91,6 @@ class Scheduler {
   }
 
   // runs in a coroutine.
-  virtual bool OnDispatch(shared_ptr<vector<TxPieceData>> pieces,
-                          TxnOutput &ret_output);
 
   virtual bool HandleConflicts(Tx &dtxn,
                                innid_t inn_id,
@@ -146,6 +145,13 @@ class Scheduler {
   void reg_table(const string &name,
                  mdb::Table *tbl
   );
+
+  virtual bool Dispatch(cmdid_t cmd_id,
+                        shared_ptr<Marshallable> cmd,
+                        TxnOutput& ret_output) {
+    verify(0);
+    return false;
+  }
 
   void RegLearnerAction(function<void(Marshallable &)> learner_action) {
     app_next_ = learner_action;

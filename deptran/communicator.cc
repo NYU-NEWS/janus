@@ -188,10 +188,12 @@ Communicator::NearestProxyForPartition(parid_t par_id) const {
 };
 
 void Communicator::BroadcastDispatch(
-    vector<TxPieceData>& vec_piece_data,
+    shared_ptr<vector<TxPieceData>> sp_vec_piece,
     Coordinator* coo,
     const function<void(int, TxnOutput&)> & callback) {
-  auto par_id = vec_piece_data[0].PartitionId();
+  cmdid_t cmd_id = sp_vec_piece->at(0).root_id_;
+  verify(sp_vec_piece->size() > 0);
+  auto par_id = sp_vec_piece->at(0).PartitionId();
   rrr::FutureAttr fuattr;
   fuattr.callback =
       [coo, this, callback](Future* fu) {
@@ -204,7 +206,10 @@ void Communicator::BroadcastDispatch(
   Log_debug("send dispatch to site %ld",
             pair_leader_proxy.first);
   auto proxy = pair_leader_proxy.second;
-  auto future = proxy->async_Dispatch(vec_piece_data, fuattr);
+  shared_ptr<VecPieceData> sp_vpd(new VecPieceData);
+  sp_vpd->sp_vec_piece_data_ = sp_vec_piece;
+  MarshallDeputy md(sp_vpd);
+  auto future = proxy->async_Dispatch(cmd_id, md, fuattr);
   Future::safe_release(future);
   for (auto& pair : rpc_par_proxies_[par_id]) {
     if (pair.first != pair_leader_proxy.first) {
@@ -216,7 +221,7 @@ void Communicator::BroadcastDispatch(
             fu->get_reply() >> ret >> outputs;
             // do nothing
           };
-      Future::safe_release(pair.second->async_Dispatch(vec_piece_data, fuattr));
+      Future::safe_release(pair.second->async_Dispatch(cmd_id, md, fuattr));
     }
   }
 }

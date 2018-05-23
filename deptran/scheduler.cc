@@ -241,34 +241,6 @@ Scheduler::~Scheduler() {
   mdb_txn_mgr_ = NULL;
 }
 
-bool Scheduler::OnDispatch(shared_ptr<vector<TxPieceData>> pieces,
-                           TxnOutput &ret_output) {
-  verify(0);
-  return false;
-//  Tx &tx = *GetOrCreateTx(piece_data.root_id_);
-//  verify(partition_id_ == piece_data.partition_id_);
-//  TxnPieceDef &piece_def = txn_reg_->get(piece_data.root_type_,
-//                                         piece_data.type_);
-//  vector<string> conflicts = piece_def.conflicts_str();
-//  bool pause = HandleConflicts(tx, piece_data.inn_id(), conflicts);
-//  if (pause) {
-//    auto &up_pause = tx.paused_pieces_[piece_data.inn_id()];
-//    verify(!up_pause);
-//    up_pause.reset(new IntEvent(0, 1));
-//    up_pause->Wait();
-//  }
-//
-//  // wait for an execution signal.
-//  int ret_code;
-//  piece_data.input.Aggregate(tx.ws_);
-//  piece_def.proc_handler_(nullptr,
-//                          tx,
-//                          const_cast<TxPieceData &>(piece_data),
-//                          &ret_code,
-//                          ret_output[piece_data.inn_id()]);
-//  tx.ws_.insert(ret_output[piece_data.inn_id()]);
-}
-
 /**
  *
  * @param txn_box

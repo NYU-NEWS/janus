@@ -24,9 +24,12 @@ abstract service Classic {
 
   defer MsgMarshall(MarshallDeputy arg | MarshallDeputy ret);
 
-  defer Dispatch(vector<SimpleCommand> cmd |
-                 i32 res,
-                 TxnOutput output);
+//  defer Dispatch(vector<SimpleCommand> cmd |
+//                 i32 res,
+//                 TxnOutput output);
+
+  defer Dispatch(i64 tid, MarshallDeputy cmd |
+                 i32 res, TxnOutput output);
 
   defer Prepare(i64 tid, 
                 vector<i32> sids | 

@@ -9,19 +9,22 @@
 
 namespace janus {
 
-bool SchedulerClassic::OnDispatch(shared_ptr<vector<TxPieceData>> sp_pieces,
-                                  TxnOutput& ret_output) {
-  Tx& tx = *GetOrCreateTx(sp_pieces->at(0).root_id_);
-  if (tx.pieces_) {
+bool SchedulerClassic::Dispatch(cmdid_t cmd_id,
+                                shared_ptr<Marshallable> cmd,
+                                TxnOutput& ret_output) {
+  Tx& tx = *GetOrCreateTx(cmd_id);
+  if (tx.cmd_) {
     verify(0);
   } else {
-    tx.pieces_ = sp_pieces;
+    tx.cmd_ = cmd;
   }
+  auto sp_vec_piece = dynamic_pointer_cast<VecPieceData>(cmd)
+      ->sp_vec_piece_data_;
   Log_debug("received dispatch for tx id: %" PRIx64, tx.tid_);
 //  verify(partition_id_ == piece_data.partition_id_);
   verify(!tx.inuse);
   tx.inuse = true;
-  for (auto& piece_data : *sp_pieces) {
+  for (auto& piece_data : *sp_vec_piece) {
     TxnPieceDef
         & piece_def = txn_reg_->get(piece_data.root_type_, piece_data.type_);
     auto& conflicts = piece_def.conflicts_;
@@ -49,7 +52,7 @@ bool SchedulerClassic::OnDispatch(shared_ptr<vector<TxPieceData>> sp_pieces,
 //  tx.ev_execute_ready_.Wait();
 //  Log_debug("finished waiting for tx id: %" PRIx64, tx.tid_);
   int ret_code;
-  for (auto& piece_data : *sp_pieces) {
+  for (auto& piece_data : *sp_vec_piece) {
     TxnPieceDef
         & piece_def = txn_reg_->get(piece_data.root_type_, piece_data.type_);
     auto& conflicts = piece_def.conflicts_;
@@ -72,7 +75,7 @@ bool SchedulerClassic::OnDispatch(shared_ptr<vector<TxPieceData>> sp_pieces,
 //   3. after that, run the function to prepare.
 //   0. an non-optimized version would be.
 //      dispatch the transaction command with paxos instance
-bool SchedulerClassic::OnPrepare(txnid_t tx_id,
+bool SchedulerClassic::OnPrepare(cmdid_t tx_id,
                                  const std::vector<i32>& sids) {
   auto sp_tx = dynamic_pointer_cast<TxClassic>(GetOrCreateTx(tx_id));
   verify(sp_tx);
@@ -86,7 +89,7 @@ bool SchedulerClassic::OnPrepare(txnid_t tx_id,
     auto sp_prepare_cmd = std::make_shared<TpcPrepareCommand>();
     verify(sp_prepare_cmd->kind_ == MarshallDeputy::CMD_TPC_PREPARE);
     sp_prepare_cmd->tx_id_ = tx_id;
-    sp_prepare_cmd->pieces_ = sp_tx->pieces_;
+    sp_prepare_cmd->cmd_ = sp_tx->cmd_;
     auto sp_m = dynamic_pointer_cast<Marshallable>(sp_prepare_cmd);
     CreateRepCoord()->Submit(sp_m);
     Log_debug("wait for prepare command replicated");
@@ -110,9 +113,8 @@ int SchedulerClassic::PrepareReplicated(TpcPrepareCommand& prepare_cmd) {
   Log_debug("prepare request replicated");
   auto tx_id = prepare_cmd.tx_id_;
   auto sp_tx = dynamic_pointer_cast<TxClassic>(GetOrCreateTx(tx_id));
-  verify(prepare_cmd.pieces_->size() > 0);
-  if (sp_tx->pieces_ == nullptr)
-    sp_tx->pieces_ = prepare_cmd.pieces_;
+  if (!sp_tx->cmd_)
+    sp_tx->cmd_ = prepare_cmd.cmd_;
   // else: is the leader.
   sp_tx->result_prepare = DoPrepare(sp_tx->tid_);
   sp_tx->ev_prepare_.Set(1);
@@ -186,6 +188,7 @@ int SchedulerClassic::CommitReplicated(TpcCommitCommand& tpc_commit_cmd) {
   }
   sp_tx->ev_commit_.Set(1);
   sp_tx->ev_execute_ready_.Set(1);
+  app_next_(*(sp_tx->cmd_));
 //  TrashExecutor(tx_id);
 }
 

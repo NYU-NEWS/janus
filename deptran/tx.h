@@ -50,16 +50,15 @@ class Tx {
   bool inuse = false;
   txnid_t tid_;
   epoch_t epoch_{0};
-  Scheduler *sched_;
+  Scheduler *sched_{nullptr};
   int phase_;
-  mdb::Txn *mdb_txn_ = nullptr;
-  Recorder *recorder_ = NULL;
+  mdb::Txn *mdb_txn_{nullptr};
+  Recorder *recorder_{nullptr};
   TxnRegistry *txn_reg_{nullptr};
   TxWorkspace ws_{};
   // TODO at most one active coroutine runnable for a tx at a time
   IntEvent running_{};
-  shared_ptr<vector<TxPieceData>> pieces_{nullptr}; // TODO change this to a
-  // shared pointer
+  shared_ptr<Marshallable> cmd_{nullptr};
 
 #ifdef CHECK_ISO
   map<Row*, map<colid_t, int>> deltas_;

@@ -6,6 +6,12 @@
 
 namespace janus {
 
+static int volatile x1 =
+    MarshallDeputy::RegInitializer(MarshallDeputy::CMD_VEC_PIECE,
+                                   [] () -> Marshallable* {
+                                     return new VecPieceData;
+                                   });
+
 TxWorkspace::TxWorkspace() {
   values_ = std::make_shared<map<int32_t, Value>>();
 }
