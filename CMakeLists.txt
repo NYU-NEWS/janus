@@ -7,6 +7,7 @@ HunterGate(
         SHA1 "aa1faccd24f33dd2c368f85a4e9ca2e5d9c249cb"
 )
 project(janus)
+set (CMAKE_CXX_STANDARD 14)
 
 find_package(Threads)
 find_package(PkgConfig REQUIRED)
@@ -31,7 +32,6 @@ link_directories(
         ${PYTHON2_LIBRARY_DIRS}
 )
 
-set (CMAKE_CXX_STANDARD 14)
 
 # deprecated conan; using hunter now.
 #
@@ -74,11 +74,13 @@ add_library(
 
 # yaml
 file(GLOB YAML_SRC
-    "dependencies/yaml-cpp/src/**/*.h"
-    "dependencies/yaml-cpp/src/**/*.cpp"
+    "dependencies/yaml-cpp/src/*.h"
+    "dependencies/yaml-cpp/src/*/*.h"
+    "dependencies/yaml-cpp/src/*.cpp"
+    "dependencies/yaml-cpp/src/*/*.cpp"
 )
 
-add_library(YAML_CPP
+add_library(YAMLCPP
     ${YAML_SRC}
 )
 
@@ -90,7 +92,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Weffc++")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCHECK_ISO")
 # this makes gcc>=5 support conan.io libraries, e.g. yaml-cpp
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
 
 #pkg_check_modules(APR REQUIRED apr-1)
 #pkg_check_modules(APRUTIL REQUIRED apr-util-1)
@@ -115,8 +117,8 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DLOG_LEVEL_AS_DEBUG")
 #    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/deptran/rcc_rpc.h
-           ${CMAKE_CURRENT_SOURCE_DIR}/deptran/rcc_rpc.py
+    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/deptran/rcc_rpc.h
+           ${CMAKE_CURRENT_SOURCE_DIR}/src/deptran/rcc_rpc.py
     COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/bin/rpcgen --cpp --python
         src/deptran/rcc_rpc.rpc
     DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/deptran/rcc_rpc.rpc
@@ -128,8 +130,6 @@ add_custom_target (gen-rpc
 
 include_directories(
     ${PYTHON2_INCLUDE_DIRS}
-#    ${APR_INCLUDE_DIRS}
-#    ${PROFILER_INCLUDE_DIRS}
     src
     src/rrr
     src/memdb
@@ -206,9 +206,9 @@ add_executable(TEST
 target_link_libraries(
         MEMDB
         RRR
-        ${CONAN_LIBS}
+#        ${CONAN_LIBS}
         ${Boost_LIBRARIES}
-        ${YAML_CPP_LIBRARIES}
+#        ${YAML_CPP_LIBRARIES}
         ${RT})
 
 target_link_libraries(
@@ -216,9 +216,9 @@ target_link_libraries(
         RRR
         MEMDB
         EXTERN_C
-        YAML_CPP
+        YAMLCPP
         ${RT}
-        ${CONAN_LIBS}
+#        ${CONAN_LIBS}
         ${Boost_LIBRARIES}
         ${CMAKE_THREAD_LIBS_INIT}
         ${PYTHON2_LIBRARIES}
@@ -236,6 +236,7 @@ target_link_libraries(
         TEST
         RRR
         GTest::main
+        GTest::gtest
         ${Boost_LIBRARIES}
 #        ${CONAN_LIBS}
         ${CMAKE_THREAD_LIBS_INIT}
