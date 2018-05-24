@@ -29,7 +29,7 @@ before_install:
         docker exec test apt-get update -qq;
       fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-        docker exec test apt-get install -y git pkg-config build-essential clang libapr1-dev libaprutil1-dev libboost-all-dev libyaml-cpp-dev python-dev python-pip libgoogle-perftools-dev;
+        docker exec test apt-get install -y git pkg-config build-essential cmake;
       fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
         docker exec test pip install tabulate;
@@ -40,6 +40,6 @@ install:
 script:
     - if [[ "$TRAVIS_OS_NAME" == "osx" ]]; then ./waf configure build; fi
     - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then
-        docker exec test sh -c 'cd janus && ./waf configure build';
+        docker exec test sh -c 'cd janus && cmake . && make';
       fi
 
