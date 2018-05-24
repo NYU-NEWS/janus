@@ -93,7 +93,7 @@ def configure(conf):
 def build(bld):
     _depend("src/rrr/pylib/simplerpcgen/rpcgen.py",
             "src/rrr/pylib/simplerpcgen/rpcgen.g",
-            "src/rrr/pylib/yapps/main.py rrr/pylib/simplerpcgen/rpcgen.g")
+            "src/rrr/pylib/yapps/main.py src/rrr/pylib/simplerpcgen/rpcgen.g")
 
 #    _depend("rlog/log_service.h", "rlog/log_service.rpc",
 #            "bin/rpcgen rlog/log_service.rpc")
