@@ -13,7 +13,10 @@ class ExternCScheduler : public Scheduler {
  public:
   virtual bool HandleConflicts(Tx& dtxn,
                                innid_t inn_id,
-                               vector<string>& conflicts) override;
+                               vector<string>& conflicts) override {
+    verify(0);
+    return false;
+  };
 
 };
 

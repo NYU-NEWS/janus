@@ -2,14 +2,14 @@
 
 #define BOOST_COROUTINE_NO_DEPRECATION_WARNING 1
 #define BOOST_COROUTINES_NO_DEPRECATION_WARNING 1
-#include <boost/coroutine/all.hpp>
+#include <boost/coroutine2/all.hpp>
 #include <boost/optional.hpp>
 
 namespace rrr {
 
-typedef boost::coroutines::coroutine<void>::pull_type boost_coro_task_t;
-typedef boost::coroutines::coroutine<void>::push_type boost_coro_yield_t;
-typedef boost::coroutines::coroutine<void()> coro_t;
+typedef boost::coroutines2::coroutine<void>::pull_type boost_coro_task_t;
+typedef boost::coroutines2::coroutine<void>::push_type boost_coro_yield_t;
+typedef boost::coroutines2::coroutine<void()> coro_t;
 
 class CoroScheduler;
 class Coroutine {

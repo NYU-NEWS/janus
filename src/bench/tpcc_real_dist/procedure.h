@@ -1,6 +1,6 @@
 #pragma once
 
-#include "bench/tpcc/procedure.h"
+#include "../tpcc/procedure.h"
 
 namespace rococo {
 

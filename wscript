@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-APPNAME="rococo"
+APPNAME="janus"
 VERSION="0.0"
 
 import os
@@ -91,16 +91,16 @@ def configure(conf):
 #        conf.check_python_module('yaml')
 
 def build(bld):
-    _depend("rrr/pylib/simplerpcgen/rpcgen.py",
-            "rrr/pylib/simplerpcgen/rpcgen.g",
-            "rrr/pylib/yapps/main.py rrr/pylib/simplerpcgen/rpcgen.g")
+    _depend("src/rrr/pylib/simplerpcgen/rpcgen.py",
+            "src/rrr/pylib/simplerpcgen/rpcgen.g",
+            "src/rrr/pylib/yapps/main.py rrr/pylib/simplerpcgen/rpcgen.g")
 
 #    _depend("rlog/log_service.h", "rlog/log_service.rpc",
 #            "bin/rpcgen rlog/log_service.rpc")
 
-    _depend("deptran/rcc_rpc.h deptran/rcc_rpc.py",
-            "deptran/rcc_rpc.rpc",
-            "bin/rpcgen --python --cpp deptran/rcc_rpc.rpc")
+    _depend("src/deptran/rcc_rpc.h src/deptran/rcc_rpc.py",
+            "src/deptran/rcc_rpc.rpc",
+            "bin/rpcgen --python --cpp src/deptran/rcc_rpc.rpc")
 
     _gen_srpc_headers()
 
@@ -112,12 +112,12 @@ def build(bld):
               includes="",
               use="")
 
-    bld.stlib(source=bld.path.ant_glob("rrr/base/*.cpp "
-                                       "rrr/misc/*.cpp "
-                                       "rrr/rpc/*.cpp "
-                                       "rrr/coroutine/*.cc"),
+    bld.stlib(source=bld.path.ant_glob("src/rrr/base/*.cpp "
+                                       "src/rrr/misc/*.cpp "
+                                       "src/rrr/rpc/*.cpp "
+                                       "src/rrr/coroutine/*.cc"),
               target="rrr",
-              includes=". rrr",
+              includes="src src/rrr",
               uselib="BOOST",
               use="PTHREAD")
 
@@ -125,77 +125,25 @@ def build(bld):
 #              includes=". rrr rpc",
 #              use="base PTHREAD")
 
-    bld.stlib(source=bld.path.ant_glob("memdb/*.cc"), target="memdb",
-              includes=". rrr deptran base",
+    bld.stlib(source=bld.path.ant_glob("src/memdb/*.cc"), target="memdb",
+              includes="src src/rrr src/deptran src/base",
               use="rrr PTHREAD")
 
-#    bld.stlib(source="rlog/rlog.cc", target="rlog",
-#              includes=". rrr rlog rpc",
-#              use="simplerpc base PTHREAD")
-
     bld.shlib(features="pyext",
-              source=bld.path.ant_glob("rrr/pylib/simplerpc/*.cpp"),
+              source=bld.path.ant_glob("src/rrr/pylib/simplerpc/*.cpp"),
               target="_pyrpc",
-              includes=". rrr rrr/rpc",
+              includes="src src/rrr src/rrr/rpc",
               use="rrr simplerpc PYTHON")
 
-#    bld.program(source=bld.path.ant_glob("rlog/*.cc", excl="rlog/rlog.cc"),
-#                target="rlogserver",
-#                includes=". rrr",
-#                use="base simplerpc PTHREAD")
 
-#    bld.stlib(source=bld.path.ant_glob("deptran/*.cc "
-#                                       "deptran/*/*.cc "
-#                                       "bench/*/*.cc ",
-#                                       excl="deptran/*_main.c*"),
-#              target="deptran",
-#              includes=". rrr deptran ",
-#              uselib="BOOST BOOST_SYSTEM BOOST_COROUTINE YAML-CPP",
-#              use="PTHREAD memdb base simplerpc memdb PROFILER RT")
-#
-#    bld.program(source=bld.path.ant_glob("test/*.cc"),
-#                target="tests",
-#                features="gtest",
-#                includes=". rrr deptran test memdb",
-#                uselib="BOOST BOOST_SYSTEM BOOST_COROUTINE YAML-CPP",
-#                use="PTHREAD rrr memdb deptran PROFILER RT")
-
-#    bld.stlib(source=bld.path.ant_glob("deptran/*.cc "
-#                                       "deptran/*/*.cc "
-#                                       "bench/*/*.cc"),
-#              target="janus",
-#              includes=". rrr deptran ",
-#              use="externc rrr memdb PTHREAD PROFILER RT BOOST YAML-CPP")
-
-#    bld.program(source="deptran/empty.cc",
-#                target="deptran_server",
-#                use="janus")
-
-    bld.program(source=bld.path.ant_glob("deptran/*.cc "
-                                         "deptran/*/*.cc "
-                                         "bench/*/*.cc"),
+    bld.program(source=bld.path.ant_glob("src/deptran/*.cc "
+                                         "src/deptran/*/*.cc "
+                                         "src/bench/*/*.cc"),
                 target="deptran_server",
-                includes=". rrr deptran ",
+                includes="src src/rrr src/deptran ",
                 uselib="YAML-CPP BOOST",
                 use="externc rrr memdb PTHREAD PROFILER RT")
 
-#    bld.program(source=bld.path.ant_glob("deptran/c_main.cc"),
-#                target="deptran_client",
-#                includes=". rrr bench deptran deptran/snow deptran/rcc deptran/2pl deptran/brq deptran/none",
-#                use="rrr memdb deptran YAML-CPP PTHREAD RT")
-
-#    bld.program(source="old-test/rpcbench.cc old-test/benchmark_service.cc",
-#                target="rpcbench",
-#                includes=". rrr deptran old-test",
-#                uselib="BOOST BOOST_SYSTEM BOOST_COROUTINE YAML-CPP",
-#                use="rrr PTHREAD")
-
-#    bld.program(source="test/rpc_microbench.cc test/benchmark_service.cc",
-#                target="rpc_microbench",
-#                includes=". rrr deptran test",
-#                use="rrr PTHREAD RT")
-#
-#
 #
 # waf helper functions
 #

@@ -1,5 +1,5 @@
 
-#include "none/coordinator.h"
+#include "coordinator.h"
 #include "frame.h"
 #include "benchmark_control_rpc.h"
 

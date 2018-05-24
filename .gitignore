@@ -9,9 +9,9 @@
 *.sublime*
 *.swp
 /log
-/deptran/rcc_service.py
-/deptran/rcc_rpc.h
-/deptran/rcc_rpc.py
+*/deptran/rcc_service.py
+*/deptran/rcc_rpc.h
+*/deptran/rcc_rpc.py
 rpc_test/counter.h
 rpc_test/lib
 rpc_test/bin
@@ -29,3 +29,8 @@ deptran/mdcc/mdcc_rpc.h
 *rpc.h
 *.res
 *.prof
+/buck-out/
+/.buckd/
+/buckaroo/
+BUCKAROO_DEPS
+.buckconfig.local

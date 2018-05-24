@@ -1,12 +1,39 @@
-cmake_minimum_required(VERSION 2.8.12)
-project(janus)
+cmake_minimum_required(VERSION 3.10)
 
-set (CMAKE_CXX_STANDARD 14)
+# use hunter instead of conan
+include("HunterGate.cmake")
+HunterGate(
+        URL "https://github.com/ruslo/hunter/archive/v0.21.16.tar.gz"
+        SHA1 "aa1faccd24f33dd2c368f85a4e9ca2e5d9c249cb"
+)
+project(janus)
 
 find_package(Threads)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(PYTHON2 REQUIRED python2)
+#pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
 
+hunter_add_package(Boost COMPONENTS system filesystem context coroutine)
+hunter_add_package(GTest)
+
+find_package(Boost 1.67 COMPONENTS
+        system filesystem context coroutine thread REQUIRED)
+find_package(GTest CONFIG REQUIRED)
+
+
+include_directories(
+        ${Boost_INCLUDE_DIR}
+#        ${YAML_CPP_INCLUDE_DIRS}
+)
+link_directories(
+        ${Boost_LIBRARY_DIRS}
+#        ${YAML_CPP_LIBRARY_DIRS}
+        ${PYTHON2_LIBRARY_DIRS}
+)
+
+set (CMAKE_CXX_STANDARD 14)
+
+# deprecated conan; using hunter now.
 #
 # do the following after git clone:
 #   1. install conan package manage tool
@@ -28,17 +55,7 @@ elseif(EXISTS ${CMAKE_BINARY_DIR}/conanbuildinfo.cmake )
     MESSAGE(${CONAN_LIBS})
 else()
     # not using conan
-    FIND_PACKAGE(Boost COMPONENTS system filesystem coroutine REQUIRED)
-    pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
-    include_directories(
-            ${Boost_INCLUDE_DIR}
-            ${YAML_CPP_INCLUDE_DIRS}
-    )
-    link_directories(
-            ${PYTHON2_LIBRARY_DIRS}
-            ${Boost_LIBRARY_DIRS}
-            ${YAML_CPP_LIBRARY_DIRS}
-    )
+    # use hunter
 endif()
 
 if(APPLE)
@@ -53,6 +70,16 @@ add_library(
         EXTERN_C
         extern_interface/scheduler.c
         extern_interface/scheduler.h
+)
+
+# yaml
+file(GLOB YAML_SRC
+    "dependencies/yaml-cpp/src/**/*.h"
+    "dependencies/yaml-cpp/src/**/*.cpp"
+)
+
+add_library(YAML_CPP
+    ${YAML_SRC}
 )
 
 # for cxx build
@@ -90,22 +117,24 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DLOG_LEVEL_AS_DEBUG")
 add_custom_command(
     OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/deptran/rcc_rpc.h
            ${CMAKE_CURRENT_SOURCE_DIR}/deptran/rcc_rpc.py
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/bin/rpcgen --cpp --python deptran/rcc_rpc.rpc
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/deptran/rcc_rpc.rpc
+    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/bin/rpcgen --cpp --python
+        src/deptran/rcc_rpc.rpc
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/deptran/rcc_rpc.rpc
     WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_custom_target (gen-rpc
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/deptran/rcc_rpc.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/deptran/rcc_rpc.py)
+    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/deptran/rcc_rpc.h
+            ${CMAKE_CURRENT_SOURCE_DIR}/src/deptran/rcc_rpc.py)
 
 include_directories(
     ${PYTHON2_INCLUDE_DIRS}
 #    ${APR_INCLUDE_DIRS}
 #    ${PROFILER_INCLUDE_DIRS}
-    .
-    rrr
-    memdb
-    deptran
+    src
+    src/rrr
+    src/memdb
+    src/deptran
+    dependencies/yaml-cpp/include
 )
 
 link_directories(
@@ -119,36 +148,36 @@ link_directories(
 
 
 file(GLOB RRR_SRC
-    "rrr/base/*.hpp"
-    "rrr/base/*.cpp"
-    "rrr/misc/*.hpp"
-    "rrr/misc/*.cpp"
-    "rrr/coroutine/*.h"
-    "rrr/coroutine/*.cc"
+    "src/rrr/base/*.hpp"
+    "src/rrr/base/*.cpp"
+    "src/rrr/misc/*.hpp"
+    "src/rrr/misc/*.cpp"
+    "src/rrr/coroutine/*.h"
+    "src/rrr/coroutine/*.cc"
 #    "rrr/mq/*.cpp"
 #    "rrr/mq/*.h"
-    "rrr/pylib/simplerpc/_pyrpc.cpp"
-    "rrr/rpc/*.cpp"
-    "rrr/rpc/*.hpp"
-    "rrr/utils/*.h"
-    "rrr/rrr.h"
-    "rrr/rrr.hpp"
+    "src/rrr/pylib/simplerpc/_pyrpc.cpp"
+    "src/rrr/rpc/*.cpp"
+    "src/rrr/rpc/*.hpp"
+    "src/rrr/utils/*.h"
+    "src/rrr/rrr.h"
+    "src/rrr/rrr.hpp"
 )
 
 file(GLOB MEMDB_SRC
-    "memdb/*.h"
-    "memdb/*.cc")
+    "src/memdb/*.h"
+    "src/memdb/*.cc")
 
 file(GLOB BENCH_SRC
-    "bench/*/*.h"
-    "bench/*/*.cc"
+    "src/bench/*/*.h"
+    "src/bench/*/*.cc"
 )
 
 file(GLOB DEPTRAN_SRC
-    "deptran/*.h"
-    "deptran/*.cc"
-    "deptran/*/*.cc"
-    "deptran/*/*.h"
+    "src/deptran/*.h"
+    "src/deptran/*.cc"
+    "src/deptran/*/*.cc"
+    "src/deptran/*/*.h"
 )
 
 add_library(RRR
@@ -187,10 +216,10 @@ target_link_libraries(
         RRR
         MEMDB
         EXTERN_C
+        YAML_CPP
         ${RT}
         ${CONAN_LIBS}
         ${Boost_LIBRARIES}
-        ${YAML_CPP_LIBRARIES}
         ${CMAKE_THREAD_LIBS_INIT}
         ${PYTHON2_LIBRARIES}
 #    ${APR_LIBRARIES}
@@ -206,7 +235,9 @@ target_link_libraries(
 target_link_libraries(
         TEST
         RRR
-        ${CONAN_LIBS}
+        GTest::main
+        ${Boost_LIBRARIES}
+#        ${CONAN_LIBS}
         ${CMAKE_THREAD_LIBS_INIT}
 )
 

@@ -1,0 +1,3 @@
+[cxx]
+  cxxflags = -std=c++14
+

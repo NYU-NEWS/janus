@@ -10,8 +10,6 @@
 
 namespace janus {
 
-using namespace std::chrono;
-
 Communicator::Communicator(PollMgr* poll_mgr) {
   vector<string> addrs;
   if (poll_mgr == nullptr)
@@ -24,7 +22,8 @@ Communicator::Communicator(PollMgr* poll_mgr) {
     auto site_infos = config->SitesByPartitionId(par_id);
     vector<std::pair<siteid_t, ClassicProxy*>> proxies;
     for (auto& si : site_infos) {
-      auto result = ConnectToSite(si, milliseconds(CONNECT_TIMEOUT_MS));
+      auto result = ConnectToSite(si, std::chrono::milliseconds
+          (CONNECT_TIMEOUT_MS));
       verify(result.first == SUCCESS);
       proxies.push_back(std::make_pair(si.id, result.second));
     }
@@ -47,7 +46,8 @@ void Communicator::ConnectClientLeaders() {
       verify(leader_site_info.locale_id == 0);
       Log_info("client @ leader %d", leader_site_info.id);
       auto result = ConnectToClientSite(leader_site_info,
-                                        milliseconds(CONNECT_TIMEOUT_MS));
+                                        std::chrono::milliseconds
+                                            (CONNECT_TIMEOUT_MS));
       verify(result.first == SUCCESS);
       verify(result.second != nullptr);
       Log_info("connected to client leader site: %d, %d, %p",
@@ -120,12 +120,12 @@ Communicator::LeaderProxyForPartition(parid_t par_id) const {
 
 ClientSiteProxyPair
 Communicator::ConnectToClientSite(Config::SiteInfo& site,
-                                  milliseconds timeout) {
+                                  std::chrono::milliseconds timeout) {
   auto config = Config::GetConfig();
   char addr[1024];
   snprintf(addr, sizeof(addr), "%s:%d", site.host.c_str(), site.port);
 
-  auto start = steady_clock::now();
+  auto start = std::chrono::steady_clock::now();
   rrr::Client* rpc_cli = new rrr::Client(rpc_poll_);
   double elapsed;
   int attempt = 0;
@@ -138,10 +138,11 @@ Communicator::ConnectToClientSite(Config::SiteInfo& site,
       Log_debug("connect to client site: %s success!", addr);
       return std::make_pair(SUCCESS, rpc_proxy);
     } else {
-      std::this_thread::sleep_for(milliseconds(CONNECT_SLEEP_MS));
+      std::this_thread::sleep_for(std::chrono::milliseconds(CONNECT_SLEEP_MS));
     }
-    auto end = steady_clock::now();
-    elapsed = duration_cast<milliseconds>(end - start).count();
+    auto end = std::chrono::steady_clock::now();
+    elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
+        .count();
   } while (elapsed < timeout.count());
   Log_info("timeout connecting to client %s", addr);
   rpc_cli->close_and_release();
@@ -150,9 +151,9 @@ Communicator::ConnectToClientSite(Config::SiteInfo& site,
 
 std::pair<int, ClassicProxy*>
 Communicator::ConnectToSite(Config::SiteInfo& site,
-                            milliseconds timeout) {
+                            std::chrono::milliseconds timeout) {
   string addr = site.GetHostAddr();
-  auto start = steady_clock::now();
+  auto start = std::chrono::steady_clock::now();
   rrr::Client* rpc_cli = new rrr::Client(rpc_poll_);
   double elapsed;
   int attempt = 0;
@@ -166,10 +167,11 @@ Communicator::ConnectToSite(Config::SiteInfo& site,
       Log_debug("connect to site: %s success!", addr.c_str());
       return std::make_pair(SUCCESS, rpc_proxy);
     } else {
-      std::this_thread::sleep_for(milliseconds(CONNECT_SLEEP_MS));
+      std::this_thread::sleep_for(std::chrono::milliseconds(CONNECT_SLEEP_MS));
     }
-    auto end = steady_clock::now();
-    elapsed = duration_cast<milliseconds>(end - start).count();
+    auto end = std::chrono::steady_clock::now();
+    elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(end - start)
+        .count();
   } while (elapsed < timeout.count());
   Log_info("timeout connecting to %s", addr.c_str());
   rpc_cli->close_and_release();

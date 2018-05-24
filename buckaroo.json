@@ -1,0 +1,11 @@
+{
+  "name": "janus",
+  "dependencies": {
+    "boost/core": "1.63.0",
+    "boost/algorithm": "1.63.0",
+    "boost/filesystem": "1.63.0",
+    "boost/utility": "1.63.0",
+    "boost/context": "1.63.0",
+    "boost/coroutine2": "1.63.0"
+  }
+}
