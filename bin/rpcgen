@@ -3,7 +3,7 @@
 import sys
 import os
 import argparse
-sys.path += os.path.abspath(os.path.join(os.path.split(__file__)[0], "../rrr/pylib")),
+sys.path += os.path.abspath(os.path.join(os.path.split(__file__)[0], "../src/rrr/pylib")),
 from simplerpcgen import rpcgen
 
 def main():
