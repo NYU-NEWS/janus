@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 from subprocess import call
+import subprocess
 from time import time
 import argparse
 
@@ -55,8 +56,10 @@ def run(m, s, b, c):
         r = call([run_app_, "-f", pm, "-f", ps, "-f", pb, "-P", "localhost", "-d", "20"],
                  stdout=f, stderr=f, timeout=5*60)
         res = "OK" if r == 0 else "Failed"
-    except:
+    except subprocess.TimeoutExpired:
         res = "Timeout"
+    except Error as e:
+        print(e)
     t2 = time();
     print("%-15s%-10s%-10s%-15s%-6s \t %.2fs" % (m, s, b, c, res, t2-t1))
     pass
