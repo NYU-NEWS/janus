@@ -1,4 +1,5 @@
-cmake_minimum_required(VERSION 3.10)
+# ubuntu 16.04 has cmake 3.5
+cmake_minimum_required(VERSION 3.5)
 
 # use hunter instead of conan
 include("HunterGate.cmake")

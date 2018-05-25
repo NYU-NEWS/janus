@@ -1,18 +1,27 @@
 #pragma once
 
-#include "deptran/classic/scheduler.h"
+#include "../classic/scheduler.h"
 
 namespace janus {
 
-class SchedulerNone: public Scheduler {
- using Scheduler::Scheduler;
+class SchedulerNone: public SchedulerClassic {
+ using SchedulerClassic::SchedulerClassic;
  public:
-  virtual bool HandleConflicts(Tx& dtxn,
-                               innid_t inn_id,
-                               vector<string>& conflicts) {
-    // do nothing for none.
-    return false;
-  };
+
+  virtual bool Dispatch(txid_t tx_id,
+                        shared_ptr<Marshallable> cmd,
+                        TxnOutput& ret_output) override {
+    SchedulerClassic::Dispatch(tx_id, cmd, ret_output);
+    auto tx = GetTx(tx_id);
+    Execute(*tx, ret_output);
+    return true;
+  }
+
+  virtual bool Guard(Tx &tx_box, Row* row, int col_id, bool write=true)
+      override {
+    // do nothing.
+    return true;
+  }
 
 };
 

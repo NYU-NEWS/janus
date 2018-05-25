@@ -14,14 +14,23 @@ class SimpleCommand;
 class SchedulerClassic: public Scheduler {
  using Scheduler::Scheduler;
  public:
+
+  void MergeCommands(shared_ptr<Marshallable> cmd1,
+                     shared_ptr<Marshallable> cmd2);
+
   virtual bool Dispatch(cmdid_t cmd_id,
                         shared_ptr<Marshallable> cmd,
                         TxnOutput& ret_output) override;
 
-  virtual bool Guard(Tx &tx_box, Row *row, int col_id, bool write=true) {
-    Log_fatal("feature not implemented: before_access");
-    return false;
-  };
+  /**
+   * For interactive pre-processing.
+   * @param tx_box
+   * @param row
+   * @param col_id
+   * @param write
+   * @return
+   */
+  virtual bool Guard(Tx &tx_box, Row *row, int col_id, bool write=true) = 0;
 
   // PrepareRequest
   virtual bool OnPrepare(txnid_t tx_id,
@@ -38,6 +47,8 @@ class SchedulerClassic: public Scheduler {
   virtual void DoCommit(Tx& tx_box);
 
   virtual void DoAbort(Tx& tx_box);
+
+  bool Execute(Tx& tx, TxnOutput& ret_output);
 
   void Next(Marshallable&) override;
 

@@ -126,6 +126,7 @@ typedef map<parid_t, vector<shared_ptr<TxPieceData>>> ReadyPiecesData;
 
 class VecPieceData : public Marshallable {
  public:
+  // TODO move shared_ptr into the vector.
   shared_ptr<vector<TxPieceData>> sp_vec_piece_data_;
   VecPieceData() : Marshallable(MarshallDeputy::CMD_VEC_PIECE) {
 

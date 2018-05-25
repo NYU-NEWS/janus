@@ -14,7 +14,7 @@ class SchedulerOcc: public SchedulerClassic {
                                vector<string>& conflicts) {
     verify(0);
   };
-  virtual bool Guard(Tx &tx_box, Row *row, int col_id) {
+  virtual bool Guard(Tx &tx_box, Row *row, int col_id, bool write) override {
     Log_fatal("before access not implemented for occ");
   };
   virtual bool DoPrepare(txnid_t tx_id) {

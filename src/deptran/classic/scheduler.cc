@@ -9,21 +9,62 @@
 
 namespace janus {
 
+void SchedulerClassic::MergeCommands(shared_ptr<Marshallable> cmd1,
+                                     shared_ptr<Marshallable> cmd2) {
+
+  auto& sp_v1 = dynamic_pointer_cast<VecPieceData>(cmd1)->sp_vec_piece_data_;
+  auto& sp_v2 = dynamic_pointer_cast<VecPieceData>(cmd2)->sp_vec_piece_data_;
+  for (auto& cmd: *sp_v2) {
+    verify(std::all_of(sp_v1->begin(), sp_v1->end(), [&cmd] (TxPieceData& d) {
+      return (cmd.root_id_ == d.root_id_) && (cmd.inn_id_ != d.inn_id_);
+    }));
+    sp_v1->push_back(cmd);
+  }
+}
+
+bool SchedulerClassic::Execute(Tx& tx, TxnOutput& ret_output) {
+  // wait for an execution signal.
+//  Log_debug("entered waiting for tx id: %" PRIx64, tx.tid_);
+//  tx.ev_execute_ready_.Wait();
+//  Log_debug("finished waiting for tx id: %" PRIx64, tx.tid_);
+  auto sp_vec_piece =
+      dynamic_pointer_cast<VecPieceData>(tx.cmd_)->sp_vec_piece_data_;
+  int ret_code;
+  for (auto& piece_data : *sp_vec_piece) {
+    TxnPieceDef
+        & piece_def = txn_reg_->get(piece_data.root_type_, piece_data.type_);
+    auto& conflicts = piece_def.conflicts_;
+    verify(piece_data.input.Ready());
+    piece_data.input.Aggregate(tx.ws_);
+    piece_def.proc_handler_(nullptr,
+                            tx,
+                            const_cast<TxPieceData&>(piece_data),
+                            &ret_code,
+                            ret_output[piece_data.inn_id()]);
+    tx.ws_.insert(ret_output[piece_data.inn_id()]);
+  }
+  tx.inuse = false;
+
+}
+
 bool SchedulerClassic::Dispatch(cmdid_t cmd_id,
                                 shared_ptr<Marshallable> cmd,
                                 TxnOutput& ret_output) {
+  auto sp_vec_piece =
+      dynamic_pointer_cast<VecPieceData>(cmd)->sp_vec_piece_data_;
   Tx& tx = *GetOrCreateTx(cmd_id);
   if (tx.cmd_) {
-    verify(0);
+    MergeCommands(tx.cmd_, cmd);
   } else {
     tx.cmd_ = cmd;
   }
-  auto sp_vec_piece = dynamic_pointer_cast<VecPieceData>(cmd)
-      ->sp_vec_piece_data_;
   Log_debug("received dispatch for tx id: %" PRIx64, tx.tid_);
 //  verify(partition_id_ == piece_data.partition_id_);
   verify(!tx.inuse);
   tx.inuse = true;
+  // pre-proces
+  // TODO separate pre-process and process/commit
+  // TODO support user-customized pre-process.
   for (auto& piece_data : *sp_vec_piece) {
     TxnPieceDef
         & piece_def = txn_reg_->get(piece_data.root_type_, piece_data.type_);
@@ -40,32 +81,16 @@ bool SchedulerClassic::Dispatch(cmdid_t cmd_id,
         if (!Guard(tx, row, col_id)) {
           tx.inuse = false;
           ret_output[piece_data.inn_id()] =
-              {}; // the client use this to identify ack.
+              {}; // the client uses this to identify ack.
           return false; // abort
         }
       }
     }
   }
-  tx.fully_dispatched_.Set(1); // TODO here, support aborts with multiple goals?
-  // wait for an execution signal.
-//  Log_debug("entered waiting for tx id: %" PRIx64, tx.tid_);
-//  tx.ev_execute_ready_.Wait();
-//  Log_debug("finished waiting for tx id: %" PRIx64, tx.tid_);
-  int ret_code;
-  for (auto& piece_data : *sp_vec_piece) {
-    TxnPieceDef
-        & piece_def = txn_reg_->get(piece_data.root_type_, piece_data.type_);
-    auto& conflicts = piece_def.conflicts_;
-    verify(piece_data.input.Ready());
-    piece_data.input.Aggregate(tx.ws_);
-    piece_def.proc_handler_(nullptr,
-                            tx,
-                            const_cast<TxPieceData&>(piece_data),
-                            &ret_code,
-                            ret_output[piece_data.inn_id()]);
-    tx.ws_.insert(ret_output[piece_data.inn_id()]);
+  // TODO reimplement this.
+  if (tx.fully_dispatched_.value_ == 0) {
+    tx.fully_dispatched_.Set(1);
   }
-  tx.inuse = false;
   return true;
 }
 
