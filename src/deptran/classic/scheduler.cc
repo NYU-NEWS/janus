@@ -29,11 +29,12 @@ bool SchedulerClassic::ExecutePiece(Tx& tx,
       & piece_def = txn_reg_->get(piece_data.root_type_, piece_data.type_);
   int ret_code;
   auto& conflicts = piece_def.conflicts_;
-  verify(piece_data.input.Ready());
   piece_data.input.Aggregate(tx.ws_);
+// TODO enable this verify
+//  verify(piece_data.input.Ready());
   piece_def.proc_handler_(nullptr,
                           tx,
-                          const_cast<TxPieceData&>(piece_data),
+                          piece_data,
                           &ret_code,
                           ret_output[piece_data.inn_id()]);
   tx.ws_.insert(ret_output[piece_data.inn_id()]);
