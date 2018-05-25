@@ -22,29 +22,62 @@ void SchedulerClassic::MergeCommands(shared_ptr<Marshallable> cmd1,
   }
 }
 
-bool SchedulerClassic::Execute(Tx& tx, TxnOutput& ret_output) {
+bool SchedulerClassic::ExecutePiece(Tx& tx,
+                                    TxPieceData& piece_data,
+                                    TxnOutput& ret_output) {
+  TxnPieceDef
+      & piece_def = txn_reg_->get(piece_data.root_type_, piece_data.type_);
+  int ret_code;
+  auto& conflicts = piece_def.conflicts_;
+  verify(piece_data.input.Ready());
+  piece_data.input.Aggregate(tx.ws_);
+  piece_def.proc_handler_(nullptr,
+                          tx,
+                          const_cast<TxPieceData&>(piece_data),
+                          &ret_code,
+                          ret_output[piece_data.inn_id()]);
+  tx.ws_.insert(ret_output[piece_data.inn_id()]);
+  return true;
+}
+
+bool SchedulerClassic::ExecuteAll(Tx &tx, TxnOutput &ret_output) {
   // wait for an execution signal.
 //  Log_debug("entered waiting for tx id: %" PRIx64, tx.tid_);
 //  tx.ev_execute_ready_.Wait();
 //  Log_debug("finished waiting for tx id: %" PRIx64, tx.tid_);
   auto sp_vec_piece =
       dynamic_pointer_cast<VecPieceData>(tx.cmd_)->sp_vec_piece_data_;
-  int ret_code;
   for (auto& piece_data : *sp_vec_piece) {
-    TxnPieceDef
-        & piece_def = txn_reg_->get(piece_data.root_type_, piece_data.type_);
-    auto& conflicts = piece_def.conflicts_;
-    verify(piece_data.input.Ready());
-    piece_data.input.Aggregate(tx.ws_);
-    piece_def.proc_handler_(nullptr,
-                            tx,
-                            const_cast<TxPieceData&>(piece_data),
-                            &ret_code,
-                            ret_output[piece_data.inn_id()]);
-    tx.ws_.insert(ret_output[piece_data.inn_id()]);
+    ExecutePiece(tx, piece_data, ret_output);
   }
   tx.inuse = false;
+  return true;
+}
 
+bool SchedulerClassic::DispatchPiece(Tx& tx,
+                                     TxPieceData& piece_data,
+                                     TxnOutput& ret_output) {
+  TxnPieceDef
+      & piece_def = txn_reg_->get(piece_data.root_type_, piece_data.type_);
+  auto& conflicts = piece_def.conflicts_;
+
+  for (auto& c: conflicts) {
+    vector<Value> pkeys;
+    for (int i = 0; i < c.primary_keys.size(); i++) {
+      pkeys.push_back(piece_data.input.at(c.primary_keys[i]));
+    }
+    auto row = tx.Query(tx.GetTable(c.table), pkeys, c.row_context_id);
+    verify(row != nullptr);
+    for (auto col_id : c.columns) {
+      if (!Guard(tx, row, col_id)) {
+        tx.inuse = false;
+        ret_output[piece_data.inn_id()] =
+            {}; // the client uses this to identify ack.
+        return false; // abort
+      }
+    }
+  }
+  return true;
 }
 
 bool SchedulerClassic::Dispatch(cmdid_t cmd_id,
@@ -57,35 +90,16 @@ bool SchedulerClassic::Dispatch(cmdid_t cmd_id,
     MergeCommands(tx.cmd_, cmd);
   } else {
     tx.cmd_ = cmd;
+    verify(!tx.inuse);
+    tx.inuse = true;
   }
   Log_debug("received dispatch for tx id: %" PRIx64, tx.tid_);
 //  verify(partition_id_ == piece_data.partition_id_);
-  verify(!tx.inuse);
-  tx.inuse = true;
   // pre-proces
   // TODO separate pre-process and process/commit
   // TODO support user-customized pre-process.
   for (auto& piece_data : *sp_vec_piece) {
-    TxnPieceDef
-        & piece_def = txn_reg_->get(piece_data.root_type_, piece_data.type_);
-    auto& conflicts = piece_def.conflicts_;
-
-    for (auto& c: conflicts) {
-      vector<Value> pkeys;
-      for (int i = 0; i < c.primary_keys.size(); i++) {
-        pkeys.push_back(piece_data.input.at(c.primary_keys[i]));
-      }
-      auto row = tx.Query(tx.GetTable(c.table), pkeys, c.row_context_id);
-      verify(row != nullptr);
-      for (auto col_id : c.columns) {
-        if (!Guard(tx, row, col_id)) {
-          tx.inuse = false;
-          ret_output[piece_data.inn_id()] =
-              {}; // the client uses this to identify ack.
-          return false; // abort
-        }
-      }
-    }
+    DispatchPiece(tx, piece_data, ret_output);
   }
   // TODO reimplement this.
   if (tx.fully_dispatched_.value_ == 0) {

@@ -18,6 +18,12 @@ class SchedulerClassic: public Scheduler {
   void MergeCommands(shared_ptr<Marshallable> cmd1,
                      shared_ptr<Marshallable> cmd2);
 
+  bool ExecutePiece(Tx& tx, TxPieceData& piece_data, TxnOutput& ret_output);
+
+  virtual bool DispatchPiece(Tx& tx,
+                             TxPieceData& cmd,
+                             TxnOutput& ret_output);
+
   virtual bool Dispatch(cmdid_t cmd_id,
                         shared_ptr<Marshallable> cmd,
                         TxnOutput& ret_output) override;
@@ -48,7 +54,7 @@ class SchedulerClassic: public Scheduler {
 
   virtual void DoAbort(Tx& tx_box);
 
-  bool Execute(Tx& tx, TxnOutput& ret_output);
+  bool ExecuteAll(Tx &tx, TxnOutput &ret_output);
 
   void Next(Marshallable&) override;
 

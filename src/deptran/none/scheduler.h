@@ -8,12 +8,11 @@ class SchedulerNone: public SchedulerClassic {
  using SchedulerClassic::SchedulerClassic;
  public:
 
-  virtual bool Dispatch(txid_t tx_id,
-                        shared_ptr<Marshallable> cmd,
-                        TxnOutput& ret_output) override {
-    SchedulerClassic::Dispatch(tx_id, cmd, ret_output);
-    auto tx = GetTx(tx_id);
-    Execute(*tx, ret_output);
+  virtual bool DispatchPiece(Tx& tx,
+                             TxPieceData& cmd,
+                             TxnOutput& ret_output) override {
+    SchedulerClassic::DispatchPiece(tx, cmd, ret_output);
+    ExecutePiece(tx, cmd, ret_output);
     return true;
   }
 
