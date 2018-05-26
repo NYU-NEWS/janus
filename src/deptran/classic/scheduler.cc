@@ -61,6 +61,8 @@ bool SchedulerClassic::DispatchPiece(Tx& tx,
   TxnPieceDef
       & piece_def = txn_reg_->get(piece_data.root_type_, piece_data.type_);
   auto& conflicts = piece_def.conflicts_;
+  verify(!tx.inuse);
+  tx.inuse = true;
 
   for (auto& c: conflicts) {
     vector<Value> pkeys;
@@ -78,6 +80,7 @@ bool SchedulerClassic::DispatchPiece(Tx& tx,
       }
     }
   }
+  tx.inuse = false;
   return true;
 }
 
@@ -91,8 +94,6 @@ bool SchedulerClassic::Dispatch(cmdid_t cmd_id,
     MergeCommands(tx.cmd_, cmd);
   } else {
     tx.cmd_ = cmd;
-    verify(!tx.inuse);
-    tx.inuse = true;
   }
   Log_debug("received dispatch for tx id: %" PRIx64, tx.tid_);
 //  verify(partition_id_ == piece_data.partition_id_);
@@ -228,6 +229,7 @@ int SchedulerClassic::CommitReplicated(TpcCommitCommand& tpc_commit_cmd) {
   }
   sp_tx->ev_commit_.Set(1);
   sp_tx->ev_execute_ready_.Set(1);
+  verify(app_next_);
   app_next_(*(sp_tx->cmd_));
 //  TrashExecutor(tx_id);
 }

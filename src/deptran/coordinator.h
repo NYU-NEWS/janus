@@ -39,9 +39,9 @@ class Coordinator : public CoordinatorBase {
   std::atomic<uint64_t> next_pie_id_;
   std::atomic<uint64_t> next_txn_id_;
 
-  std::recursive_mutex mtx_;
-  Recorder *recorder_;
-  CmdData *cmd_ = nullptr;
+  std::recursive_mutex mtx_{};
+  Recorder *recorder_{nullptr};
+  CmdData *cmd_{nullptr};
   phase_t phase_ = 0;
   map<innid_t, bool> dispatch_acks_ = {};
   map<innid_t, bool> handout_outs_ = {};

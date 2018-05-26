@@ -38,7 +38,7 @@ ClassicServiceImpl::ClassicServiceImpl(Scheduler* sched,
 }
 
 void ClassicServiceImpl::Dispatch(const i64& cmd_id,
-                                  const MarshallDeputy& cmd,
+                                  const MarshallDeputy& md,
                                   int32_t* res,
                                   TxnOutput* output,
                                   rrr::DeferredReply* defer) {
@@ -59,10 +59,10 @@ void ClassicServiceImpl::Dispatch(const i64& cmd_id,
 
 //  output->resize(output_size);
   // find stored procedure, and run it
-  const auto& func = [&]() {
+  auto sp = md.sp_data_;
+  const auto& func = [cmd_id, sp, output, res, this, defer]() {
     *res = SUCCESS;
-    verify(cmd.sp_data_);
-    if (!dtxn_sched()->Dispatch(cmd_id, cmd.sp_data_, *output)) {
+    if (!dtxn_sched()->Dispatch(cmd_id, sp, *output)) {
       *res = REJECT;
     }
     defer->reply();
@@ -76,7 +76,7 @@ void ClassicServiceImpl::Prepare(const rrr::i64& tid,
                                  rrr::i32* res,
                                  rrr::DeferredReply* defer) {
   std::lock_guard<std::mutex> guard(mtx_);
-  const auto& func = [res, defer, tid, &sids, this]() {
+  const auto& func = [res, defer, tid, sids, this]() {
     auto sched = (SchedulerClassic*) dtxn_sched_;
     bool ret = sched->OnPrepare(tid, sids);
     *res = ret ? SUCCESS : REJECT;
@@ -142,7 +142,7 @@ void ClassicServiceImpl::UpgradeEpoch(const uint32_t& curr_epoch,
 
 void ClassicServiceImpl::TruncateEpoch(const uint32_t& old_epoch,
                                        DeferredReply* defer) {
-  std::function<void()> func = [&]() {
+  std::function<void()> func = [old_epoch, this, defer]() {
     dtxn_sched()->OnTruncateEpoch(old_epoch);
     defer->reply();
   };

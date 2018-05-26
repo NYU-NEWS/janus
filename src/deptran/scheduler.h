@@ -22,8 +22,7 @@ class Scheduler {
   unordered_map<txid_t, mdb::Txn *> mdb_txns_{};
   unordered_map<txid_t, Executor *> executors_{};
 
-  function<void(Marshallable &)> app_next_ =
-      [] (Marshallable &) -> void { verify(0); };
+  function<void(Marshallable &)> app_next_{};
   function<shared_ptr<vector<MultiValue>>(Marshallable&)> key_deps_{};
 
   mdb::TxnMgr *mdb_txn_mgr_;

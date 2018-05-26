@@ -62,10 +62,10 @@ void Future::notify_ready() {
   Pthread_cond_signal(&ready_cond_);
   Pthread_mutex_unlock(&ready_m_);
   if (ready_ && attr_.callback != nullptr) {
-    Coroutine::CreateRun([this]() {
-      this->attr_.callback(this);
-    });
-//        attr_.callback(this);
+//    Coroutine::CreateRun([this]() {
+//      this->attr_.callback(this);
+//    });
+        attr_.callback(this);
   }
 }
 

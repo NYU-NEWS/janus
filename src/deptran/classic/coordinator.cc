@@ -347,7 +347,6 @@ void CoordinatorClassic::Commit() {
   } else {
     verify(0);
   }
-  GotoNextPhase();
 }
 
 void CoordinatorClassic::CommitAck(phase_t phase) {
@@ -364,6 +363,7 @@ void CoordinatorClassic::CommitAck(phase_t phase) {
     } else {
       committed_ = true;
     }
+    GotoNextPhase();
   }
   Log_debug("callback: %s, retry: %s",
             committed_ ? "True" : "False",
