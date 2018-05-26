@@ -3,7 +3,7 @@
 #include "__dep__.h"
 #include "config.h"
 
-namespace rococo {
+namespace janus {
 
 struct ChopFinishResponse;
 
@@ -25,4 +25,4 @@ class TxnInfo {
 //  return m;
 //}
 
-} //namespace rococo
+} //namespace janus

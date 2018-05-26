@@ -3,7 +3,7 @@
 #include "deptran/workload.h"
 #include "workload.h"
 
-namespace rococo {
+namespace janus {
 
 char MICRO_BENCH_TABLE_A[] = "table_a";
 char MICRO_BENCH_TABLE_B[] = "table_b";
@@ -136,4 +136,4 @@ void MicroWorkload::RegisterPrecedures() {
 //    dtxn->WriteColumn(r, 1, cmd.input[MICRO_VAR_V_3]);
 //  } END_PIE
 }
-} // namespace deptran
+} // namespace janus

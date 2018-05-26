@@ -5,7 +5,7 @@
 #include "constants.h"
 #include "sharding.h"
 
-namespace rococo {
+namespace janus {
 
 class Config {
  public:
@@ -239,6 +239,6 @@ class Config {
 
   void BuildSiteProcMap(YAML::Node node);
 };
-}
+} // namespace janus
 
 #endif // ifndef CONFIG_H_

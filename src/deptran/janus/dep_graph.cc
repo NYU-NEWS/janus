@@ -4,6 +4,6 @@
 #include "dep_graph.h"
 #include "tx.h"
 
-namespace rococo {
+namespace janus {
 
-} // namespace rococo
+} // namespace janus

@@ -1,6 +1,6 @@
 #include "procedure.h"
 
-namespace rococo {
+namespace janus {
 
 MicroProcedure::MicroProcedure() {
 }
@@ -121,4 +121,4 @@ void MicroProcedure::Reset() {
 
 MicroProcedure::~MicroProcedure() { }
 
-} // namespace rococo
+} // namespace janus

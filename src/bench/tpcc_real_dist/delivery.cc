@@ -2,7 +2,7 @@
 #include "procedure.h"
 #include "workload.h"
 
-namespace rococo {
+namespace janus {
 
 void TpccRdProcedure::DeliveryInit(TxRequest &req) {
   n_pieces_all_ = 4;
@@ -227,4 +227,4 @@ void TpccRdWorkload::RegDelivery() {
   );
 }
 
-} // namespace rococo
+} // namespace janus

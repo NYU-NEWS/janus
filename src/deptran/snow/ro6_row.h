@@ -1,7 +1,7 @@
 #pragma once
-#include "__dep__.h"
+#include "../__dep__.h"
 
-namespace rococo {
+namespace janus {
 
 typedef uint64_t version_t;
 
@@ -219,4 +219,4 @@ class RO6Row: public RCCRow {
   std::map<mdb::colid_t, std::map<i64, std::map<i64, Value>::iterator> > time_segment;
 };
 
-} // namespace rococo
+} // namespace janus

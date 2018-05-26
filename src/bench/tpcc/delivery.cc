@@ -1,7 +1,7 @@
 #include "deptran/__dep__.h"
 #include "procedure.h"
 
-namespace rococo {
+namespace janus {
 
 void TpccProcedure::DeliveryInit(TxRequest &req) {
   n_pieces_all_ = 4;
@@ -228,4 +228,4 @@ void TpccWorkload::RegDelivery() {
   );
 }
 
-} // namespace rococo
+} // namespace janus

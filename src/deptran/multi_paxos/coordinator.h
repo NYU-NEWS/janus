@@ -4,7 +4,7 @@
 #include "../coordinator.h"
 #include "../frame.h"
 
-namespace rococo {
+namespace janus {
 
 class MultiPaxosCommo;
 class CoordinatorMultiPaxos : public Coordinator {
@@ -71,4 +71,4 @@ class CoordinatorMultiPaxos : public Coordinator {
   void GotoNextPhase();
 };
 
-} //namespace rococo
+} //namespace janus

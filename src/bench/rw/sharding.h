@@ -4,7 +4,7 @@
 #pragma once
 #include <bench/tpcc_real_dist/sharding.h>
 
-namespace rococo {
+namespace janus {
   class RWBenchmarkSharding : public TpccdSharding {
   };
 }

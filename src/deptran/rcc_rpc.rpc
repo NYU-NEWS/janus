@@ -1,4 +1,4 @@
-namespace rococo;
+namespace janus;
 
 abstract service MultiPaxos {
 

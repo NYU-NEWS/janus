@@ -3,7 +3,7 @@
 #include <math.h>
 #include "deptran/__dep__.h"
 
-namespace rococo {
+namespace janus {
 
 class ZipfDist {
  public:
@@ -109,7 +109,7 @@ class ZipfDist {
   }
 };
 
-} // namespace rococo
+} // namespace janus
 
      
 

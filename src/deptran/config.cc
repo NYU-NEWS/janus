@@ -37,7 +37,7 @@
 #include "bench/micro/procedure.h"
 
 
-namespace rococo {
+namespace janus {
 Config *Config::config_s = nullptr;
 
 

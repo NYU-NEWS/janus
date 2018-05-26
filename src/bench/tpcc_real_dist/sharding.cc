@@ -7,7 +7,7 @@
 #include "frame.h"
 #include "scheduler.h"
 
-namespace rococo {
+namespace janus {
 
 void TpccdSharding::InsertRowData(tb_info_t *tb_info,
                                   uint32_t &partition_id,
@@ -381,4 +381,4 @@ int TpccdSharding::PopulateTable(tb_info_t *tb_info, parid_t partition_id) {
   }
 }
 
-} // namespace rococo
+} // namespace janus

@@ -35,4 +35,4 @@ class TxTapir : public Tx {
   virtual ~TxTapir();
 };
 
-} // namespace rococo
+} // namespace janus

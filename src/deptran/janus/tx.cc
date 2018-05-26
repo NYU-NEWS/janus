@@ -1,7 +1,7 @@
 
 #include "tx.h"
 
-namespace rococo {
+namespace janus {
 
 void TxJanus::DispatchExecute(SimpleCommand &cmd,
                               int32_t *res,
@@ -27,4 +27,4 @@ void TxJanus::DispatchExecute(SimpleCommand &cmd,
   dreqs_.push_back(cmd);
 }
 
-} // namespace rococo
+} // namespace janus

@@ -2,7 +2,7 @@
 
 #include "deptran/workload.h"
 
-namespace rococo {
+namespace janus {
 
 extern char TPCA_BRANCH[];
 extern char TPCA_TELLER[];
@@ -39,4 +39,4 @@ class TpcaWorkload : public Workload {
 //                         uint32_t n_client) override;
 };
 
-} // namespace rococo
+} // namespace janus

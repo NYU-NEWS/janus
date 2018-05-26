@@ -91,4 +91,4 @@ class TxnRegistry {
   map<txntype_t, map<innid_t, TxnPieceDef>> regs_{};
 };
 
-} // namespace rococo
+} // namespace janus

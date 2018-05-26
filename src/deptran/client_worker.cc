@@ -230,7 +230,7 @@ void ClientWorker::AcceptForwardedRequest(TxRequest& request,
   // run the task
   std::function<void()> task = [=]() {
     TxRequest req(request);
-    req.callback_ = std::bind(&rococo::ClientWorker::ForwardRequestDone,
+    req.callback_ = std::bind(&ClientWorker::ForwardRequestDone,
                               this,
                               coo,
                               txn_reply,
@@ -252,7 +252,7 @@ void ClientWorker::DispatchRequest(Coordinator* coo) {
       std::lock_guard<std::mutex> lock(this->request_gen_mutex);
       tx_generator_->GetTxRequest(&req, coo->coo_id_);
     }
-    req.callback_ = std::bind(&rococo::ClientWorker::RequestDone,
+    req.callback_ = std::bind(&ClientWorker::RequestDone,
                               this,
                               coo,
                               std::placeholders::_1);

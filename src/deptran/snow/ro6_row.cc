@@ -1,7 +1,7 @@
 #include "../rococo/rcc_row.h"
 #include "ro6_row.h"
 
-namespace rococo {
+namespace janus {
 
 // RO-6: initialize static variable
 version_t RO6Row::ver_s = 0;
@@ -179,4 +179,4 @@ Value RO6Row::get_column(int column_id, i64 txnId) {
   return get_column_by_version(column_id, version_number);
 }
 
-} // namespace rococo
+} // namespace janus

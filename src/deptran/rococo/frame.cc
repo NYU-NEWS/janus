@@ -8,7 +8,7 @@
 #include "commo.h"
 #include "config.h"
 
-namespace rococo {
+namespace janus {
 
 static Frame *rcc_frame_s = Frame::RegFrame(MODE_RCC,
                                             {"rococo", "rococo"},
@@ -74,4 +74,4 @@ Communicator *FrameRococo::CreateCommo(PollMgr *poll) {
   return new RccCommo(poll);
 }
 
-} // namespace rococo
+} // namespace janus

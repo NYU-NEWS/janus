@@ -1,7 +1,7 @@
 #include "deptran/__dep__.h"
 #include "procedure.h"
 
-namespace rococo {
+namespace janus {
 
 TpccDistChopper::TpccDistChopper() {
 }

@@ -2,7 +2,7 @@
 #include "__dep__.h"
 #include "../tpcc/sharding.h"
 
-namespace rococo {
+namespace janus {
 
 class TpccdSharding: public TpccSharding {
  public:
@@ -34,4 +34,4 @@ class TpccdSharding: public TpccSharding {
 
 };
 
-} // namespace rococo
+} // namespace janus

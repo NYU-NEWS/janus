@@ -3,7 +3,7 @@
 #include "deptran/txn_reg.h"
 #include "bench/tpcc/workload.h"
 
-namespace rococo {
+namespace janus {
 
 class TxData;
 class TxRequest;

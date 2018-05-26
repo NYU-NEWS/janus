@@ -2,7 +2,7 @@
 
 #include "../tpcc/procedure.h"
 
-namespace rococo {
+namespace janus {
 
 class TpccRdProcedure: public TpccProcedure {
  protected:
@@ -20,4 +20,4 @@ class TpccRdProcedure: public TpccProcedure {
   virtual ~TpccRdProcedure();
 };
 
-} // namespace rococo
+} // namespace janus

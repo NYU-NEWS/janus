@@ -351,6 +351,7 @@ int Sharding::PopulateTable(tb_info_t *tb_info,
     init_index(prim_foreign_index);
     InsertRow(tb_info, par_id, key_value, schema, table_ptr, tbl_sec_ptr);
   }
+  return 0;
 }
 
 // TODO this should be moved to per benchmark class

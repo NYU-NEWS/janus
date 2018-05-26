@@ -3,7 +3,7 @@
 #include "coordinator.h"
 #include "bench/tpca/workload.h"
 
-namespace rococo {
+namespace janus {
 
 class TpcaPaymentChopper: public TxData {
 
@@ -27,4 +27,4 @@ class TpcaPaymentChopper: public TxData {
 
 };
 
-} // namespace rococo
+} // namespace janus

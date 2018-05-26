@@ -2,7 +2,7 @@
 #include "deptran/frame.h"
 #include "deptran/scheduler.h"
 
-namespace rococo {
+namespace janus {
 
 int TpcaSharding::PopulateTable(tb_info_t *tb_info_ptr, parid_t par_id) {
 //        ---------------------------------------------------------
@@ -72,4 +72,4 @@ bool TpcaSharding::Ready2Populate(tb_info_t *tb_info) {
   return true;
 }
 
-} // namespace rococo
+} // namespace janus

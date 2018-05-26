@@ -65,4 +65,4 @@ class Frame {
                                                    ServerControlServiceImpl *scsi);
 };
 
-} // namespace rococo
+} // namespace janus

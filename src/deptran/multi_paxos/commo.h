@@ -4,7 +4,7 @@
 #include "../constants.h"
 #include "../communicator.h"
 
-namespace rococo {
+namespace janus {
 
 class TxData;
 class MultiPaxosCommo : public Communicator {
@@ -26,4 +26,4 @@ class MultiPaxosCommo : public Communicator {
                        const shared_ptr<Marshallable> cmd);
 };
 
-} // namespace rococo
+} // namespace janus

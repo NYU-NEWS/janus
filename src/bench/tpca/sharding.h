@@ -2,7 +2,7 @@
 
 #include <bench/tpcc_real_dist/sharding.h>
 
-namespace rococo {
+namespace janus {
 
 class TpcaSharding: public Sharding {
   int PopulateTable(tb_info_t *tb_info, parid_t) override;
@@ -29,4 +29,4 @@ class TpcaSharding: public Sharding {
 
 };
 
-} // namespace rococo
+} // namespace janus

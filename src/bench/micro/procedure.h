@@ -3,7 +3,7 @@
 #include "coordinator.h"
 #include "bench/micro/workload.h"
 
-namespace deptran {
+namespace janus {
 
 class MicroProcedure : public TxData {
 
@@ -28,4 +28,4 @@ public:
 
 };
 
-} // namespace deptran
+} // namespace janus

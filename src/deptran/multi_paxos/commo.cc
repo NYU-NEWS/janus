@@ -7,7 +7,7 @@
 #include "../command_marshaler.h"
 #include "../rcc_rpc.h"
 
-namespace rococo {
+namespace janus {
 
 MultiPaxosCommo::MultiPaxosCommo(PollMgr* poll) : Communicator(poll) {
 //  verify(poll != nullptr);
@@ -62,4 +62,4 @@ void MultiPaxosCommo::BroadcastDecide(const parid_t par_id,
   }
 }
 
-} // namespace rococo
+} // namespace janus

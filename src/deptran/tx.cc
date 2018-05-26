@@ -3,7 +3,7 @@
 #include "frame.h"
 #include "scheduler.h"
 
-namespace rococo {
+namespace janus {
 
 Tx::~Tx() {
 }
@@ -140,4 +140,4 @@ mdb::Table *Tx::GetTable(const std::string &tbl_name) const {
   return sched_->get_table(tbl_name);
 }
 
-} // namespace rococo
+} // namespace janus

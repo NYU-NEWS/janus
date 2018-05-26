@@ -5,7 +5,7 @@
  * For each member, we add RO-6 specific logics, and then call super class's
  * corresponding method
  */
-namespace rococo {
+namespace janus {
 
 /*
  * Pseudo code here
@@ -206,4 +206,4 @@ Value TxSnow::do_ro(i64 txn_id, RO6Row *row, int col_id) {
   return ret_value;
 }
 
-} //namespace rococo
+} //namespace janus

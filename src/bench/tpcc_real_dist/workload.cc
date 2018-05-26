@@ -1,7 +1,7 @@
 
 #include "workload.h"
 
-namespace rococo {
+namespace janus {
 
 TpccRdWorkload::TpccRdWorkload(Config* config)
     : TpccWorkload(config) {
@@ -60,4 +60,4 @@ void TpccRdWorkload::RegStockLevel() {
   }
 }
 
-} // namespace rococo
+} // namespace janus

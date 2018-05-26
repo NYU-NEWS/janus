@@ -290,7 +290,7 @@ class TpccWorkload: public Workload {
   tpcc_para_t tpcc_para_;
 
  public:
-  TpccWorkload(rococo::Config *config);
+  TpccWorkload(Config *config);
 
   // tpcc
   virtual void GetTxRequest(TxRequest* req, uint32_t cid) override;

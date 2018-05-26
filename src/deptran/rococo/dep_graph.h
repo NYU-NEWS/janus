@@ -10,7 +10,7 @@
 /**
  * This is NOT thread safe!!!
  */
-namespace rococo {
+namespace janus {
 
 //typedef RccDTxn RccDTxn;
 typedef vector<TxRococo*> RccScc;
@@ -75,4 +75,4 @@ class RccGraph : public Graph<TxRococo> {
 //  Marshal& FromMarshal(Marshal& m) override;
 
 };
-} // namespace rococo
+} // namespace janus

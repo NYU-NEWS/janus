@@ -2,7 +2,7 @@
 
 #include "../rococo/dep_graph.h"
 
-namespace rococo {
+namespace janus {
 class TxJanus;
 class CommitReply;
 
@@ -31,4 +31,4 @@ public:
   using RccGraph::RccGraph;
 //  JanusGraph(const JanusGraph&) = delete;
 };
-} // namespace rococo
+} // namespace janus

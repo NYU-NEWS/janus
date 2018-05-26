@@ -2,7 +2,7 @@
 #include "bench/tpca/workload.h"
 #include "bench/tpca/payment.h"
 
-namespace rococo {
+namespace janus {
 void TpcaPaymentChopper::Init(TxRequest &req) {
   verify(req.tx_type_ == TPCA_PAYMENT);
   type_ = TPCA_PAYMENT;
@@ -62,4 +62,4 @@ void TpcaPaymentChopper::Reset() {
 }
 
 
-} // namespace rococo
+} // namespace janus

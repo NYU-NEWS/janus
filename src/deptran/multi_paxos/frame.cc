@@ -8,7 +8,7 @@
 #include "commo.h"
 #include "config.h"
 
-namespace rococo {
+namespace janus {
 
 static Frame *mpf = Frame::RegFrame(MODE_MULTI_PAXOS,
                                     []() -> Frame * {
@@ -80,4 +80,4 @@ MultiPaxosFrame::CreateRpcServices(uint32_t site_id,
   return result;
 }
 
-} // namespace rococo;
+} // namespace janus;

@@ -1,7 +1,7 @@
 
 #include "procedure.h"
 
-namespace rococo {
+namespace janus {
 
 
 void TpccProcedure::StockLevelInit(TxRequest &req) {
@@ -184,4 +184,4 @@ void TpccWorkload::RegStockLevel() {
   }
 }
 
-} // namespace rococo
+} // namespace janus

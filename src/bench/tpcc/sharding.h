@@ -5,7 +5,7 @@
 #include "deptran/__dep__.h"
 #include "deptran/sharding.h"
 
-namespace rococo {
+namespace janus {
 
 class TpccSharding : public Sharding {
  public:
@@ -38,4 +38,4 @@ class TpccSharding : public Sharding {
 
 };
 
-} // namespace rococo
+} // namespace janus

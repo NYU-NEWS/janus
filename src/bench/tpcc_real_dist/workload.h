@@ -2,7 +2,7 @@
 
 #include "bench/tpcc/workload.h"
 
-namespace rococo {
+namespace janus {
 
 // ======= New order txn =======
 #define TPCCD_NEW_ORDER              10
@@ -20,7 +20,7 @@ namespace rococo {
 
 class TpccRdWorkload: public TpccWorkload {
  public:
-  TpccRdWorkload(rococo::Config *config);
+  TpccRdWorkload(Config *config);
   void RegNewOrder() override;
   void RegPayment() override;
   void RegDelivery() override;
@@ -29,5 +29,5 @@ class TpccRdWorkload: public TpccWorkload {
   virtual ~TpccRdWorkload() { }
 };
 
-} // namespace rococo
+} // namespace janus
 

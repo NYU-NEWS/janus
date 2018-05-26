@@ -3,7 +3,7 @@
 #include "deptran/frame.h"
 #include "deptran/scheduler.h"
 
-namespace rococo {
+namespace janus {
 
 int TpccSharding::PopulateTable(tb_info_t *tb_info_ptr, parid_t par_id) {
 
@@ -312,4 +312,4 @@ int TpccSharding::PopulateTables(parid_t par_id) {
   return Sharding::PopulateTables(par_id);
 }
 
-} // namespace rococo
+} // namespace janus

@@ -1,7 +1,7 @@
 #pragma once
 #include "../rococo/commo.h"
 
-namespace rococo {
+namespace janus {
 
 class JanusCommo : public RccCommo {
  public:

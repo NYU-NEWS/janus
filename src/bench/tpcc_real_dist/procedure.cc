@@ -2,7 +2,7 @@
 #include "procedure.h"
 #include "workload.h"
 
-namespace rococo {
+namespace janus {
 
 TpccRdProcedure::TpccRdProcedure() {
 }
@@ -35,4 +35,4 @@ bool TpccRdProcedure::IsOneRound() {
 TpccRdProcedure::~TpccRdProcedure() {
 }
 
-} // namespace rococo
+} // namespace janus

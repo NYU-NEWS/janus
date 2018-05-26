@@ -3,7 +3,7 @@
 #include "deptran/__dep__.h"
 #include "deptran/procedure.h"
 
-namespace deptran {
+namespace janus {
 
 class Coordinator;
 
@@ -29,4 +29,4 @@ public:
 
 };
 
-}
+} // namespace janus

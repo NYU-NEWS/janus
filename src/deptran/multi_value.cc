@@ -1,7 +1,7 @@
 
 #include "multi_value.h"
 
-namespace rococo {
+namespace janus {
 
 int MultiValue::compare(const MultiValue& mv) const {
   int i = 0;
@@ -19,4 +19,4 @@ int MultiValue::compare(const MultiValue& mv) const {
   return 0;
 }
 
-} // namespace rococo
+} // namespace janus

@@ -3,6 +3,6 @@
 #include "graph_marshaler.h"
 
 
-namespace rococo {
+namespace janus {
 
-} // namespace rococo
+} // namespace janus

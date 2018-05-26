@@ -2,7 +2,7 @@
 #include "__dep__.h"
 #include "multi_value.h"
 
-namespace rococo {
+namespace janus {
 class Config;
 
 // TODO These below seem to be in the wrong place.
@@ -252,4 +252,4 @@ class Sharding {
 };
 
 
-} // namespace rococo
+} // namespace janus

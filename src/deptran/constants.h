@@ -1,7 +1,7 @@
 #pragma once
 #include <stdint.h>
 
-namespace rococo {
+namespace janus {
 
 #define ballot_t uint64_t
 #define cooid_t uint32_t
@@ -101,4 +101,4 @@ namespace rococo {
 #define MICRO_BENCH (5)
 
 
-} // namespace rococo
+} // namespace janus

@@ -5,7 +5,7 @@
 #include "compress.h"
 #include "benchmark_control_rpc.h"
 
-namespace rococo {
+namespace janus {
 
 void RO6Coord::deptran_start(TxData *ch) {
   // new txn id for every new and retry.
@@ -259,4 +259,4 @@ void RO6Coord::do_one(TxRequest & req) {
     }
   }
 }
-} // namespace rococo
+} // namespace janus

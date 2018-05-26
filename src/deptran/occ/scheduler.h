@@ -2,7 +2,7 @@
 
 #include "deptran/classic/scheduler.h"
 
-namespace rococo {
+namespace janus {
 
 class SchedulerOcc: public SchedulerClassic {
  public:
@@ -22,4 +22,4 @@ class SchedulerOcc: public SchedulerClassic {
   };
 };
 
-} // namespace rococo
+} // namespace janus

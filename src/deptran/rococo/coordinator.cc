@@ -5,7 +5,7 @@
 #include "dep_graph.h"
 #include "../benchmark_control_rpc.h"
 
-namespace rococo {
+namespace janus {
 
 
 RccCommo* RccCoord::commo() {
@@ -239,4 +239,4 @@ void RccCoord::GotoNextPhase() {
   }
 }
 
-} // namespace rococo
+} // namespace janus

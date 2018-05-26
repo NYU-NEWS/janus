@@ -3,7 +3,7 @@
 #include "procedure.h"
 #include "workload.h"
 
-namespace rococo {
+namespace janus {
 
 
 #define TPCC_DELIVERY_Ith_INDEX_NEW_ORDER(i)    (4 * i)
@@ -226,4 +226,4 @@ int TpccProcedure::GetNPieceAll() {
 TpccProcedure::~TpccProcedure() {
 }
 
-} // namespace rococo
+} // namespace janus

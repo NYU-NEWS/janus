@@ -3,7 +3,7 @@
 #include "../__dep__.h"
 #include "deptran/tx.h"
 
-namespace rococo {
+namespace janus {
 
 class TxOcc : public Tx {
 public:
@@ -32,4 +32,4 @@ public:
   virtual bool InsertRow(Table *tbl, Row *row);
 };
 
-} // namespace rococo
+} // namespace janus

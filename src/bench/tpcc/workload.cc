@@ -1,9 +1,7 @@
 #include "workload.h"
 #include <limits>
 
-namespace rococo {
-
-using rococo::TxRococo;
+namespace janus {
 
 char TPCC_TB_WAREHOUSE[] = "warehouse";
 char TPCC_TB_DISTRICT[] = "district";

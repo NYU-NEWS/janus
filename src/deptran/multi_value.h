@@ -1,7 +1,7 @@
 #pragma once
 #include "__dep__.h"
 
-namespace rococo {
+namespace janus {
 using mdb::Value;
 
 class MultiValue {
@@ -222,4 +222,4 @@ struct cell_locator_hasher {
     return ret;
   }
 };
-} // namespace rococo
+} // namespace janus

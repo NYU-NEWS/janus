@@ -3,7 +3,7 @@
 #include "../../rrr/base/misc.hpp"
 
 
-namespace rococo {
+namespace janus {
 class SchedulerRococo;
 class WaitlistChecker : public FrequentJob {
  public:
@@ -16,4 +16,4 @@ class WaitlistChecker : public FrequentJob {
 
 };
 
-} // namespace rococo
+} // namespace janus

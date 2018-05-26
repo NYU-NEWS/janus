@@ -1,6 +1,6 @@
 #include "procedure.h"
 
-namespace rococo {
+namespace janus {
 
 void TpccProcedure::OrderStatusInit(TxRequest &req) {
   order_status_dep_.piece_order = false;
@@ -327,4 +327,4 @@ void TpccWorkload::RegOrderStatus() {
        }
   );
 }
-} // namespace rococo
+} // namespace janus

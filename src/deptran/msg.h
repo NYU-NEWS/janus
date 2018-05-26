@@ -4,6 +4,6 @@
 #include "constants.h"
 #include "command.h"
 
-namespace rococo {
+namespace janus {
 
-} // namespace rococo
+} // namespace janus

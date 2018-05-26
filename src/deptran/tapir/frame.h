@@ -25,4 +25,4 @@ class FrameTapir : public Frame {
                           bool ro, Scheduler *mgr) override;
 
 };
-} // namespace rococo
+} // namespace janus

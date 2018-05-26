@@ -2,7 +2,7 @@
 
 #include "deptran/workload.h"
 
-namespace rococo {
+namespace janus {
 
 class TmpName;
 
@@ -45,5 +45,5 @@ class MicroWorkload : public Workload {
   void GetWriteReq(TxRequest *req, uint32_t cid) const;
 };
 
-} // namespace rococo
+} // namespace janus
 

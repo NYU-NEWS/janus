@@ -1,9 +1,9 @@
 #ifndef DEP_ROW_H_
 #define DEP_ROW_H_
 
-#include "__dep__.h"
+#include "../__dep__.h"
 
-namespace rococo {
+namespace janus {
 
 struct entry_t;
 
@@ -47,6 +47,6 @@ public:
     }
 };
 
-} // namespace rococo
+} // namespace janus
 
 #endif // DEP_ROW_H_

@@ -6,7 +6,7 @@
 #include "deptran/rococo/coordinator.h"
 #include "dep_graph.h"
 
-namespace rococo {
+namespace janus {
 class JanusCommo;
 class CoordinatorJanus : public RccCoord {
  public:
@@ -103,4 +103,4 @@ class CoordinatorJanus : public RccCoord {
   void GotoNextPhase() override;
   void Reset() override;
 };
-} // namespace rococo
+} // namespace janus

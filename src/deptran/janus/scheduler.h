@@ -55,4 +55,4 @@ class SchedulerJanus : public SchedulerRococo {
     verify(0);
   };
 };
-} // namespace rococo
+} // namespace janus

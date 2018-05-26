@@ -7,7 +7,7 @@
 #include "2pl/tx.h"
 #include "snow/ro6.h"
 
-namespace rococo {
+namespace janus {
 
 class TxRequest;
 class Sharding;
@@ -229,4 +229,4 @@ txn_reg_->regs_[txn][pie].sharder_ \
 #define RO6_RO_PHASE_1 ((Config::GetConfig()->get_mode() == MODE_RO6) && ((RO6DTxn*)dtxn)->read_only_ && dtxn->phase_ == 1)
 
 
-} // namespace rococo
+} // namespace janus

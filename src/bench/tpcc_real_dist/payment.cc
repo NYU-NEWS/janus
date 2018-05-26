@@ -2,7 +2,7 @@
 #include "workload.h"
 #include "sharding.h"
 
-namespace rococo {
+namespace janus {
 
 void TpccRdProcedure::PaymentInit(TxRequest &req) {
 
@@ -410,4 +410,4 @@ void TpccRdWorkload::RegPayment() {
   );
 }
 
-} // namespace rococo
+} // namespace janus

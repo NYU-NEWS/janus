@@ -3,7 +3,7 @@
 
 #include "bench/tpcc/procedure.h"
 
-namespace rococo {
+namespace janus {
 
 class TpccProcedure;
 
@@ -37,6 +37,6 @@ class TpccDistChopper: public TpccProcedure {
   virtual ~TpccDistChopper();
 };
 
-} // namespace rococo
+} // namespace janus
 
 #endif

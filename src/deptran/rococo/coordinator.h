@@ -3,7 +3,7 @@
 #include "dep_graph.h"
 #include "deptran/classic/coordinator.h"
 
-namespace rococo {
+namespace janus {
 
 class RccCommo;
 
@@ -52,4 +52,4 @@ class RccCoord : public CoordinatorClassic {
   void Reset() override;
   virtual void GotoNextPhase();
 };
-} // namespace rococo
+} // namespace janus

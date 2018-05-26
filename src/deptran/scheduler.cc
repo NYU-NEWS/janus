@@ -402,4 +402,4 @@ void Scheduler::OnTruncateEpoch(uint32_t old_epoch) {
   }
 }
 
-} // namespace rococo
+} // namespace janus

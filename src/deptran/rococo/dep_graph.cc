@@ -3,7 +3,7 @@
 #include "dep_graph.h"
 #include "scheduler.h"
 
-namespace rococo {
+namespace janus {
 
 rrr::PollMgr *svr_poll_mgr_g = nullptr;
 static pthread_t th_id_s = 0;
@@ -482,4 +482,4 @@ bool RccGraph::HasICycle(const RccScc &scc) {
 //  return false;
 };
 
-} // namespace rococo
+} // namespace janus

@@ -450,4 +450,4 @@ map<int, function<Frame*()>> &Frame::ModeToFrame() {
   static map<int, function<Frame*()>> frame_s_ = {};
   return frame_s_;
 }
-} // namespace rococo;
+} // namespace janus;

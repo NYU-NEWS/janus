@@ -6,7 +6,7 @@
 #include "graph_marshaler.h"
 #include "deptran/service.h"
 
-namespace rococo {
+namespace janus {
 
 void RccCommo::SendDispatch(vector<SimpleCommand> &cmd,
                             const function<void(int res,
@@ -72,4 +72,4 @@ void RccCommo::SendInquire(parid_t pid,
 }
 
 
-} // namespace rococo
+} // namespace janus

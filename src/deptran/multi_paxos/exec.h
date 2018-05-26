@@ -4,7 +4,7 @@
 #include "../executor.h"
 #include "../command.h"
 
-namespace rococo {
+namespace janus {
 
 class MultiPaxosExecutor: public Executor {
  public:
@@ -20,4 +20,4 @@ class MultiPaxosExecutor: public Executor {
   ballot_t Decide(ballot_t ballot, CmdData& cmd);
 };
 
-} // namespace rococo
+} // namespace janus

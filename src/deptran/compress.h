@@ -2,7 +2,7 @@
 
 #include "__dep__.h"
 
-namespace rococo {
+namespace janus {
 
 class Compressor {
  public:
@@ -30,4 +30,4 @@ class Compressor {
   }
 };
 
-} // namespace rococo
+} // namespace janus

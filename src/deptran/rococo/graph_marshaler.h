@@ -4,7 +4,7 @@
 #include "txn-info.h"
 #include "dep_graph.h"
 
-namespace rococo {
+namespace janus {
 template<typename T>
 inline rrr::Marshal &operator<<(rrr::Marshal &m, const Vertex<T> *&v) {
   verify(0);
@@ -13,4 +13,4 @@ inline rrr::Marshal &operator<<(rrr::Marshal &m, const Vertex<T> *&v) {
   return m;
 }
 
-} // namespace rococo
+} // namespace janus

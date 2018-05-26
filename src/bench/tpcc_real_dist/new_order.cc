@@ -1,7 +1,7 @@
 #include "procedure.h"
 #include "workload.h"
 
-namespace rococo {
+namespace janus {
 
 static uint32_t TXN_TYPE = TPCCD_NEW_ORDER;
 
@@ -369,4 +369,4 @@ void TpccRdWorkload::RegNewOrder() {
     );
   }
 }
-} // namespace rococo
+} // namespace janus

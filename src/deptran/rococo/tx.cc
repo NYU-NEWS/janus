@@ -6,7 +6,7 @@
 #include "dep_graph.h"
 #include "procedure.h"
 
-namespace rococo {
+namespace janus {
 
 TxRococo::TxRococo(epoch_t epoch,
                  txnid_t tid,
