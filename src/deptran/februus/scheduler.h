@@ -21,6 +21,7 @@ class SchedulerFebruus : public SchedulerClassic {
   int OnCommit(const txid_t tx_id, uint64_t timestamp);
 
   void UpdateQueue(shared_ptr<TxFebruus> sp_tx);
+
 };
 
 } // namespace janus

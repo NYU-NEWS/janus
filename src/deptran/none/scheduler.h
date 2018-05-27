@@ -22,6 +22,10 @@ class SchedulerNone: public SchedulerClassic {
     return true;
   }
 
+  virtual bool DoPrepare(txnid_t tx_id)  {
+    return false;
+  }
+
 };
 
 } // janus

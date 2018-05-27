@@ -43,7 +43,7 @@ class SchedulerClassic: public Scheduler {
                          const std::vector<i32> &sids);
 
   virtual bool DoPrepare(txnid_t tx_id) {
-    Log_fatal("feature not implemented: do prepare");
+    verify(0);
     return false;
   };
 

@@ -1,13 +1,13 @@
 #pragma once
 
 #include "../__dep__.h"
-#include "deptran/tx.h"
+#include "../classic/tx.h"
 
 namespace janus {
 
-class TxOcc : public Tx {
+class TxOcc : public TxClassic {
 public:
-  using Tx::Tx;
+  using TxClassic::TxClassic;
 
   virtual bool ReadColumn(mdb::Row *row,
                           mdb::colid_t col_id,

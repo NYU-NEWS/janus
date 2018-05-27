@@ -14,12 +14,20 @@ class SchedulerOcc: public SchedulerClassic {
                                vector<string>& conflicts) {
     verify(0);
   };
+  virtual bool DispatchPiece(Tx& tx,
+                             TxPieceData& cmd,
+                             TxnOutput& ret_output) override {
+    SchedulerClassic::DispatchPiece(tx, cmd, ret_output);
+    ExecutePiece(tx, cmd, ret_output);
+    return true;
+  }
   virtual bool Guard(Tx &tx_box, Row *row, int col_id, bool write) override {
-    Log_fatal("before access not implemented for occ");
+    // TODO? read write guard?
+//    Log_fatal("before access not implemented for occ");
+    return false;
   };
-  virtual bool DoPrepare(txnid_t tx_id) {
-    Log_fatal("doprepare not implemented for occ");
-  };
+  virtual bool DoPrepare(txnid_t tx_id) override;
+  virtual void DoCommit(Tx& tx) override;
 };
 
 } // namespace janus
