@@ -27,6 +27,14 @@ class SchedulerTapir : public SchedulerClassic {
     verify(0);
   };
 
+  virtual bool DispatchPiece(Tx& tx,
+                             TxPieceData& cmd,
+                             TxnOutput& ret_output) override {
+    SchedulerClassic::DispatchPiece(tx, cmd, ret_output);
+    ExecutePiece(tx, cmd, ret_output);
+    return true;
+  }
+
 };
 
 } // namespace janus

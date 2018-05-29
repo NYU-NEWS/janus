@@ -8,13 +8,14 @@ namespace janus {
 
 bool SchedulerTapir::Guard(Tx &tx, Row *row, int col_id, bool write) {
   // do nothing
+  return true;
 }
 
 int SchedulerTapir::OnFastAccept(txid_t tx_id,
                                  const vector<TxPieceData> &txn_cmds) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   Log_debug("receive fast accept for cmd_id: %llx", tx_id);
-  int ret;
+  int ret = SUCCESS;
   // my understanding was that this is a wait-die locking for 2PC-prepare.
   // but to be safe, let us follow the stock protocol.
   // validate read versions
@@ -124,6 +125,7 @@ int SchedulerTapir::OnDecide(txid_t tx_id,
   tx->write_bufs_.clear();
   DestroyTx(tx_id);
   callback();
+  return 0;
 }
 
 } // namespace janus
