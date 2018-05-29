@@ -191,12 +191,12 @@ add_library(MEMDB
 #        ${DEPTRAN_SRC}
 #        ${BENCH_SRC})
 
-add_executable(JANUSDB
+add_executable(janusdb
         ${DEPTRAN_SRC}
         ${BENCH_SRC})
 
 
-add_dependencies(JANUSDB gen-rpc)
+add_dependencies(janusdb gen-rpc)
 
 #add_executable(JANUS_PROCESS
 #        "deptran/empty.cc")
@@ -213,7 +213,7 @@ target_link_libraries(
         ${RT})
 
 target_link_libraries(
-        JANUSDB
+        janusdb
         RRR
         MEMDB
         EXTERN_C

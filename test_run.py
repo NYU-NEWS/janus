@@ -23,14 +23,14 @@ sites_ = [
     "2c2s1p",
     "64c8s1p",
     "3c3s3r1p",
-    "64c8s3r1p"
+#    "64c8s3r1p"
 ]
 benchmarks_ =  [
     "rw",
     "tpca",
     "tpcc",
-    "tpcc_no",
-    "tpcc_pm",
+#    "tpcc_no",
+#    "tpcc_pm",
 #    "tpcc_dl",
 #    "tpcc_os",
 #    "tpcc_sl",

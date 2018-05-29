@@ -76,7 +76,7 @@ void TpccWorkload::RegPayment() {
   // piece 0, Ri & W warehouse
   RegP(TPCC_PAYMENT,
        TPCC_PAYMENT_0,
-       {TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_H_AMOUNT, TPCC_VAR_C_ID,
+       {TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_H_AMOUNT,
         TPCC_VAR_C_W_ID, TPCC_VAR_C_D_ID, TPCC_VAR_H_KEY}, // i
        {TPCC_PAYMENT, TPCC_PAYMENT_0, TPCC_VAR_W_NAME, TPCC_VAR_W_STREET_1,
         TPCC_VAR_W_STREET_2, TPCC_VAR_W_CITY, TPCC_VAR_W_STATE,
@@ -85,7 +85,7 @@ void TpccWorkload::RegPayment() {
        {TPCC_TB_WAREHOUSE, {TPCC_VAR_W_ID}}, // s
        DF_NO,
        PROC {
-         verify(cmd.input.size() >= 7);
+         verify(cmd.input.size() >= 6);
          Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_0);
          i32 oi = 0;
          mdb::Row* row_warehouse = tx.Query(tx.GetTable(TPCC_TB_WAREHOUSE),
@@ -121,8 +121,9 @@ void TpccWorkload::RegPayment() {
        });
 
   // piece 1, Ri district
-  RegP(TPCC_PAYMENT, TPCC_PAYMENT_1, {TPCC_VAR_W_ID, TPCC_VAR_D_ID}, // i
-       {}, // o
+  RegP(TPCC_PAYMENT, TPCC_PAYMENT_1,
+       {TPCC_VAR_W_ID, TPCC_VAR_D_ID}, // i
+       {TPCC_VAR_D_NAME}, // o
        {}, // c TODO
        {TPCC_TB_DISTRICT, {TPCC_VAR_W_ID}}, DF_NO, PROC {
         verify(cmd.input.size() >= 2);
@@ -222,7 +223,7 @@ void TpccWorkload::RegPayment() {
          std::vector<Value> row_data(9);
          row_data[0] = cmd.input[TPCC_VAR_H_KEY];              // h_key
          row_data[1] =
-             cmd.input[TPCC_VAR_C_ID];               // h_c_id   =>  c_id
+             cmd.input.at(TPCC_VAR_C_ID);               // h_c_id   =>  c_id
          row_data[2] =
              cmd.input[TPCC_VAR_C_D_ID];             // h_c_d_id =>  c_d_id
          row_data[3] =
@@ -235,8 +236,8 @@ void TpccWorkload::RegPayment() {
          row_data[7] =
              cmd.input[TPCC_VAR_H_AMOUNT];           // h_amount =>  h_amount
          row_data[8] = Value(cmd.input.at(TPCC_VAR_W_NAME).get_str() + "    "
-                                 + cmd.input[TPCC_VAR_D_NAME].get_str()); // d_data => w_name + 4spaces +
-         // d_name
+                                 + cmd.input.at(TPCC_VAR_D_NAME).get_str());
+         // d_data => w_name + 4spaces + d_name
 
          row_history = tx.CreateRow(tbl->schema(), row_data);
          txn->insert_row(tbl, row_history);

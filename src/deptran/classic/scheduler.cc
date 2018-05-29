@@ -31,7 +31,7 @@ bool SchedulerClassic::ExecutePiece(Tx& tx,
   auto& conflicts = piece_def.conflicts_;
   piece_data.input.Aggregate(tx.ws_);
 // TODO enable this verify
-//  verify(piece_data.input.Ready());
+  piece_data.input.VerifyReady();
   piece_def.proc_handler_(nullptr,
                           tx,
                           piece_data,

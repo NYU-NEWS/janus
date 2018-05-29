@@ -54,9 +54,10 @@ class TxWorkspace {
     return keys_.size();
   }
 
-  bool Ready() {
+  bool VerifyReady() {
     for (auto k: keys_) {
       if (values_->count(k) == 0) {
+        verify(0);
         return false;
       }
     }
@@ -78,7 +79,9 @@ class TxRequest {
   TxWorkspace input_{};    // the inputs for the transactions.
   int n_try_ = 20;
   function<void(TxReply &)> callback_ = [] (TxReply&)->void {verify(0);};
-  function<void()> fail_callback_ = [] () {verify(0);};
+  function<void()> fail_callback_ = [] () {
+    verify(0);
+  };
   void get_log(i64 tid, std::string &log);
 };
 
