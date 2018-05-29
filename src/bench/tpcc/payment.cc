@@ -203,15 +203,15 @@ void TpccWorkload::RegPayment() {
 
   RegP(TPCC_PAYMENT,
        TPCC_PAYMENT_5,
-       {TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_W_NAME, TPCC_VAR_D_NAME,
-        TPCC_VAR_C_ID, TPCC_VAR_C_W_ID, TPCC_VAR_C_D_ID, TPCC_VAR_H_KEY,
+       {TPCC_VAR_W_ID, TPCC_VAR_D_ID, /**TPCC_VAR_W_NAME, TPCC_VAR_D_NAME,
+        TPCC_VAR_C_ID, **/ TPCC_VAR_C_W_ID, TPCC_VAR_C_D_ID, TPCC_VAR_H_KEY,
         TPCC_VAR_H_AMOUNT}, // i
        {}, // o
        {}, // c TODO
        {TPCC_TB_HISTORY, {TPCC_VAR_H_KEY}}, // s
        DF_REAL,
        PROC {
-         verify(cmd.input.size() >= 9);
+         verify(cmd.input.size() >= 6);
          Log_debug("TPCC_PAYMENT, piece: %d", TPCC_PAYMENT_5);
 
          mdb::Txn* txn = tx.mdb_txn();
@@ -223,7 +223,8 @@ void TpccWorkload::RegPayment() {
          std::vector<Value> row_data(9);
          row_data[0] = cmd.input[TPCC_VAR_H_KEY];              // h_key
          row_data[1] =
-             cmd.input.at(TPCC_VAR_C_ID);               // h_c_id   =>  c_id
+         //    cmd.input[TPCC_VAR_C_ID];               // h_c_id   =>  c_id
+             0;               // TODO fix this.
          row_data[2] =
              cmd.input[TPCC_VAR_C_D_ID];             // h_c_d_id =>  c_d_id
          row_data[3] =
@@ -235,9 +236,11 @@ void TpccWorkload::RegPayment() {
          row_data[6] = Value(std::to_string(time(NULL)));  // h_date
          row_data[7] =
              cmd.input[TPCC_VAR_H_AMOUNT];           // h_amount =>  h_amount
-         row_data[8] = Value(cmd.input.at(TPCC_VAR_W_NAME).get_str() + "    "
-                                 + cmd.input.at(TPCC_VAR_D_NAME).get_str());
+//         row_data[8] = Value(cmd.input.at(TPCC_VAR_W_NAME).get_str() + "    "
+//                                 + cmd.input.at(TPCC_VAR_D_NAME).get_str());
          // d_data => w_name + 4spaces + d_name
+         // TODO restore this?
+         row_data[8] = Value("   ");
 
          row_history = tx.CreateRow(tbl->schema(), row_data);
          txn->insert_row(tbl, row_history);

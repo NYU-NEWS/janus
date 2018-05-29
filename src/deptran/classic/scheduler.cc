@@ -31,7 +31,7 @@ bool SchedulerClassic::ExecutePiece(Tx& tx,
   auto& conflicts = piece_def.conflicts_;
   piece_data.input.Aggregate(tx.ws_);
 // TODO enable this verify
-  piece_data.input.VerifyReady();
+//  piece_data.input.VerifyReady();
   piece_def.proc_handler_(nullptr,
                           tx,
                           piece_data,
@@ -100,6 +100,15 @@ bool SchedulerClassic::Dispatch(cmdid_t cmd_id,
   // pre-proces
   // TODO separate pre-process and process/commit
   // TODO support user-customized pre-process.
+
+// for debug purpose
+//  bool b1 = false, b2 = false;
+//  for (auto& piece_data : *sp_vec_piece) {
+//    if (piece_data.inn_id_ == 200) b1 = true;
+//    if (piece_data.inn_id_ == 205) b2 = true;
+//  }
+//  verify(b1 == b2);
+
   for (auto& piece_data : *sp_vec_piece) {
     DispatchPiece(tx, piece_data, ret_output);
   }
