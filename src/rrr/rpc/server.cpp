@@ -340,7 +340,9 @@ void* Server::start_server_loop(void* arg) {
     freeaddrinfo(start_server_loop_args->gai_result);
     delete start_server_loop_args;
 
-    pthread_exit(nullptr);
+    if (arg) {
+        pthread_exit(nullptr);
+    }
     return nullptr;
 }
 

@@ -17,7 +17,6 @@ class Coroutine {
   static std::shared_ptr<Coroutine> CurrentCoroutine();
   static std::shared_ptr<Coroutine> CreateRun(const std::function<void()> &func);
 
-  std::weak_ptr<AppEngine> scheduler_{};
   bool finished_{false}; //
   std::function<void()> func_{};
 

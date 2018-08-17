@@ -1,23 +1,23 @@
 
 #include <functional>
 #include "../base/all.hpp"
-#include "scheduler.h"
+#include "engine.h"
 #include "coroutine.h"
 #include "event.h"
 
 namespace rrr {
 
-thread_local std::shared_ptr<AppEngine> sp_coro_sched_{};
-thread_local std::shared_ptr<Coroutine> curr_coro_{};
+thread_local std::shared_ptr<AppEngine> sp_app_engine_th_{};
+thread_local std::shared_ptr<Coroutine> sp_running_coro_th_{};
 
 std::shared_ptr<Coroutine> Coroutine::CurrentCoroutine() {
-  verify(curr_coro_);
-  return curr_coro_;
+  verify(sp_running_coro_th_);
+  return sp_running_coro_th_;
 }
 
 std::shared_ptr<Coroutine>
 Coroutine::CreateRun(const std::function<void()> &func) {
-  auto sched = AppEngine::CurrentScheduler();
+  auto sched = AppEngine::GetEngine();
   auto coro = sched->CreateRunCoroutine(func);
   // some events might be triggered in the last coroutine.
   sched->Loop();
@@ -25,36 +25,30 @@ Coroutine::CreateRun(const std::function<void()> &func) {
 }
 
 std::shared_ptr<AppEngine>
-AppEngine::CurrentScheduler() {
-  if (!sp_coro_sched_) {
+AppEngine::GetEngine() {
+  if (!sp_app_engine_th_) {
     Log_debug("create a coroutine scheduler");
-    sp_coro_sched_.reset(new AppEngine);
+    sp_app_engine_th_.reset(new AppEngine);
   }
-  return sp_coro_sched_;
+  return sp_app_engine_th_;
 }
-
-// void AppEngine::AddReadyEvent(Event& ev) {
-//   boost::optional<Event&> e = ev;
-//   ready_events_.push_back(e);
-// }
 
 std::shared_ptr<Coroutine>
 AppEngine::CreateRunCoroutine(const std::function<void()> &func) {
   std::shared_ptr<Coroutine> sp_coro(new Coroutine(func));
   __debug_set_all_coro_.insert(sp_coro.get());
 //  verify(!curr_coro_); // Create a coroutine from another?
-  auto sp_old_coro = curr_coro_;
-  curr_coro_ = sp_coro;
+  auto sp_old_coro = sp_running_coro_th_;
+  sp_running_coro_th_ = sp_coro;
   sp_coro->Run();
   if (!sp_coro->Finished()) {
     // got yielded.
     yielded_coros_.insert(sp_coro);
   }
   // yielded or finished, reset to old coro.
-  curr_coro_ = sp_old_coro;
+  sp_running_coro_th_ = sp_old_coro;
   return sp_coro;
 }
-
 
 void AppEngine::Loop(bool infinite) {
   do {
@@ -79,15 +73,15 @@ void AppEngine::Loop(bool infinite) {
 }
 
 void AppEngine::RunCoro(std::shared_ptr<Coroutine> sp_coro) {
-  verify(!curr_coro_);
-  auto sp_old_coro = curr_coro_;
-  curr_coro_ = sp_coro;
-  verify(!curr_coro_->Finished());
-  curr_coro_->Continue();
-  if (curr_coro_->Finished()) {
-    yielded_coros_.erase(curr_coro_);
+  verify(!sp_running_coro_th_);
+  auto sp_old_coro = sp_running_coro_th_;
+  sp_running_coro_th_ = sp_coro;
+  verify(!sp_running_coro_th_->Finished());
+  sp_running_coro_th_->Continue();
+  if (sp_running_coro_th_->Finished()) {
+    yielded_coros_.erase(sp_running_coro_th_);
   }
-  curr_coro_ = sp_old_coro;
+  sp_running_coro_th_ = sp_old_coro;
 }
 
 } // namespace rrr

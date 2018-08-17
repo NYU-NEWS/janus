@@ -1,7 +1,7 @@
 
 #include "coroutine.h"
 #include "event.h"
-#include "scheduler.h"
+#include "engine.h"
 
 namespace rrr {
 
@@ -17,7 +17,7 @@ void Event::Wait() {
     // for now only one coroutine can wait on an event.
     auto sp_coro = Coroutine::CurrentCoroutine();
     verify(_dbg_p_scheduler_ == nullptr);
-    _dbg_p_scheduler_ = AppEngine::CurrentScheduler().get();
+    _dbg_p_scheduler_ = AppEngine::GetEngine().get();
     verify(sp_coro);
     wp_coro_ = sp_coro;
     status_ = WAIT;
@@ -34,7 +34,7 @@ bool Event::Test() {
       auto sp_coro = wp_coro_.lock();
       verify(sp_coro);
       verify(status_ != DEBUG);
-      auto sched = AppEngine::CurrentScheduler();
+      auto sched = AppEngine::GetEngine();
       verify(sched.get() == _dbg_p_scheduler_);
       verify(sched->__debug_set_all_coro_.count(sp_coro.get()) > 0);
       verify(sched->yielded_coros_.count(sp_coro) > 0);

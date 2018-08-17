@@ -2,14 +2,13 @@
 #include <iostream>
 #include "../base/all.hpp"
 #include "coroutine.h"
-#include "scheduler.h"
+#include "engine.h"
 
 namespace rrr {
 
 Coroutine::Coroutine(const std::function<void()>& func) : func_(func) {
   finished_ = false;
   verify(!finished_);
-  scheduler_ = AppEngine::CurrentScheduler();
 }
 
 Coroutine::~Coroutine() {
