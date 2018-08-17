@@ -9,7 +9,7 @@ namespace rrr {
 Coroutine::Coroutine(const std::function<void()>& func) : func_(func) {
   finished_ = false;
   verify(!finished_);
-  scheduler_ = CoroScheduler::CurrentScheduler();
+  scheduler_ = AppEngine::CurrentScheduler();
 }
 
 Coroutine::~Coroutine() {

@@ -11,13 +11,13 @@ typedef boost::coroutines2::coroutine<void>::pull_type boost_coro_task_t;
 typedef boost::coroutines2::coroutine<void>::push_type boost_coro_yield_t;
 typedef boost::coroutines2::coroutine<void()> coro_t;
 
-class CoroScheduler;
+class AppEngine;
 class Coroutine {
  public:
   static std::shared_ptr<Coroutine> CurrentCoroutine();
   static std::shared_ptr<Coroutine> CreateRun(const std::function<void()> &func);
 
-  std::weak_ptr<CoroScheduler> scheduler_{};
+  std::weak_ptr<AppEngine> scheduler_{};
   bool finished_{false}; //
   std::function<void()> func_{};
 

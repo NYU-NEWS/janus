@@ -93,7 +93,9 @@ class Scheduler {
 
   virtual bool HandleConflicts(Tx &dtxn,
                                innid_t inn_id,
-                               vector<string> &conflicts) {};
+                               vector<string> &conflicts) {
+    return false;
+  };
   virtual bool HandleConflicts(Tx &dtxn,
                                innid_t inn_id,
                                vector<conf_id_t> &conflicts) {

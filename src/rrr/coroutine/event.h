@@ -1,17 +1,19 @@
 
 #pragma once
 
+#include <memory>
 #include "../base/all.hpp"
 
 namespace rrr {
 
-class CoroScheduler;
+class AppEngine;
 class Coroutine;
 class Event {
  public:
   enum EventStatus { INIT = 0, WAIT = 1, READY = 2, TRIGGERED = 3, DEBUG = 4 };
   EventStatus status_{INIT};
   void* _dbg_p_scheduler_{nullptr};
+  uint64_t type_{0};
 
   // An event is usually allocated on a coroutine stack, thus it cannot own a
   //   shared_ptr to the coroutine it is.
@@ -19,17 +21,13 @@ class Event {
   // When the stack that contains the event frees, the event frees.
   std::weak_ptr<Coroutine> wp_coro_{};
 
-  Event(std::shared_ptr<Coroutine> coro = {}) {
-    if (!coro) {
-      coro = Coroutine::CurrentCoroutine();
-    }
-    verify(coro);
-    wp_coro_ = coro;
-  };
-
   virtual void Wait();
   virtual bool Test();
   virtual bool IsReady() { return false; }
+
+  friend AppEngine;
+ protected:
+  Event(std::shared_ptr<Coroutine> coro = {});
 };
 
 class IntEvent : public Event {
@@ -37,11 +35,6 @@ class IntEvent : public Event {
   int value_{0};
   int target_{1};
 
-  IntEvent() = default;
-
-  IntEvent(int n, int t) : Event(), value_(n), target_(t) {
-
-  }
 
   bool TestTrigger();
 
