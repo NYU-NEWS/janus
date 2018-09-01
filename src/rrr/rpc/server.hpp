@@ -6,7 +6,8 @@
 #include <pthread.h>
 
 #include "misc/marshal.hpp"
-#include "polling.hpp"
+#include "reactor/epoll_wrapper.h"
+#include "reactor/reactor.h"
 
 // for getaddrinfo() used in Server::start()
 struct addrinfo;

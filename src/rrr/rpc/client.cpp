@@ -8,8 +8,9 @@
 #include <netdb.h>
 #include <netinet/tcp.h>
 
+#include "reactor/coroutine.h"
 #include "client.hpp"
-#include "../coroutine/coroutine.h"
+#include "utils.hpp"
 
 using namespace std;
 

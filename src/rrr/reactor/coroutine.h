@@ -11,7 +11,7 @@ typedef boost::coroutines2::coroutine<void>::pull_type boost_coro_task_t;
 typedef boost::coroutines2::coroutine<void>::push_type boost_coro_yield_t;
 typedef boost::coroutines2::coroutine<void()> coro_t;
 
-class AppEngine;
+class Reactor;
 class Coroutine {
  public:
   static std::shared_ptr<Coroutine> CurrentCoroutine();

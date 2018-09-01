@@ -3,7 +3,8 @@
 #include <unordered_map>
 
 #include "misc/marshal.hpp"
-#include "polling.hpp"
+#include "reactor/epoll_wrapper.h"
+#include "reactor/reactor.h"
 
 namespace rrr {
 
@@ -130,9 +131,6 @@ class Client: public Pollable {
     void close();
 
     void invalidate_pending_futures();
-
-    // prevent direct usage, use close_and_release() instead
-    using RefCounted::release;
 
 protected:
 

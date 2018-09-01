@@ -2,15 +2,17 @@
 #include <set>
 #include <unordered_map>
 #include <list>
-#include "coroutine.h"
+#include "base/misc.hpp"
 #include "event.h"
+#include "coroutine.h"
+#include "epoll_wrapper.h"
 
 namespace rrr {
 
 class Coroutine;
-class AppEngine {
+class Reactor {
  public:
-  static std::shared_ptr<AppEngine> GetEngine();
+  static std::shared_ptr<Reactor> GetReactor();
   std::list<std::unique_ptr<Event>> events_{};
   std::set<std::shared_ptr<Coroutine>> yielded_coros_{};
   std::set<Coroutine*> __debug_set_all_coro_{};
@@ -35,12 +37,39 @@ class AppEngine {
   };
   template <class Ev>
   static Ev& CreateEvent() {
-    auto& events = GetEngine()->events_;
+    auto& events = GetReactor()->events_;
     auto up_ev = std::make_unique<Ev>();
     Ev& ret = *up_ev;
     events.push_back(std::move(up_ev));
     return ret;
   }
+};
+
+class PollMgr: public rrr::RefCounted {
+ public:
+    class PollThread;
+
+    PollThread* poll_threads_;
+    const int n_threads_;
+
+protected:
+
+    // RefCounted object uses protected dtor to prevent accidental deletion
+    ~PollMgr();
+
+public:
+
+    PollMgr(int n_threads = 1);
+    PollMgr(const PollMgr&) = delete;
+    PollMgr& operator=(const PollMgr&) = delete;
+
+    void add(Pollable*);
+    void remove(Pollable*);
+    void update_mode(Pollable*, int new_mode);
+    
+    // Frequent Job
+    void add(std::shared_ptr<Job> sp_job);
+    void remove(std::shared_ptr<Job> sp_job);
 };
 
 } // namespace rrr

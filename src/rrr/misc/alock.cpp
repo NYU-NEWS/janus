@@ -1,9 +1,9 @@
 
 
 #include "alock.hpp"
-#include "coroutine/coroutine.h"
-#include "coroutine/event.h"
-#include "coroutine/engine.h"
+#include "reactor/coroutine.h"
+#include "reactor/event.h"
+#include "reactor/reactor.h"
 
 
 namespace rrr {
@@ -13,7 +13,7 @@ uint64_t ALock::Lock(uint64_t owner,
                      type_t type,
                      uint64_t priority) {
 
-  IntEvent& proceed = AppEngine::CreateEvent<IntEvent>(); // init 0, 1 as ready
+  IntEvent& proceed = Reactor::CreateEvent<IntEvent>(); // init 0, 1 as ready
   uint64_t ret_id = 0;
   std::function<void(uint64_t)> _yes_callback
       = [&proceed, &ret_id](uint64_t id) {

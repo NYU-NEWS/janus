@@ -34,3 +34,7 @@ deptran/mdcc/mdcc_rpc.h
 /buckaroo/
 BUCKAROO_DEPS
 .buckconfig.local
+tags
+GTAGS
+GRTAGS
+GPATH

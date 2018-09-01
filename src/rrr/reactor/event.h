@@ -6,7 +6,7 @@
 
 namespace rrr {
 
-class AppEngine;
+class Reactor;
 class Coroutine;
 class Event {
  public:
@@ -25,7 +25,7 @@ class Event {
   virtual bool Test();
   virtual bool IsReady() { return false; }
 
-  friend AppEngine;
+  friend Reactor;
  protected:
   Event(std::shared_ptr<Coroutine> coro = {});
 };

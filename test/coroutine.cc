@@ -113,7 +113,7 @@ TEST(CoroutineTest, wait_die_lock) {
   });
   ASSERT_EQ(y, 0);
   coro1->Continue();
-  AppEngine::CurrentScheduler()->Loop();
+  Reactor::CurrentScheduler()->Loop();
   ASSERT_EQ(y, 1);
 }
 
