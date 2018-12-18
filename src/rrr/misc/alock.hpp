@@ -86,9 +86,7 @@ class ALock {
                         uint64_t priority = 0);
 
   virtual void DisableWound(uint64_t req_id);
-
   virtual void abort(uint64_t id) = 0;
-
   virtual ~ALock() { }
 };
 
@@ -267,7 +265,7 @@ class WaitDieALock: public ALock {
 
   virtual ~WaitDieALock();
 
-  virtual void abort(uint64_t id);
+  virtual void abort(uint64_t id) override;
 };
 
 class WoundDieALock: public ALock {
@@ -458,7 +456,7 @@ class WoundDieALock: public ALock {
 
   virtual ~WoundDieALock();
 
-  virtual void abort(uint64_t id);
+  virtual void abort(uint64_t id) override;
 };
 
 class TimeoutALock: public ALock {
@@ -585,7 +583,7 @@ class TimeoutALock: public ALock {
   /**
    *
    */
-  virtual void abort(uint64_t id);
+  virtual void abort(uint64_t id) override;
 
 };
 

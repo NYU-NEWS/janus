@@ -68,13 +68,13 @@ def configure(conf):
 
     conf.env.append_value("CXXFLAGS", "-Wno-sign-compare")
     conf.env.append_value('INCLUDES', ['/usr/local/include'])
-    # in case you use linuxbrew
-    conf.env.append_value('INCLUDES', [os.path.expanduser('~') + '/.linuxbrew/include'])
-    conf.env.append_value('LIBPATH', [os.path.expanduser('~') + '/.linuxbrew/lib'])
 #    conf.check_cxx(lib='boost_system', use='BOOST_SYSTEM')
 #    conf.check_cxx(lib='boost_filesystem', use='BOOST_FILESYSTEM')
 #    conf.check_cxx(lib='boost_coroutine', use='BOOST_COROUTINE')
 
+    # in case you use linuxbrew, uncomment the following 
+#    conf.env.append_value('INCLUDES', [os.path.expanduser('~') + '/.linuxbrew/include'])
+#    conf.env.append_value('LIBPATH', [os.path.expanduser('~') + '/.linuxbrew/lib'])
     conf.env.LIB_PTHREAD = 'pthread'
     conf.check_cfg(package='yaml-cpp', uselib_store='YAML-CPP', args=pargs)
 
@@ -115,7 +115,7 @@ def build(bld):
     bld.stlib(source=bld.path.ant_glob("src/rrr/base/*.cpp "
                                        "src/rrr/misc/*.cpp "
                                        "src/rrr/rpc/*.cpp "
-                                       "src/rrr/coroutine/*.cc"),
+                                       "src/rrr/reactor/*.cc"),
               target="rrr",
               includes="src src/rrr",
               uselib="BOOST",

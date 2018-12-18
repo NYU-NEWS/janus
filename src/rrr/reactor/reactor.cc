@@ -279,7 +279,7 @@ void PollMgr::PollThread::update_mode(Pollable* poll, int new_mode) {
   it->second = new_mode;
 
   if (new_mode != old_mode) {
-    poll_.Update(poll, new_mode);
+    poll_.Update(poll, new_mode, old_mode);
   }
 
   l_.unlock();

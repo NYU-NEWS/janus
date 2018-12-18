@@ -154,7 +154,6 @@ size_t Marshal::content_size_slow() const {
 }
 
 size_t Marshal::write(const void* p, size_t n) {
-    verify(this != nullptr);
     assert(tail_ == nullptr || tail_->next == nullptr);
 
     if (head_ == nullptr) {

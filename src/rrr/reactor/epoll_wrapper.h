@@ -86,6 +86,7 @@ class Epoll {
     }
     verify(epoll_ctl(poll_fd_, EPOLL_CTL_ADD, fd, &ev) == 0);
 #endif
+    return 0;
   }
 
   int Remove(Pollable* poll) {
@@ -109,10 +110,10 @@ class Epoll {
     memset(&ev, 0, sizeof(ev));
     epoll_ctl(poll_fd_, EPOLL_CTL_DEL, fd, &ev);
 #endif
-
+    return 0;
   }
 
-  int Update(Pollable* poll, int new_mode) {
+  int Update(Pollable* poll, int new_mode, int old_mode) {
     auto fd = poll->fd();
 #ifdef USE_KQUEUE
     struct kevent ev;
@@ -166,6 +167,7 @@ class Epoll {
     }
     verify(epoll_ctl(poll_fd_, EPOLL_CTL_MOD, fd, &ev) == 0);
 #endif
+    return 0;
   }
 
   void Wait() {

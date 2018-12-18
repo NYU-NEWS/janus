@@ -100,7 +100,6 @@ class FrequentJob : public Job {
   uint64_t period_ = 0;
 
   virtual ~FrequentJob() {}
-  virtual void Work() = 0 ;
   virtual bool Ready() override {
     uint64_t tm_now = rrr::Time::now();
     uint64_t s = tm_now - tm_last_;
