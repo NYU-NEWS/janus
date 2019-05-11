@@ -3,6 +3,9 @@ from subprocess import call
 import subprocess
 from time import time
 import argparse
+import resource
+import os
+import sys
 
 run_app_     = "build/deptran_server"
 config_path_ = "config/"
@@ -68,6 +71,13 @@ def main():
     global modes_
     global sites_
     global benchmarks_
+    soft,hard = resource.getrlimit(resource.RLIMIT_NOFILE)
+    if soft < 4096:
+       print("open file limit smaller than 4096; set it with ulimit -n")
+       sys.exit(0)
+    if not os.path.exists('tmp'):
+       os.mkdir('tmp')
+
     parser = argparse.ArgumentParser();
     parser.add_argument('-m', '--mode', help='running modes', default=modes_,
                         nargs='+', dest='modes')
