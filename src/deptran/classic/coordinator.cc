@@ -179,11 +179,11 @@ void CoordinatorClassic::DispatchAsync() {
     auto& cmds = pair.second;
     n_dispatch_ += cmds.size();
     cnt += cmds.size();
-    auto sp_vec_piece = std::make_shared<vector<TxPieceData>>();
+    auto sp_vec_piece = std::make_shared<vector<shared_ptr<TxPieceData>>>();
     for (auto c: cmds) {
       c->id_ = next_pie_id();
       dispatch_acks_[c->inn_id_] = false;
-      sp_vec_piece->push_back(*c);
+      sp_vec_piece->push_back(c);
     }
     commo()->BroadcastDispatch(sp_vec_piece,
                                this,

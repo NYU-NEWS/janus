@@ -374,6 +374,7 @@ int SchedulerJanus::OnInquire(epoch_t epoch,
     waitlist_.insert(dtxn.get());
     verify(dtxn->epoch_ > 0);
   }
+  return 0;
 
 }
 

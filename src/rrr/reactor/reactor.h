@@ -9,39 +9,48 @@
 
 namespace rrr {
 
+using std::make_unique;
+using std::make_shared;
+
 class Coroutine;
+// TODO for now we depend on the rpc services, fix in the future.
 class Reactor {
  public:
   static std::shared_ptr<Reactor> GetReactor();
-  std::list<std::unique_ptr<Event>> events_{};
-  std::set<std::shared_ptr<Coroutine>> yielded_coros_{};
-  std::set<Coroutine*> __debug_set_all_coro_{};
+  /**
+   * A reactor needs to keep reference to all coroutines created,
+   * in case it is freed by the caller after a yield.
+   * TODO the lifetime of an event should be independent from a
+   * coroutine? Or should an event belong to a coroutine?
+   */
+  std::list<std::shared_ptr<Event>> events_{};
+  std::set<std::shared_ptr<Coroutine>> coros_{};
+//  std::set<Coroutine*> __debug_set_all_coro_{};
   std::unordered_map<uint64_t, std::function<void(Event&)>> processors_{};
 
   /**
    * @param ev. is usually allocated on coroutine stack. memory managed by user.
    */
-  std::shared_ptr<Coroutine> CreateRunCoroutine(const std::function<void()> &func);
+  std::shared_ptr<Coroutine> CreateRunCoroutine(std::function<void()> func);
   void Loop(bool infinite = false);
-  void RunCoro(std::shared_ptr<Coroutine> sp_coro);
+  void ContinueCoro(std::shared_ptr<Coroutine> sp_coro);
 
-  void AddProcessor(uint64_t type, std::function<void(Event&)>) {
+  ~Reactor() {
+//    verify(0);
+  }
 
-  };
-  // TODO for now we depend on the rpc services, fix in the future.
-  void AddRpcService() {
-
-  };
-  void Run() {
-    Loop(true);
-  };
-  template <class Ev>
-  static Ev& CreateEvent() {
+  template <typename Ev, typename... Args>
+  static shared_ptr<Ev> CreateSpEvent(Args&&... args) {
     auto& events = GetReactor()->events_;
-    auto up_ev = std::make_unique<Ev>();
-    Ev& ret = *up_ev;
-    events.push_back(std::move(up_ev));
-    return ret;
+    auto p_ev = make_shared<Ev>(args...);
+    // TODO push them into a wait queue when they actually wait.
+    events.push_back(p_ev);
+    return p_ev;
+  }
+
+  template <typename Ev, typename... Args>
+  static Ev& CreateEvent(Args&&... args) {
+    return *CreateSpEvent<Ev>(args...);
   }
 };
 

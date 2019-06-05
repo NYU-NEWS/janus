@@ -31,7 +31,7 @@ class CoordinatorMultiPaxos : public Coordinator {
   ballot_t curr_ballot_ = 1; // TODO
   uint32_t n_replica_ = 0;   // TODO
   slotid_t slot_id_ = 0;
-  ballot_t *slot_hint_ = nullptr;
+  slotid_t *slot_hint_ = nullptr;
 
   uint32_t n_replica() {
     verify(n_replica_ > 0);

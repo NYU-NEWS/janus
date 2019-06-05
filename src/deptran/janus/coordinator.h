@@ -26,7 +26,7 @@ class CoordinatorJanus : public RccCoord {
   map<parid_t, int> n_fast_accept_oks_{};
   map<parid_t, int> n_accept_oks_{};
 //  map<parid_t, int> n_fast_accept_rejects_ = {};
-  map<parid_t, vector<RccGraph *>> n_fast_accept_graphs_{};
+  map<parid_t, vector<shared_ptr<RccGraph>>> n_fast_accept_graphs_{};
   map<parid_t, int> fast_accept_graph_check_caches_{};
   map<parid_t, int> n_commit_oks_ = {};
   bool fast_path_ = false;
@@ -49,7 +49,7 @@ class CoordinatorJanus : public RccCoord {
   void PreAcceptAck(phase_t phase,
                     parid_t par_id,
                     int res,
-                    RccGraph *graph);
+                    shared_ptr<RccGraph> graph);
 
   // do_one inherits from RccCoord;
 

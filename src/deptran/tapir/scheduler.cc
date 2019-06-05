@@ -20,7 +20,7 @@ int SchedulerTapir::OnFastAccept(txid_t tx_id,
   // but to be safe, let us follow the stock protocol.
   // validate read versions
   auto tx = dynamic_pointer_cast<TxTapir>(GetOrCreateTx(tx_id));
-  tx->fully_dispatched_.Wait();
+  tx->fully_dispatched_->Wait();
   if (tx->aborted_in_dispatch_) {
     return REJECT;
   }

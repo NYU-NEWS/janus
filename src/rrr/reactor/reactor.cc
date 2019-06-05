@@ -17,15 +17,17 @@ thread_local std::shared_ptr<Reactor> sp_reactor_th_{};
 thread_local std::shared_ptr<Coroutine> sp_running_coro_th_{};
 
 std::shared_ptr<Coroutine> Coroutine::CurrentCoroutine() {
-  verify(sp_running_coro_th_);
+  // TODO re-enable this verify
+//  verify(sp_running_coro_th_);
   return sp_running_coro_th_;
 }
 
 std::shared_ptr<Coroutine>
-Coroutine::CreateRun(const std::function<void()> &func) {
+Coroutine::CreateRun(std::function<void()> func) {
   auto& reactor = *Reactor::GetReactor();
   auto coro = reactor.CreateRunCoroutine(func);
   // some events might be triggered in the last coroutine.
+  verify(reactor.coros_.size() > 0);
   reactor.Loop();
   return coro;
 }
@@ -39,30 +41,41 @@ Reactor::GetReactor() {
   return sp_reactor_th_;
 }
 
+/**
+ * @param func
+ * @return
+ */
 std::shared_ptr<Coroutine>
-Reactor::CreateRunCoroutine(const std::function<void()> &func) {
-  std::shared_ptr<Coroutine> sp_coro(new Coroutine(func));
-  __debug_set_all_coro_.insert(sp_coro.get());
+Reactor::CreateRunCoroutine(const std::function<void()> func) {
+  std::shared_ptr<Coroutine> sp_coro = std::make_shared<Coroutine>(func);
+//  __debug_set_all_coro_.insert(sp_coro.get());
 //  verify(!curr_coro_); // Create a coroutine from another?
+//  verify(!sp_running_coro_th_); // disallows nested coroutines
   auto sp_old_coro = sp_running_coro_th_;
   sp_running_coro_th_ = sp_coro;
+  verify(sp_coro);
+  auto pair = coros_.insert(sp_coro);
+  verify(pair.second);
+  verify(coros_.size() > 0);
   sp_coro->Run();
-  if (!sp_coro->Finished()) {
-    // got yielded.
-    yielded_coros_.insert(sp_coro);
+  if (sp_coro->Finished()) {
+    coros_.erase(sp_coro);
   }
   // yielded or finished, reset to old coro.
   sp_running_coro_th_ = sp_old_coro;
   return sp_coro;
 }
 
+//  be careful this could be called from different coroutines.
 void Reactor::Loop(bool infinite) {
   do {
-    std::vector<std::unique_ptr<Event>> ready_events;
+    std::vector<shared_ptr<Event>> ready_events;
     for (auto it = events_.begin(); it != events_.end();) {
       Event& event = **it;
       if (event.status_ == Event::READY) {
         ready_events.push_back(std::move(*it));
+        it = events_.erase(it);
+      } else if (event.status_ == Event::DONE) {
         it = events_.erase(it);
       } else {
         it ++;
@@ -72,20 +85,20 @@ void Reactor::Loop(bool infinite) {
       auto& event = *up_ev;
       auto sp_coro = event.wp_coro_.lock();
       verify(sp_coro);
-      verify(yielded_coros_.find(sp_coro) != yielded_coros_.end());
-      RunCoro(sp_coro);
+      verify(coros_.find(sp_coro) != coros_.end());
+      ContinueCoro(sp_coro);
     }
   } while (infinite);
 }
 
-void Reactor::RunCoro(std::shared_ptr<Coroutine> sp_coro) {
-  verify(!sp_running_coro_th_);
+void Reactor::ContinueCoro(std::shared_ptr<Coroutine> sp_coro) {
+//  verify(!sp_running_coro_th_); // disallow nested coros
   auto sp_old_coro = sp_running_coro_th_;
   sp_running_coro_th_ = sp_coro;
   verify(!sp_running_coro_th_->Finished());
   sp_running_coro_th_->Continue();
   if (sp_running_coro_th_->Finished()) {
-    yielded_coros_.erase(sp_running_coro_th_);
+    coros_.erase(sp_running_coro_th_);
   }
   sp_running_coro_th_ = sp_old_coro;
 }
@@ -207,6 +220,7 @@ void PollMgr::PollThread::poll_loop() {
       poll->release();
     }
     TriggerJob();
+    Reactor::GetReactor()->Loop();
   }
 }
 
@@ -273,7 +287,7 @@ void PollMgr::PollThread::update_mode(Pollable* poll, int new_mode) {
     return;
   }
 
-  std::unordered_map<int, int>::iterator it = mode_.find(fd);
+  auto it = mode_.find(fd);
   verify(it != mode_.end());
   int old_mode = it->second;
   it->second = new_mode;

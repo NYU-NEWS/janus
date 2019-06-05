@@ -26,7 +26,8 @@ uint64_t ALock::Lock(uint64_t owner,
         proceed.Set(1);
       };
   std::function<int()> _wound_callback
-      = []() {
+      = [&]() {
+//        proceed.Set(1); // TODO why this caused problem???
         return 0;
       };
   vlock(owner,
@@ -46,7 +47,7 @@ void ALock::DisableWound(uint64_t lock_req_id) {
 WaitDieALock::~WaitDieALock() {
     verify(!done_);
     done_ = true;
-    std::list<lock_req_t>::iterator it = requests_.begin();
+    auto it = requests_.begin();
     verify(status_ != RLOCKED);
     for (; it != requests_.end(); it++) {
         if (it->status == lock_req_t::WAIT)
@@ -109,7 +110,7 @@ WaitDieALock::wd_status_t WaitDieALock::wait_die(type_t type, int64_t priority) 
                     // larger priority (less priority value) than all reqs in
                     // the queue
         {
-            std::list<lock_req_t>::reverse_iterator rit = requests_.rbegin();
+            auto rit = requests_.rbegin();
             for (; rit != requests_.rend(); rit++) {
                 if (priority >= rit->priority) // can't use > here or deadlock
                     return WD_DIE;
@@ -121,7 +122,7 @@ WaitDieALock::wd_status_t WaitDieALock::wait_die(type_t type, int64_t priority) 
         }
         case RLOCK:
         {
-            std::list<lock_req_t>::reverse_iterator rit = requests_.rbegin();
+            auto rit = requests_.rbegin();
             for (; rit != requests_.rend(); rit++) {
                 if (rit->type == WLOCK) { // check tha write req with largest priority
                     if (priority < rit->priority)

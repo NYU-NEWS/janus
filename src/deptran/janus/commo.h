@@ -31,7 +31,7 @@ class JanusCommo : public RccCommo {
                           ballot_t ballot,
                           vector<SimpleCommand>& cmds,
                           shared_ptr<RccGraph> graph,
-                          const function<void(int32_t, RccGraph*)>& callback);
+                          const function<void(int32_t, shared_ptr<RccGraph>)>& callback);
 
   void BroadcastAccept(parid_t par_id,
                        txnid_t cmd_id,

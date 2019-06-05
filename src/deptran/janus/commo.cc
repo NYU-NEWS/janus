@@ -101,7 +101,7 @@ void JanusCommo::BroadcastPreAccept(
     ballot_t ballot,
     vector<TxPieceData>& cmds,
     shared_ptr<RccGraph> sp_graph,
-    const function<void(int, RccGraph*)>& callback) {
+    const function<void(int, shared_ptr<RccGraph>)>& callback) {
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
 
   bool skip_graph = IsGraphOrphan(*sp_graph, txn_id);
@@ -114,8 +114,9 @@ void JanusCommo::BroadcastPreAccept(
       int32_t res;
       MarshallDeputy md;
       fu->get_reply() >> res >> md;
-      auto p_graph = dynamic_cast<RccGraph*>(md.sp_data_.get());
-      callback(res, p_graph);
+      auto sp = dynamic_pointer_cast<RccGraph>(md.sp_data_);
+      verify(sp);
+      callback(res, sp);
     };
     verify(txn_id > 0);
     Future* f = nullptr;

@@ -23,13 +23,13 @@ class MultiPaxosServiceImpl : public MultiPaxosService {
 
   void Prepare(const uint64_t& slot,
                const ballot_t& ballot,
-               uint64_t* max_ballot,
+               ballot_t* max_ballot,
                rrr::DeferredReply* defer) override;
 
   void Accept(const uint64_t& slot,
               const ballot_t& ballot,
               const MarshallDeputy& cmd,
-              uint64_t* max_ballot,
+              ballot_t* max_ballot,
               rrr::DeferredReply* defer) override;
 
   void Decide(const uint64_t& slot,

@@ -5,16 +5,16 @@ abstract service MultiPaxos {
   defer Forward(MarshallDeputy cmd);
 
   defer Prepare(uint64_t slot,
-                uint64_t ballot |
-                uint64_t max_ballot);
+                ballot_t ballot |
+                ballot_t max_ballot);
 
   defer Accept(uint64_t slot,
-               uint64_t ballot,
+               ballot_t ballot,
                MarshallDeputy cmd |
-               uint64_t max_ballot);
+               ballot_t max_ballot);
 
   defer Decide(uint64_t slot,
-               uint64_t ballot,
+               ballot_t ballot,
                MarshallDeputy cmd);
 }
 
@@ -54,7 +54,7 @@ abstract service Classic {
   defer rpc_null( | );
   //  defer Prepare();
   defer TapirAccept(uint64_t cmd_id,
-                    uint64_t ballot,
+                    int64_t ballot,
 	                int32_t decision);
   // works as 2PC prepare on a paxos fast-accept
   defer TapirFastAccept(uint64_t cmd_id,

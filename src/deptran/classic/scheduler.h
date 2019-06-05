@@ -15,8 +15,8 @@ class SchedulerClassic: public Scheduler {
  using Scheduler::Scheduler;
  public:
 
-  void MergeCommands(shared_ptr<Marshallable> cmd1,
-                     shared_ptr<Marshallable> cmd2);
+  void MergeCommands(vector<shared_ptr<TxPieceData>>&,
+                     shared_ptr<Marshallable>);
 
   bool ExecutePiece(Tx& tx, TxPieceData& piece_data, TxnOutput& ret_output);
 
@@ -56,7 +56,7 @@ class SchedulerClassic: public Scheduler {
 
   bool ExecuteAll(Tx &tx, TxnOutput &ret_output);
 
-  void Next(Marshallable&) override;
+  virtual void Next(Marshallable&) override;
 
   int PrepareReplicated(TpcPrepareCommand& prepare_cmd);
   int CommitReplicated(TpcCommitCommand& commit_cmd);

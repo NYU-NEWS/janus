@@ -15,7 +15,7 @@ void MultiPaxosServiceImpl::Forward(const MarshallDeputy& cmd,
 
 void MultiPaxosServiceImpl::Prepare(const uint64_t& slot,
                                     const ballot_t& ballot,
-                                    uint64_t* max_ballot,
+                                    ballot_t* max_ballot,
                                     rrr::DeferredReply* defer) {
   verify(sched_ != nullptr);
   sched_->OnPrepare(slot,
@@ -27,7 +27,7 @@ void MultiPaxosServiceImpl::Prepare(const uint64_t& slot,
 void MultiPaxosServiceImpl::Accept(const uint64_t& slot,
                                    const ballot_t& ballot,
                                    const MarshallDeputy& md_cmd,
-                                   uint64_t* max_ballot,
+                                   ballot_t* max_ballot,
                                    rrr::DeferredReply* defer) {
   verify(sched_ != nullptr);
   Coroutine::CreateRun([&] () {

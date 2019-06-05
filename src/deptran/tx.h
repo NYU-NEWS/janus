@@ -44,8 +44,8 @@ class Scheduler;
  */
 class Tx {
  public:
-  IntEvent fully_dispatched_{};
-  IntEvent ev_execute_ready_{};
+  shared_ptr<IntEvent> fully_dispatched_{Reactor::CreateSpEvent<IntEvent>()};
+  shared_ptr<IntEvent> ev_execute_ready_{Reactor::CreateSpEvent<IntEvent>()};
   bool aborted_in_dispatch_{false};
   bool inuse = false;
   txnid_t tid_;
@@ -57,8 +57,9 @@ class Tx {
   TxnRegistry *txn_reg_{nullptr};
   TxWorkspace ws_{};
   // TODO at most one active coroutine runnable for a tx at a time
-  IntEvent running_{};
-  shared_ptr<Marshallable> cmd_{nullptr};
+//  IntEvent running_{};
+  shared_ptr<Marshallable> cmd_{};
+
 
 #ifdef CHECK_ISO
   map<Row*, map<colid_t, int>> deltas_;
@@ -82,7 +83,8 @@ class Tx {
         context_row_(),
         context_value_(),
         context_rs_(),
-        mdb_txn_(nullptr) {}
+        mdb_txn_(nullptr) {
+  }
 
   mdb::Txn *mdb_txn();
 

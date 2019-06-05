@@ -367,7 +367,8 @@ map<txnid_t, shared_ptr<TxRococo>> RccGraph::Aggregate(epoch_t epoch,
                                                       RccGraph &graph) {
   // aggregate vertexes
   map<txnid_t, shared_ptr<TxRococo>> index;
-  for (auto &pair: graph.vertex_index()) {
+  auto& vidx = graph.vertex_index();
+  for (const auto& pair: vidx) {
     auto rhs_v = pair.second;
     verify(pair.first == rhs_v->id());
     auto vertex = AggregateVertex(rhs_v);

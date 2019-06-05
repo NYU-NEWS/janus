@@ -3,7 +3,7 @@
 
 namespace janus {
 
-#define ballot_t uint64_t
+#define ballot_t int64_t
 #define cooid_t uint32_t
 #define txid_t uint64_t
 #define txnid_t uint64_t

@@ -216,7 +216,8 @@ void Txn2PL::abort() {
 
 bool Txn2PL::commit() {
   verify(this->rtti() == symbol_t::TXN_2PL);
-  verify(outcome_ == symbol_t::NONE);
+  // TODO does this verification matter?
+//  verify(outcome_ == symbol_t::NONE);
   for (auto &it : inserts_) {
     it.table->insert(it.row);
   }

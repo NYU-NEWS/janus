@@ -16,6 +16,16 @@
 
 namespace janus {
 
+    class XXX {
+    public:
+        int x_{0};
+        ~XXX() {
+            if (x_ != 1)
+                verify(0);
+            x_ = 2;
+        }
+    };
+
 ClassicServiceImpl::ClassicServiceImpl(Scheduler* sched,
                                        rrr::PollMgr* poll_mgr,
                                        ServerControlServiceImpl* scsi) : scsi_(
@@ -59,13 +69,18 @@ void ClassicServiceImpl::Dispatch(const i64& cmd_id,
 
 //  output->resize(output_size);
   // find stored procedure, and run it
-  auto sp = md.sp_data_;
-  const auto& func = [cmd_id, sp, output, res, this, defer]() {
+  shared_ptr<Marshallable> sp = md.sp_data_;
+//  sp->__debug_ = 20;
+  auto func = [cmd_id, sp, output, res, this, defer]() {
+      auto red = sp;
+//    XXX xxx;
     *res = SUCCESS;
     if (!dtxn_sched()->Dispatch(cmd_id, sp, *output)) {
       *res = REJECT;
     }
     defer->reply();
+//    sp->__debug_ = 10;
+//    xxx.x_ = 1;
   };
   Coroutine::CreateRun(func);
 //  func();
@@ -183,8 +198,8 @@ void ClassicServiceImpl::RccDispatch(const vector<SimpleCommand>& cmd,
   sched->OnDispatch(cmd,
                     res,
                     output,
-                    dynamic_cast<RccGraph*>(p_md_graph->sp_data_.get()),
-                    [defer]() { defer->reply(); });
+                    dynamic_pointer_cast<RccGraph>(p_md_graph->sp_data_));
+  defer->reply();
 }
 
 void ClassicServiceImpl::RccFinish(const cmdid_t& cmd_id,
@@ -229,28 +244,24 @@ void ClassicServiceImpl::JanusDispatch(const vector<SimpleCommand>& cmd,
                                        TxnOutput* p_output,
                                        MarshallDeputy* p_md_res_graph,
                                        DeferredReply* p_defer) {
-  std::function<void()>
-      func = [&cmd, p_res, p_output, p_md_res_graph, p_defer, this]() {
+//  std::function<void()>
+//      func = [&cmd, p_res, p_output, p_md_res_graph, p_defer, this]() {
     std::lock_guard<std::mutex> guard(this->mtx_);
     auto sp_graph = std::make_shared<RccGraph>();
-    SchedulerJanus* sched = (SchedulerJanus*) dtxn_sched_;
-    sched->OnDispatch(cmd,
-                      p_res,
-                      p_output,
-                      sp_graph.get(),
-                      [p_defer, sp_graph, p_md_res_graph]() {
-                        if (sp_graph->size() <= 1) {
-                          p_md_res_graph->SetMarshallable(std::make_shared<
-                              EmptyGraph>());
-                        } else {
-                          p_md_res_graph->SetMarshallable(sp_graph);
-                        }
-                        verify(
-                            p_md_res_graph->kind_ != MarshallDeputy::UNKNOWN);
-                        p_defer->reply();
-                      });
-  };
-  Coroutine::CreateRun(func);
+//    auto x = sp_graph.get();
+//    verify(x);
+    auto* sched = (SchedulerJanus*) dtxn_sched_;
+    sched->OnDispatch(cmd, p_res, p_output, sp_graph);
+    if (sp_graph->size() <= 1) {
+      p_md_res_graph->SetMarshallable(std::make_shared<EmptyGraph>());
+    } else {
+      p_md_res_graph->SetMarshallable(sp_graph);
+    }
+    verify(p_md_res_graph->kind_ != MarshallDeputy::UNKNOWN);
+    p_defer->reply();
+//  };
+//  func();
+//  Coroutine::CreateRun(func);
 
 }
 

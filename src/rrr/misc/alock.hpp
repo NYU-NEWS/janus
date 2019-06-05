@@ -332,8 +332,7 @@ class WoundDieALock: public ALock {
     if (lock_req.status == lock_req_t::WAIT) { // waiting, use no callback
       lock_req.no_callback();
       return 0;
-    }
-    else { // locked, use wound callback
+    } else { // locked, use wound callback
       int ret = lock_req.wound_callback();
       if (ret == 0) { // wound succ, reset alock status
         if (lock_req.type == WLOCK) {

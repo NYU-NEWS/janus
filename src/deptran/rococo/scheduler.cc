@@ -48,10 +48,9 @@ shared_ptr<Tx> SchedulerRococo::GetOrCreateTx(txnid_t tid, bool ro) {
 int SchedulerRococo::OnDispatch(const vector<SimpleCommand>& cmd,
                                 int32_t* res,
                                 TxnOutput* output,
-                                RccGraph* graph,
-                                const function<void()>& callback) {
+                                shared_ptr<RccGraph> graph) {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
-  verify(graph != nullptr);
+  verify(graph.get());
   txnid_t txn_id = cmd[0].root_id_;
   auto dtxn = dynamic_pointer_cast<TxRococo>(GetOrCreateTx(txn_id));
   verify(dtxn->id() == txn_id);
@@ -65,7 +64,7 @@ int SchedulerRococo::OnDispatch(const vector<SimpleCommand>& cmd,
   dtxn->UpdateStatus(TXN_STD);
   int depth = 1;
   verify(cmd[0].root_id_ == txn_id);
-  auto sz = MinItfrGraph(*dtxn, graph, true, depth);
+  auto sz = MinItfrGraph(*dtxn, graph.get(), true, depth);
 //#ifdef DEBUG_CODE
 //    if (sz > 4) {
 //      Log_fatal("something is wrong, graph size %d", sz);
@@ -84,7 +83,6 @@ int SchedulerRococo::OnDispatch(const vector<SimpleCommand>& cmd,
       Log_info("dispatch ret graph size: %d", graph->size());
   }
 #endif
-  callback();
 //  };
 //
 //  static bool do_record = Config::GetConfig()->do_logging();
@@ -95,6 +93,7 @@ int SchedulerRococo::OnDispatch(const vector<SimpleCommand>& cmd,
 //  } else {
 //    job();
 //  }
+  return 0;
 }
 
 int SchedulerRococo::OnCommit(cmdid_t cmd_id,
@@ -121,6 +120,7 @@ int SchedulerRococo::OnCommit(cmdid_t cmd_id,
 //    Log_debug("graph size on commit, %d", (int) graph.size());
 ////    verify(0);
 //  }
+  return 0;
 }
 
 int SchedulerRococo::OnInquire(epoch_t epoch,

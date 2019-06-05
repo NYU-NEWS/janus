@@ -70,8 +70,7 @@ class SchedulerRococo : public Scheduler, public RccGraph {
   int OnDispatch(const vector<SimpleCommand> &cmd,
                  rrr::i32 *res,
                  TxnOutput* output,
-                 RccGraph *graph,
-                 const function<void()> &callback);
+                 shared_ptr<RccGraph> graph);
 
   int OnCommit(cmdid_t cmd_id,
                const RccGraph &graph,

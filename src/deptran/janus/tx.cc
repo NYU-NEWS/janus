@@ -6,6 +6,7 @@ namespace janus {
 void TxJanus::DispatchExecute(SimpleCommand &cmd,
                               int32_t *res,
                               map<int32_t, Value> *output) {
+  phase_ = PHASE_RCC_DISPATCH;
   for (auto& c: dreqs_) {
     if (c.inn_id() == cmd.inn_id()) // already handled?
       return;
@@ -25,6 +26,16 @@ void TxJanus::DispatchExecute(SimpleCommand &cmd,
     }
   }
   dreqs_.push_back(cmd);
+
+  // TODO are these preemptive actions proper?
+  int ret_code;
+  cmd.input.Aggregate(ws_);
+  piece.proc_handler_(nullptr,
+                          *this,
+                          cmd,
+                          &ret_code,
+                          *output);
+  ws_.insert(*output);
 }
 
 } // namespace janus

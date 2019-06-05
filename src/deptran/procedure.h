@@ -1,3 +1,5 @@
+#include <memory>
+
 #pragma once
 
 #include "__dep__.h"
@@ -110,6 +112,7 @@ class SimpleCommand: public CmdData {
   map<int32_t, Value> output{};
   int32_t output_size = 0;
   parid_t partition_id_ = 0xFFFFFFFF;
+//  int32_t __debug_{10};
   virtual parid_t PartitionId() const {
     verify(partition_id_ != 0xFFFFFFFF);
     return partition_id_;
@@ -120,7 +123,12 @@ class SimpleCommand: public CmdData {
     *cmd = *this;
     return cmd;
   }
-  virtual ~SimpleCommand() {};
+  virtual ~SimpleCommand() {
+//    if (__debug_ != 10) {
+//      verify(0);
+//    }
+//    __debug_ = 30;
+  };
 };
 
 typedef SimpleCommand TxPieceData;
@@ -130,23 +138,33 @@ typedef map<parid_t, vector<shared_ptr<TxPieceData>>> ReadyPiecesData;
 class VecPieceData : public Marshallable {
  public:
   // TODO move shared_ptr into the vector.
-  shared_ptr<vector<TxPieceData>> sp_vec_piece_data_;
+  shared_ptr<vector<shared_ptr<TxPieceData>>> sp_vec_piece_data_{};
   VecPieceData() : Marshallable(MarshallDeputy::CMD_VEC_PIECE) {
 
   }
 
   Marshal& ToMarshal(Marshal& m) const override {
     verify(sp_vec_piece_data_);
-    m << *sp_vec_piece_data_;
+    m << (int32_t) sp_vec_piece_data_->size();
+    for (auto sp : *sp_vec_piece_data_) {
+      m << *sp;
+    }
+//    m << *sp_vec_piece_data_;
     return m;
   }
 
   Marshal& FromMarshal(Marshal& m) override {
     verify(!sp_vec_piece_data_);
-    sp_vec_piece_data_.reset(new vector<TxPieceData>);
-    m >> *sp_vec_piece_data_;
+    sp_vec_piece_data_ = std::make_shared<vector<shared_ptr<TxPieceData>>>();
+    int32_t sz;
+    m >> sz;
+    for (int i = 0; i < sz; i++) {
+      auto x = std::make_shared<TxPieceData>();
+      m >> *x;
+      sp_vec_piece_data_->push_back(x);
+    }
+//    m >> *sp_vec_piece_data_;
     return m;
-
   }
 };
 

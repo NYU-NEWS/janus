@@ -5,12 +5,13 @@
 #include "../base/all.hpp"
 
 namespace rrr {
+using std::shared_ptr;
 
 class Reactor;
 class Coroutine;
 class Event {
  public:
-  enum EventStatus { INIT = 0, WAIT = 1, READY = 2, TRIGGERED = 3, DEBUG = 4 };
+  enum EventStatus { INIT = 0, WAIT = 1, READY = 2, DONE = 3, DEBUG};
   EventStatus status_{INIT};
   void* _dbg_p_scheduler_{nullptr};
   uint64_t type_{0};
@@ -27,11 +28,13 @@ class Event {
 
   friend Reactor;
  protected:
-  Event(std::shared_ptr<Coroutine> coro = {});
+  Event();
 };
 
 class IntEvent : public Event {
+
  public:
+  IntEvent() {}
   int value_{0};
   int target_{1};
 

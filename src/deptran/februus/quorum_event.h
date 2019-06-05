@@ -9,8 +9,8 @@ namespace janus {
 
 class QuorumEvent : public Event {
  public:
-  int32_t n_total_ = INFINITY;
-  int32_t quorum_ = INFINITY;
+  int32_t n_total_ = -1;
+  int32_t quorum_ = -1;
   int32_t n_voted_{0};
   bool timeouted_ = false;
   // fast vote result.

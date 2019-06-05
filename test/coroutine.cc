@@ -80,10 +80,28 @@ TEST(CoroutineTest, yield) {
     x = 1;
     Coroutine::CurrentCoroutine()->Yield();
     x = 2;
+    Coroutine::CurrentCoroutine()->Yield();
+    x = 3;
   });
   ASSERT_EQ(x, 1);
-  coro1->Continue();
+  Reactor::GetReactor()->ContinueCoro(coro1);
   ASSERT_EQ(x, 2);
+  Reactor::GetReactor()->ContinueCoro(coro1);
+  ASSERT_EQ(x, 3);
+}
+
+shared_ptr<Coroutine> xxx() {
+    int x;
+    auto coro1 = Coroutine::CreateRun([&x] () {
+        x = 1;
+        Coroutine::CurrentCoroutine()->Yield();
+    });
+    return coro1;
+}
+
+TEST(CoroutineTest, destruct) {
+    shared_ptr<Coroutine> c = xxx();
+    c->Continue();
 }
 
 TEST(CoroutineTest, wait_die_lock) {
@@ -113,7 +131,7 @@ TEST(CoroutineTest, wait_die_lock) {
   });
   ASSERT_EQ(y, 0);
   coro1->Continue();
-  Reactor::CurrentScheduler()->Loop();
+  Reactor::GetReactor()->Loop();
   ASSERT_EQ(y, 1);
 }
 

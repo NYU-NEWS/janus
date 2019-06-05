@@ -6,9 +6,16 @@ namespace janus {
 class Marshallable {
  public:
   int32_t kind_{0};
+//  int32_t __debug_{10};
   Marshallable() = delete;
   explicit Marshallable(int32_t k): kind_(k) {};
-  virtual ~Marshallable() = default;
+  virtual ~Marshallable() {
+//    if (__debug_ != 10) {
+//      verify(0);
+//    }
+//    __debug_ = 30;
+//    Log_debug("destruct marshallable.");
+  };
   virtual Marshal& ToMarshal(Marshal& m) const;
   virtual Marshal& FromMarshal(Marshal& m);
 };
@@ -40,7 +47,7 @@ class MarshallDeputy {
    * This should be called by inherited class as instructor.
    * @param kind
    */
-  MarshallDeputy(shared_ptr<Marshallable> m): sp_data_(m) {
+  explicit MarshallDeputy(shared_ptr<Marshallable> m): sp_data_(std::move(m)) {
     kind_ = sp_data_->kind_;
   }
 

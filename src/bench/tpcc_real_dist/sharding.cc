@@ -379,6 +379,7 @@ int TpccdSharding::PopulateTable(tb_info_t *tb_info, parid_t partition_id) {
     init_index(prim_foreign_index);
     InsertRow(tb_info, partition_id, key_value, schema, table_ptr, tbl_sec_ptr);
   }
+  return 0;
 }
 
 } // namespace janus

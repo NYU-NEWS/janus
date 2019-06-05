@@ -20,6 +20,10 @@ static int volatile x2 =
 Marshal& TpcPrepareCommand::ToMarshal(Marshal& m) const {
   m << tx_id_;
   m << ret_;
+//  m << (int32_t) cmd_.size();
+//  for (auto o : cmd_) {
+//    m << *o;
+//  }
   MarshallDeputy md(cmd_);
   m << md;
   return m;
@@ -28,10 +32,20 @@ Marshal& TpcPrepareCommand::ToMarshal(Marshal& m) const {
 Marshal& TpcPrepareCommand::FromMarshal(Marshal& m) {
   m >> tx_id_;
   m >> ret_;
+//  int32_t sz;
+//  m >> sz;
+//  verify(cmd_.empty());
+//  for (int i = 0; i < sz; i++) {
+//    auto o = make_shared<SimpleCommand>();
+//    m >> *o;
+//    cmd_.push_back(o);
+//  }
   MarshallDeputy md;
   m >> md;
   if (!cmd_)
     cmd_ = md.sp_data_;
+  else
+    verify(0);
   return m;
 }
 

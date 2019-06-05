@@ -102,6 +102,8 @@ bool TpccProcedure::HandleOutput(int pi,
   bool ret;
 
   ws_.insert(output_map);
+
+  // below is for debug
   if (type_ == TPCC_PAYMENT ||
       type_ == TPCC_ORDER_STATUS ||
       type_ == TPCC_DELIVERY ||
@@ -122,6 +124,8 @@ bool TpccProcedure::HandleOutput(int pi,
     }
     return ret;
   }
+  // above is for debug.
+
   PieceCallbackHandler handler;
   auto& callback = txn_reg_->regs_[type_][pi].callback_;
   if (callback) {
@@ -131,13 +135,14 @@ bool TpccProcedure::HandleOutput(int pi,
     bool ret = CheckReady();
   }
 
-  // below is for debug
+  // for debug
   if (type_ == TPCC_STOCK_LEVEL && pi == TPCC_STOCK_LEVEL_0) {
     verify(ws_.count(TPCC_VAR_D_NEXT_O_ID) > 0);
     TxWorkspace& ws = GetWorkspace(TPCC_STOCK_LEVEL_1);
     verify(ws.count(TPCC_VAR_D_NEXT_O_ID) > 0);
     verify(status_[TPCC_STOCK_LEVEL_1] == DISPATCHABLE);
   }
+
   return ret;
 }
 

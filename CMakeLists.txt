@@ -1,27 +1,43 @@
 # ubuntu 16.04 has cmake 3.5
 cmake_minimum_required(VERSION 3.5)
 
+
 # use hunter instead of conan
 include("HunterGate.cmake")
+
 HunterGate(
-        URL "https://github.com/ruslo/hunter/archive/v0.21.16.tar.gz"
-        SHA1 "aa1faccd24f33dd2c368f85a4e9ca2e5d9c249cb"
+        URL "https://github.com/ruslo/hunter/archive/v0.23.179.tar.gz"
+        SHA1 "21b2f139feb9f3c37e367750013aee15e1c45355"
+#        "${CMAKE_CURRENT_LIST_DIR}/cxx11.cmake"
+#        FILEPATH "/home/shuai/git/janus/config.cmake"
+        LOCAL
 )
+
+set(
+        CMAKE_TOOLCHAIN_FILE
+        "${CMAKE_CURRENT_LIST_DIR}/cxx14.cmake"
+        CACHE
+        FILEPATH
+        "Default toolchain"
+)
+
 project(janus)
-set (CMAKE_CXX_STANDARD 14)
+
+# Hunter disallows using (cmake_)cxx_standard, use toolchain instead.
+#set (CMAKE_CXX_STANDARD 14)
 
 find_package(Threads)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(PYTHON2 REQUIRED python2)
 #pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
 
-hunter_add_package(Boost COMPONENTS system filesystem context coroutine)
+
+hunter_add_package(Boost COMPONENTS system filesystem coroutine context thread)
 hunter_add_package(GTest)
 
-find_package(Boost 1.67 COMPONENTS
-        system filesystem context coroutine thread REQUIRED)
+find_package(Boost CONFIG REQUIRED
+        system filesystem coroutine context thread)
 find_package(GTest CONFIG REQUIRED)
-
 
 include_directories(
         ${Boost_INCLUDE_DIR}
@@ -65,6 +81,9 @@ else()
     set(RT "rt")
 endif()
 
+# enable sanitizers
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -O1 -fno-omit-frame-pointer -g -fstandalone-debug")
+
 # for c build
 
 add_library(
@@ -88,7 +107,7 @@ add_library(YAMLCPP
 # for cxx build
 set(CMAKE_VERBOSE_MAKEFILE on)
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Werror")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Weffc++")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCHECK_ISO")

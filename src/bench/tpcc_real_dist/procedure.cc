@@ -30,6 +30,7 @@ bool TpccRdProcedure::IsOneRound() {
     case TPCC_STOCK_LEVEL:
       return false;
   }
+  return false;
 }
 
 TpccRdProcedure::~TpccRdProcedure() {
