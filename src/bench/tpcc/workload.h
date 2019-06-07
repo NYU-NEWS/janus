@@ -275,7 +275,7 @@ class TpccWorkload: public Workload {
   virtual void RegStockLevel();
 
  public:
-  virtual void RegisterPrecedures();
+  virtual void RegisterPrecedures() override ;
 
   virtual ~TpccWorkload();
 

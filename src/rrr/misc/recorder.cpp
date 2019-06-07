@@ -51,7 +51,7 @@ void Recorder::flush_loop() {
     while (true) {
         mtx_cd_flush_.lock();
 
-        auto now = std::chrono::system_clock::now();
+//        auto now = std::chrono::system_clock::now();
         cd_flush_.wait(mtx_cd_flush_);
         flush_buf();
         mtx_cd_flush_.unlock();

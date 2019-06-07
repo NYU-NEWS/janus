@@ -14,14 +14,12 @@ class CoordinatorFebruus : public CoordinatorClassic {
   bool fast_path_{false};
   using CoordinatorClassic::CoordinatorClassic;
   void DispatchAsync() override;
-  void DispatchAck(phase_t phase,
-                   int ret,
-                   TxnOutput& outputs);
+  void DispatchAck(phase_t phase, int ret, TxnOutput& outputs) override;
   virtual void GotoNextPhase() override;
   bool PreAccept();
   void Prepare();
   bool Accept();
-  void Commit();
+  void Commit() override;
 
   CommoFebruus* commo();
 };

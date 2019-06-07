@@ -35,7 +35,7 @@ class ClassicServiceImpl : public ClassicService {
     return dtxn_sched_;
   }
 
-  void rpc_null(DeferredReply* defer);
+  void rpc_null(DeferredReply* defer) override ;
 
   void Dispatch(const i64& cmd_id,
                 const MarshallDeputy& cmd,
@@ -131,7 +131,7 @@ class ClassicServiceImpl : public ClassicService {
 
   void RccDispatchRo(const SimpleCommand& cmd,
                      map<int32_t, Value>* output,
-                     DeferredReply* reply);
+                     DeferredReply* reply) override;
 
   void JanusDispatch(const vector<SimpleCommand>& cmd,
                      int32_t* p_res,

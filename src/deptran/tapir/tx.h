@@ -18,7 +18,7 @@ class TxTapir : public Tx {
   mdb::Txn *mdb_txn();
 
   Row *CreateRow(const mdb::Schema *schema,
-                 const std::vector<mdb::Value> &values) {
+                 const std::vector<mdb::Value> &values) override {
     return mdb::VersionedRow::create(schema, values);
   }
 

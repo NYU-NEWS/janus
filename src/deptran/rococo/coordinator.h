@@ -33,7 +33,7 @@ class RccCoord : public CoordinatorClassic {
   }
 
   void PreDispatch();
-  void DispatchAsync();
+  void DispatchAsync() override ;
   virtual void DispatchAck(phase_t phase,
                            int res,
                            TxnOutput& cmd,
@@ -50,6 +50,6 @@ class RccCoord : public CoordinatorClassic {
                      map<int, mdb::version_t>& vers);
   void FinishRo() { verify(0); };
   void Reset() override;
-  virtual void GotoNextPhase();
+  virtual void GotoNextPhase() override ;
 };
 } // namespace janus

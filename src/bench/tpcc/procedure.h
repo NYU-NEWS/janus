@@ -92,19 +92,19 @@ class TpccProcedure: public TxData {
  public:
   TpccProcedure();
 
-  virtual parid_t GetPiecePartitionId(innid_t inn_id);
+  virtual parid_t GetPiecePartitionId(innid_t inn_id) override ;
 
-  virtual void Init(TxRequest &req);
+  virtual void Init(TxRequest &req) override ;
   virtual bool HandleOutput(int pi,
                             int res,
                             map<int32_t, Value> &output) override;
-  virtual bool IsReadOnly();
+  virtual bool IsReadOnly() override ;
 
-  virtual void Reset();
+  virtual void Reset() override ;
 
   virtual bool CheckReady();
 
-  virtual int GetNPieceAll();
+  virtual int GetNPieceAll() override ;
 
   virtual ~TpccProcedure();
 };

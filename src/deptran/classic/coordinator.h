@@ -71,9 +71,9 @@ class CoordinatorClassic : public Coordinator {
   }
 
   /** do it asynchronously, thread safe. */
-  virtual void DoTxAsync(TxRequest&);
+  virtual void DoTxAsync(TxRequest&) override;
   virtual void Reset() override;
-  void Restart();
+  void Restart() override;
 
   virtual void DispatchAsync();
   virtual void DispatchAck(phase_t phase,

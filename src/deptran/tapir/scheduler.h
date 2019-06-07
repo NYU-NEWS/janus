@@ -23,7 +23,7 @@ class SchedulerTapir : public SchedulerClassic {
 
   virtual bool HandleConflicts(Tx &dtxn,
                                innid_t inn_id,
-                               vector<string> &conflicts) {
+                               vector<string> &conflicts) override {
     verify(0);
   };
 

@@ -62,7 +62,7 @@ class SchedulerRococo : public Scheduler, public RccGraph {
   }
   shared_ptr<Tx> GetOrCreateTx(txnid_t tid, bool ro = false) override ;
 
-  virtual void SetPartitionId(parid_t par_id) {
+  virtual void SetPartitionId(parid_t par_id) override {
     Scheduler::partition_id_ = par_id;
     RccGraph::partition_id_ = par_id;
   }
@@ -84,7 +84,7 @@ class SchedulerRococo : public Scheduler, public RccGraph {
 
   virtual bool HandleConflicts(Tx& dtxn,
                                innid_t inn_id,
-                               vector<string>& conflicts) {
+                               vector<string>& conflicts) override {
     verify(0);
   };
 

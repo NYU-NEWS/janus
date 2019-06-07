@@ -659,52 +659,52 @@ TimeoutALock::~TimeoutALock() {
 
 void ALockGroup::lock_all(const std::function<void(void)>& yes_cb,
         const std::function<void(void)>& no_cb) {
-    verify(cas_status(INIT, WAIT) || cas_status(LOCK, WAIT));
+//    verify(cas_status(INIT, WAIT) || cas_status(LOCK, WAIT));
+//
+//    yes_callback_ = yes_cb;
+//    no_callback_ = no_cb;
+//
+//    db_ = new DragonBall(tolock_.size(), [this] () {
+//            if (this->cas_status(WAIT, LOCK)) {
+//            this->yes_callback_();
+//            } else {
+//            verify(this->get_status() == TIMEOUT);
+//            this->no_callback_();
+//            this->abort_all_locked();
+//            }
+//            });
+//
+//    decltype(tolock_) tmp;
+//
+//    swap(tmp, tolock_);
+//
+//    for(auto &p: tmp) {
+//        auto &alock = p.first;
+//        auto &type = p.second;
 
-    yes_callback_ = yes_cb;
-    no_callback_ = no_cb;
+//        auto y_cb = [this, alock] (uint64_t id) {
+//            //		this->mtx_locks_.lock();
+//            this->locked_[alock] = id;
+//            //		this->mtx_locks_.unlock();
+//            this->db_->trigger();
+//        };
+//
+//        auto n_cb = [this] () {
+//            this->set_status(TIMEOUT);
+//            this->db_->trigger();
+//        };
 
-    db_ = new DragonBall(tolock_.size(), [this] () {
-            if (this->cas_status(WAIT, LOCK)) {
-            this->yes_callback_();
-            } else {
-            verify(this->get_status() == TIMEOUT);
-            this->no_callback_();
-            this->abort_all_locked();
-            }
-            });
-
-    decltype(tolock_) tmp;
-
-    swap(tmp, tolock_);
-
-    for(auto &p: tmp) {
-        auto &alock = p.first;
-        auto &type = p.second;
-
-        auto y_cb = [this, alock] (uint64_t id) {
-            //		this->mtx_locks_.lock();
-            this->locked_[alock] = id;
-            //		this->mtx_locks_.unlock();
-            this->db_->trigger();
-        };
-
-        auto n_cb = [this] () {
-            this->set_status(TIMEOUT);
-            this->db_->trigger();
-        };
-
-        auto _wound_callback = [this, alock] () -> int {
-            int ret = wound_callback_();
-            if (ret == 0)
-                locked_.erase(alock);
-            return ret;
-        };
+//        auto _wound_callback = [this, alock] () -> int {
+//            int ret = wound_callback_();
+//            if (ret == 0)
+//                locked_.erase(alock);
+//            return ret;
+//        };
 
         /*auto areq_id = */
 //        alock->lock(0, y_cb, n_cb, type, priority_, _wound_callback);
         //            alocks_[alock] = areq_id;
-    }
+//    }
     //        mtx_locks_.unlock();
 }
 

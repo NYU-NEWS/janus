@@ -22,14 +22,14 @@ public:
   virtual bool WriteColumn(Row *row,
                            colid_t col_id,
                            const Value &value,
-                           int hint_flag = TXN_SAFE);
+                           int hint_flag = TXN_SAFE) override;
 
   virtual bool WriteColumns(Row *row,
                             const std::vector<colid_t> &col_ids,
                             const std::vector<Value> &values,
-                            int hint_flag = TXN_SAFE);
+                            int hint_flag = TXN_SAFE) override;
 
-  virtual bool InsertRow(Table *tbl, Row *row);
+  virtual bool InsertRow(Table *tbl, Row *row) override;
 };
 
 } // namespace janus

@@ -82,7 +82,7 @@ class TxRococo: public Tx, public Vertex<TxRococo> {
 
   virtual mdb::Row *CreateRow(
       const mdb::Schema *schema,
-      const std::vector<mdb::Value> &values) {
+      const std::vector<mdb::Value> &values) override {
     return RCCRow::create(schema, values);
   }
 

@@ -20,7 +20,7 @@ void Coroutine::BoostRunWrapper(boost_coro_yield_t& yield) {
   boost_coro_yield_ = yield;
   verify(func_);
   auto reactor = Reactor::GetReactor();
-  reactor->coros_;
+//  reactor->coros_;
   auto sz = reactor->coros_.size();
   verify(sz > 0);
   func_();
@@ -33,7 +33,7 @@ void Coroutine::Run() {
   verify(status_ == INIT);
   status_ = STARTED;
   auto reactor = Reactor::GetReactor();
-  reactor->coros_;
+//  reactor->coros_;
   auto sz = reactor->coros_.size();
   verify(sz > 0);
   up_boost_coro_task_ = make_unique<boost_coro_task_t>(

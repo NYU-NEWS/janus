@@ -9,7 +9,7 @@ class JanusCommo : public RccCommo {
   void SendDispatch(vector<SimpleCommand>& cmd,
                     const function<void(int res,
                                         TxnOutput& output,
-                                        RccGraph& graph)>&);
+                                        RccGraph& graph)>&) override;
   void SendHandoutRo(SimpleCommand& cmd,
                      const function<void(int res,
                                          SimpleCommand& cmd,

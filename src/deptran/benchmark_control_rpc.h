@@ -230,14 +230,14 @@ class ClientControlServiceImpl: public ClientControlService {
 
   void LogClientResponse(ClientResponse *res);
  public:
-  void client_get_txn_names(std::map<i32, std::string> *txn_names);
-  void client_shutdown();
-  void client_force_stop();
-  void client_response(ClientResponse *res);
+  void client_get_txn_names(std::map<i32, std::string> *txn_names) override;
+  void client_shutdown() override;
+  void client_force_stop() override;
+  void client_response(ClientResponse *res) override;
   void client_ready_block(i32 *res,
-                          DeferredReply *defer);
-  void client_ready(i32 *res);
-  void client_start();
+                          DeferredReply *defer) override;
+  void client_ready(i32 *res) override;
+  void client_start() override;
 
   ClientControlServiceImpl(unsigned int num_threads, const std::map<int32_t, std::string> &txn_types);
   ~ClientControlServiceImpl();

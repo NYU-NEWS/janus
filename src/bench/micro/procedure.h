@@ -11,7 +11,7 @@ public:
 
     MicroProcedure();
 
-    virtual void Init(TxRequest &req);
+    virtual void Init(TxRequest &req) override;
 
     virtual void InitR(TxRequest &req);
 
@@ -20,7 +20,7 @@ public:
     virtual bool HandleOutput(int pi, int res,
                               map<int32_t, Value> &output) override;
 
-    virtual bool IsReadOnly();
+    virtual bool IsReadOnly() override;
 
     virtual void Reset() override;
 

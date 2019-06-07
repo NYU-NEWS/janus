@@ -106,7 +106,7 @@ Marshal& operator >> (Marshal& m, TxReply& reply) {
   m >> reply.res_;
   m >> reply.output_;
   m >> reply.n_try_;
-  memset(&reply.start_time_, sizeof(reply.start_time_), 0);
+  memset(&reply.start_time_, 0, sizeof(reply.start_time_));
   m >> reply.time_;
   m >> reply.txn_type_;
   return m;

@@ -230,7 +230,7 @@ class TxData: public CmdData {
 
   TxData();
 
-  virtual void Init(TxRequest &req) = 0;
+  virtual void Init(TxRequest &req) = 0 ;
 
   // phase 1, res is NULL
   // phase 2, res returns SUCCESS is output is consistent with previous value
@@ -244,13 +244,13 @@ class TxData: public CmdData {
   }
   virtual bool OutputReady();
   virtual bool IsFinished(){verify(0);}
-  virtual void Merge(CmdData&);
+  virtual void Merge(CmdData&) override;
   virtual void Merge(innid_t inn_id, map<int32_t, Value>& output);
   virtual void Merge(TxnOutput& output);
   virtual bool HasMoreUnsentPiece();
   virtual shared_ptr<TxPieceData> GetNextReadySubCmd();
   virtual ReadyPiecesData GetReadyPiecesData(int32_t max = 0);
-  virtual set<parid_t> GetPartitionIds();
+  virtual set<parid_t> GetPartitionIds() override;
   TxWorkspace& GetWorkspace(innid_t inn_id) {
     verify(inn_id != 0);
     TxWorkspace& ws = inputs_[inn_id];

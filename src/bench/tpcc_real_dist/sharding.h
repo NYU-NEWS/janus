@@ -22,7 +22,7 @@ class TpccdSharding: public TpccSharding {
   bool GenerateRowData(tb_info_t *tb_info,
                        uint32_t &sid,
                        Value &key_value,
-                       vector<Value> &row_data);
+                       vector<Value> &row_data) override ;
 
   void InsertRowData(tb_info_t *tb_info,
                      uint32_t &partition_id,
@@ -30,7 +30,7 @@ class TpccdSharding: public TpccSharding {
                      const mdb::Schema *schema,
                      mdb::Table *const table_ptr,
                      mdb::SortedTable *tbl_sec_ptr,
-                     vector<Value> &row_data);
+                     vector<Value> &row_data) override ;
 
 };
 

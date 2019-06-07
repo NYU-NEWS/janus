@@ -43,7 +43,7 @@ class CoordinatorJanus : public RccCoord {
 
   JanusCommo *commo();
   // Dispatch inherits from RccCoord;
-  void DispatchRo() { DispatchAsync(); }
+  void DispatchRo() override { DispatchAsync(); }
 
   void PreAccept();
   void PreAcceptAck(phase_t phase,
@@ -75,7 +75,7 @@ class CoordinatorJanus : public RccCoord {
   };
   bool AcceptQuorumReached();
 
-  void Commit();
+  void Commit() override;
   void CommitAck(phase_t phase,
                  parid_t par_id,
                  int32_t res,

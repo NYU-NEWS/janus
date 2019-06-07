@@ -60,7 +60,7 @@ void* ThreadPool::start_thread_pool(void* args) {
 }
 
 ThreadPool::ThreadPool(int n /* =... */)
-    : n_(n), should_stop_(false), round_robin_(), th_(), q_() {
+    : n_(n), round_robin_(), th_(), q_() {
     verify(n_ >= 0);
     th_ = new pthread_t[n_];
     q_ = new Queue<function<void()>*> [n_];
@@ -187,7 +187,7 @@ void* RunLater::start_run_later(void* thiz) {
 }
 
 RunLater::RunLater() :
-    th_(), m_(), cv_(), should_stop_(), jobs_(), latest_(), latest_l_() {
+    th_(), m_(), cv_() {
     should_stop_ = false;
     latest_ = 0.0;
     Pthread_mutex_init(&m_, nullptr);

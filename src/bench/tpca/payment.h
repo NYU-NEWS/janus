@@ -11,7 +11,7 @@ class TpcaPaymentChopper: public TxData {
 
   TpcaPaymentChopper() {}
 
-  virtual void Init(TxRequest &req);
+  virtual void Init(TxRequest &req) override;
 
   virtual bool HandleOutput(int pi,
                             int res,
@@ -19,7 +19,7 @@ class TpcaPaymentChopper: public TxData {
     return false;
   }
 
-  virtual bool IsReadOnly() { return false; }
+  virtual bool IsReadOnly() override { return false; }
 
   virtual void Reset() override;
 

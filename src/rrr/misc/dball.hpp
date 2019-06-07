@@ -21,7 +21,7 @@ class DragonBall {
   int64_t n_wait_ = -1;
   int64_t n_ready_ = 0;
   bool called_ = false;
-  std::function<void(void)> wish_; // this is your wish!
+  std::function<void(void)> wish_{}; // this is your wish!
 
   bool th_safe_ = false;
   bool auto_trigger = true;
@@ -29,7 +29,7 @@ class DragonBall {
 //    std::mutex mtx_;
 
   DragonBall(bool th_safe = false)
-      : th_safe_(th_safe), wish_(), n_wait_() { }
+      : th_safe_(th_safe), n_wait_() { }
 
   DragonBall(const int32_t n_wait,
              const std::function<void(void)> &wish,
