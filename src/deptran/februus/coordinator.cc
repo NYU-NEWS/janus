@@ -89,7 +89,7 @@ void CoordinatorFebruus::DispatchAsync() {
   auto txn = (TxData*) cmd_;
 
   int cnt = 0;
-  auto cmds_by_par = txn->GetReadyPiecesData(INFINITY);
+  auto cmds_by_par = txn->GetReadyPiecesData(-1);
   Log_debug("dispatch for tx id: %" PRIx64, txn->root_id_);
   for (auto& pair: cmds_by_par) {
     const parid_t& par_id = pair.first;
