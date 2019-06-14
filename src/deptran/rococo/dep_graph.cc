@@ -23,7 +23,7 @@ void RccGraph::RemoveVertex(txnid_t txn_id) {
 }
 
 void RccGraph::SelectGraphCmtUkn(TxRococo& dtxn,
-                                 RccGraph *new_graph) {
+                                 shared_ptr<RccGraph> new_graph) {
   auto new_v = new_graph->FindOrCreateV(dtxn.id());
   auto s = dtxn.status();
   if (s >= TXN_DCD) {
@@ -97,10 +97,10 @@ void RccGraph::SelectGraph(set<shared_ptr<TxRococo>> vertexes,
 }
 
 uint64_t RccGraph::MinItfrGraph(TxRococo& tx,
-                                RccGraph *new_graph,
+                                shared_ptr<RccGraph> new_graph,
                                 bool quick,
                                 int depth) {
-  verify(new_graph != nullptr);
+  verify(new_graph);
   if (tx.parents_.size() == 0 && quick) {
     new_graph->empty_ = true;
     return 0;

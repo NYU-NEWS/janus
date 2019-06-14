@@ -79,7 +79,7 @@ class SchedulerRococo : public Scheduler, public RccGraph {
 
   virtual int OnInquire(epoch_t epoch,
                         txnid_t cmd_id,
-                        RccGraph *graph,
+                        shared_ptr<RccGraph> graph,
                         const function<void()> &callback);
 
   virtual bool HandleConflicts(Tx& dtxn,
@@ -103,7 +103,7 @@ class SchedulerRococo : public Scheduler, public RccGraph {
 
   void InquireAboutIfNeeded(TxRococo &dtxn);
   void AnswerIfInquired(TxRococo &dtxn);
-  void InquiredGraph(TxRococo& dtxn, RccGraph* graph);
+  void InquiredGraph(TxRococo& dtxn, shared_ptr<RccGraph> graph);
   void CheckWaitlist();
   void InquireAck(cmdid_t cmd_id, RccGraph& graph);
   void TriggerCheckAfterAggregation(RccGraph &graph);

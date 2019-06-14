@@ -12,19 +12,17 @@ class SchedulerJanus : public SchedulerRococo {
 
   map<txnid_t, shared_ptr<TxRococo>> Aggregate(RccGraph& graph);
 
-  void OnPreAccept(const txnid_t txnid,
+  void OnPreAccept(txnid_t txnid,
                    const vector<SimpleCommand> &cmds,
                    RccGraph* graph,
                    int32_t *res,
-                   RccGraph *res_graph,
-                   function<void()> callback);
+                   shared_ptr<RccGraph> res_graph);
 
 
-  void OnAccept(const txnid_t txn_id,
+  void OnAccept(txnid_t txn_id,
                 const ballot_t& ballot,
-                const RccGraph& graph,
-                int32_t* res,
-                function<void()> callback);
+                shared_ptr<RccGraph> graph,
+                int32_t* res);
 
 //  void OnCommit(const txnid_t txn_id,
 //                const RccGraph &graph,
@@ -32,7 +30,7 @@ class SchedulerJanus : public SchedulerRococo {
 //                TxnOutput *output,
 //                const function<void()> &callback);
 
-  void OnCommit(const txnid_t txn_id,
+  void OnCommit(txnid_t txn_id,
                 RccGraph* graph,
                 int32_t *res,
                 TxnOutput *output,
@@ -45,14 +43,9 @@ class SchedulerJanus : public SchedulerRococo {
 
   int OnInquire(epoch_t epoch,
                 cmdid_t cmd_id,
-                RccGraph *graph,
+                shared_ptr<RccGraph> graph,
                 const function<void()> &callback) override;
   JanusCommo* commo();
 
-  virtual bool HandleConflicts(Tx& dtxn,
-                               innid_t inn_id,
-                               vector<string>& conflicts) override {
-    verify(0);
-  };
 };
 } // namespace janus

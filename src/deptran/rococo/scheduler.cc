@@ -64,7 +64,7 @@ int SchedulerRococo::OnDispatch(const vector<SimpleCommand>& cmd,
   dtxn->UpdateStatus(TXN_STD);
   int depth = 1;
   verify(cmd[0].root_id_ == txn_id);
-  auto sz = MinItfrGraph(*dtxn, graph.get(), true, depth);
+  auto sz = MinItfrGraph(*dtxn, graph, true, depth);
 //#ifdef DEBUG_CODE
 //    if (sz > 4) {
 //      Log_fatal("something is wrong, graph size %d", sz);
@@ -125,7 +125,7 @@ int SchedulerRococo::OnCommit(cmdid_t cmd_id,
 
 int SchedulerRococo::OnInquire(epoch_t epoch,
                                txnid_t txn_id,
-                               RccGraph* graph,
+                               shared_ptr<RccGraph> graph,
                                const function<void()>& callback) {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
 
@@ -148,7 +148,7 @@ int SchedulerRococo::OnInquire(epoch_t epoch,
 
 }
 
-void SchedulerRococo::InquiredGraph(TxRococo& dtxn, RccGraph* graph) {
+void SchedulerRococo::InquiredGraph(TxRococo& dtxn, shared_ptr<RccGraph> graph) {
   verify(graph != nullptr);
   if (dtxn.IsDecided()) {
     // return scc is enough.
@@ -172,7 +172,7 @@ void SchedulerRococo::AnswerIfInquired(TxRococo& dtxn) {
               (int) sz1, (int) sz2);
   }
   if (dtxn.status() >= TXN_CMT && dtxn.graphs_for_inquire_.size() > 0) {
-    for (RccGraph* graph : dtxn.graphs_for_inquire_) {
+    for (auto graph : dtxn.graphs_for_inquire_) {
       InquiredGraph(dtxn, graph);
     }
     for (auto& callback : dtxn.callbacks_for_inquire_) {

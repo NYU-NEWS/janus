@@ -107,8 +107,7 @@ void SchedulerJanus::OnPreAccept(const txid_t txn_id,
                                  const vector<SimpleCommand> &cmds,
                                  RccGraph *graph,
                                  int32_t *res,
-                                 RccGraph *res_graph,
-                                 function<void()> callback) {
+                                 shared_ptr<RccGraph> res_graph) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 //  Log_info("on preaccept: %llx par: %d", txn_id, (int)partition_id_);
 //  if (RandomGenerator::rand(1, 2000) <= 1)
@@ -151,14 +150,12 @@ void SchedulerJanus::OnPreAccept(const txid_t txn_id,
     }
     *res = SUCCESS;
   }
-  callback();
 }
 
 void SchedulerJanus::OnAccept(const txnid_t txn_id,
                               const ballot_t &ballot,
-                              const RccGraph &graph,
-                              int32_t *res,
-                              function<void()> callback) {
+                              shared_ptr<RccGraph> graph,
+                              int32_t *res) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto dtxn = dynamic_pointer_cast<TxRococo>(GetOrCreateTx(txn_id));
   if (dtxn->max_seen_ballot_ > ballot) {
@@ -167,10 +164,9 @@ void SchedulerJanus::OnAccept(const txnid_t txn_id,
   } else {
     dtxn->max_accepted_ballot_ = ballot;
     dtxn->max_seen_ballot_ = ballot;
-    Aggregate(const_cast<RccGraph &> (graph));
+    Aggregate(*graph);
     *res = SUCCESS;
   }
-  callback();
 }
 //
 //void SchedulerJanus::OnCommit(const txnid_t cmd_id,
@@ -339,7 +335,7 @@ void SchedulerJanus::OnCommit(const txnid_t cmd_id,
 
 int SchedulerJanus::OnInquire(epoch_t epoch,
                               cmdid_t cmd_id,
-                              RccGraph *graph,
+                              shared_ptr<RccGraph> graph,
                               const function<void()> &callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   // TODO check epoch, cannot be a too old one.

@@ -103,7 +103,7 @@ enum CommandStatus {
   INIT=3
 };
 
-// TODO rename to TxPieceData?
+// TODO rename to TxPieceData? Seems a bad name. Should figure out a better name.
 class SimpleCommand: public CmdData {
  public:
   CmdData* root_ = nullptr;
@@ -133,12 +133,12 @@ class SimpleCommand: public CmdData {
 
 typedef SimpleCommand TxPieceData;
 
-typedef map<parid_t, vector<shared_ptr<TxPieceData>>> ReadyPiecesData;
+typedef map<parid_t, vector<shared_ptr<SimpleCommand>>> ReadyPiecesData;
 
 class VecPieceData : public Marshallable {
  public:
   // TODO move shared_ptr into the vector.
-  shared_ptr<vector<shared_ptr<TxPieceData>>> sp_vec_piece_data_{};
+  shared_ptr<vector<shared_ptr<SimpleCommand>>> sp_vec_piece_data_{};
   VecPieceData() : Marshallable(MarshallDeputy::CMD_VEC_PIECE) {
 
   }

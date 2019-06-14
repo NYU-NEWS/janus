@@ -97,11 +97,11 @@ map<int32_t, Value> &output) \
 #define END_LOOP_PIE });}
 
 #define PROC \
-  [this] (Executor* exec, Tx& tx, TxPieceData& cmd, \
+  [this] (Executor* exec, Tx& tx, SimpleCommand& cmd, \
           int32_t *res, map<int32_t, Value> &output)
 
 #define LPROC \
-  [this, i] (Executor* exec, Tx& tx, TxPieceData& cmd, \
+  [this, i] (Executor* exec, Tx& tx, SimpleCommand& cmd, \
           int32_t *res, map<int32_t, Value> &output)
 
 #define BEGIN_CB(txn_type, inn_id) \

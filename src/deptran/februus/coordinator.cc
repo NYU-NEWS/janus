@@ -97,7 +97,7 @@ void CoordinatorFebruus::DispatchAsync() {
     n_dispatch_ += vec_sp_piece_data.size();
     cnt += vec_sp_piece_data.size();
     // TODO optimize?
-    auto sp_vec_piece = std::make_shared<vector<shared_ptr<TxPieceData>>>();
+    auto sp_vec_piece = std::make_shared<vector<shared_ptr<SimpleCommand>>>();
     for (auto c: vec_sp_piece_data) {
       c->id_ = next_pie_id();
       dispatch_acks_[c->inn_id_] = false;

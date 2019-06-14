@@ -114,7 +114,7 @@ class TxRococo: public Tx, public Vertex<TxRococo> {
   bool all_anc_cmt_hint{false};
 //  RccGraph* graph_{nullptr};
 
-  vector<RccGraph*> graphs_for_inquire_{};
+  vector<shared_ptr<RccGraph>> graphs_for_inquire_{};
   vector<function<void()>> callbacks_for_inquire_{};
 
   ChopFinishResponse *res = nullptr;

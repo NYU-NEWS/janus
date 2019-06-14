@@ -51,7 +51,7 @@ class RccGraph : public Graph<TxRococo> {
   void UpgradeStatus(TxRococo& v, int8_t status);
 
   map<txnid_t, shared_ptr<TxRococo>> Aggregate(epoch_t epoch, RccGraph& graph);
-  void SelectGraphCmtUkn(TxRococo& dtxn, RccGraph* new_graph);
+  void SelectGraphCmtUkn(TxRococo& dtxn, shared_ptr<RccGraph> new_graph);
   void SelectGraph(set<shared_ptr<TxRococo>> vertexes, RccGraph* new_graph);
 //  RccScc& FindSCC(RccDTxn *vertex) override;
   bool AllAncCmt(TxRococo& vertex);
@@ -64,7 +64,7 @@ class RccGraph : public Graph<TxRococo> {
   }
 
   uint64_t MinItfrGraph(TxRococo& dtxn,
-                        RccGraph* gra_m,
+                        shared_ptr<RccGraph> gra_m,
                         bool quick = false,
                         int depth = -1);
 
