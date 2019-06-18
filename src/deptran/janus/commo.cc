@@ -1,7 +1,6 @@
 #include "../procedure.h"
-#include "deptran/rococo/tx.h"
+#include "../rococo/tx.h"
 #include "../rococo/graph_marshaler.h"
-#include "dep_graph.h"
 #include "commo.h"
 #include "marshallable.h"
 
@@ -50,24 +49,6 @@ void JanusCommo::SendHandoutRo(SimpleCommand& cmd,
   verify(0);
 }
 
-void JanusCommo::SendFinish(parid_t pid,
-                            txnid_t tid,
-                            shared_ptr<RccGraph> graph,
-                            const function<void(TxnOutput& output)>& callback) {
-  verify(0);
-  FutureAttr fuattr;
-  function<void(Future*)> cb = [callback](Future* fu) {
-    int32_t res;
-    TxnOutput outputs;
-    fu->get_reply() >> res >> outputs;
-    callback(outputs);
-  };
-  fuattr.callback = cb;
-  auto proxy = NearestProxyForPartition(pid).second;
-  MarshallDeputy md(graph);
-  Future::safe_release(proxy->async_JanusCommit(tid, md, fuattr));
-}
-
 void JanusCommo::SendInquire(parid_t pid,
                              epoch_t epoch,
                              txnid_t tid,
@@ -85,15 +66,6 @@ void JanusCommo::SendInquire(parid_t pid,
   Future::safe_release(proxy->async_JanusInquire(epoch, tid, fuattr));
 }
 
-bool JanusCommo::IsGraphOrphan(RccGraph& graph, txnid_t cmd_id) {
-  if (graph.size() == 1) {
-    auto v = graph.FindV(cmd_id);
-    verify(v);
-    return true;
-  } else {
-    return false;
-  }
-}
 
 void JanusCommo::BroadcastPreAccept(
     parid_t par_id,

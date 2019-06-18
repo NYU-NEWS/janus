@@ -11,7 +11,7 @@
 namespace janus {
 
 static Frame *rcc_frame_s = Frame::RegFrame(MODE_RCC,
-                                            {"rococo", "rococo"},
+                                            {"rococo", "rcc"},
                                             []() -> Frame * {
                                               return new FrameRococo();
                                             });

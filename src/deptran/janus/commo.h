@@ -16,11 +16,6 @@ class JanusCommo : public RccCommo {
                                          map<int, mdb::version_t>& vers)>&)
   override;
 
-  void SendFinish(parid_t pid,
-                  txnid_t tid,
-                  shared_ptr<RccGraph> graph,
-                  const function<void(TxnOutput&)>&) override;
-
   void SendInquire(parid_t pid,
                    epoch_t epoch,
                    txnid_t tid,
@@ -43,9 +38,8 @@ class JanusCommo : public RccCommo {
       parid_t,
       txnid_t cmd_id_,
       shared_ptr<RccGraph> graph,
-      const function<void(int32_t, TxnOutput&)>& callback);
+      const function<void(int32_t, TxnOutput&)>& callback) override;
 
-  bool IsGraphOrphan(RccGraph& graph, txnid_t cmd_id);
 
 };
 

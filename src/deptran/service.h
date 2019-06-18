@@ -24,7 +24,7 @@ class ClassicServiceImpl : public ClassicService {
   AvgStat stat_ro6_sz_vector_;
   uint64_t n_asking_ = 0;
 
-  std::mutex mtx_;
+//  std::mutex mtx_;
   Recorder* recorder_{nullptr};
   ServerControlServiceImpl* scsi_; // for statistics;
   Communicator* comm_{nullptr};

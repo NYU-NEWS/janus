@@ -10,7 +10,7 @@ class SchedulerJanus : public SchedulerRococo {
  public:
   using SchedulerRococo::SchedulerRococo;
 
-  map<txnid_t, shared_ptr<TxRococo>> Aggregate(RccGraph& graph);
+  map<txnid_t, shared_ptr<TxRococo>> Aggregate(RccGraph& graph) override;
 
   void OnPreAccept(txnid_t txnid,
                    const vector<SimpleCommand> &cmds,
@@ -30,16 +30,16 @@ class SchedulerJanus : public SchedulerRococo {
 //                TxnOutput *output,
 //                const function<void()> &callback);
 
-  void OnCommit(txnid_t txn_id,
-                RccGraph* graph,
-                int32_t *res,
-                TxnOutput *output,
-                const function<void()> &callback);
-
 //  void OnCommitWoGraph(const txnid_t cmd_id,
 //                       int32_t* res,
 //                       TxnOutput* output,
 //                       const function<void()>& callback);
+
+  void OnCommit(txnid_t txn_id,
+                RccGraph* graph,
+                int32_t *res,
+                TxnOutput *output,
+                const function<void()> &callback) override;
 
   int OnInquire(epoch_t epoch,
                 cmdid_t cmd_id,

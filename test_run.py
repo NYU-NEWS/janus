@@ -17,7 +17,7 @@ modes_ = [
     "tpl_ww_paxos",
     "occ_paxos",
     "tapir",
-    "rococo",
+    "rcc",
     "janus",
     "februus"
 ]

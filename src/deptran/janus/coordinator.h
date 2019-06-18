@@ -3,8 +3,7 @@
 #include "../__dep__.h"
 #include "../constants.h"
 #include "../command.h"
-#include "deptran/rococo/coordinator.h"
-#include "dep_graph.h"
+#include "../rococo/coordinator.h"
 
 namespace janus {
 class JanusCommo;
@@ -28,9 +27,7 @@ class CoordinatorJanus : public RccCoord {
 //  map<parid_t, int> n_fast_accept_rejects_ = {};
   map<parid_t, vector<shared_ptr<RccGraph>>> n_fast_accept_graphs_{};
   map<parid_t, int> fast_accept_graph_check_caches_{};
-  map<parid_t, int> n_commit_oks_ = {};
   bool fast_path_ = false;
-  bool fast_commit_ = false;
 
 //  map<groupid_t, reply_cnt_t> n_fast_accept_reply_;
 //  map<groupid_t, reply_cnt_t> n_accept_reply_;
@@ -79,7 +76,7 @@ class CoordinatorJanus : public RccCoord {
   void CommitAck(phase_t phase,
                  parid_t par_id,
                  int32_t res,
-                 TxnOutput &output);
+                 TxnOutput &output) override;
   bool check_commit() {
     verify(0);
     return false;

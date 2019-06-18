@@ -125,10 +125,7 @@ bool SchedulerClassic::Dispatch(cmdid_t cmd_id,
 
   // TODO investigate: change it to a reference with clang will cause crash
   for (auto sp_piece_data : *sp_vec_piece) {
-//    verify(sp_piece_data->__debug_ == 10);
-//    sp_piece_data->__debug_ = 20;
     DispatchPiece(*tx, *sp_piece_data, ret_output);
-//    sp_piece_data->__debug_ = 10;
   }
   // TODO reimplement this.
   if (tx->fully_dispatched_->value_ == 0) {

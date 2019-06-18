@@ -21,6 +21,9 @@ class RccCoord : public CoordinatorClassic {
   map<int32_t, mdb::version_t> last_vers_;
   map<int32_t, mdb::version_t> curr_vers_;
 
+  bool fast_commit_{false};
+  map<parid_t, int> n_commit_oks_{};
+
   RccCoord(uint32_t coo_id,
            int benchmark,
            ClientControlServiceImpl* ccsi,
@@ -42,6 +45,12 @@ class RccCoord : public CoordinatorClassic {
   void FinishAck(phase_t phase,
                  int res,
                  map<innid_t, map<int32_t, Value>>& output);
+
+  void Commit() override;
+  virtual void CommitAck(phase_t phase,
+                 parid_t par_id,
+                 int32_t res,
+                 TxnOutput &output);
 
   virtual void DispatchRo();
   void DispatchRoAck(phase_t phase,

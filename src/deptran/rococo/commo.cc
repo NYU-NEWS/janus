@@ -13,23 +13,34 @@ void RccCommo::SendDispatch(vector<SimpleCommand> &cmd,
                                                 TxnOutput&,
                                                 RccGraph&)>& callback) {
   rrr::FutureAttr fuattr;
+  auto tid = cmd[0].root_id_;
+  auto par_id = cmd[0].partition_id_;
   std::function<void(Future*)> cb =
-      [callback] (Future *fu) {
+      [callback, tid, par_id](Future* fu) {
         int res;
         TxnOutput output;
         MarshallDeputy md;
         fu->get_reply() >> res >> output >> md;
-        RccGraph& graph = dynamic_cast<RccGraph&>(*md.sp_data_);
-        callback(res, output, graph);
+        if (md.kind_ == MarshallDeputy::EMPTY_GRAPH) {
+          RccGraph rgraph;
+          auto v = rgraph.CreateV(tid);
+          TxRococo& info = *v;
+          info.partition_.insert(par_id);
+          verify(rgraph.vertex_index().size() > 0);
+          callback(res, output, rgraph);
+        } else if (md.kind_ == MarshallDeputy::RCC_GRAPH) {
+          RccGraph& graph = dynamic_cast<RccGraph&>(*md.sp_data_);
+          callback(res, output, graph);
+        } else {
+          verify(0);
+        }
       };
   fuattr.callback = cb;
-  // TODO fix.
-  auto proxy = (ClassicProxy*)NearestProxyForPartition(
-      cmd[0].PartitionId()).second;
+  auto proxy = NearestProxyForPartition(cmd[0].PartitionId()).second;
   Log_debug("dispatch to %ld", cmd[0].PartitionId());
 //  verify(cmd.type_ > 0);
 //  verify(cmd.root_type_ > 0);
-  Future::safe_release(proxy->async_RccDispatch(cmd, fuattr));
+  Future::safe_release(proxy->async_JanusDispatch(cmd, fuattr));
 }
 
 void RccCommo::SendHandoutRo(SimpleCommand &cmd,
@@ -71,5 +82,42 @@ void RccCommo::SendInquire(parid_t pid,
   Future::safe_release(proxy->async_RccInquire(epoch, tid, fuattr));
 }
 
+void RccCommo::BroadcastCommit(
+                                 parid_t par_id,
+                                 txnid_t cmd_id,
+                                 shared_ptr<RccGraph> graph,
+                                 const function<void(int32_t, TxnOutput&)>& callback) {
+  bool skip_graph = IsGraphOrphan(*graph, cmd_id);
+
+  verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
+  for (auto& p : rpc_par_proxies_[par_id]) {
+    auto proxy = (p.second);
+    verify(proxy != nullptr);
+    FutureAttr fuattr;
+    fuattr.callback = [callback](Future* fu) {
+                        int32_t res;
+                        TxnOutput output;
+                        fu->get_reply() >> res >> output;
+                        callback(res, output);
+                      };
+    verify(cmd_id > 0);
+    if (skip_graph) {
+      Future::safe_release(proxy->async_JanusCommitWoGraph(cmd_id, fuattr));
+    } else {
+      MarshallDeputy md(graph);
+      Future::safe_release(proxy->async_JanusCommit(cmd_id, md, fuattr));
+    }
+  }
+}
+
+bool RccCommo::IsGraphOrphan(RccGraph& graph, txnid_t cmd_id) {
+  if (graph.size() == 1) {
+    auto v = graph.FindV(cmd_id);
+    verify(v);
+    return true;
+  } else {
+    return false;
+  }
+}
 
 } // namespace janus

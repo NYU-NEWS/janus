@@ -8,7 +8,6 @@
 #include "frame.h"
 #include "coordinator.h"
 #include "scheduler.h"
-#include "dep_graph.h"
 #include "tx.h"
 
 namespace janus {

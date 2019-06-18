@@ -6,28 +6,6 @@
 #include "coordinator.h"
 
 namespace janus {
-//CoordinatorJanus::CoordinatorJanus(
-//  uint32_t                  coo_id,
-//  uint32_t                  thread_id,
-//  bool                      batch_optimal) : coo_id_(coo_id),
-//                                             thread_id_(thread_id),
-//                                             batch_optimal_(batch_optimal) {
-//  rpc_poll_ = new PollMgr(1);
-//  recorder_ = nullptr;
-//  if (Config::GetConfig()->do_logging()) {
-//    std::string log_path(Config::GetConfig()->log_path());
-//    log_path.append(std::to_string(coo_id_));
-//    recorder_ = new Recorder(log_path.c_str());
-//    rpc_poll_->add(recorder_);
-//  }
-//}
-//
-//void CoordinatorJanus::launch(Command &cmd) {
-//  cmd_ = cmd;
-//  cmd_id_ = next_cmd_id();
-//  this->FastAccept();
-//}
-
 
 JanusCommo* CoordinatorJanus::commo() {
   if (commo_ == nullptr) {
@@ -382,12 +360,10 @@ void CoordinatorJanus::GotoNextPhase() {
 void CoordinatorJanus::Reset() {
   RccCoord::Reset();
   fast_path_ = false;
-  fast_commit_ = false;
   n_fast_accept_graphs_.clear();
   n_fast_accept_oks_.clear();
   n_accept_oks_.clear();
 //  n_fast_accept_rejects_.clear();
   fast_accept_graph_check_caches_.clear();
-  n_commit_oks_.clear();
 }
 } // namespace janus

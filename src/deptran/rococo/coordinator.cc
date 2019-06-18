@@ -108,7 +108,7 @@ void RccCoord::DispatchAck(phase_t phase,
 
 /** caller should be thread safe */
 void RccCoord::Finish() {
-  verify(0);
+  std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   TxData *ch = (TxData*) cmd_;
   // commit or abort piece
   Log_debug(
@@ -152,6 +152,60 @@ void RccCoord::FinishAck(phase_t phase,
     GotoNextPhase();
   }
 }
+
+
+void RccCoord::Commit() {
+  std::lock_guard<std::recursive_mutex> guard(mtx_);
+  TxData* txn = (TxData*) cmd_;
+  auto dtxn = sp_graph_->FindV(cmd_->id_);
+  verify(txn->partition_ids_.size() == dtxn->partition_.size());
+  sp_graph_->UpgradeStatus(*dtxn, TXN_CMT);
+  for (auto par_id : cmd_->GetPartitionIds()) {
+    commo()->BroadcastCommit(par_id,
+                             cmd_->id_,
+                             sp_graph_,
+                             std::bind(&RccCoord::CommitAck,
+                                       this,
+                                       phase_,
+                                       par_id,
+                                       std::placeholders::_1,
+                                       std::placeholders::_2));
+  }
+  if (fast_commit_) {
+    committed_ = true;
+    GotoNextPhase();
+  }
+}
+
+void RccCoord::CommitAck(phase_t phase,
+                                 parid_t par_id,
+                                 int32_t res,
+                                 TxnOutput& output) {
+  std::lock_guard<std::recursive_mutex> guard(mtx_);
+  if (phase != phase_) return;
+  if (fast_commit_) return;
+  if (res == SUCCESS) {
+    committed_ = true;
+  } else if (res == REJECT) {
+    aborted_ = true;
+  } else {
+    verify(0);
+  }
+  n_commit_oks_[par_id]++;
+  if (n_commit_oks_[par_id] > 1)
+    return; // TODO debug
+
+//  txn().Merge(output);
+  // if collect enough results.
+  // if there are still more results to collect.
+  GotoNextPhase();
+//  bool all_acked = txn().OutputReady();
+//  if (all_acked)
+//  GotoNextPhase();
+  return;
+}
+
+
 
 void RccCoord::DispatchRo() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
@@ -215,6 +269,8 @@ void RccCoord::Reset() {
   ro_state_ = BEGIN;
   last_vers_.clear();
   curr_vers_.clear();
+  n_commit_oks_.clear();
+  fast_commit_ = false;
 }
 
 
@@ -228,7 +284,7 @@ void RccCoord::GotoNextPhase() {
       break;
     case Phase::DISPATCH:
       verify(phase_ % n_phase == Phase::COMMIT);
-      Finish();
+      Commit();
       break;
     case Phase::COMMIT:
       verify(phase_ % n_phase == Phase::INIT_END);

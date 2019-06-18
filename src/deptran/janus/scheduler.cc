@@ -265,12 +265,53 @@ void SchedulerJanus::OnAccept(const txnid_t txn_id,
 //}
 
 
-void SchedulerJanus::OnCommit(const txnid_t cmd_id,
-                              RccGraph *graph,
-                              int32_t *res,
-                              TxnOutput *output,
+
+int SchedulerJanus::OnInquire(epoch_t epoch,
+                              cmdid_t cmd_id,
+                              shared_ptr<RccGraph> graph,
                               const function<void()> &callback) {
-  // TODO to support cascade abort
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
+  // TODO check epoch, cannot be a too old one.
+  auto dtxn = dynamic_pointer_cast<TxRococo>(GetOrCreateTx(cmd_id));
+  TxRococo &info = *dtxn;
+  //register an event, triggered when the status >= COMMITTING;
+  verify (info.Involve(Scheduler::partition_id_));
+
+  auto cb_wrapper = [callback, graph]() {
+#ifdef DEBUG_CODE
+    for (auto pair : graph->vertex_index_) {
+      RccVertex* v = pair.second;
+      TxnInfo& tinfo = v->Get();
+      if (tinfo.status() >= TXN_CMT) {
+//        Log_info("inquire ack, txnid: %llx, parent size: %d",
+//                 pair.first, v->GetParentSet().size());
+        RccSched::__DebugCheckParentSetSize(v->id(), v->parents_.size());
+      }
+    }
+#endif
+    callback();
+  };
+
+  if (info.status() >= TXN_CMT) {
+    InquiredGraph(info, graph);
+    cb_wrapper();
+  } else {
+    info.graphs_for_inquire_.push_back(graph);
+    info.callbacks_for_inquire_.push_back(cb_wrapper);
+    verify(info.graphs_for_inquire_.size() ==
+        info.callbacks_for_inquire_.size());
+    waitlist_.insert(dtxn.get());
+    verify(dtxn->epoch_ > 0);
+  }
+  return 0;
+
+}
+
+void SchedulerJanus::OnCommit(const txnid_t cmd_id,
+                               RccGraph *graph,
+                               int32_t *res,
+                               TxnOutput *output,
+                               const function<void()> &callback) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 //  if (RandomGenerator::rand(1, 2000) <= 1)
 //    Log_info("on commit graph size: %d", graph.size());
@@ -330,47 +371,6 @@ void SchedulerJanus::OnCommit(const txnid_t cmd_id,
 ////    verify(0);
 //    }
   }
-
-}
-
-int SchedulerJanus::OnInquire(epoch_t epoch,
-                              cmdid_t cmd_id,
-                              shared_ptr<RccGraph> graph,
-                              const function<void()> &callback) {
-  std::lock_guard<std::recursive_mutex> lock(mtx_);
-  // TODO check epoch, cannot be a too old one.
-  auto dtxn = dynamic_pointer_cast<TxRococo>(GetOrCreateTx(cmd_id));
-  TxRococo &info = *dtxn;
-  //register an event, triggered when the status >= COMMITTING;
-  verify (info.Involve(Scheduler::partition_id_));
-
-  auto cb_wrapper = [callback, graph]() {
-#ifdef DEBUG_CODE
-    for (auto pair : graph->vertex_index_) {
-      RccVertex* v = pair.second;
-      TxnInfo& tinfo = v->Get();
-      if (tinfo.status() >= TXN_CMT) {
-//        Log_info("inquire ack, txnid: %llx, parent size: %d",
-//                 pair.first, v->GetParentSet().size());
-        RccSched::__DebugCheckParentSetSize(v->id(), v->parents_.size());
-      }
-    }
-#endif
-    callback();
-  };
-
-  if (info.status() >= TXN_CMT) {
-    InquiredGraph(info, graph);
-    cb_wrapper();
-  } else {
-    info.graphs_for_inquire_.push_back(graph);
-    info.callbacks_for_inquire_.push_back(cb_wrapper);
-    verify(info.graphs_for_inquire_.size() ==
-        info.callbacks_for_inquire_.size());
-    waitlist_.insert(dtxn.get());
-    verify(dtxn->epoch_ > 0);
-  }
-  return 0;
 
 }
 

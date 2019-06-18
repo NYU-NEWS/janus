@@ -50,7 +50,7 @@ class RccGraph : public Graph<TxRococo> {
   shared_ptr<TxRococo> AggregateVertex(shared_ptr<TxRococo> rhs_dtxn);
   void UpgradeStatus(TxRococo& v, int8_t status);
 
-  map<txnid_t, shared_ptr<TxRococo>> Aggregate(epoch_t epoch, RccGraph& graph);
+  virtual map<txnid_t, shared_ptr<TxRococo>> Aggregate(epoch_t epoch, RccGraph& graph);
   void SelectGraphCmtUkn(TxRococo& dtxn, shared_ptr<RccGraph> new_graph);
   void SelectGraph(set<shared_ptr<TxRococo>> vertexes, RccGraph* new_graph);
 //  RccScc& FindSCC(RccDTxn *vertex) override;

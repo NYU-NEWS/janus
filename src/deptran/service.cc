@@ -16,16 +16,6 @@
 
 namespace janus {
 
-    class XXX {
-    public:
-        int x_{0};
-        ~XXX() {
-            if (x_ != 1)
-                verify(0);
-            x_ = 2;
-        }
-    };
-
 ClassicServiceImpl::ClassicServiceImpl(Scheduler* sched,
                                        rrr::PollMgr* poll_mgr,
                                        ServerControlServiceImpl* scsi) : scsi_(
@@ -52,7 +42,7 @@ void ClassicServiceImpl::Dispatch(const i64& cmd_id,
                                   int32_t* res,
                                   TxnOutput* output,
                                   rrr::DeferredReply* defer) {
-  std::lock_guard<std::mutex> guard(mtx_);
+//  std::lock_guard<std::mutex> guard(mtx_);
 
 #ifdef PIECE_COUNT
   piece_count_key_t piece_count_key =
@@ -71,8 +61,7 @@ void ClassicServiceImpl::Dispatch(const i64& cmd_id,
   // find stored procedure, and run it
   shared_ptr<Marshallable> sp = md.sp_data_;
 //  sp->__debug_ = 20;
-  auto func = [cmd_id, sp, output, res, this, defer]() {
-      auto red = sp;
+//  auto func = [cmd_id, sp, output, res, this, defer]() {
 //    XXX xxx;
     *res = SUCCESS;
     if (!dtxn_sched()->Dispatch(cmd_id, sp, *output)) {
@@ -81,8 +70,8 @@ void ClassicServiceImpl::Dispatch(const i64& cmd_id,
     defer->reply();
 //    sp->__debug_ = 10;
 //    xxx.x_ = 1;
-  };
-  Coroutine::CreateRun(func);
+//  };
+//  Coroutine::CreateRun(func);
 //  func();
 }
 
@@ -90,7 +79,7 @@ void ClassicServiceImpl::Prepare(const rrr::i64& tid,
                                  const std::vector<i32>& sids,
                                  rrr::i32* res,
                                  rrr::DeferredReply* defer) {
-  std::lock_guard<std::mutex> guard(mtx_);
+//  std::lock_guard<std::mutex> guard(mtx_);
   const auto& func = [res, defer, tid, sids, this]() {
     auto sched = (SchedulerClassic*) dtxn_sched_;
     bool ret = sched->OnPrepare(tid, sids);
@@ -120,7 +109,7 @@ void ClassicServiceImpl::Prepare(const rrr::i64& tid,
 void ClassicServiceImpl::Commit(const rrr::i64& tid,
                                 rrr::i32* res,
                                 rrr::DeferredReply* defer) {
-  std::lock_guard<std::mutex> guard(mtx_);
+//  std::lock_guard<std::mutex> guard(mtx_);
   const auto& func = [tid, res, defer, this]() {
     auto sched = (SchedulerClassic*) dtxn_sched_;
     sched->OnCommit(tid, SUCCESS);
@@ -134,7 +123,7 @@ void ClassicServiceImpl::Abort(const rrr::i64& tid,
                                rrr::i32* res,
                                rrr::DeferredReply* defer) {
   Log::debug("get abort_txn: tid: %ld", tid);
-  std::lock_guard<std::mutex> guard(mtx_);
+//  std::lock_guard<std::mutex> guard(mtx_);
   const auto& func = [tid, res, defer, this]() {
     auto sched = (SchedulerClassic*) dtxn_sched_;
     sched->OnCommit(tid, REJECT);
@@ -192,7 +181,7 @@ void ClassicServiceImpl::RccDispatch(const vector<SimpleCommand>& cmd,
                                      TxnOutput* output,
                                      MarshallDeputy* p_md_graph,
                                      DeferredReply* defer) {
-  std::lock_guard<std::mutex> guard(this->mtx_);
+//  std::lock_guard<std::mutex> guard(this->mtx_);
   SchedulerRococo* sched = (SchedulerRococo*) dtxn_sched_;
   p_md_graph->SetMarshallable(std::make_shared<RccGraph>());
   sched->OnDispatch(cmd,
@@ -208,7 +197,7 @@ void ClassicServiceImpl::RccFinish(const cmdid_t& cmd_id,
                                    DeferredReply* defer) {
   const RccGraph& graph = dynamic_cast<const RccGraph&>(*md_graph.sp_data_);
   verify(graph.size() > 0);
-  std::lock_guard<std::mutex> guard(mtx_);
+//  std::lock_guard<std::mutex> guard(mtx_);
   SchedulerRococo* sched = (SchedulerRococo*) dtxn_sched_;
   sched->OnCommit(cmd_id, graph, output, [defer]() { defer->reply(); });
 
@@ -220,7 +209,7 @@ void ClassicServiceImpl::RccInquire(const epoch_t& epoch,
                                     MarshallDeputy* p_md_graph,
                                     rrr::DeferredReply* defer) {
   verify(IS_MODE_RCC || IS_MODE_RO6);
-  std::lock_guard<std::mutex> guard(mtx_);
+//  std::lock_guard<std::mutex> guard(mtx_);
   SchedulerRococo* p_sched = (SchedulerRococo*) dtxn_sched_;
   p_md_graph->SetMarshallable(std::make_shared<RccGraph>());
   p_sched->OnInquire(epoch,
@@ -232,7 +221,7 @@ void ClassicServiceImpl::RccInquire(const epoch_t& epoch,
 void ClassicServiceImpl::RccDispatchRo(const SimpleCommand& cmd,
                                        map<int32_t, Value>* output,
                                        rrr::DeferredReply* defer) {
-  std::lock_guard<std::mutex> guard(mtx_);
+//  std::lock_guard<std::mutex> guard(mtx_);
   verify(0);
   auto tx = dtxn_sched_->GetOrCreateTx(cmd.root_id_, true);
   auto dtxn = dynamic_pointer_cast<TxRococo>(tx);
@@ -244,7 +233,7 @@ void ClassicServiceImpl::JanusDispatch(const vector<SimpleCommand>& cmd,
                                        TxnOutput* p_output,
                                        MarshallDeputy* p_md_res_graph,
                                        DeferredReply* p_defer) {
-    std::lock_guard<std::mutex> guard(this->mtx_); // TODO remove the lock.
+//    std::lock_guard<std::mutex> guard(this->mtx_); // TODO remove the lock.
     auto sp_graph = std::make_shared<RccGraph>();
     auto* sched = (SchedulerJanus*) dtxn_sched_;
     sched->OnDispatch(cmd, p_res, p_output, sp_graph);
@@ -262,9 +251,9 @@ void ClassicServiceImpl::JanusCommit(const cmdid_t& cmd_id,
                                      int32_t* res,
                                      TxnOutput* output,
                                      DeferredReply* defer) {
-  std::lock_guard<std::mutex> guard(mtx_);
+//  std::lock_guard<std::mutex> guard(mtx_);
   RccGraph* p_graph = dynamic_cast<RccGraph*>(graph.sp_data_.get());
-  SchedulerJanus* p_sched = (SchedulerJanus*) dtxn_sched_;
+  auto p_sched = (SchedulerRococo*) dtxn_sched_;
   p_sched->OnCommit(cmd_id,
                     p_graph,
                     res,
@@ -276,7 +265,7 @@ void ClassicServiceImpl::JanusCommitWoGraph(const cmdid_t& cmd_id,
                                             int32_t* res,
                                             TxnOutput* output,
                                             DeferredReply* defer) {
-  std::lock_guard<std::mutex> guard(mtx_);
+//  std::lock_guard<std::mutex> guard(mtx_);
   SchedulerJanus* sched = (SchedulerJanus*) dtxn_sched_;
   sched->OnCommit(cmd_id, nullptr, res, output, [defer]() { defer->reply(); });
 }
@@ -285,7 +274,7 @@ void ClassicServiceImpl::JanusInquire(const epoch_t& epoch,
                                       const cmdid_t& tid,
                                       MarshallDeputy* p_md_graph,
                                       rrr::DeferredReply* defer) {
-  std::lock_guard<std::mutex> guard(mtx_);
+//  std::lock_guard<std::mutex> guard(mtx_);
   p_md_graph->SetMarshallable(std::make_shared<RccGraph>());
   SchedulerJanus* p_sched = (SchedulerJanus*) dtxn_sched_;
   p_sched->OnInquire(epoch,
@@ -300,7 +289,7 @@ void ClassicServiceImpl::JanusPreAccept(const cmdid_t& txnid,
                                         int32_t* res,
                                         MarshallDeputy* p_md_res_graph,
                                         DeferredReply* defer) {
-  std::lock_guard<std::mutex> guard(mtx_);
+//  std::lock_guard<std::mutex> guard(mtx_);
   RccGraph* p_graph = dynamic_cast<RccGraph*>(md_graph.sp_data_.get());
   verify(p_graph);
   p_md_res_graph->SetMarshallable(std::make_shared<RccGraph>());
@@ -318,7 +307,7 @@ void ClassicServiceImpl::JanusPreAcceptWoGraph(const cmdid_t& txnid,
                                                int32_t* res,
                                                MarshallDeputy* res_graph,
                                                DeferredReply* defer) {
-  std::lock_guard<std::mutex> guard(mtx_);
+//  std::lock_guard<std::mutex> guard(mtx_);
   res_graph->SetMarshallable(std::make_shared<RccGraph>());
   SchedulerJanus* p_sched = (SchedulerJanus*) dtxn_sched_;
   p_sched->OnPreAccept(txnid,
