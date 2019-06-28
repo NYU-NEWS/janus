@@ -7,11 +7,11 @@ ecdsa==0.13
 Fabric==1.10.2
 futures==3.0.5
 jmespath==0.9.0
-paramiko==1.16.0
+paramiko==2.0.9
 pyasn1==0.1.9
 pycrypto==2.6.1
 python-dateutil==2.5.0
-PyYAML==3.11
+pyyaml==4.2b1
 rsa==3.3
 s3transfer==0.0.1
 six==1.10.0

@@ -6,7 +6,7 @@ Code repo for our OSDI '16 paper:
 [Consolidating Concurrency Control and Consensus for Commits under Conflicts](http://mpaxos.com/pub/janus-osdi16.pdf)
 
 
-## Quick start (with Ubuntu 16.04)
+## Quick start (with Ubuntu 16.04 or newer)
 
 Install dependencies:
 
@@ -43,7 +43,7 @@ Test run:
 ```
 
 ## More
-Check the [wiki page](https://github.com/NYU-NEWS/janus/wiki) to find more about how to build the system on older or newer distros, how to run the system in a distributed setup, and how to generate figures in the paper, etc.
+Check out the doc directory to find more about how to build the system on older or newer distros, how to run the system in a distributed setup, and how to generate figures in the paper, etc.
 <!-- 
 ## Do some actual good
 For every star collected on this project, I will make a $25 charity loan via [Kiva] (https://www.kiva.org/invitedby/gzcdm3147?utm_campaign=permurl-share-invite-normal&utm_medium=referral&utm_content=gzcdm3147&utm_source=mpaxos.com).
