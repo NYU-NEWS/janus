@@ -351,6 +351,7 @@ void CoordinatorClassic::Commit() {
 
 void CoordinatorClassic::CommitAck(phase_t phase) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+  // TODO fix bug: when receiving a reply, the coordinator already frees.
   if (phase != phase_) return;
   TxData* cmd = (TxData*) cmd_;
   n_finish_ack_++;

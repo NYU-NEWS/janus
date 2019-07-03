@@ -81,8 +81,7 @@ class SchedulerRococo : public Scheduler, public RccGraph {
 
   virtual int OnInquire(epoch_t epoch,
                         txnid_t cmd_id,
-                        shared_ptr<RccGraph> graph,
-                        const function<void()> &callback);
+                        shared_ptr<RccGraph> graph);
 
   virtual bool HandleConflicts(Tx &dtxn,
                                innid_t inn_id,
@@ -108,11 +107,9 @@ class SchedulerRococo : public Scheduler, public RccGraph {
   void Execute(const RccScc &);
   void Execute(TxRococo &);
   void Abort(const RccScc &);
-  virtual void OnCommit(txnid_t txn_id,
-                        RccGraph *graph,
-                        int32_t *res,
-                        TxnOutput *output,
-                        const function<void()> &callback);
+  virtual int OnCommit(txnid_t txn_id,
+                        shared_ptr<RccGraph> sp_graph,
+                        TxnOutput *output);
 
   void __DebugExamineFridge();
   TxRococo &__DebugFindAnOngoingAncestor(TxRococo &vertex);

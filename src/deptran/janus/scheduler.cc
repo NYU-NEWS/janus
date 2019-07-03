@@ -268,8 +268,7 @@ void SchedulerJanus::OnAccept(const txnid_t txn_id,
 
 int SchedulerJanus::OnInquire(epoch_t epoch,
                               cmdid_t cmd_id,
-                              shared_ptr<RccGraph> graph,
-                              const function<void()> &callback) {
+                              shared_ptr<RccGraph> graph) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   // TODO check epoch, cannot be a too old one.
   auto dtxn = dynamic_pointer_cast<TxRococo>(GetOrCreateTx(cmd_id));
@@ -277,69 +276,41 @@ int SchedulerJanus::OnInquire(epoch_t epoch,
   //register an event, triggered when the status >= COMMITTING;
   verify (info.Involve(Scheduler::partition_id_));
 
-  auto cb_wrapper = [callback, graph]() {
-#ifdef DEBUG_CODE
-    for (auto pair : graph->vertex_index_) {
-      RccVertex* v = pair.second;
-      TxnInfo& tinfo = v->Get();
-      if (tinfo.status() >= TXN_CMT) {
-//        Log_info("inquire ack, txnid: %llx, parent size: %d",
-//                 pair.first, v->GetParentSet().size());
-        RccSched::__DebugCheckParentSetSize(v->id(), v->parents_.size());
-      }
-    }
-#endif
-    callback();
-  };
-
-  if (info.status() >= TXN_CMT) {
-    InquiredGraph(info, graph);
-    cb_wrapper();
-  } else {
-    info.graphs_for_inquire_.push_back(graph);
-    info.callbacks_for_inquire_.push_back(cb_wrapper);
-    verify(info.graphs_for_inquire_.size() ==
-        info.callbacks_for_inquire_.size());
+  // TODO improve this with a more advanced event.
+  if (info.status() < TXN_CMT) {
     waitlist_.insert(dtxn.get());
     verify(dtxn->epoch_ > 0);
+    auto sp_ev = Reactor::CreateSpEvent<IntEvent>();
+    info.vec_sp_inquire_.push_back(sp_ev);
+    sp_ev->Wait();
   }
+  InquiredGraph(info, graph);
   return 0;
-
 }
 
-void SchedulerJanus::OnCommit(const txnid_t cmd_id,
-                               RccGraph *graph,
-                               int32_t *res,
-                               TxnOutput *output,
-                               const function<void()> &callback) {
+int SchedulerJanus::OnCommit(const txnid_t cmd_id,
+                             shared_ptr<RccGraph> sp_graph,
+                             TxnOutput *output) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 //  if (RandomGenerator::rand(1, 2000) <= 1)
 //    Log_info("on commit graph size: %d", graph.size());
-  *res = SUCCESS;
+  int ret = SUCCESS;
   // union the graph into dep graph
   auto dtxn = dynamic_pointer_cast<TxRococo>(GetOrCreateTx(cmd_id));
-//  verify(dtxn != nullptr);
   verify(dtxn->ptr_output_repy_ == nullptr);
   dtxn->ptr_output_repy_ = output;
 
   if (dtxn->IsExecuted()) {
 //    verify(info.status() >= TXN_DCD);
 //    verify(info.graphs_for_inquire_.size() == 0);
-    *res = SUCCESS;
-    callback();
+    ret = SUCCESS;
   } else if (dtxn->IsAborted()) {
     verify(0);
-    *res = REJECT;
-    callback();
+    ret = REJECT;
   } else {
 //    Log_info("on commit: %llx par: %d", cmd_id, (int)partition_id_);
     dtxn->commit_request_received_ = true;
-    dtxn->finish_reply_callback_ = [callback, res](int r) {
-      *res = r;
-//      verify(r == SUCCESS);
-      callback();
-    };
-    if (graph == nullptr) {
+    if (!sp_graph) {
       // quick path without graph, no contention.
       verify(dtxn->fully_dispatched); //cannot handle non-dispatched now.
       UpgradeStatus(*dtxn, TXN_DCD);
@@ -352,13 +323,14 @@ void SchedulerJanus::OnCommit(const txnid_t cmd_id,
       }
     } else {
       // with graph
-      auto index = Aggregate(*graph);
+      auto index = Aggregate(*sp_graph);
 //      for (auto& pair: index) {
 //        verify(pair.second->epoch_ > 0);
 //      }
-      TriggerCheckAfterAggregation(*graph);
+      TriggerCheckAfterAggregation(*sp_graph);
     }
-
+    dtxn->sp_ev_commit_->Wait();
+    ret = dtxn->committed_ ? SUCCESS : REJECT;
     // fast path without check wait list?
 //    if (graph.size() == 1) {
 //      auto v = dep_graph_->FindV(cmd_id);
@@ -371,7 +343,7 @@ void SchedulerJanus::OnCommit(const txnid_t cmd_id,
 ////    verify(0);
 //    }
   }
-
+  return ret;
 }
 
 JanusCommo *SchedulerJanus::commo() {

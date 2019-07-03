@@ -35,7 +35,7 @@ class ClientWorker {
   // coordinators_{mutex, cond} synchronization currently only used for open clients
   std::mutex request_gen_mutex{};
   std::mutex coordinator_mutex{};
-  vector<CoordinatorBase*> free_coordinators_{};
+  vector<Coordinator*> free_coordinators_{};
   vector<Coordinator*> created_coordinators_{};
   rrr::ThreadPool* dispatch_pool_ = new rrr::ThreadPool();
 

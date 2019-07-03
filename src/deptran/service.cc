@@ -110,13 +110,13 @@ void ClassicServiceImpl::Commit(const rrr::i64& tid,
                                 rrr::i32* res,
                                 rrr::DeferredReply* defer) {
 //  std::lock_guard<std::mutex> guard(mtx_);
-  const auto& func = [tid, res, defer, this]() {
+//  const auto& func = [tid, res, defer, this]() {
     auto sched = (SchedulerClassic*) dtxn_sched_;
     sched->OnCommit(tid, SUCCESS);
     *res = SUCCESS;
     defer->reply();
-  };
-  Coroutine::CreateRun(func);
+//  };
+//  Coroutine::CreateRun(func);
 }
 
 void ClassicServiceImpl::Abort(const rrr::i64& tid,
@@ -124,13 +124,13 @@ void ClassicServiceImpl::Abort(const rrr::i64& tid,
                                rrr::DeferredReply* defer) {
   Log::debug("get abort_txn: tid: %ld", tid);
 //  std::lock_guard<std::mutex> guard(mtx_);
-  const auto& func = [tid, res, defer, this]() {
+//  const auto& func = [tid, res, defer, this]() {
     auto sched = (SchedulerClassic*) dtxn_sched_;
     sched->OnCommit(tid, REJECT);
     *res = SUCCESS;
     defer->reply();
-  };
-  Coroutine::CreateRun(func);
+//  };
+//  Coroutine::CreateRun(func);
 }
 
 void ClassicServiceImpl::rpc_null(rrr::DeferredReply* defer) {
@@ -197,6 +197,7 @@ void ClassicServiceImpl::RccFinish(const cmdid_t& cmd_id,
                                    DeferredReply* defer) {
   const RccGraph& graph = dynamic_cast<const RccGraph&>(*md_graph.sp_data_);
   verify(graph.size() > 0);
+  verify(0);
 //  std::lock_guard<std::mutex> guard(mtx_);
   SchedulerRococo* sched = (SchedulerRococo*) dtxn_sched_;
   sched->OnCommit(cmd_id, graph, output, [defer]() { defer->reply(); });
@@ -214,8 +215,8 @@ void ClassicServiceImpl::RccInquire(const epoch_t& epoch,
   p_md_graph->SetMarshallable(std::make_shared<RccGraph>());
   p_sched->OnInquire(epoch,
                      tid,
-                     dynamic_pointer_cast<RccGraph>(p_md_graph->sp_data_),
-                     [defer]() { defer->reply(); });
+                     dynamic_pointer_cast<RccGraph>(p_md_graph->sp_data_));
+  defer->reply();
 }
 
 void ClassicServiceImpl::RccDispatchRo(const SimpleCommand& cmd,
@@ -252,13 +253,10 @@ void ClassicServiceImpl::JanusCommit(const cmdid_t& cmd_id,
                                      TxnOutput* output,
                                      DeferredReply* defer) {
 //  std::lock_guard<std::mutex> guard(mtx_);
-  RccGraph* p_graph = dynamic_cast<RccGraph*>(graph.sp_data_.get());
+  auto sp_graph = dynamic_pointer_cast<RccGraph>(graph.sp_data_);
   auto p_sched = (SchedulerRococo*) dtxn_sched_;
-  p_sched->OnCommit(cmd_id,
-                    p_graph,
-                    res,
-                    output,
-                    [defer]() { defer->reply(); });
+  *res = p_sched->OnCommit(cmd_id, sp_graph, output);
+  defer->reply();
 }
 
 void ClassicServiceImpl::JanusCommitWoGraph(const cmdid_t& cmd_id,
@@ -266,8 +264,9 @@ void ClassicServiceImpl::JanusCommitWoGraph(const cmdid_t& cmd_id,
                                             TxnOutput* output,
                                             DeferredReply* defer) {
 //  std::lock_guard<std::mutex> guard(mtx_);
-  SchedulerJanus* sched = (SchedulerJanus*) dtxn_sched_;
-  sched->OnCommit(cmd_id, nullptr, res, output, [defer]() { defer->reply(); });
+  auto sched = (SchedulerJanus*) dtxn_sched_;
+  *res = sched->OnCommit(cmd_id, nullptr, output);
+  defer->reply();
 }
 
 void ClassicServiceImpl::JanusInquire(const epoch_t& epoch,
@@ -276,11 +275,11 @@ void ClassicServiceImpl::JanusInquire(const epoch_t& epoch,
                                       rrr::DeferredReply* defer) {
 //  std::lock_guard<std::mutex> guard(mtx_);
   p_md_graph->SetMarshallable(std::make_shared<RccGraph>());
-  SchedulerJanus* p_sched = (SchedulerJanus*) dtxn_sched_;
+  auto p_sched = (SchedulerJanus*) dtxn_sched_;
   p_sched->OnInquire(epoch,
                      tid,
-                     dynamic_pointer_cast<RccGraph>(p_md_graph->sp_data_),
-                     [defer]() { defer->reply(); });
+                     dynamic_pointer_cast<RccGraph>(p_md_graph->sp_data_));
+  defer->reply();
 }
 
 void ClassicServiceImpl::JanusPreAccept(const cmdid_t& txnid,

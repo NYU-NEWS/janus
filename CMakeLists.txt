@@ -15,7 +15,7 @@ HunterGate(
 
 set(
         CMAKE_TOOLCHAIN_FILE
-        "${CMAKE_CURRENT_LIST_DIR}/cxx14.cmake"
+        "${CMAKE_CURRENT_LIST_DIR}/cmake/cxx14.cmake"
         CACHE
         FILEPATH
         "Default toolchain"
@@ -82,7 +82,7 @@ else()
 endif()
 
 # enable sanitizers
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -O1 -fno-omit-frame-pointer -g -fstandalone-debug")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -O1 -fno-omit-frame-pointer -g -fstandalone-debug")
 
 # for c build
 

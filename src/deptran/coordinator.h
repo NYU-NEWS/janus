@@ -14,20 +14,22 @@ class ClientControlServiceImpl;
 enum ForwardRequestState { NONE=0, PROCESS_FORWARD_REQUEST, FORWARD_TO_LEADER };
 enum CoordinatorStage { HANDOUT, PREPARE, FINISH };
 
-class CoordinatorBase {
-public:
-  std::mutex mtx_;
+//class CoordinatorBase {
+//public:
+//  std::mutex mtx_;
+//  uint32_t n_start_ = 0;
+//  locid_t loc_id_ = -1;
+//  virtual ~CoordinatorBase() = default;
+//  // TODO do_one should be replaced with Submit.
+//  virtual void DoTxAsync(TxRequest &) = 0;
+//  virtual void Reset() = 0;
+//  virtual void restart(TxData *ch) = 0;
+//};
+
+class Coordinator {
+ public:
   uint32_t n_start_ = 0;
   locid_t loc_id_ = -1;
-  virtual ~CoordinatorBase() = default;
-  // TODO do_one should be replaced with Submit.
-  virtual void DoTxAsync(TxRequest &) = 0;
-  virtual void Reset() = 0;
-  virtual void restart(TxData *ch) = 0;
-};
-
-class Coordinator : public CoordinatorBase {
- public:
   uint32_t coo_id_;
   parid_t par_id_ = -1;
   int benchmark_;

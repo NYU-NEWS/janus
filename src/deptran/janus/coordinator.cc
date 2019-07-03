@@ -185,6 +185,7 @@ void CoordinatorJanus::CommitAck(phase_t phase,
                                  parid_t par_id,
                                  int32_t res,
                                  TxnOutput& output) {
+  // TODO fix this.
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   if (phase != phase_) return;
   if (fast_commit_) return;
@@ -196,8 +197,14 @@ void CoordinatorJanus::CommitAck(phase_t phase,
     verify(0);
   }
   n_commit_oks_[par_id]++;
-  if (n_commit_oks_[par_id] > 1)
-    return;
+
+  // TODO. Right now wait until all commit request returning before commit, fix it.
+  commo()->rpc_par_proxies_[par_id].size();
+  for (auto pid : cmd_->GetPartitionIds()) {
+    if (n_commit_oks_[pid] < commo()->rpc_par_proxies_[pid].size()) {
+      return;
+    }
+  }
 
 //  txn().Merge(output);
   // if collect enough results.
@@ -206,7 +213,6 @@ void CoordinatorJanus::CommitAck(phase_t phase,
 //  bool all_acked = txn().OutputReady();
 //  if (all_acked)
 //  GotoNextPhase();
-  return;
 }
 
 bool CoordinatorJanus::FastpathPossible() {

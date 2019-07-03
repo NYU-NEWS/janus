@@ -35,16 +35,13 @@ class SchedulerJanus : public SchedulerRococo {
 //                       TxnOutput* output,
 //                       const function<void()>& callback);
 
-  void OnCommit(txnid_t txn_id,
-                RccGraph* graph,
-                int32_t *res,
-                TxnOutput *output,
-                const function<void()> &callback) override;
+  int OnCommit(txnid_t txn_id,
+               shared_ptr<RccGraph> sp_graph,
+               TxnOutput *output) override;
 
   int OnInquire(epoch_t epoch,
                 cmdid_t cmd_id,
-                shared_ptr<RccGraph> graph,
-                const function<void()> &callback) override;
+                shared_ptr<RccGraph> graph) override;
   JanusCommo* commo();
 
 };

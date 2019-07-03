@@ -117,15 +117,16 @@ void TxRococo::CommitExecute() {
 
 void TxRococo::ReplyFinishOk() {
 //  verify(committed != aborted);
-  int r = committed_ ? SUCCESS : REJECT;
-  if (commit_request_received_) {
-    if (__debug_replied)
-      return;
-    verify(!__debug_replied); // FIXME
-    __debug_replied = true;
-    verify(ptr_output_repy_);
-    finish_reply_callback_(r);
-  }
+  sp_ev_commit_->Set(1);
+//  int r = committed_ ? SUCCESS : REJECT;
+//  if (commit_request_received_) {
+//    if (__debug_replied)
+//      return;
+//    verify(!__debug_replied); // FIXME
+//    __debug_replied = true;
+//    verify(ptr_output_repy_);
+//    finish_reply_callback_(r);
+//  }
 }
 
 bool TxRococo::start_exe_itfr(defer_t defer_type,

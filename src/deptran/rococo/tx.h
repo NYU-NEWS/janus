@@ -23,6 +23,8 @@ class TxRococo: public Tx, public Vertex<TxRococo> {
   bool __debug_replied = false;
   vector<void**> external_refs_{};
 
+  shared_ptr<IntEvent> sp_ev_commit_{Reactor::CreateSpEvent<IntEvent>()};
+
   // hopefully this makes involve checks faster
   enum InvolveEnum {UNKNOWN, INVOLVED, FOREIGN};
   InvolveEnum involve_flag_{UNKNOWN};
@@ -116,6 +118,7 @@ class TxRococo: public Tx, public Vertex<TxRococo> {
 
   vector<shared_ptr<RccGraph>> graphs_for_inquire_{};
   vector<function<void()>> callbacks_for_inquire_{};
+  vector<shared_ptr<IntEvent>> vec_sp_inquire_{};
 
   ChopFinishResponse *res = nullptr;
 //

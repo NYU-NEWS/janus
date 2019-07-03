@@ -107,7 +107,7 @@ int SchedulerRococo::OnCommit(cmdid_t cmd_id,
   verify(dtxn != nullptr);
   verify(dtxn->ptr_output_repy_ == nullptr);
   dtxn->ptr_output_repy_ = output;
-  dtxn->finish_reply_callback_ = [callback](int r) { callback(); };
+//  dtxn->finish_reply_callback_ = [callback](int r) { callback(); };
   Aggregate(epoch_mgr_.curr_epoch_, const_cast<RccGraph&>(graph));
   TriggerCheckAfterAggregation(const_cast<RccGraph&>(graph));
 
@@ -126,27 +126,10 @@ int SchedulerRococo::OnCommit(cmdid_t cmd_id,
 
 int SchedulerRococo::OnInquire(epoch_t epoch,
                                txnid_t txn_id,
-                               shared_ptr<RccGraph> graph,
-                               const function<void()>& callback) {
+                               shared_ptr<RccGraph> graph) {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
 
   verify(0);
-  auto v = FindV(txn_id);
-  verify(v != nullptr);
-  TxRococo& dtxn = *v;
-  //register an event, triggered when the status >= COMMITTING;
-  verify (dtxn.Involve(Scheduler::partition_id_));
-
-  if (dtxn.status() >= TXN_CMT) {
-    InquiredGraph(dtxn, graph);
-    callback();
-  } else {
-    dtxn.graphs_for_inquire_.push_back(graph);
-    dtxn.callbacks_for_inquire_.push_back(callback);
-    verify(dtxn.graphs_for_inquire_.size() ==
-        dtxn.callbacks_for_inquire_.size());
-  }
-
 }
 
 void SchedulerRococo::InquiredGraph(TxRococo& dtxn, shared_ptr<RccGraph> graph) {
@@ -166,22 +149,26 @@ void SchedulerRococo::InquiredGraph(TxRococo& dtxn, shared_ptr<RccGraph> graph) 
 
 void SchedulerRococo::AnswerIfInquired(TxRococo& dtxn) {
   // reply inquire requests if possible.
-  auto sz1 = dtxn.graphs_for_inquire_.size();
-  auto sz2 = dtxn.callbacks_for_inquire_.size();
-  if (sz1 != sz2) {
-    Log_fatal("graphs for inquire sz %d, callbacks sz %d",
-              (int) sz1, (int) sz2);
-  }
-  if (dtxn.status() >= TXN_CMT && dtxn.graphs_for_inquire_.size() > 0) {
-    for (auto graph : dtxn.graphs_for_inquire_) {
-      InquiredGraph(dtxn, graph);
+//  auto sz1 = dtxn.graphs_for_inquire_.size();
+//  auto sz2 = dtxn.callbacks_for_inquire_.size();
+//  if (sz1 != sz2) {
+//    Log_fatal("graphs for inquire sz %d, callbacks sz %d",
+//              (int) sz1, (int) sz2);
+//  }
+  if (dtxn.status() >= TXN_CMT) {
+    for (auto sp_ev : dtxn.vec_sp_inquire_) {
+      sp_ev->Set(1);
     }
-    for (auto& callback : dtxn.callbacks_for_inquire_) {
-      verify(callback);
-      callback();
-    }
-    dtxn.callbacks_for_inquire_.clear();
-    dtxn.graphs_for_inquire_.clear();
+//    for (auto graph : dtxn.graphs_for_inquire_) {
+//      InquiredGraph(dtxn, graph);
+//    }
+//    for (auto& callback : dtxn.callbacks_for_inquire_) {
+//      verify(callback);
+//      callback();
+//    }
+//    dtxn.callbacks_for_inquire_.clear();
+//    dtxn.graphs_for_inquire_.clear();
+    dtxn.vec_sp_inquire_.clear();
   }
 }
 
@@ -591,18 +578,18 @@ void SchedulerRococo::Execute(TxRococo& dtxn) {
 
 void SchedulerRococo::Abort(const RccScc& scc) {
   verify(0);
-  verify(scc.size() > 0);
-  for (auto v : scc) {
-    TxRococo& info = *v;
-    info.union_status(TXN_ABT); // FIXME, remove this.
-    verify(info.IsAborted());
-    auto dtxn = dynamic_pointer_cast<TxRococo>(GetTx(info.id()));
-    if (dtxn == nullptr) continue;
-    if (info.Involve(Scheduler::partition_id_)) {
-      dtxn->Abort();
-      dtxn->ReplyFinishOk();
-    }
-  }
+//  verify(scc.size() > 0);
+//  for (auto v : scc) {
+//    TxRococo& info = *v;
+//    info.union_status(TXN_ABT); // FIXME, remove this.
+//    verify(info.IsAborted());
+//    auto dtxn = dynamic_pointer_cast<TxRococo>(GetTx(info.id()));
+//    if (dtxn == nullptr) continue;
+//    if (info.Involve(Scheduler::partition_id_)) {
+//      dtxn->Abort();
+//      dtxn->ReplyFinishOk();
+//    }
+//  }
 }
 
 RccCommo* SchedulerRococo::commo() {
@@ -623,15 +610,13 @@ void SchedulerRococo::DestroyExecutor(txnid_t txn_id) {
   }
 }
 
-void SchedulerRococo::OnCommit(const txnid_t cmd_id,
-                              RccGraph *graph,
-                              int32_t *res,
-                              TxnOutput *output,
-                              const function<void()> &callback) {
+int SchedulerRococo::OnCommit(const txnid_t cmd_id,
+                              shared_ptr<RccGraph> sp_graph,
+                              TxnOutput *output) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 //  if (RandomGenerator::rand(1, 2000) <= 1)
 //    Log_info("on commit graph size: %d", graph.size());
-  *res = SUCCESS;
+  int ret = SUCCESS;
   // union the graph into dep graph
   auto dtxn = dynamic_pointer_cast<TxRococo>(GetOrCreateTx(cmd_id));
   dtxn->fully_dispatched = true; // TODO make this and janus the same.
@@ -642,21 +627,14 @@ void SchedulerRococo::OnCommit(const txnid_t cmd_id,
   if (dtxn->IsExecuted()) {
 //    verify(info.status() >= TXN_DCD);
 //    verify(info.graphs_for_inquire_.size() == 0);
-    *res = SUCCESS;
-    callback();
+    ret = SUCCESS;
   } else if (dtxn->IsAborted()) {
     verify(0);
-    *res = REJECT;
-    callback();
+    ret = REJECT;
   } else {
 //    Log_info("on commit: %llx par: %d", cmd_id, (int)partition_id_);
     dtxn->commit_request_received_ = true;
-    dtxn->finish_reply_callback_ = [callback, res](int r) {
-      *res = r;
-//      verify(r == SUCCESS);
-      callback();
-    };
-    if (graph == nullptr) {
+    if (!sp_graph) {
       // quick path without graph, no contention.
       verify(dtxn->fully_dispatched); //cannot handle non-dispatched now.
       UpgradeStatus(*dtxn, TXN_DCD);
@@ -669,13 +647,14 @@ void SchedulerRococo::OnCommit(const txnid_t cmd_id,
       }
     } else {
       // with graph
-      auto index = Aggregate(*graph);
+      auto index = Aggregate(*sp_graph);
 //      for (auto& pair: index) {
 //        verify(pair.second->epoch_ > 0);
 //      }
-      TriggerCheckAfterAggregation(*graph);
+      TriggerCheckAfterAggregation(*sp_graph);
     }
-
+    dtxn->sp_ev_commit_->Wait();
+    ret = dtxn->committed_ ? SUCCESS : REJECT;
     // fast path without check wait list?
 //    if (graph.size() == 1) {
 //      auto v = dep_graph_->FindV(cmd_id);
@@ -688,8 +667,9 @@ void SchedulerRococo::OnCommit(const txnid_t cmd_id,
 ////    verify(0);
 //    }
   }
-
+  return ret;
 }
+
 map<txnid_t, shared_ptr<TxRococo>> SchedulerRococo::Aggregate(RccGraph &graph) {
   // aggregate vertexes
   map<txnid_t, shared_ptr<TxRococo>> index;
