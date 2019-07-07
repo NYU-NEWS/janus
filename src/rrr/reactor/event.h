@@ -6,6 +6,8 @@
 
 namespace rrr {
 using std::shared_ptr;
+using std::function;
+using std::vector;
 
 class Reactor;
 class Coroutine;
@@ -15,6 +17,7 @@ class Event {
   EventStatus status_{INIT};
   void* _dbg_p_scheduler_{nullptr};
   uint64_t type_{0};
+  function<bool(int)> test_{};
 
   // An event is usually allocated on a coroutine stack, thus it cannot own a
   //   shared_ptr to the coroutine it is.
@@ -24,7 +27,7 @@ class Event {
 
   virtual void Wait();
   virtual bool Test();
-  virtual bool IsReady() { return false; }
+  virtual bool IsReady() {return false;}
 
   friend Reactor;
  protected:
@@ -52,24 +55,31 @@ class IntEvent : public Event {
     return t;
   };
 
-  int increment(int i = 1) {
-    int t = value_;
-    value_ += i;
-    TestTrigger();
-    return t;
-  };
-
-  int decrement(int i = 1) {
-    int t = value_;
-    value_ -= i;
-    TestTrigger();
-    return t;
-
-  };
-
   bool IsReady() override {
-    return (value_ == target_);
+    if (test_) {
+      return test_(value_);
+    } else {
+      return (value_ == target_);
+    }
   }
 };
+
+class SharedIntEvent {
+ public:
+  int value_{};
+  vector<shared_ptr<IntEvent>> events_;
+  int Set(int& v) {
+    auto ret = value_;
+    value_ = v;
+    for (auto sp_ev : events_) {
+      if (sp_ev->status_ <= Event::WAIT)
+      sp_ev->Set(v);
+    }
+    return ret;
+  }
+
+  void Wait(function<bool(int)> f);
+};
+
 
 }

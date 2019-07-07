@@ -1,10 +1,12 @@
 
+#include <functional>
 #include "coroutine.h"
 #include "event.h"
 #include "reactor.h"
 #include "epoll_wrapper.h"
 
 namespace rrr {
+using std::function;
 
 void Event::Wait() {
   if (IsReady()) {
@@ -72,5 +74,11 @@ bool IntEvent::TestTrigger() {
   return false;
 }
 
+void SharedIntEvent::Wait(function<bool(int v)> f) {
+  auto sp_ev =  Reactor::CreateSpEvent<IntEvent>();
+  sp_ev->test_ = f;
+  events_.push_back(sp_ev);
+  sp_ev->Wait();
+}
 
 } // namespace rrr

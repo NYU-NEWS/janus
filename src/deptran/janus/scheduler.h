@@ -12,12 +12,10 @@ class SchedulerJanus : public SchedulerRococo {
 
   map<txnid_t, shared_ptr<TxRococo>> Aggregate(RccGraph& graph) override;
 
-  void OnPreAccept(txnid_t txnid,
-                   const vector<SimpleCommand> &cmds,
-                   RccGraph* graph,
-                   int32_t *res,
-                   shared_ptr<RccGraph> res_graph);
-
+  int OnPreAccept(txnid_t txnid,
+                  const vector<SimpleCommand> &cmds,
+                  shared_ptr<RccGraph> sp_graph,
+                  shared_ptr<RccGraph> res_graph);
 
   void OnAccept(txnid_t txn_id,
                 const ballot_t& ballot,

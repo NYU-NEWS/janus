@@ -108,7 +108,7 @@ uint64_t RccGraph::MinItfrGraph(TxRococo& tx,
   verify(depth == 1);
   if (true) {
     SelectGraphCmtUkn(tx, new_graph);
-  } else if (tx.get_status() >= TXN_DCD) {
+  } else if (tx.status() >= TXN_DCD) {
 //    RccScc& scc = FindSCC(source);
 //    set<RccDTxn*> vertex_set{};
 //    vertex_set.insert(scc.begin(), scc.end());
@@ -251,8 +251,8 @@ shared_ptr<TxRococo> RccGraph::AggregateVertex(shared_ptr<TxRococo> rhs_dtxn) {
   // TODO: add epoch here.
   // create the dtxn if not exist.
   auto lhs_dtxn = FindOrCreateV(*rhs_dtxn);
-  auto status1 = lhs_dtxn->get_status();
-  auto status2 = rhs_dtxn->get_status();
+  auto status1 = lhs_dtxn->status();
+  auto status2 = rhs_dtxn->status();
   auto &parent_set1 = lhs_dtxn->parents_;
   auto &parent_set2 = rhs_dtxn->GetParentSet();
 #ifdef DEBUG_CODE
@@ -317,7 +317,7 @@ shared_ptr<TxRococo> RccGraph::AggregateVertex(shared_ptr<TxRococo> rhs_dtxn) {
   // TODO fix this for empty graph.
   lhs_dtxn->partition_.insert(rhs_dtxn->partition_.begin(),
                               rhs_dtxn->partition_.end());
-  lhs_dtxn->status_ |= rhs_dtxn->status_;
+  lhs_dtxn->status_.Set(lhs_dtxn->status_.value_ |= rhs_dtxn->status_.value_);
 //  lhs_dtxn->union_data(*rhs_dtxn);
   return lhs_dtxn;
 }
@@ -338,8 +338,8 @@ shared_ptr<TxRococo> RccGraph::AggregateVertex(shared_ptr<TxRococo> rhs_dtxn) {
 //  return scc2;
 //}
 
-bool RccGraph::AllAncCmt(TxRococo& vertex) {
-  if (vertex.all_anc_cmt_hint) {
+bool RccGraph::AllAncCmt(shared_ptr<TxRococo> vertex) {
+  if (vertex->all_anc_cmt_hint) {
     return true;
   }
   bool all_anc_cmt = true;
@@ -358,8 +358,8 @@ bool RccGraph::AllAncCmt(TxRococo& vertex) {
     }
     return r;
   };
-  TraversePred(vertex, -1, func);
-  vertex.all_anc_cmt_hint = all_anc_cmt;
+  TraversePred(*vertex, -1, func);
+  vertex->all_anc_cmt_hint = all_anc_cmt;
   return all_anc_cmt;
 }
 

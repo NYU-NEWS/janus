@@ -103,18 +103,17 @@ map<txnid_t, shared_ptr<TxRococo>> SchedulerJanus::Aggregate(RccGraph &graph) {
   return index;
 }
 
-void SchedulerJanus::OnPreAccept(const txid_t txn_id,
-                                 const vector<SimpleCommand> &cmds,
-                                 RccGraph *graph,
-                                 int32_t *res,
-                                 shared_ptr<RccGraph> res_graph) {
+int SchedulerJanus::OnPreAccept(const txid_t txn_id,
+                                const vector<SimpleCommand> &cmds,
+                                shared_ptr<RccGraph> graph,
+                                shared_ptr<RccGraph> res_graph) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 //  Log_info("on preaccept: %llx par: %d", txn_id, (int)partition_id_);
 //  if (RandomGenerator::rand(1, 2000) <= 1)
 //    Log_info("on pre-accept graph size: %d", graph.size());
   verify(txn_id > 0);
   verify(cmds[0].root_id_ == txn_id);
-  if (graph != nullptr) {
+  if (graph) {
     Aggregate(*graph);
     TriggerCheckAfterAggregation(*graph);
   }
@@ -124,14 +123,15 @@ void SchedulerJanus::OnPreAccept(const txid_t txn_id,
   dtxn->UpdateStatus(TXN_PAC);
   dtxn->involve_flag_ = TxRococo::INVOLVED;
   TxRococo &tinfo = *dtxn;
+  int ret;
   if (dtxn->max_seen_ballot_ > 0) {
-    *res = REJECT;
+    ret = REJECT;
   } else {
     if (dtxn->status() < TXN_CMT) {
       if (dtxn->phase_ < PHASE_RCC_DISPATCH && tinfo.status() < TXN_CMT) {
         for (auto &c: cmds) {
           map<int32_t, Value> output;
-          dtxn->DispatchExecute(const_cast<SimpleCommand &>(c), res, &output);
+          dtxn->DispatchExecute(const_cast<SimpleCommand &>(c), &output);
         }
       }
     } else {
@@ -148,8 +148,9 @@ void SchedulerJanus::OnPreAccept(const txid_t txn_id,
       waitlist_.insert(dtxn.get());
       verify(dtxn->epoch_ > 0);
     }
-    *res = SUCCESS;
+    ret = SUCCESS;
   }
+  return ret;
 }
 
 void SchedulerJanus::OnAccept(const txnid_t txn_id,
@@ -271,20 +272,16 @@ int SchedulerJanus::OnInquire(epoch_t epoch,
                               shared_ptr<RccGraph> graph) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   // TODO check epoch, cannot be a too old one.
-  auto dtxn = dynamic_pointer_cast<TxRococo>(GetOrCreateTx(cmd_id));
-  TxRococo &info = *dtxn;
+  auto sp_tx = dynamic_pointer_cast<TxRococo>(GetOrCreateTx(cmd_id));
   //register an event, triggered when the status >= COMMITTING;
-  verify (info.Involve(Scheduler::partition_id_));
+  verify (sp_tx->Involve(Scheduler::partition_id_));
 
   // TODO improve this with a more advanced event.
-  if (info.status() < TXN_CMT) {
-    waitlist_.insert(dtxn.get());
-    verify(dtxn->epoch_ > 0);
-    auto sp_ev = Reactor::CreateSpEvent<IntEvent>();
-    info.vec_sp_inquire_.push_back(sp_ev);
-    sp_ev->Wait();
+  if (sp_tx->status() < TXN_CMT) {
+    waitlist_.insert(sp_tx.get());
   }
-  InquiredGraph(info, graph);
+  sp_tx->status_.Wait([](int v)->bool {return v>=TXN_CMT;});
+  InquiredGraph(*sp_tx, graph);
   return 0;
 }
 

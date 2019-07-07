@@ -17,7 +17,7 @@ class Vertex {
 //  map<T *, int8_t> incoming_{}; // helper data structure, deprecated
 //  set<T *> removed_children_{}; // helper data structure, deprecated
   bool walked_{false}; // flag for traversing.
-  std::shared_ptr<vector<T*>> scc_{nullptr};
+  std::shared_ptr<vector<T*>> scc_{};
 
   T *this_pointer() {
     T *ret = static_cast<T *>(this);

@@ -123,12 +123,7 @@ class SimpleCommand: public CmdData {
     *cmd = *this;
     return cmd;
   }
-  virtual ~SimpleCommand() {
-//    if (__debug_ != 10) {
-//      verify(0);
-//    }
-//    __debug_ = 30;
-  };
+  virtual ~SimpleCommand() {};
 };
 
 typedef SimpleCommand TxPieceData;

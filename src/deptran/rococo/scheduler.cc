@@ -59,7 +59,7 @@ int SchedulerRococo::OnDispatch(const vector<SimpleCommand>& cmd,
   verify(cmd[0].partition_id_ == Scheduler::partition_id_);
   for (auto& c : cmd) {
     dtxn->DispatchExecute(const_cast<SimpleCommand&>(c),
-                          res, &(*output)[c.inn_id()]);
+                          &(*output)[c.inn_id()]);
   }
   dtxn->UpdateStatus(TXN_STD);
   int depth = 1;
@@ -147,31 +147,6 @@ void SchedulerRococo::InquiredGraph(TxRococo& dtxn, shared_ptr<RccGraph> graph) 
   }
 }
 
-void SchedulerRococo::AnswerIfInquired(TxRococo& dtxn) {
-  // reply inquire requests if possible.
-//  auto sz1 = dtxn.graphs_for_inquire_.size();
-//  auto sz2 = dtxn.callbacks_for_inquire_.size();
-//  if (sz1 != sz2) {
-//    Log_fatal("graphs for inquire sz %d, callbacks sz %d",
-//              (int) sz1, (int) sz2);
-//  }
-  if (dtxn.status() >= TXN_CMT) {
-    for (auto sp_ev : dtxn.vec_sp_inquire_) {
-      sp_ev->Set(1);
-    }
-//    for (auto graph : dtxn.graphs_for_inquire_) {
-//      InquiredGraph(dtxn, graph);
-//    }
-//    for (auto& callback : dtxn.callbacks_for_inquire_) {
-//      verify(callback);
-//      callback();
-//    }
-//    dtxn.callbacks_for_inquire_.clear();
-//    dtxn.graphs_for_inquire_.clear();
-    dtxn.vec_sp_inquire_.clear();
-  }
-}
-
 void SchedulerRococo::CheckWaitlist() {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 #ifdef DEBUG_CODE
@@ -189,7 +164,7 @@ void SchedulerRococo::CheckWaitlist() {
     InquireAboutIfNeeded(*v); // inquire about unknown transaction.
     if (v->status() >= TXN_CMT &&
         !v->IsExecuted()) {
-      if (AllAncCmt(*v)) {
+      if (AllAncCmt(v)) {
 //        check_again = true;
         RccScc& scc = FindSccPred(*v);
         verify(v->epoch_ > 0);
@@ -231,7 +206,6 @@ void SchedulerRococo::CheckWaitlist() {
         //                  tinfo.inquire_acked_);
 #endif
       }
-      AnswerIfInquired(*v);
     } // else do nothing
 
     // Adjust the waitlist.
@@ -398,7 +372,7 @@ TxRococo& SchedulerRococo::__DebugFindAnOngoingAncestor(TxRococo& vertex) {
   return *ret;
 }
 
-bool SchedulerRococo::AllAncCmt(TxRococo& vertex) {
+bool SchedulerRococo::AllAncCmt(TxRococo* vertex) {
   bool all_anc_cmt = true;
   std::function<int(TxRococo&)> func =
       [&all_anc_cmt, &vertex](TxRococo& v) -> int {
@@ -410,12 +384,12 @@ bool SchedulerRococo::AllAncCmt(TxRococo& vertex) {
           r = RccGraph::SearchHint::Ok;
         } else {
           r = RccGraph::SearchHint::Exit;
-          parent.to_checks_.insert(&vertex);
+          parent.to_checks_.insert(vertex);
           all_anc_cmt = false;
         }
         return r;
       };
-  TraversePred(vertex, -1, func);
+  TraversePred(*vertex, -1, func);
   return all_anc_cmt;
 }
 

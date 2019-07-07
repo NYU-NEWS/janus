@@ -10,7 +10,6 @@ public:
   using TxRococo::TxRococo;
 
   void DispatchExecute(SimpleCommand &cmd,
-                       int *res,
                        map<int32_t, Value> *output) override;
 
 };

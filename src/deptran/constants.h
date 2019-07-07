@@ -5,6 +5,7 @@ namespace janus {
 
 #define ballot_t int64_t
 #define cooid_t uint32_t
+#define rank_t uint32_t
 #define txid_t uint64_t
 #define txnid_t uint64_t
 #define cmdid_t uint64_t // txnid and cmdid are the same thing
@@ -62,6 +63,7 @@ namespace janus {
 #define MODE_JANUS    (0x10)
 #define MODE_FEBRUUS    (0x20)
 #define MODE_MDCC   (0x12)
+#define MODE_TROAD    (0x03)
 #define MODE_EXTERNC   (0x14)
 #define MODE_RPC_NULL   (64)
 

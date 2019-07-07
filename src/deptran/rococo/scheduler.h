@@ -29,7 +29,7 @@ class SchedulerRococo : public Scheduler, public RccGraph {
  public:
 //  RccGraph *dep_graph_ = nullptr;
   WaitlistChecker *waitlist_checker_ = nullptr;
-  set<TxRococo *> waitlist_ = {};
+  set<TxRococo*> waitlist_ = {};
   set<shared_ptr<TxRococo>> fridge_ = {};
   std::recursive_mutex mtx_{};
   std::time_t last_upgrade_time_{0};
@@ -92,13 +92,12 @@ class SchedulerRococo : public Scheduler, public RccGraph {
   void DestroyExecutor(txnid_t tid) override;
 
   void InquireAboutIfNeeded(TxRococo &dtxn);
-  void AnswerIfInquired(TxRococo &dtxn);
   void InquiredGraph(TxRococo &dtxn, shared_ptr<RccGraph> graph);
   void CheckWaitlist();
   void InquireAck(cmdid_t cmd_id, RccGraph &graph);
   void TriggerCheckAfterAggregation(RccGraph &graph);
   void AddChildrenIntoWaitlist(TxRococo *v);
-  bool AllAncCmt(TxRococo &v);
+  bool AllAncCmt(TxRococo* v);
   bool FullyDispatched(const RccScc &scc);
   void Decide(const RccScc &);
   bool HasICycle(const RccScc &scc);

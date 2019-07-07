@@ -30,7 +30,6 @@ TxRococo::TxRococo(TxRococo& rhs_dtxn) :
 }
 
 void TxRococo::DispatchExecute(SimpleCommand &cmd,
-                              int32_t *res,
                               map<int32_t, Value> *output) {
   // TODO rococo and janus should be different
   phase_ = PHASE_RCC_DISPATCH;

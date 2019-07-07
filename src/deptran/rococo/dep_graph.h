@@ -54,7 +54,7 @@ class RccGraph : public Graph<TxRococo> {
   void SelectGraphCmtUkn(TxRococo& dtxn, shared_ptr<RccGraph> new_graph);
   void SelectGraph(set<shared_ptr<TxRococo>> vertexes, RccGraph* new_graph);
 //  RccScc& FindSCC(RccDTxn *vertex) override;
-  bool AllAncCmt(TxRococo& vertex);
+  bool AllAncCmt(shared_ptr<TxRococo> vertex);
 
   bool operator== (RccGraph& rhs) const;
 

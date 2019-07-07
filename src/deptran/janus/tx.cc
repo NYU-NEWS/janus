@@ -4,7 +4,6 @@
 namespace janus {
 
 void TxJanus::DispatchExecute(SimpleCommand &cmd,
-                              int32_t *res,
                               map<int32_t, Value> *output) {
   phase_ = PHASE_RCC_DISPATCH;
   for (auto& c: dreqs_) {

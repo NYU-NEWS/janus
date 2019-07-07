@@ -9,7 +9,8 @@
 namespace janus {
 class TxRococo: public Tx, public Vertex<TxRococo> {
  public:
-  int8_t status_ = TXN_UKN;
+//  int8_t status_ = TXN_UKN;
+  SharedIntEvent status_;
   ballot_t max_seen_ballot_{0};
   ballot_t max_accepted_ballot_{0};
 
@@ -47,7 +48,6 @@ class TxRococo: public Tx, public Vertex<TxRococo> {
   }
 
   virtual void DispatchExecute(SimpleCommand &cmd,
-                               int *res,
                                map<int32_t, Value> *output);
 
   virtual void CommitExecute();
@@ -93,8 +93,8 @@ class TxRococo: public Tx, public Vertex<TxRococo> {
                     bool immediate);
 
   virtual bool UpdateStatus(int s) {
-    if (status_ < s) {
-      status_ = s;
+    if (status_.value_ < s) {
+      status_.Set(s);
       return true;
     } else {
       return false;
@@ -116,8 +116,6 @@ class TxRococo: public Tx, public Vertex<TxRococo> {
   bool all_anc_cmt_hint{false};
 //  RccGraph* graph_{nullptr};
 
-  vector<shared_ptr<RccGraph>> graphs_for_inquire_{};
-  vector<function<void()>> callbacks_for_inquire_{};
   vector<shared_ptr<IntEvent>> vec_sp_inquire_{};
 
   ChopFinishResponse *res = nullptr;
@@ -135,24 +133,20 @@ class TxRococo: public Tx, public Vertex<TxRococo> {
     return tid_;
   }
 
-  inline int8_t get_status() const {
-    return status_;
-  }
-
   inline int8_t status() const {
-    return status_;
+    return status_.value_;
   }
 
   inline bool IsAborted() const {
-    return (status_ & TXN_ABT);
+    return (status_.value_ & TXN_ABT);
   }
 
   inline bool IsCommitting() const {
-    return (status_ & TXN_CMT);
+    return (status_.value_ & TXN_CMT);
   }
 
   inline bool IsDecided() const {
-    return (status_ & TXN_DCD);
+    return (status_.value_ & TXN_DCD);
   }
 
   inline bool IsExecuted() const {
@@ -204,20 +198,7 @@ class TxRococo: public Tx, public Vertex<TxRococo> {
                          bool trigger = false,
                          bool server = false) {
     partition_.insert(ti.partition_.begin(), ti.partition_.end());
-    union_status(ti.status_, trigger, server);
-  }
-
-  void trigger() {
-    verify(0);
-    for (auto &kv: events_) {
-      if (kv.first <= status_) {
-        while (kv.second.size() > 0) {
-          DragonBall *ball = kv.second.back();
-          kv.second.pop_back();
-          ball->trigger();
-        }
-      }
-    }
+    union_status(ti.status_.value_, trigger, server);
   }
 
   inline void union_status(int8_t status,
@@ -231,29 +212,10 @@ class TxRococo: public Tx, public Vertex<TxRococo> {
 #ifdef DEBUG_CODE
       verify((status_ | status) >= status_);
 #endif
-      status_ |= status;
+      status_.Set(status_.value_ |= status);
 
-    }
-//    if (is_trigger) {
-//      trigger();
-//    }
-  }
-
-  void register_event(int8_t status, DragonBall *ball) {
-    if (status_ >= status) {
-      ball->trigger();
-    }
-    else {
-      events_[status].push_back(ball);
     }
   }
-
-  // a simple simple state machine, don't have to marshal
-  int32_t wait_finish_ = 0;
-  int32_t wait_commit_ = 0;
-
-  std::map<int8_t, std::vector<DragonBall *> > events_;
-
 
 };
 
