@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python
 
 # python system modules
 import os
@@ -830,7 +830,7 @@ class ServerController(object):
                "-d " + str(self.config['args'].c_duration) + " "
 
         for fn in self.config['args'].config_files:
-               s += "-f '" + fn + "' "
+            s += "-f '" + fn + "' "
 
         s += "-P '" + process.name + "' " + \
              "-p " + str(self.config['args'].rpc_port + process.id) + " " \
