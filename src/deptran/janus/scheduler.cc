@@ -115,7 +115,6 @@ int SchedulerJanus::OnPreAccept(const txid_t txn_id,
   verify(cmds[0].root_id_ == txn_id);
   if (graph) {
     Aggregate(*graph);
-    TriggerCheckAfterAggregation(*graph);
   }
   // TODO FIXME
   // add interference based on cmds.
@@ -144,10 +143,6 @@ int SchedulerJanus::OnPreAccept(const txid_t txn_id,
     verify(!tinfo.fully_dispatched);
     tinfo.fully_dispatched = true;
     MinItfrGraph(*dtxn, res_graph, false, 1);
-    if (tinfo.status() >= TXN_CMT) {
-      waitlist_.insert(dtxn.get());
-      verify(dtxn->epoch_ > 0);
-    }
     ret = SUCCESS;
   }
   return ret;
@@ -169,103 +164,6 @@ void SchedulerJanus::OnAccept(const txnid_t txn_id,
     *res = SUCCESS;
   }
 }
-//
-//void SchedulerJanus::OnCommit(const txnid_t cmd_id,
-//                        const RccGraph& graph,
-//                        int32_t* res,
-//                        TxnOutput* output,
-//                        const function<void()>& callback) {
-//  // TODO to support cascade abort
-//  std::lock_guard<std::recursive_mutex> lock(mtx_);
-////  if (RandomGenerator::rand(1, 2000) <= 1)
-////    Log_info("on commit graph size: %d", graph.size());
-//  *res = SUCCESS;
-//  // union the graph into dep graph
-//  RccDTxn *dtxn = (RccDTxn*) GetOrCreateDTxn(cmd_id);
-//  verify(dtxn != nullptr);
-//  RccDTxn& info = *dtxn;
-//
-//  verify(dtxn->ptr_output_repy_ == nullptr);
-//  dtxn->ptr_output_repy_ = output;
-//
-//  if (info.IsExecuted()) {
-//    verify(info.status() >= TXN_DCD);
-//    verify(info.graphs_for_inquire_.size() == 0);
-//    *res = SUCCESS;
-//    callback();
-//  } else if (info.IsAborted()) {
-//    verify(0);
-//    *res = REJECT;
-//    callback();
-//  } else {
-////    Log_info("on commit: %llx par: %d", cmd_id, (int)partition_id_);
-//    dtxn->commit_request_received_ = true;
-//    dtxn->finish_reply_callback_ = [callback, res] (int r) {
-//      *res = r;
-////      verify(r == SUCCESS);
-//      callback();
-//    };
-//    auto index = Aggregate(const_cast<RccGraph&> (graph));
-//    for (auto& pair: index) {
-//      verify(pair.second->epoch_ > 0);
-//    }
-//    TriggerCheckAfterAggregation(const_cast<RccGraph &>(graph));
-//    // fast path without check wait list?
-////    if (graph.size() == 1) {
-////      auto v = dep_graph_->FindV(cmd_id);
-////      if (v->incoming_.size() == 0);
-////      CheckInquired(v->Get());
-////      Execute(v->Get());
-////      return;
-////    } else {
-////      Log_debug("graph size on commit, %d", (int) graph.size());
-//////    verify(0);
-////    }
-//  }
-//
-//}
-
-//
-//void SchedulerJanus::OnCommitWoGraph(const txnid_t cmd_id,
-//                               int32_t* res,
-//                               TxnOutput* output,
-//                               const function<void()>& callback) {
-//  // TODO to support cascade abort
-//  std::lock_guard<std::recursive_mutex> lock(mtx_);
-//  *res = SUCCESS;
-//  // union the graph into dep graph
-//  RccDTxn *dtxn = (RccDTxn*) GetOrCreateDTxn(cmd_id);
-//  verify(dtxn != nullptr);
-//  RccDTxn& info = *dtxn;
-//
-//  verify(dtxn->ptr_output_repy_ == nullptr);
-//  dtxn->ptr_output_repy_ = output;
-//
-//  if (info.IsExecuted()) {
-//    verify(info.status() >= TXN_DCD);
-//    verify(info.graphs_for_inquire_.size() == 0);
-//    *res = SUCCESS;
-//    callback();
-//  } else if (info.IsAborted()) {
-//    verify(0);
-//    *res = REJECT;
-//    callback();
-//  } else {
-////    Log_info("on commit: %llx par: %d", cmd_id, (int)partition_id_);
-//    dtxn->commit_request_received_ = true;
-//    dtxn->finish_reply_callback_ = [callback, res] (int r) {
-//      *res = r;
-////      verify(r == SUCCESS);
-//      callback();
-//    };
-//    UpgradeStatus(dtxn, TXN_CMT);
-//    waitlist_.insert(dtxn);
-//    verify(dtxn->epoch_ > 0);
-//    CheckWaitlist();
-//  }
-//}
-
-
 
 int SchedulerJanus::OnInquire(epoch_t epoch,
                               cmdid_t cmd_id,
@@ -275,11 +173,6 @@ int SchedulerJanus::OnInquire(epoch_t epoch,
   auto sp_tx = dynamic_pointer_cast<TxRococo>(GetOrCreateTx(cmd_id));
   //register an event, triggered when the status >= COMMITTING;
   verify (sp_tx->Involve(Scheduler::partition_id_));
-
-  // TODO improve this with a more advanced event.
-  if (sp_tx->status() < TXN_CMT) {
-    waitlist_.insert(sp_tx.get());
-  }
   sp_tx->status_.Wait([](int v)->bool {return v>=TXN_CMT;});
   InquiredGraph(*sp_tx, graph);
   return 0;
@@ -292,18 +185,12 @@ int SchedulerJanus::OnCommit(const txnid_t cmd_id,
 //  if (RandomGenerator::rand(1, 2000) <= 1)
 //    Log_info("on commit graph size: %d", graph.size());
   int ret = SUCCESS;
-  // union the graph into dep graph
   auto dtxn = dynamic_pointer_cast<TxRococo>(GetOrCreateTx(cmd_id));
-  verify(dtxn->ptr_output_repy_ == nullptr);
-  dtxn->ptr_output_repy_ = output;
-
+  verify(dtxn->p_output_reply_ == nullptr);
+  dtxn->p_output_reply_ = output;
+  verify(!dtxn->IsAborted());
   if (dtxn->IsExecuted()) {
-//    verify(info.status() >= TXN_DCD);
-//    verify(info.graphs_for_inquire_.size() == 0);
-    ret = SUCCESS;
-  } else if (dtxn->IsAborted()) {
-    verify(0);
-    ret = REJECT;
+    ret = SUCCESS; // TODO no return output?
   } else {
 //    Log_info("on commit: %llx par: %d", cmd_id, (int)partition_id_);
     dtxn->commit_request_received_ = true;
@@ -312,33 +199,20 @@ int SchedulerJanus::OnCommit(const txnid_t cmd_id,
       verify(dtxn->fully_dispatched); //cannot handle non-dispatched now.
       UpgradeStatus(*dtxn, TXN_DCD);
       Execute(*dtxn);
-      if (dtxn->to_checks_.size() > 0) {
-        for (auto child : dtxn->to_checks_) {
-          waitlist_.insert(child);
-        }
-        CheckWaitlist();
-      }
     } else {
       // with graph
       auto index = Aggregate(*sp_graph);
-//      for (auto& pair: index) {
-//        verify(pair.second->epoch_ > 0);
-//      }
-      TriggerCheckAfterAggregation(*sp_graph);
+//      TriggerCheckAfterAggregation(*sp_graph);
+      WaitUntilAllPredecessorsAtLeastCommitting(dtxn.get());
+      RccScc& scc = FindSccPred(*dtxn);
+      Decide(scc);
+      WaitUntilAllPredSccExecuted(scc);
+      if (FullyDispatched(scc) && !scc[0]->IsExecuted()) {
+        Execute(scc);
+      }
     }
     dtxn->sp_ev_commit_->Wait();
     ret = dtxn->committed_ ? SUCCESS : REJECT;
-    // fast path without check wait list?
-//    if (graph.size() == 1) {
-//      auto v = dep_graph_->FindV(cmd_id);
-//      if (v->incoming_.size() == 0);
-//      CheckInquired(v->Get());
-//      Execute(v->Get());
-//      return;
-//    } else {
-//      Log_debug("graph size on commit, %d", (int) graph.size());
-////    verify(0);
-//    }
   }
   return ret;
 }

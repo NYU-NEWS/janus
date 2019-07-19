@@ -15,9 +15,8 @@ class TxRococo: public Tx, public Vertex<TxRococo> {
   ballot_t max_accepted_ballot_{0};
 
   vector<SimpleCommand> dreqs_ = {};
-  TxnOutput *ptr_output_repy_ = nullptr;
+  TxnOutput *p_output_reply_ = nullptr;
   TxnOutput output_ = {};
-  vector<TxnInfo *> conflict_txns_ = {}; // This is read-only transaction
   function<void(int)> finish_reply_callback_ =  [] (int) -> void {verify(0);};
   bool commit_request_received_ = false;
   bool read_only_ = false;
@@ -101,10 +100,6 @@ class TxRococo: public Tx, public Vertex<TxRococo> {
     }
   }
 
-  // below is copied from txn-info
-// private:
-//  int8_t status_{TXN_UKN};
-
  public:
   std::set<uint32_t> partition_;
   std::vector<uint64_t> pieces_;
@@ -114,20 +109,6 @@ class TxRococo: public Tx, public Vertex<TxRococo> {
   bool during_asking = false;
   bool inquire_acked_ = false;
   bool all_anc_cmt_hint{false};
-//  RccGraph* graph_{nullptr};
-
-  vector<shared_ptr<IntEvent>> vec_sp_inquire_{};
-
-  ChopFinishResponse *res = nullptr;
-//
-//  RccDTxn(uint64_t id) : DTxn(id, nullptr) {
-//    txn_id_ = id;
-//  }
-//
-//  ~RccDTxn() {
-//    Log_debug("txn info destruct, id: %llx", txn_id_);
-//    txn_id_ = 0; // for debug purpose
-//  }
 
   txnid_t id() override {
     return tid_;

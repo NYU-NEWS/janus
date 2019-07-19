@@ -1,7 +1,6 @@
 #pragma once
 #include "../__dep__.h"
 #include "graph.h"
-#include "txn-info.h"
 #include "dep_graph.h"
 
 namespace janus {

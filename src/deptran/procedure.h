@@ -5,7 +5,6 @@
 #include "__dep__.h"
 #include "command.h"
 #include "rococo/graph.h"
-#include "rococo/txn-info.h"
 #include "rococo/graph.h"
 #include "command_marshaler.h"
 #include "txn_reg.h"

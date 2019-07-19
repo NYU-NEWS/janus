@@ -2,7 +2,6 @@
 #include "commo.h"
 #include "dep_graph.h"
 #include "deptran/procedure.h"
-#include "txn-info.h"
 #include "graph_marshaler.h"
 #include "deptran/service.h"
 

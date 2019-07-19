@@ -28,8 +28,6 @@ class SchedulerRococo : public Scheduler, public RccGraph {
 
  public:
 //  RccGraph *dep_graph_ = nullptr;
-  WaitlistChecker *waitlist_checker_ = nullptr;
-  set<TxRococo*> waitlist_ = {};
   set<shared_ptr<TxRococo>> fridge_ = {};
   std::recursive_mutex mtx_{};
   std::time_t last_upgrade_time_{0};
@@ -93,11 +91,10 @@ class SchedulerRococo : public Scheduler, public RccGraph {
 
   void InquireAboutIfNeeded(TxRococo &dtxn);
   void InquiredGraph(TxRococo &dtxn, shared_ptr<RccGraph> graph);
-  void CheckWaitlist();
   void InquireAck(cmdid_t cmd_id, RccGraph &graph);
-  void TriggerCheckAfterAggregation(RccGraph &graph);
-  void AddChildrenIntoWaitlist(TxRococo *v);
   bool AllAncCmt(TxRococo* v);
+  void WaitUntilAllPredecessorsAtLeastCommitting(TxRococo* v);
+  void WaitUntilAllPredSccExecuted(const RccScc &);
   bool FullyDispatched(const RccScc &scc);
   void Decide(const RccScc &);
   bool HasICycle(const RccScc &scc);
@@ -107,8 +104,8 @@ class SchedulerRococo : public Scheduler, public RccGraph {
   void Execute(TxRococo &);
   void Abort(const RccScc &);
   virtual int OnCommit(txnid_t txn_id,
-                        shared_ptr<RccGraph> sp_graph,
-                        TxnOutput *output);
+                       shared_ptr<RccGraph> sp_graph,
+                       TxnOutput *output);
 
   void __DebugExamineFridge();
   TxRococo &__DebugFindAnOngoingAncestor(TxRococo &vertex);

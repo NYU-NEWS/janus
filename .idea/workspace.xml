@@ -19,26 +19,18 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="90fe84fa-ca18-4530-9a88-ce9ad2f7923a" name="Default" comment="">
-      <change afterPath="$PROJECT_DIR$/src/deptran/troad/troad.cc" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/deptran/troad/troad.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.buckconfig" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/constants.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/constants.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/deptran/janus/scheduler.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/janus/scheduler.cc" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/deptran/janus/scheduler.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/janus/scheduler.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/janus/tx.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/janus/tx.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/janus/tx.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/janus/tx.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/deptran/procedure.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/procedure.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/rococo/dep_graph.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/rococo/dep_graph.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/rococo/dep_graph.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/rococo/dep_graph.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/rococo/graph.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/rococo/graph.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/rococo/commo.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/rococo/commo.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/rococo/graph_marshaler.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/rococo/graph_marshaler.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/deptran/rococo/scheduler.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/rococo/scheduler.cc" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/deptran/rococo/scheduler.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/rococo/scheduler.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/rococo/tx.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/rococo/tx.cc" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/deptran/rococo/tx.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/rococo/tx.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/service.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/service.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/rrr/reactor/event.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/rrr/reactor/event.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/rrr/reactor/event.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/rrr/reactor/event.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/rococo/txn-info.h" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/rococo/waitlist_checker.cc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/rococo/waitlist_checker.h" beforeDir="false" />
     </list>
     <ignored path="janus.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -76,69 +68,19 @@
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="375">
       <file pinned="false" current-in-tab="false">
-        <entry file="file:///Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1/memory">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="238">
-              <caret line="3835" column="16" selection-start-line="3835" selection-start-column="16" selection-end-line="3835" selection-end-column="16" />
-              <folding>
-                <element signature="e#61192#62612#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/deptran/janus/scheduler.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="-277" />
+            <state relative-caret-position="437">
+              <caret line="23" selection-start-line="23" selection-end-line="23" />
+            </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/deptran/janus/scheduler.cc">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="211">
-              <caret line="315" column="41" selection-start-line="315" selection-start-column="41" selection-end-line="315" selection-end-column="41" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/deptran/rococo/tx.h">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="413">
-              <caret line="118" column="37" lean-forward="true" selection-start-line="118" selection-start-column="37" selection-end-line="118" selection-end-column="37" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/deptran/rococo/txn-info.h">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="323">
-              <caret line="18" column="2" selection-start-line="18" selection-start-column="2" selection-end-line="18" selection-end-column="2" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/src/deptran/rococo/scheduler.cc">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="116">
-              <caret line="153" column="59" lean-forward="true" selection-start-line="153" selection-start-column="59" selection-end-line="153" selection-end-column="59" />
-              <folding>
-                <element signature="e#408#605#0" expanded="true" />
-                <element signature="e#13938#15023#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/deptran/rococo/dep_graph.h">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="188">
-              <caret line="15" column="14" selection-start-line="15" selection-start-column="14" selection-end-line="15" selection-end-column="14" />
+            <state relative-caret-position="-840">
+              <caret line="121" column="19" selection-start-line="121" selection-start-column="19" selection-end-line="121" selection-end-column="19" />
             </state>
           </provider>
         </entry>
@@ -146,20 +88,69 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/deptran/rococo/dep_graph.cc">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="486">
-              <caret line="361" column="9" selection-start-line="361" selection-start-column="9" selection-end-line="361" selection-end-column="9" />
+            <state relative-caret-position="339">
+              <caret line="246" column="13" selection-start-line="246" selection-start-column="13" selection-end-line="246" selection-end-column="13" />
             </state>
           </provider>
         </entry>
       </file>
       <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/deptran/rococo/graph.h">
+        <entry file="file://$PROJECT_DIR$/src/deptran/rococo/tx.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="230">
-              <caret line="110" column="21" selection-start-line="110" selection-start-column="21" selection-end-line="110" selection-end-column="21" />
+            <state relative-caret-position="323">
+              <caret line="19" column="25" selection-start-line="19" selection-start-column="25" selection-end-line="19" selection-end-column="25" />
               <folding>
-                <element signature="e#1589#1601#0" expanded="true" />
+                <element signature="e#5405#5443#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/deptran/rococo/scheduler.cc">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="57">
+              <caret line="3" selection-start-line="3" selection-end-line="3" />
+              <folding>
+                <element signature="e#408#605#0" expanded="true" />
+                <element signature="e#17466#17492#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="3800">
+              <caret line="200" selection-start-line="200" selection-end-line="200" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/deptran/rococo/graph_marshaler.h">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="57">
+              <caret line="3" selection-start-line="3" selection-end-line="3" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/deptran/rococo/commo.cc">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="76">
+              <caret line="4" selection-start-line="4" selection-end-line="4" />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/deptran/procedure.h">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="133">
+              <caret line="7" selection-start-line="7" selection-end-line="7" />
             </state>
           </provider>
         </entry>
@@ -167,8 +158,8 @@
       <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/deptran/rococo/scheduler.h">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="230">
-              <caret line="94" column="25" selection-start-line="94" selection-start-column="25" selection-end-line="94" selection-end-column="25" />
+            <state relative-caret-position="965">
+              <caret line="107" column="41" selection-start-line="107" selection-start-column="41" selection-end-line="107" selection-end-column="41" />
             </state>
           </provider>
         </entry>
@@ -186,10 +177,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="$PROJECT_DIR$/src/deptran/benchmark_control_rpc.h" />
-        <option value="$PROJECT_DIR$/src/deptran/2pl/scheduler.h" />
-        <option value="$PROJECT_DIR$/src/deptran/classic/coordinator.h" />
-        <option value="$PROJECT_DIR$/src/bench/tpca/payment.h" />
         <option value="$PROJECT_DIR$/src/deptran/februus/coordinator.h" />
         <option value="$PROJECT_DIR$/src/bench/tpcc/workload.h" />
         <option value="$PROJECT_DIR$/src/bench/tpcc/procedure.h" />
@@ -221,30 +208,35 @@
         <option value="$PROJECT_DIR$/CMakeLists.txt" />
         <option value="$PROJECT_DIR$/src/deptran/troad/troad.h" />
         <option value="$PROJECT_DIR$/src/deptran/troad/troad.cc" />
-        <option value="$PROJECT_DIR$/src/deptran/procedure.h" />
         <option value="$PROJECT_DIR$/src/deptran/rococo/tx.cc" />
         <option value="$PROJECT_DIR$/src/deptran/service.cc" />
-        <option value="$PROJECT_DIR$/src/deptran/janus/scheduler.h" />
         <option value="$PROJECT_DIR$/src/deptran/janus/tx.h" />
         <option value="$PROJECT_DIR$/src/deptran/janus/tx.cc" />
         <option value="$PROJECT_DIR$/src/deptran/constants.h" />
         <option value="$PROJECT_DIR$/src/rrr/reactor/event.cc" />
         <option value="$PROJECT_DIR$/src/rrr/reactor/event.h" />
         <option value="$PROJECT_DIR$/src/deptran/rococo/dep_graph.cc" />
-        <option value="$PROJECT_DIR$/src/deptran/janus/scheduler.cc" />
         <option value="$PROJECT_DIR$/src/deptran/rococo/dep_graph.h" />
         <option value="$PROJECT_DIR$/src/deptran/rococo/graph.h" />
-        <option value="$PROJECT_DIR$/src/deptran/rococo/tx.h" />
+        <option value="$PROJECT_DIR$/src/deptran/janus/scheduler.cc" />
+        <option value="$PROJECT_DIR$/src/deptran/janus/scheduler.h" />
+        <option value="$PROJECT_DIR$/src/deptran/rococo/waitlist_checker.cc" />
+        <option value="$PROJECT_DIR$/src/deptran/rococo/waitlist_checker.h" />
         <option value="$PROJECT_DIR$/src/deptran/rococo/scheduler.h" />
+        <option value="$PROJECT_DIR$/src/deptran/rococo/commo.cc" />
+        <option value="$PROJECT_DIR$/src/deptran/procedure.h" />
         <option value="$PROJECT_DIR$/src/deptran/rococo/scheduler.cc" />
+        <option value="$PROJECT_DIR$/src/deptran/rococo/graph_marshaler.h" />
+        <option value="$PROJECT_DIR$/src/deptran/rococo/tx.h" />
       </list>
     </option>
   </component>
   <component name="OCFindUsagesOptions" text="false" ivars="false" properties="true" derivedClasses="false" />
   <component name="ProjectFrameBounds" extendedState="6">
-    <option name="y" value="23" />
-    <option name="width" value="1440" />
-    <option name="height" value="877" />
+    <option name="x" value="-144" />
+    <option name="y" value="-1057" />
+    <option name="width" value="1920" />
+    <option name="height" value="1057" />
   </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="ProjectView">
@@ -259,31 +251,6 @@
             <path>
               <item name="janus" type="b2602c69:ProjectViewProjectNode" />
               <item name="janus" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="janus" type="b2602c69:ProjectViewProjectNode" />
-              <item name="janus" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="janus" type="b2602c69:ProjectViewProjectNode" />
-              <item name="janus" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="deptran" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="janus" type="b2602c69:ProjectViewProjectNode" />
-              <item name="janus" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="deptran" type="462c0819:PsiDirectoryNode" />
-              <item name="janus" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="janus" type="b2602c69:ProjectViewProjectNode" />
-              <item name="janus" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="deptran" type="462c0819:PsiDirectoryNode" />
-              <item name="rococo" type="462c0819:PsiDirectoryNode" />
             </path>
           </expand>
           <select />
@@ -666,12 +633,12 @@
       <workItem from="1560773185594" duration="16722000" />
       <workItem from="1561856980343" duration="15464000" />
       <workItem from="1562013424670" duration="4326000" />
-      <workItem from="1562180259436" duration="27413000" />
+      <workItem from="1562180259436" duration="38978000" />
     </task>
     <servers />
   </component>
   <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="390540000" />
+    <option name="totallyTimeSpent" value="402105000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -683,7 +650,7 @@
     </todo-panel>
   </component>
   <component name="ToolWindowManager">
-    <frame x="0" y="23" width="1440" height="877" extended-state="6" />
+    <frame x="-144" y="-1057" width="1920" height="1057" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Favorites" order="0" side_tool="true" weight="0.32869613" />
@@ -702,10 +669,10 @@
       <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
       <window_info anchor="right" id="Data View" order="3" />
       <window_info anchor="right" id="Database" order="4" weight="0.32853025" />
-      <window_info active="true" anchor="right" id="Debug" order="5" visible="true" weight="0.5036023" />
-      <window_info anchor="right" id="Messages" order="6" weight="0.5295389" />
-      <window_info anchor="right" content_ui="combo" id="Project" order="7" weight="0.48919308" />
-      <window_info anchor="right" id="Find" order="8" weight="0.45317003" />
+      <window_info active="true" anchor="right" id="Debug" order="5" visible="true" weight="0.5385439" />
+      <window_info anchor="right" id="Messages" order="6" weight="0.71092075" />
+      <window_info anchor="right" content_ui="combo" id="Project" order="7" weight="0.48875803" />
+      <window_info anchor="right" id="Find" order="8" weight="0.47647527" />
       <window_info anchor="right" id="CMake" order="9" weight="0.55331415" />
       <window_info anchor="right" id="Run" order="10" weight="0.5697767" />
     </layout>
@@ -740,21 +707,6 @@
           <option name="timeStamp" value="6" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/src/deptran/rococo/scheduler.cc</url>
-          <line>103</line>
-          <option name="timeStamp" value="10" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/src/deptran/rococo/scheduler.cc</url>
-          <line>622</line>
-          <option name="timeStamp" value="11" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/src/deptran/rococo/scheduler.cc</url>
-          <line>610</line>
-          <option name="timeStamp" value="15" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/deptran/rococo/coordinator.cc</url>
           <line>183</line>
           <option name="timeStamp" value="22" />
@@ -766,41 +718,13 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/deptran/rococo/scheduler.cc</url>
-          <line>595</line>
+          <line>426</line>
           <option name="timeStamp" value="24" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
   </component>
   <component name="editorHistoryManager">
-    <entry file="file:///Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1/__functional_base">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="6612">
-          <caret line="348" selection-start-line="348" selection-end-line="348" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/client_worker.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="703">
-          <caret line="37" column="9" selection-start-line="37" selection-start-column="9" selection-end-line="37" selection-end-column="9" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/rococo/coordinator.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="400">
-          <caret line="24" column="20" selection-start-line="24" selection-start-column="20" selection-end-line="24" selection-end-column="20" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/command.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="418">
-          <caret line="24" column="32" selection-start-line="24" selection-start-column="32" selection-end-line="24" selection-end-column="32" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/requirements.txt">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="342">
@@ -862,13 +786,6 @@
     <entry file="file://$PROJECT_DIR$/src/deptran/februus/frame.h">
       <provider selected="true" editor-type-id="text-editor" />
     </entry>
-    <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="504">
-          <caret line="200" selection-start-line="200" selection-end-line="200" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/deptran/troad/troad.h">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="532">
@@ -906,13 +823,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="731">
           <caret line="119" column="32" selection-start-line="119" selection-start-column="32" selection-end-line="119" selection-end-column="32" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/procedure.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="86">
-          <caret line="125" column="27" selection-start-line="125" selection-start-column="27" selection-end-line="125" selection-end-column="27" />
         </state>
       </provider>
     </entry>
@@ -996,13 +906,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/constants.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="238">
-          <caret line="65" column="26" selection-start-line="65" selection-start-column="26" selection-end-line="65" selection-end-column="26" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/src/deptran/janus/commo.cc">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="678">
@@ -1010,34 +913,6 @@
           <folding>
             <element signature="e#0#25#0" expanded="true" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/rrr/reactor/event.cc">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="585">
-          <caret line="76" column="16" selection-start-line="76" selection-start-column="16" selection-end-line="76" selection-end-column="16" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/rrr/reactor/event.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="532">
-          <caret line="29" column="39" selection-start-line="29" selection-start-column="39" selection-end-line="29" selection-end-column="39" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/rococo/dep_graph.cc">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="486">
-          <caret line="361" column="9" selection-start-line="361" selection-start-column="9" selection-end-line="361" selection-end-column="9" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/rococo/txn-info.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="323">
-          <caret line="18" column="2" selection-start-line="18" selection-start-column="2" selection-end-line="18" selection-end-column="2" />
         </state>
       </provider>
     </entry>
@@ -1049,18 +924,6 @@
             <element signature="e#61192#62612#0" expanded="true" />
           </folding>
         </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/janus/scheduler.cc">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="211">
-          <caret line="315" column="41" selection-start-line="315" selection-start-column="41" selection-end-line="315" selection-end-column="41" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/janus/scheduler.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-277" />
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/deptran/rococo/dep_graph.h">
@@ -1080,28 +943,114 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/rococo/tx.h">
+    <entry file="file://$PROJECT_DIR$/src/deptran/constants.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="413">
-          <caret line="118" column="37" lean-forward="true" selection-start-line="118" selection-start-column="37" selection-end-line="118" selection-end-column="37" />
+        <state relative-caret-position="58">
+          <caret line="48" column="8" selection-start-line="48" selection-start-column="8" selection-end-line="48" selection-end-column="8" />
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/src/rrr/reactor/event.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="1075">
+          <caret line="80" column="8" selection-start-line="80" selection-start-column="8" selection-end-line="80" selection-end-column="8" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/rrr/reactor/event.cc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="582">
+          <caret line="76" column="21" selection-start-line="76" selection-start-column="21" selection-end-line="76" selection-end-column="21" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/deptran/rococo/dep_graph.cc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="339">
+          <caret line="246" column="13" selection-start-line="246" selection-start-column="13" selection-end-line="246" selection-end-column="13" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/deptran/janus/scheduler.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="437">
+          <caret line="23" selection-start-line="23" selection-end-line="23" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/deptran/janus/scheduler.cc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="-840">
+          <caret line="121" column="19" selection-start-line="121" selection-start-column="19" selection-end-line="121" selection-end-column="19" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/deptran/rococo/waitlist_checker.h">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/deptran/rococo/waitlist_checker.cc">
+      <provider selected="true" editor-type-id="text-editor" />
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/deptran/rococo/scheduler.h">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="230">
-          <caret line="94" column="25" selection-start-line="94" selection-start-column="25" selection-end-line="94" selection-end-column="25" />
+        <state relative-caret-position="965">
+          <caret line="107" column="41" selection-start-line="107" selection-start-column="41" selection-end-line="107" selection-end-column="41" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/deptran/rococo/txn-info.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="323">
+          <caret line="18" column="2" selection-start-line="18" selection-start-column="2" selection-end-line="18" selection-end-column="2" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/deptran/rococo/commo.cc">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="76">
+          <caret line="4" selection-start-line="4" selection-end-line="4" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/deptran/procedure.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="133">
+          <caret line="7" selection-start-line="7" selection-end-line="7" />
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/deptran/rococo/scheduler.cc">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="116">
-          <caret line="153" column="59" lean-forward="true" selection-start-line="153" selection-start-column="59" selection-end-line="153" selection-end-column="59" />
+        <state relative-caret-position="57">
+          <caret line="3" selection-start-line="3" selection-end-line="3" />
           <folding>
             <element signature="e#408#605#0" expanded="true" />
-            <element signature="e#13938#15023#0" expanded="true" />
+            <element signature="e#17466#17492#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/deptran/rococo/graph_marshaler.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="57">
+          <caret line="3" selection-start-line="3" selection-end-line="3" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/deptran/rococo/tx.h">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="323">
+          <caret line="19" column="25" selection-start-line="19" selection-start-column="25" selection-end-line="19" selection-end-column="25" />
+          <folding>
+            <element signature="e#5405#5443#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="3800">
+          <caret line="200" selection-start-line="200" selection-end-line="200" />
         </state>
       </provider>
     </entry>
