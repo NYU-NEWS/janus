@@ -82,7 +82,7 @@ else()
 endif()
 
 # enable sanitizers
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -O1 -fno-omit-frame-pointer -g -fstandalone-debug")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fsanitize=address -O1 -fno-omit-frame-pointer -g -fstandalone-debug")
 
 # for c build
 

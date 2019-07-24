@@ -1,3 +1,21 @@
+## Run a single trial
+
+Use the run.py to run a single distributed trial.
+
+run.py can be supplied with a configuration file:
+
+```
+./run.py -f config/sample.yml
+```
+
+run.py can also be supplied with multiple configuration files, so that when testing different combinations life is easier:
+
+```
+./run.py -f config/1c1s1p.yml -f config/tpl_ww.yml -f config/tpcc.yml -f config/concurrent_1.yml
+```
+
+## Run a batch of trials
+
 We assume $janus is the root of this source repository.
 
 The $janus/run_all.py file is the entry point for the distributed tests. Before this script can be used a configuration file describing the nodes in the cluster must be created.
@@ -29,3 +47,13 @@ This command specifies that we want to run with 1 to 3 shards, a replication lev
 Possible values for the -m parameter are [listed here](https://github.com/NYU-NEWS/janus/blob/master/run_all.py#L23). Additional examples can be found in the $janus/scripts/aws/run_single.sh and $janus/scripts/aws/run_multi.sh files.
 
 The scripts to build an aws environment, scripts/deploy_single.sh and scripts/deploy_multi.sh, will automatically generate the hosts file for the created ec2 instances.
+
+## Debug tips
+
+The output of a distributed trial will be included in the log directory.
+
+Add this line to /etc/security/limits.conf (Ubuntu) to enable core dump globally. 
+```
+*  soft  core  unlimited
+```
+
