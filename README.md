@@ -48,3 +48,15 @@ Check out the doc directory to find more about how to build the system on older 
 ## Do some actual good
 For every star collected on this project, I will make a $25 charity loan via [Kiva] (https://www.kiva.org/invitedby/gzcdm3147?utm_campaign=permurl-share-invite-normal&utm_medium=referral&utm_content=gzcdm3147&utm_source=mpaxos.com).
 -->
+
+### Run paxos only
+
+One-site paxos
+```
+./build/deptran_server -b -d 60 -f 'config/1c1s1p.yml' -f 'config/occ_paxos.yml' -f 'config/tpcc.yml' -f 'config/concurrent_1.yml' -P 'localhost' -p 5555 -t 10 -r '/home/vm1/janus/log' 1>'/home/vm1/janus/log/proc-localhost.log' 2>'/home/vm1/janus/log/proc-localhost.err'
+```
+
+Multi-site paxos (buggy when program runs to the end)
+```
+./build/deptran_server -b -d 60 -f 'config/1c1s3r1p.yml' -f 'config/occ_paxos.yml' -f 'config/tpcc.yml' -f 'config/concurrent_1.yml' -P 'localhost' -p 5555 -t 10 -r '/home/vm1/janus/log' 1>'/home/vm1/janus/log/proc-localhost.log' 2>'/home/vm1/janus/log/proc-localhost.err'
+```
