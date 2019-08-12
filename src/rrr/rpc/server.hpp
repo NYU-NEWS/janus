@@ -169,6 +169,7 @@ class Server: public NoCopy {
     void server_loop(struct addrinfo* svr_addr);
 
 public:
+    std::string addr_;
 
     Server(PollMgr* pollmgr = nullptr, ThreadPool* thrpool = nullptr);
     virtual ~Server();

@@ -248,15 +248,14 @@ void ServerConnection::close() {
         server_->pollmgr_->remove(this);
         server_->sconns_l_.unlock();
 
-        Log_debug("rrr::ServerConnection: closed on fd=%d", socket_);
-
         status_ = CLOSED;
         ::close(socket_);
     }
 
     // this call might actually DELETE this object, so we put it at the end of function
     if (should_release) {
-        this->release();
+        int ret = this->release();
+        Log_debug("server@%s close ServerConnection at fd=%d, ref=%d", server_->addr_.c_str(), socket_, ret);
     }
 }
 
@@ -376,7 +375,7 @@ void Server::server_loop(struct addrinfo* svr_addr) {
       int clnt_socket = accept(server_sock_, svr_addr->ai_addr, &svr_addr->ai_addrlen);
 #endif
         if (clnt_socket >= 0 && status_ == RUNNING) {
-            Log_debug("rrr::Server: got new client, fd=%d", clnt_socket);
+            Log_debug("server@%s got new client, fd=%d", this->addr_.c_str(), clnt_socket);
             verify(set_nonblocking(clnt_socket, true) == 0);
 
             sconns_l_.lock();
@@ -394,6 +393,7 @@ void Server::server_loop(struct addrinfo* svr_addr) {
 
 int Server::start(const char* bind_addr) {
     string addr(bind_addr);
+    addr_ = addr;
     size_t idx = addr.find(":");
     if (idx == string::npos) {
         Log_error("rrr::Server: bad bind address: %s", bind_addr);

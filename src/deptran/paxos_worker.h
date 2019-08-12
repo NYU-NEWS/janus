@@ -32,18 +32,13 @@ public:
   rrr::CondVar finish_cond{};
   uint32_t n_current = 0;
 
-  ~PaxosWorker() {
-    for (auto c : created_coordinators_) {
-      delete c;
-    }
-  }
-
   void SetupHeartbeat();
   void SetupBase();
   void SetupService();
   void SetupCommo();
   void ShutDown();
   void Next(Marshallable&);
+  void Dummy(Marshallable&);
 
   static const uint32_t CtrlPortDelta = 10000;
   void WaitForShutdown();
@@ -51,6 +46,7 @@ public:
   void SubmitExample();
   void Submit(shared_ptr<Marshallable> sp_m);
   bool IsLeader();
+  void register_apply_callback(std::function<void(janus::Marshallable&)>);
 };
 
 } // namespace janus

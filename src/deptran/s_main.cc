@@ -38,12 +38,14 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
       auto& worker = pxs_workers_g[i++];
       worker->site_info_ = const_cast<Config::SiteInfo*>(&config->SiteById(site_info.id));
 
-      // register callback, setup frame and scheduler
+      // setup frame and scheduler
       worker->SetupBase();
       // start server service
       worker->SetupService();
       // setup communicator
       worker->SetupCommo();
+      // register callback
+      worker->register_apply_callback(nullptr);
       Log_info("site %d launched!", (int)site_info.id);
     }));
   }
@@ -78,7 +80,7 @@ int main(int argc, char* argv[]) {
 
   //----------------------work---------------------
   for (auto& worker : pxs_workers_g) {
-    if (worker->IsLeader()) worker->SubmitExample();
+    worker->SubmitExample();
   }
 
   for (auto& worker : pxs_workers_g) {
