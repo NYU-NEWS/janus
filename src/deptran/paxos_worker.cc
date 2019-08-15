@@ -1,15 +1,25 @@
 #include "paxos_worker.h"
 #include "service.h"
 
-#include "classic/tpc_command.h"
+#include "procedure.h"
 
 namespace janus {
 
 static int volatile xx =
     MarshallDeputy::RegInitializer(MarshallDeputy::CONTAINER_CMD,
                                    []() -> Marshallable* {
-                                     return new CmdData;
+                                     return new LogEntry;
                                    });
+
+Marshal& LogEntry::ToMarshal(Marshal& m) const {
+  m << *operation_;
+  return m;
+};
+
+Marshal& LogEntry::FromMarshal(Marshal& m) {
+  m >> *operation_;
+  return m;
+};
 
 void PaxosWorker::SetupBase() {
   auto config = Config::GetConfig();
@@ -20,17 +30,15 @@ void PaxosWorker::SetupBase() {
   rep_sched_->loc_id_ = site_info_->locale_id;
 }
 
-void PaxosWorker::Next(Marshallable& cmd) {
+void PaxosWorker::Next(shared_ptr<map<int32_t, int64_t>> log_entry) {
   finish_mutex.lock();
-  n_current--;
-  if (n_current == 0) {
-    finish_cond.signal();
+  if (n_current > 0) {
+    n_current--;
+    if (n_current == 0) {
+      finish_cond.signal();
+    }
   }
   finish_mutex.unlock();
-}
-
-void PaxosWorker::Dummy(Marshallable& cmd) {
-  Log_debug("follower finished replicated");
 }
 
 void PaxosWorker::SetupService() {
@@ -77,26 +85,26 @@ void PaxosWorker::SetupCommo() {
 }
 
 void PaxosWorker::SetupHeartbeat() {
-  // bool hb = Config::GetConfig()->do_heart_beat();
-  // if (!hb) return;
-  // auto timeout = Config::GetConfig()->get_ctrl_timeout();
-  // scsi_ = new ServerControlServiceImpl(timeout);
-  // int n_io_threads = 1;
-  // svr_hb_poll_mgr_g = new rrr::PollMgr(n_io_threads);
-  // hb_thread_pool_g = new rrr::ThreadPool(1);
-  // hb_rpc_server_ = new rrr::Server(svr_hb_poll_mgr_g, hb_thread_pool_g);
-  // hb_rpc_server_->reg(scsi_);
+  bool hb = Config::GetConfig()->do_heart_beat();
+  if (!hb) return;
+  auto timeout = Config::GetConfig()->get_ctrl_timeout();
+  scsi_ = new ServerControlServiceImpl(timeout);
+  int n_io_threads = 1;
+  svr_hb_poll_mgr_g = new rrr::PollMgr(n_io_threads);
+  hb_thread_pool_g = new rrr::ThreadPool(1);
+  hb_rpc_server_ = new rrr::Server(svr_hb_poll_mgr_g, hb_thread_pool_g);
+  hb_rpc_server_->reg(scsi_);
 
-  // auto port = site_info_->port + CtrlPortDelta;
-  // std::string addr_port = std::string("0.0.0.0:") +
-  //                         std::to_string(port);
-  // hb_rpc_server_->start(addr_port.c_str());
-  // if (hb_rpc_server_ != nullptr) {
-  //   // Log_info("notify ready to control script for %s", bind_addr.c_str());
-  //   scsi_->set_ready();
-  // }
-  // Log_info("heartbeat setup for %s on %s",
-  //          site_info_->name.c_str(), addr_port.c_str());
+  auto port = site_info_->port + CtrlPortDelta;
+  std::string addr_port = std::string("0.0.0.0:") +
+                          std::to_string(port);
+  hb_rpc_server_->start(addr_port.c_str());
+  if (hb_rpc_server_ != nullptr) {
+    // Log_info("notify ready to control script for %s", bind_addr.c_str());
+    scsi_->set_ready();
+  }
+  Log_info("heartbeat setup for %s on %s",
+           site_info_->name.c_str(), addr_port.c_str());
 }
 
 void PaxosWorker::WaitForShutdown() {
@@ -120,9 +128,6 @@ void PaxosWorker::WaitForShutdown() {
       }
     }
   }
-  // if (rep_commo_) {
-  //   delete rep_commo_;
-  // }
 }
 
 void PaxosWorker::ShutDown() {
@@ -134,38 +139,35 @@ void PaxosWorker::ShutDown() {
   thread_pool_g->release();
 }
 
-void PaxosWorker::Submit(shared_ptr<Marshallable> sp_m) {
+void PaxosWorker::Submit(shared_ptr<map<int32_t, int64_t>> log_entry) {
   finish_mutex.lock();
   n_current++;
   finish_mutex.unlock();
   static cooid_t cid = 0;
-  int32_t benchmark = 0;
   static id_t id = 0;
   verify(rep_frame_ != nullptr);
-  verify(rep_sched_->app_next_ != nullptr);
+  verify(rep_sched_->apply_callback_ != nullptr);
   Coordinator* coord = rep_frame_->CreateCoordinator(cid++,
                                                      Config::GetConfig(),
-                                                     benchmark,
+                                                     0,
                                                      nullptr,
                                                      id++,
                                                      nullptr);
   coord->par_id_ = site_info_->partition_id_;
   coord->loc_id_ = site_info_->locale_id;
+  auto sp_cmd = make_shared<LogEntry>();
+  *(sp_cmd->operation_) = *log_entry;
+  auto sp_m = dynamic_pointer_cast<Marshallable>(sp_cmd);
   coord->Submit(sp_m);
 }
 
 void PaxosWorker::SubmitExample() {
   if (!IsLeader()) return;
   // TODO
-  auto sp_tx = make_shared<Tx>(100, 1, rep_sched_);
-  sp_tx->cmd_ = make_shared<CmdData>();
-
-  auto sp_prepare_cmd = std::make_shared<TpcPrepareCommand>();
-  sp_prepare_cmd->tx_id_ = 0;
-  sp_prepare_cmd->cmd_ = sp_tx->cmd_;
-  auto sp_m = dynamic_pointer_cast<Marshallable>(sp_prepare_cmd);
-
-  Submit(sp_m);
+  auto testdata = make_shared<map<int32_t, int64_t>>();
+  (*testdata)[0] = 100;
+  (*testdata)[1] = 233;
+  Submit(testdata);
 
   finish_mutex.lock();
   while (n_current > 0) {
@@ -182,18 +184,12 @@ bool PaxosWorker::IsLeader() {
   return rep_frame_->site_info_->locale_id == 0;
 }
 
-void PaxosWorker::register_apply_callback(std::function<void(janus::Marshallable&)> cb) {
+void PaxosWorker::register_apply_callback(std::function<void(shared_ptr<map<int32_t, int64_t>>)> cb) {
   verify(rep_sched_ != nullptr);
   if (cb == nullptr) {
-    if (IsLeader())
-      rep_sched_->RegLearnerAction(std::bind(&PaxosWorker::Next,
-                                             this,
-                                             std::placeholders::_1));
-    else {
-      rep_sched_->RegLearnerAction(std::bind(&PaxosWorker::Dummy,
-                                             this,
-                                             std::placeholders::_1));
-    }
+    rep_sched_->RegLearnerAction(std::bind(&PaxosWorker::Next,
+                                           this,
+                                           std::placeholders::_1));
   } else {
     rep_sched_->RegLearnerAction(cb);
   }

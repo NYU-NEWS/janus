@@ -10,6 +10,18 @@
 
 namespace janus {
 
+class LogEntry : public Marshallable {
+public:
+  shared_ptr<map<int32_t, int64_t>> operation_{};
+
+  LogEntry() : Marshallable(MarshallDeputy::CONTAINER_CMD) {
+    operation_ = make_shared<map<int32_t, int64_t>>();
+  }
+  virtual ~LogEntry() {};
+  virtual Marshal& ToMarshal(Marshal&) const override;
+  virtual Marshal& FromMarshal(Marshal&) override;
+};
+
 class PaxosWorker {
 public:
   rrr::PollMgr* svr_poll_mgr_ = nullptr;
@@ -26,7 +38,6 @@ public:
   Frame* rep_frame_ = nullptr;
   Scheduler* rep_sched_ = nullptr;
   Communicator* rep_commo_ = nullptr;
-  vector<Coordinator*> created_coordinators_{};
 
   rrr::Mutex finish_mutex{};
   rrr::CondVar finish_cond{};
@@ -37,16 +48,15 @@ public:
   void SetupService();
   void SetupCommo();
   void ShutDown();
-  void Next(Marshallable&);
-  void Dummy(Marshallable&);
+  void Next(shared_ptr<map<int32_t, int64_t>>);
 
   static const uint32_t CtrlPortDelta = 10000;
   void WaitForShutdown();
 
   void SubmitExample();
-  void Submit(shared_ptr<Marshallable> sp_m);
+  void Submit(shared_ptr<map<int32_t, int64_t>>);
   bool IsLeader();
-  void register_apply_callback(std::function<void(janus::Marshallable&)>);
+  void register_apply_callback(std::function<void(shared_ptr<map<int32_t, int64_t>>)>);
 };
 
 } // namespace janus
