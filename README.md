@@ -53,10 +53,10 @@ For every star collected on this project, I will make a $25 charity loan via [Ki
 
 One-site paxos
 ```
-./build/deptran_server -b -d 60 -f 'config/1c1s1p.yml' -f 'config/occ_paxos.yml' -f 'config/tpcc.yml' -f 'config/concurrent_1.yml' -P 'localhost' -p 5555 -t 10 -r '/home/vm1/janus/log' 1>'/home/vm1/janus/log/proc-localhost.log' 2>'/home/vm1/janus/log/proc-localhost.err'
+./build/deptran_server -b -d 60 -f 'config/1c1s1p.yml' -f 'config/occ_paxos.yml' -f 'config/tpcc.yml' -f 'config/concurrent_1.yml' -p 5555 -t 10 1>'./log/proc-localhost.log' 2>'./log/proc-localhost.err'
 ```
 
 Multi-site paxos
 ```
-./build/deptran_server -b -d 60 -f 'config/1c1s3r1p.yml' -f 'config/occ_paxos.yml' -f 'config/tpcc.yml' -f 'config/concurrent_1.yml' -P 'localhost' -p 5555 -t 10 -r '/home/vm1/janus/log' 1>'/home/vm1/janus/log/proc-localhost.log' 2>'/home/vm1/janus/log/proc-localhost.err'
+./build/deptran_server -b -d 60 -f 'config/1c1s3r1p.yml' -f 'config/occ_paxos.yml' -f 'config/tpcc.yml' -f 'config/concurrent_1.yml' -p 5555 -t 10 1>'./log/proc-localhost.log' 2>'./log/proc-localhost.err'
 ```
