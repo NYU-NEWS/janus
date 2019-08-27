@@ -1,8 +1,6 @@
 #include "paxos_worker.h"
 #include "service.h"
 
-#include "procedure.h"
-
 namespace janus {
 
 static int volatile xx =
@@ -12,12 +10,17 @@ static int volatile xx =
                                    });
 
 Marshal& LogEntry::ToMarshal(Marshal& m) const {
-  m << *operation_;
+  m << length;
+  m << std::string(operation_);
   return m;
 };
 
 Marshal& LogEntry::FromMarshal(Marshal& m) {
-  m >> *operation_;
+  m >> length;
+  std::string str;
+  m >> str;
+  operation_ = new char[length];
+  strcpy(operation_, str.c_str());
   return m;
 };
 
@@ -30,13 +33,22 @@ void PaxosWorker::SetupBase() {
   rep_sched_->loc_id_ = site_info_->locale_id;
 }
 
-void PaxosWorker::Next(shared_ptr<map<int32_t, int64_t>> log_entry) {
+void PaxosWorker::Next(Marshallable& cmd) {
+  // if (IsLeader()) {
+  gettimeofday(&commit_time_, NULL);
+  // }
+  if (cmd.kind_ == MarshallDeputy::CONTAINER_CMD) {
+    if (this->callback_ != nullptr) {
+      auto& sp_log_entry = dynamic_cast<LogEntry&>(cmd);
+      callback_(sp_log_entry.operation_, sp_log_entry.length);
+    }
+  } else {
+    verify(0);
+  }
   finish_mutex.lock();
   if (n_current > 0) {
     n_current--;
-    if (n_current == 0) {
-      finish_cond.signal();
-    }
+    finish_cond.signal();
   }
   finish_mutex.unlock();
 }
@@ -137,16 +149,51 @@ void PaxosWorker::ShutDown() {
     delete service;
   }
   thread_pool_g->release();
+  int prepare_tot_sec_ = 0, prepare_tot_usec_ = 0, accept_tot_sec_ = 0, accept_tot_usec_ = 0;
+  for (auto c : created_coordinators_) {
+    prepare_tot_sec_ += c->prepare_sec_;
+    prepare_tot_usec_ += c->prepare_usec_;
+    accept_tot_sec_ += c->accept_sec_;
+    accept_tot_usec_ += c->accept_usec_;
+    delete c;
+  }
+  Log_info("site %s, tot time: %f, prepare: %f, accept: %f, commit: %f", site_info_->name.c_str(),
+           submit_tot_sec_ + ((float)submit_tot_usec_) / 1000000,
+           prepare_tot_sec_ + ((float)prepare_tot_usec_) / 1000000,
+           accept_tot_sec_ + ((float)accept_tot_usec_) / 1000000,
+           commit_tot_sec_ + ((float)commit_tot_usec_) / 1000000);
+  if (rep_sched_ != nullptr) {
+    delete rep_sched_;
+  }
 }
 
-void PaxosWorker::Submit(shared_ptr<map<int32_t, int64_t>> log_entry) {
+void PaxosWorker::WaitForSubmit() {
+  finish_mutex.lock();
+  while (n_current > 0) {
+    Log_debug("wait for task, amount: %d", n_current);
+    finish_cond.wait(finish_mutex);
+  }
+  finish_mutex.unlock();
+  Log_debug("finish task.");
+}
+
+void PaxosWorker::Submit(const char* log_entry, int length) {
+  if (!IsLeader()) return;
+  auto sp_cmd = make_shared<LogEntry>();
+  sp_cmd->operation_ = new char[length];
+  strcpy(sp_cmd->operation_, log_entry);
+  sp_cmd->length = length;
+  auto sp_m = dynamic_pointer_cast<Marshallable>(sp_cmd);
+  _Submit(sp_m);
+}
+
+void PaxosWorker::_Submit(shared_ptr<Marshallable> sp_m) {
   finish_mutex.lock();
   n_current++;
   finish_mutex.unlock();
   static cooid_t cid = 0;
   static id_t id = 0;
   verify(rep_frame_ != nullptr);
-  verify(rep_sched_->apply_callback_ != nullptr);
   Coordinator* coord = rep_frame_->CreateCoordinator(cid++,
                                                      Config::GetConfig(),
                                                      0,
@@ -155,27 +202,29 @@ void PaxosWorker::Submit(shared_ptr<map<int32_t, int64_t>> log_entry) {
                                                      nullptr);
   coord->par_id_ = site_info_->partition_id_;
   coord->loc_id_ = site_info_->locale_id;
-  auto sp_cmd = make_shared<LogEntry>();
-  *(sp_cmd->operation_) = *log_entry;
-  auto sp_m = dynamic_pointer_cast<Marshallable>(sp_cmd);
+  created_coordinators_.push_back(coord);
+  // gettimeofday(&t1, NULL);
   coord->Submit(sp_m);
+
+  // finish_mutex.lock();
+  // if (n_current > 0) {
+  //   Log_debug("wait for command replicated, amount: %d", n_current);
+  //   finish_cond.wait(finish_mutex);
+  // }
+  // finish_mutex.unlock();
+  // Log_debug("finish command replicated.");
+
+  // gettimeofday(&t2, NULL);
+  leader_commit_time_ = coord->commit_time_;
+  // submit_tot_sec_ += t2.tv_sec - t1.tv_sec;
+  // submit_tot_usec_ += t2.tv_usec - t1.tv_usec;
+  commit_tot_sec_ += commit_time_.tv_sec - leader_commit_time_.tv_sec;
+  commit_tot_usec_ += commit_time_.tv_usec - leader_commit_time_.tv_usec;
 }
 
 void PaxosWorker::SubmitExample() {
-  if (!IsLeader()) return;
-  // TODO
-  auto testdata = make_shared<map<int32_t, int64_t>>();
-  (*testdata)[0] = 100;
-  (*testdata)[1] = 233;
-  Submit(testdata);
-
-  finish_mutex.lock();
-  while (n_current > 0) {
-    Log_debug("wait for command replicated, amount: %d", n_current);
-    finish_cond.wait(finish_mutex);
-  }
-  finish_mutex.unlock();
-  Log_debug("finish command replicated.");
+  char testdata[] = "abc";
+  Submit(testdata, 4);
 }
 
 bool PaxosWorker::IsLeader() {
@@ -184,15 +233,12 @@ bool PaxosWorker::IsLeader() {
   return rep_frame_->site_info_->locale_id == 0;
 }
 
-void PaxosWorker::register_apply_callback(std::function<void(shared_ptr<map<int32_t, int64_t>>)> cb) {
+void PaxosWorker::register_apply_callback(std::function<void(char*, int)> cb) {
+  this->callback_ = cb;
   verify(rep_sched_ != nullptr);
-  if (cb == nullptr) {
-    rep_sched_->RegLearnerAction(std::bind(&PaxosWorker::Next,
-                                           this,
-                                           std::placeholders::_1));
-  } else {
-    rep_sched_->RegLearnerAction(cb);
-  }
+  rep_sched_->RegLearnerAction(std::bind(&PaxosWorker::Next,
+                                         this,
+                                         std::placeholders::_1));
 }
 
 } // namespace janus

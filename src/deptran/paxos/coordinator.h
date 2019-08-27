@@ -33,6 +33,11 @@ class CoordinatorMultiPaxos : public Coordinator {
   slotid_t slot_id_ = 0;
   slotid_t *slot_hint_ = nullptr;
 
+  // ~CoordinatorMultiPaxos() {
+  //   Log_info("Coo: %u, prepare: %f, accept: %f", coo_id_,
+  //   prepare_sec_ + ((float)prepare_usec_) / 1000000,
+  //   accept_sec_ + ((float)accept_usec_) / 1000000);
+  // }
   uint32_t n_replica() {
     verify(n_replica_ > 0);
     return n_replica_;

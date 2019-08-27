@@ -23,7 +23,7 @@ class TxLogServer {
   unordered_map<txid_t, Executor *> executors_{};
 
   function<void(Marshallable &)> app_next_{};
-  function<void(shared_ptr<map<int32_t, int64_t>>)> apply_callback_{};
+  // function<void(shared_ptr<map<int32_t, int64_t>>)> apply_callback_{};
   function<shared_ptr<vector<MultiValue>>(Marshallable&)> key_deps_{};
 
   shared_ptr<mdb::TxnMgr> mdb_txn_mgr_{};
@@ -155,9 +155,9 @@ class TxLogServer {
     app_next_ = learner_action;
   }
 
-  void RegLearnerAction(function<void(shared_ptr<map<int32_t, int64_t>>)> learner_action) {
-    apply_callback_ = learner_action;
-  }
+  // void RegLearnerAction(function<void(shared_ptr<map<int32_t, int64_t>>)> learner_action) {
+  //   apply_callback_ = learner_action;
+  // }
 
   virtual void Next(Marshallable& cmd) { verify(0); };
 

@@ -12,22 +12,41 @@ namespace janus {
 
 class LogEntry : public Marshallable {
 public:
-  shared_ptr<map<int32_t, int64_t>> operation_{};
+  char* operation_ = nullptr;
+  int length = 0;
 
-  LogEntry() : Marshallable(MarshallDeputy::CONTAINER_CMD) {
-    operation_ = make_shared<map<int32_t, int64_t>>();
+  LogEntry() : Marshallable(MarshallDeputy::CONTAINER_CMD) {}
+  virtual ~LogEntry(){
+    if (operation_ != nullptr) delete operation_;
   }
-  virtual ~LogEntry() {};
   virtual Marshal& ToMarshal(Marshal&) const override;
   virtual Marshal& FromMarshal(Marshal&) override;
 };
 
 class PaxosWorker {
+private:
+  void _Submit(shared_ptr<Marshallable>);
+  bool IsLeader();
+
+  rrr::Mutex finish_mutex{};
+  rrr::CondVar finish_cond{};
+  uint32_t n_current = 0;
+  std::function<void(char*, int)> callback_ = nullptr;
+  vector<Coordinator*> created_coordinators_{};
+  struct timeval t1;
+  struct timeval t2;
+
 public:
   rrr::PollMgr* svr_poll_mgr_ = nullptr;
   vector<rrr::Service*> services_ = {};
   rrr::Server* rpc_server_ = nullptr;
   base::ThreadPool* thread_pool_g = nullptr;
+  int submit_tot_sec_ = 0;
+  int submit_tot_usec_ = 0;
+  int commit_tot_sec_ = 0;
+  int commit_tot_usec_ = 0;
+  struct timeval commit_time_;
+  struct timeval leader_commit_time_;
 
   rrr::PollMgr* svr_hb_poll_mgr_g = nullptr;
   ServerControlServiceImpl* scsi_ = nullptr;
@@ -39,24 +58,20 @@ public:
   Scheduler* rep_sched_ = nullptr;
   Communicator* rep_commo_ = nullptr;
 
-  rrr::Mutex finish_mutex{};
-  rrr::CondVar finish_cond{};
-  uint32_t n_current = 0;
-
   void SetupHeartbeat();
   void SetupBase();
   void SetupService();
   void SetupCommo();
   void ShutDown();
-  void Next(shared_ptr<map<int32_t, int64_t>>);
+  void Next(Marshallable&);
+  void WaitForSubmit();
 
   static const uint32_t CtrlPortDelta = 10000;
   void WaitForShutdown();
 
   void SubmitExample();
-  void Submit(shared_ptr<map<int32_t, int64_t>>);
-  bool IsLeader();
-  void register_apply_callback(std::function<void(shared_ptr<map<int32_t, int64_t>>)>);
+  void Submit(const char*, int);
+  void register_apply_callback(std::function<void(char*, int)>);
 };
 
 } // namespace janus

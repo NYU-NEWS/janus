@@ -21,6 +21,13 @@ class PaxosServer : public TxLogServer {
   slotid_t max_executed_slot_ = 0;
   slotid_t max_committed_slot_ = 0;
   map<slotid_t, shared_ptr<PaxosData>> logs_{};
+  int n_prepare_ = 0;
+  int n_accept_ = 0;
+  int n_commit_ = 0;
+
+  ~SchedulerMultiPaxos() {
+    Log_info("site par %d, loc %d: prepare %d, accept %d, commit %d", partition_id_, loc_id_, n_prepare_, n_accept_, n_commit_);
+  }
 
   shared_ptr<PaxosData> GetInstance(slotid_t id) {
     verify(id >= min_active_slot_);

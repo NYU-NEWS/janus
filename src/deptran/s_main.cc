@@ -9,11 +9,15 @@
 # include <gperftools/profiler.h>
 #endif // ifdef CPU_PROFILE
 #include "config.h"
+#include <sys/time.h>
 
+#ifdef CPU_PROFILE
+#include <gperftools/profiler.h>
+#endif // ifdef CPU_PROFILE
 using namespace janus;
 
 static vector<unique_ptr<PaxosWorker>> pxs_workers_g = {};
-vector<unique_ptr<ClientWorker>> client_workers_g = {};
+// vector<unique_ptr<ClientWorker>> client_workers_g = {};
 
 void check_current_path() {
   auto path = boost::filesystem::current_path();
@@ -23,7 +27,7 @@ void check_current_path() {
 void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
   auto config = Config::GetConfig();
   Log_info("server enabled, number of sites: %d", server_sites.size());
-  for (int i = server_sites.size(); i ; --i) {
+  for (int i = server_sites.size(); i; --i) {
     PaxosWorker* worker = new PaxosWorker();
     pxs_workers_g.push_back(std::unique_ptr<PaxosWorker>(worker));
   }
@@ -45,7 +49,9 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
       // setup communicator
       worker->SetupCommo();
       // register callback
-      worker->register_apply_callback(nullptr);
+      worker->register_apply_callback([=](char* log, int len) {
+        // Log_info("!!!!!!!!!!!!!!!!!!!!%s!!!!!!!!!!!!!!!!", log);
+      });
       Log_info("site %d launched!", (int)site_info.id);
     }));
   }
@@ -63,6 +69,33 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
   Log_info("server workers' communicators setup");
 }
 
+const int len = 10, num = 500000, concurrent = 32;
+char* message[concurrent];
+void microbench_paxos() {
+  int T = num;
+  while (T > 0) {
+    struct timeval t1, t2;
+    gettimeofday(&t1, NULL);
+    for (int i = 0; i < concurrent; i++) {
+      message[i] = new char[len];
+      for (int j = 0; j < len; j++) {
+        message[i][j] = (rand() % 10) + '0';
+      }
+      for (auto& worker : pxs_workers_g) {
+        worker->Submit(message[i], len);
+      }
+    }
+    for (auto& worker : pxs_workers_g) {
+      worker->WaitForSubmit();
+    }
+    gettimeofday(&t2, NULL);
+    pxs_workers_g[0]->submit_tot_sec_ += t2.tv_sec - t1.tv_sec;
+    pxs_workers_g[0]->submit_tot_usec_ += t2.tv_usec - t1.tv_usec;
+    T -= concurrent;
+    // if ((num - T) % (concurrent * 10) == 0) Log_info("%d%% finished", (num - T) * 100 / num);
+  }
+}
+
 int main(int argc, char* argv[]) {
   check_current_path();
   Log_info("starting process %ld", getpid());
@@ -78,17 +111,21 @@ int main(int argc, char* argv[]) {
     server_launch_worker(server_infos);
   }
 
-  //----------------------work---------------------
-  for (auto& worker : pxs_workers_g) {
-    worker->SubmitExample();
-  }
-  for (auto& worker : pxs_workers_g) {
-    worker->SubmitExample();
-  }
+#ifdef CPU_PROFILE
+  char prof_file[1024];
+  Config::GetConfig()->GetProfilePath(prof_file);
+  // start to profile
+  ProfilerStart(prof_file);
+#endif // ifdef CPU_PROFILE
+  microbench_paxos();
 
   for (auto& worker : pxs_workers_g) {
     worker->WaitForShutdown();
   }
+#ifdef CPU_PROFILE
+  // stop profiling
+  ProfilerStop();
+#endif // ifdef CPU_PROFILE
   Log_info("all server workers have shut down.");
 
   fflush(stderr);
@@ -99,6 +136,9 @@ int main(int argc, char* argv[]) {
   }
   pxs_workers_g.clear();
 
+  for (int i = 0; i < concurrent; i++) {
+    delete message[i];
+  }
   RandomGenerator::destroy();
   Config::DestroyConfig();
 

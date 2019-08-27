@@ -53,6 +53,7 @@
     "typeindex": "cpp",
     "typeinfo": "cpp",
     "utility": "cpp",
-    "algorithm": "cpp"
+    "algorithm": "cpp",
+    "*.back": "cpp"
   }
 }

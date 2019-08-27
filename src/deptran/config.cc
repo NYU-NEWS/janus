@@ -52,7 +52,7 @@ int Config::CreateConfig(int argc, char **argv) {
 //  std::string filename = "./config/sample.yml";
   vector<string> config_paths;
   std::string proc_name = "localhost"; // default as "localhost"
-  std::string logging_path = "./disk_log/";
+  std::string logging_path = "./log/";
   char *end_ptr    = NULL;
 
   char *hostspath               = NULL;
@@ -629,7 +629,7 @@ void Config::LoadShardingYML(YAML::Node config) {
     auto &tbl_info = info_it->second;
     string method = it->second.as<string>();
 
-    Log_info("group size: %d", replica_groups_.size());
+    // Log_info("group size: %d", replica_groups_.size());
     for (auto replica_group_it = this->replica_groups_.begin();
          replica_group_it != this->replica_groups_.end();
          replica_group_it++) {

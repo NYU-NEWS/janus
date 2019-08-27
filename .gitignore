@@ -42,3 +42,4 @@ GPATH
 /_3rdParty
 /.clang-format
 *.so
+.vscode/

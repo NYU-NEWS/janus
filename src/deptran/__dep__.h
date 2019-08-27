@@ -106,7 +106,7 @@ using mdb::Table;
 using mdb::colid_t;
 using mdb::SnapshotTable;
 
-#define LOG_LEVEL_AS_DEBUG 666
+// #define LOG_LEVEL_AS_DEBUG 666
 // rpc library
 class dummy_class {
  public:

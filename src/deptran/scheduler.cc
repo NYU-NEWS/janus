@@ -231,7 +231,7 @@ TxLogServer::~TxLogServer() {
   auto it = mdb_txns_.begin();
   for (; it != mdb_txns_.end(); it++)
     Log::info("tid: %ld still running", it->first);
-  if (it->second) {
+  if (it != mdb_txns_.end() && it->second) {
     delete it->second;
     it->second = NULL;
   }
