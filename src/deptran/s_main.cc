@@ -69,7 +69,7 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
   Log_info("server workers' communicators setup");
 }
 
-const int len = 10, num = 500000, concurrent = 32;
+const int len = 10, num = 5000, concurrent = 32;
 char* message[concurrent];
 void microbench_paxos() {
   int T = num;
@@ -116,6 +116,7 @@ int main(int argc, char* argv[]) {
   Config::GetConfig()->GetProfilePath(prof_file);
   // start to profile
   ProfilerStart(prof_file);
+  // ProfilerStart("thread_new");
 #endif // ifdef CPU_PROFILE
   microbench_paxos();
 
