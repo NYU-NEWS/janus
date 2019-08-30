@@ -53,21 +53,24 @@ For every star collected on this project, I will make a $25 charity loan via [Ki
 
 One-site paxos
 ```
-./build/deptran_server -b -d 60 -f 'config/1c1s1p.yml' -f 'config/occ_paxos.yml' -f 'config/concurrent_1.yml' -p 5555 -t 10 1>'./log/proc-localhost.log' 2>'./log/proc-localhost.err'
+./build/deptran_server -b -d 60 -f 'config/1c1s1p.yml' -f 'config/occ_paxos.yml' -p 5555 -t 10 1>'./log/proc-localhost.log' 2>'./log/proc-localhost.err' -T 100000
 ```
 
 Multi-site paxos
 ```
-./build/deptran_server -b -d 60 -f 'config/1c1s3r1p.yml' -f 'config/occ_paxos.yml' -f 'config/concurrent_1.yml' -p 5555 -t 10 1>'./log/proc-localhost.log' 2>'./log/proc-localhost.err'
+./build/deptran_server -b -d 60 -f 'config/1c1s3r1p.yml' -f 'config/occ_paxos.yml' -p 5555 -t 10 1>'./log/proc-localhost.log' 2>'./log/proc-localhost.err' -T 100000
 ```
 
 #### To See CPU Profiling
 
-in ./src/s_main.cc line 68: *num* is for the total requests that microbench would send, *concurrent* is for the outstanding requests sent concurrently.
+PS: There are 32 outstanding requests.
 
 ```
-./waf-2.0.18 configure -p
-./waf-2.0.18 build
-./build/deptran_server -d 60 -f 'config/1c1s3r1p.yml' -f 'config/occ_paxos.yml' -f 'config/concurrent_1.yml' -p 5555 -t 10 1>"./log/proc-localhost.log" 2>"./log/proc-localhost.err"
-./pprof --text ./build/deptran_server process-localhost.prof > cpu.txt
+./waf-2.0.18 configure -p build
+./build/deptran_server -d 60 -f 'config/1c1s3r1p.yml' -f 'config/occ_paxos.yml' -p 5555 -t 10 1>"./log/proc-localhost.log" 2>"./log/proc-localhost.err" -T 5000
+./pprof --pdf ./build/deptran_server process-localhost.prof > cpu.pdf
 ```
+
+#### Microbench results
+
+[Google Doc](https://docs.google.com/spreadsheets/d/1ANy2o1RQbw_gjPG1W3pTD3niqLZ8BfI8AwgxFGFBrO8/edit?usp=sharing)

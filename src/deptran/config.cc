@@ -65,11 +65,12 @@ int Config::CreateConfig(int argc, char **argv) {
   bool heart_beat               = false;
   single_server_t single_server = SS_DISABLED;
   int server_or_client          = -1;
+  int32_t tot_req_num               = 10000;
 
   int c;
   optind = 1;
   string filename;
-  while ((c = getopt(argc, argv, "bc:d:f:h:i:k:p:P:r:s:S:t:H:")) != -1) {
+  while ((c = getopt(argc, argv, "bc:d:f:h:i:k:p:P:r:s:S:t:H:T:")) != -1) {
     switch (c) {
       case 'b': // heartbeat to controller
         heart_beat = true;
@@ -157,6 +158,11 @@ int Config::CreateConfig(int argc, char **argv) {
         }
         break;
       }
+      case 'T':
+        tot_req_num = strtoul(optarg, &end_ptr, 10);
+        if ((end_ptr == NULL) || (*end_ptr != '\0'))
+          return -4;
+        break;
       case '?':
         // TODO remove
         if ((optopt == 'c') ||
@@ -186,7 +192,7 @@ int Config::CreateConfig(int argc, char **argv) {
     ctrl_timeout,
     ctrl_key,
     ctrl_init,
-
+    tot_req_num,
     // ctrl_run,
     duration,
     heart_beat,
@@ -212,6 +218,7 @@ Config::Config(char           *ctrl_hostname,
                uint32_t        ctrl_timeout,
                char           *ctrl_key,
                char           *ctrl_init,
+               int32_t             tot_req_num,
                uint32_t        duration,
                bool            heart_beat,
                single_server_t single_server,
@@ -222,6 +229,7 @@ Config::Config(char           *ctrl_hostname,
   ctrl_timeout_(ctrl_timeout),
   ctrl_key_(ctrl_key),
   ctrl_init_(ctrl_init),
+  tot_req_num_(tot_req_num),
   duration_(duration),
   config_paths_(vector<string>()),
   tx_proto_(0),
@@ -955,6 +963,8 @@ bool Config::retry_wait() {
   return retry_wait_;
 }
 
-
+int32_t Config::get_tot_req() {
+  return tot_req_num_;
+}
 
 }

@@ -1,0 +1,16 @@
+
+site:
+  server: # each line is a partition, the first is the master site_name:port
+    - ["s101:8000", "s201:8001"]
+  client: # each line is a partition
+    - ["c101"]
+
+process:
+  s101: localhost
+  s201: localhost
+  c101: localhost
+
+# process_name - host_addr map
+host:
+  localhost: 127.0.0.1
+

@@ -54,6 +54,13 @@
     "typeinfo": "cpp",
     "utility": "cpp",
     "algorithm": "cpp",
-    "*.back": "cpp"
+    "*.back": "cpp",
+    "csignal": "cpp",
+    "iterator": "cpp",
+    "map": "cpp",
+    "memory_resource": "cpp",
+    "random": "cpp",
+    "set": "cpp",
+    "string": "cpp"
   }
 }

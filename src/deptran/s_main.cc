@@ -10,6 +10,7 @@
 #endif // ifdef CPU_PROFILE
 #include "config.h"
 #include <sys/time.h>
+#include <atomic>
 
 #ifdef CPU_PROFILE
 #include <gperftools/profiler.h>
@@ -18,6 +19,7 @@ using namespace janus;
 
 static vector<unique_ptr<PaxosWorker>> pxs_workers_g = {};
 // vector<unique_ptr<ClientWorker>> client_workers_g = {};
+const int len = 10, concurrent = 32;
 
 void check_current_path() {
   auto path = boost::filesystem::current_path();
@@ -49,9 +51,14 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
       // setup communicator
       worker->SetupCommo();
       // register callback
-      worker->register_apply_callback([=](char* log, int len) {
-        // Log_info("!!!!!!!!!!!!!!!!!!!!%s!!!!!!!!!!!!!!!!", log);
-      });
+      if (worker->IsLeader())
+        worker->register_apply_callback([&worker](char* log, int len) {
+          if (worker->submit_num >= worker->tot_num) return;
+          worker->Submit(log, len);
+          worker->submit_num++;
+        });
+      else
+        worker->register_apply_callback([=](char* log, int len) {});
       Log_info("site %d launched!", (int)site_info.id);
     }));
   }
@@ -69,31 +76,32 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
   Log_info("server workers' communicators setup");
 }
 
-const int len = 10, num = 5000, concurrent = 32;
 char* message[concurrent];
 void microbench_paxos() {
-  int T = num;
-  while (T > 0) {
-    struct timeval t1, t2;
-    gettimeofday(&t1, NULL);
-    for (int i = 0; i < concurrent; i++) {
-      message[i] = new char[len];
-      for (int j = 0; j < len; j++) {
-        message[i][j] = (rand() % 10) + '0';
-      }
-      for (auto& worker : pxs_workers_g) {
-        worker->Submit(message[i], len);
-      }
+  // int T = num;
+  // while (T > 0) {
+  for (int i = 0; i < concurrent; i++) {
+    message[i] = new char[len];
+    for (int j = 0; j < len - 1; j++) {
+      message[i][j] = (rand() % 10) + '0';
     }
-    for (auto& worker : pxs_workers_g) {
-      worker->WaitForSubmit();
-    }
-    gettimeofday(&t2, NULL);
-    pxs_workers_g[0]->submit_tot_sec_ += t2.tv_sec - t1.tv_sec;
-    pxs_workers_g[0]->submit_tot_usec_ += t2.tv_usec - t1.tv_usec;
-    T -= concurrent;
-    // if ((num - T) % (concurrent * 10) == 0) Log_info("%d%% finished", (num - T) * 100 / num);
+    message[i][len - 1] = '\0';
   }
+  struct timeval t1, t2;
+  gettimeofday(&t1, NULL);
+  for (int i = 0; i < concurrent; i++) {
+    for (auto& worker : pxs_workers_g) {
+      worker->Submit(message[i], len);
+    }
+  }
+  for (auto& worker : pxs_workers_g) {
+    worker->WaitForSubmit();
+  }
+  gettimeofday(&t2, NULL);
+  pxs_workers_g[0]->submit_tot_sec_ += t2.tv_sec - t1.tv_sec;
+  pxs_workers_g[0]->submit_tot_usec_ += t2.tv_usec - t1.tv_usec;
+  //   T -= concurrent;
+  // }
 }
 
 int main(int argc, char* argv[]) {

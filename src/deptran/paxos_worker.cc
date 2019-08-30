@@ -31,11 +31,12 @@ void PaxosWorker::SetupBase() {
   rep_sched_ = rep_frame_->CreateScheduler();
   // rep_sched_->txn_reg_ = tx_reg_;
   rep_sched_->loc_id_ = site_info_->locale_id;
+  this->tot_num = config->get_tot_req();
 }
 
 void PaxosWorker::Next(Marshallable& cmd) {
   // if (IsLeader()) {
-  gettimeofday(&commit_time_, NULL);
+  // gettimeofday(&commit_time_, NULL);
   // }
   if (cmd.kind_ == MarshallDeputy::CONTAINER_CMD) {
     if (this->callback_ != nullptr) {
@@ -48,7 +49,7 @@ void PaxosWorker::Next(Marshallable& cmd) {
   finish_mutex.lock();
   if (n_current > 0) {
     n_current--;
-    finish_cond.signal();
+    if (n_current == 0) finish_cond.signal();
   }
   finish_mutex.unlock();
 }
@@ -61,7 +62,7 @@ void PaxosWorker::SetupService() {
     services_ = rep_frame_->CreateRpcServices(site_info_->id,
                                               rep_sched_,
                                               svr_poll_mgr_,
-                                              nullptr);
+                                              scsi_);
   }
   uint32_t num_threads = 1;
   thread_pool_g = new base::ThreadPool(num_threads);
@@ -151,10 +152,10 @@ void PaxosWorker::ShutDown() {
   thread_pool_g->release();
   int prepare_tot_sec_ = 0, prepare_tot_usec_ = 0, accept_tot_sec_ = 0, accept_tot_usec_ = 0;
   for (auto c : created_coordinators_) {
-    prepare_tot_sec_ += c->prepare_sec_;
-    prepare_tot_usec_ += c->prepare_usec_;
-    accept_tot_sec_ += c->accept_sec_;
-    accept_tot_usec_ += c->accept_usec_;
+    // prepare_tot_sec_ += c->prepare_sec_;
+    // prepare_tot_usec_ += c->prepare_usec_;
+    // accept_tot_sec_ += c->accept_sec_;
+    // accept_tot_usec_ += c->accept_usec_;
     delete c;
   }
   Log_info("site %s, tot time: %f, prepare: %f, accept: %f, commit: %f", site_info_->name.c_str(),
@@ -215,11 +216,8 @@ void PaxosWorker::_Submit(shared_ptr<Marshallable> sp_m) {
   // Log_debug("finish command replicated.");
 
   // gettimeofday(&t2, NULL);
-  leader_commit_time_ = coord->commit_time_;
   // submit_tot_sec_ += t2.tv_sec - t1.tv_sec;
   // submit_tot_usec_ += t2.tv_usec - t1.tv_usec;
-  commit_tot_sec_ += commit_time_.tv_sec - leader_commit_time_.tv_sec;
-  commit_tot_usec_ += commit_time_.tv_usec - leader_commit_time_.tv_usec;
 }
 
 void PaxosWorker::SubmitExample() {
