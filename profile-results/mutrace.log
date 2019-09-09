@@ -1,0 +1,184 @@
+mutrace: Showing statistics for process deptran_server (pid 56215).
+mutrace: 70236 mutexes used.
+
+Mutex #60733 (0x0x5587ac872ae0) first referenced by:
+        [0x2f7f] ??() ??:0
+        [0x32ca] ??() ??:0
+        ??:0    pthread_mutex_lock()
+        gthr-default.h:748      __gthread_mutex_lock()
+        std_mutex.h:103 std::mutex::lock()
+        marshallable.cc:16      janus::MarshallDeputy::RegInitializer()
+        tpc_command.cc:7        __static_initialization_and_destruction_0()
+        tpc_command.cc:61       _GLOBAL__sub_I_tpc_command.cc()
+        ??:0    __libc_csu_init()
+
+Mutex #60797 (0x0x5587ac873980) first referenced by:
+        [0x2f7f] ??() ??:0
+        [0x32ca] ??() ??:0
+        ??:0    pthread_mutex_lock()
+        logging.cpp:16  rrr::Log::set_level()
+        __dep__.h:119   dummy_class::dummy_class()
+        procedure.cc:124        __static_initialization_and_destruction_0()
+        procedure.cc:124        _GLOBAL__sub_I_procedure.cc()
+        ??:0    __libc_csu_init()Mutex #60735 (0x0x5587ac872b20) first referenced by:
+        [0x2f7f] ??() ??:0
+        [0x32ca] ??() ??:0
+        ??:0    pthread_mutex_lock()
+        gthr-default.h:748      __gthread_mutex_lock()
+        std_mutex.h:103 std::mutex::lock()
+        marshallable.cc:36      janus::MarshallDeputy::Initializers()
+        marshallable.cc:16      janus::MarshallDeputy::RegInitializer()
+        tpc_command.cc:7        __static_initialization_and_destruction_0()
+        tpc_command.cc:61       _GLOBAL__sub_I_tpc_command.cc()
+        ??:0    __libc_csu_init()
+
+Mutex #60735 (0x0x5587ac872b20) first referenced by:
+        [0x2f7f] ??() ??:0
+        [0x32ca] ??() ??:0
+        ??:0    pthread_mutex_lock()
+        gthr-default.h:748      __gthread_mutex_lock()
+        std_mutex.h:103 std::mutex::lock()
+        marshallable.cc:36      janus::MarshallDeputy::Initializers()
+        marshallable.cc:16      janus::MarshallDeputy::RegInitializer()
+        tpc_command.cc:7        __static_initialization_and_destruction_0()
+        tpc_command.cc:61       _GLOBAL__sub_I_tpc_command.cc()
+        ??:0    __libc_csu_init()
+
+Mutex #55091 (0x0x5587acfcc700) first referenced by:
+        [0x2f7f] ??() ??:0
+        [0x32ca] ??() ??:0
+        ??:0    pthread_mutex_lock()
+        gthr-default.h:748      __gthread_mutex_lock()
+        gthr-default.h:811      __gthread_recursive_mutex_lock()
+        mutex:107       std::recursive_mutex::lock()
+        std_mutex.h:162 std::lock_guard<std::recursive_mutex>::lock_guard()
+        coordinator.cc:25       janus::CoordinatorMultiPaxos::Submit()
+        paxos_worker.cc:218     janus::PaxosWorker::_Submit()
+        paxos_worker.cc:198     janus::PaxosWorker::Submit()
+        s_main.cc:90    microbench_paxos()
+        s_main.cc:132   main()
+        libc-start.c:344        __libc_start_main()
+
+Mutex #56283 (0x0x5587acfdab70) first referenced by:
+        [0x2f7f] ??() ??:0
+        [0x32ca] ??() ??:0
+        ??:0    pthread_mutex_lock()
+        gthr-default.h:748      __gthread_mutex_lock()
+        gthr-default.h:811      __gthread_recursive_mutex_lock()
+        mutex:107       std::recursive_mutex::lock()
+        std_mutex.h:162 std::lock_guard<std::recursive_mutex>::lock_guard()
+        coordinator.cc:25       janus::CoordinatorMultiPaxos::Submit()
+        paxos_worker.cc:218     janus::PaxosWorker::_Submit()
+        paxos_worker.cc:198     janus::PaxosWorker::Submit()
+        s_main.cc:90    microbench_paxos()
+        s_main.cc:132   main()
+        libc-start.c:344        __libc_start_main()
+
+Mutex #55995 (0x0x5587acfd6f60) first referenced by:
+        [0x2f7f] ??() ??:0
+        [0x32ca] ??() ??:0
+        ??:0    pthread_mutex_lock()
+        gthr-default.h:748      __gthread_mutex_lock()
+        gthr-default.h:811      __gthread_recursive_mutex_lock()
+        mutex:107       std::recursive_mutex::lock()
+        std_mutex.h:162 std::lock_guard<std::recursive_mutex>::lock_guard()
+        coordinator.cc:25       janus::CoordinatorMultiPaxos::Submit()
+        paxos_worker.cc:218     janus::PaxosWorker::_Submit()
+        paxos_worker.cc:198     janus::PaxosWorker::Submit()
+        s_main.cc:90    microbench_paxos()
+        s_main.cc:132   main()
+        libc-start.c:344        __libc_start_main()
+
+Mutex #54888 (0x0x5587acfca300) first referenced by:
+        [0x2f7f] ??() ??:0
+        [0x32ca] ??() ??:0
+        ??:0    pthread_mutex_lock()
+        gthr-default.h:748      __gthread_mutex_lock()
+        gthr-default.h:811      __gthread_recursive_mutex_lock()
+        mutex:107       std::recursive_mutex::lock()
+        std_mutex.h:162 std::lock_guard<std::recursive_mutex>::lock_guard()
+        coordinator.cc:25       janus::CoordinatorMultiPaxos::Submit()
+        paxos_worker.cc:218     janus::PaxosWorker::_Submit()
+        paxos_worker.cc:198     janus::PaxosWorker::Submit()
+        s_main.cc:90    microbench_paxos()
+        s_main.cc:132   main()
+        libc-start.c:344        __libc_start_main()
+
+Mutex #56772 (0x0x5587acfe0cf0) first referenced by:
+        [0x2f7f] ??() ??:0
+        [0x32ca] ??() ??:0
+        ??:0    pthread_mutex_lock()
+        gthr-default.h:748      __gthread_mutex_lock()
+        gthr-default.h:811      __gthread_recursive_mutex_lock()
+        mutex:107       std::recursive_mutex::lock()
+        std_mutex.h:162 std::lock_guard<std::recursive_mutex>::lock_guard()
+        coordinator.cc:25       janus::CoordinatorMultiPaxos::Submit()
+        paxos_worker.cc:218     janus::PaxosWorker::_Submit()
+        paxos_worker.cc:198     janus::PaxosWorker::Submit()
+        s_main.cc:90    microbench_paxos()
+        s_main.cc:132   main()
+        libc-start.c:344        __libc_start_main()
+
+Mutex #56503 (0x0x5587acfdd3e0) first referenced by:
+        [0x2f7f] ??() ??:0
+        [0x32ca] ??() ??:0
+        ??:0    pthread_mutex_lock()
+        gthr-default.h:748      __gthread_mutex_lock()
+        gthr-default.h:811      __gthread_recursive_mutex_lock()
+        mutex:107       std::recursive_mutex::lock()
+        std_mutex.h:162 std::lock_guard<std::recursive_mutex>::lock_guard()
+        coordinator.cc:25       janus::CoordinatorMultiPaxos::Submit()
+        paxos_worker.cc:218     janus::PaxosWorker::_Submit()
+        paxos_worker.cc:198     janus::PaxosWorker::Submit()
+        s_main.cc:90    microbench_paxos()
+        s_main.cc:132   main()
+        libc-start.c:344        __libc_start_main()
+
+Mutex #56835 (0x0x5587acfe17a0) first referenced by:
+        [0x2f7f] ??() ??:0
+        [0x32ca] ??() ??:0
+        ??:0    pthread_mutex_lock()
+        gthr-default.h:748      __gthread_mutex_lock()
+        gthr-default.h:811      __gthread_recursive_mutex_lock()
+        mutex:107       std::recursive_mutex::lock()
+        std_mutex.h:162 std::lock_guard<std::recursive_mutex>::lock_guard()
+        coordinator.cc:25       janus::CoordinatorMultiPaxos::Submit()
+        paxos_worker.cc:218     janus::PaxosWorker::_Submit()
+        paxos_worker.cc:198     janus::PaxosWorker::Submit()
+        s_main.cc:90    microbench_paxos()
+        s_main.cc:132   main()
+        libc-start.c:344        __libc_start_main()
+
+mutrace: Showing 10 most contended mutexes:
+
+ Mutex #   Locked  Changed    Cont. tot.Time[ms] avg.Time[ms] max.Time[ms]  Flags
+   60733    60196    38455     5483      418.978        0.007        0.274 M-.--.
+   60797      124       22        8        0.820        0.007        0.109 M-.--.
+   60735    60196    38455        0       98.918        0.002        0.029 M-.--.
+   55091        7        2        0        3.321        0.474        1.000 M!.--.
+   56283        7        2        0        2.057        0.294        0.996 M!.--.
+   55995        7        2        0        3.079        0.440        0.972 M!.--.
+   54888        7        2        0        1.990        0.284        0.966 M!.--.
+   56772        7        2        0        1.965        0.281        0.946 M!.--.
+   56503        7        2        0        1.898        0.271        0.922 M!.--.
+   56835        7        2        0        1.858        0.265        0.902 M!.--.
+     ...      ...      ...      ...          ...          ...          ... ||||||
+                                                                           /|||||
+          Object:                                     M = Mutex, W = RWLock /||||
+           State:                                 x = dead, ! = inconsistent /|||
+             Use:                                 R = used in realtime thread /||
+      Mutex Type:                 r = RECURSIVE, e = ERRRORCHECK, a = ADAPTIVE /|
+  Mutex Protocol:                                      i = INHERIT, p = PROTECT /
+     RWLock Kind: r = PREFER_READER, w = PREFER_WRITER, W = PREFER_WRITER_NONREC 
+
+mutrace: Note that the flags column R is only valid in --track-rt mode!
+
+mutrace: Total runtime is 3519.135 ms.
+
+mutrace: Results for SMP with 4 processors.
+
+mutrace: WARNING: 20064 inconsistent mutex uses detected. Results might not be reliable.
+mutrace:          Fix your program first!
+
+mutrace: WARNING: 1317 internal hash collisions detected. Results might not be as reliable as they could be.
+mutrace:          Try to increase --hash-size=, which is currently at 500000.
