@@ -65,12 +65,13 @@ int Config::CreateConfig(int argc, char **argv) {
   bool heart_beat               = false;
   single_server_t single_server = SS_DISABLED;
   int server_or_client          = -1;
-  int32_t tot_req_num               = 10000;
+  int32_t tot_req_num           = 10000;
+  int16_t n_concurrent          = 1;
 
   int c;
   optind = 1;
   string filename;
-  while ((c = getopt(argc, argv, "bc:d:f:h:i:k:p:P:r:s:S:t:H:T:")) != -1) {
+  while ((c = getopt(argc, argv, "bc:d:f:h:i:k:p:P:r:s:S:t:H:T:n:")) != -1) {
     switch (c) {
       case 'b': // heartbeat to controller
         heart_beat = true;
@@ -163,6 +164,11 @@ int Config::CreateConfig(int argc, char **argv) {
         if ((end_ptr == NULL) || (*end_ptr != '\0'))
           return -4;
         break;
+      case 'n':
+        n_concurrent = strtoul(optarg, &end_ptr, 10);
+        if ((end_ptr == NULL) || (*end_ptr != '\0'))
+          return -4;
+        break;
       case '?':
         // TODO remove
         if ((optopt == 'c') ||
@@ -193,6 +199,7 @@ int Config::CreateConfig(int argc, char **argv) {
     ctrl_key,
     ctrl_init,
     tot_req_num,
+    n_concurrent,
     // ctrl_run,
     duration,
     heart_beat,
@@ -218,7 +225,8 @@ Config::Config(char           *ctrl_hostname,
                uint32_t        ctrl_timeout,
                char           *ctrl_key,
                char           *ctrl_init,
-               int32_t             tot_req_num,
+               int32_t         tot_req_num,
+               int16_t         n_concurrent,
                uint32_t        duration,
                bool            heart_beat,
                single_server_t single_server,
@@ -244,7 +252,7 @@ Config::Config(char           *ctrl_hostname,
   retry_wait_(false),
   logging_path_(logging_path),
   single_server_(single_server),
-  n_concurrent_(1),
+  n_concurrent_(n_concurrent),
   max_retry_(1),
   num_site_(0),
   start_coordinator_id_(0),

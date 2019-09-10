@@ -11,16 +11,18 @@ static int volatile xx =
 
 Marshal& LogEntry::ToMarshal(Marshal& m) const {
   m << length;
-  m << std::string(operation_);
+  // m << std::string(operation_);
+  m << log_entry;
   return m;
 };
 
 Marshal& LogEntry::FromMarshal(Marshal& m) {
   m >> length;
-  std::string str;
-  m >> str;
-  operation_ = new char[length];
-  strcpy(operation_, str.c_str());
+  // std::string str;
+  // m >> str;
+  // operation_ = new char[length];
+  // strcpy(operation_, str.c_str());
+  m >> log_entry;
   return m;
 };
 
@@ -41,17 +43,21 @@ void PaxosWorker::Next(Marshallable& cmd) {
   if (cmd.kind_ == MarshallDeputy::CONTAINER_CMD) {
     if (this->callback_ != nullptr) {
       auto& sp_log_entry = dynamic_cast<LogEntry&>(cmd);
-      callback_(sp_log_entry.operation_, sp_log_entry.length);
-    }
+      callback_(sp_log_entry.log_entry.c_str(), sp_log_entry.length);
+    } /* else if (this->submit_num < this->tot_num) {
+      auto& sp_log_entry = dynamic_cast<LogEntry&>(cmd);
+      Submit(sp_log_entry.log_entry.c_str(), sp_log_entry.length);
+      this->submit_num++;
+    } */
   } else {
     verify(0);
   }
-  finish_mutex.lock();
   if (n_current > 0) {
     n_current--;
-    if (n_current == 0) finish_cond.signal();
+    if (n_current == 0) {
+      finish_cond.signal();
+    }
   }
-  finish_mutex.unlock();
 }
 
 void PaxosWorker::SetupService() {
@@ -89,7 +95,7 @@ void PaxosWorker::SetupService() {
 
 void PaxosWorker::SetupCommo() {
   if (rep_frame_) {
-    rep_commo_ = rep_frame_->CreateCommo();
+    rep_commo_ = rep_frame_->CreateCommo(svr_poll_mgr_);
     if (rep_commo_) {
       rep_commo_->loc_id_ = site_info_->locale_id;
     }
@@ -149,7 +155,7 @@ void PaxosWorker::ShutDown() {
   for (auto service : services_) {
     delete service;
   }
-  thread_pool_g->release();
+  // thread_pool_g->release();
   int prepare_tot_sec_ = 0, prepare_tot_usec_ = 0, accept_tot_sec_ = 0, accept_tot_usec_ = 0;
   for (auto c : created_coordinators_) {
     // prepare_tot_sec_ += c->prepare_sec_;
@@ -169,29 +175,33 @@ void PaxosWorker::ShutDown() {
 }
 
 void PaxosWorker::WaitForSubmit() {
-  finish_mutex.lock();
+  static int count = 0;
   while (n_current > 0) {
-    Log_debug("wait for task, amount: %d", n_current);
+    finish_mutex.lock();
+    // Log_debug("wait for task, amount: %d", n_current);
     finish_cond.wait(finish_mutex);
+    finish_mutex.unlock();
+    ++count;
   }
-  finish_mutex.unlock();
   Log_debug("finish task.");
+  Log_info("awake %d times.", count);
 }
 
 void PaxosWorker::Submit(const char* log_entry, int length) {
   if (!IsLeader()) return;
   auto sp_cmd = make_shared<LogEntry>();
-  sp_cmd->operation_ = new char[length];
-  strcpy(sp_cmd->operation_, log_entry);
+  // sp_cmd->operation_ = new char[length];
+  // strcpy(sp_cmd->operation_, log_entry);
+  sp_cmd->log_entry = string(log_entry);
   sp_cmd->length = length;
   auto sp_m = dynamic_pointer_cast<Marshallable>(sp_cmd);
   _Submit(sp_m);
 }
 
-void PaxosWorker::_Submit(shared_ptr<Marshallable> sp_m) {
-  finish_mutex.lock();
+inline void PaxosWorker::_Submit(shared_ptr<Marshallable> sp_m) {
+  // finish_mutex.lock();
   n_current++;
-  finish_mutex.unlock();
+  // finish_mutex.unlock();
   static cooid_t cid = 0;
   static id_t id = 0;
   verify(rep_frame_ != nullptr);
@@ -231,7 +241,7 @@ bool PaxosWorker::IsLeader() {
   return rep_frame_->site_info_->locale_id == 0;
 }
 
-void PaxosWorker::register_apply_callback(std::function<void(char*, int)> cb) {
+void PaxosWorker::register_apply_callback(std::function<void(const char*, int)> cb) {
   this->callback_ = cb;
   verify(rep_sched_ != nullptr);
   rep_sched_->RegLearnerAction(std::bind(&PaxosWorker::Next,

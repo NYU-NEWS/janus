@@ -19,7 +19,7 @@ using namespace janus;
 
 static vector<unique_ptr<PaxosWorker>> pxs_workers_g = {};
 // vector<unique_ptr<ClientWorker>> client_workers_g = {};
-const int len = 10, concurrent = 32;
+const int len = 5;
 
 void check_current_path() {
   auto path = boost::filesystem::current_path();
@@ -52,13 +52,14 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
       worker->SetupCommo();
       // register callback
       if (worker->IsLeader())
-        worker->register_apply_callback([&worker](char* log, int len) {
+        worker->register_apply_callback([&worker](const char* log, int len) {
           if (worker->submit_num >= worker->tot_num) return;
           worker->Submit(log, len);
           worker->submit_num++;
         });
+        // worker->register_apply_callback(nullptr);
       else
-        worker->register_apply_callback([=](char* log, int len) {});
+        worker->register_apply_callback([=](const char* log, int len) {});
       Log_info("site %d launched!", (int)site_info.id);
     }));
   }
@@ -76,13 +77,17 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
   Log_info("server workers' communicators setup");
 }
 
-char* message[concurrent];
+char* message[200];
 void microbench_paxos() {
+  int concurrent = Config::GetConfig()->get_concurrent_txn();
   // int T = num;
   // while (T > 0) {
   for (int i = 0; i < concurrent; i++) {
     message[i] = new char[len];
-    for (int j = 0; j < len - 1; j++) {
+    message[i][0] = (i / 100) + '0';
+    message[i][1] = ((i / 10) % 10) + '0';
+    message[i][2] = (i % 10) + '0';
+    for (int j = 3; j < len - 1; j++) {
       message[i][j] = (rand() % 10) + '0';
     }
     message[i][len - 1] = '\0';
@@ -100,6 +105,10 @@ void microbench_paxos() {
   gettimeofday(&t2, NULL);
   pxs_workers_g[0]->submit_tot_sec_ += t2.tv_sec - t1.tv_sec;
   pxs_workers_g[0]->submit_tot_usec_ += t2.tv_usec - t1.tv_usec;
+
+  for (int i = 0; i < concurrent; i++) {
+    delete message[i];
+  }
   //   T -= concurrent;
   // }
 }
@@ -145,9 +154,6 @@ int main(int argc, char* argv[]) {
   }
   pxs_workers_g.clear();
 
-  for (int i = 0; i < concurrent; i++) {
-    delete message[i];
-  }
   RandomGenerator::destroy();
   Config::DestroyConfig();
 

@@ -143,6 +143,7 @@ class Config {
          char *ctrl_key,
          char *ctrl_init,
          int32_t tot_req_num,
+         int16_t n_concurrent,
          uint32_t duration,
          bool heart_beat,
          single_server_t single_server,

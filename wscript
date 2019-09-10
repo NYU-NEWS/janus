@@ -40,6 +40,8 @@ def options(opt):
                    default=False, action='store_true')
     opt.add_option('-D', '--disable-check-python', dest='disable_check_python',
                    default=False, action='store_true')
+    opt.add_option('-m', '--enable-mutrace-debug', dest='mutrace',
+                   default=False, action='store_true')
     opt.parse_args();
 
 def configure(conf):
@@ -107,13 +109,13 @@ def build(bld):
 
     _gen_srpc_headers()
 
-    _depend("old-test/benchmark_service.h", "old-test/benchmark_service.rpc",
-            "bin/rpcgen --cpp old-test/benchmark_service.rpc")
+#     _depend("old-test/benchmark_service.h", "old-test/benchmark_service.rpc",
+#             "bin/rpcgen --cpp old-test/benchmark_service.rpc")
 
-    bld.stlib(source=bld.path.ant_glob("extern_interface/scheduler.c"),
-              target="externc",
-              includes="",
-              use="")
+#     bld.stlib(source=bld.path.ant_glob("extern_interface/scheduler.c"),
+#               target="externc",
+#               includes="",
+#               use="")
 
     bld.stlib(source=bld.path.ant_glob("src/rrr/base/*.cpp "
                                        "src/rrr/misc/*.cpp "
@@ -234,7 +236,12 @@ def _enable_debug(conf):
         conf.env.append_value("CXXFLAGS", "-Wall -pthread -O0 -DNDEBUG -g "
                 "-ggdb -DLOG_LEVEL_AS_DEBUG -DLOG_DEBUG -rdynamic -fno-omit-frame-pointer".split())
     else:
-        conf.env.append_value("CXXFLAGS", "-g -pthread -O2 -DNDEBUG -DLOG_INFO".split())
+        if Options.options.mutrace:
+            Logs.pprint("PINK", "mutrace debugging enabled")
+            conf.env.append_value("CXXFLAGS", "-Wall -pthread -O0 -DNDEBUG -g "
+                "-ggdb -DLOG_INFO -rdynamic -fno-omit-frame-pointer".split())
+        else:
+            conf.env.append_value("CXXFLAGS", "-g -pthread -O2 -DNDEBUG -DLOG_INFO".split())
 
 def _properly_split(args):
     if args == None:
