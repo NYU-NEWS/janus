@@ -31,24 +31,16 @@ void PaxosWorker::SetupBase() {
   rep_frame_ = Frame::GetFrame(config->replica_proto_);
   rep_frame_->site_info_ = site_info_;
   rep_sched_ = rep_frame_->CreateScheduler();
-  // rep_sched_->txn_reg_ = tx_reg_;
   rep_sched_->loc_id_ = site_info_->locale_id;
   this->tot_num = config->get_tot_req();
 }
 
 void PaxosWorker::Next(Marshallable& cmd) {
-  // if (IsLeader()) {
-  // gettimeofday(&commit_time_, NULL);
-  // }
   if (cmd.kind_ == MarshallDeputy::CONTAINER_CMD) {
     if (this->callback_ != nullptr) {
       auto& sp_log_entry = dynamic_cast<LogEntry&>(cmd);
       callback_(sp_log_entry.log_entry.c_str(), sp_log_entry.length);
-    } /* else if (this->submit_num < this->tot_num) {
-      auto& sp_log_entry = dynamic_cast<LogEntry&>(cmd);
-      Submit(sp_log_entry.log_entry.c_str(), sp_log_entry.length);
-      this->submit_num++;
-    } */
+    }
   } else {
     verify(0);
   }
@@ -155,7 +147,7 @@ void PaxosWorker::ShutDown() {
   for (auto service : services_) {
     delete service;
   }
-  // thread_pool_g->release();
+  thread_pool_g->release();
   int prepare_tot_sec_ = 0, prepare_tot_usec_ = 0, accept_tot_sec_ = 0, accept_tot_usec_ = 0;
   for (auto c : created_coordinators_) {
     // prepare_tot_sec_ += c->prepare_sec_;
@@ -214,20 +206,7 @@ inline void PaxosWorker::_Submit(shared_ptr<Marshallable> sp_m) {
   coord->par_id_ = site_info_->partition_id_;
   coord->loc_id_ = site_info_->locale_id;
   created_coordinators_.push_back(coord);
-  // gettimeofday(&t1, NULL);
   coord->Submit(sp_m);
-
-  // finish_mutex.lock();
-  // if (n_current > 0) {
-  //   Log_debug("wait for command replicated, amount: %d", n_current);
-  //   finish_cond.wait(finish_mutex);
-  // }
-  // finish_mutex.unlock();
-  // Log_debug("finish command replicated.");
-
-  // gettimeofday(&t2, NULL);
-  // submit_tot_sec_ += t2.tv_sec - t1.tv_sec;
-  // submit_tot_usec_ += t2.tv_usec - t1.tv_usec;
 }
 
 void PaxosWorker::SubmitExample() {

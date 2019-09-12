@@ -140,8 +140,8 @@ def build(bld):
               includes="src src/rrr src/rrr/rpc",
               uselib="BOOST",
               use="rrr simplerpc PYTHON")
-    
-    bld.program(source=bld.path.ant_glob("src/deptran/*.cc "
+
+    bld.shlib(source=bld.path.ant_glob("src/deptran/*.cc "
                                          "src/deptran/*/*.cc "
                                          "src/bench/*/*.cc"),
                 target="deptran_server",
@@ -152,6 +152,12 @@ def build(bld):
 
 def post(conf):
     _run_cmd("cp build/_pyrpc*.so src/rrr/pylib/simplerpc/")
+
+    bld.program(source=bld.path.ant_glob("src/leader.cc"),
+                target="leader",
+                includes="src src/rrr src/deptran ",
+                uselib="YAML-CPP BOOST",
+                use="deptran_server externc rrr memdb PTHREAD PROFILER RT")
 
 #
 # waf helper functions

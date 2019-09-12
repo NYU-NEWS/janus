@@ -57,7 +57,7 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
           worker->Submit(log, len);
           worker->submit_num++;
         });
-        // worker->register_apply_callback(nullptr);
+      // worker->register_apply_callback(nullptr);
       else
         worker->register_apply_callback([=](const char* log, int len) {});
       Log_info("site %d launched!", (int)site_info.id);
@@ -80,8 +80,12 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
 char* message[200];
 void microbench_paxos() {
   int concurrent = Config::GetConfig()->get_concurrent_txn();
-  // int T = num;
-  // while (T > 0) {
+#ifdef CPU_PROFILE
+  char prof_file[1024];
+  Config::GetConfig()->GetProfilePath(prof_file);
+  // start to profile
+  ProfilerStart(prof_file);
+#endif // ifdef CPU_PROFILE
   for (int i = 0; i < concurrent; i++) {
     message[i] = new char[len];
     message[i][0] = (i / 100) + '0';
@@ -109,11 +113,13 @@ void microbench_paxos() {
   for (int i = 0; i < concurrent; i++) {
     delete message[i];
   }
-  //   T -= concurrent;
-  // }
+#ifdef CPU_PROFILE
+  // stop profiling
+  ProfilerStop();
+#endif // ifdef CPU_PROFILE
 }
 
-int main(int argc, char* argv[]) {
+int setup(int argc, char* argv[]) {
   check_current_path();
   Log_info("starting process %ld", getpid());
 
@@ -127,23 +133,13 @@ int main(int argc, char* argv[]) {
   if (server_infos.size() > 0) {
     server_launch_worker(server_infos);
   }
+  return 0;
+}
 
-#ifdef CPU_PROFILE
-  char prof_file[1024];
-  Config::GetConfig()->GetProfilePath(prof_file);
-  // start to profile
-  ProfilerStart(prof_file);
-  // ProfilerStart("thread_new");
-#endif // ifdef CPU_PROFILE
-  microbench_paxos();
-
+int shutdown_paxos() {
   for (auto& worker : pxs_workers_g) {
     worker->WaitForShutdown();
   }
-#ifdef CPU_PROFILE
-  // stop profiling
-  ProfilerStop();
-#endif // ifdef CPU_PROFILE
   Log_info("all server workers have shut down.");
 
   fflush(stderr);

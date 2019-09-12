@@ -294,7 +294,7 @@ double timespec2ms(struct timespec time) {
 //   status_mutex_.unlock();
 // }
 
-// void ClientControlServiceImpl::wait_for_start(unsigned int id) {
+void ClientControlServiceImpl::wait_for_start(unsigned int id) {
 //   status_mutex_.lock();
 //   coo_threads_[id] = (pthread_t *) malloc(sizeof(pthread_t));
 //   *(coo_threads_[id]) = pthread_self();
@@ -308,9 +308,9 @@ double timespec2ms(struct timespec time) {
 //   while (CCS_RUN != status_ && CCS_STOP != status_)
 //     status_cond_.wait(status_mutex_);
 //   status_mutex_.unlock();
-// }
+}
 
-// void ClientControlServiceImpl::wait_for_shutdown() {
+void ClientControlServiceImpl::wait_for_shutdown() {
 //   status_mutex_.lock();
 //   if (status_ != CCS_STOP) {
 //     if (++num_finish_ == num_threads_)
@@ -319,7 +319,7 @@ double timespec2ms(struct timespec time) {
 //       status_cond_.wait(status_mutex_);
 //   }
 //   status_mutex_.unlock();
-// }
+}
 
 // void ClientControlServiceImpl::client_get_txn_names(std::map<i32, std::string> *txn_names) {
 //   *txn_names = txn_names_;
