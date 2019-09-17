@@ -40,6 +40,8 @@ void PaxosWorker::Next(Marshallable& cmd) {
     if (this->callback_ != nullptr) {
       auto& sp_log_entry = dynamic_cast<LogEntry&>(cmd);
       callback_(sp_log_entry.log_entry.c_str(), sp_log_entry.length);
+    } else {
+      verify(0);
     }
   } else {
     verify(0);
@@ -120,7 +122,7 @@ void PaxosWorker::SetupHeartbeat() {
 
 void PaxosWorker::WaitForShutdown() {
   if (hb_rpc_server_ != nullptr) {
-    scsi_->server_shutdown();
+    scsi_->wait_for_shutdown();
     delete hb_rpc_server_;
     delete scsi_;
     svr_hb_poll_mgr_g->release();
@@ -168,6 +170,7 @@ void PaxosWorker::ShutDown() {
 
 void PaxosWorker::WaitForSubmit() {
   static int count = 0;
+  scsi_->server_heart_beat();
   while (n_current > 0) {
     finish_mutex.lock();
     // Log_debug("wait for task, amount: %d", n_current);

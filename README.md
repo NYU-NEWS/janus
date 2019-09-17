@@ -51,15 +51,28 @@ For every star collected on this project, I will make a $25 charity loan via [Ki
 
 ### Run paxos only
 
-One-site paxos
+#### One-site paxos
 ```
-./build/deptran_server -b -d 60 -f 'config/1c1s1p.yml' -f 'config/occ_paxos.yml' -p 5555 -t 10 1>'./log/proc-localhost.log' 2>'./log/proc-localhost.err' -T 100000
+nohup ./build/deptran_server -b -d 60 -f 'config/1c1s1p.yml' -f 'config/occ_paxos.yml' -p 5555 -t 10 -T 100000 -n 32 -P localhost > ./log/proc-localhost.log
 ```
 
-Multi-site paxos
+#### Multi-thread paxos
 ```
-./build/deptran_server -b -d 60 -f 'config/1c1s3r1p.yml' -f 'config/occ_paxos.yml' -p 5555 -t 10 1>'./log/proc-localhost.log' 2>'./log/proc-localhost.err' -T 100000
+nohup ./build/deptran_server -b -d 60 -f 'config/1c1s3r1p.yml' -f 'config/occ_paxos.yml' -p 5555 -t 10 -T 100000 -n 32 -P localhost > ./log/proc-localhost.log
 ```
+
+[new]()  
+#### Multi-process paxos  
+open two shell  
+on one of them, run  
+```
+nohup ./build/deptran_server -b -d 60 -f 'config/1c1s2r.yml' -f 'config/occ_paxos.yml' -p 5555 -t 10 -T 100 -n 2 -P localhost > ./log/proc-localhost.log
+```
+on the other one, run
+```
+nohup ./build/deptran_server -b -d 60 -f 'config/1c1s2r.yml' -f 'config/occ_paxos.yml' -p 5556 -t 10 -T 100 -n 2 -P p2 > ./log/proc-p2.log
+```
+PS: this one will not return, so you should terminate it manually when the first one finishes.
 
 #### To See CPU Profiling
 
@@ -67,7 +80,7 @@ PS: There are 32 outstanding requests.
 
 ```
 ./waf-2.0.18 configure -p build
-./build/deptran_server -d 60 -f 'config/1c1s3r1p.yml' -f 'config/occ_paxos.yml' -p 5555 -t 10 1>"./log/proc-localhost.log" 2>"./log/proc-localhost.err" -T 5000
+./build/deptran_server -d 60 -f 'config/1c1s3r1p.yml' -f 'config/occ_paxos.yml' -p 5555 -t 10  -T 5000 -n 32 -P localhost > ./log/proc-localhost.log
 ./pprof --pdf ./build/deptran_server process-localhost.prof > cpu.pdf
 ```
 
