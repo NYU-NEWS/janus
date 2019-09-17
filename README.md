@@ -61,8 +61,7 @@ nohup ./build/deptran_server -b -d 60 -f 'config/1c1s1p.yml' -f 'config/occ_paxo
 nohup ./build/deptran_server -b -d 60 -f 'config/1c1s3r1p.yml' -f 'config/occ_paxos.yml' -p 5555 -t 10 -T 100000 -n 32 -P localhost > ./log/proc-localhost.log
 ```
 
-[new]()  
-#### Multi-process paxos  
+#### Multi-process paxos ["new"]  
 open two shell  
 on one of them, run  
 ```
