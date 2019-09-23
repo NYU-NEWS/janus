@@ -159,6 +159,12 @@ def post(conf):
                 uselib="YAML-CPP BOOST",
                 use="deptran_server externc rrr memdb PTHREAD PROFILER RT")
 
+    bld.program(source=bld.path.ant_glob("src/run.cc"),
+                target="microbench",
+                includes="src src/rrr src/deptran ",
+                uselib="YAML-CPP BOOST",
+                use="externc rrr memdb PTHREAD PROFILER RT deptran_server")
+
 #
 # waf helper functions
 #

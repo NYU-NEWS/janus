@@ -122,6 +122,7 @@ void PaxosWorker::SetupHeartbeat() {
 
 void PaxosWorker::WaitForShutdown() {
   if (hb_rpc_server_ != nullptr) {
+    scsi_->server_heart_beat();
     scsi_->wait_for_shutdown();
     delete hb_rpc_server_;
     delete scsi_;
@@ -169,17 +170,13 @@ void PaxosWorker::ShutDown() {
 }
 
 void PaxosWorker::WaitForSubmit() {
-  static int count = 0;
-  scsi_->server_heart_beat();
   while (n_current > 0) {
     finish_mutex.lock();
     // Log_debug("wait for task, amount: %d", n_current);
     finish_cond.wait(finish_mutex);
     finish_mutex.unlock();
-    ++count;
   }
   Log_debug("finish task.");
-  Log_info("awake %d times.", count);
 }
 
 void PaxosWorker::Submit(const char* log_entry, int length) {

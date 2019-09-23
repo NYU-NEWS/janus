@@ -53,25 +53,30 @@ For every star collected on this project, I will make a $25 charity loan via [Ki
 
 #### One-site paxos
 ```
-nohup ./build/deptran_server -b -d 60 -f 'config/1c1s1p.yml' -f 'config/occ_paxos.yml' -p 5555 -t 10 -T 100000 -n 32 -P localhost > ./log/proc-localhost.log
+nohup ./build/deptran_server -b -d 60 -f 'config/1c1s1p.yml' -f 'config/occ_paxos.yml' -t 10 -T 100000 -n 32 -P localhost > ./log/proc-localhost.log
 ```
 
 #### Multi-thread paxos
 ```
-nohup ./build/deptran_server -b -d 60 -f 'config/1c1s3r1p.yml' -f 'config/occ_paxos.yml' -p 5555 -t 10 -T 100000 -n 32 -P localhost > ./log/proc-localhost.log
+nohup ./build/deptran_server -b -d 60 -f 'config/1c1s3r1p.yml' -f 'config/occ_paxos.yml' -t 10 -T 100000 -n 32 -P localhost > ./log/proc-localhost.log
 ```
 
-#### Multi-process paxos ["new"]  
-open two shell  
-on one of them, run  
+[new]()  
+#### Multi-process paxos  
+open thress shells  
+on the fist one, run  
 ```
-nohup ./build/deptran_server -b -d 60 -f 'config/1c1s2r.yml' -f 'config/occ_paxos.yml' -p 5555 -t 10 -T 100 -n 2 -P localhost > ./log/proc-localhost.log
+nohup ./build/deptran_server -b -d 60 -f 'config/1c1s3r3p.yml' -f 'config/occ_paxos.yml' -t 10 -T 100000 -n 32 -P localhost > ./log/proc-localhost.log
 ```
-on the other one, run
+on the second one, run
 ```
-nohup ./build/deptran_server -b -d 60 -f 'config/1c1s2r.yml' -f 'config/occ_paxos.yml' -p 5556 -t 10 -T 100 -n 2 -P p2 > ./log/proc-p2.log
+nohup ./build/deptran_server -b -d 60 -f 'config/1c1s3r3p.yml' -f 'config/occ_paxos.yml' -t 10 -T 100000 -n 32 -P p2 > ./log/proc-p2.log
 ```
-PS: this one will not return, so you should terminate it manually when the first one finishes.
+
+on the third one, run
+```
+nohup ./build/deptran_server -b -d 60 -f 'config/1c1s3r3p.yml' -f 'config/occ_paxos.yml' -t 10 -T 100000 -n 32 -P p3 > ./log/proc-p3.log
+```
 
 #### To See CPU Profiling
 
@@ -79,7 +84,7 @@ PS: There are 32 outstanding requests.
 
 ```
 ./waf-2.0.18 configure -p build
-./build/deptran_server -d 60 -f 'config/1c1s3r1p.yml' -f 'config/occ_paxos.yml' -p 5555 -t 10  -T 5000 -n 32 -P localhost > ./log/proc-localhost.log
+./build/deptran_server -d 60 -f 'config/1c1s3r1p.yml' -f 'config/occ_paxos.yml' -t 10 -T 5000 -n 32 -P localhost > ./log/proc-localhost.log
 ./pprof --pdf ./build/deptran_server process-localhost.prof > cpu.pdf
 ```
 

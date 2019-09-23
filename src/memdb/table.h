@@ -194,8 +194,8 @@ public:
         return query(SortedMultiKey(mb, schema_));
     }
     Cursor query(const SortedMultiKey& smk) {
-        auto first = rows_.begin();
-        auto last = rows_.rbegin();
+        // auto first = rows_.begin();
+        // auto last = rows_.rbegin();
         auto range = rows_.equal_range(smk);
         return Cursor(range.first, range.second);
     }

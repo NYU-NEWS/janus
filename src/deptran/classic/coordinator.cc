@@ -424,7 +424,7 @@ void CoordinatorClassic::Report(TxReply& txn_reply,
 }
 
 void CoordinatorClassic::___TestPhaseThree(txnid_t txn_id) {
-  auto it = ___phase_three_tids_.find(txn_id);
+  // auto it = ___phase_three_tids_.find(txn_id);
 //  verify(it == ___phase_three_tids_.end());
   ___phase_three_tids_.insert(txn_id);
 }
