@@ -127,6 +127,7 @@ ServerControlServiceImpl::ServerControlServiceImpl(unsigned int timeout,
 }
 
 ServerControlServiceImpl::~ServerControlServiceImpl() {
+  alarm(0);
 }
 
 void ServerControlServiceImpl::set_ready() {

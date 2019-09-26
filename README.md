@@ -37,10 +37,6 @@ Build:
 python3 waf configure build -t
 
 ```
-Test run:
-```
-python3 test_run.py -m janus
-```
 
 ## More
 Check out the doc directory to find more about how to build the system on older or newer distros, how to run the system in a distributed setup, and how to generate figures in the paper, etc.
@@ -50,6 +46,23 @@ For every star collected on this project, I will make a $25 charity loan via [Ki
 -->
 
 ### Run paxos only
+
+#### Potential Environment Problems
+
+* `python3: error while loading shared libraries: libpython3.5m.so.1.0: cannot open shared object file`  
+    download `libpython3.5m.so.1.0`  
+    ```
+    cd /etc/ld.so.conf.d
+    vim python3.conf
+    ```
+    add the path where the file is saved  
+    ```
+    ldconfig
+    ```
+* `error while loading shared libraries: libdeptran_server.so: cannot open shared object file: No such file or directory`
+    ```
+    export LD_LIBRARY_PATH=$(pwd)/build
+    ```
 
 #### One-site paxos
 ```

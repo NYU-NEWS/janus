@@ -123,7 +123,9 @@ void microbench_paxos() {
   }
   Log_info("shutdown Server Control Service after task finish");
   for (auto& worker : pxs_workers_g) {
-    worker->scsi_->server_shutdown();
+    if (worker->hb_rpc_server_ != nullptr) {
+      worker->scsi_->server_shutdown();
+    }
   }
 }
 
