@@ -164,7 +164,7 @@ int shutdown_paxos() {
   RandomGenerator::destroy();
   Config::DestroyConfig();
 
-  Log_debug("exit process.");
+  Log_info("exit process.");
 
   return 0;
 }
