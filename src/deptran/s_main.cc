@@ -9,6 +9,7 @@
 # include <gperftools/profiler.h>
 #endif // ifdef CPU_PROFILE
 #include "config.h"
+#include "s_main.h"
 #include <sys/time.h>
 #include <atomic>
 
@@ -168,11 +169,28 @@ int shutdown_paxos() {
   return 0;
 }
 
-int main(int argc, char* argv[]) {
-  int ret = setup(argc, argv);
-  if (ret != 0) {
-    return ret;
+void register_for_follower(std::function<void(const char*, int)> cb) {
+  for (auto& worker : pxs_workers_g) {
+    worker->register_apply_callback(cb);
   }
-  microbench_paxos();
-  return shutdown_paxos();
+}
+
+void register_for_leader(std::function<void(const char*, int)> cb) {
+  for (auto& worker : pxs_workers_g) {
+    if (worker->IsLeader()) {
+      worker->register_apply_callback(cb);
+    }
+  }
+}
+
+void submit(const char* log, int len) {
+  for (auto& worker : pxs_workers_g) {
+    worker->Submit(log, len);
+  }
+}
+
+void wait_for_submit() {
+  for (auto& worker : pxs_workers_g) {
+    worker->WaitForSubmit();
+  }
 }
