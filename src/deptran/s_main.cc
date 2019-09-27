@@ -171,7 +171,9 @@ int shutdown_paxos() {
 
 void register_for_follower(std::function<void(const char*, int)> cb) {
   for (auto& worker : pxs_workers_g) {
-    worker->register_apply_callback(cb);
+    if (!worker->IsLeader()) {
+      worker->register_apply_callback(cb);
+    }
   }
 }
 
