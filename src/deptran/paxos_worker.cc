@@ -95,6 +95,8 @@ void PaxosWorker::SetupCommo() {
     }
     rep_sched_->commo_ = rep_commo_;
   }
+  if (IsLeader())
+    submit_pool = new SubmitPool();
 }
 
 void PaxosWorker::SetupHeartbeat() {
@@ -121,6 +123,10 @@ void PaxosWorker::SetupHeartbeat() {
 }
 
 void PaxosWorker::WaitForShutdown() {
+  if (submit_pool != nullptr) {
+    delete submit_pool;
+    submit_pool = nullptr;
+  }
   if (hb_rpc_server_ != nullptr) {
     scsi_->server_heart_beat();
     scsi_->wait_for_shutdown();
@@ -151,19 +157,11 @@ void PaxosWorker::ShutDown() {
     delete service;
   }
   thread_pool_g->release();
-  int prepare_tot_sec_ = 0, prepare_tot_usec_ = 0, accept_tot_sec_ = 0, accept_tot_usec_ = 0;
   for (auto c : created_coordinators_) {
-    // prepare_tot_sec_ += c->prepare_sec_;
-    // prepare_tot_usec_ += c->prepare_usec_;
-    // accept_tot_sec_ += c->accept_sec_;
-    // accept_tot_usec_ += c->accept_usec_;
     delete c;
   }
-  Log_info("site %s, tot time: %f, prepare: %f, accept: %f, commit: %f", site_info_->name.c_str(),
-           submit_tot_sec_ + ((float)submit_tot_usec_) / 1000000,
-           prepare_tot_sec_ + ((float)prepare_tot_usec_) / 1000000,
-           accept_tot_sec_ + ((float)accept_tot_usec_) / 1000000,
-           commit_tot_sec_ + ((float)commit_tot_usec_) / 1000000);
+  Log_info("site %s, tot time: %f", site_info_->name.c_str(),
+           submit_tot_sec_ + ((float)submit_tot_usec_) / 1000000);
   if (rep_sched_ != nullptr) {
     delete rep_sched_;
   }

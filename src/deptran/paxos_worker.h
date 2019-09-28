@@ -10,6 +10,79 @@
 
 namespace janus {
 
+class SubmitPool {
+private:
+  struct start_submit_pool_args {
+    SubmitPool* subpool;
+  };
+
+  int n_;
+  rrr::Queue<std::function<void()>*> q_;
+  pthread_t th_;
+  bool should_stop_{false};
+
+  static void* start_thread_pool(void* args) {
+    start_submit_pool_args* t_args = (start_submit_pool_args *) args;
+    t_args->subpool->run_thread();
+    delete t_args;
+    pthread_exit(nullptr);
+    return nullptr;
+  }
+  void run_thread() {
+    for (;;) {
+      function<void()>* job = nullptr;
+      job = q_.pop();
+      if (job == nullptr) { 
+        break;
+      }
+      (*job)();
+      delete job;
+    }
+  }
+
+public:
+  SubmitPool()
+  : n_(1), th_(0) {
+    verify(n_ >= 0);
+    for (int i = 0; i < n_; i++) {
+      start_submit_pool_args* args = new start_submit_pool_args();
+      args->subpool = this;
+      Pthread_create(&th_, nullptr, SubmitPool::start_thread_pool, args);
+    }
+  }
+  SubmitPool(const SubmitPool&) = delete;
+  SubmitPool& operator=(const SubmitPool&) = delete;
+  ~SubmitPool() {
+    should_stop_ = true;
+    for (int i = 0; i < n_; i++) {
+      q_.push(nullptr);  // death pill
+    }
+    for (int i = 0; i < n_; i++) {
+      Pthread_join(th_, nullptr);
+    }
+    wait_for_all();
+  }
+  void wait_for_all() {
+    Log_debug("%s: enter in", __FUNCTION__);
+    for (int i = 0; i < n_; i++) {
+      function<void()>* job;
+      while (q_.try_pop(&job)) {
+        if (job != nullptr) {
+          (*job)();
+          delete job;
+        }
+      }
+    }
+  }
+  int add(const std::function<void()>& f) {
+    if (should_stop_) {
+      return -1;
+    }
+    q_.push(new function<void()>(f));
+    return 0;
+  }
+};
+
 class LogEntry : public Marshallable {
 public:
   char* operation_ = nullptr;
@@ -38,6 +111,7 @@ private:
   struct timeval t2;
 
 public:
+  SubmitPool* submit_pool = nullptr;
   rrr::PollMgr* svr_poll_mgr_ = nullptr;
   vector<rrr::Service*> services_ = {};
   rrr::Server* rpc_server_ = nullptr;
@@ -47,10 +121,6 @@ public:
   int tot_num = 0;
   int submit_tot_sec_ = 0;
   int submit_tot_usec_ = 0;
-  int commit_tot_sec_ = 0;
-  int commit_tot_usec_ = 0;
-  struct timeval commit_time_;
-  struct timeval leader_commit_time_;
 
   rrr::PollMgr* svr_hb_poll_mgr_g = nullptr;
   ServerControlServiceImpl* scsi_ = nullptr;

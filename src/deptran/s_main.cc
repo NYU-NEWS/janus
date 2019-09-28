@@ -187,12 +187,81 @@ void register_for_leader(std::function<void(const char*, int)> cb) {
 
 void submit(const char* log, int len) {
   for (auto& worker : pxs_workers_g) {
-    worker->Submit(log, len);
+    // worker->Submit(log, len);
+    if (!worker->IsLeader()) continue;
+    verify(worker->submit_pool != nullptr);
+    if (worker->submit_pool->add(
+      [&worker, &log, &len]() {
+      worker->Submit(log, len);
+    }) != 0) {
+      Log_fatal("paxos submit_pool error!");
+    }
   }
 }
 
 void wait_for_submit() {
   for (auto& worker : pxs_workers_g) {
+    if (!worker->IsLeader()) continue;
+    if (worker->submit_pool != nullptr) {
+      worker->submit_pool->wait_for_all();
+    }
     worker->WaitForSubmit();
+  }
+}
+
+void microbench_paxos_queue() {
+  // register callback
+  for (auto& worker : pxs_workers_g) {
+    if (worker->IsLeader())
+      worker->register_apply_callback([&worker](const char* log, int len) {
+        Log_debug("submit callback enter in");
+        if (worker->submit_num >= worker->tot_num) return;
+        worker->Submit(log, len);
+        worker->submit_num++;
+      });
+    else
+      worker->register_apply_callback([=](const char* log, int len) {});
+  }
+  auto client_infos = Config::GetConfig()->GetMyClients();
+  if (client_infos.size() <= 0) return;
+  int concurrent = Config::GetConfig()->get_concurrent_txn();
+  for (int i = 0; i < concurrent; i++) {
+    message[i] = new char[len];
+    message[i][0] = (i / 100) + '0';
+    message[i][1] = ((i / 10) % 10) + '0';
+    message[i][2] = (i % 10) + '0';
+    for (int j = 3; j < len - 1; j++) {
+      message[i][j] = (rand() % 10) + '0';
+    }
+    message[i][len - 1] = '\0';
+  }
+#ifdef CPU_PROFILE
+  char prof_file[1024];
+  Config::GetConfig()->GetProfilePath(prof_file);
+  // start to profile
+  ProfilerStart(prof_file);
+#endif // ifdef CPU_PROFILE
+  struct timeval t1, t2;
+  gettimeofday(&t1, NULL);
+  for (int i = 0; i < concurrent; i++) {
+    submit(message[i], len);
+  }
+  wait_for_submit();
+  gettimeofday(&t2, NULL);
+  pxs_workers_g[0]->submit_tot_sec_ += t2.tv_sec - t1.tv_sec;
+  pxs_workers_g[0]->submit_tot_usec_ += t2.tv_usec - t1.tv_usec;
+#ifdef CPU_PROFILE
+  // stop profiling
+  ProfilerStop();
+#endif // ifdef CPU_PROFILE
+
+  for (int i = 0; i < concurrent; i++) {
+    delete message[i];
+  }
+  Log_info("shutdown Server Control Service after task finish");
+  for (auto& worker : pxs_workers_g) {
+    if (worker->hb_rpc_server_ != nullptr) {
+      worker->scsi_->server_shutdown();
+    }
   }
 }
