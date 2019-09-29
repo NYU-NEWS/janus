@@ -191,7 +191,7 @@ void submit(const char* log, int len) {
     if (!worker->IsLeader()) continue;
     verify(worker->submit_pool != nullptr);
     if (worker->submit_pool->add(
-      [&worker, &log, &len]() {
+      [=, &worker]() {
       worker->Submit(log, len);
     }) != 0) {
       Log_fatal("paxos submit_pool error!");
@@ -216,7 +216,7 @@ void microbench_paxos_queue() {
       worker->register_apply_callback([&worker](const char* log, int len) {
         Log_debug("submit callback enter in");
         if (worker->submit_num >= worker->tot_num) return;
-        worker->Submit(log, len);
+        submit(log, len);
         worker->submit_num++;
       });
     else
@@ -243,8 +243,17 @@ void microbench_paxos_queue() {
 #endif // ifdef CPU_PROFILE
   struct timeval t1, t2;
   gettimeofday(&t1, NULL);
-  for (int i = 0; i < concurrent; i++) {
-    submit(message[i], len);
+  vector<std::thread> ths;
+  for (int j = 0; j < 5; j++) {
+    ths.push_back(std::thread([&concurrent]() {
+      for (int i = 0; i < concurrent; i++) {
+        submit(message[i], len);
+      }
+    }));
+  }
+  Log_info("waiting for submission threads.");
+  for (auto& th : ths) {
+    th.join();
   }
   wait_for_submit();
   gettimeofday(&t2, NULL);
