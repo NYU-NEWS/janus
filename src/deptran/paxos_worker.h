@@ -17,7 +17,10 @@ private:
   };
 
   int n_;
-  rrr::Queue<std::function<void()>*> q_;
+  std::list<std::function<void()>*>* q_;
+  pthread_cond_t not_empty_;
+  pthread_mutex_t m_;
+  pthread_mutex_t run_;
   pthread_t th_;
   bool should_stop_{false};
 
@@ -31,19 +34,40 @@ private:
   void run_thread() {
     for (;;) {
       function<void()>* job = nullptr;
-      job = q_.pop();
-      if (job == nullptr) { 
+      Pthread_mutex_lock(&m_);
+      while (q_->empty()) {
+        Pthread_cond_wait(&not_empty_, &m_);
+      }
+      Pthread_mutex_lock(&run_);
+      job = q_->front();
+      q_->pop_front();
+      Pthread_mutex_unlock(&m_);
+      if (job == nullptr) {
+        Pthread_mutex_unlock(&run_);
         break;
       }
       (*job)();
       delete job;
+      Pthread_mutex_unlock(&run_);
     }
+  }
+  bool try_pop(std::function<void()>** t) {
+    bool ret = false;
+    if (!q_->empty()) {
+        ret = true;
+        *t = q_->front();
+        q_->pop_front();
+    }
+    return ret;
   }
 
 public:
   SubmitPool()
-  : n_(1), th_(0) {
+  : n_(1), th_(0), q_(new std::list<std::function<void()>*>), not_empty_(), m_(), run_() {
     verify(n_ >= 0);
+    Pthread_mutex_init(&m_, nullptr);
+    Pthread_mutex_init(&run_, nullptr);
+    Pthread_cond_init(&not_empty_, nullptr);
     for (int i = 0; i < n_; i++) {
       start_submit_pool_args* args = new start_submit_pool_args();
       args->subpool = this;
@@ -55,30 +79,44 @@ public:
   ~SubmitPool() {
     should_stop_ = true;
     for (int i = 0; i < n_; i++) {
-      q_.push(nullptr);  // death pill
+      Pthread_mutex_lock(&m_);
+      q_->push_back(nullptr); //death pill
+      Pthread_cond_signal(&not_empty_);
+      Pthread_mutex_unlock(&m_);
     }
     for (int i = 0; i < n_; i++) {
       Pthread_join(th_, nullptr);
     }
+    Log_debug("%s: enter in wait_for_all", __FUNCTION__);
     wait_for_all();
+    Pthread_cond_destroy(&not_empty_);
+    Pthread_mutex_destroy(&m_);
+    Pthread_mutex_destroy(&run_);
+    delete q_;
   }
   void wait_for_all() {
-    Log_debug("%s: enter in", __FUNCTION__);
     for (int i = 0; i < n_; i++) {
       function<void()>* job;
-      while (q_.try_pop(&job)) {
+      Pthread_mutex_lock(&m_);
+      Pthread_mutex_lock(&run_);
+      while (try_pop(&job)) {
         if (job != nullptr) {
           (*job)();
           delete job;
         }
       }
+      Pthread_mutex_unlock(&m_);
+      Pthread_mutex_unlock(&run_);
     }
   }
   int add(const std::function<void()>& f) {
     if (should_stop_) {
       return -1;
     }
-    q_.push(new function<void()>(f));
+    Pthread_mutex_lock(&m_);
+    q_->push_back(new function<void()>(f));
+    Pthread_cond_signal(&not_empty_);
+    Pthread_mutex_unlock(&m_);
     return 0;
   }
 };

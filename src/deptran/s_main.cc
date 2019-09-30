@@ -248,6 +248,7 @@ void microbench_paxos_queue() {
     ths.push_back(std::thread([&concurrent]() {
       for (int i = 0; i < concurrent; i++) {
         submit(message[i], len);
+        wait_for_submit();
       }
     }));
   }
@@ -255,7 +256,7 @@ void microbench_paxos_queue() {
   for (auto& th : ths) {
     th.join();
   }
-  wait_for_submit();
+  // wait_for_submit();
   gettimeofday(&t2, NULL);
   pxs_workers_g[0]->submit_tot_sec_ += t2.tv_sec - t1.tv_sec;
   pxs_workers_g[0]->submit_tot_usec_ += t2.tv_usec - t1.tv_usec;

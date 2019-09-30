@@ -49,7 +49,7 @@ void PaxosWorker::Next(Marshallable& cmd) {
   if (n_current > 0) {
     n_current--;
     if (n_current == 0) {
-      finish_cond.signal();
+      finish_cond.bcast();
     }
   }
 }
@@ -192,8 +192,8 @@ inline void PaxosWorker::_Submit(shared_ptr<Marshallable> sp_m) {
   // finish_mutex.lock();
   n_current++;
   // finish_mutex.unlock();
-  static cooid_t cid = 0;
-  static id_t id = 0;
+  static cooid_t cid = 1;
+  static id_t id = 1;
   verify(rep_frame_ != nullptr);
   Coordinator* coord = rep_frame_->CreateCoordinator(cid++,
                                                      Config::GetConfig(),
