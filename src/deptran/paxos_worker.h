@@ -180,10 +180,10 @@ public:
 
   static const uint32_t CtrlPortDelta = 10000;
   void WaitForShutdown();
-  bool IsLeader();
+  bool IsLeader(uint32_t);
+  bool IsPartition(uint32_t);
 
-  void SubmitExample();
-  void Submit(const char*, int);
+  void Submit(const char*, int, uint32_t);
   void register_apply_callback(std::function<void(const char*, int)>);
 };
 

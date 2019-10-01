@@ -32,6 +32,7 @@ void PaxosWorker::SetupBase() {
   rep_frame_->site_info_ = site_info_;
   rep_sched_ = rep_frame_->CreateScheduler();
   rep_sched_->loc_id_ = site_info_->locale_id;
+  rep_sched_->partition_id_ = site_info_->partition_id_;
   this->tot_num = config->get_tot_req();
 }
 
@@ -95,7 +96,7 @@ void PaxosWorker::SetupCommo() {
     }
     rep_sched_->commo_ = rep_commo_;
   }
-  if (IsLeader())
+  if (IsLeader(site_info_->partition_id_))
     submit_pool = new SubmitPool();
 }
 
@@ -177,8 +178,8 @@ void PaxosWorker::WaitForSubmit() {
   Log_debug("finish task.");
 }
 
-void PaxosWorker::Submit(const char* log_entry, int length) {
-  if (!IsLeader()) return;
+void PaxosWorker::Submit(const char* log_entry, int length, uint32_t par_id) {
+  if (!IsLeader(par_id)) return;
   auto sp_cmd = make_shared<LogEntry>();
   // sp_cmd->operation_ = new char[length];
   // strcpy(sp_cmd->operation_, log_entry);
@@ -207,15 +208,17 @@ inline void PaxosWorker::_Submit(shared_ptr<Marshallable> sp_m) {
   coord->Submit(sp_m);
 }
 
-void PaxosWorker::SubmitExample() {
-  char testdata[] = "abc";
-  Submit(testdata, 4);
-}
-
-bool PaxosWorker::IsLeader() {
+bool PaxosWorker::IsLeader(uint32_t par_id) {
   verify(rep_frame_ != nullptr);
   verify(rep_frame_->site_info_ != nullptr);
-  return rep_frame_->site_info_->locale_id == 0;
+  return rep_frame_->site_info_->partition_id_ == par_id &&
+         rep_frame_->site_info_->locale_id == 0;
+}
+
+bool PaxosWorker::IsPartition(uint32_t par_id) {
+  verify(rep_frame_ != nullptr);
+  verify(rep_frame_->site_info_ != nullptr);
+  return rep_frame_->site_info_->partition_id_ == par_id;
 }
 
 void PaxosWorker::register_apply_callback(std::function<void(const char*, int)> cb) {

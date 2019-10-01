@@ -72,11 +72,11 @@ char* message[200];
 void microbench_paxos() {
   // register callback
   for (auto& worker : pxs_workers_g) {
-    if (worker->IsLeader())
+    if (worker->IsLeader(worker->site_info_->partition_id_))
       worker->register_apply_callback([&worker](const char* log, int len) {
         Log_debug("submit callback enter in");
         if (worker->submit_num >= worker->tot_num) return;
-        worker->Submit(log, len);
+        worker->Submit(log, len, worker->site_info_->partition_id_);
         worker->submit_num++;
       });
     else
@@ -105,7 +105,7 @@ void microbench_paxos() {
   gettimeofday(&t1, NULL);
   for (int i = 0; i < concurrent; i++) {
     for (auto& worker : pxs_workers_g) {
-      worker->Submit(message[i], len);
+      worker->Submit(message[i], len, worker->site_info_->partition_id_);
     }
   }
   for (auto& worker : pxs_workers_g) {
@@ -169,42 +169,41 @@ int shutdown_paxos() {
   return 0;
 }
 
-void register_for_follower(std::function<void(const char*, int)> cb) {
+void register_for_follower(std::function<void(const char*, int)> cb, uint32_t par_id) {
   for (auto& worker : pxs_workers_g) {
-    if (!worker->IsLeader()) {
+    if (worker->IsPartition(par_id) && !worker->IsLeader(par_id)) {
       worker->register_apply_callback(cb);
     }
   }
 }
 
-void register_for_leader(std::function<void(const char*, int)> cb) {
+void register_for_leader(std::function<void(const char*, int)> cb, uint32_t par_id) {
   for (auto& worker : pxs_workers_g) {
-    if (worker->IsLeader()) {
+    if (worker->IsLeader(par_id)) {
       worker->register_apply_callback(cb);
     }
   }
 }
 
-void submit(const char* log, int len) {
+void submit(const char* log, int len, uint32_t par_id) {
   for (auto& worker : pxs_workers_g) {
     // worker->Submit(log, len);
-    if (!worker->IsLeader()) continue;
+    if (!worker->IsLeader(par_id)) continue;
     verify(worker->submit_pool != nullptr);
     if (worker->submit_pool->add(
-      [=, &worker]() {
-      worker->Submit(log, len);
-    }) != 0) {
+            [=, &worker]() {
+              worker->Submit(log, len, par_id);
+            }) != 0) {
       Log_fatal("paxos submit_pool error!");
     }
   }
 }
 
-void wait_for_submit() {
+void wait_for_submit(uint32_t par_id) {
   for (auto& worker : pxs_workers_g) {
-    if (!worker->IsLeader()) continue;
-    if (worker->submit_pool != nullptr) {
-      worker->submit_pool->wait_for_all();
-    }
+    if (!worker->IsLeader(par_id)) continue;
+    verify(worker->submit_pool != nullptr);
+    worker->submit_pool->wait_for_all();
     worker->WaitForSubmit();
   }
 }
@@ -212,11 +211,11 @@ void wait_for_submit() {
 void microbench_paxos_queue() {
   // register callback
   for (auto& worker : pxs_workers_g) {
-    if (worker->IsLeader())
+    if (worker->IsLeader(worker->site_info_->partition_id_))
       worker->register_apply_callback([&worker](const char* log, int len) {
         Log_debug("submit callback enter in");
         if (worker->submit_num >= worker->tot_num) return;
-        submit(log, len);
+        submit(log, len, worker->site_info_->partition_id_);
         worker->submit_num++;
       });
     else
@@ -244,11 +243,13 @@ void microbench_paxos_queue() {
   struct timeval t1, t2;
   gettimeofday(&t1, NULL);
   vector<std::thread> ths;
-  for (int j = 0; j < 5; j++) {
-    ths.push_back(std::thread([&concurrent]() {
+  int k = 0;
+  for (int j = 0; j < 1; j++) {
+    ths.push_back(std::thread([=, &k]() {
+      int par_id = k++;
       for (int i = 0; i < concurrent; i++) {
-        submit(message[i], len);
-        wait_for_submit();
+        submit(message[i], len, par_id);
+        // wait_for_submit(j);
       }
     }));
   }
@@ -256,7 +257,20 @@ void microbench_paxos_queue() {
   for (auto& th : ths) {
     th.join();
   }
-  // wait_for_submit();
+  while (1) {
+    for (int j = 0; j < 1; j++) {
+      wait_for_submit(j);
+    }
+    bool flag = true;
+    for (auto& worker : pxs_workers_g) {
+      if (worker->tot_num > worker->submit_num)
+        flag = false;
+    }
+    if (flag) {
+      Log_info("microbench finishes");
+      break;
+    }
+  }
   gettimeofday(&t2, NULL);
   pxs_workers_g[0]->submit_tot_sec_ += t2.tv_sec - t1.tv_sec;
   pxs_workers_g[0]->submit_tot_usec_ += t2.tv_usec - t1.tv_usec;
@@ -265,6 +279,8 @@ void microbench_paxos_queue() {
   ProfilerStop();
 #endif // ifdef CPU_PROFILE
 
+  Log_info("%s, time consumed: %f", pxs_workers_g[0]->site_info_->name.c_str(),
+           pxs_workers_g[0]->submit_tot_sec_ + ((float)pxs_workers_g[0]->submit_tot_usec_) / 1000000);
   for (int i = 0; i < concurrent; i++) {
     delete message[i];
   }

@@ -45,51 +45,33 @@ Check out the doc directory to find more about how to build the system on older 
 For every star collected on this project, I will make a $25 charity loan via [Kiva] (https://www.kiva.org/invitedby/gzcdm3147?utm_campaign=permurl-share-invite-normal&utm_medium=referral&utm_content=gzcdm3147&utm_source=mpaxos.com).
 -->
 
-### Run paxos only
+### For Paxos
 
 #### Potential Environment Problems
-
-* `python3: error while loading shared libraries: libpython3.5m.so.1.0: cannot open shared object file`  
-    download `libpython3.5m.so.1.0`  
-    ```
-    cd /etc/ld.so.conf.d
-    vim python3.conf
-    ```
-    add the path where the file is saved  
-    ```
-    ldconfig
-    ```
 * `error while loading shared libraries: libdeptran_server.so: cannot open shared object file: No such file or directory`
     ```
     export LD_LIBRARY_PATH=$(pwd)/build
     ```
 
-#### One-site paxos
+#### Multi-process paxos
+
 ```
-nohup ./build/deptran_server -b -d 60 -f 'config/1c1s1p.yml' -f 'config/occ_paxos.yml' -t 10 -T 100000 -n 32 -P localhost > ./log/proc-localhost.log
+make
+python3 paxos-microbench.py -d 60 -f 'config/1c1s3r3p.yml' -f 'config/occ_paxos.yml' -t 30 -T 100000 -n 32 -P p3 -P p2 -P localhost
 ```
 
 #### Multi-thread paxos
+
 ```
-nohup ./build/deptran_server -b -d 60 -f 'config/1c1s3r1p.yml' -f 'config/occ_paxos.yml' -t 10 -T 100000 -n 32 -P localhost > ./log/proc-localhost.log
+make
+python3 paxos-microbench.py -d 60 -f 'config/1c1s3r1p.yml' -f 'config/occ_paxos.yml' -t 30 -T 100000 -n 32 -P localhost
 ```
 
-[new]()  
-#### Multi-process paxos  
-open thress shells  
-on the fist one, run  
-```
-nohup ./build/deptran_server -b -d 60 -f 'config/1c1s3r3p.yml' -f 'config/occ_paxos.yml' -t 10 -T 100000 -n 32 -P localhost > ./log/proc-localhost.log
-```
-on the second one, run
-```
-nohup ./build/deptran_server -b -d 60 -f 'config/1c1s3r3p.yml' -f 'config/occ_paxos.yml' -t 10 -T 100000 -n 32 -P p2 > ./log/proc-p2.log
-```
+#### Others
 
-on the third one, run
-```
-nohup ./build/deptran_server -b -d 60 -f 'config/1c1s3r3p.yml' -f 'config/occ_paxos.yml' -t 10 -T 100000 -n 32 -P p3 > ./log/proc-p3.log
-```
+run `python3 paxos-microbench.py -h` for help  
+**MUST** add all process names in the config files  
+for multi-process paxos, if some site fails to start, change the order of your `-P` options and try again
 
 #### To See CPU Profiling
 
@@ -97,7 +79,7 @@ PS: There are 32 outstanding requests.
 
 ```
 ./waf-2.0.18 configure -p build
-./build/deptran_server -d 60 -f 'config/1c1s3r1p.yml' -f 'config/occ_paxos.yml' -t 10 -T 5000 -n 32 -P localhost > ./log/proc-localhost.log
+./build/microbench -d 60 -f 'config/1c1s3r1p.yml' -f 'config/occ_paxos.yml' -t 10 -T 5000 -n 32 -P localhost > ./log/proc-localhost.log
 ./pprof --pdf ./build/deptran_server process-localhost.prof > cpu.pdf
 ```
 
