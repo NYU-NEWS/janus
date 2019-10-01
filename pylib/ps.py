@@ -1,11 +1,11 @@
 import subprocess
 import threading
 import logging
-import Queue
+import queue
 
 def ps(hosts, grep_filter):
-    output = [] 
-    queue = Queue.Queue(len(hosts))
+    output = []
+    q = queue.Queue(len(hosts))
 
     def work(host, grep_filter):
         cmd = ['/bin/bash', '-c', "'ps -eLF | grep \"{}\"'".format(grep_filter)]
@@ -16,22 +16,22 @@ def ps(hosts, grep_filter):
 
         try:
             o = subprocess.check_output(ssh_cmd)
-            output += o
+            output += str(o)
         except subprocess.CalledProcessError as e:
             output += "error calling ps! returncode {}".format(e.returncode)
-        queue.put(output)
+        q.put(output)
 
-   
+
     threads=[]
     for host in hosts:
         t = threading.Thread(target=work, args=(host, grep_filter,))
         threads.append(t)
         t.start()
-    
+
     for x in range(len(hosts)):
         try:
-            output.append(queue.get(True, 1))
-        except Queue.Empty as e:
+            output.append(q.get(True, 1))
+        except queue.Empty as e:
             logging.debug("timeout waiting for value from: " + str(x))
             pass
 
@@ -52,9 +52,8 @@ def killall(hosts, proc, param="-9"):
         t = threading.Thread(target=work,args=(host, proc, param,))
         threads.append(t)
         t.start()
-    
+
     logging.info("waiting for killall commands to finish.")
     for t in threads:
         t.join()
     logging.info("done waiting for killall commands to finish.")
-

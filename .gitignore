@@ -38,3 +38,7 @@ tags
 GTAGS
 GRTAGS
 GPATH
+/CMakeFiles
+/_3rdParty
+/.clang-format
+*.so

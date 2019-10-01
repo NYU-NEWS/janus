@@ -133,8 +133,10 @@ def build(bld):
               source=bld.path.ant_glob("src/rrr/pylib/simplerpc/*.cpp"),
               target="_pyrpc",
               includes="src src/rrr src/rrr/rpc",
+              uselib="BOOST",
               use="rrr simplerpc PYTHON")
-
+    
+    _run_cmd("cp build/_pyrpc*.so src/rrr/pylib/simplerpc/")
 
     bld.program(source=bld.path.ant_glob("src/deptran/*.cc "
                                          "src/deptran/*/*.cc "

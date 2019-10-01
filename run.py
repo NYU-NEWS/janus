@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 
 # python system modules
 import os
@@ -34,7 +34,7 @@ from deptran.rcc_rpc import ServerControlProxy
 from deptran.rcc_rpc import ClientControlProxy
 from pylib import ps
 
-LOG_LEVEL = logging.INFO
+LOG_LEVEL = logging.DEBUG
 LOG_FILE_LEVEL = logging.DEBUG
 logger = logging.getLogger('janus')
 
@@ -499,8 +499,8 @@ class ClientController(object):
                 time.sleep(self.timeout)
 
     def print_stage_result(self, do_sample, do_sample_lock):
-        sites = ProcessInfo.get_sites(self.process_infos,
-                                      SiteInfo.SiteType.Client)
+        # sites = ProcessInfo.get_sites(self.process_infos,
+        #                               SiteInfo.SiteType.Client)
 
         interval_time = (self.run_sec - self.pre_run_sec) + \
                         ((self.run_nsec - self.pre_run_nsec) / ONE_BILLION)
@@ -593,7 +593,7 @@ class ClientController(object):
     def client_shutdown(self):
         logger.debug("Shutting down clients ...")
         sites = ProcessInfo.get_sites(self.process_infos, SiteInfo.SiteType.Client)
-        for site in self.sites:
+        for site in sites:
             try:
                 site.rpc_proxy.sync_client_shutdown()
             except:
@@ -650,7 +650,7 @@ class ServerController(object):
         self.pre_time = time.time()
 
     def server_kill(self):
-        hosts = { pi.host_address for pi in self.process_infos.itervalues() }
+        hosts = { pi.host_address for pi in self.process_infos.values() }
         ps_output = ps.ps(hosts, "deptran_server")
         logger.debug("Existing Server or Client Processes:\n{}".format(ps_output))
         ps.killall(hosts, "deptran_server", "-9")
@@ -702,6 +702,7 @@ class ServerController(object):
         try:
             sites = ProcessInfo.get_sites(self.process_infos,
                                           SiteInfo.SiteType.Server)
+            logger.debug("sites: " + str(sites))
             for site in sites:
                 site.connect_rpc(300)
                 logger.info("Connected to site %s @ %s", site.name, site.process.host_address)
@@ -710,6 +711,7 @@ class ServerController(object):
 
                 logger.info("call sync_server_ready on site {}".format(site.id))
                 while (site.rpc_proxy.sync_server_ready() != 1):
+                    logger.debug("site.rpc_proxy.sync_server_ready returns")
                     time.sleep(1) # waiting for server to initialize
                 logger.info("site %s ready", site.name)
 
@@ -848,7 +850,7 @@ class ServerController(object):
     def start(self):
         # this current starts all the processes
         # todo: separate this into a class that starts and stops deptran
-        host_process_counts = { host_address: 0 for host_address in self.config['host'].itervalues() }
+        host_process_counts = { host_address: 0 for host_address in self.config['host'].values() }
         def run_one_server(process, process_name, host_process_counts):
             logger.info("starting %s @ %s", process_name, process.host_address)
             cmd = self.gen_process_cmd(process, host_process_counts)
@@ -858,7 +860,7 @@ class ServerController(object):
         logger.debug(self.process_infos)
 
         t_list = []
-        for process_name, process in self.process_infos.iteritems():
+        for process_name, process in self.process_infos.items():
             t = Thread(target=run_one_server,
                        args=(process, process_name, host_process_counts,))
             t.start()
@@ -1029,6 +1031,7 @@ class SiteInfo:
             bind_address = "{host}:{port}".format(
                 host=self.process.host_address,
                 port=port)
+            logger.debug("SiteInfo.connect_rpc: rpc_client bind_addr: " + bind_address)
             result = self.rpc_client.connect(bind_address)
             if time.time() - connect_start > timeout:
                 raise RuntimeError("rpc connect time out")
@@ -1081,7 +1084,7 @@ class ProcessInfo:
         else:
             m = ProcessInfo.server_sites
 
-        for process in process_list.itervalues():
+        for process in process_list.values():
             for site in m(process):
                 sites.append(site)
         return sites
@@ -1097,7 +1100,7 @@ def get_process_info(config):
 
 
     process_infos = {}
-    for (_, process_name) in sorted_processes.iteritems():
+    for (_, process_name) in sorted_processes.items():
         if process_name not in process_infos:
             process_infos[process_name] = ProcessInfo(process_name,
                                                       hosts[process_name],
@@ -1162,9 +1165,9 @@ def main():
 
         process_infos = get_process_info(config)
         server_controller = ServerController(config, process_infos)
-        logger.debug("before server_controller.start");
+        logger.debug("before server_controller.start")
         server_controller.start()
-        logger.debug("after server_controller.start");
+        logger.debug("after server_controller.start")
 
         client_controller = ClientController(config, process_infos)
 
