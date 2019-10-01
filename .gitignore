@@ -44,3 +44,4 @@ GPATH
 *.so
 .vscode/
 cpu*
+profile-results/

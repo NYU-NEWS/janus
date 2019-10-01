@@ -112,10 +112,10 @@ def build(bld):
 #     _depend("old-test/benchmark_service.h", "old-test/benchmark_service.rpc",
 #             "bin/rpcgen --cpp old-test/benchmark_service.rpc")
 
-#     bld.stlib(source=bld.path.ant_glob("extern_interface/scheduler.c"),
-#               target="externc",
-#               includes="",
-#               use="")
+    bld.stlib(source=bld.path.ant_glob("extern_interface/scheduler.c"),
+              target="externc",
+              includes="",
+              use="")
 
     bld.stlib(source=bld.path.ant_glob("src/rrr/base/*.cpp "
                                        "src/rrr/misc/*.cpp "
@@ -164,6 +164,10 @@ def post(conf):
                 includes="src src/rrr src/deptran ",
                 uselib="YAML-CPP BOOST",
                 use="externc rrr memdb PTHREAD PROFILER RT deptran_server")
+    bld.add_post_fun(post)
+
+def post(conf):
+    _run_cmd("cp build/_pyrpc*.so src/rrr/pylib/simplerpc/")
 
 #
 # waf helper functions
