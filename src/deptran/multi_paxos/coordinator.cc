@@ -48,37 +48,41 @@ void CoordinatorMultiPaxos::Prepare() {
             par_id_,
             slot_id_);
   verify(n_prepare_ack_ == 0);
-  commo()->BroadcastPrepare(par_id_,
-                            slot_id_,
-                            curr_ballot_,
-                            std::bind(&CoordinatorMultiPaxos::PrepareAck,
-                                      this,
-                                      phase_,
-                                      std::placeholders::_1));
-}
-
-void CoordinatorMultiPaxos::PrepareAck(phase_t phase, Future* fu) {
-  std::lock_guard<std::recursive_mutex> lock(mtx_);
-  if (phase_ != phase) return;
-  ballot_t max_ballot;
-  fu->get_reply() >> max_ballot;
-  if (max_ballot == curr_ballot_) {
-    n_prepare_ack_++;
-    verify(n_prepare_ack_ <= n_replica_);
-    if (n_prepare_ack_ >= GetQuorum()) {
-      GotoNextPhase();
-    }
-  } else {
-    if (max_ballot > curr_ballot_) {
-      curr_ballot_ = max_ballot + 1;
-      Log_debug("%s: saw greater ballot increment to %d",
-                __FUNCTION__, curr_ballot_);
-      phase_ = Phase::INIT_END;
-      GotoNextPhase();
-    } else {
-      // max_ballot < curr_ballot ignore
-    }
-  }
+  int n_replica = Config::GetConfig()->GetPartitionSize(par_id_);
+  auto sp_quorum_event = Reactor::CreateSpEvent<QuorumEvent>(n_replica, n_replica / 2 + 1);
+  commo()->BroadcastPrepare(sp_quorum_event, par_id_, slot_id_, curr_ballot_);
+  sp_quorum_event->Wait();
+//  commo()->BroadcastPrepare(par_id_,
+//                            slot_id_,
+//                            curr_ballot_,
+//                            std::bind(&CoordinatorMultiPaxos::PrepareAck,
+//                                      this,
+//                                      phase_,
+//                                      std::placeholders::_1));
+//}
+//
+//void CoordinatorMultiPaxos::PrepareAck(phase_t phase, Future* fu) {
+//  std::lock_guard<std::recursive_mutex> lock(mtx_);
+//  if (phase_ != phase) return;
+//  ballot_t max_ballot;
+//  fu->get_reply() >> max_ballot;
+//  if (max_ballot == curr_ballot_) {
+//    n_prepare_ack_++;
+//    verify(n_prepare_ack_ <= n_replica_);
+//    if (n_prepare_ack_ >= GetQuorum()) {
+//      GotoNextPhase();
+//    }
+//  } else {
+//    if (max_ballot > curr_ballot_) {
+//      curr_ballot_ = max_ballot + 1;
+//      Log_debug("%s: saw greater ballot increment to %d",
+//                __FUNCTION__, curr_ballot_);
+//      phase_ = Phase::INIT_END;
+//      GotoNextPhase();
+//    } else {
+////       max_ballot < curr_ballot ignore
+//    }
+//  }
 }
 
 void CoordinatorMultiPaxos::Accept() {
@@ -88,38 +92,44 @@ void CoordinatorMultiPaxos::Accept() {
   Log_debug("multi-paxos coordinator broadcasts accept, "
                 "par_id_: %lx, slot_id: %llx",
             par_id_, slot_id_);
-  commo()->BroadcastAccept(par_id_,
-                           slot_id_,
-                           curr_ballot_,
-                           cmd_,
-                           std::bind(&CoordinatorMultiPaxos::AcceptAck,
-                                     this,
-                                     phase_,
-                                     std::placeholders::_1));
-}
-
-void CoordinatorMultiPaxos::AcceptAck(phase_t phase, Future* fu) {
-  std::lock_guard<std::recursive_mutex> lock(mtx_);
-  if (phase_ > phase) return;
-  ballot_t max_ballot;
-  fu->get_reply() >> max_ballot;
-  if (max_ballot == curr_ballot_) {
-    n_finish_ack_++;
-    if (n_finish_ack_ >= GetQuorum()) {
-      committed_ = true;
-      GotoNextPhase();
-    }
-  } else {
-    if (max_ballot > curr_ballot_) {
-      curr_ballot_ = max_ballot + 1;
-      Log_debug("%s: saw greater ballot increment to %d",
-                __FUNCTION__, curr_ballot_);
-      phase_ = Phase::INIT_END;
-      GotoNextPhase();
-    } else {
-      // max_ballot < curr_ballot ignore
-    }
-  }
+  int n_replica = Config::GetConfig()->GetPartitionSize(par_id_);
+  auto sp_quorum_event = Reactor::CreateSpEvent<QuorumEvent>(n_replica, n_replica / 2 + 1);
+  commo()->BroadcastAccept(sp_quorum_event, par_id_, slot_id_, curr_ballot_, cmd_);
+  sp_quorum_event->Wait();
+  // TODO process the case where failed to get a majority.
+  committed_ = true;
+//  commo()->BroadcastAccept(par_id_,
+//                           slot_id_,
+//                           curr_ballot_,
+//                           cmd_,
+//                           std::bind(&CoordinatorMultiPaxos::AcceptAck,
+//                                     this,
+//                                     phase_,
+//                                     std::placeholders::_1));
+//}
+//
+//void CoordinatorMultiPaxos::AcceptAck(phase_t phase, Future* fu) {
+//  std::lock_guard<std::recursive_mutex> lock(mtx_);
+//  if (phase_ > phase) return;
+//  ballot_t max_ballot;
+//  fu->get_reply() >> max_ballot;
+//  if (max_ballot == curr_ballot_) {
+//    n_finish_ack_++;
+//    if (n_finish_ack_ >= GetQuorum()) {
+//      committed_ = true;
+//      GotoNextPhase();
+//    }
+//  } else {
+//    if (max_ballot > curr_ballot_) {
+//      curr_ballot_ = max_ballot + 1;
+//      Log_debug("%s: saw greater ballot increment to %d",
+//                __FUNCTION__, curr_ballot_);
+//      phase_ = Phase::INIT_END;
+//      GotoNextPhase();
+//    } else {
+//      // max_ballot < curr_ballot ignore
+//    }
+//  }
 }
 
 void CoordinatorMultiPaxos::Commit() {
@@ -135,15 +145,18 @@ void CoordinatorMultiPaxos::Commit() {
 void CoordinatorMultiPaxos::GotoNextPhase() {
   int n_phase = 4;
   int current_phase = phase_ % n_phase;
-  switch (phase_++ % n_phase) {
+  phase_++;
+  switch (current_phase) {
     case Phase::INIT_END:
       if (IsLeader()) {
-        phase_++;
+        phase_++; // skip prepare phase for "leader"
+        verify(phase_ % n_phase == Phase::ACCEPT);
         Accept();
+        phase_++;
       } else {
-        Prepare();
+        // TODO
+        verify(0);
       }
-      break;
     case Phase::ACCEPT:
       verify(phase_ % n_phase == Phase::COMMIT);
       if (committed_) {

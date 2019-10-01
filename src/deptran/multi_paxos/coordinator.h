@@ -60,9 +60,9 @@ class CoordinatorMultiPaxos : public Coordinator {
 
   ballot_t PickBallot();
   void Prepare();
-  void PrepareAck(phase_t phase, Future *fu);
+//  void PrepareAck(phase_t phase, Future *fu);
   void Accept();
-  void AcceptAck(phase_t phase, Future *fu);
+//  void AcceptAck(phase_t phase, Future *fu);
   void Commit();
 
   void Reset() override {}

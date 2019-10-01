@@ -4,6 +4,7 @@
 #include <list>
 #include "base/misc.hpp"
 #include "event.h"
+#include "quorum_event.h"
 #include "coroutine.h"
 #include "epoll_wrapper.h"
 
@@ -42,10 +43,11 @@ class Reactor {
   template <typename Ev, typename... Args>
   static shared_ptr<Ev> CreateSpEvent(Args&&... args) {
     auto& events = GetReactor()->events_;
-    auto p_ev = make_shared<Ev>(args...);
+    auto sp_ev = make_shared<Ev>(args...);
+    sp_ev->__debug_creator = 1;
     // TODO push them into a wait queue when they actually wait.
-    events.push_back(p_ev);
-    return p_ev;
+    events.push_back(sp_ev);
+    return sp_ev;
   }
 
   template <typename Ev, typename... Args>

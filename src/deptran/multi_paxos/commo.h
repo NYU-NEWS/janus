@@ -11,10 +11,19 @@ class MultiPaxosCommo : public Communicator {
  public:
   MultiPaxosCommo() = delete;
   MultiPaxosCommo(PollMgr*);
+  void BroadcastPrepare(shared_ptr<QuorumEvent> quorum_event,
+                        parid_t par_id,
+                        slotid_t slot_id,
+                        ballot_t ballot);
   void BroadcastPrepare(parid_t par_id,
                         slotid_t slot_id,
                         ballot_t ballot,
                         const function<void(Future *fu)> &callback);
+  void BroadcastAccept(shared_ptr<QuorumEvent> quorum_event,
+                       parid_t par_id,
+                       slotid_t slot_id,
+                       ballot_t ballot,
+                       shared_ptr<Marshallable> cmd);
   void BroadcastAccept(parid_t par_id,
                        slotid_t slot_id,
                        ballot_t ballot,

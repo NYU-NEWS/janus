@@ -1,5 +1,4 @@
 #include "commo.h"
-#include "quorum_event.h"
 
 using namespace janus;
 

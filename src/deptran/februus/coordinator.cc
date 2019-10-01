@@ -1,7 +1,6 @@
 #include "../__dep__.h"
 #include "coordinator.h"
 #include "commo.h"
-#include "quorum_event.h"
 
 namespace janus {
 

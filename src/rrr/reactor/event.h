@@ -13,6 +13,7 @@ class Reactor;
 class Coroutine;
 class Event {
  public:
+  int __debug_creator{0};
   enum EventStatus { INIT = 0, WAIT = 1, READY = 2, DONE = 3, DEBUG};
   EventStatus status_{INIT};
   void* _dbg_p_scheduler_{nullptr};

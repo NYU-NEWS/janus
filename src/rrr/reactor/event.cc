@@ -9,6 +9,7 @@ namespace rrr {
 using std::function;
 
 void Event::Wait() {
+  verify(__debug_creator); // if this fails, the event is not created by reactor.
   if (IsReady()) {
     status_ = DONE; // does not need to wait.
     return;
@@ -29,6 +30,7 @@ void Event::Wait() {
 }
 
 bool Event::Test() {
+  verify(__debug_creator); // if this fails, the event is not created by reactor.
   if (IsReady()) {
     if (status_ == INIT) {
       // wait has not been called, do nothing until wait happens.
@@ -42,9 +44,10 @@ bool Event::Test() {
 //      verify(sched->__debug_set_all_coro_.count(sp_coro.get()) > 0);
 //      verify(sched->coros_.count(sp_coro) > 0);
       status_ = READY;
+    } else if (status_ == READY) {
+      // This could happen for a quorum event.
+      Log_debug("event status ready, triggered?");
     } else {
-      // TODO could be a multi condition event?
-      Log_debug("event status not init or wait");
       verify(0);
     }
     return true;

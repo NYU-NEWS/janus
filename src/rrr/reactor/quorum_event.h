@@ -1,9 +1,10 @@
 #pragma once
 
-#include "../__dep__.h"
-#include "reactor/event.h"
+#include <vector>
+#include "event.h"
 
 using rrr::Event;
+using std::vector;
 
 namespace janus {
 
