@@ -1,3 +1,6 @@
+## Warning
+The project has upgraded to python3, so this page is deprecated and needs to be updated. 
+
 ## Build on an outdated Linux distribution
 
 Sometimes you need to build on a testbed which are equipped with older systems such as Ubuntu 14.04. You can try Linuxbrew to install newer packages such as boost and yaml-cpp.

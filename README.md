@@ -20,8 +20,8 @@ sudo apt-get install -y \
     libapr1-dev libaprutil1-dev \
     libboost-all-dev \
     libyaml-cpp-dev \
-    python-dev \
-    python-pip \
+    python3-dev \
+    python3-pip \
     libgoogle-perftools-dev
 sudo pip install -r requirements.txt
 ```
@@ -34,12 +34,12 @@ git clone --recursive https://github.com/NYU-NEWS/janus.git
 Build:
 
 ```
-./waf configure build -t
+python3 waf configure build -t
 
 ```
 Test run:
 ```
-./test_run.py -m janus
+python3 test_run.py -m janus
 ```
 
 ## More
