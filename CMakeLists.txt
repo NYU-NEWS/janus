@@ -28,7 +28,7 @@ project(janus)
 
 find_package(Threads)
 find_package(PkgConfig REQUIRED)
-pkg_check_modules(PYTHON2 REQUIRED python2)
+pkg_check_modules(PYTHON REQUIRED python3)
 #pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
 
 
@@ -46,7 +46,7 @@ include_directories(
 link_directories(
         ${Boost_LIBRARY_DIRS}
 #        ${YAML_CPP_LIBRARY_DIRS}
-        ${PYTHON2_LIBRARY_DIRS}
+        ${PYTHON_LIBRARY_DIRS}
 )
 
 
@@ -149,7 +149,7 @@ add_custom_target (gen-rpc
             ${CMAKE_CURRENT_SOURCE_DIR}/src/deptran/rcc_rpc.py)
 
 include_directories(
-    ${PYTHON2_INCLUDE_DIRS}
+    ${PYTHON_INCLUDE_DIRS}
     src
     src/rrr
     src/memdb
@@ -158,7 +158,7 @@ include_directories(
 )
 
 link_directories(
-    ${PYTHON2_LIBRARY_DIRS}
+    ${PYTHON_LIBRARY_DIRS}
 #    ${APR_LIBRARY_DIRS}
 #    ${PROFILER_LIBRARY_DIRS}
 )
@@ -241,7 +241,7 @@ target_link_libraries(
 #        ${CONAN_LIBS}
         ${Boost_LIBRARIES}
         ${CMAKE_THREAD_LIBS_INIT}
-        ${PYTHON2_LIBRARIES}
+        ${PYTHON_LIBRARIES}
 #    ${APR_LIBRARIES}
 #    ${APRUTIL_LIBRARIES}
 #    ${PROFILER_LIBRARIES}
