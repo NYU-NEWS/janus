@@ -170,6 +170,7 @@ int shutdown_paxos() {
 }
 
 void register_for_follower(std::function<void(const char*, int)> cb, uint32_t par_id) {
+  par_id--;
   for (auto& worker : pxs_workers_g) {
     if (worker->IsPartition(par_id) && !worker->IsLeader(par_id)) {
       worker->register_apply_callback(cb);
@@ -178,6 +179,7 @@ void register_for_follower(std::function<void(const char*, int)> cb, uint32_t pa
 }
 
 void register_for_leader(std::function<void(const char*, int)> cb, uint32_t par_id) {
+  par_id--;
   for (auto& worker : pxs_workers_g) {
     if (worker->IsLeader(par_id)) {
       worker->register_apply_callback(cb);
@@ -201,6 +203,7 @@ void submit(const char* log, int len, uint32_t par_id) {
 }
 
 void wait_for_submit(uint32_t par_id) {
+  par_id--;
   for (auto& worker : pxs_workers_g) {
     if (!worker->IsLeader(par_id)) continue;
     verify(worker->submit_pool != nullptr);
@@ -244,12 +247,12 @@ void microbench_paxos_queue() {
   struct timeval t1, t2;
   gettimeofday(&t1, NULL);
   vector<std::thread> ths;
-  int k = 0;
+  int k = 1;
   for (int j = 0; j < 1; j++) {
     ths.push_back(std::thread([=, &k]() {
       int par_id = k++;
       for (int i = 0; i < concurrent; i++) {
-        submit(message[i], len, par_id + 1);
+        submit(message[i], len, par_id);
         // wait_for_submit(j);
       }
     }));
@@ -260,7 +263,7 @@ void microbench_paxos_queue() {
   }
   while (1) {
     for (int j = 0; j < 1; j++) {
-      wait_for_submit(j);
+      wait_for_submit(j + 1);
     }
     bool flag = true;
     for (auto& worker : pxs_workers_g) {
