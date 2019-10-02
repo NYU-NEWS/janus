@@ -170,7 +170,6 @@ int shutdown_paxos() {
 }
 
 void register_for_follower(std::function<void(const char*, int)> cb, uint32_t par_id) {
-  par_id--;
   for (auto& worker : pxs_workers_g) {
     if (worker->IsPartition(par_id) && !worker->IsLeader(par_id)) {
       worker->register_apply_callback(cb);
@@ -179,7 +178,6 @@ void register_for_follower(std::function<void(const char*, int)> cb, uint32_t pa
 }
 
 void register_for_leader(std::function<void(const char*, int)> cb, uint32_t par_id) {
-  par_id--;
   for (auto& worker : pxs_workers_g) {
     if (worker->IsLeader(par_id)) {
       worker->register_apply_callback(cb);
@@ -188,7 +186,6 @@ void register_for_leader(std::function<void(const char*, int)> cb, uint32_t par_
 }
 
 void submit(const char* log, int len, uint32_t par_id) {
-  par_id--;
   for (auto& worker : pxs_workers_g) {
     // worker->Submit(log, len);
     if (!worker->IsLeader(par_id)) continue;
@@ -203,7 +200,6 @@ void submit(const char* log, int len, uint32_t par_id) {
 }
 
 void wait_for_submit(uint32_t par_id) {
-  par_id--;
   for (auto& worker : pxs_workers_g) {
     if (!worker->IsLeader(par_id)) continue;
     verify(worker->submit_pool != nullptr);
@@ -219,8 +215,8 @@ void microbench_paxos_queue() {
       worker->register_apply_callback([&worker](const char* log, int len) {
         Log_debug("submit callback enter in");
         if (worker->submit_num >= worker->tot_num) return;
-        submit(log, len, worker->site_info_->partition_id_ + 1);
         worker->submit_num++;
+        submit(log, len, worker->site_info_->partition_id_);
       });
     else
       worker->register_apply_callback([=](const char* log, int len) {});
@@ -247,8 +243,8 @@ void microbench_paxos_queue() {
   struct timeval t1, t2;
   gettimeofday(&t1, NULL);
   vector<std::thread> ths;
-  int k = 1;
-  for (int j = 0; j < 1; j++) {
+  int k = 0;
+  for (int j = 0; j < 2; j++) {
     ths.push_back(std::thread([=, &k]() {
       int par_id = k++;
       for (int i = 0; i < concurrent; i++) {
@@ -262,8 +258,8 @@ void microbench_paxos_queue() {
     th.join();
   }
   while (1) {
-    for (int j = 0; j < 1; j++) {
-      wait_for_submit(j + 1);
+    for (int j = 0; j < 2; j++) {
+      wait_for_submit(j);
     }
     bool flag = true;
     for (auto& worker : pxs_workers_g) {

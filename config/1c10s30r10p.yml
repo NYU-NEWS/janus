@@ -1,0 +1,62 @@
+
+site:
+  server: # each line is a partition, the first is the master site_name:port
+    - ["s101:8000", "s201:8001", "s301:8002"]
+    - ["s102:8010", "s202:8011", "s302:8012"]
+    - ["s103:8020", "s203:8021", "s303:8023"]
+    - ["s104:8030", "s204:8031", "s304:8032"]
+    - ["s105:8040", "s205:8041", "s305:8042"]
+    - ["s106:8050", "s206:8051", "s306:8052"]
+    - ["s107:8060", "s207:8061", "s307:8062"]
+    - ["s108:8070", "s208:8071", "s308:8072"]
+    - ["s109:8080", "s209:8081", "s309:8082"]
+    - ["s110:8090", "s210:8091", "s310:8092"]
+  client: # each line is a partition
+    - ["c101"]
+
+process:
+  s101: localhost
+  s201: p1
+  s301: p1
+  s102: localhost
+  s202: p2
+  s302: p2
+  s103: localhost
+  s203: p3
+  s303: p3
+  s104: localhost
+  s204: p4
+  s304: p4
+  s105: localhost
+  s205: p5
+  s305: p5
+  s106: localhost
+  s206: p6
+  s306: p6
+  s107: localhost
+  s207: p7
+  s307: p7
+  s108: localhost
+  s208: p8
+  s308: p8
+  s109: localhost
+  s209: p9
+  s309: p9
+  s110: localhost
+  s210: p10
+  s310: p10
+  c101: localhost
+
+# process_name - host_addr map
+host:
+  localhost: 127.0.0.1
+  p1: 127.0.0.1
+  p2: 127.0.0.1
+  p3: 127.0.0.1
+  p4: 127.0.0.1
+  p5: 127.0.0.1
+  p6: 127.0.0.1
+  p7: 127.0.0.1
+  p8: 127.0.0.1
+  p9: 127.0.0.1
+  p10: 127.0.0.1
