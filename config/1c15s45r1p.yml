@@ -1,0 +1,72 @@
+
+site:
+  server: # each line is a partition, the first is the master site_name:port
+    - ["s101:8000", "s201:8001", "s301:8002"]
+    - ["s102:8010", "s202:8011", "s302:8012"]
+    - ["s103:8020", "s203:8021", "s303:8023"]
+    - ["s104:8030", "s204:8031", "s304:8032"]
+    - ["s105:8040", "s205:8041", "s305:8042"]
+    - ["s106:8050", "s206:8051", "s306:8052"]
+    - ["s107:8060", "s207:8061", "s307:8062"]
+    - ["s108:8070", "s208:8071", "s308:8072"]
+    - ["s109:8080", "s209:8081", "s309:8082"]
+    - ["s110:8090", "s210:8091", "s310:8092"]
+    - ["s111:8100", "s211:8101", "s311:8102"]
+    - ["s112:8110", "s212:8111", "s312:8112"]
+    - ["s113:8120", "s213:8121", "s313:8122"]
+    - ["s114:8130", "s214:8131", "s314:8132"]
+    - ["s115:8140", "s215:8141", "s315:8142"]
+  client: # each line is a partition
+    - ["c101"]
+
+process:
+  s101: localhost
+  s201: localhost
+  s301: localhost
+  s102: localhost
+  s202: localhost
+  s302: localhost
+  s103: localhost
+  s203: localhost
+  s303: localhost
+  s104: localhost
+  s204: localhost
+  s304: localhost
+  s105: localhost
+  s205: localhost
+  s305: localhost
+  s106: localhost
+  s206: localhost
+  s306: localhost
+  s107: localhost
+  s207: localhost
+  s307: localhost
+  s108: localhost
+  s208: localhost
+  s308: localhost
+  s109: localhost
+  s209: localhost
+  s309: localhost
+  s110: localhost
+  s210: localhost
+  s310: localhost
+  s111: localhost
+  s211: localhost
+  s311: localhost
+  s112: localhost
+  s212: localhost
+  s312: localhost
+  s113: localhost
+  s213: localhost
+  s313: localhost
+  s114: localhost
+  s214: localhost
+  s314: localhost
+  s115: localhost
+  s215: localhost
+  s315: localhost
+  c101: localhost
+
+# process_name - host_addr map
+host:
+  localhost: 127.0.0.1

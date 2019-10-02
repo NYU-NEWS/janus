@@ -186,6 +186,7 @@ void register_for_leader(std::function<void(const char*, int)> cb, uint32_t par_
 }
 
 void submit(const char* log, int len, uint32_t par_id) {
+  par_id--;
   for (auto& worker : pxs_workers_g) {
     // worker->Submit(log, len);
     if (!worker->IsLeader(par_id)) continue;
@@ -215,7 +216,7 @@ void microbench_paxos_queue() {
       worker->register_apply_callback([&worker](const char* log, int len) {
         Log_debug("submit callback enter in");
         if (worker->submit_num >= worker->tot_num) return;
-        submit(log, len, worker->site_info_->partition_id_);
+        submit(log, len, worker->site_info_->partition_id_ + 1);
         worker->submit_num++;
       });
     else
@@ -248,7 +249,7 @@ void microbench_paxos_queue() {
     ths.push_back(std::thread([=, &k]() {
       int par_id = k++;
       for (int i = 0; i < concurrent; i++) {
-        submit(message[i], len, par_id);
+        submit(message[i], len, par_id + 1);
         // wait_for_submit(j);
       }
     }));
