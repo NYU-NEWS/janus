@@ -71,6 +71,7 @@ python3 paxos-microbench.py -d 60 -f 'config/1c1s3r1p.yml' -f 'config/occ_paxos.
 
 run `python3 paxos-microbench.py -h` for help  
 **MUST** add all process names in the config files  
+see the contents in config files for more information about paxos partition and replication
 for multi-process paxos, if some site fails to start, change the order of your `-P` options and try again
 
 #### To See CPU Profiling
