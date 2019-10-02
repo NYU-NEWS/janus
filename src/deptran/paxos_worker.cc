@@ -161,8 +161,6 @@ void PaxosWorker::ShutDown() {
   for (auto c : created_coordinators_) {
     delete c;
   }
-  Log_info("site %s, tot time: %f", site_info_->name.c_str(),
-           submit_tot_sec_ + ((float)submit_tot_usec_) / 1000000);
   if (rep_sched_ != nullptr) {
     delete rep_sched_;
   }
