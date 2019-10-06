@@ -135,6 +135,37 @@ TEST(CoroutineTest, wait_die_lock) {
   ASSERT_EQ(y, 1);
 }
 
+TEST(CoroutineTest, timeout) {
+  auto coro1 = Coroutine::CreateRun([](){
+    auto t1 = Time::now();
+    auto timeout = 1 * 1000000;
+    auto sp_e = Reactor::CreateSpEvent<TimeoutEvent>(timeout);
+    Log_debug("set timeout, start wait");
+    sp_e->Wait();
+    auto t2 = Time::now();
+    ASSERT_GT(t2, t1 + timeout);
+    Log_debug("end timeout, end wait");
+    Reactor::GetReactor()->looping_ = false;
+  });
+  Reactor::GetReactor()->Loop(true);
+}
+
+TEST(CoroutineTest, orevent) {
+  auto inte = Reactor::CreateSpEvent<IntEvent>();
+  auto coro1 = Coroutine::CreateRun([&inte](){
+    auto t1 = Time::now();
+    auto timeout = 10 * 1000000;
+    auto sp_e1 = Reactor::CreateSpEvent<TimeoutEvent>(timeout);
+    auto sp_e2 = Reactor::CreateSpEvent<OrEvent>(sp_e1, inte);
+    sp_e2->Wait();
+    auto t2 = Time::now();
+    ASSERT_GT(t1 + timeout, t2);
+  });
+  auto coro2 = Coroutine::CreateRun([&inte](){
+    inte->Set(1);
+  });
+}
+
 TEST(SquareRootTest, PositiveNos) {
 //  EXPECT_EQ (18.0, square-root (324.0));
 //  EXPECT_EQ (25.4, square-root (645.16));
@@ -145,6 +176,7 @@ TEST (SquareRootTest, ZeroAndNegativeNos) {
 //  ASSERT_EQ (0.0, square-root (0.0));
 //  ASSERT_EQ (-1, square-root (-22.0));
 }
+
 
 int main(int argc, char **argv) {
   ::testing::InitGoogleTest(&argc, argv);

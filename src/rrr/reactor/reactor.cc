@@ -68,10 +68,12 @@ Reactor::CreateRunCoroutine(const std::function<void()> func) {
 
 //  be careful this could be called from different coroutines.
 void Reactor::Loop(bool infinite) {
+  looping_ = infinite;
   do {
     std::vector<shared_ptr<Event>> ready_events;
     for (auto it = events_.begin(); it != events_.end();) {
       Event& event = **it;
+      event.Test();
       if (event.status_ == Event::READY) {
         ready_events.push_back(std::move(*it));
         it = events_.erase(it);
@@ -88,7 +90,7 @@ void Reactor::Loop(bool infinite) {
       verify(coros_.find(sp_coro) != coros_.end());
       ContinueCoro(sp_coro);
     }
-  } while (infinite);
+  } while (looping_);
 }
 
 void Reactor::ContinueCoro(std::shared_ptr<Coroutine> sp_coro) {

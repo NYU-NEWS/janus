@@ -47,6 +47,8 @@ bool Event::Test() {
     } else if (status_ == READY) {
       // This could happen for a quorum event.
       Log_debug("event status ready, triggered?");
+    } else if (status_ == DONE) {
+      // do nothing
     } else {
       verify(0);
     }

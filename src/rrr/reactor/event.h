@@ -82,5 +82,39 @@ class SharedIntEvent {
   void Wait(function<bool(int)> f);
 };
 
+class TimeoutEvent : public Event {
+ public:
+  uint64_t wakeup_time_{0};
+  TimeoutEvent(uint64_t wait_us_): wakeup_time_{Time::now()+wait_us_} {}
+
+  bool IsReady() override {
+//    Log_debug("test timeout");
+    return (Time::now() > wakeup_time_);
+  }
+};
+
+class OrEvent : public Event {
+ public:
+  vector<shared_ptr<Event>> events_;
+
+  void AddEvent() {
+    // empty func for recursive variadic parameters
+  }
+
+  template<typename X, typename... Args>
+  void AddEvent(X& x, Args&... rest) {
+    events_.push_back(std::dynamic_pointer_cast<Event>(x));
+    AddEvent(rest...);
+  }
+
+  template<typename... Args>
+  OrEvent(Args&&... args) {
+    AddEvent(args...);
+  }
+
+  bool IsReady() {
+    return std::any_of(events_.begin(), events_.end(), [](shared_ptr<Event> e){return e->IsReady();});
+  }
+};
 
 }
