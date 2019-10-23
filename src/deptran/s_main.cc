@@ -12,6 +12,8 @@
 #include "s_main.h"
 #include <sys/time.h>
 #include <atomic>
+#include <iostream>
+#include <fstream>
 
 #ifdef CPU_PROFILE
 #include <gperftools/profiler.h>
@@ -219,7 +221,11 @@ void microbench_paxos_queue() {
         submit(log, len, worker->site_info_->partition_id_);
       });
     else
-      worker->register_apply_callback([=](const char* log, int len) {});
+      worker->register_apply_callback([&worker](const char* log, int len) {
+        std::ofstream outfile(string("log/") + string(worker->site_info_->name.c_str()) + string(".txt"), ios::app);
+	outfile << log << std::endl;
+	outfile.close();
+      });
   }
   auto client_infos = Config::GetConfig()->GetMyClients();
   if (client_infos.size() <= 0) return;
