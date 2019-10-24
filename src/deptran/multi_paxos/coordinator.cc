@@ -49,9 +49,19 @@ void CoordinatorMultiPaxos::Prepare() {
             slot_id_);
   verify(n_prepare_ack_ == 0);
   int n_replica = Config::GetConfig()->GetPartitionSize(par_id_);
-  auto sp_quorum_event = Reactor::CreateSpEvent<QuorumEvent>(n_replica, n_replica / 2 + 1);
-  commo()->BroadcastPrepare(sp_quorum_event, par_id_, slot_id_, curr_ballot_);
-  sp_quorum_event->Wait();
+  auto sp_quorum = commo()->BroadcastPrepare(par_id_, slot_id_, curr_ballot_);
+  sp_quorum->Wait();
+  if (sp_quorum->Yes()) {
+    verify(!sp_quorum->HasAcceptedValue());
+    // TODO use the previously accepted value.
+
+  } else if (sp_quorum->No()) {
+    // TODO restart prepare?
+    verify(0);
+  } else {
+    // TODO timeout
+    verify(0);
+  }
 //  commo()->BroadcastPrepare(par_id_,
 //                            slot_id_,
 //                            curr_ballot_,
@@ -92,12 +102,17 @@ void CoordinatorMultiPaxos::Accept() {
   Log_debug("multi-paxos coordinator broadcasts accept, "
                 "par_id_: %lx, slot_id: %llx",
             par_id_, slot_id_);
-  int n_replica = Config::GetConfig()->GetPartitionSize(par_id_);
-  auto sp_quorum_event = Reactor::CreateSpEvent<QuorumEvent>(n_replica, n_replica / 2 + 1);
-  commo()->BroadcastAccept(sp_quorum_event, par_id_, slot_id_, curr_ballot_, cmd_);
-  sp_quorum_event->Wait();
-  // TODO process the case where failed to get a majority.
-  committed_ = true;
+  auto sp_quorum = commo()->BroadcastAccept(par_id_, slot_id_, curr_ballot_, cmd_);
+  sp_quorum->Wait();
+  if (sp_quorum->Yes()) {
+    committed_ = true;
+  } else if (sp_quorum->No()) {
+    // TODO process the case: failed to get a majority.
+    verify(0);
+  } else {
+    // TODO process timeout.
+    verify(0);
+  }
 //  commo()->BroadcastAccept(par_id_,
 //                           slot_id_,
 //                           curr_ballot_,
@@ -153,6 +168,7 @@ void CoordinatorMultiPaxos::GotoNextPhase() {
         verify(phase_ % n_phase == Phase::ACCEPT);
         Accept();
         phase_++;
+        verify(phase_ % n_phase == Phase::COMMIT);
       } else {
         // TODO
         verify(0);

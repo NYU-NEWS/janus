@@ -7,23 +7,55 @@
 namespace janus {
 
 class TxData;
+
+class PaxosPrepareQuorumEvent: public QuorumEvent {
+ public:
+  using QuorumEvent::QuorumEvent;
+//  ballot_t max_ballot_{0};
+  bool HasAcceptedValue() {
+    // TODO implement this
+    return false;
+  }
+  void FeedResponse(bool y) {
+    if (y) {
+      n_voted_yes_++;
+    } else {
+      n_voted_no_++;
+    }
+  }
+
+
+};
+
+class PaxosAcceptQuorumEvent: public QuorumEvent {
+ public:
+  using QuorumEvent::QuorumEvent;
+  void FeedResponse(bool y) {
+    if (y) {
+      n_voted_yes_++;
+    } else {
+      n_voted_no_++;
+    }
+  }
+};
+
 class MultiPaxosCommo : public Communicator {
  public:
   MultiPaxosCommo() = delete;
   MultiPaxosCommo(PollMgr*);
-  void BroadcastPrepare(shared_ptr<QuorumEvent> quorum_event,
-                        parid_t par_id,
-                        slotid_t slot_id,
-                        ballot_t ballot);
+  shared_ptr<PaxosPrepareQuorumEvent>
+  BroadcastPrepare(parid_t par_id,
+                   slotid_t slot_id,
+                   ballot_t ballot);
   void BroadcastPrepare(parid_t par_id,
                         slotid_t slot_id,
                         ballot_t ballot,
                         const function<void(Future *fu)> &callback);
-  void BroadcastAccept(shared_ptr<QuorumEvent> quorum_event,
-                       parid_t par_id,
-                       slotid_t slot_id,
-                       ballot_t ballot,
-                       shared_ptr<Marshallable> cmd);
+  shared_ptr<PaxosAcceptQuorumEvent>
+  BroadcastAccept(parid_t par_id,
+                  slotid_t slot_id,
+                  ballot_t ballot,
+                  shared_ptr<Marshallable> cmd);
   void BroadcastAccept(parid_t par_id,
                        slotid_t slot_id,
                        ballot_t ballot,

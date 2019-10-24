@@ -107,6 +107,7 @@ class SimpleCommand: public CmdData {
  public:
   CmdData* root_ = nullptr;
   uint64_t timestamp_{0};
+  int32_t rank_{RANK_UNDEFINED};
   TxWorkspace input{};
   map<int32_t, Value> output{};
   int32_t output_size = 0;
@@ -199,6 +200,7 @@ class TxData: public CmdData {
   map<int32_t, cmdtype_t> p_types_ = {};                  // types of each piece.
   map<int32_t, parid_t> sharding_ = {};
   map<int32_t, int32_t> status_ = {}; // -1 waiting; 0 ready; 1 ongoing; 2
+  map<innid_t, rank_t> ranks_ = {};  // input of each piece.
   // finished;
   map<int32_t, shared_ptr<TxPieceData>> map_piece_data_ = {};
   std::set<parid_t> partition_ids_ = {};

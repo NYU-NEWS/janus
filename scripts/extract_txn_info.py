@@ -1,10 +1,14 @@
-#! /usr/bin/env python
+#! /usr/bin/env python3
 # extracts txn data from the run.py log
 
 import sys
 import os
 import yaml
-import StringIO
+
+try:
+    from StringIO import StringIO ## for Python 2
+except ImportError:
+    from io import StringIO ## for Python 3
 
 BEGIN_DELIM = "__Data__"
 END_DELIM = "__EndData__"
@@ -27,7 +31,8 @@ with open(fn, 'r') as f:
         l = line.strip()
         if record and l == END_DELIM:
             record = False
-            io = StringIO.StringIO(buf)
+            io = StringIO(buf)
+            print(buf)
             y = yaml.load(io)
             txn_name = y['txn_name']
             data[txn_name] = y

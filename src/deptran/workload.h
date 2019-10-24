@@ -69,7 +69,7 @@ class Workload {
             const set<int32_t>& ovars,
             const vector<conf_id_t>& conflicts,
             const sharder_t& sharder,
-            const defer_t& defer,
+            const rank_t& rank,
             const ProcHandler& handler
   ) {
     auto& piece = txn_reg_->regs_[txn_type][inn_id];
@@ -77,7 +77,7 @@ class Workload {
     piece.output_vars_ = ovars;
     piece.conflicts_ = conflicts;
     piece.sharder_ = sharder;
-    piece.defer_ = defer;
+    piece.rank_ = rank;
     piece.proc_handler_ = handler;
   }
 

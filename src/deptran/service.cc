@@ -185,7 +185,6 @@ void ClassicServiceImpl::RccDispatch(const vector<SimpleCommand>& cmd,
   SchedulerRococo* sched = (SchedulerRococo*) dtxn_sched_;
   p_md_graph->SetMarshallable(std::make_shared<RccGraph>());
   sched->OnDispatch(cmd,
-                    res,
                     output,
                     dynamic_pointer_cast<RccGraph>(p_md_graph->sp_data_));
   defer->reply();
@@ -200,7 +199,7 @@ void ClassicServiceImpl::RccFinish(const cmdid_t& cmd_id,
   verify(0);
 //  std::lock_guard<std::mutex> guard(mtx_);
   SchedulerRococo* sched = (SchedulerRococo*) dtxn_sched_;
-  sched->OnCommit(cmd_id, graph, output, [defer]() { defer->reply(); });
+  sched->OnCommit(cmd_id, RANK_UNDEFINED, graph, output, [defer]() { defer->reply(); });
 
   stat_sz_gra_commit_.sample(graph.size());
 }
@@ -237,7 +236,7 @@ void ClassicServiceImpl::JanusDispatch(const vector<SimpleCommand>& cmd,
 //    std::lock_guard<std::mutex> guard(this->mtx_); // TODO remove the lock.
     auto sp_graph = std::make_shared<RccGraph>();
     auto* sched = (SchedulerJanus*) dtxn_sched_;
-    sched->OnDispatch(cmd, p_res, p_output, sp_graph);
+    sched->OnDispatch(cmd, p_output, sp_graph);
     if (sp_graph->size() <= 1) {
       p_md_res_graph->SetMarshallable(std::make_shared<EmptyGraph>());
     } else {
@@ -248,6 +247,7 @@ void ClassicServiceImpl::JanusDispatch(const vector<SimpleCommand>& cmd,
 }
 
 void ClassicServiceImpl::JanusCommit(const cmdid_t& cmd_id,
+                                     const rank_t& rank,
                                      const MarshallDeputy& graph,
                                      int32_t* res,
                                      TxnOutput* output,
@@ -255,17 +255,18 @@ void ClassicServiceImpl::JanusCommit(const cmdid_t& cmd_id,
 //  std::lock_guard<std::mutex> guard(mtx_);
   auto sp_graph = dynamic_pointer_cast<RccGraph>(graph.sp_data_);
   auto p_sched = (SchedulerRococo*) dtxn_sched_;
-  *res = p_sched->OnCommit(cmd_id, sp_graph, output);
+  *res = p_sched->OnCommit(cmd_id, rank, sp_graph, output);
   defer->reply();
 }
 
 void ClassicServiceImpl::JanusCommitWoGraph(const cmdid_t& cmd_id,
+                                            const rank_t& rank,
                                             int32_t* res,
                                             TxnOutput* output,
                                             DeferredReply* defer) {
 //  std::lock_guard<std::mutex> guard(mtx_);
   auto sched = (SchedulerJanus*) dtxn_sched_;
-  *res = sched->OnCommit(cmd_id, nullptr, output);
+  *res = sched->OnCommit(cmd_id, rank, nullptr, output);
   defer->reply();
 }
 
@@ -283,6 +284,7 @@ void ClassicServiceImpl::JanusInquire(const epoch_t& epoch,
 }
 
 void ClassicServiceImpl::JanusPreAccept(const cmdid_t& txnid,
+                                        const rank_t& rank,
                                         const vector<SimpleCommand>& cmds,
                                         const MarshallDeputy& md_graph,
                                         int32_t* res,
@@ -294,11 +296,12 @@ void ClassicServiceImpl::JanusPreAccept(const cmdid_t& txnid,
   verify(sp_graph && ret_sp_graph);
   p_md_res_graph->SetMarshallable(std::make_shared<RccGraph>());
   auto sched = (SchedulerJanus*) dtxn_sched_;
-  *res = sched->OnPreAccept(txnid, cmds, sp_graph, ret_sp_graph);
+  *res = sched->OnPreAccept(txnid, rank, cmds, sp_graph, ret_sp_graph);
   defer->reply();
 }
 
 void ClassicServiceImpl::JanusPreAcceptWoGraph(const cmdid_t& txnid,
+                                               const rank_t& rank,
                                                const vector<SimpleCommand>& cmds,
                                                int32_t* res,
                                                MarshallDeputy* res_graph,
@@ -307,7 +310,7 @@ void ClassicServiceImpl::JanusPreAcceptWoGraph(const cmdid_t& txnid,
   res_graph->SetMarshallable(std::make_shared<RccGraph>());
   auto* p_sched = (SchedulerJanus*) dtxn_sched_;
   auto sp_ret_graph = dynamic_pointer_cast<RccGraph>(res_graph->sp_data_);
-  *res = p_sched->OnPreAccept(txnid, cmds, nullptr, sp_ret_graph);
+  *res = p_sched->OnPreAccept(txnid, rank, cmds, nullptr, sp_ret_graph);
   defer->reply();
 }
 

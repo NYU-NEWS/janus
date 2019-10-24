@@ -84,6 +84,7 @@ void RccCommo::SendInquire(parid_t pid,
 void RccCommo::BroadcastCommit(
                                  parid_t par_id,
                                  txnid_t cmd_id,
+                                 rank_t rank,
                                  shared_ptr<RccGraph> graph,
                                  const function<void(int32_t, TxnOutput&)>& callback) {
   bool skip_graph = IsGraphOrphan(*graph, cmd_id);
@@ -101,10 +102,10 @@ void RccCommo::BroadcastCommit(
                       };
     verify(cmd_id > 0);
     if (skip_graph) {
-      Future::safe_release(proxy->async_JanusCommitWoGraph(cmd_id, fuattr));
+      Future::safe_release(proxy->async_JanusCommitWoGraph(cmd_id, RANK_UNDEFINED, fuattr));
     } else {
       MarshallDeputy md(graph);
-      Future::safe_release(proxy->async_JanusCommit(cmd_id, md, fuattr));
+      Future::safe_release(proxy->async_JanusCommit(cmd_id, RANK_UNDEFINED, md, fuattr));
     }
   }
 }

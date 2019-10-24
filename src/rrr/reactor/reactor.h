@@ -1,5 +1,6 @@
 #pragma once
 #include <set>
+#include <algorithm>
 #include <unordered_map>
 #include <list>
 #include "base/misc.hpp"
@@ -44,9 +45,7 @@ class Reactor {
   template <typename Ev, typename... Args>
   static shared_ptr<Ev> CreateSpEvent(Args&&... args) {
     auto& events = GetReactor()->events_;
-//    auto sp_ev = make_shared<Ev>(args...);
-    shared_ptr<Ev> sp_ev;
-    sp_ev.reset(new Ev(args...));
+    auto sp_ev = make_shared<Ev>(args...);
     sp_ev->__debug_creator = 1;
     // TODO push them into a wait queue when they actually wait.
     events.push_back(sp_ev);

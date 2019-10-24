@@ -5,7 +5,7 @@ namespace janus {
 
 #define ballot_t int64_t
 #define cooid_t uint32_t
-#define rank_t uint32_t
+#define rank_t uint8_t
 #define txid_t uint64_t
 #define txnid_t uint64_t
 #define cmdid_t uint64_t // txnid and cmdid are the same thing
@@ -46,6 +46,20 @@ namespace janus {
 #define TXN_FNS (0x20)  // finished
 #define TXN_ABT (0x40)  // aborted
 
+#define TXN_BYPASS   (0x01)
+#define TXN_SAFE     (0x02)
+#define TXN_INSTANT  (0x02)
+#define TXN_DEFERRED (0x04)
+
+#define DF_REAL (0x04)
+#define DF_NO   (0x02)
+#define DF_FAKE (0x0f)
+
+#define RANK_UNDEFINED (0x00)
+#define RANK_I (0x02)
+#define RANK_D (0x04)
+#define RANK_MAX (0x08)
+
 #define SUCCESS     (0)
 #define FAILURE     (-1)
 #define CONTENTION  (-1)
@@ -82,8 +96,8 @@ namespace janus {
 #define OP_W    (0x4)
 
 #define EDGE_ALL (0x0)
-#define EDGE_D  (0x1)
 #define EDGE_I  (0x2)
+#define EDGE_D  (0x4)
 
 #define RR  (0x0)
 #define WW  (0x1)

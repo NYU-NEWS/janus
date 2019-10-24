@@ -9,7 +9,8 @@ class TxClassic: public Tx {
   using Tx::Tx;
   IntEvent& ev_prepare_{Reactor::CreateEvent<IntEvent>()};
   IntEvent& ev_commit_{Reactor::CreateEvent<IntEvent>()};
-  bool result_prepare;
+  bool is_leader_hint_{false};
+  bool result_prepare_{false};
 };
 
 } // namespace janus

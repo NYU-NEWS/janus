@@ -49,6 +49,9 @@ void RccCoord::DispatchAsync() {
     cnt += cmds.size();
     vector<SimpleCommand> cc;
     for (auto c: cmds) {
+      if (c->rank_ == RANK_UNDEFINED) {
+        c->rank_ = RANK_I;
+      }
       c->id_ = next_pie_id();
       dispatch_acks_[c->inn_id_] = false;
       cc.push_back(*c);
@@ -163,6 +166,7 @@ void RccCoord::Commit() {
   for (auto par_id : cmd_->GetPartitionIds()) {
     commo()->BroadcastCommit(par_id,
                              cmd_->id_,
+                             RANK_UNDEFINED,
                              sp_graph_,
                              std::bind(&RccCoord::CommitAck,
                                        this,
@@ -271,6 +275,7 @@ void RccCoord::Reset() {
   curr_vers_.clear();
   n_commit_oks_.clear();
   fast_commit_ = false;
+  rank_ = RANK_UNDEFINED;
 }
 
 

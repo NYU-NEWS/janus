@@ -20,6 +20,7 @@ class TxnOCC: public Txn2PL {
 
   // whether the commit has been verified
   bool verified_;
+  int __debug_abort_{-1};
 
   // OCC_LAZY: update version only at commit time
   // OCC_EAGER (default): update version at first write (early conflict detection)

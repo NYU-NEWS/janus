@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import os.path
 import sys
 import traceback
@@ -97,7 +97,7 @@ def main():
     file_data = read_files()
     txn_data = {}
     extract_data(txn_data, file_data)
-    for txn, rows in txn_data.iteritems():
+    for txn, rows in txn_data.items():
         rows.sort(key=row_key_clients)
         for k, g in groupby(rows, row_key):
             output_data_file(k, g)

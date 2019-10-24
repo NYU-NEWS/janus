@@ -104,6 +104,9 @@ void TxRococo::CommitExecute() {
   phase_ = PHASE_RCC_COMMIT;
   TxWorkspace ws;
   for (auto &cmd: dreqs_) {
+    if (cmd.rank_ != current_rank_) {
+      continue;
+    }
     TxnPieceDef& p = txn_reg_->get(cmd.root_type_, cmd.type_);
     int tmp;
     cmd.input.Aggregate(ws);
@@ -379,12 +382,12 @@ void TxRococo::AddParentEdge(shared_ptr<TxRococo> other, int8_t weight) {
   }
 }
 
-void TxRococo::TraceDep(Row* row, colid_t col_id, int hint_flag) {
+void TxRococo::TraceDep(Row* row, colid_t col_id, rank_t hint_flag) {
   // TODO remove pointers in outdated epoch ???
   auto r = dynamic_cast<RCCRow*>(row);
   verify(r != nullptr);
   entry_t *entry = r->get_dep_entry(col_id);
-  int8_t edge_type = (hint_flag == TXN_INSTANT) ? EDGE_I : EDGE_D;
+  int8_t edge_type = (hint_flag == RANK_I) ? EDGE_I : EDGE_D;
   auto parent_dtxn = dynamic_pointer_cast<TxRococo>(entry->last_);
   if (parent_dtxn == nullptr) {
 

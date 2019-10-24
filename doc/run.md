@@ -1,3 +1,6 @@
+
+Note: this runs correctly only on Linux at the moment, not MacOS, because the command `ps` is different on the two platforms.
+
 ## Run a single trial
 
 Use the run.py to run a single distributed trial.

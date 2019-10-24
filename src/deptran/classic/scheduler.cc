@@ -157,10 +157,11 @@ bool SchedulerClassic::OnPrepare(cmdid_t tx_id,
     sp_prepare_cmd->cmd_ = sp_tx->cmd_;
     auto sp_m = dynamic_pointer_cast<Marshallable>(sp_prepare_cmd);
     CreateRepCoord()->Submit(sp_m);
-    Log_debug("wait for prepare command replicated");
+//    Log_debug("wait for prepare command replicated");
+    sp_tx->is_leader_hint_ = true;
     sp_tx->ev_prepare_.Wait();
-    Log_debug("finished prepare command replication");
-    return sp_tx->result_prepare;
+//    Log_debug("finished prepare command replication");
+    return sp_tx->result_prepare_;
   } else if (Config::GetConfig()->do_logging()) {
     string log;
     this->get_prepare_log(tx_id, sids, &log);
@@ -175,13 +176,18 @@ int SchedulerClassic::PrepareReplicated(TpcPrepareCommand& prepare_cmd) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   // TODO verify it is the same leader, error if not.
   // TODO and return the prepare callback here.
-  Log_debug("prepare request replicated");
   auto tx_id = prepare_cmd.tx_id_;
   auto sp_tx = dynamic_pointer_cast<TxClassic>(GetOrCreateTx(tx_id));
+  if (!sp_tx->is_leader_hint_) {
+    // TODO follower site right now does not really do work.
+    return 0;
+  }
   if (!sp_tx->cmd_)
     sp_tx->cmd_ = prepare_cmd.cmd_;
   // else: is the leader.
-  sp_tx->result_prepare = DoPrepare(sp_tx->tid_);
+  sp_tx->result_prepare_ = DoPrepare(sp_tx->tid_);
+  Log_debug("prepare request replicated and executed for %" PRIx64 ", result: %x, sid: %x",
+      sp_tx->tid_, sp_tx->result_prepare_, (int)this->site_id_);
   sp_tx->ev_prepare_.Set(1);
   Log_debug("triggering prepare replication callback %" PRIx64, sp_tx->tid_);
   return 0;
@@ -241,6 +247,10 @@ int SchedulerClassic::CommitReplicated(TpcCommitCommand& tpc_commit_cmd) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto tx_id = tpc_commit_cmd.tx_id_;
   auto sp_tx = dynamic_pointer_cast<TxClassic>(GetOrCreateTx(tx_id));
+  if (!sp_tx->is_leader_hint_) {
+    // TODO follower site right now does not really do work.
+    return 0;
+  }
   int commit_or_abort = tpc_commit_cmd.ret_;
   if (commit_or_abort == SUCCESS) {
 #ifdef CHECK_ISO

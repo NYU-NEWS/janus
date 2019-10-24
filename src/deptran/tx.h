@@ -22,11 +22,6 @@ using mdb::Row;
 using mdb::Table;
 using mdb::colid_t;
 
-#define TXN_BYPASS   (0x01)
-#define TXN_SAFE     (0x02)
-#define TXN_INSTANT  (0x02)
-#define TXN_DEFERRED (0x04)
-
 #define IS_MODE_RCC (Config::GetConfig()->get_mode() == MODE_RCC)
 #define IS_MODE_RO6 (Config::GetConfig()->get_mode() == MODE_RO6)
 #define IS_MODE_2PL (Config::GetConfig()->get_mode() == MODE_2PL)
@@ -45,6 +40,7 @@ class Scheduler;
 class Tx {
  public:
   shared_ptr<IntEvent> fully_dispatched_{Reactor::CreateSpEvent<IntEvent>()};
+//  bool fully_dispatched_{false};
   shared_ptr<IntEvent> ev_execute_ready_{Reactor::CreateSpEvent<IntEvent>()};
   bool aborted_in_dispatch_{false};
   bool inuse = false;

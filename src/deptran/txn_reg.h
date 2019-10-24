@@ -27,9 +27,6 @@ typedef std::function<void(Executor* exec,
 )> ProcHandler;
 
 typedef enum {
-  DF_REAL,
-  DF_NO,
-  DF_FAKE
 } defer_t;
 
 typedef std::function<bool(TxData *,
@@ -59,7 +56,7 @@ class TxnPieceDef {
   ProcHandler proc_handler_{};
   PieceCallbackHandler callback_{};
   sharder_t sharder_{};
-  defer_t defer_{};
+  rank_t rank_{};
   set<int32_t> input_vars_{};
   set<int32_t> output_vars_{};
   vector<conf_id_t> conflicts_{};

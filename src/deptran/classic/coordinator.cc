@@ -285,6 +285,7 @@ void CoordinatorClassic::PrepareAck(phase_t phase, int res) {
   TxData* cmd = (TxData*) cmd_;
   n_prepare_ack_++;
 
+  verify(res == SUCCESS || res == REJECT);
   if (res == REJECT) {
     cmd->commit_.store(false);
     aborted_ = true;

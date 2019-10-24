@@ -4,7 +4,10 @@ import traceback
 import time
 import random
 from string import Template
-import StringIO
+try:
+    from StringIO import StringIO ## for Python 2
+except ImportError:
+    from io import StringIO ## for Python 3
 
 
 from fabric.api import env, task, run, local, hosts
@@ -203,7 +206,7 @@ def config_ntp_leaders():
     sudo('service ntp stop')
     ntp_template = Template(open('config/etc/ntp.conf').read())
     leader_ip = env.roledefs['leaders'][0]
-    ntp_conf = StringIO.StringIO(ntp_template.substitute(leader=leader_ip))
+    ntp_conf = StringIO(ntp_template.substitute(leader=leader_ip))
     Xput(ntp_conf, '/etc/ntp.conf', use_sudo=True)
     sudo('service ntp start')
 

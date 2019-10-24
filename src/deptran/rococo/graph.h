@@ -12,7 +12,7 @@ class Vertex {
  private:
 //  std::shared_ptr<T> data_{};
  public:
-  set<uint64_t> parents_{}; // parent vertex ids in the graph.
+  map<uint64_t, rank_t> parents_{}; // parent vertex ids in the graph.
 //  map<T *, int8_t> outgoing_{}; // helper data structure, deprecated
 //  map<T *, int8_t> incoming_{}; // helper data structure, deprecated
 //  set<T *> removed_children_{}; // helper data structure, deprecated
@@ -32,7 +32,7 @@ class Vertex {
 //    verify(0);
   }
   virtual ~Vertex() {};
-  set<uint64_t> &GetParentSet() {
+  map<uint64_t, rank_t> &GetParents() {
 #ifdef DEBUG_CODE
     set<uint64_t> ret;
     for (auto& pair : incoming_) {
@@ -48,9 +48,7 @@ class Vertex {
     // printf("add edge: %d -> %d\n", this->id(), other->id());
     verify(parents_.size() >= 0);
     auto id = rhs_v->id();
-    parents_.insert(id);
-    // TODO add callback?
-    // TODO disable adding parents in vertex?
+    parents_[id] |= weight;
   }
 
   virtual uint64_t id() {
@@ -195,7 +193,7 @@ class Graph : public Marshallable {
 
     int ret = SearchHint::Ok;
     for (auto &pair : vertex.parents_) {
-      auto v = FindV(pair);
+      auto v = FindV(pair.first);
       // TODO? maybe this could happen for foreign decided?
       verify(v != nullptr);
       ret = func(*v);
@@ -233,7 +231,7 @@ class Graph : public Marshallable {
       return true;
 
     for (auto &pair : vertex.parents_) {
-      auto v = FindV(pair);
+      auto v = FindV(pair.first);
       verify(v != nullptr);
       if (!func(*v))
         return false; // traverse aborted by users.
@@ -282,7 +280,7 @@ class Graph : public Marshallable {
     S.push_back(&v);
 
     for (auto &p : v.parents_) {
-      auto w = FindV(p);
+      auto w = FindV(p.first);
       verify(w != nullptr); // TODO, allow non-existing vertex?
       if (w->scc_) // opt scc already computed
         continue;
@@ -481,7 +479,7 @@ class Graph : public Marshallable {
 //  }
 
   virtual Scc<V> &FindSccPred(V& vertex) {
-    if (vertex.scc_) {
+    if (vertex.current_rank_ == vertex.scc_rank_ && vertex.scc_) {
       // already computed.
       return (Scc<V> &) (*(vertex.scc_));
     }
@@ -494,6 +492,7 @@ class Graph : public Marshallable {
     for (auto v : *sp_scc) {
       verify(!v->scc_); // FIXME
       v->scc_ = sp_scc;
+      v->scc_rank_ = vertex.current_rank_;
     }
     return *sp_scc;
   }

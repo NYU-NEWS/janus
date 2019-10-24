@@ -32,6 +32,7 @@ class RccCommo : public Communicator {
   virtual void BroadcastCommit(
                        parid_t,
                        txnid_t cmd_id_,
+                       rank_t rank,
                        shared_ptr<RccGraph> graph,
                        const function<void(int32_t, TxnOutput&)>& callback);
   bool IsGraphOrphan(RccGraph& graph, txnid_t cmd_id);

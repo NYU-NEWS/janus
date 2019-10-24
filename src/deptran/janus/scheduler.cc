@@ -104,6 +104,7 @@ map<txnid_t, shared_ptr<TxRococo>> SchedulerJanus::Aggregate(RccGraph &graph) {
 }
 
 int SchedulerJanus::OnPreAccept(const txid_t txn_id,
+                                const rank_t rank,
                                 const vector<SimpleCommand> &cmds,
                                 shared_ptr<RccGraph> graph,
                                 shared_ptr<RccGraph> res_graph) {
@@ -140,8 +141,8 @@ int SchedulerJanus::OnPreAccept(const txid_t txn_id,
         }
       }
     }
-    verify(!tinfo.fully_dispatched);
-    tinfo.fully_dispatched = true;
+    verify(!tinfo.fully_dispatched_->value_);
+    tinfo.fully_dispatched_->Set(1);
     MinItfrGraph(*dtxn, res_graph, false, 1);
     ret = SUCCESS;
   }
@@ -179,6 +180,7 @@ int SchedulerJanus::OnInquire(epoch_t epoch,
 }
 
 int SchedulerJanus::OnCommit(const txnid_t cmd_id,
+                             rank_t rank,
                              shared_ptr<RccGraph> sp_graph,
                              TxnOutput *output) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
@@ -193,10 +195,10 @@ int SchedulerJanus::OnCommit(const txnid_t cmd_id,
     ret = SUCCESS; // TODO no return output?
   } else {
 //    Log_info("on commit: %llx par: %d", cmd_id, (int)partition_id_);
-    dtxn->commit_request_received_ = true;
+//    dtxn->commit_request_received_ = true;
     if (!sp_graph) {
       // quick path without graph, no contention.
-      verify(dtxn->fully_dispatched); //cannot handle non-dispatched now.
+      verify(dtxn->fully_dispatched_->value_); //cannot handle non-dispatched now.
       UpgradeStatus(*dtxn, TXN_DCD);
       Execute(*dtxn);
     } else {

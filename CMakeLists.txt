@@ -34,10 +34,12 @@ pkg_check_modules(PYTHON REQUIRED python3)
 
 hunter_add_package(Boost COMPONENTS system filesystem coroutine context thread)
 hunter_add_package(GTest)
+hunter_add_package(GSL)
 
 find_package(Boost CONFIG REQUIRED
         system filesystem coroutine context thread)
 find_package(GTest CONFIG REQUIRED)
+find_package(GSL CONFIG REQUIRED)
 
 include_directories(
         ${Boost_INCLUDE_DIR}
@@ -257,6 +259,7 @@ target_link_libraries(
         RRR
         GTest::main
         GTest::gtest
+        GSL:gsl
         ${Boost_LIBRARIES}
 #        ${CONAN_LIBS}
         ${CMAKE_THREAD_LIBS_INIT}

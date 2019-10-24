@@ -9,21 +9,24 @@
 namespace janus {
 class TxRococo: public Tx, public Vertex<TxRococo> {
  public:
-//  int8_t status_ = TXN_UKN;
+  rank_t current_rank_{RANK_UNDEFINED};
+  rank_t shared_rank_{RANK_UNDEFINED}; // this could be greater than current_rank_ as it can be updated during graph propagation
+  rank_t scc_rank_{0};
+  // ----below variables get reset whenever current_rank_ is changed
   SharedIntEvent status_;
   ballot_t max_seen_ballot_{0};
   ballot_t max_accepted_ballot_{0};
-
-  vector<SimpleCommand> dreqs_ = {};
+  shared_ptr<IntEvent> sp_ev_commit_{Reactor::CreateSpEvent<IntEvent>()};
   TxnOutput *p_output_reply_ = nullptr;
   TxnOutput output_ = {};
-  function<void(int)> finish_reply_callback_ =  [] (int) -> void {verify(0);};
-  bool commit_request_received_ = false;
+  bool executed_{false};
+  // also reset phase_ and fully_dispatched.
+  // ----above variables get reset whenever current_rank_ is changed
+
+  vector<SimpleCommand> dreqs_ = {};
   bool read_only_ = false;
   bool __debug_replied = false;
   vector<void**> external_refs_{};
-
-  shared_ptr<IntEvent> sp_ev_commit_{Reactor::CreateSpEvent<IntEvent>()};
 
   // hopefully this makes involve checks faster
   enum InvolveEnum {UNKNOWN, INVOLVED, FOREIGN};
@@ -46,6 +49,29 @@ class TxRococo: public Tx, public Vertex<TxRococo> {
     }
   }
 
+  void CommitRank() {
+    if (current_rank_ == RANK_D) {
+      current_rank_ = RANK_MAX;
+    } else if (current_rank_ == RANK_I) {
+      current_rank_ = RANK_D;
+    } else {
+      verify(0);
+    }
+    if (current_rank_ > shared_rank_) {
+      shared_rank_ = current_rank_;
+    }
+
+    max_seen_ballot_ = 0;
+    max_accepted_ballot_ = 0;
+    sp_ev_commit_ = Reactor::CreateSpEvent<IntEvent>();
+    p_output_reply_ = nullptr;
+    // TODO do we need to proper reset this value.
+    status_.value_ = TXN_UNKNOWN;
+    fully_dispatched_ = Reactor::CreateSpEvent<IntEvent>();
+//    fully_dispatched_ = false;
+    executed_ = false;
+  }
+
   virtual void DispatchExecute(SimpleCommand &cmd,
                                map<int32_t, Value> *output);
 
@@ -65,7 +91,7 @@ class TxRococo: public Tx, public Vertex<TxRococo> {
                    const Value &value,
                    int hint_flag = TXN_INSTANT) override;
 
-  void TraceDep(Row* row, colid_t col_id, int hint_flag);
+  void TraceDep(Row* row, colid_t col_id, rank_t hint_flag);
 
   virtual void AddParentEdge(shared_ptr<TxRococo> other, int8_t weight) override;
 
@@ -92,6 +118,7 @@ class TxRococo: public Tx, public Vertex<TxRococo> {
                     bool immediate);
 
   virtual bool UpdateStatus(int s) {
+//    verify(current_rank_ == rank);
     if (status_.value_ < s) {
       status_.Set(s);
       return true;
@@ -103,8 +130,6 @@ class TxRococo: public Tx, public Vertex<TxRococo> {
  public:
   std::set<uint32_t> partition_;
   std::vector<uint64_t> pieces_;
-  bool fully_dispatched{false};
-  bool executed_{false};
   bool during_commit = false;
   bool during_asking = false;
   bool inquire_acked_ = false;

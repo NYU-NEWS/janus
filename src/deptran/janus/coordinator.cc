@@ -167,6 +167,7 @@ void CoordinatorJanus::Commit() {
   for (auto par_id : cmd_->GetPartitionIds()) {
     commo()->BroadcastCommit(par_id,
                              cmd_->id_,
+                             RANK_UNDEFINED,
                              sp_graph_,
                              std::bind(&CoordinatorJanus::CommitAck,
                                        this,
@@ -305,11 +306,11 @@ int CoordinatorJanus::FastQuorumGraphCheck(parid_t par_id) {
   verify(vec_graph.size() == fast_quorum);
   auto v = vec_graph[0]->FindV(cmd_->id_);
   verify(v != nullptr);
-  auto& parent_set = v->GetParentSet();
+  auto& parent_set = v->GetParents();
   for (int i = 1; i < vec_graph.size(); i++) {
     RccGraph& graph = *vec_graph[i];
     auto vv = graph.FindV(cmd_->id_);
-    auto& pp_set = vv->GetParentSet();
+    auto& pp_set = vv->GetParents();
     if (parent_set != pp_set) {
       res = 2;
       break;

@@ -2,6 +2,11 @@ import subprocess
 import threading
 import logging
 import queue
+import sys
+
+if sys.version_info < (3, 0):
+    sys.stdout.write("Sorry, requires Python 3.x, not Python 2.x\n")
+    sys.exit(1)
 
 def ps(hosts, grep_filter):
     output = []
@@ -19,6 +24,7 @@ def ps(hosts, grep_filter):
             output += str(o)
         except subprocess.CalledProcessError as e:
             output += "error calling ps! returncode {}".format(e.returncode)
+            sys.exit(1)
         q.put(output)
 
 

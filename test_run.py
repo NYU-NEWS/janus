@@ -19,7 +19,7 @@ modes_ = [
     "tapir",
     "rcc",
     "janus",
-    "februus"
+    "troad"
 ]
 sites_ = [
     "1c1s1p",

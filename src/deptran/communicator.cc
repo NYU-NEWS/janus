@@ -213,6 +213,7 @@ void Communicator::BroadcastDispatch(
   MarshallDeputy md(sp_vpd); // ????
   auto future = proxy->async_Dispatch(cmd_id, md, fuattr);
   Future::safe_release(future);
+  // FIXME fix this, this cause occ and perhaps 2pl to fail
   for (auto& pair : rpc_par_proxies_[par_id]) {
     if (pair.first != pair_leader_proxy.first) {
       rrr::FutureAttr fuattr;

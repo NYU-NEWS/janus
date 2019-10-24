@@ -48,7 +48,7 @@ class BalancedPlacementStrategy:
 						result[dc].append(h)
 						break
 
-			sorted_result = { dc: sorted(value) for (dc, value) in result.iteritems() }
+			sorted_result = { dc: sorted(value) for (dc, value) in result.items() }
 			return sorted_result
 
 	def generate_process(self, process, hosts, server_names, client_names):
@@ -80,10 +80,10 @@ class BalancedPlacementStrategy:
 		# returns each data center in a round robin fashion -- forever
 		datacenter_it = itertools.cycle(hosts.keys())
 
-		server_hosts_it = {dc: itertools.cycle(hosts) for (dc, hosts) in server_machines.iteritems()}
+		server_hosts_it = {dc: itertools.cycle(hosts) for (dc, hosts) in server_machines.items()}
 		for server in server_names:
-			dc = datacenter_it.next()
-			server_host = server_hosts_it[dc].next()
+			dc = next(datacenter_it)
+			server_host = next(server_hosts_it[dc])
 			logging.info("map %s -> %s", server, server_host)
 			process[server] = server_host
 
@@ -97,10 +97,10 @@ class BalancedPlacementStrategy:
 				logger.error("use --allow-client-overlap if testing locally.")
 				sys.exit(1)
 
-		client_hosts_it = {dc: itertools.cycle(hosts) for (dc, hosts) in client_machines.iteritems()}
+		client_hosts_it = {dc: itertools.cycle(hosts) for (dc, hosts) in client_machines.items()}
 		for client in client_names:
-			dc = datacenter_it.next()
-			client_host = client_hosts_it[dc].next()
+			dc = next(datacenter_it)
+			client_host = next(client_hosts_it[dc])
 			logging.info("map %s -> %s", client, client_host)
 			process[client] = client_host
 

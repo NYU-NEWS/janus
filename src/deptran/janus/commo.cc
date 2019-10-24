@@ -93,10 +93,10 @@ void JanusCommo::BroadcastPreAccept(
     verify(txn_id > 0);
     Future* f = nullptr;
     if (skip_graph) {
-      f = proxy->async_JanusPreAcceptWoGraph(txn_id, cmds, fuattr);
+      f = proxy->async_JanusPreAcceptWoGraph(txn_id, RANK_UNDEFINED, cmds, fuattr);
     } else {
       MarshallDeputy md(sp_graph);
-      f = proxy->async_JanusPreAccept(txn_id, cmds, md, fuattr);
+      f = proxy->async_JanusPreAccept(txn_id, RANK_UNDEFINED, cmds, md, fuattr);
     }
     Future::safe_release(f);
   }
@@ -129,6 +129,7 @@ void JanusCommo::BroadcastAccept(parid_t par_id,
 void JanusCommo::BroadcastCommit(
     parid_t par_id,
     txnid_t cmd_id,
+    rank_t rank,
     shared_ptr<RccGraph> graph,
     const function<void(int32_t, TxnOutput&)>& callback) {
   bool skip_graph = IsGraphOrphan(*graph, cmd_id);
@@ -146,10 +147,10 @@ void JanusCommo::BroadcastCommit(
     };
     verify(cmd_id > 0);
     if (skip_graph) {
-      Future::safe_release(proxy->async_JanusCommitWoGraph(cmd_id, fuattr));
+      Future::safe_release(proxy->async_JanusCommitWoGraph(cmd_id, 0, fuattr));
     } else {
       MarshallDeputy md(graph);
-      Future::safe_release(proxy->async_JanusCommit(cmd_id, md, fuattr));
+      Future::safe_release(proxy->async_JanusCommit(cmd_id, 0, md, fuattr));
     }
   }
 }

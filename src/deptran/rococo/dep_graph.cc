@@ -5,9 +5,6 @@
 
 namespace janus {
 
-rrr::PollMgr *svr_poll_mgr_g = nullptr;
-static pthread_t th_id_s = 0;
-
 shared_ptr<TxRococo> RccGraph::FindOrCreateRccVertex(txnid_t txn_id,
                                                     SchedulerRococo *sched) {
   verify(sched != nullptr);
@@ -35,7 +32,7 @@ void RccGraph::SelectGraphCmtUkn(TxRococo& dtxn,
   // TODO, verify that the parent vertex still exists.
   // TODO, verify that the new parent has the correct epoch.
   for (auto &pair : dtxn.parents_) {
-    auto parent_v = FindV(pair);
+    auto parent_v = FindV(pair.first);
     verify(parent_v != nullptr);
 //    auto weight = pair.second;
     auto new_parent_v = new_graph->FindOrCreateV(parent_v->id());
@@ -57,7 +54,7 @@ void RccGraph::SelectGraph(set<shared_ptr<TxRococo>> vertexes,
   for (auto v : vertexes) {
     auto new_v = new_graph->FindOrCreateV(*v);
     for (auto &kv: v->parents_) {
-      auto parent_v = FindV(kv);
+      auto parent_v = FindV(kv.first);
       verify(parent_v != nullptr);
 //      auto weight = kv.second;
       auto weight = 0;
@@ -238,6 +235,9 @@ void RccGraph::RebuildEdgePointer(map<txnid_t, shared_ptr<TxRococo>> &index) {
 }
 
 void RccGraph::UpgradeStatus(TxRococo& v, int8_t status) {
+  if (v.current_rank_ < v.shared_rank_) {
+    return;
+  }
   auto s = v.status();
   if (s >= TXN_CMT) {
     SchedulerRococo::__DebugCheckParentSetSize(v.id(), v.parents_.size());
@@ -248,13 +248,12 @@ void RccGraph::UpgradeStatus(TxRococo& v, int8_t status) {
 }
 
 shared_ptr<TxRococo> RccGraph::AggregateVertex(shared_ptr<TxRococo> rhs_dtxn) {
-  // TODO: add epoch here.
   // create the dtxn if not exist.
   auto lhs_dtxn = FindOrCreateV(*rhs_dtxn);
   auto status1 = lhs_dtxn->status();
   auto status2 = rhs_dtxn->status();
   auto &parent_set1 = lhs_dtxn->parents_;
-  auto &parent_set2 = rhs_dtxn->GetParentSet();
+  auto &parent_set2 = rhs_dtxn->GetParents();
 #ifdef DEBUG_CODE
   if (status1 >= TXN_CMT) {
     RccSched::__DebugCheckParentSetSize(vertex->id(), vertex->parents_.size());
@@ -274,35 +273,35 @@ shared_ptr<TxRococo> RccGraph::AggregateVertex(shared_ptr<TxRococo> rhs_dtxn) {
   }
 #endif
   /**
-   * If local vertex is not yet fully dispatched, what to do?
+   * If local vertex is not yet fully dispatched, pre-setting its dependencies does not hurt
    */
-//  RccDTxn &info = *lhs_dtxn;
-//  RccDTxn &rhs_tinfo = *rhs_dtxn;
-//  partition_id_;
-
-  if (lhs_dtxn->max_seen_ballot_ == 0 &&
-      status1 <= TXN_STD &&
-      status2 <= TXN_STD) {
-    lhs_dtxn->parents_.insert(rhs_dtxn->parents_.begin(),
-                              rhs_dtxn->parents_.end());
+  if (lhs_dtxn->shared_rank_ > rhs_dtxn->shared_rank_) {
+    return lhs_dtxn;
+  } else if (lhs_dtxn->shared_rank_ < rhs_dtxn->shared_rank_) {
+    lhs_dtxn->parents_ = rhs_dtxn->parents_;
+    lhs_dtxn->shared_rank_ = rhs_dtxn->shared_rank_;
+    lhs_dtxn->max_seen_ballot_ = rhs_dtxn->max_accepted_ballot_;
+    lhs_dtxn->max_accepted_ballot_ = rhs_dtxn->max_accepted_ballot_;
+  } else {
+    if (lhs_dtxn->max_seen_ballot_ == 0 &&
+        status1 <= TXN_STD &&
+        status2 <= TXN_STD) {
+      lhs_dtxn->parents_.insert(rhs_dtxn->parents_.begin(),
+                                rhs_dtxn->parents_.end());
 //    lhs_dtxn->partition_.insert(rhs_dtxn->partition_.begin(),
 //                                rhs_dtxn->partition_.end());
-  } else if (status2 >= TXN_CMT) {
-    if (status2 > status1) {
-//      verify(rhs_dtxn->partition_.size() >= lhs_dtxn->partition_.size());
-      lhs_dtxn->parents_ = rhs_dtxn->parents_;
-//      lhs_dtxn->partition_ = rhs_dtxn->partition_;
-    } // else do nothing.
-  } else {
-    if (status2 >= TXN_PAC && status2 >= status1) {
-      if (lhs_dtxn->max_seen_ballot_ <= rhs_dtxn->max_accepted_ballot_) {
-//        verify(rhs_dtxn->partition_.size() >= lhs_dtxn->partition_.size());
-        lhs_dtxn->max_seen_ballot_ = rhs_dtxn->max_accepted_ballot_;
+    } else if (status2 >= TXN_CMT) {
+      if (status2 > status1) {
         lhs_dtxn->parents_ = rhs_dtxn->parents_;
-//        lhs_dtxn->partition_ = rhs_dtxn->partition_;
       } // else do nothing.
+    } else {
+      if (status2 >= TXN_PAC && status2 >= status1) {
+        if (lhs_dtxn->max_seen_ballot_ <= rhs_dtxn->max_accepted_ballot_) {
+          lhs_dtxn->max_seen_ballot_ = rhs_dtxn->max_accepted_ballot_;
+          lhs_dtxn->parents_ = rhs_dtxn->parents_;
+        } // else do nothing.
+      }
     }
-
   }
 #ifdef DEBUG_CODE
   if (status1 >= TXN_CMT) {
@@ -314,11 +313,10 @@ shared_ptr<TxRococo> RccGraph::AggregateVertex(shared_ptr<TxRococo> rhs_dtxn) {
     }
   }
 #endif
-  // TODO fix this for empty graph.
   lhs_dtxn->partition_.insert(rhs_dtxn->partition_.begin(),
                               rhs_dtxn->partition_.end());
+  // TODO add rank support here.
   lhs_dtxn->status_.Set(lhs_dtxn->status_.value_ |= rhs_dtxn->status_.value_);
-//  lhs_dtxn->union_data(*rhs_dtxn);
   return lhs_dtxn;
 }
 

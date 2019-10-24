@@ -137,7 +137,6 @@ ReadyPiecesData TxData::GetReadyPiecesData(int32_t max) {
   ReadyPiecesData ready_pieces_data;
 
 //  int n_debug = 0;
-  auto sz = status_.size();
   for (auto &kv : status_) {
     auto pi = kv.first;
     auto &status = kv.second;
@@ -153,6 +152,7 @@ ReadyPiecesData TxData::GetReadyPiecesData(int32_t max) {
       piece_data->output_size = output_size_[pi];
       piece_data->root_ = this;
       piece_data->timestamp_ = timestamp_;
+      piece_data->rank_ = ranks_[pi];
       map_piece_data_[pi] = piece_data;
       ready_pieces_data[piece_data->partition_id_].push_back(piece_data);
       partition_ids_.insert(piece_data->partition_id_);
@@ -167,7 +167,7 @@ ReadyPiecesData TxData::GetReadyPiecesData(int32_t max) {
       if (max == 0) break;
     }
   }
-  verify(ready_pieces_data.size() > 0);
+//  verify(ready_pieces_data.size() > 0);
   return ready_pieces_data;
 }
 

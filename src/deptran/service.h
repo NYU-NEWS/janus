@@ -140,12 +140,14 @@ class ClassicServiceImpl : public ClassicService {
                      DeferredReply* p_defer) override;
 
   void JanusCommit(const txid_t& cmd_id,
+                   const rank_t& rank,
                    const MarshallDeputy& graph,
                    int32_t* res,
                    TxnOutput* output,
                    DeferredReply* defer) override;
 
   void JanusCommitWoGraph(const txid_t& cmd_id,
+                          const rank_t& rank,
                           int32_t* res,
                           TxnOutput* output,
                           DeferredReply* defer) override;
@@ -156,6 +158,7 @@ class ClassicServiceImpl : public ClassicService {
                     DeferredReply*) override;
 
   void JanusPreAccept(const txid_t& txnid,
+                      const rank_t& rank,
                       const vector<SimpleCommand>& cmd,
                       const MarshallDeputy& md_graph,
                       int32_t* res,
@@ -163,6 +166,7 @@ class ClassicServiceImpl : public ClassicService {
                       DeferredReply* defer) override;
 
   void JanusPreAcceptWoGraph(const txid_t& txnid,
+                             const rank_t& rank,
                              const vector<SimpleCommand>& cmd,
                              int32_t* res,
                              MarshallDeputy* res_graph,

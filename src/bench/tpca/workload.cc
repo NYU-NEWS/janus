@@ -166,7 +166,7 @@ void TpcaWorkload::RegisterPrecedures() {
        {}, // TODO o
        {conf_id_t(TPCA_CUSTOMER, {TPCA_VAR_X}, {1}, TPCA_ROW_1)}, // c
        {TPCA_CUSTOMER, {TPCA_VAR_X}}, // s
-       DF_REAL,
+       DF_NO,
        PROC {
 //        Log::debug("output: %p, output_size: %p", output, output_size);
          Value buf;

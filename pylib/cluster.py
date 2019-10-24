@@ -1,11 +1,15 @@
 import logging
 import string
-import StringIO
 import time
 import traceback
 import random
 import os
 import os.path
+
+try:
+    from StringIO import StringIO ## for Python 2
+except ImportError:
+    from io import StringIO ## for Python 3
 
 import yaml
 import boto3
@@ -100,13 +104,13 @@ def put_janus_config(copy_configs=[]):
                                              instance.public_ip_address) )
                 cnt += 1
 
-    config_contents = StringIO.StringIO(
+    config_contents = StringIO(
         yaml.dump(aws_hosts, default_flow_style=False))
     dest_fn = os.path.join(env.nfs_home, "config", aws_hosts_fn)
     put(config_contents, dest_fn) 
 
     aws_hosts_region_fn = 'aws_hosts_region.yml'
-    contents = StringIO.StringIO(
+    contents = StringIO(
         yaml.dump(region_data, default_flow_style=False))
     dest_fn = os.path.join(env.nfs_home, "config", aws_hosts_region_fn)
     put(contents, dest_fn)
@@ -127,7 +131,7 @@ def config_nfs_server():
     hosts_allow_fn = 'config/etc/hosts.allow'
     ip_list = ' '.join(env.roledefs['all'])
     template_ha = string.Template(open(hosts_allow_fn).read())
-    contents = StringIO.StringIO(template_ha.substitute(ip_list=ip_list))
+    contents = StringIO(template_ha.substitute(ip_list=ip_list))
     logging.info("/etc/hosts.allow :\n{}".format(contents.getvalue()))
     
     Xput(contents, '/etc/hosts.allow', use_sudo=True)
@@ -177,7 +181,7 @@ def config_nfs_client(server_ip=None):
     logging.info("using {} for the nfs server".format(server_ip))
     fstab_fn = "config/etc/fstab"
     template = string.Template(open(fstab_fn).read())
-    contents = StringIO.StringIO(template.substitute(server_ip=server_ip))
+    contents = StringIO(template.substitute(server_ip=server_ip))
     append('/etc/fstab', contents.getvalue(), use_sudo=True)
 
 

@@ -15,12 +15,16 @@ client:
 site:
   server: # each line is a partition, the first is the master site_name:port
     - ["s101:8101"]
+    - ["s201:8102"]
+    - ["s301:8103"]
   client: # each line is a partition
     - ["c1"]
 
 # site_name - process_name map
 process:
   s101: localhost
+  s201: localhost
+  s301: localhost
   c1: localhost
 
 # process_name - host_addr map

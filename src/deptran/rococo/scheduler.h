@@ -68,11 +68,11 @@ class SchedulerRococo : public Scheduler, public RccGraph {
   }
 
   int OnDispatch(const vector<SimpleCommand> &cmd,
-                 rrr::i32 *res,
                  TxnOutput *output,
                  shared_ptr<RccGraph> graph);
 
   int OnCommit(cmdid_t cmd_id,
+               rank_t rank,
                const RccGraph &graph,
                TxnOutput *output,
                const function<void()> &callback);
@@ -95,7 +95,8 @@ class SchedulerRococo : public Scheduler, public RccGraph {
   bool AllAncCmt(TxRococo* v);
   void WaitUntilAllPredecessorsAtLeastCommitting(TxRococo* v);
   void WaitUntilAllPredSccExecuted(const RccScc &);
-  bool FullyDispatched(const RccScc &scc);
+  bool FullyDispatched(const RccScc &scc, rank_t r=RANK_UNDEFINED);
+  bool IsExecuted(const RccScc &scc, rank_t r=RANK_UNDEFINED);
   void Decide(const RccScc &);
   bool HasICycle(const RccScc &scc);
   bool HasAbortedAncestor(const RccScc &scc);
@@ -104,6 +105,7 @@ class SchedulerRococo : public Scheduler, public RccGraph {
   void Execute(TxRococo &);
   void Abort(const RccScc &);
   virtual int OnCommit(txnid_t txn_id,
+                       rank_t rank,
                        shared_ptr<RccGraph> sp_graph,
                        TxnOutput *output);
 

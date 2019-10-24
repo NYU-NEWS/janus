@@ -17,7 +17,7 @@ void CommoFebruus::BroadcastPreAccept(QuorumEvent& e,
       int32_t res;
       uint64_t timestamp;
       fu->get_reply() >> res >> timestamp;
-      e.n_voted_++;
+      e.n_voted_yes_++;
       e.vec_timestamp_.push_back(timestamp);
       e.Test();
     };
@@ -41,7 +41,7 @@ void CommoFebruus::BroadcastAccept(QuorumEvent& e,
       int32_t res;
       uint64_t timestamp;
       fu->get_reply() >> res;
-      e.n_voted_++;
+      e.n_voted_yes_++;
       e.Test();
     };
     verify(tx_id > 0);

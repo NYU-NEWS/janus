@@ -37,6 +37,7 @@ class JanusCommo : public RccCommo {
   void BroadcastCommit(
       parid_t,
       txnid_t cmd_id_,
+      rank_t rank,
       shared_ptr<RccGraph> graph,
       const function<void(int32_t, TxnOutput&)>& callback) override;
 

@@ -2,6 +2,7 @@
 
 # python system modules
 import os
+import signal
 import sys
 import time
 import shutil
@@ -33,6 +34,19 @@ from simplerpc.marshal import Marshal
 from deptran.rcc_rpc import ServerControlProxy
 from deptran.rcc_rpc import ClientControlProxy
 from pylib import ps
+
+if sys.version_info < (3, 0):
+    sys.stdout.write("Sorry, requires Python 3.x, not Python 2.x\n")
+    sys.exit(1)
+
+g_exit = False
+def signal_handler(sig, frame):
+    print('You pressed Ctrl+C!')
+    global g_exit
+    g_exit = True
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
 
 LOG_LEVEL = logging.DEBUG
 LOG_FILE_LEVEL = logging.DEBUG
@@ -387,7 +401,7 @@ class ClientController(object):
         res = sites[0].process.client_rpc_proxy.sync_client_get_txn_names()
         for k, v in res.items():
             logger.debug("txn: %s - %s", v, k)
-            self.txn_names[k] = v
+            self.txn_names[k] = v.decode()
 
         self.start_client()
         logger.info("Clients started")
@@ -724,7 +738,7 @@ class ServerController(object):
             avg_r_sz = 0.0
             avg_cpu_util = 0.0
             sample_result = []
-            while (True):
+            while (not g_exit):
                 logger.debug("top server heartbeat loop")
                 do_statistics = False
                 do_sample_lock.acquire()
@@ -743,7 +757,7 @@ class ServerController(object):
 
                 try:
                     for site in sites:
-                        logger.debug("ping %s", site.name)
+#                        logger.debug("ping %s", site.name)
                         if do_statistics:
                             futures.append(site.rpc_proxy.async_server_heart_beat_with_data())
                         else:

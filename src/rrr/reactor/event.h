@@ -2,6 +2,7 @@
 #pragma once
 
 #include <memory>
+#include <algorithm>
 #include "../base/all.hpp"
 
 namespace rrr {
