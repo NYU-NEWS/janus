@@ -1,5 +1,5 @@
 #pragma once
-#include "../rococo/commo.h"
+#include "../rcc/commo.h"
 
 namespace janus {
 
@@ -38,10 +38,12 @@ class JanusCommo : public RccCommo {
       parid_t,
       txnid_t cmd_id_,
       rank_t rank,
+      bool need_validation,
       shared_ptr<RccGraph> graph,
       const function<void(int32_t, TxnOutput&)>& callback) override;
 
-
+  shared_ptr<QuorumEvent> BroadcastInquireValidation(set<parid_t>& pars, txid_t txid);
+  void BroadcastNotifyValidation(txid_t txid, set<parid_t>& pars, int32_t result);
 };
 
 } // namespace

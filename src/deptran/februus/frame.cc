@@ -21,7 +21,7 @@ Coordinator *FrameFebruus::CreateCoordinator(cooid_t coo_id,
                                              int benchmark,
                                              ClientControlServiceImpl *ccsi,
                                              uint32_t id,
-                                             TxnRegistry *txn_reg) {
+                                             shared_ptr<TxnRegistry> txn_reg) {
   verify(config != nullptr);
   CoordinatorFebruus *coord = new CoordinatorFebruus(coo_id,
                                                      benchmark,
@@ -32,8 +32,8 @@ Coordinator *FrameFebruus::CreateCoordinator(cooid_t coo_id,
   return coord;
 }
 
-Scheduler *FrameFebruus::CreateScheduler() {
-  Scheduler *sched = new SchedulerFebruus();
+TxLogServer *FrameFebruus::CreateScheduler() {
+  TxLogServer *sched = new SchedulerFebruus();
   sched->frame_ = this;
   return sched;
 }
@@ -53,7 +53,7 @@ mdb::Row *FrameFebruus::CreateRow(const mdb::Schema *schema,
 }
 
 shared_ptr<Tx> FrameFebruus::CreateTx(epoch_t epoch, txnid_t tid,
-                                      bool ro, Scheduler *mgr) {
+                                      bool ro, TxLogServer *mgr) {
   shared_ptr<Tx> sp_tx(new TxFebruus(epoch, tid, mgr));
   return sp_tx;
 }

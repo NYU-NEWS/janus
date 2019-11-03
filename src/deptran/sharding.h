@@ -62,7 +62,7 @@ typedef struct c_last_id_t {
   }
 } c_last_id_t;
 
-class Scheduler;
+class TxLogServer;
 class Frame;
 class Sharding {
  public:
@@ -148,7 +148,7 @@ class Sharding {
   std::map<std::string, tb_info_t> tb_infos_;
   std::map<MultiValue, MultiValue> dist2sid_;
   std::map<MultiValue, MultiValue> stock2sid_;
-  Scheduler *tx_sched_;
+  TxLogServer *tx_sched_;
   Frame* frame_;
 
   // below is used for table populater

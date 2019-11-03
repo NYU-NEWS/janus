@@ -1,7 +1,7 @@
 #ifndef BENCHMARK_CTRL_H_
 #define BENCHMARK_CTRL_H_
 
-#include "rococo/dep_graph.h"
+#include "rcc/dep_graph.h"
 #include "rcc_rpc.h" // before this one include all the custom data structures.
 
 #include <time.h>

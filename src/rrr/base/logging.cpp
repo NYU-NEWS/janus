@@ -46,19 +46,30 @@ void Log::log_v(int level, int line, const char* file, const char* fmt, va_list 
     static char indicator[] = { 'F', 'E', 'W', 'I', 'D' };
     assert(level <= Log::DEBUG);
     if (level <= level_s) {
-        const char* filebase = basename(file);
+//        const char* filebase = basename(file);
+      const char* filebase = file;
+      verify (filebase != nullptr);
         char now_str[TIME_NOW_STR_SIZE];
-        Pthread_mutex_lock(&m_s);
         time_now_str(now_str);
-        fprintf(fp_s, "%c ", indicator[level]);
-        if (filebase != nullptr) {
-            fprintf(fp_s, "[%s:%d] ", filebase, line);
-        }
-        fprintf(fp_s, "%s | ", now_str);
-        vfprintf(fp_s, fmt, args);
-        fprintf(fp_s, "\n");
-        Pthread_mutex_unlock(&m_s);
-        fflush(fp_s);
+        char buf[1000];
+//      Pthread_mutex_lock(&m_s);
+      int offset = 0;
+      offset += sprintf(buf+offset, "%c ", indicator[level]);
+      offset += sprintf(buf+offset, "[%s:%d] ", filebase, line);
+      offset += sprintf(buf+offset, "%s | ", now_str);
+      offset += vsprintf(buf+offset, fmt, args);
+      offset += sprintf(buf+offset, "\n");
+      fprintf(fp_s, "%s", buf);
+
+//      fprintf(fp_s, "%c ", indicator[level]);
+//        if (filebase != nullptr) {
+//            fprintf(fp_s, "[%s:%d] ", filebase, line);
+//        }
+//        fprintf(fp_s, "%s | ", now_str);
+//        vfprintf(fp_s, fmt, args);
+//        fprintf(fp_s, "\n");
+//        Pthread_mutex_unlock(&m_s);
+//        fflush(fp_s);
     }
 }
 

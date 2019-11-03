@@ -13,7 +13,7 @@ class TxData;
 class TxRequest;
 class Tx;
 class Executor;
-class Scheduler;
+class TxLogServer;
 class ClientControlServiceImpl;
 class ServerControlServiceImpl;
 class TxnRegistry;
@@ -41,9 +41,9 @@ class Frame {
                                          int benchmark,
                                          ClientControlServiceImpl *ccsi,
                                          uint32_t id,
-                                         TxnRegistry *txn_reg);
-  virtual Executor *CreateExecutor(cmdid_t cmd_id, Scheduler *sch);
-  virtual Scheduler *CreateScheduler();
+                                         shared_ptr<TxnRegistry> txn_reg);
+  virtual Executor *CreateExecutor(cmdid_t cmd_id, TxLogServer *sch);
+  virtual TxLogServer *CreateScheduler();
   virtual Communicator *CreateCommo(PollMgr *pollmgr = nullptr);
   // for only dtxn
   Sharding *CreateSharding();
@@ -51,16 +51,16 @@ class Frame {
   virtual mdb::Row *CreateRow(const mdb::Schema *schema,
                               std::vector<Value> &row_data);
   void GetTxTypes(std::map<int32_t, std::string>& txn_types);
-  TxData *CreateTxnCommand(TxRequest &req, TxnRegistry *reg);
-  TxData *CreateChopper(TxRequest &req, TxnRegistry *reg);
+  TxData *CreateTxnCommand(TxRequest &req, shared_ptr<TxnRegistry> reg);
+//  TxData *CreateChopper(TxRequest &req, TxnRegistry *reg);
   virtual shared_ptr<Tx> CreateTx(epoch_t epoch,
                                   txnid_t txn_id,
                                   bool ro,
-                                  Scheduler *sch);
+                                  TxLogServer *sch);
 
   Workload *CreateTxGenerator();
   virtual vector<rrr::Service *> CreateRpcServices(uint32_t site_id,
-                                                   Scheduler *dtxn_sched,
+                                                   TxLogServer *dtxn_sched,
                                                    rrr::PollMgr *poll_mgr,
                                                    ServerControlServiceImpl *scsi);
 };

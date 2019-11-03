@@ -10,7 +10,7 @@
 #pragma once
 
 #include "__dep__.h"
-#include "rococo/rcc_row.h"
+#include "rcc/row.h"
 #include "snow/ro6_row.h"
 #include "multi_value.h"
 #include "txn_reg.h"
@@ -28,7 +28,7 @@ using mdb::colid_t;
 #define IS_MODE_OCC (Config::GetConfig()->get_mode() == MODE_OCC)
 #define IS_MODE_NONE (Config::GetConfig()->get_mode() == MODE_NONE)
 
-class Scheduler;
+class TxLogServer;
 
 /**
  * This is the data structure storing information used by
@@ -46,11 +46,11 @@ class Tx {
   bool inuse = false;
   txnid_t tid_;
   epoch_t epoch_{0};
-  Scheduler *sched_{nullptr};
+  TxLogServer *sched_{nullptr};
   int phase_;
   mdb::Txn *mdb_txn_{nullptr};
   Recorder *recorder_{nullptr};
-  TxnRegistry *txn_reg_{nullptr};
+  weak_ptr<TxnRegistry> txn_reg_{};
   TxWorkspace ws_{};
   // TODO at most one active coroutine runnable for a tx at a time
 //  IntEvent running_{};
@@ -71,7 +71,7 @@ class Tx {
 
   Tx() = delete;
 
-  Tx(epoch_t epoch, txnid_t tid, Scheduler *mgr)
+  Tx(epoch_t epoch, txnid_t tid, TxLogServer *mgr)
       : epoch_(epoch),
         tid_(tid),
         sched_(mgr),

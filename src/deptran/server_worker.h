@@ -2,8 +2,8 @@
 
 #include "__dep__.h"
 #include "marshal-value.h"
-#include "rococo/graph.h"
-#include "rococo/graph_marshaler.h"
+#include "rcc/graph.h"
+#include "rcc/graph_marshaler.h"
 #include "command.h"
 #include "procedure.h"
 #include "command_marshaler.h"
@@ -34,9 +34,9 @@ class ServerWorker {
   Frame* rep_frame_ = nullptr;
   Config::SiteInfo *site_info_ = nullptr;
   Sharding *sharding_ = nullptr;
-  Scheduler *tx_sched_ = nullptr;
-  Scheduler *rep_sched_ = nullptr;
-  TxnRegistry *tx_reg_ = nullptr;
+  TxLogServer *tx_sched_ = nullptr;
+  TxLogServer *rep_sched_ = nullptr;
+  shared_ptr<TxnRegistry> tx_reg_{nullptr};
 
   Communicator *tx_commo_ = nullptr;
   Communicator *rep_commo_ = nullptr;

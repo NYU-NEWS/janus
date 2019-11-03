@@ -6,7 +6,7 @@
 
 namespace janus {
 
-Executor::Executor(txnid_t txn_id, Scheduler *sched)
+Executor::Executor(txnid_t txn_id, TxLogServer *sched)
     : cmd_id_(txn_id), sched_(sched) {
   verify(sched != nullptr);
 }

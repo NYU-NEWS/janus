@@ -46,7 +46,7 @@ class Workload {
   std::map<string, double>& txn_weights_;
   Sharding* sharding_;
   Sharding* sss_ = nullptr;
-  TxnRegistry *txn_reg_ = nullptr;
+  shared_ptr<TxnRegistry> txn_reg_{nullptr};
 
  public:
   static Workload *CreateWorkload(Config *config);

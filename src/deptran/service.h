@@ -8,7 +8,7 @@
 namespace janus {
 
 class ServerControlServiceImpl;
-class Scheduler;
+class TxLogServer;
 class SimpleCommand;
 class Communicator;
 class SchedulerClassic;
@@ -29,9 +29,9 @@ class ClassicServiceImpl : public ClassicService {
   ServerControlServiceImpl* scsi_; // for statistics;
   Communicator* comm_{nullptr};
 
-  Scheduler* dtxn_sched_;
+  TxLogServer* dtxn_sched_;
 
-  Scheduler* dtxn_sched() {
+  TxLogServer* dtxn_sched() {
     return dtxn_sched_;
   }
 
@@ -109,7 +109,7 @@ class ClassicServiceImpl : public ClassicService {
 
   ClassicServiceImpl() = delete;
 
-  ClassicServiceImpl(Scheduler* sched,
+  ClassicServiceImpl(TxLogServer* sched,
                      rrr::PollMgr* poll_mgr,
                      ServerControlServiceImpl* scsi = NULL);
 
@@ -133,6 +133,9 @@ class ClassicServiceImpl : public ClassicService {
                      map<int32_t, Value>* output,
                      DeferredReply* reply) override;
 
+  void RccInquireValidation(const txid_t& txid, int32_t* ret, DeferredReply* reply) override;
+  void RccNotifyGlobalValidation(const txid_t& txid, const int32_t& res, DeferredReply* reply) override;
+
   void JanusDispatch(const vector<SimpleCommand>& cmd,
                      int32_t* p_res,
                      TxnOutput* p_output,
@@ -141,6 +144,7 @@ class ClassicServiceImpl : public ClassicService {
 
   void JanusCommit(const txid_t& cmd_id,
                    const rank_t& rank,
+                   const int32_t& need_validation,
                    const MarshallDeputy& graph,
                    int32_t* res,
                    TxnOutput* output,
@@ -148,6 +152,7 @@ class ClassicServiceImpl : public ClassicService {
 
   void JanusCommitWoGraph(const txid_t& cmd_id,
                           const rank_t& rank,
+                          const int32_t& need_validation,
                           int32_t* res,
                           TxnOutput* output,
                           DeferredReply* defer) override;

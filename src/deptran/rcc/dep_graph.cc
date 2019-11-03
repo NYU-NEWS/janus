@@ -1,15 +1,15 @@
 #include "../__dep__.h"
 #include "../constants.h"
 #include "dep_graph.h"
-#include "scheduler.h"
+#include "server.h"
 
 namespace janus {
 
-shared_ptr<TxRococo> RccGraph::FindOrCreateRccVertex(txnid_t txn_id,
-                                                    SchedulerRococo *sched) {
+shared_ptr<RccTx> RccGraph::FindOrCreateRccVertex(txnid_t txn_id,
+                                                  RccServer *sched) {
   verify(sched != nullptr);
   auto v = FindOrCreateV(txn_id);
-  TxRococo &dtxn = *v;
+  RccTx &dtxn = *v;
   // FIXME, set mgr and mdb_txn?
   dtxn.sched_ = sched;
   return v;
@@ -19,7 +19,7 @@ void RccGraph::RemoveVertex(txnid_t txn_id) {
   Remove(txn_id);
 }
 
-void RccGraph::SelectGraphCmtUkn(TxRococo& dtxn,
+void RccGraph::SelectGraphCmtUkn(RccTx& dtxn,
                                  shared_ptr<RccGraph> new_graph) {
   auto new_v = new_graph->FindOrCreateV(dtxn.id());
   auto s = dtxn.status();
@@ -49,7 +49,7 @@ void RccGraph::SelectGraphCmtUkn(TxRococo& dtxn,
 #endif
 }
 
-void RccGraph::SelectGraph(set<shared_ptr<TxRococo>> vertexes,
+void RccGraph::SelectGraph(set<shared_ptr<RccTx>> vertexes,
                            RccGraph *new_graph) {
   for (auto v : vertexes) {
     auto new_v = new_graph->FindOrCreateV(*v);
@@ -58,7 +58,7 @@ void RccGraph::SelectGraph(set<shared_ptr<TxRococo>> vertexes,
       verify(parent_v != nullptr);
 //      auto weight = kv.second;
       auto weight = 0;
-      shared_ptr<TxRococo> new_parent_v = nullptr;
+      shared_ptr<RccTx> new_parent_v = nullptr;
       if (vertexes.count(parent_v) > 0) {
         new_parent_v = new_graph->FindOrCreateV(*parent_v);
       } else {
@@ -93,7 +93,7 @@ void RccGraph::SelectGraph(set<shared_ptr<TxRococo>> vertexes,
 #endif
 }
 
-uint64_t RccGraph::MinItfrGraph(TxRococo& tx,
+uint64_t RccGraph::MinItfrGraph(RccTx& tx,
                                 shared_ptr<RccGraph> new_graph,
                                 bool quick,
                                 int depth) {
@@ -205,7 +205,7 @@ bool RccGraph::operator==(RccGraph &rhs) const {
   return true;
 }
 
-void RccGraph::RebuildEdgePointer(map<txnid_t, shared_ptr<TxRococo>> &index) {
+void RccGraph::RebuildEdgePointer(map<txnid_t, shared_ptr<RccTx>> &index) {
   // TODO
   for (auto &pair : index) {
     auto id = pair.first;
@@ -234,20 +234,20 @@ void RccGraph::RebuildEdgePointer(map<txnid_t, shared_ptr<TxRococo>> &index) {
   }
 }
 
-void RccGraph::UpgradeStatus(TxRococo& v, int8_t status) {
+void RccGraph::UpgradeStatus(RccTx& v, int8_t status) {
   if (v.current_rank_ < v.shared_rank_) {
     return;
   }
   auto s = v.status();
   if (s >= TXN_CMT) {
-    SchedulerRococo::__DebugCheckParentSetSize(v.id(), v.parents_.size());
+    RccServer::__DebugCheckParentSetSize(v.id(), v.parents_.size());
   } else if (status >= TXN_CMT) {
-    SchedulerRococo::__DebugCheckParentSetSize(v.id(), v.parents_.size());
+    RccServer::__DebugCheckParentSetSize(v.id(), v.parents_.size());
   }
   v.union_status(status);
 }
 
-shared_ptr<TxRococo> RccGraph::AggregateVertex(shared_ptr<TxRococo> rhs_dtxn) {
+shared_ptr<RccTx> RccGraph::AggregateVertex(shared_ptr<RccTx> rhs_dtxn) {
   // create the dtxn if not exist.
   auto lhs_dtxn = FindOrCreateV(*rhs_dtxn);
   auto status1 = lhs_dtxn->status();
@@ -336,13 +336,13 @@ shared_ptr<TxRococo> RccGraph::AggregateVertex(shared_ptr<TxRococo> rhs_dtxn) {
 //  return scc2;
 //}
 
-bool RccGraph::AllAncCmt(shared_ptr<TxRococo> vertex) {
+bool RccGraph::AllAncCmt(shared_ptr<RccTx> vertex) {
   if (vertex->all_anc_cmt_hint) {
     return true;
   }
   bool all_anc_cmt = true;
-  std::function<int(TxRococo&)> func = [&all_anc_cmt](TxRococo& v) -> int {
-    TxRococo &info = v;
+  std::function<int(RccTx&)> func = [&all_anc_cmt](RccTx& v) -> int {
+    RccTx &info = v;
     int r = 0;
     if (info.IsExecuted() ||
         info.all_anc_cmt_hint ||
@@ -361,16 +361,16 @@ bool RccGraph::AllAncCmt(shared_ptr<TxRococo> vertex) {
   return all_anc_cmt;
 }
 
-map<txnid_t, shared_ptr<TxRococo>> RccGraph::Aggregate(epoch_t epoch,
-                                                      RccGraph &graph) {
+map<txnid_t, shared_ptr<RccTx>> RccGraph::Aggregate(epoch_t epoch,
+                                                    RccGraph &graph) {
   // aggregate vertexes
-  map<txnid_t, shared_ptr<TxRococo>> index;
+  map<txnid_t, shared_ptr<RccTx>> index;
   auto& vidx = graph.vertex_index();
   for (const auto& pair: vidx) {
     auto rhs_v = pair.second;
     verify(pair.first == rhs_v->id());
     auto vertex = AggregateVertex(rhs_v);
-    TxRococo &dtxn = *vertex;
+    RccTx &dtxn = *vertex;
     if (dtxn.epoch_ == 0) {
       dtxn.epoch_ = epoch;
     }

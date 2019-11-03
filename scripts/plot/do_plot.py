@@ -5,7 +5,7 @@ import copy
 import subprocess
 from string import Template
 
-default_gnuplot_exe="gnuplot5"
+default_gnuplot_exe="gnuplot"
 default_gnuplot_cmds="./cmds.gnuplot"
 
 args = None
@@ -70,7 +70,7 @@ def classify_data():
 
 def get_data(data_classes, filters):
     output = []
-    for key, fn in data_classes.iteritems():
+    for key, fn in data_classes.items():
         res = []
         for f in filters:
             #print(f[0], f[1:], key[3], f[0](key,*f[1:]))
@@ -87,7 +87,7 @@ def run_gnuplot(settings, data_files):
         return
 
     cmd = [args.gnuplot_exe]
-    for k,v in settings.iteritems():
+    for k,v in settings.items():
         cmd.append('-e')
         cmd.append("{k}='{v}';".format(k=k, v=v))
 

@@ -7,25 +7,25 @@ namespace janus {
 
 struct entry_t;
 
-class RCCRow : public mdb::CoarseLockedRow {
+class RccRow : public mdb::VersionedRow {
 private:
 
 protected:
 
     // protected dtor as required by RefCounted
-    ~RCCRow();
+    ~RccRow() override;
 
 
 public:
 
-    entry_t *dep_entry_;
+    entry_t *dep_entry_{nullptr};
 
-    void copy_into(RCCRow * row) const;
+    void copy_into(RccRow * row) const;
 
     void init_dep(int n_columns);
 
-    virtual mdb::Row* copy() const {
-        RCCRow * row = new RCCRow();
+    mdb::Row* copy() const override {
+        RccRow * row = new RccRow();
         copy_into(row);
         return row;
     }
@@ -33,7 +33,7 @@ public:
     virtual entry_t *get_dep_entry(int col_id);
 
     template <class Container>
-    static RCCRow * create(const mdb::Schema* schema, const Container& values) {
+    static RccRow * create(const mdb::Schema* schema, const Container& values) {
         verify(values.size() == schema->columns_count());
         std::vector<const Value*> values_ptr(values.size(), nullptr);
         size_t fill_counter = 0;
@@ -41,9 +41,10 @@ public:
             fill_values_ptr(schema, values_ptr, *it, fill_counter);
             fill_counter++;
         }
-        RCCRow * raw_row = new RCCRow();
+        RccRow * raw_row = new RccRow();
         raw_row->init_dep(schema->columns_count());
-        return (RCCRow * ) mdb::Row::create(raw_row, schema, values_ptr);
+        raw_row->init_ver(schema->columns_count());
+        return (RccRow * ) mdb::Row::create(raw_row, schema, values_ptr);
     }
 };
 

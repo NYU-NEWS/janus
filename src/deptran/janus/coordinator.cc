@@ -168,6 +168,7 @@ void CoordinatorJanus::Commit() {
     commo()->BroadcastCommit(par_id,
                              cmd_->id_,
                              RANK_UNDEFINED,
+                             txn->need_validation_,
                              sp_graph_,
                              std::bind(&CoordinatorJanus::CommitAck,
                                        this,
@@ -177,8 +178,25 @@ void CoordinatorJanus::Commit() {
                                        std::placeholders::_2));
   }
   if (fast_commit_) {
+    verify(0);
     committed_ = true;
     GotoNextPhase();
+  }
+  if (txn->need_validation_) {
+    auto pars = cmd_->GetPartitionIds();
+    auto quorum = commo()->BroadcastInquireValidation(pars, cmd_->id_);
+    quorum->Wait();
+    int result = 0;
+    if (quorum->Yes()) {
+      result = 1;
+      validation_result_ = true;
+    } else if (quorum->No()) {
+      result = -1;
+      validation_result_ = false;
+    } else {
+      verify(0);
+    }
+    commo()->BroadcastNotifyValidation(cmd_->id_, pars, result);
   }
 }
 
@@ -352,7 +370,12 @@ void CoordinatorJanus::GotoNextPhase() {
       verify(phase_ % n_phase == Phase::INIT_END);
       verify(committed_ != aborted_);
       if (committed_) {
-        End();
+        if (validation_result_) {
+          End();
+        } else {
+          aborted_ = true;
+          Restart();
+        }
       } else if (aborted_) {
         Restart();
       } else {
@@ -372,5 +395,6 @@ void CoordinatorJanus::Reset() {
   n_accept_oks_.clear();
 //  n_fast_accept_rejects_.clear();
   fast_accept_graph_check_caches_.clear();
+  validation_result_ = true;
 }
 } // namespace janus

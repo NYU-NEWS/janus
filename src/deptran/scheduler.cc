@@ -2,8 +2,8 @@
 #include "constants.h"
 #include "tx.h"
 #include "scheduler.h"
-#include "rococo/graph.h"
-#include "rococo/graph_marshaler.h"
+#include "rcc/graph.h"
+#include "rcc/graph_marshaler.h"
 #include "marshal-value.h"
 #include "procedure.h"
 #include "rcc_rpc.h"
@@ -14,7 +14,7 @@
 
 namespace janus {
 
-shared_ptr<Tx> Scheduler::CreateTx(epoch_t epoch, txnid_t tid, bool
+shared_ptr<Tx> TxLogServer::CreateTx(epoch_t epoch, txnid_t tid, bool
 read_only) {
   Log_debug("create tid %ld", tid);
   verify(dtxns_.find(tid) == dtxns_.end());
@@ -40,7 +40,7 @@ read_only) {
   return dtxn;
 }
 
-shared_ptr<Tx> Scheduler::CreateTx(txnid_t tx_id, bool ro) {
+shared_ptr<Tx> TxLogServer::CreateTx(txnid_t tx_id, bool ro) {
   Log_debug("create tid %" PRIx64, tx_id);
   verify(dtxns_.find(tx_id) == dtxns_.end());
   auto dtxn = frame_->CreateTx(epoch_mgr_.curr_epoch_, tx_id, ro, this);
@@ -62,7 +62,7 @@ shared_ptr<Tx> Scheduler::CreateTx(txnid_t tx_id, bool ro) {
   return dtxn;
 }
 
-shared_ptr<Tx> Scheduler::GetOrCreateTx(txnid_t tid, bool ro) {
+shared_ptr<Tx> TxLogServer::GetOrCreateTx(txnid_t tid, bool ro) {
   shared_ptr<Tx> ret = nullptr;
   auto it = dtxns_.find(tid);
   if (it == dtxns_.end()) {
@@ -75,14 +75,14 @@ shared_ptr<Tx> Scheduler::GetOrCreateTx(txnid_t tid, bool ro) {
   return ret;
 }
 
-void Scheduler::DestroyTx(i64 tid) {
-  Log_debug("destroy tid %ld\n", tid);
+void TxLogServer::DestroyTx(i64 tid) {
+  Log_debug("destroy tid %ld", tid);
   auto it = dtxns_.find(tid);
   verify(it != dtxns_.end());
   dtxns_.erase(it);
 }
 
-shared_ptr<Tx> Scheduler::GetTx(txnid_t tid) {
+shared_ptr<Tx> TxLogServer::GetTx(txnid_t tid) {
   // Log_debug("DTxnMgr::get(%ld)\n", tid);
   auto it = dtxns_.find(tid);
   // verify(it != dtxns_.end());
@@ -93,7 +93,7 @@ shared_ptr<Tx> Scheduler::GetTx(txnid_t tid) {
   }
 }
 
-mdb::Txn *Scheduler::GetMTxn(const i64 tid) {
+mdb::Txn *TxLogServer::GetMTxn(const i64 tid) {
   mdb::Txn *txn = nullptr;
   auto it = mdb_txns_.find(tid);
   if (it == mdb_txns_.end()) {
@@ -104,7 +104,7 @@ mdb::Txn *Scheduler::GetMTxn(const i64 tid) {
   return txn;
 }
 
-mdb::Txn *Scheduler::RemoveMTxn(const i64 tid) {
+mdb::Txn *TxLogServer::RemoveMTxn(const i64 tid) {
   mdb::Txn *txn = nullptr;
   auto it = mdb_txns_.find(tid);
   verify(it != mdb_txns_.end());
@@ -113,7 +113,7 @@ mdb::Txn *Scheduler::RemoveMTxn(const i64 tid) {
   return txn;
 }
 
-mdb::Txn *Scheduler::GetOrCreateMTxn(const i64 tid) {
+mdb::Txn *TxLogServer::GetOrCreateMTxn(const i64 tid) {
   mdb::Txn *txn = nullptr;
   auto it = mdb_txns_.find(tid);
   if (it == mdb_txns_.end()) {
@@ -141,9 +141,9 @@ mdb::Txn *Scheduler::GetOrCreateMTxn(const i64 tid) {
 }
 
 // TODO move this to the dtxn class
-void Scheduler::get_prepare_log(i64 txn_id,
-                                const std::vector<i32> &sids,
-                                std::string *str) {
+void TxLogServer::get_prepare_log(i64 txn_id,
+                                  const std::vector<i32> &sids,
+                                  std::string *str) {
   auto it = mdb_txns_.find(txn_id);
   verify(it != mdb_txns_.end() && it->second != NULL);
 
@@ -184,8 +184,8 @@ void Scheduler::get_prepare_log(i64 txn_id,
   }
 }
 
-Scheduler::Scheduler() : mtx_() {
-  mdb_txn_mgr_ = new mdb::TxnMgrUnsafe();
+TxLogServer::TxLogServer() : mtx_() {
+  mdb_txn_mgr_ = make_shared<mdb::TxnMgrUnsafe>();
   if (Config::GetConfig()->do_logging()) {
     auto path = Config::GetConfig()->log_path();
     // TODO free this
@@ -193,7 +193,7 @@ Scheduler::Scheduler() : mtx_() {
   }
 }
 
-Coordinator *Scheduler::CreateRepCoord() {
+Coordinator *TxLogServer::CreateRepCoord() {
   Coordinator *coord;
   static cooid_t cid = 0;
   int32_t benchmark = 0;
@@ -210,24 +210,24 @@ Coordinator *Scheduler::CreateRepCoord() {
   return coord;
 }
 
-Scheduler::Scheduler(int mode) : Scheduler() {
+TxLogServer::TxLogServer(int mode) : TxLogServer() {
   mode_ = mode;
   switch (mode) {
     case MODE_MDCC:
-    case MODE_OCC:mdb_txn_mgr_ = new mdb::TxnMgrOCC();
+    case MODE_OCC:
+      mdb_txn_mgr_ = make_shared<mdb::TxnMgrOCC>();
       break;
     case MODE_NONE:
     case MODE_RPC_NULL:
     case MODE_RCC:
     case MODE_RO6:
-      mdb_txn_mgr_ =
-          new mdb::TxnMgrUnsafe(); //XXX is it OK to use unsafe for deptran
+      mdb_txn_mgr_ = make_shared<mdb::TxnMgrUnsafe>();
       break;
     default:verify(0);
   }
 }
 
-Scheduler::~Scheduler() {
+TxLogServer::~TxLogServer() {
   auto it = mdb_txns_.begin();
   for (; it != mdb_txns_.end(); it++)
     Log::info("tid: %ld still running", it->first);
@@ -236,9 +236,6 @@ Scheduler::~Scheduler() {
     it->second = NULL;
   }
   mdb_txns_.clear();
-  if (mdb_txn_mgr_)
-    delete mdb_txn_mgr_;
-  mdb_txn_mgr_ = NULL;
 }
 
 /**
@@ -246,8 +243,8 @@ Scheduler::~Scheduler() {
  * @param txn_box
  * @param inn_id, if 0, execute all pieces.
  */
-void Scheduler::Execute(Tx &txn_box,
-                        innid_t inn_id) {
+void TxLogServer::Execute(Tx &txn_box,
+                          innid_t inn_id) {
   if (inn_id == 0) {
     for (auto &pair : txn_box.paused_pieces_) {
       auto &up_pause = pair.second;
@@ -263,8 +260,8 @@ void Scheduler::Execute(Tx &txn_box,
   }
 }
 
-void Scheduler::reg_table(const std::string &name,
-                          mdb::Table *tbl) {
+void TxLogServer::reg_table(const std::string &name,
+                            mdb::Table *tbl) {
   verify(mdb_txn_mgr_ != NULL);
   mdb_txn_mgr_->reg_table(name, tbl);
   if (name == TPCC_TB_ORDER) {
@@ -282,40 +279,7 @@ void Scheduler::reg_table(const std::string &name,
   }
 }
 
-Executor *Scheduler::CreateExecutor(txid_t txn_id) {
-  verify(executors_.find(txn_id) == executors_.end());
-  Executor *exec = frame_->CreateExecutor(txn_id, this);
-  verify(exec->sched_);
-  auto dtxn = CreateTx(txn_id);
-  exec->dtxn_ = dtxn;
-  executors_[txn_id] = exec;
-  exec->recorder_ = this->recorder_;
-  exec->txn_reg_ = txn_reg_;
-  verify(txn_reg_);
-  return exec;
-}
-
-Executor *Scheduler::GetOrCreateExecutor(txid_t txn_id) {
-  Executor *exec = nullptr;
-  auto it = executors_.find(txn_id);
-  if (it == executors_.end()) {
-    exec = CreateExecutor(txn_id);
-  } else {
-    exec = it->second;
-    verify(exec->sched_ != nullptr);
-  }
-  return exec;
-}
-
-void Scheduler::TrashExecutor(txid_t txn_id) {
-  if (epoch_enabled_) {
-    // epoch_mgr_.Done(txn_id);
-  } else {
-    DestroyExecutor(txn_id);
-  }
-}
-
-void Scheduler::DestroyExecutor(txnid_t txn_id) {
+void TxLogServer::DestroyExecutor(txnid_t txn_id) {
   Log_debug("destroy tid %ld\n", txn_id);
   auto it = executors_.find(txn_id);
   verify(it != executors_.end());
@@ -324,14 +288,7 @@ void Scheduler::DestroyExecutor(txnid_t txn_id) {
   delete exec;
 }
 
-Executor *Scheduler::GetExecutor(cmdid_t cmd_id) {
-  // Log_debug("DTxnMgr::get(%ld)\n", tid);
-  auto it = executors_.find(cmd_id);
-  verify(it != executors_.end());
-  return it->second;
-}
-
-void Scheduler::TriggerUpgradeEpoch() {
+void TxLogServer::TriggerUpgradeEpoch() {
   if (site_id_ == 0) {
     auto t_now = std::time(nullptr);
     auto d = std::difftime(t_now, last_upgrade_time_);
@@ -342,7 +299,7 @@ void Scheduler::TriggerUpgradeEpoch() {
     in_upgrade_epoch_ = true;
     epoch_t epoch = epoch_mgr_.curr_epoch_;
     commo()->SendUpgradeEpoch(epoch,
-                              std::bind(&Scheduler::UpgradeEpochAck,
+                              std::bind(&TxLogServer::UpgradeEpochAck,
                                         this,
                                         std::placeholders::_1,
                                         std::placeholders::_2,
@@ -350,9 +307,9 @@ void Scheduler::TriggerUpgradeEpoch() {
   }
 }
 
-void Scheduler::UpgradeEpochAck(parid_t par_id,
-                                siteid_t site_id,
-                                int32_t res) {
+void TxLogServer::UpgradeEpochAck(parid_t par_id,
+                                  siteid_t site_id,
+                                  int32_t res) {
   auto parids = Config::GetConfig()->GetAllPartitionIds();
   epoch_replies_[par_id][site_id] = res;
   if (epoch_replies_.size() < parids.size()) {
@@ -387,19 +344,10 @@ void Scheduler::UpgradeEpochAck(parid_t par_id,
   }
 }
 
-int32_t Scheduler::OnUpgradeEpoch(uint32_t old_epoch) {
+int32_t TxLogServer::OnUpgradeEpoch(uint32_t old_epoch) {
   epoch_mgr_.GrowActive();
   epoch_mgr_.GrowBuffer();
   return epoch_mgr_.CheckBufferInactive();
-}
-
-void Scheduler::OnTruncateEpoch(uint32_t old_epoch) {
-  // TODO
-  Log_info("truncating epochs: %d", old_epoch);
-  auto ids = epoch_mgr_.GrowInactive(old_epoch);
-  for (auto &id: ids) {
-    DestroyExecutor(id);
-  }
 }
 
 } // namespace janus

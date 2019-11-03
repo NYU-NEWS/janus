@@ -62,8 +62,7 @@ void CoordinatorClassic::DoTxAsync(TxRequest& req) {
   cmd->root_id_ = this->next_txn_id();
   cmd->id_ = cmd->root_id_;
   ongoing_tx_id_ = cmd->id_;
-  Log_debug("assigning tx id: %"
-                PRIx64, ongoing_tx_id_);
+  Log_debug("assigning tx id: %" PRIx64, ongoing_tx_id_);
   cmd->timestamp_ = GenerateTimestamp();
   cmd_ = cmd;
   n_retry_ = 0;
@@ -82,7 +81,7 @@ void CoordinatorClassic::DoTxAsync(TxRequest& req) {
              this->coo_id_);
     ForwardTxnRequest(req);
   } else {
-    Log_info("start txn!!! : %d", forward_status_);
+    Log_debug("start txn!!! : %d", forward_status_);
     Coroutine::CreateRun([this]() { GotoNextPhase(); });
   }
 }
@@ -146,8 +145,7 @@ void CoordinatorClassic::Restart() {
   cmd_->root_id_ = this->next_txn_id();
   cmd_->id_ = cmd_->root_id_;
   ongoing_tx_id_ = cmd_->root_id_;
-  Log_debug("assigning tx_id: %"
-                PRIx64, ongoing_tx_id_);
+  Log_debug("assigning tx_id: %" PRIx64, ongoing_tx_id_);
   TxData* txn = (TxData*) cmd_;
   double last_latency = txn->last_attempt_latency();
   if (ccsi_)

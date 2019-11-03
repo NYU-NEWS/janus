@@ -45,7 +45,7 @@ void CoordinatorTapir::DispatchAsync() {
                                          std::placeholders::_1,
                                          std::placeholders::_2));
   }
-  Log_debug("sent %d SubCmds\n", cnt);
+  Log_debug("sent %d SubCmds", cnt);
 }
 
 void CoordinatorTapir::DispatchAck(phase_t phase,

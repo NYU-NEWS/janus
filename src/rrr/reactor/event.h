@@ -12,7 +12,8 @@ using std::vector;
 
 class Reactor;
 class Coroutine;
-class Event {
+class Event : public std::enable_shared_from_this<Event> {
+//class Event {
  public:
   int __debug_creator{0};
   enum EventStatus { INIT = 0, WAIT = 1, READY = 2, DONE = 3, DEBUG};
@@ -27,12 +28,18 @@ class Event {
   // When the stack that contains the event frees, the event frees.
   std::weak_ptr<Coroutine> wp_coro_{};
 
-  virtual void Wait();
+  virtual void Wait() final;
+
+  void Wait(function<bool(int)> f) {
+    test_ = f;
+    Wait();
+  }
+
   virtual bool Test();
-  virtual bool IsReady() {return false;}
+  virtual bool IsReady() {return test_(0);}
 
   friend Reactor;
- protected:
+// protected:
   Event();
 };
 

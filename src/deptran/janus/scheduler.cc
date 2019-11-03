@@ -2,18 +2,18 @@
 
 #include "scheduler.h"
 #include "commo.h"
-#include "deptran/rococo/tx.h"
+#include "../rcc/tx.h"
 
 using namespace janus;
 
-map<txnid_t, shared_ptr<TxRococo>> SchedulerJanus::Aggregate(RccGraph &graph) {
+map<txnid_t, shared_ptr<RccTx>> SchedulerJanus::Aggregate(RccGraph &graph) {
   // aggregate vertexes
-  map<txnid_t, shared_ptr<TxRococo>> index;
+  map<txnid_t, shared_ptr<RccTx>> index;
   for (auto &pair: graph.vertex_index()) {
     auto rhs_v = pair.second;
     verify(pair.first == rhs_v->id());
     auto vertex = AggregateVertex(rhs_v);
-    TxRococo &dtxn = *vertex;
+    RccTx &dtxn = *vertex;
     if (dtxn.epoch_ == 0) {
       dtxn.epoch_ = epoch_mgr_.curr_epoch_;
     }
@@ -119,10 +119,10 @@ int SchedulerJanus::OnPreAccept(const txid_t txn_id,
   }
   // TODO FIXME
   // add interference based on cmds.
-  auto dtxn = dynamic_pointer_cast<TxRococo>(GetOrCreateTx(txn_id));
+  auto dtxn = dynamic_pointer_cast<RccTx>(GetOrCreateTx(txn_id));
   dtxn->UpdateStatus(TXN_PAC);
-  dtxn->involve_flag_ = TxRococo::INVOLVED;
-  TxRococo &tinfo = *dtxn;
+  dtxn->involve_flag_ = RccTx::INVOLVED;
+  RccTx &tinfo = *dtxn;
   int ret;
   if (dtxn->max_seen_ballot_ > 0) {
     ret = REJECT;
@@ -154,7 +154,7 @@ void SchedulerJanus::OnAccept(const txnid_t txn_id,
                               shared_ptr<RccGraph> graph,
                               int32_t *res) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
-  auto dtxn = dynamic_pointer_cast<TxRococo>(GetOrCreateTx(txn_id));
+  auto dtxn = dynamic_pointer_cast<RccTx>(GetOrCreateTx(txn_id));
   if (dtxn->max_seen_ballot_ > ballot) {
     *res = REJECT;
     verify(0); // do not support failure recovery so far.
@@ -171,9 +171,9 @@ int SchedulerJanus::OnInquire(epoch_t epoch,
                               shared_ptr<RccGraph> graph) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   // TODO check epoch, cannot be a too old one.
-  auto sp_tx = dynamic_pointer_cast<TxRococo>(GetOrCreateTx(cmd_id));
+  auto sp_tx = dynamic_pointer_cast<RccTx>(GetOrCreateTx(cmd_id));
   //register an event, triggered when the status >= COMMITTING;
-  verify (sp_tx->Involve(Scheduler::partition_id_));
+  verify (sp_tx->Involve(TxLogServer::partition_id_));
   sp_tx->status_.Wait([](int v)->bool {return v>=TXN_CMT;});
   InquiredGraph(*sp_tx, graph);
   return 0;
@@ -181,13 +181,15 @@ int SchedulerJanus::OnInquire(epoch_t epoch,
 
 int SchedulerJanus::OnCommit(const txnid_t cmd_id,
                              rank_t rank,
+                             bool need_validation,
                              shared_ptr<RccGraph> sp_graph,
                              TxnOutput *output) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 //  if (RandomGenerator::rand(1, 2000) <= 1)
 //    Log_info("on commit graph size: %d", graph.size());
   int ret = SUCCESS;
-  auto dtxn = dynamic_pointer_cast<TxRococo>(GetOrCreateTx(cmd_id));
+  auto dtxn = dynamic_pointer_cast<RccTx>(GetOrCreateTx(cmd_id));
+  dtxn->need_validation_ = need_validation;
   verify(dtxn->p_output_reply_ == nullptr);
   dtxn->p_output_reply_ = output;
   verify(!dtxn->IsAborted());

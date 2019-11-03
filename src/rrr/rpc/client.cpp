@@ -5,6 +5,7 @@
 #include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <netdb.h>
 #include <netinet/tcp.h>
 
@@ -63,10 +64,12 @@ void Future::notify_ready() {
   Pthread_cond_signal(&ready_cond_);
   Pthread_mutex_unlock(&ready_m_);
   if (ready_ && attr_.callback != nullptr) {
-//    Coroutine::CreateRun([this]() {
-//      this->attr_.callback(this);
-//    });
-        attr_.callback(this);
+    // Warning: make sure memory is safe!
+    auto x = attr_.callback;
+    Coroutine::CreateRun([x, this]() {
+      x(this);
+    });
+//        attr_.callback(this);
   }
 }
 
@@ -109,6 +112,21 @@ int Client::connect(const char* addr) {
   }
   string host = addr_str.substr(0, idx);
   string port = addr_str.substr(idx + 1);
+#ifdef USE_IPC
+  struct sockaddr_un saun;
+  saun.sun_family = AF_UNIX;
+  string ipc_addr = "rsock" + port;
+  strcpy(saun.sun_path, ipc_addr.data());
+  if ((sock_ = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
+    perror("client: socket");
+    exit(1);
+  }
+  auto len = sizeof(saun.sun_family) + strlen(saun.sun_path)+1;
+  if (::connect(sock_, (struct sockaddr*)&saun, len) < 0) {
+    perror("client: connect");
+    exit(1);
+  }
+#else
 
   struct addrinfo hints, * result, * rp;
   memset(&hints, 0, sizeof(struct addrinfo));
@@ -145,7 +163,7 @@ int Client::connect(const char* addr) {
     Log_error("rrr::Client: connect(%s): %s", addr, strerror(errno));
     return ENOTCONN;
   }
-
+#endif
   verify(set_nonblocking(sock_, true) == 0);
   Log_debug("rrr::Client: connected to %s", addr);
 

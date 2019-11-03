@@ -3,12 +3,14 @@
 #include <memory>
 
 #include <sys/select.h>
+#include <sys/un.h>
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netdb.h>
 #include <netinet/tcp.h>
+#include <sys/un.h>
 
 #include "reactor/coroutine.h"
 #include "server.hpp"
@@ -99,7 +101,9 @@ ServerConnection::~ServerConnection() {
 }
 
 int ServerConnection::run_async(const std::function<void()>& f) {
-    return server_->threadpool_->run_async(f);
+//  verify(0);
+//  return 0;
+  return server_->threadpool_->run_async(f);
 }
 
 void ServerConnection::begin_reply(Request* req, i32 error_code /* =... */) {
@@ -335,12 +339,9 @@ struct start_server_loop_args_type {
 
 void* Server::start_server_loop(void* arg) {
     start_server_loop_args_type* start_server_loop_args = (start_server_loop_args_type*) arg;
-
     start_server_loop_args->server->server_loop(start_server_loop_args->svr_addr);
-
     freeaddrinfo(start_server_loop_args->gai_result);
     delete start_server_loop_args;
-
     if (arg) {
         pthread_exit(nullptr);
     }
@@ -367,7 +368,13 @@ void Server::server_loop(struct addrinfo* svr_addr) {
             break;
         }
 
-        int clnt_socket = accept(server_sock_, svr_addr->ai_addr, &svr_addr->ai_addrlen);
+#ifdef USE_IPC
+      struct sockaddr_un fsaun;
+        uint32_t from_len;
+      int clnt_socket = ::accept(server_sock_, (struct sockaddr*)&fsaun, &from_len);
+#else
+      int clnt_socket = accept(server_sock_, svr_addr->ai_addr, &svr_addr->ai_addrlen);
+#endif
         if (clnt_socket >= 0 && status_ == RUNNING) {
             Log_debug("rrr::Server: got new client, fd=%d", clnt_socket);
             verify(set_nonblocking(clnt_socket, true) == 0);
@@ -395,9 +402,26 @@ int Server::start(const char* bind_addr) {
     string host = addr.substr(0, idx);
     string port = addr.substr(idx + 1);
 
-    struct addrinfo hints, *result, *rp;
-    memset(&hints, 0, sizeof(struct addrinfo));
+  start_server_loop_args_type* start_server_loop_args = new start_server_loop_args_type();
+#ifdef USE_IPC
+  struct sockaddr_un saun;
+  if ((server_sock_ = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
+    perror("server: socket");
+    exit(1);
+  }
+  saun.sun_family = AF_UNIX;
+  string ipc_addr = "rsock" + port;
+  strcpy(saun.sun_path, ipc_addr.data());
+  auto len = sizeof(saun.sun_family) + strlen(saun.sun_path)+1;
+  ::unlink(ipc_addr.data());
+  if (::bind(server_sock_, (struct sockaddr*)&saun, len) != 0) {
+    perror("server: socket bind");
+    exit(1);
+  }
 
+#else
+  struct addrinfo hints, *result, *rp;
+    memset(&hints, 0, sizeof(struct addrinfo));
     hints.ai_family = AF_INET; // ipv4
     hints.ai_socktype = SOCK_STREAM; // tcp
     hints.ai_flags = AI_PASSIVE; // server side
@@ -409,7 +433,7 @@ int Server::start(const char* bind_addr) {
     }
 
     for (rp = result; rp != nullptr; rp = rp->ai_next) {
-        server_sock_ = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+      server_sock_ = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
         if (server_sock_ == -1) {
             continue;
         }
@@ -420,6 +444,8 @@ int Server::start(const char* bind_addr) {
 
         if (::bind(server_sock_, rp->ai_addr, rp->ai_addrlen) == 0) {
             break;
+        } else {
+          verify(0);
         }
         close(server_sock_);
         server_sock_ = -1;
@@ -431,6 +457,10 @@ int Server::start(const char* bind_addr) {
         freeaddrinfo(result);
         return EINVAL;
     }
+  start_server_loop_args->gai_result = result;
+  start_server_loop_args->svr_addr = rp;
+#endif
+  start_server_loop_args->server = this;
 
     // about backlog: http://www.linuxjournal.com/files/linuxjournal.com/linuxjournal/articles/023/2333/2333s2.html
     const int backlog = SOMAXCONN;
@@ -440,10 +470,6 @@ int Server::start(const char* bind_addr) {
     status_ = RUNNING;
     Log_info("rrr::Server: started on %s", bind_addr);
 
-    start_server_loop_args_type* start_server_loop_args = new start_server_loop_args_type();
-    start_server_loop_args->server = this;
-    start_server_loop_args->gai_result = result;
-    start_server_loop_args->svr_addr = rp;
     Pthread_create(&loop_th_, nullptr, Server::start_server_loop, start_server_loop_args);
 
     return 0;

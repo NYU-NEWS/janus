@@ -12,7 +12,7 @@ namespace janus {
 class ExternCFrame : public Frame {
  public:
   ExternCFrame() : Frame(MODE_EXTERNC) { }
-  Scheduler *CreateScheduler() override;
+  TxLogServer *CreateScheduler() override;
 };
 
 } // namespace janus

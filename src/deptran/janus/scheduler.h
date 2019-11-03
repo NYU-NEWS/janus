@@ -1,16 +1,16 @@
 
 #pragma once
-#include "deptran/rococo/scheduler.h"
+#include "../rcc/server.h"
 
 namespace janus {
 
 class RccGraph;
 class JanusCommo;
-class SchedulerJanus : public SchedulerRococo {
+class SchedulerJanus : public RccServer {
  public:
-  using SchedulerRococo::SchedulerRococo;
+  using RccServer::RccServer;
 
-  map<txnid_t, shared_ptr<TxRococo>> Aggregate(RccGraph& graph) override;
+  map<txnid_t, shared_ptr<RccTx>> Aggregate(RccGraph& graph) override;
 
   virtual int OnPreAccept(txnid_t txnid,
                           rank_t rank,
@@ -25,6 +25,7 @@ class SchedulerJanus : public SchedulerRococo {
 
   int OnCommit(txnid_t txn_id,
                rank_t rank,
+               bool need_validation,
                shared_ptr<RccGraph> sp_graph,
                TxnOutput *output) override;
 

@@ -46,10 +46,11 @@ namespace janus {
 #define TXN_FNS (0x20)  // finished
 #define TXN_ABT (0x40)  // aborted
 
-#define TXN_BYPASS   (0x01)
-#define TXN_SAFE     (0x02)
-#define TXN_INSTANT  (0x02)
-#define TXN_DEFERRED (0x04)
+#define TXN_BYPASS     (0x01)
+#define TXN_SAFE       (0x02)
+#define TXN_INSTANT    (0x02)
+#define TXN_IMMEDIATE  (0x02)
+#define TXN_DEFERRED   (0x04)
 
 #define DF_REAL (0x04)
 #define DF_NO   (0x02)

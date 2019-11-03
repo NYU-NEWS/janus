@@ -3,7 +3,7 @@
 #include "../__dep__.h"
 #include "../constants.h"
 #include "../command.h"
-#include "../rococo/coordinator.h"
+#include "../rcc/coord.h"
 
 namespace janus {
 class JanusCommo;
@@ -47,10 +47,6 @@ class CoordinatorJanus : public RccCoord {
                     parid_t par_id,
                     int res,
                     shared_ptr<RccGraph> graph);
-
-  // do_one inherits from RccCoord;
-
-  void restart() { verify(0); };
   // functions needed in the fast accept phase.
   bool FastpathPossible();
   bool AllFastQuorumsReached();

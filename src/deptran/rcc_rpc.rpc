@@ -62,7 +62,6 @@ abstract service Classic {
                         i32 res);
   // works as a 2PC commit/abort with a paxos decision
   defer TapirDecide(uint64_t cmd_id, i32 commit);
-  
 
   defer RccDispatch(vector<SimpleCommand> cmd |
                     i32 res,
@@ -80,6 +79,9 @@ abstract service Classic {
   defer RccDispatchRo(SimpleCommand cmd |
                       map<i32, Value> output);
 
+  defer RccInquireValidation(txid_t tx_id | int32_t res);
+
+  defer RccNotifyGlobalValidation(txid_t tx_id, int32_t res |);
 
   defer JanusDispatch(vector<SimpleCommand> cmd |
                       i32 res,
@@ -88,12 +90,14 @@ abstract service Classic {
 
   defer JanusCommit(cmdid_t id,
                     rank_t rank,
+                    int32_t need_validation,
                     MarshallDeputy graph |
                     int32_t res,
                     TxnOutput output);
 
   defer JanusCommitWoGraph(cmdid_t id,
-                           rank_t rank |
+                           rank_t rank,
+                           int32_t need_validation |
                            int32_t res,
                            TxnOutput output);
 

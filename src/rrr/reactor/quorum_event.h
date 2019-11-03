@@ -22,6 +22,7 @@ class QuorumEvent : public Event {
 
   QuorumEvent(int n_total,
               int quorum) : Event(),
+                            n_total_(n_total),
                             quorum_(quorum) {
   }
 
@@ -30,7 +31,8 @@ class QuorumEvent : public Event {
   }
 
   bool No() {
-    return n_voted_no_ >= quorum_;
+    verify(n_total_ >= quorum_);
+    return n_voted_no_ > (n_total_ - quorum_);
   }
 
   bool IsReady() override {

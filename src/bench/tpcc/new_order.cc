@@ -381,7 +381,7 @@ void TpccWorkload::RegNewOrder() {
                {
                  cmd.input.at(TPCC_VAR_D_ID),
                  cmd.input.at(TPCC_VAR_W_ID),
-                 cmd.input.at(TPCC_VAR_O_ID),
+                 cmd.input.WaitAt(TPCC_VAR_O_ID),
                  cmd.input.at(TPCC_VAR_OL_NUMBER(i)),
                  cmd.input.at(TPCC_VAR_I_ID(i)),
                  cmd.input.at(TPCC_VAR_S_W_ID(i)),

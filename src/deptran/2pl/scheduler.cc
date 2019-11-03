@@ -9,15 +9,15 @@
 #include "../scheduler.h"
 #include "../marshal-value.h"
 #include "../rcc_rpc.h"
-#include "../rococo/graph.h"
-#include "../rococo/graph_marshaler.h"
+#include "../rcc/graph.h"
+#include "../rcc/graph_marshaler.h"
 #include "scheduler.h"
 #include "tx.h"
 
 namespace janus {
 
 Scheduler2pl::Scheduler2pl() : SchedulerClassic() {
-  mdb_txn_mgr_ = new mdb::TxnMgr2PL();
+  mdb_txn_mgr_ = make_shared<mdb::TxnMgr2PL>();
 }
 
 mdb::Txn* Scheduler2pl::del_mdb_txn(const i64 tid) {

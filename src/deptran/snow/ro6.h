@@ -1,9 +1,9 @@
 #pragma once
 
-#include "deptran/rococo/tx.h"
+#include "../rcc/tx.h"
 namespace janus {
 
-class TxSnow: public TxRococo {
+class TxSnow: public RccTx {
  private:
   i64 txnId = tid_;
   std::set <i64> ro_;
@@ -12,7 +12,7 @@ class TxSnow: public TxRococo {
   // for haonan, I think it should be like this?
   std::set <std::pair<mdb::Row *, int>> row_col_map;
  public:
-  TxSnow(i64 tid, Scheduler *mgr, bool ro) : TxRococo(0, tid, mgr, ro) {
+  TxSnow(i64 tid, TxLogServer *mgr, bool ro) : RccTx(0, tid, mgr, ro) {
   }
 
   // Implementing create method

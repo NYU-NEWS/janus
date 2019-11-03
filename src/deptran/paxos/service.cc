@@ -1,11 +1,11 @@
 
 #include "service.h"
-#include "scheduler.h"
+#include "server.h"
 
 namespace janus {
 
-MultiPaxosServiceImpl::MultiPaxosServiceImpl(Scheduler *sched)
-    : sched_((SchedulerMultiPaxos*)sched) {
+MultiPaxosServiceImpl::MultiPaxosServiceImpl(TxLogServer *sched)
+    : sched_((PaxosServer*)sched) {
 
 }
 

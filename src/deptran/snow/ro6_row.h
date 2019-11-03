@@ -58,7 +58,7 @@ class ReadTxnIdTracker {
 
 #define MultiVersionedRow RO6Row
 
-class RO6Row: public RCCRow {
+class RO6Row: public RccRow {
  public:
 
   virtual mdb::symbol_t rtti() const {

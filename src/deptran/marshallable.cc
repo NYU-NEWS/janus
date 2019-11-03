@@ -1,14 +1,16 @@
 
+#include <memory>
 #include <unordered_map>
 #include <mutex>
 #include "marshallable.h"
-#include "rococo/dep_graph.h"
+#include "rcc/dep_graph.h"
 
 namespace janus {
 
 std::mutex md_mutex_g;
 std::mutex mdi_mutex_g;
 shared_ptr<MarshallDeputy::MarContainer> mc_{nullptr};
+thread_local shared_ptr<MarshallDeputy::MarContainer> mc_th_{nullptr};
 
 int MarshallDeputy::RegInitializer(int32_t cmd_type,
                                    function<Marshallable * ()> init) {
@@ -21,12 +23,15 @@ int MarshallDeputy::RegInitializer(int32_t cmd_type,
 
 function<Marshallable * ()>
 MarshallDeputy::GetInitializer(int32_t type) {
-  md_mutex_g.lock();
-  auto& inits =  Initializers();
-  auto it = inits.find(type);
-  verify(it != inits.end());
+  if (!mc_th_) {
+    mc_th_ = std::make_shared<MarshallDeputy::MarContainer>();
+    md_mutex_g.lock();
+    *mc_th_ = *mc_;
+    md_mutex_g.unlock();
+  }
+  auto it = mc_th_->find(type);
+  verify(it != mc_th_->end());
   auto f = it->second;
-  md_mutex_g.unlock();
   return f;
 }
 
@@ -34,7 +39,7 @@ MarshallDeputy::MarContainer&
 MarshallDeputy::Initializers() {
   mdi_mutex_g.lock();
   if (!mc_)
-    mc_.reset(new MarshallDeputy::MarContainer);
+    mc_ = std::make_shared<MarshallDeputy::MarContainer>();
   mdi_mutex_g.unlock();
   return *mc_;
 };

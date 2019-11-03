@@ -8,8 +8,8 @@
 
 namespace janus {
 
-class ExternCScheduler : public Scheduler {
-  using Scheduler::Scheduler;
+class ExternCScheduler : public TxLogServer {
+  using TxLogServer::TxLogServer;
  public:
   virtual bool HandleConflicts(Tx& dtxn,
                                innid_t inn_id,

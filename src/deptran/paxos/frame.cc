@@ -3,7 +3,7 @@
 #include "frame.h"
 #include "exec.h"
 #include "coordinator.h"
-#include "scheduler.h"
+#include "server.h"
 #include "service.h"
 #include "commo.h"
 #include "config.h"
@@ -20,7 +20,7 @@ MultiPaxosFrame::MultiPaxosFrame(int mode) : Frame(mode) {
 
 }
 
-Executor *MultiPaxosFrame::CreateExecutor(cmdid_t cmd_id, Scheduler *sched) {
+Executor *MultiPaxosFrame::CreateExecutor(cmdid_t cmd_id, TxLogServer *sched) {
   Executor *exec = new MultiPaxosExecutor(cmd_id, sched);
   return exec;
 }
@@ -30,7 +30,7 @@ Coordinator *MultiPaxosFrame::CreateCoordinator(cooid_t coo_id,
                                                 int benchmark,
                                                 ClientControlServiceImpl *ccsi,
                                                 uint32_t id,
-                                                TxnRegistry *txn_reg) {
+                                                shared_ptr<TxnRegistry> txn_reg) {
   verify(config != nullptr);
   CoordinatorMultiPaxos *coo;
   coo = new CoordinatorMultiPaxos(coo_id,
@@ -49,9 +49,9 @@ Coordinator *MultiPaxosFrame::CreateCoordinator(cooid_t coo_id,
   return coo;
 }
 
-Scheduler *MultiPaxosFrame::CreateScheduler() {
-  Scheduler *sch = nullptr;
-  sch = new SchedulerMultiPaxos();
+TxLogServer *MultiPaxosFrame::CreateScheduler() {
+  TxLogServer *sch = nullptr;
+  sch = new PaxosServer();
   sch->frame_ = this;
   return sch;
 }
@@ -68,7 +68,7 @@ Communicator *MultiPaxosFrame::CreateCommo(PollMgr *poll) {
 
 vector<rrr::Service *>
 MultiPaxosFrame::CreateRpcServices(uint32_t site_id,
-                                   Scheduler *rep_sched,
+                                   TxLogServer *rep_sched,
                                    rrr::PollMgr *poll_mgr,
                                    ServerControlServiceImpl *scsi) {
   auto config = Config::GetConfig();

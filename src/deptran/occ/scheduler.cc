@@ -13,7 +13,7 @@
 namespace janus {
 
 SchedulerOcc::SchedulerOcc() : SchedulerClassic() {
-  mdb_txn_mgr_ = new mdb::TxnMgrOCC();
+  mdb_txn_mgr_ = make_shared<mdb::TxnMgrOCC>();
 }
 
 mdb::Txn* SchedulerOcc::get_mdb_txn(const i64 tid) {

@@ -4,8 +4,7 @@
 
 #include "__dep__.h"
 #include "command.h"
-#include "rococo/graph.h"
-#include "rococo/graph.h"
+#include "rcc/graph.h"
 #include "command_marshaler.h"
 #include "txn_reg.h"
 
@@ -30,6 +29,7 @@ class TxWorkspace {
  public:
   set<int32_t> keys_ = {};
   std::shared_ptr<map<int32_t, Value>> values_{};
+  std::shared_ptr<map<int32_t, shared_ptr<IntEvent>>> value_events_{};
   TxWorkspace();
   ~TxWorkspace();
   TxWorkspace(const TxWorkspace& rhs);
@@ -46,6 +46,17 @@ class TxWorkspace {
   }
 
   Value& at(int32_t k) {
+    auto it = values_->find(k);
+    verify(it != values_->end());
+    return it->second;
+  }
+
+  Value& WaitAt(int32_t k) {
+    auto e = Reactor::CreateSpEvent<Event>();
+    e->Wait([this, k](int x)->bool{
+      auto it = this->values_->find(k);
+      return (it != this->values_->end());
+    });
     auto it = values_->find(k);
     verify(it != values_->end());
     return it->second;
@@ -217,7 +228,10 @@ class TxData: public CmdData {
   int max_try_ = 0;
   int n_try_ = 0;
 
-  TxnRegistry *txn_reg_ = nullptr;
+  bool validation_ok_{true};
+  bool need_validation_{false};
+
+  weak_ptr<TxnRegistry> txn_reg_{};
   Sharding *sss_ = nullptr;
 
   std::function<void(TxReply &)> callback_;

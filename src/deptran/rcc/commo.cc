@@ -1,9 +1,9 @@
 
 #include "commo.h"
 #include "dep_graph.h"
-#include "deptran/procedure.h"
+#include "../procedure.h"
 #include "graph_marshaler.h"
-#include "deptran/service.h"
+#include "../service.h"
 
 namespace janus {
 
@@ -23,7 +23,7 @@ void RccCommo::SendDispatch(vector<SimpleCommand> &cmd,
         if (md.kind_ == MarshallDeputy::EMPTY_GRAPH) {
           RccGraph rgraph;
           auto v = rgraph.CreateV(tid);
-          TxRococo& info = *v;
+          RccTx& info = *v;
           info.partition_.insert(par_id);
           verify(rgraph.vertex_index().size() > 0);
           callback(res, output, rgraph);
@@ -81,12 +81,12 @@ void RccCommo::SendInquire(parid_t pid,
   Future::safe_release(proxy->async_RccInquire(epoch, tid, fuattr));
 }
 
-void RccCommo::BroadcastCommit(
-                                 parid_t par_id,
-                                 txnid_t cmd_id,
-                                 rank_t rank,
-                                 shared_ptr<RccGraph> graph,
-                                 const function<void(int32_t, TxnOutput&)>& callback) {
+void RccCommo::BroadcastCommit(parid_t par_id,
+                               txnid_t cmd_id,
+                               rank_t rank,
+                               bool need_validation,
+                               shared_ptr<RccGraph> graph,
+                               const function<void(int32_t, TxnOutput&)>& callback) {
   bool skip_graph = IsGraphOrphan(*graph, cmd_id);
 
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
@@ -102,10 +102,10 @@ void RccCommo::BroadcastCommit(
                       };
     verify(cmd_id > 0);
     if (skip_graph) {
-      Future::safe_release(proxy->async_JanusCommitWoGraph(cmd_id, RANK_UNDEFINED, fuattr));
+      Future::safe_release(proxy->async_JanusCommitWoGraph(cmd_id, RANK_UNDEFINED, need_validation, fuattr));
     } else {
       MarshallDeputy md(graph);
-      Future::safe_release(proxy->async_JanusCommit(cmd_id, RANK_UNDEFINED, md, fuattr));
+      Future::safe_release(proxy->async_JanusCommit(cmd_id, RANK_UNDEFINED, need_validation, md, fuattr));
     }
   }
 }

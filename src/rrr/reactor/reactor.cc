@@ -71,14 +71,17 @@ void Reactor::Loop(bool infinite) {
   looping_ = infinite;
   do {
     std::vector<shared_ptr<Event>> ready_events;
-    for (auto it = events_.begin(); it != events_.end();) {
+//    auto& events = all_events_;
+    auto& events = waiting_events_;
+//    Log_debug("event list size: %d", events.size());
+    for (auto it = events.begin(); it != events.end();) {
       Event& event = **it;
       event.Test();
       if (event.status_ == Event::READY) {
         ready_events.push_back(std::move(*it));
-        it = events_.erase(it);
+        it = events.erase(it);
       } else if (event.status_ == Event::DONE) {
-        it = events_.erase(it);
+        it = events.erase(it);
       } else {
         it ++;
       }

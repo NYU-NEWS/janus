@@ -1,16 +1,16 @@
 
-#include "deptran/procedure.h"
+#include "../procedure.h"
 #include "graph.h"
 #include "tx.h"
-#include "scheduler.h"
+#include "server.h"
 #include "commo.h"
 #include "frame.h"
 
 namespace janus {
 
-map<txnid_t, int32_t> SchedulerRococo::__debug_xxx_s{};
-std::recursive_mutex SchedulerRococo::__debug_mutex_s{};
-void SchedulerRococo::__DebugCheckParentSetSize(txnid_t tid, int32_t sz) {
+map<txnid_t, int32_t> RccServer::__debug_xxx_s{};
+std::recursive_mutex RccServer::__debug_mutex_s{};
+void RccServer::__DebugCheckParentSetSize(txnid_t tid, int32_t sz) {
 #ifdef DEBUG_CODE
   std::lock_guard<std::recursive_mutex> guard(__debug_mutex_s);
   if (__debug_xxx_s.count(tid) > 0) {
@@ -22,34 +22,34 @@ void SchedulerRococo::__DebugCheckParentSetSize(txnid_t tid, int32_t sz) {
 #endif
 }
 
-SchedulerRococo::SchedulerRococo() : Scheduler(), mtx_() {
+RccServer::RccServer() : TxLogServer(), mtx_() {
   RccGraph::sched_ = this;
-  RccGraph::partition_id_ = Scheduler::partition_id_;
+  RccGraph::partition_id_ = TxLogServer::partition_id_;
   RccGraph::managing_memory_ = false;
   epoch_enabled_ = true;
 }
 
-SchedulerRococo::~SchedulerRococo() {
+RccServer::~RccServer() {
 }
 
-shared_ptr<Tx> SchedulerRococo::GetOrCreateTx(txnid_t tid, bool ro) {
-  auto dtxn = dynamic_pointer_cast<TxRococo>(
-      Scheduler::GetOrCreateTx(tid, ro));
-  dtxn->partition_.insert(Scheduler::partition_id_);
+shared_ptr<Tx> RccServer::GetOrCreateTx(txnid_t tid, bool ro) {
+  auto dtxn = dynamic_pointer_cast<RccTx>(
+      TxLogServer::GetOrCreateTx(tid, ro));
+  dtxn->partition_.insert(TxLogServer::partition_id_);
   verify(dtxn->id() == tid);
   return dtxn;
 }
 
-int SchedulerRococo::OnDispatch(const vector<SimpleCommand>& cmd,
-                                TxnOutput* output,
-                                shared_ptr<RccGraph> graph) {
+int RccServer::OnDispatch(const vector<SimpleCommand>& cmd,
+                          TxnOutput* output,
+                          shared_ptr<RccGraph> graph) {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   verify(graph.get());
   txnid_t txn_id = cmd[0].root_id_;
-  auto dtxn = dynamic_pointer_cast<TxRococo>(GetOrCreateTx(txn_id));
+  auto dtxn = dynamic_pointer_cast<RccTx>(GetOrCreateTx(txn_id));
   verify(dtxn->id() == txn_id);
-  verify(RccGraph::partition_id_ == Scheduler::partition_id_);
-  verify(cmd[0].partition_id_ == Scheduler::partition_id_);
+  verify(RccGraph::partition_id_ == TxLogServer::partition_id_);
+  verify(cmd[0].partition_id_ == TxLogServer::partition_id_);
   for (auto& c : cmd) {
     dtxn->DispatchExecute(const_cast<SimpleCommand&>(c),
                           &(*output)[c.inn_id()]);
@@ -86,27 +86,27 @@ int SchedulerRococo::OnDispatch(const vector<SimpleCommand>& cmd,
 //  } else {
 //    job();
 //  }
-  return 0;
+  return dtxn->need_validation_;
 }
 
-int SchedulerRococo::OnCommit(cmdid_t cmd_id,
-                              rank_t rank,
-                              const RccGraph& graph,
-                              TxnOutput* output,
-                              const function<void()>& callback) {
+int RccServer::OnCommit(cmdid_t cmd_id,
+                        rank_t rank,
+                        const RccGraph& graph,
+                        TxnOutput* output,
+                        const function<void()>& callback) {
   verify(0);
   return 0;
 }
 
-int SchedulerRococo::OnInquire(epoch_t epoch,
-                               txnid_t txn_id,
-                               shared_ptr<RccGraph> graph) {
+int RccServer::OnInquire(epoch_t epoch,
+                         txnid_t txn_id,
+                         shared_ptr<RccGraph> graph) {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
 
   verify(0);
 }
 
-void SchedulerRococo::InquiredGraph(TxRococo& dtxn, shared_ptr<RccGraph> graph) {
+void RccServer::InquiredGraph(RccTx& dtxn, shared_ptr<RccGraph> graph) {
   verify(graph != nullptr);
   if (dtxn.IsDecided()) {
     // return scc is enough.
@@ -121,7 +121,7 @@ void SchedulerRococo::InquiredGraph(TxRococo& dtxn, shared_ptr<RccGraph> graph) 
   }
 }
 
-void SchedulerRococo::__DebugExamineFridge() {
+void RccServer::__DebugExamineFridge() {
 #ifdef DEBUG_CODE
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   int in_ask = 0;
@@ -170,41 +170,41 @@ void SchedulerRococo::__DebugExamineFridge() {
 #endif
 }
 
-void SchedulerRococo::InquireAboutIfNeeded(TxRococo& dtxn) {
+void RccServer::InquireAboutIfNeeded(RccTx& dtxn) {
 //  Graph<RccDTxn> &txn_gra = dep_graph_->txn_gra_;
   if (dtxn.status() <= TXN_STD &&
       !dtxn.during_asking &&
-      !dtxn.Involve(Scheduler::partition_id_)) {
-    verify(!dtxn.Involve(Scheduler::partition_id_));
+      !dtxn.Involve(TxLogServer::partition_id_)) {
+    verify(!dtxn.Involve(TxLogServer::partition_id_));
     verify(!dtxn.during_asking);
     parid_t par_id = *(dtxn.partition_.begin());
     dtxn.during_asking = true;
     commo()->SendInquire(par_id,
                          dtxn.epoch_,
                          dtxn.tid_,
-                         std::bind(&SchedulerRococo::InquireAck,
+                         std::bind(&RccServer::InquireAck,
                                    this,
                                    dtxn.id(),
                                    std::placeholders::_1));
   }
 }
 
-void SchedulerRococo::InquireAck(cmdid_t cmd_id, RccGraph& graph) {
+void RccServer::InquireAck(cmdid_t cmd_id, RccGraph& graph) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto v = FindV(cmd_id);
   verify(v != nullptr);
-  TxRococo& tinfo = *v;
+  RccTx& tinfo = *v;
   tinfo.inquire_acked_ = true;
   Aggregate(epoch_mgr_.curr_epoch_, const_cast<RccGraph&>(graph));
 //  TriggerCheckAfterAggregation(const_cast<RccGraph&>(graph));
   verify(tinfo.status() >= TXN_CMT);
 }
 
-TxRococo& SchedulerRococo::__DebugFindAnOngoingAncestor(TxRococo& vertex) {
-  TxRococo* ret = nullptr;
-  set<TxRococo*> walked;
-  std::function<bool(TxRococo&)> func = [&ret, &vertex](TxRococo& v) -> bool {
-    TxRococo& info = v;
+RccTx& RccServer::__DebugFindAnOngoingAncestor(RccTx& vertex) {
+  RccTx* ret = nullptr;
+  set<RccTx*> walked;
+  std::function<bool(RccTx&)> func = [&ret, &vertex](RccTx& v) -> bool {
+    RccTx& info = v;
     if (info.status() >= TXN_CMT) {
       return true;
     } else {
@@ -217,10 +217,10 @@ TxRococo& SchedulerRococo::__DebugFindAnOngoingAncestor(TxRococo& vertex) {
 }
 
 
-void SchedulerRococo::WaitUntilAllPredecessorsAtLeastCommitting(TxRococo* vertex) {
-  std::function<int(TxRococo&)> func =
-      [vertex, this](TxRococo& v) -> int {
-        TxRococo& parent = v;
+void RccServer::WaitUntilAllPredecessorsAtLeastCommitting(RccTx* vertex) {
+  std::function<int(RccTx&)> func =
+      [vertex, this](RccTx& v) -> int {
+        RccTx& parent = v;
         int r = 0;
         if (parent.IsExecuted() || parent.IsAborted()) {
           r = RccGraph::SearchHint::Skip;
@@ -236,11 +236,11 @@ void SchedulerRococo::WaitUntilAllPredecessorsAtLeastCommitting(TxRococo* vertex
   TraversePred(*vertex, -1, func);
 }
 
-bool SchedulerRococo::AllAncCmt(TxRococo* vertex) {
+bool RccServer::AllAncCmt(RccTx* vertex) {
   bool all_anc_cmt = true;
-  std::function<int(TxRococo&)> func =
-      [&all_anc_cmt, &vertex](TxRococo& v) -> int {
-        TxRococo& parent = v;
+  std::function<int(RccTx&)> func =
+      [&all_anc_cmt, &vertex](RccTx& v) -> int {
+        RccTx& parent = v;
         int r = 0;
         if (parent.IsExecuted() || parent.IsAborted()) {
           r = RccGraph::SearchHint::Skip;
@@ -257,19 +257,19 @@ bool SchedulerRococo::AllAncCmt(TxRococo* vertex) {
   return all_anc_cmt;
 }
 
-void SchedulerRococo::Decide(const RccScc& scc) {
+void RccServer::Decide(const RccScc& scc) {
   for (auto v : scc) {
     UpgradeStatus(*v, TXN_DCD);
 //    Log_info("txnid: %llx, parent size: %d", v->id(), v->parents_.size());
   }
 }
 
-bool SchedulerRococo::HasICycle(const RccScc& scc) {
+bool RccServer::HasICycle(const RccScc& scc) {
   for (auto& vertex : scc) {
-    set<TxRococo*> walked;
+    set<RccTx*> walked;
     bool ret = false;
-    std::function<bool(TxRococo*)> func =
-        [&ret, vertex](TxRococo* v) -> bool {
+    std::function<bool(RccTx*)> func =
+        [&ret, vertex](RccTx* v) -> bool {
           if (v == vertex) {
             ret = true;
             return false;
@@ -282,12 +282,12 @@ bool SchedulerRococo::HasICycle(const RccScc& scc) {
   return false;
 };
 
-bool SchedulerRococo::HasAbortedAncestor(const RccScc& scc) {
+bool RccServer::HasAbortedAncestor(const RccScc& scc) {
   verify(scc.size() > 0);
   bool has_aborted = false;
-  std::function<int(TxRococo&)> func =
-      [&has_aborted](TxRococo& v) -> int {
-        TxRococo& info = v;
+  std::function<int(RccTx&)> func =
+      [&has_aborted](RccTx& v) -> int {
+        RccTx& info = v;
         if (info.IsExecuted()) {
           return RccGraph::SearchHint::Skip;
         }
@@ -301,12 +301,12 @@ bool SchedulerRococo::HasAbortedAncestor(const RccScc& scc) {
   return has_aborted;
 };
 
-bool SchedulerRococo::FullyDispatched(const RccScc& scc, rank_t rank) {
+bool RccServer::FullyDispatched(const RccScc& scc, rank_t rank) {
   bool ret = std::all_of(scc.begin(),
                          scc.end(),
-                         [this, rank](TxRococo* v) {
-                           TxRococo& tinfo = *v;
-                           if (tinfo.Involve(Scheduler::partition_id_)) {
+                         [this, rank](RccTx* v) {
+                           RccTx& tinfo = *v;
+                           if (tinfo.Involve(TxLogServer::partition_id_)) {
                              if (tinfo.current_rank_ > rank) {
                                return true;
                              } else if (tinfo.current_rank_ < rank) {
@@ -321,12 +321,12 @@ bool SchedulerRococo::FullyDispatched(const RccScc& scc, rank_t rank) {
   return ret;
 }
 
-bool SchedulerRococo::IsExecuted(const RccScc& scc, rank_t rank) {
+bool RccServer::IsExecuted(const RccScc& scc, rank_t rank) {
   bool ret = std::any_of(scc.begin(),
                          scc.end(),
-                         [this, rank](TxRococo* v) {
-                           TxRococo& tinfo = *v;
-                           if (tinfo.Involve(Scheduler::partition_id_)) {
+                         [this, rank](RccTx* v) {
+                           RccTx& tinfo = *v;
+                           if (tinfo.Involve(TxLogServer::partition_id_)) {
                              if (tinfo.current_rank_ > rank) {
                                return true;
                              } else if (tinfo.current_rank_ < rank) {
@@ -341,16 +341,16 @@ bool SchedulerRococo::IsExecuted(const RccScc& scc, rank_t rank) {
   return ret;
 }
 
-void SchedulerRococo::WaitUntilAllPredSccExecuted(const RccScc& scc) {
+void RccServer::WaitUntilAllPredSccExecuted(const RccScc& scc) {
   verify(scc.size() > 0);
-  set<TxRococo*> scc_set;
+  set<RccTx*> scc_set;
   scc_set.insert(scc.begin(), scc.end());
-  std::function<int(TxRococo&)> func =
-      [&scc_set, &scc, this](TxRococo& v) -> int {
-        TxRococo& info = v;
+  std::function<int(RccTx&)> func =
+      [&scc_set, &scc, this](RccTx& v) -> int {
+        RccTx& info = v;
         if (info.IsExecuted()) {
           return RccGraph::SearchHint::Skip;
-        } else if (!info.Involve(Scheduler::partition_id_)) {
+        } else if (!info.Involve(TxLogServer::partition_id_)) {
           verify(info.status() >= TXN_CMT);
         } else if (scc_set.find(&v) != scc_set.end()) {
           // belong to the scc
@@ -364,14 +364,14 @@ void SchedulerRococo::WaitUntilAllPredSccExecuted(const RccScc& scc) {
   TraversePred(*scc[0], -1, func);
 }
 
-bool SchedulerRococo::AllAncFns(const RccScc& scc) {
+bool RccServer::AllAncFns(const RccScc& scc) {
   verify(scc.size() > 0);
-  set<TxRococo*> scc_set;
+  set<RccTx*> scc_set;
   scc_set.insert(scc.begin(), scc.end());
   bool all_anc_fns = true;
-  std::function<int(TxRococo&)> func =
-      [&all_anc_fns, &scc_set, &scc](TxRococo& v) -> int {
-        TxRococo& info = v;
+  std::function<int(RccTx&)> func =
+      [&all_anc_fns, &scc_set, &scc](RccTx& v) -> int {
+        RccTx& info = v;
         if (info.IsExecuted()) {
           return RccGraph::SearchHint::Skip;
         } else if (info.status() >= TXN_DCD) {
@@ -388,30 +388,31 @@ bool SchedulerRococo::AllAncFns(const RccScc& scc) {
   return all_anc_fns;
 };
 
-void SchedulerRococo::Execute(const RccScc& scc) {
+void RccServer::Execute(const RccScc& scc) {
   verify(scc.size() > 0);
   for (auto v : scc) {
-    TxRococo& dtxn = *v;
+    RccTx& dtxn = *v;
     Execute(dtxn);
   }
 }
 
-void SchedulerRococo::Execute(TxRococo& dtxn) {
+void RccServer::Execute(RccTx& dtxn) {
   dtxn.executed_ = true;
   verify(dtxn.IsDecided());
-  verify(dtxn.epoch_ > 0);
-  if (dtxn.Involve(Scheduler::partition_id_)) {
+  if (dtxn.Involve(TxLogServer::partition_id_)) {
+    if (dtxn.need_validation_) {
+      dtxn.CommitValidate();
+      dtxn.sp_ev_global_validated_->Wait();
+    } // else do nothing
     dtxn.CommitExecute();
 #ifdef CHECK_ISO
     MergeDeltas(dtxn.deltas_);
 #endif
     dtxn.ReplyFinishOk();
-    // TODO cannot trash executor like this
-//    TrashExecutor(dtxn.tid_);
   }
 }
 
-void SchedulerRococo::Abort(const RccScc& scc) {
+void RccServer::Abort(const RccScc& scc) {
   verify(0);
 //  verify(scc.size() > 0);
 //  for (auto v : scc) {
@@ -427,7 +428,7 @@ void SchedulerRococo::Abort(const RccScc& scc) {
 //  }
 }
 
-RccCommo* SchedulerRococo::commo() {
+RccCommo* RccServer::commo() {
 //  if (commo_ == nullptr) {
 //    verify(0);
 //  }
@@ -436,8 +437,8 @@ RccCommo* SchedulerRococo::commo() {
   return commo;
 }
 
-void SchedulerRococo::DestroyExecutor(txnid_t txn_id) {
-  auto dtxn = dynamic_pointer_cast<TxRococo>(GetOrCreateTx(txn_id));
+void RccServer::DestroyExecutor(txnid_t txn_id) {
+  auto dtxn = dynamic_pointer_cast<RccTx>(GetOrCreateTx(txn_id));
   verify(dtxn->committed_ || dtxn->aborted_);
   if (epoch_enabled_) {
 //    Remove(txn_id);
@@ -445,16 +446,32 @@ void SchedulerRococo::DestroyExecutor(txnid_t txn_id) {
   }
 }
 
-int SchedulerRococo::OnCommit(const txnid_t cmd_id,
-                              rank_t rank,
-                              shared_ptr<RccGraph> sp_graph,
-                              TxnOutput *output) {
+int RccServer::OnInquireValidation(txid_t tx_id) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
+  auto dtxn = dynamic_pointer_cast<RccTx>(GetOrCreateTx(tx_id));
+  dtxn->sp_ev_local_validated_->Wait();
+  return dtxn->local_validation_result_;
+}
+
+void RccServer::OnNotifyGlobalValidation(txid_t tx_id, int validation_result) {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
+  auto dtxn = dynamic_pointer_cast<RccTx>(GetOrCreateTx(tx_id));
+  dtxn->global_validation_result_ = validation_result;
+  dtxn->sp_ev_global_validated_->Set(1);
+}
+
+int RccServer::OnCommit(const txnid_t cmd_id,
+                        rank_t rank,
+                        bool need_validation,
+                        shared_ptr<RccGraph> sp_graph,
+                        TxnOutput *output) {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
+  verify(0);
 //  if (RandomGenerator::rand(1, 2000) <= 1)
 //    Log_info("on commit graph size: %d", graph.size());
   int ret = SUCCESS;
   // union the graph into dep graph
-  auto dtxn = dynamic_pointer_cast<TxRococo>(GetOrCreateTx(cmd_id));
+  auto dtxn = dynamic_pointer_cast<RccTx>(GetOrCreateTx(cmd_id));
   dtxn->fully_dispatched_->Set(1); // TODO make this and janus the same.
   verify(dtxn->p_output_reply_ == nullptr);
   dtxn->p_output_reply_ = output;
@@ -487,14 +504,14 @@ int SchedulerRococo::OnCommit(const txnid_t cmd_id,
   return ret;
 }
 
-map<txnid_t, shared_ptr<TxRococo>> SchedulerRococo::Aggregate(RccGraph &graph) {
+map<txnid_t, shared_ptr<RccTx>> RccServer::Aggregate(RccGraph &graph) {
   // aggregate vertexes
-  map<txnid_t, shared_ptr<TxRococo>> index;
+  map<txnid_t, shared_ptr<RccTx>> index;
   for (auto &pair: graph.vertex_index()) {
     auto rhs_v = pair.second;
     verify(pair.first == rhs_v->id());
     auto vertex = AggregateVertex(rhs_v);
-    TxRococo &dtxn = *vertex;
+    RccTx &dtxn = *vertex;
     if (dtxn.epoch_ == 0) {
       dtxn.epoch_ = epoch_mgr_.curr_epoch_;
     }

@@ -5,7 +5,7 @@
 #include "msg.h"
 #include "config.h"
 #include "command_marshaler.h"
-#include "deptran/rococo/dep_graph.h"
+#include "deptran/rcc/dep_graph.h"
 #include "rcc_rpc.h"
 
 namespace janus {

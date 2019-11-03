@@ -34,7 +34,7 @@ void TpccProcedure::Init(TxRequest &req) {
   max_try_ = req.n_try_;
   n_try_ = 1;
   commit_.store(true);
-  leaf_procs_ = txn_reg_->regs_[type_];
+  leaf_procs_ = txn_reg_.lock()->regs_[type_];
   switch (type_) {
     case TPCC_NEW_ORDER:
       NewOrderInit(req);
@@ -111,7 +111,7 @@ bool TpccProcedure::HandleOutput(int pi,
       0) {
     // for debug
 
-    auto ret = CheckReady();
+    ret = CheckReady();
     if (type_ == TPCC_DELIVERY) {
       if (pi == TPCC_DELIVERY_2) {
         verify(output_map.count(TPCC_VAR_OL_AMOUNT) > 0);
@@ -127,12 +127,12 @@ bool TpccProcedure::HandleOutput(int pi,
   // above is for debug.
 
   PieceCallbackHandler handler;
-  auto& callback = txn_reg_->regs_[type_][pi].callback_;
+  auto& callback = txn_reg_.lock()->regs_[type_][pi].callback_;
   if (callback) {
     ret = callback(this, output_map);
   } else {
     // ws_.insert(output_map.begin(), output_map.end());
-    bool ret = CheckReady();
+    ret = CheckReady();
   }
 
   // for debug
@@ -196,7 +196,7 @@ bool TpccProcedure::IsReadOnly() {
 
 parid_t TpccProcedure::GetPiecePartitionId(innid_t inn_id) {
   parid_t partition_id = 0;
-  auto& pair = txn_reg_->regs_[type_][inn_id].sharder_;
+  auto& pair = txn_reg_.lock()->regs_[type_][inn_id].sharder_;
   if (true) {
     auto tb = pair.first;
     auto& var_ids = pair.second;
@@ -228,7 +228,6 @@ int TpccProcedure::GetNPieceAll() {
   return n_pieces_all_;
 }
 
-TpccProcedure::~TpccProcedure() {
-}
+TpccProcedure::~TpccProcedure() = default;
 
 } // namespace janus

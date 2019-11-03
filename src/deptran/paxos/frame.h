@@ -13,17 +13,17 @@ class MultiPaxosFrame : public Frame {
  public:
   MultiPaxosFrame(int mode);
   MultiPaxosCommo *commo_ = nullptr;
-  Executor *CreateExecutor(cmdid_t cmd_id, Scheduler *sched) override;
+  Executor *CreateExecutor(cmdid_t cmd_id, TxLogServer *sched) override;
   Coordinator *CreateCoordinator(cooid_t coo_id,
                                  Config *config,
                                  int benchmark,
                                  ClientControlServiceImpl *ccsi,
                                  uint32_t id,
-                                 TxnRegistry *txn_reg) override;
-  Scheduler *CreateScheduler() override;
+                                 shared_ptr<TxnRegistry> txn_reg) override;
+  TxLogServer *CreateScheduler() override;
   Communicator *CreateCommo(PollMgr *poll = nullptr) override;
   vector<rrr::Service *> CreateRpcServices(uint32_t site_id,
-                                           Scheduler *dtxn_sched,
+                                           TxLogServer *dtxn_sched,
                                            rrr::PollMgr *poll_mgr,
                                            ServerControlServiceImpl *scsi) override;
 };

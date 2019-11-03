@@ -20,11 +20,13 @@ def options(opt):
                    default=False, action='store_true')
     opt.add_option('-c', '--use-clang', dest='clang',
                    default=False, action='store_true')
+    opt.add_option('-i', '--use-ipc', dest='ipc',
+                   default=False, action='store_true')
     opt.add_option('-p', '--enable-profiling', dest='prof',
                    default=False, action='store_true')
     opt.add_option('-d', '--debug', dest='debug',
                    default=False, action='store_true')
-    opt.add_option('-t', '--enable-tcmalloc', dest='tcmalloc',
+    opt.add_option('-M', '--enable-tcmalloc', dest='tcmalloc',
                    default=False, action='store_true')
     opt.add_option('-s', '--enable-rpc-statistics', dest='rpc_s',
                    default=False, action='store_true')
@@ -51,6 +53,7 @@ def configure(conf):
     _enable_cxx14(conf)
     _enable_debug(conf)
     _enable_profile(conf)
+    _enable_ipc(conf)
     _enable_rpc_s(conf)
     _enable_piece_count(conf)
     _enable_txn_count(conf)
@@ -219,6 +222,11 @@ def _enable_profile(conf):
         Logs.pprint("PINK", "CPU profiling enabled")
         conf.env.append_value("CXXFLAGS", "-DCPU_PROFILE")
         conf.env.LIB_PROFILER = 'profiler'
+
+def _enable_ipc(conf):
+    if Options.options.ipc:
+        Logs.pprint("PINK", "Use IPC instead of network socket")
+        conf.env.append_value("CXXFLAGS", "-DUSE_IPC")
 
 def _enable_debug(conf):
     if Options.options.debug:

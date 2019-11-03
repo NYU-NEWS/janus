@@ -9,8 +9,8 @@
 #include "sharding.h"
 #include "frame.h"
 #include "sharding.h"
-#include "rococo/dep_graph.h"
-#include "rococo/graph_marshaler.h"
+#include "rcc/dep_graph.h"
+#include "rcc/graph_marshaler.h"
 #include "workload.h"
 
 // for tpca benchmark

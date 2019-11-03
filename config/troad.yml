@@ -1,0 +1,6 @@
+mode:
+  cc: troad # concurrency control
+  ab: troad # atomic broadcast
+  batch: false
+  retry: 20 
+  ongoing: 1 # per client

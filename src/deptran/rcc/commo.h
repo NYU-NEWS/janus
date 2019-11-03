@@ -33,6 +33,7 @@ class RccCommo : public Communicator {
                        parid_t,
                        txnid_t cmd_id_,
                        rank_t rank,
+                       bool need_validation,
                        shared_ptr<RccGraph> graph,
                        const function<void(int32_t, TxnOutput&)>& callback);
   bool IsGraphOrphan(RccGraph& graph, txnid_t cmd_id);

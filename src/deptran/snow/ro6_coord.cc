@@ -233,30 +233,30 @@ void RO6Coord::do_one(TxRequest & req) {
   // pre-process
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
 
-  TxData *ch = frame_->CreateChopper(req, txn_reg_);
-  cmd_->id_ = this->next_txn_id();
-
-  Log::debug("do one request");
-
-  if (ccsi_) ccsi_->txn_start_one(thread_id_, ch->type_);
-
-  verify(!batch_optimal_);
-
-  if (recorder_) {
-    std::string log_s;
-    req.get_log(cmd_->id_, log_s);
-    std::function<void(void)> start_func = [this, ch]() {
-      if (ch->IsReadOnly()) ro6_start_ro(ch);
-      else {
-        deptran_start(ch);
-      }
-    };
-    recorder_->submit(log_s, start_func);
-  } else {
-    if (ch->IsReadOnly()) ro6_start_ro(ch);
-    else {
-        deptran_start(ch);
-    }
-  }
+//  TxData *ch = frame_->CreateChopper(req, txn_reg_);
+//  cmd_->id_ = this->next_txn_id();
+//
+//  Log::debug("do one request");
+//
+//  if (ccsi_) ccsi_->txn_start_one(thread_id_, ch->type_);
+//
+//  verify(!batch_optimal_);
+//
+//  if (recorder_) {
+//    std::string log_s;
+//    req.get_log(cmd_->id_, log_s);
+//    std::function<void(void)> start_func = [this, ch]() {
+//      if (ch->IsReadOnly()) ro6_start_ro(ch);
+//      else {
+//        deptran_start(ch);
+//      }
+//    };
+//    recorder_->submit(log_s, start_func);
+//  } else {
+//    if (ch->IsReadOnly()) ro6_start_ro(ch);
+//    else {
+//        deptran_start(ch);
+//    }
+//  }
 }
 } // namespace janus

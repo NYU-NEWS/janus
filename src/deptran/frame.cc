@@ -1,7 +1,7 @@
 #include "__dep__.h"
 #include "frame.h"
 #include "config.h"
-#include "rococo/rcc_row.h"
+#include "rcc/row.h"
 #include "snow/ro6_row.h"
 #include "marshal-value.h"
 #include "coordinator.h"
@@ -10,9 +10,9 @@
 #include "scheduler.h"
 #include "none/coordinator.h"
 #include "none/scheduler.h"
-#include "rococo/coordinator.h"
+#include "rcc/coord.h"
 #include "snow/ro6_coord.h"
-#include "deptran/2pl/coordinator.h"
+#include "2pl/coordinator.h"
 #include "occ/tx.h"
 #include "occ/coordinator.h"
 
@@ -166,7 +166,7 @@ Coordinator* Frame::CreateCoordinator(cooid_t coo_id,
                                       int benchmark,
                                       ClientControlServiceImpl *ccsi,
                                       uint32_t id,
-                                      TxnRegistry *txn_reg) {
+                                      shared_ptr<TxnRegistry> txn_reg) {
   // TODO: clean this up; make Coordinator subclasses assign txn_reg_
   Coordinator *coo;
   auto attr = this;
@@ -247,7 +247,7 @@ void Frame::GetTxTypes(std::map<int32_t, std::string>& txn_types) {
   }
 }
 
-TxData* Frame::CreateTxnCommand(TxRequest& req, TxnRegistry* reg) {
+TxData* Frame::CreateTxnCommand(TxRequest& req, shared_ptr<TxnRegistry> reg) {
   auto benchmark = Config::config_s->benchmark_;
   TxData *cmd = NULL;
   switch (benchmark) {
@@ -281,9 +281,9 @@ TxData* Frame::CreateTxnCommand(TxRequest& req, TxnRegistry* reg) {
   return cmd;
 }
 
-TxData * Frame::CreateChopper(TxRequest &req, TxnRegistry* reg) {
-  return CreateTxnCommand(req, reg);
-}
+//TxData * Frame::CreateChopper(TxRequest &req, TxnRegistry* reg) {
+//  return CreateTxnCommand(req, reg);
+//}
 
 Communicator* Frame::CreateCommo(PollMgr* pollmgr) {
   commo_ = new Communicator(pollmgr);
@@ -291,7 +291,7 @@ Communicator* Frame::CreateCommo(PollMgr* pollmgr) {
 }
 
 shared_ptr<Tx> Frame::CreateTx(epoch_t epoch, txnid_t tid,
-                    bool ro, Scheduler *mgr) {
+                               bool ro, TxLogServer *mgr) {
   shared_ptr<Tx> sp_tx;
 
   switch (mode_) {
@@ -302,7 +302,7 @@ shared_ptr<Tx> Frame::CreateTx(epoch_t epoch, txnid_t tid,
       sp_tx.reset(new TxOcc(epoch, tid, mgr));
       break;
     case MODE_RCC:
-      sp_tx.reset(new TxRococo(epoch, tid, mgr, ro));
+      sp_tx.reset(new RccTx(epoch, tid, mgr, ro));
       break;
     case MODE_RO6:
       sp_tx.reset(new TxSnow(tid, mgr, ro));
@@ -317,7 +317,7 @@ shared_ptr<Tx> Frame::CreateTx(epoch_t epoch, txnid_t tid,
   return sp_tx;
 }
 
-Executor* Frame::CreateExecutor(cmdid_t cmd_id, Scheduler* sched) {
+Executor* Frame::CreateExecutor(cmdid_t cmd_id, TxLogServer* sched) {
   Executor* exec = nullptr;
 //  auto mode = Config::GetConfig()->cc_mode_;
 //  switch (mode) {
@@ -335,9 +335,9 @@ Executor* Frame::CreateExecutor(cmdid_t cmd_id, Scheduler* sched) {
   return exec;
 }
 
-Scheduler* Frame::CreateScheduler() {
+TxLogServer* Frame::CreateScheduler() {
   auto mode = Config::GetConfig()->tx_proto_;
-  Scheduler *sch = nullptr;
+  TxLogServer *sch = nullptr;
   switch(mode) {
     case MODE_2PL:
       sch = new Scheduler2pl();
@@ -390,7 +390,7 @@ Workload * Frame::CreateTxGenerator() {
 }
 
 vector<rrr::Service *> Frame::CreateRpcServices(uint32_t site_id,
-                                                Scheduler *dtxn_sched,
+                                                TxLogServer *dtxn_sched,
                                                 rrr::PollMgr *poll_mgr,
                                                 ServerControlServiceImpl *scsi) {
   auto config = Config::GetConfig();

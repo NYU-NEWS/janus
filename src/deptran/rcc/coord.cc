@@ -1,5 +1,5 @@
 #include "marshal-value.h"
-#include "coordinator.h"
+#include "coord.h"
 #include "frame.h"
 #include "tx.h"
 #include "dep_graph.h"
@@ -20,9 +20,6 @@ RccCommo* RccCoord::commo() {
 void RccCoord::PreDispatch() {
   verify(ro_state_ == BEGIN);
   TxData* txn = dynamic_cast<TxData*>(cmd_);
-//  auto dispatch = txn->is_read_only() ?
-//                  std::bind(&RccCoord::DispatchRo, this) :
-//                  std::bind(&RccCoord::Dispatch, this);
   auto dispatch = std::bind(&RccCoord::DispatchAsync, this);
   if (recorder_) {
     std::string log_s;
@@ -74,9 +71,13 @@ void RccCoord::DispatchAck(phase_t phase,
   verify(phase == phase_); // cannot proceed without all acks.
   verify(tx_data().root_id_ == tx_data().id_);
   verify(graph.vertex_index().size() > 0);
-  TxRococo& info = *(graph.vertex_index().at(tx_data().root_id_));
+  RccTx& info = *(graph.vertex_index().at(tx_data().root_id_));
 //  verify(cmd[0].root_id_ == info.id());
 //  verify(info.partition_.find(cmd.partition_id_) != info.partition_.end());
+  if (res) {
+    // need validation
+    tx_data().need_validation_ = true;
+  }
 
   for (auto& pair : output) {
     n_dispatch_ack_++;
@@ -111,49 +112,51 @@ void RccCoord::DispatchAck(phase_t phase,
 
 /** caller should be thread safe */
 void RccCoord::Finish() {
-  std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-  TxData *ch = (TxData*) cmd_;
-  // commit or abort piece
-  Log_debug(
-    "send rococo finish requests to %d servers, tid: %llx, graph size: %d",
-    (int)ch->partition_ids_.size(), cmd_->id_, sp_graph_->size());
-  auto v = sp_graph_->FindV(cmd_->id_);
-  TxRococo& info = *v;
-  verify(ch->partition_ids_.size() == info.partition_.size());
-  sp_graph_->UpgradeStatus(*v, TXN_CMT);
-  verify(sp_graph_->size() > 0);
-
-  for (auto& rp : ch->partition_ids_) {
-    commo()->SendFinish(rp,
-                        cmd_->id_,
-                        sp_graph_,
-                        std::bind(&RccCoord::FinishAck,
-                                  this,
-                                  phase_,
-                                  SUCCESS,
-                                  std::placeholders::_1));
-  }
+  verify(0);
+//  std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+//  TxData *ch = (TxData*) cmd_;
+//  // commit or abort piece
+//  Log_debug(
+//    "send rococo finish requests to %d servers, tid: %llx, graph size: %d",
+//    (int)ch->partition_ids_.size(), cmd_->id_, sp_graph_->size());
+//  auto v = sp_graph_->FindV(cmd_->id_);
+//  RccTx& info = *v;
+//  verify(ch->partition_ids_.size() == info.partition_.size());
+//  sp_graph_->UpgradeStatus(*v, TXN_CMT);
+//  verify(sp_graph_->size() > 0);
+//
+//  for (auto& rp : ch->partition_ids_) {
+//    commo()->SendFinish(rp,
+//                        cmd_->id_,
+//                        sp_graph_,
+//                        std::bind(&RccCoord::FinishAck,
+//                                  this,
+//                                  phase_,
+//                                  SUCCESS,
+//                                  std::placeholders::_1));
+//  }
 }
 
 void RccCoord::FinishAck(phase_t phase,
                          int res,
                          map<innid_t, map<int32_t, Value>>& output) {
-  std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-  verify(phase_ == phase);
-  n_finish_ack_++;
-
-  Log_debug("receive finish response. tid: %llx", cmd_->id_);
-  tx_data().outputs_.insert(output.begin(), output.end());
-
-  verify(!tx_data().do_early_return());
-  bool all_acked = (n_finish_ack_ == tx_data().GetPartitionIds().size());
-//  verify(all_acked == txn().OutputReady());
-  if (all_acked) {
-    // generate a reply and callback.
-    Log_debug("deptran callback, %llx", cmd_->id_);
-    committed_ = true;
-    GotoNextPhase();
-  }
+  verify(0);
+//  std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+//  verify(phase_ == phase);
+//  n_finish_ack_++;
+//
+//  Log_debug("receive finish response. tid: %llx", cmd_->id_);
+//  tx_data().outputs_.insert(output.begin(), output.end());
+//
+//  verify(!tx_data().do_early_return());
+//  bool all_acked = (n_finish_ack_ == tx_data().GetPartitionIds().size());
+////  verify(all_acked == txn().OutputReady());
+//  if (all_acked) {
+//    // generate a reply and callback.
+//    Log_debug("deptran callback, %llx", cmd_->id_);
+//    committed_ = true;
+//    GotoNextPhase();
+//  }
 }
 
 
@@ -167,6 +170,7 @@ void RccCoord::Commit() {
     commo()->BroadcastCommit(par_id,
                              cmd_->id_,
                              RANK_UNDEFINED,
+                             txn->need_validation_,
                              sp_graph_,
                              std::bind(&RccCoord::CommitAck,
                                        this,
@@ -282,7 +286,8 @@ void RccCoord::Reset() {
 void RccCoord::GotoNextPhase() {
   int n_phase = 3;
   int current_phase = phase_ % n_phase;
-  switch (phase_++ % n_phase) {
+  phase_++;
+  switch (current_phase % n_phase) {
     case Phase::INIT_END:
       PreDispatch();
       verify(phase_ % n_phase == Phase::DISPATCH);

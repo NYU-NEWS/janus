@@ -15,14 +15,14 @@ class FrameTapir : public Frame {
                                  int benchmark,
                                  ClientControlServiceImpl *ccsi,
                                  uint32_t id,
-                                 TxnRegistry *txn_reg) override;
-  Scheduler *CreateScheduler() override;
+                                 shared_ptr<TxnRegistry>) override;
+  TxLogServer *CreateScheduler() override;
   mdb::Row *CreateRow(const mdb::Schema *schema,
                       vector<Value> &row_data) override;
   Communicator *CreateCommo(PollMgr *pollmgr = nullptr) override;
 
   shared_ptr<Tx> CreateTx(epoch_t epoch, txnid_t tid,
-                          bool ro, Scheduler *mgr) override;
+                          bool ro, TxLogServer *mgr) override;
 
 };
 } // namespace janus

@@ -1,4 +1,4 @@
-#include "../rococo/rcc_row.h"
+#include "../rcc/row.h"
 #include "ro6_row.h"
 
 namespace janus {
@@ -8,7 +8,7 @@ version_t RO6Row::ver_s = 0;
 
 
 void RO6Row::copy_into(RO6Row *row) const {
-  RCCRow::copy_into((RCCRow *) row);
+  RccRow::copy_into((RccRow *) row);
   // TODO copy contents for RO6Row data structure.
 }
 

@@ -1,6 +1,6 @@
 #include "../procedure.h"
-#include "../rococo/tx.h"
-#include "../rococo/graph_marshaler.h"
+#include "../rcc/tx.h"
+#include "../rcc/graph_marshaler.h"
 #include "commo.h"
 #include "marshallable.h"
 
@@ -22,7 +22,7 @@ void JanusCommo::SendDispatch(vector<TxPieceData>& cmd,
         if (md.kind_ == MarshallDeputy::EMPTY_GRAPH) {
           RccGraph rgraph;
           auto v = rgraph.CreateV(tid);
-          TxRococo& info = *v;
+          RccTx& info = *v;
           info.partition_.insert(par_id);
           verify(rgraph.vertex_index().size() > 0);
           callback(res, output, rgraph);
@@ -130,6 +130,7 @@ void JanusCommo::BroadcastCommit(
     parid_t par_id,
     txnid_t cmd_id,
     rank_t rank,
+    bool need_validation,
     shared_ptr<RccGraph> graph,
     const function<void(int32_t, TxnOutput&)>& callback) {
   bool skip_graph = IsGraphOrphan(*graph, cmd_id);
@@ -147,12 +148,46 @@ void JanusCommo::BroadcastCommit(
     };
     verify(cmd_id > 0);
     if (skip_graph) {
-      Future::safe_release(proxy->async_JanusCommitWoGraph(cmd_id, 0, fuattr));
+      Future::safe_release(
+          proxy->async_JanusCommitWoGraph(cmd_id, 0, need_validation, fuattr));
     } else {
       MarshallDeputy md(graph);
-      Future::safe_release(proxy->async_JanusCommit(cmd_id, 0, md, fuattr));
+      Future::safe_release(
+          proxy->async_JanusCommit(cmd_id, 0, need_validation, md, fuattr));
     }
   }
+}
+
+shared_ptr<QuorumEvent> JanusCommo::BroadcastInquireValidation(set<parid_t>& pars, txid_t txid) {
+  auto e = Reactor::CreateSpEvent<QuorumEvent>(pars.size(), pars.size());
+  for (auto par_id : pars) {
+    auto proxy = NearestProxyForPartition(par_id).second;
+    FutureAttr fuattr;
+    fuattr.callback = [e](Future* fu) {
+      int32_t res;
+      fu->get_reply() >> res;
+      if (res == 1) {
+        e->n_voted_yes_++;
+      } else if (res == -1) {
+        e->n_voted_no_++;
+      } else {
+        verify(0);
+      }
+    };
+    Future::safe_release(proxy->async_RccInquireValidation(txid, fuattr));
+  }
+  return e;
+}
+void JanusCommo::BroadcastNotifyValidation(txid_t txid, set<parid_t>& pars, int32_t result) {
+  for (auto par_id : pars) {
+    for (auto pair : rpc_par_proxies_[par_id]) {
+      auto proxy = pair.second;
+      FutureAttr fuattr;
+      fuattr.callback = [](Future* fu) {};
+      Future::safe_release(proxy->async_RccNotifyGlobalValidation(txid, result, fuattr));
+    }
+  }
+
 }
 
 } // namespace janus

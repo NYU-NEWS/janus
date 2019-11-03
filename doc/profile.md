@@ -16,3 +16,5 @@ Generate pdf
 ```
 ./scripts/pprof --pdf ./build/deptran_server process-localhost.prof > tmp.pdf
 ```
+
+Note: make sure you install the `graphviz` package.

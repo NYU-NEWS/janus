@@ -20,13 +20,58 @@
   <component name="ChangeListManager">
     <list default="true" id="90fe84fa-ca18-4530-9a88-ce9ad2f7923a" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config/sample.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config/sample.yml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/doc/Distributed-Execution.md" beforeDir="false" afterPath="$PROJECT_DIR$/doc/Distributed-Execution.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/2pl/tx.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/2pl/tx.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/2pl/tx.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/2pl/tx.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/classic/scheduler.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/classic/scheduler.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/executor.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/executor.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/executor.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/executor.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/extern_c/frame.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/extern_c/frame.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/extern_c/frame.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/extern_c/frame.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/extern_c/sched.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/extern_c/sched.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/februus/frame.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/februus/frame.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/februus/frame.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/februus/frame.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/frame.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/frame.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/frame.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/frame.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/janus/frame.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/janus/frame.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/janus/frame.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/janus/frame.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/janus/scheduler.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/janus/scheduler.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/multi_paxos/commo.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/paxos/commo.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/multi_paxos/commo.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/paxos/commo.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/multi_paxos/coordinator.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/paxos/coordinator.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/multi_paxos/coordinator.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/paxos/coordinator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/multi_paxos/exec.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/paxos/exec.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/multi_paxos/exec.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/paxos/exec.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/multi_paxos/frame.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/paxos/frame.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/multi_paxos/frame.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/paxos/frame.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/multi_paxos/scheduler.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/paxos/server.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/multi_paxos/scheduler.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/paxos/server.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/multi_paxos/service.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/paxos/service.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/multi_paxos/service.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/paxos/service.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/rcc/frame.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/rcc/frame.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/rcc/frame.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/rcc/frame.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/rcc/server.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/rcc/server.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/rcc/server.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/rcc/server.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/rcc/tx.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/rcc/tx.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/rcc/tx.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/rcc/tx.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/scheduler.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/scheduler.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/scheduler.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/scheduler.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/server_worker.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/server_worker.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/server_worker.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/server_worker.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/service.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/service.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/service.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/service.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/sharding.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/sharding.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/snow/ro6.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/snow/ro6.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/snow/ro6_row.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/snow/ro6_row.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/tapir/frame.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/tapir/frame.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/tapir/frame.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/tapir/frame.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/troad/commo.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/troad/commo.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/troad/commo.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/troad/commo.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/troad/coordinator.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/troad/coordinator.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/troad/scheduler.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/troad/scheduler.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/troad/troad.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/troad/troad.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/troad/troad.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/troad/troad.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/tx.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/tx.h" afterDir="false" />
     </list>
-    <ignored path="janus.iws" />
-    <ignored path=".idea/workspace.xml" />
-    <ignored path="$PROJECT_DIR$/cmake-build-debug/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -57,230 +102,24 @@
   <component name="FavoritesManager">
     <favorites_list name="janus" />
   </component>
-  <component name="FileEditorManager">
-    <leaf SIDE_TABS_SIZE_LIMIT_KEY="375">
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/deptran/rococo/dep_graph.cc">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="7134">
-              <caret line="246" column="13" selection-start-line="246" selection-start-column="13" selection-end-line="246" selection-end-column="13" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/deptran/rococo/tx.h">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="551">
-              <caret line="19" column="25" selection-start-line="19" selection-start-column="25" selection-end-line="19" selection-end-column="25" />
-              <folding>
-                <element signature="e#5405#5443#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/deptran/rococo/scheduler.cc">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="87">
-              <caret line="3" selection-start-line="3" selection-end-line="3" />
-              <folding>
-                <element signature="e#408#605#0" expanded="true" />
-                <element signature="e#17466#17492#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1732">
-              <caret line="85" selection-start-line="85" selection-end-line="85" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="true">
-        <entry file="file://$PROJECT_DIR$/src/deptran/classic/scheduler.cc">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="731">
-              <caret line="152" selection-start-line="152" selection-end-line="152" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/bench/tpcc_real_dist/payment.cc">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="1160">
-              <caret line="184" column="68" selection-start-line="184" selection-start-column="68" selection-end-line="184" selection-end-column="68" />
-              <folding>
-                <element signature="e#0#22#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/deptran/rococo/graph_marshaler.h">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="87">
-              <caret line="3" selection-start-line="3" selection-end-line="3" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/deptran/rococo/commo.cc">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="116">
-              <caret line="4" selection-start-line="4" selection-end-line="4" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/deptran/procedure.h">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="203">
-              <caret line="7" selection-start-line="7" selection-end-line="7" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/src/deptran/rococo/scheduler.h">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="2755">
-              <caret line="95" column="41" selection-start-line="95" selection-start-column="41" selection-end-line="95" selection-end-column="41" />
-            </state>
-          </provider>
-        </entry>
-      </file>
-    </leaf>
-  </component>
-  <component name="FindInProjectRecents">
-    <findStrings>
-      <find>u</find>
-    </findStrings>
-  </component>
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="IdeDocumentHistory">
-    <option name="CHANGED_PATHS">
-      <list>
-        <option value="$PROJECT_DIR$/src/deptran/februus/coordinator.h" />
-        <option value="$PROJECT_DIR$/src/bench/tpcc/workload.h" />
-        <option value="$PROJECT_DIR$/src/bench/tpcc/procedure.h" />
-        <option value="$PROJECT_DIR$/src/deptran/rococo/coordinator.h" />
-        <option value="$PROJECT_DIR$/src/bench/tpcc_real_dist/sharding.h" />
-        <option value="$PROJECT_DIR$/src/deptran/none/scheduler.h" />
-        <option value="$PROJECT_DIR$/src/bench/micro/procedure.h" />
-        <option value="$PROJECT_DIR$/src/deptran/multi_paxos/exec.cc" />
-        <option value="$PROJECT_DIR$/src/bench/rw/workload.h" />
-        <option value="$PROJECT_DIR$/src/deptran/occ/scheduler.h" />
-        <option value="$PROJECT_DIR$/src/deptran/occ/tx.h" />
-        <option value="$PROJECT_DIR$/src/deptran/tapir/scheduler.h" />
-        <option value="$PROJECT_DIR$/src/deptran/tapir/tx.h" />
-        <option value="$PROJECT_DIR$/src/deptran/procedure.cc" />
-        <option value="$PROJECT_DIR$/src/deptran/janus/dep_graph.h" />
-        <option value="$PROJECT_DIR$/src/deptran/janus/dep_graph.cc" />
-        <option value="$PROJECT_DIR$/src/deptran/janus/frame.cc" />
-        <option value="$PROJECT_DIR$/src/deptran/janus/commo.h" />
-        <option value="$PROJECT_DIR$/src/deptran/janus/commo.cc" />
-        <option value="$PROJECT_DIR$/src/deptran/rococo/frame.cc" />
-        <option value="$PROJECT_DIR$/src/deptran/rococo/coordinator.cc" />
-        <option value="$PROJECT_DIR$/src/deptran/janus/coordinator.h" />
-        <option value="$PROJECT_DIR$/src/deptran/classic/scheduler.cc" />
-        <option value="$PROJECT_DIR$/src/deptran/service.h" />
-        <option value="$PROJECT_DIR$/src/deptran/client_worker.h" />
-        <option value="$PROJECT_DIR$/src/deptran/coordinator.h" />
-        <option value="$PROJECT_DIR$/src/deptran/classic/coordinator.cc" />
-        <option value="$PROJECT_DIR$/src/deptran/janus/coordinator.cc" />
-        <option value="$PROJECT_DIR$/src/deptran/troad/troad.h" />
-        <option value="$PROJECT_DIR$/src/deptran/troad/troad.cc" />
-        <option value="$PROJECT_DIR$/src/deptran/rococo/tx.cc" />
-        <option value="$PROJECT_DIR$/src/deptran/service.cc" />
-        <option value="$PROJECT_DIR$/src/deptran/janus/tx.h" />
-        <option value="$PROJECT_DIR$/src/deptran/janus/tx.cc" />
-        <option value="$PROJECT_DIR$/src/deptran/constants.h" />
-        <option value="$PROJECT_DIR$/src/rrr/reactor/event.cc" />
-        <option value="$PROJECT_DIR$/src/rrr/reactor/event.h" />
-        <option value="$PROJECT_DIR$/src/deptran/rococo/dep_graph.cc" />
-        <option value="$PROJECT_DIR$/src/deptran/rococo/dep_graph.h" />
-        <option value="$PROJECT_DIR$/src/deptran/rococo/graph.h" />
-        <option value="$PROJECT_DIR$/src/deptran/janus/scheduler.cc" />
-        <option value="$PROJECT_DIR$/src/deptran/janus/scheduler.h" />
-        <option value="$PROJECT_DIR$/src/deptran/rococo/waitlist_checker.cc" />
-        <option value="$PROJECT_DIR$/src/deptran/rococo/waitlist_checker.h" />
-        <option value="$PROJECT_DIR$/src/deptran/rococo/scheduler.h" />
-        <option value="$PROJECT_DIR$/src/deptran/rococo/commo.cc" />
-        <option value="$PROJECT_DIR$/src/deptran/procedure.h" />
-        <option value="$PROJECT_DIR$/src/deptran/rococo/scheduler.cc" />
-        <option value="$PROJECT_DIR$/src/deptran/rococo/graph_marshaler.h" />
-        <option value="$PROJECT_DIR$/src/deptran/rococo/tx.h" />
-        <option value="$PROJECT_DIR$/CMakeLists.txt" />
-      </list>
-    </option>
-  </component>
   <component name="OCFindUsagesOptions" text="false" ivars="false" properties="true" derivedClasses="false" />
-  <component name="ProjectFrameBounds" extendedState="6">
-    <option name="x" value="560" />
-    <option name="y" value="317" />
-    <option name="width" value="2812" />
-    <option name="height" value="1580" />
-  </component>
+  <component name="ProjectId" id="1RZ1VRjN8apBEsyJhApjUSr3svC" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
-  <component name="ProjectView">
-    <navigator proportions="" version="1">
-      <foldersAlwaysOnTop value="true" />
-    </navigator>
-    <panes>
-      <pane id="ProjectPane">
-        <subPane>
-          <expand>
-            <path>
-              <item name="janus" type="b2602c69:ProjectViewProjectNode" />
-              <item name="janus" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="janus" type="b2602c69:ProjectViewProjectNode" />
-              <item name="janus" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="janus" type="b2602c69:ProjectViewProjectNode" />
-              <item name="janus" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="bench" type="462c0819:PsiDirectoryNode" />
-            </path>
-            <path>
-              <item name="janus" type="b2602c69:ProjectViewProjectNode" />
-              <item name="janus" type="462c0819:PsiDirectoryNode" />
-              <item name="src" type="462c0819:PsiDirectoryNode" />
-              <item name="bench" type="462c0819:PsiDirectoryNode" />
-              <item name="tpcc_real_dist" type="462c0819:PsiDirectoryNode" />
-            </path>
-          </expand>
-          <select />
-        </subPane>
-      </pane>
-      <pane id="Scope" />
-    </panes>
-  </component>
   <component name="PropertiesComponent">
+    <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="SearchEverywhereHistoryKey" value="refcou&#9;null&#9;null&#10;clock_gettime&#9;null&#9;null" />
     <property name="WebServerToolWindowFactoryState" value="false" />
+    <property name="cf.advertisement.text.has.clang-format" value="true" />
     <property name="js-jscs-nodeInterpreter" value="/usr/local/bin/node" />
     <property name="js.eslint.eslintPackage" value="" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="nodejs_interpreter_path" value="node" />
     <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
-    <property name="settings.editor.selected.configurable" value="CPPToolchains" />
+    <property name="settings.editor.selected.configurable" value="Console" />
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
@@ -299,7 +138,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="CMake Application.tpl_ww-paxos-1c1s-tpcc">
+  <component name="RunManager" selected="CMake Application.tpl_ww-paxos-3c3s3r-tpca_zipf_1.0">
     <configuration default="true" type="tests" factoryName="Attests">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -380,6 +219,11 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
+    <configuration name="janus-3c3s3r-tpca-con_100" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/3c3s3r1p.yml -f config/tpca.yml -f config/janus.yml -f config/concurrent_100.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="janus-3c3s3r-tpcc-con_100" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/3c3s3r1p.yml -f config/tpcc.yml -f config/janus.yml -f config/concurrent_100.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -425,7 +269,37 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
+    <configuration name="none-3c3s3r-tpca-con_100" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/3c3s3r1p.yml -f config/tpca.yml -f config/none.yml -f config/concurrent_100.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="none-64c8s-rw-con_100" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/64c8s1p.yml -f config/rw.yml -f config/none.yml -f config/concurrent_100.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="occ_paxos-1c1s-tpca_zipf_1.0-con100" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/1c1s1p.yml -f config/tpca_zipf_1.yml -f config/occ_paxos.yml  -f config/concurrent_100.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="occ_paxos-3c1s3r-tpca_zipf_1.0_con100" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/3c1s3r1p.yml -f config/tpca_zipf_1.yml -f config/occ_paxos.yml  -f config/concurrent_100.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="occ_paxos-3c3s-tpca_zipf_1.0_con100" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/3c3s1p.yml -f config/tpca_zipf_1.yml -f config/occ_paxos.yml  -f config/concurrent_100.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="occ_paxos-3c3s3r-tpca_zipf_1.0" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/3c3s3r1p.yml -f config/tpca_zipf_1.yml -f config/occ_paxos.yml  -f config/concurrent_1.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="occ_paxos-3c3s3r-tpca_zipf_1.0_con100" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/3c3s3r1p.yml -f config/tpca_zipf_1.yml -f config/occ_paxos.yml  -f config/concurrent_100.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -441,6 +315,11 @@
       </method>
     </configuration>
     <configuration name="rcc-64c8s-tpcc-con_100" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/64c8s1p.yml -f config/tpcc.yml -f config/rcc.yml -f config/concurrent_1.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="tapir-1c1s-tpca-con_100" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/1c1s1p.yml -f config/tpca.yml -f config/tapir.yml -f config/concurrent_100.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -475,6 +354,11 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
+    <configuration name="tpl_ww-paxos-1c1s3r-tpca_zipf_1.0" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/1c1s3r1p.yml -f config/tpca_zipf_1.yml -f config/tpl_ww_paxos.yml  -f config/concurrent_1.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="tpl_ww-paxos-2c2s-tpca_zipf_1.0" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/2c2s1p.yml -f config/tpca_zipf_1.yml -f config/tpl_ww_paxos.yml  -f config/concurrent_1.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
@@ -485,7 +369,27 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
+    <configuration name="tpl_ww-paxos-3c3s3r-tpcc-con100" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/3c3s3r1p.yml -f config/tpcc.yml -f config/tpl_ww_paxos.yml  -f config/concurrent_100.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="tpl_ww-tpca_zipf_1.0-con_100" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/3c1s3r.yml -f config/tpca_zipf_1.yml -f config/tpl_ww.yml -f config/concurrent_100.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="troad-1c1s-tpca_zipf_1.0-con_100" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/1c1s1p.yml -f config/tpca_zipf_1.yml -f config/troad.yml -f config/concurrent_100.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="troad-1c1s-tpca_zipf_1.0" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/1c1s1p.yml -f config/tpca_zipf_1.yml -f config/troad.yml -f config/concurrent_1.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="troad-3c3s3r-tpca_zipf_1.0-con_100" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/3c3s3r1p.yml -f config/tpca_zipf_1.yml -f config/troad.yml -f config/concurrent_100.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -550,17 +454,21 @@
     </configuration>
     <list>
       <item itemvalue="CMake Application.Build All" />
-      <item itemvalue="CMake Application.EXTERN_C" />
       <item itemvalue="CMake Application.MEMDB" />
       <item itemvalue="CMake Application.RRR" />
       <item itemvalue="CMake Application.TEST" />
       <item itemvalue="CMake Application.YAMLCPP" />
+      <item itemvalue="CMake Application.EXTERN_C" />
       <item itemvalue="CMake Application.gen-rpc" />
       <item itemvalue="CMake Application.janus-1c1s-tpca_zipf_1.0" />
+      <item itemvalue="CMake Application.troad-1c1s-tpca_zipf_1.0" />
+      <item itemvalue="CMake Application.troad-1c1s-tpca_zipf_1.0-con_100" />
+      <item itemvalue="CMake Application.troad-3c3s3r-tpca_zipf_1.0-con_100" />
       <item itemvalue="CMake Application.janus-1c1s-tpcc_zipf_1.0" />
       <item itemvalue="CMake Application.janus-3c3s-tpca_zipf_1.0-con_100" />
       <item itemvalue="CMake Application.janus-64c8s-tpca_zipf_1.0-con_100" />
       <item itemvalue="CMake Application.janus-3c3s3r-tpcc-con_100" />
+      <item itemvalue="CMake Application.janus-3c3s3r-tpca-con_100" />
       <item itemvalue="CMake Application.janus-64c8s-tpcc-con_100" />
       <item itemvalue="CMake Application.rcc-1c1s-tpca_zipf_1.0" />
       <item itemvalue="CMake Application.rcc-1c1s-tpca_zipf_1.0_con_1" />
@@ -571,16 +479,25 @@
       <item itemvalue="CMake Application.none-3c3s-tpca_zipf_1.0-con_100" />
       <item itemvalue="CMake Application.none-3c3s-tpcc-con_100" />
       <item itemvalue="CMake Application.none-3c3s-tpcc_no-con_100" />
+      <item itemvalue="CMake Application.none-3c3s3r-tpca-con_100" />
       <item itemvalue="CMake Application.none-64c8s-rw-con_100" />
       <item itemvalue="CMake Application.tapir-2c2s-tpcc-con_100" />
+      <item itemvalue="CMake Application.tapir-1c1s-tpca-con_100" />
       <item itemvalue="CMake Application.tpl_ww-1c1s-tpca_zipf_1.0-con100" />
       <item itemvalue="CMake Application.tpl_ww-3c3s3r-tpca_zipf_1.0-con_100" />
       <item itemvalue="CMake Application.tpl_ww-paxos-1c1s-tpca_zipf_1.0-con100" />
+      <item itemvalue="CMake Application.tpl_ww-paxos-1c1s3r-tpca_zipf_1.0" />
       <item itemvalue="CMake Application.tpl_ww-paxos-1c1s-tpca_zipf_1.0" />
       <item itemvalue="CMake Application.tpl_ww-paxos-1c1s-tpcc" />
       <item itemvalue="CMake Application.tpl_ww-paxos-2c2s-tpca_zipf_1.0" />
       <item itemvalue="CMake Application.tpl_ww-paxos-3c3s3r-tpca_zipf_1.0" />
+      <item itemvalue="CMake Application.tpl_ww-paxos-3c3s3r-tpcc-con100" />
       <item itemvalue="CMake Application.tpl_ww-tpca_zipf_1.0-con_100" />
+      <item itemvalue="CMake Application.occ_paxos-1c1s-tpca_zipf_1.0-con100" />
+      <item itemvalue="CMake Application.occ_paxos-3c3s3r-tpca_zipf_1.0_con100" />
+      <item itemvalue="CMake Application.occ_paxos-3c3s-tpca_zipf_1.0_con100" />
+      <item itemvalue="CMake Application.occ_paxos-3c1s3r-tpca_zipf_1.0_con100" />
+      <item itemvalue="CMake Application.occ_paxos-3c3s3r-tpca_zipf_1.0" />
     </list>
   </component>
   <component name="SvnConfiguration">
@@ -654,11 +571,28 @@
       <workItem from="1562013424670" duration="4326000" />
       <workItem from="1562180259436" duration="38978000" />
       <workItem from="1563981965570" duration="1256000" />
+      <workItem from="1569859832980" duration="120000" />
+      <workItem from="1569860003521" duration="1017000" />
+      <workItem from="1569861114895" duration="105000" />
+      <workItem from="1569880569355" duration="70000" />
+      <workItem from="1569880650106" duration="331000" />
+      <workItem from="1569881220084" duration="5573000" />
+      <workItem from="1569960264993" duration="9096000" />
+      <workItem from="1570368398144" duration="8754000" />
+      <workItem from="1570547083252" duration="7614000" />
+      <workItem from="1570938680291" duration="8024000" />
+      <workItem from="1571261995015" duration="5345000" />
+      <workItem from="1571769784216" duration="3011000" />
+      <workItem from="1571844940014" duration="19000" />
+      <workItem from="1571844975250" duration="4811000" />
+      <workItem from="1572038982425" duration="11638000" />
+      <workItem from="1572390129086" duration="12676000" />
+      <workItem from="1572455269876" duration="303000" />
+      <workItem from="1572488125596" duration="12000" />
+      <workItem from="1572488172154" duration="2393000" />
+      <workItem from="1572718339481" duration="15890000" />
     </task>
     <servers />
-  </component>
-  <component name="TimeTrackingManager">
-    <option name="totallyTimeSpent" value="403361000" />
   </component>
   <component name="TodoView">
     <todo-panel id="selected-file">
@@ -669,36 +603,21 @@
       <is-autoscroll-to-source value="true" />
     </todo-panel>
   </component>
-  <component name="ToolWindowManager">
-    <frame x="92" y="42" width="3748" height="2118" extended-state="6" />
-    <editor active="true" />
-    <layout>
-      <window_info id="Favorites" order="0" side_tool="true" weight="0.32869613" />
-      <window_info id="Structure" order="1" side_tool="true" weight="0.25" />
-      <window_info anchor="bottom" id="Event Log" order="0" side_tool="true" weight="0.3281334" />
-      <window_info anchor="bottom" id="Version Control" order="1" weight="0.32912782" />
-      <window_info anchor="bottom" id="Terminal" order="2" weight="0.32974717" />
-      <window_info anchor="bottom" id="Message" order="3" />
-      <window_info anchor="bottom" id="Cvs" order="4" weight="0.25" />
-      <window_info anchor="bottom" id="Inspection" order="5" weight="0.4" />
-      <window_info anchor="bottom" id="TODO" order="6" weight="0.32920924" />
-      <window_info anchor="bottom" id="Database Changes" order="7" show_stripe_button="false" />
-      <window_info anchor="bottom" id="Inspection Results" order="8" weight="0.32924962" />
-      <window_info anchor="right" id="Commander" order="0" weight="0.4" />
-      <window_info anchor="right" id="Ant Build" order="1" weight="0.25" />
-      <window_info anchor="right" content_ui="combo" id="Hierarchy" order="2" weight="0.25" />
-      <window_info anchor="right" id="Data View" order="3" />
-      <window_info anchor="right" id="Database" order="4" weight="0.32853025" />
-      <window_info active="true" anchor="right" id="Debug" order="5" visible="true" weight="0.53852457" />
-      <window_info anchor="right" id="Messages" order="6" weight="0.71065575" />
-      <window_info anchor="right" content_ui="combo" id="Project" order="7" weight="0.4885246" />
-      <window_info anchor="right" id="Find" order="8" weight="0.47647527" />
-      <window_info anchor="right" id="CMake" order="9" weight="0.5532787" />
-      <window_info anchor="right" id="Run" order="10" weight="0.5697767" />
-    </layout>
-  </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="1" />
+  </component>
+  <component name="Vcs.Log.Tabs.Properties">
+    <option name="TAB_STATES">
+      <map>
+        <entry key="MAIN">
+          <value>
+            <State>
+              <option name="COLUMN_ORDER" />
+            </State>
+          </value>
+        </entry>
+      </map>
+    </option>
   </component>
   <component name="Vcs.Log.UiProperties">
     <option name="RECENTLY_FILTERED_USER_GROUPS">
@@ -712,361 +631,31 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/src/deptran/classic/scheduler.cc</url>
-          <line>169</line>
-          <option name="timeStamp" value="1" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/src/deptran/classic/scheduler.cc</url>
-          <line>154</line>
-          <option name="timeStamp" value="5" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/src/deptran/classic/scheduler.cc</url>
-          <line>152</line>
-          <option name="timeStamp" value="6" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/src/deptran/rococo/coordinator.cc</url>
-          <line>237</line>
+          <url>file://$PROJECT_DIR$/src/deptran/rococo/rcc_coord.cc</url>
+          <line>245</line>
           <option name="timeStamp" value="22" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/src/deptran/rococo/coordinator.cc</url>
-          <line>249</line>
+          <url>file://$PROJECT_DIR$/src/deptran/rococo/rcc_coord.cc</url>
+          <line>257</line>
           <option name="timeStamp" value="23" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/src/deptran/rococo/scheduler.cc</url>
+          <url>file://$PROJECT_DIR$/src/deptran/rococo/rcc_server.cc</url>
           <line>251</line>
           <option name="timeStamp" value="24" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/deptran/multi_paxos/coordinator.cc</url>
+          <line>39</line>
+          <option name="timeStamp" value="25" />
+        </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/deptran/troad/coordinator.cc</url>
+          <line>164</line>
+          <option name="timeStamp" value="32" />
+        </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
-  </component>
-  <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/.git">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/februus/coordinator.cc">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <folding>
-            <element signature="e#0#23#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/februus/frame.cc">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/februus/quorum_event.cc">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/februus/quorum_event.h">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/februus/scheduler.cc">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <folding>
-            <element signature="e#0#15#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/februus/scheduler.h">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/februus/tx.h">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/februus/commo.cc">
-      <provider selected="true" editor-type-id="text-editor">
-        <state>
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/februus/commo.h">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/februus/coordinator.h">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/februus/frame.h">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/troad/troad.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="532">
-          <caret line="28" selection-start-line="28" selection-end-line="28" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/janus/coordinator.cc">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="501">
-          <caret line="212" column="40" selection-start-line="212" selection-start-column="40" selection-end-line="212" selection-end-column="40" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/janus/commo.h">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/janus/coordinator.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="247">
-          <caret line="13" column="32" selection-start-line="13" selection-start-column="32" selection-end-line="13" selection-end-column="32" />
-          <folding>
-            <element signature="e#14#37#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/janus/frame.cc">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/janus/frame.h">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/service.cc">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="428">
-          <caret line="309" column="36" selection-start-line="309" selection-start-column="36" selection-end-line="309" selection-end-column="36" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/rrr/reactor/coroutine.cc">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="475">
-          <caret line="25" column="9" selection-start-line="25" selection-start-column="9" selection-end-line="25" selection-end-column="9" />
-          <folding>
-            <element signature="e#0#18#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/rrr/reactor/coroutine.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-85" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/rrr/base/basetypes.hpp">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-3213" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/rrr/reactor/reactor.cc">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="-5607" />
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/rrr/reactor/reactor.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="374">
-          <caret line="44" selection-start-line="44" selection-end-line="44" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/rococo/tx.cc">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="101">
-          <caret line="35" column="15" selection-start-line="35" selection-start-column="15" selection-end-line="35" selection-end-column="15" />
-          <folding>
-            <element signature="e#0#28#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/janus/tx.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="190">
-          <caret line="11" column="33" selection-start-line="11" selection-start-column="33" selection-end-line="11" selection-end-column="33" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/janus/tx.cc">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="646">
-          <caret line="37" selection-start-line="37" selection-end-line="37" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/frame.cc">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="403">
-          <caret line="108" selection-start-line="108" selection-end-line="108" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/troad/troad.cc">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="190">
-          <caret line="10" column="46" selection-start-line="10" selection-start-column="46" selection-end-line="10" selection-end-column="46" />
-          <folding>
-            <element signature="e#1#24#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/janus/commo.cc">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="678">
-          <caret line="128" column="17" selection-start-line="128" selection-start-column="17" selection-end-line="128" selection-end-column="17" />
-          <folding>
-            <element signature="e#0#25#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file:///Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1/memory" />
-    <entry file="file://$PROJECT_DIR$/src/deptran/rococo/dep_graph.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="188">
-          <caret line="15" column="14" selection-start-line="15" selection-start-column="14" selection-end-line="15" selection-end-column="14" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/rococo/graph.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="230">
-          <caret line="110" column="21" selection-start-line="110" selection-start-column="21" selection-end-line="110" selection-end-column="21" />
-          <folding>
-            <element signature="e#1589#1601#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/constants.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="58">
-          <caret line="48" column="8" selection-start-line="48" selection-start-column="8" selection-end-line="48" selection-end-column="8" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/rrr/reactor/event.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1075">
-          <caret line="80" column="8" selection-start-line="80" selection-start-column="8" selection-end-line="80" selection-end-column="8" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/rrr/reactor/event.cc">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="582">
-          <caret line="76" column="21" selection-start-line="76" selection-start-column="21" selection-end-line="76" selection-end-column="21" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/rococo/waitlist_checker.h">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/rococo/waitlist_checker.cc">
-      <provider selected="true" editor-type-id="text-editor" />
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/rococo/txn-info.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="323">
-          <caret line="18" column="2" selection-start-line="18" selection-start-column="2" selection-end-line="18" selection-end-column="2" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/janus/scheduler.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="580">
-          <caret line="20" selection-start-line="20" selection-end-line="20" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/janus/scheduler.cc">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3422">
-          <caret line="118" column="15" selection-start-line="118" selection-start-column="15" selection-end-line="118" selection-end-column="15" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/rococo/dep_graph.cc">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="7134">
-          <caret line="246" column="13" selection-start-line="246" selection-start-column="13" selection-end-line="246" selection-end-column="13" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/rococo/tx.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="551">
-          <caret line="19" column="25" selection-start-line="19" selection-start-column="25" selection-end-line="19" selection-end-column="25" />
-          <folding>
-            <element signature="e#5405#5443#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/rococo/scheduler.cc">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="87">
-          <caret line="3" selection-start-line="3" selection-end-line="3" />
-          <folding>
-            <element signature="e#408#605#0" expanded="true" />
-            <element signature="e#17466#17492#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/rococo/graph_marshaler.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="87">
-          <caret line="3" selection-start-line="3" selection-end-line="3" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/rococo/commo.cc">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="116">
-          <caret line="4" selection-start-line="4" selection-end-line="4" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/procedure.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="203">
-          <caret line="7" selection-start-line="7" selection-end-line="7" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/rococo/scheduler.h">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="2755">
-          <caret line="95" column="41" selection-start-line="95" selection-start-column="41" selection-end-line="95" selection-end-column="41" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/bench/tpcc_real_dist/payment.cc">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1160">
-          <caret line="184" column="68" selection-start-line="184" selection-start-column="68" selection-end-line="184" selection-end-column="68" />
-          <folding>
-            <element signature="e#0#22#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/CMakeLists.txt">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="1732">
-          <caret line="85" selection-start-line="85" selection-end-line="85" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/src/deptran/classic/scheduler.cc">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="731">
-          <caret line="152" selection-start-line="152" selection-end-line="152" />
-        </state>
-      </provider>
-    </entry>
   </component>
 </project>

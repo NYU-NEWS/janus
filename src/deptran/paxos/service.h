@@ -2,8 +2,8 @@
 
 #include "__dep__.h"
 #include "constants.h"
-#include "../rococo/graph.h"
-#include "../rococo/graph_marshaler.h"
+#include "../rcc/graph.h"
+#include "../rcc/graph_marshaler.h"
 #include "../command.h"
 #include "deptran/procedure.h"
 #include "../command_marshaler.h"
@@ -12,12 +12,12 @@
 class SimpleCommand;
 namespace janus {
 
-class Scheduler;
-class SchedulerMultiPaxos;
+class TxLogServer;
+class PaxosServer;
 class MultiPaxosServiceImpl : public MultiPaxosService {
  public:
-  SchedulerMultiPaxos* sched_;
-  MultiPaxosServiceImpl(Scheduler* sched);
+  PaxosServer* sched_;
+  MultiPaxosServiceImpl(TxLogServer* sched);
   void Forward(const MarshallDeputy& cmd,
                rrr::DeferredReply* defer) override;
 

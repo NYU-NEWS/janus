@@ -11,8 +11,8 @@ class TxData;
 class TpcPrepareCommand;
 class TpcCommitCommand;
 class SimpleCommand;
-class SchedulerClassic: public Scheduler {
- using Scheduler::Scheduler;
+class SchedulerClassic: public TxLogServer {
+ using TxLogServer::TxLogServer;
  public:
 
   void MergeCommands(vector<shared_ptr<TxPieceData>>&,

@@ -1,13 +1,13 @@
 #pragma once
 
-#include "deptran/rococo/tx.h"
+#include "../rcc/tx.h"
 #include "../command.h"
 
 namespace janus {
 
-class TxJanus : public TxRococo {
+class TxJanus : public RccTx {
 public:
-  using TxRococo::TxRococo;
+  using RccTx::RccTx;
 
   void DispatchExecute(SimpleCommand &cmd,
                        map<int32_t, Value> *output) override;

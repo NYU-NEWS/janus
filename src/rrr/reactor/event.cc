@@ -9,7 +9,7 @@ namespace rrr {
 using std::function;
 
 void Event::Wait() {
-  verify(__debug_creator); // if this fails, the event is not created by reactor.
+//  verify(__debug_creator); // if this fails, the event is not created by reactor.
   if (IsReady()) {
     status_ = DONE; // does not need to wait.
     return;
@@ -20,9 +20,11 @@ void Event::Wait() {
     // this value is set when wait is called.
     // for now only one coroutine can wait on an event.
     auto sp_coro = Coroutine::CurrentCoroutine();
+//    verify(sp_coro);
 //    verify(_dbg_p_scheduler_ == nullptr);
 //    _dbg_p_scheduler_ = Reactor::GetReactor().get();
-    verify(sp_coro);
+    auto& events = Reactor::GetReactor()->waiting_events_;
+    events.push_back(shared_from_this());
     wp_coro_ = sp_coro;
     status_ = WAIT;
     sp_coro->Yield();

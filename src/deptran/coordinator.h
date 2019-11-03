@@ -48,7 +48,7 @@ class Coordinator {
   map<innid_t, bool> dispatch_acks_ = {};
   map<innid_t, bool> handout_outs_ = {};
   Sharding* sharding_ = nullptr;
-  TxnRegistry *txn_reg_ = nullptr;
+  shared_ptr<TxnRegistry> txn_reg_{nullptr};
   Communicator* commo_ = nullptr;
   Frame* frame_ = nullptr;
 
@@ -59,6 +59,7 @@ class Coordinator {
   uint32_t n_retry_ = 0;
   // below should be reset on retry.
   bool committed_ = false;
+  bool validation_result_{true};
   bool aborted_ = false;
   uint32_t n_dispatch_ = 0;
   uint32_t n_dispatch_ack_ = 0;

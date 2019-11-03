@@ -14,7 +14,7 @@ class Executor;
 class Coordinator;
 class Frame;
 class Communicator;
-class Scheduler {
+class TxLogServer {
  public:
   locid_t loc_id_ = -1;
   siteid_t site_id_ = -1;
@@ -25,15 +25,15 @@ class Scheduler {
   function<void(Marshallable &)> app_next_{};
   function<shared_ptr<vector<MultiValue>>(Marshallable&)> key_deps_{};
 
-  mdb::TxnMgr *mdb_txn_mgr_;
+  shared_ptr<mdb::TxnMgr> mdb_txn_mgr_{};
   int mode_;
   Recorder *recorder_ = nullptr;
   Frame *frame_ = nullptr;
   Frame *rep_frame_ = nullptr;
-  Scheduler *rep_sched_ = nullptr;
+  TxLogServer *rep_sched_ = nullptr;
   Communicator *commo_{nullptr};
   //  Coordinator* rep_coord_ = nullptr;
-  TxnRegistry *txn_reg_ = nullptr;
+  shared_ptr<TxnRegistry> txn_reg_{nullptr};
   parid_t partition_id_{};
   std::recursive_mutex mtx_{};
 
@@ -81,9 +81,9 @@ class Scheduler {
     return commo_;
   }
 
-  Scheduler();
-  Scheduler(int mode);
-  virtual ~Scheduler();
+  TxLogServer();
+  TxLogServer(int mode);
+  virtual ~TxLogServer();
 
   virtual void SetPartitionId(parid_t par_id) {
     partition_id_ = par_id;
@@ -115,11 +115,7 @@ class Scheduler {
   virtual shared_ptr<Tx> GetOrCreateTx(txnid_t tid, bool ro = false);
   void DestroyTx(i64 tid);
 
-  Executor *GetExecutor(txnid_t txn_id);
-  Executor *CreateExecutor(txnid_t txn_id);
-  Executor *GetOrCreateExecutor(txnid_t txn_id);
   virtual void DestroyExecutor(txnid_t txn_id);
-  virtual void TrashExecutor(txnid_t txn_id);
 
   inline int get_mode() { return mode_; }
 
@@ -164,7 +160,6 @@ class Scheduler {
   void TriggerUpgradeEpoch();
   void UpgradeEpochAck(parid_t par_id, siteid_t site_id, int res);
   virtual int32_t OnUpgradeEpoch(uint32_t old_epoch);
-  virtual void OnTruncateEpoch(uint32_t old_epoch);
 };
 
 } // namespace janus

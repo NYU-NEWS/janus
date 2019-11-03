@@ -264,7 +264,7 @@ protected:
     ~ThreadPool();
 
 public:
-    ThreadPool(int n = get_ncpu() * 2);
+    ThreadPool(int n = 1 /*get_ncpu() * 2*/);
     ThreadPool(const ThreadPool&) = delete;
     ThreadPool& operator=(const ThreadPool&) = delete;
 

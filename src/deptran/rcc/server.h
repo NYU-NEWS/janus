@@ -12,46 +12,39 @@ class SimpleCommand;
 class RccGraph;
 class RccCommo;
 class TxnInfo;
-class WaitlistChecker;
 
-class SchedulerRococo : public Scheduler, public RccGraph {
+class RccServer : public TxLogServer, public RccGraph {
  public:
   static map<txnid_t, int32_t> __debug_xxx_s;
   static std::recursive_mutex __debug_mutex_s;
   static void __DebugCheckParentSetSize(txnid_t tid, int32_t sz);
   AvgStat traversing_stat_{};
 
-  class Waitlist {
-    set<TxRococo *> waitlist_ = {};
-    set<TxRococo *> fridge_ = {};
-  };
-
  public:
-//  RccGraph *dep_graph_ = nullptr;
-  set<shared_ptr<TxRococo>> fridge_ = {};
+  set<shared_ptr<RccTx>> fridge_ = {};
   std::recursive_mutex mtx_{};
   std::time_t last_upgrade_time_{0};
   map<parid_t, int32_t> epoch_replies_{};
   bool in_upgrade_epoch_{false};
   const int EPOCH_DURATION = 5;
 
-  SchedulerRococo();
-  virtual ~SchedulerRococo();
+  RccServer();
+  virtual ~RccServer();
 
   using RccGraph::Aggregate; // C++ has strange hiding rules
-  virtual map<txnid_t, shared_ptr<TxRococo>> Aggregate(RccGraph &graph);
+  virtual map<txnid_t, shared_ptr<RccTx>> Aggregate(RccGraph &graph);
   // override graph operations
-  unordered_map<txnid_t, shared_ptr<TxRococo>> &vertex_index() override {
+  unordered_map<txnid_t, shared_ptr<RccTx>> &vertex_index() override {
     verify(!managing_memory_);
     return reinterpret_cast<
-        std::unordered_map<txnid_t, shared_ptr<TxRococo>> &>(dtxns_);
+        std::unordered_map<txnid_t, shared_ptr<RccTx>> &>(dtxns_);
   };
-  shared_ptr<TxRococo> CreateV(txnid_t txn_id) override {
+  shared_ptr<RccTx> CreateV(txnid_t txn_id) override {
     auto sp_tx = CreateTx(txn_id);
-    return dynamic_pointer_cast<TxRococo>(sp_tx);
+    return dynamic_pointer_cast<RccTx>(sp_tx);
   }
-  shared_ptr<TxRococo> CreateV(TxRococo &rhs) override {
-    auto dtxn = dynamic_pointer_cast<TxRococo>(CreateTx(rhs.id()));
+  shared_ptr<RccTx> CreateV(RccTx &rhs) override {
+    auto dtxn = dynamic_pointer_cast<RccTx>(CreateTx(rhs.id()));
     if (rhs.epoch_ > 0) {
       dtxn->epoch_ = rhs.epoch_;
     }
@@ -63,7 +56,7 @@ class SchedulerRococo : public Scheduler, public RccGraph {
   shared_ptr<Tx> GetOrCreateTx(txnid_t tid, bool ro = false) override;
 
   virtual void SetPartitionId(parid_t par_id) override {
-    Scheduler::partition_id_ = par_id;
+    TxLogServer::partition_id_ = par_id;
     RccGraph::partition_id_ = par_id;
   }
 
@@ -89,11 +82,11 @@ class SchedulerRococo : public Scheduler, public RccGraph {
 
   void DestroyExecutor(txnid_t tid) override;
 
-  void InquireAboutIfNeeded(TxRococo &dtxn);
-  void InquiredGraph(TxRococo &dtxn, shared_ptr<RccGraph> graph);
+  void InquireAboutIfNeeded(RccTx &dtxn);
+  void InquiredGraph(RccTx &dtxn, shared_ptr<RccGraph> graph);
   void InquireAck(cmdid_t cmd_id, RccGraph &graph);
-  bool AllAncCmt(TxRococo* v);
-  void WaitUntilAllPredecessorsAtLeastCommitting(TxRococo* v);
+  bool AllAncCmt(RccTx* v);
+  void WaitUntilAllPredecessorsAtLeastCommitting(RccTx* v);
   void WaitUntilAllPredSccExecuted(const RccScc &);
   bool FullyDispatched(const RccScc &scc, rank_t r=RANK_UNDEFINED);
   bool IsExecuted(const RccScc &scc, rank_t r=RANK_UNDEFINED);
@@ -102,16 +95,24 @@ class SchedulerRococo : public Scheduler, public RccGraph {
   bool HasAbortedAncestor(const RccScc &scc);
   bool AllAncFns(const RccScc &);
   void Execute(const RccScc &);
-  void Execute(TxRococo &);
+  void Execute(RccTx &);
   void Abort(const RccScc &);
   virtual int OnCommit(txnid_t txn_id,
                        rank_t rank,
+                       bool need_validation,
                        shared_ptr<RccGraph> sp_graph,
                        TxnOutput *output);
+  /**
+   *
+   * @return validation result
+   */
+  int OnInquireValidation(txid_t tx_id);
+  void OnNotifyGlobalValidation(txid_t tx_id, int validation_result);
+
 
   void __DebugExamineFridge();
-  TxRococo &__DebugFindAnOngoingAncestor(TxRococo &vertex);
-  void __DebugExamineGraphVerify(TxRococo &v);
+  RccTx &__DebugFindAnOngoingAncestor(RccTx &vertex);
+  void __DebugExamineGraphVerify(RccTx &v);
   RccCommo *commo();
 };
 

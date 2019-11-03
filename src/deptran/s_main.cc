@@ -8,7 +8,7 @@
 #include "server_worker.h"
 
 #ifdef CPU_PROFILE
-# include <google/profiler.h>
+# include <gperftools/profiler.h>
 #endif // ifdef CPU_PROFILE
 
 using namespace janus;
@@ -140,19 +140,20 @@ int main(int argc, char *argv[]) {
     client_setup_heartbeat(client_infos.size());
   }
 
-
-  auto server_infos = Config::GetConfig()->GetMyServers();
-  if (server_infos.size() > 0) {
-    server_launch_worker(server_infos);
-  }
-
 #ifdef CPU_PROFILE
   char prof_file[1024];
   Config::GetConfig()->GetProfilePath(prof_file);
   // start to profile
   ProfilerStart(prof_file);
+  Log_info("started to profile cpu");
 #endif // ifdef CPU_PROFILE
-  if (client_infos.size() > 0) {
+
+  auto server_infos = Config::GetConfig()->GetMyServers();
+  if (!server_infos.empty()) {
+    server_launch_worker(server_infos);
+  }
+
+  if (!client_infos.empty()) {
     //client_setup_heartbeat(client_infos.size());
     client_launch_workers(client_infos);
     wait_for_clients();

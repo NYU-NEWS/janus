@@ -3,7 +3,7 @@
 #include "../command.h"
 #include "../command_marshaler.h"
 #include "../communicator.h"
-#include "../rococo/rcc_row.h"
+#include "../rcc/row.h"
 #include "commo.h"
 #include "frame.h"
 #include "coordinator.h"
@@ -23,7 +23,7 @@ Coordinator *JanusFrame::CreateCoordinator(cooid_t coo_id,
                                            int benchmark,
                                            ClientControlServiceImpl *ccsi,
                                            uint32_t id,
-                                           TxnRegistry *txn_reg) {
+                                           shared_ptr<TxnRegistry> txn_reg) {
   verify(config != nullptr);
   CoordinatorJanus *coord = new CoordinatorJanus(coo_id,
                                      benchmark,
@@ -34,20 +34,20 @@ Coordinator *JanusFrame::CreateCoordinator(cooid_t coo_id,
   return coord;
 }
 
-Executor *JanusFrame::CreateExecutor(uint64_t, Scheduler *sched) {
+Executor *JanusFrame::CreateExecutor(uint64_t, TxLogServer *sched) {
   verify(0);
   return nullptr;
 }
 
-Scheduler *JanusFrame::CreateScheduler() {
-  Scheduler *sched = new SchedulerJanus();
+TxLogServer *JanusFrame::CreateScheduler() {
+  TxLogServer *sched = new SchedulerJanus();
   sched->frame_ = this;
   return sched;
 }
 
 vector<rrr::Service *>
 JanusFrame::CreateRpcServices(uint32_t site_id,
-                              Scheduler *sched,
+                              TxLogServer *sched,
                               rrr::PollMgr *poll_mgr,
                               ServerControlServiceImpl *scsi) {
   return Frame::CreateRpcServices(site_id, sched, poll_mgr, scsi);
@@ -56,12 +56,12 @@ JanusFrame::CreateRpcServices(uint32_t site_id,
 mdb::Row *JanusFrame::CreateRow(const mdb::Schema *schema,
                                 vector<Value> &row_data) {
 
-  mdb::Row *r = RCCRow::create(schema, row_data);
+  mdb::Row *r = RccRow::create(schema, row_data);
   return r;
 }
 
 shared_ptr<Tx> JanusFrame::CreateTx(epoch_t epoch, txnid_t tid,
-                                    bool ro, Scheduler *mgr) {
+                                    bool ro, TxLogServer *mgr) {
 //  auto dtxn = new JanusDTxn(tid, mgr, ro);
 //  return dtxn;
   shared_ptr<Tx> sp_tx(new TxJanus(epoch, tid, mgr, ro));

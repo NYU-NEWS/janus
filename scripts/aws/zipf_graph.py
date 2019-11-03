@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 import subprocess
 import sys
 import logging
@@ -46,7 +46,7 @@ def parse_args():
 
 def run(config, zipf):
     cmd = ['./run_all.py', config.name,
-               '-hh', config.hosts]
+               '-hh', config.hosts, '--allow-client-overlap']
     for f in config.config_files:
         cmd.extend(['-cc', f])
     for m in config.modes:

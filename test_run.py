@@ -11,15 +11,15 @@ run_app_     = "build/deptran_server"
 config_path_ = "config/"
 
 modes_ = [
-    "none",
-    "tpl_ww",
-    "occ",
+#    "none",
+#    "tpl_ww",
+#    "occ",
     "tpl_ww_paxos",
     "occ_paxos",
     "tapir",
-    "rcc",
+#    "rcc",
     "janus",
-    "troad"
+#    "troad"
 ]
 sites_ = [
     "1c1s1p",
@@ -29,7 +29,7 @@ sites_ = [
 #    "64c8s3r1p"
 ]
 benchmarks_ =  [
-    "rw",
+#    "rw",
     "tpca",
     "tpcc",
 #    "tpcc_no",

@@ -132,6 +132,7 @@ void Recorder::flush_buf() {
 }
 
 void Recorder::invoke_cb() {
+  verify(0);
     mtx_.lock();
     int sz = callback_reqs_->size();
     auto reqs = callback_reqs_;

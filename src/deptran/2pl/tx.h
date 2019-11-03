@@ -12,7 +12,7 @@ class Tx2pl: public TxClassic {
   bool prepared_{false};
   bool wounded_{false};
 
-  Tx2pl(epoch_t epoch, txnid_t tid, Scheduler *);
+  Tx2pl(epoch_t epoch, txnid_t tid, TxLogServer *);
 };
 
 } // namespace janus

@@ -13,8 +13,8 @@ using namespace janus;
 //                                                return new ExternCFrame();
 //                                              });
 
-Scheduler* ExternCFrame::CreateScheduler() {
-  Scheduler* sched = new ExternCScheduler();
+TxLogServer* ExternCFrame::CreateScheduler() {
+  TxLogServer* sched = new ExternCScheduler();
   sched->frame_ = this;
   return sched;
 }

@@ -6,11 +6,11 @@ prefix="single_dc"
 set -v
 
 function run_tests {
-	write_concurrent
+#	write_concurrent
 
-	tpca_fixed 3
+#	tpca_fixed 3
 	zipf_graph 3
-	tpcc 6 
+#	tpcc 6 
 
 #	rw_fixed
 #	tpca_fixed

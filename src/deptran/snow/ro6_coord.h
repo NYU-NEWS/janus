@@ -1,5 +1,5 @@
 #pragma once
-#include "deptran/rococo/coordinator.h"
+#include "../rcc/coord.h"
 
 namespace janus {
 class RO6Coord : public RccCoord {
