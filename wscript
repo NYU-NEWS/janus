@@ -148,17 +148,6 @@ def build(bld):
                 includes="src src/rrr src/deptran ",
                 uselib="YAML-CPP BOOST",
                 use="externc rrr memdb PTHREAD PROFILER RT")
-    bld.add_post_fun(post)
-
-def post(conf):
-    _run_cmd("cp build/_pyrpc*.so src/rrr/pylib/simplerpc/")
-
-    bld.program(source=bld.path.ant_glob("src/leader.cc"),
-                target="leader",
-                includes="src src/rrr src/deptran ",
-                uselib="YAML-CPP BOOST",
-                use="deptran_server externc rrr memdb PTHREAD PROFILER RT")
-
     bld.program(source=bld.path.ant_glob("src/run.cc"),
                 target="microbench",
                 includes="src src/rrr src/deptran ",

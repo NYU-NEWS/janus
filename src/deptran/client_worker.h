@@ -42,7 +42,7 @@ class ClientWorker {
   std::atomic<uint32_t> num_txn, success, num_try;
   Workload * tx_generator_{nullptr};
   Timer *timer_{nullptr};
-  TxnRegistry* txn_reg_ = nullptr;
+  shared_ptr<TxnRegistry> txn_reg_{nullptr};
   Config* config_{nullptr};
   Config::SiteInfo& my_site_;
   vector<string> servers_;

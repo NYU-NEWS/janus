@@ -133,7 +133,7 @@ Coordinator* ClientWorker::CreateCoordinator(uint16_t offset_id) {
 
 void ClientWorker::Work() {
   Log_debug("%s: %d", __FUNCTION__, this->cli_id_);
-  txn_reg_ = new TxnRegistry();
+  txn_reg_ = std::make_shared<TxnRegistry>();
   verify(config_ != nullptr);
   Workload* workload = Workload::CreateWorkload(config_);
   workload->txn_reg_ = txn_reg_;

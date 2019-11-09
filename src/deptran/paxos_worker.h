@@ -167,7 +167,7 @@ public:
 
   Config::SiteInfo* site_info_ = nullptr;
   Frame* rep_frame_ = nullptr;
-  Scheduler* rep_sched_ = nullptr;
+  TxLogServer* rep_sched_ = nullptr;
   Communicator* rep_commo_ = nullptr;
 
   void SetupHeartbeat();
