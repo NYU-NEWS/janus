@@ -3,7 +3,7 @@
 #include "../command.h"
 #include "../command_marshaler.h"
 #include "../communicator.h"
-#include "../rococo/rcc_row.h"
+#include "../rcc/row.h"
 #include "troad.h"
 
 namespace janus {
