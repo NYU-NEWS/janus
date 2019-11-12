@@ -1,5 +1,6 @@
 
 #include <functional>
+#include <thread>
 #include "coroutine.h"
 #include "event.h"
 #include "reactor.h"
@@ -10,6 +11,9 @@ using std::function;
 
 void Event::Wait() {
 //  verify(__debug_creator); // if this fails, the event is not created by reactor.
+
+  verify(Reactor::sp_reactor_th_);
+  verify(Reactor::sp_reactor_th_->thread_id_ == std::this_thread::get_id());
   if (IsReady()) {
     status_ = DONE; // does not need to wait.
     return;

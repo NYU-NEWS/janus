@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <unordered_map>
 #include <list>
+#include <thread>
 #include "base/misc.hpp"
 #include "event.h"
 #include "quorum_event.h"
@@ -19,6 +20,8 @@ class Coroutine;
 class Reactor {
  public:
   static std::shared_ptr<Reactor> GetReactor();
+  static thread_local std::shared_ptr<Reactor> sp_reactor_th_;
+  static thread_local std::shared_ptr<Coroutine> sp_running_coro_th_;
   /**
    * A reactor needs to keep reference to all coroutines created,
    * in case it is freed by the caller after a yield.
@@ -28,6 +31,7 @@ class Reactor {
   std::set<std::shared_ptr<Coroutine>> coros_{};
   std::unordered_map<uint64_t, std::function<void(Event&)>> processors_{};
   bool looping_{false};
+  std::thread::id thread_id_{};
 
   /**
    * @param ev. is usually allocated on coroutine stack. memory managed by user.

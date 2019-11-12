@@ -13,13 +13,13 @@
 
 namespace rrr {
 
-thread_local std::shared_ptr<Reactor> sp_reactor_th_{};
-thread_local std::shared_ptr<Coroutine> sp_running_coro_th_{};
+thread_local std::shared_ptr<Reactor> Reactor::sp_reactor_th_{};
+thread_local std::shared_ptr<Coroutine> Reactor::sp_running_coro_th_{};
 
 std::shared_ptr<Coroutine> Coroutine::CurrentCoroutine() {
   // TODO re-enable this verify
 //  verify(sp_running_coro_th_);
-  return sp_running_coro_th_;
+  return Reactor::sp_running_coro_th_;
 }
 
 std::shared_ptr<Coroutine>
@@ -37,6 +37,7 @@ Reactor::GetReactor() {
   if (!sp_reactor_th_) {
     Log_debug("create a coroutine scheduler");
     sp_reactor_th_ = std::make_shared<Reactor>();
+    sp_reactor_th_->thread_id_ = std::this_thread::get_id();
   }
   return sp_reactor_th_;
 }
@@ -68,6 +69,7 @@ Reactor::CreateRunCoroutine(const std::function<void()> func) {
 
 //  be careful this could be called from different coroutines.
 void Reactor::Loop(bool infinite) {
+  verify(std::this_thread::get_id() == thread_id_);
   looping_ = infinite;
   do {
     std::vector<shared_ptr<Event>> ready_events;
