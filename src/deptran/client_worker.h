@@ -37,7 +37,7 @@ class ClientWorker {
   std::mutex coordinator_mutex{};
   vector<Coordinator*> free_coordinators_{};
   vector<Coordinator*> created_coordinators_{};
-  rrr::ThreadPool* dispatch_pool_ = new rrr::ThreadPool();
+//  rrr::ThreadPool* dispatch_pool_ = new rrr::ThreadPool();
 
   std::atomic<uint32_t> num_txn, success, num_try;
   Workload * tx_generator_{nullptr};

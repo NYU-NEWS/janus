@@ -305,7 +305,7 @@ void CoordinatorClassic::PrepareAck(phase_t phase, int res) {
 
 void CoordinatorClassic::Commit() {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-  ___TestPhaseThree(cmd_->id_);
+//  ___TestPhaseThree(cmd_->id_);
   auto mode = Config::GetConfig()->tx_proto_;
   verify(mode == MODE_OCC || mode == MODE_2PL);
   Log_debug("send out finish request, cmd_id: %"
@@ -426,7 +426,7 @@ void CoordinatorClassic::Report(TxReply& txn_reply,
 void CoordinatorClassic::___TestPhaseThree(txnid_t txn_id) {
   // auto it = ___phase_three_tids_.find(txn_id);
 //  verify(it == ___phase_three_tids_.end());
-  ___phase_three_tids_.insert(txn_id);
+//  ___phase_three_tids_.insert(txn_id);
 }
 
 void CoordinatorClassic::___TestPhaseOne(txnid_t txn_id) {

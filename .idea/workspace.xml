@@ -10,6 +10,7 @@
       <config projectName="janus" targetName="gen-rpc" />
       <config projectName="janus" targetName="TEST" />
       <config projectName="janus" targetName="ROCOCO_SERVER" />
+      <config projectName="janus" targetName="paxosbench" />
     </generated>
   </component>
   <component name="CMakeSettings" AUTO_RELOAD="true">
@@ -20,57 +21,10 @@
   <component name="ChangeListManager">
     <list default="true" id="90fe84fa-ca18-4530-9a88-ce9ad2f7923a" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/2pl/tx.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/2pl/tx.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/2pl/tx.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/2pl/tx.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/classic/scheduler.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/classic/scheduler.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/executor.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/executor.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/executor.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/executor.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/extern_c/frame.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/extern_c/frame.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/extern_c/frame.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/extern_c/frame.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/extern_c/sched.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/extern_c/sched.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/februus/frame.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/februus/frame.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/februus/frame.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/februus/frame.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/frame.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/frame.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/frame.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/frame.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/janus/frame.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/janus/frame.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/janus/frame.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/janus/frame.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/janus/scheduler.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/janus/scheduler.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/multi_paxos/commo.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/paxos/commo.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/multi_paxos/commo.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/paxos/commo.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/multi_paxos/coordinator.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/paxos/coordinator.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/multi_paxos/coordinator.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/paxos/coordinator.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/multi_paxos/exec.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/paxos/exec.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/multi_paxos/exec.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/paxos/exec.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/multi_paxos/frame.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/paxos/frame.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/multi_paxos/frame.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/paxos/frame.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/multi_paxos/scheduler.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/paxos/server.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/multi_paxos/scheduler.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/paxos/server.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/multi_paxos/service.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/paxos/service.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/multi_paxos/service.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/paxos/service.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/rcc/frame.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/rcc/frame.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/rcc/frame.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/rcc/frame.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/rcc/server.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/rcc/server.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/rcc/server.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/rcc/server.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/rcc/tx.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/rcc/tx.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/rcc/tx.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/rcc/tx.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/scheduler.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/scheduler.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/scheduler.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/scheduler.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/server_worker.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/server_worker.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/server_worker.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/server_worker.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/service.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/service.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/service.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/service.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/sharding.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/sharding.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/snow/ro6.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/snow/ro6.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/snow/ro6_row.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/snow/ro6_row.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/tapir/frame.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/tapir/frame.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/tapir/frame.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/tapir/frame.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/troad/commo.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/troad/commo.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/troad/commo.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/troad/commo.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/troad/coordinator.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/troad/coordinator.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/troad/scheduler.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/troad/scheduler.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/troad/troad.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/troad/troad.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/troad/troad.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/troad/troad.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/tx.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/tx.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/Makefile" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/scripts/paxos-microbench.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/paxos-microbench.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -138,7 +92,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="CMake Application.tpl_ww-paxos-3c3s3r-tpca_zipf_1.0">
+  <component name="RunManager" selected="CMake Application.paxosbench-test">
     <configuration default="true" type="tests" factoryName="Attests">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -300,6 +254,11 @@
       </method>
     </configuration>
     <configuration name="occ_paxos-3c3s3r-tpca_zipf_1.0_con100" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/3c3s3r1p.yml -f config/tpca_zipf_1.yml -f config/occ_paxos.yml  -f config/concurrent_100.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="paxosbench-test" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-b -d 60 -f config/1c1s3r1p.yml -f config/occ_paxos.yml -P localhost -t 30 -T 100000 -n 32" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="paxosbench" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="paxosbench">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -498,6 +457,7 @@
       <item itemvalue="CMake Application.occ_paxos-3c3s-tpca_zipf_1.0_con100" />
       <item itemvalue="CMake Application.occ_paxos-3c1s3r-tpca_zipf_1.0_con100" />
       <item itemvalue="CMake Application.occ_paxos-3c3s3r-tpca_zipf_1.0" />
+      <item itemvalue="CMake Application.paxosbench-test" />
     </list>
   </component>
   <component name="SvnConfiguration">
@@ -591,6 +551,9 @@
       <workItem from="1572488125596" duration="12000" />
       <workItem from="1572488172154" duration="2393000" />
       <workItem from="1572718339481" duration="15890000" />
+      <workItem from="1574180099044" duration="358000" />
+      <workItem from="1574220777939" duration="2378000" />
+      <workItem from="1574363788285" duration="53000" />
     </task>
     <servers />
   </component>

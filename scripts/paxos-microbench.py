@@ -13,8 +13,9 @@ LOG_LEVEL = logging.INFO
 LOG_FILE_LEVEL = logging.DEBUG
 logger = logging.getLogger('paxos')
 
-deptran_home = os.path.split(os.path.realpath(__file__))
-deptran_home = deptran_home[0]
+#deptran_home = os.path.split(os.path.realpath(__file__))
+#deptran_home = deptran_home[0]
+deptran_home = os.getcwd()
 g_log_dir = deptran_home + "/log"
 
 

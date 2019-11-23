@@ -203,6 +203,14 @@ file(GLOB DEPTRAN_SRC
     "src/deptran/*/*.h"
 )
 
+list(FILTER DEPTRAN_SRC EXCLUDE REGEX
+        "src/deptran/s_main.cc"
+)
+
+list(FILTER DEPTRAN_SRC EXCLUDE REGEX
+        "src/deptran/paxos_main_helper.cc"
+)
+
 add_library(RRR
     ${RRR_SRC})
 
@@ -214,6 +222,13 @@ add_library(MEMDB
 #        ${BENCH_SRC})
 
 add_executable(janusdb
+        "src/deptran/s_main.cc"
+        ${DEPTRAN_SRC}
+        ${BENCH_SRC})
+
+add_executable(paxosbench
+        "src/run.cc"
+        "src/deptran/paxos_main_helper.cc"
         ${DEPTRAN_SRC}
         ${BENCH_SRC})
 
@@ -250,6 +265,22 @@ target_link_libraries(
 #    ${PROFILER_LIBRARIES}
 )
 
+target_link_libraries(
+        paxosbench
+        RRR
+        MEMDB
+        EXTERN_C
+        YAMLCPP
+        ${RT}
+        #        ${CONAN_LIBS}
+        ${Boost_LIBRARIES}
+        ${CMAKE_THREAD_LIBS_INIT}
+        ${PYTHON_LIBRARIES}
+        #    ${APR_LIBRARIES}
+        #    ${APRUTIL_LIBRARIES}
+        #    ${PROFILER_LIBRARIES}
+)
+
 #target_link_libraries(
 #        JANUS_PROCESS
 #        JANUS
@@ -265,4 +296,3 @@ target_link_libraries(
 #        ${CONAN_LIBS}
         ${CMAKE_THREAD_LIBS_INIT}
 )
-

@@ -52,7 +52,7 @@ int Config::CreateConfig(int argc, char **argv) {
 //  std::string filename = "./config/sample.yml";
   vector<string> config_paths;
   std::string proc_name = "localhost"; // default as "localhost"
-  std::string logging_path = "./log/";
+  std::string logging_path = "./disk_log/";
   char *end_ptr    = NULL;
 
   char *hostspath               = NULL;
@@ -236,6 +236,7 @@ Config::Config(char           *ctrl_hostname,
   ctrl_port_(ctrl_port),
   ctrl_timeout_(ctrl_timeout),
   ctrl_key_(ctrl_key),
+
   ctrl_init_(ctrl_init),
   tot_req_num_(tot_req_num),
   duration_(duration),
@@ -645,7 +646,7 @@ void Config::LoadShardingYML(YAML::Node config) {
     auto &tbl_info = info_it->second;
     string method = it->second.as<string>();
 
-    // Log_info("group size: %d", replica_groups_.size());
+    Log_info("group size: %d", replica_groups_.size());
     for (auto replica_group_it = this->replica_groups_.begin();
          replica_group_it != this->replica_groups_.end();
          replica_group_it++) {

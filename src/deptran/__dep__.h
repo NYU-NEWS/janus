@@ -13,9 +13,10 @@
 #include <iostream>
 #include <condition_variable>
 #include <atomic>
-#include <cstdint>
 #include <algorithm>
 #include <set>
+#include <iostream>
+#include <fstream>
 
 using namespace std;
 // using the following will trigger errors in CLion (<= 2017.3)
@@ -34,6 +35,7 @@ using namespace std;
 // system library
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <signal.h>
@@ -54,6 +56,7 @@ using namespace std;
 
 // c library
 #include <cstdio>
+#include <cstdint>
 #include <cstdlib>
 #include <cassert>
 #include <cstring>
@@ -106,7 +109,6 @@ using mdb::Table;
 using mdb::colid_t;
 using mdb::SnapshotTable;
 
-// #define LOG_LEVEL_AS_DEBUG 666
 // rpc library
 class dummy_class {
  public:

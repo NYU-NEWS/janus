@@ -15,7 +15,7 @@ ClientWorker::~ClientWorker() {
   for (auto c : created_coordinators_) {
     delete c;
   }
-  dispatch_pool_->release();
+//  dispatch_pool_->release();
 }
 
 void ClientWorker::ForwardRequestDone(Coordinator* coo,
@@ -123,10 +123,10 @@ Coordinator* ClientWorker::CreateCoordinator(uint16_t offset_id) {
   coo->loc_id_ = my_site_.locale_id;
   coo->commo_ = commo_;
   coo->forward_status_ = forward_requests_to_leader_ ? FORWARD_TO_LEADER : NONE;
-  Log_info("coordinator %d created at site %d: forward %d",
-           coo->coo_id_,
-           this->my_site_.id,
-           coo->forward_status_);
+  Log_debug("coordinator %d created at site %d: forward %d",
+            coo->coo_id_,
+            this->my_site_.id,
+            coo->forward_status_);
   created_coordinators_.push_back(coo);
   return coo;
 }
@@ -246,7 +246,7 @@ void ClientWorker::AcceptForwardedRequest(TxRequest& request,
 void ClientWorker::DispatchRequest(Coordinator* coo) {
   const char* f = __FUNCTION__;
   std::function<void()> task = [=]() {
-    Log_info("%s: %d", f, cli_id_);
+    Log_debug("%s: %d", f, cli_id_);
     TxRequest req;
     {
       std::lock_guard<std::mutex> lock(this->request_gen_mutex);
