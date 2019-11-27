@@ -21,11 +21,15 @@ void Coroutine::BoostRunWrapper(boost_coro_yield_t& yield) {
   verify(func_);
   auto reactor = Reactor::GetReactor();
 //  reactor->coros_;
-  auto sz = reactor->coros_.size();
-  verify(sz > 0);
-  func_();
-  func_ = {};
-  boost_coro_yield_.reset();
+  while (true) {
+    auto sz = reactor->coros_.size();
+    verify(sz > 0);
+    func_();
+    func_ = {};
+    status_ = FINISHED;
+    boost_coro_yield_.reset();
+    yield();
+  }
 }
 
 void Coroutine::Run() {
@@ -51,7 +55,7 @@ void Coroutine::Yield() {
 }
 
 void Coroutine::Continue() {
-  verify(status_ == PAUSED);
+  verify(status_ == PAUSED || status_ == RECYCLED);
   verify(up_boost_coro_task_);
   status_ = RESUMED;
   (*up_boost_coro_task_)();

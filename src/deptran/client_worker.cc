@@ -35,15 +35,15 @@ void ClientWorker::ForwardRequestDone(Coordinator* coo,
   } else if (!have_more_time) {
     Log_debug("times up. stop.");
     Log_debug("n_concurrent_ = %d", n_concurrent_);
-    finish_mutex.lock();
+//    finish_mutex.lock();
     n_concurrent_--;
     if (n_concurrent_ == 0) {
       Log_debug("all coordinators finished... signal done");
-      finish_cond.signal();
+//      finish_cond.signal();
     } else {
       Log_debug("waiting for %d more coordinators to finish", n_concurrent_);
     }
-    finish_mutex.unlock();
+//    finish_mutex.unlock();
   }
 
   defer->reply();
@@ -69,23 +69,23 @@ void ClientWorker::RequestDone(Coordinator* coo, TxReply& txn_reply) {
   } else if (!have_more_time) {
     Log_debug("times up. stop.");
     Log_debug("n_concurrent_ = %d", n_concurrent_);
-    finish_mutex.lock();
+//    finish_mutex.lock();
     n_concurrent_--;
+    verify(n_concurrent_ >= 0);
     if (n_concurrent_ == 0) {
       Log_debug("all coordinators finished... signal done");
-      finish_cond.signal();
+//      finish_cond.signal();
     } else {
       Log_debug("waiting for %d more coordinators to finish", n_concurrent_);
       Log_debug("transactions they are processing:");
       // for debug purpose, print ongoing transaction ids.
       for (auto c : created_coordinators_) {
         if (c->ongoing_tx_id_ > 0) {
-          Log_debug("\t %"
-                        PRIx64, c->ongoing_tx_id_);
+          Log_debug("\t %" PRIx64, c->ongoing_tx_id_);
         }
       }
     }
-    finish_mutex.unlock();
+//    finish_mutex.unlock();
   } else {
     verify(0);
   }
@@ -151,15 +151,15 @@ void ClientWorker::Work() {
   if (config_->client_type_ == Config::Closed) {
     Log_info("closed loop clients.");
     verify(n_concurrent_ > 0);
-    for (uint32_t n_tx = 0; n_tx < n_concurrent_; n_tx++) {
-      auto coo = CreateCoordinator(n_tx);
-      Log_debug("create coordinator %d", coo->coo_id_);
-      auto p_job = (Job*)new OneTimeJob([this, coo] () {
+    int n = n_concurrent_;
+    auto sp_job = std::make_shared<OneTimeJob>([this] () {
+      for (uint32_t n_tx = 0; n_tx < n_concurrent_; n_tx++) {
+        auto coo = CreateCoordinator(n_tx);
+        Log_debug("create coordinator %d", coo->coo_id_);
         this->DispatchRequest(coo);
-      });
-      shared_ptr<Job> sp_job(p_job);
-      poll_mgr_->add(sp_job);
-    }
+      }
+    });
+    poll_mgr_->add(dynamic_pointer_cast<Job>(sp_job));
   } else {
     Log_info("open loop clients.");
     const std::chrono::nanoseconds wait_time
@@ -193,12 +193,13 @@ void ClientWorker::Work() {
     Log_debug("exit client dispatch loop...");
   }
 
-  finish_mutex.lock();
+//  finish_mutex.lock();
   while (n_concurrent_ > 0) {
     Log_debug("wait for finish... %d", n_concurrent_);
-    finish_cond.wait(finish_mutex);
+    sleep(1);
+//    finish_cond.wait(finish_mutex);
   }
-  finish_mutex.unlock();
+//  finish_mutex.unlock();
 
   Log_info("Finish:\nTotal: %u, Commit: %u, Attempts: %u, Running for %u\n",
            num_txn.load(),
@@ -266,7 +267,8 @@ ClientWorker::ClientWorker(
     uint32_t id,
     Config::SiteInfo& site_info,
     Config* config,
-    ClientControlServiceImpl* ccsi) :
+    ClientControlServiceImpl* ccsi,
+    PollMgr* poll_mgr) :
     id(id),
     my_site_(site_info),
     config_(config),
@@ -276,7 +278,7 @@ ClientWorker::ClientWorker(
     duration(config->get_duration()),
     ccsi(ccsi),
     n_concurrent_(config->get_concurrent_txn()) {
-  poll_mgr_ = new PollMgr(1);
+  poll_mgr_ = poll_mgr == nullptr ? new PollMgr(1) : poll_mgr;
   frame_ = Frame::GetFrame(config->tx_proto_);
   tx_generator_ = frame_->CreateTxGenerator();
   config->get_all_site_addr(servers_);

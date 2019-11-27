@@ -29,9 +29,15 @@ class Reactor {
   std::list<std::shared_ptr<Event>> all_events_{};
   std::list<std::shared_ptr<Event>> waiting_events_{};
   std::set<std::shared_ptr<Coroutine>> coros_{};
+  std::vector<std::shared_ptr<Coroutine>> available_coros_{};
   std::unordered_map<uint64_t, std::function<void(Event&)>> processors_{};
   bool looping_{false};
   std::thread::id thread_id_{};
+#ifdef REUSE_CORO
+#define REUSING_CORO (true)
+#else
+#define REUSING_CORO (false)
+#endif
 
   /**
    * @param ev. is usually allocated on coroutine stack. memory managed by user.

@@ -177,10 +177,10 @@ struct ClientResponse  {
 }
 
 abstract service ServerControl {
-    server_shutdown ( | );
-    server_ready ( | i32 res);
-    server_heart_beat_with_data ( | ServerResponse res);
-    server_heart_beat ( | );
+    defer server_shutdown ( | );
+    defer server_ready ( | i32 res);
+    defer server_heart_beat_with_data ( | ServerResponse res);
+    defer server_heart_beat ( | );
 }
 
 struct TxDispatchRequest {
@@ -193,12 +193,12 @@ struct TxnDispatchResponse {
 }
 
 abstract service ClientControl {
-    client_get_txn_names( | map<i32, string> txn_names);
-    client_shutdown ( | );
-    client_force_stop ( | );
-    client_response ( | ClientResponse res);
-    client_ready ( | i32 res);
+    defer client_get_txn_names( | map<i32, string> txn_names);
+    defer client_shutdown ( | );
+    defer client_force_stop ( | );
+    defer client_response ( | ClientResponse res);
+    defer client_ready ( | i32 res);
     defer client_ready_block ( | i32 res);
-    client_start ( | );
+    defer client_start ( | );
     defer DispatchTxn(TxDispatchRequest req | TxReply result);
 }

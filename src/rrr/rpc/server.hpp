@@ -2,15 +2,17 @@
 
 #include <unordered_map>
 #include <unordered_set>
-
 #include <pthread.h>
+
+#include <sys/socket.h>
+#include <netdb.h>
 
 #include "misc/marshal.hpp"
 #include "reactor/epoll_wrapper.h"
 #include "reactor/reactor.h"
 
 // for getaddrinfo() used in Server::start()
-struct addrinfo;
+//struct addrinfo;
 
 namespace rrr {
 
@@ -33,6 +35,28 @@ class Service {
 public:
     virtual ~Service() {}
     virtual int __reg_to__(Server*) = 0;
+};
+
+class ServerListener: public Pollable {
+  friend class Server;
+ public:
+  std:: string addr_;
+  Server* server_;
+  std::unique_ptr<struct addrinfo> up_gai_result_;
+  std::unique_ptr<struct addrinfo> up_svr_addr_;
+
+  int server_sock_{0};
+  int poll_mode() {
+    return Pollable::READ;
+  }
+  void handle_write() {verify(0);}
+  void handle_read();
+  void handle_error() {verify(0);}
+  void close();
+  int fd() {return server_sock_;}
+  ServerListener(Server* s, std::string addr);
+//protected:
+//  ~ServerListener() {};
 };
 
 class ServerConnection: public Pollable {
@@ -134,7 +158,9 @@ public:
     }
 
     int run_async(const std::function<void()>& f) {
-        return sconn_->run_async(f);
+      // TODO disable threadpool run in RPCs.
+//        return sconn_->run_async(f);
+      return 0;
     }
 
     void reply() {
@@ -146,9 +172,8 @@ public:
 };
 
 class Server: public NoCopy {
-
     friend class ServerConnection;
-
+ public:
     std::unordered_map<i32, std::function<void(Request*, ServerConnection*)>> handlers_;
     PollMgr* pollmgr_;
     ThreadPool* threadpool_;
@@ -157,7 +182,8 @@ class Server: public NoCopy {
     Counter sconns_ctr_;
 
     SpinLock sconns_l_;
-    std::unordered_set<ServerConnection*> sconns_;
+    std::unordered_set<ServerConnection*> sconns_{};
+    std::unique_ptr<ServerListener> up_server_listener_{};
 
     enum {
         NEW, RUNNING, STOPPING, STOPPED

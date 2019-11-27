@@ -34,6 +34,8 @@ def options(opt):
                    default=False, action='store_true')
     opt.add_option('-C', '--enable-conflict-count', dest='cc',
                    default=False, action='store_true')
+    opt.add_option('-C', '--disable-reuse-coroutine', dest='disable_reuse_coroutine',
+                   default=False, action='store_true')
     opt.add_option('-r', '--enable-logging', dest='log',
                    default=False, action='store_true')
     opt.add_option('-T', '--enable-txn-stat', dest='txn_stat',
@@ -62,6 +64,7 @@ def configure(conf):
     _enable_conflict_count(conf)
 #    _enable_snappy(conf)
     #_enable_logging(conf)
+    _enable_reuse_coroutine(conf)
 
 
     conf.env.append_value("CXXFLAGS", "-Wno-reorder")
@@ -209,6 +212,13 @@ def _enable_logging(conf):
     conf.env.append_value("CXXFLAGS", "-DRECORD")
     conf.env.append_value("LINKFLAGS", "-laio")
     Logs.pprint("PINK", "Logging enabled")
+
+def _enable_reuse_coroutine(conf):
+    if Options.options.disable_reuse_coroutine:
+        Logs.pprint("RED", "Disable reuse coroutine, dangerous to performance!")
+    else:
+        conf.env.append_value("CXXFLAGS", "-DREUSE_CORO")
+        Logs.pprint("PINK", "Reuse coroutine enabled")
 
 def _enable_snappy(conf):
     Logs.pprint("PINK", "google snappy enabled")

@@ -53,7 +53,7 @@ void client_launch_workers(vector<Config::SiteInfo> &client_sites) {
     ClientWorker* worker = new ClientWorker(client_id,
                                             client_sites[client_id],
                                             Config::GetConfig(),
-                                            ccsi_g);
+                                            ccsi_g, nullptr);
     workers.push_back(worker);
     client_threads_g.push_back(std::thread(&ClientWorker::Work, worker));
     client_workers_g.push_back(std::unique_ptr<ClientWorker>(worker));
@@ -85,14 +85,21 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
       Log_info("start communication for site %d", (int)worker.site_info_->id);
       worker.SetupCommo();
       Log_info("site %d launched!", (int)site_info.id);
+      worker.launched_ = true;
     }));
   }
 
-  Log_info("waiting for client setup threads.");
+  for (auto& worker : svr_workers_g) {
+    while (!worker.launched_) {
+      sleep(1);
+    }
+  }
+
+  Log_info("waiting for server setup threads.");
   for (auto& th: setup_ths) {
     th.join();
   }
-  Log_info("done waiting for client setup threads.");
+  Log_info("done waiting for server setup threads.");
 
   for (ServerWorker& worker : svr_workers_g) {
     // start communicator after all servers are running
@@ -156,6 +163,7 @@ int main(int argc, char *argv[]) {
   if (!client_infos.empty()) {
     //client_setup_heartbeat(client_infos.size());
     client_launch_workers(client_infos);
+    sleep(Config::GetConfig()->duration_);
     wait_for_clients();
     Log_info("all clients have shut down.");
   }

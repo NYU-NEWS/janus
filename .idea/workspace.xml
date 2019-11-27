@@ -9,8 +9,8 @@
       <config projectName="janus" targetName="MEMDB" />
       <config projectName="janus" targetName="gen-rpc" />
       <config projectName="janus" targetName="TEST" />
-      <config projectName="janus" targetName="ROCOCO_SERVER" />
       <config projectName="janus" targetName="paxosbench" />
+      <config projectName="janus" targetName="ROCOCO_SERVER" />
     </generated>
   </component>
   <component name="CMakeSettings" AUTO_RELOAD="true">
@@ -21,10 +21,8 @@
   <component name="ChangeListManager">
     <list default="true" id="90fe84fa-ca18-4530-9a88-ce9ad2f7923a" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Makefile" beforeDir="false" afterPath="$PROJECT_DIR$/Makefile" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/paxos-microbench.py" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/paxos-microbench.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/rrr/reactor/reactor.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/rrr/reactor/reactor.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/rrr/reactor/reactor.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/rrr/reactor/reactor.h" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -60,6 +58,9 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="OCFindUsagesOptions" text="false" ivars="false" properties="true" derivedClasses="false" />
+  <component name="OCResolveContextSettings">
+    <option name="configuration" value="0-RRR" />
+  </component>
   <component name="ProjectId" id="1RZ1VRjN8apBEsyJhApjUSr3svC" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="PropertiesComponent">
@@ -73,7 +74,7 @@
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="nodejs_interpreter_path" value="node" />
     <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
-    <property name="settings.editor.selected.configurable" value="Console" />
+    <property name="settings.editor.selected.configurable" value="preferences.sourceCode.C/C++" />
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
@@ -92,7 +93,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="CMake Application.paxosbench-test">
+  <component name="RunManager" selected="CMake Application.none-3c3s-rw-con_100">
     <configuration default="true" type="tests" factoryName="Attests">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -204,6 +205,11 @@
       </method>
     </configuration>
     <configuration name="none-1c1s-tpcc-con_100" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/1c1s1p.yml -f config/tpcc.yml -f config/none.yml -f config/concurrent_100.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="none-3c3s-rw-con_100" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/3c3s1p.yml -f config/rw.yml -f config/none.yml -f config/concurrent_100.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -413,12 +419,6 @@
     </configuration>
     <list>
       <item itemvalue="CMake Application.Build All" />
-      <item itemvalue="CMake Application.MEMDB" />
-      <item itemvalue="CMake Application.RRR" />
-      <item itemvalue="CMake Application.TEST" />
-      <item itemvalue="CMake Application.YAMLCPP" />
-      <item itemvalue="CMake Application.EXTERN_C" />
-      <item itemvalue="CMake Application.gen-rpc" />
       <item itemvalue="CMake Application.janus-1c1s-tpca_zipf_1.0" />
       <item itemvalue="CMake Application.troad-1c1s-tpca_zipf_1.0" />
       <item itemvalue="CMake Application.troad-1c1s-tpca_zipf_1.0-con_100" />
@@ -435,6 +435,7 @@
       <item itemvalue="CMake Application.none-1c1s-rw-con_100" />
       <item itemvalue="CMake Application.none-1c1s-rw" />
       <item itemvalue="CMake Application.none-1c1s-tpcc-con_100" />
+      <item itemvalue="CMake Application.none-3c3s-rw-con_100" />
       <item itemvalue="CMake Application.none-3c3s-tpca_zipf_1.0-con_100" />
       <item itemvalue="CMake Application.none-3c3s-tpcc-con_100" />
       <item itemvalue="CMake Application.none-3c3s-tpcc_no-con_100" />
@@ -458,6 +459,12 @@
       <item itemvalue="CMake Application.occ_paxos-3c1s3r-tpca_zipf_1.0_con100" />
       <item itemvalue="CMake Application.occ_paxos-3c3s3r-tpca_zipf_1.0" />
       <item itemvalue="CMake Application.paxosbench-test" />
+      <item itemvalue="CMake Application.EXTERN_C" />
+      <item itemvalue="CMake Application.gen-rpc" />
+      <item itemvalue="CMake Application.MEMDB" />
+      <item itemvalue="CMake Application.RRR" />
+      <item itemvalue="CMake Application.TEST" />
+      <item itemvalue="CMake Application.YAMLCPP" />
     </list>
   </component>
   <component name="SvnConfiguration">
@@ -554,6 +561,7 @@
       <workItem from="1574180099044" duration="358000" />
       <workItem from="1574220777939" duration="2378000" />
       <workItem from="1574363788285" duration="53000" />
+      <workItem from="1574776555544" duration="7412000" />
     </task>
     <servers />
   </component>
@@ -617,6 +625,11 @@
           <url>file://$PROJECT_DIR$/src/deptran/troad/coordinator.cc</url>
           <line>164</line>
           <option name="timeStamp" value="32" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/deptran/client_worker.cc</url>
+          <line>166</line>
+          <option name="timeStamp" value="45" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

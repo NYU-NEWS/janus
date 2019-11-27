@@ -76,7 +76,7 @@ class Job {
   virtual ~Job(){};
 };
 
-class OneTimeJob : Job {
+class OneTimeJob : public Job {
  public:
   OneTimeJob(std::function<void()> func) : func_(func) {
   }

@@ -63,10 +63,10 @@ class ServerControlServiceImpl: public ServerControlService {
   void set_sig_handler();
 
  public:
-  void server_shutdown();
-  void server_ready(i32 *res);
-  void server_heart_beat_with_data(ServerResponse *res);
-  void server_heart_beat();
+  void server_shutdown(DeferredReply*) override;
+  void server_ready(i32 *res, DeferredReply*) override;
+  void server_heart_beat_with_data(ServerResponse *res, DeferredReply*) override;
+  void server_heart_beat(DeferredReply*) override;
 
   ServerControlServiceImpl(unsigned int timeout = 5, Recorder *recorder = NULL);
   ~ServerControlServiceImpl();
@@ -230,14 +230,14 @@ class ClientControlServiceImpl: public ClientControlService {
 
   void LogClientResponse(ClientResponse *res);
  public:
-  void client_get_txn_names(std::map<i32, std::string> *txn_names) override;
-  void client_shutdown() override;
-  void client_force_stop() override;
-  void client_response(ClientResponse *res) override;
+  void client_get_txn_names(std::map<i32, std::string> *txn_names, DeferredReply*) override;
+  void client_shutdown(DeferredReply*) override;
+  void client_force_stop(DeferredReply*) override;
+  void client_response(ClientResponse *res, DeferredReply*) override;
   void client_ready_block(i32 *res,
                           DeferredReply *defer) override;
-  void client_ready(i32 *res) override;
-  void client_start() override;
+  void client_ready(i32 *res, DeferredReply*) override;
+  void client_start(DeferredReply*) override;
 
   ClientControlServiceImpl(unsigned int num_threads, const std::map<int32_t, std::string> &txn_types);
   ~ClientControlServiceImpl();

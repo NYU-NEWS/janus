@@ -7,10 +7,7 @@
 #include <errno.h>
 #include <string.h>
 #include <sys/types.h>
-#include <sys/socket.h>
-#include <netdb.h>
 #include <netinet/tcp.h>
-#include <sys/un.h>
 
 #include "reactor/coroutine.h"
 #include "server.hpp"
@@ -103,7 +100,10 @@ ServerConnection::~ServerConnection() {
 int ServerConnection::run_async(const std::function<void()>& f) {
 //  verify(0);
 //  return 0;
-  return server_->threadpool_->run_async(f);
+// disable async run
+  verify(0);
+  return 0;
+//  return server_->threadpool_->run_async(f);
 }
 
 void ServerConnection::begin_reply(Request* req, i32 error_code /* =... */) {
@@ -281,11 +281,11 @@ Server::Server(PollMgr* pollmgr /* =... */, ThreadPool* thrpool /* =? */)
         pollmgr_ = (PollMgr *) pollmgr->ref_copy();
     }
 
-    if (thrpool == nullptr) {
-        threadpool_ = new ThreadPool;
-    } else {
-        threadpool_ = (ThreadPool *) thrpool->ref_copy();
-    }
+//    if (thrpool == nullptr) {
+//        threadpool_ = new ThreadPool;
+//    } else {
+//        threadpool_ = (ThreadPool *) thrpool->ref_copy();
+//    }
 }
 
 Server::~Server() {
@@ -307,6 +307,8 @@ Server::~Server() {
     for (auto& it: sconns) {
         it->close();
     }
+    up_server_listener_->close();
+
 
     // make sure all open connections are closed
     int alive_connection_count = -1;
@@ -324,7 +326,7 @@ Server::~Server() {
     }
     verify(sconns_ctr_.peek_next() == 0);
 
-    threadpool_->release();
+//    threadpool_->release();
     pollmgr_->release();
 
     //Log_debug("rrr::Server: destroyed");
@@ -337,6 +339,7 @@ struct start_server_loop_args_type {
 };
 
 void* Server::start_server_loop(void* arg) {
+  verify(0);
     start_server_loop_args_type* start_server_loop_args = (start_server_loop_args_type*) arg;
     start_server_loop_args->server->server_loop(start_server_loop_args->svr_addr);
     freeaddrinfo(start_server_loop_args->gai_result);
@@ -377,7 +380,9 @@ void Server::server_loop(struct addrinfo* svr_addr) {
         if (clnt_socket >= 0 && status_ == RUNNING) {
             Log_debug("server@%s got new client, fd=%d", this->addr_.c_str(), clnt_socket);
             verify(set_nonblocking(clnt_socket, true) == 0);
-
+            int buf_len = 1024 * 1024; // 1M buffer
+            setsockopt(clnt_socket, SOL_SOCKET, SO_RCVBUF, &buf_len, sizeof(buf_len));
+            setsockopt(clnt_socket, SOL_SOCKET, SO_SNDBUF, &buf_len, sizeof(buf_len));
             sconns_l_.lock();
             ServerConnection* sconn = new ServerConnection(this, clnt_socket);
             sconns_.insert(sconn);
@@ -391,11 +396,121 @@ void Server::server_loop(struct addrinfo* svr_addr) {
     status_ = STOPPED;
 }
 
+void ServerListener::handle_read() {
+//  fd_set fds;
+//  FD_ZERO(&fds);
+//  FD_SET(server_sock_, &fds);
+
+  while (true) {
+#ifdef USE_IPC
+    struct sockaddr_un fsaun;
+      uint32_t from_len;
+    int clnt_socket = ::accept(server_sock_, (struct sockaddr*)&fsaun, &from_len);
+#else
+    int clnt_socket = ::accept(server_sock_, up_svr_addr_->ai_addr, &up_svr_addr_->ai_addrlen);
+#endif
+    if (clnt_socket >= 0) {
+      Log_debug("server@%s got new client, fd=%d", this->addr_.c_str(), clnt_socket);
+      verify(set_nonblocking(clnt_socket, true) == 0);
+
+      ServerConnection* sconn = new ServerConnection(server_, clnt_socket);
+      server_->sconns_l_.lock();
+      server_->sconns_.insert(sconn);
+      server_->pollmgr_->add(sconn);
+      server_->sconns_l_.unlock();
+    } else {
+      break;
+    }
+  }
+}
+
+void ServerListener::close() {
+  ::close(server_sock_);
+}
+
+ServerListener::ServerListener(Server* server, string addr) {
+  server_ = server;
+  addr_ = addr;
+  size_t idx = addr.find(":");
+  if (idx == string::npos) {
+    Log_error("rrr::Server: bad bind address: %s", addr.c_str());
+  }
+  string host = addr.substr(0, idx);
+  string port = addr.substr(idx + 1);
+
+#ifdef USE_IPC
+  struct sockaddr_un saun;
+  if ((server_sock_ = socket(AF_UNIX, SOCK_STREAM, 0)) < 0) {
+    perror("server: socket");
+    exit(1);
+  }
+  saun.sun_family = AF_UNIX;
+  string ipc_addr = "rsock" + port;
+  strcpy(saun.sun_path, ipc_addr.data());
+  auto len = sizeof(saun.sun_family) + strlen(saun.sun_path)+1;
+  ::unlink(ipc_addr.data());
+  if (::bind(server_sock_, (struct sockaddr*)&saun, len) != 0) {
+    perror("server: socket bind");
+    exit(1);
+  }
+
+#else
+  struct addrinfo hints, *result, *rp;
+  memset(&hints, 0, sizeof(struct addrinfo));
+  hints.ai_family = AF_INET; // ipv4
+  hints.ai_socktype = SOCK_STREAM; // tcp
+  hints.ai_flags = AI_PASSIVE; // server side
+
+  int r = getaddrinfo((host == "0.0.0.0") ? nullptr : host.c_str(), port.c_str(), &hints, &result);
+  if (r != 0) {
+    Log_error("rrr::Server: getaddrinfo(): %s", gai_strerror(r));
+  }
+
+  for (rp = result; rp != nullptr; rp = rp->ai_next) {
+    server_sock_ = socket(rp->ai_family, rp->ai_socktype, rp->ai_protocol);
+    if (server_sock_ == -1) {
+      continue;
+    }
+
+    const int yes = 1;
+    verify(setsockopt(server_sock_, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(yes)) == 0);
+    verify(setsockopt(server_sock_, IPPROTO_TCP, TCP_NODELAY, &yes, sizeof(yes)) == 0);
+
+    if (::bind(server_sock_, rp->ai_addr, rp->ai_addrlen) == 0) {
+      break;
+    } else {
+      verify(0);
+    }
+    ::close(server_sock_);
+    server_sock_ = -1;
+  }
+
+  if (rp == nullptr) {
+    // failed to bind
+    Log_error("rrr::Server: bind(): %s", strerror(errno));
+    freeaddrinfo(result);
+  }
+  up_gai_result_.reset(result);
+  up_svr_addr_.reset(rp);
+#endif
+
+  // about backlog: http://www.linuxjournal.com/files/linuxjournal.com/linuxjournal/articles/023/2333/2333s2.html
+  const int backlog = SOMAXCONN;
+  verify(listen(server_sock_, backlog) == 0);
+  verify(set_nonblocking(server_sock_, true) == 0);
+  set_nonblocking(server_sock_, true);
+  Log_info("rrr::Server: started on %s", addr.c_str());
+}
+
 int Server::start(const char* bind_addr) {
-    string addr(bind_addr);
-    addr_ = addr;
-    size_t idx = addr.find(":");
-    if (idx == string::npos) {
+  string addr(bind_addr);
+  up_server_listener_ = std::make_unique<ServerListener>(this, addr);
+  pollmgr_->add(up_server_listener_.get());
+  return 0;
+
+  addr_ = addr;
+  size_t idx = addr.find(":");
+  if (idx == string::npos) {
         Log_error("rrr::Server: bad bind address: %s", bind_addr);
         return EINVAL;
     }

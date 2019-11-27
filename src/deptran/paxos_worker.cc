@@ -129,7 +129,7 @@ void PaxosWorker::WaitForShutdown() {
     submit_pool = nullptr;
   }
   if (hb_rpc_server_ != nullptr) {
-    scsi_->server_heart_beat();
+//    scsi_->server_heart_beat();
     scsi_->wait_for_shutdown();
     delete hb_rpc_server_;
     delete scsi_;

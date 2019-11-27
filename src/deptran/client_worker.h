@@ -27,7 +27,7 @@ class ClientWorker {
   uint32_t id;
   uint32_t duration;
   ClientControlServiceImpl *ccsi{nullptr};
-  uint32_t n_concurrent_;
+  int32_t n_concurrent_;
   rrr::Mutex finish_mutex{};
   rrr::CondVar finish_cond{};
   bool forward_requests_to_leader_ = false;
@@ -50,7 +50,8 @@ class ClientWorker {
   ClientWorker(uint32_t id,
                Config::SiteInfo &site_info,
                Config *config,
-               ClientControlServiceImpl *ccsi);
+               ClientControlServiceImpl *ccsi,
+               PollMgr* mgr);
   ClientWorker() = delete;
   ~ClientWorker();
   // This is called from a different thread.

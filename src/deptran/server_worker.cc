@@ -14,8 +14,10 @@ void ServerWorker::SetupHeartbeat() {
   auto timeout = Config::GetConfig()->get_ctrl_timeout();
   scsi_ = new ServerControlServiceImpl(timeout);
   int n_io_threads = 1;
-  svr_hb_poll_mgr_g = new rrr::PollMgr(n_io_threads);
-  hb_thread_pool_g = new rrr::ThreadPool(1);
+//  svr_hb_poll_mgr_g = new rrr::PollMgr(n_io_threads);
+  svr_hb_poll_mgr_g = svr_poll_mgr_;
+//  hb_thread_pool_g = new rrr::ThreadPool(1);
+  hb_thread_pool_g = svr_thread_pool_;
   hb_rpc_server_ = new rrr::Server(svr_hb_poll_mgr_g, hb_thread_pool_g);
   hb_rpc_server_->reg(scsi_);
 
@@ -126,6 +128,7 @@ void ServerWorker::SetupService() {
   // init rrr::PollMgr 1 threads
   int n_io_threads = 1;
   svr_poll_mgr_ = new rrr::PollMgr(n_io_threads);
+//  svr_thread_pool_ = new rrr::ThreadPool(1);
 
   // init service implementation
 
@@ -152,7 +155,7 @@ void ServerWorker::SetupService() {
 //  thread_pool_g = new base::ThreadPool(num_threads);
 
   // init rrr::Server
-  rpc_server_ = new rrr::Server(svr_poll_mgr_, nullptr);
+  rpc_server_ = new rrr::Server(svr_poll_mgr_, svr_thread_pool_);
 
   // reg services
   for (auto service : services_) {
@@ -178,8 +181,10 @@ void ServerWorker::WaitForShutdown() {
     scsi_->wait_for_shutdown();
     delete hb_rpc_server_;
     delete scsi_;
-    svr_hb_poll_mgr_g->release();
-    hb_thread_pool_g->release();
+    if (svr_hb_poll_mgr_g != svr_poll_mgr_)
+      svr_hb_poll_mgr_g->release();
+    if (hb_thread_pool_g != svr_thread_pool_)
+      hb_thread_pool_g->release();
 
     for (auto service : services_) {
 #ifdef CHECK_ISO

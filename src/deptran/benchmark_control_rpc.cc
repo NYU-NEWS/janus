@@ -26,7 +26,7 @@ const std::string ServerControlServiceImpl::STAT_RO6_SZ_VECTOR = "ack_start_vect
 
 void ServerControlServiceImpl::shutdown_wrapper(int sig) {
   for (auto s : scsi_s) {
-    s->server_shutdown();
+    s->server_shutdown(nullptr);
   }
 }
 
@@ -39,15 +39,17 @@ void ServerControlServiceImpl::set_sig_handler() {
   sig_handler_set_ = true;
 }
 
-void ServerControlServiceImpl::server_shutdown() {
+void ServerControlServiceImpl::server_shutdown(DeferredReply* d) {
   Log_info("Shutdown Server Control Service");
   status_mutex_.lock();
   status_ = SCS_STOP;
   status_cond_.bcast();
   status_mutex_.unlock();
+  if (d)
+    d->reply();
 }
 
-void ServerControlServiceImpl::server_ready(rrr::i32 *res) {
+void ServerControlServiceImpl::server_ready(rrr::i32 *res, DeferredReply* d) {
   status_mutex_.lock();
   if (SCS_RUN == status_) {
     *res = 1;
@@ -55,6 +57,7 @@ void ServerControlServiceImpl::server_ready(rrr::i32 *res) {
     *res = 0;
   }
   status_mutex_.unlock();
+  d->reply();
 }
 
 void ServerControlServiceImpl::do_statistics(const char *key,
@@ -71,13 +74,14 @@ void ServerControlServiceImpl::do_statistics(const char *key,
   stat_m_.unlock();
 }
 
-void ServerControlServiceImpl::server_heart_beat() {
+void ServerControlServiceImpl::server_heart_beat(DeferredReply* d) {
   if (!sig_handler_set_)
     set_sig_handler();
   alarm(timeout_);
+  d->reply();
 }
 
-void ServerControlServiceImpl::server_heart_beat_with_data(ServerResponse *res) {
+void ServerControlServiceImpl::server_heart_beat_with_data(ServerResponse *res, DeferredReply* d) {
   res->cpu_util = rrr::CPUInfo::cpu_stat();
   if (recorder_) {
     AvgStat r_cnt = recorder_->stat_cnt_.reset();
@@ -114,6 +118,7 @@ void ServerControlServiceImpl::server_heart_beat_with_data(ServerResponse *res) 
   }
 
   stat_m_.unlock();
+  d->reply();
 }
 
 ServerControlServiceImpl::ServerControlServiceImpl(unsigned int timeout,
@@ -175,22 +180,24 @@ double timespec2ms(struct timespec time) {
   return time.tv_sec * 1000.0 + time.tv_nsec / 1000000.0;
 }
 
-void ClientControlServiceImpl::client_shutdown() {
+void ClientControlServiceImpl::client_shutdown(DeferredReply *defer) {
   Log_info("Shutdown Client Control Service");
   status_mutex_.lock();
   status_ = CCS_STOP;
   status_cond_.bcast();
   status_mutex_.unlock();
+  defer->reply();
 }
 
-void ClientControlServiceImpl::client_force_stop() {
+void ClientControlServiceImpl::client_force_stop(DeferredReply* defer) {
   int i = 0;
   for (; i < num_threads_; i++)
     if (coo_threads_[i] != NULL)
       pthread_kill(*(coo_threads_[i]), SIGALRM);
+  defer->reply();
 }
 
-void ClientControlServiceImpl::client_response(ClientResponse *res) {
+void ClientControlServiceImpl::client_response(ClientResponse *res, DeferredReply* defer) {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   status_mutex_.lock();
   if (CCS_FINISH == status_)
@@ -259,6 +266,7 @@ void ClientControlServiceImpl::client_response(ClientResponse *res) {
       it->second.interval_attempt_latencies[use]->clear();
     }
   }
+  defer->reply();
 }
 
 void ClientControlServiceImpl::client_ready_block(rrr::i32 *res,
@@ -275,16 +283,17 @@ void ClientControlServiceImpl::client_ready_block(rrr::i32 *res,
     defer->reply();
 }
 
-void ClientControlServiceImpl::client_ready(rrr::i32 *res) {
+void ClientControlServiceImpl::client_ready(rrr::i32 *res, DeferredReply* defer) {
   status_mutex_.lock();
   if (CCS_READY == status_)
     *res = 1;
   else
     *res = 0;
   status_mutex_.unlock();
+  defer->reply();
 }
 
-void ClientControlServiceImpl::client_start() {
+void ClientControlServiceImpl::client_start(DeferredReply* defer) {
   status_mutex_.lock();
   status_ = CCS_RUN;
   status_cond_.bcast();
@@ -292,6 +301,7 @@ void ClientControlServiceImpl::client_start() {
   last_time_ = start_time_;
   before_last_time_ = start_time_;
   status_mutex_.unlock();
+  defer->reply();
 }
 
 void ClientControlServiceImpl::wait_for_start(unsigned int id) {
@@ -321,8 +331,9 @@ void ClientControlServiceImpl::wait_for_shutdown() {
   status_mutex_.unlock();
 }
 
-void ClientControlServiceImpl::client_get_txn_names(std::map<i32, std::string> *txn_names) {
+void ClientControlServiceImpl::client_get_txn_names(std::map<i32, std::string> *txn_names, DeferredReply* defer) {
   *txn_names = txn_names_;
+  defer->reply();
 }
 
 ClientControlServiceImpl::ClientControlServiceImpl(unsigned int num_threads,

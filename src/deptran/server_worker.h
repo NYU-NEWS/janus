@@ -21,6 +21,7 @@ class Frame;
 class ServerWorker {
  public:
   rrr::PollMgr *svr_poll_mgr_ = nullptr;
+  base::ThreadPool *svr_thread_pool_ = nullptr;
   vector<rrr::Service*> services_ = {};
   rrr::Server *rpc_server_ = nullptr;
   base::ThreadPool *thread_pool_g = nullptr;
@@ -40,6 +41,8 @@ class ServerWorker {
 
   Communicator *tx_commo_ = nullptr;
   Communicator *rep_commo_ = nullptr;
+
+  bool launched_{false};
 
   void SetupHeartbeat();
   void PopTable();
