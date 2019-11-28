@@ -144,7 +144,7 @@ def build(bld):
               uselib="BOOST",
               use="rrr simplerpc PYTHON")
 
-    bld.stlib(source=bld.path.ant_glob("src/deptran/*.cc "
+    bld.shlib(source=bld.path.ant_glob("src/deptran/*.cc "
                                        "src/deptran/*/*.cc "
                                        "src/bench/*/*.cc",
                                        excl=['src/deptran/s_main.cc', 'src/deptran/paxos_main_helper.cc']),
@@ -153,11 +153,14 @@ def build(bld):
               uselib="YAML-CPP BOOST",
               use="externc rrr memdb PTHREAD PROFILER RT")
 
-    bld.program(source=bld.path.ant_glob("src/deptran/s_main.cc"),
-                target="deptran_server",
-                includes="src src/rrr src/deptran ",
-                uselib="YAML-CPP BOOST",
-                use="externc rrr memdb txlog PTHREAD PROFILER RT")
+    bld.program(source=bld.path.ant_glob("src/deptran/*.cc "
+                                         "src/deptran/*/*.cc "
+                                         "src/bench/*/*.cc",
+                                         excl=['src/deptran/paxos_main_helper.cc']),
+              target="deptran_server",
+              includes="src src/rrr src/deptran ",
+              uselib="YAML-CPP BOOST",
+              use="externc rrr memdb PTHREAD PROFILER RT")
 
     bld.program(source=bld.path.ant_glob("src/run.cc "
                                          "src/deptran/paxos_main_helper.cc"),

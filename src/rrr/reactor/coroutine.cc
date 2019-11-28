@@ -27,7 +27,6 @@ void Coroutine::BoostRunWrapper(boost_coro_yield_t& yield) {
     func_();
     func_ = {};
     status_ = FINISHED;
-    boost_coro_yield_.reset();
     yield();
   }
 }

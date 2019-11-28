@@ -33,7 +33,7 @@ host:
 
 mode:
   cc: 2pl_ww # concurrency control
-  ab: none # atomic broadcast
+  ab: paxos # atomic broadcast
   read_only: occ
   batch: false
   retry: 0
