@@ -144,30 +144,33 @@ def build(bld):
               uselib="BOOST",
               use="rrr simplerpc PYTHON")
 
-    bld.shlib(source=bld.path.ant_glob("src/deptran/*.cc "
+    bld.objects(source=bld.path.ant_glob("src/deptran/*.cc "
                                        "src/deptran/*/*.cc "
                                        "src/bench/*/*.cc",
                                        excl=['src/deptran/s_main.cc', 'src/deptran/paxos_main_helper.cc']),
-              target="txlog",
+              target="deptran_objects",
               includes="src src/rrr src/deptran ",
               uselib="YAML-CPP BOOST",
               use="externc rrr memdb PTHREAD PROFILER RT")
 
-    bld.program(source=bld.path.ant_glob("src/deptran/*.cc "
-                                         "src/deptran/*/*.cc "
-                                         "src/bench/*/*.cc",
-                                         excl=['src/deptran/paxos_main_helper.cc']),
+    bld.shlib(source=bld.path.ant_glob("src/deptran/paxos_main_helper.cc "),
+              target="txlog",
+              includes="src src/rrr src/deptran ",
+              uselib="YAML-CPP BOOST",
+              use="externc rrr memdb deptran_objects PTHREAD PROFILER RT")
+
+    bld.program(source=bld.path.ant_glob("src/deptran/s_main.cc"),
               target="deptran_server",
               includes="src src/rrr src/deptran ",
               uselib="YAML-CPP BOOST",
-              use="externc rrr memdb PTHREAD PROFILER RT")
+              use="externc rrr memdb deptran_objects PTHREAD PROFILER RT")
 
     bld.program(source=bld.path.ant_glob("src/run.cc "
                                          "src/deptran/paxos_main_helper.cc"),
                 target="microbench",
                 includes="src src/rrr src/deptran ",
                 uselib="YAML-CPP BOOST",
-                use="externc rrr memdb txlog PTHREAD PROFILER RT")
+                use="externc rrr memdb deptran_objects PTHREAD PROFILER RT")
 
     bld.add_post_fun(post)
 
