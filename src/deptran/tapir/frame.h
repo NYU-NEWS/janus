@@ -9,7 +9,7 @@ namespace janus {
 
 class FrameTapir : public Frame {
  public:
-  FrameTapir() : Frame(MODE_TAPIR) {}
+  FrameTapir(int m=MODE_TAPIR) : Frame(MODE_TAPIR) {}
   Coordinator *CreateCoordinator(cooid_t coo_id,
                                  Config *config,
                                  int benchmark,

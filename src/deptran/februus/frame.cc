@@ -10,11 +10,7 @@
 
 namespace janus {
 
-static Frame *februus_frame_s = Frame::RegFrame(MODE_FEBRUUS,
-                                                {"feb", "februus"},
-                                                []() -> Frame * {
-                                                  return new FrameFebruus();
-                                                });
+REG_FRAME(MODE_FEBRUUS, vector<string>({"feb","februus"}), FrameFebruus);
 
 Coordinator *FrameFebruus::CreateCoordinator(cooid_t coo_id,
                                              Config *config,

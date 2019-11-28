@@ -8,7 +8,7 @@ namespace janus {
 
 class FrameRococo : public Frame {
  public:
-  FrameRococo() : Frame(MODE_RCC) {}
+  FrameRococo(int m=MODE_RCC) : Frame(MODE_RCC) {}
   Executor *CreateExecutor(cmdid_t, TxLogServer *sched) override;
   Coordinator *CreateCoordinator(cooid_t coo_id,
                                  Config *config,

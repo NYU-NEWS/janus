@@ -12,11 +12,7 @@
 
 namespace janus {
 
-static Frame *janus_frame_s = Frame::RegFrame(MODE_JANUS,
-                                              {"brq", "baroque", "janus"},
-                                              []() -> Frame * {
-                                                return new JanusFrame();
-                                              });
+REG_FRAME(MODE_JANUS, vector<string>({"brq","baroque","janus"}), JanusFrame);
 
 Coordinator *JanusFrame::CreateCoordinator(cooid_t coo_id,
                                            Config *config,

@@ -8,10 +8,6 @@
 
 namespace janus {
 
-static Frame *troad_frame_s = Frame::RegFrame(MODE_TROAD,
-                                              {"troad"},
-                                              []() -> Frame * {
-                                                return new TroadFrame();
-                                              });
+REG_FRAME(MODE_TROAD, vector<string>({"troad"}), TroadFrame);
 
 } // namespace janus

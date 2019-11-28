@@ -10,11 +10,7 @@
 
 namespace janus {
 
-static Frame *rcc_frame_s = Frame::RegFrame(MODE_RCC,
-                                            {"rococo", "rcc"},
-                                            []() -> Frame * {
-                                              return new FrameRococo();
-                                            });
+REG_FRAME(MODE_RCC, vector<string>({"rococo","rcc"}), FrameRococo);
 
 Executor *FrameRococo::CreateExecutor(cmdid_t cmd_id, TxLogServer *sched) {
   verify(0);

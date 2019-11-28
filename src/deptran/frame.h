@@ -19,6 +19,7 @@ class ServerControlServiceImpl;
 class TxnRegistry;
 class Communicator;
 class Workload;
+
 class Frame {
  public:
   Communicator *commo_ = nullptr;
@@ -64,5 +65,9 @@ class Frame {
                                                    rrr::PollMgr *poll_mgr,
                                                    ServerControlServiceImpl *scsi);
 };
+
+#define REG_FRAME(mode, names, classframe) \
+static Frame* var__FILE____LINE__ __attribute__((used)) = \
+Frame::RegFrame(mode, names, []()->Frame*{ return new classframe(mode);})
 
 } // namespace janus

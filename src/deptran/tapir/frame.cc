@@ -9,11 +9,7 @@
 
 namespace janus {
 
-static Frame *tapir_frame_s = Frame::RegFrame(MODE_TAPIR,
-                                              {"tapir"},
-                                              []() -> Frame * {
-                                                return new FrameTapir();
-                                              });
+REG_FRAME(MODE_TAPIR, vector<string>({"tapir"}), FrameTapir);
 
 Coordinator *FrameTapir::CreateCoordinator(cooid_t coo_id,
                                            Config *config,

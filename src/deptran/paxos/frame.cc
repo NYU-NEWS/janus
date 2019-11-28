@@ -10,11 +10,7 @@
 
 namespace janus {
 
-static Frame *mpf = Frame::RegFrame(MODE_MULTI_PAXOS,
-                                    []() -> Frame * {
-                                      return new MultiPaxosFrame
-                                          (MODE_MULTI_PAXOS);
-                                    });
+REG_FRAME(MODE_MULTI_PAXOS, vector<string>({"paxos"}), MultiPaxosFrame);
 
 MultiPaxosFrame::MultiPaxosFrame(int mode) : Frame(mode) {
 
