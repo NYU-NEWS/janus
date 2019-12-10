@@ -42,8 +42,10 @@ class ServerListener: public Pollable {
  public:
   std:: string addr_;
   Server* server_;
-  std::unique_ptr<struct addrinfo> up_gai_result_;
-  std::unique_ptr<struct addrinfo> up_svr_addr_;
+  // cannot use smart pointers for memory management because this pointer
+  // needs to be freed by freeaddrinfo.
+  struct addrinfo* p_gai_result_{nullptr};
+  struct addrinfo* p_svr_addr_{nullptr};
 
   int server_sock_{0};
   int poll_mode() {
@@ -56,7 +58,13 @@ class ServerListener: public Pollable {
   int fd() {return server_sock_;}
   ServerListener(Server* s, std::string addr);
 //protected:
-//  ~ServerListener() {};
+  virtual ~ServerListener() {
+    if (p_gai_result_ != nullptr) {
+      freeaddrinfo(p_gai_result_);
+      p_gai_result_ = nullptr;
+      p_svr_addr_ = nullptr;
+    }
+  };
 };
 
 class ServerConnection: public Pollable {

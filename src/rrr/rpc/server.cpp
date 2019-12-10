@@ -407,7 +407,7 @@ void ServerListener::handle_read() {
       uint32_t from_len;
     int clnt_socket = ::accept(server_sock_, (struct sockaddr*)&fsaun, &from_len);
 #else
-    int clnt_socket = ::accept(server_sock_, up_svr_addr_->ai_addr, &up_svr_addr_->ai_addrlen);
+    int clnt_socket = ::accept(server_sock_, p_svr_addr_->ai_addr, &p_svr_addr_->ai_addrlen);
 #endif
     if (clnt_socket >= 0) {
       Log_debug("server@%s got new client, fd=%d", this->addr_.c_str(), clnt_socket);
@@ -489,9 +489,10 @@ ServerListener::ServerListener(Server* server, string addr) {
     // failed to bind
     Log_error("rrr::Server: bind(): %s", strerror(errno));
     freeaddrinfo(result);
+  } else {
+    p_gai_result_ = result;
+    p_svr_addr_ = rp;
   }
-  up_gai_result_.reset(result);
-  up_svr_addr_.reset(rp);
 #endif
 
   // about backlog: http://www.linuxjournal.com/files/linuxjournal.com/linuxjournal/articles/023/2333/2333s2.html

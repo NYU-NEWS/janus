@@ -153,7 +153,9 @@ void PaxosWorker::WaitForShutdown() {
 
 void PaxosWorker::ShutDown() {
   Log_debug("site %s deleting services, num: %d", site_info_->name.c_str(), services_.size());
+  verify(rpc_server_ != nullptr);
   delete rpc_server_;
+  rpc_server_ = nullptr;
   for (auto service : services_) {
     delete service;
   }
