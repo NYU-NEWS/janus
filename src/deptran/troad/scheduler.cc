@@ -1,23 +1,18 @@
 
 
-#include "scheduler.h"
+#include "troad.h"
+#include "tx.h"
 #include "commo.h"
-#include "../rcc/tx.h"
 
 using namespace janus;
 
-map<txnid_t, shared_ptr<RccTx>> SchedulerJanus::Aggregate(RccGraph &graph) {
+map<txnid_t, shared_ptr<RccTx>> SchedulerTroad::Aggregate(RccGraph &graph) {
   // aggregate vertexes
   map<txnid_t, shared_ptr<RccTx>> index;
   for (auto &pair: graph.vertex_index()) {
     auto rhs_v = pair.second;
-    verify(pair.first == rhs_v->id());
     auto vertex = AggregateVertex(rhs_v);
-    RccTx &dtxn = *vertex;
-    if (dtxn.epoch_ == 0) {
-      dtxn.epoch_ = epoch_mgr_.curr_epoch_;
-    }
-    epoch_mgr_.AddToEpoch(dtxn.epoch_, dtxn.tid_, dtxn.IsDecided());
+    verify(pair.first == rhs_v->id());
     verify(vertex->id() == pair.second->id());
     verify(vertex_index().count(vertex->id()) > 0);
     index[vertex->id()] = vertex;
@@ -103,7 +98,7 @@ map<txnid_t, shared_ptr<RccTx>> SchedulerJanus::Aggregate(RccGraph &graph) {
   return index;
 }
 
-int SchedulerJanus::OnPreAccept(const txid_t txn_id,
+int SchedulerTroad::OnPreAccept(const txid_t txn_id,
                                 const rank_t rank,
                                 const vector<SimpleCommand> &cmds,
                                 shared_ptr<RccGraph> graph,
@@ -114,61 +109,62 @@ int SchedulerJanus::OnPreAccept(const txid_t txn_id,
 //    Log_info("on pre-accept graph size: %d", graph.size());
   verify(txn_id > 0);
   verify(cmds[0].root_id_ == txn_id);
+  verify(rank == RANK_I || rank == RANK_D);
   if (graph) {
+//    verify(graph->size() == 0);
     Aggregate(*graph);
   }
-  // TODO FIXME
-  // add interference based on cmds.
-  auto dtxn = dynamic_pointer_cast<RccTx>(GetOrCreateTx(txn_id));
+  auto dtxn = dynamic_pointer_cast<TxTroad>(GetOrCreateTx(txn_id));
+  verify(dtxn->current_rank_ == rank);
   dtxn->UpdateStatus(TXN_PAC);
   dtxn->involve_flag_ = RccTx::INVOLVED;
-  RccTx &tinfo = *dtxn;
-  int ret;
   if (dtxn->max_seen_ballot_ > 0) {
-    ret = REJECT;
-  } else {
-    if (dtxn->status() < TXN_CMT) {
-      if (dtxn->phase_ < PHASE_RCC_DISPATCH && tinfo.status() < TXN_CMT) {
-        for (auto &c: cmds) {
-          map<int32_t, Value> output;
-          dtxn->DispatchExecute(const_cast<SimpleCommand &>(c), &output);
-        }
-      }
-    } else {
-      if (dtxn->dreqs_.size() == 0) {
-        for (auto &c: cmds) {
-          dtxn->dreqs_.push_back(c);
-        }
+    return REJECT;
+  }
+  // assuming an ordered message queue and inquire depth always as 1.
+//  verify(dtxn->status() < TXN_CMT); TODO re-enable this check.
+  if (dtxn->status() < TXN_CMT) {
+    if (dtxn->phase_ <= PHASE_RCC_DISPATCH) {
+      for (auto &c: cmds) {
+        map<int32_t, Value> output;
+        dtxn->DispatchExecute(const_cast<SimpleCommand &>(c), &output); // track dependencies
       }
     }
-    verify(!tinfo.fully_dispatched_->value_);
-    tinfo.fully_dispatched_->Set(1);
-    MinItfrGraph(*dtxn, res_graph, false, 1);
-    ret = SUCCESS;
-  }
-  return ret;
-}
-
-void SchedulerJanus::OnAccept(const txnid_t txn_id,
-                              const ballot_t &ballot,
-                              shared_ptr<RccGraph> graph,
-                              int32_t *res) {
-  std::lock_guard<std::recursive_mutex> lock(mtx_);
-  auto dtxn = dynamic_pointer_cast<RccTx>(GetOrCreateTx(txn_id));
-  if (dtxn->max_seen_ballot_ > ballot) {
-    *res = REJECT;
-    verify(0); // do not support failure recovery so far.
   } else {
-    dtxn->max_accepted_ballot_ = ballot;
-    dtxn->max_seen_ballot_ = ballot;
+    if (dtxn->dreqs_.size() == 0) {
+      for (auto &c: cmds) {
+        dtxn->dreqs_.push_back(c);
+      }
+    }
+  }
+  verify(!dtxn->fully_dispatched_->value_);
+  dtxn->fully_dispatched_->Set(1);
+  MinItfrGraph(*dtxn, res_graph, false, 1);
+  return SUCCESS;
+}
+
+int SchedulerTroad::OnAccept(const txnid_t txn_id,
+                             const rank_t rank,
+                             const ballot_t &ballot,
+                             shared_ptr<RccGraph> graph) {
+  std::lock_guard<std::recursive_mutex> lock(mtx_);
+  auto dtxn = dynamic_pointer_cast<TxTroad>(GetOrCreateTx(txn_id));
+  verify(dtxn->current_rank_ == rank);
+  if (dtxn->max_seen_ballot_ > ballot) {
+    verify(0); // do not support failure recovery at the moment.
+    return REJECT;
+  } else {
     Aggregate(*graph);
-    *res = SUCCESS;
+    dtxn->max_seen_ballot_ = ballot;
+    dtxn->max_accepted_ballot_ = ballot;
+    return SUCCESS;
   }
 }
 
-int SchedulerJanus::OnInquire(epoch_t epoch,
+int SchedulerTroad::OnInquire(epoch_t epoch,
                               cmdid_t cmd_id,
                               shared_ptr<RccGraph> graph) {
+  verify(0);
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   // TODO check epoch, cannot be a too old one.
   auto sp_tx = dynamic_pointer_cast<RccTx>(GetOrCreateTx(cmd_id));
@@ -179,17 +175,18 @@ int SchedulerJanus::OnInquire(epoch_t epoch,
   return 0;
 }
 
-int SchedulerJanus::OnCommit(const txnid_t cmd_id,
-                             rank_t rank,
-                             bool need_validation,
+int SchedulerTroad::OnCommit(const txnid_t cmd_id,
+                             const rank_t rank,
+                             const bool need_validation,
                              shared_ptr<RccGraph> sp_graph,
                              TxnOutput *output) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 //  if (RandomGenerator::rand(1, 2000) <= 1)
 //    Log_info("on commit graph size: %d", graph.size());
   int ret = SUCCESS;
-  auto dtxn = dynamic_pointer_cast<RccTx>(GetOrCreateTx(cmd_id));
-  dtxn->need_validation_ = need_validation;
+  auto sp_tx = dynamic_pointer_cast<RccTx>(GetOrCreateTx(cmd_id));
+  auto dtxn = dynamic_pointer_cast<TxTroad>(sp_tx);
+  verify(rank == dtxn->current_rank_);
   verify(dtxn->p_output_reply_ == nullptr);
   dtxn->p_output_reply_ = output;
   verify(!dtxn->IsAborted());
@@ -201,29 +198,39 @@ int SchedulerJanus::OnCommit(const txnid_t cmd_id,
     if (!sp_graph) {
       // quick path without graph, no contention.
       verify(dtxn->fully_dispatched_->value_); //cannot handle non-dispatched now.
-      UpgradeStatus(*dtxn, TXN_DCD);
-      Execute(dtxn);
+      // TODO next start from here.
+      Coroutine::CreateRun([&] () {
+        UpgradeStatus(*dtxn, TXN_DCD);
+        this->Execute(sp_tx);
+      });
     } else {
       // with graph
-      auto index = Aggregate(*sp_graph);
 //      TriggerCheckAfterAggregation(*sp_graph);
-      WaitUntilAllPredecessorsAtLeastCommitting(dtxn.get());
-      RccScc& scc = FindSccPred(*dtxn);
-      Decide(scc);
-      WaitUntilAllPredSccExecuted(scc);
-      if (FullyDispatched(scc) && !scc[0]->IsExecuted()) {
-        Execute(scc);
-      }
+      Coroutine::CreateRun([this, sp_tx, rank, sp_graph]() {
+        auto index = Aggregate(*sp_graph);
+        auto dtxn = dynamic_pointer_cast<TxTroad>(sp_tx);
+        UpgradeStatus(*dtxn, TXN_CMT);
+        WaitUntilAllPredecessorsAtLeastCommitting(dtxn.get());
+        RccScc& scc = FindSccPred(*dtxn);
+        Decide(scc);
+        WaitUntilAllPredSccExecuted(scc);
+        if (FullyDispatched(scc, rank) && !IsExecuted(scc, rank)) {
+          Execute(scc);
+        }
+      });
     }
-    dtxn->sp_ev_commit_->Wait();
-    ret = dtxn->committed_ ? SUCCESS : REJECT;
+//    dtxn->sp_ev_commit_->Wait(1*1000*1000);
+//    dtxn->sp_ev_commit_->Wait();
+//    verify(dtxn->sp_ev_commit_->status_ != Event::TIMEOUT);
+//    ret = dtxn->local_validation_result_ > 0 ? SUCCESS : REJECT;
   }
-  return ret;
+  dtxn->CommitRank();
+  return SUCCESS;
 }
 
-JanusCommo *SchedulerJanus::commo() {
+TroadCommo *SchedulerTroad::commo() {
 
-  auto commo = dynamic_cast<JanusCommo *>(commo_);
+  auto commo = dynamic_cast<TroadCommo *>(commo_);
   verify(commo != nullptr);
   return commo;
 }

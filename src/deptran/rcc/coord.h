@@ -24,6 +24,7 @@ class RccCoord : public CoordinatorClassic {
 
   bool fast_commit_{false};
   map<parid_t, int> n_commit_oks_{};
+  bool mocking_janus_{false};
 
   RccCoord(uint32_t coo_id,
            int benchmark,

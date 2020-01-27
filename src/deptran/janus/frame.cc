@@ -9,10 +9,11 @@
 #include "coordinator.h"
 #include "scheduler.h"
 #include "tx.h"
+#include "../troad/troad.h"
 
 namespace janus {
 
-REG_FRAME(MODE_JANUS, vector<string>({"brq","baroque","janus"}), JanusFrame);
+REG_FRAME(MODE_JANUS, vector<string>({"brq","baroque","janus"}), TroadJanusFrame);
 
 Coordinator *JanusFrame::CreateCoordinator(cooid_t coo_id,
                                            Config *config,

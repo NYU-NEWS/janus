@@ -4,6 +4,7 @@ import traceback
 import time
 import random
 from string import Template
+from six import string_types
 try:
     from StringIO import StringIO ## for Python 2
 except ImportError:
@@ -15,6 +16,8 @@ from fabric.api import execute, cd, runs_once, sudo, parallel
 from fabric.contrib.files import exists, append
 from fabric.decorators import roles
 from fabric.context_managers import prefix
+from fabric.context_managers import settings
+from fabric.context_managers import hide
 from fabric.operations import reboot
 
 # tasks are exported under the module names
@@ -23,6 +26,12 @@ from pylib import cluster
 from pylib.cluster import Xput
 
 import pylib
+
+# username for ec2 instances
+env.user = 'ubuntu'
+env.key_filename = 'config/ssh/id_rsa'
+
+settings(hide('warnings', 'running', 'stdout', 'stderr'),warn_only=True)
 
 def run_python(*args, **kwargs):
     activate_virtual_env = \
@@ -50,8 +59,8 @@ def environment():
         env.local_cwd = os.path.dirname(os.path.realpath(__file__))
         env.setdefault('remote_home', '/mnt/janus')
         env.setdefault('nfs_home', '/export/janus')
-        env.setdefault('git_repo', 'git@github.com:NYU-NEWS/janus.git')
-        env.setdefault('git_revision', 'master')
+        env.setdefault('git_repo', 'git@github.com:shuaimu/janus.git')
+        env.setdefault('git_revision', 'tmp3')
         env.setdefault('py_virtual_env',
                        '{home}/py_venv'.format(home=env.nfs_home))
         env.setdefault('data_dir', '.ec2-data')
@@ -73,8 +82,8 @@ def deploy_continue():
         try:
             execute('install_apt_packages')
             execute('install_leader_apt_packages')
-            execute('config_ntp_leaders')
-            execute('config_ntp_clients')
+#            execute('config_ntp_leaders')
+#            execute('config_ntp_clients')
             execute('build', args="-t")
             execute('cluster.put_janus_config')
             execute('cluster.put_limits_config')
@@ -100,9 +109,9 @@ def deploy_all(regions='us-west-2', servers_per_region=[3], instance_type='t2.sm
     example:
          fab deploy_all:regions=us-west-2:eu-west-1,servers_per_region=3:2
     """
-    if isinstance(regions, basestring):
+    if isinstance(regions, string_types):
         regions = regions.split(':')
-    if isinstance(servers_per_region, basestring):
+    if isinstance(servers_per_region, string_types):
         servers_per_region = [ int(i) for i in servers_per_region.split(':') ]
 
     teardown_instances = True 
@@ -138,8 +147,8 @@ def deploy_all(regions='us-west-2', servers_per_region=[3], instance_type='t2.sm
         while attempts < 3 and done == False:
             try:
                 execute('install_leader_apt_packages')
-                execute('config_ntp_leaders')
-                execute('config_ntp_clients')
+#                execute('config_ntp_leaders')
+#                execute('config_ntp_clients')
                 execute('build', args="-t")
                 execute('cluster.put_janus_config')
                 execute('cluster.put_limits_config')
@@ -170,7 +179,7 @@ def create_virtual_env():
     
     with cd(env.nfs_home):
         execute('retrieve_code')
-        run('pyenv local 2.7.11')
+        run('pyenv local 3.8')
         run('virtualenv {venv}'.format(venv=venv))
         run('{venv}/bin/pip install -r requirements.txt'.format(venv=venv))
 
@@ -189,20 +198,32 @@ def create_work_dirs():
 @runs_once
 @roles('leaders')
 def install_leader_apt_packages():
-    sudo('apt-get -y install gnuplot5')
+    with settings(hide('warnings', 'running', 'stdout', 'stderr'),warn_only=True):
+        sudo('apt-get -y update -qq')
+        sudo('apt-get -y dist-upgrade')
+        sudo('apt-get -y install gnuplot')
  
 @task
 @roles('all')
 @parallel
 def install_apt_packages():
-    sudo('apt-get -y update')
-    sudo('apt-get -y install pkg-config libgoogle-perftools-dev')
+    with settings(hide('warnings', 'running', 'stdout', 'stderr'),warn_only=True):
+        sudo('apt-get -y -qq update')
+        sudo('apt-get -y -qq dist-upgrade')
+        sudo('apt-get -y -qq install pkg-config libgoogle-perftools-dev')
+        sudo('apt-get -y -qq install build-essential clang')
+        sudo('apt-get -y -qq install libapr1-dev libaprutil1-dev')
+        sudo('apt-get -y -qq install libboost-all-dev')
+        sudo('apt-get -y -qq install libyaml-cpp-dev')
+        sudo('apt-get -y -qq install python3-dev python3-pip')
 
 @task
 @roles('leaders')
 @parallel
 def config_ntp_leaders():
-    sudo('apt-get -y install ntp ntpstat')
+    sudo('apt-get -y -qq update')
+    sudo('apt-get -y -qq dist-upgrade')
+    sudo('apt-get -y -qq install ntp ntpstat')
     sudo('service ntp stop')
     ntp_template = Template(open('config/etc/ntp.conf').read())
     leader_ip = env.roledefs['leaders'][0]
@@ -214,7 +235,9 @@ def config_ntp_leaders():
 @roles('servers')
 @parallel
 def config_ntp_clients():
-    sudo('apt-get -y install ntpdate')
+    sudo('apt-get -y -qq update')
+    sudo('apt-get -y -qq dist-upgrade')
+    sudo('apt-get -y -qq install ntpdate')
     leader_ip = env.roledefs['leaders'][0]
     run('sleep 2')
     sudo('ntpdate -q ' + leader_ip)
@@ -224,17 +247,20 @@ def config_ntp_clients():
 @roles('leaders')
 def build(args=None, clean=True):
     execute('retrieve_code')
-    execute('create_virtual_env')
+#    execute('create_virtual_env')
     execute('install_apt_packages')
-    return
-    opts = ["./waf"] 
-    if args:
-        opts.insert(1, args)
-    if clean:
-        opts.extend(["distclean", "configure"])
-    opts.append("build")
-    with cd(env.nfs_home): 
-        run_python(' '.join(opts))
+    with cd(env.nfs_home):
+     run('sudo -H pip3 install -r requirements.txt')
+     run('./waf configure build -M')
+#    return
+#    opts = ["./waf"] 
+#    if args:
+#        opts.insert(1, args)
+#    if clean:
+#        opts.extend(["distclean", "configure"])
+#    opts.append("build")
+#    with cd(env.nfs_home): 
+#        run_python(' '.join(opts))
 
 @task
 @runs_once
@@ -271,7 +297,7 @@ def retrieve_code():
                 run('git checkout master')
                 run('git pull origin master')
                 run('git checkout {rev}'.format(rev=env.git_revision))
-        execute('retrieve_boost')
+#        execute('retrieve_boost')
 
 @task
 @hosts('localhost')

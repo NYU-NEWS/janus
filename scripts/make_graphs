@@ -10,7 +10,9 @@ output_dir=${2:-.}
 janus_home=${3:-/home/shuai/git/janus}
 
 mkdir -p $output_dir
-python $janus_home/scripts/plot/do_plot.py -g $janus_home/config/plot/*yml -d ${data_files[@]} -gcmds $janus_home/scripts/plot/cmds.gnuplot
+#python3 $janus_home/scripts/plot/do_plot.py -g $janus_home/config/plot/*yml -d ${data_files[@]} -gcmds $janus_home/scripts/plot/cmds.gnuplot
+python3 $janus_home/scripts/plot/do_plot.py -g $janus_home/config/plot/single*yml -d single*.csv -gcmds $janus_home/scripts/plot/cmds.gnuplot
+python3 $janus_home/scripts/plot/do_plot.py -g $janus_home/config/plot/multi*yml -d multi*.csv -gcmds $janus_home/scripts/plot/cmds.gnuplot
 mv *png $output_dir
 mv *eps $output_dir
 exit 0

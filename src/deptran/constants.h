@@ -51,6 +51,7 @@ namespace janus {
 #define TXN_INSTANT    (0x02)
 #define TXN_IMMEDIATE  (0x02)
 #define TXN_DEFERRED   (0x04)
+#define TXOP_MULTIHOP        (0x08) // for multi-hop data/flow dependency
 
 #define DF_REAL (0x04)
 #define DF_NO   (0x02)

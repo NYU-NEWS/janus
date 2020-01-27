@@ -29,6 +29,10 @@ class RccCommo : public Communicator {
                            txnid_t tid,
                            const function<void(RccGraph& graph)>&);
 
+  shared_ptr<RccGraph> Inquire(parid_t pid,
+                               epoch_t epoch,
+                               txnid_t tid);
+
   virtual void BroadcastCommit(
                        parid_t,
                        txnid_t cmd_id_,
@@ -37,6 +41,7 @@ class RccCommo : public Communicator {
                        shared_ptr<RccGraph> graph,
                        const function<void(int32_t, TxnOutput&)>& callback);
   bool IsGraphOrphan(RccGraph& graph, txnid_t cmd_id);
+  void BroadcastValidation(txid_t, set<parid_t>, int validation);
 };
 
 } // namespace janus

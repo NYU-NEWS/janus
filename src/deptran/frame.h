@@ -66,8 +66,11 @@ class Frame {
                                                    ServerControlServiceImpl *scsi);
 };
 
+#define RANDOM_VAR_NAME(var, file, line) \
+var##file##line
+
 #define REG_FRAME(mode, names, classframe) \
-static Frame* var__FILE____LINE__ __attribute__((used)) = \
+static Frame* RANDOM_VAR_NAME(var, __FILE__, __LINE__) = \
 Frame::RegFrame(mode, names, []()->Frame*{ return new classframe(mode);})
 
 } // namespace janus

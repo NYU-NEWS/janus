@@ -10,7 +10,31 @@
 
 namespace janus {
 
-REG_FRAME(MODE_MULTI_PAXOS, vector<string>({"paxos"}), MultiPaxosFrame);
+//REG_FRAME(MODE_MULTI_PAXOS, vector<string>({"paxos"}), MultiPaxosFrame);
+
+template<typename D>
+struct automatic_register {
+ private:
+  struct exec_register {
+    exec_register() {
+      D::do_it();
+    }
+  };
+  // will force instantiation of definition of static member
+  template<exec_register&> struct ref_it { };
+
+  static exec_register register_object;
+  static ref_it<register_object> referrer;
+};
+
+template<typename D> typename automatic_register<D>::exec_register
+    automatic_register<D>::register_object;
+
+struct foo : automatic_register<foo> {
+  static void do_it() {
+    REG_FRAME(MODE_MULTI_PAXOS, vector<string>({"paxos"}), MultiPaxosFrame);
+  }
+};
 
 MultiPaxosFrame::MultiPaxosFrame(int mode) : Frame(mode) {
 

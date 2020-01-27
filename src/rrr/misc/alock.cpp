@@ -13,7 +13,12 @@ uint64_t ALock::Lock(uint64_t owner,
                      type_t type,
                      uint64_t priority) {
 
-  IntEvent& proceed = Reactor::CreateEvent<IntEvent>(); // init 0, 1 as ready
+  // TODO There are strange problems with the following line
+  // Instead of being a IntEvent object, proceed becomes an Event obj
+//  IntEvent& proceed = Reactor::CreateEvent<IntEvent>(); // init 0, 1 as ready
+  auto x = Reactor::CreateSpEvent<IntEvent>(); // init 0, 1 as ready
+  auto& proceed = *x;
+  verify(proceed.target_ >= 0);
   uint64_t ret_id = 0;
   std::function<void(uint64_t)> _yes_callback
       = [&proceed, &ret_id](uint64_t id) {

@@ -8,11 +8,12 @@
 
 namespace rrr {
 
-Coroutine::Coroutine(std::function<void()> func) : func_(std::move(func)), status_(INIT) {
+Coroutine::Coroutine(std::function<void()> func) : func_(func), status_(INIT) {
 }
 
 Coroutine::~Coroutine() {
-  verify(up_boost_coro_task_ != nullptr);
+  verify(up_boost_coro_task_);
+  up_boost_coro_task_.reset();
 //  verify(0);
 }
 
@@ -24,8 +25,9 @@ void Coroutine::BoostRunWrapper(boost_coro_yield_t& yield) {
   while (true) {
     auto sz = reactor->coros_.size();
     verify(sz > 0);
+    verify(func_);
     func_();
-    func_ = {};
+//    func_ = nullptr; // Can be swapped out here?
     status_ = FINISHED;
     yield();
   }
@@ -39,8 +41,15 @@ void Coroutine::Run() {
 //  reactor->coros_;
   auto sz = reactor->coros_.size();
   verify(sz > 0);
-  up_boost_coro_task_ = make_unique<boost_coro_task_t>(
-      std::bind(&Coroutine::BoostRunWrapper, this, std::placeholders::_1));
+//  up_boost_coro_task_ = make_shared<boost_coro_task_t>(
+
+  boost_coro_task_t* x = new boost_coro_task_t(
+//      std::bind(&Coroutine::BoostRunWrapper, this, std::placeholders::_1)
+    [this] (boost_coro_yield_t& yield) {
+      this->BoostRunWrapper(yield);
+    }
+      );
+  up_boost_coro_task_.reset(x);
 #ifdef USE_BOOST_COROUTINE1
   (*up_boost_coro_task_)();
 #endif

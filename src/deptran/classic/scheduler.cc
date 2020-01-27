@@ -159,7 +159,7 @@ bool SchedulerClassic::OnPrepare(cmdid_t tx_id,
     CreateRepCoord()->Submit(sp_m);
 //    Log_debug("wait for prepare command replicated");
     sp_tx->is_leader_hint_ = true;
-    sp_tx->ev_prepare_.Wait();
+    sp_tx->ev_prepare_->Wait();
 //    Log_debug("finished prepare command replication");
     return sp_tx->result_prepare_;
   } else if (Config::GetConfig()->do_logging()) {
@@ -188,7 +188,7 @@ int SchedulerClassic::PrepareReplicated(TpcPrepareCommand& prepare_cmd) {
   sp_tx->result_prepare_ = DoPrepare(sp_tx->tid_);
   Log_debug("prepare request replicated and executed for %" PRIx64 ", result: %x, sid: %x",
       sp_tx->tid_, sp_tx->result_prepare_, (int)this->site_id_);
-  sp_tx->ev_prepare_.Set(1);
+  sp_tx->ev_prepare_->Set(1);
   Log_debug("triggering prepare replication callback %" PRIx64, sp_tx->tid_);
   return 0;
 }
@@ -207,7 +207,7 @@ int SchedulerClassic::OnCommit(txnid_t tx_id, int commit_or_abort) {
     cmd->ret_ = commit_or_abort;
     auto sp_m = dynamic_pointer_cast<Marshallable>(cmd);
     CreateRepCoord()->Submit(sp_m);
-    sp_tx->ev_commit_.Wait();
+    sp_tx->ev_commit_->Wait();
   } else {
 //    verify(exec->phase_ < 3);
 //    exec->phase_ = 3;
@@ -264,7 +264,7 @@ int SchedulerClassic::CommitReplicated(TpcCommitCommand& tpc_commit_cmd) {
   } else {
     verify(0);
   }
-  sp_tx->ev_commit_.Set(1);
+  sp_tx->ev_commit_->Set(1);
   sp_tx->ev_execute_ready_->Set(1);
 //  verify(app_next_);
 //  app_next_(*(sp_tx->cmd_));

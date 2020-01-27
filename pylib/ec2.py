@@ -12,26 +12,27 @@ from fabric.decorators import hosts, roles
 from fabric.contrib.files import exists
 from pylib.security_group import sec_grp_name, save_sec_grp
 
+# AMI: ubuntu 18.04 amd64 20191021
 EC2_REGIONS = {
     'eu-west-1': {
         'location': 'Ireland',
         'endpoint': 'ec2.eu-west-1.amazonaws.com',
-        'ami_image': 'ami-26067455'
+        'ami_image': 'ami-0e41581acd7dedd99'
     },
     'ap-northeast-2': {
         'location': 'Seoul',
         'endpoint': 'ec2.ap-northeast-2.amazonaws.com',
-        'ami_image': 'ami-bdf227d3'
+        'ami_image': 'ami-0f4362c71ffaf7759'
     },
     'us-west-2': {
         'location': 'Oregon',
         'endpoint': 'ec2.us-west-2.amazonaws.com',
-        'ami_image': 'ami-34579e54'
+        'ami_image': 'ami-09c6723c6c24250c9'
     },
     'us-west-1': {
         'location': 'California',
         'endpoint': 'ec2.us-west-1.amazonaws.com',
-        'ami_image': 'ami-9c730afc'
+        'ami_image': 'ami-00a3e4424e9ab3e56'
     },
     'ap-southeast-1': {},
     'ap-southeast-2': {},
@@ -53,7 +54,7 @@ def get_created_instances():
 @parallel(pool_size=10)
 def reboot_all():
     instance_ids = []
-    for region, instances in get_created_instances().iteritems():
+    for region, instances in get_created_instances().items():
         ec2 = boto3.client('ec2', region_name=region)
         for instance in instances:
             instance_ids.append(instance.id)
@@ -62,7 +63,7 @@ def reboot_all():
 
 @task
 def list_regions():
-    for region, info in EC2_REGIONS.iteritems():
+    for region, info in EC2_REGIONS.items():
         print ("region: {}".format(region))
         for k in sorted(info.keys()):
             v = info[k]
@@ -88,7 +89,8 @@ def create(region, num=1, instance_type=INSTANCE_TYPE):
                                      MinCount=num,
                                      MaxCount=num, 
                                      SecurityGroups=security_group,
-                                     InstanceType=instance_type)
+                                     InstanceType=instance_type, 
+                                     KeyName="test_key")
     
     logging.info("created {num} instances in region {region}".format(num=num,
                                                              region=region))
@@ -125,7 +127,7 @@ def load_instances():
         unpickler = pickle.Unpickler(f)
         data = unpickler.load()
         created_instances = { region: [ get_instance(region, instance_id) for instance_id in instance_ids ]
-                              for region, instance_ids in data.iteritems() }
+                              for region, instance_ids in data.items() }
         logging.info("created: {}".format(created_instances))
 
     env.instances_loaded = True
@@ -149,7 +151,7 @@ def set_instance_roles():
         roledefs[t].append(ip)
 
     first = True
-    for region, instances in created_instances.iteritems():
+    for region, instances in created_instances.items():
         for instance in instances:
             if first:
                 add_server('leaders', instance.public_ip_address)
@@ -213,7 +215,7 @@ def rm_instances_data():
 def terminate_instances():
     execute('ec2.load_instances')
     
-    for region, instances in created_instances.iteritems():
+    for region, instances in created_instances.items():
         ec2 = boto3.resource('ec2', region_name=region)
         ids = [instance.id for instance in instances]
         logging.info("terminate {}".format(ids))
@@ -221,7 +223,7 @@ def terminate_instances():
 
     execute('ec2.rm_instances_data')
     time.sleep(30) 
-    for region in created_instances.iterkeys():
+    for region in created_instances.keys():
         execute('cluster.delete_security_group', region=region)
 
 
@@ -235,7 +237,7 @@ def wait_for_all_servers(timeout=3600):
     done = False
     while not done:
         done = True
-        for region, instances in created_instances.iteritems():
+        for region, instances in created_instances.items():
             ec2 = boto3.resource('ec2', region_name=region)
             ids = [instance.id for instance in instances]
             instances = ec2.instances.filter(InstanceIds=ids)
@@ -274,7 +276,7 @@ def persist_instances():
     with open(fn, 'wb') as f:
         pickler = pickle.Pickler(f)
         data = { region: [ instance.id for instance in instances ] 
-                 for region, instances in created_instances.iteritems() }
+                 for region, instances in created_instances.items() }
         pickler.dump(data)
 
 
@@ -286,7 +288,7 @@ def get_instance(region, instance_id):
 def instance_by_pub_ip(ip):
     execute('ec2.load_instances')
     print('looking: {}, {}'.format(ip, created_instances))
-    for region, instances in created_instances.iteritems():
+    for region, instances in created_instances.items():
         logging.info("region {}, ins: {}".format(region, instances))
         for instance in instances:
             print ("instance id: {}; ip {}".format(instance.id,

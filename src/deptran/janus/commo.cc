@@ -77,7 +77,7 @@ void JanusCommo::BroadcastPreAccept(
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
 
   bool skip_graph = IsGraphOrphan(*sp_graph, txn_id);
-
+  WAN_WAIT;
   for (auto& p : rpc_par_proxies_[par_id]) {
     auto proxy = (p.second);
     verify(proxy != nullptr);
@@ -107,6 +107,7 @@ void JanusCommo::BroadcastAccept(parid_t par_id,
                                  ballot_t ballot,
                                  shared_ptr<RccGraph> graph,
                                  const function<void(int)>& callback) {
+  WAN_WAIT;
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
   for (auto& p : rpc_par_proxies_[par_id]) {
     auto proxy = (p.second);
@@ -134,7 +135,7 @@ void JanusCommo::BroadcastCommit(
     shared_ptr<RccGraph> graph,
     const function<void(int32_t, TxnOutput&)>& callback) {
   bool skip_graph = IsGraphOrphan(*graph, cmd_id);
-
+  WAN_WAIT;
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
   for (auto& p : rpc_par_proxies_[par_id]) {
     auto proxy = (p.second);

@@ -16,11 +16,13 @@ class Event : public std::enable_shared_from_this<Event> {
 //class Event {
  public:
   int __debug_creator{0};
-  enum EventStatus { INIT = 0, WAIT = 1, READY = 2, DONE = 3, DEBUG};
+  enum EventStatus { INIT = 0, WAIT = 1, READY = 2,
+      DONE = 3, TIMEOUT = 4, DEBUG};
   EventStatus status_{INIT};
   void* _dbg_p_scheduler_{nullptr};
   uint64_t type_{0};
   function<bool(int)> test_{};
+  uint64_t wakeup_time_; // calculated by timeout, unit: microsecond
 
   // An event is usually allocated on a coroutine stack, thus it cannot own a
   //   shared_ptr to the coroutine it is.
@@ -28,7 +30,7 @@ class Event : public std::enable_shared_from_this<Event> {
   // When the stack that contains the event frees, the event frees.
   std::weak_ptr<Coroutine> wp_coro_{};
 
-  virtual void Wait() final;
+  virtual void Wait(uint64_t timeout=0) final;
 
   void Wait(function<bool(int)> f) {
     test_ = f;
@@ -36,7 +38,10 @@ class Event : public std::enable_shared_from_this<Event> {
   }
 
   virtual bool Test();
-  virtual bool IsReady() {return test_(0);}
+  virtual bool IsReady() {
+    verify(test_);
+    return test_(0);
+  }
 
   friend Reactor;
 // protected:
@@ -64,7 +69,7 @@ class IntEvent : public Event {
     return t;
   };
 
-  bool IsReady() override {
+  virtual bool IsReady() override {
     if (test_) {
       return test_(value_);
     } else {
@@ -88,6 +93,13 @@ class SharedIntEvent {
   }
 
   void Wait(function<bool(int)> f);
+};
+
+class NeverEvent: public Event {
+ public:
+  bool IsReady() override {
+    return false;
+  }
 };
 
 class TimeoutEvent : public Event {

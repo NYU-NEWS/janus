@@ -2,15 +2,15 @@
 <project version="4">
   <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
     <generated>
-      <config projectName="janus" targetName="RRR" />
-      <config projectName="janus" targetName="janusdb" />
-      <config projectName="janus" targetName="EXTERN_C" />
       <config projectName="janus" targetName="YAMLCPP" />
-      <config projectName="janus" targetName="MEMDB" />
-      <config projectName="janus" targetName="gen-rpc" />
+      <config projectName="janus" targetName="janusdb" />
       <config projectName="janus" targetName="TEST" />
+      <config projectName="janus" targetName="gen-rpc" />
+      <config projectName="janus" targetName="MEMDB" />
       <config projectName="janus" targetName="paxosbench" />
       <config projectName="janus" targetName="ROCOCO_SERVER" />
+      <config projectName="janus" targetName="RRR" />
+      <config projectName="janus" targetName="EXTERN_C" />
     </generated>
   </component>
   <component name="CMakeSettings" AUTO_RELOAD="true">
@@ -21,8 +21,15 @@
   <component name="ChangeListManager">
     <list default="true" id="90fe84fa-ca18-4530-9a88-ce9ad2f7923a" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/rrr/reactor/reactor.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/rrr/reactor/reactor.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/rrr/reactor/reactor.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/rrr/reactor/reactor.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/rcc/commo.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/rcc/commo.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/rcc/commo.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/rcc/commo.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/rcc/server.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/rcc/server.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/rcc/server.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/rcc/server.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/troad/commo.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/troad/commo.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/troad/commo.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/troad/commo.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/troad/coordinator.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/troad/coordinator.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/troad/scheduler.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/troad/scheduler.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/rrr/reactor/event.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/rrr/reactor/event.cc" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -58,9 +65,6 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="OCFindUsagesOptions" text="false" ivars="false" properties="true" derivedClasses="false" />
-  <component name="OCResolveContextSettings">
-    <option name="configuration" value="0-RRR" />
-  </component>
   <component name="ProjectId" id="1RZ1VRjN8apBEsyJhApjUSr3svC" />
   <component name="ProjectLevelVcsManager" settingsEditedManually="true" />
   <component name="PropertiesComponent">
@@ -73,8 +77,9 @@
     <property name="js.eslint.eslintPackage" value="" />
     <property name="last_opened_file_path" value="$PROJECT_DIR$" />
     <property name="nodejs_interpreter_path" value="node" />
+    <property name="nodejs_package_manager_path" value="npm" />
     <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
-    <property name="settings.editor.selected.configurable" value="preferences.sourceCode.C/C++" />
+    <property name="settings.editor.selected.configurable" value="CPPToolchains" />
   </component>
   <component name="RecentsManager">
     <key name="MoveFile.RECENT_KEYS">
@@ -93,7 +98,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="CMake Application.none-3c3s-rw-con_100">
+  <component name="RunManager" selected="CMake Application.troad-64c8s-tpcc-con_100">
     <configuration default="true" type="tests" factoryName="Attests">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -164,7 +169,7 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
-    <configuration name="janus-1c1s-tpcc_zipf_1.0" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/1c1s1p.yml -f config/tpcc.yml -f config/janus.yml -f config/concurrent_1.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
+    <configuration name="janus-1c1s-tpcc_no-con_1" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/1c1s1p.yml -f config/tpcc_no.yml -f config/janus.yml -f config/concurrent_1.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -354,7 +359,27 @@
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
     </configuration>
+    <configuration name="troad-1c1s-tpcc_no-con_1" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/1c1s1p.yml -f config/tpcc_no.yml -f config/troad.yml -f config/concurrent_1.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="troad-3c3s3r-tpca_zipf_1.0-con_100" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/3c3s3r1p.yml -f config/tpca_zipf_1.yml -f config/troad.yml -f config/concurrent_100.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="troad-3c3s3r-tpcc-con_100" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/3c3s3r1p.yml -f config/tpcc.yml -f config/troad.yml -f config/concurrent_100.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="troad-64c8s-tpca-con_100" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/64c8s1p.yml -f config/tpca.yml -f config/troad.yml -f config/concurrent_100.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
+      <method v="2">
+        <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="troad-64c8s-tpcc-con_100" type="CMakeRunConfiguration" factoryName="Application" PROGRAM_PARAMS="-f config/64c8s1p.yml -f config/tpcc.yml -f config/troad.yml -f config/concurrent_100.yml -d 30 -P localhost" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="janus" TARGET_NAME="janusdb" CONFIG_NAME="Debug" RUN_TARGET_PROJECT_NAME="janus" RUN_TARGET_NAME="janusdb">
       <method v="2">
         <option name="com.jetbrains.cidr.execution.CidrBuildBeforeRunTaskProvider$BuildBeforeRunTask" enabled="true" />
       </method>
@@ -423,11 +448,15 @@
       <item itemvalue="CMake Application.troad-1c1s-tpca_zipf_1.0" />
       <item itemvalue="CMake Application.troad-1c1s-tpca_zipf_1.0-con_100" />
       <item itemvalue="CMake Application.troad-3c3s3r-tpca_zipf_1.0-con_100" />
-      <item itemvalue="CMake Application.janus-1c1s-tpcc_zipf_1.0" />
+      <item itemvalue="CMake Application.troad-3c3s3r-tpcc-con_100" />
+      <item itemvalue="CMake Application.troad-1c1s-tpcc_no-con_1" />
+      <item itemvalue="CMake Application.troad-64c8s-tpca-con_100" />
+      <item itemvalue="CMake Application.troad-64c8s-tpcc-con_100" />
+      <item itemvalue="CMake Application.janus-1c1s-tpcc_no-con_1" />
       <item itemvalue="CMake Application.janus-3c3s-tpca_zipf_1.0-con_100" />
       <item itemvalue="CMake Application.janus-64c8s-tpca_zipf_1.0-con_100" />
-      <item itemvalue="CMake Application.janus-3c3s3r-tpcc-con_100" />
       <item itemvalue="CMake Application.janus-3c3s3r-tpca-con_100" />
+      <item itemvalue="CMake Application.janus-3c3s3r-tpcc-con_100" />
       <item itemvalue="CMake Application.janus-64c8s-tpcc-con_100" />
       <item itemvalue="CMake Application.rcc-1c1s-tpca_zipf_1.0" />
       <item itemvalue="CMake Application.rcc-1c1s-tpca_zipf_1.0_con_1" />
@@ -562,6 +591,15 @@
       <workItem from="1574220777939" duration="2378000" />
       <workItem from="1574363788285" duration="53000" />
       <workItem from="1574776555544" duration="7412000" />
+      <workItem from="1576155611687" duration="11374000" />
+      <workItem from="1576437278949" duration="531000" />
+      <workItem from="1576470209302" duration="248000" />
+      <workItem from="1577798369446" duration="8002000" />
+      <workItem from="1578364387913" duration="6343000" />
+      <workItem from="1578514940940" duration="25751000" />
+      <workItem from="1578716292326" duration="11898000" />
+      <workItem from="1579997370982" duration="960000" />
+      <workItem from="1579999793179" duration="23945000" />
     </task>
     <servers />
   </component>
@@ -601,35 +639,164 @@
   <component name="XDebuggerManager">
     <breakpoint-manager>
       <breakpoints>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/deptran/rococo/rcc_coord.cc</url>
           <line>245</line>
           <option name="timeStamp" value="22" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/deptran/rococo/rcc_coord.cc</url>
           <line>257</line>
           <option name="timeStamp" value="23" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/deptran/rococo/rcc_server.cc</url>
           <line>251</line>
           <option name="timeStamp" value="24" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/deptran/multi_paxos/coordinator.cc</url>
           <line>39</line>
           <option name="timeStamp" value="25" />
         </line-breakpoint>
         <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
           <url>file://$PROJECT_DIR$/src/deptran/troad/coordinator.cc</url>
-          <line>164</line>
+          <line>97</line>
           <option name="timeStamp" value="32" />
         </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/deptran/troad/commo.cc</url>
+          <line>88</line>
+          <option name="timeStamp" value="49" />
+        </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/deptran/service.cc</url>
+          <line>327</line>
+          <option name="timeStamp" value="51" />
+        </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/deptran/troad/commo.cc</url>
+          <line>257</line>
+          <option name="timeStamp" value="56" />
+        </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/deptran/troad/commo.cc</url>
+          <line>262</line>
+          <option name="timeStamp" value="58" />
+        </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/deptran/service.cc</url>
+          <line>282</line>
+          <option name="timeStamp" value="60" />
+        </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/deptran/rcc/tx.cc</url>
+          <line>227</line>
+          <option name="timeStamp" value="91" />
+        </line-breakpoint>
         <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
-          <url>file://$PROJECT_DIR$/src/deptran/client_worker.cc</url>
-          <line>166</line>
-          <option name="timeStamp" value="45" />
+          <url>file://$PROJECT_DIR$/src/deptran/janus/scheduler.cc</url>
+          <line>218</line>
+          <option name="timeStamp" value="114" />
+        </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/bench/tpcc/new_order.cc</url>
+          <line>79</line>
+          <option name="timeStamp" value="117" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/bench/tpcc/new_order.cc</url>
+          <line>87</line>
+          <option name="timeStamp" value="124" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/deptran/janus/scheduler.cc</url>
+          <line>194</line>
+          <option name="timeStamp" value="128" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/deptran/rcc/server.cc</url>
+          <line>478</line>
+          <option name="timeStamp" value="130" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/rrr/misc/alock.cpp</url>
+          <line>17</line>
+          <option name="timeStamp" value="147" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/deptran/janus/coordinator.cc</url>
+          <line>373</line>
+          <option name="timeStamp" value="148" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/deptran/troad/coordinator.cc</url>
+          <line>231</line>
+          <option name="timeStamp" value="149" />
+        </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <condition expression="res_graph-&gt;size() &gt; 1" language="ObjectiveC" />
+          <url>file://$PROJECT_DIR$/src/deptran/troad/scheduler.cc</url>
+          <line>142</line>
+          <option name="timeStamp" value="163" />
+        </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/deptran/troad/scheduler.cc</url>
+          <line>129</line>
+          <option name="timeStamp" value="165" />
+        </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/deptran/troad/tx.cc</url>
+          <line>8</line>
+          <option name="timeStamp" value="166" />
+        </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/deptran/troad/tx.cc</url>
+          <line>22</line>
+          <option name="timeStamp" value="167" />
+        </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/deptran/troad/tx.cc</url>
+          <line>15</line>
+          <option name="timeStamp" value="168" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/deptran/troad/coordinator.cc</url>
+          <line>191</line>
+          <option name="timeStamp" value="174" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/deptran/troad/coordinator.cc</url>
+          <line>45</line>
+          <option name="timeStamp" value="175" />
+        </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/deptran/rcc/tx.cc</url>
+          <line>269</line>
+          <option name="timeStamp" value="176" />
+        </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/deptran/service.cc</url>
+          <line>267</line>
+          <option name="timeStamp" value="177" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <condition expression="sz &gt; 0" language="ObjectiveC" mode="CODE_FRAGMENT" />
+          <url>file://$PROJECT_DIR$/src/deptran/troad/coordinator.cc</url>
+          <line>186</line>
+          <option name="timeStamp" value="182" />
+        </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <condition expression="pp_set.size() &gt; 0" language="ObjectiveC" />
+          <url>file://$PROJECT_DIR$/src/deptran/troad/coordinator.cc</url>
+          <line>190</line>
+          <option name="timeStamp" value="184" />
+        </line-breakpoint>
+        <line-breakpoint type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <condition expression="sp-&gt;size() &gt; 1" language="ObjectiveC" />
+          <url>file://$PROJECT_DIR$/src/deptran/troad/commo.cc</url>
+          <line>129</line>
+          <option name="timeStamp" value="187" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

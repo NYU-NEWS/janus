@@ -172,20 +172,17 @@ void RccServer::__DebugExamineFridge() {
 
 void RccServer::InquireAboutIfNeeded(RccTx& dtxn) {
 //  Graph<RccDTxn> &txn_gra = dep_graph_->txn_gra_;
-  if (dtxn.status() <= TXN_STD &&
-      !dtxn.during_asking &&
+  if (
+//      dtxn.status() <= TXN_STD &&
+//      !dtxn.during_asking &&
       !dtxn.Involve(TxLogServer::partition_id_)) {
     verify(!dtxn.Involve(TxLogServer::partition_id_));
     verify(!dtxn.during_asking);
     parid_t par_id = *(dtxn.partition_.begin());
     dtxn.during_asking = true;
-    commo()->SendInquire(par_id,
-                         dtxn.epoch_,
-                         dtxn.tid_,
-                         std::bind(&RccServer::InquireAck,
-                                   this,
-                                   dtxn.id(),
-                                   std::placeholders::_1));
+    auto sp_graph = commo()->Inquire(par_id, dtxn.epoch_, dtxn.tid_);
+    Aggregate(epoch_mgr_.curr_epoch_, *sp_graph);
+    verify(dtxn.status() >= TXN_CMT);
   }
 }
 
@@ -219,18 +216,23 @@ RccTx& RccServer::__DebugFindAnOngoingAncestor(RccTx& vertex) {
 
 void RccServer::WaitUntilAllPredecessorsAtLeastCommitting(RccTx* vertex) {
   std::function<int(RccTx&)> func =
-      [vertex, this](RccTx& v) -> int {
+      [this](RccTx& v) -> int {
         RccTx& parent = v;
         int r = 0;
         if (parent.IsExecuted() || parent.IsAborted()) {
           r = RccGraph::SearchHint::Skip;
-        } else if (parent.status() >= TXN_CMT) {
-          InquireAboutIfNeeded(*vertex);
-          vertex->status_.Wait([vertex](int v)->bool {
-            return (vertex->current_rank_ < vertex->shared_rank_ || v>=TXN_CMT);
+        } else if (parent.status() < TXN_CMT) {
+          bool b = parent.Involve(TxLogServer::partition_id_);
+          if (!b) {
+            InquireAboutIfNeeded(parent);
+            verify(parent.status() >= TXN_CMT);
+          }
+          parent.status_.Wait([](int val)->bool {
+            // TODO considering rank.
+            return (val>=TXN_CMT);
           });
-          r = RccGraph::SearchHint::Ok;
         }
+        r = RccGraph::SearchHint::Ok;
         return r;
       };
   TraversePred(*vertex, -1, func);
@@ -346,17 +348,16 @@ void RccServer::WaitUntilAllPredSccExecuted(const RccScc& scc) {
   set<RccTx*> scc_set;
   scc_set.insert(scc.begin(), scc.end());
   std::function<int(RccTx&)> func =
-      [&scc_set, &scc, this](RccTx& v) -> int {
-        RccTx& info = v;
-        if (info.IsExecuted()) {
+      [&scc_set, &scc, this](RccTx& tx) -> int {
+        if (tx.IsExecuted()) {
           return RccGraph::SearchHint::Skip;
-        } else if (!info.Involve(TxLogServer::partition_id_)) {
-          verify(info.status() >= TXN_CMT);
-        } else if (scc_set.find(&v) != scc_set.end()) {
+        } else if (!tx.Involve(TxLogServer::partition_id_)) {
+          verify(tx.status() >= TXN_CMT);
+        } else if (scc_set.find(&tx) != scc_set.end()) {
           // belong to the scc
         } else {
-          info.status_.Wait([&info](int v)->bool{
-            return (info.current_rank_ < info.shared_rank_ || v>TXN_DCD);
+          tx.status_.Wait([&tx](int v)->bool{
+            return (tx.current_rank_ <= tx.shared_rank_ || v>=TXN_DCD);
           });
         }
         return RccGraph::SearchHint::Ok;
@@ -391,26 +392,36 @@ bool RccServer::AllAncFns(const RccScc& scc) {
 void RccServer::Execute(const RccScc& scc) {
   verify(scc.size() > 0);
   for (auto v : scc) {
-    RccTx& dtxn = *v;
-    Execute(dtxn);
+    auto sp_tx = FindV(v->id());
+    Execute(sp_tx);
   }
 }
 
-void RccServer::Execute(RccTx& dtxn) {
-  dtxn.executed_ = true;
-  verify(dtxn.IsDecided());
-  if (dtxn.Involve(TxLogServer::partition_id_)) {
-    if (dtxn.need_validation_) {
-      dtxn.CommitValidate();
-      dtxn.sp_ev_global_validated_->Wait();
-    } // else do nothing
-    dtxn.CommitExecute();
+void RccServer::Execute(shared_ptr<RccTx> sp_tx) {
+  tx_pending_execution_.push_back(sp_tx);
+  sp_tx->executed_ = true;
+  verify(sp_tx->IsDecided());
+  if (sp_tx->Involve(TxLogServer::partition_id_)) {
+    Coroutine::CreateRun([sp_tx, this]() {
+      if (sp_tx->need_validation_) {
+        sp_tx->CommitValidate();
+      } else {
+        sp_tx->local_validation_result_ = 1;
+      }
+//      commo()->BroadcastValidation(sp_tx->id(), sp_tx->partition_,
+//          sp_tx->local_validation_result_);
+      sp_tx->sp_ev_commit_->Set(1);
+//      sp_tx->sp_ev_global_validated_->Wait(10 * 1000 * 1000);
+      sp_tx->sp_ev_global_validated_->Wait();
+      verify(sp_tx->sp_ev_global_validated_->status_ != Event::TIMEOUT);
+      sp_tx->CommitExecute();
+    });
 #ifdef CHECK_ISO
-    MergeDeltas(dtxn.deltas_);
+    MergeDeltas(sp_tx->deltas_);
 #endif
-    dtxn.ReplyFinishOk();
   }
 }
+
 
 void RccServer::Abort(const RccScc& scc) {
   verify(0);
@@ -485,7 +496,7 @@ int RccServer::OnCommit(const txnid_t cmd_id,
       // quick path without graph, no contention.
       verify(dtxn->fully_dispatched_->value_); //cannot handle non-dispatched now.
       UpgradeStatus(*dtxn, TXN_DCD);
-      Execute(*dtxn);
+      Execute(dtxn);
     } else {
       // with graph
       auto index = Aggregate(*sp_graph);

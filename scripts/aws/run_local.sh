@@ -1,5 +1,9 @@
 #!/bin/bash
 duration=30
+
+# lan
+./waf configure -M
+./waf build
 concurrent=100
 prefix="single_dc"
 
@@ -9,8 +13,8 @@ function run_tests {
 	write_concurrent
 
 #	tpca_fixed 3
-#	zipf_graph 3
-	tpcc 6 
+	zipf_graph 3
+	tpcc 6
 
 #	rw_fixed
 #	tpca_fixed
@@ -29,7 +33,7 @@ function write_concurrent {
 
 function new_experiment {
 	rm -rf tmp/* log/* 
-	tar -czvf ~/${1}.tgz archive && rm -rf archive && mkdir -p archive
+	tar -czvf ~/${1}.tgz archive ## && rm -rf archive && mkdir -p archive
 	printf '=%.0s' {1..40}
 	echo
 	echo "end $1"
@@ -84,8 +88,8 @@ function tpcc {
 		cpu=2
 	fi
 	exp_name=${prefix}_tpcc_${shards}
-	./run_all.py -g -hh config/aws_hosts.yml -cc config/client_closed.yml -cc /tmp/concurrent.yml -cc config/tpcc.yml -cc config/tapir.yml -b tpcc -m brq:brq -m 2pl_ww:multi_paxos -m occ:multi_paxos -m tapir:tapir -m troad:troad -c 1 -c 2 -c 4 -c 8 -c 16 -c 24 -c 28 -c 32 -s $shards -u $cpu -r 3 -d $duration $exp_name --allow-client-overlap
-#	./run_all.py -g -hh config/aws_hosts.yml -cc config/client_closed.yml -cc /tmp/concurrent.yml -cc config/tpcc.yml -cc config/tapir.yml -b tpcc -m troad:troad -c 1 -c 2 -c 4 -c 8 -c 16 -c 24 -c 28 -c 32 -s $shards -u $cpu -r 3 -d $duration $exp_name --allow-client-overlap
+	./run_all.py -g -hh config/aws_hosts.yml -cc config/client_closed.yml -cc /tmp/concurrent.yml -cc config/tpcc.yml -cc config/tapir.yml -b tpcc -m brq:brq -m tapir:tapir -m troad:troad -c 1 -c 2 -c 4 -c 8 -c 16 -c 24 -c 28 -c 32 -s $shards -u $cpu -r 3 -d $duration $exp_name --allow-client-overlap
+#	./run_all.py -g -hh config/aws_hosts.yml -cc config/client_closed.yml -cc /tmp/concurrent.yml -cc config/tpcc.yml -cc config/tapir.yml -b tpcc -m brq:brq -m 2pl_ww:multi_paxos -m occ:multi_paxos -m tapir:tapir -m troad:troad -c 1 -c 2 -c 4 -c 8 -c 16 -c 24 -c 28 -c 32 -s $shards -u $cpu -r 3 -d $duration $exp_name --allow-client-overlap
 	new_experiment $exp_name
 }
 
@@ -111,5 +115,12 @@ function zipfs {
 		new_experiment $exp_name
 	done
 }
+run_tests
+
+# wan (requires compile with -W)
+concurrent=400
+prefix="multi_dc"
+./waf configure -M -W
+./waf build
 
 run_tests

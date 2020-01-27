@@ -8,6 +8,8 @@ include("HunterGate.cmake")
 HunterGate(
         URL "https://github.com/ruslo/hunter/archive/v0.23.179.tar.gz"
         SHA1 "21b2f139feb9f3c37e367750013aee15e1c45355"
+#        URL "https://github.com/cpp-pm/hunter/archive/v0.23.242.tar.gz"
+#        SHA1 "503b149d0ebdbc598e498f1669ae828a2136b838"
 #        "${CMAKE_CURRENT_LIST_DIR}/cxx11.cmake"
 #        FILEPATH "/home/shuai/git/janus/config.cmake"
         LOCAL
@@ -39,7 +41,7 @@ hunter_add_package(GSL)
 find_package(Boost CONFIG REQUIRED
         system filesystem coroutine context thread)
 find_package(GTest CONFIG REQUIRED)
-find_package(GSL CONFIG REQUIRED)
+#find_package(GSL CONFIG REQUIRED)
 
 include_directories(
         ${Boost_INCLUDE_DIR}
@@ -122,9 +124,11 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-register -Werror")
 #pkg_check_modules(PROFILER REQUIRED libprofiler)
 
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG_CODE")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DLOG_LEVEL_AS_INFO")
+set(CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS_RELEASE} -DLOG_LEVEL_AS_INFO")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DLOG_LEVEL_AS_DEBUG")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCPU_PROFILE")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSIMULATE_WAN")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DREUSE_CORO")
 
 #FIND_LIBRARY (DMALLOC_LIBRARY dmalloc /usr/lib /sw/lib)
 #FIND_PATH (DMALLOC_INCLUDE_DIR dmalloc.h PATHS /usr/include /sw/include)

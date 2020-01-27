@@ -490,7 +490,7 @@ class Graph : public Marshallable {
     shared_ptr<Scc<V>> sp_scc(new Scc<V>);
     *sp_scc = StrongConnectPred(vertex, indexes, lowlinks, index, S);
     for (auto v : *sp_scc) {
-      verify(!v->scc_); // FIXME
+//      verify(!v->scc_); // FIXME troad may overwrite, but is this correct?
       v->scc_ = sp_scc;
       v->scc_rank_ = vertex.current_rank_;
     }

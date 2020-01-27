@@ -122,7 +122,7 @@ void TpccWorkload::RegOrderStatus() {
        DF_NO,
        PROC {
          verify(cmd.input.size() >= 3);
-         Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_0);
+         Log_debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_0);
 
          mdb::MultiBlob mbl(3), mbh(3);
          mbl[0] = cmd.input[TPCC_VAR_D_ID].get_blob();
@@ -220,7 +220,7 @@ void TpccWorkload::RegOrderStatus() {
        {TPCC_TB_ORDER, {TPCC_VAR_W_ID}},
        DF_NO,
        PROC {
-         Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_2);
+         Log_debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_2);
          verify(cmd.input.size() >= 3);
 
          mdb::MultiBlob mb_0(3);
@@ -265,7 +265,7 @@ void TpccWorkload::RegOrderStatus() {
        {TPCC_TB_ORDER_LINE, {TPCC_VAR_W_ID}}, // s
        DF_NO,
        PROC {
-         Log::debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_3);
+         Log_debug("TPCC_ORDER_STATUS, piece: %d", TPCC_ORDER_STATUS_3);
          verify(cmd.input.size() >= 3);
          mdb::MultiBlob mbl(4), mbh(4);
          Log_debug("ol_d_id: %d, ol_w_id: %d, ol_o_id: %d",

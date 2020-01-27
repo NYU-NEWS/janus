@@ -43,7 +43,7 @@ class Coroutine {
   Status status_ = INIT; //
   std::function<void()> func_{};
 
-  std::unique_ptr<boost_coro_task_t> up_boost_coro_task_{};
+  std::shared_ptr<boost_coro_task_t> up_boost_coro_task_{nullptr};
   boost::optional<boost_coro_yield_t&> boost_coro_yield_{};
 
   Coroutine() = delete;

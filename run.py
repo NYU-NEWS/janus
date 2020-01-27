@@ -875,6 +875,7 @@ class ServerController(object):
 
         t_list = []
         for process_name, process in self.process_infos.items():
+            time.sleep(0.1) # avoid errors such as ssh_exchange_identification: Connection closed by remote host
             t = Thread(target=run_one_server,
                        args=(process, process_name, host_process_counts,))
             t.start()
@@ -1045,7 +1046,7 @@ class SiteInfo:
             bind_address = "{host}:{port}".format(
                 host=self.process.host_address,
                 port=port)
-            logger.debug("SiteInfo.connect_rpc: rpc_client bind_addr: " + bind_address)
+            # logger.debug("SiteInfo.connect_rpc: rpc_client bind_addr: " + bind_address)
             result = self.rpc_client.connect(bind_address)
             if time.time() - connect_start > timeout:
                 raise RuntimeError("rpc connect time out")

@@ -155,6 +155,7 @@ int main(int argc, char *argv[]) {
   Log_info("started to profile cpu");
 #endif // ifdef CPU_PROFILE
 
+  
   auto server_infos = Config::GetConfig()->GetMyServers();
   if (!server_infos.empty()) {
     server_launch_worker(server_infos);

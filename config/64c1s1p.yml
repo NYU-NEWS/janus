@@ -1,0 +1,158 @@
+
+site:
+  server: # each line is a partition, the first is the master site_name:port
+#    - ["s101:8000", "s201:8001", "s301:8002"]
+#    - ["s102:8100", "s202:8101", "s302:8102"]
+#    - ["s103:8200", "s203:8201", "s303:8202"]
+    - ["s101:8101"]
+      #    - ["s102:8102"]
+      #    - ["s103:8103"]
+      #    - ["s104:8104"]
+      #    - ["s105:8105"]
+      #    - ["s106:8106"]
+      #    - ["s107:8107"]
+      #    - ["s108:8108"]
+  client: # each line is a partition
+    - ["c01"]
+    - ["c02"]
+    - ["c03"]
+    - ["c04"]
+    - ["c05"]
+    - ["c06"]
+    - ["c07"]
+    - ["c08"]
+    - ["c09"]
+    - ["c10"]
+    - ["c11"]
+    - ["c12"]
+    - ["c13"]
+    - ["c14"]
+    - ["c15"]
+    - ["c16"]
+    - ["c17"]
+    - ["c18"]
+    - ["c19"]
+    - ["c20"]
+    - ["c21"]
+    - ["c22"]
+    - ["c23"]
+    - ["c24"]
+    - ["c25"]
+    - ["c26"]
+    - ["c27"]
+    - ["c28"]
+    - ["c29"]
+    - ["c30"]
+    - ["c31"]
+    - ["c32"]
+    - ["c33"]
+    - ["c34"]
+    - ["c35"]
+    - ["c36"]
+    - ["c37"]
+    - ["c38"]
+    - ["c39"]
+    - ["c40"]
+    - ["c41"]
+    - ["c42"]
+    - ["c43"]
+    - ["c44"]
+    - ["c45"]
+    - ["c46"]
+    - ["c47"]
+    - ["c48"]
+    - ["c49"]
+    - ["c50"]
+    - ["c51"]
+    - ["c52"]
+    - ["c53"]
+    - ["c54"]
+    - ["c55"]
+    - ["c56"]
+    - ["c57"]
+    - ["c58"]
+    - ["c59"]
+    - ["c60"]
+    - ["c61"]
+    - ["c62"]
+    - ["c63"]
+    - ["c64"]
+
+# site_name - process_name map
+process:
+  s101: localhost
+  #  s102: localhost
+  #  s103: localhost
+  #  s104: localhost
+  #  s105: localhost
+  #  s106: localhost
+  #  s107: localhost
+  #  s108: localhost
+  c01: localhost
+  c02: localhost
+  c03: localhost
+  c04: localhost
+  c05: localhost
+  c06: localhost
+  c07: localhost
+  c08: localhost
+  c09: localhost
+  c10: localhost
+  c11: localhost
+  c12: localhost
+  c13: localhost
+  c14: localhost
+  c15: localhost
+  c16: localhost
+  c17: localhost
+  c18: localhost
+  c19: localhost
+  c20: localhost
+  c21: localhost
+  c22: localhost
+  c23: localhost
+  c24: localhost
+  c25: localhost
+  c26: localhost
+  c27: localhost
+  c28: localhost
+  c29: localhost
+  c30: localhost
+  c31: localhost
+  c32: localhost
+  c33: localhost
+  c34: localhost
+  c35: localhost
+  c36: localhost
+  c37: localhost
+  c38: localhost
+  c39: localhost
+  c40: localhost
+  c41: localhost
+  c42: localhost
+  c43: localhost
+  c44: localhost
+  c45: localhost
+  c46: localhost
+  c47: localhost
+  c48: localhost
+  c49: localhost
+  c50: localhost
+  c51: localhost
+  c52: localhost
+  c53: localhost
+  c54: localhost
+  c55: localhost
+  c56: localhost
+  c57: localhost
+  c58: localhost
+  c59: localhost
+  c60: localhost
+  c61: localhost
+  c62: localhost
+  c63: localhost
+  c64: localhost
+
+# process_name - host_addr map
+host:
+  localhost: 127.0.0.1

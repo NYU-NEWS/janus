@@ -191,7 +191,17 @@ void ServerConnection::handle_read() {
         if (it != server_->handlers_.end()) {
             // the handler should delete req, and release server_connection refcopy.
             Coroutine::CreateRun([&it, &req, this] () {
-              it->second(req, (ServerConnection *) this->ref_copy());
+              it->second(req, (ServerConnection*) this->ref_copy());
+              // this line of code actually relies on the stack outside.
+//              auto f = it->second;
+//              auto r = req;
+//              auto c = (ServerConnection*)this->ref_copy();
+#ifdef SIMULATE_WAN
+//              auto ev = Reactor::CreateSpEvent<NeverEvent>();
+//              ev->Wait(100 * 1000); // timeout after 100 ms
+//              ev->Wait(1); // timeout after 100 ms
+#endif
+//              f(r, c);
             });
         } else {
             rpc_id_missing_l_s.lock();

@@ -44,6 +44,8 @@ def options(opt):
                    default=False, action='store_true')
     opt.add_option('-m', '--enable-mutrace-debug', dest='mutrace',
                    default=False, action='store_true')
+    opt.add_option('-W', '--simulate-wan', dest='simulate_wan',
+                   default=False, action='store_true')
     opt.parse_args();
 
 def configure(conf):
@@ -65,7 +67,7 @@ def configure(conf):
 #    _enable_snappy(conf)
     #_enable_logging(conf)
     _enable_reuse_coroutine(conf)
-
+    _enable_simulate_wan(conf)
 
     conf.env.append_value("CXXFLAGS", "-Wno-reorder")
     conf.env.append_value("CXXFLAGS", "-Wno-comment")
@@ -238,6 +240,11 @@ def _enable_tcmalloc(conf):
         conf.env.append_value("LINKFLAGS", "-Wl,--no-as-needed")
         conf.env.append_value("LINKFLAGS", "-ltcmalloc")
         conf.env.append_value("LINKFLAGS", "-Wl,--as-needed")
+
+def _enable_simulate_wan(conf):
+    if Options.options.simulate_wan:
+        Logs.pprint("PINK", "simulate wan")
+        conf.env.append_value("CXXFLAGS", "-DSIMULATE_WAN")
 
 def _enable_pic(conf):
     conf.env.append_value("CXXFLAGS", "-fPIC")

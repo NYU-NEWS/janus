@@ -11,6 +11,8 @@
 namespace janus {
 class RccTx: public Tx, public Vertex<RccTx> {
  public:
+  static thread_local uint64_t timestamp_;
+  bool __mocking_janus_{false};
   rank_t current_rank_{RANK_UNDEFINED};
   rank_t shared_rank_{RANK_UNDEFINED}; // this could be greater than current_rank_ as it can be updated during graph propagation
   rank_t scc_rank_{0};
@@ -84,11 +86,9 @@ class RccTx: public Tx, public Vertex<RccTx> {
                                map<int32_t, Value> *output);
 
   void CommitValidate();
-  void CommitExecute();
+  virtual void CommitExecute();
 
   virtual void Abort();
-
-  virtual void ReplyFinishOk();
 
   bool ReadColumn(mdb::Row *row,
                   mdb::colid_t col_id,
@@ -225,13 +225,13 @@ class RccTx: public Tx, public Vertex<RccTx> {
 
 
 inline rrr::Marshal &operator<<(rrr::Marshal &m, const RccTx &ti) {
-  m << ti.tid_ << ti.status() << ti.partition_ << ti.epoch_;
+  m << ti.tid_ << ti.status() << ti.partition_ << ti.parents_;
   return m;
 }
 
 inline rrr::Marshal &operator>>(rrr::Marshal &m, RccTx &ti) {
   int8_t status;
-  m >> ti.tid_ >> status >> ti.partition_ >> ti.epoch_;
+  m >> ti.tid_ >> status >> ti.partition_ >> ti.parents_;
   ti.union_status(status);
   return m;
 }

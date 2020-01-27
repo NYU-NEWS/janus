@@ -122,7 +122,7 @@ void ClassicServiceImpl::Commit(const rrr::i64& tid,
 void ClassicServiceImpl::Abort(const rrr::i64& tid,
                                rrr::i32* res,
                                rrr::DeferredReply* defer) {
-  Log::debug("get abort_txn: tid: %ld", tid);
+  Log_debug("get abort_txn: tid: %ld", tid);
 //  std::lock_guard<std::mutex> guard(mtx_);
 //  const auto& func = [tid, res, defer, this]() {
     auto sched = (SchedulerClassic*) dtxn_sched_;
@@ -304,10 +304,11 @@ void ClassicServiceImpl::JanusPreAccept(const cmdid_t& txnid,
                                         MarshallDeputy* p_md_res_graph,
                                         DeferredReply* defer) {
 //  std::lock_guard<std::mutex> guard(mtx_);
+  p_md_res_graph->SetMarshallable(std::make_shared<RccGraph>());
   auto sp_graph = dynamic_pointer_cast<RccGraph>(md_graph.sp_data_);
   auto ret_sp_graph = dynamic_pointer_cast<RccGraph>(p_md_res_graph->sp_data_);
-  verify(sp_graph && ret_sp_graph);
-  p_md_res_graph->SetMarshallable(std::make_shared<RccGraph>());
+  verify(sp_graph);
+  verify(ret_sp_graph);
   auto sched = (SchedulerJanus*) dtxn_sched_;
   *res = sched->OnPreAccept(txnid, rank, cmds, sp_graph, ret_sp_graph);
   defer->reply();

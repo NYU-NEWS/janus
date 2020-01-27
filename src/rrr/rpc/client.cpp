@@ -163,7 +163,7 @@ int Client::connect(const char* addr) {
 
   if (rp == nullptr) {
     // failed to connect
-    Log_error("rrr::Client: connect(%s): %s", addr, strerror(errno));
+    // Log_error("rrr::Client: connect(%s): %s", addr, strerror(errno));
     return ENOTCONN;
   }
 #endif

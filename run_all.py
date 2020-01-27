@@ -27,6 +27,7 @@ def signal_handler(sig, frame):
 
 signal.signal(signal.SIGINT, signal_handler)
 
+archive_dir = "./archive/"
 
 DEFAULT_MODES = ["tpl_ww:multi_paxos",
                  "occ:multi_paxos",
@@ -318,7 +319,7 @@ def save_git_revision():
 def archive_results(name):
     log_dir = "./log/"
     scripts_dir = "./scripts/"
-    archive_dir = "./archive/"
+    global archive_dir
     log_file = os.path.join(log_dir, name + ".log")
     data_file = os.path.join(log_dir, name + ".yml")
     archive_file = os.path.join(archive_dir, name + ".tgz")
@@ -375,7 +376,7 @@ def aggregate_results(name):
         cc = os.path.join(os.getcwd(), 'scripts/aggregate_run_output.py')
         cmd = [cc, '-p', name, '-r', save_git_revision()]
         os.chdir(archive_dir)
-        cmd += glob.glob('*yml')
+        cmd += glob.glob("{}*yml".format(name))
         res = subprocess.call(cmd)
         if res != 0:
             logger.error("Error aggregating data!!")
@@ -408,6 +409,11 @@ def run_experiments(args):
             args.experiment_name,
             experiment_suffix)
 
+        archive_file = os.path.join(archive_dir, experiment_name + ".tgz")
+        if os.path.exists(archive_file):   
+            logger.info("skipping test for %s",experiment_name)
+            continue
+
         logger.info("Experiment: {}".format(params))
         config_file = generate_config(
             args,
@@ -435,7 +441,7 @@ def run_experiments(args):
                         experiment_name)
             traceback.print_exc()
 
-    aggregate_results(experiment_name)
+    aggregate_results(args.experiment_name)
     generate_graphs(args)
 
 

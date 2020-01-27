@@ -57,7 +57,7 @@ void TpccWorkload::RegNewOrder() {
                {TPCC_COL_DISTRICT_D_NEXT_O_ID},
                ROW_DISTRICT)},
        {TPCC_TB_DISTRICT, {TPCC_VAR_W_ID}},
-       DF_REAL,
+       DF_NO,
        PROC {
 //          verify(cmd.input.size() >= 2);
           verify(cmd.input[TPCC_VAR_W_ID].get_i32() >= 0);
@@ -80,7 +80,7 @@ void TpccWorkload::RegNewOrder() {
           tx.ReadColumn(row_district,
                            TPCC_COL_DISTRICT_D_NEXT_O_ID,
                            &buf,
-                           TXN_BYPASS); // read d_next_o_id
+                           TXN_IMMEDIATE); // read d_next_o_id
           Value next_o_id = buf;
           output[TPCC_VAR_O_ID] = buf;
           // read d_next_o_id, increment by 1

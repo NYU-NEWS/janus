@@ -65,6 +65,26 @@ void RccCommo::SendFinish(parid_t pid,
   Future::safe_release(proxy->async_RccFinish(tid, md, fuattr));
 }
 
+
+shared_ptr<RccGraph> RccCommo::Inquire(parid_t pid,
+                                       epoch_t epoch,
+                                       txnid_t tid) {
+  shared_ptr<RccGraph> ret;
+  auto ev = Reactor::CreateSpEvent<IntEvent>();
+  FutureAttr fuattr;
+  function<void(Future*)> cb = [&ret, &ev] (Future* fu) {
+    MarshallDeputy md;
+    fu->get_reply() >> md;
+    ret = dynamic_pointer_cast<RccGraph>(md.sp_data_);
+    ev->Set(1);
+  };
+  fuattr.callback = cb;
+  auto proxy = (ClassicProxy*)NearestProxyForPartition(pid).second;
+  Future::safe_release(proxy->async_RccInquire(epoch, tid, fuattr));
+  ev->Wait(20*1000*1000);
+  return ret;
+}
+
 void RccCommo::SendInquire(parid_t pid,
                            epoch_t epoch,
                            txnid_t tid,
@@ -90,6 +110,7 @@ void RccCommo::BroadcastCommit(parid_t par_id,
   bool skip_graph = IsGraphOrphan(*graph, cmd_id);
 
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
+  WAN_WAIT;
   for (auto& p : rpc_par_proxies_[par_id]) {
     auto proxy = (p.second);
     verify(proxy != nullptr);
@@ -117,6 +138,18 @@ bool RccCommo::IsGraphOrphan(RccGraph& graph, txnid_t cmd_id) {
     return true;
   } else {
     return false;
+  }
+}
+
+void RccCommo::BroadcastValidation(txid_t id, set<parid_t> pars, int result) {
+  for (auto partition_id : pars) {
+    for (auto& pair : rpc_par_proxies_[partition_id]) {
+      auto proxy = pair.second;
+      FutureAttr fuattr;
+      fuattr.callback = [] (Future* fu) {
+      };
+      Future::safe_release(proxy->async_RccNotifyGlobalValidation(id, result, fuattr));
+    }
   }
 }
 

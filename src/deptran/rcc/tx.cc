@@ -8,6 +8,8 @@
 
 namespace janus {
 
+thread_local uint64_t RccTx::timestamp_ = 0;
+
 RccTx::RccTx(epoch_t epoch,
              txnid_t tid,
              TxLogServer *mgr,
@@ -151,9 +153,7 @@ void RccTx::CommitExecute() {
   }
   TxWorkspace ws;
   for (auto &cmd: dreqs_) {
-    if (cmd.rank_ != current_rank_) {
-      continue;
-    }
+    verify (cmd.rank_ == RANK_I || cmd.rank_ == RANK_D);
     TxnPieceDef& p = txn_reg_.lock()->get(cmd.root_type_, cmd.type_);
     int tmp;
     cmd.input.Aggregate(ws);
@@ -162,11 +162,6 @@ void RccTx::CommitExecute() {
     ws.insert(m);
   }
 }
-
-void RccTx::ReplyFinishOk() {
-  sp_ev_commit_->Set(1);
-}
-
 
 void RccTx::start_ro(const SimpleCommand& cmd,
                      map<int32_t, Value> &output,
@@ -189,11 +184,14 @@ bool RccTx::ReadColumn(mdb::Row *row,
       case TXN_IMMEDIATE: {
         verify(r->rtti() == symbol_t::ROW_VERSIONED);
         auto c = r->get_column(col_id);
-        auto ver_id = r->get_column_ver(col_id);
-        row->ref_copy();
-        read_vers_[row][col_id] = ver_id;
         *value = c;
-        need_validation_ = true;
+        if (__mocking_janus_) {
+          auto ver_id = r->get_column_ver(col_id);
+          row->ref_copy();
+          read_vers_[row][col_id] = ver_id;
+          need_validation_ = true;
+        }
+        // continue to trace dep
       }
       case TXN_DEFERRED:
         TraceDep(row, col_id, hint_flag);
@@ -203,7 +201,8 @@ bool RccTx::ReadColumn(mdb::Row *row,
         break;
     }
   } else if (phase_ == PHASE_RCC_COMMIT) {
-    if (hint_flag == TXN_BYPASS || hint_flag == TXN_DEFERRED) {
+    if (hint_flag == TXN_BYPASS || hint_flag == TXN_DEFERRED
+    || hint_flag == TXN_IMMEDIATE) {
       mdb_txn()->read_column(row, col_id, value);
     } else {
       verify(0);
@@ -225,6 +224,7 @@ bool RccTx::WriteColumn(Row *row,
       mdb_txn()->write_column(row, col_id, value);
     }
     if (hint_flag == TXN_IMMEDIATE) {
+      // TODO, something is wrong here.
       mdb_txn()->write_column(row, col_id, value);
       verify(0);
     }
@@ -233,7 +233,11 @@ bool RccTx::WriteColumn(Row *row,
     }
   } else if (phase_ == PHASE_RCC_COMMIT) {
     if (hint_flag == TXN_BYPASS || hint_flag == TXN_DEFERRED) {
-      mdb_txn()->write_column(row, col_id, value);
+      auto v = value;
+      v.ver_ = timestamp_++;
+      mdb_txn()->write_column(row, col_id, v);
+      auto r = dynamic_cast<mdb::VersionedRow *>(row);
+      r->set_column_ver(col_id, timestamp_++);
     } else {
       verify(0);
     }
@@ -263,11 +267,14 @@ void RccTx::TraceDep(Row* row, colid_t col_id, rank_t hint_flag) {
     // do nothing
   } else {
     if (parent_dtxn != nullptr) {
+//      this->AddParentEdge(parent_dtxn, edge_type);
+      // TODO pre-mature reference? XXX come back and check on this.
       if (!parent_dtxn->IsExecuted()) {
         this->AddParentEdge(parent_dtxn, edge_type);
       } // else do nothing
     } // else do nothing
   }
+  entry->last_ = shared_from_this();
 #ifdef DEBUG_CODE
   verify(graph_);
   TxnInfo& tinfo = tv_->Get();

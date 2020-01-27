@@ -37,7 +37,7 @@ class TxLogServer;
  * It now contains a workspace for procedure data as a
  * temporary solution.
  */
-class Tx {
+class Tx: public enable_shared_from_this<Tx> {
  public:
   shared_ptr<IntEvent> fully_dispatched_{Reactor::CreateSpEvent<IntEvent>()};
 //  bool fully_dispatched_{false};

@@ -10,6 +10,21 @@
 
 namespace janus {
 
+static void __wan_wait() {
+  Reactor::CreateSpEvent<NeverEvent>()->Wait(100*1000);
+}
+
+#ifdef SIMULATE_WAN
+
+#define WAN_WAIT __wan_wait();
+
+#else
+
+#define WAN_WAIT ;
+
+#endif
+
+
 class Coordinator;
 class ClassicProxy;
 class ClientControlProxy;

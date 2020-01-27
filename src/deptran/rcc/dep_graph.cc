@@ -31,7 +31,9 @@ void RccGraph::SelectGraphCmtUkn(RccTx& dtxn,
   new_v->partition_ = dtxn.partition_;
   // TODO, verify that the parent vertex still exists.
   // TODO, verify that the new parent has the correct epoch.
-  for (auto &pair : dtxn.parents_) {
+  auto& parents = dtxn.parents_;
+  for (auto &pair : parents) {
+    verify(parents.size() > 0);
     auto parent_v = FindV(pair.first);
     verify(parent_v != nullptr);
 //    auto weight = pair.second;
@@ -180,7 +182,7 @@ uint64_t RccGraph::MinItfrGraph(RccTx& tx,
 #endif
 
   auto sz = new_graph->size();
-  Log_debug("return graph size: %llx", sz);
+//  Log_debug("return graph size: %llx", sz);
 //  verify(new_graph->FindV(tid) != nullptr);
   return sz;
 }

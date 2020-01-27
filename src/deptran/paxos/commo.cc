@@ -17,7 +17,7 @@ void MultiPaxosCommo::BroadcastPrepare(parid_t par_id,
                                        slotid_t slot_id,
                                        ballot_t ballot,
                                        const function<void(Future*)>& cb) {
-
+  verify(0); // deprecated function
   auto proxies = rpc_par_proxies_[par_id];
   for (auto& p : proxies) {
     auto proxy = (MultiPaxosProxy*) p.second;
@@ -34,6 +34,7 @@ MultiPaxosCommo::BroadcastPrepare(parid_t par_id,
   int n = Config::GetConfig()->GetPartitionSize(par_id);
   auto e = Reactor::CreateSpEvent<PaxosPrepareQuorumEvent>(n, n/2+1);
   auto proxies = rpc_par_proxies_[par_id];
+  WAN_WAIT;
   for (auto& p : proxies) {
     auto proxy = (MultiPaxosProxy*) p.second;
     FutureAttr fuattr;
@@ -58,6 +59,7 @@ MultiPaxosCommo::BroadcastAccept(parid_t par_id,
   auto e = Reactor::CreateSpEvent<PaxosAcceptQuorumEvent>(n, n);
   auto proxies = rpc_par_proxies_[par_id];
   vector<Future*> fus;
+  WAN_WAIT;
   for (auto& p : proxies) {
     auto proxy = (MultiPaxosProxy*) p.second;
     FutureAttr fuattr;
@@ -78,6 +80,7 @@ void MultiPaxosCommo::BroadcastAccept(parid_t par_id,
                                       ballot_t ballot,
                                       shared_ptr<Marshallable> cmd,
                                       const function<void(Future*)>& cb) {
+  verify(0); // deprecated function
   auto proxies = rpc_par_proxies_[par_id];
   vector<Future*> fus;
   for (auto& p : proxies) {

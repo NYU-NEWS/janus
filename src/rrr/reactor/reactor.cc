@@ -18,7 +18,7 @@ thread_local std::shared_ptr<Coroutine> Reactor::sp_running_coro_th_{};
 
 std::shared_ptr<Coroutine> Coroutine::CurrentCoroutine() {
   // TODO re-enable this verify
-//  verify(sp_running_coro_th_);
+  verify(Reactor::sp_running_coro_th_);
   return Reactor::sp_running_coro_th_;
 }
 
@@ -61,20 +61,20 @@ Reactor::CreateRunCoroutine(const std::function<void()> func) {
 //  __debug_set_all_coro_.insert(sp_coro.get());
 //  verify(!curr_coro_); // Create a coroutine from another?
 //  verify(!sp_running_coro_th_); // disallows nested coroutines
-  auto sp_old_coro = sp_running_coro_th_;
-  sp_running_coro_th_ = sp_coro;
-  verify(sp_coro);
-  auto pair = coros_.insert(sp_coro);
-  verify(pair.second);
-  verify(coros_.size() > 0);
-  sp_coro->Run();
-  if (sp_coro->Finished()) {
-    coros_.erase(sp_coro);
-  }
-  Loop();
-  // yielded or finished, reset to old coro.
-  sp_running_coro_th_ = sp_old_coro;
-  return sp_coro;
+//  auto sp_old_coro = sp_running_coro_th_;
+//  sp_running_coro_th_ = sp_coro;
+//  verify(sp_coro);
+//  auto pair = coros_.insert(sp_coro);
+//  verify(pair.second);
+//  verify(coros_.size() > 0);
+//  sp_coro->Run();
+//  if (sp_coro->Finished()) {
+//    coros_.erase(sp_coro);
+//  }
+//  Loop();
+//  // yielded or finished, reset to old coro.
+//  sp_running_coro_th_ = sp_old_coro;
+//  return sp_coro;
 }
 
 //  be careful this could be called from different coroutines.
@@ -98,6 +98,31 @@ void Reactor::Loop(bool infinite) {
         it ++;
       }
     }
+    for (auto it = timeout_events_.begin(); it != timeout_events_.end();) {
+      auto sp_ev = *it;
+      const auto& status = sp_ev->status_;
+      if (status == Event::READY) {
+        ready_events.push_back(std::move(*it));
+        it = events.erase(it);
+        continue;
+      } else if (status == Event::DONE) {
+        it = events.erase(it);
+        continue;
+      } else if (status == Event::WAIT) {
+        auto time = Time::now();
+        if (time >= sp_ev->wakeup_time_) {
+          if (sp_ev->status_ == Event::WAIT) {
+            sp_ev->status_ = Event::TIMEOUT;
+            ready_events.push_back(sp_ev);
+          }
+          it = timeout_events_.erase(it);
+        } else {
+          break;
+        }
+      } else {
+        verify(0);
+      }
+    }
     for (auto& up_ev: ready_events) {
       auto& event = *up_ev;
       auto sp_coro = event.wp_coro_.lock();
@@ -110,6 +135,7 @@ void Reactor::Loop(bool infinite) {
 
 void Reactor::ContinueCoro(std::shared_ptr<Coroutine> sp_coro) {
 //  verify(!sp_running_coro_th_); // disallow nested coros
+  verify(sp_running_coro_th_ != sp_coro);
   auto sp_old_coro = sp_running_coro_th_;
   sp_running_coro_th_ = sp_coro;
   verify(!sp_running_coro_th_->Finished());
@@ -117,7 +143,7 @@ void Reactor::ContinueCoro(std::shared_ptr<Coroutine> sp_coro) {
     sp_coro->Run();
   } else {
     // PAUSED or RECYCLED
-    sp_running_coro_th_->Continue();
+    sp_coro->Continue();
   }
   if (sp_running_coro_th_->Finished()) {
     if (REUSING_CORO) {

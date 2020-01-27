@@ -37,7 +37,8 @@ def format_cc_name(etxn):
         'brq': 'Janus',
         '2pl_ww': '2PL',
         'occ': 'OCC',
-        'tapir': 'Tapir'
+        'tapir': 'Tapir',
+        'troad': 'Troad'
     }
     if etxn['cc'] in m:
         etxn['cc'] = m[etxn['cc']]
@@ -63,14 +64,18 @@ def extract_data(txn_data, file_data):
             a.append(row)
 
 def row_key_clients(r):
-    return r[0:4]+[r[5]]
+    t = r[0:4]+[r[5]]
+    return t
 def row_key(r):
     return r[0:4]
+def row_key_zipf(r):
+    print(r[17])
+    return r[17]
 
 def output_data_file(key, group):
     fn = ARGS.prefix + '_'.join(key) + ".csv"
-    if os.path.exists(fn) and not ARGS.force:
-        raise RuntimeError("file already exists: {}".format(fn))
+#    if os.path.exists(fn) and not ARGS.force:
+#        raise RuntimeError("file already exists: {}".format(fn))
     print("generate csv: {}".format(fn))
     with open(fn, 'w') as f:
         f.write("# ")
@@ -78,7 +83,9 @@ def output_data_file(key, group):
         f.write("\n")
         f.write("# git sha: {}\n".format(ARGS.git_revision))
         first = True
-        for row in group:
+        l = list(group)
+        l.sort(key=row_key_zipf)
+        for row in l:
             srow = [str(x) for x in row]
           
             f.write(", ".join(srow)) 

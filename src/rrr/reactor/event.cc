@@ -9,7 +9,7 @@
 namespace rrr {
 using std::function;
 
-void Event::Wait() {
+void Event::Wait(uint64_t timeout) {
 //  verify(__debug_creator); // if this fails, the event is not created by reactor.
 
   verify(Reactor::sp_reactor_th_);
@@ -24,11 +24,28 @@ void Event::Wait() {
     // this value is set when wait is called.
     // for now only one coroutine can wait on an event.
     auto sp_coro = Coroutine::CurrentCoroutine();
-//    verify(sp_coro);
+    verify(sp_coro);
 //    verify(_dbg_p_scheduler_ == nullptr);
 //    _dbg_p_scheduler_ = Reactor::GetReactor().get();
-    auto& events = Reactor::GetReactor()->waiting_events_;
-    events.push_back(shared_from_this());
+    // TODO for now timeout queue and waiting queues are different. fix it.
+    if (timeout == 0) {
+      auto& events = Reactor::GetReactor()->waiting_events_; // Timeout???
+      events.push_back(shared_from_this());
+    } else {
+      auto& events = Reactor::GetReactor()->timeout_events_;
+      auto it = events.end();
+      wakeup_time_ = Time::now() + timeout;
+      events.push_back(shared_from_this());
+//      while (it != events.begin()) {
+//        it--;
+//        auto& it_event = *it;
+//        if (it_event->wakeup_time_ < wakeup_time_) {
+//          it++; // list insert happens before position.
+//          break;
+//        }
+//      }
+//      events.insert(it, shared_from_this());
+    }
     wp_coro_ = sp_coro;
     status_ = WAIT;
     sp_coro->Yield();
@@ -52,7 +69,7 @@ bool Event::Test() {
       status_ = READY;
     } else if (status_ == READY) {
       // This could happen for a quorum event.
-      Log_debug("event status ready, triggered?");
+//      Log_debug("event status ready, triggered?");
     } else if (status_ == DONE) {
       // do nothing
     } else {
@@ -70,7 +87,10 @@ Event::Event() {
 }
 
 bool IntEvent::TestTrigger() {
-  verify(status_ <= WAIT);
+  if (status_ > WAIT) {
+    Log_debug("Event already triggered!");
+    return false;
+  }
   if (value_ == target_) {
     if (status_ == INIT) {
       // do nothing until wait happens.
@@ -89,7 +109,9 @@ void SharedIntEvent::Wait(function<bool(int v)> f) {
   auto sp_ev =  Reactor::CreateSpEvent<IntEvent>();
   sp_ev->test_ = f;
   events_.push_back(sp_ev);
-  sp_ev->Wait();
+  sp_ev->Wait(240*1000*1000);
+  verify(sp_ev->status_ != Event::TIMEOUT);
+//  sp_ev->Wait();
 }
 
 } // namespace rrr

@@ -216,15 +216,15 @@ void Communicator::BroadcastDispatch(
   // FIXME fix this, this cause occ and perhaps 2pl to fail
   for (auto& pair : rpc_par_proxies_[par_id]) {
     if (pair.first != pair_leader_proxy.first) {
-      rrr::FutureAttr fuattr;
-      fuattr.callback =
+      rrr::FutureAttr fu2;
+      fu2.callback =
           [coo, this, callback](Future* fu) {
             int32_t ret;
             TxnOutput outputs;
             fu->get_reply() >> ret >> outputs;
             // do nothing
           };
-      Future::safe_release(pair.second->async_Dispatch(cmd_id, md, fuattr));
+      Future::safe_release(pair.second->async_Dispatch(cmd_id, md, fu2));
     }
   }
 }

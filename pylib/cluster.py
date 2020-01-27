@@ -5,12 +5,8 @@ import traceback
 import random
 import os
 import os.path
-
-try:
-    from StringIO import StringIO ## for Python 2
-except ImportError:
-    from io import StringIO ## for Python 3
-
+from six import string_types
+from six import StringIO
 import yaml
 import boto3
 
@@ -35,7 +31,7 @@ def Xput(*args, **kwargs):
 @roles('leaders')
 def ping():
     created_instances = get_created_instances()
-    for region, instances in created_instances.iteritems():
+    for region, instances in created_instances.items():
         for instance in instances:
             if instance.public_ip_address == env.roledefs['leaders'][0]: 
                 continue
@@ -51,7 +47,7 @@ def sshleader():
 @roles('leaders')
 def sshping():
     created_instances = get_created_instances()
-    for region, instances in created_instances.iteritems():
+    for region, instances in created_instances.items():
         for instance in instances:
             if instance.public_ip_address == env.roledefs['leaders'][0]: 
                 continue
@@ -78,7 +74,7 @@ def put_janus_config(copy_configs=[]):
     execute('ec2.set_instance_roles')
     
     # copy the specified files to the server
-    if isinstance(copy_configs, basestring):
+    if isinstance(copy_configs, string_types):
         copy_configs = copy_configs.split(':')
     for c in copy_configs:
         fn = os.path.basename(c)
@@ -94,7 +90,7 @@ def put_janus_config(copy_configs=[]):
     created_instances = get_created_instances()
     region_data = {region: [] for region in created_instances.keys()}
     leader_ip_address = env.roledefs['leaders'][0]
-    for region, instances in created_instances.iteritems():
+    for region, instances in created_instances.items():
         cnt = 0
         for instance in instances:
             proc_name = "{region}-{cnt}".format(region=region, cnt=cnt)
@@ -205,7 +201,7 @@ def setup_security_groups(regions=EC2_REGIONS.keys()):
     if 'security_groups' in env:
         return
 
-    if isinstance(regions, basestring):
+    if isinstance(regions, string_types):
         regions = regions.split(":")
 
     execute('ec2.set_instance_roles')

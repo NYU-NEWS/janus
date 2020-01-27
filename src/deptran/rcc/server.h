@@ -27,6 +27,7 @@ class RccServer : public TxLogServer, public RccGraph {
   map<parid_t, int32_t> epoch_replies_{};
   bool in_upgrade_epoch_{false};
   const int EPOCH_DURATION = 5;
+  list<shared_ptr<RccTx>> tx_pending_execution_{};
 
   RccServer();
   virtual ~RccServer();
@@ -70,6 +71,7 @@ class RccServer : public TxLogServer, public RccGraph {
                TxnOutput *output,
                const function<void()> &callback);
 
+
   virtual int OnInquire(epoch_t epoch,
                         txnid_t cmd_id,
                         shared_ptr<RccGraph> graph);
@@ -95,7 +97,7 @@ class RccServer : public TxLogServer, public RccGraph {
   bool HasAbortedAncestor(const RccScc &scc);
   bool AllAncFns(const RccScc &);
   void Execute(const RccScc &);
-  void Execute(RccTx &);
+  void Execute(shared_ptr<RccTx> );
   void Abort(const RccScc &);
   virtual int OnCommit(txnid_t txn_id,
                        rank_t rank,
