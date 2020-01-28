@@ -89,38 +89,24 @@ void Reactor::Loop(bool infinite) {
     for (auto it = events.begin(); it != events.end();) {
       Event& event = **it;
       event.Test();
-      if (event.status_ == Event::READY) {
-        ready_events.push_back(std::move(*it));
-        it = events.erase(it);
-      } else if (event.status_ == Event::DONE) {
-        it = events.erase(it);
-      } else {
-        it ++;
-      }
-    }
-    for (auto it = timeout_events_.begin(); it != timeout_events_.end();) {
-      auto sp_ev = *it;
-      const auto& status = sp_ev->status_;
+      const auto& status = event.status_;
       if (status == Event::READY) {
         ready_events.push_back(std::move(*it));
         it = events.erase(it);
-        continue;
       } else if (status == Event::DONE) {
         it = events.erase(it);
-        continue;
       } else if (status == Event::WAIT) {
         auto time = Time::now();
-        if (time >= sp_ev->wakeup_time_) {
-          if (sp_ev->status_ == Event::WAIT) {
-            sp_ev->status_ = Event::TIMEOUT;
-            ready_events.push_back(sp_ev);
+        const auto& wakeup_time = event.wakeup_time_;
+        if (wakeup_time > 0 && Time::now () > wakeup_time) {
+          if (status == Event::WAIT) {
+            event.status_ = Event::TIMEOUT;
+            ready_events.push_back(*it);
           }
-          it = timeout_events_.erase(it);
-        } else {
-          break;
+          it = events.erase(it);
         }
       } else {
-        verify(0);
+        it ++;
       }
     }
     for (auto& up_ev: ready_events) {

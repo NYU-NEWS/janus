@@ -28,14 +28,15 @@ void Event::Wait(uint64_t timeout) {
 //    verify(_dbg_p_scheduler_ == nullptr);
 //    _dbg_p_scheduler_ = Reactor::GetReactor().get();
     // TODO for now timeout queue and waiting queues are different. fix it.
+    auto& waiting_events = Reactor::GetReactor()->waiting_events_; // Timeout???
+    waiting_events.push_back(shared_from_this());
     if (timeout == 0) {
-      auto& events = Reactor::GetReactor()->waiting_events_; // Timeout???
-      events.push_back(shared_from_this());
+      wakeup_time_ = 0;
     } else {
-      auto& events = Reactor::GetReactor()->timeout_events_;
-      auto it = events.end();
+//      auto& timeout_events = Reactor::GetReactor()->timeout_events_;
+//      auto it = timeout_events.end();
       wakeup_time_ = Time::now() + timeout;
-      events.push_back(shared_from_this());
+//      timeout_events.push_back(shared_from_this());
 //      while (it != events.begin()) {
 //        it--;
 //        auto& it_event = *it;
