@@ -104,6 +104,8 @@ void Reactor::Loop(bool infinite) {
             ready_events.push_back(*it);
           }
           it = events.erase(it);
+        } else {
+          it++;
         }
       } else {
         it ++;
