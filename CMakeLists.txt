@@ -104,7 +104,7 @@ add_library(
         EXTERN_C
         extern_interface/scheduler.c
         extern_interface/scheduler.h
-)
+        src/deptran/access/coordinator.h)
 
 # yaml
 file(GLOB YAML_SRC
@@ -232,7 +232,7 @@ add_library(RRR
     ${RRR_SRC})
 
 add_library(MEMDB
-    ${MEMDB_SRC})
+    ${MEMDB_SRC} src/deptran/access/coordinator.h src/memdb/linked_vector.h)
 
 #add_library(JANUS
 #        ${DEPTRAN_SRC}
@@ -241,7 +241,7 @@ add_library(MEMDB
 add_executable(janusdb
         "src/deptran/s_main.cc"
         ${DEPTRAN_SRC}
-        ${BENCH_SRC})
+        ${BENCH_SRC} src/deptran/access/coordinator.h)
 
 add_executable(paxosbench
         "src/run.cc"
