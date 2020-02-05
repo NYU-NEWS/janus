@@ -24,6 +24,13 @@ namespace janus {
 #define cmdtype_t uint32_t
 #define groupid_t uint32_t
 
+/** ACCESS related macro **/
+#define snapshotid_t uint64_t  // access: ssid
+#define acc_status_t uint8_t   // status is either "unchecked" or "finalized"
+#define UNCHECKED (0x0)        // a txn is not finalized yet
+#define FINALIZED (0x1)        // finalized
+
+
 /** read and write type */
 #define OP_WRITE   (0x01)
 #define OP_READ    (0x02)

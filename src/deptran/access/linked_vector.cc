@@ -1,6 +1,6 @@
 #include "linked_vector.h"
 
-namespace mdb {
+namespace janus {
     template <class T>
     LinkedVector<T>::LinkedVector() : nodes(), free_head(-1), _front(-1), _back(-1), _queue_size(0) {
         // default constructor

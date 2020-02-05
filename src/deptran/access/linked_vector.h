@@ -6,7 +6,7 @@
 #include <type_traits>
 #include <vector>
 
-using std::aligned_storage_t ;
+using std::aligned_storage_t;
 /*
  * Customized data structure for managing transaction queue
  * on each data item (key+col pair).
@@ -17,7 +17,7 @@ using std::aligned_storage_t ;
  * An element in TxnQueue is a txn (a struct)
  * It's made general purpose
  */
-namespace mdb {
+namespace janus {
     // Define a node in the linked vector
     template <class T>
     struct Node {

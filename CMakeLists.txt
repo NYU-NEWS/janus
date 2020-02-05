@@ -232,7 +232,7 @@ add_library(RRR
     ${RRR_SRC})
 
 add_library(MEMDB
-    ${MEMDB_SRC} src/deptran/access/coordinator.h src/memdb/linked_vector.h)
+    ${MEMDB_SRC} src/deptran/access/coordinator.h src/deptran/access/linked_vector.h)
 
 #add_library(JANUS
 #        ${DEPTRAN_SRC}
@@ -241,7 +241,7 @@ add_library(MEMDB
 add_executable(janusdb
         "src/deptran/s_main.cc"
         ${DEPTRAN_SRC}
-        ${BENCH_SRC} src/deptran/access/coordinator.h)
+        ${BENCH_SRC} src/deptran/access/coordinator.h src/deptran/access/row.h src/deptran/access/tx.h)
 
 add_executable(paxosbench
         "src/run.cc"
