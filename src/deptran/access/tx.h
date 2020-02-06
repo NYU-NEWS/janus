@@ -9,12 +9,11 @@
 #include "row.h"
 
 namespace janus {
-    class AccTxn : public TxClassic {
+    class AccTxn : public Tx {
     public:
-        using TxClassic::TxClassic;
-
-        AccRow* CreateRow(const mdb::Schema *schema,
-                          const std::vector<mdb::Value> &values) override;
+        // hides the CreateRow virtual function in Tx
+        mdb::Row* CreateRow(const mdb::Schema *schema,
+                            std::vector<mdb::Value>&& values);
 
         bool ReadColumn(Row *row,
                         colid_t col_id,
@@ -26,25 +25,19 @@ namespace janus {
                          std::vector<Value> *values,
                          int hint_flag) override;
 
+        // hides the WriteColumn virtual function in Tx
         bool WriteColumn(Row *row,
                          colid_t col_id,
-                         const Value &value,
-                         int hint_flag) override;
+                         Value&& value,
+                         int hint_flag);
 
+        // hides the WriteColumns virtual function in Tx
         bool WriteColumns(Row *row,
                           const std::vector<colid_t> &col_ids,
-                          const std::vector<Value> &values,
-                          int hint_flag) override;
+                          std::vector<Value>&& values,
+                          int hint_flag);
 
         bool InsertRow(Table *tbl, Row *row) override;
-
-        AccRow* Query(mdb::Table *tbl,
-                      const mdb::MultiBlob &mb,
-                      int64_t row_context_id = 0) override;
-
-        AccRow* Query(mdb::Table *tbl,
-                      vector<Value> &primary_keys,
-                      int64_t row_context_id = 0) override;
 
         ~AccTxn() override;
     };

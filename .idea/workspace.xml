@@ -21,10 +21,9 @@
   <component name="ChangeListManager">
     <list default="true" id="90fe84fa-ca18-4530-9a88-ce9ad2f7923a" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/access/row.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/access/row.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/deptran/access/tx.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/access/tx.cc" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/deptran/access/tx.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/access/tx.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/constants.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/constants.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/tx.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/tx.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -608,7 +607,7 @@
       <workItem from="1580833427401" duration="10012000" />
       <workItem from="1580916887109" duration="2582000" />
       <workItem from="1580919902848" duration="10203000" />
-      <workItem from="1581003363495" duration="6277000" />
+      <workItem from="1581003363495" duration="8320000" />
     </task>
     <servers />
   </component>
