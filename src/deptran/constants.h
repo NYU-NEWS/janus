@@ -26,9 +26,10 @@ namespace janus {
 
 /** ACCESS related macro **/
 #define snapshotid_t uint64_t  // access: ssid
-#define acc_status_t uint8_t   // status is either "unchecked" or "finalized"
-#define UNCHECKED (0x0)        // a txn is not finalized yet
-#define FINALIZED (0x1)        // finalized
+#define acc_status_t uint8_t   // status is either "unchecked," "validating", or "finalized"
+#define UNCHECKED (0x0)        // a txn is not checked yet
+#define VALIDATING (0x1)       // Being validated, e.g., have received validation message
+#define FINALIZED (0x2)        // finalized
 
 
 /** read and write type */
