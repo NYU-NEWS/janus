@@ -21,9 +21,12 @@
   <component name="ChangeListManager">
     <list default="true" id="90fe84fa-ca18-4530-9a88-ce9ad2f7923a" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/access/linked_vector.cc" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/access/linked_vector.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/access/linked_vector.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/access/row.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/access/row.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/access/row.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/access/row.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/deptran/access/tx.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/access/tx.cc" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/deptran/access/tx.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/access/tx.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/tx.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/tx.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -72,6 +75,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="ASKED_ADD_EXTERNAL_FILES" value="true" />
+    <property name="OCFindUsagesOptions.isSearchForTextOccurrences" value="false" />
     <property name="SHARE_PROJECT_CONFIGURATION_FILES" value="true" />
     <property name="SearchEverywhereHistoryKey" value="refcou&#9;null&#9;null&#10;clock_gettime&#9;null&#9;null" />
     <property name="WebServerToolWindowFactoryState" value="false" />
@@ -436,23 +440,19 @@
     </configuration>
     <list>
       <item itemvalue="CMake Application.Build All" />
+      <item itemvalue="CMake Application.EXTERN_C" />
+      <item itemvalue="CMake Application.MEMDB" />
+      <item itemvalue="CMake Application.RRR" />
+      <item itemvalue="CMake Application.TEST" />
+      <item itemvalue="CMake Application.YAMLCPP" />
+      <item itemvalue="CMake Application.gen-rpc" />
       <item itemvalue="CMake Application.janus-1c1s-tpca_zipf_1.0" />
-      <item itemvalue="CMake Application.troad-1c1s-tpca_zipf_1.0" />
-      <item itemvalue="CMake Application.troad-1c1s-tpca_zipf_1.0-con_100" />
-      <item itemvalue="CMake Application.troad-3c3s3r-tpca_zipf_1.0-con_100" />
-      <item itemvalue="CMake Application.troad-3c3s3r-tpcc-con_100" />
-      <item itemvalue="CMake Application.troad-1c1s-tpcc_no-con_1" />
-      <item itemvalue="CMake Application.troad-64c8s-tpca-con_100" />
-      <item itemvalue="CMake Application.troad-64c8s-tpcc-con_100" />
       <item itemvalue="CMake Application.janus-1c1s-tpcc_no-con_1" />
       <item itemvalue="CMake Application.janus-3c3s-tpca_zipf_1.0-con_100" />
-      <item itemvalue="CMake Application.janus-64c8s-tpca_zipf_1.0-con_100" />
       <item itemvalue="CMake Application.janus-3c3s3r-tpca-con_100" />
       <item itemvalue="CMake Application.janus-3c3s3r-tpcc-con_100" />
+      <item itemvalue="CMake Application.janus-64c8s-tpca_zipf_1.0-con_100" />
       <item itemvalue="CMake Application.janus-64c8s-tpcc-con_100" />
-      <item itemvalue="CMake Application.rcc-1c1s-tpca_zipf_1.0" />
-      <item itemvalue="CMake Application.rcc-1c1s-tpca_zipf_1.0_con_1" />
-      <item itemvalue="CMake Application.rcc-64c8s-tpcc-con_100" />
       <item itemvalue="CMake Application.none-1c1s-rw-con_100" />
       <item itemvalue="CMake Application.none-1c1s-rw" />
       <item itemvalue="CMake Application.none-1c1s-tpcc-con_100" />
@@ -462,30 +462,34 @@
       <item itemvalue="CMake Application.none-3c3s-tpcc_no-con_100" />
       <item itemvalue="CMake Application.none-3c3s3r-tpca-con_100" />
       <item itemvalue="CMake Application.none-64c8s-rw-con_100" />
-      <item itemvalue="CMake Application.tapir-2c2s-tpcc-con_100" />
+      <item itemvalue="CMake Application.occ_paxos-1c1s-tpca_zipf_1.0-con100" />
+      <item itemvalue="CMake Application.occ_paxos-3c1s3r-tpca_zipf_1.0_con100" />
+      <item itemvalue="CMake Application.occ_paxos-3c3s-tpca_zipf_1.0_con100" />
+      <item itemvalue="CMake Application.occ_paxos-3c3s3r-tpca_zipf_1.0" />
+      <item itemvalue="CMake Application.occ_paxos-3c3s3r-tpca_zipf_1.0_con100" />
+      <item itemvalue="CMake Application.paxosbench-test" />
+      <item itemvalue="CMake Application.rcc-1c1s-tpca_zipf_1.0" />
+      <item itemvalue="CMake Application.rcc-1c1s-tpca_zipf_1.0_con_1" />
+      <item itemvalue="CMake Application.rcc-64c8s-tpcc-con_100" />
       <item itemvalue="CMake Application.tapir-1c1s-tpca-con_100" />
+      <item itemvalue="CMake Application.tapir-2c2s-tpcc-con_100" />
       <item itemvalue="CMake Application.tpl_ww-1c1s-tpca_zipf_1.0-con100" />
       <item itemvalue="CMake Application.tpl_ww-3c3s3r-tpca_zipf_1.0-con_100" />
       <item itemvalue="CMake Application.tpl_ww-paxos-1c1s-tpca_zipf_1.0-con100" />
-      <item itemvalue="CMake Application.tpl_ww-paxos-1c1s3r-tpca_zipf_1.0" />
       <item itemvalue="CMake Application.tpl_ww-paxos-1c1s-tpca_zipf_1.0" />
       <item itemvalue="CMake Application.tpl_ww-paxos-1c1s-tpcc" />
+      <item itemvalue="CMake Application.tpl_ww-paxos-1c1s3r-tpca_zipf_1.0" />
       <item itemvalue="CMake Application.tpl_ww-paxos-2c2s-tpca_zipf_1.0" />
       <item itemvalue="CMake Application.tpl_ww-paxos-3c3s3r-tpca_zipf_1.0" />
       <item itemvalue="CMake Application.tpl_ww-paxos-3c3s3r-tpcc-con100" />
       <item itemvalue="CMake Application.tpl_ww-tpca_zipf_1.0-con_100" />
-      <item itemvalue="CMake Application.occ_paxos-1c1s-tpca_zipf_1.0-con100" />
-      <item itemvalue="CMake Application.occ_paxos-3c3s3r-tpca_zipf_1.0_con100" />
-      <item itemvalue="CMake Application.occ_paxos-3c3s-tpca_zipf_1.0_con100" />
-      <item itemvalue="CMake Application.occ_paxos-3c1s3r-tpca_zipf_1.0_con100" />
-      <item itemvalue="CMake Application.occ_paxos-3c3s3r-tpca_zipf_1.0" />
-      <item itemvalue="CMake Application.paxosbench-test" />
-      <item itemvalue="CMake Application.EXTERN_C" />
-      <item itemvalue="CMake Application.gen-rpc" />
-      <item itemvalue="CMake Application.MEMDB" />
-      <item itemvalue="CMake Application.RRR" />
-      <item itemvalue="CMake Application.TEST" />
-      <item itemvalue="CMake Application.YAMLCPP" />
+      <item itemvalue="CMake Application.troad-1c1s-tpca_zipf_1.0-con_100" />
+      <item itemvalue="CMake Application.troad-1c1s-tpca_zipf_1.0" />
+      <item itemvalue="CMake Application.troad-1c1s-tpcc_no-con_1" />
+      <item itemvalue="CMake Application.troad-3c3s3r-tpca_zipf_1.0-con_100" />
+      <item itemvalue="CMake Application.troad-3c3s3r-tpcc-con_100" />
+      <item itemvalue="CMake Application.troad-64c8s-tpca-con_100" />
+      <item itemvalue="CMake Application.troad-64c8s-tpcc-con_100" />
     </list>
   </component>
   <component name="ServiceViewManager">
@@ -607,7 +611,9 @@
       <workItem from="1580833427401" duration="10012000" />
       <workItem from="1580916887109" duration="2582000" />
       <workItem from="1580919902848" duration="10203000" />
-      <workItem from="1581003363495" duration="8320000" />
+      <workItem from="1581003363495" duration="22799000" />
+      <workItem from="1581038060037" duration="1543000" />
+      <workItem from="1581113271541" duration="3775000" />
     </task>
     <servers />
   </component>
@@ -669,12 +675,12 @@
       <screen x="0" y="23" width="1920" height="996" />
     </state>
     <state x="740" y="208" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.23.1920.996/-1440.23.1440.877@0.23.1920.996" timestamp="1580920547794" />
-    <state x="624" y="290" width="673" height="473" key="find.popup" timestamp="1580939244770">
+    <state x="624" y="290" width="673" height="473" key="find.popup" timestamp="1581023994261">
       <screen x="0" y="23" width="1920" height="997" />
     </state>
     <state x="624" y="289" width="673" height="462" key="find.popup/0.23.1920.994/-1440.23.1440.877@0.23.1920.994" timestamp="1580917525088" />
     <state x="624" y="290" width="673" height="472" key="find.popup/0.23.1920.996/-1440.23.1440.877@0.23.1920.996" timestamp="1580921022677" />
-    <state x="624" y="290" width="673" height="473" key="find.popup/0.23.1920.997/-1440.23.1440.877@0.23.1920.997" timestamp="1580939244770" />
+    <state x="624" y="290" width="673" height="473" key="find.popup/0.23.1920.997/-1440.23.1440.877@0.23.1920.997" timestamp="1581023994261" />
     <state width="600" height="424" key="javadoc.popup" timestamp="1581006028537">
       <screen x="0" y="23" width="1920" height="996" />
     </state>
@@ -845,6 +851,10 @@
           <url>file://$PROJECT_DIR$/src/deptran/troad/commo.cc</url>
           <line>129</line>
           <option name="timeStamp" value="187" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/src/deptran/access/row.cc</url>
+          <option name="timeStamp" value="188" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

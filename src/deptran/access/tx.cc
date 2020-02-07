@@ -3,14 +3,18 @@
 namespace janus {
     // TODO: fill in these stubs
     mdb::Row* AccTxn::CreateRow(const mdb::Schema *schema,
-                                std::vector<mdb::Value>&& values) {
-        return nullptr;
+                                std::vector<mdb::Value>& values) {
+        verify(values.size() == schema->columns_count());
+        auto* new_row = new AccRow();
+        return new_row->create(schema, values);
     }
 
     bool AccTxn::ReadColumn(Row *row,
                             colid_t col_id,
                             Value *value,
                             int hint_flag) {
+        auto acc_row = dynamic_cast<AccRow*>(row);
+
         return false;
     }
 

@@ -13,7 +13,7 @@ namespace janus {
     public:
         // hides the CreateRow virtual function in Tx
         mdb::Row* CreateRow(const mdb::Schema *schema,
-                            std::vector<mdb::Value>&& values);
+                            std::vector<mdb::Value>& values);
 
         bool ReadColumn(Row *row,
                         colid_t col_id,
