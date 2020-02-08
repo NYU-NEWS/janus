@@ -39,12 +39,15 @@ namespace janus {
             status = stat;
             value = v;
         }
+        const mdb::Value* get_value() {
+            return &value;
+        }
     };
 
     class AccRow : public mdb::Row {
     public:
-        AccRow* create(const mdb::Schema *schema, std::vector<mdb::Value>& values);
-        //bool read_column(mdb::colid_t col_id, mdb::Value* value);
+        AccRow* create(const mdb::Schema *schema, std::vector<mdb::Value>&& values);
+        bool read_column(mdb::colid_t col_id, const mdb::Value*& value);
 
     private:
         // a map of txn_q; keys are cols, values are linkedvectors that holding txns (versions)
