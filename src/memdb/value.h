@@ -28,6 +28,7 @@ public:
     explicit Value(const std::string& s): k_(STR), p_str_(new std::string(s)) {}
     explicit Value(const char* str): k_(STR), p_str_(new std::string(str)) {}
 
+    Value(Value&&) /*noexcept*/ = default;
     Value(const Value& o) {
         k_ = o.k_;
         i32_ = o.i32_;
@@ -42,6 +43,20 @@ public:
         if (k_ == STR) {
             delete p_str_;
         }
+    }
+
+    // let's add a move assign operator for ACCESS
+    Value& operator=(Value&& that) noexcept {
+        verify(this != &that);
+        if (k_ == STR) {
+            delete p_str_;
+            p_str_ = new std::string(std::move(*that.p_str_));
+        }
+        k_ = that.k_;
+        i32_ = that.i32_;
+        i64_ = that.i64_;
+        double_ = that.double_;
+        return *this;
     }
 
     const Value& operator= (const Value& o) {
