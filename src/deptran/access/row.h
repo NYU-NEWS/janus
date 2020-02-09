@@ -48,7 +48,7 @@ namespace janus {
     public:
         AccRow* create(const mdb::Schema *schema, std::vector<mdb::Value>&& values);
         bool read_column(mdb::colid_t col_id, const mdb::Value*& value);
-
+        bool write_column(mdb::colid_t col_id, mdb::Value&& value);
     private:
         // a map of txn_q; keys are cols, values are linkedvectors that holding txns (versions)
         std::unordered_map<mdb::colid_t, LinkedVector<AccTxnRec>> txn_queue;

@@ -22,4 +22,14 @@ namespace janus {
         value = txn_queue.at(col_id).back().get_element().get_value();
         return true;
     }
+
+    bool AccRow::write_column(mdb::colid_t col_id, mdb::Value&& value) {
+        if (col_id >= txn_queue.size()) {
+            return false;
+        }
+        // push back to the txn queue
+        txn_queue.at(col_id).push_back(Node<AccTxnRec>(std::move(AccTxnRec(std::move(value)))));
+        return true;
+    }
+
 }

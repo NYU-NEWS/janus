@@ -26,18 +26,18 @@ namespace janus {
                          int hint_flag) override;
 
         // hides the WriteColumn virtual function in Tx
-        bool WriteColumn(Row *row,
+        static bool WriteColumn(Row *row,
                          colid_t col_id,
                          Value&& value,
                          int hint_flag);
 
         // hides the WriteColumns virtual function in Tx
-        bool WriteColumns(Row *row,
+        static bool WriteColumns(Row *row,
                           const std::vector<colid_t> &col_ids,
                           std::vector<Value>&& values,
                           int hint_flag);
 
-        bool InsertRow(Table *tbl, Row *row) override;
+        //bool InsertRow(Table *tbl, Row *row) override;
 
         ~AccTxn() override;
     };
