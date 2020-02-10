@@ -430,7 +430,8 @@ map<string, int> &Frame::FrameNameToMode() {
       {"mdcc",          MODE_MDCC},
       {"multi_paxos",   MODE_MULTI_PAXOS},
       {"epaxos",        MODE_NOT_READY},
-      {"rep_commit",    MODE_NOT_READY}
+      {"rep_commit",    MODE_NOT_READY},
+      {"acc",           MODE_ACC}
   };
   return frame_name_mode_s;
 }
