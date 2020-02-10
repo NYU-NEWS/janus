@@ -3,11 +3,12 @@
 namespace janus {
     AccRow* AccRow::create(const mdb::Schema *schema,
                            std::vector<mdb::Value>&& values) {
+        auto* new_row = new AccRow();
         for (mdb::colid_t col_id = 0; col_id < values.size(); ++col_id) {
             // write values to each col in order
-            txn_queue.emplace(col_id, AccTxnRec(std::move(values.at(col_id))));
+            new_row->txn_queue.emplace(col_id, AccTxnRec(std::move(values.at(col_id))));
         }
-        return this;
+        return new_row;
     }
 
     bool AccRow::read_column(mdb::colid_t col_id, const mdb::Value*& value) {

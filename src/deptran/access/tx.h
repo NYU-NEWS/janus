@@ -4,16 +4,17 @@
 #pragma once
 
 #include <memdb/value.h>
-#include <deptran/classic/tx.h>
+#include <deptran/tx.h>
 #include "constants.h"
 #include "row.h"
 
 namespace janus {
     class AccTxn : public Tx {
+        using Tx::Tx;
     public:
         // hides the CreateRow virtual function in Tx
-        static mdb::Row* CreateRow(const mdb::Schema* schema,
-                            std::vector<mdb::Value>&& values);
+        //static mdb::Row* CreateRow(const mdb::Schema* schema,
+        //                    std::vector<mdb::Value>&& values);
 
         static bool ReadColumn(Row *row,
                         colid_t col_id,
@@ -40,6 +41,9 @@ namespace janus {
         //bool InsertRow(Table *tbl, Row *row) override;
 
         ~AccTxn() override;
+    private:
+        txnid_t tid;
+
     };
 
 }   // namespace janus

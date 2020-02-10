@@ -46,7 +46,7 @@ namespace janus {
 
     class AccRow : public mdb::Row {
     public:
-        AccRow* create(const mdb::Schema *schema, std::vector<mdb::Value>&& values);
+        static AccRow* create(const mdb::Schema *schema, std::vector<mdb::Value>&& values);
         bool read_column(mdb::colid_t col_id, const mdb::Value*& value);
         bool write_column(mdb::colid_t col_id, mdb::Value&& value);
     private:

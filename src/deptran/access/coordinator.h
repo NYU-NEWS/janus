@@ -6,9 +6,10 @@
 #include "deptran/classic/coordinator.h"
 
 namespace janus {
-    class CoordinatorAccess : public CoordinatorClassic {
+    class CoordinatorAcc : public CoordinatorClassic {
     public:
         using CoordinatorClassic::CoordinatorClassic;
-
+        enum Phase {INIT_END=0, DISPATCH=1};
+        void GotoNextPhase() override;
     };
 } // namespace janus
