@@ -100,7 +100,7 @@ namespace janus {
 #define MODE_TAPIR         (0x100)
 #define MODE_MENCIUS       (0x200)
 #define MODE_NOT_READY     (0x00)
-#define MODE_ACC           (0x3)
+#define MODE_ACC           (0x33)
 
 #define OP_IR   (0x1)
 #define OP_DR   (0x2)
