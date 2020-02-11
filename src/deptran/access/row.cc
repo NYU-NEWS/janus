@@ -1,14 +1,21 @@
+#include <memdb/value.h>
 #include "row.h"
 
 namespace janus {
     AccRow* AccRow::create(const mdb::Schema *schema,
-                           std::vector<mdb::Value>&& values) {
-        auto* new_row = new AccRow();
+                           std::vector<mdb::Value>& values) {
+        std::vector<const mdb::Value*> values_ptr(values.size(), nullptr);
+        size_t fill_counter = 0;
+        for (auto it = values.begin(); it != values.end(); ++it) {
+            fill_values_ptr(schema, values_ptr, *it, fill_counter);
+            fill_counter++;
+        }
+        auto* raw_row = new AccRow();
         for (mdb::colid_t col_id = 0; col_id < values.size(); ++col_id) {
             // write values to each col in order
-            new_row->txn_queue.emplace(col_id, AccTxnRec(std::move(values.at(col_id))));
+            raw_row->txn_queue.emplace(col_id, AccTxnRec(std::move(values.at(col_id))));
         }
-        return new_row;
+        return (AccRow*)mdb::Row::create(raw_row, schema, values_ptr);
     }
 
     bool AccRow::read_column(mdb::colid_t col_id, const mdb::Value*& value) {

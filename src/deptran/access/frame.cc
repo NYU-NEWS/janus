@@ -31,7 +31,7 @@ namespace janus {
     mdb::Row* FrameAcc::CreateRow(const mdb::Schema *schema,
                                   vector<Value> &row_data) {
         verify(row_data.size() == schema->columns_count());
-        return (mdb::Row*)AccRow::create(schema, std::move(row_data));
+        return (mdb::Row*)AccRow::create(schema, row_data);
     }
 
     shared_ptr<Tx> FrameAcc::CreateTx(epoch_t epoch, txnid_t tid,
