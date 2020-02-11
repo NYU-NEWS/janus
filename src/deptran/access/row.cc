@@ -18,7 +18,7 @@ namespace janus {
         return (AccRow*)mdb::Row::create(raw_row, schema, values_ptr);
     }
 
-    bool AccRow::read_column(mdb::colid_t col_id, const mdb::Value*& value) {
+    bool AccRow::read_column(mdb::colid_t col_id, mdb::Value* value) {
         // TODO: change this logic, now it reads back() for testing
         if (col_id >= txn_queue.size()) {
             // col_id is invalid. We're doing a trick here.
@@ -27,7 +27,7 @@ namespace janus {
             value = nullptr;
             return false;
         }
-        value = txn_queue.at(col_id).back().get_element().get_value();
+        *value = txn_queue.at(col_id).back().get_element().get_value();
         return true;
     }
 

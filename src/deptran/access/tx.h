@@ -12,14 +12,11 @@ namespace janus {
     class AccTxn : public Tx {
         using Tx::Tx;
     public:
-        // hides the CreateRow virtual function in Tx
-        //static mdb::Row* CreateRow(const mdb::Schema* schema,
-        //                    std::vector<mdb::Value>&& values);
-
-        static bool ReadColumn(Row *row,
+        /* leave it as is for now, should pass in a const Value*& to avoid copy */
+        bool ReadColumn(Row *row,
                         colid_t col_id,
-                        const Value*& value,
-                        int hint_flag);
+                        Value* value,
+                        int hint_flag) override;
 
         bool ReadColumns(Row *row,
                          const std::vector<colid_t>& col_ids,

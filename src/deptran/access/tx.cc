@@ -2,17 +2,9 @@
 
 namespace janus {
     // TODO: fill in these stubs
-    /*
-    mdb::Row* AccTxn::CreateRow(const mdb::Schema *schema,
-                                std::vector<mdb::Value>&& values) {
-        verify(values.size() == schema->columns_count());
-        auto* new_row = new AccRow();
-        return new_row->create(schema, std::move(values));
-    }
-    */
     bool AccTxn::ReadColumn(Row *row,
                             colid_t col_id,
-                            const Value*& value,
+                            Value* value,
                             int hint_flag) {
         verify(row != nullptr);
         // class downcasting to get AccRow
@@ -27,9 +19,9 @@ namespace janus {
         verify(row != nullptr);
         auto acc_row = dynamic_cast<AccRow*>(row);
         for (auto col_id : col_ids) {
-            const Value* v;
+            Value* v;
             if (acc_row->read_column(col_id, v)) {
-                values->push_back(*v);
+                values->push_back(std::move(*v));
             } else {
                 return false;
             }

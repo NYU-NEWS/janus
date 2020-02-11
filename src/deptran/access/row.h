@@ -35,15 +35,15 @@ namespace janus {
         AccTxnRec& operator=(const AccTxnRec&) = delete;
         AccTxnRec(txnid_t tid, snapshotid_t ss_id, acc_status_t stat, mdb::Value&& v)
         : txn_id(tid), ssid(ss_id), status(stat), value(std::move(v)) {}
-        const mdb::Value* get_value() {
-            return &value;
+        const mdb::Value& get_value() {
+            return value;
         }
     };
 
     class AccRow : public mdb::Row {
     public:
         static AccRow* create(const mdb::Schema *schema, std::vector<mdb::Value>& values);
-        bool read_column(mdb::colid_t col_id, const mdb::Value*& value);
+        bool read_column(mdb::colid_t col_id, mdb::Value* value);
         bool write_column(mdb::colid_t col_id, mdb::Value&& value, txnid_t tid);
     private:
         // a map of txn_q; keys are cols, values are linkedvectors that holding txns (versions)
