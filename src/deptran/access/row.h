@@ -24,21 +24,17 @@ namespace janus {
         mdb::Value value;       // the value of this write
 
         AccTxnRec() : txn_id(-1), ssid(-1), status(UNCHECKED) {}
-        explicit AccTxnRec(mdb::Value&& v) : txn_id(0), ssid(0), status(FINALIZED) {
-            // this constr is used when creating a new row
-            // I assume this is database propagation?
-            // txn_id and ssid are set to default value = 0
-            value = std::move(v);
-        }
-        AccTxnRec(AccTxnRec&&) /*noexcept*/ = default;
+        explicit AccTxnRec(mdb::Value&& v, txnid_t tid = 0, acc_status_t stat = UNCHECKED)
+        : txn_id(tid), ssid(0), status(stat), value(std::move(v)) {}
+        AccTxnRec(AccTxnRec&& that) noexcept
+        : txn_id(that.txn_id),
+          ssid(that.ssid),
+          status(that.status),
+          value(std::move(that.value)) {}
         AccTxnRec(const AccTxnRec&) = delete;
         AccTxnRec& operator=(const AccTxnRec&) = delete;
-        AccTxnRec(txnid_t tid, snapshotid_t ss_id, acc_status_t stat, mdb::Value&& v) {
-            txn_id = tid;
-            ssid = ss_id;
-            status = stat;
-            value = v;
-        }
+        AccTxnRec(txnid_t tid, snapshotid_t ss_id, acc_status_t stat, mdb::Value&& v)
+        : txn_id(tid), ssid(ss_id), status(stat), value(std::move(v)) {}
         const mdb::Value* get_value() {
             return &value;
         }
@@ -48,7 +44,7 @@ namespace janus {
     public:
         static AccRow* create(const mdb::Schema *schema, std::vector<mdb::Value>& values);
         bool read_column(mdb::colid_t col_id, const mdb::Value*& value);
-        bool write_column(mdb::colid_t col_id, mdb::Value&& value);
+        bool write_column(mdb::colid_t col_id, mdb::Value&& value, txnid_t tid);
     private:
         // a map of txn_q; keys are cols, values are linkedvectors that holding txns (versions)
         std::unordered_map<mdb::colid_t, LinkedVector<AccTxnRec>> txn_queue;

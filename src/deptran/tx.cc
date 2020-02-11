@@ -100,6 +100,16 @@ bool Tx::ReadColumns(Row *row,
 }
 
 bool Tx::WriteColumn(Row *row,
+                     colid_t col_id,
+                     Value &value,
+                     int hint_flag) {
+  return WriteColumn(row,
+                     col_id,
+                     const_cast<const Value&>(value),
+                     hint_flag);
+}
+
+bool Tx::WriteColumn(Row *row,
                        colid_t col_id,
                        const Value &value,
                        int hint_flag) {
@@ -107,6 +117,16 @@ bool Tx::WriteColumn(Row *row,
   auto ret = mdb_txn()->write_column(row, col_id, value);
   verify(ret == true);
   return true;
+}
+
+bool Tx::WriteColumns(Row *row,
+                      const std::vector<colid_t> &col_ids,
+                      std::vector<Value> &values,
+                      int hint_flag) {
+  return WriteColumns(row,
+                      col_ids,
+                      const_cast<const std::vector<Value>&>(values),
+                      hint_flag);
 }
 
 bool Tx::WriteColumns(Row *row,

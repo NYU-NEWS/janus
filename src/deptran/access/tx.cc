@@ -39,21 +39,21 @@ namespace janus {
 
     bool AccTxn::WriteColumn(Row *row,
                              colid_t col_id,
-                             Value&& value,
+                             Value& value,
                              int hint_flag) {
         verify(row != nullptr);
         auto acc_row = dynamic_cast<AccRow*>(row);
-        return acc_row->write_column(col_id, std::move(value));
+        return acc_row->write_column(col_id, std::move(value), this->tid_);
     }
 
     bool AccTxn::WriteColumns(Row *row,
                               const std::vector<colid_t> &col_ids,
-                              std::vector<Value>&& values,
+                              std::vector<Value>& values,
                               int hint_flag) {
         verify(row != nullptr);
         auto acc_row = dynamic_cast<AccRow*>(row);
         for (auto col_id : col_ids) {
-            if (!acc_row->write_column(col_id, std::move(values[col_id]))) {
+            if (!acc_row->write_column(col_id, std::move(values[col_id]), this->tid_)) {
                 return false;
             }
         }

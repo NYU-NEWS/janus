@@ -97,10 +97,22 @@ class Tx: public enable_shared_from_this<Tx> {
                            std::vector<Value> *values,
                            int hint_flag = TXN_INSTANT);
 
+  /* This is a helper function for temp fix --> Acc can pass in references*/
+  virtual bool WriteColumn(Row *row,
+                           colid_t col_id,
+                           Value &value,
+                           int hint_flag = TXN_INSTANT);
+
   virtual bool WriteColumn(Row *row,
                            colid_t col_id,
                            const Value &value,
                            int hint_flag = TXN_INSTANT);
+
+  /* This is a helper function for temp fix --> Acc can pass in references*/
+  virtual bool WriteColumns(Row *row,
+                            const std::vector<colid_t> &col_ids,
+                            std::vector<Value> &values,
+                            int hint_flag = TXN_INSTANT);
 
   virtual bool WriteColumns(Row *row,
                             const std::vector<colid_t> &col_ids,

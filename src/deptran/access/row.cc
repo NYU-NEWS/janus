@@ -13,7 +13,7 @@ namespace janus {
         auto* raw_row = new AccRow();
         for (mdb::colid_t col_id = 0; col_id < values.size(); ++col_id) {
             // write values to each col in order
-            raw_row->txn_queue.emplace(col_id, AccTxnRec(std::move(values.at(col_id))));
+            raw_row->txn_queue.emplace(col_id, AccTxnRec(std::move(values.at(col_id)), 0, FINALIZED));
         }
         return (AccRow*)mdb::Row::create(raw_row, schema, values_ptr);
     }
@@ -31,12 +31,12 @@ namespace janus {
         return true;
     }
 
-    bool AccRow::write_column(mdb::colid_t col_id, mdb::Value&& value) {
+    bool AccRow::write_column(mdb::colid_t col_id, mdb::Value&& value, txnid_t tid) {
         if (col_id >= txn_queue.size()) {
             return false;
         }
         // push back to the txn queue
-        txn_queue.at(col_id).push_back(Node<AccTxnRec>(std::move(AccTxnRec(std::move(value)))));
+        txn_queue.at(col_id).push_back(std::move(Node<AccTxnRec>(std::move(AccTxnRec(std::move(value), tid)))));
         return true;
     }
 
