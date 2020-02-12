@@ -35,6 +35,7 @@ public:
         double_ = o.double_;
         if (k_ == STR) {
             p_str_ = new std::string(std::move(*o.p_str_));
+            o.p_str_ = nullptr;
         }
     }
 
@@ -59,12 +60,15 @@ public:
         verify(this != &that);
         if (k_ == STR) {
             delete p_str_;
-            p_str_ = new std::string(std::move(*that.p_str_));
         }
         k_ = that.k_;
         i32_ = that.i32_;
         i64_ = that.i64_;
         double_ = that.double_;
+        if (k_ == STR) {
+            p_str_ = new std::string(std::move(*that.p_str_));
+            that.p_str_ = nullptr;
+        }
         return *this;
     }
 

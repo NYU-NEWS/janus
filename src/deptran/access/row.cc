@@ -11,11 +11,12 @@ namespace janus {
             fill_counter++;
         }
         auto* raw_row = new AccRow();
+        AccRow* new_row = (AccRow*)mdb::Row::create(raw_row, schema, values_ptr);
         for (mdb::colid_t col_id = 0; col_id < values.size(); ++col_id) {
             // write values to each col in order
-            raw_row->txn_queue.emplace(col_id, AccTxnRec(std::move(values.at(col_id)), 0, FINALIZED));
+            new_row->txn_queue.emplace(col_id, AccTxnRec(std::move(values.at(col_id)), 0, FINALIZED));
         }
-        return (AccRow*)mdb::Row::create(raw_row, schema, values_ptr);
+        return new_row;
     }
 
     bool AccRow::read_column(mdb::colid_t col_id, mdb::Value* value) {

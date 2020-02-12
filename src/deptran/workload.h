@@ -6,6 +6,7 @@
 #include "txn_reg.h"
 #include "2pl/tx.h"
 #include "snow/ro6.h"
+#include "access/row.h"
 
 namespace janus {
 
@@ -217,6 +218,9 @@ txn_reg_->regs_[txn][pie].sharder_ \
         break; \
     case MODE_RO6: \
         r = tx.CreateRow(schema, row_data); \
+        break; \
+    case MODE_ACC: \
+        r = AccRow::create(schema, row_data); \
         break; \
     default: \
         r = tx.CreateRow(schema, row_data); \

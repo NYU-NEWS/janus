@@ -346,20 +346,19 @@ void TpccRdWorkload::RegNewOrder() {
                cmd.input[TPCC_VAR_I_PRICE(i)].get_double() *
                cmd.input[TPCC_VAR_OL_QUANTITY(i)].get_i32()));
 
-           CREATE_ROW(tbl->schema(), vector<Value>(
-               {
-                 cmd.input[TPCC_VAR_D_ID],
-                 cmd.input[TPCC_VAR_W_ID],
-                 cmd.input[TPCC_VAR_O_ID],
-                 cmd.input[TPCC_VAR_OL_NUMBER(i)],
-                 cmd.input[TPCC_VAR_I_ID(i)],
-                 cmd.input[TPCC_VAR_S_W_ID(i)],
-                 cmd.input[TPCC_VAR_OL_DELIVER_D(i)],
-                 cmd.input[TPCC_VAR_OL_QUANTITY(i)],
-                 amount,
-                 cmd.input[TPCC_VAR_OL_DIST_INFO(i)]
-               }
-           ));
+           vector<Value> row_data = {
+                   cmd.input[TPCC_VAR_D_ID],
+                   cmd.input[TPCC_VAR_W_ID],
+                   cmd.input[TPCC_VAR_O_ID],
+                   cmd.input[TPCC_VAR_OL_NUMBER(i)],
+                   cmd.input[TPCC_VAR_I_ID(i)],
+                   cmd.input[TPCC_VAR_S_W_ID(i)],
+                   cmd.input[TPCC_VAR_OL_DELIVER_D(i)],
+                   cmd.input[TPCC_VAR_OL_QUANTITY(i)],
+                   amount,
+                   cmd.input[TPCC_VAR_OL_DIST_INFO(i)]
+           };
+           CREATE_ROW(tbl->schema(), row_data);
 
            tx.InsertRow(tbl, r);
            *res = SUCCESS;
