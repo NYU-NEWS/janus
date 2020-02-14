@@ -40,12 +40,16 @@ namespace janus {
         explicit AccColumn(mdb::Value&& v);
         AccColumn(const AccColumn&) = delete;   // no copy
         AccColumn& operator=(const AccColumn&) = delete; // no copy
-        //void create(mdb::Value&& v);
         const mdb::Value& read() const;
         void write(mdb::Value&& v, txnid_t tid);
     private:
         // a vector of txns as a versioned column --> txn queue
         std::vector<AccTxnRec> txn_queue;
         const int INITIAL_QUEUE_SIZE = 100;
+        snapshotid_t ssid_cur = 0;
+        std::pair<int, snapshotid_t> finalized_version =
+                std::make_pair(0, 0); // points to the most recent finalized version
+                                              // (txn_queue index, ssid)
+        void update_finalized();    // called whenever commit a write
     };
 }
