@@ -3,7 +3,7 @@
 //
 #pragma once
 
-#include "linked_vector.h"
+//#include "linked_vector.h"
 #include "constants.h"
 #include <unordered_map>
 #include <memdb/value.h>
@@ -47,7 +47,7 @@ namespace janus {
         bool write_column(mdb::colid_t col_id, mdb::Value&& value, txnid_t tid);
     private:
         // a map of txn_q; keys are cols, values are linkedvectors that holding txns (versions)
-        std::unordered_map<mdb::colid_t, LinkedVector<AccTxnRec>> txn_queue;
+        std::unordered_map<mdb::colid_t, std::vector<AccTxnRec>> txn_queue;
 
 
     };

@@ -44,8 +44,9 @@ namespace janus {
                               int hint_flag) {
         verify(row != nullptr);
         auto acc_row = dynamic_cast<AccRow*>(row);
+        int v_counter = 0;
         for (auto col_id : col_ids) {
-            if (!acc_row->write_column(col_id, std::move(values[col_id]), this->tid_)) {
+            if (!acc_row->write_column(col_id, std::move(values[v_counter++]), this->tid_)) {
                 return false;
             }
         }

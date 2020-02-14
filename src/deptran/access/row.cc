@@ -12,10 +12,18 @@ namespace janus {
         }
         auto* raw_row = new AccRow();
         AccRow* new_row = (AccRow*)mdb::Row::create(raw_row, schema, values_ptr);
+        for (auto col_info_it = schema->begin(); col_info_it != schema->end(); col_info_it++) {
+            int col_id = schema->get_column_id(col_info_it->name);
+            new_row->txn_queue.emplace(col_id, std::vector<AccTxnRec>());
+            new_row->txn_queue.at(col_id).emplace_back(std::move(values.at(col_id)), 0, FINALIZED);
+        }
+        /*
         for (mdb::colid_t col_id = 0; col_id < values.size(); ++col_id) {
             // write values to each col in order
-            new_row->txn_queue.emplace(col_id, AccTxnRec(std::move(values.at(col_id)), 0, FINALIZED));
+            new_row->txn_queue.emplace(col_id, std::vector<AccTxnRec>());
+            new_row->txn_queue.at(col_id).emplace_back(std::move(values.at(col_id)), 0, FINALIZED);
         }
+        */
         return new_row;
     }
 
@@ -28,7 +36,7 @@ namespace janus {
             value = nullptr;
             return false;
         }
-        *value = txn_queue.at(col_id).back().get_element().get_value();
+        *value = txn_queue.at(col_id).back().get_value();
         return true;
     }
 
@@ -37,8 +45,7 @@ namespace janus {
             return false;
         }
         // push back to the txn queue
-        txn_queue.at(col_id).push_back(std::move(Node<AccTxnRec>(std::move(AccTxnRec(std::move(value), tid)))));
+        txn_queue.at(col_id).push_back(std::move(AccTxnRec(std::move(value), tid)));
         return true;
     }
-
 }
