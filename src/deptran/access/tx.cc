@@ -9,7 +9,7 @@ namespace janus {
         verify(row != nullptr);
         // class downcasting to get AccRow
         auto acc_row = dynamic_cast<AccRow*>(row);
-        return acc_row->read_column(col_id, value);
+        return acc_row->read_column(col_id, value, sg.metadata);
     }
 
     bool AccTxn::ReadColumns(Row *row,
@@ -19,8 +19,9 @@ namespace janus {
         verify(row != nullptr);
         auto acc_row = dynamic_cast<AccRow*>(row);
         for (auto col_id : col_ids) {
-            Value* v;
-            if (acc_row->read_column(col_id, v)) {
+            Value *v = nullptr;
+            if (acc_row->read_column(col_id, v, sg.metadata)) {
+                verify(v != nullptr);
                 values->push_back(std::move(*v));
             } else {
                 return false;
@@ -35,7 +36,7 @@ namespace janus {
                              int hint_flag) {
         verify(row != nullptr);
         auto acc_row = dynamic_cast<AccRow*>(row);
-        return acc_row->write_column(col_id, std::move(value), this->tid_);
+        return acc_row->write_column(col_id, std::move(value), this->tid_, sg.metadata);
     }
 
     bool AccTxn::WriteColumns(Row *row,
@@ -46,7 +47,7 @@ namespace janus {
         auto acc_row = dynamic_cast<AccRow*>(row);
         int v_counter = 0;
         for (auto col_id : col_ids) {
-            if (!acc_row->write_column(col_id, std::move(values[v_counter++]), this->tid_)) {
+            if (!acc_row->write_column(col_id, std::move(values[v_counter++]), this->tid_, sg.metadata)) {
                 return false;
             }
         }

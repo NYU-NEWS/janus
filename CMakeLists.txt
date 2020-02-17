@@ -241,7 +241,7 @@ add_library(MEMDB
 add_executable(janusdb
         "src/deptran/s_main.cc"
         ${DEPTRAN_SRC}
-        ${BENCH_SRC} src/deptran/access/coordinator.h src/deptran/access/row.h src/deptran/access/tx.h src/deptran/access/frame.h src/deptran/access/scheduler.h src/deptran/access/column.h)
+        ${BENCH_SRC} src/deptran/access/coordinator.h src/deptran/access/row.h src/deptran/access/tx.h src/deptran/access/frame.h src/deptran/access/scheduler.h src/deptran/access/column.h src/deptran/access/safeguard.h)
 
 add_executable(paxosbench
         "src/run.cc"

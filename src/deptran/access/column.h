@@ -4,7 +4,9 @@
 #pragma once
 
 #include "constants.h"
+#include "tx.h"
 #include <memdb/value.h>
+#include "safeguard.h"
 
 namespace janus {
     struct AccTxnRec {
@@ -12,7 +14,7 @@ namespace janus {
         // This is the element of a node in LinkedVector
         // Each txn record must be a write
         txnid_t txn_id;
-        snapshotid_t ssid;      // snapshot id
+        snapshotid_t ssid;      // snapshot id TODO: not needed in each Rec now, we have ssid_curr, take this out.
         acc_status_t status;    // either unchecked, validating, or finalized
         mdb::Value value;       // the value of this write
 
@@ -40,8 +42,8 @@ namespace janus {
         explicit AccColumn(mdb::Value&& v);
         AccColumn(const AccColumn&) = delete;   // no copy
         AccColumn& operator=(const AccColumn&) = delete; // no copy
-        const mdb::Value& read() const;
-        void write(mdb::Value&& v, txnid_t tid);
+        const mdb::Value& read(MetaData& metadata) const;
+        void write(mdb::Value&& v, txnid_t tid, MetaData& metadata);
     private:
         // a vector of txns as a versioned column --> txn queue
         std::vector<AccTxnRec> txn_queue;

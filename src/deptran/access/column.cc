@@ -11,18 +11,18 @@ namespace janus {
         update_finalized();
     }
 
-    const mdb::Value& AccColumn::read() const {
-        // TODO: fill in the read logic, now it returns the last element
-        //return txn_queue.back().get_value();
+    const mdb::Value& AccColumn::read(MetaData& metadata) const {
+        metadata.read_ssids[this] = finalized_version.second;
         return txn_queue.at(finalized_version.first).value;
     }
 
-    void AccColumn::write(mdb::Value&& v, txnid_t tid) {
+    void AccColumn::write(mdb::Value&& v, txnid_t tid, MetaData& metadata) {
         txn_queue.emplace_back(std::move(v), tid);
+        metadata.write_ssids[this] = ssid_cur++;
     }
 
     void AccColumn::update_finalized() {
-        int index = txn_queue.size() - 1;
+        unsigned long index = txn_queue.size() - 1;
         for (auto it = txn_queue.rbegin(); it != txn_queue.rend(); it++, index--) {
             if (it->status == FINALIZED) {
                 if (finalized_version.first == index) {

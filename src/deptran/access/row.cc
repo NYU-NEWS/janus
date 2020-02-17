@@ -24,7 +24,7 @@ namespace janus {
         return new_row;
     }
 
-    bool AccRow::read_column(mdb::colid_t col_id, mdb::Value* value) {
+    bool AccRow::read_column(mdb::colid_t col_id, mdb::Value* value, MetaData& metadata) {
         // TODO: change this logic, now it reads back() for testing
         if (col_id >= _row.size()) {
             // col_id is invalid. We're doing a trick here.
@@ -33,16 +33,16 @@ namespace janus {
             value = nullptr;
             return false;
         }
-        *value = _row.at(col_id).read();
+        *value = _row.at(col_id).read(metadata);
         return true;
     }
 
-    bool AccRow::write_column(mdb::colid_t col_id, mdb::Value&& value, txnid_t tid) {
+    bool AccRow::write_column(mdb::colid_t col_id, mdb::Value&& value, txnid_t tid, MetaData& metadata) {
         if (col_id >= _row.size()) {
             return false;
         }
         // push back to the txn queue
-        _row.at(col_id).write(std::move(value), tid);
+        _row.at(col_id).write(std::move(value), tid, metadata);
         return true;
     }
 }

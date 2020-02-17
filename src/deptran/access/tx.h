@@ -7,6 +7,7 @@
 #include <deptran/tx.h>
 #include "constants.h"
 #include "row.h"
+#include "safeguard.h"
 
 namespace janus {
     class AccTxn : public Tx {
@@ -39,8 +40,8 @@ namespace janus {
 
         ~AccTxn() override;
     private:
-        txnid_t tid;
-
+//        txnid_t tid;
+        SafeGuard sg;
     };
 
 }   // namespace janus
