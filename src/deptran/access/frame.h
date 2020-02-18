@@ -20,5 +20,6 @@ namespace janus {
                            vector<Value> &row_data) override;
        shared_ptr<Tx> CreateTx(epoch_t epoch, txnid_t tid,
                                bool ro, TxLogServer *mgr) override;
+       Communicator* CreateCommo(PollMgr *pollmgr) override;
    };
 }

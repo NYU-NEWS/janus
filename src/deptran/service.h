@@ -220,6 +220,15 @@ class ClassicServiceImpl : public ClassicService {
   void CommitFebruus(const txid_t& tx_id,
                      const uint64_t& timestamp,
                      int32_t* res, DeferredReply* defer) override;
+
+  void AccDispatch(const i64& cmd_id,
+                   const MarshallDeputy& cmd,
+                   int32_t* res,
+                   int8_t* is_consistent,
+                   uint64_t* ssid_low,
+                   uint64_t* ssid_high,
+                   TxnOutput* output,
+                   DeferredReply* defer_reply) override;
  protected:
   void RegisterStats();
 };

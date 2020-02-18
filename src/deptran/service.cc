@@ -13,6 +13,7 @@
 #include "janus/scheduler.h"
 #include "februus/scheduler.h"
 #include "benchmark_control_rpc.h"
+#include "access/scheduler.h"
 
 namespace janus {
 
@@ -398,6 +399,25 @@ void ClassicServiceImpl::CommitFebruus(const txid_t& tx_id,
   SchedulerFebruus* sched = (SchedulerFebruus*) dtxn_sched_;
   *res = sched->OnCommit(tx_id, timestamp);
   defer->reply();
+}
+
+void ClassicServiceImpl::AccDispatch(const i64& cmd_id,
+                                  const MarshallDeputy& md,
+                                  int32_t* res,
+                                  int8_t* is_consistent,
+                                  uint64_t* ssid_low,
+                                  uint64_t* ssid_high,
+                                  TxnOutput* output,
+                                  rrr::DeferredReply* defer){
+    // server-side handler of AccDispatch RPC
+    shared_ptr<Marshallable> sp = md.sp_data_;
+    auto* sched = (SchedulerAcc*) dtxn_sched_;
+    *is_consistent = CONSISTENT;
+    *ssid_low = 0;
+    *ssid_high = 0;
+    sched->OnDispatch(cmd_id, sp, is_consistent, ssid_low, ssid_high, *output);
+    *res = SUCCESS;  // OnDispatch always returns true
+    defer->reply();
 }
 
 void ClassicServiceImpl::RegisterStats() {

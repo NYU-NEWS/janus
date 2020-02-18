@@ -13,10 +13,10 @@ namespace janus {
                                              uint32_t id,
                                              shared_ptr<TxnRegistry> txn_reg) {
         verify(config != nullptr);
-        CoordinatorAcc *coord = new CoordinatorAcc(coo_id,
-                                                   benchmark,
-                                                   ccsi,
-                                                   id);
+        auto *coord = new CoordinatorAcc(coo_id,
+                                         benchmark,
+                                         ccsi,
+                                         id);
         coord->txn_reg_ = txn_reg;
         coord->frame_ = this;
         return coord;
@@ -40,4 +40,8 @@ namespace janus {
         return sp_tx;
     }
 
+    Communicator* FrameAcc::CreateCommo(PollMgr *pollmgr) {
+        commo_ = new AccCommo(pollmgr);
+        return commo_;
+    }
 }
