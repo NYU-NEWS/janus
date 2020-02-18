@@ -6,12 +6,12 @@ namespace janus {
                            std::vector<mdb::Value>& values) {
         std::vector<const mdb::Value*> values_ptr(values.size(), nullptr);
         size_t fill_counter = 0;
-        for (auto it = values.begin(); it != values.end(); ++it) {
-            fill_values_ptr(schema, values_ptr, *it, fill_counter);
+        for (auto& value : values) {
+            fill_values_ptr(schema, values_ptr, value, fill_counter);
             fill_counter++;
         }
         auto* raw_row = new AccRow();
-        AccRow* new_row = (AccRow*)mdb::Row::create(raw_row, schema, values_ptr);
+        auto* new_row = (AccRow*)mdb::Row::create(raw_row, schema, values_ptr);
         for (auto col_info_it = schema->begin(); col_info_it != schema->end(); col_info_it++) {
             int col_id = schema->get_column_id(col_info_it->name);
             new_row->_row.emplace(

@@ -156,6 +156,10 @@ abstract service Classic {
                       i32 ret);
 
   defer CommitFebruus(txid_t tx_id, uint64_t timestamp | i32 ret);
+
+  // RPCs for ACCESS
+  defer AccDispatch(i64 tid, MarshallDeputy cmd |
+                    i32 res, vector<uint64_t> ssids, TxnOutput output);
 }
 
 

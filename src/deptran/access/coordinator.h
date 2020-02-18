@@ -9,7 +9,8 @@ namespace janus {
     class CoordinatorAcc : public CoordinatorClassic {
     public:
         using CoordinatorClassic::CoordinatorClassic;
-        enum Phase {INIT_END=0, DISPATCH=1};
+        enum Phase {INIT_END=0, DISPATCH=1, VALIDATE=2, DECIDE=3};
         void GotoNextPhase() override;
+
     };
 } // namespace janus
