@@ -159,7 +159,7 @@ abstract service Classic {
 
   // RPCs for ACCESS
   defer AccDispatch(i64 tid, MarshallDeputy cmd |
-                    i32 res, i8 is_consistent, uint64_t ssid_low, uint64_t ssid_high, TxnOutput output);
+                    i32 res, uint64_t ssid_low, uint64_t ssid_high, uint64_t ssid_highest, TxnOutput output);
 }
 
 

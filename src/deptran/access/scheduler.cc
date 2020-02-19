@@ -1,11 +1,12 @@
 #include "scheduler.h"
+#include "tx.h"
 
 namespace janus {
     bool SchedulerAcc::OnDispatch(cmdid_t cmd_id,
                                   const shared_ptr<Marshallable>& cmd,  // TODO: make sure const ref works
-                                  int8_t *is_consistent,
                                   uint64_t *ssid_low,
                                   uint64_t *ssid_high,
+                                  uint64_t *ssid_highest,
                                   TxnOutput &ret_output) {
         // Step 1: dispatch and execute pieces
         auto sp_vec_piece = dynamic_pointer_cast<VecPieceData>(cmd)->sp_vec_piece_data_;
@@ -28,9 +29,11 @@ namespace janus {
         }
         // Step 2: do local safeguard consistency check.
         // TODO: fill in logics
-        *ssid_low = 10;
-        *ssid_high = 100;
-        *is_consistent = CONSISTENT;
-        return true;
+        auto acc_txn = dynamic_pointer_cast<AccTxn>(tx);
+        // fill return values
+        *ssid_low = acc_txn->sg.metadata.highest_ssid_low;
+        *ssid_high = acc_txn->sg.metadata.lowest_ssid_high;
+        *ssid_highest = acc_txn->sg.metadata.highest_ssid_high;
+        return acc_txn->sg.metadata.validate_abort;
     }
 }

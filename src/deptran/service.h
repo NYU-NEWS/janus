@@ -224,9 +224,9 @@ class ClassicServiceImpl : public ClassicService {
   void AccDispatch(const i64& cmd_id,
                    const MarshallDeputy& cmd,
                    int32_t* res,
-                   int8_t* is_consistent,
                    uint64_t* ssid_low,
                    uint64_t* ssid_high,
+                   uint64_t* ssid_highest,
                    TxnOutput* output,
                    DeferredReply* defer_reply) override;
  protected:

@@ -42,6 +42,7 @@ namespace janus {
     private:
 //        txnid_t tid;
         SafeGuard sg;
+        friend class SchedulerAcc;
     };
 
 }   // namespace janus

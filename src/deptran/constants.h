@@ -32,6 +32,7 @@ namespace janus {
 #define FINALIZED (0x2)        // finalized
 #define CONSISTENT (0x1)       // return vale of is_consistent of AccDispatch RPC -- local ssids same
 #define UNSURE (0x0)           // return vale of is_consistent of AccDispatch RPC -- local ssids inequivalent
+#define VALIDATE_ABORT (0x2)   // should not do validate, abort early!
 
 /** read and write type */
 #define OP_WRITE   (0x01)

@@ -404,19 +404,17 @@ void ClassicServiceImpl::CommitFebruus(const txid_t& tx_id,
 void ClassicServiceImpl::AccDispatch(const i64& cmd_id,
                                   const MarshallDeputy& md,
                                   int32_t* res,
-                                  int8_t* is_consistent,
                                   uint64_t* ssid_low,
                                   uint64_t* ssid_high,
+                                  uint64_t* ssid_highest,
                                   TxnOutput* output,
                                   rrr::DeferredReply* defer){
     // server-side handler of AccDispatch RPC
     shared_ptr<Marshallable> sp = md.sp_data_;
     auto* sched = (SchedulerAcc*) dtxn_sched_;
-    *is_consistent = CONSISTENT;
-    *ssid_low = 0;
-    *ssid_high = 0;
-    sched->OnDispatch(cmd_id, sp, is_consistent, ssid_low, ssid_high, *output);
-    *res = SUCCESS;  // OnDispatch always returns true
+    bool validate_abort = sched->OnDispatch(cmd_id, sp, ssid_low, ssid_high, ssid_highest, *output);
+    *res = validate_abort ? VALIDATE_ABORT : SUCCESS;  // success could be either consistent or not
+                                                       // validate_abort then means for sure inconsistent
     defer->reply();
 }
 

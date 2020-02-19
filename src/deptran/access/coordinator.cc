@@ -70,9 +70,9 @@ namespace janus {
 
     void CoordinatorAcc::AccDispatchAck(phase_t phase,
                                         int res,
-                                        int8_t is_consistent,
                                         uint64_t ssid_low,
                                         uint64_t ssid_high,
+                                        uint64_t ssid_highest,
                                         map<innid_t, map<int32_t, Value>>& outputs) {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
         if (phase != phase_) return;
@@ -87,17 +87,20 @@ namespace janus {
             txn->Merge(pair.first, pair.second);
         }
         // store returned ssids
-        if (!is_consistent) {
+        if (res == VALIDATE_ABORT || ssid_low > ssid_high) {
             _is_consistent = false;
+            _validate_abort = res == VALIDATE_ABORT;
         }
-        if (ssid_low > highest_ssid_low) {
-            highest_ssid_low = ssid_low;
+        if (_is_consistent) { // if some ack has shown inconsistent, then no need to update these
+            if (ssid_low > highest_ssid_low) {
+                highest_ssid_low = ssid_low;
+            }
+            if (ssid_high < lowest_ssid_high) {
+                lowest_ssid_high = ssid_high;
+            }
         }
-        if (ssid_high < lowest_ssid_high) {
-            lowest_ssid_high = ssid_high;
-        }
-        if (ssid_high > highest_ssid_high) {
-            highest_ssid_high = ssid_high;
+        if (ssid_highest > highest_ssid_high) {
+            highest_ssid_high = ssid_highest;
         }
 
         if (txn->HasMoreUnsentPiece()) {

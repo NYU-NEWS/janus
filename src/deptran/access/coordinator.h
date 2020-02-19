@@ -16,12 +16,13 @@ namespace janus {
         AccCommo* commo();
         void AccDispatchAck(phase_t phase,
                             int res,
-                            int8_t is_consistent,
                             uint64_t ssid_low,
                             uint64_t ssid_high,
+                            uint64_t ssid_highest,
                             map<innid_t, map<int32_t, Value>>& outputs);
     private:
         bool _is_consistent = true;
+        bool _validate_abort = false;
         // a consistent snapshot resides between highest_low and lowest_high
         snapshotid_t highest_ssid_low = 0;
         snapshotid_t lowest_ssid_high = UINT_MAX;

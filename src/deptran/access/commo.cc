@@ -4,9 +4,9 @@ namespace janus {
     void AccCommo::AccBroadcastDispatch(shared_ptr<vector<shared_ptr<SimpleCommand>>> sp_vec_piece,
                                         Coordinator *coo,
                                         const std::function<void(int res,
-                                                                 int8_t is_consistent,
                                                                  uint64_t ssid_low,
                                                                  uint64_t ssid_high,
+                                                                 uint64_t ssid_highest,
                                                                  TxnOutput &)> &callback) {
         cmdid_t cmd_id = sp_vec_piece->at(0)->root_id_;
         verify(sp_vec_piece->size() > 0);
@@ -15,12 +15,12 @@ namespace janus {
         fuattr.callback =
                 [coo, this, callback](Future* fu) {
                     int32_t ret;
-                    int8_t is_consistent;
                     uint64_t ssid_low;
                     uint64_t ssid_high;
+                    uint64_t ssid_highest;
                     TxnOutput outputs;
-                    fu->get_reply() >> ret >> is_consistent >> ssid_low >> ssid_high >> outputs;
-                    callback(ret, is_consistent, ssid_low, ssid_high, outputs);
+                    fu->get_reply() >> ret >> ssid_low >> ssid_high >> ssid_highest >> outputs;
+                    callback(ret, ssid_low, ssid_high, ssid_highest, outputs);
                 };
         auto pair_leader_proxy = LeaderProxyForPartition(par_id);
         Log_debug("send dispatch to site %ld",
@@ -38,11 +38,11 @@ namespace janus {
                 fu2.callback =
                         [coo, this, callback](Future* fu) {
                             int32_t ret;
-                            int8_t is_consistent;
                             uint64_t ssid_low;
                             uint64_t ssid_high;
+                            uint64_t ssid_highest;
                             TxnOutput outputs;
-                            fu->get_reply() >> ret >> is_consistent >> ssid_low >> ssid_high >> outputs;
+                            fu->get_reply() >> ret >> ssid_low >> ssid_high >> ssid_highest >> outputs;
                             // do nothing
                         };
                 Future::safe_release(pair.second->async_AccDispatch(cmd_id, md, fu2));

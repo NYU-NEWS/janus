@@ -62,6 +62,5 @@ namespace janus {
 
     AccTxn::~AccTxn() {
         // TODO: fill in if holding any resources
-        return;
     }
 }

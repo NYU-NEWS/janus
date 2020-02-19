@@ -17,7 +17,7 @@ namespace janus {
             new_row->_row.emplace(
                     std::piecewise_construct,
                     std::make_tuple(col_id),
-                    std::make_tuple(std::move(values.at(col_id))));
+                    std::make_tuple(col_id, std::move(values.at(col_id))));
             //new_row->_row.emplace(col_id, AccColumn());
             //new_row->_row.at(col_id).create(std::move(values.at(col_id)));
         }

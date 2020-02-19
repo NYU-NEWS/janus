@@ -11,9 +11,9 @@ namespace janus {
         void AccBroadcastDispatch(shared_ptr<vector<shared_ptr<SimpleCommand>>> sp_vec_piece,
                                   Coordinator *coo,
                                   const std::function<void(int res,
-                                                      int8_t is_consistent,
                                                       uint64_t ssid_low,
                                                       uint64_t ssid_high,
+                                                      uint64_t ssid_highest,
                                                       TxnOutput &)> &callback);
     };
 }
