@@ -3,7 +3,7 @@
 
 namespace janus {
     bool SchedulerAcc::OnDispatch(cmdid_t cmd_id,
-                                  const shared_ptr<Marshallable>& cmd,  // TODO: make sure const ref works
+                                  const shared_ptr<Marshallable>& cmd,
                                   uint64_t *ssid_low,
                                   uint64_t *ssid_high,
                                   uint64_t *ssid_highest,
@@ -20,20 +20,23 @@ namespace janus {
                 present_cmd->push_back(sp_piece_data);
             }
         }
-        for (const auto& sp_piece_data : *sp_vec_piece) {   // TODO: make sure const ref works
-            // TODO: make sure skipping dispatchpiece and directly calling executepiece is fine
+        for (const auto& sp_piece_data : *sp_vec_piece) {
             SchedulerClassic::ExecutePiece(*tx, *sp_piece_data, ret_output);
         }
         if (tx->fully_dispatched_->value_ == 0) {
             tx->fully_dispatched_->Set(1);
         }
         // Step 2: do local safeguard consistency check.
-        // TODO: fill in logics
         auto acc_txn = dynamic_pointer_cast<AccTxn>(tx);
         // fill return values
         *ssid_low = acc_txn->sg.metadata.highest_ssid_low;
         *ssid_high = acc_txn->sg.metadata.lowest_ssid_high;
         *ssid_highest = acc_txn->sg.metadata.highest_ssid_high;
         return acc_txn->sg.metadata.validate_abort;
+    }
+
+    void SchedulerAcc::OnValidate(cmdid_t cmd_id, snapshotid_t ssid_new, int8_t *res) {
+        // TODO: fill real logic in
+        *res = CONSISTENT;
     }
 }

@@ -418,6 +418,16 @@ void ClassicServiceImpl::AccDispatch(const i64& cmd_id,
     defer->reply();
 }
 
+void ClassicServiceImpl::AccValidate(const i64 &cmd_id,
+                                     const uint64_t &ssid_new,
+                                     int8_t *res,
+                                     DeferredReply *defer) {
+    // server-side handler of AccValidate RPC
+    auto* sched = (SchedulerAcc*) dtxn_sched_;
+    sched->OnValidate(cmd_id, ssid_new, res);
+    defer->reply();
+}
+
 void ClassicServiceImpl::RegisterStats() {
   if (scsi_) {
     scsi_->set_recorder(recorder_);
@@ -464,5 +474,4 @@ void ClassicServiceImpl::MsgMarshall(const MarshallDeputy& arg,
   verify(0);
   return;
 }
-
 } // namespace janus

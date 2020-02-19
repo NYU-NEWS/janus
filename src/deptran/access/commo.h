@@ -15,6 +15,10 @@ namespace janus {
                                                       uint64_t ssid_high,
                                                       uint64_t ssid_highest,
                                                       TxnOutput &)> &callback);
+        void AccBroadcastValidate(parid_t par_id,
+                                  cmdid_t cmd_id,
+                                  snapshotid_t ssid_new,
+                                  const std::function<void(int8_t res)> &callback);
     };
 }
 

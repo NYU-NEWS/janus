@@ -49,4 +49,22 @@ namespace janus {
             }
         }
     }
+
+    void AccCommo::AccBroadcastValidate(parid_t par_id,
+                                        cmdid_t cmd_id,
+                                        snapshotid_t ssid_new,
+                                        const std::function<void(int8_t res)> &callback) {
+        // TODO: fill me in
+        rrr::FutureAttr fuattr;
+        fuattr.callback =
+                [this, callback](Future* fu) {
+                    int8_t ret;
+                    fu->get_reply() >> ret;
+                    callback(ret);
+                };
+        auto pair_leader_proxy = LeaderProxyForPartition(par_id);
+        auto proxy = pair_leader_proxy.second;
+        auto future = proxy->async_AccValidate(cmd_id, ssid_new, fuattr); // call Acc Validate RPC
+        Future::safe_release(future);
+    }
 }

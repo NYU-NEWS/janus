@@ -11,28 +11,44 @@ namespace janus {
     }
 
     void CoordinatorAcc::GotoNextPhase() {
-        const int n_phase = 2;  // TODO: make this 4 for real
+        const int n_phase = 4;  // TODO: make this 4 for real
         switch (phase_++ % n_phase) {
-            case Phase::INIT_END:
+            case Phase::INIT_END: verify(phase_ % n_phase == Phase::DISPATCH);
                 DispatchAsync();
-                verify(phase_ % n_phase == Phase::DISPATCH);
                 break;
-            case Phase::DISPATCH:
+            case Phase::DISPATCH: verify(phase_ % n_phase == Phase::VALIDATE);
                 // TODO: safeguard check. If consistent, respond.
                 if (_is_consistent) { // SG says this txn is consistent
                     // return to the end user immediately and finish
                     committed_ = true;
                 }
-                committed_ = true;
-                verify(phase_ % n_phase == Phase::INIT_END);
-                //verify(phase_ % n_phase == Phase::VALIDATE);
-                End();
+                GotoNextPhase(); // go validate if necessary
+                //End();
                 break;
-            case Phase::VALIDATE:
-                verify(phase_ % n_phase == Phase::DECIDE);
+            case Phase::VALIDATE: verify(phase_ % n_phase == Phase::DECIDE);
+                // validate if _validate_abort != true and inconsistent
+                if (!committed_ && _validate_abort) {
+                    AccValidate();
+//                    aborted_ = true; // TODO: no need to validate for now, later may apply some optimizations
+                                     // TODO: validate or not in this case is an ML control knob
+//                    GotoNextPhase();
+                } else if (committed_) { // SG checks consistent, no need to validate
+                    GotoNextPhase();
+                } else {
+                    AccValidate();
+                }
                 break;
-            case Phase::DECIDE:
-                verify(phase_ % n_phase == Phase::INIT_END);
+            case Phase::DECIDE: verify(phase_ % n_phase == Phase::INIT_END);
+                if (committed_) {
+                    // TODO: send out 1-way message to update finalized on servers
+                    End();
+                } else if (aborted_) {
+                    // TODO: do we need to update txns to be aborted on servers? could be an ML knob?
+                    // TODO: seems no need for now, but might be needed when interacting with 2PL?
+                    Restart();
+                } else {
+                    verify(0);
+                }
                 break;
             default:
                 verify(0);  // invalid phase
@@ -117,6 +133,38 @@ namespace janus {
         } else if (AllDispatchAcked()) {
             Log_debug("receive all start acks, txn_id: %llx; START PREPARE", txn->id_);
             GotoNextPhase();
+        }
+    }
+
+    void CoordinatorAcc::AccValidate() {
+        std::lock_guard<std::recursive_mutex> lock(mtx_);
+        auto pars = tx_data().GetPartitionIds();
+        verify(!pars.empty());
+        for (auto par_id : pars) {
+            n_validate_rpc_++;
+            commo()->AccBroadcastValidate(par_id,
+                                          tx_data().id_,
+                                          highest_ssid_high,
+                                          std::bind(&CoordinatorAcc::AccValidateAck,
+                                                          this,
+                                                             phase_,
+                                                             std::placeholders::_1));
+        }
+    }
+
+    void CoordinatorAcc::AccValidateAck(phase_t phase, int8_t res) {
+        // TODO: fill me in
+        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+        if (phase != phase_) return;
+        n_validate_ack_++;
+        if (res == INCONSISTENT) { // at least one shard returns inconsistent
+            aborted_ = true;
+        }
+        if (n_validate_ack_ == n_validate_rpc_) {
+            // have received all acks
+            committed_ = !aborted_;
+            GotoNextPhase(); // to phase decide
+            return;
         }
     }
 } // namespace janus

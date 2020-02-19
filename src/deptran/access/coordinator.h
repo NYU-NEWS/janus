@@ -20,6 +20,8 @@ namespace janus {
                             uint64_t ssid_high,
                             uint64_t ssid_highest,
                             map<innid_t, map<int32_t, Value>>& outputs);
+        void AccValidate();
+        void AccValidateAck(phase_t phase, int8_t res);
     private:
         bool _is_consistent = true;
         bool _validate_abort = false;
@@ -28,5 +30,7 @@ namespace janus {
         snapshotid_t lowest_ssid_high = UINT_MAX;
         snapshotid_t highest_ssid_high = 0;  // for updating ssids upon validation
                                              // and for final ssid if validation says consistent
+        int n_validate_rpc_ = 0;
+        int n_validate_ack_ = 0;
     };
 } // namespace janus
