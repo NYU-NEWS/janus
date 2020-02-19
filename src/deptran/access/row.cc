@@ -24,25 +24,38 @@ namespace janus {
         return new_row;
     }
 
-    bool AccRow::read_column(mdb::colid_t col_id, mdb::Value* value, MetaData& metadata) {
+    snapshotid_t AccRow::read_column(mdb::colid_t col_id, mdb::Value* value, MetaData& metadata) {
         // TODO: change this logic, now it reads back() for testing
         if (col_id >= _row.size()) {
             // col_id is invalid. We're doing a trick here.
             // We should make txn_queue check if col_id exists, which
             // is linear time. Instead, we do size() since keys are col_ids
             value = nullptr;
-            return false;
+            return READ_INVALID;
         }
-        *value = _row.at(col_id).read(metadata);
-        return true;
+        snapshotid_t ssid_high;
+        *value = _row.at(col_id).read(metadata, ssid_high);
+        return ssid_high;
     }
 
-    bool AccRow::write_column(mdb::colid_t col_id, mdb::Value&& value, txnid_t tid, MetaData& metadata) {
+    snapshotid_t AccRow::write_column(mdb::colid_t col_id, mdb::Value&& value, txnid_t tid, MetaData& metadata) {
         if (col_id >= _row.size()) {
-            return false;
+            return WRITE_INVALID;
         }
         // push back to the txn queue
-        _row.at(col_id).write(std::move(value), tid, metadata);
-        return true;
+        return _row.at(col_id).write(std::move(value), tid, metadata);
+    }
+
+    bool AccRow::validate(mdb::colid_t col_id, snapshotid_t ssid, snapshotid_t ssid_new) {
+        // TODO: handle aborted txn rec (FIXME later)
+        if (_row[col_id].ssid_cur.ssid_low > ssid) {
+            // there has been new write, validation fails
+            return false;
+        } else {
+            if (_row[col_id].ssid_cur.ssid_high < ssid_new) { // extends SSID range
+                _row[col_id].ssid_cur.ssid_high = ssid_new;
+            }
+            return true;
+        }
     }
 }

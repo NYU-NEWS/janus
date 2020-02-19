@@ -5,13 +5,15 @@
 #include <unordered_map>
 #include <deptran/constants.h>
 #include <memdb/utils.h>
+#include <memdb/row.h>
 
 namespace janus {
     class AccColumn;
     struct MetaData {  // the info returned from rows for consistency check
         // for now, it needs one ssid from each row
-        std::unordered_map<mdb::colid_t, snapshotid_t> ssid_highs; // the set of ssid_high of each accessed col
-                                                                   // used for later validation
+        std::unordered_map<mdb::Row*, std::unordered_map<mdb::colid_t, snapshotid_t>> ssid_highs;
+                                                            // the set of ssid_high of each accessed col
+                                                            // used for later validation
         snapshotid_t highest_ssid_low = 0;
         snapshotid_t lowest_ssid_high = UINT_MAX;
         snapshotid_t highest_ssid_high = 0;

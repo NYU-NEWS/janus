@@ -153,7 +153,6 @@ namespace janus {
     }
 
     void CoordinatorAcc::AccValidateAck(phase_t phase, int8_t res) {
-        // TODO: fill me in
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
         if (phase != phase_) return;
         n_validate_ack_++;
@@ -163,6 +162,11 @@ namespace janus {
         if (n_validate_ack_ == n_validate_rpc_) {
             // have received all acks
             committed_ = !aborted_;
+            // -------Testing purpose here----------
+            // TODO: take this out
+            aborted_ = false;
+            committed_ = true;
+            //--------------------------------------
             GotoNextPhase(); // to phase decide
             return;
         }

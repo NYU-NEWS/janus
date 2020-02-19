@@ -56,8 +56,8 @@ namespace janus {
         explicit AccColumn(colid_t, mdb::Value&& v);
         AccColumn(const AccColumn&) = delete;   // no copy
         AccColumn& operator=(const AccColumn&) = delete; // no copy
-        const mdb::Value& read(MetaData& metadata);
-        void write(mdb::Value&& v, txnid_t tid, MetaData& metadata);
+        const mdb::Value& read(MetaData& metadata, snapshotid_t& ssid_high);
+        snapshotid_t write(mdb::Value&& v, txnid_t tid, MetaData& metadata);
         static void update_metadata(MetaData& metadata, const SSID& ssid);
     private:
         colid_t col_id = -1;
@@ -69,5 +69,6 @@ namespace janus {
                 std::make_pair(0, SSID());  // points to the most recent finalized version
                                                     // (txn_queue index, ssid)
         void update_finalized();    // called whenever commit a write
+        friend class AccRow;
     };
 }
