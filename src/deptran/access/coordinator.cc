@@ -19,6 +19,10 @@ namespace janus {
                 break;
             case Phase::DISPATCH:
                 // TODO: safeguard check. If consistent, respond.
+                if (_is_consistent) { // SG says this txn is consistent
+                    // return to the end user immediately and finish
+                    committed_ = true;
+                }
                 committed_ = true;
                 verify(phase_ % n_phase == Phase::INIT_END);
                 //verify(phase_ % n_phase == Phase::VALIDATE);
@@ -86,10 +90,12 @@ namespace janus {
                       n_dispatch_ack_, n_dispatch_, cmd_->id_, inn_id);
             txn->Merge(pair.first, pair.second);
         }
-        // store returned ssids
-        if (res == VALIDATE_ABORT || ssid_low > ssid_high) {
+        // store RPC returned information
+        if (ssid_low > ssid_high) {  // no overlapped range
             _is_consistent = false;
-            _validate_abort = res == VALIDATE_ABORT;
+        }
+        if (res == VALIDATE_ABORT) {
+            _validate_abort = true;
         }
         if (_is_consistent) { // if some ack has shown inconsistent, then no need to update these
             if (ssid_low > highest_ssid_low) {
