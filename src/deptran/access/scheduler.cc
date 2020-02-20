@@ -63,7 +63,6 @@ namespace janus {
    }
 
     void SchedulerAcc::OnFinalize(cmdid_t cmd_id, int8_t decision) {
-        // TODO: fill me in.
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
         for (auto& row_col : acc_txn->sg.metadata.pending_writes) {
             auto acc_row = dynamic_cast<AccRow*>(row_col.first);

@@ -51,6 +51,7 @@ namespace janus {
                 }
                 finalized_version.first = index;
                 finalized_version.second = it->ssid;
+                return;
             }
         }
     }

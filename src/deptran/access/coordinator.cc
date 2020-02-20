@@ -28,10 +28,10 @@ namespace janus {
             case Phase::VALIDATE: verify(phase_ % n_phase == Phase::DECIDE);
                 // validate if _validate_abort != true and inconsistent
                 if (!committed_ && _validate_abort) {
-                    AccValidate();
-//                    aborted_ = true; // TODO: no need to validate for now, later may apply some optimizations
+//                    AccValidate();
+                    aborted_ = true; // TODO: no need to validate for now, later may apply some optimizations
                                      // TODO: validate or not in this case is an ML control knob
-//                    GotoNextPhase();
+                    GotoNextPhase();
                 } else if (committed_) { // SG checks consistent, no need to validate
                     GotoNextPhase();
                 } else {
