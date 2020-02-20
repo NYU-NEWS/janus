@@ -28,6 +28,16 @@ namespace janus {
         }
         // Step 2: do local safeguard consistency check.
         auto acc_txn = dynamic_pointer_cast<AccTxn>(tx);
+        // first iterate through ssid_accessed --> has dedup'ed read/write on the same row-col
+        for (const auto& row_col : acc_txn->sg.metadata.ssid_accessed) {
+            for (const auto& col_ssid : row_col.second) {
+                // update metadata for consistency check later on
+                acc_txn->sg.update_metadata(col_ssid.second.ssid_low, col_ssid.second.ssid_high);
+                // fill in ssid_highs for validation later
+                acc_txn->sg.metadata.ssid_highs[row_col.first][col_ssid.first] = col_ssid.second.ssid_high;
+            }
+        }
+        acc_txn->sg.metadata.ssid_accessed.clear();  // no need anymore, only for dispatch phase
         // fill return values
         *ssid_low = acc_txn->sg.metadata.highest_ssid_low;
         *ssid_high = acc_txn->sg.metadata.lowest_ssid_high;

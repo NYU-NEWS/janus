@@ -9,9 +9,12 @@ namespace janus {
         verify(row != nullptr);
         // class downcasting to get AccRow
         auto acc_row = dynamic_cast<AccRow*>(row);
-        snapshotid_t ssid_high = acc_row->read_column(col_id, value, sg.metadata);
+        SSID ssid = acc_row->read_column(col_id, value, sg.metadata);
         row->ref_copy();
-        sg.metadata.ssid_highs[row][col_id] = ssid_high;
+        if (sg.metadata.ssid_accessed[row].find(col_id) == sg.metadata.ssid_accessed[row].end()) {
+            // no early write from the same txn at the same row-col
+            sg.metadata.ssid_accessed[row][col_id] = ssid;
+        }
         return true;
     }
 
@@ -24,10 +27,13 @@ namespace janus {
         row->ref_copy();
         for (auto col_id : col_ids) {
             Value *v = nullptr;
-            snapshotid_t ssid_high = acc_row->read_column(col_id, v, sg.metadata);
+            SSID ssid = acc_row->read_column(col_id, v, sg.metadata);
             verify(v != nullptr);
             values->push_back(std::move(*v));
-            sg.metadata.ssid_highs[row][col_id] = ssid_high;
+            if (sg.metadata.ssid_accessed[row].find(col_id) == sg.metadata.ssid_accessed[row].end()) {
+                // no early write from the same txn at the same row-col
+                sg.metadata.ssid_accessed[row][col_id] = ssid;
+            }
         }
         return true;
     }
@@ -38,9 +44,11 @@ namespace janus {
                              int hint_flag) {
         verify(row != nullptr);
         auto acc_row = dynamic_cast<AccRow*>(row);
-        snapshotid_t ssid_high = acc_row->write_column(col_id, std::move(value), this->tid_, sg.metadata);
+        unsigned long ver_index = 0;
+        SSID ssid = acc_row->write_column(col_id, std::move(value), this->tid_, sg.metadata, ver_index);
         row->ref_copy();
-        sg.metadata.ssid_highs[row][col_id] = ssid_high;
+        sg.metadata.ssid_accessed[row][col_id] = ssid; // we insert anyway, possible overwrite earlier reads
+        sg.metadata.pending_writes[row][col_id] = ver_index; // for finalize/abort this write later
         return true;
     }
 
@@ -53,9 +61,10 @@ namespace janus {
         int v_counter = 0;
         row->ref_copy();
         for (auto col_id : col_ids) {
-            snapshotid_t ssid_high =
-                    acc_row->write_column(col_id, std::move(values[v_counter++]), this->tid_, sg.metadata);
-            sg.metadata.ssid_highs[row][col_id] = ssid_high;
+            unsigned long ver_index = 0;
+            SSID ssid = acc_row->write_column(col_id, std::move(values[v_counter++]), this->tid_, sg.metadata, ver_index);
+            sg.metadata.ssid_accessed[row][col_id] = ssid;
+            sg.metadata.pending_writes[row][col_id] = ver_index;
         }
         return true;
     }

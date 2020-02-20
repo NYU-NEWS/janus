@@ -33,8 +33,6 @@ namespace janus {
 #define CONSISTENT (0x1)       // return vale of is_consistent of AccDispatch RPC -- local ssids same
 #define INCONSISTENT (0x0)     // validation gets inconsistent
 #define VALIDATE_ABORT (0x2)   // should not do validate, abort early!
-#define READ_INVALID (-1)      // read col id outside valid range
-#define WRITE_INVALID (-2)     // write col id outside valid range
 
 /** read and write type */
 #define OP_WRITE   (0x01)

@@ -24,26 +24,26 @@ namespace janus {
         return new_row;
     }
 
-    snapshotid_t AccRow::read_column(mdb::colid_t col_id, mdb::Value* value, MetaData& metadata) {
+    SSID AccRow::read_column(mdb::colid_t col_id, mdb::Value* value, MetaData& metadata) {
         // TODO: change this logic, now it reads back() for testing
         if (col_id >= _row.size()) {
             // col_id is invalid. We're doing a trick here.
             // We should make txn_queue check if col_id exists, which
             // is linear time. Instead, we do size() since keys are col_ids
             value = nullptr;
-            return READ_INVALID;
+            return {};
         }
-        snapshotid_t ssid_high;
-        *value = _row.at(col_id).read(metadata, ssid_high);
-        return ssid_high;
+        SSID ssid;
+        *value = _row.at(col_id).read(metadata, ssid);
+        return ssid;
     }
 
-    snapshotid_t AccRow::write_column(mdb::colid_t col_id, mdb::Value&& value, txnid_t tid, MetaData& metadata) {
+    SSID AccRow::write_column(mdb::colid_t col_id, mdb::Value&& value, txnid_t tid, MetaData& metadata, unsigned long& ver_index) {
         if (col_id >= _row.size()) {
-            return WRITE_INVALID;
+            return {};
         }
         // push back to the txn queue
-        return _row.at(col_id).write(std::move(value), tid, metadata);
+        return _row.at(col_id).write(std::move(value), tid, metadata, ver_index);
     }
 
     bool AccRow::validate(mdb::colid_t col_id, snapshotid_t ssid, snapshotid_t ssid_new) {

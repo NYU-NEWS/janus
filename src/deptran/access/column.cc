@@ -12,7 +12,7 @@ namespace janus {
         update_finalized();
     }
 
-    const mdb::Value& AccColumn::read(MetaData& metadata, snapshotid_t& ssid_high) {
+    const mdb::Value& AccColumn::read(MetaData& metadata, SSID& ssid) {
         // reads return the ssid of the write it returns
         if (finalized_version.first == txn_queue.size() - 1) {
             // the most recent write is finalized, no pending write
@@ -24,19 +24,21 @@ namespace janus {
             metadata.validate_abort = true;
         }
         //metadata.ssid_highs[col_id] = finalized_version.second.ssid_high;
-        ssid_high = finalized_version.second.ssid_high;
-        update_metadata(metadata, finalized_version.second);
+        //ssid_high = finalized_version.second.ssid_high;
+        //update_metadata(metadata, finalized_version.second);
+        ssid = finalized_version.second;
         return txn_queue.at(finalized_version.first).value;
     }
 
-    snapshotid_t AccColumn::write(mdb::Value&& v, txnid_t tid, MetaData& metadata) {
+    SSID AccColumn::write(mdb::Value&& v, txnid_t tid, MetaData& metadata, unsigned long& ver_index) {
         // write has to return its own new ssid!
         txn_queue.back().ssid = ssid_cur;  // update txn rec's SSID with ssid_cur
         ssid_cur.ssid_low = ++ssid_cur.ssid_high;   // make new ssid_cur upon new write
         txn_queue.emplace_back(std::move(v), tid, ssid_cur);
         //metadata.ssid_highs[col_id] = ssid_cur.ssid_high;
-        update_metadata(metadata, ssid_cur);
-        return ssid_cur.ssid_high;
+        //update_metadata(metadata, ssid_cur);
+        ver_index = txn_queue.size() - 1; // record index of this pending write for later finalize/abort it
+        return ssid_cur;
     }
 
     void AccColumn::update_finalized() {
@@ -53,6 +55,7 @@ namespace janus {
         }
     }
 
+    /*
     void AccColumn::update_metadata(MetaData& metadata, const SSID &ssid) {
         if (ssid.ssid_low > metadata.highest_ssid_low) {
             metadata.highest_ssid_low = ssid.ssid_low;
@@ -64,4 +67,5 @@ namespace janus {
             metadata.highest_ssid_high = ssid.ssid_high;
         }
     }
+    */
 }
