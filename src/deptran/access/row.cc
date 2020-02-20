@@ -58,4 +58,9 @@ namespace janus {
             return true;
         }
     }
+
+    void AccRow::finalize(mdb::colid_t col_id, unsigned long ver_index, int8_t decision) {
+        _row[col_id].txn_queue[ver_index].status = decision;
+        _row[col_id].update_finalized();
+    }
 }

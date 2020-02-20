@@ -428,6 +428,15 @@ void ClassicServiceImpl::AccValidate(const i64 &cmd_id,
     defer->reply();
 }
 
+void ClassicServiceImpl::AccFinalize(const i64& cmd_id,
+                                     const int8_t& decision,
+                                     DeferredReply* defer) {
+    // server-side handler of AccFinalize
+    auto* sched = (SchedulerAcc*) dtxn_sched_;
+    sched->OnFinalize(cmd_id, decision);
+    defer->reply();
+}
+
 void ClassicServiceImpl::RegisterStats() {
   if (scsi_) {
     scsi_->set_recorder(recorder_);

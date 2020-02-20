@@ -31,7 +31,7 @@ namespace janus {
     class SafeGuard {
         // each txn has a safeguard object for checking consistency
     public:
-        bool is_consistent() const;  // compare ssids to tell consistency
+        //bool is_consistent() const;  // compare ssids to tell consistency
         void update_metadata(snapshotid_t ssid_low, snapshotid_t ssid_high);
     private:
         MetaData metadata;

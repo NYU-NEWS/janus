@@ -46,19 +46,31 @@ namespace janus {
     }
 
     void SchedulerAcc::OnValidate(cmdid_t cmd_id, snapshotid_t ssid_new, int8_t *res) {
-        // TODO: fill real logic in
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
         for (auto& row_col : acc_txn->sg.metadata.ssid_highs) {
             auto acc_row = dynamic_cast<AccRow*>(row_col.first);
             for (auto& col_ssid : row_col.second) {
                 if (!acc_row->validate(col_ssid.first, col_ssid.second, ssid_new)) {
                     // validation fails on this row-col
+                    acc_txn->sg.metadata.ssid_highs.clear();
                     *res = INCONSISTENT;
                     return;
                 }
             }
         }
+        acc_txn->sg.metadata.ssid_highs.clear();
         *res = CONSISTENT;
-        return;
+   }
+
+    void SchedulerAcc::OnFinalize(cmdid_t cmd_id, int8_t decision) {
+        // TODO: fill me in.
+        auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
+        for (auto& row_col : acc_txn->sg.metadata.pending_writes) {
+            auto acc_row = dynamic_cast<AccRow*>(row_col.first);
+            for (auto& col_index : row_col.second) {
+                acc_row->finalize(col_index.first, col_index.second, decision);
+            }
+        }
+        acc_txn->sg.metadata.pending_writes.clear();
     }
 }

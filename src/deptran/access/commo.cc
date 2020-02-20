@@ -54,7 +54,6 @@ namespace janus {
                                         cmdid_t cmd_id,
                                         snapshotid_t ssid_new,
                                         const std::function<void(int8_t res)> &callback) {
-        // TODO: fill me in
         rrr::FutureAttr fuattr;
         fuattr.callback =
                 [this, callback](Future* fu) {
@@ -65,6 +64,15 @@ namespace janus {
         auto pair_leader_proxy = LeaderProxyForPartition(par_id);
         auto proxy = pair_leader_proxy.second;
         auto future = proxy->async_AccValidate(cmd_id, ssid_new, fuattr); // call Acc Validate RPC
+        Future::safe_release(future);
+    }
+
+    void AccCommo::AccBroadcastFinalize(parid_t par_id, cmdid_t cmd_id, int8_t decision) {
+        rrr::FutureAttr fuattr;
+        fuattr.callback = {};
+        auto pair_leader_proxy = LeaderProxyForPartition(par_id);
+        auto proxy = pair_leader_proxy.second;
+        auto future = proxy->async_AccFinalize(cmd_id, decision, fuattr); // call AccFinalize RPC
         Future::safe_release(future);
     }
 }

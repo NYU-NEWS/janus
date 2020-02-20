@@ -19,6 +19,7 @@ namespace janus {
                                   cmdid_t cmd_id,
                                   snapshotid_t ssid_new,
                                   const std::function<void(int8_t res)> &callback);
+        void AccBroadcastFinalize(parid_t par_id, cmdid_t cmd_id, int8_t decision);
     };
 }
 

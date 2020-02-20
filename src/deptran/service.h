@@ -232,6 +232,8 @@ class ClassicServiceImpl : public ClassicService {
 
   void AccValidate(const i64& cmd_id, const uint64_t& ssid_new, int8_t* res, DeferredReply* defer_reply) override;
 
+  void AccFinalize(const i64& cmd_id, const int8_t& decision, DeferredReply* defer_reply) override;
+
  protected:
   void RegisterStats();
 };

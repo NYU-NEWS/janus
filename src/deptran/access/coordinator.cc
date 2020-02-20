@@ -40,7 +40,7 @@ namespace janus {
                 break;
             case Phase::DECIDE: verify(phase_ % n_phase == Phase::INIT_END);
                 if (committed_) {
-                    // TODO: send out 1-way message to update finalized on servers
+                    AccFinalize(FINALIZED);
                     End();
                 } else if (aborted_) {
                     // TODO: do we need to update txns to be aborted on servers? could be an ML knob?
@@ -69,7 +69,7 @@ namespace janus {
             n_dispatch_ += cmds.size();
             cnt += cmds.size();
             auto sp_vec_piece = std::make_shared<vector<shared_ptr<TxPieceData>>>();
-            for (const auto& c: cmds) { // TODO: make sure using const ref works
+            for (const auto& c: cmds) {
                 c->id_ = next_pie_id();
                 dispatch_acks_[c->inn_id_] = false;
                 sp_vec_piece->push_back(c);
@@ -162,13 +162,42 @@ namespace janus {
         if (n_validate_ack_ == n_validate_rpc_) {
             // have received all acks
             committed_ = !aborted_;
+            if (!committed_) {
+                int x = 0;
+            }
             // -------Testing purpose here----------
             // TODO: take this out
-            aborted_ = false;
-            committed_ = true;
+            //aborted_ = false;
+            //committed_ = true;
             //--------------------------------------
             GotoNextPhase(); // to phase decide
             return;
         }
+    }
+
+    void CoordinatorAcc::AccFinalize(int8_t decision) {
+        std::lock_guard<std::recursive_mutex> lock(mtx_);
+        auto pars = tx_data().GetPartitionIds();
+        verify(!pars.empty());
+        for (auto par_id : pars) {
+            commo()->AccBroadcastFinalize(par_id,
+                                          tx_data().id_,
+                                          decision);
+        }
+    }
+
+    void CoordinatorAcc::Restart() {
+        reset_all_members();
+        CoordinatorClassic::Restart();
+    }
+
+    void CoordinatorAcc::reset_all_members() {
+        _is_consistent = true;
+        _validate_abort = false;
+        highest_ssid_low = 0;
+        lowest_ssid_high = UINT_MAX;
+        highest_ssid_high = 0;
+        n_validate_rpc_ = 0;
+        n_validate_ack_ = 0;
     }
 } // namespace janus

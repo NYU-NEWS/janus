@@ -22,6 +22,9 @@ namespace janus {
                             map<innid_t, map<int32_t, Value>>& outputs);
         void AccValidate();
         void AccValidateAck(phase_t phase, int8_t res);
+        void AccFinalize(int8_t decision);
+        void Restart() override;
+        void reset_all_members();
     private:
         bool _is_consistent = true;
         bool _validate_abort = false;

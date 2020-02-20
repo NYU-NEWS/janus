@@ -30,6 +30,7 @@ namespace janus {
 #define UNCHECKED (0x0)        // a txn is not checked yet
 #define VALIDATING (0x1)       // Being validated, e.g., have received validation message
 #define FINALIZED (0x2)        // finalized
+#define ABORTED (0x3)          // txn aborted
 #define CONSISTENT (0x1)       // return vale of is_consistent of AccDispatch RPC -- local ssids same
 #define INCONSISTENT (0x0)     // validation gets inconsistent
 #define VALIDATE_ABORT (0x2)   // should not do validate, abort early!
