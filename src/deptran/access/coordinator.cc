@@ -28,10 +28,10 @@ namespace janus {
             case Phase::VALIDATE: verify(phase_ % n_phase == Phase::DECIDE);
                 // validate if _validate_abort != true and inconsistent
                 if (!committed_ && _validate_abort) {
-//                    AccValidate();
-                    aborted_ = true; // TODO: no need to validate for now, later may apply some optimizations
+                    AccValidate();
+//                    aborted_ = true; // TODO: no need to validate for now, later may apply some optimizations
                                      // TODO: validate or not in this case is an ML control knob
-                    GotoNextPhase();
+//                    GotoNextPhase();
                 } else if (committed_) { // SG checks consistent, no need to validate
                     GotoNextPhase();
                 } else {
@@ -187,6 +187,9 @@ namespace janus {
     }
 
     void CoordinatorAcc::Restart() {
+        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+        cmd_->root_id_ = this->next_txn_id();
+        cmd_->id_ = cmd_->root_id_;
         reset_all_members();
         CoordinatorClassic::Restart();
     }
