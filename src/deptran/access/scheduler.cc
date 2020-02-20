@@ -34,7 +34,7 @@ namespace janus {
                 // update metadata for consistency check later on
                 acc_txn->sg.update_metadata(col_ssid.second.ssid_low, col_ssid.second.ssid_high);
                 // fill in ssid_highs for validation later
-                acc_txn->sg.metadata.ssid_highs[row_col.first][col_ssid.first] = col_ssid.second.ssid_high;
+                //acc_txn->sg.metadata.ssid_highs[row_col.first][col_ssid.first] = col_ssid.second.ssid_high;
             }
         }
         acc_txn->sg.metadata.ssid_accessed.clear();  // no need anymore, only for dispatch phase
@@ -47,18 +47,18 @@ namespace janus {
 
     void SchedulerAcc::OnValidate(cmdid_t cmd_id, snapshotid_t ssid_new, int8_t *res) {
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
-        for (auto& row_col : acc_txn->sg.metadata.ssid_highs) {
+        for (auto& row_col : acc_txn->sg.metadata.indices) {
             auto acc_row = dynamic_cast<AccRow*>(row_col.first);
             for (auto& col_ssid : row_col.second) {
                 if (!acc_row->validate(col_ssid.first, col_ssid.second, ssid_new)) {
                     // validation fails on this row-col
-                    acc_txn->sg.metadata.ssid_highs.clear();
+                    acc_txn->sg.metadata.indices.clear();
                     *res = INCONSISTENT;
                     return;
                 }
             }
         }
-        acc_txn->sg.metadata.ssid_highs.clear();
+        acc_txn->sg.metadata.indices.clear();
         *res = CONSISTENT;
    }
 

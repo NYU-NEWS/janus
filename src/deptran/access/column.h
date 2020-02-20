@@ -56,8 +56,9 @@ namespace janus {
         explicit AccColumn(colid_t, mdb::Value&& v);
         AccColumn(const AccColumn&) = delete;   // no copy
         AccColumn& operator=(const AccColumn&) = delete; // no copy
-        const mdb::Value& read(MetaData& metadata, SSID& ssid);
-        SSID write(mdb::Value&& v, txnid_t tid, MetaData& metadata, unsigned long& ver_index);
+        const mdb::Value& read(bool& validate_abort, SSID& ssid, unsigned long& index);
+        SSID write(mdb::Value&& v, txnid_t tid, unsigned long& ver_index);
+        bool all_recent_aborted(unsigned long index) const;
         //static void update_metadata(MetaData& metadata, const SSID& ssid);
     private:
         colid_t col_id = -1;

@@ -12,7 +12,7 @@ namespace janus {
     class SSID;
     struct MetaData {  // the info returned from rows for consistency check
         // for now, it needs one ssid from each row
-        std::unordered_map<mdb::Row*, std::unordered_map<mdb::colid_t, snapshotid_t>> ssid_highs;
+        std::unordered_map<mdb::Row*, std::unordered_map<mdb::colid_t, unsigned long>> indices;
                                                             // the set of ssid_high of each accessed col
                                                             // used for later validation
         std::unordered_map<mdb::Row*, std::unordered_map<mdb::colid_t, SSID>> ssid_accessed;

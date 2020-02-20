@@ -1,5 +1,5 @@
 #include "coordinator.h"
-
+int inconsistent_n_count = 0;
 namespace janus {
     AccCommo* CoordinatorAcc::commo() {
         if (commo_ == nullptr) {
@@ -45,6 +45,7 @@ namespace janus {
                 } else if (aborted_) {
                     // TODO: do we need to update txns to be aborted on servers? could be an ML knob?
                     // TODO: seems no need for now, but might be needed when interacting with 2PL?
+                    AccFinalize(ABORTED);
                     Restart();
                 } else {
                     verify(0);
@@ -109,6 +110,7 @@ namespace janus {
         // store RPC returned information
         if (ssid_low > ssid_high) {  // no overlapped range
             _is_consistent = false;
+//            Log_debug("inconsistency = %ld", ++inconsistent_n_count);
         }
         if (res == VALIDATE_ABORT) {
             _validate_abort = true;
