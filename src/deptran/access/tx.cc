@@ -12,12 +12,6 @@ namespace janus {
         unsigned long index = 0;
         SSID ssid = acc_row->read_column(col_id, value, sg.metadata.validate_abort, index);
         row->ref_copy();
-        /*
-        if (sg.metadata.ssid_accessed[row].find(col_id) == sg.metadata.ssid_accessed[row].end()) {
-            // no early write from the same txn at the same row-col
-            sg.metadata.ssid_accessed[row][col_id] = ssid;
-        }
-        */
         sg.metadata.indices[row][col_id] = index;  // for later validation
         // update metadata
         sg.update_metadata(ssid.ssid_low, ssid.ssid_high);
@@ -37,12 +31,6 @@ namespace janus {
             SSID ssid = acc_row->read_column(col_id, v, sg.metadata.validate_abort, index);
             verify(v != nullptr);
             values->push_back(std::move(*v));
-            /*
-            if (sg.metadata.ssid_accessed[row].find(col_id) == sg.metadata.ssid_accessed[row].end()) {
-                // no early write from the same txn at the same row-col
-                sg.metadata.ssid_accessed[row][col_id] = ssid;
-            }
-            */
             sg.metadata.indices[row][col_id] = index;  // for later validation
             // update metadata
             sg.update_metadata(ssid.ssid_low, ssid.ssid_high);
@@ -59,8 +47,6 @@ namespace janus {
         unsigned long ver_index = 0;
         SSID ssid = acc_row->write_column(col_id, std::move(value), this->tid_, ver_index); // ver_index is new write
         row->ref_copy();
-        //sg.metadata.ssid_accessed[row][col_id] = ssid; // we insert anyway, possible overwrite earlier reads
-        //sg.metadata.pending_writes[row][col_id] = ver_index; // for finalize/abort this write later
         sg.metadata.indices[row][col_id] = ver_index; // for validation and finalize
         sg.update_metadata(ssid.ssid_low, ssid.ssid_high);
         return true;
@@ -77,19 +63,11 @@ namespace janus {
         for (auto col_id : col_ids) {
             unsigned long ver_index = 0;
             SSID ssid = acc_row->write_column(col_id, std::move(values[v_counter++]), this->tid_, ver_index);
-            //sg.metadata.ssid_accessed[row][col_id] = ssid;
-            //sg.metadata.pending_writes[row][col_id] = ver_index;
             sg.metadata.indices[row][col_id] = ver_index; // for validation
             sg.update_metadata(ssid.ssid_low, ssid.ssid_high);
         }
         return true;
     }
-
-    /*
-    bool AccTxn::InsertRow(Table *tbl, Row *row) {
-        return false;
-    }
-    */
 
     AccTxn::~AccTxn() {
         // TODO: fill in if holding any resources

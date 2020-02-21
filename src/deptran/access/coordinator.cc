@@ -1,5 +1,4 @@
 #include "coordinator.h"
-int inconsistent_n_count = 0;
 namespace janus {
     AccCommo* CoordinatorAcc::commo() {
         if (commo_ == nullptr) {
@@ -39,8 +38,6 @@ namespace janus {
                     End();
                     reset_all_members();
                 } else if (aborted_) {
-                    // TODO: do we need to update txns to be aborted on servers? could be an ML knob?
-                    // TODO: seems no need for now, but might be needed when interacting with 2PL?
                     AccFinalize(ABORTED);
                     Restart();
                 } else {

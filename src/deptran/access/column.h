@@ -13,7 +13,8 @@ namespace janus {
         txnid_t ssid_low;
         txnid_t ssid_high;
         SSID() : ssid_low(0), ssid_high(0) {}
-        SSID(const SSID& that) : ssid_low(that.ssid_low), ssid_high(that.ssid_high) {}
+        SSID(snapshotid_t low, snapshotid_t high) : ssid_low(low), ssid_high(high) {}
+        SSID(const SSID& that) = default;
         SSID& operator=(const SSID& that) {
             if (this == &that) {
                 return *this;
@@ -65,11 +66,12 @@ namespace janus {
         // a vector of txns as a versioned column --> txn queue
         std::vector<AccTxnRec> txn_queue;
         const int INITIAL_QUEUE_SIZE = 100;
-        SSID ssid_cur;
-        std::pair<int, SSID> finalized_version =
-                std::make_pair(0, SSID());  // points to the most recent finalized version
-                                                    // (txn_queue index, ssid)
+        //SSID ssid_cur;
+        unsigned long finalized_version = 0;  // the index points to the most recent finalized version
         void update_finalized();    // called whenever commit a write
+        bool is_logical_head(unsigned long index) const;
+        SSID get_next_SSID() const;
+        const AccTxnRec& logical_head() const;
         friend class AccRow;
     };
 }

@@ -43,38 +43,36 @@ namespace janus {
     }
 
     bool AccRow::validate(mdb::colid_t col_id, unsigned long index, snapshotid_t ssid_new) { // index is the new write's
-        if (_row[col_id].txn_queue.size() > index + 1 && !_row[col_id].all_recent_aborted(index)) {
-            // there has been new unaborted write, validation fails
+        if (!_row[col_id].is_logical_head(index)) {
+            // there have been recent unaborted writes
             if (_row[col_id].txn_queue[index].status == UNCHECKED) {
                 _row[col_id].txn_queue[index].status = ABORTED;  // will abort anyways
             }
             return false;
-        } else {
-            if (_row[col_id].txn_queue[index].status == UNCHECKED) {
-                _row[col_id].txn_queue[index].status = VALIDATING;  // mark validating
-            }
-            if (_row[col_id].ssid_cur.ssid_high < ssid_new) { // extends SSID range
-                _row[col_id].ssid_cur.ssid_high = ssid_new;
-            }
-            if (_row[col_id].finalized_version.first == index) {  // validating a read and validation good
-                if (_row[col_id].txn_queue[index].ssid.ssid_high < ssid_new) {
-                    _row[col_id].txn_queue[index].ssid.ssid_high = ssid_new;
-                }
-                _row[col_id].update_finalized();
-            }
-            return true;
         }
+        // now, validation succeeds, i.e., index is logical head
+        if (_row[col_id].txn_queue[index].status == UNCHECKED) {
+            _row[col_id].txn_queue[index].status = VALIDATING;  // mark validating
+        }
+        if (_row[col_id].txn_queue[index].ssid.ssid_high < ssid_new) { // extends SSID range
+            _row[col_id].txn_queue[index].ssid.ssid_high = ssid_new;
+        }
+        return true;
     }
 
     void AccRow::finalize(mdb::colid_t col_id, unsigned long ver_index, int8_t decision, snapshotid_t ssid_new) {
-        verify(decision == FINALIZED);
-        _row[col_id].txn_queue[ver_index].status = decision;
+        if (_row[col_id].txn_queue[ver_index].status == UNCHECKED ||
+            _row[col_id].txn_queue[ver_index].status == VALIDATING) {
+            _row[col_id].txn_queue[ver_index].status = decision;
+        }
+        if (decision == ABORTED) {
+            return;
+        }
         // now we extend ssid range
-        if (ver_index == _row[col_id].txn_queue.size() - 1 || _row[col_id].all_recent_aborted(ver_index)) {
-            if (ssid_new != 0 && _row[col_id].ssid_cur.ssid_high < ssid_new) {
-                _row[col_id].ssid_cur.ssid_high = ssid_new;
+        if (_row[col_id].is_logical_head(ver_index)) {
+            if (ssid_new != 0 && _row[col_id].txn_queue[ver_index].ssid.ssid_high < ssid_new) {
+                _row[col_id].txn_queue[ver_index].ssid.ssid_high = ssid_new;
             }
-            _row[col_id].txn_queue[ver_index].ssid.ssid_high = _row[col_id].ssid_cur.ssid_high;
         }
         _row[col_id].update_finalized();
     }

@@ -13,14 +13,8 @@ namespace janus {
     struct MetaData {  // the info returned from rows for consistency check
         // for now, it needs one ssid from each row
         std::unordered_map<mdb::Row*, std::unordered_map<mdb::colid_t, unsigned long>> indices;
-                                                            // the set of ssid_high of each accessed col
-                                                            // used for later validation
-        //std::unordered_map<mdb::Row*, std::unordered_map<mdb::colid_t, SSID>> ssid_accessed;
-                                                            // when read/write a column, record it
-                                                            // this is to optimize TPCA-alike workloads
-        //std::unordered_map<mdb::Row*, std::unordered_map<mdb::colid_t, unsigned long>> pending_writes;
-                                                            // this records all writes, for finalize them later
-
+                                                            // the set of versions accessed,
+                                                            // used for validation and finalize
         snapshotid_t highest_ssid_low = 0;
         snapshotid_t lowest_ssid_high = UINT_MAX;
         snapshotid_t highest_ssid_high = 0;
