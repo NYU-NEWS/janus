@@ -15,10 +15,10 @@ namespace janus {
         std::unordered_map<mdb::Row*, std::unordered_map<mdb::colid_t, unsigned long>> indices;
                                                             // the set of ssid_high of each accessed col
                                                             // used for later validation
-        std::unordered_map<mdb::Row*, std::unordered_map<mdb::colid_t, SSID>> ssid_accessed;
+        //std::unordered_map<mdb::Row*, std::unordered_map<mdb::colid_t, SSID>> ssid_accessed;
                                                             // when read/write a column, record it
                                                             // this is to optimize TPCA-alike workloads
-        std::unordered_map<mdb::Row*, std::unordered_map<mdb::colid_t, unsigned long>> pending_writes;
+        //std::unordered_map<mdb::Row*, std::unordered_map<mdb::colid_t, unsigned long>> pending_writes;
                                                             // this records all writes, for finalize them later
 
         snapshotid_t highest_ssid_low = 0;
@@ -31,10 +31,11 @@ namespace janus {
     class SafeGuard {
         // each txn has a safeguard object for checking consistency
     public:
-        //bool is_consistent() const;  // compare ssids to tell consistency
         void update_metadata(snapshotid_t ssid_low, snapshotid_t ssid_high);
+        void reset_safeguard();
     private:
         MetaData metadata;
+        bool validate_done = false;
         friend class AccTxn;
         friend class SchedulerAcc;
     };

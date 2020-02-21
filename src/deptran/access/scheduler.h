@@ -16,7 +16,7 @@ namespace janus {
                         uint64_t* ssid_highest,
                         TxnOutput& ret_output);     // AccDispatch RPC handler
         void OnValidate(cmdid_t cmd_id, snapshotid_t ssid_new, int8_t* res);
-        void OnFinalize(cmdid_t cmd_id, int8_t decision);
+        void OnFinalize(cmdid_t cmd_id, int8_t decision, snapshotid_t ssid_new);
         bool Guard(Tx &tx_box, Row* row, int col_id, bool write) override {
             // do nothing, just has to override this pure virtual func.
             return true;

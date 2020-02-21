@@ -26,8 +26,9 @@ namespace janus {
         if (tx->fully_dispatched_->value_ == 0) {
             tx->fully_dispatched_->Set(1);
         }
-        // Step 2: do local safeguard consistency check.
+        // Step 2: report ssid ranges
         auto acc_txn = dynamic_pointer_cast<AccTxn>(tx);
+        /*
         // first iterate through ssid_accessed --> has dedup'ed read/write on the same row-col
         for (const auto& row_col : acc_txn->sg.metadata.ssid_accessed) {
             for (const auto& col_ssid : row_col.second) {
@@ -38,6 +39,7 @@ namespace janus {
             }
         }
         acc_txn->sg.metadata.ssid_accessed.clear();  // no need anymore, only for dispatch phase
+        */
         // fill return values
         *ssid_low = acc_txn->sg.metadata.highest_ssid_low;
         *ssid_high = acc_txn->sg.metadata.lowest_ssid_high;
@@ -47,29 +49,48 @@ namespace janus {
 
     void SchedulerAcc::OnValidate(cmdid_t cmd_id, snapshotid_t ssid_new, int8_t *res) {
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
+        if (acc_txn->sg.validate_done) {
+            // multiple pieces may share the same scheduler and thus validate on the same indices map
+            *res = CONSISTENT;  // if there is at least one validation fails, final result will be fail
+            return;
+        } else {
+            acc_txn->sg.validate_done = true;
+        }
         for (auto& row_col : acc_txn->sg.metadata.indices) {
             auto acc_row = dynamic_cast<AccRow*>(row_col.first);
             for (auto& col_ssid : row_col.second) {
                 if (!acc_row->validate(col_ssid.first, col_ssid.second, ssid_new)) {
                     // validation fails on this row-col
-                    acc_txn->sg.metadata.indices.clear();
+                    // acc_txn->sg.metadata.indices.clear(); // still need it for finalize
                     *res = INCONSISTENT;
                     return;
                 }
             }
         }
-        acc_txn->sg.metadata.indices.clear();
+        // acc_txn->sg.metadata.indices.clear(); // still need this for finalize
         *res = CONSISTENT;
    }
 
-    void SchedulerAcc::OnFinalize(cmdid_t cmd_id, int8_t decision) {
+    void SchedulerAcc::OnFinalize(cmdid_t cmd_id, int8_t decision, snapshotid_t ssid_new) {
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
-        for (auto& row_col : acc_txn->sg.metadata.pending_writes) {
+        if (acc_txn->sg.metadata.indices.empty()) {
+            return;
+        }
+        if (decision == ABORTED) {
+            acc_txn->sg.reset_safeguard();
+            return;
+        }
+        if (acc_txn->sg.validate_done) {
+            // this txn did validation earlier, so ssid highs have been updated already
+            ssid_new = 0;
+        }
+        for (auto& row_col : acc_txn->sg.metadata.indices) {
             auto acc_row = dynamic_cast<AccRow*>(row_col.first);
             for (auto& col_index : row_col.second) {
-                acc_row->finalize(col_index.first, col_index.second, decision);
+                acc_row->finalize(col_index.first, col_index.second, decision, ssid_new);
             }
         }
-        acc_txn->sg.metadata.pending_writes.clear();
+        // clear metadata after finalizing a txn
+        acc_txn->sg.reset_safeguard();
     }
 }

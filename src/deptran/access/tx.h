@@ -40,7 +40,6 @@ namespace janus {
 
         ~AccTxn() override;
     private:
-//        txnid_t tid;
         SafeGuard sg;
         friend class SchedulerAcc;
     };

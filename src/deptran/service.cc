@@ -413,8 +413,7 @@ void ClassicServiceImpl::AccDispatch(const i64& cmd_id,
     shared_ptr<Marshallable> sp = md.sp_data_;
     auto* sched = (SchedulerAcc*) dtxn_sched_;
     bool validate_abort = sched->OnDispatch(cmd_id, sp, ssid_low, ssid_high, ssid_highest, *output);
-    *res = validate_abort ? VALIDATE_ABORT : SUCCESS;  // success could be either consistent or not
-                                                       // validate_abort then means for sure inconsistent
+    *res = validate_abort ? VALIDATE_ABORT : SUCCESS;
     defer->reply();
 }
 
@@ -430,10 +429,11 @@ void ClassicServiceImpl::AccValidate(const i64 &cmd_id,
 
 void ClassicServiceImpl::AccFinalize(const i64& cmd_id,
                                      const int8_t& decision,
+                                     const uint64_t& ssid_new,
                                      DeferredReply* defer) {
     // server-side handler of AccFinalize
     auto* sched = (SchedulerAcc*) dtxn_sched_;
-    sched->OnFinalize(cmd_id, decision);
+    sched->OnFinalize(cmd_id, decision, ssid_new);
     defer->reply();
 }
 

@@ -67,12 +67,12 @@ namespace janus {
         Future::safe_release(future);
     }
 
-    void AccCommo::AccBroadcastFinalize(parid_t par_id, cmdid_t cmd_id, int8_t decision) {
+    void AccCommo::AccBroadcastFinalize(parid_t par_id, cmdid_t cmd_id, int8_t decision, snapshotid_t ssid_new) {
         rrr::FutureAttr fuattr;
         fuattr.callback = {};
         auto pair_leader_proxy = LeaderProxyForPartition(par_id);
         auto proxy = pair_leader_proxy.second;
-        auto future = proxy->async_AccFinalize(cmd_id, decision, fuattr); // call AccFinalize RPC
+        auto future = proxy->async_AccFinalize(cmd_id, decision, ssid_new, fuattr); // call AccFinalize RPC
         Future::safe_release(future);
     }
 }

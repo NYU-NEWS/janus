@@ -18,18 +18,14 @@ namespace janus {
                     std::piecewise_construct,
                     std::make_tuple(col_id),
                     std::make_tuple(col_id, std::move(values.at(col_id))));
-            //new_row->_row.emplace(col_id, AccColumn());
-            //new_row->_row.at(col_id).create(std::move(values.at(col_id)));
         }
         return new_row;
     }
 
     SSID AccRow::read_column(mdb::colid_t col_id, mdb::Value* value, bool& validate_abort, unsigned long& index) {
-        // TODO: change this logic, now it reads back() for testing
         if (col_id >= _row.size()) {
             // col_id is invalid. We're doing a trick here.
-            // We should make txn_queue check if col_id exists, which
-            // is linear time. Instead, we do size() since keys are col_ids
+            // keys are col_ids
             value = nullptr;
             return {};
         }
@@ -46,23 +42,40 @@ namespace janus {
         return _row.at(col_id).write(std::move(value), tid, ver_index);
     }
 
-    bool AccRow::validate(mdb::colid_t col_id, unsigned long index, snapshotid_t ssid_new) {
-        // TODO: handle aborted txn rec (FIXME later)
+    bool AccRow::validate(mdb::colid_t col_id, unsigned long index, snapshotid_t ssid_new) { // index is the new write's
         if (_row[col_id].txn_queue.size() > index + 1 && !_row[col_id].all_recent_aborted(index)) {
             // there has been new unaborted write, validation fails
+            if (_row[col_id].txn_queue[index].status == UNCHECKED) {
+                _row[col_id].txn_queue[index].status = ABORTED;  // will abort anyways
+            }
             return false;
         } else {
+            if (_row[col_id].txn_queue[index].status == UNCHECKED) {
+                _row[col_id].txn_queue[index].status = VALIDATING;  // mark validating
+            }
             if (_row[col_id].ssid_cur.ssid_high < ssid_new) { // extends SSID range
                 _row[col_id].ssid_cur.ssid_high = ssid_new;
+            }
+            if (_row[col_id].finalized_version.first == index) {  // validating a read and validation good
+                if (_row[col_id].txn_queue[index].ssid.ssid_high < ssid_new) {
+                    _row[col_id].txn_queue[index].ssid.ssid_high = ssid_new;
+                }
+                _row[col_id].update_finalized();
             }
             return true;
         }
     }
 
-    void AccRow::finalize(mdb::colid_t col_id, unsigned long ver_index, int8_t decision) {
+    void AccRow::finalize(mdb::colid_t col_id, unsigned long ver_index, int8_t decision, snapshotid_t ssid_new) {
+        verify(decision == FINALIZED);
         _row[col_id].txn_queue[ver_index].status = decision;
-        if (decision == FINALIZED) {
-            _row[col_id].update_finalized();
+        // now we extend ssid range
+        if (ver_index == _row[col_id].txn_queue.size() - 1 || _row[col_id].all_recent_aborted(ver_index)) {
+            if (ssid_new != 0 && _row[col_id].ssid_cur.ssid_high < ssid_new) {
+                _row[col_id].ssid_cur.ssid_high = ssid_new;
+            }
+            _row[col_id].txn_queue[ver_index].ssid.ssid_high = _row[col_id].ssid_cur.ssid_high;
         }
+        _row[col_id].update_finalized();
     }
 }

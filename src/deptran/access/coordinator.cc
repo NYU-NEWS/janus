@@ -18,16 +18,11 @@ namespace janus {
                 break;
             case Phase::DISPATCH: verify(phase_ % n_phase == Phase::VALIDATE);
                 // TODO: safeguard check. If consistent, respond.
-                if (_is_consistent) { // SG says this txn is consistent
-                    // return to the end user immediately and finish
-                    committed_ = true;
-                }
-                GotoNextPhase(); // go validate if necessary
-                //End();
+                SafeGuardCheck();
                 break;
             case Phase::VALIDATE: verify(phase_ % n_phase == Phase::DECIDE);
                 // validate if _validate_abort != true and inconsistent
-                if (!committed_ && _validate_abort) {
+                if (!committed_ && tx_data()._validate_abort) {
                     AccValidate();
 //                    aborted_ = true; // TODO: no need to validate for now, later may apply some optimizations
                                      // TODO: validate or not in this case is an ML control knob
@@ -42,6 +37,7 @@ namespace janus {
                 if (committed_) {
                     AccFinalize(FINALIZED);
                     End();
+                    reset_all_members();
                 } else if (aborted_) {
                     // TODO: do we need to update txns to be aborted on servers? could be an ML knob?
                     // TODO: seems no need for now, but might be needed when interacting with 2PL?
@@ -108,25 +104,25 @@ namespace janus {
             txn->Merge(pair.first, pair.second);
         }
         // store RPC returned information
-        if (ssid_low > ssid_high) {  // no overlapped range
-            _is_consistent = false;
-//            Log_debug("inconsistency = %ld", ++inconsistent_n_count);
-        }
         if (res == VALIDATE_ABORT) {
-            _validate_abort = true;
+            txn->_validate_abort = true;
         }
-        if (_is_consistent) { // if some ack has shown inconsistent, then no need to update these
-            if (ssid_low > highest_ssid_low) {
-                highest_ssid_low = ssid_low;
+        if (ssid_highest > txn->highest_ssid_high) {
+            txn->highest_ssid_high = ssid_highest;
+        }
+        if (txn->_is_consistent) {
+            if (ssid_low > txn->highest_ssid_low) {
+                txn->highest_ssid_low = ssid_low;
             }
-            if (ssid_high < lowest_ssid_high) {
-                lowest_ssid_high = ssid_high;
+            if (ssid_high < txn->lowest_ssid_high) {
+                txn->lowest_ssid_high = ssid_high;
+            }
+            // ssid check consistency
+            if (txn->highest_ssid_low > txn->lowest_ssid_high) {
+                // inconsistent if no overlapped range
+                txn->_is_consistent = false;
             }
         }
-        if (ssid_highest > highest_ssid_high) {
-            highest_ssid_high = ssid_highest;
-        }
-
         if (txn->HasMoreUnsentPiece()) {
             Log_debug("command has more sub-cmd, cmd_id: %llx,"
                       " n_started_: %d, n_pieces: %d",
@@ -143,10 +139,10 @@ namespace janus {
         auto pars = tx_data().GetPartitionIds();
         verify(!pars.empty());
         for (auto par_id : pars) {
-            n_validate_rpc_++;
+            tx_data().n_validate_rpc_++;
             commo()->AccBroadcastValidate(par_id,
                                           tx_data().id_,
-                                          highest_ssid_high,
+                                          tx_data().highest_ssid_high,
                                           std::bind(&CoordinatorAcc::AccValidateAck,
                                                           this,
                                                              phase_,
@@ -157,23 +153,19 @@ namespace janus {
     void CoordinatorAcc::AccValidateAck(phase_t phase, int8_t res) {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
         if (phase != phase_) return;
-        n_validate_ack_++;
+        tx_data().n_validate_ack_++;
         if (res == INCONSISTENT) { // at least one shard returns inconsistent
             aborted_ = true;
         }
-        if (n_validate_ack_ == n_validate_rpc_) {
+        if (tx_data().n_validate_ack_ == tx_data().n_validate_rpc_) {
             // have received all acks
             committed_ = !aborted_;
-            if (!committed_) {
-                int x = 0;
-            }
             // -------Testing purpose here----------
             // TODO: take this out
             //aborted_ = false;
             //committed_ = true;
             //--------------------------------------
             GotoNextPhase(); // to phase decide
-            return;
         }
     }
 
@@ -181,10 +173,12 @@ namespace janus {
         std::lock_guard<std::recursive_mutex> lock(mtx_);
         auto pars = tx_data().GetPartitionIds();
         verify(!pars.empty());
+        snapshotid_t ssid_new = decision == FINALIZED ? tx_data().highest_ssid_high : 0;
         for (auto par_id : pars) {
             commo()->AccBroadcastFinalize(par_id,
                                           tx_data().id_,
-                                          decision);
+                                          decision,
+                                          ssid_new);
         }
     }
 
@@ -197,12 +191,24 @@ namespace janus {
     }
 
     void CoordinatorAcc::reset_all_members() {
-        _is_consistent = true;
-        _validate_abort = false;
-        highest_ssid_low = 0;
-        lowest_ssid_high = UINT_MAX;
-        highest_ssid_high = 0;
-        n_validate_rpc_ = 0;
-        n_validate_ack_ = 0;
+        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+        tx_data()._is_consistent = true;
+        tx_data()._validate_abort = false;
+        tx_data().highest_ssid_low = 0;
+        tx_data().lowest_ssid_high = UINT_MAX;
+        tx_data().highest_ssid_high = 0;
+        tx_data().n_validate_rpc_ = 0;
+        tx_data().n_validate_ack_ = 0;
+    }
+
+    void CoordinatorAcc::SafeGuardCheck() {
+        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+        verify(!committed_);
+        if (tx_data()._is_consistent) { // SG says this txn is consistent
+            // return to the end user immediately and finish
+            tx_data().n_ssid_consistent_++;   //  for stats
+            committed_ = true;
+        }
+        GotoNextPhase(); // go validate if necessary
     }
 } // namespace janus

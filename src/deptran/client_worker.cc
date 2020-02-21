@@ -59,6 +59,7 @@ void ClientWorker::RequestDone(Coordinator* coo, TxReply& txn_reply) {
     success++;
   num_txn++;
   num_try.fetch_add(txn_reply.n_try_);
+  ssid_consistent.fetch_add(txn_reply.n_ssid_consistent_);
 
   bool have_more_time = timer_->elapsed() < duration;
   Log_debug("received callback from tx_id %" PRIx64, txn_reply.tx_id_);
@@ -317,10 +318,11 @@ void ClientWorker::Work() {
   }
 //  finish_mutex.unlock();
 
-  Log_info("Finish:\nTotal: %u, Commit: %u, Attempts: %u, Running for %u\n",
+  Log_info("Finish:\nTotal: %u, Commit: %u, Attempts: %u, SSID_consistent: %u, Running for %u\n",
            num_txn.load(),
            success.load(),
            num_try.load(),
+           ssid_consistent.load(),
            Config::GetConfig()->get_duration());
   fflush(stderr);
   fflush(stdout);
@@ -433,6 +435,7 @@ ClientWorker::ClientWorker(
   num_txn.store(0);
   success.store(0);
   num_try.store(0);
+  ssid_consistent.store(0);
   commo_ = frame_->CreateCommo(poll_mgr_);
   commo_->loc_id_ = my_site_.locale_id;
   forward_requests_to_leader_ =

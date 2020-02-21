@@ -23,6 +23,7 @@ class TxReply {
   map<int32_t, Value> output_;
   int32_t txn_type_;
   txnid_t tx_id_;
+  int32_t n_ssid_consistent_;
 };
 
 class TxWorkspace {
@@ -227,6 +228,7 @@ class TxData: public CmdData {
 
   int max_try_ = 0;
   int n_try_ = 0;
+  int n_ssid_consistent_ = 0;
 
   bool validation_ok_{true};
   bool need_validation_{false};
@@ -300,6 +302,17 @@ class TxData: public CmdData {
   virtual void Reset() override;
 
   virtual ~TxData() {}
+
+    /* ACC members */
+    bool _is_consistent = true;
+    bool _validate_abort = false;
+    // a consistent snapshot resides between highest_low and lowest_high
+    snapshotid_t highest_ssid_low = 0;
+    snapshotid_t lowest_ssid_high = UINT_MAX;
+    snapshotid_t highest_ssid_high = 0;  // for updating ssids upon validation
+    // and for final ssid if validation says consistent
+    int n_validate_rpc_ = 0;
+    int n_validate_ack_ = 0;
 };
 
 } // namespace rcc

@@ -99,6 +99,7 @@ Marshal& operator << (Marshal& m, const TxReply& reply) {
   // m << reply.start_time_;
   m << reply.time_;
   m << reply.txn_type_;
+  m << reply.n_ssid_consistent_;
   return m;
 }
 
@@ -109,6 +110,7 @@ Marshal& operator >> (Marshal& m, TxReply& reply) {
   memset(&reply.start_time_, 0, sizeof(reply.start_time_));
   m >> reply.time_;
   m >> reply.txn_type_;
+  m >> reply.n_ssid_consistent_;
   return m;
 }
 
@@ -323,6 +325,7 @@ TxReply &TxData::get_reply() {
   clock_gettime(&t_buf);
   reply_.time_ = timespec2ms(t_buf) - timespec2ms(start_time_);
   reply_.txn_type_ = (int32_t) type_;
+  reply_.n_ssid_consistent_ = n_ssid_consistent_;
   return reply_;
 }
 
