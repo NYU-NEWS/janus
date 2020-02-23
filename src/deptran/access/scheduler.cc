@@ -2,12 +2,12 @@
 #include "tx.h"
 
 namespace janus {
-    bool SchedulerAcc::OnDispatch(cmdid_t cmd_id,
-                                  const shared_ptr<Marshallable>& cmd,
-                                  uint64_t *ssid_low,
-                                  uint64_t *ssid_high,
-                                  uint64_t *ssid_highest,
-                                  TxnOutput &ret_output) {
+    int32_t SchedulerAcc::OnDispatch(cmdid_t cmd_id,
+                                     const shared_ptr<Marshallable>& cmd,
+                                     uint64_t *ssid_low,
+                                     uint64_t *ssid_high,
+                                     uint64_t *ssid_highest,
+                                     TxnOutput &ret_output) {
         // Step 1: dispatch and execute pieces
         auto sp_vec_piece = dynamic_pointer_cast<VecPieceData>(cmd)->sp_vec_piece_data_;
         verify(sp_vec_piece);
@@ -32,7 +32,13 @@ namespace janus {
         *ssid_low = acc_txn->sg.metadata.highest_ssid_low;
         *ssid_high = acc_txn->sg.metadata.lowest_ssid_high;
         *ssid_highest = acc_txn->sg.metadata.highest_ssid_high;
-        return acc_txn->sg.metadata.validate_abort;
+        if (acc_txn->sg.metadata.validate_abort) {
+            return VALIDATE_ABORT;
+        }
+        if (!acc_txn->sg.offset_1_valid) {
+            return OFFSET_INVALID;
+        }
+        return SUCCESS;
     }
 
     void SchedulerAcc::OnValidate(cmdid_t cmd_id, snapshotid_t ssid_new, int8_t *res) {
@@ -59,12 +65,14 @@ namespace janus {
     void SchedulerAcc::OnFinalize(cmdid_t cmd_id, int8_t decision, snapshotid_t ssid_new) {
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
         if (acc_txn->sg.metadata.indices.empty()) {
+            // we've done finalize for this txn already
             return;
         }
         if (acc_txn->sg.validate_done) {
             // this txn did validation earlier, so ssid highs have been updated already
             ssid_new = 0;
         }
+        // we might need to update ssid in finalize for the ssid-diff=1 special case (optimization)
         for (auto& row_col : acc_txn->sg.metadata.indices) {
             auto acc_row = dynamic_cast<AccRow*>(row_col.first);
             for (auto& col_index : row_col.second) {

@@ -26,5 +26,6 @@ namespace janus {
         void AccFinalize(int8_t decision);
         void Restart() override;
         void reset_all_members();
+        bool offset_1_check_pass();
     };
 } // namespace janus

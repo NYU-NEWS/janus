@@ -15,6 +15,7 @@ namespace janus {
         sg.metadata.indices[row][col_id] = index;  // for later validation
         // update metadata
         sg.update_metadata(ssid.ssid_low, ssid.ssid_high);
+        sg.offset_1_valid = !sg.metadata.validate_abort;  // offset-1 case
         return true;
     }
 
@@ -34,6 +35,7 @@ namespace janus {
             sg.metadata.indices[row][col_id] = index;  // for later validation
             // update metadata
             sg.update_metadata(ssid.ssid_low, ssid.ssid_high);
+            sg.offset_1_valid = !sg.metadata.validate_abort;  // offset-1 case
         }
         return true;
     }
@@ -45,7 +47,7 @@ namespace janus {
         verify(row != nullptr);
         auto acc_row = dynamic_cast<AccRow*>(row);
         unsigned long ver_index = 0;
-        SSID ssid = acc_row->write_column(col_id, std::move(value), this->tid_, ver_index); // ver_index is new write
+        SSID ssid = acc_row->write_column(col_id, std::move(value), this->tid_, ver_index, sg.offset_1_valid); // ver_index is new write
         row->ref_copy();
         sg.metadata.indices[row][col_id] = ver_index; // for validation and finalize
         sg.update_metadata(ssid.ssid_low, ssid.ssid_high);
@@ -62,7 +64,7 @@ namespace janus {
         row->ref_copy();
         for (auto col_id : col_ids) {
             unsigned long ver_index = 0;
-            SSID ssid = acc_row->write_column(col_id, std::move(values[v_counter++]), this->tid_, ver_index);
+            SSID ssid = acc_row->write_column(col_id, std::move(values[v_counter++]), this->tid_, ver_index, sg.offset_1_valid);
             sg.metadata.indices[row][col_id] = ver_index; // for validation
             sg.update_metadata(ssid.ssid_low, ssid.ssid_high);
         }

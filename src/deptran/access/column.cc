@@ -12,7 +12,7 @@ namespace janus {
         update_finalized();
     }
 
-    const mdb::Value& AccColumn::read(bool& validate_abort, SSID& ssid, unsigned long& index) {
+    const mdb::Value& AccColumn::read(bool& validate_abort, SSID& ssid, unsigned long& index) const {
         // return the most recent finalized version
         index = finalized_version;
         ssid = txn_queue[index].ssid;   // TODO:check
@@ -20,11 +20,16 @@ namespace janus {
         return txn_queue.at(finalized_version).value;
     }
 
-    SSID AccColumn::write(mdb::Value&& v, txnid_t tid, unsigned long& ver_index) { // ver_index is the new write's
+    SSID AccColumn::write(mdb::Value&& v, txnid_t tid, unsigned long& ver_index, bool& is_decided) { // ver_index is the new write's
         // write also returns the ssid of preceding write
-        txn_queue.emplace_back(std::move(v), tid, get_next_SSID());
+        SSID new_ssid = get_next_SSID();
+        txn_queue.emplace_back(std::move(v), tid, new_ssid);
         ver_index = txn_queue.size() - 1; // record index of this pending write for later validation and finalize
-        return txn_queue[ver_index -1].ssid;  // return the SSID of the preceding write
+        if (txn_queue[ver_index - 1].status == UNCHECKED || txn_queue[ver_index - 1].status == VALIDATING) {
+            // for check off-1 for writes, only need to check the one preceding write
+            is_decided = false;
+        }
+        return new_ssid;  // return the SSID of this new write -- safety
     }
 
     void AccColumn::update_finalized() {
@@ -68,5 +73,30 @@ namespace janus {
         }
         verify(0);
         return txn_queue.back();
+    }
+
+    void AccColumn::update_decided_head() {
+        for (unsigned long x = decided_head + 1; x < txn_queue.size(); ++x) {
+            if (txn_queue[x].status == UNCHECKED || txn_queue[x].status == VALIDATING) {
+                decided_head = x - 1;
+                return;
+            }
+        }
+    }
+
+    bool AccColumn::all_decided(unsigned long index) const {
+        return decided_head >= index;   // actually it is strictly =
+    }
+
+    unsigned long AccColumn::logical_head_index() const {
+        // logical head could be either finalized_version or a pending write
+        unsigned long index = txn_queue.size() - 1;
+        for (auto it = txn_queue.rbegin(); it != txn_queue.rend(); it++, index--) {
+            if (it->status != ABORTED) {
+                return index;
+            }
+        }
+        verify(0);
+        return 0;
     }
 }

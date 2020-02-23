@@ -22,5 +22,6 @@ namespace janus {
         metadata.highest_ssid_high = 0;
         metadata.validate_abort = false;
         validate_done = false;
+        offset_1_valid = true;
     }
 }

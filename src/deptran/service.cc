@@ -412,8 +412,7 @@ void ClassicServiceImpl::AccDispatch(const i64& cmd_id,
     // server-side handler of AccDispatch RPC
     shared_ptr<Marshallable> sp = md.sp_data_;
     auto* sched = (SchedulerAcc*) dtxn_sched_;
-    bool validate_abort = sched->OnDispatch(cmd_id, sp, ssid_low, ssid_high, ssid_highest, *output);
-    *res = validate_abort ? VALIDATE_ABORT : SUCCESS;
+    *res = sched->OnDispatch(cmd_id, sp, ssid_low, ssid_high, ssid_highest, *output);
     defer->reply();
 }
 

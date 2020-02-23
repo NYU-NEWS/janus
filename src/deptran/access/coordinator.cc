@@ -104,21 +104,22 @@ namespace janus {
         if (res == VALIDATE_ABORT) {
             txn->_validate_abort = true;
         }
+        if (res == OFFSET_INVALID) {
+            txn->_offset_invalid = true; // for offset1 optimization
+        }
         if (ssid_highest > txn->highest_ssid_high) {
             txn->highest_ssid_high = ssid_highest;
         }
-        if (txn->_is_consistent) {
-            if (ssid_low > txn->highest_ssid_low) {
-                txn->highest_ssid_low = ssid_low;
-            }
-            if (ssid_high < txn->lowest_ssid_high) {
-                txn->lowest_ssid_high = ssid_high;
-            }
-            // ssid check consistency
-            if (txn->highest_ssid_low > txn->lowest_ssid_high) {
-                // inconsistent if no overlapped range
-                txn->_is_consistent = false;
-            }
+        if (ssid_low > txn->highest_ssid_low) {
+            txn->highest_ssid_low = ssid_low;
+        }
+        if (ssid_high < txn->lowest_ssid_high) {
+            txn->lowest_ssid_high = ssid_high;
+        }
+        // basic ssid check consistency using ssid range
+        if (txn->highest_ssid_low > txn->lowest_ssid_high) {
+            // inconsistent if no overlapped range
+            txn->_is_consistent = false;
         }
         if (txn->HasMoreUnsentPiece()) {
             Log_debug("command has more sub-cmd, cmd_id: %llx,"
@@ -196,16 +197,25 @@ namespace janus {
         tx_data().highest_ssid_high = 0;
         tx_data().n_validate_rpc_ = 0;
         tx_data().n_validate_ack_ = 0;
+        tx_data()._offset_invalid = false;
     }
 
     void CoordinatorAcc::SafeGuardCheck() {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
         verify(!committed_);
-        if (tx_data()._is_consistent) { // SG says this txn is consistent
-            // return to the end user immediately and finish
-            tx_data().n_ssid_consistent_++;   //  for stats
+        // ssid check consistency
+        // added offset-1 optimization
+        if (tx_data()._is_consistent || offset_1_check_pass()) {
             committed_ = true;
+            tx_data().n_ssid_consistent_++;   //  for stats
         }
         GotoNextPhase(); // go validate if necessary
+    }
+
+    bool CoordinatorAcc::offset_1_check_pass() {
+        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+        return !tx_data()._offset_invalid &&  // write valid
+               !tx_data()._validate_abort &&  // read valid
+               tx_data().highest_ssid_low - tx_data().lowest_ssid_high <= 1;  // offset within 1
     }
 } // namespace janus

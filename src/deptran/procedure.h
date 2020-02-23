@@ -306,6 +306,7 @@ class TxData: public CmdData {
     /* ACC members */
     bool _is_consistent = true;
     bool _validate_abort = false;
+    bool _offset_invalid = false;
     // a consistent snapshot resides between highest_low and lowest_high
     snapshotid_t highest_ssid_low = 0;
     snapshotid_t lowest_ssid_high = UINT_MAX;

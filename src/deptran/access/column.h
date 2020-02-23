@@ -57,8 +57,8 @@ namespace janus {
         explicit AccColumn(colid_t, mdb::Value&& v);
         AccColumn(const AccColumn&) = delete;   // no copy
         AccColumn& operator=(const AccColumn&) = delete; // no copy
-        const mdb::Value& read(bool& validate_abort, SSID& ssid, unsigned long& index);
-        SSID write(mdb::Value&& v, txnid_t tid, unsigned long& ver_index);
+        const mdb::Value& read(bool& validate_abort, SSID& ssid, unsigned long& index) const;
+        SSID write(mdb::Value&& v, txnid_t tid, unsigned long& ver_index, bool& is_decided);
         bool all_recent_aborted(unsigned long index) const;
         //static void update_metadata(MetaData& metadata, const SSID& ssid);
     private:
@@ -68,10 +68,14 @@ namespace janus {
         const int INITIAL_QUEUE_SIZE = 100;
         //SSID ssid_cur;
         unsigned long finalized_version = 0;  // the index points to the most recent finalized version
+        unsigned long decided_head = 0;         // before which inclusive all writes are either finalized or aborted
         void update_finalized();    // called whenever commit a write
         bool is_logical_head(unsigned long index) const;
         SSID get_next_SSID() const;
         const AccTxnRec& logical_head() const;
+        unsigned long logical_head_index() const;
+        void update_decided_head();
+        bool all_decided(unsigned long index) const;
         friend class AccRow;
     };
 }

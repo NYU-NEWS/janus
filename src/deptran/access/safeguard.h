@@ -30,6 +30,7 @@ namespace janus {
     private:
         MetaData metadata;
         bool validate_done = false;
+        bool offset_1_valid = true;
         friend class AccTxn;
         friend class SchedulerAcc;
     };
