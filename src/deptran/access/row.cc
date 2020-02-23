@@ -51,6 +51,17 @@ namespace janus {
             }
             return false;
         }
+        if (_row[col_id].txn_queue[index].status == UNCHECKED) {
+            // this was the write
+            _row[col_id].txn_queue[index].status = VALIDATING;  // mark validating
+        }
+        // now, validation succeeds, i.e., index is logical head, update ssid
+        if (_row[col_id].txn_queue[index].ssid.ssid_high < ssid_new && _row[col_id].txn_queue[index].status == FINALIZED) {
+            // only extends SSID range for reads for now, the commented code below also change SSID for writes
+            // whether do it for writes or not could be a control knob
+            _row[col_id].txn_queue[index].ssid.ssid_high = ssid_new;
+        }
+        /*
         // now, validation succeeds, i.e., index is logical head, update ssid
         if (_row[col_id].txn_queue[index].ssid.ssid_high < ssid_new) {
             // extends ssid high for either read or write
@@ -62,6 +73,7 @@ namespace janus {
                 _row[col_id].txn_queue[index].ssid.ssid_low = ssid_new;
             }
         }
+        */
         return true;
     }
 

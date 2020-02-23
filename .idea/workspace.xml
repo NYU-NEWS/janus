@@ -20,14 +20,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="90fe84fa-ca18-4530-9a88-ce9ad2f7923a" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/bench/tpca/workload.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/bench/tpca/workload.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/access/coordinator.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/access/coordinator.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/client_worker.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/client_worker.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/client_worker.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/client_worker.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/procedure.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/procedure.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/procedure.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/procedure.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/test_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/test_run.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/access/row.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/access/row.cc" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
