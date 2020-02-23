@@ -22,20 +22,12 @@
     <list default="true" id="90fe84fa-ca18-4530-9a88-ce9ad2f7923a" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/bench/tpca/workload.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/bench/tpca/workload.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/access/column.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/access/column.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/access/column.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/access/column.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/deptran/access/coordinator.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/access/coordinator.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/access/coordinator.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/access/coordinator.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/access/row.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/access/row.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/access/row.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/access/row.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/access/safeguard.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/access/safeguard.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/access/safeguard.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/access/safeguard.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/access/scheduler.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/access/scheduler.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/access/scheduler.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/access/scheduler.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/access/tx.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/access/tx.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/constants.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/constants.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/client_worker.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/client_worker.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/client_worker.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/client_worker.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/procedure.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/procedure.cc" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/deptran/procedure.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/procedure.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/service.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/service.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/test_run.py" beforeDir="false" afterPath="$PROJECT_DIR$/test_run.py" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -744,7 +736,7 @@
       <workItem from="1582296513049" duration="16715000" />
       <workItem from="1582313431848" duration="12941000" />
       <workItem from="1582388169713" duration="4966000" />
-      <workItem from="1582409552433" duration="4514000" />
+      <workItem from="1582409552433" duration="8308000" />
     </task>
     <servers />
   </component>

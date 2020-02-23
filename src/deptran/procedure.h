@@ -24,6 +24,8 @@ class TxReply {
   int32_t txn_type_;
   txnid_t tx_id_;
   int32_t n_ssid_consistent_;
+  int32_t n_validate_abort_;
+  int32_t n_offset_valid_;
 };
 
 class TxWorkspace {
@@ -229,6 +231,8 @@ class TxData: public CmdData {
   int max_try_ = 0;
   int n_try_ = 0;
   int n_ssid_consistent_ = 0;
+  int n_validate_abort_ = 0;
+  int n_offset_valid_ = 0;
 
   bool validation_ok_{true};
   bool need_validation_{false};

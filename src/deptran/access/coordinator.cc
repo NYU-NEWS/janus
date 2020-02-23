@@ -207,7 +207,13 @@ namespace janus {
         // added offset-1 optimization
         if (tx_data()._is_consistent || offset_1_check_pass()) {
             committed_ = true;
-            tx_data().n_ssid_consistent_++;   //  for stats
+            tx_data().n_ssid_consistent_++;   // for stats
+        }
+        if (offset_1_check_pass() && !tx_data()._is_consistent) {
+            tx_data().n_offset_valid_++;  // for stats
+        }
+        if (tx_data()._validate_abort) {
+            tx_data().n_validate_abort_++;    // for stats
         }
         GotoNextPhase(); // go validate if necessary
     }
