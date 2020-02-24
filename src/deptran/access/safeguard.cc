@@ -8,10 +8,8 @@ namespace janus {
         if (ssid_high < metadata.lowest_ssid_high) {
             metadata.lowest_ssid_high = ssid_high;
         }
-        // the reason for ssid_high+1 here is: ssid is the preceding write for the new read/write, then
-        // the new write's ssid is (ssid_high+1, ssid_high+1).
-        if (ssid_high + 1 > metadata.highest_ssid_high) {
-            metadata.highest_ssid_high = ssid_high + 1;
+        if (ssid_high > metadata.highest_ssid_high) {
+            metadata.highest_ssid_high = ssid_high;
         }
     }
 
