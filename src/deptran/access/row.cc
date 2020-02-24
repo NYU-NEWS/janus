@@ -99,8 +99,8 @@ namespace janus {
         if (_row[col_id].txn_queue[ver_index].ssid.ssid_high < ssid_new) {
             // update ssid, similar to validation
             _row[col_id].txn_queue[ver_index].ssid.ssid_high = ssid_new;
-            if (!is_read) {
-                // this is a write, bounce up
+            if (!is_read && ssid_new == _row[col_id].txn_queue[ver_index].ssid.ssid_high + 1) {
+                // this is a write for ssid-diff case, bounce up
                 _row[col_id].txn_queue[ver_index].ssid.ssid_low = ssid_new;
             }
         }
