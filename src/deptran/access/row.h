@@ -9,7 +9,6 @@
 #include "tx.h"
 #include <unordered_map>
 #include <memdb/row.h>
-#include "safeguard.h"
 /*
  * Defines the row structure in ACCESS.
  * A row is a map of txn_queue (linked_vector); a txn_queue for each col

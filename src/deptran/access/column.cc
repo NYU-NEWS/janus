@@ -5,7 +5,7 @@ namespace janus {
         txn_queue.reserve(INITIAL_QUEUE_SIZE);
     }
 
-    AccColumn::AccColumn(colid_t cid, mdb::Value&& v) {
+    AccColumn::AccColumn(mdb::colid_t cid, mdb::Value&& v) {
         verify(txn_queue.empty());  // this should be a create
         txn_queue.emplace_back(std::move(v), 0, FINALIZED);
         col_id = cid;

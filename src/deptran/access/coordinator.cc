@@ -168,6 +168,7 @@ namespace janus {
     }
 
     void CoordinatorAcc::AccFinalize(int8_t decision) {
+	// TODO: READ-ONLY NO NEED TO FINALIZE
         std::lock_guard<std::recursive_mutex> lock(mtx_);
         auto pars = tx_data().GetPartitionIds();
         verify(!pars.empty());
@@ -193,7 +194,7 @@ namespace janus {
         tx_data()._is_consistent = true;
         tx_data()._validate_abort = false;
         tx_data().highest_ssid_low = 0;
-        tx_data().lowest_ssid_high = UINT_MAX;
+        tx_data().lowest_ssid_high = UINT64_MAX;
         tx_data().highest_ssid_high = 0;
         tx_data().n_validate_rpc_ = 0;
         tx_data().n_validate_ack_ = 0;

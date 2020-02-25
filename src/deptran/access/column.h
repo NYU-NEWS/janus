@@ -4,9 +4,8 @@
 #pragma once
 
 #include "constants.h"
-#include "tx.h"
+#include <memdb/utils.h>
 #include <memdb/value.h>
-#include "safeguard.h"
 
 namespace janus {
     struct SSID {  // SSID defines an ssid range by low--high
@@ -54,7 +53,7 @@ namespace janus {
     public:
         //friend class AccRow;
         AccColumn();
-        explicit AccColumn(colid_t, mdb::Value&& v);
+        explicit AccColumn(mdb::colid_t, mdb::Value&& v);
         AccColumn(const AccColumn&) = delete;   // no copy
         AccColumn& operator=(const AccColumn&) = delete; // no copy
         const mdb::Value& read(bool& validate_abort, SSID& ssid, unsigned long& index) const;
@@ -62,7 +61,7 @@ namespace janus {
         bool all_recent_aborted(unsigned long index) const;
         //static void update_metadata(MetaData& metadata, const SSID& ssid);
     private:
-        colid_t col_id = -1;
+        mdb::colid_t col_id = -1;
         // a vector of txns as a versioned column --> txn queue
         std::vector<AccTxnRec> txn_queue;
         const int INITIAL_QUEUE_SIZE = 100;

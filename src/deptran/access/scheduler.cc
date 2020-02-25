@@ -32,6 +32,7 @@ namespace janus {
         *ssid_low = acc_txn->sg.metadata.highest_ssid_low;
         *ssid_high = acc_txn->sg.metadata.lowest_ssid_high;
         *ssid_highest = acc_txn->sg.metadata.highest_ssid_high;
+	acc_txn->sg.metadata.earlier_read.clear();
         if (acc_txn->sg.metadata.validate_abort) {
             return VALIDATE_ABORT;
         }

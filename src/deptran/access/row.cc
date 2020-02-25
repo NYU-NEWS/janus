@@ -85,24 +85,26 @@ namespace janus {
             _row[col_id].txn_queue[ver_index].status = decision;
             is_read = false;
         }
-//        _row[col_id].update_decided_head();
         if (decision == ABORTED) {
             // TODO: abort merge
             return;
         }
         // update finalized_version
         _row[col_id].update_finalized();
-        // now we update ssid for the special ssid-diff=1 case --> iff ssid_new != 0
-        if (ssid_new == 0) {
+        // now we update ssid
+	if (ssid_new == 0 || !_row[col_id].is_logical_head(ver_index) || _row[col_id].txn_queue[ver_index].ssid.ssid_high >= ssid_new) {
+	    // only update ssid if the index is the logical head
             return;
         }
-        if (_row[col_id].txn_queue[ver_index].ssid.ssid_high < ssid_new) {
-            // update ssid, similar to validation
+	if (is_read) {
             _row[col_id].txn_queue[ver_index].ssid.ssid_high = ssid_new;
-            if (!is_read && ssid_new == _row[col_id].txn_queue[ver_index].ssid.ssid_high + 1) {
-                // this is a write for ssid-diff case, bounce up
-                _row[col_id].txn_queue[ver_index].ssid.ssid_low = ssid_new;
-            }
+            return;
         }
+        if (ssid_new == _row[col_id].txn_queue[ver_index].ssid.ssid_high + 1) {
+	    // this is a write for ssid-offset1 case
+	    _row[col_id].txn_queue[ver_index].ssid.ssid_low = ssid_new;
+            _row[col_id].txn_queue[ver_index].ssid.ssid_high = ssid_new;
+        }
+	// we should not either extend or bounce up SSID for a write not in offset-1 case
     }
 }
