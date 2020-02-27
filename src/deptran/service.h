@@ -223,16 +223,16 @@ class ClassicServiceImpl : public ClassicService {
 
   void AccDispatch(const i64& cmd_id,
                    const MarshallDeputy& cmd,
+                   const uint64_t& ssid_spec,
                    int32_t* res,
-                   uint64_t* ssid_low,
-                   uint64_t* ssid_high,
-                   uint64_t* ssid_highest,
+                   uint64_t* ssid_min,
+                   uint64_t* ssid_max,
                    TxnOutput* output,
                    DeferredReply* defer_reply) override;
 
   void AccValidate(const i64& cmd_id, const uint64_t& ssid_new, int8_t* res, DeferredReply* defer_reply) override;
 
-  void AccFinalize(const i64& cmd_id, const int8_t& decision, const uint64_t& ssid_new, DeferredReply* defer_reply) override;
+  void AccFinalize(const i64& cmd_id, const int8_t& decision, DeferredReply* defer_reply) override;
 
  protected:
   void RegisterStats();

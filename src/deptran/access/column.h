@@ -9,8 +9,8 @@
 
 namespace janus {
     struct SSID {  // SSID defines an ssid range by low--high
-        txnid_t ssid_low;
-        txnid_t ssid_high;
+        snapshotid_t ssid_low;   // the ssid of this write upon creation
+        snapshotid_t ssid_high;  // the highest ssid extended by reads returning this write
         SSID() : ssid_low(0), ssid_high(0) {}
         SSID(snapshotid_t low, snapshotid_t high) : ssid_low(low), ssid_high(high) {}
         SSID(const SSID& that) = default;
@@ -44,8 +44,13 @@ namespace janus {
         AccTxnRec& operator=(const AccTxnRec&) = delete;
         AccTxnRec(mdb::Value&& v, txnid_t tid, const SSID& ss_id, acc_status_t stat = UNCHECKED)
                 : txn_id(tid), ssid(ss_id), status(stat), value(std::move(v)) {}
-        const mdb::Value & get_value() const {
-            return value;
+        void extend_ssid(snapshotid_t ssid_new) {
+            if (ssid.ssid_high < ssid_new) {
+                ssid.ssid_high = ssid_new;
+            }
+        }
+        bool have_reads() const {
+            return ssid.ssid_low != ssid.ssid_high;
         }
     };
     // an AccColumn has a vector of queued txns
@@ -56,25 +61,45 @@ namespace janus {
         explicit AccColumn(mdb::colid_t, mdb::Value&& v);
         AccColumn(const AccColumn&) = delete;   // no copy
         AccColumn& operator=(const AccColumn&) = delete; // no copy
-        const mdb::Value& read(bool& validate_abort, SSID& ssid, unsigned long& index) const;
-        SSID write(mdb::Value&& v, txnid_t tid, unsigned long& ver_index, bool& is_decided);
-        bool all_recent_aborted(unsigned long index) const;
-        //static void update_metadata(MetaData& metadata, const SSID& ssid);
+        const mdb::Value& read(snapshotid_t& ssid_spec, bool& offset_safe, unsigned long& index) const;
+        snapshotid_t write(mdb::Value&& v, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index, bool& offset_safe);
     private:
+        /* basic column members */
         mdb::colid_t col_id = -1;
-        // a vector of txns as a versioned column --> txn queue
-        std::vector<AccTxnRec> txn_queue;
         const int INITIAL_QUEUE_SIZE = 100;
-        //SSID ssid_cur;
+        std::vector<AccTxnRec> txn_queue;  // a vector of txns as a versioned column --> txn queue
+        SSID write_get_next_SSID(snapshotid_t ssid_spec) const;
+        snapshotid_t read_get_next_SSID(snapshotid_t ssid_spec) const;
+        bool is_offset_safe(snapshotid_t new_ssid) const;
+        bool is_read(txnid_t tid, unsigned long index) const;
+        void finalize(unsigned long index, int8_t decision);
+        void commit(unsigned long index);
+        void abort(unsigned long index);
+
+        /* logical head related */
+        unsigned long _logical_head = 0;   // points to logical head, for reads fast reference
+        void update_logical_head();
+        bool is_logical_head(unsigned long index) const;
+        unsigned long logical_head_index() const;
+        snapshotid_t logical_head_ssid_for_writes() const;
+        snapshotid_t logical_head_ssid_for_reads() const;
+        acc_status_t logical_head_status() const;
+
+        /* stable frontier related */
+        unsigned long _stable_frontier = 0;
+        void update_stable_frontier();
+
+        friend class AccRow;
+
+        /* ---obsolete----
+        SSID ssid_cur;
         unsigned long finalized_version = 0;  // the index points to the most recent finalized version
         unsigned long decided_head = 0;         // before which inclusive all writes are either finalized or aborted
         void update_finalized();    // called whenever commit a write
-        bool is_logical_head(unsigned long index) const;
-        SSID get_next_SSID() const;
-        const AccTxnRec& logical_head() const;
-        unsigned long logical_head_index() const;
         void update_decided_head();
         bool all_decided(unsigned long index) const;
-        friend class AccRow;
+        bool all_recent_aborted(unsigned long index) const;
+        const AccTxnRec& logical_head() const;
+        */
     };
 }

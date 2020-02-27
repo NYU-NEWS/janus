@@ -16,9 +16,8 @@ namespace janus {
         AccCommo* commo();
         void AccDispatchAck(phase_t phase,
                             int res,
-                            uint64_t ssid_low,
-                            uint64_t ssid_high,
-                            uint64_t ssid_highest,
+                            uint64_t ssid_min,
+                            uint64_t ssid_max,
                             map<innid_t, map<int32_t, Value>>& outputs);
         void SafeGuardCheck();
         void AccValidate();

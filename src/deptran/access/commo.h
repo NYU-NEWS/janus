@@ -10,16 +10,16 @@ namespace janus {
         using Communicator::Communicator;
         void AccBroadcastDispatch(shared_ptr<vector<shared_ptr<SimpleCommand>>> sp_vec_piece,
                                   Coordinator *coo,
+                                  snapshotid_t ssid_spec,
                                   const std::function<void(int res,
-                                                      uint64_t ssid_low,
-                                                      uint64_t ssid_high,
-                                                      uint64_t ssid_highest,
+                                                      uint64_t ssid_min,
+                                                      uint64_t ssid_max,
                                                       TxnOutput &)> &callback);
         void AccBroadcastValidate(parid_t par_id,
                                   cmdid_t cmd_id,
                                   snapshotid_t ssid_new,
                                   const std::function<void(int8_t res)> &callback);
-        void AccBroadcastFinalize(parid_t par_id, cmdid_t cmd_id, int8_t decision, snapshotid_t ssid_new);
+        void AccBroadcastFinalize(parid_t par_id, cmdid_t cmd_id, int8_t decision);
     };
 }
 

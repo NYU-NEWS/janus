@@ -11,12 +11,12 @@ namespace janus {
     public:
         int32_t OnDispatch(cmdid_t cmd_id,
                            const shared_ptr<Marshallable>& cmd,
-                            uint64_t* ssid_low,
-                            uint64_t* ssid_high,
-                            uint64_t* ssid_highest,
-                            TxnOutput& ret_output);     // AccDispatch RPC handler
+                           uint64_t ssid_spec,
+                           uint64_t* ssid_min,
+                           uint64_t* ssid_max,
+                           TxnOutput& ret_output);     // AccDispatch RPC handler
         void OnValidate(cmdid_t cmd_id, snapshotid_t ssid_new, int8_t* res);
-        void OnFinalize(cmdid_t cmd_id, int8_t decision, snapshotid_t ssid_new);
+        void OnFinalize(cmdid_t cmd_id, int8_t decision);
         bool Guard(Tx &tx_box, Row* row, int col_id, bool write) override {
             // do nothing, just has to override this pure virtual func.
             return true;

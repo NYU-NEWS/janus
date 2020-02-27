@@ -1,25 +1,22 @@
 #include "safeguard.h"
 
 namespace janus {
-    void SafeGuard::update_metadata(snapshotid_t ssid_low, snapshotid_t ssid_high_check, snapshotid_t ssid_high) {
-        if (ssid_low > metadata.highest_ssid_low) {
-            metadata.highest_ssid_low = ssid_low;
+    void SafeGuard::update_metadata(snapshotid_t ssid) {
+        if (ssid > metadata.ssid_max) {
+            metadata.ssid_max = ssid;
         }
-	if (ssid_high_check < metadata.lowest_ssid_high) {
-            metadata.lowest_ssid_high = ssid_high_check;
-        }
-        if (ssid_high > metadata.highest_ssid_high) {
-            metadata.highest_ssid_high = ssid_high;
+	    if (ssid < metadata.ssid_min) {
+            metadata.ssid_min = ssid;
         }
     }
 
     void SafeGuard::reset_safeguard() {
         metadata.indices.clear();
-        metadata.highest_ssid_low = 0;
-        metadata.lowest_ssid_high = UINT64_MAX;
-        metadata.highest_ssid_high = 0;
-        metadata.validate_abort = false;
+        metadata.ssid_max = 0;
+        metadata.ssid_min = UINT64_MAX;
+        //metadata.validate_abort = false;
         validate_done = false;
-        offset_1_valid = true;
+        offset_safe = true;
+        ssid_spec = 0;
     }
 }

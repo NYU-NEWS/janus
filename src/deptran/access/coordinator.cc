@@ -20,13 +20,7 @@ namespace janus {
                 SafeGuardCheck();
                 break;
             case Phase::VALIDATE: verify(phase_ % n_phase == Phase::DECIDE);
-                // validate if _validate_abort != true and inconsistent
-                if (!committed_ && tx_data()._validate_abort) {
-                    AccValidate();
-//                    aborted_ = true; // TODO: no need to validate for now, later may apply some optimizations
-                                     // TODO: validate or not in this case is an ML control knob
-//                    GotoNextPhase();
-                } else if (committed_) { // SG checks consistent, no need to validate
+                if (committed_) { // SG checks consistent, no need to validate
                     GotoNextPhase();
                 } else {
                     AccValidate();
@@ -70,23 +64,22 @@ namespace janus {
             }
             commo()->AccBroadcastDispatch(sp_vec_piece,
                                      this,
+                                          tx_data().ssid_spec,
                                           std::bind(&CoordinatorAcc::AccDispatchAck,
                                                  this,
                                                     phase_,
                                                     std::placeholders::_1,
                                                     std::placeholders::_2,
                                                     std::placeholders::_3,
-                                                    std::placeholders::_4,
-                                                    std::placeholders::_5));
+                                                    std::placeholders::_4));
         }
         Log_debug("AccDispatchAsync cnt: %d for tx_id: %" PRIx64, cnt, txn->root_id_);
     }
 
     void CoordinatorAcc::AccDispatchAck(phase_t phase,
                                         int res,
-                                        uint64_t ssid_low,
-                                        uint64_t ssid_high,
-                                        uint64_t ssid_highest,
+                                        uint64_t ssid_min,
+                                        uint64_t ssid_max,
                                         map<innid_t, map<int32_t, Value>>& outputs) {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
         if (phase != phase_) return;
@@ -101,24 +94,17 @@ namespace janus {
             txn->Merge(pair.first, pair.second);
         }
         // store RPC returned information
-        if (res == VALIDATE_ABORT) {
-            txn->_validate_abort = true;
-        }
         if (res == OFFSET_INVALID) {
             txn->_offset_invalid = true; // for offset1 optimization
         }
-        if (ssid_highest > txn->highest_ssid_high) {
-            txn->highest_ssid_high = ssid_highest;
+        if (ssid_max > txn->ssid_max) {
+            txn->ssid_max = ssid_max;
         }
-        if (ssid_low > txn->highest_ssid_low) {
-            txn->highest_ssid_low = ssid_low;
+        if (ssid_min < txn->ssid_min) {
+            txn->ssid_min = ssid_min;
         }
-        if (ssid_high < txn->lowest_ssid_high) {
-            txn->lowest_ssid_high = ssid_high;
-        }
-        // basic ssid check consistency using ssid range
-        if (txn->highest_ssid_low > txn->lowest_ssid_high) {
-            // inconsistent if no overlapped range
+        // basic ssid check consistency
+        if (txn->ssid_min != txn->ssid_max) {  // not a ssid snapshot
             txn->_is_consistent = false;
         }
         if (txn->HasMoreUnsentPiece()) {
@@ -140,7 +126,7 @@ namespace janus {
             tx_data().n_validate_rpc_++;
             commo()->AccBroadcastValidate(par_id,
                                           tx_data().id_,
-                                          tx_data().highest_ssid_high,
+                                          tx_data().ssid_max,   // the new cross-shard ssid
                                           std::bind(&CoordinatorAcc::AccValidateAck,
                                                           this,
                                                              phase_,
@@ -159,7 +145,6 @@ namespace janus {
             // have received all acks
             committed_ = !aborted_;
             // -------Testing purpose here----------
-            // TODO: take this out
             //aborted_ = false;
             //committed_ = true;
             //--------------------------------------
@@ -168,16 +153,15 @@ namespace janus {
     }
 
     void CoordinatorAcc::AccFinalize(int8_t decision) {
-	// TODO: READ-ONLY NO NEED TO FINALIZE
+	    // TODO: READS NO NEED TO FINALIZE
         std::lock_guard<std::recursive_mutex> lock(mtx_);
         auto pars = tx_data().GetPartitionIds();
         verify(!pars.empty());
-        snapshotid_t ssid_new = decision == FINALIZED ? tx_data().highest_ssid_high : 0;
+        //snapshotid_t = decision == FINALIZED ? tx_data().highest_ssid_high : 0;
         for (auto par_id : pars) {
             commo()->AccBroadcastFinalize(par_id,
                                           tx_data().id_,
-                                          decision,
-                                          ssid_new);
+                                          decision);
         }
     }
 
@@ -192,13 +176,14 @@ namespace janus {
     void CoordinatorAcc::reset_all_members() {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
         tx_data()._is_consistent = true;
-        tx_data()._validate_abort = false;
-        tx_data().highest_ssid_low = 0;
-        tx_data().lowest_ssid_high = UINT64_MAX;
-        tx_data().highest_ssid_high = 0;
+        //tx_data()._validate_abort = false;
+        tx_data().ssid_max = 0;
+        tx_data().ssid_min = UINT64_MAX;
+        //tx_data().highest_ssid_high = 0;
         tx_data().n_validate_rpc_ = 0;
         tx_data().n_validate_ack_ = 0;
         tx_data()._offset_invalid = false;
+        tx_data().ssid_spec = 0;
     }
 
     void CoordinatorAcc::SafeGuardCheck() {
@@ -213,16 +198,12 @@ namespace janus {
         if (offset_1_check_pass() && !tx_data()._is_consistent) {
             tx_data().n_offset_valid_++;  // for stats
         }
-        if (tx_data()._validate_abort) {
-            tx_data().n_validate_abort_++;    // for stats
-        }
         GotoNextPhase(); // go validate if necessary
     }
 
     bool CoordinatorAcc::offset_1_check_pass() {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
         return !tx_data()._offset_invalid &&  // write valid
-               !tx_data()._validate_abort &&  // read valid
-               tx_data().highest_ssid_low - tx_data().lowest_ssid_high <= 1;  // offset within 1
+               tx_data().ssid_max - tx_data().ssid_min <= 1;  // offset within 1
     }
 } // namespace janus

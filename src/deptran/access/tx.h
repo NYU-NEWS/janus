@@ -41,6 +41,7 @@ namespace janus {
         ~AccTxn() override;
     private:
         SafeGuard sg;
+        void load_speculative_ssid(snapshotid_t ssid);
         friend class SchedulerAcc;
     };
 

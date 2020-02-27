@@ -22,89 +22,53 @@ namespace janus {
         return new_row;
     }
 
-    SSID AccRow::read_column(mdb::colid_t col_id, mdb::Value* value, bool& validate_abort, unsigned long& index) const {
+    snapshotid_t AccRow::read_column(mdb::colid_t col_id, mdb::Value* value, snapshotid_t ssid_spec, bool& offset_safe, unsigned long& index) const {
         if (col_id >= _row.size()) {
             // col_id is invalid. We're doing a trick here.
             // keys are col_ids
             value = nullptr;
-            return {};
+            return 0;
         }
-        SSID ssid;
-        *value = _row.at(col_id).read(validate_abort, ssid, index);
-        return ssid;
+        snapshotid_t ssid_final = ssid_spec;
+        *value = _row.at(col_id).read(ssid_final, offset_safe, index);
+        return ssid_final;
     }
 
-    SSID AccRow::write_column(mdb::colid_t col_id, mdb::Value&& value, txnid_t tid, unsigned long& ver_index, bool& is_decided) {
+    snapshotid_t AccRow::write_column(mdb::colid_t col_id, mdb::Value&& value, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index, bool& offset_safe) {
         if (col_id >= _row.size()) {
-            return {};
+            return 0;
         }
         // push back to the txn queue
-        return _row.at(col_id).write(std::move(value), tid, ver_index, is_decided);
+        return _row.at(col_id).write(std::move(value), ssid_spec, tid, ver_index, offset_safe);
     }
 
-    bool AccRow::validate(mdb::colid_t col_id, unsigned long index, snapshotid_t ssid_new) { // index is the new write's
-        if (!_row[col_id].is_logical_head(index)) {
-            // there have been recent unaborted writes
-            if (_row[col_id].txn_queue[index].status == UNCHECKED) {
-                _row[col_id].txn_queue[index].status = ABORTED;  // will abort anyways
-                // TODO: abort merge
+    bool AccRow::validate(txnid_t tid, mdb::colid_t col_id, unsigned long index, snapshotid_t ssid_new, bool validate_consistent) {
+        if (_row[col_id].is_read(tid, index)) {
+            // this is validating a read
+            if (!validate_consistent || !_row[col_id].is_logical_head(index)) {
+                return false;
             }
+            _row[col_id].txn_queue[index].extend_ssid(ssid_new);
+            return true;
+        } else {
+            // validating a write
+            if (validate_consistent && _row[col_id].is_logical_head(index) && !_row[col_id].txn_queue[index].have_reads()) { // 2nd part is particularly required for safety for speculative execution now
+                _row[col_id].txn_queue[index].extend_ssid(ssid_new);
+                _row[col_id].txn_queue[index].status = VALIDATING;
+                return true;
+            }
+            _row[col_id].txn_queue[index].status = ABORTED;  // will abort anyways
+            // TODO: DO CASCADING ABORTS LOGIC (early aborts)
             return false;
         }
-        if (_row[col_id].txn_queue[index].status == UNCHECKED) {
-            // this was the write
-            _row[col_id].txn_queue[index].status = VALIDATING;  // mark validating
-        }
-        // now, validation succeeds, i.e., index is logical head, update ssid
-        if (_row[col_id].txn_queue[index].ssid.ssid_high < ssid_new && _row[col_id].txn_queue[index].status == FINALIZED) {
-            // only extends SSID range for reads for now, the commented code below also change SSID for writes
-            // whether do it for writes or not could be a control knob
-            _row[col_id].txn_queue[index].ssid.ssid_high = ssid_new;
-        }
-        /*
-        // now, validation succeeds, i.e., index is logical head, update ssid
-        if (_row[col_id].txn_queue[index].ssid.ssid_high < ssid_new) {
-            // extends ssid high for either read or write
-            _row[col_id].txn_queue[index].ssid.ssid_high = ssid_new;
-            if (_row[col_id].txn_queue[index].status == UNCHECKED) {
-                // validating a write, at index is an unfinalized write
-                _row[col_id].txn_queue[index].status = VALIDATING;  // mark validating
-                // update both low and high to new, e.g., from [2,2] to [5,5] for writes
-                _row[col_id].txn_queue[index].ssid.ssid_low = ssid_new;
-            }
-        }
-        */
-        return true;
     }
 
-    void AccRow::finalize(mdb::colid_t col_id, unsigned long ver_index, int8_t decision, snapshotid_t ssid_new) {
-        bool is_read = true;  // the being finalized request is a read, then at ver_index is a finalized write
-        // update status
-        if (_row[col_id].txn_queue[ver_index].status == UNCHECKED ||
-            _row[col_id].txn_queue[ver_index].status == VALIDATING) {
-            _row[col_id].txn_queue[ver_index].status = decision;
-            is_read = false;
-        }
-        if (decision == ABORTED) {
-            // TODO: abort merge
+    void AccRow::finalize(txnid_t tid, mdb::colid_t col_id, unsigned long ver_index, int8_t decision) {
+        if (_row[col_id].is_read(tid, ver_index)) {
+            // deciding a read, nothing to do
+            // TODO: should not send rpcs for deciding reads in the first place
             return;
         }
-        // update finalized_version
-        _row[col_id].update_finalized();
-        // now we update ssid
-	if (ssid_new == 0 || !_row[col_id].is_logical_head(ver_index) || _row[col_id].txn_queue[ver_index].ssid.ssid_high >= ssid_new) {
-	    // only update ssid if the index is the logical head
-            return;
-        }
-	if (is_read) {
-            _row[col_id].txn_queue[ver_index].ssid.ssid_high = ssid_new;
-            return;
-        }
-        if (ssid_new == _row[col_id].txn_queue[ver_index].ssid.ssid_high + 1) {
-	    // this is a write for ssid-offset1 case
-	    _row[col_id].txn_queue[ver_index].ssid.ssid_low = ssid_new;
-            _row[col_id].txn_queue[ver_index].ssid.ssid_high = ssid_new;
-        }
-	// we should not either extend or bounce up SSID for a write not in offset-1 case
+        _row[col_id].finalize(ver_index, decision);
     }
 }

@@ -158,12 +158,12 @@ abstract service Classic {
   defer CommitFebruus(txid_t tx_id, uint64_t timestamp | i32 ret);
 
   // RPCs for ACCESS
-  defer AccDispatch(i64 tid, MarshallDeputy cmd |
-                    i32 res, uint64_t ssid_low, uint64_t ssid_high, uint64_t ssid_highest, TxnOutput output);
+  defer AccDispatch(i64 tid, MarshallDeputy cmd, uint64_t ssid_spec |
+                    i32 res, uint64_t ssid_min, uint64_t ssid_max, TxnOutput output);
 
   defer AccValidate(i64 tid, uint64_t ssid_new | int8_t res);
 
-  defer AccFinalize(i64 tid, int8_t decision, uint64_t ssid_new |);
+  defer AccFinalize(i64 tid, int8_t decision |);
 }
 
 

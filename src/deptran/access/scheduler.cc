@@ -4,14 +4,16 @@
 namespace janus {
     int32_t SchedulerAcc::OnDispatch(cmdid_t cmd_id,
                                      const shared_ptr<Marshallable>& cmd,
-                                     uint64_t *ssid_low,
-                                     uint64_t *ssid_high,
-                                     uint64_t *ssid_highest,
+                                     uint64_t ssid_spec,
+                                     uint64_t *ssid_min,
+                                     uint64_t *ssid_max,
                                      TxnOutput &ret_output) {
         // Step 1: dispatch and execute pieces
         auto sp_vec_piece = dynamic_pointer_cast<VecPieceData>(cmd)->sp_vec_piece_data_;
         verify(sp_vec_piece);
-        auto tx = GetOrCreateTx(cmd_id);
+        //auto tx = GetOrCreateTx(cmd_id);
+        auto tx = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));
+        tx->load_speculative_ssid(ssid_spec);   // read in the spec ssid provided by the client
         if (!tx->cmd_) {
             tx->cmd_ = cmd;
         } else {
@@ -26,20 +28,10 @@ namespace janus {
         if (tx->fully_dispatched_->value_ == 0) {
             tx->fully_dispatched_->Set(1);
         }
-        // Step 2: report ssid ranges
-        auto acc_txn = dynamic_pointer_cast<AccTxn>(tx);
-        // fill return values
-        *ssid_low = acc_txn->sg.metadata.highest_ssid_low;
-        *ssid_high = acc_txn->sg.metadata.lowest_ssid_high;
-        *ssid_highest = acc_txn->sg.metadata.highest_ssid_high;
-	acc_txn->sg.metadata.earlier_read.clear();
-        if (acc_txn->sg.metadata.validate_abort) {
-            return VALIDATE_ABORT;
-        }
-        if (!acc_txn->sg.offset_1_valid) {
-            return OFFSET_INVALID;
-        }
-        return SUCCESS;
+        // Step 2: report ssid status
+        *ssid_min = tx->sg.metadata.ssid_min;
+        *ssid_max = tx->sg.metadata.ssid_max;
+        return tx->sg.offset_safe ? SUCCESS : OFFSET_INVALID;
     }
 
     void SchedulerAcc::OnValidate(cmdid_t cmd_id, snapshotid_t ssid_new, int8_t *res) {
@@ -50,34 +42,31 @@ namespace janus {
             return;
         }
         acc_txn->sg.validate_done = true;
+        bool validate_consistent = true;
         for (auto& row_col : acc_txn->sg.metadata.indices) {
             auto acc_row = dynamic_cast<AccRow*>(row_col.first);
             for (auto& col_ssid : row_col.second) {
-                if (!acc_row->validate(col_ssid.first, col_ssid.second, ssid_new)) {
+                if (!acc_row->validate(acc_txn->tid_, col_ssid.first, col_ssid.second, ssid_new, validate_consistent)) {
                     // validation fails on this row-col
-                    *res = INCONSISTENT;
-                    return;
+                    validate_consistent = false;
+                    // we need to go thru all records for possible early aborts
                 }
             }
         }
-        *res = CONSISTENT;
-   }
+        *res = validate_consistent ? CONSISTENT : INCONSISTENT;
+    }
 
-    void SchedulerAcc::OnFinalize(cmdid_t cmd_id, int8_t decision, snapshotid_t ssid_new) {
+    void SchedulerAcc::OnFinalize(cmdid_t cmd_id, int8_t decision) {
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
         if (acc_txn->sg.metadata.indices.empty()) {
             // we've done finalize for this txn already
             return;
         }
-        if (acc_txn->sg.validate_done) {
-            // this txn did validation earlier, so ssid highs have been updated already
-            ssid_new = 0;
-        }
-        // we might need to update ssid in finalize for the ssid-diff=1 special case (optimization)
+        // for now, we do not update ssid for offset optimization case.
         for (auto& row_col : acc_txn->sg.metadata.indices) {
             auto acc_row = dynamic_cast<AccRow*>(row_col.first);
             for (auto& col_index : row_col.second) {
-                acc_row->finalize(col_index.first, col_index.second, decision, ssid_new);
+                acc_row->finalize(acc_txn->tid_, col_index.first, col_index.second, decision);
             }
         }
         // clear metadata after finalizing a txn
