@@ -95,7 +95,7 @@ void Client::invalidate_pending_futures() {
 
 void Client::close() {
   if (status_ == CONNECTED) {
-    pollmgr_->remove(this);
+    pollmgr_->remove(shared_from_this());
     ::close(sock_);
   }
   status_ = CLOSED;
@@ -171,7 +171,7 @@ int Client::connect(const char* addr) {
   Log_debug("rrr::Client: connected to %s", addr);
 
   status_ = CONNECTED;
-  pollmgr_->add(this);
+  pollmgr_->add(shared_from_this());
 
   return 0;
 }
@@ -189,7 +189,7 @@ void Client::handle_write() {
   out_.write_to_fd(sock_);
 
   if (out_.empty()) {
-    pollmgr_->update_mode(this, Pollable::READ);
+    pollmgr_->update_mode(shared_from_this(), Pollable::READ);
   }
   out_l_.unlock();
 }
@@ -302,7 +302,7 @@ void Client::end_request() {
 
   // always enable write events since the code above gauranteed there
   // will be some data to send
-  pollmgr_->update_mode(this, Pollable::READ | Pollable::WRITE);
+  pollmgr_->update_mode(shared_from_this(), Pollable::READ | Pollable::WRITE);
 
   out_l_.unlock();
 }

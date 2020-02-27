@@ -107,6 +107,7 @@ int ServerConnection::run_async(const std::function<void()>& f) {
 }
 
 void ServerConnection::begin_reply(Request* req, i32 error_code /* =... */) {
+  verify (status_ == CONNECTED);
     out_l_.lock();
     v32 v_error_code = error_code;
     v64 v_reply_xid = req->xid;
@@ -118,6 +119,8 @@ void ServerConnection::begin_reply(Request* req, i32 error_code /* =... */) {
 }
 
 void ServerConnection::end_reply() {
+  verify (status_ == CONNECTED);
+
     // set reply size in packet
     if (bmark_ != nullptr) {
         i32 reply_size = out_.get_and_reset_write_cnt();
@@ -128,7 +131,7 @@ void ServerConnection::end_reply() {
 
     // always enable write events since the code above gauranteed there
     // will be some data to send
-    server_->pollmgr_->update_mode(this, Pollable::READ | Pollable::WRITE);
+    server_->pollmgr_->update_mode(shared_from_this(), Pollable::READ | Pollable::WRITE);
 
     out_l_.unlock();
 }
@@ -190,8 +193,11 @@ void ServerConnection::handle_read() {
         auto it = server_->handlers_.find(rpc_id);
         if (it != server_->handlers_.end()) {
             // the handler should delete req, and release server_connection refcopy.
-            Coroutine::CreateRun([&it, &req, this] () {
-              it->second(req, (ServerConnection*) this->ref_copy());
+            auto x = dynamic_pointer_cast<ServerConnection>(shared_from_this());
+            Coroutine::CreateRun([&it, &req, x, this] () {
+              verify(x);
+              verify(x->connected());
+              it->second(req, this);
               // this line of code actually relies on the stack outside.
 //              auto f = it->second;
 //              auto r = req;
@@ -230,7 +236,7 @@ void ServerConnection::handle_write() {
     out_l_.lock();
     out_.write_to_fd(socket_);
     if (out_.empty()) {
-        server_->pollmgr_->update_mode(this, Pollable::READ);
+        server_->pollmgr_->update_mode(shared_from_this(), Pollable::READ);
     }
     out_l_.unlock();
 }
@@ -240,32 +246,20 @@ void ServerConnection::handle_error() {
 }
 
 void ServerConnection::close() {
-    bool should_release = false;
-
     if (status_ == CONNECTED) {
         server_->sconns_l_.lock();
-        unordered_set<ServerConnection*>::iterator it = server_->sconns_.find(this);
+        auto it = server_->sconns_.find(dynamic_pointer_cast<ServerConnection>(shared_from_this()));
         if (it == server_->sconns_.end()) {
             // another thread has already calling close()
             server_->sconns_l_.unlock();
             return;
         }
         server_->sconns_.erase(it);
-
-        // because we released this connection from server_->sconns_
-        should_release = true;
-
-        server_->pollmgr_->remove(this);
+        server_->pollmgr_->remove(shared_from_this());
         server_->sconns_l_.unlock();
 
         status_ = CLOSED;
         ::close(socket_);
-    }
-
-    // this call might actually DELETE this object, so we put it at the end of function
-    if (should_release) {
-        int ret = this->release();
-        Log_debug("server@%s close ServerConnection at fd=%d, ref=%d", server_->addr_.c_str(), socket_, ret);
     }
 }
 
@@ -308,7 +302,7 @@ Server::~Server() {
     }
 
     sconns_l_.lock();
-    vector<ServerConnection*> sconns(sconns_.begin(), sconns_.end());
+    vector<shared_ptr<ServerConnection>> sconns(sconns_.begin(), sconns_.end());
     // NOTE: do NOT clear sconns_ here, because when running the following
     // it->close(), the ServerConnection object will check the sconns_ to
     // ensure it still resides in sconns_
@@ -317,7 +311,8 @@ Server::~Server() {
     for (auto& it: sconns) {
         it->close();
     }
-    up_server_listener_->close();
+    sconns.clear();
+    sp_server_listener_->close();
 
 
     // make sure all open connections are closed
@@ -394,7 +389,8 @@ void Server::server_loop(struct addrinfo* svr_addr) {
             setsockopt(clnt_socket, SOL_SOCKET, SO_RCVBUF, &buf_len, sizeof(buf_len));
             setsockopt(clnt_socket, SOL_SOCKET, SO_SNDBUF, &buf_len, sizeof(buf_len));
             sconns_l_.lock();
-            ServerConnection* sconn = new ServerConnection(this, clnt_socket);
+            auto sconn = std::make_shared<ServerConnection>(this, clnt_socket);
+
             sconns_.insert(sconn);
             pollmgr_->add(sconn);
             sconns_l_.unlock();
@@ -423,7 +419,7 @@ void ServerListener::handle_read() {
       Log_debug("server@%s got new client, fd=%d", this->addr_.c_str(), clnt_socket);
       verify(set_nonblocking(clnt_socket, true) == 0);
 
-      ServerConnection* sconn = new ServerConnection(server_, clnt_socket);
+      auto sconn = std::make_shared<ServerConnection>(server_, clnt_socket);
       server_->sconns_l_.lock();
       server_->sconns_.insert(sconn);
       server_->pollmgr_->add(sconn);
@@ -489,6 +485,7 @@ ServerListener::ServerListener(Server* server, string addr) {
     if (::bind(server_sock_, rp->ai_addr, rp->ai_addrlen) == 0) {
       break;
     } else {
+      Log_fatal("cannot bind to: %s", addr.c_str());
       verify(0);
     }
     ::close(server_sock_);
@@ -515,8 +512,8 @@ ServerListener::ServerListener(Server* server, string addr) {
 
 int Server::start(const char* bind_addr) {
   string addr(bind_addr);
-  up_server_listener_ = std::make_unique<ServerListener>(this, addr);
-  pollmgr_->add(up_server_listener_.get());
+  sp_server_listener_ = std::make_unique<ServerListener>(this, addr);
+  pollmgr_->add(sp_server_listener_);
   return 0;
 
   addr_ = addr;

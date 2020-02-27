@@ -118,9 +118,6 @@ void RccTx::Abort() {
 }
 
 void RccTx::CommitValidate() {
-  if (local_validation_result_ != 0) {
-    return;
-  }
   for (auto& pair1 : read_vers_) {
     Row* r = pair1.first;
     if (r->rtti() != symbol_t::ROW_VERSIONED) {
@@ -135,20 +132,18 @@ void RccTx::CommitValidate() {
       verify(col_id < row->prepared_rver_.size());
       verify(col_id < row->prepared_wver_.size());
       if (ver_read < ver_now) {
-        sp_ev_local_validated_->Set(1);
-        local_validation_result_ = -1;
+        local_validated_->Set(REJECT);
         return;
       }
     }
   }
-  local_validation_result_ = 1;
-  sp_ev_local_validated_->Set(1);
+  local_validated_->Set(SUCCESS);
 }
 
 void RccTx::CommitExecute() {
   phase_ = PHASE_RCC_COMMIT;
   committed_ = true;
-  if (global_validation_result_ < 0) {
+  if (global_validated_->Get() < 0) {
     return;
   }
   TxWorkspace ws;
@@ -178,9 +173,9 @@ bool RccTx::ReadColumn(mdb::Row *row,
   if (phase_ == PHASE_RCC_DISPATCH) {
     switch (hint_flag) {
       case TXN_BYPASS:
-        // TODO starting test
-//        mdb_txn()->read_column(r, col_id, value);
-//        break;
+        // TODO starting test for troad?
+        mdb_txn()->read_column(r, col_id, value);
+        break;
       case TXN_IMMEDIATE: {
         verify(r->rtti() == symbol_t::ROW_VERSIONED);
         auto c = r->get_column(col_id);
@@ -269,7 +264,7 @@ void RccTx::TraceDep(Row* row, colid_t col_id, rank_t hint_flag) {
     if (parent_dtxn != nullptr) {
 //      this->AddParentEdge(parent_dtxn, edge_type);
       // TODO pre-mature reference? XXX come back and check on this.
-      if (!parent_dtxn->IsExecuted()) {
+      if (!parent_dtxn->HasLogApplyStarted()) {
         this->AddParentEdge(parent_dtxn, edge_type);
       } // else do nothing
     } // else do nothing

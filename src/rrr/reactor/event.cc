@@ -18,7 +18,14 @@ void Event::Wait(uint64_t timeout) {
     status_ = DONE; // does not need to wait.
     return;
   } else {
-    verify(status_ == INIT);
+    if (status_ == TIMEOUT || status_ == DONE) {
+      return;
+    }
+    if (status_ == WAIT) {
+      // this does not look right, fix later
+      Log_fatal("multiple waits on the same event; no support at the moment");
+    }
+//    verify(status_ == INIT); // does not support multiple wait so far. maybe we can support it in the future.
     status_= DEBUG;
     // the event may be created in a different coroutine.
     // this value is set when wait is called.
@@ -32,6 +39,7 @@ void Event::Wait(uint64_t timeout) {
     waiting_events.push_back(shared_from_this());
     if (timeout == 0) {
       wakeup_time_ = 0;
+      wakeup_time_ = Time::now() + 50*1000*1000;
     } else {
 //      auto& timeout_events = Reactor::GetReactor()->timeout_events_;
 //      auto it = timeout_events.end();
@@ -50,6 +58,9 @@ void Event::Wait(uint64_t timeout) {
     wp_coro_ = sp_coro;
     status_ = WAIT;
     sp_coro->Yield();
+//    if (status_ == TIMEOUT) {
+//      verify(0);
+//    }
   }
 }
 
@@ -110,9 +121,8 @@ void SharedIntEvent::Wait(function<bool(int v)> f) {
   auto sp_ev =  Reactor::CreateSpEvent<IntEvent>();
   sp_ev->test_ = f;
   events_.push_back(sp_ev);
-  sp_ev->Wait(240*1000*1000);
+  sp_ev->Wait(1*1000*1000);
   verify(sp_ev->status_ != Event::TIMEOUT);
-//  sp_ev->Wait();
 }
 
 } // namespace rrr

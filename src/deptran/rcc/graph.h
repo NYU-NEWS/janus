@@ -16,7 +16,7 @@ class Vertex {
 //  map<T *, int8_t> outgoing_{}; // helper data structure, deprecated
 //  map<T *, int8_t> incoming_{}; // helper data structure, deprecated
 //  set<T *> removed_children_{}; // helper data structure, deprecated
-  bool walked_{false}; // flag for traversing.
+//  bool walked_{false}; // flag for traversing.
   std::shared_ptr<vector<T*>> scc_{};
 
   T *this_pointer() {
@@ -174,28 +174,61 @@ class Graph : public Marshallable {
   };
 
   // depth first search.
+  int TraversePredNonRecursive(V& vertex,
+                               function<int(V& )> &func) {
+    shared_ptr<list<V *>> to_walk = make_shared<list<V *>>();
+    shared_ptr<set<V *>> walked = make_shared<set<V *>>();
+    to_walk->push_back(&vertex);
+    walked->insert(&vertex);
+
+    int ret = SearchHint::Ok;
+    int __debug_depth = 0;
+    while (!to_walk->empty()) {
+      verify(__debug_depth++ < 100);
+      auto vvv = to_walk->front();
+      to_walk->pop_front();
+      walked->insert(vvv);
+      for (auto &pair : vvv->parents_) {
+        auto v = FindV(pair.first);
+        verify(v != nullptr);
+        ret = func(*v);
+        if (ret == SearchHint::Exit) {
+          return ret;
+        } else if (ret == SearchHint::Skip) {
+          continue;
+        }
+        if (walked->count(v.get())==0) {
+          to_walk->push_back(v.get());
+        }
+        verify(ret == SearchHint::Ok);
+      }
+    }
+    return ret;
+  }
+
+  // depth first search.
   int TraversePred(V& vertex,
                    int64_t depth,
                    function<int(V& )> &func,
-                   vector<V *> *walked = nullptr) {
-    bool to_clean = false;
+                   shared_ptr<set<V *>> walked = nullptr) {
     if (walked == nullptr) {
-      to_clean = true;
-      walked = new vector<V *>;
-      walked->reserve(100);
+      walked = make_shared<set<V *>>();
     }
-    if (vertex.walked_) {
-      return true;
-    } else {
-      vertex.walked_ = true;
-    }
-    walked->push_back(&vertex);
+//    if (walked.vertex.walked_) {
+//      return true;
+//    } else {
+//      vertex.walked_ = true;
+//    }
+//    walked->push_back(&vertex);
 
     int ret = SearchHint::Ok;
     for (auto &pair : vertex.parents_) {
       auto v = FindV(pair.first);
       // TODO? maybe this could happen for foreign decided?
       verify(v != nullptr);
+      if (!walked->insert(v.get()).second) {
+        continue;
+      }
       ret = func(*v);
       if (ret == SearchHint::Exit) {
         break;
@@ -208,13 +241,6 @@ class Graph : public Marshallable {
         if (ret == SearchHint::Exit)
           break;
       }
-    }
-    if (to_clean) {
-      for (V *v: *walked) {
-        v->walked_ = false;
-
-      }
-      delete walked;
     }
     return ret;
   }

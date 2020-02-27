@@ -89,8 +89,10 @@ class OneTimeJob : public Job {
     return done_;
   }
   void Work() override {
+    verify(func_);
     func_();
     done_ = true;
+    func_ = {};
   }
 };
 

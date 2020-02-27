@@ -123,7 +123,7 @@ class Sharding {
               uint32_t ns = 0,
               std::vector<uint32_t>* pars = nullptr,
               uint64_t _num_records = 0,
-              mdb::symbol_t _symbol = mdb::TBL_UNSORTED
+              mdb::symbol_t _symbol = mdb::TBL_SORTED
     ) : num_records(_num_records),
         symbol(_symbol) {
       if (pars) {

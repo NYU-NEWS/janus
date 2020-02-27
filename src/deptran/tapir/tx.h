@@ -1,11 +1,11 @@
 #pragma once
 
 #include "../__dep__.h"
-#include "deptran/tx.h"
+#include "../classic/tx.h"
 
 namespace janus {
 
-class TxTapir : public Tx {
+class TxTapir : public TxClassic {
  public:
   set<VersionedRow *> locked_rows_{};
   map<Row *, map<colid_t, mdb::version_t>> read_vers_{};
@@ -13,7 +13,7 @@ class TxTapir : public Tx {
   map<VersionedRow *, map<colid_t, uint64_t>> prepared_rvers_{};
   map<VersionedRow *, map<colid_t, uint64_t>> prepared_wvers_{};
 
-  using Tx::Tx;
+  using TxClassic::TxClassic;
 
   mdb::Txn *mdb_txn();
 

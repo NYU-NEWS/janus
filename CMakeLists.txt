@@ -5,15 +5,27 @@ cmake_minimum_required(VERSION 3.5)
 # use hunter instead of conan
 include("HunterGate.cmake")
 
-HunterGate(
-        URL "https://github.com/ruslo/hunter/archive/v0.23.179.tar.gz"
-        SHA1 "21b2f139feb9f3c37e367750013aee15e1c45355"
-#        URL "https://github.com/cpp-pm/hunter/archive/v0.23.242.tar.gz"
-#        SHA1 "503b149d0ebdbc598e498f1669ae828a2136b838"
-#        "${CMAKE_CURRENT_LIST_DIR}/cxx11.cmake"
-#        FILEPATH "/home/shuai/git/janus/config.cmake"
-        LOCAL
-)
+if(UNIX AND NOT APPLE)
+    # Linux
+    HunterGate(
+            URL "https://github.com/cpp-pm/hunter/archive/v0.23.242.tar.gz"
+            SHA1 "503b149d0ebdbc598e498f1669ae828a2136b838"
+            #        "${CMAKE_CURRENT_LIST_DIR}/cxx11.cmake"
+            #        FILEPATH "/home/shuai/git/janus/config.cmake"
+            LOCAL
+    )
+elseif(APPLE)
+    HunterGate(
+            URL "https://github.com/ruslo/hunter/archive/v0.23.179.tar.gz"
+            SHA1 "21b2f139feb9f3c37e367750013aee15e1c45355"
+            #        "${CMAKE_CURRENT_LIST_DIR}/cxx11.cmake"
+            #        FILEPATH "/home/shuai/git/janus/config.cmake"
+            LOCAL
+    )
+
+endif()
+
+
 
 set(
         CMAKE_TOOLCHAIN_FILE
@@ -111,11 +123,12 @@ add_library(YAMLCPP
 # for cxx build
 set(CMAKE_VERBOSE_MAKEFILE on)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-register -Werror")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_IPC")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Weffc++")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCHECK_ISO")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDB_CHECKSUM")
 # this makes gcc>=5 support conan.io libraries, e.g. yaml-cpp
 # set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -D_GLIBCXX_USE_CXX11_ABI=0")
 
@@ -127,7 +140,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-register -Werror")
 set(CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS_RELEASE} -DLOG_LEVEL_AS_INFO")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DLOG_LEVEL_AS_DEBUG")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCPU_PROFILE")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSIMULATE_WAN")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DSIMULATE_WAN")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DREUSE_CORO")
 
 #FIND_LIBRARY (DMALLOC_LIBRARY dmalloc /usr/lib /sw/lib)
@@ -293,8 +306,8 @@ target_link_libraries(
 target_link_libraries(
         TEST
         RRR
-        GTest::main
-        GTest::gtest
+#        GTest::main
+#        GTest::gtest
         GSL:gsl
         ${Boost_LIBRARIES}
 #        ${CONAN_LIBS}

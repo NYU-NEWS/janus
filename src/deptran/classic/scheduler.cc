@@ -61,6 +61,8 @@ bool SchedulerClassic::ExecuteAll(Tx &tx, TxnOutput &ret_output) {
 bool SchedulerClassic::DispatchPiece(Tx& tx,
                                      TxPieceData& piece_data,
                                      TxnOutput& ret_output) {
+
+
   TxnPieceDef
       & piece_def = txn_reg_->get(piece_data.root_type_, piece_data.type_);
   auto& conflicts = piece_def.conflicts_;
@@ -98,7 +100,8 @@ bool SchedulerClassic::Dispatch(cmdid_t cmd_id,
   auto sp_vec_piece =
       dynamic_pointer_cast<VecPieceData>(cmd)->sp_vec_piece_data_;
   verify(sp_vec_piece);
-  auto tx = GetOrCreateTx(cmd_id);
+  auto tx = dynamic_pointer_cast<TxClassic>(GetOrCreateTx(cmd_id));
+  verify(tx);
 //  MergeCommands(tx.cmd_, cmd);
   Log_debug("received dispatch for tx id: %" PRIx64, tx->tid_);
 //  verify(partition_id_ == piece_data.partition_id_);
@@ -115,16 +118,20 @@ bool SchedulerClassic::Dispatch(cmdid_t cmd_id,
 //  verify(b1 == b2);
   if (!tx->cmd_) {
     tx->cmd_ = cmd;
-  } else {
+  } else if (tx->cmd_ != cmd) {
     auto present_cmd =
         dynamic_pointer_cast<VecPieceData>(tx->cmd_)->sp_vec_piece_data_;
     for (auto& sp_piece_data : *sp_vec_piece) {
       present_cmd->push_back(sp_piece_data);
     }
+  } else {
+    // do nothing
+//    verify(0);
   }
 
   // TODO investigate: change it to a reference with clang will cause crash
   for (auto sp_piece_data : *sp_vec_piece) {
+    verify(sp_piece_data);
     DispatchPiece(*tx, *sp_piece_data, ret_output);
   }
   // TODO reimplement this.
@@ -178,12 +185,11 @@ int SchedulerClassic::PrepareReplicated(TpcPrepareCommand& prepare_cmd) {
   // TODO and return the prepare callback here.
   auto tx_id = prepare_cmd.tx_id_;
   auto sp_tx = dynamic_pointer_cast<TxClassic>(GetOrCreateTx(tx_id));
-  if (!sp_tx->is_leader_hint_) {
-    // TODO follower site right now does not really do work.
-    return 0;
-  }
   if (!sp_tx->cmd_)
     sp_tx->cmd_ = prepare_cmd.cmd_;
+  if (!sp_tx->is_leader_hint_) {
+    return 0;
+  }
   // else: is the leader.
   sp_tx->result_prepare_ = DoPrepare(sp_tx->tid_);
   Log_debug("prepare request replicated and executed for %" PRIx64 ", result: %x, sid: %x",
@@ -209,13 +215,7 @@ int SchedulerClassic::OnCommit(txnid_t tx_id, int commit_or_abort) {
     CreateRepCoord()->Submit(sp_m);
     sp_tx->ev_commit_->Wait();
   } else {
-//    verify(exec->phase_ < 3);
-//    exec->phase_ = 3;
     if (commit_or_abort == SUCCESS) {
-#ifdef CHECK_ISO
-      //      MergeDeltas(exec->dtxn_->deltas_);
-#endif
-//      exec->CommitLaunch(res, callback);
       DoCommit(*sp_tx);
     } else if (commit_or_abort == REJECT) {
 //      exec->AbortLaunch(res, callback);
@@ -248,14 +248,13 @@ int SchedulerClassic::CommitReplicated(TpcCommitCommand& tpc_commit_cmd) {
   auto tx_id = tpc_commit_cmd.tx_id_;
   auto sp_tx = dynamic_pointer_cast<TxClassic>(GetOrCreateTx(tx_id));
   if (!sp_tx->is_leader_hint_) {
-    // TODO follower site right now does not really do work.
-    return 0;
+    verify(sp_tx->cmd_);
+    unique_ptr<TxnOutput> out = std::make_unique<TxnOutput>();
+    Dispatch(sp_tx->tid_, sp_tx->cmd_, *out);
+    DoPrepare(sp_tx->tid_);
   }
   int commit_or_abort = tpc_commit_cmd.ret_;
   if (commit_or_abort == SUCCESS) {
-#ifdef CHECK_ISO
-    MergeDeltas(exec->dtxn_->deltas_);
-#endif
     sp_tx->committed_ = true;
     DoCommit(*sp_tx);
   } else if (commit_or_abort == REJECT) {
@@ -266,9 +265,6 @@ int SchedulerClassic::CommitReplicated(TpcCommitCommand& tpc_commit_cmd) {
   }
   sp_tx->ev_commit_->Set(1);
   sp_tx->ev_execute_ready_->Set(1);
-//  verify(app_next_);
-//  app_next_(*(sp_tx->cmd_));
-//  TrashExecutor(tx_id);
   return 0;
 }
 

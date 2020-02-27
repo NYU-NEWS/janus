@@ -49,6 +49,7 @@ void ServerWorker::SetupBase() {
   tx_sched_->SetPartitionId(site_info_->partition_id_);
   tx_sched_->loc_id_ = site_info_->locale_id;
   tx_sched_->site_id_ = site_info_->id;
+//  Log_info("initialize site id: %d", (int) site_info_->id);
   sharding_->tx_sched_ = tx_sched_;
 
   if (config->IsReplicated() &&
@@ -187,9 +188,6 @@ void ServerWorker::WaitForShutdown() {
       hb_thread_pool_g->release();
 
     for (auto service : services_) {
-#ifdef CHECK_ISO
-      this->tx_sched_->CheckDeltas();
-#endif
       if (DepTranServiceImpl* s = dynamic_cast<DepTranServiceImpl*>(service)) {
         auto& recorder = s->recorder_;
         if (recorder) {
@@ -202,12 +200,6 @@ void ServerWorker::WaitForShutdown() {
       }
     }
   }
-#ifdef CHECK_ISO
-    for (auto service : services_) {
-      this->tx_sched_->CheckDeltas();
-    }
-#endif
-
   Log_debug("exit %s", __FUNCTION__);
 }
 
@@ -238,5 +230,11 @@ void ServerWorker::ShutDown() {
   }
 //  thread_pool_g->release();
   svr_poll_mgr_->release();
+}
+int ServerWorker::DbChecksum() {
+  auto cs = this->tx_sched_->mdb_txn_mgr_->Checksum();
+  Log_info("site_id: %d shard_id: %d checksum: %x", (int)this->site_info_->id,
+           (int)this->site_info_->partition_id_, (int) cs);
+  return cs;
 }
 } // namespace janus

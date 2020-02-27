@@ -23,14 +23,25 @@ class RccTx: public Tx, public Vertex<RccTx> {
   shared_ptr<IntEvent> sp_ev_commit_{Reactor::CreateSpEvent<IntEvent>()};
   TxnOutput *p_output_reply_ = nullptr;
   TxnOutput output_ = {};
-  bool executed_{false};
+  bool log_apply_started_{false}; // compared to ???
   // also reset phase_ and fully_dispatched.
   // ----above variables get reset whenever current_rank_ is changed
   bool need_validation_{false};
-  shared_ptr<IntEvent> sp_ev_local_validated_{Reactor::CreateSpEvent<IntEvent>()};
-  shared_ptr<IntEvent> sp_ev_global_validated_{Reactor::CreateSpEvent<IntEvent>()};
-  int local_validation_result_{0}; // 1=success, -1=failed
-  int global_validation_result_{0}; // 1=success, -1=failed
+
+  class StatusBox : public BoxEvent<int> {
+   public:
+    int& Get() {
+      verify(is_set_);
+      return BoxEvent<int>::Get();
+    }
+    void Set(const int& x) {
+//      verify(x != REJECT);
+      BoxEvent<int>::Set(x);
+    }
+  };
+
+  shared_ptr<StatusBox> local_validated_{Reactor::CreateSpEvent<StatusBox>()};
+  shared_ptr<StatusBox> global_validated_{Reactor::CreateSpEvent<StatusBox>()};
 
   vector<SimpleCommand> dreqs_ = {};
   bool read_only_ = false;
@@ -60,10 +71,12 @@ class RccTx: public Tx, public Vertex<RccTx> {
   }
 
   void CommitRank() {
+    verify(0);
     if (current_rank_ == RANK_D) {
       current_rank_ = RANK_MAX;
     } else if (current_rank_ == RANK_I) {
       current_rank_ = RANK_D;
+      status_.value_ = TXN_UNKNOWN;
     } else {
       verify(0);
     }
@@ -76,10 +89,10 @@ class RccTx: public Tx, public Vertex<RccTx> {
     sp_ev_commit_ = Reactor::CreateSpEvent<IntEvent>();
     p_output_reply_ = nullptr;
     // TODO do we need to proper reset this value.
-    status_.value_ = TXN_UNKNOWN;
+//    status_.value_ = TXN_UNKNOWN;
     fully_dispatched_ = Reactor::CreateSpEvent<IntEvent>();
 //    fully_dispatched_ = false;
-    executed_ = false;
+    log_apply_started_ = false;
   }
 
   virtual void DispatchExecute(SimpleCommand &cmd,
@@ -153,11 +166,11 @@ class RccTx: public Tx, public Vertex<RccTx> {
     return (status_.value_ & TXN_DCD);
   }
 
-  inline bool IsExecuted() const {
+  inline bool HasLogApplyStarted() const {
 //    if (executed_) {
 //      verify(IsDecided());
 //    }
-    return executed_;
+    return log_apply_started_;
   }
 
   bool Involve(parid_t id) {

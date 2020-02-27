@@ -82,6 +82,7 @@ shared_ptr<RccGraph> RccCommo::Inquire(parid_t pid,
   auto proxy = (ClassicProxy*)NearestProxyForPartition(pid).second;
   Future::safe_release(proxy->async_RccInquire(epoch, tid, fuattr));
   ev->Wait(20*1000*1000);
+  verify(ev->status_ != Event::TIMEOUT);
   return ret;
 }
 

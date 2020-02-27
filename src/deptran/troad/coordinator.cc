@@ -9,7 +9,7 @@ namespace janus {
 
 TroadCommo* CoordinatorTroad::commo() {
   if (commo_ == nullptr) {
-    commo_ = frame_->CreateCommo();
+    commo_ = frame_->CreateCommo(nullptr);
     commo_->loc_id_ = loc_id_;
   }
   verify(commo_ != nullptr);
@@ -40,7 +40,7 @@ void CoordinatorTroad::PreAccept() {
   }
   bool fast_path = true;
   for (auto ev: events) {
-    ev->Wait();
+    ev->Wait(20*1000*1000);
     verify(ev->Yes()); // TODO tolerate failure recovery.
     if (!FastQuorumGraphCheck(*ev)) {
       fast_path = false;
@@ -88,7 +88,7 @@ void CoordinatorTroad::Accept() {
     events.push_back(ev);
   }
   for (auto ev : events) {
-    ev->Wait();
+    ev->Wait(100*1000*1000);
     verify(ev->Yes()); // TODO handle failure recovery.
   }
   GotoNextPhase();
@@ -111,10 +111,9 @@ void CoordinatorTroad::Commit() {
   }
   aborted_ = false;
   for (auto ev : events) {
-     ev->Wait(10*1000*1000);
+     ev->Wait(100*1000*1000);
 //    ev->Wait();
     if (ev->No()) {
-//      aborted_ = true;
     } else if (ev->Yes()) {
 
     } else {
@@ -122,7 +121,6 @@ void CoordinatorTroad::Commit() {
       verify(0);
     }
   }
-  committed_ = !aborted_;
   NotifyValidation();
 
 //  txn().Merge(output);
@@ -138,16 +136,19 @@ void CoordinatorTroad::NotifyValidation() {
 //  __debug_notifying_ = true;
   verify(phase_ % 6 == COMMIT);
   auto ev1 = commo()->CollectValidation(cmd_->id_, cmd_->GetPartitionIds());
-  ev1->Wait();
+  ev1->Wait(200*1000*1000);
   int res;
   if (ev1->Yes()) {
     res = SUCCESS;
   } else if (ev1->No()){
-    aborted_ = true;
+    if (mocking_janus_) {
+      aborted_ = true;
+    }
     res = REJECT;
   } else {
     verify(0);
   }
+  committed_ = !aborted_;
   auto ev = commo()->BroadcastValidation(*cmd_, res);
 //  ev->Wait();
 //  verify(ev->Yes());

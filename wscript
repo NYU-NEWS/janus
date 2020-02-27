@@ -46,6 +46,8 @@ def options(opt):
                    default=False, action='store_true')
     opt.add_option('-W', '--simulate-wan', dest='simulate_wan',
                    default=False, action='store_true')
+    opt.add_option('-S', '--db-checksum', dest='db_checksum',
+                   default=False, action='store_true')
     opt.parse_args();
 
 def configure(conf):
@@ -68,6 +70,7 @@ def configure(conf):
     #_enable_logging(conf)
     _enable_reuse_coroutine(conf)
     _enable_simulate_wan(conf)
+    _enable_db_checksum(conf)
 
     conf.env.append_value("CXXFLAGS", "-Wno-reorder")
     conf.env.append_value("CXXFLAGS", "-Wno-comment")
@@ -245,6 +248,11 @@ def _enable_simulate_wan(conf):
     if Options.options.simulate_wan:
         Logs.pprint("PINK", "simulate wan")
         conf.env.append_value("CXXFLAGS", "-DSIMULATE_WAN")
+
+def _enable_db_checksum(conf):
+    if Options.options.db_checksum:
+        Logs.pprint("PINK", "db checksum")
+        conf.env.append_value("CXXFLAGS", "-DDB_CHECKSUM")
 
 def _enable_pic(conf):
     conf.env.append_value("CXXFLAGS", "-fPIC")

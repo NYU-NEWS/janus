@@ -44,6 +44,7 @@ class ServerWorker {
 
   bool launched_{false};
 
+  int DbChecksum();
   void SetupHeartbeat();
   void PopTable();
   void SetupBase();

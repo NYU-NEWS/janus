@@ -39,16 +39,16 @@ void TxTroad::DispatchExecute(SimpleCommand &cmd,
 void TxTroad::CommitExecute() {
   phase_ = PHASE_RCC_COMMIT;
   committed_ = true;
-  if (global_validation_result_ < 0) {
-    return;
-  }
+//  if (global_validated_->Get() == REJECT) {
+//    return;
+//  }
   TxWorkspace ws;
   for (auto &cmd: dreqs_) {
     verify (cmd.rank_ == RANK_I || cmd.rank_ == RANK_D);
     if (! __mocking_janus_) {
-      if (cmd.rank_ != current_rank_) {
-        continue;
-      }
+//      if (cmd.rank_ != current_rank_) {
+//        continue;
+//      }
     }
     TxnPieceDef& p = txn_reg_.lock()->get(cmd.root_type_, cmd.type_);
     int tmp;

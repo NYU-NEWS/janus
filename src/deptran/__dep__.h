@@ -39,6 +39,8 @@ using namespace std;
 #include <fcntl.h>
 #include <unistd.h>
 #include <signal.h>
+#include <sys/resource.h>
+#include <errno.h>
 
 
 // boost library

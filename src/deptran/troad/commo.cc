@@ -131,6 +131,7 @@ TroadCommo::BroadcastPreAccept(
       if (res == SUCCESS) {
         ev->n_voted_yes_++;
       } else if (res == REJECT) {
+        verify(0);
         ev->n_voted_no_++;
       } else {
         verify(0);
@@ -216,7 +217,13 @@ shared_ptr<QuorumEvent> TroadCommo::CollectValidation(txid_t txid, set<parid_t> 
     auto proxy = NearestProxyForPartition(partition_id).second;
     FutureAttr fuattr;
     fuattr.callback = [ev] (Future* fu) {
-      ev->n_voted_yes_++;
+      int res;
+      fu->get_reply() >> res;
+      if (res == SUCCESS) {
+        ev->n_voted_yes_++;
+      } else {
+        ev->n_voted_no_++;
+      }
     };
     Future::safe_release(proxy->async_RccInquireValidation(txid, fuattr));
   }

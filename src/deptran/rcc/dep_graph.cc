@@ -237,9 +237,9 @@ void RccGraph::RebuildEdgePointer(map<txnid_t, shared_ptr<RccTx>> &index) {
 }
 
 void RccGraph::UpgradeStatus(RccTx& v, int8_t status) {
-  if (v.current_rank_ < v.shared_rank_) {
-    return;
-  }
+//  if (v.current_rank_ < v.shared_rank_) {
+//    return;
+//  }
   auto s = v.status();
   if (s >= TXN_CMT) {
     RccServer::__DebugCheckParentSetSize(v.id(), v.parents_.size());
@@ -346,7 +346,7 @@ bool RccGraph::AllAncCmt(shared_ptr<RccTx> vertex) {
   std::function<int(RccTx&)> func = [&all_anc_cmt](RccTx& v) -> int {
     RccTx &info = v;
     int r = 0;
-    if (info.IsExecuted() ||
+    if (info.HasLogApplyStarted() ||
         info.all_anc_cmt_hint ||
         info.IsAborted()) {
       r = RccGraph::SearchHint::Skip;

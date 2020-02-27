@@ -40,10 +40,11 @@ int TpcaSharding::PopulateTable(tb_info_t *tb_info_ptr, parid_t par_id) {
         //std::cerr << tb_info_ptr->columns[col_index].name << "(primary):" << row_data.back() << "; ";
       }
       else if (tb_info_ptr->columns[col_index].foreign != NULL) {
-        Value v_buf = value_get_n(tb_info_ptr->columns[col_index].type,
-                                  RandomGenerator::rand(0,
-                                                        tb_info_ptr->columns[col_index].foreign_tb->num_records
-                                                            - 1));
+//        Value v_buf = value_get_n(tb_info_ptr->columns[col_index].type,
+//                                  RandomGenerator::rand(0,
+//                                                        tb_info_ptr->columns[col_index].foreign_tb->num_records
+//                                                            - 1));
+        Value v_buf = value_get_n(tb_info_ptr->columns[col_index].type, 0);
         row_data.push_back(v_buf);
 
         //std::cerr << tb_info_ptr->columns[col_index].name << "(foreign:" << tb_info_ptr->columns[col_index].foreign->name << "):" << v_buf << "; ";

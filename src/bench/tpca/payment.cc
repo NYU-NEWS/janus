@@ -46,7 +46,7 @@ void TpcaPaymentChopper::Init(TxRequest &req) {
       {TPCA_PAYMENT_3, DISPATCHABLE}
   };
   ranks_ = {
-      {TPCA_PAYMENT_1, DF_NO},
+      {TPCA_PAYMENT_1, DF_REAL},
       {TPCA_PAYMENT_2, DF_REAL},
       {TPCA_PAYMENT_3, DF_REAL}
   };

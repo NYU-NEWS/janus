@@ -106,7 +106,7 @@ public:
     }
 };
 
-class Client: public Pollable {
+ class Client: public Pollable {
     Marshal in_, out_;
 
     /**
@@ -132,15 +132,14 @@ class Client: public Pollable {
 
     void invalidate_pending_futures();
 
-protected:
-
-    virtual ~Client() {
-        invalidate_pending_futures();
-    }
 
 public:
 
-    Client(PollMgr* pollmgr): pollmgr_(pollmgr), sock_(-1), status_(NEW), bmark_(nullptr) { }
+   virtual ~Client() {
+     invalidate_pending_futures();
+   }
+
+   Client(PollMgr* pollmgr): pollmgr_(pollmgr), sock_(-1), status_(NEW), bmark_(nullptr) { }
 
     /**
      * Start a new request. Must be paired with end_request(), even if nullptr returned.
@@ -171,7 +170,6 @@ public:
 
     void close_and_release() {
         close();
-        release();
     }
 
     int fd() {

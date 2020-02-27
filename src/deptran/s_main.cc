@@ -80,6 +80,9 @@ void server_launch_worker(vector<Config::SiteInfo>& server_sites) {
       // populate table according to benchmarks
       worker.PopTable();
       Log_info("table popped for site %d", (int)worker.site_info_->id);
+#ifdef DB_CHECKSUM
+      worker.DbChecksum();
+#endif
       // start server service
       worker.SetupService();
       Log_info("start communication for site %d", (int)worker.site_info_->id);
@@ -131,9 +134,19 @@ void wait_for_clients() {
   }
 }
 
+void setup_ulimit() {
+  struct rlimit limit;
+  /* Get max number of files. */
+  if (getrlimit(RLIMIT_NOFILE, &limit) != 0) {
+    Log_fatal("getrlimit() failed with errno=%d", errno);
+  }
+  Log_info("ulimit -n is %d", (int)limit.rlim_cur);
+}
+
 int main(int argc, char *argv[]) {
   check_current_path();
   Log_info("starting process %ld", getpid());
+  setup_ulimit();
 
   // read configuration
   int ret = Config::CreateConfig(argc, argv);
@@ -155,7 +168,6 @@ int main(int argc, char *argv[]) {
   Log_info("started to profile cpu");
 #endif // ifdef CPU_PROFILE
 
-  
   auto server_infos = Config::GetConfig()->GetMyServers();
   if (!server_infos.empty()) {
     server_launch_worker(server_infos);
@@ -169,21 +181,29 @@ int main(int argc, char *argv[]) {
     Log_info("all clients have shut down.");
   }
 
+#ifdef DB_CHECKSUM
+  sleep(5); // hopefully servers can finish hanging RPCs in 5 seconds.
+#endif
+
   for (auto& worker : svr_workers_g) {
     worker.WaitForShutdown();
   }
+#ifdef DB_CHECKSUM
+  for (auto& worker : svr_workers_g) {
+    worker.DbChecksum();
+  }
+#endif
 #ifdef CPU_PROFILE
   // stop profiling
   ProfilerStop();
 #endif // ifdef CPU_PROFILE
-  Log_info("all server workers have shut down.");
-
-  // TODO, FIXME pending_future in rpc cause error.
   fflush(stderr);
   fflush(stdout);
   return 0;
+  // TODO, FIXME pending_future in rpc cause error.
   client_shutdown();
   server_shutdown();
+  Log_info("all server workers have shut down.");
 
   RandomGenerator::destroy();
   Config::DestroyConfig();

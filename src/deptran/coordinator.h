@@ -12,7 +12,6 @@ namespace janus {
 class ClientControlServiceImpl;
 
 enum ForwardRequestState { NONE=0, PROCESS_FORWARD_REQUEST, FORWARD_TO_LEADER };
-enum CoordinatorStage { HANDOUT, PREPARE, FINISH };
 
 //class CoordinatorBase {
 //public:

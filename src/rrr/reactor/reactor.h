@@ -87,9 +87,9 @@ public:
     PollMgr(const PollMgr&) = delete;
     PollMgr& operator=(const PollMgr&) = delete;
 
-    void add(Pollable*);
-    void remove(Pollable*);
-    void update_mode(Pollable*, int new_mode);
+    void add(shared_ptr<Pollable>);
+    void remove(shared_ptr<Pollable>);
+    void update_mode(shared_ptr<Pollable>, int new_mode);
     
     // Frequent Job
     void add(std::shared_ptr<Job> sp_job);

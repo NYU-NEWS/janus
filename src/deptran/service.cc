@@ -42,8 +42,6 @@ void ClassicServiceImpl::Dispatch(const i64& cmd_id,
                                   int32_t* res,
                                   TxnOutput* output,
                                   rrr::DeferredReply* defer) {
-//  std::lock_guard<std::mutex> guard(mtx_);
-
 #ifdef PIECE_COUNT
   piece_count_key_t piece_count_key =
       (piece_count_key_t){header.t_type, header.p_type};
@@ -56,23 +54,12 @@ void ClassicServiceImpl::Dispatch(const i64& cmd_id,
       piece_count_[piece_count_key]++;
   piece_count_tid_.insert(header.tid);
 #endif
-
-//  output->resize(output_size);
-  // find stored procedure, and run it
   shared_ptr<Marshallable> sp = md.sp_data_;
-//  sp->__debug_ = 20;
-//  auto func = [cmd_id, sp, output, res, this, defer]() {
-//    XXX xxx;
-    *res = SUCCESS;
-    if (!dtxn_sched()->Dispatch(cmd_id, sp, *output)) {
-      *res = REJECT;
-    }
-    defer->reply();
-//    sp->__debug_ = 10;
-//    xxx.x_ = 1;
-//  };
-//  Coroutine::CreateRun(func);
-//  func();
+  *res = SUCCESS;
+  if (!dtxn_sched()->Dispatch(cmd_id, sp, *output)) {
+    *res = REJECT;
+  }
+  defer->reply();
 }
 
 void ClassicServiceImpl::Prepare(const rrr::i64& tid,

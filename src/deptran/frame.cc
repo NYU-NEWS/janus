@@ -287,13 +287,15 @@ TxData* Frame::CreateTxnCommand(TxRequest& req, shared_ptr<TxnRegistry> reg) {
 
 Communicator* Frame::CreateCommo(PollMgr* pollmgr) {
   commo_ = new Communicator(pollmgr);
+  if (mode_ == MODE_NONE) {
+    commo_->broadcasting_to_leaders_only_ = false;
+  }
   return commo_;
 }
 
 shared_ptr<Tx> Frame::CreateTx(epoch_t epoch, txnid_t tid,
                                bool ro, TxLogServer *mgr) {
   shared_ptr<Tx> sp_tx;
-
   switch (mode_) {
     case MODE_2PL:
       sp_tx.reset(new Tx2pl(epoch, tid, mgr));

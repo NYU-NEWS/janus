@@ -193,7 +193,7 @@ int SchedulerJanus::OnCommit(const txnid_t cmd_id,
   verify(dtxn->p_output_reply_ == nullptr);
   dtxn->p_output_reply_ = output;
   verify(!dtxn->IsAborted());
-  if (dtxn->IsExecuted()) {
+  if (dtxn->HasLogApplyStarted()) {
     ret = SUCCESS; // TODO no return output?
   } else {
 //    Log_info("on commit: %llx par: %d", cmd_id, (int)partition_id_);
@@ -211,7 +211,7 @@ int SchedulerJanus::OnCommit(const txnid_t cmd_id,
       RccScc& scc = FindSccPred(*dtxn);
       Decide(scc);
       WaitUntilAllPredSccExecuted(scc);
-      if (FullyDispatched(scc) && !scc[0]->IsExecuted()) {
+      if (FullyDispatched(scc) && !scc[0]->HasLogApplyStarted()) {
         Execute(scc);
       }
     }

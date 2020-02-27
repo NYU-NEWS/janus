@@ -6,6 +6,7 @@
 #include "base/all.hpp"
 #include <unistd.h>
 #include <array>
+#include <memory>
 
 #ifdef __APPLE__
 #define USE_KQUEUE
@@ -19,12 +20,9 @@
 
 
 namespace rrr {
+using std::shared_ptr;
 
-class Pollable: public rrr::RefCounted {
-protected:
-
-    // RefCounted class requires protected destructor
-    virtual ~Pollable() {}
+class Pollable: public std::enable_shared_from_this<Pollable> {
 
 public:
 
@@ -52,7 +50,7 @@ class Epoll {
     verify(poll_fd_ != -1);
   }
 
-  int Add(Pollable* poll) {
+  int Add(shared_ptr<Pollable> poll) {
     auto poll_mode = poll->poll_mode();
     auto fd = poll->fd();
 #ifdef USE_KQUEUE
@@ -62,7 +60,7 @@ class Epoll {
       ev.ident = fd;
       ev.flags = EV_ADD;
       ev.filter = EVFILT_READ;
-      ev.udata = poll;
+      ev.udata = poll.get();
       verify(kevent(poll_fd_, &ev, 1, nullptr, 0, nullptr) == 0);
     }
     if (poll_mode & Pollable::WRITE) {
@@ -70,7 +68,7 @@ class Epoll {
       ev.ident = fd;
       ev.flags = EV_ADD;
       ev.filter = EVFILT_WRITE;
-      ev.udata = poll;
+      ev.udata = poll.get();
       verify(kevent(poll_fd_, &ev, 1, nullptr, 0, nullptr) == 0);
     }
 
@@ -78,7 +76,7 @@ class Epoll {
     struct epoll_event ev;
     memset(&ev, 0, sizeof(ev));
 
-    ev.data.ptr = poll;
+    ev.data.ptr = poll.get();
     ev.events = EPOLLET | EPOLLIN | EPOLLRDHUP; // EPOLLERR and EPOLLHUP are included by default
 
     if (poll_mode & Pollable::WRITE) {
@@ -89,7 +87,7 @@ class Epoll {
     return 0;
   }
 
-  int Remove(Pollable* poll) {
+  int Remove(shared_ptr<Pollable> poll) {
     auto fd = poll->fd();
 #ifdef USE_KQUEUE
     struct kevent ev;
@@ -113,7 +111,7 @@ class Epoll {
     return 0;
   }
 
-  int Update(Pollable* poll, int new_mode, int old_mode) {
+  int Update(shared_ptr<Pollable> poll, int new_mode, int old_mode) {
     auto fd = poll->fd();
 #ifdef USE_KQUEUE
     struct kevent ev;
@@ -121,7 +119,7 @@ class Epoll {
       // add READ
       bzero(&ev, sizeof(ev));
       ev.ident = fd;
-      ev.udata = poll;
+      ev.udata = poll.get();
       ev.flags = EV_ADD;
       ev.filter = EVFILT_READ;
       verify(kevent(poll_fd_, &ev, 1, nullptr, 0, nullptr) == 0);
@@ -130,7 +128,7 @@ class Epoll {
       // del READ
       bzero(&ev, sizeof(ev));
       ev.ident = fd;
-      ev.udata = poll;
+      ev.udata = poll.get();
       ev.flags = EV_DELETE;
       ev.filter = EVFILT_READ;
       verify(kevent(poll_fd_, &ev, 1, nullptr, 0, nullptr) == 0);
@@ -139,7 +137,7 @@ class Epoll {
       // add WRITE
       bzero(&ev, sizeof(ev));
       ev.ident = fd;
-      ev.udata = poll;
+      ev.udata = poll.get();
       ev.flags = EV_ADD;
       ev.filter = EVFILT_WRITE;
       verify(kevent(poll_fd_, &ev, 1, nullptr, 0, nullptr) == 0);
@@ -148,7 +146,7 @@ class Epoll {
       // del WRITE
       bzero(&ev, sizeof(ev));
       ev.ident = fd;
-      ev.udata = poll;
+      ev.udata = poll.get();
       ev.flags = EV_DELETE;
       ev.filter = EVFILT_WRITE;
       verify(kevent(poll_fd_, &ev, 1, nullptr, 0, nullptr) == 0);
@@ -157,7 +155,7 @@ class Epoll {
     struct epoll_event ev;
     memset(&ev, 0, sizeof(ev));
 
-    ev.data.ptr = poll;
+    ev.data.ptr = poll.get();
     ev.events = EPOLLET | EPOLLRDHUP;
     if (new_mode & Pollable::READ) {
         ev.events |= EPOLLIN;

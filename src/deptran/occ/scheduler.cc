@@ -47,7 +47,8 @@ bool SchedulerOcc::DoPrepare(txnid_t tx_id) {
 
   // only do version check on leader.
   if (tx_box->is_leader_hint_ && !txn->version_check()) {
-        Log_debug("txn: occ validation failed. id %" PRIx64 "site: %x", (int64_t)tx_id, (int)this->site_id_);
+    Log_debug("txn: occ validation failed. id %" PRIx64 "site: %x",
+        (int64_t) tx_id, (int) this->site_id_);
     txn->__debug_abort_ = 1;
     return false;
   } else {
@@ -72,7 +73,8 @@ bool SchedulerOcc::DoPrepare(txnid_t tx_id) {
           vr->unlock_row_by(txn->id());
         }
         txn->locks_.clear();
-        Log_debug("txn: occ read locks failed. id %" PRIx64 ", site: %x, is-leader: %d", (int64_t)tx_id, (int)this->site_id_, tx_box->is_leader_hint_);
+        Log_debug("txn: occ read locks failed. id %" PRIx64 ", site: %x, is-leader: %d",
+            (int64_t)tx_id, (int)this->site_id_, tx_box->is_leader_hint_);
         txn->__debug_abort_ = 1;
         return false;
       }

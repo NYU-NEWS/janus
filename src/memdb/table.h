@@ -3,6 +3,7 @@
 #include <string>
 #include <list>
 #include <unordered_map>
+#include <boost/crc.hpp>      // for boost::crc_basic, boost::crc_optimal
 
 #include "value.h"
 #include "row.h"
@@ -31,6 +32,10 @@ public:
     const Schema* schema() const { return schema_; }
     const std::string Name() const { return name_; }
 
+    virtual uint16_t Checksum() {
+      verify(0);
+      return 0;
+    }
     virtual void insert(Row* row) = 0;
     virtual void remove(Row* row, bool do_free = true) = 0;
     virtual uint64_t size() {verify(0); return 0;}
@@ -170,17 +175,33 @@ public:
         }
     };
 
-    virtual uint64_t size() {return rows_.size();}
+    virtual uint64_t size() override {return rows_.size();}
 
     SortedTable(std::string name, const Schema* schema): Table(name, schema) {}
 
     ~SortedTable();
 
-    virtual symbol_t rtti() const {
+    virtual symbol_t rtti() const override {
         return TBL_SORTED;
     }
 
-    void insert(Row* row) {
+    virtual uint16_t Checksum() override {
+      auto v = std::make_unique<vector<uint16_t>>(rows_.size());
+      auto i = 0;
+      uint16_t ret = 0;
+      for (auto pair: rows_) {
+        auto& row = pair.second;
+        auto c = row->Checksum();
+        i++;
+        ret ^= c;
+      }
+//      boost::crc_basic<16>  crc_ccitt1( 0x1021, 0xFFFF, 0, false, false );
+//      crc_ccitt1.process_bytes( v->data(), v->size() * sizeof((*v)[0]));
+//      auto r = crc_ccitt1.checksum();
+      return ret;
+    }
+
+    void insert(Row* row) override {
         SortedMultiKey key = SortedMultiKey(row->get_key(), schema_);
         verify(row->schema() == schema_);
         row->set_table(this);
@@ -269,7 +290,7 @@ public:
         remove(SortedMultiKey(mb, schema_));
     }
     void remove(const SortedMultiKey& smk);
-    void remove(Row* row, bool do_free = true);
+    void remove(Row* row, bool do_free = true) override;
     void remove(Cursor cur);
 };
 

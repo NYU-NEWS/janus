@@ -1,6 +1,7 @@
 #include <Python.h>
 
 #include <string>
+#include <memory>
 
 #include "rpc/server.hpp"
 #include "rpc/client.hpp"
@@ -119,7 +120,6 @@ static PyObject* _pyrpc_server_reg(PyObject* self, PyObject* args) {
 
         // cleanup as required by simple-rpc
         delete req;
-        sconn->release();
     });
 
     return Py_BuildValue("i", ret);
@@ -131,14 +131,18 @@ static PyObject* _pyrpc_init_poll_mgr(PyObject* self, PyObject* args) {
     return Py_BuildValue("k", poll);
 }
 
+vector<shared_ptr<Client>> clients = {};
+
 static PyObject* _pyrpc_init_client(PyObject* self, PyObject* args) {
     GILHelper gil_helper;
     unsigned long u;
     if (!PyArg_ParseTuple(args, "k", &u))
         return NULL;
     PollMgr* poll = (PollMgr*) u;
-    Client* clnt = new Client(poll);
-    return Py_BuildValue("k", clnt);
+    auto x = std::make_shared<Client>(poll);
+  clients.push_back(x);
+  Client* clnt = x.get();
+  return Py_BuildValue("k", clnt);
 }
 
 static PyObject* _pyrpc_fini_client(PyObject* self, PyObject* args) {

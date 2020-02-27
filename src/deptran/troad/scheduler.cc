@@ -181,50 +181,41 @@ int SchedulerTroad::OnCommit(const txnid_t cmd_id,
                              shared_ptr<RccGraph> sp_graph,
                              TxnOutput *output) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
+  Log_debug("committing dtxn %" PRIx64, cmd_id);
 //  if (RandomGenerator::rand(1, 2000) <= 1)
 //    Log_info("on commit graph size: %d", graph.size());
-  int ret = SUCCESS;
   auto sp_tx = dynamic_pointer_cast<RccTx>(GetOrCreateTx(cmd_id));
   auto dtxn = dynamic_pointer_cast<TxTroad>(sp_tx);
   verify(rank == dtxn->current_rank_);
   verify(dtxn->p_output_reply_ == nullptr);
   dtxn->p_output_reply_ = output;
   verify(!dtxn->IsAborted());
-  if (dtxn->IsExecuted()) {
-    ret = SUCCESS; // TODO no return output?
-  } else {
+  auto sp_e = Reactor::CreateSpEvent<Event>();
+//  sp_e->test_ = [sp_tx] (int v) -> bool {
+//    return sp_tx->local_validated_->is_set_;
+//  };
+  verify (!dtxn->HasLogApplyStarted());
 //    Log_info("on commit: %llx par: %d", cmd_id, (int)partition_id_);
 //    dtxn->commit_request_received_ = true;
-    if (!sp_graph) {
-      // quick path without graph, no contention.
-      verify(dtxn->fully_dispatched_->value_); //cannot handle non-dispatched now.
-      // TODO next start from here.
-      Coroutine::CreateRun([&] () {
-        UpgradeStatus(*dtxn, TXN_DCD);
-        this->Execute(sp_tx);
-      });
-    } else {
-      // with graph
-//      TriggerCheckAfterAggregation(*sp_graph);
-      Coroutine::CreateRun([this, sp_tx, rank, sp_graph]() {
-        auto index = Aggregate(*sp_graph);
-        auto dtxn = dynamic_pointer_cast<TxTroad>(sp_tx);
-        UpgradeStatus(*dtxn, TXN_CMT);
-        WaitUntilAllPredecessorsAtLeastCommitting(dtxn.get());
-        RccScc& scc = FindSccPred(*dtxn);
-        Decide(scc);
-        WaitUntilAllPredSccExecuted(scc);
-        if (FullyDispatched(scc, rank) && !IsExecuted(scc, rank)) {
-          Execute(scc);
-        }
-      });
-    }
+  if (sp_graph) {
+    Aggregate(*sp_graph);
+  }
+  UpgradeStatus(*dtxn, TXN_CMT);
+  WaitUntilAllPredecessorsAtLeastCommitting(dtxn.get());
+  RccScc& scc = FindSccPred(*dtxn);
+  Decide(scc);
+  WaitUntilAllPredSccExecuted(scc);
+  if (FullyDispatched(scc, rank) && !IsExecuted(scc, rank)) {
+    Execute(scc);
+  }
+    // TODO verify by a wait time.
 //    dtxn->sp_ev_commit_->Wait(1*1000*1000);
 //    dtxn->sp_ev_commit_->Wait();
 //    verify(dtxn->sp_ev_commit_->status_ != Event::TIMEOUT);
 //    ret = dtxn->local_validation_result_ > 0 ? SUCCESS : REJECT;
-  }
-  dtxn->CommitRank();
+//  sp_e->Wait(10*1000*1000);
+//  verify(sp_e->status_ != Event::TIMEOUT);
+//  dtxn->CommitRank();
   return SUCCESS;
 }
 

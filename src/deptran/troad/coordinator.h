@@ -22,18 +22,7 @@ class CoordinatorTroad : public RccCoord {
   Recorder *recorder_;
   ballot_t ballot_ = 0; // the ballot I am holding
   // data structures for saving replies.
-  struct reply_cnt_t { int yes; int no; };
-  map<parid_t, int> n_fast_accept_oks_{};
-//  map<parid_t, int> n_accept_oks_{};
-//  map<parid_t, int> n_fast_accept_rejects_ = {};
-  map<parid_t, vector<shared_ptr<RccGraph>>> n_fast_accept_graphs_{};
-  map<parid_t, int> fast_accept_graph_check_caches_{};
   bool fast_path_ = false;
-
-//  map<groupid_t, reply_cnt_t> n_fast_accept_reply_;
-//  map<groupid_t, reply_cnt_t> n_accept_reply_;
-  map<groupid_t, reply_cnt_t> n_prepare_reply_;
-//  map<groupid_t, reply_cnt_t> n_commit_reply_;
 
   using RccCoord::RccCoord;
 

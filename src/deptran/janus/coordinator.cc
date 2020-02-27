@@ -9,7 +9,7 @@ namespace janus {
 
 JanusCommo* CoordinatorJanus::commo() {
   if (commo_ == nullptr) {
-    commo_ = frame_->CreateCommo();
+    commo_ = frame_->CreateCommo(nullptr);
     commo_->loc_id_ = loc_id_;
   }
   verify(commo_ != nullptr);

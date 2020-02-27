@@ -264,6 +264,15 @@ class TxnMgr: public NoCopy {
   virtual Txn *start(txn_id_t txnid) = 0;
   Txn *start_nested(Txn *base);
 
+  uint16_t Checksum() {
+    uint16_t result = 0;
+    for (auto pair : tables_) {
+      auto tbl = pair.second;
+      result ^= tbl->Checksum();
+    }
+    return result;
+  }
+
   void reg_table(const std::string &tbl_name, Table *tbl) {
     verify(tables_.find(tbl_name) == tables_.end());
     insert_into_map(tables_, tbl_name, tbl);

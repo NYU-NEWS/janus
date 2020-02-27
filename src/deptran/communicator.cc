@@ -72,7 +72,7 @@ void Communicator::WaitConnectClientLeaders() {
 Communicator::~Communicator() {
   verify(rpc_clients_.size() > 0);
   for (auto& pair : rpc_clients_) {
-    rrr::Client* rpc_cli = pair.second;
+    auto rpc_cli = pair.second;
     rpc_cli->close_and_release();
   }
   rpc_clients_.clear();
@@ -154,14 +154,14 @@ Communicator::ConnectToSite(Config::SiteInfo& site,
                             std::chrono::milliseconds timeout) {
   string addr = site.GetHostAddr();
   auto start = std::chrono::steady_clock::now();
-  rrr::Client* rpc_cli = new rrr::Client(rpc_poll_);
+  auto rpc_cli = std::make_shared<rrr::Client>(rpc_poll_);
   double elapsed;
   int attempt = 0;
   do {
     Log_info("connect to site: %s (attempt %d)", addr.c_str(), attempt++);
     auto connect_result = rpc_cli->connect(addr.c_str());
     if (connect_result == SUCCESS) {
-      ClassicProxy* rpc_proxy = new ClassicProxy(rpc_cli);
+      ClassicProxy* rpc_proxy = new ClassicProxy(rpc_cli.get());
       rpc_clients_.insert(std::make_pair(site.id, rpc_cli));
       rpc_proxies_.insert(std::make_pair(site.id, rpc_proxy));
       Log_debug("connect to site: %s success!", addr.c_str());
@@ -194,7 +194,7 @@ void Communicator::BroadcastDispatch(
     Coordinator* coo,
     const function<void(int, TxnOutput&)> & callback) {
   cmdid_t cmd_id = sp_vec_piece->at(0)->root_id_;
-  verify(sp_vec_piece->size() > 0);
+  verify(!sp_vec_piece->empty());
   auto par_id = sp_vec_piece->at(0)->PartitionId();
   rrr::FutureAttr fuattr;
   fuattr.callback =
@@ -211,20 +211,22 @@ void Communicator::BroadcastDispatch(
   shared_ptr<VecPieceData> sp_vpd(new VecPieceData);
   sp_vpd->sp_vec_piece_data_ = sp_vec_piece;
   MarshallDeputy md(sp_vpd); // ????
+
   auto future = proxy->async_Dispatch(cmd_id, md, fuattr);
   Future::safe_release(future);
-  // FIXME fix this, this cause occ and perhaps 2pl to fail
-  for (auto& pair : rpc_par_proxies_[par_id]) {
-    if (pair.first != pair_leader_proxy.first) {
-      rrr::FutureAttr fu2;
-      fu2.callback =
-          [coo, this, callback](Future* fu) {
-            int32_t ret;
-            TxnOutput outputs;
-            fu->get_reply() >> ret >> outputs;
-            // do nothing
-          };
-      Future::safe_release(pair.second->async_Dispatch(cmd_id, md, fu2));
+  if (!broadcasting_to_leaders_only_) {
+    for (auto& pair : rpc_par_proxies_[par_id]) {
+      if (pair.first != pair_leader_proxy.first) {
+        rrr::FutureAttr fu2;
+        fu2.callback =
+            [coo, this, callback](Future* fu) {
+              int32_t ret;
+              TxnOutput outputs;
+              fu->get_reply() >> ret >> outputs;
+              // do nothing
+            };
+        Future::safe_release(pair.second->async_Dispatch(cmd_id, md, fu2));
+      }
     }
   }
 }

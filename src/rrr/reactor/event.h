@@ -48,6 +48,27 @@ class Event : public std::enable_shared_from_this<Event> {
   Event();
 };
 
+template <class Type>
+class BoxEvent : public Event {
+ public:
+  Type content_{};
+  bool is_set_{false};
+  Type& Get() {
+    return content_;
+  }
+  void Set(const Type& c) {
+    is_set_ = true;
+    content_ = c;
+  }
+  void Clear() {
+    is_set_ = false;
+    content_ = {};
+  }
+  virtual bool IsReady() override {
+    return is_set_;
+  }
+};
+
 class IntEvent : public Event {
 
  public:
