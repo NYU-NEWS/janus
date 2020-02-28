@@ -70,15 +70,17 @@ namespace janus {
                                                     std::placeholders::_1,
                                                     std::placeholders::_2,
                                                     std::placeholders::_3,
-                                                    std::placeholders::_4));
+                                                    std::placeholders::_4,
+                                                    std::placeholders::_5));
         }
         Log_debug("AccDispatchAsync cnt: %d for tx_id: %" PRIx64, cnt, txn->root_id_);
     }
 
     void CoordinatorAcc::AccDispatchAck(phase_t phase,
                                         int res,
-                                        uint64_t ssid_min,
-                                        uint64_t ssid_max,
+                                        uint64_t ssid_low,
+                                        uint64_t ssid_high,
+                                        uint64_t ssid_new,
                                         map<innid_t, map<int32_t, Value>>& outputs) {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
         if (phase != phase_) return;
@@ -107,14 +109,18 @@ namespace janus {
             default:  // SUCCESS, do nothing
                 break;
         }
-        if (ssid_max > txn->ssid_max) {
-            txn->ssid_max = ssid_max;
+        if (ssid_new > txn->ssid_new) {
+            txn->ssid_new = ssid_new;
         }
-        if (ssid_min < txn->ssid_min) {
-            txn->ssid_min = ssid_min;
+        if (ssid_low > txn->highest_ssid_low) {
+            txn->highest_ssid_low = ssid_low;
+        }
+        if (ssid_high < txn->lowest_ssid_high) {
+            txn->lowest_ssid_high = ssid_high;
         }
         // basic ssid check consistency
-        if (txn->ssid_min != txn->ssid_max) {  // not a ssid snapshot
+        if (txn->highest_ssid_low > txn->lowest_ssid_high) {
+            // inconsistent if no overlapped range
             txn->_is_consistent = false;
         }
         if (txn->HasMoreUnsentPiece()) {
@@ -138,7 +144,7 @@ namespace janus {
             tx_data().n_validate_rpc_++;
             commo()->AccBroadcastValidate(par_id,
                                           tx_data().id_,
-                                          tx_data().ssid_max,   // the new cross-shard ssid
+                                          tx_data().ssid_new,   // the new cross-shard ssid for writes
                                           std::bind(&CoordinatorAcc::AccValidateAck,
                                                           this,
                                                              phase_,
@@ -190,8 +196,9 @@ namespace janus {
     void CoordinatorAcc::reset_all_members() {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
         tx_data()._is_consistent = true;
-        tx_data().ssid_max = 0;
-        tx_data().ssid_min = UINT64_MAX;
+        tx_data().highest_ssid_low = 0;
+        tx_data().lowest_ssid_high = UINT64_MAX;
+        tx_data().ssid_new = 0;
         tx_data().n_validate_rpc_ = 0;
         tx_data().n_validate_ack_ = 0;
         tx_data()._offset_invalid = false;
@@ -217,7 +224,7 @@ namespace janus {
     bool CoordinatorAcc::offset_1_check_pass() {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
         return !tx_data()._offset_invalid &&  // write valid
-               tx_data().ssid_max - tx_data().ssid_min <= 1;  // offset within 1
+               tx_data().highest_ssid_low - tx_data().lowest_ssid_high <= 1;  // offset within 1
     }
 
     void CoordinatorAcc::AccCommit() {
@@ -226,8 +233,10 @@ namespace janus {
             AccFinalize(FINALIZED);
             End();  // do not wait for finalize to return, respond to user now
         } else {
+            /* -- this is for testing -- */
             AccFinalize(FINALIZED);
             End();
+            /* ------------------------- */
             // TODO: put in a queue, wait for decision
             // AccFinalize(FINALIZED);
             // will End() upon receiving all finalize responses

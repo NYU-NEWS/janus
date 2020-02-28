@@ -225,8 +225,9 @@ class ClassicServiceImpl : public ClassicService {
                    const MarshallDeputy& cmd,
                    const uint64_t& ssid_spec,
                    int32_t* res,
-                   uint64_t* ssid_min,
-                   uint64_t* ssid_max,
+                   uint64_t* ssid_low,
+                   uint64_t* ssid_high,
+                   uint64_t* ssid_new,
                    TxnOutput* output,
                    DeferredReply* defer_reply) override;
 

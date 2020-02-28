@@ -14,16 +14,15 @@ namespace janus {
                                                             // the set of versions accessed,
                                                             // used for validation and finalize
 	    //std::unordered_map<mdb::Row*, std::unordered_map<mdb::colid_t, snapshotid_t>> earlier_read;
-        snapshotid_t ssid_max = 0;
-        snapshotid_t ssid_min = UINT64_MAX;
-        //bool validate_abort = false;  // if any read encounters an unfinalized write and later validation is required
-                                      // then no need to validate cuz validation would fail anyway
+        snapshotid_t highest_ssid_low = 0;
+        snapshotid_t lowest_ssid_high = UINT64_MAX;
+        snapshotid_t highest_write_ssid = 0;
     };
 
     class SafeGuard {
         // each txn has a safeguard object for checking consistency
     public:
-        void update_metadata(snapshotid_t ssid);
+        void update_metadata(snapshotid_t ssid_low, snapshotid_t ssid_high, bool is_read = true);
         void reset_safeguard();
     private:
         MetaData metadata;

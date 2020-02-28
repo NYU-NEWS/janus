@@ -5,8 +5,9 @@ namespace janus {
     int32_t SchedulerAcc::OnDispatch(cmdid_t cmd_id,
                                      const shared_ptr<Marshallable>& cmd,
                                      uint64_t ssid_spec,
-                                     uint64_t *ssid_min,
-                                     uint64_t *ssid_max,
+                                     uint64_t *ssid_low,
+                                     uint64_t *ssid_high,
+                                     uint64_t *ssid_new,
                                      TxnOutput &ret_output) {
         // Step 1: dispatch and execute pieces
         auto sp_vec_piece = dynamic_pointer_cast<VecPieceData>(cmd)->sp_vec_piece_data_;
@@ -29,8 +30,9 @@ namespace janus {
             tx->fully_dispatched_->Set(1);
         }
         // Step 2: report ssid status
-        *ssid_min = tx->sg.metadata.ssid_min;
-        *ssid_max = tx->sg.metadata.ssid_max;
+        *ssid_low = tx->sg.metadata.highest_ssid_low;
+        *ssid_high = tx->sg.metadata.lowest_ssid_high;
+        *ssid_new = tx->sg.metadata.highest_write_ssid;
         // report offset_invalid and decided. These two things are *incomparable*!
         if (!tx->sg.decided && !tx->sg.offset_safe) {
             return BOTH_NEGATIVE;

@@ -14,25 +14,26 @@ namespace janus {
         update_stable_frontier();
     }
 
-    const mdb::Value& AccColumn::read(snapshotid_t& ssid_spec, bool& offset_safe, unsigned long& index, bool& decided) {
+    const mdb::Value& AccColumn::read(snapshotid_t ssid_spec, SSID& ssid, bool& offset_safe, unsigned long& index, bool& decided) {
         // return logical head
         index = _logical_head;
-        ssid_spec = read_get_next_SSID(ssid_spec);
+        snapshotid_t ssid_new = read_get_next_SSID(ssid_spec);
         // extends head's ssid
-        txn_queue[index].extend_ssid(ssid_spec);
+        txn_queue[index].extend_ssid(ssid_new);
+        ssid = txn_queue[index].ssid;
         offset_safe = is_offset_safe(ssid_spec);
         decided = logical_head_status() == FINALIZED;  // then if this tx turns out consistent and all parts decided, can respond immediately
         return txn_queue[_logical_head].value;
     }
 
-    snapshotid_t AccColumn::write(mdb::Value&& v, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index, bool& offset_safe) { // ver_index is the new write's
+    SSID AccColumn::write(mdb::Value&& v, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index, bool& offset_safe) { // ver_index is the new write's
         // write returns new ssid
         SSID new_ssid = write_get_next_SSID(ssid_spec);
         txn_queue.emplace_back(std::move(v), tid, new_ssid);
         ver_index = txn_queue.size() - 1; // record index of this pending write for later validation and finalize
         offset_safe = is_offset_safe(new_ssid.ssid_low);
         update_logical_head();
-        return new_ssid.ssid_low;  // return the SSID of this new write -- safety
+        return new_ssid;  // return the SSID of this new write -- safety
     }
 
     SSID AccColumn::write_get_next_SSID(snapshotid_t ssid_spec) const {

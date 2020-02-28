@@ -12,8 +12,9 @@ namespace janus {
                                   Coordinator *coo,
                                   snapshotid_t ssid_spec,
                                   const std::function<void(int res,
-                                                      uint64_t ssid_min,
-                                                      uint64_t ssid_max,
+                                                      uint64_t ssid_low,
+                                                      uint64_t ssid_high,
+                                                      uint64_t ssid_new,
                                                       TxnOutput &)> &callback);
         void AccBroadcastValidate(parid_t par_id,
                                   cmdid_t cmd_id,

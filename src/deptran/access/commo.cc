@@ -5,8 +5,9 @@ namespace janus {
                                         Coordinator *coo,
                                         snapshotid_t ssid_spec,
                                         const std::function<void(int res,
-                                                                 uint64_t ssid_min,
-                                                                 uint64_t ssid_max,
+                                                                 uint64_t ssid_low,
+                                                                 uint64_t ssid_high,
+                                                                 uint64_t ssid_new,
                                                                  TxnOutput &)> &callback) {
         cmdid_t cmd_id = sp_vec_piece->at(0)->root_id_;
         verify(sp_vec_piece->size() > 0);
@@ -15,11 +16,12 @@ namespace janus {
         fuattr.callback =
                 [coo, this, callback](Future* fu) {
                     int32_t ret;
-                    uint64_t ssid_min;
-                    uint64_t ssid_max;
+                    uint64_t ssid_low;
+                    uint64_t ssid_high;
+                    uint64_t ssid_new;
                     TxnOutput outputs;
-                    fu->get_reply() >> ret >> ssid_min >> ssid_max >> outputs;
-                    callback(ret, ssid_min, ssid_max, outputs);
+                    fu->get_reply() >> ret >> ssid_low >> ssid_high >> ssid_new >> outputs;
+                    callback(ret, ssid_low, ssid_high, ssid_new, outputs);
                 };
         auto pair_leader_proxy = LeaderProxyForPartition(par_id);
         Log_debug("send dispatch to site %ld",
@@ -37,10 +39,11 @@ namespace janus {
                 fu2.callback =
                         [coo, this, callback](Future* fu) {
                             int32_t ret;
-                            uint64_t ssid_min;
-                            uint64_t ssid_max;
+                            uint64_t ssid_low;
+                            uint64_t ssid_high;
+                            uint64_t ssid_new;
                             TxnOutput outputs;
-                            fu->get_reply() >> ret >> ssid_min >> ssid_max >> outputs;
+                            fu->get_reply() >> ret >> ssid_low >> ssid_high >> ssid_new >> outputs;
                             // do nothing
                         };
                 Future::safe_release(pair.second->async_AccDispatch(cmd_id, md, ssid_spec, fu2));

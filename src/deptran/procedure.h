@@ -312,8 +312,9 @@ class TxData: public CmdData {
     //bool _validate_abort = false;
     bool _offset_invalid = false;
     // a consistent snapshot resides between highest_low and lowest_high
-    snapshotid_t ssid_max = 0;
-    snapshotid_t ssid_min = UINT64_MAX;
+    snapshotid_t highest_ssid_low = 0;
+    snapshotid_t lowest_ssid_high = UINT64_MAX;
+    snapshotid_t ssid_new = 0;
     //snapshotid_t highest_ssid_high = 0;  // for updating ssids upon validation
     // and for final ssid if validation says consistent
     int n_validate_rpc_ = 0;

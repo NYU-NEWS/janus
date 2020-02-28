@@ -405,14 +405,15 @@ void ClassicServiceImpl::AccDispatch(const i64& cmd_id,
                                   const MarshallDeputy& md,
                                   const uint64_t& ssid_spec,
                                   int32_t* res,
-                                  uint64_t* ssid_min,
-                                  uint64_t* ssid_max,
+                                  uint64_t* ssid_low,
+                                  uint64_t* ssid_high,
+                                  uint64_t* ssid_new,
                                   TxnOutput* output,
                                   rrr::DeferredReply* defer){
     // server-side handler of AccDispatch RPC
     shared_ptr<Marshallable> sp = md.sp_data_;
     auto* sched = (SchedulerAcc*) dtxn_sched_;
-    *res = sched->OnDispatch(cmd_id, sp, ssid_spec, ssid_min, ssid_max, *output);
+    *res = sched->OnDispatch(cmd_id, sp, ssid_spec, ssid_low, ssid_high, ssid_new, *output);
     defer->reply();
 }
 

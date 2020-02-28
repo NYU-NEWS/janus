@@ -16,15 +16,14 @@ namespace janus {
         AccCommo* commo();
         void AccDispatchAck(phase_t phase,
                             int res,
-                            uint64_t ssid_min,
-                            uint64_t ssid_max,
+                            uint64_t ssid_low,
+                            uint64_t ssid_high,
+                            uint64_t ssid_new,
                             map<innid_t, map<int32_t, Value>>& outputs);
         void SafeGuardCheck();
         void AccValidate();
         void AccValidateAck(phase_t phase, int8_t res);
-        void AccFinalizeNoWait(int8_t decision);
         void AccFinalize(int8_t decision);
-        void AccFinalizeAck(phase_t phase, int8_t res);
         void Restart() override;
         void reset_all_members();
         bool offset_1_check_pass();
