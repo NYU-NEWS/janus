@@ -61,7 +61,7 @@ namespace janus {
         explicit AccColumn(mdb::colid_t, mdb::Value&& v);
         AccColumn(const AccColumn&) = delete;   // no copy
         AccColumn& operator=(const AccColumn&) = delete; // no copy
-        const mdb::Value& read(snapshotid_t& ssid_spec, bool& offset_safe, unsigned long& index) const;
+        const mdb::Value& read(snapshotid_t& ssid_spec, bool& offset_safe, unsigned long& index, bool& decided);
         snapshotid_t write(mdb::Value&& v, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index, bool& offset_safe);
     private:
         /* basic column members */

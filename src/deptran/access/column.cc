@@ -14,11 +14,14 @@ namespace janus {
         update_stable_frontier();
     }
 
-    const mdb::Value& AccColumn::read(snapshotid_t& ssid_spec, bool& offset_safe, unsigned long& index) const {
+    const mdb::Value& AccColumn::read(snapshotid_t& ssid_spec, bool& offset_safe, unsigned long& index, bool& decided) {
         // return logical head
         index = _logical_head;
         ssid_spec = read_get_next_SSID(ssid_spec);
+        // extends head's ssid
+        txn_queue[index].extend_ssid(ssid_spec);
         offset_safe = is_offset_safe(ssid_spec);
+        decided = logical_head_status() == FINALIZED;  // then if this tx turns out consistent and all parts decided, can respond immediately
         return txn_queue[_logical_head].value;
     }
 

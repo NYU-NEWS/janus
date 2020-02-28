@@ -31,7 +31,17 @@ namespace janus {
         // Step 2: report ssid status
         *ssid_min = tx->sg.metadata.ssid_min;
         *ssid_max = tx->sg.metadata.ssid_max;
-        return tx->sg.offset_safe ? SUCCESS : OFFSET_INVALID;
+        // report offset_invalid and decided. These two things are *incomparable*!
+        if (!tx->sg.decided && !tx->sg.offset_safe) {
+            return BOTH_NEGATIVE;
+        }
+        if (!tx->sg.decided) {
+            return NOT_DECIDED;
+        }
+        if (!tx->sg.offset_safe) {
+            return OFFSET_INVALID;
+        }
+        return SUCCESS;
     }
 
     void SchedulerAcc::OnValidate(cmdid_t cmd_id, snapshotid_t ssid_new, int8_t *res) {
@@ -41,19 +51,26 @@ namespace janus {
             *res = CONSISTENT;  // if there is at least one validation fails, final result will be fail
             return;
         }
+        acc_txn->sg.decided = true;   // clear decided from dispatch
         acc_txn->sg.validate_done = true;
         bool validate_consistent = true;
         for (auto& row_col : acc_txn->sg.metadata.indices) {
             auto acc_row = dynamic_cast<AccRow*>(row_col.first);
             for (auto& col_ssid : row_col.second) {
-                if (!acc_row->validate(acc_txn->tid_, col_ssid.first, col_ssid.second, ssid_new, validate_consistent)) {
+                if (!acc_row->validate(acc_txn->tid_, col_ssid.first, col_ssid.second, ssid_new, validate_consistent, acc_txn->sg.decided)) {
                     // validation fails on this row-col
                     validate_consistent = false;
                     // we need to go thru all records for possible early aborts
                 }
             }
         }
-        *res = validate_consistent ? CONSISTENT : INCONSISTENT;
+        if (!validate_consistent) {
+            *res = INCONSISTENT;
+        } else if (!acc_txn->sg.decided) {
+            *res = NOT_DECIDED;  // not decided but consistent
+        } else {
+            *res = CONSISTENT;   // consistent and decided
+        }
     }
 
     void SchedulerAcc::OnFinalize(cmdid_t cmd_id, int8_t decision) {

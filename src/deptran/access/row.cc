@@ -22,7 +22,7 @@ namespace janus {
         return new_row;
     }
 
-    snapshotid_t AccRow::read_column(mdb::colid_t col_id, mdb::Value* value, snapshotid_t ssid_spec, bool& offset_safe, unsigned long& index) const {
+    snapshotid_t AccRow::read_column(mdb::colid_t col_id, mdb::Value* value, snapshotid_t ssid_spec, bool& offset_safe, unsigned long& index, bool& decided) {
         if (col_id >= _row.size()) {
             // col_id is invalid. We're doing a trick here.
             // keys are col_ids
@@ -30,7 +30,7 @@ namespace janus {
             return 0;
         }
         snapshotid_t ssid_final = ssid_spec;
-        *value = _row.at(col_id).read(ssid_final, offset_safe, index);
+        *value = _row.at(col_id).read(ssid_final, offset_safe, index, decided);
         return ssid_final;
     }
 
@@ -42,13 +42,15 @@ namespace janus {
         return _row.at(col_id).write(std::move(value), ssid_spec, tid, ver_index, offset_safe);
     }
 
-    bool AccRow::validate(txnid_t tid, mdb::colid_t col_id, unsigned long index, snapshotid_t ssid_new, bool validate_consistent) {
+    bool AccRow::validate(txnid_t tid, mdb::colid_t col_id, unsigned long index, snapshotid_t ssid_new, bool validate_consistent, bool& decided) {
         if (_row[col_id].is_read(tid, index)) {
             // this is validating a read
             if (!validate_consistent || !_row[col_id].is_logical_head(index)) {
                 return false;
             }
             _row[col_id].txn_queue[index].extend_ssid(ssid_new);
+            // check decided, only need for reads and if consistent
+            decided = _row[col_id].txn_queue[index].status == FINALIZED;
             return true;
         } else {
             // validating a write

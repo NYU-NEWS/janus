@@ -18,5 +18,6 @@ namespace janus {
         validate_done = false;
         offset_safe = true;
         ssid_spec = 0;
+        decided = true;
     }
 }

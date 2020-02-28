@@ -100,7 +100,7 @@ Marshal& operator << (Marshal& m, const TxReply& reply) {
   m << reply.time_;
   m << reply.txn_type_;
   m << reply.n_ssid_consistent_;
-  m << reply.n_validate_abort_;
+  m << reply.n_decided_;
   m << reply.n_offset_valid_;
   return m;
 }
@@ -113,7 +113,7 @@ Marshal& operator >> (Marshal& m, TxReply& reply) {
   m >> reply.time_;
   m >> reply.txn_type_;
   m >> reply.n_ssid_consistent_;
-  m >> reply.n_validate_abort_;
+  m >> reply.n_decided_;
   m >> reply.n_offset_valid_;
   return m;
 }
@@ -330,7 +330,7 @@ TxReply &TxData::get_reply() {
   reply_.time_ = timespec2ms(t_buf) - timespec2ms(start_time_);
   reply_.txn_type_ = (int32_t) type_;
   reply_.n_ssid_consistent_ = n_ssid_consistent_;
-  reply_.n_validate_abort_ = n_validate_abort_;
+  reply_.n_decided_ = n_decided_;
   reply_.n_offset_valid_ = n_offset_valid_;
   return reply_;
 }

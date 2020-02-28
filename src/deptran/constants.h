@@ -25,16 +25,26 @@ namespace janus {
 #define groupid_t uint32_t
 
 /** ACCESS related macro **/
+// data types
 #define snapshotid_t uint64_t  // access: ssid
 #define acc_status_t uint8_t   // status is either "unchecked," "validating", or "finalized"
+// record status
 #define UNCHECKED (0x0)        // a txn is not checked yet
 #define VALIDATING (0x1)       // Being validated, e.g., have received validation message
 #define FINALIZED (0x2)        // finalized
 #define ABORTED (0x3)          // txn aborted
+// dispatch responses
+#define OFFSET_INVALID (0x1)   // for offset-1 optimization
+#define NOT_DECIDED (0x2)      // some write reads returning has not been decided
+#define BOTH_NEGATIVE (0x3)    // both offset invalid and not decided
+//~also returns SUCCESS by default
+// validate responses
 #define CONSISTENT (0x1)       // return vale of is_consistent of AccDispatch RPC -- local ssids same
 #define INCONSISTENT (0x0)     // validation gets inconsistent
+//~also returns NOT_DECIDED upon validation
+// obsolete below
 //#define VALIDATE_ABORT (0x2)   // should not do validate, abort early!
-#define OFFSET_INVALID (0x4)   // for offset-1 optimization
+
 
 /** read and write type */
 #define OP_WRITE   (0x01)

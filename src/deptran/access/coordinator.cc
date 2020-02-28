@@ -10,13 +10,12 @@ namespace janus {
     }
 
     void CoordinatorAcc::GotoNextPhase() {
-        const int n_phase = 4;  // TODO: make this 4 for real
+        const int n_phase = 4;
         switch (phase_++ % n_phase) {
             case Phase::INIT_END: verify(phase_ % n_phase == Phase::DISPATCH);
                 DispatchAsync();
                 break;
             case Phase::DISPATCH: verify(phase_ % n_phase == Phase::VALIDATE);
-                // TODO: safeguard check. If consistent, respond.
                 SafeGuardCheck();
                 break;
             case Phase::VALIDATE: verify(phase_ % n_phase == Phase::DECIDE);
@@ -28,10 +27,10 @@ namespace janus {
                 break;
             case Phase::DECIDE: verify(phase_ % n_phase == Phase::INIT_END);
                 if (committed_) {
-                    AccFinalize(FINALIZED);
-                    End();
-                    reset_all_members();
+                    AccCommit();
+                    // reset_all_members();  tx_data is GC'ed in End()
                 } else if (aborted_) {
+                    // TODO: cascading aborts
                     AccFinalize(ABORTED);
                     Restart();
                 } else {
@@ -94,8 +93,19 @@ namespace janus {
             txn->Merge(pair.first, pair.second);
         }
         // store RPC returned information
-        if (res == OFFSET_INVALID) {
-            txn->_offset_invalid = true; // for offset1 optimization
+        switch (res) {
+            case BOTH_NEGATIVE:
+                txn->_offset_invalid = true;
+                txn->_decided = false;
+                break;
+            case OFFSET_INVALID:
+                txn->_offset_invalid = true;
+                break;
+            case NOT_DECIDED:
+                txn->_decided = false;
+                break;
+            default:  // SUCCESS, do nothing
+                break;
         }
         if (ssid_max > txn->ssid_max) {
             txn->ssid_max = ssid_max;
@@ -122,6 +132,8 @@ namespace janus {
         std::lock_guard<std::recursive_mutex> lock(mtx_);
         auto pars = tx_data().GetPartitionIds();
         verify(!pars.empty());
+        tx_data()._decided = true;  // clear decided from dispatch,
+                                    // not-decided in dispatch could be now decided after validation
         for (auto par_id : pars) {
             tx_data().n_validate_rpc_++;
             commo()->AccBroadcastValidate(par_id,
@@ -141,6 +153,9 @@ namespace janus {
         if (res == INCONSISTENT) { // at least one shard returns inconsistent
             aborted_ = true;
         }
+        if (res == NOT_DECIDED) {  // consistent but not decided
+            tx_data()._decided = false;
+        }
         if (tx_data().n_validate_ack_ == tx_data().n_validate_rpc_) {
             // have received all acks
             committed_ = !aborted_;
@@ -153,11 +168,10 @@ namespace janus {
     }
 
     void CoordinatorAcc::AccFinalize(int8_t decision) {
-	    // TODO: READS NO NEED TO FINALIZE
+        // TODO: READS NO NEED TO FINALIZE
         std::lock_guard<std::recursive_mutex> lock(mtx_);
         auto pars = tx_data().GetPartitionIds();
         verify(!pars.empty());
-        //snapshotid_t = decision == FINALIZED ? tx_data().highest_ssid_high : 0;
         for (auto par_id : pars) {
             commo()->AccBroadcastFinalize(par_id,
                                           tx_data().id_,
@@ -176,14 +190,13 @@ namespace janus {
     void CoordinatorAcc::reset_all_members() {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
         tx_data()._is_consistent = true;
-        //tx_data()._validate_abort = false;
         tx_data().ssid_max = 0;
         tx_data().ssid_min = UINT64_MAX;
-        //tx_data().highest_ssid_high = 0;
         tx_data().n_validate_rpc_ = 0;
         tx_data().n_validate_ack_ = 0;
         tx_data()._offset_invalid = false;
         tx_data().ssid_spec = 0;
+        tx_data()._decided = true;
     }
 
     void CoordinatorAcc::SafeGuardCheck() {
@@ -205,5 +218,19 @@ namespace janus {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
         return !tx_data()._offset_invalid &&  // write valid
                tx_data().ssid_max - tx_data().ssid_min <= 1;  // offset within 1
+    }
+
+    void CoordinatorAcc::AccCommit() {
+        if (tx_data()._decided) { // all parts are decided, return immediately
+            tx_data().n_decided_++; // stats
+            AccFinalize(FINALIZED);
+            End();  // do not wait for finalize to return, respond to user now
+        } else {
+            AccFinalize(FINALIZED);
+            End();
+            // TODO: put in a queue, wait for decision
+            // AccFinalize(FINALIZED);
+            // will End() upon receiving all finalize responses
+        }
     }
 } // namespace janus

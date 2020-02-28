@@ -10,7 +10,7 @@ namespace janus {
         // class downcasting to get AccRow
         auto acc_row = dynamic_cast<AccRow*>(row);
         unsigned long index = 0;
-        snapshotid_t ssid = acc_row->read_column(col_id, value, sg.ssid_spec, sg.offset_safe, index);
+        snapshotid_t ssid = acc_row->read_column(col_id, value, sg.ssid_spec, sg.offset_safe, index, sg.decided);
         row->ref_copy();
         sg.metadata.indices[row][col_id] = index;  // for later validation
 	    //sg.metadata.earlier_read[row][col_id] = ssid.ssid_high;  // for wild card optimization, i.e., read ssid [0, x]
@@ -29,7 +29,7 @@ namespace janus {
         for (auto col_id : col_ids) {
             Value *v = nullptr;
             unsigned long index = 0;
-            snapshotid_t ssid = acc_row->read_column(col_id, v, sg.ssid_spec, sg.offset_safe, index);
+            snapshotid_t ssid = acc_row->read_column(col_id, v, sg.ssid_spec, sg.offset_safe, index, sg.decided);
             verify(v != nullptr);
             values->push_back(std::move(*v));
             sg.metadata.indices[row][col_id] = index;  // for later validation
