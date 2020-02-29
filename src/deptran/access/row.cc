@@ -48,14 +48,14 @@ namespace janus {
             if (!validate_consistent || !_row[col_id].is_logical_head(index)) {
                 return false;
             }
-            _row[col_id].txn_queue[index].extend_ssid(ssid_new);
+            _row[col_id].txn_queue[index].extend_ssid(ssid_new);  // extend ssid range for reads
             // check decided, only need for reads and if consistent
             decided = _row[col_id].txn_queue[index].status == FINALIZED;
             return true;
         } else {
             // validating a write
             if (validate_consistent && _row[col_id].is_logical_head(index) && !_row[col_id].txn_queue[index].have_reads()) { // 2nd part is particularly required for safety for speculative execution now
-                _row[col_id].txn_queue[index].extend_ssid(ssid_new);
+                _row[col_id].txn_queue[index].update_ssid(ssid_new);  // update both low and high to new for writes
                 _row[col_id].txn_queue[index].status = VALIDATING;
                 return true;
             }

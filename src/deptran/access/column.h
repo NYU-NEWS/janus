@@ -45,8 +45,13 @@ namespace janus {
         AccTxnRec(mdb::Value&& v, txnid_t tid, const SSID& ss_id, acc_status_t stat = UNCHECKED)
                 : txn_id(tid), ssid(ss_id), status(stat), value(std::move(v)) {}
         void extend_ssid(snapshotid_t ssid_new) {
-            if (ssid.ssid_high < ssid_new) {
+            if (ssid.ssid_high < ssid_new) { // extend ssid range for reads upon validation
                 ssid.ssid_high = ssid_new;
+            }
+        }
+        void update_ssid(snapshotid_t ssid_new) {  // update ssid for write upon validation
+            if (ssid.ssid_high < ssid_new) {
+                ssid.ssid_low = ssid.ssid_high = ssid_new;
             }
         }
         bool have_reads() const {
