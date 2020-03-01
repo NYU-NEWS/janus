@@ -30,6 +30,7 @@ namespace janus {
         bool validate_done = false;
         bool offset_safe = true;
         bool decided = true;         // if the write a read returning is finalized, used in both dispatch and validate
+        bool status_query_done = false;  // for AccStatusQuery
         friend class AccTxn;
         friend class SchedulerAcc;
     };

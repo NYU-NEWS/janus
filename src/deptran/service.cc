@@ -436,6 +436,14 @@ void ClassicServiceImpl::AccFinalize(const i64& cmd_id,
     defer->reply();
 }
 
+void ClassicServiceImpl::AccStatusQuery(const i64 &cmd_id,
+                                        int8_t *res,
+                                        DeferredReply* defer) {
+    // server-side handler of AccStatusQuery RPC
+    auto* sched = (SchedulerAcc*) dtxn_sched_;
+    sched->OnStatusQuery(cmd_id, res);
+}
+
 void ClassicServiceImpl::RegisterStats() {
   if (scsi_) {
     scsi_->set_recorder(recorder_);
@@ -482,4 +490,5 @@ void ClassicServiceImpl::MsgMarshall(const MarshallDeputy& arg,
   verify(0);
   return;
 }
+
 } // namespace janus

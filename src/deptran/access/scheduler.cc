@@ -91,4 +91,12 @@ namespace janus {
         // clear metadata after finalizing a txn
         acc_txn->sg.reset_safeguard();
     }
+
+    void SchedulerAcc::OnStatusQuery(cmdid_t cmd_id, int8_t *res, DeferredReply* defer) {
+        auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
+        if (acc_txn->sg.status_query_done) {
+            // we have done the query RPC on this shard
+
+        }
+    }
 }

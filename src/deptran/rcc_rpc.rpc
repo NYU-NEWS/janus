@@ -164,6 +164,8 @@ abstract service Classic {
   defer AccValidate(i64 tid, uint64_t ssid_new | int8_t res);
 
   defer AccFinalize(i64 tid, int8_t decision |);
+
+  defer AccStatusQuery(i64 tid | int8_t res);
 }
 
 
