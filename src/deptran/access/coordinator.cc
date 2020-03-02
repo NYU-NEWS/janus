@@ -18,14 +18,14 @@ namespace janus {
             case Phase::DISPATCH: verify(phase_ % n_phase == Phase::VALIDATE);
                 SafeGuardCheck();
                 break;
-            case Phase::VALIDATE: verify(phase_ % n_phase == Phase::DECIDE);
+            case Phase::VALIDATE: verify(phase_ % n_phase == Phase::EARLY_DECIDE);
                 if (committed_) { // SG checks consistent, no need to validate
                     GotoNextPhase();
                 } else {
                     AccValidate();
                 }
                 break;
-            case Phase::DECIDE: verify(phase_ % n_phase == Phase::DECIDING);
+            case Phase::EARLY_DECIDE: verify(phase_ % n_phase == Phase::DECIDE);
                 if (committed_) {
                     AccCommit();
                     // reset_all_members();  tx_data is GC'ed in End()
@@ -35,7 +35,7 @@ namespace janus {
                     verify(0);
                 }
                 break;
-            case Phase::DECIDING: verify(phase_ % n_phase == Phase::INIT_END);
+            case Phase::DECIDE: verify(phase_ % n_phase == Phase::INIT_END);
                 // do nothing here, will called in StatusQueryAck
                 break;
             default:
@@ -246,10 +246,10 @@ namespace janus {
             if (tx_data()._decided) {
                 tx_data().n_decided_++; // stats
             }
+            if (phase_ % n_phase == Phase::DECIDE) { // current is EARLY_DECIDE phase
+                SkipDecidePhase();
+            }
             End();  // do not wait for finalize to return, respond to user now
-        }
-        if (phase_ % n_phase == Phase::DECIDING) { // current is DECIDE phase
-            GotoNextPhase();
         }
     }
 
@@ -259,8 +259,8 @@ namespace janus {
         // abort as long as inconsistent or there is at least one statusquery ack is abort (cascading abort)
         AccFinalize(ABORTED);
         Restart();
-        if (phase_ % n_phase == Phase::DECIDING) { // current is DECIDE phase
-            GotoNextPhase();
+        if (phase_ % n_phase == Phase::DECIDE) { // current is EARLY_DECIDE phase
+            SkipDecidePhase();
         }
     }
 
@@ -312,5 +312,11 @@ namespace janus {
             }
             // this txn has not got to DECIDE phase yet, either validating or dispatching
         }
+    }
+
+    void CoordinatorAcc::SkipDecidePhase() {
+        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+        verify(phase_ % n_phase == Phase::DECIDE);
+        phase_++;
     }
 } // namespace janus
