@@ -21,6 +21,7 @@ namespace janus {
         SSID write_column(mdb::colid_t col_id, mdb::Value&& value, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index, bool& offset_safe);
         bool validate(txnid_t tid, mdb::colid_t col_id, unsigned long index, snapshotid_t ssid_new, bool validate_consistent, bool& decided);
         void finalize(txnid_t tid, mdb::colid_t col_id, unsigned long ver_index, int8_t decision);
+        int8_t check_status(txnid_t tid, mdb::colid_t col_id, unsigned long index);
     private:
         // a map of txn_q; keys are cols, values are linkedvectors that holding txns (versions)
         std::unordered_map<mdb::colid_t, AccColumn> _row;

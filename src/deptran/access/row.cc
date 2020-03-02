@@ -73,4 +73,18 @@ namespace janus {
         }
         _row[col_id].finalize(ver_index, decision);
     }
+
+    int8_t AccRow::check_status(txnid_t tid, mdb::colid_t col_id, unsigned long index) {
+        if (!_row[col_id].is_read(tid, index)) {
+            // this was a write, no need to check status
+            return FINALIZED;
+        }
+        switch (_row[col_id].txn_queue[index].status) {
+            case UNCHECKED: return UNCHECKED;
+            case VALIDATING: return VALIDATING;
+            case FINALIZED: return FINALIZED;
+            case ABORTED: return ABORTED;
+            default: verify(0); return FINALIZED;
+        }
+    }
 }

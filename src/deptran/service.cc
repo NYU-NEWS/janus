@@ -441,7 +441,7 @@ void ClassicServiceImpl::AccStatusQuery(const i64 &cmd_id,
                                         DeferredReply* defer) {
     // server-side handler of AccStatusQuery RPC
     auto* sched = (SchedulerAcc*) dtxn_sched_;
-    sched->OnStatusQuery(cmd_id, res);
+    sched->OnStatusQuery(cmd_id, res, defer);
 }
 
 void ClassicServiceImpl::RegisterStats() {

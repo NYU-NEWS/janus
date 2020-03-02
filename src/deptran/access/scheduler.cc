@@ -94,9 +94,52 @@ namespace janus {
 
     void SchedulerAcc::OnStatusQuery(cmdid_t cmd_id, int8_t *res, DeferredReply* defer) {
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
-        if (acc_txn->sg.status_query_done) {
-            // we have done the query RPC on this shard
-
+        if (acc_txn->sg.status_query_done || acc_txn->sg.decided) {
+            // 1. if we send 1 rpc per shard then we don't need sg.status_query_done
+            // 2. if sg.decided is true then we know all versions are decided because StatusQuery RPC
+            // arrives after dispatch --> during dispatch we know all versions are decided. THIS NEEDS 1.
+            *res = FINALIZED;   // will be aborted if any rpc returns abort
+            acc_txn->sg.status_query_done = true;
+            defer->reply();
+            return;
         }
+        // async function below
+        bool decided = true;  // all versions decided, default is finalized
+        bool aborted = false; // decided result is aborting this txn
+        for (auto& row_col : acc_txn->sg.metadata.indices) {
+            auto acc_row = dynamic_cast<AccRow*>(row_col.first);
+            for (auto& col_index : row_col.second) {
+                int8_t status = acc_row->check_status(acc_txn->tid_, col_index.first, col_index.second);
+                switch (status) {
+                    case UNCHECKED:
+                    case VALIDATING:
+                        // not decided yet, keep waiting
+                        decided = false;
+                        break;
+                    case FINALIZED:
+                        break;
+                    case ABORTED:
+                        aborted = true;
+                        break;
+                    default:
+                        verify(0);
+                        break;
+                }
+            }
+        }
+        // early aborts
+        if (aborted) { // some shards have decided abort, we early abort now even if !decided
+            *res = ABORTED;
+            acc_txn->sg.status_query_done = true;
+            defer->reply();
+            return;
+        }
+        if (decided) { // all versions decided and finalized
+            *res = FINALIZED;
+            acc_txn->sg.status_query_done = true;
+            defer->reply();
+            return;
+        }
+        return;  // not all versions decided yet and no one aborted, keep waiting, release thread
     }
 }
