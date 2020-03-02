@@ -38,6 +38,15 @@ namespace janus {
 
         //bool InsertRow(Table *tbl, Row *row) override;
 
+        void query_callback(int8_t status);
+        void n_query_inc();
+        void n_callback_inc();
+        bool all_callbacks_received() const;
+        void set_query_abort();
+        int8_t query_result() const;
+        void set_query_done();
+        bool is_query_done() const;
+
         ~AccTxn() override;
     private:
         SafeGuard sg;

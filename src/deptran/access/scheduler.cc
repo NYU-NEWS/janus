@@ -100,46 +100,16 @@ namespace janus {
             // arrives after dispatch --> during dispatch we know all versions are decided. THIS NEEDS 1.
             *res = FINALIZED;   // will be aborted if any rpc returns abort
             acc_txn->sg.status_query_done = true;
+            verify(defer != nullptr);
             defer->reply();
             return;
         }
-        // async function below
-        bool decided = true;  // all versions decided, default is finalized
-        bool aborted = false; // decided result is aborting this txn
+        // now we check each pending version, and insert a callback func to that version waiting for its status
         for (auto& row_col : acc_txn->sg.metadata.indices) {
-            auto acc_row = dynamic_cast<AccRow*>(row_col.first);
-            for (auto& col_index : row_col.second) {
-                int8_t status = acc_row->check_status(acc_txn->tid_, col_index.first, col_index.second);
-                switch (status) {
-                    case UNCHECKED:
-                    case VALIDATING:
-                        // not decided yet, keep waiting
-                        decided = false;
-                        break;
-                    case FINALIZED:
-                        break;
-                    case ABORTED:
-                        aborted = true;
-                        break;
-                    default:
-                        verify(0);
-                        break;
-                }
+            auto acc_row = dynamic_cast<AccRow *>(row_col.first);
+            for (auto &col_index : row_col.second) {
+                acc_row->register_query_callback(acc_txn, col_index.first, col_index.second, res, defer);
             }
         }
-        // early aborts
-        if (aborted) { // some shards have decided abort, we early abort now even if !decided
-            *res = ABORTED;
-            acc_txn->sg.status_query_done = true;
-            defer->reply();
-            return;
-        }
-        if (decided) { // all versions decided and finalized
-            *res = FINALIZED;
-            acc_txn->sg.status_query_done = true;
-            defer->reply();
-            return;
-        }
-        return;  // not all versions decided yet and no one aborted, keep waiting, release thread
     }
 }

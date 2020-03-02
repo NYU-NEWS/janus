@@ -10,7 +10,8 @@ namespace janus {
     class CoordinatorAcc : public CoordinatorClassic {
     public:
         using CoordinatorClassic::CoordinatorClassic;
-        enum Phase {INIT_END=0, DISPATCH=1, VALIDATE=2, DECIDE=3};
+        const int n_phase = 5;
+        enum Phase {INIT_END=0, DISPATCH=1, VALIDATE=2, DECIDE=3, DECIDING=4};
         void GotoNextPhase() override;
         void DispatchAsync() override;
         AccCommo* commo();
@@ -28,5 +29,8 @@ namespace janus {
         void reset_all_members();
         bool offset_1_check_pass();
         void AccCommit();
+        void AccAbort();
+        void StatusQuery();
+        void AccStatusQueryAck(int8_t res);
     };
 } // namespace janus

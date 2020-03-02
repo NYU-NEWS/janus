@@ -27,5 +27,8 @@ namespace janus {
         ssid_spec = 0;
         decided = true;
         status_query_done = false;
+        status_abort = false;
+        _n_query = 0;
+        _n_query_callback = 0;
     }
 }

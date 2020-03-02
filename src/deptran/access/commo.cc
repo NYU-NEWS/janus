@@ -76,4 +76,18 @@ namespace janus {
         auto future = proxy->async_AccFinalize(cmd_id, decision, fuattr); // call AccFinalize RPC
         Future::safe_release(future);
     }
+
+    void AccCommo::AccBroadcastStatusQuery(parid_t par_id, cmdid_t cmd_id, const std::function<void(int8_t res)> &callback) {
+        rrr::FutureAttr fuattr;
+        fuattr.callback =
+                [this, callback](Future* fu) {
+                    int8_t ret;
+                    fu->get_reply() >> ret;
+                    callback(ret);
+                };
+        auto pair_leader_proxy = LeaderProxyForPartition(par_id);
+        auto proxy = pair_leader_proxy.second;
+        auto future = proxy->async_AccStatusQuery(cmd_id, fuattr); // call Acc StatusQuery RPC
+        Future::safe_release(future);
+    }
 }

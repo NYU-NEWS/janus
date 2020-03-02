@@ -77,4 +77,36 @@ namespace janus {
     void AccTxn::load_speculative_ssid(snapshotid_t ssid) {
         sg.ssid_spec = ssid;
     }
+
+    void AccTxn::query_callback(int8_t status) {
+        return;
+    }
+
+    void AccTxn::n_query_inc() {
+        sg._n_query++;
+    }
+
+    void AccTxn::n_callback_inc() {
+        sg._n_query_callback++;
+    }
+
+    bool AccTxn::all_callbacks_received() const {
+        return sg._n_query == sg._n_query_callback;
+    }
+
+    void AccTxn::set_query_abort() {
+        sg.status_abort = true;
+    }
+
+    int8_t AccTxn::query_result() const {
+        return sg.status_abort ? ABORTED : FINALIZED;
+    }
+
+    void AccTxn::set_query_done() {
+        sg.status_query_done = true;
+    }
+
+    bool AccTxn::is_query_done() const {
+        return sg.status_query_done;
+    }
 }

@@ -10,10 +10,10 @@ namespace janus {
     }
 
     void CoordinatorAcc::GotoNextPhase() {
-        const int n_phase = 4;
         switch (phase_++ % n_phase) {
             case Phase::INIT_END: verify(phase_ % n_phase == Phase::DISPATCH);
                 DispatchAsync();
+                StatusQuery();
                 break;
             case Phase::DISPATCH: verify(phase_ % n_phase == Phase::VALIDATE);
                 SafeGuardCheck();
@@ -25,17 +25,18 @@ namespace janus {
                     AccValidate();
                 }
                 break;
-            case Phase::DECIDE: verify(phase_ % n_phase == Phase::INIT_END);
+            case Phase::DECIDE: verify(phase_ % n_phase == Phase::DECIDING);
                 if (committed_) {
                     AccCommit();
                     // reset_all_members();  tx_data is GC'ed in End()
                 } else if (aborted_) {
-                    // TODO: cascading aborts
-                    AccFinalize(ABORTED);
-                    Restart();
+                    AccAbort();
                 } else {
                     verify(0);
                 }
+                break;
+            case Phase::DECIDING: verify(phase_ % n_phase == Phase::INIT_END);
+                // do nothing here, will called in StatusQueryAck
                 break;
             default:
                 verify(0);  // invalid phase
@@ -130,6 +131,10 @@ namespace janus {
             this->DispatchAsync();
         } else if (AllDispatchAcked()) {
             Log_debug("receive all start acks, txn_id: %llx; START PREPARE", txn->id_);
+            if (txn->_decided) {
+                // all dependent writes are finalized
+                txn->_status_query_done = true;  // do not need AccQueryStatus acks
+            }
             GotoNextPhase();
         }
     }
@@ -165,6 +170,9 @@ namespace janus {
         if (tx_data().n_validate_ack_ == tx_data().n_validate_rpc_) {
             // have received all acks
             committed_ = !aborted_;
+            if (tx_data()._decided) {
+                tx_data()._status_query_done = true; // no need to wait for AccStatusQuery acks
+            }
             // -------Testing purpose here----------
             //aborted_ = false;
             //committed_ = true;
@@ -204,6 +212,10 @@ namespace janus {
         tx_data()._offset_invalid = false;
         tx_data().ssid_spec = 0;
         tx_data()._decided = true;
+        tx_data()._status_query_done = false;
+        tx_data()._status_abort = false;
+        tx_data().n_status_query = 0;
+        tx_data().n_status_callback = 0;
     }
 
     void CoordinatorAcc::SafeGuardCheck() {
@@ -228,18 +240,77 @@ namespace janus {
     }
 
     void CoordinatorAcc::AccCommit() {
-        if (tx_data()._decided) { // all parts are decided, return immediately
-            tx_data().n_decided_++; // stats
+        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+        if (tx_data()._decided || tx_data()._status_query_done) {
             AccFinalize(FINALIZED);
+            if (tx_data()._decided) {
+                tx_data().n_decided_++; // stats
+            }
             End();  // do not wait for finalize to return, respond to user now
-        } else {
-            /* -- this is for testing -- */
-            AccFinalize(FINALIZED);
-            End();
-            /* ------------------------- */
-            // TODO: put in a queue, wait for decision
-            // AccFinalize(FINALIZED);
-            // will End() upon receiving all finalize responses
+        }
+        if (phase_ % n_phase == Phase::DECIDING) { // current is DECIDE phase
+            GotoNextPhase();
+        }
+    }
+
+    void CoordinatorAcc::AccAbort() {
+        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+        verify(aborted_);
+        // abort as long as inconsistent or there is at least one statusquery ack is abort (cascading abort)
+        AccFinalize(ABORTED);
+        Restart();
+        if (phase_ % n_phase == Phase::DECIDING) { // current is DECIDE phase
+            GotoNextPhase();
+        }
+    }
+
+    void CoordinatorAcc::StatusQuery() {
+        std::lock_guard<std::recursive_mutex> lock(mtx_);
+        auto pars = tx_data().GetPartitionIds();
+        verify(!pars.empty());
+        for (auto par_id : pars) {
+            tx_data().n_status_query++;
+            commo()->AccBroadcastStatusQuery(par_id,
+                                             tx_data().id_,
+                                             std::bind(&CoordinatorAcc::AccStatusQueryAck,
+                                                             this,
+                                                                std::placeholders::_1));
+        }
+    }
+
+    void CoordinatorAcc::AccStatusQueryAck(int8_t res) {
+        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+        if (tx_data()._status_query_done) {
+            // no need to wait on query acks, it has been decided
+            return;
+        }
+        tx_data().n_status_callback++;
+        switch (res) {
+            case FINALIZED:  // do nothing
+                break;
+            case ABORTED:
+                tx_data()._status_abort = true;
+                break;
+            default: verify(0); break;
+        }
+        if (tx_data()._status_abort) {
+            // TODO: may early abort
+            committed_ = false;
+            aborted_ = true;
+            tx_data()._status_query_done = true;
+            AccAbort();
+        }
+        if (tx_data().n_status_query == tx_data().n_status_callback) { // received all callbacks, and thus res=finalized
+            tx_data()._status_query_done = true;
+            if (phase_ % n_phase == Phase::INIT_END) { // this txn is in DECIDING phase
+                // finalize this txn, commit if consistent, abort if not, replaying the DECIDE phase
+                if (committed_) {
+                    AccCommit();
+                } else {
+                    AccAbort();
+                }
+            }
+            // this txn has not got to DECIDE phase yet, either validating or dispatching
         }
     }
 } // namespace janus

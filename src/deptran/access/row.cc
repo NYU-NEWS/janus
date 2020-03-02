@@ -87,4 +87,45 @@ namespace janus {
             default: verify(0); return FINALIZED;
         }
     }
+
+    void AccRow::register_query_callback(shared_ptr<AccTxn> acc_txn,
+                                         mdb::colid_t col_id,
+                                         unsigned long index,
+                                         int8_t *res,
+                                         DeferredReply *defer) {
+        if (!_row[col_id].is_read(acc_txn->tid_, index)) {
+            // this was a write, no need to check status
+            return;
+        }
+        verify(!is_decided(col_id, index)); // the version should not be decided by now
+        insert_callback(acc_txn, col_id, index, res, defer);
+    }
+
+    bool AccRow::is_decided(mdb::colid_t col_id, unsigned long index) {
+        return _row[col_id].txn_queue[index].status == FINALIZED || _row[col_id].txn_queue[index].status == ABORTED;
+    }
+
+    void AccRow::insert_callback(shared_ptr<AccTxn> acc_txn, mdb::colid_t col_id, unsigned long index, int8_t *res, DeferredReply *defer) {
+        _row[col_id].txn_queue[index].query_callbacks.emplace_back([&](int8_t status) -> void {
+            if (acc_txn->is_query_done()) { // have done the query by early abort
+                return;
+            }
+            acc_txn->n_callback_inc();
+            switch (status) {
+                case FINALIZED: // nothing to do
+                    break;
+                case ABORTED:
+                    acc_txn->set_query_abort();
+                    break;
+                default: verify(0); break;
+            }
+            if (acc_txn->all_callbacks_received() || acc_txn->query_result() == ABORTED) { // all versions decided or early abort
+                // respond to AccStatusQuery RPC
+                acc_txn->set_query_done();
+                *res = acc_txn->query_result();
+                verify(defer != nullptr);
+                defer->reply();
+            }
+        });
+    }
 }

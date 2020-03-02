@@ -107,6 +107,14 @@ namespace janus {
                 verify(0);
                 break;
         }
+        // now we do AccQueryStatus callbacks
+        if (txn_queue[index].query_callbacks.empty()) {
+            // no later reads read this write
+            return;
+        }
+        for (auto& callback : txn_queue[index].query_callbacks) {
+            callback(decision);
+        }
     }
 
     void AccColumn::commit(unsigned long index) {
