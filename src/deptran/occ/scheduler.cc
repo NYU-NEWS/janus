@@ -198,6 +198,7 @@ void SchedulerOcc::DoCommit(Tx& tx) {
   txn->outcome_ = symbol_t::TXN_COMMIT;
   txn->release_resource();
   delete mdb_txn_;
+  tx.mdb_txn_ = nullptr;
 }
 
 } // namespace janus

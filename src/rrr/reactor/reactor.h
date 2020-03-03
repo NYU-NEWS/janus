@@ -28,6 +28,7 @@ class Reactor {
    */
   std::list<std::shared_ptr<Event>> all_events_{};
   std::list<std::shared_ptr<Event>> waiting_events_{};
+  std::vector<std::shared_ptr<Event>> ready_events_{};
   std::list<std::shared_ptr<Event>> timeout_events_{};
   std::set<std::shared_ptr<Coroutine>> coros_{};
   std::vector<std::shared_ptr<Coroutine>> available_coros_{};

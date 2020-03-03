@@ -168,9 +168,9 @@ shared_ptr<QuorumEvent> JanusCommo::BroadcastInquireValidation(set<parid_t>& par
       int32_t res;
       fu->get_reply() >> res;
       if (res == 1) {
-        e->n_voted_yes_++;
+        e->VoteYes();
       } else if (res == -1) {
-        e->n_voted_no_++;
+        e->VoteNo();
       } else {
         verify(0);
       }

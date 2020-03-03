@@ -13,7 +13,8 @@ default_configs = [
     'config/tapir.yml'
 ]
 #default_modes = [ 'brq:brq', 'tapir:tapir', 'troad:troad', '2pl_ww:multi_paxos', 'occ:multi_paxos' ]
-default_modes = [ 'brq:brq', 'troad:troad']
+default_modes = [ 'brq:brq', '2pl_ww:multi_paxos', 'occ:multi_paxos' ]
+#default_modes = [ 'brq:brq', 'troad:troad']
 #default_modes = [ 'tapir:tapir' ]
 default_benchmark = [ 'tpca' ]
 default_options = ['-r', '3']

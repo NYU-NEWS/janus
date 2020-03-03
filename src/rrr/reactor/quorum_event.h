@@ -9,11 +9,12 @@ using std::vector;
 namespace janus {
 
 class QuorumEvent : public Event {
+ private:
+  int32_t n_voted_yes_{0};
+  int32_t n_voted_no_{0};
  public:
   int32_t n_total_ = -1;
   int32_t quorum_ = -1;
-  int32_t n_voted_yes_{0};
-  int32_t n_voted_no_{0};
   bool timeouted_ = false;
   // fast vote result.
   vector<uint64_t> vec_timestamp_{};
@@ -33,6 +34,17 @@ class QuorumEvent : public Event {
   bool No() {
     verify(n_total_ >= quorum_);
     return n_voted_no_ > (n_total_ - quorum_);
+  }
+
+  void VoteYes() {
+    n_voted_yes_++;
+    Test();
+
+  }
+
+  void VoteNo() {
+    n_voted_no_++;
+    Test();
   }
 
   bool IsReady() override {

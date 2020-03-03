@@ -135,7 +135,6 @@ mdb::Txn *TxLogServer::GetOrCreateMTxn(const i64 tid) {
   } else {
 
   }
-
   verify(txn != nullptr);
   return txn;
 }

@@ -18,9 +18,9 @@ class PaxosPrepareQuorumEvent: public QuorumEvent {
   }
   void FeedResponse(bool y) {
     if (y) {
-      n_voted_yes_++;
+      VoteYes();
     } else {
-      n_voted_no_++;
+      VoteNo();
     }
   }
 
@@ -32,9 +32,9 @@ class PaxosAcceptQuorumEvent: public QuorumEvent {
   using QuorumEvent::QuorumEvent;
   void FeedResponse(bool y) {
     if (y) {
-      n_voted_yes_++;
+      VoteYes();
     } else {
-      n_voted_no_++;
+      VoteNo();
     }
   }
 };

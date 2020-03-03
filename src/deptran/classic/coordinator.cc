@@ -88,8 +88,9 @@ void CoordinatorClassic::DoTxAsync(TxRequest& req) {
 
 void CoordinatorClassic::GotoNextPhase() {
   int n_phase = 4;
-  int current_phase = phase_ % n_phase;
-  switch (phase_++ % n_phase) {
+  auto current_phase = phase_ % n_phase;
+  phase_++;
+  switch (current_phase) {
     case Phase::INIT_END:
       DispatchAsync();
       verify(phase_ % n_phase == Phase::DISPATCH);
@@ -97,12 +98,12 @@ void CoordinatorClassic::GotoNextPhase() {
     case Phase::DISPATCH:
       verify(phase_ % n_phase == Phase::PREPARE);
       verify(!committed_);
-      if (aborted_) {
-        phase_++;
-        Commit();
-      } else {
+//      if (aborted_) {
+//        phase_++;
+//        Commit();
+//      } else {
         Prepare();
-      }
+//      }
       break;
     case Phase::PREPARE:
       verify(phase_ % n_phase == Phase::COMMIT);
@@ -110,6 +111,7 @@ void CoordinatorClassic::GotoNextPhase() {
       break;
     case Phase::COMMIT:
       verify(phase_ % n_phase == Phase::INIT_END);
+      verify(committed_ != aborted_);
       if (committed_)
         End();
       else if (aborted_) {
@@ -210,7 +212,7 @@ void CoordinatorClassic::DispatchAck(phase_t phase,
                                      TxnOutput& outputs) {
   std::lock_guard<std::recursive_mutex> lock(this->mtx_);
   if (phase != phase_) return;
-  TxData* txn = (TxData*) cmd_;
+  auto* txn = (TxData*) cmd_;
   if (res == REJECT) {
     Log_debug("got REJECT reply for cmd_id: %llx NOT COMMITING",
               txn->root_id_);
@@ -218,20 +220,20 @@ void CoordinatorClassic::DispatchAck(phase_t phase,
     txn->commit_.store(false);
   }
   n_dispatch_ack_ += outputs.size();
-  if (aborted_) {
-    if (n_dispatch_ack_ == n_dispatch_) {
-      // wait until all ongoing dispatch to finish before aborting.
-      Log_debug("received all start acks (at least one is REJECT);"
-                    "tx_id: %"
-                    PRIx64, txn->root_id_);
-      GotoNextPhase();
-      return;
-    }
-  }
+//  if (aborted_) {
+//    if (n_dispatch_ack_ == n_dispatch_) {
+//      // wait until all ongoing dispatch to finish before aborting.
+//      Log_debug("received all start acks (at least one is REJECT);"
+//                    "tx_id: %"
+//                    PRIx64, txn->root_id_);
+//      GotoNextPhase();
+//      return;
+//    }
+//  }
 
   for (auto& pair : outputs) {
     const innid_t& inn_id = pair.first;
-    verify(dispatch_acks_.at(inn_id) == false);
+    verify(!dispatch_acks_.at(inn_id));
     dispatch_acks_[inn_id] = true;
     Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
               n_dispatch_ack_, n_dispatch_, cmd_->id_, inn_id);
@@ -314,7 +316,7 @@ void CoordinatorClassic::Commit() {
             tx_data().id_, n_finish_req_);
 
   verify(tx_data().commit_.load() == committed_);
-
+  verify(committed_ != aborted_);
   if (committed_) {
     tx_data().reply_.res_ = SUCCESS;
     for (auto& rp : tx_data().partition_ids_) {
@@ -357,12 +359,13 @@ void CoordinatorClassic::CommitAck(phase_t phase) {
   Log_debug("finish cmd_id_: %ld; n_finish_ack_: %ld; n_finish_req_: %ld",
             cmd_->id_, n_finish_ack_, n_finish_req_);
   verify(cmd->GetPartitionIds().size() == n_finish_req_);
+  // Perhaps a bug here?
   if (n_finish_ack_ == cmd->GetPartitionIds().size()) {
-    if (cmd->reply_.res_ == REJECT) {
-      aborted_ = true;
-    } else {
-      committed_ = true;
-    }
+//    if (cmd->reply_.res_ == REJECT) {
+//      aborted_ = true;
+//    } else {
+//      committed_ = true;
+//    }
     GotoNextPhase();
   }
   Log_debug("callback: %s, retry: %s",

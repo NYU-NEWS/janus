@@ -17,6 +17,7 @@ struct PaxosData {
 
 class PaxosServer : public TxLogServer {
  public:
+  // ----min_active <= max_executed <= max_committed---
   slotid_t min_active_slot_ = 0; // anything before (lt) this slot is freed
   slotid_t max_executed_slot_ = 0;
   slotid_t max_committed_slot_ = 0;
@@ -24,6 +25,7 @@ class PaxosServer : public TxLogServer {
   int n_prepare_ = 0;
   int n_accept_ = 0;
   int n_commit_ = 0;
+  bool in_applying_logs_{false};
 
   ~PaxosServer() {
     Log_info("site par %d, loc %d: prepare %d, accept %d, commit %d", partition_id_, loc_id_, n_prepare_, n_accept_, n_commit_);

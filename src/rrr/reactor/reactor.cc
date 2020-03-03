@@ -84,39 +84,55 @@ void Reactor::Loop(bool infinite) {
   verify(std::this_thread::get_id() == thread_id_);
   looping_ = infinite;
   do {
-    std::vector<shared_ptr<Event>> ready_events;
-//    auto& events = all_events_;
-    auto& events = waiting_events_;
-//    Log_debug("event list size: %d", events.size());
-    for (auto it = events.begin(); it != events.end();) {
+    std::vector<shared_ptr<Event>> ready_events = std::move(ready_events_);
+    for (auto ev : ready_events) {
+      verify(ev->status_ == Event::READY);
+    }
+
+    auto time_now = Time::now();
+    for (auto it = timeout_events_.begin(); it != timeout_events_.end();) {
       Event& event = **it;
-      event.Test();
-      const auto& status = event.status_;
-      if (status == Event::READY) {
-        ready_events.push_back(std::move(*it));
-        it = events.erase(it);
-      } else if (status == Event::DONE) {
-        it = events.erase(it);
-      } else if (status == Event::WAIT) {
-        const auto& wakeup_time = event.wakeup_time_;
-        if (wakeup_time > 0 && Time::now() > wakeup_time) {
-          event.status_ = Event::TIMEOUT;
-          ready_events.push_back(*it);
-          it = events.erase(it);
-        } else {
-          it++;
+      auto status = event.status_;
+      switch (status) {
+        case Event::INIT:
+        case Event::WAIT: {
+          const auto &wakeup_time = event.wakeup_time_;
+          if (wakeup_time > 0 && time_now > wakeup_time) {
+            event.status_ = Event::TIMEOUT;
+            ready_events.push_back(*it);
+            it = timeout_events_.erase(it);
+          } else {
+            it++;
+          }
+          break;
         }
-      } else {
-        it ++;
+        case Event::DONE:
+        case Event::READY:
+          it = timeout_events_.erase(it);
+          break;
+        default:
+          verify(0);
       }
     }
-    for (auto& up_ev: ready_events) {
-      auto& event = *up_ev;
+    for (auto it = ready_events.begin(); it != ready_events.end(); it++) {
+      Event& event = **it;
       auto sp_coro = event.wp_coro_.lock();
       verify(sp_coro);
       verify(coros_.find(sp_coro) != coros_.end());
       ContinueCoro(sp_coro);
     }
+
+    // FOR debug purposes.
+//    auto& events = waiting_events_;
+////    Log_debug("event list size: %d", events.size());
+//    for (auto it = events.begin(); it != events.end(); it++) {
+//      Event& event = **it;
+//      const auto& status = event.status_;
+//      if (event.status_ == Event::WAIT) {
+//        event.Test();
+//        verify(event.status_ != Event::READY);
+//      }
+//    }
   } while (looping_);
 }
 

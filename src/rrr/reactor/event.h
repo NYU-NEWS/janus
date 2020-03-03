@@ -59,6 +59,7 @@ class BoxEvent : public Event {
   void Set(const Type& c) {
     is_set_ = true;
     content_ = c;
+    Test();
   }
   void Clear() {
     is_set_ = false;
@@ -86,7 +87,8 @@ class IntEvent : public Event {
   int Set(int n) {
     int t = value_;
     value_ = n;
-    TestTrigger();
+//    TestTrigger();
+    Test();
     return t;
   };
 

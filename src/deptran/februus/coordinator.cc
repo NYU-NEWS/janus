@@ -63,7 +63,7 @@ bool CoordinatorFebruus::Accept() {
   fast_path_ = true;
   for (auto& pair: map_up_quorum_event) {
     auto& quorum_event = *pair.second;
-    if (quorum_event.n_voted_yes_ >= quorum_event.quorum_) {
+    if (quorum_event.Yes()) {
       continue;
     } else {
       verify(0); // TODO conflict from recovery.

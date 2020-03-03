@@ -15,7 +15,7 @@ void Event::Wait(uint64_t timeout) {
   verify(Reactor::sp_reactor_th_);
   verify(Reactor::sp_reactor_th_->thread_id_ == std::this_thread::get_id());
   if (IsReady()) {
-    status_ = DONE; // does not need to wait.
+    status_ = DONE; // no need to wait.
     return;
   } else {
     if (status_ == TIMEOUT || status_ == DONE) {
@@ -34,16 +34,18 @@ void Event::Wait(uint64_t timeout) {
     verify(sp_coro);
 //    verify(_dbg_p_scheduler_ == nullptr);
 //    _dbg_p_scheduler_ = Reactor::GetReactor().get();
-    // TODO for now timeout queue and waiting queues are different. fix it.
-    auto& waiting_events = Reactor::GetReactor()->waiting_events_; // Timeout???
-    waiting_events.push_back(shared_from_this());
-    if (timeout == 0) {
-      wakeup_time_ = 0;
-      wakeup_time_ = Time::now() + 50*1000*1000;
-    } else {
-//      auto& timeout_events = Reactor::GetReactor()->timeout_events_;
-//      auto it = timeout_events.end();
+//    auto& waiting_events = Reactor::GetReactor()->waiting_events_; // Timeout???
+//    waiting_events.push_back(shared_from_this());
+//    if (timeout == 0) {
+//      timeout = 5 * 1000 * 1000;
+//    }
+    if (timeout > 0) {
       wakeup_time_ = Time::now() + timeout;
+      auto& timeout_events = Reactor::GetReactor()->timeout_events_;
+      timeout_events.push_back(shared_from_this());
+    }
+    // TODO optimize timeout_events, sort by wakeup time.
+//      auto it = timeout_events.end();
 //      timeout_events.push_back(shared_from_this());
 //      while (it != events.begin()) {
 //        it--;
@@ -54,7 +56,6 @@ void Event::Wait(uint64_t timeout) {
 //        }
 //      }
 //      events.insert(it, shared_from_this());
-    }
     wp_coro_ = sp_coro;
     status_ = WAIT;
     sp_coro->Yield();
@@ -79,6 +80,7 @@ bool Event::Test() {
 //      verify(sched->__debug_set_all_coro_.count(sp_coro.get()) > 0);
 //      verify(sched->coros_.count(sp_coro) > 0);
       status_ = READY;
+      Reactor::GetReactor()->ready_events_.push_back(shared_from_this());
     } else if (status_ == READY) {
       // This could happen for a quorum event.
 //      Log_debug("event status ready, triggered?");
@@ -119,9 +121,10 @@ bool IntEvent::TestTrigger() {
 
 void SharedIntEvent::Wait(function<bool(int v)> f) {
   auto sp_ev =  Reactor::CreateSpEvent<IntEvent>();
+  sp_ev->value_ = value_;
   sp_ev->test_ = f;
   events_.push_back(sp_ev);
-  sp_ev->Wait(1*1000*1000);
+  sp_ev->Wait(100*1000*1000);
   verify(sp_ev->status_ != Event::TIMEOUT);
 }
 

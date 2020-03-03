@@ -158,7 +158,7 @@ Communicator::ConnectToSite(Config::SiteInfo& site,
   double elapsed;
   int attempt = 0;
   do {
-    Log_info("connect to site: %s (attempt %d)", addr.c_str(), attempt++);
+    Log_debug("connect to site: %s (attempt %d)", addr.c_str(), attempt++);
     auto connect_result = rpc_cli->connect(addr.c_str());
     if (connect_result == SUCCESS) {
       ClassicProxy* rpc_proxy = new ClassicProxy(rpc_cli.get());

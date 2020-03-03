@@ -26,7 +26,9 @@ class Scheduler2pl: public SchedulerClassic {
   virtual bool DispatchPiece(Tx& tx,
                              SimpleCommand& cmd,
                              TxnOutput& ret_output) override {
-    SchedulerClassic::DispatchPiece(tx, cmd, ret_output);
+    auto ret = SchedulerClassic::DispatchPiece(tx, cmd, ret_output);
+    if (!ret)
+      return ret;
     ExecutePiece(tx, cmd, ret_output);
     return true;
   }

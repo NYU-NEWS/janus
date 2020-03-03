@@ -7,10 +7,9 @@ namespace janus {
 class TxClassic: public Tx {
  public:
   using Tx::Tx;
-  shared_ptr<IntEvent> ev_prepare_{Reactor::CreateSpEvent<IntEvent>()};
-  shared_ptr<IntEvent> ev_commit_{Reactor::CreateSpEvent<IntEvent>()};
+  shared_ptr<BoxEvent<bool>> prepare_result{Reactor::CreateSpEvent<BoxEvent<bool>>()};
+  shared_ptr<BoxEvent<int>> commit_result{Reactor::CreateSpEvent<BoxEvent<int>>()};
   bool is_leader_hint_{false};
-  bool result_prepare_{false};
 };
 
 } // namespace janus

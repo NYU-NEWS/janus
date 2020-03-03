@@ -228,9 +228,10 @@ void RccServer::WaitUntilAllPredecessorsAtLeastCommitting(RccTx* vertex) {
             verify(parent.status() >= TXN_CMT);
           }
           parent.status_.Wait([](int val)->bool {
-            // TODO considering rank.
             return (val>=TXN_CMT);
           });
+        } else if (parent.status() >= TXN_DCD) {
+          return RccGraph::SearchHint::Skip;
         }
         return r;
       };
@@ -352,16 +353,16 @@ void RccServer::WaitUntilAllPredSccExecuted(const RccScc& scc) {
           return RccGraph::SearchHint::Skip;
         } else if (!tx.Involve(TxLogServer::partition_id_)) {
           verify(tx.status() >= TXN_CMT);
+          return RccGraph::SearchHint::Skip;
         } else if (scc_set.find(&tx) != scc_set.end()) {
           // belong to the scc
+          return RccGraph::SearchHint::Ok;
         } else {
-          tx.status_.Wait([&tx](int v)->bool{
-            return (
-//                tx.current_rank_ <= tx.shared_rank_ ||
-            v>=TXN_DCD);
+          tx.status_.Wait([&tx](int v)->bool {
+            return (v>=TXN_DCD);
           });
+          return RccGraph::SearchHint::Ok;
         }
-        return RccGraph::SearchHint::Ok;
       };
   TraversePredNonRecursive(*scc[0], func);
 }
@@ -388,7 +389,7 @@ bool RccServer::AllAncFns(const RccScc& scc) {
       };
   TraversePred(*scc[0], -1, func);
   return all_anc_fns;
-};
+}
 
 void RccServer::Execute(const RccScc& scc) {
   verify(scc.size() > 0);

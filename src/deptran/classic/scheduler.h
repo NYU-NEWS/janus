@@ -54,8 +54,6 @@ class SchedulerClassic: public TxLogServer {
 
   virtual void DoAbort(Tx& tx_box);
 
-  bool ExecuteAll(Tx &tx, TxnOutput &ret_output);
-
   virtual void Next(Marshallable&) override;
 
   int PrepareReplicated(TpcPrepareCommand& prepare_cmd);

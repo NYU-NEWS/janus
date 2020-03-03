@@ -184,7 +184,7 @@ class Graph : public Marshallable {
     int ret = SearchHint::Ok;
     int __debug_depth = 0;
     while (!to_walk->empty()) {
-      verify(__debug_depth++ < 100);
+      verify(__debug_depth++ < 10000);
       auto vvv = to_walk->front();
       to_walk->pop_front();
       walked->insert(vvv);

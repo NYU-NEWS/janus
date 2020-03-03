@@ -58,6 +58,11 @@ void PaxosServer::OnCommit(const slotid_t slot_id,
     max_committed_slot_ = slot_id;
   }
   verify(slot_id > max_executed_slot_);
+  // This prevents the log entry from being applied twice
+  if (in_applying_logs_) {
+    return;
+  }
+  in_applying_logs_ = true;
   for (slotid_t id = max_executed_slot_ + 1; id <= max_committed_slot_; id++) {
     auto next_instance = GetInstance(id);
     if (next_instance->committed_cmd_) {
@@ -78,6 +83,7 @@ void PaxosServer::OnCommit(const slotid_t slot_id,
     i++;
   }
   min_active_slot_ = i;
+  in_applying_logs_ = false;
 }
 
 } // namespace janus

@@ -30,7 +30,6 @@ namespace rrr {
 class ALock {
  public:
   enum type_t { RLOCK, WLOCK };
- private:
   uint64_t next_id_ = 1;
   uint64_t owner_{0};
 
@@ -83,9 +82,9 @@ class ALock {
    */
   virtual uint64_t Lock(uint64_t owner = 0,
                         type_t type = WLOCK,
-                        uint64_t priority = 0);
+                        uint64_t priority = 0,
+                        const std::function<int(void)>& = {});
 
-  virtual void DisableWound(uint64_t req_id);
   virtual void abort(uint64_t id) = 0;
   virtual ~ALock() { }
 };

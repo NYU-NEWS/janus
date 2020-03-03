@@ -192,21 +192,21 @@ void TpcaWorkload::RegisterPrecedures() {
   RegP(TPCA_PAYMENT, TPCA_PAYMENT_2,
        {TPCA_VAR_Y}, // i
        {}, // o
-       {conf_id_t(TPCA_CUSTOMER, {TPCA_VAR_Y}, {1}, TPCA_ROW_2)}, // c
+       {conf_id_t(TPCA_TELLER, {TPCA_VAR_Y}, {1}, TPCA_ROW_2)}, // c
        {TPCA_TELLER, {TPCA_VAR_Y} }, // s
        DF_REAL,
        PROC {
-         Value buf;
+         auto buf = std::make_unique<Value>();
          verify(cmd.input.size() >= 1);
          mdb::Row *r = NULL;
          mdb::MultiBlob mb(1);
          mb[0] = cmd.input.at(TPCA_VAR_Y).get_blob();
 
          r = tx.Query(tx.GetTable(TPCA_TELLER), mb, TPCA_ROW_2);
-         tx.ReadColumn(r, 1, &buf, TXN_BYPASS);
-         output[TPCA_VAR_OY] = buf;
-         buf.set_i32(buf.get_i32() + 1/*input[1].get_i32()*/);
-         tx.WriteColumn(r, 1, buf, TXN_DEFERRED);
+         tx.ReadColumn(r, 1, buf.get(), TXN_BYPASS);
+         output[TPCA_VAR_OY] = *buf;
+         buf->set_i32(buf->get_i32() + 1/*input[1].get_i32()*/);
+         tx.WriteColumn(r, 1, *buf, TXN_DEFERRED);
          *res = SUCCESS;
        }
   );
@@ -214,7 +214,7 @@ void TpcaWorkload::RegisterPrecedures() {
   RegP(TPCA_PAYMENT, TPCA_PAYMENT_3,
        {TPCA_VAR_Z}, // i
        {}, // o
-       {conf_id_t(TPCA_CUSTOMER, {TPCA_VAR_Z}, {1}, TPCA_ROW_3)}, // c
+       {conf_id_t(TPCA_BRANCH, {TPCA_VAR_Z}, {1}, TPCA_ROW_3)}, // c
        {TPCA_BRANCH, {TPCA_VAR_Z}},
        DF_REAL,
        PROC {
