@@ -274,12 +274,14 @@ namespace janus {
                                              tx_data().id_,
                                              std::bind(&CoordinatorAcc::AccStatusQueryAck,
                                                              this,
+                                                                tx_data().id_,
                                                                 std::placeholders::_1));
         }
     }
 
-    void CoordinatorAcc::AccStatusQueryAck(int8_t res) {
+    void CoordinatorAcc::AccStatusQueryAck(txnid_t tid, int8_t res) {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+        if (tid != tx_data().id_) return;  // the queried txn has early returned
         if (tx_data()._status_query_done) {
             // no need to wait on query acks, it has been decided
             return;

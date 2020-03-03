@@ -31,7 +31,7 @@ namespace janus {
         void AccCommit();
         void AccAbort();
         void StatusQuery();
-        void AccStatusQueryAck(int8_t res);
+        void AccStatusQueryAck(txnid_t tid, int8_t res);
         void SkipDecidePhase();
     };
 } // namespace janus
