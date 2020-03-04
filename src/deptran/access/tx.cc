@@ -114,4 +114,35 @@ namespace janus {
     bool AccTxn::is_query_done() const {
         return sg.status_query_done;
     }
+
+    void AccTxn::insert_callbacks(shared_ptr<AccTxn> acc_txn, int8_t *res, DeferredReply* defer) {
+        query_callbacks.emplace_back([=](int8_t status) -> void {
+            Log_info("calling callback for txid: %lu; decision is: %d.", acc_txn->tid_, status);
+            if (acc_txn->is_query_done()) { // have done the query by early abort
+                Log_info("calling callback for txid: %lu; decision is: %d. is_query_done", acc_txn->tid_, status);
+                return;
+            }
+            acc_txn->n_callback_inc();
+            Log_info("calling callback for txid: %lu; decision is: %d. After callbackinc", acc_txn->tid_, status);
+            switch (status) {
+                case FINALIZED: // nothing to do
+                    Log_info("calling callback for txid: %lu; decision is: %d. finalized case", acc_txn->tid_, status);
+                    break;
+                case ABORTED:
+                    acc_txn->set_query_abort();
+                    Log_info("calling callback for txid: %lu; decision is: %d. after set abort", acc_txn->tid_, status);
+                    break;
+                default: verify(0); break;
+            }
+            if (acc_txn->all_callbacks_received() || acc_txn->query_result() == ABORTED) { // all versions decided or early abort
+                // respond to AccStatusQuery RPC
+                acc_txn->set_query_done();
+                Log_info("calling callback for txid: %lu; decision is: %d. received all callbacks", acc_txn->tid_, status);
+                *res = acc_txn->query_result();
+                Log_info("calling callback for txid: %lu; decision is: %d.  res addr = %x.", acc_txn->tid_, status, res);
+                //verify(defer != nullptr);
+                defer->reply();
+            }
+        });
+    }
 }

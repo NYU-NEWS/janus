@@ -31,7 +31,6 @@ namespace janus {
         SSID ssid;              // snapshot id
         acc_status_t status;    // either unchecked, validating, or finalized
         mdb::Value value;       // the value of this write
-        std::vector<std::function<void(int8_t)>> query_callbacks;  // for AccStatusQuery RPC
 
         AccTxnRec() : txn_id(-1), ssid(), status(UNCHECKED) {}
         explicit AccTxnRec(mdb::Value&& v, txnid_t tid = 0, acc_status_t stat = UNCHECKED)

@@ -88,8 +88,19 @@ namespace janus {
                 acc_row->finalize(acc_txn->tid_, col_index.first, col_index.second, decision);
             }
         }
+        // now we do AccQueryStatus callbacks
+        if (acc_txn->query_callbacks.empty()) {
+            // no later reads read this write
+            Log_info("after finalize Txnid: %lu. query_callbacks empty", acc_txn->tid_);
+            return;
+        }
+        for (auto& callback : acc_txn->query_callbacks) {
+            Log_info("after finalize Txnid: %lu. calling callback()", acc_txn->tid_);
+            callback(decision);
+        }
         // clear metadata after finalizing a txn
         acc_txn->sg.reset_safeguard();
+        acc_txn->query_callbacks.clear();
     }
 
     void SchedulerAcc::OnStatusQuery(cmdid_t cmd_id, int8_t *res, DeferredReply* defer) {
@@ -115,10 +126,14 @@ namespace janus {
             return;
         }
         // now we check each pending version, and insert a callback func to that version waiting for its status
+	verify(!acc_txn->sg.metadata.reads_for_query.empty());
         for (auto& row_col : acc_txn->sg.metadata.reads_for_query) {
             auto acc_row = dynamic_cast<AccRow *>(row_col.first);
             for (auto &col_index : row_col.second) {
-                acc_row->register_query_callback(acc_txn, col_index.first, col_index.second, *res, *defer);
+		acc_txn->n_query_inc();
+                txnid_t to_tid = acc_row->get_ver_tid(col_index.first, col_index.second);  // inserting the callback of current txn to txn:tid
+                auto to_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(to_tid));  // get the target txn
+                to_txn->insert_callbacks(acc_txn, res, defer);
             }
         }
         acc_txn->sg.metadata.reads_for_query.clear(); // no need those records anymore, might add more by later dispatch

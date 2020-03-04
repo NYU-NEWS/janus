@@ -45,10 +45,12 @@ namespace janus {
         int8_t query_result() const;
         void set_query_done();
         bool is_query_done() const;
+	void insert_callbacks(shared_ptr<AccTxn> acc_txn, int8_t *res, DeferredReply* defer);
 
         ~AccTxn() override;
     private:
         SafeGuard sg;
+	std::vector<std::function<void(int8_t)>> query_callbacks;  // for AccStatusQuery RPC
         void load_speculative_ssid(snapshotid_t ssid);
         friend class SchedulerAcc;
     };
