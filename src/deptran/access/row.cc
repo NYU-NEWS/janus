@@ -42,7 +42,7 @@ namespace janus {
         return _row.at(col_id).write(std::move(value), ssid_spec, tid, ver_index, offset_safe);
     }
 
-    bool AccRow::validate(txnid_t tid, mdb::colid_t col_id, unsigned long index, snapshotid_t ssid_new, bool validate_consistent, bool& decided) {
+    bool AccRow::validate(txnid_t tid, mdb::colid_t col_id, unsigned long index, snapshotid_t ssid_new, bool validate_consistent) {
 	if (_row[col_id].is_read(tid, index)) {
             // this is validating a read
             if (!validate_consistent || (!_row[col_id].is_logical_head(index) && _row[col_id].next_record_ssid(index) <= ssid_new)) {
@@ -50,10 +50,6 @@ namespace janus {
                 return false;
             }
             _row[col_id].txn_queue[index].extend_ssid(ssid_new);  // extend ssid range for reads
-            // check decided, only need for reads and if consistent
-            if (_row[col_id].txn_queue[index].status != FINALIZED) {
-                decided = false;
-            }
             return true;
         } else {
             // validating a write
@@ -85,10 +81,6 @@ namespace janus {
 
     int8_t AccRow::check_status(mdb::colid_t col_id, unsigned long index) {
         return _row[col_id].txn_queue[index].status;
-    }
-
-    bool AccRow::is_decided(mdb::colid_t col_id, unsigned long index) {
-        return _row[col_id].txn_queue[index].status == FINALIZED || _row[col_id].txn_queue[index].status == ABORTED;
     }
 
     txnid_t AccRow::get_ver_tid(mdb::colid_t col_id, unsigned long index) {

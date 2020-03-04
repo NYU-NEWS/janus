@@ -53,26 +53,19 @@ namespace janus {
             *res = CONSISTENT;  // if there is at least one validation fails, final result will be fail
             return;
         }
-        acc_txn->sg.decided = true;   // clear decided from dispatch
         acc_txn->sg.validate_done = true;
         bool validate_consistent = true;
         for (auto& row_col : acc_txn->sg.metadata.indices) {
             auto acc_row = dynamic_cast<AccRow*>(row_col.first);
             for (auto& col_ssid : row_col.second) {
-                if (!acc_row->validate(acc_txn->tid_, col_ssid.first, col_ssid.second, ssid_new, validate_consistent, acc_txn->sg.decided)) {
+                if (!acc_row->validate(acc_txn->tid_, col_ssid.first, col_ssid.second, ssid_new, validate_consistent)) {
                     // validation fails on this row-col
                     validate_consistent = false;
                     // we need to go thru all records for possible early aborts
                 }
             }
         }
-        if (!validate_consistent) {
-            *res = INCONSISTENT;
-        } else if (!acc_txn->sg.decided) {
-            *res = NOT_DECIDED;  // not decided but consistent
-        } else {
-            *res = CONSISTENT;   // consistent and decided
-        }
+	*res = validate_consistent ? CONSISTENT : INCONSISTENT;
     }
 
     void SchedulerAcc::OnFinalize(cmdid_t cmd_id, int8_t decision) {
@@ -91,11 +84,9 @@ namespace janus {
         // now we do AccQueryStatus callbacks
         if (acc_txn->query_callbacks.empty()) {
             // no later reads read this write
-            Log_info("after finalize Txnid: %lu. query_callbacks empty", acc_txn->tid_);
             return;
         }
         for (auto& callback : acc_txn->query_callbacks) {
-            Log_info("after finalize Txnid: %lu. calling callback()", acc_txn->tid_);
             callback(decision);
         }
         // clear metadata after finalizing a txn

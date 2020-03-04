@@ -143,10 +143,6 @@ namespace janus {
         std::lock_guard<std::recursive_mutex> lock(mtx_);
         auto pars = tx_data().GetPartitionIds();
         verify(!pars.empty());
-	/* do not check decided in validation
-        tx_data()._decided = true;  // clear decided from dispatch,
-                                    // not-decided in dispatch could be now decided after validation
-	*/
         for (auto par_id : pars) {
             tx_data().n_validate_rpc_++;
             commo()->AccBroadcastValidate(par_id,
@@ -166,23 +162,9 @@ namespace janus {
         if (res == INCONSISTENT) { // at least one shard returns inconsistent
             aborted_ = true;
         }
-	/* do no check decided in validation for now
-        if (res == NOT_DECIDED) {  // consistent but not decided
-            tx_data()._decided = false;
-        }
-	*/
         if (tx_data().n_validate_ack_ == tx_data().n_validate_rpc_) {
             // have received all acks
             committed_ = !aborted_;
-	    /* do not check decided in validation for now
-            if (tx_data()._decided) {
-                tx_data()._status_query_done = true; // no need to wait for AccStatusQuery acks
-            }
-	    */
-            // -------Testing purpose here----------
-            //aborted_ = false;
-            //committed_ = true;
-            //--------------------------------------
             GotoNextPhase(); // to phase decide
         }
     }
@@ -218,12 +200,10 @@ namespace janus {
     void CoordinatorAcc::AccFinalizeAck(phase_t phase) {
         // this is only called by Finalize(ABORTED)
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-        Log_info("Txnid: %lu; AccFinalizeAck(ABORTED).", tx_data().id_);
         if (phase != phase_) return;
         tx_data().n_abort_ack++;
         if (tx_data().n_abort_ack == tx_data().n_abort_sent) {
             // we only restart after this txn is aborted everywhere
-            Log_info("Txnid: %lu; now restart.", tx_data().id_);
             if (phase_ % n_phase == Phase::DECIDE) { // current is EARLY_DECIDE phase
                 //SkipDecidePhase();
                 GotoNextPhase();
