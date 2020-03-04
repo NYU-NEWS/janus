@@ -38,7 +38,6 @@ namespace janus {
 
         //bool InsertRow(Table *tbl, Row *row) override;
 
-        void query_callback(int8_t status);
         void n_query_inc();
         void n_callback_inc();
         bool all_callbacks_received() const;

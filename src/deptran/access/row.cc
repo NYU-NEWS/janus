@@ -43,25 +43,34 @@ namespace janus {
     }
 
     bool AccRow::validate(txnid_t tid, mdb::colid_t col_id, unsigned long index, snapshotid_t ssid_new, bool validate_consistent, bool& decided) {
-        if (_row[col_id].is_read(tid, index)) {
+	if (_row[col_id].is_read(tid, index)) {
             // this is validating a read
-            if (!validate_consistent || !_row[col_id].is_logical_head(index)) {
+            if (!validate_consistent || (!_row[col_id].is_logical_head(index) && _row[col_id].next_record_ssid(index) <= ssid_new)) {
+                // validate fails if there is new logical head && we cannot extend ssid to new
                 return false;
             }
             _row[col_id].txn_queue[index].extend_ssid(ssid_new);  // extend ssid range for reads
             // check decided, only need for reads and if consistent
-            decided = _row[col_id].txn_queue[index].status == FINALIZED;
+            if (_row[col_id].txn_queue[index].status != FINALIZED) {
+                decided = false;
+            }
             return true;
         } else {
             // validating a write
-            if (validate_consistent && _row[col_id].is_logical_head(index) && !_row[col_id].txn_queue[index].have_reads()) { // 2nd part is particularly required for safety for speculative execution now
-                _row[col_id].txn_queue[index].update_ssid(ssid_new);  // update both low and high to new for writes
+            if (_row[col_id].txn_queue[index].ssid.ssid_low == ssid_new) {
+                // this write is the new snapshot
                 _row[col_id].txn_queue[index].status = VALIDATING;
                 return true;
             }
-            _row[col_id].txn_queue[index].status = ABORTED;  // will abort anyways
-            // TODO: DO CASCADING ABORTS LOGIC (early aborts)
-            return false;
+            if (!validate_consistent || (!_row[col_id].is_logical_head(index) && _row[col_id].next_record_ssid(index) <= ssid_new)
+                || _row[col_id].txn_queue[index].have_reads()) {
+                // validation fails. TODO: can we optimize the have_reads() case?
+                _row[col_id].txn_queue[index].status = ABORTED;  // will abort anyways
+                return false;
+            }
+            _row[col_id].txn_queue[index].update_ssid(ssid_new);  // update both low and high to new for writes
+            _row[col_id].txn_queue[index].status = VALIDATING;
+            return true;
         }
     }
 
@@ -74,30 +83,17 @@ namespace janus {
         _row[col_id].finalize(ver_index, decision);
     }
 
-    int8_t AccRow::check_status(txnid_t tid, mdb::colid_t col_id, unsigned long index) {
-        if (!_row[col_id].is_read(tid, index)) {
-            // this was a write, no need to check status
-            return FINALIZED;
-        }
-        switch (_row[col_id].txn_queue[index].status) {
-            case UNCHECKED: return UNCHECKED;
-            case VALIDATING: return VALIDATING;
-            case FINALIZED: return FINALIZED;
-            case ABORTED: return ABORTED;
-            default: verify(0); return FINALIZED;
-        }
+    int8_t AccRow::check_status(mdb::colid_t col_id, unsigned long index) {
+        return _row[col_id].txn_queue[index].status;
     }
 
     void AccRow::register_query_callback(shared_ptr<AccTxn> acc_txn,
                                          mdb::colid_t col_id,
                                          unsigned long index,
-                                         int8_t *res,
-                                         DeferredReply *defer) {
-        if (!_row[col_id].is_read(acc_txn->tid_, index)) {
-            // this was a write, no need to check status
-            return;
-        }
-        verify(!is_decided(col_id, index)); // the version should not be decided by now
+                                         int8_t& res,
+                                         DeferredReply& defer) {
+        verify(_row[col_id].is_read(acc_txn->tid_, index));
+        verify(!is_decided(col_id, index)); // the version should not have been decided by now
         insert_callback(acc_txn, col_id, index, res, defer);
     }
 
@@ -105,8 +101,9 @@ namespace janus {
         return _row[col_id].txn_queue[index].status == FINALIZED || _row[col_id].txn_queue[index].status == ABORTED;
     }
 
-    void AccRow::insert_callback(shared_ptr<AccTxn> acc_txn, mdb::colid_t col_id, unsigned long index, int8_t *res, DeferredReply *defer) {
-        _row[col_id].txn_queue[index].query_callbacks.emplace_back([&](int8_t status) -> void {
+    void AccRow::insert_callback(shared_ptr<AccTxn> acc_txn, mdb::colid_t col_id, unsigned long index, int8_t& res, DeferredReply& defer) {
+        acc_txn->n_query_inc();
+        _row[col_id].txn_queue[index].query_callbacks.emplace_back([&, acc_txn](int8_t status) -> void {
             if (acc_txn->is_query_done()) { // have done the query by early abort
                 return;
             }
@@ -122,9 +119,9 @@ namespace janus {
             if (acc_txn->all_callbacks_received() || acc_txn->query_result() == ABORTED) { // all versions decided or early abort
                 // respond to AccStatusQuery RPC
                 acc_txn->set_query_done();
-                *res = acc_txn->query_result();
-                verify(defer != nullptr);
-                defer->reply();
+                res = acc_txn->query_result();
+                //verify(defer != nullptr);
+                defer.reply();
             }
         });
     }

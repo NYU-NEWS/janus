@@ -104,11 +104,45 @@ namespace janus {
             defer->reply();
             return;
         }
+        // do a round of check in case there is validation or finalize arrive in between
+        bool is_decided = true, will_abort = false;
+        check_status(cmd_id, is_decided, will_abort);
+        if (is_decided) {
+            acc_txn->sg.metadata.reads_for_query.clear();
+            acc_txn->sg.status_query_done = true;
+            *res = will_abort ? ABORTED : FINALIZED;
+            defer->reply();
+            return;
+        }
         // now we check each pending version, and insert a callback func to that version waiting for its status
-        for (auto& row_col : acc_txn->sg.metadata.indices) {
+        for (auto& row_col : acc_txn->sg.metadata.reads_for_query) {
             auto acc_row = dynamic_cast<AccRow *>(row_col.first);
             for (auto &col_index : row_col.second) {
-                acc_row->register_query_callback(acc_txn, col_index.first, col_index.second, res, defer);
+                acc_row->register_query_callback(acc_txn, col_index.first, col_index.second, *res, *defer);
+            }
+        }
+        acc_txn->sg.metadata.reads_for_query.clear(); // no need those records anymore, might add more by later dispatch
+    }
+
+    void SchedulerAcc::check_status(cmdid_t cmd_id, bool& is_decided, bool& will_abort) {
+        auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
+        for (const auto& row_col : acc_txn->sg.metadata.reads_for_query) {
+            auto acc_row = dynamic_cast<AccRow *>(row_col.first);
+            for (const auto &col_index : row_col.second) {
+                int8_t status = acc_row->check_status(col_index.first, col_index.second);
+                switch (status) {
+                    case UNCHECKED:
+                    case VALIDATING:
+                        is_decided = false;
+                        break;
+                    case FINALIZED:
+                        acc_txn->sg.metadata.reads_for_query[row_col.first].erase(col_index.first);
+                        break;
+                    case ABORTED:
+                        acc_txn->sg.metadata.reads_for_query[row_col.first].erase(col_index.first);
+                        will_abort = true;
+                        break;
+                }
             }
         }
     }

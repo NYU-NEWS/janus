@@ -325,6 +325,8 @@ class TxData: public CmdData {
     bool _status_abort = false;
     int n_status_query = 0;
     int n_status_callback = 0;
+    int n_abort_sent = 0;
+    int n_abort_ack = 0;
 };
 
 } // namespace rcc

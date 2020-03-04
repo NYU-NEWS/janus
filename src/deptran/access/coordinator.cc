@@ -19,7 +19,7 @@ namespace janus {
                 SafeGuardCheck();
                 break;
             case Phase::VALIDATE: verify(phase_ % n_phase == Phase::EARLY_DECIDE);
-                if (committed_) { // SG checks consistent, no need to validate
+		if (committed_ || aborted_) { // SG checks consistent or early aborts, no need to validate
                     GotoNextPhase();
                 } else {
                     AccValidate();
@@ -143,8 +143,10 @@ namespace janus {
         std::lock_guard<std::recursive_mutex> lock(mtx_);
         auto pars = tx_data().GetPartitionIds();
         verify(!pars.empty());
+	/* do not check decided in validation
         tx_data()._decided = true;  // clear decided from dispatch,
                                     // not-decided in dispatch could be now decided after validation
+	*/
         for (auto par_id : pars) {
             tx_data().n_validate_rpc_++;
             commo()->AccBroadcastValidate(par_id,
@@ -164,15 +166,19 @@ namespace janus {
         if (res == INCONSISTENT) { // at least one shard returns inconsistent
             aborted_ = true;
         }
+	/* do no check decided in validation for now
         if (res == NOT_DECIDED) {  // consistent but not decided
             tx_data()._decided = false;
         }
+	*/
         if (tx_data().n_validate_ack_ == tx_data().n_validate_rpc_) {
             // have received all acks
             committed_ = !aborted_;
+	    /* do not check decided in validation for now
             if (tx_data()._decided) {
                 tx_data()._status_query_done = true; // no need to wait for AccStatusQuery acks
             }
+	    */
             // -------Testing purpose here----------
             //aborted_ = false;
             //committed_ = true;
@@ -186,12 +192,45 @@ namespace janus {
         std::lock_guard<std::recursive_mutex> lock(mtx_);
         auto pars = tx_data().GetPartitionIds();
         verify(!pars.empty());
-        for (auto par_id : pars) {
-            commo()->AccBroadcastFinalize(par_id,
-                                          tx_data().id_,
-                                          decision);
+	switch (decision) {
+            case FINALIZED:
+                for (auto par_id : pars) {
+                     commo()->AccBroadcastFinalize(par_id,
+                                                  tx_data().id_,
+                                                  decision);
+                }
+                break;
+            case ABORTED:
+                for (auto par_id : pars) {
+                    tx_data().n_abort_sent++;
+                    commo()->AccBroadcastFinalizeAbort(par_id,
+                                                       tx_data().id_,
+                                                       decision,
+                                                       std::bind(&CoordinatorAcc::AccFinalizeAck,
+                                                                 this,
+                                                                 phase_));
+                }
+                break;
+            default: verify(0); break;
         }
     }
+
+    void CoordinatorAcc::AccFinalizeAck(phase_t phase) {
+        // this is only called by Finalize(ABORTED)
+        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+        Log_info("Txnid: %lu; AccFinalizeAck(ABORTED).", tx_data().id_);
+        if (phase != phase_) return;
+        tx_data().n_abort_ack++;
+        if (tx_data().n_abort_ack == tx_data().n_abort_sent) {
+            // we only restart after this txn is aborted everywhere
+            Log_info("Txnid: %lu; now restart.", tx_data().id_);
+            if (phase_ % n_phase == Phase::DECIDE) { // current is EARLY_DECIDE phase
+                //SkipDecidePhase();
+                GotoNextPhase();
+            }
+            Restart();
+         }
+     }
 
     void CoordinatorAcc::Restart() {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
@@ -216,6 +255,8 @@ namespace janus {
         tx_data()._status_abort = false;
         tx_data().n_status_query = 0;
         tx_data().n_status_callback = 0;
+	tx_data().n_abort_sent = 0;
+        tx_data().n_abort_ack = 0;
     }
 
     void CoordinatorAcc::SafeGuardCheck() {
@@ -247,10 +288,13 @@ namespace janus {
                 tx_data().n_decided_++; // stats
             }
             if (phase_ % n_phase == Phase::DECIDE) { // current is EARLY_DECIDE phase
-                SkipDecidePhase();
+                //SkipDecidePhase();
+		GotoNextPhase();
             }
             End();  // do not wait for finalize to return, respond to user now
-        }
+        } else {
+	    GotoNextPhase();
+	}
     }
 
     void CoordinatorAcc::AccAbort() {
@@ -258,10 +302,8 @@ namespace janus {
         verify(aborted_);
         // abort as long as inconsistent or there is at least one statusquery ack is abort (cascading abort)
         AccFinalize(ABORTED);
-        Restart();
-        if (phase_ % n_phase == Phase::DECIDE) { // current is EARLY_DECIDE phase
-            SkipDecidePhase();
-        }
+        // Restart();
+	// we now abort after received all finalize(abort) replies
     }
 
     void CoordinatorAcc::StatusQuery() {
@@ -300,7 +342,10 @@ namespace janus {
             committed_ = false;
             aborted_ = true;
             tx_data()._status_query_done = true;
-            AccAbort();
+            // AccAbort();  // this early abort mess phase_ up, use GotoNextPhase instead
+	    if (phase_ % n_phase == Phase::EARLY_DECIDE) { // still waiting for validating
+                GotoNextPhase();
+            }
         }
         if (tx_data().n_status_query == tx_data().n_status_callback) { // received all callbacks, and thus res=finalized
             tx_data()._status_query_done = true;

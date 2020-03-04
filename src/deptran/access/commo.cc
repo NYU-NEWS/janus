@@ -77,6 +77,19 @@ namespace janus {
         Future::safe_release(future);
     }
 
+    void AccCommo::AccBroadcastFinalizeAbort(parid_t par_id, cmdid_t cmd_id, int8_t decision, const std::function<void()> &callback) {
+        rrr::FutureAttr fuattr;
+        fuattr.callback =
+                [this, callback](Future* fu) {
+                    fu->get_reply();
+                    callback();
+                };
+        auto pair_leader_proxy = LeaderProxyForPartition(par_id);
+        auto proxy = pair_leader_proxy.second;
+        auto future = proxy->async_AccFinalize(cmd_id, decision, fuattr); // call AccFinalize RPC
+        Future::safe_release(future);
+    }
+
     void AccCommo::AccBroadcastStatusQuery(parid_t par_id, cmdid_t cmd_id, const std::function<void(int8_t res)> &callback) {
         rrr::FutureAttr fuattr;
         fuattr.callback =

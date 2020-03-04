@@ -25,6 +25,7 @@ namespace janus {
         void AccValidate();
         void AccValidateAck(phase_t phase, int8_t res);
         void AccFinalize(int8_t decision);
+	void AccFinalizeAck(phase_t phase);
         void Restart() override;
         void reset_all_members();
         bool offset_1_check_pass();

@@ -21,8 +21,12 @@ namespace janus {
         // extends head's ssid
         txn_queue[index].extend_ssid(ssid_new);
         ssid = txn_queue[index].ssid;
-        offset_safe = is_offset_safe(ssid_spec);
-        decided = logical_head_status() == FINALIZED;  // then if this tx turns out consistent and all parts decided, can respond immediately
+	if (!is_offset_safe(ssid_new)) {
+            offset_safe = false;
+        }
+        if (logical_head_status() != FINALIZED) { // then if this tx turns out consistent and all parts decided, can respond immediately
+            decided = false;
+        }
         return txn_queue[_logical_head].value;
     }
 
@@ -31,7 +35,9 @@ namespace janus {
         SSID new_ssid = write_get_next_SSID(ssid_spec);
         txn_queue.emplace_back(std::move(v), tid, new_ssid);
         ver_index = txn_queue.size() - 1; // record index of this pending write for later validation and finalize
-        offset_safe = is_offset_safe(new_ssid.ssid_low);
+	if (!is_offset_safe(new_ssid.ssid_low)) {
+            offset_safe = false;
+        }
         update_logical_head();
         return new_ssid;  // return the SSID of this new write -- safety
     }
@@ -93,6 +99,15 @@ namespace janus {
     bool AccColumn::is_logical_head(unsigned long index) const {
         return index == _logical_head;
     }
+
+    snapshotid_t AccColumn::next_record_ssid(unsigned long index) const {
+        for (unsigned long i = index + 1; i < txn_queue.size(); ++i) {
+            if (txn_queue[i].status != ABORTED) {
+                return txn_queue[i].ssid.ssid_low;
+            }
+        }
+        return UINT64_MAX;
+    }
     // ---------------------------------
     // ----------- finalize ------------
     void AccColumn::finalize(unsigned long index, int8_t decision) {
@@ -115,6 +130,7 @@ namespace janus {
         for (auto& callback : txn_queue[index].query_callbacks) {
             callback(decision);
         }
+	txn_queue[index].query_callbacks.clear();
     }
 
     void AccColumn::commit(unsigned long index) {

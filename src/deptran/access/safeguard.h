@@ -13,7 +13,7 @@ namespace janus {
         std::unordered_map<mdb::Row*, std::unordered_map<mdb::colid_t, unsigned long>> indices;
                                                             // the set of versions accessed,
                                                             // used for validation and finalize
-	    //std::unordered_map<mdb::Row*, std::unordered_map<mdb::colid_t, snapshotid_t>> earlier_read;
+	std::unordered_map<mdb::Row*, std::unordered_map<mdb::colid_t, unsigned long>> reads_for_query;
         snapshotid_t highest_ssid_low = 0;
         snapshotid_t lowest_ssid_high = UINT64_MAX;
         snapshotid_t highest_write_ssid = 0;
