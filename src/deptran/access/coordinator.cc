@@ -10,37 +10,17 @@ namespace janus {
     }
 
     void CoordinatorAcc::GotoNextPhase() {
-	std::lock_guard<std::recursive_mutex> lock(mtx_);
+        std::lock_guard<std::recursive_mutex> lock(mtx_);
         switch (phase_++ % n_phase) {
-            case Phase::INIT_END: verify(phase_ % n_phase == Phase::DISPATCH);
+            case Phase::INIT_END: verify(phase_ % n_phase == Phase::SAFEGUARD);
+                unfreeze_coordinator();
                 DispatchAsync();
-                StatusQuery();
                 break;
-            case Phase::DISPATCH: verify(phase_ % n_phase == Phase::VALIDATE);
+            case Phase::SAFEGUARD: verify(phase_ % n_phase == Phase::FINISH);
                 SafeGuardCheck();
                 break;
-            case Phase::VALIDATE: verify(phase_ % n_phase == Phase::EARLY_DECIDE);
-		if (committed_ || aborted_) { // SG checks consistent or early aborts, no need to validate
-                    GotoNextPhase();
-                } else {
-                    AccValidate();
-                }
-                break;
-            case Phase::EARLY_DECIDE: verify(phase_ % n_phase == Phase::DECIDE);
-                if (committed_) {
-                    AccCommit();
-                    // reset_all_members();  tx_data is GC'ed in End()
-                } else if (aborted_) {
-                    AccAbort();
-                } else {
-                    verify(0);
-                }
-                break;
-            case Phase::DECIDE: verify(phase_ % n_phase == Phase::DONE);
-                // do nothing here, will called in StatusQueryAck
-                break;
-	    case Phase::DONE: verify(phase_ % n_phase == Phase::INIT_END);
-                // has committed, waiting for next tx, could still have incoming status query replies
+            case Phase::FINISH: verify(phase_ % n_phase == Phase::INIT_END);
+                AccFinish();
                 break;
             default:
                 verify(0);  // invalid phase
@@ -48,10 +28,10 @@ namespace janus {
         }
     }
 
+    // -----------------INIT_END------------------
     void CoordinatorAcc::DispatchAsync() {
         std::lock_guard<std::recursive_mutex> lock(mtx_);
         auto txn = (TxData*) cmd_;
-
         int cnt = 0;
         auto cmds_by_par = txn->GetReadyPiecesData(1);
         Log_debug("AccDispatchAsync for tx_id: %" PRIx64, txn->root_id_);
@@ -138,10 +118,84 @@ namespace janus {
             if (txn->_decided) {
                 // all dependent writes are finalized
                 txn->_status_query_done = true;  // do not need AccQueryStatus acks
-	    }
-	    StatusQuery();
+	        }
+	        StatusQuery();
             GotoNextPhase();
         }
+    }
+
+    void CoordinatorAcc::StatusQuery() {
+        std::lock_guard<std::recursive_mutex> lock(mtx_);
+        auto pars = tx_data().GetPartitionIds();
+        verify(!pars.empty());
+        for (auto par_id : pars) {
+            tx_data().n_status_query++;
+            commo()->AccBroadcastStatusQuery(par_id,
+                                             tx_data().id_,
+                                             std::bind(&CoordinatorAcc::AccStatusQueryAck,
+                                                       this,
+                                                       tx_data().id_,
+                                                       std::placeholders::_1));
+        }
+    }
+
+    void CoordinatorAcc::AccStatusQueryAck(txnid_t tid, int8_t res) {
+        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+        if (tid != tx_data().id_) return;  // the queried txn has early returned
+        if (is_frozen()) return;  // this txn has been decided, either committed or aborted
+        if (tx_data()._status_query_done) {
+            // no need to wait on query acks, it has been decided
+            return;
+        }
+        tx_data().n_status_callback++;
+        switch (res) {
+            case FINALIZED:  // do nothing
+                break;
+            case ABORTED:
+                tx_data()._status_abort = true;
+                break;
+            default: verify(0); break;
+        }
+        if (tx_data().n_status_query == tx_data().n_status_callback) { // received all callbacks
+            tx_data()._status_query_done = true;
+            if (tx_data()._status_abort) {
+                aborted_ = true;
+            }
+            committed_ = !aborted_;
+            //Log_info("tx: %lu, time as usual. commit = %d", tx_data().id_, committed_);
+            if (phase_ % n_phase == Phase::INIT_END) { // this txn is waiting in FINAL phase
+                //Log_info("tx: %lu, time goes back. commit = %d", tx_data().id_, committed_);
+                time_flies_back();
+            }
+            // this txn has not got to FINAL phase yet, either validating or dispatching
+        }
+    }
+
+    // ------------- SAFEGUARD ----------------
+    void CoordinatorAcc::SafeGuardCheck() {
+        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+        verify(!committed_);
+        // ssid check consistency
+        // added offset-1 optimization
+        if (tx_data()._is_consistent || offset_1_check_pass()) {
+            committed_ = true;
+            tx_data().n_ssid_consistent_++;   // for stats
+        }
+        if (offset_1_check_pass() && !tx_data()._is_consistent) {
+            tx_data().n_offset_valid_++;  // for stats
+        }
+        if (committed_ || aborted_) { // SG checks consistent or cascading aborts, no need to validate
+            //Log_info("tx: %lu, safeguard check, commit = %d; aborted = %d", tx_data().id_, committed_, aborted_);
+            GotoNextPhase();
+        } else {
+            AccValidate();
+        }
+    }
+
+    bool CoordinatorAcc::offset_1_check_pass() {
+        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+        return !tx_data()._offset_invalid &&  // write valid
+               tx_data().highest_ssid_low - tx_data().lowest_ssid_high <= 1;  // offset within 1
     }
 
     void CoordinatorAcc::AccValidate() {
@@ -170,8 +224,47 @@ namespace janus {
         if (tx_data().n_validate_ack_ == tx_data().n_validate_rpc_) {
             // have received all acks
             committed_ = !aborted_;
-            GotoNextPhase(); // to phase decide
+           // Log_info("tx: %lu, acc_validate_ack. commit = %d", tx_data().id_, committed_);
+            GotoNextPhase(); // to phase final
         }
+    }
+
+    // ------------ FINAL --------------
+    void CoordinatorAcc::AccFinish() {
+        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+        if (committed_) {
+            AccCommit();
+        } else if (aborted_) {
+            AccAbort();
+        } else {
+            verify(0);
+        }
+    }
+
+    void CoordinatorAcc::AccCommit() {
+        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+        if (tx_data()._decided || tx_data()._status_query_done) {
+            freeze_coordinator();
+            //Log_info("tx: %lu, fast commit.", tx_data().id_);
+            AccFinalize(FINALIZED);
+            if (tx_data()._decided) {
+                tx_data().n_decided_++; // stats
+            }
+            End();  // do not wait for finalize to return, respond to user now
+        } else {
+            //Log_info("tx: %lu, wait for decision.", tx_data().id_);
+            // do nothing, waiting in this phase for AccStatusQuery responses
+        }
+    }
+
+    void CoordinatorAcc::AccAbort() {
+        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+        //Log_info("tx: %lu, abort.", tx_data().id_);
+        verify(aborted_);
+        freeze_coordinator();
+        // abort as long as inconsistent or there is at least one statusquery ack is abort (cascading abort)
+        AccFinalize(ABORTED);
+        // we now abort after received all finalize(abort) replies
     }
 
     void CoordinatorAcc::AccFinalize(int8_t decision) {
@@ -179,7 +272,7 @@ namespace janus {
         std::lock_guard<std::recursive_mutex> lock(mtx_);
         auto pars = tx_data().GetPartitionIds();
         verify(!pars.empty());
-	switch (decision) {
+	    switch (decision) {
             case FINALIZED:
                 for (auto par_id : pars) {
                      commo()->AccBroadcastFinalize(par_id,
@@ -209,12 +302,8 @@ namespace janus {
         tx_data().n_abort_ack++;
         if (tx_data().n_abort_ack == tx_data().n_abort_sent) {
             // we only restart after this txn is aborted everywhere
-            if (phase_ % n_phase == Phase::DECIDE) { // current is EARLY_DECIDE phase
-		SkipDecidePhase();
-                //GotoNextPhase();
-            }
             Restart();
-         }
+        }
      }
 
     void CoordinatorAcc::Restart() {
@@ -225,6 +314,7 @@ namespace janus {
         CoordinatorClassic::Restart();
     }
 
+    // --------- state clean ------------
     void CoordinatorAcc::reset_all_members() {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
         tx_data()._is_consistent = true;
@@ -240,116 +330,7 @@ namespace janus {
         tx_data()._status_abort = false;
         tx_data().n_status_query = 0;
         tx_data().n_status_callback = 0;
-	tx_data().n_abort_sent = 0;
+	    tx_data().n_abort_sent = 0;
         tx_data().n_abort_ack = 0;
-    }
-
-    void CoordinatorAcc::SafeGuardCheck() {
-        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-        verify(!committed_);
-        // ssid check consistency
-        // added offset-1 optimization
-        if (tx_data()._is_consistent || offset_1_check_pass()) {
-            committed_ = true;
-            tx_data().n_ssid_consistent_++;   // for stats
-        }
-        if (offset_1_check_pass() && !tx_data()._is_consistent) {
-            tx_data().n_offset_valid_++;  // for stats
-        }
-        GotoNextPhase(); // go validate if necessary
-    }
-
-    bool CoordinatorAcc::offset_1_check_pass() {
-        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-        return !tx_data()._offset_invalid &&  // write valid
-               tx_data().highest_ssid_low - tx_data().lowest_ssid_high <= 1;  // offset within 1
-    }
-
-    void CoordinatorAcc::AccCommit() {
-        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-        if (tx_data()._decided || tx_data()._status_query_done) {
-            AccFinalize(FINALIZED);
-            if (tx_data()._decided) {
-                tx_data().n_decided_++; // stats
-            }
-            if (phase_ % n_phase == Phase::DECIDE) { // current is EARLY_DECIDE phase
-		SkipDecidePhase();
-                //GotoNextPhase();
-            }
-            End();  // do not wait for finalize to return, respond to user now
-        } else {
-	    GotoNextPhase();
-	}
-    }
-
-    void CoordinatorAcc::AccAbort() {
-        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-        verify(aborted_);
-        // abort as long as inconsistent or there is at least one statusquery ack is abort (cascading abort)
-        AccFinalize(ABORTED);
-        // Restart();
-	// we now abort after received all finalize(abort) replies
-    }
-
-    void CoordinatorAcc::StatusQuery() {
-        std::lock_guard<std::recursive_mutex> lock(mtx_);
-        auto pars = tx_data().GetPartitionIds();
-        verify(!pars.empty());
-        for (auto par_id : pars) {
-            tx_data().n_status_query++;
-            commo()->AccBroadcastStatusQuery(par_id,
-                                             tx_data().id_,
-                                             std::bind(&CoordinatorAcc::AccStatusQueryAck,
-                                                             this,
-                                                                tx_data().id_,
-                                                                std::placeholders::_1));
-        }
-    }
-
-    void CoordinatorAcc::AccStatusQueryAck(txnid_t tid, int8_t res) {
-        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-        if (tid != tx_data().id_) return;  // the queried txn has early returned
-        if (tx_data()._status_query_done) {
-            // no need to wait on query acks, it has been decided
-            return;
-        }
-        tx_data().n_status_callback++;
-        switch (res) {
-            case FINALIZED:  // do nothing
-                break;
-            case ABORTED:
-                tx_data()._status_abort = true;
-                break;
-            default: verify(0); break;
-        }
-        if (tx_data()._status_abort) {
-            // TODO: may early abort
-            committed_ = false;
-            aborted_ = true;
-            tx_data()._status_query_done = true;
-            // AccAbort();  // this early abort mess phase_ up, use GotoNextPhase instead
-	    if (phase_ % n_phase == Phase::EARLY_DECIDE) { // still waiting for validating
-                GotoNextPhase();
-            }
-        }
-	if (tx_data().n_status_query == tx_data().n_status_callback || tx_data()._status_abort) { // received all callbacks, and thus res=finalized
-            tx_data()._status_query_done = true;
-	    if (phase_ % n_phase == Phase::DONE) { // this txn is in DECIDING phase
-                GotoNextPhase();  // go to done, and ready for next tx.	
-                // finalize this txn, commit if consistent, abort if not, replaying the DECIDE phase
-                if (committed_) {
-                    AccCommit();
-                } else {
-                    AccAbort();
-                }
-            }
-            // this txn has not got to DECIDE phase yet, either validating or dispatching
-        }
-    }
-
-    void CoordinatorAcc::SkipDecidePhase() {
-        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-        verify(phase_ % n_phase == Phase::DECIDE);
-	phase_ = phase_ + 2;  // skipping decide phase
     }
 } // namespace janus

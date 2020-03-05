@@ -76,6 +76,7 @@ namespace janus {
             // TODO: should not send rpcs for deciding reads in the first place
             return;
         }
+        //Log_info("tid: %lu; finaling a record. decision = %d; index = %lu", tid, decision, ver_index);
         _row[col_id].finalize(ver_index, decision);
     }
 

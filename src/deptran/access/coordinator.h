@@ -10,8 +10,8 @@ namespace janus {
     class CoordinatorAcc : public CoordinatorClassic {
     public:
         using CoordinatorClassic::CoordinatorClassic;
-	const int n_phase = 6;
-        enum Phase {INIT_END=0, DISPATCH=1, VALIDATE=2, EARLY_DECIDE=3, DECIDE=4, DONE=5};
+	    const int n_phase = 3;
+        enum Phase {INIT_END=0, SAFEGUARD=1, FINISH=2};
         void GotoNextPhase() override;
         void DispatchAsync() override;
         AccCommo* commo();
@@ -24,8 +24,9 @@ namespace janus {
         void SafeGuardCheck();
         void AccValidate();
         void AccValidateAck(phase_t phase, int8_t res);
+        void AccFinish();
         void AccFinalize(int8_t decision);
-	void AccFinalizeAck(phase_t phase);
+	    void AccFinalizeAck(phase_t phase);
         void Restart() override;
         void reset_all_members();
         bool offset_1_check_pass();
@@ -34,5 +35,11 @@ namespace janus {
         void StatusQuery();
         void AccStatusQueryAck(txnid_t tid, int8_t res);
         void SkipDecidePhase();
+    private:
+        bool finished = true;
+        void freeze_coordinator() { verify(!finished); finished = true; }
+        void unfreeze_coordinator() { verify(finished); finished = false; }
+        bool is_frozen() const { return finished; }
+        void time_flies_back() { phase_--; GotoNextPhase(); }
     };
 } // namespace janus

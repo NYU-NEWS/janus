@@ -96,7 +96,7 @@ namespace janus {
 
     void SchedulerAcc::OnStatusQuery(cmdid_t cmd_id, int8_t *res, DeferredReply* defer) {
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
-	if (acc_txn->sg.metadata.reads_for_query.empty()) {
+	    if (acc_txn->sg.metadata.reads_for_query.empty()) {
             *res = FINALIZED;
             verify(defer != nullptr);
             defer->reply();
