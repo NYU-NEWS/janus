@@ -10,6 +10,7 @@ namespace janus {
     }
 
     void CoordinatorAcc::GotoNextPhase() {
+	std::lock_guard<std::recursive_mutex> lock(mtx_);
         switch (phase_++ % n_phase) {
             case Phase::INIT_END: verify(phase_ % n_phase == Phase::DISPATCH);
                 DispatchAsync();
@@ -35,8 +36,11 @@ namespace janus {
                     verify(0);
                 }
                 break;
-            case Phase::DECIDE: verify(phase_ % n_phase == Phase::INIT_END);
+            case Phase::DECIDE: verify(phase_ % n_phase == Phase::DONE);
                 // do nothing here, will called in StatusQueryAck
+                break;
+	    case Phase::DONE: verify(phase_ % n_phase == Phase::INIT_END);
+                // has committed, waiting for next tx, could still have incoming status query replies
                 break;
             default:
                 verify(0);  // invalid phase
@@ -134,7 +138,8 @@ namespace janus {
             if (txn->_decided) {
                 // all dependent writes are finalized
                 txn->_status_query_done = true;  // do not need AccQueryStatus acks
-            }
+	    }
+	    StatusQuery();
             GotoNextPhase();
         }
     }
@@ -205,8 +210,8 @@ namespace janus {
         if (tx_data().n_abort_ack == tx_data().n_abort_sent) {
             // we only restart after this txn is aborted everywhere
             if (phase_ % n_phase == Phase::DECIDE) { // current is EARLY_DECIDE phase
-                //SkipDecidePhase();
-                GotoNextPhase();
+		SkipDecidePhase();
+                //GotoNextPhase();
             }
             Restart();
          }
@@ -268,8 +273,8 @@ namespace janus {
                 tx_data().n_decided_++; // stats
             }
             if (phase_ % n_phase == Phase::DECIDE) { // current is EARLY_DECIDE phase
-                //SkipDecidePhase();
-		GotoNextPhase();
+		SkipDecidePhase();
+                //GotoNextPhase();
             }
             End();  // do not wait for finalize to return, respond to user now
         } else {
@@ -327,9 +332,10 @@ namespace janus {
                 GotoNextPhase();
             }
         }
-        if (tx_data().n_status_query == tx_data().n_status_callback) { // received all callbacks, and thus res=finalized
+	if (tx_data().n_status_query == tx_data().n_status_callback || tx_data()._status_abort) { // received all callbacks, and thus res=finalized
             tx_data()._status_query_done = true;
-            if (phase_ % n_phase == Phase::INIT_END) { // this txn is in DECIDING phase
+	    if (phase_ % n_phase == Phase::DONE) { // this txn is in DECIDING phase
+                GotoNextPhase();  // go to done, and ready for next tx.	
                 // finalize this txn, commit if consistent, abort if not, replaying the DECIDE phase
                 if (committed_) {
                     AccCommit();
@@ -344,6 +350,6 @@ namespace janus {
     void CoordinatorAcc::SkipDecidePhase() {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
         verify(phase_ % n_phase == Phase::DECIDE);
-        phase_++;
+	phase_ = phase_ + 2;  // skipping decide phase
     }
 } // namespace janus

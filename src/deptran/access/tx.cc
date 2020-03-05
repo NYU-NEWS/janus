@@ -16,6 +16,7 @@ namespace janus {
 	sg.metadata.indices[row][col_id] = index;  // for later validation, could be overwritten by later writes
         if (!is_decided) {
             sg.decided = false;
+	    row->ref_copy();
             sg.metadata.reads_for_query[row][col_id] = index;  // for later AccStatusQuery on read versions
         }
         // update metadata
@@ -29,7 +30,6 @@ namespace janus {
                              int hint_flag) {
         verify(row != nullptr);
         auto acc_row = dynamic_cast<AccRow*>(row);
-        row->ref_copy();
         for (auto col_id : col_ids) {
             Value *v = nullptr;
             unsigned long index = 0;
@@ -37,8 +37,10 @@ namespace janus {
 	    SSID ssid = acc_row->read_column(col_id, v, sg.ssid_spec, sg.offset_safe, index, is_decided);
             verify(v != nullptr);
             values->push_back(std::move(*v));
+	    row->ref_copy();
             sg.metadata.indices[row][col_id] = index;  // for later validation
 	    if (!is_decided) {
+		row->ref_copy();
                 sg.decided = false;
                 sg.metadata.reads_for_query[row][col_id] = index;  // for later AccStatusQuery on read versions
             }
@@ -57,7 +59,7 @@ namespace janus {
         unsigned long ver_index = 0;
         SSID ssid = acc_row->write_column(col_id, std::move(value), sg.ssid_spec, this->tid_, ver_index, sg.offset_safe); // ver_index is new write
         row->ref_copy();
-	    sg.update_metadata(ssid.ssid_low, ssid.ssid_high, false);
+	sg.update_metadata(ssid.ssid_low, ssid.ssid_high, false);
         sg.metadata.indices[row][col_id] = ver_index; // for validation and finalize
         return true;
     }
@@ -69,11 +71,11 @@ namespace janus {
         verify(row != nullptr);
         auto acc_row = dynamic_cast<AccRow*>(row);
         int v_counter = 0;
-        row->ref_copy();
         for (auto col_id : col_ids) {
             unsigned long ver_index = 0;
             SSID ssid = acc_row->write_column(col_id, std::move(values[v_counter++]), sg.ssid_spec, this->tid_, ver_index, sg.offset_safe);
             sg.update_metadata(ssid.ssid_low, ssid.ssid_high, false);
+	    row->ref_copy();
             sg.metadata.indices[row][col_id] = ver_index; // for validation and finalize
         }
         return true;

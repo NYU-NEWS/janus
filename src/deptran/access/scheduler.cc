@@ -96,6 +96,13 @@ namespace janus {
 
     void SchedulerAcc::OnStatusQuery(cmdid_t cmd_id, int8_t *res, DeferredReply* defer) {
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
+	if (acc_txn->sg.metadata.reads_for_query.empty()) {
+            *res = FINALIZED;
+            verify(defer != nullptr);
+            defer->reply();
+            return;
+        }
+	/*
         if (acc_txn->sg.status_query_done || acc_txn->sg.decided) {
             // 1. if we send 1 rpc per shard then we don't need sg.status_query_done
             // 2. if sg.decided is true then we know all versions are decided because StatusQuery RPC
@@ -106,6 +113,7 @@ namespace janus {
             defer->reply();
             return;
         }
+	*/
         // do a round of check in case there is validation or finalize arrive in between
         bool is_decided = true, will_abort = false;
         check_status(cmd_id, is_decided, will_abort);
@@ -121,6 +129,10 @@ namespace janus {
         for (auto& row_col : acc_txn->sg.metadata.reads_for_query) {
             auto acc_row = dynamic_cast<AccRow *>(row_col.first);
             for (auto &col_index : row_col.second) {
+		if (col_index.second == 0) {
+                    // recently decided
+                    continue;
+                }
 		acc_txn->n_query_inc();
                 txnid_t to_tid = acc_row->get_ver_tid(col_index.first, col_index.second);  // inserting the callback of current txn to txn:tid
                 auto to_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(to_tid));  // get the target txn
@@ -132,9 +144,9 @@ namespace janus {
 
     void SchedulerAcc::check_status(cmdid_t cmd_id, bool& is_decided, bool& will_abort) {
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
-        for (const auto& row_col : acc_txn->sg.metadata.reads_for_query) {
+        for (auto& row_col : acc_txn->sg.metadata.reads_for_query) {
             auto acc_row = dynamic_cast<AccRow *>(row_col.first);
-            for (const auto &col_index : row_col.second) {
+            for (auto &col_index : row_col.second) {
                 int8_t status = acc_row->check_status(col_index.first, col_index.second);
                 switch (status) {
                     case UNCHECKED:
@@ -142,10 +154,12 @@ namespace janus {
                         is_decided = false;
                         break;
                     case FINALIZED:
-                        acc_txn->sg.metadata.reads_for_query[row_col.first].erase(col_index.first);
+                        col_index.second = 0;
+			//acc_txn->sg.metadata.reads_for_query[row_col.first].erase(col_index.first);
                         break;
                     case ABORTED:
-                        acc_txn->sg.metadata.reads_for_query[row_col.first].erase(col_index.first);
+			col_index.second = 0;
+                        //acc_txn->sg.metadata.reads_for_query[row_col.first].erase(col_index.first);
                         will_abort = true;
                         break;
                 }
