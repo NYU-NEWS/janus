@@ -53,6 +53,9 @@ namespace janus {
             *res = CONSISTENT;  // if there is at least one validation fails, final result will be fail
             return;
         }
+	// TODO: here we do async lambda callback that allows reads to wait for dependent versions to finalize
+        // TODO: BUT how do we deal the deadlock case: w-->r/ w-->r ?
+        // -----------------------------
         acc_txn->sg.validate_done = true;
         bool validate_consistent = true;
         for (auto& row_col : acc_txn->sg.metadata.indices) {
@@ -96,8 +99,8 @@ namespace janus {
 
     void SchedulerAcc::OnStatusQuery(cmdid_t cmd_id, int8_t *res, DeferredReply* defer) {
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
-	    if (acc_txn->sg.metadata.reads_for_query.empty()) {
-            *res = FINALIZED;
+	    if (acc_txn->sg.metadata.reads_for_query.empty() || acc_txn->is_status_abort()) {
+            *res = FINALIZED;	// some rpc has returned abort if is_status_abort
             verify(defer != nullptr);
             defer->reply();
             return;
@@ -114,18 +117,22 @@ namespace janus {
             return;
         }
 	*/
+	// TODO: take this round of check out
         // do a round of check in case there is validation or finalize arrive in between
         bool is_decided = true, will_abort = false;
         check_status(cmd_id, is_decided, will_abort);
         if (is_decided) {
             acc_txn->sg.metadata.reads_for_query.clear();
-            acc_txn->sg.status_query_done = true;
+            // acc_txn->sg.status_query_done = true;
             *res = will_abort ? ABORTED : FINALIZED;
             defer->reply();
             return;
         }
         // now we check each pending version, and insert a callback func to that version waiting for its status
 	verify(!acc_txn->sg.metadata.reads_for_query.empty());
+	int rpc_id = acc_txn->n_query_inc();  // the rpc that needs later reply
+        acc_txn->subrpc_count[rpc_id] = 0;
+        acc_txn->subrpc_status[rpc_id] = FINALIZED;
         for (auto& row_col : acc_txn->sg.metadata.reads_for_query) {
             auto acc_row = dynamic_cast<AccRow *>(row_col.first);
             for (auto &col_index : row_col.second) {
@@ -133,10 +140,11 @@ namespace janus {
                     // recently decided
                     continue;
                 }
-		acc_txn->n_query_inc();
+		// acc_txn->n_query_inc();
+		acc_txn->subrpc_count[rpc_id]++;
                 txnid_t to_tid = acc_row->get_ver_tid(col_index.first, col_index.second);  // inserting the callback of current txn to txn:tid
                 auto to_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(to_tid));  // get the target txn
-                to_txn->insert_callbacks(acc_txn, res, defer);
+		to_txn->insert_callbacks(acc_txn, res, defer, rpc_id);
             }
         }
         acc_txn->sg.metadata.reads_for_query.clear(); // no need those records anymore, might add more by later dispatch

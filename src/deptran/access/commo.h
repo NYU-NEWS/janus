@@ -15,7 +15,10 @@ namespace janus {
                                                       uint64_t ssid_low,
                                                       uint64_t ssid_high,
                                                       uint64_t ssid_new,
-                                                      TxnOutput &)> &callback);
+                                                      TxnOutput &)> &callback,
+				  cmdid_t cmd_id,
+                                  int& n_status_query,
+                                  const std::function<void(int8_t res)> &callback_status);
         void AccBroadcastValidate(parid_t par_id,
                                   cmdid_t cmd_id,
                                   snapshotid_t ssid_new,

@@ -47,7 +47,7 @@ namespace janus {
                 sp_vec_piece->push_back(c);
             }
             commo()->AccBroadcastDispatch(sp_vec_piece,
-                                     this,
+                                          this,
                                           tx_data().ssid_spec,
                                           std::bind(&CoordinatorAcc::AccDispatchAck,
                                                  this,
@@ -56,7 +56,13 @@ namespace janus {
                                                     std::placeholders::_2,
                                                     std::placeholders::_3,
                                                     std::placeholders::_4,
-                                                    std::placeholders::_5));
+                                                    std::placeholders::_5),
+					  tx_data().id_,
+                                          tx_data().n_status_query,
+                                          std::bind(&CoordinatorAcc::AccStatusQueryAck,
+                                                    this,
+                                                    tx_data().id_,
+                                                    std::placeholders::_1)); 
         }
         Log_debug("AccDispatchAsync cnt: %d for tx_id: %" PRIx64, cnt, txn->root_id_);
     }
@@ -118,8 +124,8 @@ namespace janus {
             if (txn->_decided) {
                 // all dependent writes are finalized
                 txn->_status_query_done = true;  // do not need AccQueryStatus acks
-	        }
-	        StatusQuery();
+	    }
+	    //StatusQuery();
             GotoNextPhase();
         }
     }
@@ -143,10 +149,7 @@ namespace janus {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
         if (tid != tx_data().id_) return;  // the queried txn has early returned
         if (is_frozen()) return;  // this txn has been decided, either committed or aborted
-        if (tx_data()._status_query_done) {
-            // no need to wait on query acks, it has been decided
-            return;
-        }
+        if (tx_data()._status_query_done) return; // no need to wait on query acks, it has been decided
         tx_data().n_status_callback++;
         switch (res) {
             case FINALIZED:  // do nothing

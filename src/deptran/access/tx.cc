@@ -89,12 +89,12 @@ namespace janus {
         sg.ssid_spec = ssid;
     }
 
-    void AccTxn::n_query_inc() {
-        sg._n_query++;
+    int AccTxn::n_query_inc() {
+	return ++sg._n_query;
     }
 
-    void AccTxn::n_callback_inc() {
-        sg._n_query_callback++;
+    int AccTxn::n_callback_inc() {
+	return ++sg._n_query_callback;
     }
 
     bool AccTxn::all_callbacks_received() const {
@@ -105,35 +105,35 @@ namespace janus {
         sg.status_abort = true;
     }
 
-    int8_t AccTxn::query_result() const {
-        return sg.status_abort ? ABORTED : FINALIZED;
-    }
-
-    void AccTxn::set_query_done() {
-        sg.status_query_done = true;
+    bool AccTxn::is_status_abort() const {
+        return sg.status_abort;
     }
 
     bool AccTxn::is_query_done() const {
         return sg.status_query_done;
     }
 
-    void AccTxn::insert_callbacks(shared_ptr<AccTxn> acc_txn, int8_t *res, DeferredReply* defer) {
+    int8_t AccTxn::query_result() const {
+        return sg.status_abort ? ABORTED : FINALIZED;
+    }
+
+    void AccTxn::insert_callbacks(const shared_ptr<AccTxn>& acc_txn, int8_t *res, DeferredReply* defer, int rpc_id) {
         query_callbacks.emplace_back([=](int8_t status) -> void {
-            if (acc_txn->is_query_done()) { // have done the query by early abort
+	    if (acc_txn->subrpc_status[rpc_id] == ABORTED) { // have done the query by early abort
                 return;
             }
-            acc_txn->n_callback_inc();
+	    acc_txn->subrpc_count[rpc_id]--;
             switch (status) {
                 case FINALIZED: // nothing to do
                     break;
                 case ABORTED:
                     acc_txn->set_query_abort();
+		    acc_txn->subrpc_status[rpc_id] = ABORTED;
                     break;
                 default: verify(0); break;
             }
-            if (acc_txn->all_callbacks_received() || acc_txn->query_result() == ABORTED) { // all versions decided or early abort
+	    if (acc_txn->subrpc_count[rpc_id] == 0 || acc_txn->subrpc_status[rpc_id] == ABORTED) { // all versions decided or early abort
                 // respond to AccStatusQuery RPC
-                acc_txn->set_query_done();
                 *res = acc_txn->query_result();
                 verify(defer != nullptr);
                 defer->reply();

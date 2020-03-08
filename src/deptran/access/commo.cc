@@ -8,7 +8,10 @@ namespace janus {
                                                                  uint64_t ssid_low,
                                                                  uint64_t ssid_high,
                                                                  uint64_t ssid_new,
-                                                                 TxnOutput &)> &callback) {
+                                                                 TxnOutput &)> &callback,
+					cmdid_t status_cmd_id,
+                                        int& n_status_query,
+                                        const std::function<void(int8_t res)> &callback_status) {
         cmdid_t cmd_id = sp_vec_piece->at(0)->root_id_;
         verify(sp_vec_piece->size() > 0);
         auto par_id = sp_vec_piece->at(0)->PartitionId();
@@ -31,11 +34,26 @@ namespace janus {
         sp_vpd->sp_vec_piece_data_ = sp_vec_piece;
         MarshallDeputy md(sp_vpd); // ????
         auto future = proxy->async_AccDispatch(cmd_id, md, ssid_spec, fuattr); // call Acc dispatch RPC
+
+	// now insert AccStatusQuery RPC here
+        rrr::FutureAttr status_fuattr;
+        status_fuattr.callback =
+                [coo, this, callback_status](Future* fu) {
+                    int8_t ret;
+                    fu->get_reply() >> ret;
+                    callback_status(ret);
+                };
+        n_status_query++;
+        auto future_status = proxy->async_AccStatusQuery(status_cmd_id, status_fuattr); // call Acc StatusQuery RPC
+
+        // release both RPCs sequentially
         Future::safe_release(future);
+	Future::safe_release(future_status);
+
         // FIXME fix this, this cause occ and perhaps 2pl to fail
         for (auto& pair : rpc_par_proxies_[par_id]) {
             if (pair.first != pair_leader_proxy.first) {
-                rrr::FutureAttr fu2;
+                rrr::FutureAttr fu2, fu2_status;
                 fu2.callback =
                         [coo, this, callback](Future* fu) {
                             int32_t ret;
@@ -46,7 +64,14 @@ namespace janus {
                             fu->get_reply() >> ret >> ssid_low >> ssid_high >> ssid_new >> outputs;
                             // do nothing
                         };
+		fu2_status.callback =
+                        [coo, this, callback_status](Future* fu) {
+                            int8_t ret;
+                            fu->get_reply() >> ret;
+                            // do nothing
+                        };
                 Future::safe_release(pair.second->async_AccDispatch(cmd_id, md, ssid_spec, fu2));
+		Future::safe_release(pair.second->async_AccStatusQuery(status_cmd_id, fu2_status));
             }
         }
     }
