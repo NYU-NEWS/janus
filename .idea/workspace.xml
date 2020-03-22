@@ -2,15 +2,15 @@
 <project version="4">
   <component name="CMakeRunConfigurationManager" shouldGenerate="true" shouldDeleteObsolete="true">
     <generated>
-      <config projectName="janus" targetName="YAMLCPP" />
+      <config projectName="janus" targetName="RRR" />
       <config projectName="janus" targetName="janusdb" />
-      <config projectName="janus" targetName="TEST" />
-      <config projectName="janus" targetName="gen-rpc" />
+      <config projectName="janus" targetName="EXTERN_C" />
+      <config projectName="janus" targetName="YAMLCPP" />
       <config projectName="janus" targetName="MEMDB" />
+      <config projectName="janus" targetName="gen-rpc" />
+      <config projectName="janus" targetName="TEST" />
       <config projectName="janus" targetName="paxosbench" />
       <config projectName="janus" targetName="ROCOCO_SERVER" />
-      <config projectName="janus" targetName="RRR" />
-      <config projectName="janus" targetName="EXTERN_C" />
     </generated>
   </component>
   <component name="CMakeSettings" AUTO_RELOAD="true">
@@ -21,11 +21,8 @@
   <component name="ChangeListManager">
     <list default="true" id="90fe84fa-ca18-4530-9a88-ce9ad2f7923a" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/access/column.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/access/column.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/access/coordinator.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/access/coordinator.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/access/coordinator.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/access/coordinator.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/access/row.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/access/row.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/access/scheduler.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/access/scheduler.cc" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/CMakeLists.txt" beforeDir="false" afterPath="$PROJECT_DIR$/CMakeLists.txt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/deptran/workload.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/workload.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -81,19 +78,20 @@
     <property name="cf.advertisement.text.has.clang-format" value="true" />
     <property name="js-jscs-nodeInterpreter" value="/usr/local/bin/node" />
     <property name="js.eslint.eslintPackage" value="" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/config" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/src/bench" />
     <property name="nodejs_interpreter_path" value="node" />
     <property name="nodejs_package_manager_path" value="npm" />
     <property name="run.code.analysis.last.selected.profile" value="pProject Default" />
     <property name="settings.editor.selected.configurable" value="language.cpp" />
   </component>
   <component name="RecentsManager">
-    <key name="CopyFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$/config" />
-    </key>
     <key name="MoveFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/src/deptran/access" />
       <recent name="$PROJECT_DIR$/deptran" />
+    </key>
+    <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/bench" />
+      <recent name="$PROJECT_DIR$/config" />
     </key>
   </component>
   <component name="RunManager" selected="CMake Application.acc-tpca-simple">

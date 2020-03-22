@@ -16,6 +16,10 @@ class Sharding;
 class Workload {
  public:
   typedef struct {
+      int n_friends_;
+  } fb_para_t;
+
+  typedef struct {
     int n_branch_;
     int n_teller_;
     int n_customer_;
@@ -34,6 +38,7 @@ class Workload {
   } micro_bench_para_t;
 
   union {
+    fb_para_t fb_para_;
     tpca_para_t tpca_para_;
     rw_benchmark_para_t rw_benchmark_para_;
     micro_bench_para_t micro_bench_para_;
