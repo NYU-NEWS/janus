@@ -27,13 +27,12 @@ namespace janus {
             GetRotxnRequest(req, cid);
         }
         req->n_try_ = n_try_;
-        //Value amount((i64) RandomGenerator::rand(0, 10000));
     }
 
     void FBWorkload::GetWriteRequest(TxRequest* req, uint32_t cid) {
         for (int i = 0; i < N_KEYS_PER_WRITE; ++i) { // fb should have 1 key per write
             int key = KeyGenerator();
-            req->input_.values_->emplace(i, Value(key));
+            req->input_[FB_REQ_VAR_ID(i)] = Value(key);
         }
     }
 
@@ -43,11 +42,11 @@ namespace janus {
         GenerateReadKeys(keys, rotxn_size);
         int index = 0;
         for (const auto& key : keys) {
-            req->input_.values_->emplace(index++, key);
+            req->input_[FB_REQ_VAR_ID(index++)] = Value(key);
         }
     }
 
-    int FBWorkload::KeyGenerator() const {
+    int FBWorkload::KeyGenerator() {
         const auto& dist = Config::GetConfig()->dist_;
         if (dist == "uniform") { // uniform workloads
             std::uniform_int_distribution<> d(0, fb_para_.n_friends_ - 1);
@@ -118,82 +117,61 @@ namespace janus {
         verify(keys.size() == size);
     }
 
+    void FBWorkload::RegisterPrecedures() {
+        for (int i = 0; i < MAX_TXN_SIZE; ++i) {
+            // a read
+            RegP(FB_ROTXN, FB_ROTXN_P(i), {FB_REQ_VAR_ID(i)}, {}, {}, {FB_TABLE, {FB_REQ_VAR_ID(i)}}, DF_NO,
+                 LPROC {
+                     verify(cmd.input.size() > 0);
+                     mdb::Row *r = nullptr;
+                     mdb::MultiBlob mb(1);
+                     mb[0] = cmd.input.at(FB_REQ_VAR_ID(i)).get_blob();
+                     int key = cmd.input.at(FB_REQ_VAR_ID(i)).get_i32();
+                     r = tx.Query(tx.GetTable(FB_TABLE), mb);
+                     verify(!COL_COUNTS.empty());
+                     verify(key < COL_COUNTS.size());
+                     int n_col = COL_COUNTS.at(key);
+                     std::vector<int> col_ids;
+                     for (int col_id = 1; col_id < n_col; ++col_id) {
+                         col_ids.emplace_back(col_id);
+                     }
+                     std::vector<Value> results;
+                     tx.ReadColumns(r, col_ids, &results, TXN_BYPASS);
+                     output[FB_ROTXN_OUTPUT(i)] = results.at(0);  // we only keep the first col's result for now
+                                                                      // FIXME: fix this later for real
+                     *res = SUCCESS;
+                }
+            );
+            // a write
+            RegP(FB_WRITE, FB_WRITE_P(i), {FB_REQ_VAR_ID(i)}, {}, {}, {FB_TABLE, {FB_REQ_VAR_ID(i)}}, DF_NO,
+                 LPROC {
+                     verify(cmd.input.size() > 0);
+                     mdb::Row *r = nullptr;
+                     mdb::MultiBlob mb(1);
+                     mb[0] = cmd.input.at(FB_REQ_VAR_ID(i)).get_blob();
+                     int key = cmd.input.at(FB_REQ_VAR_ID(i)).get_i32();
+                     r = tx.Query(tx.GetTable(FB_TABLE), mb);
+                     verify(!COL_COUNTS.empty());
+                     verify(key < COL_COUNTS.size());
+                     int n_col = COL_COUNTS.at(key);
+                     std::vector<int> col_ids;
+                     std::vector<Value> values;
+                     for (int col_id = 1; col_id < n_col; ++col_id) {
+                         col_ids.emplace_back(col_id);
+                         values.emplace_back(get_fb_value());
+                     }
+                     tx.WriteColumns(r, col_ids, values, TXN_BYPASS);
+                     *res = SUCCESS;
+                 }
+            );
+        }
+    }
 
-void FBWorkload::RegisterPrecedures() {
-  RegP(TPCA_PAYMENT, TPCA_PAYMENT_1,
-       {TPCA_VAR_X}, // i
-       {}, // TODO o
-       {conf_id_t(TPCA_CUSTOMER, {TPCA_VAR_X}, {1}, TPCA_ROW_1)}, // c
-       {TPCA_CUSTOMER, {TPCA_VAR_X}}, // s
-       DF_NO,
-       PROC {
-//        Log::debug("output: %p, output_size: %p", output, output_size);
-         Value buf;
-         verify(cmd.input.size() >= 1);
-
-         mdb::Row *r = NULL;
-         mdb::MultiBlob mb(1);
-         mb[0] = cmd.input.at(TPCA_VAR_X).get_blob();
-
-         r = tx.Query(tx.GetTable(TPCA_CUSTOMER), mb, TPCA_ROW_1);
-//         tx.ReadColumn(r, 1, &buf, TXN_IMMEDIATE); // TODO test for janus and troad
-         tx.ReadColumn(r, 1, &buf, TXN_BYPASS); // TODO test for janus and troad
-         output[TPCA_VAR_OX] = buf;
-
-         int n = tx.tid_; // making this non-commutative in order to test isolation
-//         buf.set_i32(buf.get_i32() + 1/*input[1].get_i32()*/);
-         buf.set_i32(n/*input[1].get_i32()*/);
-         tx.WriteColumn(r, 1, buf, TXN_DEFERRED);
-         *res = SUCCESS;
-       }
-  );
-
-  RegP(TPCA_PAYMENT, TPCA_PAYMENT_2,
-       {TPCA_VAR_Y}, // i
-       {}, // o
-       {conf_id_t(TPCA_CUSTOMER, {TPCA_VAR_Y}, {1}, TPCA_ROW_2)}, // c
-       {TPCA_TELLER, {TPCA_VAR_Y} }, // s
-       DF_REAL,
-       PROC {
-         Value buf;
-         verify(cmd.input.size() >= 1);
-         mdb::Row *r = NULL;
-         mdb::MultiBlob mb(1);
-         mb[0] = cmd.input.at(TPCA_VAR_Y).get_blob();
-
-         r = tx.Query(tx.GetTable(TPCA_TELLER), mb, TPCA_ROW_2);
-         tx.ReadColumn(r, 1, &buf, TXN_BYPASS);
-         output[TPCA_VAR_OY] = buf;
-         buf.set_i32(buf.get_i32() + 1/*input[1].get_i32()*/);
-         tx.WriteColumn(r, 1, buf, TXN_DEFERRED);
-         *res = SUCCESS;
-       }
-  );
-
-  RegP(TPCA_PAYMENT, TPCA_PAYMENT_3,
-       {TPCA_VAR_Z}, // i
-       {}, // o
-       {conf_id_t(TPCA_CUSTOMER, {TPCA_VAR_Z}, {1}, TPCA_ROW_3)}, // c
-       {TPCA_BRANCH, {TPCA_VAR_Z}},
-       DF_REAL,
-       PROC {
-         Value buf;
-         verify(cmd.input.size() >= 1);
-         i32 output_index = 0;
-
-         mdb::Row *r = NULL;
-         mdb::MultiBlob mb(1);
-         mb[0] = cmd.input.at(TPCA_VAR_Z).get_blob();
-
-         r = tx.Query(tx.GetTable(TPCA_BRANCH), mb, TPCA_ROW_3);
-         tx.ReadColumn(r, 1, &buf, TXN_BYPASS);
-         output[TPCA_VAR_OZ] = buf;
-         buf.set_i32(buf.get_i32() + 1/*input[1].get_i32()*/);
-         tx.WriteColumn(r, 1, buf, TXN_DEFERRED);
-         *res = SUCCESS;
-       }
-  );
-}
-
+    const Value& FBWorkload::get_fb_value() const {
+        verify(!FB_VALUES.empty());
+        std::uniform_int_distribution<> dis(0, FB_VALUES.size() - 1);
+        int index = dis(rand_gen_);
+        return FB_VALUES.at(index);
+    }
 } // namespace janus
 

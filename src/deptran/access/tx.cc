@@ -10,13 +10,13 @@ namespace janus {
         // class downcasting to get AccRow
         auto acc_row = dynamic_cast<AccRow*>(row);
         unsigned long index = 0;
-	bool is_decided = true;
+	    bool is_decided = true;
         SSID ssid = acc_row->read_column(col_id, value, sg.ssid_spec, sg.offset_safe, index, is_decided);
         row->ref_copy();
-	sg.metadata.indices[row][col_id] = index;  // for later validation, could be overwritten by later writes
+	    sg.metadata.indices[row][col_id] = index;  // for later validation, could be overwritten by later writes
         if (!is_decided) {
             sg.decided = false;
-	    row->ref_copy();
+	        row->ref_copy();
             sg.metadata.reads_for_query[row][col_id] = index;  // for later AccStatusQuery on read versions
         }
         // update metadata
@@ -33,14 +33,14 @@ namespace janus {
         for (auto col_id : col_ids) {
             Value *v = nullptr;
             unsigned long index = 0;
-	    bool is_decided = true;
-	    SSID ssid = acc_row->read_column(col_id, v, sg.ssid_spec, sg.offset_safe, index, is_decided);
-            verify(v != nullptr);
-            values->push_back(std::move(*v));
-	    row->ref_copy();
+	        bool is_decided = true;
+	        SSID ssid = acc_row->read_column(col_id, v, sg.ssid_spec, sg.offset_safe, index, is_decided);
+	        verify(v != nullptr);
+	        values->push_back(std::move(*v));
+	        row->ref_copy();
             sg.metadata.indices[row][col_id] = index;  // for later validation
-	    if (!is_decided) {
-		row->ref_copy();
+	        if (!is_decided) {
+		    row->ref_copy();
                 sg.decided = false;
                 sg.metadata.reads_for_query[row][col_id] = index;  // for later AccStatusQuery on read versions
             }
@@ -59,7 +59,7 @@ namespace janus {
         unsigned long ver_index = 0;
         SSID ssid = acc_row->write_column(col_id, std::move(value), sg.ssid_spec, this->tid_, ver_index, sg.offset_safe); // ver_index is new write
         row->ref_copy();
-	sg.update_metadata(ssid.ssid_low, ssid.ssid_high, false);
+	    sg.update_metadata(ssid.ssid_low, ssid.ssid_high, false);
         sg.metadata.indices[row][col_id] = ver_index; // for validation and finalize
         return true;
     }
@@ -75,7 +75,7 @@ namespace janus {
             unsigned long ver_index = 0;
             SSID ssid = acc_row->write_column(col_id, std::move(values[v_counter++]), sg.ssid_spec, this->tid_, ver_index, sg.offset_safe);
             sg.update_metadata(ssid.ssid_low, ssid.ssid_high, false);
-	    row->ref_copy();
+	        row->ref_copy();
             sg.metadata.indices[row][col_id] = ver_index; // for validation and finalize
         }
         return true;
@@ -90,11 +90,11 @@ namespace janus {
     }
 
     int AccTxn::n_query_inc() {
-	return ++sg._n_query;
+	    return ++sg._n_query;
     }
 
     int AccTxn::n_callback_inc() {
-	return ++sg._n_query_callback;
+	    return ++sg._n_query_callback;
     }
 
     bool AccTxn::all_callbacks_received() const {
@@ -119,20 +119,20 @@ namespace janus {
 
     void AccTxn::insert_callbacks(const shared_ptr<AccTxn>& acc_txn, int8_t *res, DeferredReply* defer, int rpc_id) {
         query_callbacks.emplace_back([=](int8_t status) -> void {
-	    if (acc_txn->subrpc_status[rpc_id] == ABORTED) { // have done the query by early abort
+	        if (acc_txn->subrpc_status[rpc_id] == ABORTED) { // have done the query by early abort
                 return;
             }
-	    acc_txn->subrpc_count[rpc_id]--;
+	        acc_txn->subrpc_count[rpc_id]--;
             switch (status) {
                 case FINALIZED: // nothing to do
                     break;
                 case ABORTED:
                     acc_txn->set_query_abort();
-		    acc_txn->subrpc_status[rpc_id] = ABORTED;
+		            acc_txn->subrpc_status[rpc_id] = ABORTED;
                     break;
                 default: verify(0); break;
             }
-	    if (acc_txn->subrpc_count[rpc_id] == 0 || acc_txn->subrpc_status[rpc_id] == ABORTED) { // all versions decided or early abort
+	        if (acc_txn->subrpc_count[rpc_id] == 0 || acc_txn->subrpc_status[rpc_id] == ABORTED) { // all versions decided or early abort
                 // respond to AccStatusQuery RPC
                 *res = acc_txn->query_result();
                 verify(defer != nullptr);
