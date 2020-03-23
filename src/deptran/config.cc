@@ -475,6 +475,8 @@ void Config::InitBench(std::string &bench_str) {
     benchmark_ = RW_BENCHMARK;
   } else if (bench_str == "micro_bench") {
     benchmark_ = MICRO_BENCH;
+  } else if (bench_str == "facebook") {
+    benchmark_ = FACEBOOK;
   } else {
     Log_error("No implementation for benchmark: %s", bench_str.c_str());
     verify(0);

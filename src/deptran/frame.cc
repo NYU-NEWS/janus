@@ -52,6 +52,10 @@
 
 #include "extern_c/frame.h"
 
+// for facebook benchmark
+#include "bench/facebook/workload.h"
+#include "bench/facebook/procedure.h"
+#include "bench/facebook/sharding.h"
 
 namespace janus {
 
@@ -124,6 +128,9 @@ Sharding* Frame::CreateSharding() {
       break;
     case TPCA:
       ret = new TpcaSharding();
+      break;
+    case FACEBOOK:
+      ret = new FBSharding();
       break;
     default:
       verify(0);
@@ -241,6 +248,10 @@ void Frame::GetTxTypes(std::map<int32_t, std::string>& txn_types) {
       txn_types[MICRO_BENCH_R] = std::string(MICRO_BENCH_R_NAME);
       txn_types[MICRO_BENCH_W] = std::string(MICRO_BENCH_W_NAME);
       break;
+    case FACEBOOK:
+      txn_types[FB_ROTXN] = std::string(FB_ROTXN_NAME);
+      txn_types[FB_WRITE] = std::string(FB_WRITE_NAME);
+      break;
     default:
       Log_fatal("benchmark not implemented");
       verify(0);
@@ -269,6 +280,10 @@ TxData* Frame::CreateTxnCommand(TxRequest& req, shared_ptr<TxnRegistry> reg) {
       break;
     case MICRO_BENCH:
       cmd = new MicroProcedure();
+      break;
+    case FACEBOOK:
+      verify(req.tx_type_ == FB_ROTXN || req.tx_type_ == FB_WRITE);
+      cmd = new FBChopper();
       break;
     default:
       verify(0);
@@ -383,6 +398,9 @@ Workload * Frame::CreateTxGenerator() {
       break;
     case RW_BENCHMARK:
       gen = new RwWorkload(Config::GetConfig());
+      break;
+    case FACEBOOK:
+      gen = new FBWorkload(Config::GetConfig());
       break;
     case MICRO_BENCH:
     default:

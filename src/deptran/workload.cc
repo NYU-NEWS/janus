@@ -26,6 +26,10 @@
 #include "bench/micro/workload.h"
 #include "bench/micro/procedure.h"
 
+// facebook
+#include "bench/facebook/workload.h"
+#include "bench/facebook/procedure.h"
+
 namespace janus {
 
 Workload* Workload::CreateWorkload(Config *config) {
@@ -43,6 +47,8 @@ Workload* Workload::CreateWorkload(Config *config) {
       return new RwWorkload(config);
     case MICRO_BENCH:
       return new MicroWorkload(config);
+    case FACEBOOK:
+      return new FBWorkload(config);
     default:
       verify(0);
       return NULL;
@@ -83,6 +89,9 @@ Workload::Workload(Config* config)
                 RandomGenerator::rand(0, rw_benchmark_para_.n_table_) :
                 -1;
       break;
+    case FACEBOOK:
+      fb_para_.n_friends_ = table_num_rows[std::string(FB_TABLE)];
+      break;
     default:
       Log_fatal("benchmark not implemented");
       verify(0);
@@ -111,6 +120,10 @@ void Workload::GetProcedureTypes(map<int32_t, string> &txn_types) {
     case MICRO_BENCH:
       txn_types[MICRO_BENCH_R] = std::string(MICRO_BENCH_R_NAME);
       txn_types[MICRO_BENCH_W] = std::string(MICRO_BENCH_W_NAME);
+      break;
+    case FACEBOOK:
+      txn_types[FB_ROTXN] = std::string(FB_ROTXN_NAME);
+      txn_types[FB_WRITE] = std::string(FB_WRITE_NAME);
       break;
     default:
       Log_fatal("benchmark not implemented");
