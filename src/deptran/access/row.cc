@@ -12,6 +12,14 @@ namespace janus {
         }
         auto* raw_row = new AccRow();
         auto* new_row = (AccRow*)mdb::Row::create(raw_row, schema, values_ptr);
+        verify(values.size() <= schema->columns_count());
+        for (int col_id = 0; col_id < values.size(); ++col_id) {
+            new_row->_row.emplace(
+                    std::piecewise_construct,
+                    std::make_tuple(col_id),
+                    std::make_tuple(col_id, std::move(values.at(col_id))));
+        }
+        /* Obsolete. because workloads may only populate a subset of cols for each key, e.g., FB
         for (auto col_info_it = schema->begin(); col_info_it != schema->end(); col_info_it++) {
             int col_id = schema->get_column_id(col_info_it->name);
             new_row->_row.emplace(
@@ -19,6 +27,7 @@ namespace janus {
                     std::make_tuple(col_id),
                     std::make_tuple(col_id, std::move(values.at(col_id))));
         }
+        */
         return new_row;
     }
 

@@ -19,7 +19,7 @@ namespace janus {
         void OnValidate(cmdid_t cmd_id, snapshotid_t ssid_new, int8_t* res);
         void OnFinalize(cmdid_t cmd_id, int8_t decision);
         void OnStatusQuery(cmdid_t cmd_id, int8_t* res, DeferredReply* defer);
-	void check_status(cmdid_t cmd_id, bool& is_decided, bool& will_abort);
+	    void check_status(cmdid_t cmd_id, bool& is_decided, bool& will_abort);
         bool Guard(Tx &tx_box, Row* row, int col_id, bool write) override {
             // do nothing, just has to override this pure virtual func.
             return true;

@@ -38,7 +38,7 @@ namespace janus {
 
         //bool InsertRow(Table *tbl, Row *row) override;
 
-	int n_query_inc();
+	    int n_query_inc();
         int n_callback_inc();
         int n_callback() const {
             return sg._n_query_callback;
@@ -50,18 +50,17 @@ namespace janus {
         void set_query_abort();
         int8_t query_result() const;
         bool is_query_done() const;
-	bool is_status_abort() const;
+	    bool is_status_abort() const;
         void insert_callbacks(const shared_ptr<AccTxn>& acc_txn, int8_t *res, DeferredReply* defer, int rpc_id);
 
         ~AccTxn() override;
     private:
         SafeGuard sg;
-	std::vector<std::function<void(int8_t)>> query_callbacks;  // for AccStatusQuery RPC
-	std::unordered_map<int, int> subrpc_count;   // tracks the number of sub-callbacks for each query rpc
+	    std::vector<std::function<void(int8_t)>> query_callbacks;  // for AccStatusQuery RPC
+	    std::unordered_map<int, int> subrpc_count;   // tracks the number of sub-callbacks for each query rpc
         std::unordered_map<int, int8_t> subrpc_status;
         void load_speculative_ssid(snapshotid_t ssid);
         friend class SchedulerAcc;
     };
-
 }   // namespace janus
 

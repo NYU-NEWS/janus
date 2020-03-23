@@ -11,7 +11,21 @@ namespace janus {
         std::map<std::string, uint64_t> table_num_rows;
         sharding_->get_number_rows(table_num_rows);
         fb_para_.n_friends_ = table_num_rows[std::string(FB_TABLE)];
-        verify(single_server_ == Config::SS_DISABLED);
+        //verify(single_server_ == Config::SS_DISABLED);
+        switch (single_server_) {
+            case Config::SS_DISABLED:
+                fix_id_ = -1;
+                break;
+            case Config::SS_THREAD_SINGLE:
+            case Config::SS_PROCESS_SINGLE: {
+                fix_id_ = RandomGenerator::rand(0, fb_para_.n_friends_ - 1);
+                unsigned int f;
+                sharding_->GetPartition(FB_TABLE, Value(fix_id_), f);
+                break;
+            }
+            default:
+                verify(0);
+        }
         rand_gen_.seed((int)std::time(0) + (uint64_t)pthread_self());
     }
 
@@ -34,6 +48,7 @@ namespace janus {
             int key = KeyGenerator();
             req->input_[FB_REQ_VAR_ID(i)] = Value(key);
         }
+        req->input_[FB_OP_COUNT] = Value(N_KEYS_PER_WRITE);
     }
 
     void FBWorkload::GetRotxnRequest(TxRequest *req, uint32_t cid) {
@@ -44,6 +59,7 @@ namespace janus {
         for (const auto& key : keys) {
             req->input_[FB_REQ_VAR_ID(index++)] = Value(key);
         }
+        req->input_[FB_OP_COUNT] = Value((i32)keys.size());
     }
 
     int FBWorkload::KeyGenerator() {
@@ -55,13 +71,13 @@ namespace janus {
             static auto alpha = Config::GetConfig()->coeffcient_;
             static ZipfDist d(alpha, fb_para_.n_friends_);
             return d(rand_gen_);  // TODO: tpca does "rotate", what is that for?
-        } else {
+        } else { // FIXME: we do not support fixed_dist for now
             verify(0); // do not support other workloads for now
             return 0;
         }
     }
 
-    int FBWorkload::GetReadBatchSize() const {
+    int FBWorkload::GetReadBatchSize() {
         std::uniform_real_distribution<> dis(0.0, 1.0);
         double token = dis(rand_gen_);
         // the following logic is gotten from Eiger's FB workload generator (TAO)
@@ -132,7 +148,7 @@ namespace janus {
                      verify(key < COL_COUNTS.size());
                      int n_col = COL_COUNTS.at(key);
                      std::vector<int> col_ids;
-                     for (int col_id = 1; col_id < n_col; ++col_id) {
+                     for (int col_id = 1; col_id <= n_col; ++col_id) { // we don't read/write the key col
                          col_ids.emplace_back(col_id);
                      }
                      std::vector<Value> results;
@@ -156,7 +172,7 @@ namespace janus {
                      int n_col = COL_COUNTS.at(key);
                      std::vector<int> col_ids;
                      std::vector<Value> values;
-                     for (int col_id = 1; col_id < n_col; ++col_id) {
+                     for (int col_id = 1; col_id <= n_col; ++col_id) { // we don't read/write the key col
                          col_ids.emplace_back(col_id);
                          values.emplace_back(get_fb_value());
                      }
@@ -167,7 +183,7 @@ namespace janus {
         }
     }
 
-    const Value& FBWorkload::get_fb_value() const {
+    const Value& FBWorkload::get_fb_value() {
         verify(!FB_VALUES.empty());
         std::uniform_int_distribution<> dis(0, FB_VALUES.size() - 1);
         int index = dis(rand_gen_);

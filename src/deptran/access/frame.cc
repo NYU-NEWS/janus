@@ -30,7 +30,7 @@ namespace janus {
 
     mdb::Row* FrameAcc::CreateRow(const mdb::Schema *schema,
                                   vector<Value> &row_data) {
-        verify(row_data.size() == schema->columns_count());
+        // verify(row_data.size() == schema->columns_count()); // workloads may only populate a subset of cols, e.g., FB
         return (mdb::Row*)AccRow::create(schema, row_data);
     }
 

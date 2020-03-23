@@ -23,7 +23,7 @@ namespace janus {
         bool validate(txnid_t tid, mdb::colid_t col_id, unsigned long index, snapshotid_t ssid_new, bool validate_consistent);
         void finalize(txnid_t tid, mdb::colid_t col_id, unsigned long ver_index, int8_t decision);
         int8_t check_status(mdb::colid_t col_id, unsigned long index);
-	txnid_t get_ver_tid(mdb::colid_t col_id, unsigned long index);
+	    txnid_t get_ver_tid(mdb::colid_t col_id, unsigned long index);
     private:
         // a map of txn_q; keys are cols, values are linkedvectors that holding txns (versions)
         std::unordered_map<mdb::colid_t, AccColumn> _row;

@@ -89,7 +89,7 @@ namespace janus {
         snapshotid_t logical_head_ssid_for_writes() const;
         snapshotid_t logical_head_ssid_for_reads() const;
         acc_status_t logical_head_status() const;
-	snapshotid_t next_record_ssid(unsigned long index) const;	
+	    snapshotid_t next_record_ssid(unsigned long index) const;
 
         /* stable frontier related */
         unsigned long _stable_frontier = 0;

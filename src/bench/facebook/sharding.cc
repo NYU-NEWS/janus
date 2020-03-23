@@ -34,9 +34,16 @@ namespace janus {
             verify(!FB_VALUES.empty());
             int n_col = get_n_column(key_value.get_i32());
             verify(n_col > 0);
+            n_col = n_col == 1 ? ++n_col : n_col; // we have to populate the key column, so write at least 2 cols for each row
             for (int index = 0; index < n_col; ++index) {
-                Value v = get_fb_value();
-                row_data.emplace_back(v);
+                if (tb_info_ptr->columns[index].is_primary) {
+                    // this col is the key
+                    row_data.push_back(key_value);
+                } else {
+                    // this col is a regular col
+                    Value v = get_fb_value();
+                    row_data.emplace_back(v);
+                }
             }
             verify(row_data.size() == n_col);
             auto r = frame_->CreateRow(schema, row_data);
