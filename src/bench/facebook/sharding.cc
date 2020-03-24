@@ -16,7 +16,7 @@ namespace janus {
             verify(tb_info_ptr->columns[col_index].type == col_it->type);
             if (tb_info_ptr->columns[col_index].is_primary) {
                 verify(col_it->indexed);
-                verify(tb_info_ptr->columns[col_index].type == Value::I64);  // we use userId as primary key
+                verify(tb_info_ptr->columns[col_index].type == Value::I32);  // we use userId as primary key
                 key_value = value_get_zero(tb_info_ptr->columns[col_index].type);
                 max_key = value_get_n(tb_info_ptr->columns[col_index].type,
                             tb_info_ptr->num_records);
@@ -44,7 +44,7 @@ namespace janus {
                     row_data.emplace_back(v);
                 }
             }
-            verify(row_data.size() == n_col);
+            verify(row_data.size() == n_col + 1); // we populate n + 1 cols b/c the first col is the primary key
             auto r = frame_->CreateRow(schema, row_data);
             table_ptr->insert(r);
         }

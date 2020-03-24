@@ -21,9 +21,7 @@
   <component name="ChangeListManager">
     <list default="true" id="90fe84fa-ca18-4530-9a88-ce9ad2f7923a" name="Default" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/bench/facebook/sharding.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/bench/facebook/sharding.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/config.cc" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/config.cc" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/deptran/config.h" beforeDir="false" afterPath="$PROJECT_DIR$/src/deptran/config.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config/facebook.yml" beforeDir="false" afterPath="$PROJECT_DIR$/config/facebook.yml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -747,7 +745,7 @@
       <workItem from="1583161611067" duration="12319000" />
       <workItem from="1583178639452" duration="2977000" />
       <workItem from="1584898536525" duration="33402000" />
-      <workItem from="1584982426118" duration="16361000" />
+      <workItem from="1584982426118" duration="16840000" />
     </task>
     <servers />
   </component>

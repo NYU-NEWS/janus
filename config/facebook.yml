@@ -13,4 +13,4 @@ bench:
 # schema: [generated in code: config.cc]
 
 sharding:
-  freinds:   MOD
+  friends:   MOD
