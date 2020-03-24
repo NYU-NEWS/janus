@@ -45,6 +45,11 @@ namespace janus {
                 }
             }
             verify(row_data.size() == n_col + 1); // we populate n + 1 cols b/c the first col is the primary key
+            // now we fill the rest of the cols with empty values
+            // this is a hot fix to make fb bench work with legacy models: occ, 2pl, etc
+            for (int i = n_col + 1; i < 1025; ++i) { // index of all cols is 0 -- 1024
+                row_data.emplace_back(Value(""));
+            }
             auto r = frame_->CreateRow(schema, row_data);
             table_ptr->insert(r);
         }

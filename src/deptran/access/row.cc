@@ -12,7 +12,7 @@ namespace janus {
         }
         auto* raw_row = new AccRow();
         auto* new_row = (AccRow*)mdb::Row::create(raw_row, schema, values_ptr);
-        verify(values.size() <= schema->columns_count());
+        verify(values.size() == schema->columns_count());
         for (int col_id = 0; col_id < values.size(); ++col_id) {
             new_row->_row.emplace(
                     std::piecewise_construct,
