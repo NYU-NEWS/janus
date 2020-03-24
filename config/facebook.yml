@@ -6,7 +6,7 @@ bench:
     page_render: 0.998
     page_update: 0.002
   population: # intial number of records in the table table
-    friends:   100
+    friends:   10000
   dist: zipf
   coefficient: 0.99 # 0 as unifrom, 1 as pure zipf
 

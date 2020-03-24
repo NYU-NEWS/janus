@@ -53,6 +53,8 @@ namespace janus {
 
     void FBWorkload::GetRotxnRequest(TxRequest *req, uint32_t cid) {
         int rotxn_size = GetReadBatchSize();
+        //Log_info("rotxn_size = %d.", rotxn_size);
+        //rotxn_size = 5;
         std::unordered_set<int> keys;
         GenerateReadKeys(keys, rotxn_size);
         int index = 0;
@@ -147,6 +149,13 @@ namespace janus {
                      verify(!COL_COUNTS.empty());
                      verify(key < COL_COUNTS.size());
                      int n_col = COL_COUNTS.at(key);
+                     Value result;
+                     for (int col_id = 1; col_id <= n_col; ++col_id) { // we don't read/write the key col
+                         tx.ReadColumn(r, col_id, &result, TXN_BYPASS);
+                     }
+                     output[FB_ROTXN_OUTPUT(i)] = result; // we only keep the first col's result for now
+                                                          // FIXME: fix this later for real
+                     /*
                      std::vector<int> col_ids;
                      for (int col_id = 1; col_id <= n_col; ++col_id) { // we don't read/write the key col
                          col_ids.emplace_back(col_id);
@@ -155,6 +164,7 @@ namespace janus {
                      tx.ReadColumns(r, col_ids, &results, TXN_BYPASS);
                      output[FB_ROTXN_OUTPUT(i)] = results.at(0);  // we only keep the first col's result for now
                                                                       // FIXME: fix this later for real
+                     */
                      *res = SUCCESS;
                 }
             );
@@ -170,6 +180,11 @@ namespace janus {
                      verify(!COL_COUNTS.empty());
                      verify(key < COL_COUNTS.size());
                      int n_col = COL_COUNTS.at(key);
+                     Value v = get_fb_value();
+                     for (int col_id = 1; col_id <= n_col; ++col_id) { // we don't read/write the key col
+                         tx.WriteColumn(r, col_id, v, TXN_BYPASS);
+                     }
+                     /*
                      std::vector<int> col_ids;
                      std::vector<Value> values;
                      for (int col_id = 1; col_id <= n_col; ++col_id) { // we don't read/write the key col
@@ -177,6 +192,7 @@ namespace janus {
                          values.emplace_back(get_fb_value());
                      }
                      tx.WriteColumns(r, col_ids, values, TXN_BYPASS);
+                     */
                      *res = SUCCESS;
                  }
             );
