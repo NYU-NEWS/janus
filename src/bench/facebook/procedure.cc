@@ -35,7 +35,7 @@ namespace janus {
             output_size_= {{i, 1}};
             p_types_ = {{FB_ROTXN_P(i), FB_ROTXN_P(i)}};
             sss_->GetPartition(FB_TABLE, req.input_[FB_REQ_VAR_ID(i)],
-                               sharding_[FB_REQ_VAR_ID(i)]);
+                               sharding_[FB_ROTXN_P(i)]);
         }
     }
 
@@ -52,7 +52,7 @@ namespace janus {
             output_size_= {{i, 0}};
             p_types_ = {{FB_WRITE_P(i), FB_WRITE_P(i)}};
             sss_->GetPartition(FB_TABLE, req.input_[FB_REQ_VAR_ID(i)],
-                               sharding_[FB_REQ_VAR_ID(i)]);
+                               sharding_[FB_WRITE_P(i)]);
         }
     }
 
