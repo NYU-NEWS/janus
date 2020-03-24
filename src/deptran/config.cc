@@ -565,6 +565,11 @@ void Config::LoadBenchYML(YAML::Node config) {
     coeffcient_ = config["coefficient"].as<float>();
   if (config["rotate"])
     rotate_ = config["rotate"].as<int32_t>();
+
+  // We hard code Facebook schema
+  if (benchmark_ == FACEBOOK) {
+      GenerateFBSchema();
+  }
 }
 
 void Config::LoadSchemaYML(YAML::Node config) {
@@ -590,6 +595,41 @@ void Config::LoadSchemaYML(YAML::Node config) {
     sharding_->tb_infos_[tbl_name] = tbl_info;
   }
   sharding_->BuildTableInfoPtr();
+}
+
+void Config::GenerateFBSchema() {
+    verify(sharding_);
+    auto &tb_infos = sharding_->tb_infos_;
+    std::string tbl_name = "friends";
+    auto info_it = tb_infos.find(tbl_name);
+    if(info_it == tb_infos.end()) {
+        tb_infos[tbl_name] = Sharding::tb_info_t();
+        info_it = tb_infos.find(tbl_name);
+    }
+    auto &tbl_info = info_it->second;
+    GenerateFBTableColumnInfo(tbl_info);
+    tbl_info.tb_name = tbl_name;
+    sharding_->tb_infos_[tbl_name] = tbl_info;
+}
+
+void Config::GenerateFBTableColumnInfo(Sharding::tb_info_t &tbl_info) {
+    int max_n_cols = 1025;  // this is max 1024 accessible cols + 1 key col
+    for (int i = 0; i < max_n_cols; ++i) {
+        // note that col 0 is the primary key
+        std::string c_type = i == 0 ? "integer" : "string";
+        Value::kind c_v_type = i == 0 ? Value::I32 : Value::STR;
+        bool c_primary = i == 0 ? true : false;
+        std::string c_name = std::to_string(i);  // we use col_id also for col_name
+        std::string c_foreign, ftbl_name, fcol_name;
+        bool is_foreign = false;
+        tbl_info.columns.push_back(Sharding::column_t(c_v_type,
+                                                      c_name,
+                                                      c_primary,
+                                                      is_foreign,
+                                                      ftbl_name,
+                                                      fcol_name));
+
+    }
 }
 
 void Config::LoadSchemaTableColumnYML(Sharding::tb_info_t &tb_info,

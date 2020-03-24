@@ -34,8 +34,7 @@ namespace janus {
             verify(!FB_VALUES.empty());
             int n_col = get_n_column(key_value.get_i32());
             verify(n_col > 0);
-            n_col = n_col == 1 ? ++n_col : n_col; // we have to populate the key column, so write at least 2 cols for each row
-            for (int index = 0; index < n_col; ++index) {
+            for (int index = 0; index <= n_col; ++index) { // we have to populate the key column, so total max = 1024 + 1
                 if (tb_info_ptr->columns[index].is_primary) {
                     // this col is the key
                     row_data.push_back(key_value);

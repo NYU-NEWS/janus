@@ -1,0 +1,16 @@
+
+bench:
+  workload: facebook
+  scale: 1
+  weight: # these are hard coded, modify here won't have any effects
+    page_render: 0.998
+    page_update: 0.002
+  population: # intial number of records in the table table
+    friends:   1000000
+  dist: zipf
+  coefficient: 0.99 # 0 as unifrom, 1 as pure zipf
+
+# schema: [generated in code: config.cc]
+
+sharding:
+  freinds:   MOD

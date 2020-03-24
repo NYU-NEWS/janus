@@ -243,6 +243,10 @@ class Config {
     map<string, double> &get_txn_weights();
 
   void BuildSiteProcMap(YAML::Node node);
+
+private:
+    void GenerateFBSchema();
+    void GenerateFBTableColumnInfo(Sharding::tb_info_t &tbl_info);
 };
 } // namespace janus
 
