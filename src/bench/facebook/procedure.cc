@@ -56,17 +56,51 @@ namespace janus {
         }
     }
 
+    void FBChopper::FBRotxnRetry() {
+        int ol_cnt = ws_[FB_OP_COUNT].get_i32();
+        n_pieces_all_ = ol_cnt;
+        n_pieces_dispatchable_ =  ol_cnt;
+        for (int i = 0; i < ol_cnt; ++i) {
+            status_[FB_ROTXN_P(i)] = DISPATCHABLE;
+            GetWorkspace(FB_ROTXN_P(i)).keys_ = {i};
+        }
+    }
+
+    void FBChopper::FBWriteRetry() {
+        int ol_cnt = ws_[FB_OP_COUNT].get_i32();
+        verify(ol_cnt == 1);
+        n_pieces_all_ = ol_cnt;
+        n_pieces_dispatchable_ =  ol_cnt;
+        for (int i = 0; i < ol_cnt; ++i) { // 1 iteration
+            status_[FB_WRITE_P(i)] = DISPATCHABLE;
+            GetWorkspace(FB_WRITE_P(i)).keys_ = {i};
+        }
+    }
+
     void FBChopper::Reset() {
         TxData::Reset();
+        ws_ = ws_init_;
+        partition_ids_.clear();
+        n_try_++;
+        commit_.store(true);
+        /*
         for (auto& pair : status_) {
             pair.second = DISPATCHABLE;
         }
-        commit_.store(true);
-        partition_ids_.clear();
-        n_try_++;
+        */
         n_pieces_dispatchable_ = 0;
         n_pieces_dispatch_acked_ = 0;
         n_pieces_dispatched_ = 0;
+        switch (type_) {
+            case FB_ROTXN:
+                FBRotxnRetry();
+                break;
+            case FB_WRITE:
+                FBWriteRetry();
+                break;
+            default: verify(0);
+                break;
+        }
     }
 
     bool FBChopper::IsReadOnly() {

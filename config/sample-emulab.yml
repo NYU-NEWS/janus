@@ -1,0 +1,82 @@
+#
+# host machine
+#   physical process as container  
+#     logical site as a thread
+# site --> process --> host
+#   
+# site: logical site (either as server/coordinator), which lives in a thread (may share thread 
+# process 
+# host is  
+client:
+  type: closed # { open, closed }
+  rate: 1000 # only used for open clients -- units are txn/s
+
+# site - partition map
+site:
+  server: # each line is a partition, the first is the master site_name:port
+    - ["s101:8101"]
+    - ["s201:8102"]
+    - ["s301:8103"]
+    - ["s401:8104"]
+    - ["s501:8105"]
+    - ["s601:8106"]
+    - ["s701:8107"]
+    - ["s801:8108"]
+  client: # each line is a partition
+    - ["c1"]
+    - ["c2"]
+    - ["c3"]
+    - ["c4"]
+    - ["c5"]
+    - ["c6"]
+    - ["c7"]
+    - ["c8"]
+
+# site_name - process_name map
+process:
+  s101: node-1
+  s201: node-2
+  s301: node-3
+  s401: node-4
+  s501: node-5
+  s601: node-6
+  s701: node-7
+  s801: node-8
+  c1: node-9
+  c2: node-10
+  c3: node-11
+  c4: node-12
+  c5: node-13
+  c6: node-14
+  c7: node-15
+  c8: node-16
+
+# process_name - host_addr map
+host:
+  node-0: node-0
+  node-1: node-1
+  node-2: node-2
+  node-3: node-3
+  node-4: node-4
+  node-5: node-5
+  node-6: node-6
+  node-7: node-7
+  node-8: node-8
+  node-9: node-9
+  node-10: node-10
+  node-11: node-11
+  node-12: node-12
+  node-13: node-13
+  node-14: node-14
+  node-15: node-15
+  node-16: node-16
+
+mode:
+  cc: acc # concurrency control
+  ab: none # atomic broadcast
+  read_only: occ
+  batch: false
+  retry: 9
+  ongoing: 1 # per client
+
+n_concurrent: 100

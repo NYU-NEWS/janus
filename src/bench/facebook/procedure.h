@@ -17,5 +17,7 @@ namespace janus {
 
         void FBRotxnInit(TxRequest &req);
         void FBWriteInit(TxRequest &req);
+        void FBRotxnRetry();
+        void FBWriteRetry();
     };
 } // namespace janus
