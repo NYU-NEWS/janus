@@ -180,8 +180,8 @@ namespace janus {
                      verify(!COL_COUNTS.empty());
                      verify(key < COL_COUNTS.size());
                      int n_col = COL_COUNTS.at(key);
-                     Value v = get_fb_value();
                      for (int col_id = 1; col_id <= n_col; ++col_id) { // we don't read/write the key col
+                         Value v = get_fb_value();
                          tx.WriteColumn(r, col_id, v, TXN_BYPASS);
                      }
                      /*
