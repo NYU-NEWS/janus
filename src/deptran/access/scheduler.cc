@@ -1,5 +1,6 @@
 #include "scheduler.h"
 #include "tx.h"
+#include "predictor.h"
 
 namespace janus {
     int32_t SchedulerAcc::OnDispatch(cmdid_t cmd_id,
@@ -22,6 +23,22 @@ namespace janus {
             for (auto& sp_piece_data : *sp_vec_piece) {
                 present_cmd->push_back(sp_piece_data);
             }
+        }
+        // get all the being-accessed row_keys, feed in predictor, and find decision
+        uint64_t now = Predictor::get_current_time();  // the phyiscal arrival time of this tx
+        bool will_block = false;
+        for (const auto& sp_piece_data : *sp_vec_piece) {
+            for (auto var_id : sp_piece_data->input.keys_) {
+                i32 row_key = sp_piece_data->input.at(var_id).get_i32();
+                if (Predictor::should_block(row_key, now, ssid_spec)) {
+                    will_block = true;
+                }
+            }
+        }
+        if (will_block) {
+            // TODO: a deferred function call
+        } else {
+            // TODO: the code below gets in here
         }
         // Log_debug("Received AccDispatch for txnid = %lu; #pieces = %d.", tx->tid_, sp_vec_piece->size());
         for (const auto& sp_piece_data : *sp_vec_piece) {

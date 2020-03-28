@@ -89,6 +89,10 @@ namespace janus {
         sg.ssid_spec = ssid;
     }
 
+    snapshotid_t AccTxn::get_spec_ssid() const {
+        return sg.ssid_spec;
+    }
+
     int AccTxn::n_query_inc() {
 	    return ++sg._n_query;
     }

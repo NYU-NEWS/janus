@@ -60,6 +60,7 @@ namespace janus {
 	    std::unordered_map<int, int> subrpc_count;   // tracks the number of sub-callbacks for each query rpc
         std::unordered_map<int, int8_t> subrpc_status;
         void load_speculative_ssid(snapshotid_t ssid);
+        snapshotid_t get_spec_ssid() const;
         friend class SchedulerAcc;
     };
 }   // namespace janus
