@@ -31,8 +31,8 @@ namespace janus {
         n_pieces_dispatched_ = 0;
         for (int i = 0; i < ol_cnt; ++i) {
             status_[FB_ROTXN_P(i)] = DISPATCHABLE;
-            GetWorkspace(FB_ROTXN_P(i)).keys_ = {i};
-            output_size_= {{i, 1}};
+            GetWorkspace(FB_ROTXN_P(i)).keys_ = {FB_REQ_VAR_ID(i)};
+            output_size_= {{FB_ROTXN_P(i), 1}};
             p_types_ = {{FB_ROTXN_P(i), FB_ROTXN_P(i)}};
             sss_->GetPartition(FB_TABLE, req.input_[FB_REQ_VAR_ID(i)],
                                sharding_[FB_ROTXN_P(i)]);
@@ -48,8 +48,8 @@ namespace janus {
         n_pieces_dispatched_ = 0;
         for (int i = 0; i < ol_cnt; ++i) { // 1 iteration
             status_[FB_WRITE_P(i)] = DISPATCHABLE;
-            GetWorkspace(FB_WRITE_P(i)).keys_ = {i};
-            output_size_= {{i, 0}};
+            GetWorkspace(FB_WRITE_P(i)).keys_ = {FB_REQ_VAR_ID(i)};
+            output_size_= {{FB_WRITE_P(i), 0}};
             p_types_ = {{FB_WRITE_P(i), FB_WRITE_P(i)}};
             sss_->GetPartition(FB_TABLE, req.input_[FB_REQ_VAR_ID(i)],
                                sharding_[FB_WRITE_P(i)]);
@@ -62,7 +62,7 @@ namespace janus {
         n_pieces_dispatchable_ =  ol_cnt;
         for (int i = 0; i < ol_cnt; ++i) {
             status_[FB_ROTXN_P(i)] = DISPATCHABLE;
-            GetWorkspace(FB_ROTXN_P(i)).keys_ = {i};
+            GetWorkspace(FB_ROTXN_P(i)).keys_ = {FB_REQ_VAR_ID(i)};
         }
     }
 
@@ -73,7 +73,7 @@ namespace janus {
         n_pieces_dispatchable_ =  ol_cnt;
         for (int i = 0; i < ol_cnt; ++i) { // 1 iteration
             status_[FB_WRITE_P(i)] = DISPATCHABLE;
-            GetWorkspace(FB_WRITE_P(i)).keys_ = {i};
+            GetWorkspace(FB_WRITE_P(i)).keys_ = {FB_REQ_VAR_ID(i)};
         }
     }
 

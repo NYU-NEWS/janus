@@ -34,6 +34,8 @@ bool SchedulerClassic::ExecutePiece(Tx& tx,
   piece_data.input.Aggregate(tx.ws_);
 // TODO enable this verify
   piece_data.input.VerifyReady();
+  //Log_debug("Classic::ExecutePiece. roottype = %d; subtype = %d; piecedata.kind = %d. piecedata.innid = %d.",
+  //        roottype, subtype, piece_data.kind_, piece_data.inn_id());
   piece_def.proc_handler_(nullptr,
                           tx,
                           piece_data,

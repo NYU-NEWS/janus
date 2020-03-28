@@ -23,7 +23,15 @@ namespace janus {
                 present_cmd->push_back(sp_piece_data);
             }
         }
+        // Log_debug("Received AccDispatch for txnid = %lu; #pieces = %d.", tx->tid_, sp_vec_piece->size());
         for (const auto& sp_piece_data : *sp_vec_piece) {
+            /*
+            Log_debug("piece input size = %d. key size = %d.",
+                    sp_piece_data->input.size(), sp_piece_data->input.keys_.size());
+            for (const auto& key : sp_piece_data->input.keys_) {
+                Log_debug("piece input id = %d; row key = %d.", key, sp_piece_data->input.at(key).get_i32());
+            }
+            */
             SchedulerClassic::ExecutePiece(*tx, *sp_piece_data, ret_output);
         }
         if (tx->fully_dispatched_->value_ == 0) {

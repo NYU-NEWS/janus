@@ -153,7 +153,7 @@ namespace janus {
                      for (int col_id = 1; col_id <= n_col; ++col_id) { // we don't read/write the key col
                          tx.ReadColumn(r, col_id, &result, TXN_BYPASS);
                      }
-                     output[FB_ROTXN_OUTPUT(i)] = result; // we only keep the first col's result for now
+                     output[FB_ROTXN_OUTPUT(i)] = result; // we only keep the last col's result for now
                                                           // FIXME: fix this later for real
                      /*
                      std::vector<int> col_ids;
