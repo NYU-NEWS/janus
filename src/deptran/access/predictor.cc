@@ -4,6 +4,7 @@
 namespace janus {
     bool Predictor::should_block(int32_t key, uint64_t arrival_time, snapshotid_t ssid_spec) {
         // TODO: fill the logic, record arrival time and ssid of this new tx
+        // append arrival_time to corresponding arrival times
         return false;
     }
 
