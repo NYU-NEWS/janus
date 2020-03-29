@@ -11,7 +11,6 @@ namespace janus {
         std::map<std::string, uint64_t> table_num_rows;
         sharding_->get_number_rows(table_num_rows);
         fb_para_.n_friends_ = table_num_rows[std::string(FB_TABLE)];
-        //verify(single_server_ == Config::SS_DISABLED);
         switch (single_server_) {
             case Config::SS_DISABLED:
                 fix_id_ = -1;
@@ -138,6 +137,7 @@ namespace janus {
     void FBWorkload::RegisterPrecedures() {
         for (int i = 0; i < MAX_TXN_SIZE; ++i) {
             // a read
+            set_op_type(FB_ROTXN, FB_ROTXN_P(i), READ_REQ);
             RegP(FB_ROTXN, FB_ROTXN_P(i), {FB_REQ_VAR_ID(i)}, {}, {}, {FB_TABLE, {FB_REQ_VAR_ID(i)}}, DF_NO,
                  LPROC {
                      verify(cmd.input.size() > 0);
@@ -148,6 +148,7 @@ namespace janus {
                      r = tx.Query(tx.GetTable(FB_TABLE), mb);
                      verify(!COL_COUNTS.empty());
                      verify(key < COL_COUNTS.size());
+                     //cmd.op_type_ = READ_REQ;  // pieces only contain reads; for acc ML engine
                      int n_col = COL_COUNTS.at(key);
                      Value result;
                      for (int col_id = 1; col_id <= n_col; ++col_id) { // we don't read/write the key col
@@ -169,6 +170,7 @@ namespace janus {
                 }
             );
             // a write
+            set_op_type(FB_WRITE, FB_WRITE_P(i), WRITE_REQ);
             RegP(FB_WRITE, FB_WRITE_P(i), {FB_REQ_VAR_ID(i)}, {}, {}, {FB_TABLE, {FB_REQ_VAR_ID(i)}}, DF_NO,
                  LPROC {
                      verify(cmd.input.size() > 0);
@@ -179,6 +181,7 @@ namespace janus {
                      r = tx.Query(tx.GetTable(FB_TABLE), mb);
                      verify(!COL_COUNTS.empty());
                      verify(key < COL_COUNTS.size());
+                     //cmd.op_type_ = WRITE_REQ;  // pieces contain writes; for ML engine
                      int n_col = COL_COUNTS.at(key);
                      for (int col_id = 1; col_id <= n_col; ++col_id) { // we don't read/write the key col
                          Value v = get_fb_value();

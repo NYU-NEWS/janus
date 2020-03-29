@@ -32,6 +32,7 @@ namespace janus {
     void CoordinatorAcc::DispatchAsync() {
         std::lock_guard<std::recursive_mutex> lock(mtx_);
         auto txn = (TxData*) cmd_;
+        //Log_info("try this: %d", txn_reg_->get(1, 1000).input_vars_.size());
         int cnt = 0;
         auto cmds_by_par = txn->GetReadyPiecesData(1);
         Log_debug("AccDispatchAsync for tx_id: %" PRIx64, txn->root_id_);
@@ -42,7 +43,11 @@ namespace janus {
             cnt += cmds.size();
             auto sp_vec_piece = std::make_shared<vector<shared_ptr<TxPieceData>>>();
             for (const auto& c: cmds) {
+                //Log_info("try this. roottype = %d; type = %d.", c->root_type_, c->type_);
                 c->id_ = next_pie_id();
+                c->op_type_ = txn_reg_->get_optype(c->root_type_, c->type_);
+                //c->op_type_ = txn_reg_->regs_[c->root_type_][c->type_].op_type;
+                //Log_info("try this. optype = %d.", c->op_type_);
                 dispatch_acks_[c->inn_id_] = false;
                 sp_vec_piece->push_back(c);
             }
@@ -57,7 +62,7 @@ namespace janus {
                                                     std::placeholders::_3,
                                                     std::placeholders::_4,
                                                     std::placeholders::_5),
-					  tx_data().id_,
+					                       tx_data().id_,
                                           tx_data().n_status_query,
                                           std::bind(&CoordinatorAcc::AccStatusQueryAck,
                                                     this,

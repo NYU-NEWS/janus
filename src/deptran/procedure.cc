@@ -170,6 +170,7 @@ ReadyPiecesData TxData::GetReadyPiecesData(int32_t max) {
       piece_data->root_ = this;
       piece_data->timestamp_ = timestamp_;
       piece_data->rank_ = ranks_[pi]; // TODO fix bug here
+      piece_data->op_type_ = op_type_;  // get op_type_
       map_piece_data_[pi] = piece_data;
       ready_pieces_data[piece_data->partition_id_].push_back(piece_data);
       partition_ids_.insert(piece_data->partition_id_);

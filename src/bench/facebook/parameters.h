@@ -6,6 +6,7 @@
 namespace janus {
 // facebook workload characteristics defined below
 #define FB_WRITE_FRACTION 0.002
+//#define FB_WRITE_FRACTION -1
 #define N_KEYS_PER_WRITE 1
 #define MAX_TXN_SIZE 1024    // this is the max size of rotxns, FB writes always access 1 key
 #define OBJ_FRACTION 0.095   // object to assocs ratio

@@ -64,6 +64,7 @@ class TxnPieceDef {
     // TODO
     return {};
   };
+  optype_t op_type = UNDEFINED;  // this piece is a READ or WRITE
 };
 
 /**
@@ -79,6 +80,10 @@ class TxnRegistry {
    */
   TxnPieceDef& get(const txntype_t t_type, const innid_t p_type) {
     return regs_[t_type][p_type];
+  }
+
+  optype_t get_optype(txntype_t t_type, innid_t p_type) {
+    return regs_[t_type][p_type].op_type;
   }
 
  public:

@@ -87,6 +87,13 @@ class Workload {
     piece.proc_handler_ = handler;
   }
 
+  /*
+   * For acc ML engine recording each piece is a read or a write
+   */
+  void set_op_type(txntype_t txn_type, innid_t inn_id, optype_t op_type = UNDEFINED) {
+      auto& piece = txn_reg_->regs_[txn_type][inn_id];
+      piece.op_type = op_type;
+  }
 };
 
 #define BEGIN_LOOP_PIE(txn, pie, max_i, iod) \

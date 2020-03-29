@@ -28,10 +28,10 @@ namespace janus {
         uint64_t now = Predictor::get_current_time();  // the phyiscal arrival time of this tx
         bool will_block = false;
         for (const auto& sp_piece_data : *sp_vec_piece) {
-            Log_debug("piece.op_type_ = %d.", sp_piece_data->op_type_);
+            //Log_info("piece.op_type_ = %d.", sp_piece_data->op_type_);
             for (auto var_id : sp_piece_data->input.keys_) {
                 i32 row_key = sp_piece_data->input.at(var_id).get_i32();
-                if (Predictor::should_block(row_key, now, ssid_spec)) {
+                if (Predictor::should_block(row_key, now, ssid_spec, sp_piece_data->op_type_)) {
                     will_block = true;
                 }
             }
