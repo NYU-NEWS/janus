@@ -11,13 +11,12 @@
 #include "row.h"
 
 namespace janus {
-    enum op_type {READ, WRITE};
     struct FEATURES { // the features each tx uses to predict
         std::pair<int, int> last_n_reads;
         std::pair<int, int> last_n_writes;
-        AccRow* key;
+        int32_t key;
         snapshotid_t ssid_spec;
-        op_type type;
+        optype_t type;     // either READ_REQ if this piece only has reads or WRITE_REQ if it has any write or UNDEFINED
     };
     class Predictor {
     public:

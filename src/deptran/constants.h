@@ -44,6 +44,11 @@ namespace janus {
 //~also returns NOT_DECIDED upon validation
 // obsolete below
 //#define VALIDATE_ABORT (0x2)   // should not do validate, abort early!
+/* ACCESS ML engine related below */
+#define optype_t uint8_t
+#define READ_REQ (0x0)      // if a piece only contains reads
+#define WRITE_REQ (0x1)     // if a piece contains any write
+#define UNDEFINED (0x2)     // if not specified by the workload
 
 
 /** read and write type */

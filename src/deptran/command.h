@@ -12,6 +12,7 @@ class CmdData : public Marshallable {
   innid_t inn_id_ = 0;
   cmdid_t root_id_ = 0;
   cmdtype_t root_type_ = 0;
+  optype_t op_type_ = UNDEFINED;
 
   virtual innid_t inn_id() const {
     return inn_id_;
