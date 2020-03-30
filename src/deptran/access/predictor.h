@@ -43,7 +43,17 @@ namespace janus {
             this->label_ = that.label_;
             return *this;
         }
-        Features(const Features& that) = default;
+        /*
+        Features(const Features& that) {
+            last_n_reads = that.last_n_reads;
+            last_n_writes = that.last_n_writes;
+            key_ = that.key_;
+            ssid_spec_ = that.ssid_spec_;
+            op_type_ = that.op_type_;
+            label_ = that.label_;
+        }
+        */
+        Features(const Features& that) = delete;
         Features& operator=(const Features& that) = delete;
         bool operator<(const Features& that) const {  // feature_vector is sorted based on ssid of each feature
             return this->ssid_spec_ < that.ssid_spec_;
@@ -65,11 +75,18 @@ namespace janus {
         static bool should_block(int32_t key, uint64_t arrival_time, snapshotid_t ssid_spec, optype_t op_type = UNDEFINED);  // take a row key, give a prediction
         static uint64_t get_current_time();     // get current time in ms and convert it to ssid type
     private:
+        //static const uint32_t N_FEATURES = TRAINING_SIZE;
+        //static uint64_t last_training_time;  // last time we migrated feature_vector to training_samples
+        static TRAINING_TIMERS training_timers;  // timer per key
         static READ_ARRIVALS read_arrivals;
         static WRITE_ARRIVALS write_arrivals;
         static FEATURE_VECTOR feature_vector; // a vector of features cross keys so far, periodically moved to learner
+        static TRAINING_VECTOR training_samples;  // set of feature sets for training and updating the model
         static Features construct_features(int32_t key, snapshotid_t ssid_spec, optype_t op_type);
         static void label_features(int32_t key, snapshotid_t ssid_spec, optype_t op_type);
         static bool is_conflict(optype_t t1, optype_t t2);
+        static void gather_training_samples(int32_t key);
+        static uint64_t get_current_time_in_seconds();
+        static uint64_t get_ft_time_in_seconds(const Features& ft);
     };
 }
