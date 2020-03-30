@@ -23,7 +23,8 @@ namespace janus {
                 break;
         }
         Features ft = construct_features(key, ssid_spec, op_type);
-        feature_vector.emplace(key, std::set<Features>{std::move(ft)}); // put the feature of this new tx to feature_vector
+        //feature_vector.emplace(key, std::set<Features>{std::move(ft)}); // put the feature of this new tx to feature_vector
+        feature_vector[key].insert(std::move(ft));
         // todo: labeling with this new tx
 
         // todo: query the ML model via VW with ft, and get a prediction

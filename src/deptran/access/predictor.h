@@ -40,7 +40,7 @@ namespace janus {
         }
         Features(const Features& that) = default;
         Features& operator=(const Features& that) = delete;
-        bool operator<(const Features& that) const {
+        bool operator<(const Features& that) const {  // feature_vector is sorted based on ssid of each feature
             return this->ssid_spec_ < that.ssid_spec_;
         }
     };
