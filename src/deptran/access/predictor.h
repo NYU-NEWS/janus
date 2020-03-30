@@ -20,15 +20,19 @@ namespace janus {
         int32_t key_ = 0;
         snapshotid_t ssid_spec_ = 0;
         optype_t op_type_ = UNDEFINED;     // either READ_REQ if this piece only has reads or WRITE_REQ if it has any write or UNDEFINED
+        label_t label_ = NONBLOCK;   // initially labelled false as in ML doc
         // helper funcs
-        Features(uint read_low, uint read_high, uint write_low, uint write_high, int32_t key, snapshotid_t ssid_spec, optype_t op_type)
-            : last_n_reads(read_low, read_high), last_n_writes(write_low, write_high), key_(key), ssid_spec_(ssid_spec), op_type_(op_type) {}
+        Features(uint read_low, uint read_high, uint write_low, uint write_high,
+                int32_t key, snapshotid_t ssid_spec, optype_t op_type, label_t label = NONBLOCK)
+            : last_n_reads(read_low, read_high), last_n_writes(write_low, write_high),
+              key_(key), ssid_spec_(ssid_spec), op_type_(op_type), label_(label) {}
         Features(Features&& that) noexcept
             : last_n_reads(std::move(that.last_n_reads)),
               last_n_writes(std::move(that.last_n_writes)),
               key_(that.key_),
               ssid_spec_(that.ssid_spec_),
-              op_type_(that.op_type_) {}
+              op_type_(that.op_type_),
+              label_(that.label_){}
         Features& operator=(Features&& that) noexcept {
             assert(this != &that);
             this->last_n_reads = std::move(that.last_n_reads);
@@ -36,6 +40,7 @@ namespace janus {
             this->key_ = that.key_;
             this->ssid_spec_ = that.ssid_spec_;
             this->op_type_ = that.op_type_;
+            this->label_ = that.label_;
             return *this;
         }
         Features(const Features& that) = default;
@@ -64,5 +69,7 @@ namespace janus {
         static WRITE_ARRIVALS write_arrivals;
         static FEATURE_VECTOR feature_vector; // a vector of features cross keys so far, periodically moved to learner
         static Features construct_features(int32_t key, snapshotid_t ssid_spec, optype_t op_type);
+        static void label_features(int32_t key, snapshotid_t ssid_spec, optype_t op_type);
+        static bool is_conflict(optype_t t1, optype_t t2);
     };
 }

@@ -7,7 +7,9 @@
 /* server-side ML engine */
 #define N_READS (100)  // # of past read arrivals in a feature set
 #define N_WRITES (100) // # of past write arrivals
-
+#define label_t int    // the type of labels
+#define NONBLOCK (0)   // as "false" in ml doc
+#define BLOCK (1)      // as "true" in ml doc
 
 
 

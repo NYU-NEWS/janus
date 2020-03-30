@@ -19,14 +19,14 @@ namespace janus {
                 break;
             case UNDEFINED:
                 Log_info("op_type is undefined. Should define it in the workload txn_reg.");
-            default: assert(0);
+            default: verify(0);
                 break;
         }
         Features ft = construct_features(key, ssid_spec, op_type);
-        //feature_vector.emplace(key, std::set<Features>{std::move(ft)}); // put the feature of this new tx to feature_vector
+        // insert the feature of this tx to feature_vector
         feature_vector[key].insert(std::move(ft));
-        // todo: labeling with this new tx
-
+        // labeling with this new tx. *IMPORTANT* must label after inserting it into vector
+        label_features(key, ssid_spec, op_type);
         // todo: query the ML model via VW with ft, and get a prediction
         return false;
     }
@@ -42,5 +42,28 @@ namespace janus {
         uint write_high = write_arrivals.size() - 1;
         uint write_low = write_high - N_WRITES + 1;
         return {read_low, read_high, write_low, write_high, key, ssid_spec, op_type};
+    }
+
+    void Predictor::label_features(int32_t key, snapshotid_t ssid_spec, optype_t op_type) {
+        auto rit = feature_vector.at(key).rbegin();
+        rit++;  // we skip the most recently added element, which is this very tx
+        // feature_vector set is sorted by ssid in ascending order, we iterate reversely
+        for (; rit != feature_vector.at(key).rend(); rit++) {
+            if (rit->ssid_spec_ >= ssid_spec && is_conflict(op_type, rit->op_type_)) {
+                // we label this feature "should block"
+                auto* ft = const_cast<Features*>(&*rit);  // this is an ugly trick for updating elements in
+                                                          // sorted containers. It *should* be safe here b/c
+                                                          // we are not modifying the sorting keys of the set
+                ft->label_ = BLOCK;
+            }
+            if (rit->ssid_spec_ < ssid_spec) {
+                break;
+            }
+        }
+    }
+
+    bool Predictor::is_conflict(optype_t t1, optype_t t2) {
+        verify(t1 != UNDEFINED && t2 != UNDEFINED);
+        return (t1 == t2 == WRITE_REQ || t1 != t2);  // true if at least one is write
     }
 }
