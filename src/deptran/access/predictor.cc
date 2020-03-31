@@ -15,9 +15,15 @@ namespace janus {
         // append arrival_time to corresponding arrival times
         switch (op_type) {
             case READ_REQ:
+                if (read_arrivals[key].empty()) {
+                    read_arrivals[key].reserve(READ_ARRIVALS_SIZE);
+                }
                 read_arrivals[key].emplace_back(arrival_time);
                 break;
             case WRITE_REQ:
+                if (write_arrivals[key].empty()) {
+                    write_arrivals[key].reserve(WRITE_ARRIVALS_SIZE);
+                }
                 write_arrivals[key].emplace_back(arrival_time);
                 break;
             case UNDEFINED:

@@ -14,7 +14,9 @@
 #define TRAINING_INTERVAL (300)  // timer for migrating feature sets to training samples (in seconds)
 #define LABELING_TIMER (5)   // the ground truth should be available before these seconds
 
-
+// implementation-related control knobs
+#define READ_ARRIVALS_SIZE (10000)  // initial size of READ_ARRIVALS
+#define WRITE_ARRIVALS_SIZE (10)    // initial size of WRITE_ARRIVALS
 
 /* macros used in the cocde */
 #define READ_ARRIVALS std::unordered_map<int32_t, std::vector<uint64_t>>
