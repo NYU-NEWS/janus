@@ -24,8 +24,8 @@ void CoordinatorTroad::launch_recovery(cmdid_t cmd_id) {
 void CoordinatorTroad::PreAccept() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   WAN_WAIT;
-  auto dtxn = sp_graph_->FindV(cmd_->id_);
-  verify(tx_data().partition_ids_.size() == dtxn->partition_.size());
+//  auto dtxn = sp_graph_->FindV(cmd_->id_);
+//  verify(tx_data().partition_ids_.size() == dtxn->partition_.size());
   vector<shared_ptr<PreAcceptQuorumEvent>> events;
   for (auto par_id : cmd_->GetPartitionIds()) {
     auto cmds = tx_data().GetCmdsByPartition(par_id);
@@ -34,30 +34,31 @@ void CoordinatorTroad::PreAccept() {
                                     cmd_->id_,
                                     rank_,
                                     magic_ballot(),
-                                    cmds,
-                                    sp_graph_);
+                                    cmds);
     events.push_back(ev);
   }
   bool fast_path = true;
   for (auto ev: events) {
-    ev->Wait(20*1000*1000);
+    ev->Wait();
     verify(ev->Yes()); // TODO tolerate failure recovery.
     if (!FastQuorumGraphCheck(*ev)) {
       fast_path = false;
     }
   }
-  sp_graph_->Clear();
+  parents_.clear();
   if (fast_path) {
+//  if (false) {
     fast_path_ = true;
     for (auto ev : events) {
-      auto& g = ev->graphs_[0];
-      sp_graph_->Aggregate(0, *g);
+      auto& g = ev->vec_parents_[0];
+      parents_.insert(g->begin(), g->end());
     }
   } else {
     fast_path_ = false;
     for (auto ev: events) {
-      for (auto sp_graph : ev->graphs_) {
-        sp_graph_->Aggregate(0, *sp_graph);
+      for (auto g : ev->vec_parents_) {
+//        sp_graph_->Aggregate(0, *sp_graph);
+        parents_.insert(g->begin(), g->end());
       }
     }
   }
@@ -76,19 +77,19 @@ void CoordinatorTroad::Accept() {
   verify(!fast_path_);
 //  Log_info("broadcast accept request for txn_id: %llx", cmd_->id_);
   TxData* txn = (TxData*) cmd_;
-  auto dtxn = sp_graph_->FindV(cmd_->id_);
-  verify(txn->partition_ids_.size() == dtxn->partition_.size());
-  sp_graph_->UpgradeStatus(*dtxn, TXN_CMT);
+//  auto dtxn = sp_graph_->FindV(cmd_->id_);
+//  verify(txn->partition_ids_.size() == dtxn->partition_.size());
+//  sp_graph_->UpgradeStatus(*dtxn, TXN_CMT);
   vector<shared_ptr<QuorumEvent>> events;
   for (auto par_id : cmd_->GetPartitionIds()) {
     auto ev = commo()->BroadcastAccept(par_id,
                              cmd_->id_,
                              ballot_,
-                             sp_graph_);
+                             parents_);
     events.push_back(ev);
   }
   for (auto ev : events) {
-    ev->Wait(100*1000*1000);
+    ev->Wait();
     verify(ev->Yes()); // TODO handle failure recovery.
   }
   GotoNextPhase();
@@ -97,23 +98,23 @@ void CoordinatorTroad::Accept() {
 void CoordinatorTroad::Commit() {
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   TxData* txn = (TxData*) cmd_;
-  auto dtxn = sp_graph_->FindV(cmd_->id_);
-  verify(txn->partition_ids_.size() == dtxn->partition_.size());
-  sp_graph_->UpgradeStatus(*dtxn, TXN_CMT);
+//  auto dtxn = sp_graph_->FindV(cmd_->id_);
+//  verify(txn->partition_ids_.size() == dtxn->partition_.size());
+//  sp_graph_->UpgradeStatus(*dtxn, TXN_CMT);
   vector<shared_ptr<QuorumEvent>> events;
   for (auto par_id : cmd_->GetPartitionIds()) {
     auto ev = commo()->BroadcastCommit(par_id,
                                cmd_->id_,
                                   rank_,
                                        txn->need_validation_,
-                                 sp_graph_);
+                                 parents_);
     events.push_back(ev);
   }
   aborted_ = false;
   for (auto ev : events) {
-     ev->Wait(100*1000*1000);
-//    ev->Wait();
+    ev->Wait();
     if (ev->No()) {
+      verify(0);
     } else if (ev->Yes()) {
 
     } else {
@@ -121,8 +122,9 @@ void CoordinatorTroad::Commit() {
       verify(0);
     }
   }
-  NotifyValidation();
-
+//  NotifyValidation();
+  committed_ = !aborted_;
+  GotoNextPhase();
 //  txn().Merge(output);
   // if collect enough results.
   // if there are still more results to collect.
@@ -136,11 +138,12 @@ void CoordinatorTroad::NotifyValidation() {
 //  __debug_notifying_ = true;
   verify(phase_ % 6 == COMMIT);
   auto ev1 = commo()->CollectValidation(cmd_->id_, cmd_->GetPartitionIds());
-  ev1->Wait(200*1000*1000);
+  ev1->Wait();
   int res;
   if (ev1->Yes()) {
     res = SUCCESS;
   } else if (ev1->No()){
+    verify(0);
     if (mocking_janus_) {
       aborted_ = true;
     }
@@ -174,25 +177,32 @@ int32_t CoordinatorTroad::GetSlowQuorum(parid_t par_id) {
  * @return true if fast quorum acheived, false if not
  */
 bool CoordinatorTroad::FastQuorumGraphCheck(PreAcceptQuorumEvent& ev) {
-  auto par_id = ev.partition_id_;
-  auto& vec_graph = ev.graphs_;
-  auto fast_quorum = GetFastQuorum(par_id);
-  verify(vec_graph.size() >= fast_quorum);
-//  verify(vec_graph.size() == 1);
-//  verify(vec_graph.size() >= 1);
-  verify(vec_graph.size() == fast_quorum);
-  auto v = vec_graph[0]->FindV(cmd_->id_);
-  verify(v != nullptr);
-  auto& parent_set = v->GetParents();
-  auto sz = parent_set.size();
-  for (int i = 1; i < vec_graph.size(); i++) {
-    RccGraph& graph = *vec_graph[i];
-    auto vv = graph.FindV(cmd_->id_);
-    auto& pp_set = vv->GetParents();
-    if (parent_set != pp_set) {
-      return false;
-    }
+  verify(ev.vec_parents_.size() > 0);
+  auto& parents = ev.vec_parents_[0];
+  for (int i = 1; i < ev.vec_parents_.size(); i++) {
+    auto& parents2 = ev.vec_parents_[i];
+    if (parents != parents2) return false;
   }
+  return true;
+//  auto par_id = ev.partition_id_;
+//  auto& vec_graph = ev.graphs_;
+//  auto fast_quorum = GetFastQuorum(par_id);
+//  verify(vec_graph.size() >= fast_quorum);
+////  verify(vec_graph.size() == 1);
+////  verify(vec_graph.size() >= 1);
+//  verify(vec_graph.size() == fast_quorum);
+//  auto v = vec_graph[0]->FindV(cmd_->id_);
+//  verify(v != nullptr);
+//  auto& parent_set = v->GetParents();
+//  auto sz = parent_set.size();
+//  for (int i = 1; i < vec_graph.size(); i++) {
+//    RccGraph& graph = *vec_graph[i];
+//    auto vv = graph.FindV(cmd_->id_);
+//    auto& pp_set = vv->GetParents();
+//    if (parent_set != pp_set) {
+//      return false;
+//    }
+//  }
   return true;
 }
 
@@ -245,6 +255,7 @@ void CoordinatorTroad::GotoNextPhase() {
           GotoNextPhase(); // directly to PRE_ACCEPT
         }
       } else if (aborted_) {
+        verify(0);
 //        verify(rank_ == RANK_I);
         Restart();
       } else {

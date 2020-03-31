@@ -26,22 +26,22 @@ void CoordinatorJanus::PreAccept() {
 //  // generate fast accept request
   // set broadcast callback
   // broadcast
-  auto dtxn = sp_graph_->FindV(cmd_->id_);
-  verify(tx_data().partition_ids_.size() == dtxn->partition_.size());
-  for (auto par_id : cmd_->GetPartitionIds()) {
-    auto cmds = tx_data().GetCmdsByPartition(par_id);
-    commo()->BroadcastPreAccept(par_id,
-                                cmd_->id_,
-                                magic_ballot(),
-                                cmds,
-                                sp_graph_,
-                                std::bind(&CoordinatorJanus::PreAcceptAck,
-                                          this,
-                                          phase_,
-                                          par_id,
-                                          std::placeholders::_1,
-                                          std::placeholders::_2));
-  }
+//  auto dtxn = sp_graph_->FindV(cmd_->id_);
+//  verify(tx_data().partition_ids_.size() == dtxn->partition_.size());
+//  for (auto par_id : cmd_->GetPartitionIds()) {
+//    auto cmds = tx_data().GetCmdsByPartition(par_id);
+//    commo()->BroadcastPreAccept(par_id,
+//                                cmd_->id_,
+//                                magic_ballot(),
+//                                cmds,
+//                                sp_graph_,
+//                                std::bind(&CoordinatorJanus::PreAcceptAck,
+//                                          this,
+//                                          phase_,
+//                                          par_id,
+//                                          std::placeholders::_1,
+//                                          std::placeholders::_2));
+//  }
 }
 
 void CoordinatorJanus::PreAcceptAck(phase_t phase,
@@ -100,39 +100,39 @@ void CoordinatorJanus::prepare() {
 }
 
 void CoordinatorJanus::ChooseGraph() {
-  for (auto& pair : n_fast_accept_graphs_) {
-    auto& vec_graph = pair.second;
-    if (fast_path_) {
-      auto& g = vec_graph[0];
-      sp_graph_->Aggregate(0, *g);
-    } else {
-      for (auto g : vec_graph) {
-        sp_graph_->Aggregate(0, *g);
-      }
-    }
-  }
+//  for (auto& pair : n_fast_accept_graphs_) {
+//    auto& vec_graph = pair.second;
+//    if (fast_path_) {
+//      auto& g = vec_graph[0];
+//      sp_graph_->Aggregate(0, *g);
+//    } else {
+//      for (auto g : vec_graph) {
+//        sp_graph_->Aggregate(0, *g);
+//      }
+//    }
+//  }
 }
 
 void CoordinatorJanus::Accept() {
-  std::lock_guard<std::recursive_mutex> guard(mtx_);
-  verify(!fast_path_);
-//  Log_info("broadcast accept request for txn_id: %llx", cmd_->id_);
-  ChooseGraph();
-  TxData* txn = (TxData*) cmd_;
-  auto dtxn = sp_graph_->FindV(cmd_->id_);
-  verify(txn->partition_ids_.size() == dtxn->partition_.size());
-  sp_graph_->UpgradeStatus(*dtxn, TXN_CMT);
-  for (auto par_id : cmd_->GetPartitionIds()) {
-    commo()->BroadcastAccept(par_id,
-                             cmd_->id_,
-                             ballot_,
-                             sp_graph_,
-                             std::bind(&CoordinatorJanus::AcceptAck,
-                                       this,
-                                       phase_,
-                                       par_id,
-                                       std::placeholders::_1));
-  }
+//  std::lock_guard<std::recursive_mutex> guard(mtx_);
+//  verify(!fast_path_);
+////  Log_info("broadcast accept request for txn_id: %llx", cmd_->id_);
+//  ChooseGraph();
+//  TxData* txn = (TxData*) cmd_;
+//  auto dtxn = sp_graph_->FindV(cmd_->id_);
+//  verify(txn->partition_ids_.size() == dtxn->partition_.size());
+//  sp_graph_->UpgradeStatus(*dtxn, TXN_CMT);
+//  for (auto par_id : cmd_->GetPartitionIds()) {
+//    commo()->BroadcastAccept(par_id,
+//                             cmd_->id_,
+//                             ballot_,
+//                             sp_graph_,
+//                             std::bind(&CoordinatorJanus::AcceptAck,
+//                                       this,
+//                                       phase_,
+//                                       par_id,
+//                                       std::placeholders::_1));
+//  }
 }
 
 void CoordinatorJanus::AcceptAck(phase_t phase,
@@ -159,45 +159,45 @@ void CoordinatorJanus::AcceptAck(phase_t phase,
 }
 
 void CoordinatorJanus::Commit() {
-  std::lock_guard<std::recursive_mutex> guard(mtx_);
-  TxData* txn = (TxData*) cmd_;
-  auto dtxn = sp_graph_->FindV(cmd_->id_);
-  verify(txn->partition_ids_.size() == dtxn->partition_.size());
-  sp_graph_->UpgradeStatus(*dtxn, TXN_CMT);
-  for (auto par_id : cmd_->GetPartitionIds()) {
-    commo()->BroadcastCommit(par_id,
-                             cmd_->id_,
-                             RANK_UNDEFINED,
-                             txn->need_validation_,
-                             sp_graph_,
-                             std::bind(&CoordinatorJanus::CommitAck,
-                                       this,
-                                       phase_,
-                                       par_id,
-                                       std::placeholders::_1,
-                                       std::placeholders::_2));
-  }
-  if (fast_commit_) {
-    verify(0);
-    committed_ = true;
-    GotoNextPhase();
-  }
-  if (txn->need_validation_) {
-    auto pars = cmd_->GetPartitionIds();
-    auto quorum = commo()->BroadcastInquireValidation(pars, cmd_->id_);
-    quorum->Wait();
-    int result = 0;
-    if (quorum->Yes()) {
-      result = 1;
-      validation_result_ = true;
-    } else if (quorum->No()) {
-      result = -1;
-      validation_result_ = false;
-    } else {
-      verify(0);
-    }
-    commo()->BroadcastNotifyValidation(cmd_->id_, pars, result);
-  }
+//  std::lock_guard<std::recursive_mutex> guard(mtx_);
+//  TxData* txn = (TxData*) cmd_;
+//  auto dtxn = sp_graph_->FindV(cmd_->id_);
+//  verify(txn->partition_ids_.size() == dtxn->partition_.size());
+//  sp_graph_->UpgradeStatus(*dtxn, TXN_CMT);
+//  for (auto par_id : cmd_->GetPartitionIds()) {
+//    commo()->BroadcastCommit(par_id,
+//                             cmd_->id_,
+//                             RANK_UNDEFINED,
+//                             txn->need_validation_,
+//                             sp_graph_,
+//                             std::bind(&CoordinatorJanus::CommitAck,
+//                                       this,
+//                                       phase_,
+//                                       par_id,
+//                                       std::placeholders::_1,
+//                                       std::placeholders::_2));
+//  }
+//  if (fast_commit_) {
+//    verify(0);
+//    committed_ = true;
+//    GotoNextPhase();
+//  }
+//  if (txn->need_validation_) {
+//    auto pars = cmd_->GetPartitionIds();
+//    auto quorum = commo()->BroadcastInquireValidation(pars, cmd_->id_);
+//    quorum->Wait();
+//    int result = 0;
+//    if (quorum->Yes()) {
+//      result = 1;
+//      validation_result_ = true;
+//    } else if (quorum->No()) {
+//      result = -1;
+//      validation_result_ = false;
+//    } else {
+//      verify(0);
+//    }
+//    commo()->BroadcastNotifyValidation(cmd_->id_, pars, result);
+//  }
 }
 
 void CoordinatorJanus::CommitAck(phase_t phase,

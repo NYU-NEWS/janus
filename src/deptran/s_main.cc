@@ -150,7 +150,9 @@ int main(int argc, char *argv[]) {
 
   // read configuration
   int ret = Config::CreateConfig(argc, argv);
-  if (ret != SUCCESS) {
+  if (ret == SUCCESS) {
+    Log_info("Read config finish");
+  } else {
     Log_fatal("Read config failed");
     return ret;
   }
@@ -171,6 +173,8 @@ int main(int argc, char *argv[]) {
   auto server_infos = Config::GetConfig()->GetMyServers();
   if (!server_infos.empty()) {
     server_launch_worker(server_infos);
+  } else {
+    Log_info("no servers on this process");
   }
 
   if (!client_infos.empty()) {
@@ -182,15 +186,30 @@ int main(int argc, char *argv[]) {
   }
 
 #ifdef DB_CHECKSUM
-  sleep(5); // hopefully servers can finish hanging RPCs in 5 seconds.
+  sleep(90); // hopefully servers can finish hanging RPCs in 90 seconds.
 #endif
 
   for (auto& worker : svr_workers_g) {
     worker.WaitForShutdown();
   }
 #ifdef DB_CHECKSUM
+  map<parid_t, vector<int>> checksum_results = {};
   for (auto& worker : svr_workers_g) {
-    worker.DbChecksum();
+    auto p = worker.site_info_->partition_id_;
+    int sum = worker.DbChecksum();
+    checksum_results[p].push_back(sum);
+  }
+  bool checksum_fail = false;
+  for (auto& pair : checksum_results) {
+    auto& vec = pair.second;
+    for (auto checksum: vec) {
+      if (checksum != vec[0]) {
+        checksum_fail = true;
+      }
+    }
+  }
+  if (checksum_fail) {
+    Log_warn("checksum match failed...perhaps wait longer before checksum?");
   }
 #endif
 #ifdef CPU_PROFILE

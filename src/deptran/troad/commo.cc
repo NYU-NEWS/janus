@@ -110,6 +110,46 @@ TroadCommo::BroadcastPreAccept(
     txnid_t txn_id,
     rank_t rank,
     ballot_t ballot,
+    vector<TxPieceData>& cmds) {
+  verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
+  auto n = rpc_par_proxies_[par_id].size();
+  auto ev = Reactor::CreateSpEvent<PreAcceptQuorumEvent>(n, n);
+  ev->partition_id_ = par_id;
+//  WAN_WAIT;
+  for (auto& p : rpc_par_proxies_[par_id]) {
+    auto proxy = (p.second);
+    verify(proxy != nullptr);
+    FutureAttr fuattr;
+    fuattr.callback = [ev](Future* fu) {
+      int32_t res;
+      auto sp = std::make_shared<parent_set_t>();
+      fu->get_reply() >> res >> *sp;
+//      auto sp = dynamic_pointer_cast<RccGraph>(md.sp_data_);
+//      verify(sp);
+      if (res == SUCCESS) {
+        ev->VoteYes();
+      } else if (res == REJECT) {
+        verify(0);
+        ev->VoteNo();
+      } else {
+        verify(0);
+      }
+      ev->vec_parents_.push_back(sp);
+    };
+    verify(txn_id > 0);
+    Future* f = nullptr;
+    f = proxy->async_RccPreAccept(txn_id, rank, cmds, fuattr);
+    Future::safe_release(f);
+  }
+  return ev;
+}
+
+shared_ptr<PreAcceptQuorumEvent>
+TroadCommo::BroadcastPreAccept(
+    parid_t par_id,
+    txnid_t txn_id,
+    rank_t rank,
+    ballot_t ballot,
     vector<TxPieceData>& cmds,
     shared_ptr<RccGraph> sp_graph) {
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
@@ -136,7 +176,8 @@ TroadCommo::BroadcastPreAccept(
       } else {
         verify(0);
       }
-      ev->graphs_.push_back(sp);
+      // TODO recover
+//      ev->graphs_.push_back(sp);
     };
     verify(txn_id > 0);
     Future* f = nullptr;
@@ -174,6 +215,39 @@ void TroadCommo::BroadcastAccept(parid_t par_id,
                                                   md,
                                                   fuattr));
   }
+}
+
+shared_ptr<QuorumEvent> TroadCommo::BroadcastAccept(parid_t par_id,
+                                                    txnid_t cmd_id,
+                                                    ballot_t ballot,
+                                                    parent_set_t& parents) {
+  WAN_WAIT;
+  verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
+  auto n = rpc_par_proxies_[par_id].size();
+  auto ev = Reactor::CreateSpEvent<QuorumEvent>(n, n/2+1);
+//  auto ev = Reactor::CreateSpEvent<QuorumEvent>(n, n/2+1);
+  for (auto& p : rpc_par_proxies_[par_id]) {
+    auto proxy = (p.second);
+    verify(proxy != nullptr);
+    FutureAttr fuattr;
+    fuattr.callback = [ev](Future* fu) {
+      int32_t res;
+      fu->get_reply() >> res;
+      if (res == SUCCESS) {
+        ev->VoteYes();
+      } else if (res == REJECT) {
+        ev->VoteNo();
+      } else {
+        verify(0);
+      }
+    };
+    verify(cmd_id > 0);
+    Future::safe_release(proxy->async_RccAccept(cmd_id,
+                                                  ballot,
+                                                  parents,
+                                                  fuattr));
+  }
+  return ev;
 }
 
 shared_ptr<QuorumEvent> TroadCommo::BroadcastAccept(parid_t par_id,
@@ -282,8 +356,8 @@ TroadCommo::BroadcastCommit(parid_t par_id,
                             txnid_t cmd_id,
                             rank_t rank,
                             bool need_validation,
-                            shared_ptr<RccGraph> graph) {
-  bool skip_graph = IsGraphOrphan(*graph, cmd_id);
+                            parent_set_t& parents) {
+//  bool skip_graph = IsGraphOrphan(*graph, cmd_id);
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
   int n = rpc_par_proxies_[par_id].size();
   auto ev = Reactor::CreateSpEvent<QuorumEvent>(n, 1);
@@ -302,12 +376,13 @@ TroadCommo::BroadcastCommit(parid_t par_id,
       }
     };
     verify(cmd_id > 0);
-    if (skip_graph) {
-      Future::safe_release(proxy->async_JanusCommitWoGraph(cmd_id, rank, need_validation, fuattr));
-    } else {
-      MarshallDeputy md(graph);
-      Future::safe_release(proxy->async_JanusCommit(cmd_id, rank, need_validation, md, fuattr));
-    }
+//    if (skip_graph) {
+//      Future::safe_release(proxy->async_JanusCommitWoGraph(cmd_id, rank, need_validation, fuattr));
+//    } else {
+//      MarshallDeputy md(graph);
+//      Future::safe_release(proxy->async_JanusCommit(cmd_id, rank, need_validation, md, fuattr));
+//    }
+  Future::safe_release(proxy->async_RccCommit(cmd_id, rank, need_validation, parents, fuattr));
   }
   return ev;
 }

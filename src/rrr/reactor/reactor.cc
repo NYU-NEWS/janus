@@ -85,6 +85,7 @@ void Reactor::Loop(bool infinite) {
   looping_ = infinite;
   do {
     std::vector<shared_ptr<Event>> ready_events = std::move(ready_events_);
+    verify(ready_events_.empty());
     for (auto ev : ready_events) {
       verify(ev->status_ == Event::READY);
     }
@@ -95,10 +96,17 @@ void Reactor::Loop(bool infinite) {
       auto status = event.status_;
       switch (status) {
         case Event::INIT:
+          verify(0);
         case Event::WAIT: {
           const auto &wakeup_time = event.wakeup_time_;
           if (wakeup_time > 0 && time_now > wakeup_time) {
-            event.status_ = Event::TIMEOUT;
+            if (event.IsReady()) {
+              // This is because our event mechanism is not perfect, some events
+              // don't get triggered with arbitrary condition change.
+              event.status_ = Event::READY;
+            } else {
+              event.status_ = Event::TIMEOUT;
+            }
             ready_events.push_back(*it);
             it = timeout_events_.erase(it);
           } else {
@@ -106,8 +114,8 @@ void Reactor::Loop(bool infinite) {
           }
           break;
         }
-        case Event::DONE:
         case Event::READY:
+        case Event::DONE:
           it = timeout_events_.erase(it);
           break;
         default:
@@ -116,9 +124,16 @@ void Reactor::Loop(bool infinite) {
     }
     for (auto it = ready_events.begin(); it != ready_events.end(); it++) {
       Event& event = **it;
+      verify(event.status_ != Event::DONE);
       auto sp_coro = event.wp_coro_.lock();
       verify(sp_coro);
-      verify(coros_.find(sp_coro) != coros_.end());
+      verify(sp_coro->status_ == Coroutine::PAUSED);
+      verify(coros_.find(sp_coro) != coros_.end()); // TODO ?????????
+      if (event.status_ == Event::READY) {
+        event.status_ = Event::DONE;
+      } else {
+        verify(event.status_ == Event::TIMEOUT);
+      }
       ContinueCoro(sp_coro);
     }
 
@@ -133,7 +148,8 @@ void Reactor::Loop(bool infinite) {
 //        verify(event.status_ != Event::READY);
 //      }
 //    }
-  } while (looping_);
+  } while (looping_ || !ready_events_.empty());
+  verify(ready_events_.empty());
 }
 
 void Reactor::ContinueCoro(std::shared_ptr<Coroutine> sp_coro) {
@@ -259,6 +275,7 @@ void PollMgr::PollThread::poll_loop() {
   while (!stop_flag_) {
     TriggerJob();
     poll_.Wait();
+    verify(Reactor::GetReactor()->ready_events_.empty());
     TriggerJob();
     // after each poll loop, remove uninterested pollables
     pending_remove_l_.lock();
@@ -278,7 +295,8 @@ void PollMgr::PollThread::poll_loop() {
       l_.unlock();
     }
     TriggerJob();
-    Reactor::GetReactor()->Loop();
+    verify(Reactor::GetReactor()->ready_events_.empty());
+//    Reactor::GetReactor()->Loop();
   }
 }
 

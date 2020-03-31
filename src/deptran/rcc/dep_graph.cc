@@ -242,11 +242,14 @@ void RccGraph::UpgradeStatus(RccTx& v, int8_t status) {
 //  }
   auto s = v.status();
   if (s >= TXN_CMT) {
-    RccServer::__DebugCheckParentSetSize(v.id(), v.parents_.size());
+    v.__DebugCheckParents();
+//    RccServer::__DebugCheckParentSetSize(v.id(), v.parents_.size());
   } else if (status >= TXN_CMT) {
-    RccServer::__DebugCheckParentSetSize(v.id(), v.parents_.size());
+//    RccServer::__DebugCheckParentSetSize(v.id(), v.parents_.size());
+//    v.__DebugCheckParents();
   }
   v.union_status(status);
+  v.__DebugCheckParents();
 }
 
 shared_ptr<RccTx> RccGraph::AggregateVertex(shared_ptr<RccTx> rhs_dtxn) {
@@ -277,19 +280,21 @@ shared_ptr<RccTx> RccGraph::AggregateVertex(shared_ptr<RccTx> rhs_dtxn) {
   /**
    * If local vertex is not yet fully dispatched, pre-setting its dependencies does not hurt
    */
-  if (lhs_dtxn->shared_rank_ > rhs_dtxn->shared_rank_) {
-    return lhs_dtxn;
-  } else if (lhs_dtxn->shared_rank_ < rhs_dtxn->shared_rank_) {
-    lhs_dtxn->parents_ = rhs_dtxn->parents_;
-    lhs_dtxn->shared_rank_ = rhs_dtxn->shared_rank_;
-    lhs_dtxn->max_seen_ballot_ = rhs_dtxn->max_accepted_ballot_;
-    lhs_dtxn->max_accepted_ballot_ = rhs_dtxn->max_accepted_ballot_;
-  } else {
+//  if (lhs_dtxn->shared_rank_ > rhs_dtxn->shared_rank_) {
+//    verify(0);
+//    return lhs_dtxn;
+//  } else if (lhs_dtxn->shared_rank_ < rhs_dtxn->shared_rank_) {
+//    lhs_dtxn->parents_ = rhs_dtxn->parents_;
+//    lhs_dtxn->shared_rank_ = rhs_dtxn->shared_rank_;
+//    lhs_dtxn->max_seen_ballot_ = rhs_dtxn->max_accepted_ballot_;
+//    lhs_dtxn->max_accepted_ballot_ = rhs_dtxn->max_accepted_ballot_;
+//  } else {
     if (lhs_dtxn->max_seen_ballot_ == 0 &&
         status1 <= TXN_STD &&
         status2 <= TXN_STD) {
-      lhs_dtxn->parents_.insert(rhs_dtxn->parents_.begin(),
-                                rhs_dtxn->parents_.end());
+      verify(0);
+//      lhs_dtxn->parents_.insert(rhs_dtxn->parents_.begin(),
+//                                rhs_dtxn->parents_.end());
 //    lhs_dtxn->partition_.insert(rhs_dtxn->partition_.begin(),
 //                                rhs_dtxn->partition_.end());
     } else if (status2 >= TXN_CMT) {
@@ -304,7 +309,7 @@ shared_ptr<RccTx> RccGraph::AggregateVertex(shared_ptr<RccTx> rhs_dtxn) {
         } // else do nothing.
       }
     }
-  }
+//  }
 #ifdef DEBUG_CODE
   if (status1 >= TXN_CMT) {
     // do nothing about edges.
@@ -319,6 +324,8 @@ shared_ptr<RccTx> RccGraph::AggregateVertex(shared_ptr<RccTx> rhs_dtxn) {
                               rhs_dtxn->partition_.end());
   // TODO add rank support here.
   lhs_dtxn->status_.Set(lhs_dtxn->status_.value_ |= rhs_dtxn->status_.value_);
+  lhs_dtxn->__DebugCheckParents();
+  rhs_dtxn->__DebugCheckParents();
   return lhs_dtxn;
 }
 

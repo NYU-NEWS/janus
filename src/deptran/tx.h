@@ -128,8 +128,10 @@ class Tx: public enable_shared_from_this<Tx> {
   virtual ~Tx();
 };
 
-struct entry_t {
+class entry_t {
+ public:
   shared_ptr<Tx> last_{nullptr}; // last transaction(write) that touches this
+  unordered_set<shared_ptr<Tx>> active_{}; // last transaction(write) that touches this
   // item. (arriving order)
 
   const entry_t &operator=(const entry_t &rhs) {

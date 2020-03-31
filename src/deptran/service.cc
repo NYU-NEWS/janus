@@ -186,19 +186,20 @@ void ClassicServiceImpl::RccFinish(const cmdid_t& cmd_id,
   stat_sz_gra_commit_.sample(graph.size());
 }
 
-void ClassicServiceImpl::RccInquire(const epoch_t& epoch,
-                                    const txnid_t& tid,
-                                    MarshallDeputy* p_md_graph,
+void ClassicServiceImpl::RccInquire(const txnid_t& tid,
+                                    pair<map<txid_t, ParentEdge<RccTx>>, set<txid_t>>* ret,
                                     rrr::DeferredReply* defer) {
-  verify(IS_MODE_RCC || IS_MODE_RO6);
+//  verify(IS_MODE_RCC || IS_MODE_RO6);
 //  std::lock_guard<std::mutex> guard(mtx_);
   RccServer* p_sched = (RccServer*) dtxn_sched_;
-  p_md_graph->SetMarshallable(std::make_shared<RccGraph>());
-  p_sched->OnInquire(epoch,
-                     tid,
-                     dynamic_pointer_cast<RccGraph>(p_md_graph->sp_data_));
+//  p_md_graph->SetMarshallable(std::make_shared<RccGraph>());
+//  p_sched->OnInquire(epoch,
+//                     tid,
+//                     dynamic_pointer_cast<RccGraph>(p_md_graph->sp_data_));
+  *ret = p_sched->OnInquire(tid);
   defer->reply();
 }
+
 
 void ClassicServiceImpl::RccDispatchRo(const SimpleCommand& cmd,
                                        map<int32_t, Value>* output,
@@ -258,6 +259,19 @@ void ClassicServiceImpl::JanusCommit(const cmdid_t& cmd_id,
   defer->reply();
 }
 
+void ClassicServiceImpl::RccCommit(const cmdid_t& cmd_id,
+                                   const rank_t& rank,
+                                   const int32_t& need_validation,
+                                   const map<txid_t, ParentEdge<RccTx>>& parents,
+                                   int32_t* res,
+                                   TxnOutput* output,
+                                   DeferredReply* defer) {
+//  std::lock_guard<std::mutex> guard(mtx_);
+  auto p_sched = (RccServer*) dtxn_sched_;
+  *res = p_sched->OnCommit(cmd_id, rank, need_validation, parents, output);
+  defer->reply();
+}
+
 void ClassicServiceImpl::JanusCommitWoGraph(const cmdid_t& cmd_id,
                                             const rank_t& rank,
                                             const int32_t& need_validation,
@@ -274,12 +288,25 @@ void ClassicServiceImpl::JanusInquire(const epoch_t& epoch,
                                       const cmdid_t& tid,
                                       MarshallDeputy* p_md_graph,
                                       rrr::DeferredReply* defer) {
+  verify(0);
 //  std::lock_guard<std::mutex> guard(mtx_);
-  p_md_graph->SetMarshallable(std::make_shared<RccGraph>());
-  auto p_sched = (SchedulerJanus*) dtxn_sched_;
-  p_sched->OnInquire(epoch,
-                     tid,
-                     dynamic_pointer_cast<RccGraph>(p_md_graph->sp_data_));
+//  p_md_graph->SetMarshallable(std::make_shared<RccGraph>());
+//  auto p_sched = (SchedulerJanus*) dtxn_sched_;
+//  p_sched->OnInquire(epoch,
+//                     tid,
+//                     dynamic_pointer_cast<RccGraph>(p_md_graph->sp_data_));
+//  defer->reply();
+}
+
+void ClassicServiceImpl::RccPreAccept(const cmdid_t& txnid,
+                                      const rank_t& rank,
+                                      const vector<SimpleCommand>& cmds,
+                                      int32_t* res,
+                                      map<txid_t, ParentEdge<RccTx>>* res_parents,
+                                      DeferredReply* defer) {
+//  std::lock_guard<std::mutex> guard(mtx_);
+  auto sched = (RccServer*) dtxn_sched_;
+  *res = sched->OnPreAccept(txnid, rank, cmds, *res_parents);
   defer->reply();
 }
 
@@ -312,6 +339,16 @@ void ClassicServiceImpl::JanusPreAcceptWoGraph(const cmdid_t& txnid,
   auto* p_sched = (SchedulerJanus*) dtxn_sched_;
   auto sp_ret_graph = dynamic_pointer_cast<RccGraph>(res_graph->sp_data_);
   *res = p_sched->OnPreAccept(txnid, rank, cmds, nullptr, sp_ret_graph);
+  defer->reply();
+}
+
+void ClassicServiceImpl::RccAccept(const cmdid_t& txnid,
+                                   const ballot_t& ballot,
+                                   const map<txid_t, ParentEdge<RccTx>>& parents,
+                                   int32_t* res,
+                                   DeferredReply* defer) {
+  auto sched = (RccServer*) dtxn_sched_;
+  *res = sched->OnAccept(txnid, 0, ballot, parents);
   defer->reply();
 }
 

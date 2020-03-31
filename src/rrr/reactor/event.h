@@ -104,8 +104,8 @@ class IntEvent : public Event {
 class SharedIntEvent {
  public:
   int value_{};
-  vector<shared_ptr<IntEvent>> events_;
-  int Set(int& v) {
+  vector<shared_ptr<IntEvent>> events_{};
+  int Set(const int& v) {
     auto ret = value_;
     value_ = v;
     for (auto sp_ev : events_) {
@@ -116,6 +116,7 @@ class SharedIntEvent {
   }
 
   void Wait(function<bool(int)> f);
+  void WaitUntilGreaterOrEqualThan(int x);
 };
 
 class NeverEvent: public Event {

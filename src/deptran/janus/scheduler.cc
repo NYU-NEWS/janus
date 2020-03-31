@@ -109,6 +109,7 @@ int SchedulerJanus::OnPreAccept(const txid_t txn_id,
                                 shared_ptr<RccGraph> graph,
                                 shared_ptr<RccGraph> res_graph) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
+  verify(0);
 //  Log_info("on preaccept: %llx par: %d", txn_id, (int)partition_id_);
 //  if (RandomGenerator::rand(1, 2000) <= 1)
 //    Log_info("on pre-accept graph size: %d", graph.size());
@@ -166,60 +167,47 @@ void SchedulerJanus::OnAccept(const txnid_t txn_id,
   }
 }
 
-int SchedulerJanus::OnInquire(epoch_t epoch,
-                              cmdid_t cmd_id,
-                              shared_ptr<RccGraph> graph) {
-  std::lock_guard<std::recursive_mutex> lock(mtx_);
-  // TODO check epoch, cannot be a too old one.
-  auto sp_tx = dynamic_pointer_cast<RccTx>(GetOrCreateTx(cmd_id));
-  //register an event, triggered when the status >= COMMITTING;
-  verify (sp_tx->Involve(TxLogServer::partition_id_));
-  sp_tx->status_.Wait([](int v)->bool {return v>=TXN_CMT;});
-  InquiredGraph(*sp_tx, graph);
-  return 0;
-}
-
-int SchedulerJanus::OnCommit(const txnid_t cmd_id,
-                             rank_t rank,
-                             bool need_validation,
-                             shared_ptr<RccGraph> sp_graph,
-                             TxnOutput *output) {
-  std::lock_guard<std::recursive_mutex> lock(mtx_);
-//  if (RandomGenerator::rand(1, 2000) <= 1)
-//    Log_info("on commit graph size: %d", graph.size());
-  int ret = SUCCESS;
-  auto dtxn = dynamic_pointer_cast<RccTx>(GetOrCreateTx(cmd_id));
-  dtxn->need_validation_ = need_validation;
-  verify(dtxn->p_output_reply_ == nullptr);
-  dtxn->p_output_reply_ = output;
-  verify(!dtxn->IsAborted());
-  if (dtxn->HasLogApplyStarted()) {
-    ret = SUCCESS; // TODO no return output?
-  } else {
-//    Log_info("on commit: %llx par: %d", cmd_id, (int)partition_id_);
-//    dtxn->commit_request_received_ = true;
-    if (!sp_graph) {
-      // quick path without graph, no contention.
-      verify(dtxn->fully_dispatched_->value_); //cannot handle non-dispatched now.
-      UpgradeStatus(*dtxn, TXN_DCD);
-      Execute(dtxn);
-    } else {
-      // with graph
-      auto index = Aggregate(*sp_graph);
-//      TriggerCheckAfterAggregation(*sp_graph);
-      WaitUntilAllPredecessorsAtLeastCommitting(dtxn.get());
-      RccScc& scc = FindSccPred(*dtxn);
-      Decide(scc);
-      WaitUntilAllPredSccExecuted(scc);
-      if (FullyDispatched(scc) && !scc[0]->HasLogApplyStarted()) {
-        Execute(scc);
-      }
-    }
-    dtxn->sp_ev_commit_->Wait();
-    ret = dtxn->committed_ ? SUCCESS : REJECT;
-  }
-  return ret;
-}
+//int SchedulerJanus::OnCommit(const txnid_t cmd_id,
+//                             rank_t rank,
+//                             bool need_validation,
+//                             shared_ptr<RccGraph> sp_graph,
+//                             TxnOutput *output) {
+//  std::lock_guard<std::recursive_mutex> lock(mtx_);
+////  if (RandomGenerator::rand(1, 2000) <= 1)
+////    Log_info("on commit graph size: %d", graph.size());
+//  int ret = SUCCESS;
+//  auto dtxn = dynamic_pointer_cast<RccTx>(GetOrCreateTx(cmd_id));
+//  dtxn->need_validation_ = need_validation;
+//  verify(dtxn->p_output_reply_ == nullptr);
+//  dtxn->p_output_reply_ = output;
+//  verify(!dtxn->IsAborted());
+//  if (dtxn->HasLogApplyStarted()) {
+//    ret = SUCCESS; // TODO no return output?
+//  } else {
+////    Log_info("on commit: %llx par: %d", cmd_id, (int)partition_id_);
+////    dtxn->commit_request_received_ = true;
+//    if (!sp_graph) {
+//      // quick path without graph, no contention.
+//      verify(dtxn->fully_dispatched_->value_); //cannot handle non-dispatched now.
+//      UpgradeStatus(*dtxn, TXN_DCD);
+//      Execute(dtxn);
+//    } else {
+//      // with graph
+//      auto index = Aggregate(*sp_graph);
+////      TriggerCheckAfterAggregation(*sp_graph);
+//      WaitUntilAllPredecessorsAtLeastCommitting(dtxn.get());
+//      RccScc& scc = FindSccPred(*dtxn);
+//      Decide(scc);
+//      WaitUntilAllPredSccExecuted(scc);
+//      if (FullyDispatched(scc) && !scc[0]->HasLogApplyStarted()) {
+//        Execute(scc);
+//      }
+//    }
+//    dtxn->sp_ev_commit_->Wait();
+//    ret = dtxn->committed_ ? SUCCESS : REJECT;
+//  }
+//  return ret;
+//}
 
 JanusCommo *SchedulerJanus::commo() {
 

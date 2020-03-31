@@ -75,9 +75,6 @@ class SchedulerTroad : public SchedulerJanus {
                shared_ptr<RccGraph> sp_graph,
                TxnOutput *output) override;
 
-  int OnInquire(epoch_t epoch,
-                cmdid_t cmd_id,
-                shared_ptr<RccGraph> graph) override;
   TroadCommo* commo();
 
 };

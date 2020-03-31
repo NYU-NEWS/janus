@@ -72,9 +72,11 @@ abstract service Classic {
                   MarshallDeputy md_graph |
                   map<uint32_t, map<int32_t, Value>> outputs);
 
-  defer RccInquire(epoch_t epoch,
-                   txnid_t txn_id |
-                   MarshallDeputy md_res_graph);
+  // defer RccInquire(epoch_t epoch,
+  //                  txnid_t txn_id |
+  //                  MarshallDeputy md_res_graph);
+  defer RccInquire(txnid_t txn_id |
+                   pair<map<uint64_t, ParentEdge<RccTx>>, set<uint64_t>>);
 
   defer RccDispatchRo(SimpleCommand cmd |
                       map<i32, Value> output);
@@ -87,6 +89,13 @@ abstract service Classic {
                       i32 res,
                       TxnOutput output,
                       MarshallDeputy ret_graph);
+
+  defer RccCommit(cmdid_t id,
+                  rank_t rank,
+                  int32_t need_validation,
+                  map<uint64_t,ParentEdge<RccTx>>  parents |
+                  int32_t res,
+                  TxnOutput output);
 
   defer JanusCommit(cmdid_t id,
                     rank_t rank,
@@ -105,6 +114,12 @@ abstract service Classic {
                      txnid_t txn_id |
                      MarshallDeputy ret_graph);
 
+  defer RccPreAccept(cmdid_t txn_id,
+                     rank_t rank,
+                     vector<SimpleCommand> cmd |
+                     i32 res,
+                     map<uint64_t, ParentEdge<RccTx>> );
+
   defer JanusPreAccept(cmdid_t txn_id,
                        rank_t rank,
                        vector<SimpleCommand> cmd,
@@ -117,6 +132,11 @@ abstract service Classic {
                               vector<SimpleCommand> cmd |
                               i32 res,
                               MarshallDeputy ret_graph);
+
+  defer RccAccept(cmdid_t txn_id,
+                    ballot_t ballot,
+                    map<uint64_t,ParentEdge<RccTx>>  |
+                    i32 res);
 
   defer JanusAccept(cmdid_t txn_id,
                     ballot_t ballot,

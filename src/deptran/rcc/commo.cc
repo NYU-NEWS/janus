@@ -66,22 +66,21 @@ void RccCommo::SendFinish(parid_t pid,
 }
 
 
-shared_ptr<RccGraph> RccCommo::Inquire(parid_t pid,
-                                       epoch_t epoch,
-                                       txnid_t tid) {
-  shared_ptr<RccGraph> ret;
+shared_ptr<pair<map<txid_t, ParentEdge<RccTx>>, set<txid_t>>>
+RccCommo::Inquire(parid_t pid, txnid_t tid) {
+  auto ret = std::make_shared<pair<map<txid_t, ParentEdge<RccTx>>, set<txid_t>>>();
   auto ev = Reactor::CreateSpEvent<IntEvent>();
   FutureAttr fuattr;
-  function<void(Future*)> cb = [&ret, &ev] (Future* fu) {
-    MarshallDeputy md;
-    fu->get_reply() >> md;
-    ret = dynamic_pointer_cast<RccGraph>(md.sp_data_);
+  function<void(Future*)> cb = [ret, &ev] (Future* fu) {
+//    MarshallDeputy md;
+    fu->get_reply() >> *ret;
     ev->Set(1);
   };
   fuattr.callback = cb;
   auto proxy = (ClassicProxy*)NearestProxyForPartition(pid).second;
-  Future::safe_release(proxy->async_RccInquire(epoch, tid, fuattr));
-  ev->Wait(20*1000*1000);
+  Future::safe_release(proxy->async_RccInquire(tid, fuattr));
+//  ev->Wait(60*1000*1000);
+  ev->Wait();
   verify(ev->status_ != Event::TIMEOUT);
   return ret;
 }
@@ -90,16 +89,17 @@ void RccCommo::SendInquire(parid_t pid,
                            epoch_t epoch,
                            txnid_t tid,
                            const function<void(RccGraph& graph)>& callback) {
-  FutureAttr fuattr;
-  function<void(Future*)> cb = [callback] (Future* fu) {
-    MarshallDeputy md;
-    fu->get_reply() >> md;
-    RccGraph& graph = dynamic_cast<RccGraph&>(*md.sp_data_);
-    callback(graph);
-  };
-  fuattr.callback = cb;
-  auto proxy = (ClassicProxy*)NearestProxyForPartition(pid).second;
-  Future::safe_release(proxy->async_RccInquire(epoch, tid, fuattr));
+  // verify(0);
+//  FutureAttr fuattr;
+//  function<void(Future*)> cb = [callback] (Future* fu) {
+//    MarshallDeputy md;
+//    fu->get_reply() >> md;
+//    RccGraph& graph = dynamic_cast<RccGraph&>(*md.sp_data_);
+//    callback(graph);
+//  };
+//  fuattr.callback = cb;
+//  auto proxy = (ClassicProxy*)NearestProxyForPartition(pid).second;
+//  Future::safe_release(proxy->async_RccInquire(tid, fuattr));
 }
 
 void RccCommo::BroadcastCommit(parid_t par_id,

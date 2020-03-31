@@ -12,7 +12,6 @@ public:
   void DispatchExecute(SimpleCommand &cmd,
                        map<int32_t, Value> *output) override;
 
-  void CommitExecute() override;
 };
 
 } // namespace janus

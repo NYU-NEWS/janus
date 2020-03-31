@@ -14,7 +14,7 @@ function run_tests {
 
 #	tpca_fixed 3
 	zipf_graph 3
-	tpcc 6
+#	tpcc 6
 
 #	rw_fixed
 #	tpca_fixed

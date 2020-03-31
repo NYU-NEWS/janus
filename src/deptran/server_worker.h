@@ -3,6 +3,7 @@
 #include "__dep__.h"
 #include "marshal-value.h"
 #include "rcc/graph.h"
+#include "rcc/tx.h"
 #include "rcc/graph_marshaler.h"
 #include "command.h"
 #include "procedure.h"

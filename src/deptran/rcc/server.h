@@ -15,12 +15,6 @@ class TxnInfo;
 
 class RccServer : public TxLogServer, public RccGraph {
  public:
-  static map<txnid_t, int32_t> __debug_xxx_s;
-  static std::recursive_mutex __debug_mutex_s;
-  static void __DebugCheckParentSetSize(txnid_t tid, int32_t sz);
-  AvgStat traversing_stat_{};
-
- public:
   set<shared_ptr<RccTx>> fridge_ = {};
   std::recursive_mutex mtx_{};
   std::time_t last_upgrade_time_{0};
@@ -58,23 +52,14 @@ class RccServer : public TxLogServer, public RccGraph {
 
   virtual void SetPartitionId(parid_t par_id) override {
     TxLogServer::partition_id_ = par_id;
-    RccGraph::partition_id_ = par_id;
+//    RccGraph::partition_id_ = par_id;
   }
 
   int OnDispatch(const vector<SimpleCommand> &cmd,
                  TxnOutput *output,
                  shared_ptr<RccGraph> graph);
 
-  int OnCommit(cmdid_t cmd_id,
-               rank_t rank,
-               const RccGraph &graph,
-               TxnOutput *output,
-               const function<void()> &callback);
-
-
-  virtual int OnInquire(epoch_t epoch,
-                        txnid_t cmd_id,
-                        shared_ptr<RccGraph> graph);
+  virtual pair<map<txid_t, ParentEdge<RccTx>>, set<txid_t>> OnInquire(txnid_t cmd_id);
 
   virtual bool HandleConflicts(Tx &dtxn,
                                innid_t inn_id,
@@ -96,7 +81,7 @@ class RccServer : public TxLogServer, public RccGraph {
   bool HasICycle(const RccScc &scc);
   bool HasAbortedAncestor(const RccScc &scc);
   bool AllAncFns(const RccScc &);
-  void Execute(const RccScc &);
+  void Execute(RccScc &);
   void Execute(shared_ptr<RccTx> );
   void Abort(const RccScc &);
   virtual int OnCommit(txnid_t txn_id,
@@ -111,6 +96,21 @@ class RccServer : public TxLogServer, public RccGraph {
   int OnInquireValidation(txid_t tx_id);
   void OnNotifyGlobalValidation(txid_t tx_id, int validation_result);
 
+  int OnPreAccept(txnid_t txnid,
+                  rank_t rank,
+                  const vector<SimpleCommand> &cmds,
+                  map<txid_t, ParentEdge<RccTx>>& parents) ;
+
+  int OnAccept(txnid_t txn_id,
+               rank_t rank,
+               const ballot_t& ballot,
+               const map<txid_t, ParentEdge<RccTx>>& parents);
+
+  int OnCommit(txnid_t txn_id,
+               rank_t rank,
+               bool need_validation,
+               const map<txid_t, ParentEdge<RccTx>>& parents,
+               TxnOutput *output);
 
   void __DebugExamineFridge();
   RccTx &__DebugFindAnOngoingAncestor(RccTx &vertex);

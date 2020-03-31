@@ -245,6 +245,9 @@ void Client::handle_read() {
       break;
     }
   }
+  // This is a workaround, the Loop call should really happen
+  // between handle_read and handle_write in the epoll loop
+  Reactor::GetReactor()->Loop();
 }
 
 int Client::poll_mode() {

@@ -5,6 +5,7 @@ namespace janus {
 
 void TxTroad::DispatchExecute(SimpleCommand &cmd,
                               map<int32_t, Value> *output) {
+  verify(phase_ != PHASE_RCC_COMMIT);
   phase_ = PHASE_RCC_DISPATCH;
   for (auto& c: dreqs_) {
     if (c.inn_id() == cmd.inn_id()) // already handled?
@@ -24,6 +25,7 @@ void TxTroad::DispatchExecute(SimpleCommand &cmd,
     }
   }
   dreqs_.push_back(cmd);
+  verify(dreqs_.size() <=3);
 
   // TODO are these preemptive actions proper?
   int ret_code;
@@ -34,29 +36,6 @@ void TxTroad::DispatchExecute(SimpleCommand &cmd,
                           &ret_code,
                           *output);
   ws_.insert(*output);
-}
-
-void TxTroad::CommitExecute() {
-  phase_ = PHASE_RCC_COMMIT;
-  committed_ = true;
-//  if (global_validated_->Get() == REJECT) {
-//    return;
-//  }
-  TxWorkspace ws;
-  for (auto &cmd: dreqs_) {
-    verify (cmd.rank_ == RANK_I || cmd.rank_ == RANK_D);
-    if (! __mocking_janus_) {
-//      if (cmd.rank_ != current_rank_) {
-//        continue;
-//      }
-    }
-    TxnPieceDef& p = txn_reg_.lock()->get(cmd.root_type_, cmd.type_);
-    int tmp;
-    cmd.input.Aggregate(ws);
-    auto& m = output_[cmd.inn_id_];
-    p.proc_handler_(nullptr, *this, cmd, &tmp, m);
-    ws.insert(m);
-  }
 }
 
 } // namespace janus

@@ -1,6 +1,8 @@
 #pragma once
 #include "../__dep__.h"
+#include "graph.h"
 #include "../tx.h"
+#include "../scheduler.h"
 #include "../procedure.h"
 
 #define PHASE_RCC_DISPATCH (1)
@@ -9,17 +11,26 @@
 #define PHASE_RCC_D_COMMIT (3)
 
 namespace janus {
+
 class RccTx: public Tx, public Vertex<RccTx> {
  public:
+  void __DebugCheckParents();
+  void __DebugCheckScc();
+  static SpinLock __debug_parents_lock_;
+  static SpinLock __debug_scc_lock_;
+  static std::map<txid_t, parent_set_t> __debug_parents_;
+  static std::map<txid_t, vector<txid_t>> __debug_scc_;
   static thread_local uint64_t timestamp_;
   bool __mocking_janus_{false};
   rank_t current_rank_{RANK_UNDEFINED};
   rank_t shared_rank_{RANK_UNDEFINED}; // this could be greater than current_rank_ as it can be updated during graph propagation
   rank_t scc_rank_{0};
   // ----below variables get reset whenever current_rank_ is changed
-  SharedIntEvent status_;
+  SharedIntEvent status_{};
   ballot_t max_seen_ballot_{0};
   ballot_t max_accepted_ballot_{0};
+  SharedIntEvent commit_received_{};
+  SharedIntEvent log_apply_finished_{};
   shared_ptr<IntEvent> sp_ev_commit_{Reactor::CreateSpEvent<IntEvent>()};
   TxnOutput *p_output_reply_ = nullptr;
   TxnOutput output_ = {};
@@ -27,6 +38,11 @@ class RccTx: public Tx, public Vertex<RccTx> {
   // also reset phase_ and fully_dispatched.
   // ----above variables get reset whenever current_rank_ is changed
   bool need_validation_{false};
+  bool __commit_received_{false};
+
+  bool all_ancestors_committing() {
+    return all_anc_cmt_hint;
+  }
 
   class StatusBox : public BoxEvent<int> {
    public:
@@ -40,6 +56,7 @@ class RccTx: public Tx, public Vertex<RccTx> {
     }
   };
 
+  bool __debug_local_validated_foreign_{false};
   shared_ptr<StatusBox> local_validated_{Reactor::CreateSpEvent<StatusBox>()};
   shared_ptr<StatusBox> global_validated_{Reactor::CreateSpEvent<StatusBox>()};
 
@@ -52,6 +69,18 @@ class RccTx: public Tx, public Vertex<RccTx> {
   // hopefully this makes involve checks faster
   enum InvolveEnum {UNKNOWN, INVOLVED, FOREIGN};
   InvolveEnum involve_flag_{UNKNOWN};
+
+//  bool InvolveThisShard() {
+//    if (involve_flag_ == UNKNOWN) {
+//      verify(status() >= TXN_CMT);
+//      if (Involve(TxLogServer::partition_id_)) {
+//        involve_flag_ = INVOLVED;
+//      } else {
+//        involve_flag_ = FOREIGN;
+//      }
+//    }
+//    return (involve_flag_ == INVOLVED);
+//  }
 
   // if any other transactions is blocked by this transaction,
   // add it to this set to make the checking waitlist faster.
@@ -114,6 +143,7 @@ class RccTx: public Tx, public Vertex<RccTx> {
                    int hint_flag = TXN_INSTANT) override;
 
   void TraceDep(Row* row, colid_t col_id, rank_t hint_flag);
+  void CommitDep(Row& row, colid_t col_id);
 
   virtual void AddParentEdge(shared_ptr<RccTx> other, int8_t weight) override;
 
@@ -129,9 +159,11 @@ class RccTx: public Tx, public Vertex<RccTx> {
   }
 
   virtual bool UpdateStatus(int s) {
-//    verify(current_rank_ == rank);
     if (status_.value_ < s) {
-      status_.Set(s);
+      status_.Set(status_.value_ | s);
+      if (status_.value_ >= TXN_CMT) {
+        __DebugCheckParents();
+      }
       return true;
     } else {
       return false;
@@ -236,6 +268,17 @@ class RccTx: public Tx, public Vertex<RccTx> {
 
 };
 
+typedef map<txid_t, ParentEdge<RccTx>> parent_set_t;
+
+inline rrr::Marshal &operator<<(rrr::Marshal &m, const ParentEdge<RccTx> &e) {
+  m << e.partitions_;
+  return m;
+}
+
+inline rrr::Marshal &operator>>(rrr::Marshal &m, ParentEdge<RccTx> &e) {
+  m >> e.partitions_;
+  return m;
+}
 
 inline rrr::Marshal &operator<<(rrr::Marshal &m, const RccTx &ti) {
   m << ti.tid_ << ti.status() << ti.partition_ << ti.parents_;

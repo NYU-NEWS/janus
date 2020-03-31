@@ -119,14 +119,34 @@ class ClassicServiceImpl : public ClassicService {
                    MarshallDeputy* p_md_graph,
                    DeferredReply* defer) override;
 
+  void RccPreAccept(const txid_t& txnid,
+                    const rank_t& rank,
+                    const vector<SimpleCommand>& cmd,
+                    int32_t* res,
+                    map<txid_t, ParentEdge<RccTx>>* parents,
+                    DeferredReply* defer) override;
+
+  void RccAccept(const txid_t& txnid,
+                 const ballot_t& ballot,
+                 const map<txid_t, ParentEdge<RccTx>>& parents,
+                 int32_t* res,
+                 DeferredReply* defer) override;
+
+  void RccCommit(const txid_t& cmd_id,
+                 const rank_t& rank,
+                 const int32_t& need_validation,
+                 const map<txid_t, ParentEdge<RccTx>>& parents,
+                 int32_t* res,
+                 TxnOutput* output,
+                 DeferredReply* defer) override;
+
   void RccFinish(const txid_t& cmd_id,
                  const MarshallDeputy& md_graph,
                  TxnOutput* output,
                  DeferredReply* defer) override;
 
-  void RccInquire(const epoch_t& epoch,
-                  const txid_t& tid,
-                  MarshallDeputy* p_md_graph,
+  void RccInquire(const txid_t& tid,
+                  pair<map<txid_t, ParentEdge<RccTx>>, set<txid_t>>* p_md_graph,
                   DeferredReply*) override;
 
   void RccDispatchRo(const SimpleCommand& cmd,

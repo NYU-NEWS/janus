@@ -161,20 +161,6 @@ int SchedulerTroad::OnAccept(const txnid_t txn_id,
   }
 }
 
-int SchedulerTroad::OnInquire(epoch_t epoch,
-                              cmdid_t cmd_id,
-                              shared_ptr<RccGraph> graph) {
-  verify(0);
-  std::lock_guard<std::recursive_mutex> lock(mtx_);
-  // TODO check epoch, cannot be a too old one.
-  auto sp_tx = dynamic_pointer_cast<RccTx>(GetOrCreateTx(cmd_id));
-  //register an event, triggered when the status >= COMMITTING;
-  verify (sp_tx->Involve(TxLogServer::partition_id_));
-  sp_tx->status_.Wait([](int v)->bool {return v>=TXN_CMT;});
-  InquiredGraph(*sp_tx, graph);
-  return 0;
-}
-
 int SchedulerTroad::OnCommit(const txnid_t cmd_id,
                              const rank_t rank,
                              const bool need_validation,
@@ -189,13 +175,28 @@ int SchedulerTroad::OnCommit(const txnid_t cmd_id,
   verify(rank == dtxn->current_rank_);
   verify(dtxn->p_output_reply_ == nullptr);
   dtxn->p_output_reply_ = output;
+  dtxn->__commit_received_ = true;
   verify(!dtxn->IsAborted());
-  auto sp_e = Reactor::CreateSpEvent<Event>();
-//  sp_e->test_ = [sp_tx] (int v) -> bool {
-//    return sp_tx->local_validated_->is_set_;
-//  };
-  verify (!dtxn->HasLogApplyStarted());
-//    Log_info("on commit: %llx par: %d", cmd_id, (int)partition_id_);
+  bool weird = dtxn->HasLogApplyStarted();
+  Coroutine::CreateRun([sp_tx, weird](){
+    auto sp_e = Reactor::CreateSpEvent<Event>();
+    sp_e->test_ = [sp_tx] (int v) -> bool {
+      return sp_tx->local_validated_->is_set_;
+    };
+    sp_e->Wait(120*1000*1000);
+    if (sp_e->status_ == Event::TIMEOUT) {
+      verify(!weird);
+      verify(0);
+    }
+  });
+  dtxn->commit_received_.Set(1);
+// TODO XXXX whyyyyyyyyyyyyyyy?
+  if (weird) {
+    verify(0);
+    verify(dtxn->status() > TXN_CMT);
+    dtxn->__DebugCheckParents();
+    return SUCCESS;
+  }
 //    dtxn->commit_request_received_ = true;
   if (sp_graph) {
     Aggregate(*sp_graph);
@@ -213,8 +214,6 @@ int SchedulerTroad::OnCommit(const txnid_t cmd_id,
 //    dtxn->sp_ev_commit_->Wait();
 //    verify(dtxn->sp_ev_commit_->status_ != Event::TIMEOUT);
 //    ret = dtxn->local_validation_result_ > 0 ? SUCCESS : REJECT;
-//  sp_e->Wait(10*1000*1000);
-//  verify(sp_e->status_ != Event::TIMEOUT);
 //  dtxn->CommitRank();
   return SUCCESS;
 }

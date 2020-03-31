@@ -46,12 +46,12 @@ Coordinator::Coordinator(uint32_t coo_id,
 }
 
 Coordinator::~Coordinator() {
-  for (int i = 0; i < site_prepare_.size(); i++) {
-    Log_debug("Coo: %u, Site: %d, accept: %d, "
-                 "prepare: %d, commit: %d, abort: %d",
-             coo_id_, i, site_piece_[i], site_prepare_[i],
-             site_commit_[i], site_abort_[i]);
-  }
+//  for (int i = 0; i < site_prepare_.size(); i++) {
+//    Log_debug("Coo: %u, Site: %d, accept: %d, "
+//                 "prepare: %d, commit: %d, abort: %d",
+//             coo_id_, i, site_piece_[i], site_prepare_[i],
+//             site_commit_[i], site_abort_[i]);
+//  }
 
   if (recorder_) delete recorder_;
 #ifdef TXN_STAT

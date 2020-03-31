@@ -13,7 +13,8 @@ class RccCoord : public CoordinatorClassic {
   RccCommo* commo();
 
  public:
-  shared_ptr<RccGraph> sp_graph_{new RccGraph};
+//  shared_ptr<RccGraph> sp_graph_{new RccGraph};
+  map<txid_t, ParentEdge<RccTx>> parents_{};
   rank_t rank_{RANK_UNDEFINED};
   enum RoState { BEGIN, FIRST, SECOND, DONE };
   enum Phase { INIT_END = 0, DISPATCH, COMMIT };
@@ -34,7 +35,6 @@ class RccCoord : public CoordinatorClassic {
                            benchmark,
                            ccsi,
                            thread_id) {
-    verify(sp_graph_->size() == 0);
   }
 
   void PreDispatch();

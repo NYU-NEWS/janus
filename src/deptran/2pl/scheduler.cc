@@ -4,13 +4,8 @@
 
 #include "../__dep__.h"
 #include "../constants.h"
-#include "deptran/tx.h"
-#include "../procedure.h"
+#include "../tx.h"
 #include "../scheduler.h"
-#include "../marshal-value.h"
-#include "../rcc_rpc.h"
-#include "../rcc/graph.h"
-#include "../rcc/graph_marshaler.h"
 #include "scheduler.h"
 #include "tx.h"
 

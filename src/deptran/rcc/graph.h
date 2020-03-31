@@ -6,17 +6,49 @@
 
 namespace janus {
 
+template<class T>
+class ParentEdge {
+ public:
+  std::set<parid_t> partitions_{}; // parent's partitions
+  T* cache_ptr_{nullptr};
+  bool operator==(const ParentEdge<T>& rhs) const {
+    return partitions_ == rhs.partitions_;
+  }
+};
+
+
+template<class T>
+void ReplaceParentEdges(map<txid_t, ParentEdge<T>>& lhs, map<txid_t, ParentEdge<T>>& rhs) {
+  for (auto& pair: rhs) {
+    auto& id = pair.first;
+    auto& edge = pair.second;
+    auto it = lhs.find(id);
+    if (it != lhs.end()) {
+      auto& e2 = it->second;
+      edge.cache_ptr_ = e2.cache_ptr_;
+    }
+  }
+  lhs = std::move(rhs);
+};
+
 // This is a CRTP
 template<class T>
 class Vertex {
  private:
 //  std::shared_ptr<T> data_{};
  public:
-  map<uint64_t, rank_t> parents_{}; // parent vertex ids in the graph.
+//  map<uint64_t, rank_t> parents_{}; // parent vertex ids in the graph.
+  typedef std::map<txid_t, ParentEdge<T>> parent_set_t;
+  map<txid_t, ParentEdge<T>> parents_{};
 //  map<T *, int8_t> outgoing_{}; // helper data structure, deprecated
 //  map<T *, int8_t> incoming_{}; // helper data structure, deprecated
 //  set<T *> removed_children_{}; // helper data structure, deprecated
 //  bool walked_{false}; // flag for traversing.
+  // for scc computation
+  uint64_t scc_index_{0};
+  uint64_t scc_lowlink_{0};
+  bool scc_onstack_{false};
+  set<txid_t> scc_ids_{};
   std::shared_ptr<vector<T*>> scc_{};
 
   T *this_pointer() {
@@ -32,7 +64,7 @@ class Vertex {
 //    verify(0);
   }
   virtual ~Vertex() {};
-  map<uint64_t, rank_t> &GetParents() {
+  parent_set_t& GetParents() {
 #ifdef DEBUG_CODE
     set<uint64_t> ret;
     for (auto& pair : incoming_) {
@@ -48,7 +80,10 @@ class Vertex {
     // printf("add edge: %d -> %d\n", this->id(), other->id());
     verify(parents_.size() >= 0);
     auto id = rhs_v->id();
-    parents_[id] |= weight;
+//    parents_[id] |= weight;
+    auto& e = parents_[id];
+    e.partitions_ = rhs_v->partition_;
+    e.cache_ptr_ = rhs_v.get();
   }
 
   virtual uint64_t id() {
@@ -76,6 +111,8 @@ class Graph : public Marshallable {
   typedef std::vector<V *> VertexList;
   bool managing_memory_{true};
   std::unordered_map<uint64_t, shared_ptr<V>> vertex_index_{};
+  uint64_t scc_next_index_{1};
+  vector<V*> scc_S_{};
 
   virtual std::unordered_map<uint64_t, shared_ptr<V>> &vertex_index() {
     verify(managing_memory_);
@@ -157,6 +194,15 @@ class Graph : public Marshallable {
     return v;
   }
 
+  virtual V* FindOrCreateParentVPtr(V& v, txid_t id, ParentEdge<V>& e) {
+    auto& x = e.cache_ptr_;
+    if (x == nullptr) {
+      auto y = FindOrCreateV(id);
+      x = y.get();
+    }
+    return x;
+  }
+
   virtual shared_ptr<V> FindOrCreateV(V &av) {
     auto v = FindV(av.id());
     if (v == nullptr) v = CreateV(av);
@@ -175,32 +221,44 @@ class Graph : public Marshallable {
 
   // depth first search.
   int TraversePredNonRecursive(V& vertex,
-                               function<int(V& )> &func) {
-    shared_ptr<list<V *>> to_walk = make_shared<list<V *>>();
-    shared_ptr<set<V *>> walked = make_shared<set<V *>>();
+                               function<int(V& self, V& parent)> &func,
+                               const function<void(V& self)> &func_end = {}) {
+    auto to_walk = make_shared<vector<V *>>();
+    auto walked = make_shared<unordered_set<V *>>();
     to_walk->push_back(&vertex);
     walked->insert(&vertex);
 
     int ret = SearchHint::Ok;
     int __debug_depth = 0;
     while (!to_walk->empty()) {
-      verify(__debug_depth++ < 10000);
-      auto vvv = to_walk->front();
-      to_walk->pop_front();
+      verify(__debug_depth++ < 100000000);
+      auto vvv = to_walk->back();
       walked->insert(vvv);
+      to_walk->pop_back();
+      // because this coroutine can be switched out,
+      // be careful when using iterator.
+      vector<V*> vs;
       for (auto &pair : vvv->parents_) {
-        auto v = FindV(pair.first);
-        verify(v != nullptr);
-        ret = func(*v);
+        auto &parent_id = pair.first;
+        auto v = FindOrCreateParentVPtr(*vvv, parent_id, pair.second);
+        vs.push_back(v);
+      }
+      for (auto& v: vs) {
+        ret = func(*vvv, *v);
         if (ret == SearchHint::Exit) {
           return ret;
         } else if (ret == SearchHint::Skip) {
           continue;
         }
-        if (walked->count(v.get())==0) {
-          to_walk->push_back(v.get());
+        if (walked->count(v)==0) {
+          to_walk->push_back(v);
         }
         verify(ret == SearchHint::Ok);
+      }
+    }
+    if (func_end) {
+      for (auto& v : *walked) {
+        func_end(*v);
       }
     }
     return ret;
@@ -256,8 +314,8 @@ class Graph : public Marshallable {
       // already traversed.
       return true;
 
-    for (auto &pair : vertex.parents_) {
-      auto v = FindV(pair.first);
+    for (auto &p : vertex.parents_) {
+      auto v = FindV(p.first);
       verify(v != nullptr);
       if (!func(*v))
         return false; // traverse aborted by users.
@@ -295,46 +353,78 @@ class Graph : public Marshallable {
     return true;
   }
 
-  Scc<V> StrongConnectPred(V& v,
+  void StrongConnectPred(V& v,
                            map<V*, int> &indexes,
                            map<V*, int> &lowlinks,
                            int &index,
-                           vector<V*> &S) {
-    indexes[&v] = index;
-    lowlinks[&v] = index;
-    index++;
-    S.push_back(&v);
+                           vector<V*> &S,
+                           Scc<V>* p_ret) {
+    v.scc_index_ = scc_next_index_;
+    v.scc_lowlink_ = scc_next_index_;
+    scc_next_index_++;
+    scc_S_.push_back(&v);
+    v.scc_onstack_ = true;
+
+//    indexes[&v] = index;
+//    lowlinks[&v] = index;
+//    index++;
+//    S.push_back(&v);
 
     for (auto &p : v.parents_) {
-      auto w = FindV(p.first);
-      verify(w != nullptr); // TODO, allow non-existing vertex?
-      if (w->scc_) // opt scc already computed
+      auto& w = *FindOrCreateParentVPtr(v, p.first, p.second);
+      if (w.scc_) // opt scc already computed
         continue;
-
-      if (indexes.find(w.get()) == indexes.end()) {
-        this->StrongConnectPred(*w, indexes, lowlinks, index, S);
-        lowlinks[&v] = (lowlinks[&v] < lowlinks[w.get()]) ?
-                       lowlinks[&v] : lowlinks[w.get()];
+      if (w.scc_index_ == 0) {
+//      if (indexes.find(w) == indexes.end()) {
+        this->StrongConnectPred(w, indexes, lowlinks, index, S, nullptr);
+//        lowlinks[&v] = (lowlinks[&v] < lowlinks[w]) ?
+//                       lowlinks[&v] : lowlinks[w];
+        v.scc_lowlink_ = v.scc_lowlink_ < w.scc_lowlink_ ?
+            v.scc_lowlink_ : w.scc_lowlink_;
       } else {
-        for (auto &t : S) {
-          if (t == w.get()) {
-            lowlinks[&v] = lowlinks[&v] < indexes[w.get()] ?
-                           lowlinks[&v] : indexes[w.get()];
-          }
+        if (w.scc_onstack_) {
+          v.scc_lowlink_ = v.scc_lowlink_ < w.scc_index_ ?
+              v.scc_lowlink_ : w.scc_index_;
         }
+//        for (auto &t : S) {
+//          if (t == w) {
+//            lowlinks[&v] = lowlinks[&v] < indexes[w] ?
+//                           lowlinks[&v] : indexes[w];
+//          }
+//        }
       }
     }
 
-    Scc<V> ret;
-    if (lowlinks[&v] == indexes[&v]) {
+//    Scc<V>& ret = *p_ret;
+//    if (lowlinks[&v] == indexes[&v]) {
+    if (v.scc_lowlink_ == v.scc_index_) {
+      verify(v.scc_ == nullptr);
+      v.scc_ = std::make_shared<vector<V*>>();
       V* w;
       do {
-        w = S.back();
-        S.pop_back();
-        ret.push_back(w);
+        w = scc_S_.back();
+        scc_S_.pop_back();
+        w->scc_onstack_ = false;
+        v.scc_->push_back(w);
+//        if (p_ret) {
+//          p_ret->push_back(w);
+//        }
       } while (w != &v);
+
+      sort(v.scc_->begin(), v.scc_->end(), [](V* tx1, V* tx2)->bool{
+        return tx1->id() < tx2->id();
+      });
+
+      for (auto x : *v.scc_) {
+        x->scc_ = v.scc_;
+      }
+#ifdef DEBUG_CHECK
+      bool xx = std::any_of(v.scc_->begin(), v.scc_->end(), [&](V* tx){
+        return (tx->id()==v.id());
+      });
+      verify(xx);
+#endif
     }
-    return ret;
   }
 
 //  std::vector<V*> StrongConnect(V* v,
@@ -505,7 +595,7 @@ class Graph : public Marshallable {
 //  }
 
   virtual Scc<V> &FindSccPred(V& vertex) {
-    if (vertex.current_rank_ == vertex.scc_rank_ && vertex.scc_) {
+    if (vertex.scc_) {
       // already computed.
       return (Scc<V> &) (*(vertex.scc_));
     }
@@ -514,13 +604,13 @@ class Graph : public Marshallable {
     int index = 0;
     vector<V*> S;
     shared_ptr<Scc<V>> sp_scc(new Scc<V>);
-    *sp_scc = StrongConnectPred(vertex, indexes, lowlinks, index, S);
-    for (auto v : *sp_scc) {
-//      verify(!v->scc_); // FIXME troad may overwrite, but is this correct?
-      v->scc_ = sp_scc;
-      v->scc_rank_ = vertex.current_rank_;
-    }
-    return *sp_scc;
+    StrongConnectPred(vertex, indexes, lowlinks, index, S, sp_scc.get());
+//    verify(!sp_scc->empty());
+//    for (auto v : *sp_scc) {
+//      v->scc_ = sp_scc;
+//    }
+//    return *sp_scc;
+    return *(vertex.scc_);
   }
 
 //  virtual Scc<V>& FindSCC(V *vertex) {
@@ -591,15 +681,15 @@ class Graph : public Marshallable {
 
       for (auto &kv : v->outgoing_) {
         V *tv = kv.first;
-        auto i = vertex_index().find(tv->data_->id());
+        auto j = vertex_index().find(tv->data_->id());
         V *new_tv;
 
-        if (i == vertex_index().end()) {
+        if (j == vertex_index().end()) {
           new_tv = new V(tv->data_->id());
           new_tv->data_ = tv->data_;
           vertex_index()[new_tv->data_->id()] = new_tv;
         } else {
-          new_tv = i->second;
+          new_tv = j->second;
         }
 
         // do the logic

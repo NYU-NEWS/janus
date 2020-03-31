@@ -92,10 +92,10 @@ void RccCoord::DispatchAck(phase_t phase,
   Log_debug("start response graph size: %d", (int)graph.size());
   verify(graph.size() > 0);
 
-  sp_graph_->Aggregate(0, graph);
+//  sp_graph_->Aggregate(0, graph);
 
   // TODO?
-  if (graph.size() > 1) tx_data().disable_early_return();
+//  if (graph.size() > 1) tx_data().disable_early_return();
 
   if (tx_data().HasMoreUnsentPiece()) {
     Log_debug("command has more sub-cmd, cmd_id: %lx,"
@@ -161,28 +161,29 @@ void RccCoord::FinishAck(phase_t phase,
 
 
 void RccCoord::Commit() {
-  std::lock_guard<std::recursive_mutex> guard(mtx_);
-  TxData* txn = (TxData*) cmd_;
-  auto dtxn = sp_graph_->FindV(cmd_->id_);
-  verify(txn->partition_ids_.size() == dtxn->partition_.size());
-  sp_graph_->UpgradeStatus(*dtxn, TXN_CMT);
-  for (auto par_id : cmd_->GetPartitionIds()) {
-    commo()->BroadcastCommit(par_id,
-                             cmd_->id_,
-                             RANK_UNDEFINED,
-                             txn->need_validation_,
-                             sp_graph_,
-                             std::bind(&RccCoord::CommitAck,
-                                       this,
-                                       phase_,
-                                       par_id,
-                                       std::placeholders::_1,
-                                       std::placeholders::_2));
-  }
-  if (fast_commit_) {
-    committed_ = true;
-    GotoNextPhase();
-  }
+  verify(0);
+//  std::lock_guard<std::recursive_mutex> guard(mtx_);
+//  TxData* txn = (TxData*) cmd_;
+//  auto dtxn = sp_graph_->FindV(cmd_->id_);
+//  verify(txn->partition_ids_.size() == dtxn->partition_.size());
+//  sp_graph_->UpgradeStatus(*dtxn, TXN_CMT);
+//  for (auto par_id : cmd_->GetPartitionIds()) {
+//    commo()->BroadcastCommit(par_id,
+//                             cmd_->id_,
+//                             RANK_UNDEFINED,
+//                             txn->need_validation_,
+//                             sp_graph_,
+//                             std::bind(&RccCoord::CommitAck,
+//                                       this,
+//                                       phase_,
+//                                       par_id,
+//                                       std::placeholders::_1,
+//                                       std::placeholders::_2));
+//  }
+//  if (fast_commit_) {
+//    committed_ = true;
+//    GotoNextPhase();
+//  }
 }
 
 void RccCoord::CommitAck(phase_t phase,
@@ -271,10 +272,11 @@ void RccCoord::DispatchRoAck(phase_t phase,
 
 void RccCoord::Reset() {
   CoordinatorClassic::Reset();
-  sp_graph_->Clear();
-  verify(sp_graph_->size() == 0);
-  verify(sp_graph_->vertex_index().size() == 0);
+//  sp_graph_->Clear();
+//  verify(sp_graph_->size() == 0);
+//  verify(sp_graph_->vertex_index().size() == 0);
   ro_state_ = BEGIN;
+  parents_.clear();
   last_vers_.clear();
   curr_vers_.clear();
   n_commit_oks_.clear();

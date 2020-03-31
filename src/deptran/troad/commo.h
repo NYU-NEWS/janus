@@ -6,7 +6,8 @@ namespace janus {
 class PreAcceptQuorumEvent : public QuorumEvent {
  public:
   using QuorumEvent::QuorumEvent;
-  vector<shared_ptr<RccGraph>> graphs_;
+//  vector<shared_ptr<RccGraph>> graphs_;
+  vector<shared_ptr<parent_set_t>> vec_parents_{};
   parid_t partition_id_{0};
 };
 
@@ -41,6 +42,13 @@ class TroadCommo : public RccCommo {
                      txnid_t txn_id,
                      rank_t rank,
                      ballot_t ballot,
+                     vector<SimpleCommand>& cmds);
+
+  shared_ptr<PreAcceptQuorumEvent>
+  BroadcastPreAccept(parid_t par_id,
+                     txnid_t txn_id,
+                     rank_t rank,
+                     ballot_t ballot,
                      vector<SimpleCommand>& cmds,
                      shared_ptr<RccGraph> graph);
 
@@ -49,6 +57,11 @@ class TroadCommo : public RccCommo {
                        ballot_t ballot,
                        shared_ptr<RccGraph> graph,
                        const function<void(int)>& callback);
+
+  shared_ptr<QuorumEvent> BroadcastAccept(parid_t par_id,
+                                          txnid_t cmd_id,
+                                          ballot_t ballot,
+                                          parent_set_t& parents);
 
   shared_ptr<QuorumEvent> BroadcastAccept(parid_t par_id,
                                           txnid_t cmd_id,
@@ -68,7 +81,7 @@ class TroadCommo : public RccCommo {
       txnid_t cmd_id_,
       rank_t rank,
       bool need_validation,
-      shared_ptr<RccGraph> graph);
+      parent_set_t& parents);
   shared_ptr<QuorumEvent> CollectValidation(txid_t txid, set<parid_t> pars);
   shared_ptr<QuorumEvent> BroadcastValidation(CmdData& cmd_, int validation);
 

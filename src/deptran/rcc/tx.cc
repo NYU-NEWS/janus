@@ -9,6 +9,58 @@
 namespace janus {
 
 thread_local uint64_t RccTx::timestamp_ = 0;
+SpinLock RccTx::__debug_parents_lock_{};
+SpinLock RccTx::__debug_scc_lock_{};
+std::map<txid_t, parent_set_t> RccTx::__debug_parents_{};
+std::map<txid_t, vector<txid_t>> RccTx::__debug_scc_{};
+
+void RccTx::__DebugCheckScc() {
+#ifdef DEBUG_CHECK
+  __debug_scc_lock_.lock();
+  verify(!scc_->empty());
+  auto& scc = __debug_scc_[tid_];
+  vector<txid_t> another_scc{};
+  for (auto x : *scc_) {
+    another_scc.push_back(x->id());
+  }
+  if (scc.empty()) {
+    scc = another_scc;
+  } else {
+    if (scc != another_scc) {
+      auto x1 = scc.size();
+      auto x2 = another_scc.size();
+      verify(0);
+    }
+  }
+
+  for (auto i : scc) {
+    auto& y = __debug_scc_[i];
+    if (!y.empty()) {
+      verify(y == scc);
+    } else {
+      y = scc;
+    }
+  }
+  __debug_scc_lock_.unlock();
+#endif
+}
+
+void RccTx::__DebugCheckParents() {
+#ifdef DEBUG_CHECK
+  verify(status() >= TXN_CMT);
+  verify(IsCommitting());
+  __debug_parents_lock_.lock();
+  auto it = __debug_parents_.find(tid_);
+  if (it != __debug_parents_.end()) {
+    auto& p1 = parents_;
+    auto& p2 = it->second;
+    verify(p1 == p2);
+  } else {
+    __debug_parents_[tid_] = parents_;
+  }
+  __debug_parents_lock_.unlock();
+#endif
+}
 
 RccTx::RccTx(epoch_t epoch,
              txnid_t tid,
@@ -29,6 +81,10 @@ RccTx::RccTx(RccTx& rhs_dtxn) :
   Tx(rhs_dtxn.epoch_, rhs_dtxn.tid_, nullptr),
   partition_(rhs_dtxn.partition_),
   status_(rhs_dtxn.status_) {
+  verify(0);
+  if (status_.value_ >= TXN_CMT) {
+  __DebugCheckParents();
+  }
 }
 
 /**
@@ -51,6 +107,7 @@ RccTx::RccTx(RccTx& rhs_dtxn) :
 void RccTx::DispatchExecute(SimpleCommand &cmd,
                             map<int32_t, Value> *output) {
   // TODO rococo and janus should be different
+  verify(phase_ != PHASE_RCC_COMMIT);
   phase_ = PHASE_RCC_DISPATCH;
   for (auto& c: dreqs_) {
     if (c.inn_id() == cmd.inn_id()) // already handled?
@@ -143,18 +200,38 @@ void RccTx::CommitValidate() {
 void RccTx::CommitExecute() {
   phase_ = PHASE_RCC_COMMIT;
   committed_ = true;
-  if (global_validated_->Get() < 0) {
-    return;
-  }
+//  if (global_validated_->Get() == REJECT) {
+//    return;
+//  }
+  verify(!dreqs_.empty());
   TxWorkspace ws;
   for (auto &cmd: dreqs_) {
     verify (cmd.rank_ == RANK_I || cmd.rank_ == RANK_D);
+    if (! __mocking_janus_) {
+//      if (cmd.rank_ != current_rank_) {
+//        continue;
+//      }
+    }
     TxnPieceDef& p = txn_reg_.lock()->get(cmd.root_type_, cmd.type_);
     int tmp;
     cmd.input.Aggregate(ws);
     auto& m = output_[cmd.inn_id_];
     p.proc_handler_(nullptr, *this, cmd, &tmp, m);
     ws.insert(m);
+
+
+    auto& conflicts = p.conflicts_;
+    for (auto& c: conflicts) {
+      vector<Value> pkeys;
+      for (int i = 0; i < c.primary_keys.size(); i++) {
+        pkeys.push_back(cmd.input.at(c.primary_keys[i]));
+      }
+      auto row = Query(GetTable(c.table), pkeys, c.row_context_id);
+      verify(row != nullptr);
+      for (auto col_id : c.columns) {
+        CommitDep(*row, col_id);
+      }
+    }
   }
 }
 
@@ -254,32 +331,30 @@ void RccTx::TraceDep(Row* row, colid_t col_id, rank_t hint_flag) {
   auto r = dynamic_cast<RccRow*>(row);
   verify(r != nullptr);
   entry_t *entry = r->get_dep_entry(col_id);
-  int8_t edge_type = (hint_flag == RANK_I) ? EDGE_I : EDGE_D;
-  auto parent_dtxn = dynamic_pointer_cast<RccTx>(entry->last_);
-  if (parent_dtxn == nullptr) {
-    // do nothing
-  } else if (parent_dtxn.get() == this) {
-    // do nothing
-  } else {
-    if (parent_dtxn != nullptr) {
-//      this->AddParentEdge(parent_dtxn, edge_type);
-      // TODO pre-mature reference? XXX come back and check on this.
-      if (!parent_dtxn->HasLogApplyStarted()) {
-        this->AddParentEdge(parent_dtxn, edge_type);
-      } // else do nothing
-    } // else do nothing
+//  int8_t edge_type = (hint_flag == RANK_I) ? EDGE_I : EDGE_D;
+  int8_t edge_type = EDGE_D;
+//  auto parent_dtxn = dynamic_pointer_cast<RccTx>(entry->last_);
+  if (entry->last_) {
+    auto last_commit = static_pointer_cast<RccTx>(entry->last_);
+    if (last_commit.get() != this) {
+      this->AddParentEdge(last_commit, EDGE_D);
+    }
   }
+  for (auto& x: entry->active_) {
+    auto parent_dtxn = static_pointer_cast<RccTx>(x);
+    if (parent_dtxn.get() != this) {
+      this->AddParentEdge(parent_dtxn, edge_type);
+    }
+  }
+  entry->active_.insert(shared_from_this());
+}
+
+void RccTx::CommitDep(Row& row, colid_t col_id) {
+  auto& r = dynamic_cast<RccRow&>(row);
+  entry_t *entry = r.get_dep_entry(col_id);
   entry->last_ = shared_from_this();
-#ifdef DEBUG_CODE
-  verify(graph_);
-  TxnInfo& tinfo = tv_->Get();
-  auto s = tinfo.status();
-  verify(s < TXN_CMT);
-//  RccScc& scc = graph_->FindSCC(tv_);
-//  if (scc.size() > 1 && graph_->HasICycle(scc)) {
-//    verify(0);
-//  }
-#endif
+  entry->active_.erase(shared_from_this());
+
 }
 
 } // namespace janus

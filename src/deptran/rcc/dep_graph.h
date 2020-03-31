@@ -29,7 +29,7 @@ class RccGraph : public Graph<RccTx> {
 //  Graph <TxnInfo> txn_gra_;
   RccServer* sched_{nullptr};
   bool empty_{false};
-  parid_t partition_id_ = 0; // TODO
+//  parid_t partition_id_ = 0; // TODO
 //  std::vector<rrr::Client *> rpc_clients_;
 //  std::vector<RococoProxy *> rpc_proxies_;
 //  std::vector<std::string> server_addrs_;
