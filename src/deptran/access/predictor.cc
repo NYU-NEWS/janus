@@ -9,9 +9,11 @@ namespace janus {
     FEATURE_VECTOR Predictor::feature_vector;
     TRAINING_VECTOR Predictor::training_samples;
     TRAINING_TIMERS Predictor::training_timers;
+    bool Predictor::initialized = false;
     //uint64_t Predictor::last_training_time = 0;
 
     bool Predictor::should_block(int32_t key, uint64_t arrival_time, snapshotid_t ssid_spec, optype_t op_type) {
+        initialize_containers();
         // append arrival_time to corresponding arrival times
         switch (op_type) {
             case READ_REQ:
@@ -31,13 +33,16 @@ namespace janus {
             default: verify(0);
                 break;
         }
-        Features ft = construct_features(key, ssid_spec, op_type);
-        // insert the feature of this tx to feature_vector
-        feature_vector[key].insert(std::move(ft));
-        // labeling with this new tx. *IMPORTANT* must label after inserting it into vector
-        label_features(key, ssid_spec, op_type);
-        // check if training interval timer fires, if so migrate feature_vector to training set
-        gather_training_samples(key);
+        Features ft;
+        bool features_ready = construct_features(ft, key, ssid_spec, op_type);
+        if (features_ready) {
+            // insert the feature of this tx to feature_vector
+            feature_vector[key].insert(std::move(ft));
+            // labeling with this new tx. *IMPORTANT* must label after inserting it into vector
+            label_features(key, ssid_spec, op_type);
+            // check if training interval timer fires, if so migrate feature_vector to training set
+            gather_training_samples(key);
+        }
         // todo: query the ML model via VW with ft, and get a prediction
         return false;
     }
@@ -47,12 +52,17 @@ namespace janus {
         return std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
     }
 
-    Features Predictor::construct_features(int32_t key, snapshotid_t ssid_spec, optype_t op_type) {
+    bool Predictor::construct_features(Features& ft, int32_t key, snapshotid_t ssid_spec, optype_t op_type) {
+        if (read_arrivals.size() < N_READS || write_arrivals.size() < N_WRITES) {
+            // we do not have enough data points yet!
+            return false;
+        }
         uint read_high = read_arrivals.size() - 1;
         uint read_low = read_high - N_READS + 1;
         uint write_high = write_arrivals.size() - 1;
         uint write_low = write_high - N_WRITES + 1;
-        return {read_low, read_high, write_low, write_high, key, ssid_spec, op_type};
+        ft = {read_low, read_high, write_low, write_high, key, ssid_spec, op_type};
+        return true;
     }
 
     void Predictor::label_features(int32_t key, snapshotid_t ssid_spec, optype_t op_type) {
@@ -79,9 +89,6 @@ namespace janus {
     }
 
     void Predictor::gather_training_samples(int32_t key) {
-        if (training_samples.empty()) { // reserve space for training samples
-            training_samples.reserve(TRAINING_SIZE);
-        }
         auto current_time = get_current_time_in_seconds();
         if (training_timers.find(key) == training_timers.end()) {
             // we have not trained anything for this key yet
@@ -90,6 +97,8 @@ namespace janus {
         }
         auto last_training_time = training_timers.at(key);
         if (current_time - last_training_time <= TRAINING_INTERVAL) {
+            // TODO: should I do this like in a bigger chunk or go through features in every run like GC?
+            // TODO: make adjustment based on expt perf
             // timer has not fired yet
             return;
         }
@@ -125,5 +134,27 @@ namespace janus {
             default: verify(0);
                 return 0;
         }
+    }
+
+    void Predictor::initialize_containers() {
+        if (initialized) {
+            return;
+        }
+        if (training_timers.empty()) {
+            training_timers.reserve(INITIAL_N_KEYS);
+        }
+        if (read_arrivals.empty()) {
+            read_arrivals.reserve(INITIAL_N_KEYS);
+        }
+        if (write_arrivals.empty()) {
+            write_arrivals.reserve(INITIAL_N_KEYS);
+        }
+        if (feature_vector.empty()) {
+            feature_vector.reserve(INITIAL_N_KEYS);
+        }
+        if (training_samples.empty()) { // reserve space for training samples
+            training_samples.reserve(TRAINING_SIZE);
+        }
+        initialized = true;
     }
 }

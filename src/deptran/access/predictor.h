@@ -22,6 +22,7 @@ namespace janus {
         optype_t op_type_ = UNDEFINED;     // either READ_REQ if this piece only has reads or WRITE_REQ if it has any write or UNDEFINED
         label_t label_ = NONBLOCK;   // initially labelled false as in ML doc
         // helper funcs
+        Features() = default;
         Features(uint read_low, uint read_high, uint write_low, uint write_high,
                 int32_t key, snapshotid_t ssid_spec, optype_t op_type, label_t label = NONBLOCK)
             : last_n_reads(read_low, read_high), last_n_writes(write_low, write_high),
@@ -82,11 +83,13 @@ namespace janus {
         static WRITE_ARRIVALS write_arrivals;
         static FEATURE_VECTOR feature_vector; // a vector of features cross keys so far, periodically moved to learner
         static TRAINING_VECTOR training_samples;  // set of feature sets for training and updating the model
-        static Features construct_features(int32_t key, snapshotid_t ssid_spec, optype_t op_type);
+        static bool construct_features(Features& ft, int32_t key, snapshotid_t ssid_spec, optype_t op_type);
         static void label_features(int32_t key, snapshotid_t ssid_spec, optype_t op_type);
         static bool is_conflict(optype_t t1, optype_t t2);
         static void gather_training_samples(int32_t key);
         static uint64_t get_current_time_in_seconds();
         static uint64_t get_ft_time_in_seconds(const Features& ft);
+        static void initialize_containers();
+        static bool initialized;
     };
 }
