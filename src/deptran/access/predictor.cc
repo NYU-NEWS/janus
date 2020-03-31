@@ -73,6 +73,9 @@ namespace janus {
     }
 
     void Predictor::gather_training_samples(int32_t key) {
+        if (training_samples.empty()) { // reserve space for training samples
+            training_samples.reserve(TRAINING_SIZE);
+        }
         auto current_time = get_current_time_in_seconds();
         if (training_timers.find(key) == training_timers.end()) {
             // we have not trained anything for this key yet
