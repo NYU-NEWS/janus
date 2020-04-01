@@ -53,13 +53,13 @@ namespace janus {
     }
 
     bool Predictor::construct_features(Features& ft, int32_t key, snapshotid_t ssid_spec, optype_t op_type) {
-        if (read_arrivals.size() < N_READS || write_arrivals.size() < N_WRITES) {
+        if (read_arrivals[key].size() < N_READS || write_arrivals[key].size() < N_WRITES) {
             // we do not have enough data points yet!
             return false;
         }
-        uint read_high = read_arrivals.size() - 1;
+        uint read_high = read_arrivals[key].size() - 1;
         uint read_low = read_high - N_READS + 1;
-        uint write_high = write_arrivals.size() - 1;
+        uint write_high = write_arrivals[key].size() - 1;
         uint write_low = write_high - N_WRITES + 1;
         ft = {read_low, read_high, write_low, write_high, key, ssid_spec, op_type};
         return true;
