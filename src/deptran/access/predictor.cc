@@ -34,15 +34,13 @@ namespace janus {
                 break;
         }
         Features ft;
-        bool features_ready = construct_features(ft, key, ssid_spec, op_type);
-        if (features_ready) {
-            // insert the feature of this tx to feature_vector
-            feature_vector[key].insert(std::move(ft));
-            // labeling with this new tx. *IMPORTANT* must label after inserting it into vector
-            label_features(key, ssid_spec, op_type);
-            // check if training interval timer fires, if so migrate feature_vector to training set
-            gather_training_samples(key);
-        }
+        bool features_complete = construct_features(ft, key, ssid_spec, op_type);
+        // insert the feature of this tx to feature_vector
+        feature_vector[key].insert(std::move(ft));
+        // labeling with this new tx. *IMPORTANT* must label after inserting it into vector
+        label_features(key, ssid_spec, op_type);
+        // check if training interval timer fires, if so migrate feature_vector to training set
+        gather_training_samples(key);
         // todo: query the ML model via VW with ft, and get a prediction
         return false;
     }
@@ -53,16 +51,24 @@ namespace janus {
     }
 
     bool Predictor::construct_features(Features& ft, int32_t key, snapshotid_t ssid_spec, optype_t op_type) {
-        if (read_arrivals[key].size() < N_READS || write_arrivals[key].size() < N_WRITES) {
-            // we do not have enough data points yet!
-            return false;
+        bool feature_complete = true;
+        uint read_low, read_high, write_low, write_high;
+        read_high = read_arrivals[key].size() - 1;
+        read_low = read_arrivals[key].size() < N_READS ? 0 : read_high - N_READS + 1;
+        if (read_arrivals[key].empty()) {  // mark empty by low > high
+            read_low = 1;
+            read_high = 0;
+            feature_complete = false;
         }
-        uint read_high = read_arrivals[key].size() - 1;
-        uint read_low = read_high - N_READS + 1;
-        uint write_high = write_arrivals[key].size() - 1;
-        uint write_low = write_high - N_WRITES + 1;
+        write_high = write_arrivals[key].size() - 1;
+        write_low = write_arrivals[key].size() < N_WRITES ? 0 : write_high - N_WRITES + 1;
+        if (write_arrivals[key].empty()) {
+            write_low = 1;
+            write_high = 0;
+            feature_complete = false;
+        }
         ft = {read_low, read_high, write_low, write_high, key, ssid_spec, op_type};
-        return true;
+        return feature_complete;
     }
 
     void Predictor::label_features(int32_t key, snapshotid_t ssid_spec, optype_t op_type) {
