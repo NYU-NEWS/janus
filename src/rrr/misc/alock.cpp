@@ -29,7 +29,7 @@ uint64_t ALock::Lock(uint64_t owner,
         type,
         priority,
         wound_cb);
-  x->Wait(200*1000*1000);
+  x->Wait();
   verify(x->status_ != Event::TIMEOUT);
   return x->Get();
 }

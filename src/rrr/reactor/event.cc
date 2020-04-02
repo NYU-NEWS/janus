@@ -11,7 +11,6 @@ using std::function;
 
 void Event::Wait(uint64_t timeout) {
 //  verify(__debug_creator); // if this fails, the event is not created by reactor.
-
   verify(Reactor::sp_reactor_th_);
   verify(Reactor::sp_reactor_th_->thread_id_ == std::this_thread::get_id());
   verify(status_ == INIT);
@@ -36,7 +35,7 @@ void Event::Wait(uint64_t timeout) {
 //    waiting_events.push_back(shared_from_this());
 #ifdef EVENT_TIMEOUT_CHECK
     if (timeout == 0) {
-      timeout = 600 * 1000 * 1000;
+      timeout = 120 * 1000 * 1000;
     }
 #endif
     if (timeout > 0) {

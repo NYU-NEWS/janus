@@ -99,7 +99,8 @@ void Reactor::Loop(bool infinite) {
           verify(0);
         case Event::WAIT: {
           const auto &wakeup_time = event.wakeup_time_;
-          if (wakeup_time > 0 && time_now > wakeup_time) {
+          verify(wakeup_time > 0);
+          if (time_now > wakeup_time) {
             if (event.IsReady()) {
               // This is because our event mechanism is not perfect, some events
               // don't get triggered with arbitrary condition change.
@@ -296,7 +297,7 @@ void PollMgr::PollThread::poll_loop() {
     }
     TriggerJob();
     verify(Reactor::GetReactor()->ready_events_.empty());
-//    Reactor::GetReactor()->Loop();
+    Reactor::GetReactor()->Loop();
   }
 }
 
