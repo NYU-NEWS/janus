@@ -1,3 +1,6 @@
 [submodule "dependencies/yaml-cpp"]
 	path = dependencies/yaml-cpp
 	url = https://github.com/jbeder/yaml-cpp/
+[submodule "dependencies/vowpal_wabbit"]
+	path = dependencies/vowpal_wabbit
+	url = https://github.com/VowpalWabbit/vowpal_wabbit.git
