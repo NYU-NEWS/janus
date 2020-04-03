@@ -1,14 +1,15 @@
 #include <chrono>
 #include <rrr/base/all.hpp>
 #include "predictor.h"
+#include "learner.h"
 
 namespace janus {
     // define static members
     READ_ARRIVALS Predictor::read_arrivals;
     WRITE_ARRIVALS Predictor::write_arrivals;
     FEATURE_VECTOR Predictor::feature_vector;
-    TRAINING_VECTOR Predictor::training_samples;
-    TRAINING_TIMERS Predictor::training_timers;
+    //TRAINING_VECTOR Predictor::training_samples;
+    //TRAINING_TIMERS Predictor::training_timers;
     bool Predictor::initialized = false;
     //uint64_t Predictor::last_training_time = 0;
 
@@ -36,13 +37,14 @@ namespace janus {
         Features ft;
         bool features_complete = construct_features(ft, key, ssid_spec, op_type);
         // insert the feature of this tx to feature_vector
-        feature_vector[key].insert(std::move(ft));
+        auto ret = feature_vector[key].insert(std::move(ft));
         // labeling with this new tx. *IMPORTANT* must label after inserting it into vector
         label_features(key, ssid_spec, op_type);
         // check if training interval timer fires, if so migrate feature_vector to training set
-        gather_training_samples(key);
+        Learner::gather_training_samples(key);
         // todo: query the ML model via VW with ft, and get a prediction
-        return false;
+        double prediction = Learner::vw_predict(*ret.first);
+        return prediction > PREDICTION_BAR;  // should block if prediction close to 1
     }
 
     uint64_t Predictor::get_current_time() {
@@ -52,7 +54,7 @@ namespace janus {
 
     bool Predictor::construct_features(Features& ft, int32_t key, snapshotid_t ssid_spec, optype_t op_type) {
         bool feature_complete = true;
-        uint read_low, read_high, write_low, write_high;
+        uint32_t read_low, read_high, write_low, write_high;
         read_high = read_arrivals[key].size() - 1;
         read_low = read_arrivals[key].size() < N_READS ? 0 : read_high - N_READS + 1;
         if (read_arrivals[key].empty()) {  // mark empty by low > high
@@ -94,6 +96,7 @@ namespace janus {
         return (t1 == t2 == WRITE_REQ || t1 != t2);  // true if at least one is write
     }
 
+    /*
     void Predictor::gather_training_samples(int32_t key) {
         auto current_time = get_current_time_in_seconds();
         if (training_timers.find(key) == training_timers.end()) {
@@ -123,6 +126,7 @@ namespace janus {
         feature_set.erase(feature_set.begin(), itr);  // remove those migrated elements from feature_vector
         training_timers[key] = current_time;
     }
+    */
 
     uint64_t Predictor::get_current_time_in_seconds() {
         auto now = std::chrono::system_clock::now();
@@ -146,9 +150,11 @@ namespace janus {
         if (initialized) {
             return;
         }
+        /*
         if (training_timers.empty()) {
             training_timers.reserve(INITIAL_N_KEYS);
         }
+        */
         if (read_arrivals.empty()) {
             read_arrivals.reserve(INITIAL_N_KEYS);
         }
@@ -158,9 +164,11 @@ namespace janus {
         if (feature_vector.empty()) {
             feature_vector.reserve(INITIAL_N_KEYS);
         }
+        /*
         if (training_samples.empty()) { // reserve space for training samples
             training_samples.reserve(TRAINING_SIZE);
         }
+        */
         initialized = true;
     }
 }
