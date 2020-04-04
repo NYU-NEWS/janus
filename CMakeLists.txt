@@ -44,12 +44,12 @@ pkg_check_modules(PYTHON REQUIRED python3)
 #pkg_check_modules(YAML_CPP REQUIRED yaml-cpp)
 
 
-hunter_add_package(Boost COMPONENTS system filesystem coroutine context thread program_options)
+hunter_add_package(Boost COMPONENTS system filesystem coroutine context thread program_options test)
 hunter_add_package(GTest)
 #hunter_add_package(GSL)
 
 find_package(Boost CONFIG REQUIRED
-        system filesystem coroutine context thread program_options)
+        system filesystem coroutine context thread program_options unit_test_framework)
 find_package(GTest CONFIG REQUIRED)
 #find_package(GSL CONFIG REQUIRED)
 
@@ -266,12 +266,12 @@ target_link_libraries(
 #        ${YAML_CPP_LIBRARIES}
         ${RT})
 
-set(VW_INSTALL OFF CACHE BOOL "")
-set(BUILD_TESTS OFF CACHE BOOL "")
-set(BUILD_JAVA OFF CACHE BOOL "")
-set(BUILD_PYTHON OFF CACHE BOOL "")
-set(BUILD_DOCS OFF CACHE BOOL "")
-set(WARNINGS OFF CACHE BOOL "")
+#set(VW_INSTALL OFF CACHE BOOL "")
+#set(BUILD_TESTS OFF CACHE BOOL "")
+#set(BUILD_JAVA OFF CACHE BOOL "")
+#set(BUILD_PYTHON OFF CACHE BOOL "")
+#set(BUILD_DOCS OFF CACHE BOOL "")
+#set(WARNINGS OFF CACHE BOOL "")
 add_subdirectory(dependencies/vowpal_wabbit EXCLUDE_FROM_ALL)
 
 target_link_libraries(
@@ -280,7 +280,7 @@ target_link_libraries(
         MEMDB
         EXTERN_C
         YAMLCPP
-       vw
+        vw
         ${RT}
 #        ${CONAN_LIBS}
         ${Boost_LIBRARIES}
