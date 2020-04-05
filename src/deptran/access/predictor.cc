@@ -43,8 +43,9 @@ namespace janus {
         // check if training interval timer fires, if so migrate feature_vector to training set
         Learner::gather_training_samples(key);
         // todo: query the ML model via VW with ft, and get a prediction
-        double prediction = Learner::vw_predict(*ret.first);
-        return prediction > PREDICTION_BAR;  // should block if prediction close to 1
+        //double prediction = Learner::vw_predict(*ret.first);
+        //return prediction > PREDICTION_BAR;  // should block if prediction close to 1
+        return false;
     }
 
     uint64_t Predictor::get_current_time() {

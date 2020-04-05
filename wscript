@@ -93,8 +93,6 @@ def configure(conf):
 #    conf.env.append_value('LIBPATH', [os.path.expanduser('~') + '/.linuxbrew/lib'])
     conf.env.LIB_PTHREAD = 'pthread'
     conf.check_cfg(package='yaml-cpp', uselib_store='YAML-CPP', args=pargs)
-    conf.check_cfg(package='libvw', uselib_store='VW', args=pargs)
-    conf.check_cfg(package='libvw_c_wrapper', uselib_store='VW-C', args=pargs)
 
     if sys.platform != 'darwin':
         conf.env.LIB_RT = 'rt'
@@ -160,26 +158,26 @@ def build(bld):
                                        excl=['src/deptran/s_main.cc', 'src/deptran/paxos_main_helper.cc']),
               target="deptran_objects",
               includes="src src/rrr src/deptran ",
-              uselib="YAML-CPP BOOST VW VW-C",
+              uselib="YAML-CPP BOOST",
               use="externc rrr memdb PTHREAD PROFILER RT")
 
     bld.shlib(source=bld.path.ant_glob("src/deptran/paxos_main_helper.cc "),
               target="txlog",
               includes="src src/rrr src/deptran ",
-              uselib="YAML-CPP BOOST VW VW-C",
+              uselib="YAML-CPP BOOST",
               use="externc rrr memdb deptran_objects PTHREAD PROFILER RT")
 
     bld.program(source=bld.path.ant_glob("src/deptran/s_main.cc"),
               target="deptran_server",
               includes="src src/rrr src/deptran ",
-              uselib="YAML-CPP BOOST VW VW-C",
+              uselib="YAML-CPP BOOST",
               use="externc rrr memdb deptran_objects PTHREAD PROFILER RT")
 
     bld.program(source=bld.path.ant_glob("src/run.cc "
                                          "src/deptran/paxos_main_helper.cc"),
                 target="microbench",
                 includes="src src/rrr src/deptran ",
-                uselib="YAML-CPP BOOST VW VW-C",
+                uselib="YAML-CPP BOOST",
                 use="externc rrr memdb deptran_objects PTHREAD PROFILER RT")
 
     bld.add_post_fun(post)
