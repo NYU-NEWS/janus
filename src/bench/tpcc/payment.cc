@@ -74,6 +74,7 @@ void TpccProcedure::PaymentRetry() {
 
 void TpccWorkload::RegPayment() {
   // piece 0, Ri & W warehouse
+  set_op_type(TPCC_PAYMENT, TPCC_PAYMENT_0, READ_REQ);
   RegP(TPCC_PAYMENT,
        TPCC_PAYMENT_0,
        {TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_H_AMOUNT,
@@ -121,6 +122,7 @@ void TpccWorkload::RegPayment() {
        });
 
   // piece 1, Ri district
+  set_op_type(TPCC_PAYMENT, TPCC_PAYMENT_1, READ_REQ);
   RegP(TPCC_PAYMENT, TPCC_PAYMENT_1,
        {TPCC_VAR_W_ID, TPCC_VAR_D_ID}, // i
        {TPCC_VAR_D_NAME}, // o
@@ -166,6 +168,7 @@ void TpccWorkload::RegPayment() {
       });
 
   // piece 1, Ri & W district
+  set_op_type(TPCC_PAYMENT, TPCC_PAYMENT_2, WRITE_REQ);
   RegP(TPCC_PAYMENT,
        TPCC_PAYMENT_2,
        {TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_H_AMOUNT}, // i
@@ -201,6 +204,7 @@ void TpccWorkload::RegPayment() {
          *res = SUCCESS;
        });
 
+  set_op_type(TPCC_PAYMENT, TPCC_PAYMENT_5, WRITE_REQ);
   RegP(TPCC_PAYMENT,
        TPCC_PAYMENT_5,
        {TPCC_VAR_W_ID, TPCC_VAR_D_ID, /**TPCC_VAR_W_NAME, TPCC_VAR_D_NAME,
@@ -248,6 +252,7 @@ void TpccWorkload::RegPayment() {
        });
 
   // piece 2, R customer secondary index, c_last -> c_id
+  set_op_type(TPCC_PAYMENT, TPCC_PAYMENT_3, READ_REQ);
   RegP(TPCC_PAYMENT,
        TPCC_PAYMENT_3,
        {TPCC_VAR_C_W_ID, TPCC_VAR_C_D_ID, TPCC_VAR_C_LAST}, // i
@@ -304,6 +309,7 @@ void TpccWorkload::RegPayment() {
        });
 
   // piece 4, R & W customer
+  set_op_type(TPCC_PAYMENT, TPCC_PAYMENT_4, WRITE_REQ);
   RegP(TPCC_PAYMENT,
        TPCC_PAYMENT_4,
        {TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_H_AMOUNT, TPCC_VAR_C_ID,

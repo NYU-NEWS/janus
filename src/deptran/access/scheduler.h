@@ -24,5 +24,9 @@ namespace janus {
             // do nothing, just has to override this pure virtual func.
             return true;
         }
+    private:
+        const i32 NOT_ROW_KEY = -1;
+        i32 get_row_key(const shared_ptr<SimpleCommand>& sp_piece_data, int32_t var_id, uint8_t workload) const;
+        bool tpcc_row_key(int32_t var_id) const;
     };
 }

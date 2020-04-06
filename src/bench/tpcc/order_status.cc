@@ -114,6 +114,7 @@ void TpccProcedure::OrderStatusRetry() {
 
 void TpccWorkload::RegOrderStatus() {
   // piece 0, R customer secondary index, c_last -> c_id
+  set_op_type(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_0, READ_REQ);
   RegP(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_0,
        {TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_C_LAST}, // i
        {}, // o
@@ -171,6 +172,7 @@ void TpccWorkload::RegOrderStatus() {
   );
 
   // Ri customer
+  set_op_type(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_1, READ_REQ);
   RegP(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_1,
        {TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_C_ID}, // i
        {}, // o
@@ -213,6 +215,7 @@ void TpccWorkload::RegOrderStatus() {
   );
 
   // Ri order
+  set_op_type(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_2, READ_REQ);
   RegP(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_2,
        {TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_C_ID}, // i
        {}, // o
@@ -258,6 +261,7 @@ void TpccWorkload::RegOrderStatus() {
   );
 
   // R order_line
+  set_op_type(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_3, READ_REQ);
   RegP(TPCC_ORDER_STATUS, TPCC_ORDER_STATUS_3,
        {TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_O_ID}, // i
        {}, // o

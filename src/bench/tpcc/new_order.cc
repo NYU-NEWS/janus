@@ -49,6 +49,9 @@ void TpccProcedure::NewOrderRetry() {
 
 void TpccWorkload::RegNewOrder() {
   // Ri & W district
+  set_op_type(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0, WRITE_REQ);  // some rows in this piece are read-only, but
+                                                             // we train per-key not per-row, so this is
+                                                             // roughly fine for now
   RegP(TPCC_NEW_ORDER, TPCC_NEW_ORDER_0,
        {TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_C_ID,
         TPCC_VAR_O_CARRIER_ID, TPCC_VAR_OL_CNT, TPCC_VAR_O_ALL_LOCAL}, // i
@@ -225,6 +228,7 @@ void TpccWorkload::RegNewOrder() {
 
   for (int i = (0); i < (1000); i++) {
     // 1000 is a magical number?
+    set_op_type(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RI(i), READ_REQ);
     RegP(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RI(i),
          {TPCC_VAR_I_ID(i)}, // i
          {}, // o
@@ -260,6 +264,7 @@ void TpccWorkload::RegNewOrder() {
     );
 
     // 1000 is a magical number?
+    set_op_type(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RS(i), READ_REQ);
     RegP(TPCC_NEW_ORDER, TPCC_NEW_ORDER_RS(i),
          {TPCC_VAR_D_ID, TPCC_VAR_I_ID(i), TPCC_VAR_S_W_ID(i)}, // i
          {}, // o
@@ -296,6 +301,7 @@ void TpccWorkload::RegNewOrder() {
     );
 
     // 1000 is a magical number?
+    set_op_type(TPCC_NEW_ORDER, TPCC_NEW_ORDER_WS(i), WRITE_REQ);
     RegP(TPCC_NEW_ORDER, TPCC_NEW_ORDER_WS(i),
          {TPCC_VAR_I_ID(i), TPCC_VAR_S_W_ID(i),
           TPCC_VAR_OL_QUANTITY(i), TPCC_VAR_S_REMOTE_CNT(i)}, // i
@@ -359,6 +365,7 @@ void TpccWorkload::RegNewOrder() {
          }
     );
 
+    set_op_type(TPCC_NEW_ORDER, TPCC_NEW_ORDER_WOL(i), WRITE_REQ);
     RegP(TPCC_NEW_ORDER, TPCC_NEW_ORDER_WOL(i),
          {TPCC_VAR_I_ID(i), TPCC_VAR_I_PRICE(i),
           TPCC_VAR_O_ID, TPCC_VAR_S_W_ID(i),

@@ -48,6 +48,7 @@ void TpccProcedure::StockLevelRetry() {
 
 void TpccWorkload::RegStockLevel() {
   // Ri district
+  set_op_type(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_0, READ_REQ);
   RegP(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_0,
        {TPCC_VAR_W_ID, TPCC_VAR_D_ID}, // i
        {}, // o
@@ -72,6 +73,7 @@ void TpccWorkload::RegStockLevel() {
   );
 
   // Ri order_line
+  set_op_type(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_1, READ_REQ);
   RegP(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_1,
        {TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_D_NEXT_O_ID}, // i
        {}, // o
@@ -157,6 +159,7 @@ void TpccWorkload::RegStockLevel() {
 
   for (int i = (0); i < (1000); i++) {
     // 1000 is a magical number?
+    set_op_type(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_RS(i), READ_REQ);
     RegP(TPCC_STOCK_LEVEL, TPCC_STOCK_LEVEL_RS(i),
          {TPCC_VAR_W_ID, TPCC_VAR_OL_I_ID(i), TPCC_VAR_THRESHOLD}, // i
          {}, // o

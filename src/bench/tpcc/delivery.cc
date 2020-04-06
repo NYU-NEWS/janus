@@ -38,6 +38,7 @@ void TpccProcedure::DeliveryRetry() {
 
 void TpccWorkload::RegDelivery() {
   // Ri & W new_order
+  set_op_type(TPCC_DELIVERY, TPCC_DELIVERY_0, READ_REQ);
   RegP(TPCC_DELIVERY, TPCC_DELIVERY_0,
        {TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_O_CARRIER_ID}, // i
        {TPCC_VAR_O_ID},  // o
@@ -95,6 +96,7 @@ void TpccWorkload::RegDelivery() {
   );
 
   // Ri & W order
+  set_op_type(TPCC_DELIVERY, TPCC_DELIVERY_1, WRITE_REQ);
   RegP(TPCC_DELIVERY, TPCC_DELIVERY_1,
        {TPCC_VAR_W_ID, TPCC_VAR_D_ID,
         TPCC_VAR_O_ID, TPCC_VAR_O_CARRIER_ID}, // i
@@ -127,6 +129,7 @@ void TpccWorkload::RegDelivery() {
   );
 
 //   Ri & W order_line
+  set_op_type(TPCC_DELIVERY, TPCC_DELIVERY_2, WRITE_REQ);
   RegP(TPCC_DELIVERY, TPCC_DELIVERY_2,
        {TPCC_VAR_W_ID, TPCC_VAR_D_ID, TPCC_VAR_O_ID}, // i
        {}, // TODO o
@@ -192,6 +195,7 @@ void TpccWorkload::RegDelivery() {
   );
 
   // W customer
+  set_op_type(TPCC_DELIVERY, TPCC_DELIVERY_3, WRITE_REQ);
   RegP(TPCC_DELIVERY, TPCC_DELIVERY_3,
        {TPCC_VAR_W_ID, TPCC_VAR_D_ID,
         TPCC_VAR_C_ID, TPCC_VAR_OL_AMOUNT}, // i

@@ -1,6 +1,8 @@
 #include "scheduler.h"
 #include "tx.h"
 #include "predictor.h"
+#include "bench/facebook/workload.h"
+#include "bench/tpcc/workload.h"
 
 namespace janus {
     int32_t SchedulerAcc::OnDispatch(cmdid_t cmd_id,
@@ -27,10 +29,26 @@ namespace janus {
         // get all the being-accessed row_keys, feed in predictor, and find decision
         uint64_t now = Predictor::get_current_time();  // the phyiscal arrival time of this tx
         bool will_block = false;
+        uint8_t workload = FACEBOOK;  // by default
+        switch (sp_vec_piece->at(0)->root_type_) {
+            case FB_ROTXN:
+            case FB_WRITE:
+                workload = FACEBOOK;
+                break;
+            // case SPANNER:
+            //    break;
+            default:  // TPCC
+                workload = TPCC;
+                break;
+        }
         for (const auto& sp_piece_data : *sp_vec_piece) {
             //Log_info("piece.op_type_ = %d.", sp_piece_data->op_type_);
             for (auto var_id : sp_piece_data->input.keys_) {
-                i32 row_key = sp_piece_data->input.at(var_id).get_i32();
+                // in FB workloads, it's guaranteed that each input_ is a row key
+                i32 row_key = get_row_key(sp_piece_data, var_id, workload);
+                if (row_key == NOT_ROW_KEY) {
+                    continue;
+                }
                 if (Predictor::should_block(row_key, now, ssid_spec, sp_piece_data->op_type_)) {
                     will_block = true;
                 }
@@ -199,5 +217,45 @@ namespace janus {
                 }
             }
         }
+    }
+
+    i32 SchedulerAcc::get_row_key(const shared_ptr<SimpleCommand> &sp_piece_data, int32_t var_id, uint8_t workload) const {
+        switch (workload) {
+            case FACEBOOK:
+                // in FB workloads, it's guaranteed that each input_ is a row key
+                return sp_piece_data->input.at(var_id).get_i32();
+            case TPCC: {
+                // more complicated
+                if (!tpcc_row_key(var_id)) {
+                    return NOT_ROW_KEY;
+                }
+                if (sp_piece_data->input.values_->find(var_id) == sp_piece_data->input.values_->end()) {
+                    // key/value dependent, not ready yet
+                    return NOT_ROW_KEY;
+                }
+                Value k = sp_piece_data->input.at(var_id);
+                if (k.get_kind() != mdb::Value::I32) {
+                    // tpcc, either a string: by_last (not really readcolumn or writecolumn) or unfilled key
+                    // or a double used as col values not row identifiers
+                    return NOT_ROW_KEY;
+                } else {
+                    return sp_piece_data->input.at(var_id).get_i32();
+                }
+            }
+            default: verify(0);
+                return NOT_ROW_KEY;
+        }
+    }
+
+    bool SchedulerAcc::tpcc_row_key(int32_t var_id) const {
+        return (var_id == TPCC_VAR_C_ID ||
+                var_id == TPCC_VAR_D_ID ||
+                var_id == TPCC_VAR_W_ID ||
+                var_id == TPCC_VAR_O_ID ||
+                var_id == TPCC_VAR_C_D_ID ||
+                var_id == TPCC_VAR_C_W_ID ||
+                (TPCC_VAR_I_ID(0) <= var_id && var_id < TPCC_VAR_I_NAME(0)) ||
+                (TPCC_VAR_S_W_ID(0) <= var_id && var_id < TPCC_VAR_S_D_ID(0)) ||
+                TPCC_VAR_OL_I_ID(0) <= var_id);
     }
 }
