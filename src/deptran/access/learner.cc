@@ -106,7 +106,7 @@ namespace janus {
             ft_str += std::to_string(Predictor::read_arrivals.at(ft->key_).at(i));
             ft_str.push_back(' ');
         }
-        verify(ft_index < WRITE_ARRIVAL_BEGIN);
+        verify(ft_index <= WRITE_ARRIVAL_BEGIN);
     }
 
     void Learner::get_write_arrivals(std::string &ft_str, Features *ft) {
@@ -122,7 +122,7 @@ namespace janus {
             ft_str += std::to_string(Predictor::write_arrivals.at(ft->key_).at(i));
             ft_str.push_back(' ');
         }
-        verify(ft_index < KEY_POS);
+        verify(ft_index <= KEY_POS);
     }
 
     void Learner::get_key(std::string &ft_str, Features *ft) {

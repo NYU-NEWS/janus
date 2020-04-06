@@ -11,7 +11,9 @@
 #define NONBLOCK (0)   // as "false" in ml doc
 #define BLOCK (1)      // as "true" in ml doc
 #define TRAINING_SIZE (1000000)  // the number of feature sets for training
-#define TRAINING_INTERVAL (300)  // timer for migrating feature sets to training samples (in seconds)
+//#define TRAINING_INTERVAL (300)  // timer for migrating feature sets to training samples (in seconds)
+#define TRAINING_INTERVAL (0)
+
 #define LABELING_TIMER (5)   // the ground truth should be available before these seconds
 #define PREDICTION_BAR (0.5) // greater than 0.5 we say it's true
 
