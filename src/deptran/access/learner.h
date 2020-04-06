@@ -22,7 +22,7 @@ namespace janus {
     private:
         static TRAINING_VECTOR training_samples;  // set of feature sets for training and updating the model
         static TRAINING_TIMERS training_timers;  // timer per key
-        static std::string&& to_vw_string(Features*);
+        static std::string to_vw_string(Features*);
         static void feed_training_samples(Features*);
         static uint32_t head;
         static uint32_t get_head();

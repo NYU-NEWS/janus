@@ -47,7 +47,8 @@ namespace janus {
         }
     }
 
-    std::string &&Learner::to_vw_string(Features* ft) {
+    std::string Learner::to_vw_string(Features* ft) {
+        // do not return &&, instead count on RVO by compiler
         assert(ft != nullptr);
         std::string ft_str;
         get_label(ft_str, ft);
@@ -56,7 +57,7 @@ namespace janus {
         get_key(ft_str, ft);
         get_ssid(ft_str, ft);
         get_type(ft_str, ft);
-        return std::move(ft_str);
+        return ft_str;
     }
 
     void Learner::feed_training_samples(Features* ft) {
