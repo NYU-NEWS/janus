@@ -29,28 +29,30 @@ namespace janus {
         // get all the being-accessed row_keys, feed in predictor, and find decision
         uint64_t now = Predictor::get_current_time();  // the phyiscal arrival time of this tx
         bool will_block = false;
-        uint8_t workload = FACEBOOK;  // by default
-        switch (sp_vec_piece->at(0)->root_type_) {
-            case FB_ROTXN:
-            case FB_WRITE:
-                workload = FACEBOOK;
-                break;
-            // case SPANNER:
-            //    break;
-            default:  // TPCC
-                workload = TPCC;
-                break;
-        }
-        for (const auto& sp_piece_data : *sp_vec_piece) {
-            //Log_info("piece.op_type_ = %d.", sp_piece_data->op_type_);
-            for (auto var_id : sp_piece_data->input.keys_) {
-                // in FB workloads, it's guaranteed that each input_ is a row key
-                i32 row_key = get_row_key(sp_piece_data, var_id, workload);
-                if (row_key == NOT_ROW_KEY) {
-                    continue;
-                }
-                if (Predictor::should_block(row_key, now, ssid_spec, sp_piece_data->op_type_)) {
-                    will_block = true;
+        if (ssid_spec != 0) { // client-side ssid_spec logic is on
+            uint8_t workload;  // either FB, TPCC, or Spanner for now
+            switch (sp_vec_piece->at(0)->root_type_) {
+                case FB_ROTXN:
+                case FB_WRITE:
+                    workload = FACEBOOK;
+                    break;
+                    // case SPANNER:
+                    //    break;
+                default:  // TPCC
+                    workload = TPCC;
+                    break;
+            }
+            for (const auto& sp_piece_data : *sp_vec_piece) {
+                //Log_info("piece.op_type_ = %d.", sp_piece_data->op_type_);
+                for (auto var_id : sp_piece_data->input.keys_) {
+                    // in FB workloads, it's guaranteed that each input_ is a row key
+                    i32 row_key = get_row_key(sp_piece_data, var_id, workload);
+                    if (row_key == NOT_ROW_KEY) {
+                        continue;
+                    }
+                    if (Predictor::should_block(row_key, now, ssid_spec, sp_piece_data->op_type_)) {
+                        will_block = true;
+                    }
                 }
             }
         }
