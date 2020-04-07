@@ -32,8 +32,8 @@ namespace janus {
         *arrival_time = now;  // return arrival time in response
         //Log_info("server:OnDispatch. txid = %lu. ssid_spec = %lu.eturning arrival_time = %lu.", tx->tid_, ssid_spec, *arrival_time);
         bool will_block = false;
-        // if (ssid_spec != 0) { // client-side ssid_spec logic is on
-        if (false) {  // for testing purpose, disable server-side ML engine
+        if (ssid_spec != 0) { // client-side ssid_spec logic is on
+        //if (false) {  // for testing purpose, disable server-side ML engine
             uint8_t workload;  // either FB, TPCC, or Spanner for now
             switch (sp_vec_piece->at(0)->root_type_) {
                 case FB_ROTXN:
