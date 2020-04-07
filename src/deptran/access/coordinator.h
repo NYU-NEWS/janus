@@ -20,7 +20,8 @@ namespace janus {
                             uint64_t ssid_low,
                             uint64_t ssid_high,
                             uint64_t ssid_new,
-                            map<innid_t, map<int32_t, Value>>& outputs);
+                            map<innid_t, map<int32_t, Value>>& outputs,
+                            uint64_t arrival_time);
         void SafeGuardCheck();
         void AccValidate();
         void AccValidateAck(phase_t phase, int8_t res);

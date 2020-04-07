@@ -327,6 +327,9 @@ class TxData: public CmdData {
     int n_status_callback = 0;
     int n_abort_sent = 0;
     int n_abort_ack = 0;
+    // ssid predictor related below
+    std::unordered_map<innid_t, parid_t> innid_to_server;
+    std::unordered_map<innid_t, uint64_t> innid_to_starttime;
 };
 
 } // namespace rcc

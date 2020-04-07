@@ -11,7 +11,8 @@ namespace janus {
                                      uint64_t *ssid_low,
                                      uint64_t *ssid_high,
                                      uint64_t *ssid_new,
-                                     TxnOutput &ret_output) {
+                                     TxnOutput &ret_output,
+                                     uint64_t* arrival_time) {
         // Step 1: dispatch and execute pieces
         auto sp_vec_piece = dynamic_pointer_cast<VecPieceData>(cmd)->sp_vec_piece_data_;
         verify(sp_vec_piece);
@@ -28,8 +29,11 @@ namespace janus {
         }
         // get all the being-accessed row_keys, feed in predictor, and find decision
         uint64_t now = Predictor::get_current_time();  // the phyiscal arrival time of this tx
+        *arrival_time = now;  // return arrival time in response
+        //Log_info("server:OnDispatch. txid = %lu. ssid_spec = %lu.eturning arrival_time = %lu.", tx->tid_, ssid_spec, *arrival_time);
         bool will_block = false;
-        if (ssid_spec != 0) { // client-side ssid_spec logic is on
+        // if (ssid_spec != 0) { // client-side ssid_spec logic is on
+        if (false) {  // for testing purpose, disable server-side ML engine
             uint8_t workload;  // either FB, TPCC, or Spanner for now
             switch (sp_vec_piece->at(0)->root_type_) {
                 case FB_ROTXN:

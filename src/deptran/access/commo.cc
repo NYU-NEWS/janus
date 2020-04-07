@@ -8,8 +8,9 @@ namespace janus {
                                                                  uint64_t ssid_low,
                                                                  uint64_t ssid_high,
                                                                  uint64_t ssid_new,
-                                                                 TxnOutput &)> &callback,
-					cmdid_t status_cmd_id,
+                                                                 TxnOutput &,
+                                                                 uint64_t arrival_time)> &callback,
+					                    cmdid_t status_cmd_id,
                                         int& n_status_query,
                                         const std::function<void(int8_t res)> &callback_status) {
         cmdid_t cmd_id = sp_vec_piece->at(0)->root_id_;
@@ -23,8 +24,9 @@ namespace janus {
                     uint64_t ssid_high;
                     uint64_t ssid_new;
                     TxnOutput outputs;
-                    fu->get_reply() >> ret >> ssid_low >> ssid_high >> ssid_new >> outputs;
-                    callback(ret, ssid_low, ssid_high, ssid_new, outputs);
+                    uint64_t arrival_time;
+                    fu->get_reply() >> ret >> ssid_low >> ssid_high >> ssid_new >> outputs >> arrival_time;
+                    callback(ret, ssid_low, ssid_high, ssid_new, outputs, arrival_time);
                 };
         auto pair_leader_proxy = LeaderProxyForPartition(par_id);
         Log_debug("send dispatch to site %ld",
@@ -35,7 +37,7 @@ namespace janus {
         MarshallDeputy md(sp_vpd); // ????
         auto future = proxy->async_AccDispatch(cmd_id, md, ssid_spec, fuattr); // call Acc dispatch RPC
 
-	// now insert AccStatusQuery RPC here
+	    // now insert AccStatusQuery RPC here
         rrr::FutureAttr status_fuattr;
         status_fuattr.callback =
                 [coo, this, callback_status](Future* fu) {
@@ -48,7 +50,7 @@ namespace janus {
 
         // release both RPCs sequentially
         Future::safe_release(future);
-	Future::safe_release(future_status);
+	    Future::safe_release(future_status);
 
         // FIXME fix this, this cause occ and perhaps 2pl to fail
         for (auto& pair : rpc_par_proxies_[par_id]) {
@@ -61,17 +63,18 @@ namespace janus {
                             uint64_t ssid_high;
                             uint64_t ssid_new;
                             TxnOutput outputs;
-                            fu->get_reply() >> ret >> ssid_low >> ssid_high >> ssid_new >> outputs;
+                            uint64_t arrival_time;
+                            fu->get_reply() >> ret >> ssid_low >> ssid_high >> ssid_new >> outputs >> arrival_time;
                             // do nothing
                         };
-		fu2_status.callback =
+		        fu2_status.callback =
                         [coo, this, callback_status](Future* fu) {
                             int8_t ret;
                             fu->get_reply() >> ret;
                             // do nothing
                         };
                 Future::safe_release(pair.second->async_AccDispatch(cmd_id, md, ssid_spec, fu2));
-		Future::safe_release(pair.second->async_AccStatusQuery(status_cmd_id, fu2_status));
+		        Future::safe_release(pair.second->async_AccStatusQuery(status_cmd_id, fu2_status));
             }
         }
     }

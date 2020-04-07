@@ -229,6 +229,7 @@ class ClassicServiceImpl : public ClassicService {
                    uint64_t* ssid_high,
                    uint64_t* ssid_new,
                    TxnOutput* output,
+                   uint64_t* arrival_time,
                    DeferredReply* defer_reply) override;
 
   void AccValidate(const i64& cmd_id, const uint64_t& ssid_new, int8_t* res, DeferredReply* defer_reply) override;

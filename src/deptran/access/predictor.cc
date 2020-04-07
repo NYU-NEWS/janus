@@ -79,7 +79,7 @@ namespace janus {
         rit++;  // we skip the most recently added element, which is this very tx
         // feature_vector set is sorted by ssid in ascending order, we iterate reversely
         for (; rit != feature_vector.at(key).rend(); rit++) {
-            if (rit->ssid_spec_ >= ssid_spec && is_conflict(op_type, rit->op_type_)) {
+            if (rit->ssid_spec_ > ssid_spec && is_conflict(op_type, rit->op_type_)) {
                 // we label this feature "should block"
                 auto* ft = const_cast<Features*>(&*rit);  // this is an ugly trick for updating elements in
                                                           // sorted containers. It *should* be safe here b/c

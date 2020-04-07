@@ -39,3 +39,7 @@
 
 /* VW engine parameters */
 #define VW_INITIALIZE_STRING ("-b 10 -l 10 -c --passes 25")
+
+
+/* Client-side ssid predictor macro (heuristics and ML) */
+#define TIME_MAP std::unordered_map<parid_t, uint64_t>  // a map of parid_t to physical time delta

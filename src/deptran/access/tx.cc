@@ -11,6 +11,7 @@ namespace janus {
         auto acc_row = dynamic_cast<AccRow*>(row);
         unsigned long index = 0;
 	    bool is_decided = true;
+        //Log_info("server:ReadColumn. txid = %lu. ssid_spec = %lu.", this->tid_, sg.ssid_spec);
         SSID ssid = acc_row->read_column(col_id, value, sg.ssid_spec, sg.offset_safe, index, is_decided);
         row->ref_copy();
 	    sg.metadata.indices[row][col_id] = index;  // for later validation, could be overwritten by later writes
@@ -57,6 +58,7 @@ namespace janus {
         verify(row != nullptr);
         auto acc_row = dynamic_cast<AccRow*>(row);
         unsigned long ver_index = 0;
+        //Log_info("server:WriteColumn. txid = %lu. ssid_spec = %lu.", this->tid_, sg.ssid_spec);
         SSID ssid = acc_row->write_column(col_id, std::move(value), sg.ssid_spec, this->tid_, ver_index, sg.offset_safe); // ver_index is new write
         row->ref_copy();
 	    sg.update_metadata(ssid.ssid_low, ssid.ssid_high, false);

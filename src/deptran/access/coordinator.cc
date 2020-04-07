@@ -1,4 +1,6 @@
 #include "coordinator.h"
+#include "ssid_predictor.h"
+
 namespace janus {
     AccCommo* CoordinatorAcc::commo() {
         if (commo_ == nullptr) {
@@ -36,6 +38,18 @@ namespace janus {
         int cnt = 0;
         auto cmds_by_par = txn->GetReadyPiecesData(1);
         Log_debug("AccDispatchAsync for tx_id: %" PRIx64, txn->root_id_);
+        // get a predicted ssid_spec
+        uint64_t current_time = SSIDPredictor::get_current_time();
+        if (tx_data().ssid_spec == 0) {
+            // for multi-shot txns, we only do ssid prediction at the first shot and use the same ssid across shots
+            std::vector<parid_t> servers;
+            servers.reserve(cmds_by_par.size());
+            for (auto& pair : cmds_by_par) {
+                servers.emplace_back(pair.first);
+            }
+            tx_data().ssid_spec = current_time + SSIDPredictor::predict_ssid(servers);
+        }
+        //Log_info("Client:Dispatch. txid = %lu. current_time = %lu. sending ssid_spec = %lu.", txn->id_, current_time, tx_data().ssid_spec);
         for (auto& pair: cmds_by_par) {
             const parid_t& par_id = pair.first;
             auto& cmds = pair.second;
@@ -44,6 +58,9 @@ namespace janus {
             auto sp_vec_piece = std::make_shared<vector<shared_ptr<TxPieceData>>>();
             for (const auto& c: cmds) {
                 //Log_info("try this. roottype = %d; type = %d.", c->root_type_, c->type_);
+                tx_data().innid_to_server[c->inn_id_] = par_id;
+                tx_data().innid_to_starttime[c->inn_id_] = current_time;
+                //Log_info("Client:Dispatch. txid = %lu. recording innid = %u. server = %u.", txn->id_, c->inn_id_, par_id);
                 c->id_ = next_pie_id();
                 c->op_type_ = txn_reg_->get_optype(c->root_type_, c->type_);
                 //c->op_type_ = txn_reg_->regs_[c->root_type_][c->type_].op_type;
@@ -61,7 +78,8 @@ namespace janus {
                                                     std::placeholders::_2,
                                                     std::placeholders::_3,
                                                     std::placeholders::_4,
-                                                    std::placeholders::_5),
+                                                    std::placeholders::_5,
+                                                    std::placeholders::_6),
 					                       tx_data().id_,
                                           tx_data().n_status_query,
                                           std::bind(&CoordinatorAcc::AccStatusQueryAck,
@@ -77,7 +95,8 @@ namespace janus {
                                         uint64_t ssid_low,
                                         uint64_t ssid_high,
                                         uint64_t ssid_new,
-                                        map<innid_t, map<int32_t, Value>>& outputs) {
+                                        map<innid_t, map<int32_t, Value>>& outputs,
+                                        uint64_t arrival_time) {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
         if (phase != phase_) return;
         auto* txn = (TxData*) cmd_;
@@ -89,6 +108,14 @@ namespace janus {
             Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
                       n_dispatch_ack_, n_dispatch_, cmd_->id_, inn_id);
             txn->Merge(pair.first, pair.second);
+            // record arrival times
+            verify(tx_data().innid_to_server.find(inn_id) != tx_data().innid_to_server.end());
+            verify(tx_data().innid_to_starttime.find(inn_id) != tx_data().innid_to_starttime.end());
+            parid_t server = tx_data().innid_to_server.at(inn_id);
+            uint64_t starttime = tx_data().innid_to_starttime.at(inn_id);
+            uint64_t time_delta = arrival_time >= starttime ? arrival_time - starttime : 0;  // for clock skew (rare case)
+            //Log_info("Client:ACK. txid = %lu. innid = %lu. server = %lu. time_delta = %lu.", txn->id_, inn_id, server, time_delta);
+            SSIDPredictor::update_time_tracker(server, time_delta);
         }
         // store RPC returned information
         switch (res) {
@@ -340,5 +367,7 @@ namespace janus {
         tx_data().n_status_callback = 0;
 	    tx_data().n_abort_sent = 0;
         tx_data().n_abort_ack = 0;
+        tx_data().innid_to_server.clear();
+        tx_data().innid_to_starttime.clear();
     }
 } // namespace janus

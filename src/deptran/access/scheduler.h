@@ -15,7 +15,8 @@ namespace janus {
                            uint64_t* ssid_min,
                            uint64_t* ssid_max,
                            uint64_t* ssid_new,
-                           TxnOutput& ret_output);     // AccDispatch RPC handler
+                           TxnOutput& ret_output,
+                           uint64_t* arrival_time);     // AccDispatch RPC handler
         void OnValidate(cmdid_t cmd_id, snapshotid_t ssid_new, int8_t* res);
         void OnFinalize(cmdid_t cmd_id, int8_t decision);
         void OnStatusQuery(cmdid_t cmd_id, int8_t* res, DeferredReply* defer);
