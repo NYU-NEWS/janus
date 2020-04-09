@@ -94,7 +94,7 @@ namespace janus {
 
     bool Predictor::is_conflict(optype_t t1, optype_t t2) {
         verify(t1 != UNDEFINED && t2 != UNDEFINED);
-        return (t1 == t2 == WRITE_REQ || t1 != t2);  // true if at least one is write
+        return ((t1 == WRITE_REQ && t2 == WRITE_REQ) || t1 != t2);  // true if at least one is write
     }
 
     /*

@@ -5,12 +5,12 @@
 #pragma once
 
 /* server-side ML engine */
-#define N_READS (100)  // # of past read arrivals in a feature set
-#define N_WRITES (100) // # of past write arrivals
+#define N_READS (10)  // # of past read arrivals in a feature set
+#define N_WRITES (10) // # of past write arrivals
 #define label_t int    // the type of labels
 #define NONBLOCK (0)   // as "false" in ml doc
 #define BLOCK (1)      // as "true" in ml doc
-#define TRAINING_SIZE (1000000)  // the number of feature sets for training
+#define TRAINING_SIZE (10000)  // the number of feature sets for training
 //#define TRAINING_INTERVAL (300)  // timer for migrating feature sets to training samples (in seconds)
 #define TRAINING_INTERVAL (0)
 
