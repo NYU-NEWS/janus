@@ -75,8 +75,8 @@ namespace janus {
     }
 
     void Predictor::label_features(int32_t key, snapshotid_t ssid_spec, optype_t op_type) {
+        // note that, feature_vector[key] is an ordered key ordered by ssid, new tx is not necessarily the last element.
         auto rit = feature_vector.at(key).rbegin();
-        rit++;  // we skip the most recently added element, which is this very tx
         // feature_vector set is sorted by ssid in ascending order, we iterate reversely
         for (; rit != feature_vector.at(key).rend(); rit++) {
             if (rit->ssid_spec_ > ssid_spec && is_conflict(op_type, rit->op_type_)) {
@@ -86,7 +86,8 @@ namespace janus {
                                                           // we are not modifying the sorting keys of the set
                 ft->label_ = BLOCK;
             }
-            if (rit->ssid_spec_ < ssid_spec) {
+            if (rit->ssid_spec_ <= ssid_spec) {
+                // we have some false negatives here by doing <=, but it's fine for now
                 break;
             }
         }

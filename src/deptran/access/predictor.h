@@ -20,8 +20,8 @@ namespace janus {
         int32_t key_ = 0;
         snapshotid_t ssid_spec_ = 0;
         optype_t op_type_ = UNDEFINED;     // either READ_REQ if this piece only has reads or WRITE_REQ if it has any write or UNDEFINED
-        label_t label_ = NONBLOCK;   // initially labelled false as in ML doc
-        // helper funcs
+        label_t label_ = NONBLOCK;         // initially labelled false as in ML doc
+        /****** helper funcs ******/
         Features() = default;
         Features(uint32_t read_low, uint32_t read_high, uint32_t write_low, uint32_t write_high,
                 int32_t key, snapshotid_t ssid_spec, optype_t op_type, label_t label = NONBLOCK)

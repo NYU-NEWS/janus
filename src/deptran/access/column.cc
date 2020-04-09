@@ -27,7 +27,7 @@ namespace janus {
         // extends head's ssid
         txn_queue[index].extend_ssid(ssid_new);
         ssid = txn_queue[index].ssid;
-	if (!is_offset_safe(ssid_new)) {
+	    if (!is_offset_safe(ssid_new)) {
             offset_safe = false;
         }
         if (logical_head_status() != FINALIZED) { // then if this tx turns out consistent and all parts decided, can respond immediately
@@ -41,7 +41,7 @@ namespace janus {
         SSID new_ssid = write_get_next_SSID(ssid_spec);
         txn_queue.emplace_back(std::move(v), tid, new_ssid);
         ver_index = txn_queue.size() - 1; // record index of this pending write for later validation and finalize
-	if (!is_offset_safe(new_ssid.ssid_low)) {
+	    if (!is_offset_safe(new_ssid.ssid_low)) {
             offset_safe = false;
         }
         update_logical_head();
