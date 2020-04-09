@@ -30,7 +30,8 @@ namespace janus {
 	    ~AccRow() override;
     private:
         // a map of txn_q; keys are cols, values are linkedvectors that holding txns (versions)
-        std::unordered_map<mdb::colid_t, AccColumn> _row;
+        // std::unordered_map<mdb::colid_t, AccColumn> _row;
+        std::vector<AccColumn> _row;
         std::vector<std::pair<char*, int>> keys;
         static int get_key_type(const mdb::Value& value);
     };

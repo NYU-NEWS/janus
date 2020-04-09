@@ -6,6 +6,12 @@ namespace janus {
         txn_queue.reserve(INITIAL_QUEUE_SIZE);
     }
 
+    AccColumn::AccColumn(AccColumn &&other) noexcept
+        : col_id(other.col_id),
+          _logical_head(other._logical_head),
+          _stable_frontier(other._stable_frontier),
+          txn_queue(std::move(other.txn_queue)) { }
+
     AccColumn::AccColumn(mdb::colid_t cid, mdb::Value&& v) {
         verify(txn_queue.empty());  // this should be a create
         txn_queue.emplace_back(std::move(v), 0, FINALIZED);
@@ -155,6 +161,7 @@ namespace janus {
         }
         _stable_frontier = index - 1;
     }
+
     //----------------------------------------
     //---------------obsolete-----------------
     /*

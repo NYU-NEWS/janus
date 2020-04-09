@@ -64,6 +64,7 @@ namespace janus {
         //friend class AccRow;
         AccColumn();
         explicit AccColumn(mdb::colid_t, mdb::Value&& v);
+        AccColumn(AccColumn&& that) noexcept;
         AccColumn(const AccColumn&) = delete;   // no copy
         AccColumn& operator=(const AccColumn&) = delete; // no copy
         const mdb::Value& read(snapshotid_t ssid_spec, SSID& ssid, bool& offset_safe, unsigned long& index, bool& decided);

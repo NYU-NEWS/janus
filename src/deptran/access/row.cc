@@ -26,10 +26,13 @@ namespace janus {
                 values.at(col_id).write_binary(key);
                 new_row->keys.emplace_back(key, n_bytes);
             }
+            new_row->_row.emplace_back(col_id, std::move(values.at(col_id)));
+            /*
             new_row->_row.emplace(
                     std::piecewise_construct,
                     std::make_tuple(col_id),
                     std::make_tuple(col_id, std::move(values.at(col_id))));
+            */
         }
         /* Obsolete. because workloads may only populate a subset of cols for each key, e.g., FB
         for (auto col_info_it = schema->begin(); col_info_it != schema->end(); col_info_it++) {
@@ -137,14 +140,16 @@ namespace janus {
     }
 
     mdb::Value AccRow::get_column(int column_id) const {
-        verify(_row.find(column_id) != _row.end());
+        //verify(_row.find(column_id) != _row.end());
+        verify(_row.size() > column_id);
         verify(!_row.at(column_id).txn_queue.empty());
         mdb::Value v = _row.at(column_id).txn_queue.at(0).value;
         return v;
     }
 
     mdb::blob AccRow::get_blob(int column_id) const {
-        verify(_row.find(column_id) != _row.end());
+        //verify(_row.find(column_id) != _row.end());
+        verify(_row.size() > column_id);
         verify(!_row.at(column_id).txn_queue.empty());
         mdb::blob b;
         Value v = _row.at(column_id).txn_queue.at(0).value;
