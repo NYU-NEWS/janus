@@ -346,6 +346,7 @@ void TpccWorkload::RegNewOrder() {
              new_ol_quantity += 91;
            Value new_ol_quantity_value(new_ol_quantity);
 
+           std::vector<Value> col_data({new_ol_quantity_value, new_s_ytd, new_s_order_cnt, new_s_remote_cnt});
            tx.WriteColumns(r,
                               {
                                   TPCC_COL_STOCK_S_QUANTITY,
@@ -353,12 +354,7 @@ void TpccWorkload::RegNewOrder() {
                                   TPCC_COL_STOCK_S_ORDER_CNT,
                                   TPCC_COL_STOCK_S_REMOTE_CNT
                               },
-                              {
-                                  new_ol_quantity_value,
-                                  new_s_ytd,
-                                  new_s_order_cnt,
-                                  new_s_remote_cnt
-                              },
+                              col_data,
                               TXN_DEFERRED);
            *res = SUCCESS;
            return;

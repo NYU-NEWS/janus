@@ -184,8 +184,9 @@ void TpccWorkload::RegDelivery() {
            tx.ReadColumn(row_ol, TPCC_COL_ORDER_LINE_OL_AMOUNT,
                             &buf, TXN_DEFERRED); // read ol_amount
            ol_amount_buf += buf.get_double();
+           Value v(std::to_string(time(NULL)));
            tx.WriteColumn(row_ol, TPCC_COL_ORDER_LINE_OL_DELIVERY_D,
-                             Value(std::to_string(time(NULL))),
+                             v,
                              TXN_DEFERRED);
          }
          output[TPCC_VAR_OL_AMOUNT] = Value(ol_amount_buf);

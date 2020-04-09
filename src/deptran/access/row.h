@@ -25,6 +25,8 @@ namespace janus {
         int8_t check_status(mdb::colid_t col_id, unsigned long index);
 	    txnid_t get_ver_tid(mdb::colid_t col_id, unsigned long index);
         mdb::MultiBlob get_key() const override;
+        mdb::Value get_column(int column_id) const override;  // used by tpcc population
+        mdb::blob get_blob(int column_id) const override;
 	    ~AccRow() override;
     private:
         // a map of txn_q; keys are cols, values are linkedvectors that holding txns (versions)

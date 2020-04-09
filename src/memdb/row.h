@@ -117,13 +117,13 @@ class Row: public RefCounted {
     return tbl_;
   }
 
-  Value get_column(int column_id) const;
+  virtual Value get_column(int column_id) const;
   Value get_column(const std::string &col_name) const {
     return get_column(schema_->get_column_id(col_name));
   }
   virtual MultiBlob get_key() const;
 
-  blob get_blob(int column_id) const;
+  virtual blob get_blob(int column_id) const;
   blob get_blob(const std::string &col_name) const {
     return get_blob(schema_->get_column_id(col_name));
   }

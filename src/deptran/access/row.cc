@@ -135,6 +135,26 @@ namespace janus {
         return mb;
     }
 
+    mdb::Value AccRow::get_column(int column_id) const {
+        verify(_row.find(column_id) != _row.end());
+        verify(!_row.at(column_id).txn_queue.empty());
+        mdb::Value v = _row.at(column_id).txn_queue.at(0).value;
+        return v;
+    }
+
+    mdb::blob AccRow::get_blob(int column_id) const {
+        verify(_row.find(column_id) != _row.end());
+        verify(!_row.at(column_id).txn_queue.empty());
+        mdb::blob b;
+        Value v = _row.at(column_id).txn_queue.at(0).value;
+        int n_bytes = get_key_type(v);
+        char* v_data = new char[n_bytes];
+        v.write_binary(v_data);
+        b.data = v_data;
+        b.len = n_bytes;
+        return b;
+    }
+
     AccRow::~AccRow() {
         for (auto& key : keys) {
             delete[] key.first;
