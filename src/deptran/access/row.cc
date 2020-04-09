@@ -17,6 +17,7 @@ namespace janus {
         verify(values.size() == schema->columns_count());
         auto* new_row = new AccRow();
         new_row->schema_ = schema;
+        new_row->_row.reserve(schema->columns_count());
         for (int col_id = 0; col_id < values.size(); ++col_id) {
             const mdb::Schema::column_info* info = schema->get_column_info(col_id);
             if (info->indexed) { // this col is a key
