@@ -4,6 +4,7 @@
 namespace janus {
     AccRow* AccRow::create(const mdb::Schema *schema,
                            std::vector<mdb::Value>& values) {
+        /*
         std::vector<const mdb::Value*> values_ptr(values.size(), nullptr);
         size_t fill_counter = 0;
         for (auto& value : values) {
@@ -12,8 +13,18 @@ namespace janus {
         }
         auto* raw_row = new AccRow();
         auto* new_row = (AccRow*)mdb::Row::create(raw_row, schema, values_ptr);
+        */
         verify(values.size() == schema->columns_count());
+        auto* new_row = new AccRow();
+        new_row->schema_ = schema;
         for (int col_id = 0; col_id < values.size(); ++col_id) {
+            const mdb::Schema::column_info* info = schema->get_column_info(col_id);
+            if (info->indexed) { // this col is a key
+                int n_bytes = get_key_type(values.at(col_id));
+                char* key = new char[n_bytes];
+                values.at(col_id).write_binary(key);
+                new_row->keys.emplace_back(key, n_bytes);
+            }
             new_row->_row.emplace(
                     std::piecewise_construct,
                     std::make_tuple(col_id),
@@ -95,5 +106,39 @@ namespace janus {
 
     txnid_t AccRow::get_ver_tid(mdb::colid_t col_id, unsigned long index) {
         return _row[col_id].txn_queue[index].txn_id;
+    }
+
+    int AccRow::get_key_type(const mdb::Value& value) {
+        switch (value.get_kind()) {
+            case mdb::Value::I32:
+                return sizeof(i32);
+            case mdb::Value::I64:
+                return sizeof(i64);
+            case mdb::Value::DOUBLE:
+                return sizeof(double);
+            case mdb::Value::STR:
+                return value.get_str().length();
+            default: verify(0);
+                break;
+        }
+    }
+
+    mdb::MultiBlob AccRow::get_key() const {
+        //const std::vector<int>& key_cols = schema_->key_columns_id();
+        mdb::MultiBlob mb(keys.size());
+        for (int i = 0; i < mb.count(); i++) {
+            mdb::blob b;
+            b.data = keys.at(i).first;
+            b.len = keys.at(i).second;
+            mb[i] = b;
+        }
+        return mb;
+    }
+
+    AccRow::~AccRow() {
+        for (auto& key : keys) {
+            delete[] key.first;
+        }
+        _row.clear();
     }
 }
