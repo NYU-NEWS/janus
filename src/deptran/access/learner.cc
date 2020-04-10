@@ -79,11 +79,11 @@ namespace janus {
     }
 
     void Learner::get_label(std::string &ft_str, Features* ft) {
-        switch (ft->label_) {
-            case 0:
-                ft_str.push_back('0');
+        switch (ft->label_) {  // -1 and 1 for logistic regression with vw
+            case NONBLOCK:
+                ft_str += "-1";
                 break;
-            case 1:
+            case BLOCK:
                 ft_str.push_back('1');
                 break;
             default: verify(0);
