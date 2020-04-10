@@ -61,6 +61,7 @@ namespace janus {
     }
 
     void Learner::feed_training_samples(Features* ft) {
+        //Log_info("ML%s", to_vw_string(ft).c_str());
         uint32_t pos = get_head();
         if (pos >= training_samples.size()) {
             training_samples.emplace_back(to_vw_string(ft));

@@ -46,6 +46,7 @@ namespace janus {
                     workload = TPCC;
                     break;
             }
+            std::unordered_map<i32, optype_t> keys_to_train;
             for (const auto& sp_piece_data : *sp_vec_piece) {
                 //Log_info("piece.op_type_ = %d.", sp_piece_data->op_type_);
                 for (auto var_id : sp_piece_data->input.keys_) {
@@ -54,11 +55,17 @@ namespace janus {
                     if (row_key == NOT_ROW_KEY) {
                         continue;
                     }
-                    if (Predictor::should_block(row_key, now, ssid_spec, sp_piece_data->op_type_)) {
-                        will_block = true;
+                    if (keys_to_train.find(row_key) == keys_to_train.end() || sp_piece_data->op_type_ == WRITE_REQ) {
+                        keys_to_train[row_key] = sp_piece_data->op_type_;
                     }
                 }
             }
+            for (const auto& key_op : keys_to_train) {
+                if (Predictor::should_block(key_op.first, now, ssid_spec, key_op.second)) {
+                    will_block = true;
+                }
+            }
+            keys_to_train.clear();
         }
         if (will_block) {
             // TODO: a deferred function call
