@@ -27,7 +27,7 @@ namespace janus {
         static uint32_t head;
         static uint32_t get_head();
         static void get_label(std::string& ft_str, Features* ft);
-        static void get_read_arrivals(std::string& ft_str, Features* ft);
+        static void get_req_arrivals(std::string& ft_str, Features* ft);
         static void get_write_arrivals(std::string& ft_str, Features* ft);
         static void get_key(std::string& ft_str, Features* ft);
         static void get_ssid(std::string& ft_str, Features* ft);
@@ -35,6 +35,7 @@ namespace janus {
         /* VW engine below */
         //static vw* model;
         static void vw_train_model();
+
     };
 }
 

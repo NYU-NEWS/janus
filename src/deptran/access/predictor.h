@@ -15,20 +15,20 @@
 namespace janus {
     struct Features { // the features each tx uses to predict
         // feature variables
-        std::pair<uint32_t, uint32_t> last_n_reads = {0, 0};
-        std::pair<uint32_t, uint32_t> last_n_writes = {0, 0};
+        std::pair<uint32_t, uint32_t> last_n_requests = {0, 0};  // for writes
+        std::pair<uint32_t, uint32_t> last_n_writes = {0, 0};    // for reads
         int32_t key_ = 0;
         snapshotid_t ssid_spec_ = 0;
         optype_t op_type_ = UNDEFINED;     // either READ_REQ if this piece only has reads or WRITE_REQ if it has any write or UNDEFINED
         label_t label_ = NONBLOCK;         // initially labelled false as in ML doc
         /****** helper funcs ******/
         Features() = default;
-        Features(uint32_t read_low, uint32_t read_high, uint32_t write_low, uint32_t write_high,
+        Features(uint32_t req_low, uint32_t req_high, uint32_t write_low, uint32_t write_high,
                 int32_t key, snapshotid_t ssid_spec, optype_t op_type, label_t label = NONBLOCK)
-            : last_n_reads(read_low, read_high), last_n_writes(write_low, write_high),
+            : last_n_requests(req_low, req_high), last_n_writes(write_low, write_high),
               key_(key), ssid_spec_(ssid_spec), op_type_(op_type), label_(label) {}
         Features(Features&& that) noexcept
-            : last_n_reads(std::move(that.last_n_reads)),
+            : last_n_requests(std::move(that.last_n_requests)),
               last_n_writes(std::move(that.last_n_writes)),
               key_(that.key_),
               ssid_spec_(that.ssid_spec_),
@@ -36,7 +36,7 @@ namespace janus {
               label_(that.label_){}
         Features& operator=(Features&& that) noexcept {
             assert(this != &that);
-            this->last_n_reads = std::move(that.last_n_reads);
+            this->last_n_requests = std::move(that.last_n_requests);
             this->last_n_writes = std::move(that.last_n_writes);
             this->key_ = that.key_;
             this->ssid_spec_ = that.ssid_spec_;
@@ -80,7 +80,7 @@ namespace janus {
         //static const uint32_t N_FEATURES = TRAINING_SIZE;
         //static uint64_t last_training_time;  // last time we migrated feature_vector to training_samples
         //static TRAINING_TIMERS training_timers;  // timer per key
-        static READ_ARRIVALS read_arrivals;
+        static REQUEST_ARRIVALS request_arrivals;
         static WRITE_ARRIVALS write_arrivals;
         static FEATURE_VECTOR feature_vector; // a vector of features cross keys so far, periodically moved to learner
         //static TRAINING_VECTOR training_samples;  // set of feature sets for training and updating the model

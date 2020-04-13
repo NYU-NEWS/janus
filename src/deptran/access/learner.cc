@@ -52,22 +52,38 @@ namespace janus {
         assert(ft != nullptr);
         std::string ft_str;
         get_label(ft_str, ft);
-        get_read_arrivals(ft_str, ft);
-        get_write_arrivals(ft_str, ft);
+        if (ft->op_type_ == WRITE_REQ) {
+            get_req_arrivals(ft_str, ft);
+        } else if (ft->op_type_ == READ_REQ) {
+            get_write_arrivals(ft_str, ft);
+        } else {
+            verify(0);
+        }
+        verify(N_WRITES == N_REQUESTS);  // for now we make these two the same for simplicity
         get_key(ft_str, ft);
         get_ssid(ft_str, ft);
         get_type(ft_str, ft);
+        if (ft->op_type_ == READ_REQ) {
+            // we need to log this read's current time
+            uint64_t ft_time = Predictor::request_arrivals.at(ft->key_).at(ft->last_n_requests.second);
+            ft_str.push_back(' ');
+            ft_str += std::to_string(SEP_FT_TIME_POS);
+            ft_str.push_back(':');
+            ft_str += std::to_string(ft_time);
+        }
         return ft_str;
     }
 
     void Learner::feed_training_samples(Features* ft) {
-        //Log_info("ML%s", to_vw_string(ft).c_str());
+        Log_info("ML%s", to_vw_string(ft).c_str());
+        /*
         uint32_t pos = get_head();
         if (pos >= training_samples.size()) {
             training_samples.emplace_back(to_vw_string(ft));
         } else {
             training_samples.at(pos) = to_vw_string(ft);
         }
+        */
     }
 
     uint32_t Learner::get_head() {
@@ -94,20 +110,21 @@ namespace janus {
         // e.g., 1 |
     }
 
-    void Learner::get_read_arrivals(std::string &ft_str, Features* ft) {
-        if (ft->last_n_reads.first > ft->last_n_reads.second) {
+    void Learner::get_req_arrivals(std::string &ft_str, Features* ft) {
+        if (ft->last_n_requests.first > ft->last_n_requests.second) {
             // empty read arrival features
+            verify(0);
             return;
         }
-        int ft_index = READ_ARRIVAL_BEGIN;
-        for (int i = ft->last_n_reads.first; i <= ft->last_n_reads.second; i++, ft_index++) {
+        int ft_index = REQ_ARRIVAL_BEGIN;
+        for (int i = ft->last_n_requests.first; i <= ft->last_n_requests.second; i++, ft_index++) {
             // e.g., 1 | 1:1032334 2:3242342 3:432424
             ft_str += std::to_string(ft_index);
             ft_str.push_back(':');
-            ft_str += std::to_string(Predictor::read_arrivals.at(ft->key_).at(i));
+            ft_str += std::to_string(Predictor::request_arrivals.at(ft->key_).at(i));
             ft_str.push_back(' ');
         }
-        verify(ft_index <= WRITE_ARRIVAL_BEGIN);
+        verify(ft_index <= SEP_KEY_POS);
     }
 
     void Learner::get_write_arrivals(std::string &ft_str, Features *ft) {
@@ -115,7 +132,7 @@ namespace janus {
             // empty write arrival features
             return;
         }
-        int ft_index = WRITE_ARRIVAL_BEGIN;
+        int ft_index = SEP_WRITE_ARRIVAL_BEGIN;
         for (int i = ft->last_n_writes.first; i <= ft->last_n_writes.second; i++, ft_index++) {
             // e.g., 1 | 1:1032334 2:3242342 3:432424 101:32423423 102:123242332
             ft_str += std::to_string(ft_index);
@@ -123,25 +140,25 @@ namespace janus {
             ft_str += std::to_string(Predictor::write_arrivals.at(ft->key_).at(i));
             ft_str.push_back(' ');
         }
-        verify(ft_index <= KEY_POS);
+        verify(ft_index <= SEP_KEY_POS);
     }
 
     void Learner::get_key(std::string &ft_str, Features *ft) {
-        ft_str += std::to_string(KEY_POS);
+        ft_str += std::to_string(SEP_KEY_POS);
         ft_str.push_back(':');
         ft_str += std::to_string(ft->key_);
         ft_str.push_back(' ');
     }
 
     void Learner::get_ssid(std::string &ft_str, Features *ft) {
-        ft_str += std::to_string(SSID_POS);
+        ft_str += std::to_string(SEP_SSID_POS);
         ft_str.push_back(':');
         ft_str += std::to_string(ft->ssid_spec_);
         ft_str.push_back(' ');
     }
 
     void Learner::get_type(std::string &ft_str, Features *ft) {
-        ft_str += std::to_string(TYPE_POS);
+        ft_str += std::to_string(SEP_TYPE_POS);
         ft_str.push_back(':');
         ft_str += std::to_string(ft->op_type_);
     }
