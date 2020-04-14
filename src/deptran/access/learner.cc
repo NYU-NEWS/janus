@@ -57,6 +57,7 @@ namespace janus {
         get_key(ft_str, ft);
         get_ssid(ft_str, ft);
         get_type(ft_str, ft);
+        get_curr_time(ft_str, ft);
         return ft_str;
     }
 
@@ -188,6 +189,13 @@ namespace janus {
         ft_str += std::to_string(TYPE_POS);
         ft_str.push_back(':');
         ft_str += std::to_string(ft->op_type_);
+        ft_str.push_back(' ');
+    }
+
+    void Learner::get_curr_time(std::string &ft_str, Features *ft) {
+        ft_str += std::to_string(CURR_TIME_POS);
+        ft_str.push_back(':');
+        ft_str += std::to_string(ft->arrival_time_);
     }
 
     /*

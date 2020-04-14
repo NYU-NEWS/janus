@@ -36,6 +36,7 @@
 #define KEY_POS (WRITE_ARRIVAL_BEGIN + N_WRITES)
 #define SSID_POS (KEY_POS + 1)
 #define TYPE_POS (SSID_POS + 1)
+#define CURR_TIME_POS (TYPE_POS + 1)
 
 /* VW engine parameters */
 #define VW_INITIALIZE_STRING ("-b 10 -l 10 -c --passes 25")
