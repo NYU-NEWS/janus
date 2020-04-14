@@ -33,9 +33,11 @@
 /* feature index */
 #define READ_ARRIVAL_BEGIN (1)
 #define WRITE_ARRIVAL_BEGIN (N_READS + READ_ARRIVAL_BEGIN)
-#define KEY_POS (WRITE_ARRIVAL_BEGIN + N_WRITES)
-#define SSID_POS (KEY_POS + 1)
-#define TYPE_POS (SSID_POS + 1)
+// #define KEY_POS (WRITE_ARRIVAL_BEGIN + N_WRITES)
+#define SSID_POS (WRITE_ARRIVAL_BEGIN + N_WRITES)
+#define READ_POS (SSID_POS + 1)
+#define WRITE_POS (READ_POS + 1)
+#define KEY_POS(I) (WRITE_POS + 1 + I)
 
 /* VW engine parameters */
 #define VW_INITIALIZE_STRING ("-b 10 -l 10 -c --passes 25")

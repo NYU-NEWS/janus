@@ -54,9 +54,9 @@ namespace janus {
         get_label(ft_str, ft);
         get_read_arrivals(ft_str, ft);
         get_write_arrivals(ft_str, ft);
-        get_key(ft_str, ft);
         get_ssid(ft_str, ft);
         get_type(ft_str, ft);
+        get_key(ft_str, ft);
         return ft_str;
     }
 
@@ -143,16 +143,15 @@ namespace janus {
             ft_str += time_str;
             ft_str.push_back(' ');
         }
-        verify(ft_index <= KEY_POS);
+        verify(ft_index <= SSID_POS);
     }
 
     void Learner::get_key(std::string &ft_str, Features *ft) {
-        ft_str += std::to_string(KEY_POS);
-        ft_str.push_back(':');
         int32_t key = ft->key_;
-        //ft_str += std::to_string(ft->key_);
-        ft_str += std::to_string(key);
-        ft_str.push_back(' ');
+        int key_pos = KEY_POS(key);
+        ft_str += std::to_string(key_pos);
+        ft_str.push_back(':');
+        ft_str.push_back('1');
     }
 
     void Learner::get_ssid(std::string &ft_str, Features *ft) {
@@ -175,9 +174,21 @@ namespace janus {
     }
 
     void Learner::get_type(std::string &ft_str, Features *ft) {
-        ft_str += std::to_string(TYPE_POS);
+        int type_pos;
+        switch (ft->op_type_) {
+            case READ_REQ:
+                type_pos = READ_POS;
+                break;
+            case WRITE_REQ:
+                type_pos = WRITE_POS;
+                break;
+            default: verify(0);
+                break;
+        }
+        ft_str += std::to_string(type_pos);
         ft_str.push_back(':');
-        ft_str += std::to_string(ft->op_type_);
+        ft_str.push_back('1');
+        ft_str.push_back(' ');
     }
 
     /*
