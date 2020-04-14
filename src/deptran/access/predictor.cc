@@ -5,7 +5,7 @@
 
 namespace janus {
     // define static members
-    REQUEST_ARRIVALS Predictor::request_arrivals;
+    READ_ARRIVALS Predictor::read_arrivals;
     WRITE_ARRIVALS Predictor::write_arrivals;
     FEATURE_VECTOR Predictor::feature_vector;
     //TRAINING_VECTOR Predictor::training_samples;
@@ -17,16 +17,17 @@ namespace janus {
         initialize_containers();
         // append arrival_time to corresponding arrival times
         switch (op_type) {
+            case READ_REQ:
+                if (read_arrivals[key].empty()) {
+                    read_arrivals[key].reserve(READ_ARRIVALS_SIZE);
+                }
+                read_arrivals[key].emplace_back(arrival_time);
+                break;
             case WRITE_REQ:
                 if (write_arrivals[key].empty()) {
                     write_arrivals[key].reserve(WRITE_ARRIVALS_SIZE);
                 }
                 write_arrivals[key].emplace_back(arrival_time);
-            case READ_REQ:
-                if (request_arrivals[key].empty()) {
-                    request_arrivals[key].reserve(N_REQUESTS);
-                }
-                request_arrivals[key].emplace_back(arrival_time);
                 break;
             case UNDEFINED:
                 Log_info("op_type is undefined. Should define it in the workload txn_reg.");
@@ -54,27 +55,22 @@ namespace janus {
 
     bool Predictor::construct_features(Features& ft, int32_t key, snapshotid_t ssid_spec, optype_t op_type) {
         bool feature_complete = true;
-        uint32_t req_low, req_high, write_low, write_high;
-        req_high = request_arrivals[key].size() - 1;
-        req_low = request_arrivals[key].size() < N_REQUESTS ? 0 : req_high - N_REQUESTS + 1;
-        switch (op_type) {
-            case WRITE_REQ:
-                write_low = 1;
-                write_high = 0;
-                break;
-            case READ_REQ:
-                write_high = write_arrivals[key].size() - 1;
-                write_low = write_arrivals[key].size() < N_WRITES ? 0 : write_high - N_WRITES + 1;
-                if (write_arrivals[key].empty()) {
-                    write_low = 1;
-                    write_high = 0;
-                    feature_complete = false;
-                }
-                break;
-            default: verify(0);
-                break;
+        uint32_t read_low, read_high, write_low, write_high;
+        read_high = read_arrivals[key].size() - 1;
+        read_low = read_arrivals[key].size() < N_READS ? 0 : read_high - N_READS + 1;
+        if (read_arrivals[key].empty()) {  // mark empty by low > high
+            read_low = 1;
+            read_high = 0;
+            feature_complete = false;
         }
-        ft = {req_low, req_high, write_low, write_high, key, ssid_spec, op_type};
+        write_high = write_arrivals[key].size() - 1;
+        write_low = write_arrivals[key].size() < N_WRITES ? 0 : write_high - N_WRITES + 1;
+        if (write_arrivals[key].empty()) {
+            write_low = 1;
+            write_high = 0;
+            feature_complete = false;
+        }
+        ft = {read_low, read_high, write_low, write_high, key, ssid_spec, op_type};
         return feature_complete;
     }
 
@@ -140,7 +136,16 @@ namespace janus {
     }
 
     uint64_t Predictor::get_ft_time_in_seconds(const Features &ft) {
-        return request_arrivals.at(ft.key_).at(ft.last_n_requests.second) / 1000000;
+        switch (ft.op_type_) {
+            case READ_REQ:
+                return read_arrivals.at(ft.key_).at(ft.last_n_reads.second) / 1000000;
+            case WRITE_REQ:
+                return write_arrivals.at(ft.key_).at(ft.last_n_writes.second) / 1000000;
+            case UNDEFINED:
+                Log_info("op_type is undefined. Should define it in the workload txn_reg.");
+            default: verify(0);
+                return 0;
+        }
     }
 
     void Predictor::initialize_containers() {
@@ -152,8 +157,8 @@ namespace janus {
             training_timers.reserve(INITIAL_N_KEYS);
         }
         */
-        if (request_arrivals.empty()) {
-            request_arrivals.reserve(INITIAL_N_KEYS);
+        if (read_arrivals.empty()) {
+            read_arrivals.reserve(INITIAL_N_KEYS);
         }
         if (write_arrivals.empty()) {
             write_arrivals.reserve(INITIAL_N_KEYS);
