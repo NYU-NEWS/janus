@@ -195,7 +195,8 @@ namespace janus {
     void Learner::get_curr_time(std::string &ft_str, Features *ft) {
         ft_str += std::to_string(CURR_TIME_POS);
         ft_str.push_back(':');
-        ft_str += std::to_string(ft->arrival_time_);
+        // ft_str += std::to_string(ft->arrival_time_);
+        ft_str += std::to_string(1);
     }
 
     /*
