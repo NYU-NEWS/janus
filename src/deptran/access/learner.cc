@@ -57,7 +57,6 @@ namespace janus {
         get_key(ft_str, ft);
         get_ssid(ft_str, ft);
         get_type(ft_str, ft);
-        get_curr_time(ft_str, ft);
         return ft_str;
     }
 
@@ -107,14 +106,12 @@ namespace janus {
             ft_str += std::to_string(ft_index);
             ft_str.push_back(':');
             uint64_t read_time = Predictor::read_arrivals.at(ft->key_).at(i);
-            uint64_t time_delta = arrival_time - read_time;
+            int64_t time_delta = arrival_time - read_time;
             std::string time_str;
-            if (time_delta == 0) {
-                time_str = "1";  // use 1 instead of 0 to see how it changes the model
-            } else if (time_delta > 0) {
+            if (time_delta > 0) {
                 time_str = "-";
                 time_str += std::to_string(time_delta);
-            } else {
+            } else { // should not equal to or less than 0
                 verify(0);
             }
             ft_str += time_str;
@@ -135,14 +132,12 @@ namespace janus {
             ft_str += std::to_string(ft_index);
             ft_str.push_back(':');
             uint64_t write_time = Predictor::write_arrivals.at(ft->key_).at(i);
-            uint64_t time_delta = arrival_time - write_time;
+            int64_t time_delta = arrival_time - write_time;
             std::string time_str;
-            if (time_delta == 0) {
-                time_str = "1";  // use 1 instead of 0 to see how it changes the model
-            } else if (time_delta > 0) {
+            if (time_delta > 0) {
                 time_str = "-";
                 time_str += std::to_string(time_delta);
-            } else {
+            } else { // should not equal to or less than 0
                 verify(0);
             }
             ft_str += time_str;
@@ -155,9 +150,6 @@ namespace janus {
         ft_str += std::to_string(KEY_POS);
         ft_str.push_back(':');
         int32_t key = ft->key_;
-        if (key == 0) {
-            key = -1;  // use -1 instead of 0 to see how it changes the model
-        }
         //ft_str += std::to_string(ft->key_);
         ft_str += std::to_string(key);
         ft_str.push_back(' ');
@@ -170,9 +162,6 @@ namespace janus {
         uint64_t time_delta = 0;
         if (ssid >= arrival_time) {
             time_delta = ssid - arrival_time;
-            if (time_delta == 0) {
-                time_delta = 1;  // use 1 instead of 0 to see how it changes the model
-            }
             ssid_str = std::to_string(time_delta);
         } else {
             time_delta = arrival_time - ssid;
@@ -189,14 +178,6 @@ namespace janus {
         ft_str += std::to_string(TYPE_POS);
         ft_str.push_back(':');
         ft_str += std::to_string(ft->op_type_);
-        ft_str.push_back(' ');
-    }
-
-    void Learner::get_curr_time(std::string &ft_str, Features *ft) {
-        ft_str += std::to_string(CURR_TIME_POS);
-        ft_str.push_back(':');
-        // ft_str += std::to_string(ft->arrival_time_);
-        ft_str += std::to_string(1);
     }
 
     /*
