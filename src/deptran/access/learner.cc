@@ -109,7 +109,7 @@ namespace janus {
             uint64_t time_delta = arrival_time - read_time;
             std::string time_str;
             if (time_delta == 0) {
-                time_str = "0";
+                time_str = "1";  // use 1 instead of 0 to see how it changes the model
             } else if (time_delta > 0) {
                 time_str = "-";
                 time_str += std::to_string(time_delta);
@@ -137,7 +137,7 @@ namespace janus {
             uint64_t time_delta = arrival_time - write_time;
             std::string time_str;
             if (time_delta == 0) {
-                time_str = "0";
+                time_str = "1";  // use 1 instead of 0 to see how it changes the model
             } else if (time_delta > 0) {
                 time_str = "-";
                 time_str += std::to_string(time_delta);
@@ -153,7 +153,12 @@ namespace janus {
     void Learner::get_key(std::string &ft_str, Features *ft) {
         ft_str += std::to_string(KEY_POS);
         ft_str.push_back(':');
-        ft_str += std::to_string(ft->key_);
+        int32_t key = ft->key_;
+        if (key == 0) {
+            key = -1;  // use -1 instead of 0 to see how it changes the model
+        }
+        //ft_str += std::to_string(ft->key_);
+        ft_str += std::to_string(key);
         ft_str.push_back(' ');
     }
 
@@ -164,6 +169,9 @@ namespace janus {
         uint64_t time_delta = 0;
         if (ssid >= arrival_time) {
             time_delta = ssid - arrival_time;
+            if (time_delta == 0) {
+                time_delta = 1;  // use 1 instead of 0 to see how it changes the model
+            }
             ssid_str = std::to_string(time_delta);
         } else {
             time_delta = arrival_time - ssid;
