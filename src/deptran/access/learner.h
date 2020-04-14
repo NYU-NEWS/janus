@@ -32,7 +32,7 @@ namespace janus {
         static void get_key(std::string& ft_str, Features* ft);
         static void get_ssid(std::string& ft_str, Features* ft);
         static void get_type(std::string& ft_str, Features* ft);
-        static uint64_t get_arrival_time(Features* ft);
+        // static uint64_t get_arrival_time(Features* ft);
         /* VW engine below */
         //static vw* model;
         static void vw_train_model();

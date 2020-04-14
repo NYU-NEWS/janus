@@ -15,6 +15,8 @@ namespace janus {
 
     bool Predictor::should_block(int32_t key, uint64_t arrival_time, snapshotid_t ssid_spec, optype_t op_type) {
         initialize_containers();
+        Features ft;
+        bool features_complete = construct_features(ft, key, ssid_spec, op_type, arrival_time);
         // append arrival_time to corresponding arrival times
         switch (op_type) {
             case READ_REQ:
@@ -34,8 +36,6 @@ namespace janus {
             default: verify(0);
                 break;
         }
-        Features ft;
-        bool features_complete = construct_features(ft, key, ssid_spec, op_type);
         // insert the feature of this tx to feature_vector
         auto ret = feature_vector[key].insert(std::move(ft));
         // labeling with this new tx. *IMPORTANT* must label after inserting it into vector
@@ -53,7 +53,7 @@ namespace janus {
         return std::chrono::duration_cast<std::chrono::microseconds>(now.time_since_epoch()).count();
     }
 
-    bool Predictor::construct_features(Features& ft, int32_t key, snapshotid_t ssid_spec, optype_t op_type) {
+    bool Predictor::construct_features(Features& ft, int32_t key, snapshotid_t ssid_spec, optype_t op_type, uint64_t arrival_time) {
         bool feature_complete = true;
         uint32_t read_low, read_high, write_low, write_high;
         read_high = read_arrivals[key].size() - 1;
@@ -70,7 +70,7 @@ namespace janus {
             write_high = 0;
             feature_complete = false;
         }
-        ft = {read_low, read_high, write_low, write_high, key, ssid_spec, op_type};
+        ft = {read_low, read_high, write_low, write_high, key, ssid_spec, op_type, arrival_time};
         return feature_complete;
     }
 

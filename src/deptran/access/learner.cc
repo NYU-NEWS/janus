@@ -100,7 +100,7 @@ namespace janus {
             return;
         }
         int ft_index = READ_ARRIVAL_BEGIN;
-        uint64_t arrival_time = get_arrival_time(ft);
+        uint64_t arrival_time = ft->arrival_time_;
         for (int i = ft->last_n_reads.first; i <= ft->last_n_reads.second; i++, ft_index++) {
             // e.g., 1 | 1:1032334 2:3242342 3:432424
             ft_str += std::to_string(ft_index);
@@ -128,7 +128,7 @@ namespace janus {
             return;
         }
         int ft_index = WRITE_ARRIVAL_BEGIN;
-        uint64_t arrival_time = get_arrival_time(ft);
+        uint64_t arrival_time = ft->arrival_time_;
         for (int i = ft->last_n_writes.first; i <= ft->last_n_writes.second; i++, ft_index++) {
             // e.g., 1 | 1:1032334 2:3242342 3:432424 101:32423423 102:123242332
             ft_str += std::to_string(ft_index);
@@ -163,7 +163,7 @@ namespace janus {
     }
 
     void Learner::get_ssid(std::string &ft_str, Features *ft) {
-        uint64_t arrival_time = get_arrival_time(ft);
+        uint64_t arrival_time = ft->arrival_time_;
         uint64_t ssid = ft->ssid_spec_;
         std::string ssid_str;
         uint64_t time_delta = 0;
@@ -190,6 +190,7 @@ namespace janus {
         ft_str += std::to_string(ft->op_type_);
     }
 
+    /*
     uint64_t Learner::get_arrival_time(Features *ft) {
         switch (ft->op_type_) {
             case READ_REQ:
@@ -200,7 +201,7 @@ namespace janus {
                 return 0;
         }
     }
-
+    */
     /*
     void Learner::vw_train_model() {
         for (const auto& ft_str : training_samples) {
