@@ -61,6 +61,7 @@ namespace janus {
         std::unordered_map<int, int8_t> subrpc_status;
         void load_speculative_ssid(snapshotid_t ssid);
         snapshotid_t get_spec_ssid() const;
+        shared_ptr<IntEvent> acc_query_start = Reactor::CreateSpEvent<IntEvent>();
         friend class SchedulerAcc;
     };
 }   // namespace janus

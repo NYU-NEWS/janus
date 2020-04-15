@@ -27,6 +27,8 @@ namespace janus {
         }
     private:
         const i32 NOT_ROW_KEY = -1;
+        const uint64_t MAX_QUERY_TIMEOUT = 5000000; // maximum timeout for acc_query rpc is 5 seconds.
+        const uint64_t MAX_BLOCK_TIMEOUT = 3000000; // max time a txn will be blocked
         i32 get_row_key(const shared_ptr<SimpleCommand>& sp_piece_data, int32_t var_id, uint8_t workload) const;
         bool tpcc_row_key(int32_t var_id) const;
     };

@@ -67,11 +67,17 @@ namespace janus {
             }
             keys_to_train.clear();
         }
-        if (will_block) {
-            // TODO: a deferred function call
-        } else {
-            // TODO: the code below gets in here
+        // will_block = true; // todo: testing purpose, take this out later
+        if (will_block && ssid_spec > now) {
+            // wait until ssid_spec fires
+            // TODO: heuristics or ML tells us how long it should wait
+            uint64_t block_time = ssid_spec - now;
+            if (block_time > MAX_BLOCK_TIMEOUT) {
+                block_time = MAX_BLOCK_TIMEOUT;
+            }
+            Reactor::CreateSpEvent<NeverEvent>()->Wait(block_time);
         }
+        tx->acc_query_start->Set(1);  // acc_query RPC can be handled only after we have executed this tx
         // Log_debug("Received AccDispatch for txnid = %lu; #pieces = %d.", tx->tid_, sp_vec_piece->size());
         for (const auto& sp_piece_data : *sp_vec_piece) {
             /*
@@ -110,7 +116,7 @@ namespace janus {
             *res = CONSISTENT;  // if there is at least one validation fails, final result will be fail
             return;
         }
-	// TODO: here we do async lambda callback that allows reads to wait for dependent versions to finalize
+	    // TODO: here we do async lambda callback that allows reads to wait for dependent versions to finalize
         // TODO: BUT how do we deal the deadlock case: w-->r/ w-->r ?
         // -----------------------------
         acc_txn->sg.validate_done = true;
@@ -125,7 +131,7 @@ namespace janus {
                 }
             }
         }
-	*res = validate_consistent ? CONSISTENT : INCONSISTENT;
+	    *res = validate_consistent ? CONSISTENT : INCONSISTENT;
     }
 
     void SchedulerAcc::OnFinalize(cmdid_t cmd_id, int8_t decision) {
@@ -156,6 +162,9 @@ namespace janus {
 
     void SchedulerAcc::OnStatusQuery(cmdid_t cmd_id, int8_t *res, DeferredReply* defer) {
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
+        // wait until acc_query_start is set 1 by OnAccDispatch
+        acc_txn->acc_query_start->Wait(MAX_QUERY_TIMEOUT);
+        acc_txn->acc_query_start->Set(0);  // reset
 	    if (acc_txn->sg.metadata.reads_for_query.empty() || acc_txn->is_status_abort()) {
             *res = FINALIZED;	// some rpc has returned abort if is_status_abort
             verify(defer != nullptr);
@@ -186,22 +195,22 @@ namespace janus {
             return;
         }
         // now we check each pending version, and insert a callback func to that version waiting for its status
-	verify(!acc_txn->sg.metadata.reads_for_query.empty());
-	int rpc_id = acc_txn->n_query_inc();  // the rpc that needs later reply
+	    verify(!acc_txn->sg.metadata.reads_for_query.empty());
+	    int rpc_id = acc_txn->n_query_inc();  // the rpc that needs later reply
         acc_txn->subrpc_count[rpc_id] = 0;
         acc_txn->subrpc_status[rpc_id] = FINALIZED;
         for (auto& row_col : acc_txn->sg.metadata.reads_for_query) {
             auto acc_row = dynamic_cast<AccRow *>(row_col.first);
             for (auto &col_index : row_col.second) {
-		if (col_index.second == 0) {
+		    if (col_index.second == 0) {
                     // recently decided
                     continue;
-                }
-		// acc_txn->n_query_inc();
-		acc_txn->subrpc_count[rpc_id]++;
-                txnid_t to_tid = acc_row->get_ver_tid(col_index.first, col_index.second);  // inserting the callback of current txn to txn:tid
-                auto to_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(to_tid));  // get the target txn
-		to_txn->insert_callbacks(acc_txn, res, defer, rpc_id);
+		    }
+		    // acc_txn->n_query_inc();
+		    acc_txn->subrpc_count[rpc_id]++;
+		    txnid_t to_tid = acc_row->get_ver_tid(col_index.first, col_index.second);  // inserting the callback of current txn to txn:tid
+		    auto to_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(to_tid));  // get the target txn
+		    to_txn->insert_callbacks(acc_txn, res, defer, rpc_id);
             }
         }
         acc_txn->sg.metadata.reads_for_query.clear(); // no need those records anymore, might add more by later dispatch
@@ -223,7 +232,7 @@ namespace janus {
 			//acc_txn->sg.metadata.reads_for_query[row_col.first].erase(col_index.first);
                         break;
                     case ABORTED:
-			col_index.second = 0;
+			            col_index.second = 0;
                         //acc_txn->sg.metadata.reads_for_query[row_col.first].erase(col_index.first);
                         will_abort = true;
                         break;
