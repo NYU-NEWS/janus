@@ -102,6 +102,8 @@ Marshal& operator << (Marshal& m, const TxReply& reply) {
   m << reply.n_ssid_consistent_;
   m << reply.n_decided_;
   m << reply.n_offset_valid_;
+  m << reply.n_validation_passed;
+  m << reply.n_cascading_aborts;
   return m;
 }
 
@@ -115,6 +117,8 @@ Marshal& operator >> (Marshal& m, TxReply& reply) {
   m >> reply.n_ssid_consistent_;
   m >> reply.n_decided_;
   m >> reply.n_offset_valid_;
+  m >> reply.n_validation_passed;
+  m >> reply.n_cascading_aborts;
   return m;
 }
 
@@ -333,6 +337,8 @@ TxReply &TxData::get_reply() {
   reply_.n_ssid_consistent_ = n_ssid_consistent_;
   reply_.n_decided_ = n_decided_;
   reply_.n_offset_valid_ = n_offset_valid_;
+  reply_.n_validation_passed = n_validation_passed;
+  reply_.n_cascading_aborts = n_cascading_aborts;
   return reply_;
 }
 

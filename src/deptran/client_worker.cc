@@ -62,6 +62,8 @@ void ClientWorker::RequestDone(Coordinator* coo, TxReply& txn_reply) {
   ssid_consistent.fetch_add(txn_reply.n_ssid_consistent_);
   decided.fetch_add(txn_reply.n_decided_);
   offset_valid.fetch_add(txn_reply.n_offset_valid_);
+  validation_passed.fetch_add(txn_reply.n_validation_passed);
+  cascading_aborts.fetch_add(txn_reply.n_cascading_aborts);
 
   bool have_more_time = timer_->elapsed() < duration;
   Log_debug("received callback from tx_id %" PRIx64, txn_reply.tx_id_);
@@ -320,13 +322,15 @@ void ClientWorker::Work() {
   }
 //  finish_mutex.unlock();
 
-  Log_info("Finish:\nTotal: %u, Commit: %u, Attempts: %u, SSID_consistent: %u, Decided: %u, Offset_valid: %u, Running for %u\n",
+  Log_info("Finish:\nTotal: %u, Commit: %u, Attempts: %u, SSID_consistent: %u, Decided: %u, Offset_valid: %u, Validation_pass: %u, Cascading_aborts: %u, Running for %u\n",
            num_txn.load(),
            success.load(),
            num_try.load(),
            ssid_consistent.load(),
            decided.load(),
            offset_valid.load(),
+           validation_passed.load(),
+           cascading_aborts.load(),
            Config::GetConfig()->get_duration());
   fflush(stderr);
   fflush(stdout);
@@ -442,6 +446,8 @@ ClientWorker::ClientWorker(
   ssid_consistent.store(0);
   decided.store(0);
   offset_valid.store(0);
+  validation_passed.store(0);
+  cascading_aborts.store(0);
   commo_ = frame_->CreateCommo(poll_mgr_);
   commo_->loc_id_ = my_site_.locale_id;
   forward_requests_to_leader_ =

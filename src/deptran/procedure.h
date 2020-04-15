@@ -26,6 +26,8 @@ class TxReply {
   int32_t n_ssid_consistent_;
   int32_t n_decided_;
   int32_t n_offset_valid_;
+  int32_t n_validation_passed;
+  int32_t n_cascading_aborts;
 };
 
 class TxWorkspace {
@@ -230,9 +232,12 @@ class TxData: public CmdData {
 
   int max_try_ = 0;
   int n_try_ = 0;
+  // ACC stats related
   int n_ssid_consistent_ = 0;
   int n_decided_ = 0;
   int n_offset_valid_ = 0;
+  int n_validation_passed = 0;
+  int n_cascading_aborts = 0;
 
   bool validation_ok_{true};
   bool need_validation_{false};
@@ -327,6 +332,7 @@ class TxData: public CmdData {
     int n_status_callback = 0;
     int n_abort_sent = 0;
     int n_abort_ack = 0;
+    bool _validation_failed = false;
     // ssid predictor related below
     std::unordered_map<innid_t, parid_t> innid_to_server;
     std::unordered_map<innid_t, uint64_t> innid_to_starttime;

@@ -212,12 +212,13 @@ namespace janus {
         verify(!committed_);
         // ssid check consistency
         // added offset-1 optimization
-        if (tx_data()._is_consistent || offset_1_check_pass()) {
-            committed_ = true;
-            tx_data().n_ssid_consistent_++;   // for stats
-        }
         if (offset_1_check_pass() && !tx_data()._is_consistent) {
             tx_data().n_offset_valid_++;  // for stats
+        }
+        if (tx_data()._is_consistent || offset_1_check_pass()) {
+            tx_data()._is_consistent = true;
+            committed_ = true;
+            tx_data().n_ssid_consistent_++;   // for stats
         }
         if (committed_ || aborted_) { // SG checks consistent or cascading aborts, no need to validate
             //Log_info("tx: %lu, safeguard check, commit = %d; aborted = %d", tx_data().id_, committed_, aborted_);
@@ -255,10 +256,14 @@ namespace janus {
         tx_data().n_validate_ack_++;
         if (res == INCONSISTENT) { // at least one shard returns inconsistent
             aborted_ = true;
+            tx_data()._validation_failed = true; // stats
         }
         if (tx_data().n_validate_ack_ == tx_data().n_validate_rpc_) {
             // have received all acks
             committed_ = !aborted_;
+            if (!tx_data()._validation_failed) {
+                tx_data().n_validation_passed++;  // stats
+            }
            // Log_info("tx: %lu, acc_validate_ack. commit = %d", tx_data().id_, committed_);
             GotoNextPhase(); // to phase final
         }
@@ -300,6 +305,11 @@ namespace janus {
         // abort as long as inconsistent or there is at least one statusquery ack is abort (cascading abort)
         AccFinalize(ABORTED);
         // we now abort after received all finalize(abort) replies
+        // for stats
+        if (tx_data()._is_consistent || !tx_data()._validation_failed) {
+            // this txn aborts due to cascading aborts, consistency check passed
+            tx_data().n_cascading_aborts++;
+        }
     }
 
     void CoordinatorAcc::AccFinalize(int8_t decision) {
@@ -369,5 +379,6 @@ namespace janus {
         tx_data().n_abort_ack = 0;
         tx_data().innid_to_server.clear();
         tx_data().innid_to_starttime.clear();
+        tx_data()._validation_failed = false;
     }
 } // namespace janus
