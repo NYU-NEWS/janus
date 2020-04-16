@@ -202,15 +202,15 @@ namespace janus {
         for (auto& row_col : acc_txn->sg.metadata.reads_for_query) {
             auto acc_row = dynamic_cast<AccRow *>(row_col.first);
             for (auto &col_index : row_col.second) {
-		    if (col_index.second == 0) {
+		        if (col_index.second == 0) {
                     // recently decided
                     continue;
-		    }
-		    // acc_txn->n_query_inc();
-		    acc_txn->subrpc_count[rpc_id]++;
-		    txnid_t to_tid = acc_row->get_ver_tid(col_index.first, col_index.second);  // inserting the callback of current txn to txn:tid
-		    auto to_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(to_tid));  // get the target txn
-		    to_txn->insert_callbacks(acc_txn, res, defer, rpc_id);
+		        }
+		        // acc_txn->n_query_inc();
+		        acc_txn->subrpc_count[rpc_id]++;
+		        txnid_t to_tid = acc_row->get_ver_tid(col_index.first, col_index.second);  // inserting the callback of current txn to txn:tid
+		        auto to_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(to_tid));  // get the target txn
+		        to_txn->insert_callbacks(acc_txn, res, defer, rpc_id);
             }
         }
         acc_txn->sg.metadata.reads_for_query.clear(); // no need those records anymore, might add more by later dispatch
