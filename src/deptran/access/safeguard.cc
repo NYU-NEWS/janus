@@ -26,10 +26,11 @@ namespace janus {
         offset_safe = true;
         ssid_spec = 0;
         decided = true;
+        abort = false;
 //        status_query_done = false;
 //        status_abort = false;
 //        _n_query = 0;
 //        _n_query_callback = 0;
-	metadata.reads_for_query.clear();
+	    metadata.reads_for_query.clear();
     }
 }

@@ -223,6 +223,7 @@ void TpccWorkload::RegDelivery() {
              cmd.input[TPCC_VAR_OL_AMOUNT].get_double());
          tx.WriteColumn(row_customer, TPCC_COL_CUSTOMER_C_BALANCE,
                            buf, TXN_DEFERRED);
+         buf = Value((i32)0);
          tx.ReadColumn(row_customer, TPCC_COL_CUSTOMER_C_DELIVERY_CNT,
                           &buf, TXN_BYPASS);
          buf.set_i32(buf.get_i32() + (i32) 1);

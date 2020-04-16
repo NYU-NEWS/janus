@@ -26,6 +26,7 @@ namespace janus {
         void reset_safeguard();
     private:
         MetaData metadata;
+        bool abort = false;
         snapshotid_t ssid_spec = 0;  // provided by ML on the client for this txn
         bool validate_done = false;
         bool offset_safe = true;

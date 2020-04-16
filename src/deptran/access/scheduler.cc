@@ -18,6 +18,13 @@ namespace janus {
         verify(sp_vec_piece);
         //auto tx = GetOrCreateTx(cmd_id);
         auto tx = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));
+        if (tx->sg.abort) { // early abort
+            *ssid_low = 0;
+            *ssid_high = 0;
+            *ssid_new = 0;
+            *arrival_time = Predictor::get_current_time();
+            return EARLY_ABORT;
+        }
         tx->load_speculative_ssid(ssid_spec);   // read in the spec ssid provided by the client
         if (!tx->cmd_) {
             tx->cmd_ = cmd;
@@ -32,8 +39,8 @@ namespace janus {
         *arrival_time = now;  // return arrival time in response
         //Log_info("server:OnDispatch. txid = %lu. ssid_spec = %lu.eturning arrival_time = %lu.", tx->tid_, ssid_spec, *arrival_time);
         bool will_block = false;
-        if (ssid_spec != 0) { // client-side ssid_spec logic is on
-        //if (false) {  // for testing purpose, disable server-side ML engine
+        //if (ssid_spec != 0) { // client-side ssid_spec logic is on
+        if (false) {  // for testing purpose, disable server-side ML engine
             uint8_t workload;  // either FB, TPCC, or Spanner for now
             switch (sp_vec_piece->at(0)->root_type_) {
                 case FB_ROTXN:
@@ -67,7 +74,7 @@ namespace janus {
             }
             keys_to_train.clear();
         }
-        // will_block = true; // todo: testing purpose, take this out later
+        will_block = true; // todo: testing purpose, take this out later
         if (will_block && ssid_spec > now) {
             // wait until ssid_spec fires
             // TODO: heuristics or ML tells us how long it should wait
@@ -97,6 +104,9 @@ namespace janus {
         *ssid_high = tx->sg.metadata.lowest_ssid_high;
         *ssid_new = tx->sg.metadata.highest_write_ssid;
         // report offset_invalid and decided. These two things are *incomparable*!
+        if (tx->sg.abort) {
+            return EARLY_ABORT;
+        }
         if (!tx->sg.decided && !tx->sg.offset_safe) {
             return BOTH_NEGATIVE;
         }

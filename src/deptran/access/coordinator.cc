@@ -119,6 +119,9 @@ namespace janus {
         }
         // store RPC returned information
         switch (res) {
+            case EARLY_ABORT:
+                txn->_early_abort = true;
+                break;
             case BOTH_NEGATIVE:
                 txn->_offset_invalid = true;
                 txn->_decided = false;
@@ -156,9 +159,8 @@ namespace janus {
             if (txn->_decided) {
                 // all dependent writes are finalized
                 txn->_status_query_done = true;  // do not need AccQueryStatus acks
-	    }
-	    //StatusQuery();
-            GotoNextPhase();
+	        }
+	        GotoNextPhase();
         }
     }
 
@@ -212,13 +214,17 @@ namespace janus {
         verify(!committed_);
         // ssid check consistency
         // added offset-1 optimization
-        if (offset_1_check_pass() && !tx_data()._is_consistent) {
-            tx_data().n_offset_valid_++;  // for stats
-        }
-        if (tx_data()._is_consistent || offset_1_check_pass()) {
-            tx_data()._is_consistent = true;
-            committed_ = true;
-            tx_data().n_ssid_consistent_++;   // for stats
+        if (tx_data()._early_abort) {
+            aborted_ = true;
+        } else {
+            if (offset_1_check_pass() && !tx_data()._is_consistent) {
+                tx_data().n_offset_valid_++;  // for stats
+            }
+            if (tx_data()._is_consistent || offset_1_check_pass()) {
+                tx_data()._is_consistent = true;
+                committed_ = true;
+                tx_data().n_ssid_consistent_++;   // for stats
+            }
         }
         if (committed_ || aborted_) { // SG checks consistent or cascading aborts, no need to validate
             //Log_info("tx: %lu, safeguard check, commit = %d; aborted = %d", tx_data().id_, committed_, aborted_);
@@ -306,7 +312,7 @@ namespace janus {
         AccFinalize(ABORTED);
         // we now abort after received all finalize(abort) replies
         // for stats
-        if (tx_data()._is_consistent || !tx_data()._validation_failed) {
+        if (!tx_data()._early_abort && (tx_data()._is_consistent || !tx_data()._validation_failed)) {
             // this txn aborts due to cascading aborts, consistency check passed
             tx_data().n_cascading_aborts++;
         }
@@ -380,5 +386,6 @@ namespace janus {
         tx_data().innid_to_server.clear();
         tx_data().innid_to_starttime.clear();
         tx_data()._validation_failed = false;
+        tx_data()._early_abort = false;
     }
 } // namespace janus
