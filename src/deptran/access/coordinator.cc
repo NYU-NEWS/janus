@@ -108,6 +108,7 @@ namespace janus {
         if (phase != phase_) return;
         auto* txn = (TxData*) cmd_;
         n_dispatch_ack_ += outputs.size();
+        bool track_arrival_time = true;
         for (auto& pair : outputs) {
             const innid_t& inn_id = pair.first;
             verify(!dispatch_acks_.at(inn_id));
@@ -116,6 +117,9 @@ namespace janus {
                       n_dispatch_ack_, n_dispatch_, cmd_->id_, inn_id);
             txn->Merge(pair.first, pair.second);
             // record arrival times
+            if (!track_arrival_time) {
+                continue;
+            }
             verify(tx_data().innid_to_server.find(inn_id) != tx_data().innid_to_server.end());
             verify(tx_data().innid_to_starttime.find(inn_id) != tx_data().innid_to_starttime.end());
             parid_t server = tx_data().innid_to_server.at(inn_id);
@@ -123,6 +127,7 @@ namespace janus {
             uint64_t time_delta = arrival_time >= starttime ? arrival_time - starttime : 0;  // for clock skew (rare case)
             //Log_info("Client:ACK. txid = %lu. innid = %lu. server = %lu. time_delta = %lu.", txn->id_, inn_id, server, time_delta);
             SSIDPredictor::update_time_tracker(server, time_delta);
+            track_arrival_time = false;
         }
         // store RPC returned information
         switch (res) {
