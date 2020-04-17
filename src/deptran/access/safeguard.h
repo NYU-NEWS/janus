@@ -27,6 +27,8 @@ namespace janus {
     private:
         MetaData metadata;
         bool abort = false;
+        bool disable_early_abort = false;
+        bool mark_finalized = false;
         snapshotid_t ssid_spec = 0;  // provided by ML on the client for this txn
         bool validate_done = false;
         bool offset_safe = true;

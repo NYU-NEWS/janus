@@ -224,6 +224,8 @@ class ClassicServiceImpl : public ClassicService {
   void AccDispatch(const i64& cmd_id,
                    const MarshallDeputy& cmd,
                    const uint64_t& ssid_spec,
+                   const uint8_t& single_shard,
+                   const uint8_t& write_only,
                    int32_t* res,
                    uint64_t* ssid_low,
                    uint64_t* ssid_high,

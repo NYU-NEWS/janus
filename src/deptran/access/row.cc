@@ -58,12 +58,13 @@ namespace janus {
         return ssid;
     }
 
-    SSID AccRow::write_column(mdb::colid_t col_id, mdb::Value&& value, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index, bool& offset_safe, bool& abort) {
+    SSID AccRow::write_column(mdb::colid_t col_id, mdb::Value&& value, snapshotid_t ssid_spec, txnid_t tid,
+            unsigned long& ver_index, bool& offset_safe, bool& abort, bool disable_early_abort, bool mark_finalized) {
         if (col_id >= _row.size()) {
             return {};
         }
         // push back to the txn queue
-        return _row.at(col_id).write(std::move(value), ssid_spec, tid, ver_index, offset_safe, abort);
+        return _row.at(col_id).write(std::move(value), ssid_spec, tid, ver_index, offset_safe, abort, disable_early_abort, mark_finalized);
     }
 
     bool AccRow::validate(txnid_t tid, mdb::colid_t col_id, unsigned long index, snapshotid_t ssid_new, bool validate_consistent) {

@@ -171,6 +171,7 @@ namespace janus {
             );
             // a write
             set_op_type(FB_WRITE, FB_WRITE_P(i), WRITE_REQ);
+            set_write_only(FB_WRITE, FB_WRITE_P(i));
             RegP(FB_WRITE, FB_WRITE_P(i), {FB_REQ_VAR_ID(i)}, {}, {}, {FB_TABLE, {FB_REQ_VAR_ID(i)}}, DF_NO,
                  LPROC {
                      verify(cmd.input.size() > 0);

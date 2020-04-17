@@ -90,9 +90,14 @@ class Workload {
   /*
    * For acc ML engine recording each piece is a read or a write
    */
-  void set_op_type(txntype_t txn_type, innid_t inn_id, optype_t op_type = UNDEFINED) {
+  void set_op_type(txntype_t txn_type, innid_t inn_id, optype_t op_type = UNDEFINED) const {
       auto& piece = txn_reg_->regs_[txn_type][inn_id];
       piece.op_type = op_type;
+  }
+
+  void set_write_only(txntype_t txn_type, innid_t inn_id) const {
+      auto& piece = txn_reg_->regs_[txn_type][inn_id];
+      piece.write_only_ = 1;  // set true
   }
 };
 

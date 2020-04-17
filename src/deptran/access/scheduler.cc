@@ -8,6 +8,8 @@ namespace janus {
     int32_t SchedulerAcc::OnDispatch(cmdid_t cmd_id,
                                      const shared_ptr<Marshallable>& cmd,
                                      uint64_t ssid_spec,
+                                     uint8_t single_shard,
+                                     uint8_t write_only,
                                      uint64_t *ssid_low,
                                      uint64_t *ssid_high,
                                      uint64_t *ssid_new,
@@ -18,17 +20,6 @@ namespace janus {
         verify(sp_vec_piece);
         //auto tx = GetOrCreateTx(cmd_id);
         auto tx = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));
-        if (tx->sg.abort) { // early abort
-            *ssid_low = 0;
-            *ssid_high = 0;
-            *ssid_new = 0;
-            *arrival_time = Predictor::get_current_time();
-            for (const auto& sp_piece_data : *sp_vec_piece) {
-                // prepare dummy ret_output
-                ret_output[sp_piece_data->inn_id()] = {};
-            }
-            return EARLY_ABORT;
-        }
         tx->load_speculative_ssid(ssid_spec);   // read in the spec ssid provided by the client
         if (!tx->cmd_) {
             tx->cmd_ = cmd;
@@ -43,6 +34,7 @@ namespace janus {
         *arrival_time = now;  // return arrival time in response
         //Log_info("server:OnDispatch. txid = %lu. ssid_spec = %lu.eturning arrival_time = %lu.", tx->tid_, ssid_spec, *arrival_time);
         bool will_block = false;
+        // we always train a new tx even if it will be early-aborted
         if (ssid_spec != 0) { // client-side ssid_spec logic is on
         //if (false) {  // for testing purpose, disable server-side ML engine
             uint8_t workload;  // either FB, TPCC, or Spanner for now
@@ -78,7 +70,29 @@ namespace janus {
             }
             keys_to_train.clear();
         }
-        //will_block = true; // todo: testing purpose, take this out later
+        // deal with early-abort and single-shard, write-only txn
+        if (single_shard) {
+            tx->sg.disable_early_abort = true;
+            // Log_info("Disabled early abort due to single-shard txn");
+        }
+        if (single_shard && write_only) {
+            tx->sg.mark_finalized = true;
+            // Log_info("Mark all writes finalized due to the txn is write only and single shard");
+        }
+        if (tx->sg.abort) { // early abort
+            verify(!tx->sg.disable_early_abort);
+            *ssid_low = 0;
+            *ssid_high = 0;
+            *ssid_new = 0;
+            *arrival_time = Predictor::get_current_time();
+            for (const auto& sp_piece_data : *sp_vec_piece) {
+                // prepare dummy ret_output
+                ret_output[sp_piece_data->inn_id()] = {};
+            }
+            return EARLY_ABORT;
+        }
+        // now execute this txn
+        // will_block = true; // todo: testing purpose, take this out later
         if (will_block && ssid_spec > now) {
             // wait until ssid_spec fires
             // TODO: heuristics or ML tells us how long it should wait

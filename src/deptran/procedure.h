@@ -271,6 +271,7 @@ class TxData: public CmdData {
   virtual void Merge(innid_t inn_id, map<int32_t, Value>& output);
   virtual void Merge(TxnOutput& output);
   virtual bool HasMoreUnsentPiece();
+  virtual bool AllPiecesDispatchable();
   virtual shared_ptr<TxPieceData> GetNextReadySubCmd();
   virtual ReadyPiecesData GetReadyPiecesData(int32_t max = 0);
   virtual set<parid_t>& GetPartitionIds() override;
@@ -336,6 +337,7 @@ class TxData: public CmdData {
     int n_abort_sent = 0;
     int n_abort_ack = 0;
     bool _validation_failed = false;
+    bool _single_shard_txn = false;
     // ssid predictor related below
     std::unordered_map<innid_t, parid_t> innid_to_server;
     std::unordered_map<innid_t, uint64_t> innid_to_starttime;

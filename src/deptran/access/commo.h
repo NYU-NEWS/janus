@@ -11,6 +11,8 @@ namespace janus {
         void AccBroadcastDispatch(shared_ptr<vector<shared_ptr<SimpleCommand>>> sp_vec_piece,
                                   Coordinator *coo,
                                   snapshotid_t ssid_spec,
+                                  bool single_shard,
+                                  bool write_only,
                                   const std::function<void(int res,
                                                       uint64_t ssid_low,
                                                       uint64_t ssid_high,

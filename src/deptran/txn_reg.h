@@ -65,6 +65,7 @@ class TxnPieceDef {
     return {};
   };
   optype_t op_type = UNDEFINED;  // this piece is a READ or WRITE
+  uint8_t write_only_ = 0; // for disabling early-abort
 };
 
 /**
@@ -84,6 +85,10 @@ class TxnRegistry {
 
   optype_t get_optype(txntype_t t_type, innid_t p_type) {
     return regs_[t_type][p_type].op_type;
+  }
+
+  uint8_t get_write_only(txntype_t t_type, innid_t p_type) {
+    return regs_[t_type][p_type].write_only_;
   }
 
  public:

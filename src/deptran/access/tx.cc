@@ -75,7 +75,8 @@ namespace janus {
         auto acc_row = dynamic_cast<AccRow*>(row);
         unsigned long ver_index = 0;
         //Log_info("server:WriteColumn. txid = %lu. ssid_spec = %lu.", this->tid_, sg.ssid_spec);
-        SSID ssid = acc_row->write_column(col_id, std::move(value), sg.ssid_spec, this->tid_, ver_index, sg.offset_safe, sg.abort); // ver_index is new write
+        SSID ssid = acc_row->write_column(col_id, std::move(value), sg.ssid_spec, this->tid_, ver_index,
+                sg.offset_safe, sg.abort, sg.disable_early_abort, sg.mark_finalized); // ver_index is new write
         if (!sg.abort) {
             row->ref_copy();
             sg.update_metadata(ssid.ssid_low, ssid.ssid_high, false);
@@ -96,7 +97,8 @@ namespace janus {
         int v_counter = 0;
         for (auto col_id : col_ids) {
             unsigned long ver_index = 0;
-            SSID ssid = acc_row->write_column(col_id, std::move(values[v_counter++]), sg.ssid_spec, this->tid_, ver_index, sg.offset_safe, sg.abort);
+            SSID ssid = acc_row->write_column(col_id, std::move(values[v_counter++]), sg.ssid_spec, this->tid_,
+                    ver_index, sg.offset_safe, sg.abort, sg.disable_early_abort, sg.mark_finalized);
             if (!sg.abort) {
                 sg.update_metadata(ssid.ssid_low, ssid.ssid_high, false);
                 row->ref_copy();

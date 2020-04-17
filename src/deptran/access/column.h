@@ -68,7 +68,8 @@ namespace janus {
         AccColumn(const AccColumn&) = delete;   // no copy
         AccColumn& operator=(const AccColumn&) = delete; // no copy
         const mdb::Value& read(snapshotid_t ssid_spec, SSID& ssid, bool& offset_safe, unsigned long& index, bool& decided);
-        SSID write(mdb::Value&& v, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index, bool& offset_safe, bool& abort);
+        SSID write(mdb::Value&& v, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index, bool& offset_safe,
+                bool& abort, bool disable_early_abort = false, bool mark_finalized = false);
     private:
         /* basic column members */
         mdb::colid_t col_id = -1;

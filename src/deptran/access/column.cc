@@ -36,14 +36,19 @@ namespace janus {
         return txn_queue[_logical_head].value;
     }
 
-    SSID AccColumn::write(mdb::Value&& v, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index, bool& offset_safe, bool& abort) { // ver_index is the new write's
+    SSID AccColumn::write(mdb::Value&& v, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index,
+            bool& offset_safe, bool& abort, bool disable_early_abort, bool mark_finalized) { // ver_index is the new write's
         // write returns new ssid
         SSID new_ssid = write_get_next_SSID(ssid_spec);
-        if (new_ssid.ssid_low != ssid_spec) {
+        if (new_ssid.ssid_low != ssid_spec && !disable_early_abort) {
             abort = true;
             return new_ssid;
         }
-        txn_queue.emplace_back(std::move(v), tid, new_ssid);
+        if (mark_finalized) { // single_shard_write, can safely mark it finalized now.
+            txn_queue.emplace_back(std::move(v), tid, new_ssid, FINALIZED);
+        } else {
+            txn_queue.emplace_back(std::move(v), tid, new_ssid);
+        }
         ver_index = txn_queue.size() - 1; // record index of this pending write for later validation and finalize
 	    if (!is_offset_safe(new_ssid.ssid_low)) {
             offset_safe = false;
@@ -135,9 +140,6 @@ namespace janus {
     }
 
     void AccColumn::commit(unsigned long index) {
-        if (txn_queue[index].status != UNCHECKED && txn_queue[index].status != VALIDATING) {
-            //Log_info("XXX. status = %d. index = %lu. record tid: %lu", txn_queue[index].status, index, txn_queue[index].txn_id);
-        }
         verify(txn_queue[index].status == UNCHECKED || txn_queue[index].status == VALIDATING);
         txn_queue[index].status = FINALIZED;
         // no need to update logical head, done for this tx in dispatch

@@ -38,6 +38,10 @@ namespace janus {
         int cnt = 0;
         auto cmds_by_par = txn->GetReadyPiecesData(1);
         Log_debug("AccDispatchAsync for tx_id: %" PRIx64, txn->root_id_);
+        // check if this txn is a single-shard txn: if so, always consistent and no need to validate
+        if (txn->AllPiecesDispatchable() && cmds_by_par.size() == 1) {
+            tx_data()._single_shard_txn = true;
+        }
         // get a predicted ssid_spec
         uint64_t current_time = SSIDPredictor::get_current_time();
         if (tx_data().ssid_spec == 0) {
@@ -57,6 +61,7 @@ namespace janus {
             cnt += cmds.size();
             auto sp_vec_piece = std::make_shared<vector<shared_ptr<TxPieceData>>>();
             bool writing_to_par = false;
+            bool write_only = true;
             for (const auto& c: cmds) {
                 //Log_info("try this. roottype = %d; type = %d.", c->root_type_, c->type_);
                 tx_data().innid_to_server[c->inn_id_] = par_id;
@@ -64,10 +69,13 @@ namespace janus {
                 //Log_info("Client:Dispatch. txid = %lu. recording innid = %u. server = %u.", txn->id_, c->inn_id_, par_id);
                 c->id_ = next_pie_id();
                 c->op_type_ = txn_reg_->get_optype(c->root_type_, c->type_);
-                if (c->op_type_ == WRITE_REQ) {
+                if (!txn_reg_->get_write_only(c->root_type_, c->type_)) {
+                    write_only = false;  // write-only if all pieces for this parid are write-only pieces
+                }
+                // c->write_only_ = txn_reg_->get_write_only(c->root_type_, c->type_);
+                if (c->op_type_ == WRITE_REQ && !(write_only && tx_data()._single_shard_txn)) {
                     writing_to_par = true;
                 }
-                //c->op_type_ = txn_reg_->regs_[c->root_type_][c->type_].op_type;
                 //Log_info("try this. optype = %d.", c->op_type_);
                 dispatch_acks_[c->inn_id_] = false;
                 sp_vec_piece->push_back(c);
@@ -78,6 +86,8 @@ namespace janus {
             commo()->AccBroadcastDispatch(sp_vec_piece,
                                           this,
                                           tx_data().ssid_spec,
+                                          tx_data()._single_shard_txn,
+                                          write_only,
                                           std::bind(&CoordinatorAcc::AccDispatchAck,
                                                  this,
                                                     phase_,
@@ -157,7 +167,7 @@ namespace janus {
             txn->lowest_ssid_high = ssid_high;
         }
         // basic ssid check consistency
-        if (txn->highest_ssid_low > txn->lowest_ssid_high) {
+        if (txn->highest_ssid_low > txn->lowest_ssid_high && !tx_data()._single_shard_txn) {
             // inconsistent if no overlapped range
             txn->_is_consistent = false;
         }
@@ -411,5 +421,6 @@ namespace janus {
         tx_data()._validation_failed = false;
         tx_data()._early_abort = false;
         tx_data().pars_to_finalize.clear();
+        tx_data()._single_shard_txn = false;
     }
 } // namespace janus

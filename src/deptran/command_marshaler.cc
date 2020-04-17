@@ -14,6 +14,7 @@ Marshal& CmdData::ToMarshal(Marshal& m) const {
   m << root_id_;
   m << root_type_;
   m << op_type_;
+  // m << write_only_;
   return m;
 };
 
@@ -24,6 +25,7 @@ Marshal& CmdData::FromMarshal(Marshal& m) {
   m >> root_id_;
   m >> root_type_;
   m >> op_type_;
+  //m >> write_only_;
   return m;
 };
 
@@ -35,6 +37,7 @@ rrr::Marshal &operator<<(rrr::Marshal &m, const SimpleCommand &cmd) {
   m << cmd.root_id_;
   m << cmd.root_type_;
   m << cmd.op_type_;
+  //m << cmd.write_only_;
   m << cmd.input;
   m << cmd.output;
   m << cmd.output_size;
@@ -51,6 +54,7 @@ rrr::Marshal &operator>>(rrr::Marshal &m, SimpleCommand &cmd) {
   m >> cmd.root_id_;
   m >> cmd.root_type_;
   m >> cmd.op_type_;
+  //m >> cmd.write_only_;
   m >> cmd.input;
   m >> cmd.output;
   m >> cmd.output_size;

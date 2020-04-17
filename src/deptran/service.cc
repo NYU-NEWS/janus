@@ -404,6 +404,8 @@ void ClassicServiceImpl::CommitFebruus(const txid_t& tx_id,
 void ClassicServiceImpl::AccDispatch(const i64& cmd_id,
                                   const MarshallDeputy& md,
                                   const uint64_t& ssid_spec,
+                                  const uint8_t& single_shard,
+                                  const uint8_t& write_only,
                                   int32_t* res,
                                   uint64_t* ssid_low,
                                   uint64_t* ssid_high,
@@ -414,7 +416,7 @@ void ClassicServiceImpl::AccDispatch(const i64& cmd_id,
     // server-side handler of AccDispatch RPC
     shared_ptr<Marshallable> sp = md.sp_data_;
     auto* sched = (SchedulerAcc*) dtxn_sched_;
-    *res = sched->OnDispatch(cmd_id, sp, ssid_spec, ssid_low, ssid_high, ssid_new, *output, arrival_time);
+    *res = sched->OnDispatch(cmd_id, sp, ssid_spec, single_shard, write_only, ssid_low, ssid_high, ssid_new, *output, arrival_time);
     defer->reply();
 }
 

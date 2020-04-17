@@ -12,6 +12,8 @@ namespace janus {
         int32_t OnDispatch(cmdid_t cmd_id,
                            const shared_ptr<Marshallable>& cmd,
                            uint64_t ssid_spec,
+                           uint8_t single_shard,
+                           uint8_t write_only,
                            uint64_t* ssid_min,
                            uint64_t* ssid_max,
                            uint64_t* ssid_new,
