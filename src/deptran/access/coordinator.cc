@@ -56,6 +56,7 @@ namespace janus {
             n_dispatch_ += cmds.size();
             cnt += cmds.size();
             auto sp_vec_piece = std::make_shared<vector<shared_ptr<TxPieceData>>>();
+            bool writing_to_par = false;
             for (const auto& c: cmds) {
                 //Log_info("try this. roottype = %d; type = %d.", c->root_type_, c->type_);
                 tx_data().innid_to_server[c->inn_id_] = par_id;
@@ -63,10 +64,16 @@ namespace janus {
                 //Log_info("Client:Dispatch. txid = %lu. recording innid = %u. server = %u.", txn->id_, c->inn_id_, par_id);
                 c->id_ = next_pie_id();
                 c->op_type_ = txn_reg_->get_optype(c->root_type_, c->type_);
+                if (c->op_type_ == WRITE_REQ) {
+                    writing_to_par = true;
+                }
                 //c->op_type_ = txn_reg_->regs_[c->root_type_][c->type_].op_type;
                 //Log_info("try this. optype = %d.", c->op_type_);
                 dispatch_acks_[c->inn_id_] = false;
                 sp_vec_piece->push_back(c);
+            }
+            if (writing_to_par) {
+                tx_data().pars_to_finalize.insert(par_id);
             }
             commo()->AccBroadcastDispatch(sp_vec_piece,
                                           this,
@@ -292,7 +299,9 @@ namespace janus {
         if (tx_data()._decided || tx_data()._status_query_done) {
             freeze_coordinator();
             //Log_info("tx: %lu, fast commit.", tx_data().id_);
-            AccFinalize(FINALIZED);
+            if (!tx_data().pars_to_finalize.empty()) {
+                AccFinalize(FINALIZED);
+            }
             if (tx_data()._decided) {
                 tx_data().n_decided_++; // stats
             }
@@ -309,19 +318,25 @@ namespace janus {
         verify(aborted_);
         freeze_coordinator();
         // abort as long as inconsistent or there is at least one statusquery ack is abort (cascading abort)
-        AccFinalize(ABORTED);
-        // we now abort after received all finalize(abort) replies
         // for stats
         if (!tx_data()._early_abort && (tx_data()._is_consistent || !tx_data()._validation_failed)) {
             // this txn aborts due to cascading aborts, consistency check passed
             tx_data().n_cascading_aborts++;
+        }
+        if (!tx_data().pars_to_finalize.empty()) {
+            AccFinalize(ABORTED);  // will abort in AccFinalizeAck
+        } else {
+            // abort here
+            tx_data().n_abort_ack++;
+            Restart();
         }
     }
 
     void CoordinatorAcc::AccFinalize(int8_t decision) {
         // TODO: READS NO NEED TO FINALIZE
         std::lock_guard<std::recursive_mutex> lock(mtx_);
-        auto pars = tx_data().GetPartitionIds();
+        // auto pars = tx_data().GetPartitionIds();
+        auto pars = tx_data().pars_to_finalize;
         verify(!pars.empty());
 	    switch (decision) {
             case FINALIZED:
@@ -387,5 +402,6 @@ namespace janus {
         tx_data().innid_to_starttime.clear();
         tx_data()._validation_failed = false;
         tx_data()._early_abort = false;
+        tx_data().pars_to_finalize.clear();
     }
 } // namespace janus
