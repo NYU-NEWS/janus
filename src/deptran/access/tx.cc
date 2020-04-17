@@ -21,18 +21,16 @@ namespace janus {
         unsigned long index = 0;
 	    bool is_decided = true;
         //Log_info("server:ReadColumn. txid = %lu. ssid_spec = %lu.", this->tid_, sg.ssid_spec);
-        SSID ssid = acc_row->read_column(col_id, value, sg.ssid_spec, sg.offset_safe, index, is_decided, sg.abort);
-        if (!sg.abort) {
+        SSID ssid = acc_row->read_column(col_id, value, sg.ssid_spec, sg.offset_safe, index, is_decided);
+        row->ref_copy();
+        sg.metadata.indices[row][col_id] = index;  // for later validation, could be overwritten by later writes
+        if (!is_decided) {
+            sg.decided = false;
             row->ref_copy();
-            sg.metadata.indices[row][col_id] = index;  // for later validation, could be overwritten by later writes
-            if (!is_decided) {
-                sg.decided = false;
-                row->ref_copy();
-                sg.metadata.reads_for_query[row][col_id] = index;  // for later AccStatusQuery on read versions
-            }
-            // update metadata
-            sg.update_metadata(ssid.ssid_low, ssid.ssid_high, true);
+            sg.metadata.reads_for_query[row][col_id] = index;  // for later AccStatusQuery on read versions
         }
+        // update metadata
+        sg.update_metadata(ssid.ssid_low, ssid.ssid_high, true);
         return true;
     }
 
@@ -51,19 +49,17 @@ namespace janus {
             }
             unsigned long index = 0;
 	        bool is_decided = true;
-	        SSID ssid = acc_row->read_column(col_id, &v, sg.ssid_spec, sg.offset_safe, index, is_decided, sg.abort);
-            if (!sg.abort) {
-                values->push_back(std::move(v));
-                row->ref_copy();
-                sg.metadata.indices[row][col_id] = index;  // for later validation
-                if (!is_decided) {
-                    row->ref_copy();
-                    sg.decided = false;
-                    sg.metadata.reads_for_query[row][col_id] = index;  // for later AccStatusQuery on read versions
-                }
-                // update metadata
-                sg.update_metadata(ssid.ssid_low, ssid.ssid_high, true);
-            }
+	        SSID ssid = acc_row->read_column(col_id, &v, sg.ssid_spec, sg.offset_safe, index, is_decided);
+	        values->push_back(std::move(v));
+	        row->ref_copy();
+	        sg.metadata.indices[row][col_id] = index;  // for later validation
+	        if (!is_decided) {
+	            row->ref_copy();
+	            sg.decided = false;
+	            sg.metadata.reads_for_query[row][col_id] = index;  // for later AccStatusQuery on read versions
+	        }
+	        // update metadata
+	        sg.update_metadata(ssid.ssid_low, ssid.ssid_high, true);
         }
         return true;
     }
