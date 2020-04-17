@@ -28,6 +28,7 @@ class TxReply {
   int32_t n_offset_valid_;
   int32_t n_validation_passed;
   int32_t n_cascading_aborts;
+  int32_t n_early_aborts;
 };
 
 class TxWorkspace {
@@ -238,6 +239,7 @@ class TxData: public CmdData {
   int n_offset_valid_ = 0;
   int n_validation_passed = 0;
   int n_cascading_aborts = 0;
+  int n_early_aborts = 0;
 
   bool validation_ok_{true};
   bool need_validation_{false};

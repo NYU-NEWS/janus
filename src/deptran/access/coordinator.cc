@@ -319,6 +319,9 @@ namespace janus {
         freeze_coordinator();
         // abort as long as inconsistent or there is at least one statusquery ack is abort (cascading abort)
         // for stats
+        if (tx_data()._early_abort) {
+            tx_data().n_early_aborts++;
+        }
         if (!tx_data()._early_abort && (tx_data()._is_consistent || !tx_data()._validation_failed)) {
             // this txn aborts due to cascading aborts, consistency check passed
             tx_data().n_cascading_aborts++;
