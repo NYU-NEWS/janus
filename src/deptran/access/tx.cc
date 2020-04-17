@@ -177,8 +177,8 @@ namespace janus {
     void AccTxn::get_dummy_value(mdb::Value *value) {
         verify(value != nullptr);
         switch (value->get_kind()) {
-            case mdb::Value::I32:
-                *value = DUMMY_VALUE_I32;
+            case mdb::Value::STR:
+                *value = DUMMY_VALUE_STR;
                 break;
             case mdb::Value::I64:
                 *value = DUMMY_VALUE_I64;
@@ -187,8 +187,8 @@ namespace janus {
                 *value = DUMMY_VALUE_DOUBLE;
                 break;
             case mdb::Value::UNKNOWN:
-            case mdb::Value::STR:
-                *value = DUMMY_VALUE_STR;
+            case mdb::Value::I32:
+                *value = DUMMY_VALUE_I32;
                 break;
             default: verify(0);
                 break;
