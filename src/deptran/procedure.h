@@ -29,6 +29,8 @@ class TxReply {
   int32_t n_validation_passed;
   int32_t n_cascading_aborts;
   int32_t n_early_aborts;
+  int32_t n_single_shard;
+  int32_t n_single_shard_write_only;
 };
 
 class TxWorkspace {
@@ -240,6 +242,8 @@ class TxData: public CmdData {
   int n_validation_passed = 0;
   int n_cascading_aborts = 0;
   int n_early_aborts = 0;
+  int n_single_shard = 0;
+  int n_single_shard_write_only = 0;
 
   bool validation_ok_{true};
   bool need_validation_{false};

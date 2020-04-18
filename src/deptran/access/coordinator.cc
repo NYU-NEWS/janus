@@ -41,6 +41,7 @@ namespace janus {
         // check if this txn is a single-shard txn: if so, always consistent and no need to validate
         if (txn->AllPiecesDispatchable() && cmds_by_par.size() == 1) {
             tx_data()._single_shard_txn = true;
+            tx_data().n_single_shard++;  // stats
         }
         // get a predicted ssid_spec
         uint64_t current_time = SSIDPredictor::get_current_time();
@@ -82,6 +83,9 @@ namespace janus {
             }
             if (writing_to_par) {
                 tx_data().pars_to_finalize.insert(par_id);
+            }
+            if (tx_data()._single_shard_txn && write_only) {
+                tx_data().n_single_shard_write_only++; // stats
             }
             commo()->AccBroadcastDispatch(sp_vec_piece,
                                           this,
