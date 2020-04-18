@@ -18,6 +18,7 @@ site:
     - ["s102:8102"]
 #    - ["s103:8103"]
   client: # each line is a partition
+<<<<<<< HEAD
     - ["c101"]
     - ["c102"]
     - ["c103"]
@@ -34,12 +35,33 @@ site:
     - ["c114"]
     - ["c115"]
     - ["c116"]
+=======
+    - ["c1"]
+    - ["c2"]
+    - ["c3"]
+    - ["c4"]
+    - ["c5"]
+    - ["c6"]
+    - ["c7"]
+    - ["c8"]
+    - ["c9"]
+    - ["c10"]
+    - ["c11"]
+    - ["c12"]
+    - ["c13"]
+    - ["c14"]
+    - ["c15"]
+    - ["c16"]
+#    - ["c1", "c2"]
+#    - ["c3", "c4"]
+>>>>>>> 16c2syml
 
 # site_name - process_name map
 process:
   s101: localhost
   s102: localhost
 #  s103: localhost
+<<<<<<< HEAD
   c101: localhost
   c102: localhost
   c103: localhost
@@ -59,6 +81,24 @@ process:
 
 
 
+=======
+  c1: localhost
+  c2: localhost
+  c3: localhost
+  c4: localhost
+  c5: localhost
+  c6: localhost
+  c7: localhost
+  c8: localhost
+  c9: localhost
+  c10: localhost
+  c11: localhost
+  c12: localhost
+  c13: localhost
+  c14: localhost
+  c15: localhost
+  c16: localhost
+>>>>>>> 16c2syml
 
 
 # process_name - host_addr map
