@@ -152,9 +152,6 @@ namespace janus {
     }
 
     void AccColumn::abort(unsigned long index) {
-        if (txn_queue[index].status == FINALIZED) {
-            //Log_info("YYY. status = finalized when aborting.");
-        }
         verify(txn_queue[index].status != FINALIZED);  // could have been early aborted
         txn_queue[index].status = ABORTED;
         update_logical_head();

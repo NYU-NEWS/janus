@@ -98,7 +98,7 @@ namespace janus {
     void AccRow::finalize(txnid_t tid, mdb::colid_t col_id, unsigned long ver_index, int8_t decision) {
         if (_row[col_id].is_read(tid, ver_index)) {
             // deciding a read, nothing to do
-            // TODO: should not send rpcs for deciding reads in the first place
+            // this hard has some writes to finalize, we skip the reads at this shard
             return;
         }
         //Log_info("tid: %lu; finaling a record. decision = %d; index = %lu", tid, decision, ver_index);
