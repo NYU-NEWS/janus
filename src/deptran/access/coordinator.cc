@@ -40,8 +40,8 @@ namespace janus {
         Log_debug("AccDispatchAsync for tx_id: %" PRIx64, txn->root_id_);
         // check if this txn is a single-shard txn: if so, always consistent and no need to validate
         if (txn->AllPiecesDispatchable() && cmds_by_par.size() == 1) {
-            tx_data()._single_shard_txn = true;
-            tx_data().n_single_shard++;  // stats
+            // tx_data()._single_shard_txn = true;
+            // tx_data().n_single_shard++;  // stats
         }
         // get a predicted ssid_spec
         uint64_t current_time = SSIDPredictor::get_current_time();
