@@ -20,10 +20,14 @@ namespace janus {
         update_stable_frontier();
     }
 
-    const mdb::Value& AccColumn::read(snapshotid_t ssid_spec, SSID& ssid, bool& offset_safe, unsigned long& index, bool& decided) {
+    const mdb::Value& AccColumn::read(snapshotid_t ssid_spec, SSID& ssid, bool& offset_safe, unsigned long& index, bool& decided, bool& abort) {
         // return logical head
         index = _logical_head;
         snapshotid_t ssid_new = read_get_next_SSID(ssid_spec);
+        if (ssid_new != ssid_spec) {  // read is bumped up
+            abort = true;
+            return txn_queue[_logical_head].value;  // dummy return, todo: fix this later
+        }
         // extends head's ssid
         txn_queue[index].extend_ssid(ssid_new);
         ssid = txn_queue[index].ssid;
