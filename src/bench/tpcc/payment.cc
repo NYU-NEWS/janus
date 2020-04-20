@@ -199,7 +199,7 @@ void TpccWorkload::RegPayment() {
              buf_temp.get_double() + cmd.input[TPCC_VAR_H_AMOUNT].get_double());
          tx.WriteColumn(row_temp,
                         TPCC_COL_DISTRICT_D_YTD,
-                        buf_temp,
+                        buf_temp,   // fixme: this is a bug? should be buf? let shuai know
                         TXN_DEFERRED);
          *res = SUCCESS;
        });
