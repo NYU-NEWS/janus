@@ -84,7 +84,7 @@ namespace janus {
             *ssid_low = 0;
             *ssid_high = 0;
             *ssid_new = 0;
-            *arrival_time = Predictor::get_current_time();
+            // *arrival_time = Predictor::get_current_time();
             for (const auto& sp_piece_data : *sp_vec_piece) {
                 // prepare dummy ret_output
                 ret_output[sp_piece_data->inn_id()] = {};
