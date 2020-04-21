@@ -34,7 +34,7 @@ namespace janus {
             }
             // wait
             txn_queue[_logical_head].status_resolved.Wait([](int val)->bool {
-                return (val == 1); // 1 is set in AccFinalize
+                return (val == FINALIZED || val == ABORTED); // val is set in AccFinalize
             });
             // wait done, event fires
             update_logical_head();  // might have a new head now after waiting fires
@@ -145,7 +145,7 @@ namespace janus {
     // ---------------------------------
     // ----------- finalize ------------
     void AccColumn::finalize(unsigned long index, int8_t decision) {
-        txn_queue[index].status_resolved.Set(1);  // mark this write has been finalized.
+        txn_queue[index].status_resolved.Set(reinterpret_cast<int &>(decision));  // mark this write has been finalized.
         switch (decision) {
             case FINALIZED:
                 commit(index);

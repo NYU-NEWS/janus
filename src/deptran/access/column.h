@@ -40,7 +40,8 @@ namespace janus {
                 : txn_id(that.txn_id),
                   ssid(that.ssid),
                   status(that.status),
-                  value(std::move(that.value)) {}
+                  value(std::move(that.value)),
+                  status_resolved(std::move(that.status_resolved)) {}
         AccTxnRec(const AccTxnRec&) = delete;
         AccTxnRec& operator=(const AccTxnRec&) = delete;
         AccTxnRec(mdb::Value&& v, txnid_t tid, const SSID& ss_id, acc_status_t stat = UNCHECKED)
