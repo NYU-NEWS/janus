@@ -138,6 +138,7 @@ namespace janus {
     }
 
     void SchedulerAcc::OnValidate(cmdid_t cmd_id, snapshotid_t ssid_new, int8_t *res) {
+        verify(0);  // early-abort makes no validtion
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
         if (acc_txn->sg.validate_done) {
             // multiple pieces may share the same scheduler and thus validate on the same indices map

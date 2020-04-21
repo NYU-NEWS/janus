@@ -271,6 +271,7 @@ namespace janus {
     }
 
     void CoordinatorAcc::AccValidate() {
+        verify(0);  // early-abort makes no validtion
         std::lock_guard<std::recursive_mutex> lock(mtx_);
         auto pars = tx_data().GetPartitionIds();
         verify(!pars.empty());
@@ -287,6 +288,7 @@ namespace janus {
     }
 
     void CoordinatorAcc::AccValidateAck(phase_t phase, int8_t res) {
+        verify(0);  // early-abort makes no validtion
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
         if (phase != phase_) return;
         tx_data().n_validate_ack_++;
