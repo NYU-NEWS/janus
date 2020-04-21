@@ -193,6 +193,7 @@ namespace janus {
     }
 
     void SchedulerAcc::OnStatusQuery(cmdid_t cmd_id, int8_t *res, DeferredReply* defer) {
+        verify(0);  // reads waiting on writes then no query rpc needed
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
         // wait until acc_query_start is set 1 by OnAccDispatch
         acc_txn->acc_query_start->Wait(MAX_QUERY_TIMEOUT);
