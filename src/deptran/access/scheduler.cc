@@ -199,19 +199,6 @@ namespace janus {
             defer->reply();
             return;
         }
-	/*
-        if (acc_txn->sg.status_query_done || acc_txn->sg.decided) {
-            // 1. if we send 1 rpc per shard then we don't need sg.status_query_done
-            // 2. if sg.decided is true then we know all versions are decided because StatusQuery RPC
-            // arrives after dispatch --> during dispatch we know all versions are decided. THIS NEEDS 1.
-            *res = FINALIZED;   // will be aborted if any rpc returns abort
-            acc_txn->sg.status_query_done = true;
-            verify(defer != nullptr);
-            defer->reply();
-            return;
-        }
-	*/
-	// TODO: take this round of check out
         // do a round of check in case there is validation or finalize arrive in between
         bool is_decided = true, will_abort = false;
         check_status(cmd_id, is_decided, will_abort);

@@ -31,6 +31,7 @@ namespace janus {
         SSID ssid;              // snapshot id
         acc_status_t status;    // either unchecked, validating, or finalized
         mdb::Value value;       // the value of this write
+        rrr::SharedIntEvent status_resolved;  // fires when status becomes finalized or aborted
 
         AccTxnRec() : txn_id(-1), ssid(), status(UNCHECKED) {}
         explicit AccTxnRec(mdb::Value&& v, txnid_t tid = 0, acc_status_t stat = UNCHECKED)
@@ -92,6 +93,7 @@ namespace janus {
         snapshotid_t logical_head_ssid_for_reads() const;
         acc_status_t logical_head_status() const;
 	    snapshotid_t next_record_ssid(unsigned long index) const;
+	    bool head_not_resolved() const;
 
         /* stable frontier related */
         unsigned long _stable_frontier = 0;
