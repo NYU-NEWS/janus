@@ -164,8 +164,10 @@ namespace janus {
 
     void SchedulerAcc::OnFinalize(cmdid_t cmd_id, int8_t decision) {
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
+        //Log_info("parid = %d; txnid = %lu; Finalizing RPC. decision = %d.", this->partition_id_, acc_txn->tid_, decision);
         if (acc_txn->sg.metadata.indices.empty()) {
             // we've done finalize for this txn already
+            //Log_info("txnid = %lu; Finalizing RPC. decision = %d. INDICES EMPTY, returned.", acc_txn->tid_, decision);
             return;
         }
         // for now, we do not update ssid for offset optimization case.
@@ -181,6 +183,7 @@ namespace janus {
             return;
         }
         for (auto& callback : acc_txn->query_callbacks) {
+            verify(0);
             callback(decision);
         }
         // clear metadata after finalizing a txn

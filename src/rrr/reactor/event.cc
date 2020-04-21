@@ -160,6 +160,9 @@ void SharedIntEvent::Wait(function<bool(int v)> f) {
 //  sp_ev->Wait(1000*1000*1000);
 //  verify(sp_ev->status_ != Event::TIMEOUT);
   sp_ev->Wait();
+
+  //sp_ev->Wait(5*1000*1000);
+  //verify(sp_ev->status_ != Event::TIMEOUT);
 }
 
 } // namespace rrr

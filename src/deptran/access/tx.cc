@@ -21,9 +21,17 @@ namespace janus {
         unsigned long index = 0;
 	    bool is_decided = true;
         //Log_info("server:ReadColumn. txid = %lu. ssid_spec = %lu.", this->tid_, sg.ssid_spec);
-        SSID ssid = acc_row->read_column(col_id, value, sg.ssid_spec, sg.offset_safe, index, is_decided, sg.abort);
+        SSID ssid = acc_row->read_column(this->tid_, col_id, value, sg.ssid_spec, sg.offset_safe, index, is_decided, sg.abort);
         if (!sg.abort) {
             row->ref_copy();
+            /*
+            if (sg.metadata.indices[row].find(col_id) != sg.metadata.indices[row].end()) {
+                Log_info("txnid = %lu; After READ; col_id = %d. index = %d. indices already have: %d; and now overwriting it.", this->tid_, col_id, index,
+                         sg.metadata.indices[row][col_id]);
+            } else {
+                Log_info("txnid = %lu; After READ; col_id = %d. index = %d. first inseting to indices.", this->tid_, col_id, index);
+            }
+            */
             sg.metadata.indices[row][col_id] = index;  // for later validation, could be overwritten by later writes
             if (!is_decided) {
                 sg.decided = false;
@@ -51,10 +59,18 @@ namespace janus {
             }
             unsigned long index = 0;
 	        bool is_decided = true;
-            SSID ssid = acc_row->read_column(col_id, &v, sg.ssid_spec, sg.offset_safe, index, is_decided, sg.abort);
+            SSID ssid = acc_row->read_column(this->tid_, col_id, &v, sg.ssid_spec, sg.offset_safe, index, is_decided, sg.abort);
             if (!sg.abort) {
                 values->push_back(std::move(v));
                 row->ref_copy();
+                /*
+                if (sg.metadata.indices[row].find(col_id) != sg.metadata.indices[row].end()) {
+                    Log_info("txnid = %lu; After READ; col_id = %d. index = %d. indices already have: %d; and now overwriting it.", this->tid_, col_id, index,
+                             sg.metadata.indices[row][col_id]);
+                } else {
+                    Log_info("txnid = %lu; After READ; col_id = %d. index = %d. first inseting to indices.", this->tid_, col_id, index);
+                }
+                */
                 sg.metadata.indices[row][col_id] = index;  // for later validation
                 if (!is_decided) {
                     row->ref_copy();
@@ -84,6 +100,14 @@ namespace janus {
         if (!sg.abort) {
             row->ref_copy();
             sg.update_metadata(ssid.ssid_low, ssid.ssid_high, false);
+            /*
+            if (sg.metadata.indices[row].find(col_id) != sg.metadata.indices[row].end()) {
+                Log_info("txnid = %lu; After row and col write; col_id = %d. index = %d. indices already have: %d; and now overwriting it.", this->tid_, col_id, ver_index,
+                         sg.metadata.indices[row][col_id]);
+            } else {
+                Log_info("txnid = %lu; After row and col write; col_id = %d. index = %d. first inseting to indices.", this->tid_, col_id, ver_index);
+            }
+            */
             sg.metadata.indices[row][col_id] = ver_index; // for validation and finalize
         }
         return true;
@@ -93,19 +117,27 @@ namespace janus {
                               const std::vector<colid_t> &col_ids,
                               std::vector<Value>& values,
                               int hint_flag) {
-        if (sg.abort) {
-            return true;
-        }
         verify(row != nullptr);
         auto acc_row = dynamic_cast<AccRow*>(row);
         int v_counter = 0;
         for (auto col_id : col_ids) {
+            if (sg.abort) {
+                return true;
+            }
             unsigned long ver_index = 0;
             SSID ssid = acc_row->write_column(col_id, std::move(values[v_counter++]), sg.ssid_spec, this->tid_,
                     ver_index, sg.offset_safe, sg.abort, sg.disable_early_abort, sg.mark_finalized);
             if (!sg.abort) {
                 sg.update_metadata(ssid.ssid_low, ssid.ssid_high, false);
                 row->ref_copy();
+                /*
+                if (sg.metadata.indices[row].find(col_id) != sg.metadata.indices[row].end()) {
+                    Log_info("txnid = %lu; After row and col write; col_id = %d. index = %d. indices already have: %d; and now overwriting it.", this->tid_, col_id, ver_index,
+                             sg.metadata.indices[row][col_id]);
+                } else {
+                    Log_info("txnid = %lu; After row and col write; col_id = %d. index = %d. first inseting to indices.", this->tid_, col_id, ver_index);
+                }
+                */
                 sg.metadata.indices[row][col_id] = ver_index; // for validation and finalize
             }
         }

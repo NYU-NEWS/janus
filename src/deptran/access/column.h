@@ -35,7 +35,8 @@ namespace janus {
 
         AccTxnRec() : txn_id(-1), ssid(), status(UNCHECKED) {}
         explicit AccTxnRec(mdb::Value&& v, txnid_t tid = 0, acc_status_t stat = UNCHECKED)
-                : txn_id(tid), ssid(), status(stat), value(std::move(v)) {}
+                : txn_id(tid), ssid(), status(stat), value(std::move(v))
+                { status_resolved.AccSet(stat); }
         AccTxnRec(AccTxnRec&& that) noexcept
                 : txn_id(that.txn_id),
                   ssid(that.ssid),
@@ -69,7 +70,7 @@ namespace janus {
         AccColumn(AccColumn&& that) noexcept;
         AccColumn(const AccColumn&) = delete;   // no copy
         AccColumn& operator=(const AccColumn&) = delete; // no copy
-        const mdb::Value& read(snapshotid_t ssid_spec, SSID& ssid, bool& offset_safe, unsigned long& index, bool& decided, bool& abort);
+        const mdb::Value& read(txnid_t tid, snapshotid_t ssid_spec, SSID& ssid, bool& offset_safe, unsigned long& index, bool& decided, bool& abort);
         SSID write(mdb::Value&& v, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index, bool& offset_safe,
                 bool& abort, bool disable_early_abort = false, bool mark_finalized = false);
     private:
@@ -81,7 +82,7 @@ namespace janus {
         snapshotid_t read_get_next_SSID(snapshotid_t ssid_spec) const;
         bool is_offset_safe(snapshotid_t new_ssid) const;
         bool is_read(txnid_t tid, unsigned long index) const;
-        void finalize(unsigned long index, int8_t decision);
+        void finalize(txnid_t tid, unsigned long index, int8_t decision);
         void commit(unsigned long index);
         void abort(unsigned long index);
 

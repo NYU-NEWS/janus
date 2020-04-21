@@ -442,6 +442,7 @@ void ClassicServiceImpl::AccFinalize(const i64& cmd_id,
 void ClassicServiceImpl::AccStatusQuery(const i64 &cmd_id,
                                         int8_t *res,
                                         DeferredReply* defer) {
+    verify(0);
     // server-side handler of AccStatusQuery RPC
     // this is called right after AccDispatch as these 2 RPCs are bundled
     auto* sched = (SchedulerAcc*) dtxn_sched_;

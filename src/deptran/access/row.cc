@@ -46,7 +46,7 @@ namespace janus {
         return new_row;
     }
 
-    SSID AccRow::read_column(mdb::colid_t col_id, mdb::Value* value, snapshotid_t ssid_spec, bool& offset_safe, unsigned long& index, bool& decided, bool& abort) {
+    SSID AccRow::read_column(txnid_t tid, mdb::colid_t col_id, mdb::Value* value, snapshotid_t ssid_spec, bool& offset_safe, unsigned long& index, bool& decided, bool& abort) {
         if (col_id >= _row.size()) {
             // col_id is invalid. We're doing a trick here.
             // keys are col_ids
@@ -54,7 +54,7 @@ namespace janus {
             return {};
         }
         SSID ssid;
-        *value = _row.at(col_id).read(ssid_spec, ssid, offset_safe, index, decided, abort);
+        *value = _row.at(col_id).read(tid, ssid_spec, ssid, offset_safe, index, decided, abort);
         return ssid;
     }
 
@@ -96,13 +96,15 @@ namespace janus {
     }
 
     void AccRow::finalize(txnid_t tid, mdb::colid_t col_id, unsigned long ver_index, int8_t decision) {
+        //Log_info("txnid = %lu; ROW Finalize. col_id = %d; index = %d; decision = %d.", tid, col_id, ver_index, decision);
         if (_row[col_id].is_read(tid, ver_index)) {
             // deciding a read, nothing to do
             // this hard has some writes to finalize, we skip the reads at this shard
+            //Log_info("txnid = %lu; ROW Finalize. col_id = %d; index = %d; decision = %d. A read, returned.", tid, col_id, ver_index, decision);
             return;
         }
         //Log_info("tid: %lu; finaling a record. decision = %d; index = %lu", tid, decision, ver_index);
-        _row[col_id].finalize(ver_index, decision);
+        _row[col_id].finalize(tid, ver_index, decision);
     }
 
     int8_t AccRow::check_status(mdb::colid_t col_id, unsigned long index) {

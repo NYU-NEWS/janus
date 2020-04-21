@@ -105,7 +105,24 @@ class SharedIntEvent {
  public:
   int value_{};
   vector<shared_ptr<IntEvent>> events_{};
-  int Set(const int& v);
+  int Set(int& v) {
+    auto ret = value_;
+    value_ = v;
+    for (auto sp_ev : events_) {
+      if (sp_ev->status_ <= Event::WAIT)
+      sp_ev->Set(v);
+    }
+    return ret;
+  }
+
+  void AccSet(int v) {
+      //Log_info("Setting v = %d.", v);
+      value_ = v;
+      for (auto sp_ev : events_) {
+          if (sp_ev->status_ <= Event::WAIT)
+              sp_ev->Set(v);
+      }
+  }
   void Wait(function<bool(int)> f);
   void WaitUntilGreaterOrEqualThan(int x);
 };

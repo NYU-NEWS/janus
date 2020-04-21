@@ -108,6 +108,7 @@ namespace janus {
                                                     tx_data().id_,
                                                     std::placeholders::_1)); 
         }
+        //Log_info("DISPATCH txid = %lu.", tx_data().id_);
         Log_debug("AccDispatchAsync cnt: %d for tx_id: %" PRIx64, cnt, txn->root_id_);
     }
 
@@ -184,12 +185,13 @@ namespace janus {
             Log_debug("receive all start acks, txn_id: %llx; START PREPARE", txn->id_);
             if (txn->_decided) {
                 // all dependent writes are finalized
-                txn->_status_query_done = true;  // do not need AccQueryStatus acks
+                // txn->_status_query_done = true;  // do not need AccQueryStatus acks
 	        }
 	        GotoNextPhase();
         }
     }
 
+    /*
     void CoordinatorAcc::StatusQuery() {
         std::lock_guard<std::recursive_mutex> lock(mtx_);
         auto pars = tx_data().GetPartitionIds();
@@ -204,8 +206,9 @@ namespace janus {
                                                        std::placeholders::_1));
         }
     }
-
+    */
     void CoordinatorAcc::AccStatusQueryAck(txnid_t tid, int8_t res) {
+        verify(0);
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
         if (tid != tx_data().id_) return;  // the queried txn has early returned
         if (is_frozen()) return;  // this txn has been decided, either committed or aborted
@@ -237,6 +240,7 @@ namespace janus {
     // ------------- SAFEGUARD ----------------
     void CoordinatorAcc::SafeGuardCheck() {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+        //Log_info("SG txid = %lu.", tx_data().id_);
         verify(!committed_);
         // ssid check consistency
         // added offset-1 optimization
@@ -315,7 +319,7 @@ namespace janus {
 
     void CoordinatorAcc::AccCommit() {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-        if (tx_data()._decided || tx_data()._status_query_done) {
+        //if (tx_data()._decided || tx_data()._status_query_done) {
             freeze_coordinator();
             //Log_info("tx: %lu, fast commit.", tx_data().id_);
             if (!tx_data().pars_to_finalize.empty()) {
@@ -325,10 +329,10 @@ namespace janus {
                 tx_data().n_decided_++; // stats
             }
             End();  // do not wait for finalize to return, respond to user now
-        } else {
+        //} else {
             //Log_info("tx: %lu, wait for decision.", tx_data().id_);
             // do nothing, waiting in this phase for AccStatusQuery responses
-        }
+        //}
     }
 
     void CoordinatorAcc::AccAbort() {
@@ -349,7 +353,6 @@ namespace janus {
             AccFinalize(ABORTED);  // will abort in AccFinalizeAck
         } else {
             // abort here
-            tx_data().n_abort_ack++;
             Restart();
         }
     }
@@ -392,7 +395,7 @@ namespace janus {
             // we only restart after this txn is aborted everywhere
             Restart();
         }
-     }
+    }
 
     void CoordinatorAcc::Restart() {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
