@@ -11,8 +11,7 @@ extern char SPANNER_TABLE[];
 #define SPANNER_ROTXN_NAME "F1_LOAD"
 #define SPANNER_RW (2)
 #define SPANNER_RW_NAME "F1_UPDATE"
-#define SPANNER_ROTXN_SIZE (7000)
-#define SPANNER_RW_SIZE (7001)
+#define SPANNER_TXN_SIZE (7000)
 #define SPANNER_ROTXN_P(I) (1000 + I)  // # of fragments per client to read or write (1 ~ 500), Table 5
 #define SPANNER_RW_P(I) (2000 + I)     // same as above (1 ~ 500), Table 5
 #define SPANNER_ROTXN_OUTPUT(I) (3000 + I)
@@ -33,6 +32,7 @@ extern char SPANNER_TABLE[];
         void GetRotxnRequest(TxRequest* req, uint32_t cid);
         int KeyGenerator();
         int GetTxnSize();
+        int GetNumWrites(int rw_size);
         void GenerateKeys(std::unordered_set<int>& keys, int size);
         const Value& get_spanner_value();
     };

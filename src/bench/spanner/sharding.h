@@ -3,7 +3,7 @@
 #include <bench/tpcc_real_dist/sharding.h>
 
 namespace janus {
-    class FBSharding: public Sharding {
+    class SpannerSharding: public Sharding {
         int PopulateTable(tb_info_t *tb_info, parid_t) override;
         void PreparePrimaryColumn(tb_info_t *tb_info,
                                   uint32_t col_index,
@@ -23,7 +23,7 @@ namespace janus {
                            vector<Value> &row_data) override { verify(0); };
 
         bool Ready2Populate(tb_info_t *tb_info) override { return true; };
-        int get_n_column(i32 key) const;
-        const Value& get_fb_value() const;
+        //int get_n_column(i32 key) const;
+        const Value& get_spanner_value() const;
     };
 } // namespace janus

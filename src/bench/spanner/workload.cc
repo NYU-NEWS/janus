@@ -44,14 +44,14 @@ namespace janus {
 
     void SpannerWorkload::GetRWRequest(TxRequest* req, uint32_t cid) {
         int rw_size = GetTxnSize();
-        int n_writes = GetNumWrites(rw_size);  // should be a number in 1 ~ 5, and <= rw_size, has to be at least 1 write
+        int n_writes = GetNumWrites(rw_size);  // should be a number in 1 ~ 3, and <= rw_size, has to be at least 1 write
         std::unordered_set<int> keys;
         GenerateKeys(keys, rw_size);
         int i = 0;
         for (const auto& key : keys) {
             req->input_[SPANNER_RW_KEY(i++)] = Value(key);
         }
-        req->input_[SPANNER_RW_SIZE] = Value((i32)rw_size);
+        req->input_[SPANNER_TXN_SIZE] = Value((i32)rw_size);
         req->input_[SPANNER_RW_W_COUNT] = Value((i32)n_writes);
     }
 
@@ -63,7 +63,7 @@ namespace janus {
         for (const auto& key : keys) {
             req->input_[SPANNER_ROTXN_KEY(index++)] = Value(key);
         }
-        req->input_[SPANNER_ROTXN_SIZE] = Value((i32)rotxn_size);
+        req->input_[SPANNER_TXN_SIZE] = Value((i32)rotxn_size);
     }
 
     int SpannerWorkload::KeyGenerator() {
@@ -103,6 +103,23 @@ namespace janus {
         return 300;
     }
 
+    int SpannerWorkload::GetNumWrites(int rw_size) {
+        // get at least 1 write, at most 3 writes
+        if (rw_size == 1) {
+            return 1;
+        }
+        std::uniform_real_distribution<> dis(0.0, 1.0);
+        double token = dis(rand_gen_);
+        if (token < .5) { return 1; }
+        token -= .5;
+
+        if (token < .25 || rw_size == 2) {
+            return 2;
+        } else {
+            return 3;
+        }
+    }
+
     void SpannerWorkload::GenerateKeys(std::unordered_set<int>& keys, int size) {
         do {
             int k = KeyGenerator();
@@ -133,7 +150,7 @@ namespace janus {
             // a rw txn
             // TODO: set_op_type(SPANNER_RW, SPANNER_RW_P(i), WRITE_REQ);
             // TODO: set_write_only(FB_WRITE, FB_WRITE_P(i));
-            RegP(SPANNER_RW, SPANNER_RW_P(i), {SPANNER_RW_KEY(i), SPANNER_RW_SIZE, SPANNER_RW_W_COUNT}, {}, {}, {SPANNER_TABLE, {SPANNER_RW_KEY(i)}}, DF_NO,
+            RegP(SPANNER_RW, SPANNER_RW_P(i), {SPANNER_RW_KEY(i), SPANNER_TXN_SIZE, SPANNER_RW_W_COUNT}, {}, {}, {SPANNER_TABLE, {SPANNER_RW_KEY(i)}}, DF_NO,
                  LPROC {
                      verify(cmd.input.size() > 0);
                      mdb::Row *r = nullptr;
@@ -141,8 +158,8 @@ namespace janus {
                      mb[0] = cmd.input.at(SPANNER_RW_KEY(i)).get_blob();
                      // int key = cmd.input.at(SPANNER_RW_KEY(i)).get_i32();
                      r = tx.Query(tx.GetTable(SPANNER_TABLE), mb);
-                     int n_write = cmd.input.at(SPANNER_RW_W_COUNT);
-                     int rw_size = cmd.input.at(SPANNER_RW_SIZE);
+                     int n_write = cmd.input.at(SPANNER_RW_W_COUNT).get_i32();
+                     int rw_size = cmd.input.at(SPANNER_TXN_SIZE).get_i32();
                      if (i + n_write < rw_size) {
                          // this is read in RW
                          Value result;
