@@ -3,6 +3,7 @@
 #include "predictor.h"
 #include "bench/facebook/workload.h"
 #include "bench/tpcc/workload.h"
+#include "bench/spanner/workload.h"
 
 namespace janus {
     int32_t SchedulerAcc::OnDispatch(cmdid_t cmd_id,
@@ -43,8 +44,10 @@ namespace janus {
                 case FB_WRITE:
                     workload = FACEBOOK;
                     break;
-                    // case SPANNER:
-                    //    break;
+                case SPANNER_ROTXN:
+                case SPANNER_RW:
+                    workload = SPANNER;
+                    break;
                 default:  // TPCC
                     workload = TPCC;
                     break;
@@ -266,6 +269,14 @@ namespace janus {
             case FACEBOOK:
                 // in FB workloads, it's guaranteed that each input_ is a row key
                 return sp_piece_data->input.at(var_id).get_i32();
+            case SPANNER: {
+                if (var_id == SPANNER_TXN_SIZE || var_id == SPANNER_RW_W_COUNT) {
+                    verify(sp_piece_data->root_type_ == SPANNER_RW);
+                    return NOT_ROW_KEY;
+                } else {
+                    return sp_piece_data->input.at(var_id).get_i32();
+                }
+            }
             case TPCC: {
                 // more complicated
                 if (!tpcc_row_key(var_id)) {

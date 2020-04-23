@@ -53,6 +53,7 @@ namespace janus {
         }
         req->input_[SPANNER_TXN_SIZE] = Value((i32)rw_size);
         req->input_[SPANNER_RW_W_COUNT] = Value((i32)n_writes);
+        req->spanner_rw_reads = rw_size - n_writes;
     }
 
     void SpannerWorkload::GetRotxnRequest(TxRequest *req, uint32_t cid) {
@@ -147,7 +148,8 @@ namespace janus {
                 }
             );
             // a rw txn
-            // TODO: set_op_type(SPANNER_RW, SPANNER_RW_P(i), WRITE_REQ);
+            set_op_type(SPANNER_RW, SPANNER_RW_P(i), WRITE_REQ);  // this could be a read, e.g., a read inside a RW
+                                                                         // but is fine for now
             // TODO: set_write_only(FB_WRITE, FB_WRITE_P(i));
             RegP(SPANNER_RW, SPANNER_RW_P(i), {SPANNER_RW_KEY(i), SPANNER_TXN_SIZE, SPANNER_RW_W_COUNT}, {}, {}, {SPANNER_TABLE, {SPANNER_RW_KEY(i)}}, DF_NO,
                  LPROC {

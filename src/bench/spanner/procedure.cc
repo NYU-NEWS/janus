@@ -10,6 +10,7 @@ namespace janus {
         max_try_ = req.n_try_;
         n_try_ = 1;
         commit_.store(true);
+        spanner_rw_reads = req.spanner_rw_reads;
         switch (type_) {
             case SPANNER_ROTXN:
                 SpannerRotxnInit(req);

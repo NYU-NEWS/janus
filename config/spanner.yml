@@ -1,0 +1,16 @@
+
+bench:
+  workload: spanner
+  scale: 1
+  weight: # these are hard coded, modify here won't have any effects
+    f1_load: 0.999
+    f1_update: 0.001
+  population: # intial number of records in the spanner table
+    f1:   10000
+  dist: uniform
+  coefficient: 0 # 0 as uniform, 1 as pure zipf
+
+# schema: [generated in code: config.cc]
+
+sharding:
+  f1:   MOD

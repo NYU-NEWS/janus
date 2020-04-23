@@ -7,9 +7,9 @@ namespace janus {
 extern char SPANNER_TABLE[];
 
 // Spanner has read-only txns and multi-key general read-write txns
-#define SPANNER_ROTXN (1)
+#define SPANNER_ROTXN (10001)
 #define SPANNER_ROTXN_NAME "F1_LOAD"
-#define SPANNER_RW (2)
+#define SPANNER_RW (10002)
 #define SPANNER_RW_NAME "F1_UPDATE"
 #define SPANNER_TXN_SIZE (7000)
 #define SPANNER_ROTXN_P(I) (1000 + I)  // # of fragments per client to read or write (1 ~ 500), Table 5
