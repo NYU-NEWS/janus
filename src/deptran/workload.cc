@@ -30,6 +30,10 @@
 #include "bench/facebook/workload.h"
 #include "bench/facebook/procedure.h"
 
+// Spanner
+#include "bench/spanner/workload.h"
+#include "bench/spanner/procedure.h"
+
 namespace janus {
 
 Workload* Workload::CreateWorkload(Config *config) {
@@ -49,6 +53,8 @@ Workload* Workload::CreateWorkload(Config *config) {
       return new MicroWorkload(config);
     case FACEBOOK:
       return new FBWorkload(config);
+    case SPANNER:
+      return new SpannerWorkload(config);
     default:
       verify(0);
       return NULL;
@@ -92,6 +98,9 @@ Workload::Workload(Config* config)
     case FACEBOOK:
       fb_para_.n_friends_ = table_num_rows[std::string(FB_TABLE)];
       break;
+    case SPANNER:
+      spanner_para_.n_directories_ = table_num_rows[std::string(SPANNER_TABLE)];
+      break;
     default:
       Log_fatal("benchmark not implemented");
       verify(0);
@@ -124,6 +133,10 @@ void Workload::GetProcedureTypes(map<int32_t, string> &txn_types) {
     case FACEBOOK:
       txn_types[FB_ROTXN] = std::string(FB_ROTXN_NAME);
       txn_types[FB_WRITE] = std::string(FB_WRITE_NAME);
+      break;
+    case SPANNER:
+      txn_types[SPANNER_ROTXN] = std::string(SPANNER_ROTXN_NAME);
+      txn_types[SPANNER_RW] = std::string(SPANNER_RW_NAME);
       break;
     default:
       Log_fatal("benchmark not implemented");

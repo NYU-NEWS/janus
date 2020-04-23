@@ -247,6 +247,8 @@ class Config {
 private:
     void GenerateFBSchema();
     void GenerateFBTableColumnInfo(Sharding::tb_info_t &tbl_info);
+    void GenerateSpannerSchema();
+    void GenerateSpannerTableColumnInfo(Sharding::tb_info_t &tbl_info);
 };
 } // namespace janus
 

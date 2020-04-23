@@ -47,7 +47,11 @@ namespace janus {
         n_pieces_dispatched_ = 0;
         for (int i = 0; i < ol_cnt; ++i) {
             status_[SPANNER_RW_P(i)] = DISPATCHABLE;
-            GetWorkspace(SPANNER_RW_P(i)).keys_ = {SPANNER_RW_KEY(i)};
+            GetWorkspace(SPANNER_RW_P(i)).keys_ = {
+                    SPANNER_RW_KEY(i),
+                    SPANNER_TXN_SIZE,
+                    SPANNER_RW_W_COUNT
+            };
             output_size_= {{SPANNER_RW_P(i), 0}};
             p_types_ = {{SPANNER_RW_P(i), SPANNER_RW_P(i)}};
             sss_->GetPartition(SPANNER_TABLE, req.input_[SPANNER_RW_KEY(i)],
@@ -71,7 +75,11 @@ namespace janus {
         n_pieces_dispatchable_ =  ol_cnt;
         for (int i = 0; i < ol_cnt; ++i) {
             status_[SPANNER_RW_P(i)] = DISPATCHABLE;
-            GetWorkspace(SPANNER_RW_P(i)).keys_ = {SPANNER_RW_KEY(i)};
+            GetWorkspace(SPANNER_RW_P(i)).keys_ = {
+                    SPANNER_RW_KEY(i),
+                    SPANNER_TXN_SIZE,
+                    SPANNER_RW_W_COUNT
+            };
         }
     }
 

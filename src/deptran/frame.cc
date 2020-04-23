@@ -57,6 +57,11 @@
 #include "bench/facebook/procedure.h"
 #include "bench/facebook/sharding.h"
 
+// for Spanner benchmark
+#include "bench/spanner/workload.h"
+#include "bench/spanner/procedure.h"
+#include "bench/spanner/sharding.h"
+
 namespace janus {
 
 Frame* Frame::RegFrame(int mode,
@@ -131,6 +136,9 @@ Sharding* Frame::CreateSharding() {
       break;
     case FACEBOOK:
       ret = new FBSharding();
+      break;
+    case SPANNER:
+      ret = new SpannerSharding();
       break;
     default:
       verify(0);
@@ -252,6 +260,10 @@ void Frame::GetTxTypes(std::map<int32_t, std::string>& txn_types) {
       txn_types[FB_ROTXN] = std::string(FB_ROTXN_NAME);
       txn_types[FB_WRITE] = std::string(FB_WRITE_NAME);
       break;
+    case SPANNER:
+      txn_types[SPANNER_ROTXN] = std::string(SPANNER_ROTXN_NAME);
+      txn_types[SPANNER_RW] = std::string(SPANNER_RW_NAME);
+      break;
     default:
       Log_fatal("benchmark not implemented");
       verify(0);
@@ -284,6 +296,10 @@ TxData* Frame::CreateTxnCommand(TxRequest& req, shared_ptr<TxnRegistry> reg) {
     case FACEBOOK:
       verify(req.tx_type_ == FB_ROTXN || req.tx_type_ == FB_WRITE);
       cmd = new FBChopper();
+      break;
+    case SPANNER:
+      verify(req.tx_type_ == SPANNER_ROTXN || req.tx_type_ == SPANNER_RW);
+      cmd = new SpannerChopper();
       break;
     default:
       verify(0);
@@ -401,6 +417,9 @@ Workload * Frame::CreateTxGenerator() {
       break;
     case FACEBOOK:
       gen = new FBWorkload(Config::GetConfig());
+      break;
+    case SPANNER:
+      gen = new SpannerWorkload(Config::GetConfig());
       break;
     case MICRO_BENCH:
     default:
