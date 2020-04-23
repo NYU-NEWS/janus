@@ -36,6 +36,8 @@ namespace janus {
             default: verify(0);
                 break;
         }
+        // NOTE: we need to make a hard copy of ft to feed to vw for prediction!
+        Features ft_copy = ft;
         // insert the feature of this tx to feature_vector
         auto ret = feature_vector[key].insert(std::move(ft));
         // labeling with this new tx. *IMPORTANT* must label after inserting it into vector
@@ -44,6 +46,8 @@ namespace janus {
         Learner::gather_training_samples(key);
         // todo: query the ML model via VW with ft, and get a prediction
         //double prediction = Learner::vw_predict(*ret.first);
+        double prediction = Learner::vw_predict(ft_copy);
+        Log_debug("Get prediction: %f.", prediction);
         //return prediction > PREDICTION_BAR;  // should block if prediction close to 1
         return false;
     }

@@ -69,7 +69,7 @@ def configure(conf):
     _enable_piece_count(conf)
     _enable_txn_count(conf)
     _enable_conflict_count(conf)
-#    _enable_snappy(conf)
+    #    _enable_snappy(conf)
     #_enable_logging(conf)
     _enable_reuse_coroutine(conf)
     _enable_simulate_wan(conf)
@@ -80,19 +80,21 @@ def configure(conf):
     conf.env.append_value("CXXFLAGS", "-Wno-unused-function")
     conf.env.append_value("CXXFLAGS", "-Wno-unused-variable")
     conf.env.append_value("CXXFLAGS", "-Wno-sign-compare")
-    conf.check_boost(lib='system filesystem context thread coroutine')
+    conf.check_boost(lib='system filesystem context thread coroutine program_options')
 
     conf.env.append_value("CXXFLAGS", "-Wno-sign-compare")
     conf.env.append_value('INCLUDES', ['/usr/local/include'])
-#    conf.check_cxx(lib='boost_system', use='BOOST_SYSTEM')
-#    conf.check_cxx(lib='boost_filesystem', use='BOOST_FILESYSTEM')
-#    conf.check_cxx(lib='boost_coroutine', use='BOOST_COROUTINE')
+    #    conf.check_cxx(lib='boost_system', use='BOOST_SYSTEM')
+    #    conf.check_cxx(lib='boost_filesystem', use='BOOST_FILESYSTEM')
+    #    conf.check_cxx(lib='boost_coroutine', use='BOOST_COROUTINE')
 
-    # in case you use linuxbrew, uncomment the following 
-#    conf.env.append_value('INCLUDES', [os.path.expanduser('~') + '/.linuxbrew/include'])
-#    conf.env.append_value('LIBPATH', [os.path.expanduser('~') + '/.linuxbrew/lib'])
+    # in case you use linuxbrew, uncomment the following
+    #    conf.env.append_value('INCLUDES', [os.path.expanduser('~') + '/.linuxbrew/include'])
+    #    conf.env.append_value('LIBPATH', [os.path.expanduser('~') + '/.linuxbrew/lib'])
     conf.env.LIB_PTHREAD = 'pthread'
     conf.check_cfg(package='yaml-cpp', uselib_store='YAML-CPP', args=pargs)
+    conf.check_cfg(package='libvw', uselib_store='VW', args=pargs)
+    conf.check_cfg(package='libvw_c_wrapper', uselib_store='VW-C', args=pargs)
 
     if sys.platform != 'darwin':
         conf.env.LIB_RT = 'rt'
@@ -111,8 +113,8 @@ def build(bld):
             "src/rrr/pylib/simplerpcgen/rpcgen.g",
             "src/rrr/pylib/yapps/main.py src/rrr/pylib/simplerpcgen/rpcgen.g")
 
-#    _depend("rlog/log_service.h", "rlog/log_service.rpc",
-#            "bin/rpcgen rlog/log_service.rpc")
+    #    _depend("rlog/log_service.h", "rlog/log_service.rpc",
+    #            "bin/rpcgen rlog/log_service.rpc")
 
     _depend("src/deptran/rcc_rpc.h src/deptran/rcc_rpc.py",
             "src/deptran/rcc_rpc.rpc",
@@ -120,8 +122,8 @@ def build(bld):
 
     _gen_srpc_headers()
 
-#     _depend("old-test/benchmark_service.h", "old-test/benchmark_service.rpc",
-#             "bin/rpcgen --cpp old-test/benchmark_service.rpc")
+    #     _depend("old-test/benchmark_service.h", "old-test/benchmark_service.rpc",
+    #             "bin/rpcgen --cpp old-test/benchmark_service.rpc")
 
     bld.stlib(source=bld.path.ant_glob("extern_interface/scheduler.c"),
               target="externc",
@@ -137,9 +139,9 @@ def build(bld):
               uselib="BOOST",
               use="PTHREAD")
 
-#    bld.stlib(source=bld.path.ant_glob("rpc/*.cc"), target="simplerpc",
-#              includes=". rrr rpc",
-#              use="base PTHREAD")
+    #    bld.stlib(source=bld.path.ant_glob("rpc/*.cc"), target="simplerpc",
+    #              includes=". rrr rpc",
+    #              use="base PTHREAD")
 
     bld.stlib(source=bld.path.ant_glob("src/memdb/*.cc"), target="memdb",
               includes="src src/rrr src/deptran src/base",
@@ -153,31 +155,31 @@ def build(bld):
               use="rrr simplerpc PYTHON")
 
     bld.objects(source=bld.path.ant_glob("src/deptran/*.cc "
-                                       "src/deptran/*/*.cc "
-                                       "src/bench/*/*.cc",
-                                       excl=['src/deptran/s_main.cc', 'src/deptran/paxos_main_helper.cc']),
-              target="deptran_objects",
-              includes="src src/rrr src/deptran ",
-              uselib="YAML-CPP BOOST",
-              use="externc rrr memdb PTHREAD PROFILER RT")
+                                         "src/deptran/*/*.cc "
+                                         "src/bench/*/*.cc",
+                                         excl=['src/deptran/s_main.cc', 'src/deptran/paxos_main_helper.cc']),
+                target="deptran_objects",
+                includes="src src/rrr src/deptran ",
+                uselib="YAML-CPP BOOST VW VW-C",
+                use="externc rrr memdb PTHREAD PROFILER RT")
 
     bld.shlib(source=bld.path.ant_glob("src/deptran/paxos_main_helper.cc "),
               target="txlog",
               includes="src src/rrr src/deptran ",
-              uselib="YAML-CPP BOOST",
+              uselib="YAML-CPP BOOST VW VW-C",
               use="externc rrr memdb deptran_objects PTHREAD PROFILER RT")
 
     bld.program(source=bld.path.ant_glob("src/deptran/s_main.cc"),
-              target="deptran_server",
-              includes="src src/rrr src/deptran ",
-              uselib="YAML-CPP BOOST",
-              use="externc rrr memdb deptran_objects PTHREAD PROFILER RT")
+                target="deptran_server",
+                includes="src src/rrr src/deptran ",
+                uselib="YAML-CPP BOOST VW VW-C",
+                use="externc rrr memdb deptran_objects PTHREAD PROFILER RT")
 
     bld.program(source=bld.path.ant_glob("src/run.cc "
                                          "src/deptran/paxos_main_helper.cc"),
                 target="microbench",
                 includes="src src/rrr src/deptran ",
-                uselib="YAML-CPP BOOST",
+                uselib="YAML-CPP BOOST VW VW-C",
                 use="externc rrr memdb deptran_objects PTHREAD PROFILER RT")
 
     bld.add_post_fun(post)
@@ -290,12 +292,12 @@ def _enable_debug(conf):
     if Options.options.debug:
         Logs.pprint("PINK", "Debug support enabled")
         conf.env.append_value("CXXFLAGS", "-Wall -pthread -O0 -DNDEBUG -g "
-                "-ggdb -DLOG_LEVEL_AS_DEBUG -DLOG_DEBUG -rdynamic -fno-omit-frame-pointer".split())
+                                          "-ggdb -DLOG_LEVEL_AS_DEBUG -DLOG_DEBUG -rdynamic -fno-omit-frame-pointer".split())
     else:
         if Options.options.mutrace:
             Logs.pprint("PINK", "mutrace debugging enabled")
             conf.env.append_value("CXXFLAGS", "-Wall -pthread -O0 -DNDEBUG -g "
-                "-ggdb -DLOG_INFO -rdynamic -fno-omit-frame-pointer".split())
+                                              "-ggdb -DLOG_INFO -rdynamic -fno-omit-frame-pointer".split())
         else:
             conf.env.append_value("CXXFLAGS", "-g -pthread -O2 -DNDEBUG -DLOG_INFO".split())
 
@@ -329,4 +331,3 @@ def _depend(target, source, action):
 def _run_cmd(cmd):
     Logs.pprint('PINK', cmd)
     os.system(cmd)
-

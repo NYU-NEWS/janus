@@ -6,7 +6,7 @@ namespace janus {
     TRAINING_VECTOR Learner::training_samples;
     TRAINING_TIMERS Learner::training_timers;
     uint32_t Learner::head = 0;
-    //vw* Learner::model = VW::initialize(VW_INITIALIZE_STRING);
+    vw* Learner::model = VW::initialize(VW_INITIALIZE_STRING);
 
     void Learner::gather_training_samples(int32_t key) {
         if (training_timers.empty()) {
@@ -42,7 +42,7 @@ namespace janus {
         }
         feature_set.erase(feature_set.begin(), itr);  // remove those migrated elements from feature_vector
         if (current_time - training_timers.at(key) >= TRAINING_INTERVAL) {
-            //vw_train_model();
+            vw_train_model();
             training_timers.at(key) = current_time;
         }
     }
@@ -203,7 +203,7 @@ namespace janus {
         }
     }
     */
-    /*
+
     void Learner::vw_train_model() {
         for (const auto& ft_str : training_samples) {
             example *e = VW::read_example(*model, ft_str);
@@ -219,5 +219,5 @@ namespace janus {
         VW::finish_example(*model, *e);
         return (double)VW::get_prediction(e);
     }
-    */
+
 }

@@ -35,7 +35,7 @@ namespace janus {
               ssid_spec_(that.ssid_spec_),
               op_type_(that.op_type_),
               arrival_time_(that.arrival_time_),
-              label_(that.label_){}
+              label_(that.label_) {}
         Features& operator=(Features&& that) noexcept {
             assert(this != &that);
             this->last_n_reads = std::move(that.last_n_reads);
@@ -47,18 +47,31 @@ namespace janus {
             this->label_ = that.label_;
             return *this;
         }
-        /*
+
+        Features& operator=(const Features& that) {
+            assert(this != &that);
+            this->last_n_reads = that.last_n_reads;
+            this->last_n_writes = that.last_n_writes;
+            this->key_ = that.key_;
+            this->ssid_spec_ = that.ssid_spec_;
+            this->op_type_ = that.op_type_;
+            this->arrival_time_ = that.arrival_time_;
+            this->label_ = that.label_;
+            return *this;
+        }
+
         Features(const Features& that) {
             last_n_reads = that.last_n_reads;
             last_n_writes = that.last_n_writes;
             key_ = that.key_;
             ssid_spec_ = that.ssid_spec_;
             op_type_ = that.op_type_;
+            arrival_time_ = that.arrival_time_;
             label_ = that.label_;
         }
-        */
-        Features(const Features& that) = delete;
-        Features& operator=(const Features& that) = delete;
+
+        //Features(const Features& that) = delete;
+        //Features& operator=(const Features& that) = delete;
         bool operator<(const Features& that) const {  // feature_vector is sorted based on ssid of each feature
             return this->ssid_spec_ < that.ssid_spec_;
         }

@@ -8,7 +8,7 @@
 #include "ml_parameters.h"
 #include "predictor.h"
 #include <unordered_map>
-//#include "vw.h"  // the VW ML-engine
+#include <vowpalwabbit/vw.h>  // the VW ML-engine
 
 namespace janus {
     //class Predictor;
@@ -34,7 +34,7 @@ namespace janus {
         static void get_type(std::string& ft_str, Features* ft);
         // static uint64_t get_arrival_time(Features* ft);
         /* VW engine below */
-        //static vw* model;
+        static vw* model;
         static void vw_train_model();
     };
 }
