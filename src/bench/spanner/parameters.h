@@ -23,11 +23,10 @@ namespace janus {
         values.reserve(N_SPANNER_VALUES);
         while (true) {
             double number = distribution(RAND_SPANNER_VALUES);
-            if (number > min && number < max) {
-                int n_bytes = std::round(number);
-                std::string value(n_bytes, '*');
-                values.emplace_back(value);
-            }
+            if (number >= max) { continue; }
+            int n_bytes = number <= min ? 1 : std::round(number);
+            std::string value(n_bytes, '*');
+            values.emplace_back(value);
             if (values.size() == N_SPANNER_VALUES) {
                 break;
             }
