@@ -4,10 +4,10 @@
 #include "threading.hpp"
 
 //#define __FILENAME__ (strrchr(__FILE__, '/') ? strrchr(__FILE__, '/') + 1 : __FILE__)
-#include <vowpalwabbit/vw.h>
+//#include <vowpalwabbit/vw.h>
 
 //#if !defined (__FILENAME__)
-//#define __FILENAME__ __FILE__
+#define __FILENAME__ __FILE__
 //#endif
 
 #define Log_debug(msg, ...) ::rrr::Log::debug(__LINE__, __FILENAME__, msg, ## __VA_ARGS__)

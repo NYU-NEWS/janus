@@ -59,7 +59,7 @@ include_directories(
 )
 link_directories(
         ${Boost_LIBRARY_DIRS}
-#        ${YAML_CPP_LIBRARY_DIRS}
+        #        ${YAML_CPP_LIBRARY_DIRS}
         ${PYTHON_LIBRARY_DIRS}
 )
 
@@ -104,19 +104,19 @@ add_library(
         EXTERN_C
         extern_interface/scheduler.c
         extern_interface/scheduler.h
-        src/deptran/access/coordinator.h)
+)
 
 # yaml
 file(GLOB YAML_SRC
-    "dependencies/yaml-cpp/src/*.h"
-    "dependencies/yaml-cpp/src/*/*.h"
-    "dependencies/yaml-cpp/src/*.cpp"
-    "dependencies/yaml-cpp/src/*/*.cpp"
-)
+        "dependencies/yaml-cpp/src/*.h"
+        "dependencies/yaml-cpp/src/*/*.h"
+        "dependencies/yaml-cpp/src/*.cpp"
+        "dependencies/yaml-cpp/src/*/*.cpp"
+        )
 
 add_library(YAMLCPP
-    ${YAML_SRC}
-)
+        ${YAML_SRC}
+        )
 
 # for cxx build
 set(CMAKE_VERBOSE_MAKEFILE on)
@@ -137,6 +137,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDB_CHECKSUM")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG_CODE")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DDEBUG_CHECK")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DEVENT_TIMEOUT_CHECK")
+
 set(CMAKE_CXX_FLAGS_RELEASE  "${CMAKE_CXX_FLAGS_RELEASE} -DLOG_LEVEL_AS_INFO")
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DLOG_LEVEL_AS_DEBUG")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCPU_PROFILE")
@@ -157,30 +158,30 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DREUSE_CORO")
 #    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_custom_command(
-    OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/deptran/rcc_rpc.h
-           ${CMAKE_CURRENT_SOURCE_DIR}/src/deptran/rcc_rpc.py
-    COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/bin/rpcgen --cpp --python
+        OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/src/deptran/rcc_rpc.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/deptran/rcc_rpc.py
+        COMMAND ${CMAKE_CURRENT_SOURCE_DIR}/bin/rpcgen --cpp --python
         src/deptran/rcc_rpc.rpc
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/deptran/rcc_rpc.rpc
-    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/deptran/rcc_rpc.rpc
+        WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_custom_target (gen-rpc
-    DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/deptran/rcc_rpc.h
-            ${CMAKE_CURRENT_SOURCE_DIR}/src/deptran/rcc_rpc.py)
+        DEPENDS ${CMAKE_CURRENT_SOURCE_DIR}/src/deptran/rcc_rpc.h
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/deptran/rcc_rpc.py)
 
 include_directories(
-    ${PYTHON_INCLUDE_DIRS}
-    src
-    src/rrr
-    src/memdb
-    src/deptran
-    dependencies/yaml-cpp/include
+        ${PYTHON_INCLUDE_DIRS}
+        src
+        src/rrr
+        src/memdb
+        src/deptran
+        dependencies/yaml-cpp/include
 )
 
 link_directories(
-    ${PYTHON_LIBRARY_DIRS}
-#    ${APR_LIBRARY_DIRS}
-#    ${PROFILER_LIBRARY_DIRS}
+        ${PYTHON_LIBRARY_DIRS}
+        #    ${APR_LIBRARY_DIRS}
+        #    ${PROFILER_LIBRARY_DIRS}
 )
 
 
@@ -188,51 +189,51 @@ link_directories(
 
 
 file(GLOB RRR_SRC
-    "src/rrr/base/*.hpp"
-    "src/rrr/base/*.cpp"
-    "src/rrr/misc/*.hpp"
-    "src/rrr/misc/*.cpp"
-    "src/rrr/reactor/*.h"
-    "src/rrr/reactor/*.cc"
-#    "rrr/mq/*.cpp"
-#    "rrr/mq/*.h"
-    "src/rrr/pylib/simplerpc/_pyrpc.cpp"
-    "src/rrr/rpc/*.cpp"
-    "src/rrr/rpc/*.hpp"
-    "src/rrr/utils/*.h"
-    "src/rrr/rrr.h"
-    "src/rrr/rrr.hpp"
-)
+        "src/rrr/base/*.hpp"
+        "src/rrr/base/*.cpp"
+        "src/rrr/misc/*.hpp"
+        "src/rrr/misc/*.cpp"
+        "src/rrr/reactor/*.h"
+        "src/rrr/reactor/*.cc"
+        #    "rrr/mq/*.cpp"
+        #    "rrr/mq/*.h"
+        "src/rrr/pylib/simplerpc/_pyrpc.cpp"
+        "src/rrr/rpc/*.cpp"
+        "src/rrr/rpc/*.hpp"
+        "src/rrr/utils/*.h"
+        "src/rrr/rrr.h"
+        "src/rrr/rrr.hpp"
+        )
 
 file(GLOB MEMDB_SRC
-    "src/memdb/*.h"
-    "src/memdb/*.cc")
+        "src/memdb/*.h"
+        "src/memdb/*.cc")
 
 file(GLOB BENCH_SRC
-    "src/bench/*/*.h"
-    "src/bench/*/*.cc"
-)
+        "src/bench/*/*.h"
+        "src/bench/*/*.cc"
+        )
 
 file(GLOB DEPTRAN_SRC
-    "src/deptran/*.h"
-    "src/deptran/*.cc"
-    "src/deptran/*/*.cc"
-    "src/deptran/*/*.h"
-)
+        "src/deptran/*.h"
+        "src/deptran/*.cc"
+        "src/deptran/*/*.cc"
+        "src/deptran/*/*.h"
+        )
 
 list(FILTER DEPTRAN_SRC EXCLUDE REGEX
         "src/deptran/s_main.cc"
-)
+        )
 
 list(FILTER DEPTRAN_SRC EXCLUDE REGEX
         "src/deptran/paxos_main_helper.cc"
-)
+        )
 
 add_library(RRR
-    ${RRR_SRC})
+        ${RRR_SRC})
 
 add_library(MEMDB
-    ${MEMDB_SRC} src/deptran/access/coordinator.h src/deptran/access/linked_vector.h)
+        ${MEMDB_SRC})
 
 #add_library(JANUS
 #        ${DEPTRAN_SRC}
@@ -241,7 +242,7 @@ add_library(MEMDB
 add_executable(janusdb
         "src/deptran/s_main.cc"
         ${DEPTRAN_SRC}
-        ${BENCH_SRC} src/deptran/access/coordinator.h src/deptran/access/row.h src/deptran/access/tx.h src/deptran/access/frame.h src/deptran/access/scheduler.h src/deptran/access/column.h src/deptran/access/safeguard.h src/deptran/access/commo.h src/bench/facebook/parameters.h src/deptran/access/learner.h src/deptran/access/predictor.h src/deptran/access/ml_parameters.h src/deptran/access/ssid_predictor.h)
+        ${BENCH_SRC})
 
 add_executable(paxosbench
         "src/run.cc"
@@ -261,9 +262,9 @@ add_executable(TEST
 target_link_libraries(
         MEMDB
         RRR
-#        ${CONAN_LIBS}
+        #        ${CONAN_LIBS}
         ${Boost_LIBRARIES}
-#        ${YAML_CPP_LIBRARIES}
+        #        ${YAML_CPP_LIBRARIES}
         ${RT})
 
 target_link_libraries(
@@ -273,13 +274,13 @@ target_link_libraries(
         EXTERN_C
         YAMLCPP
         ${RT}
-#        ${CONAN_LIBS}
+        #        ${CONAN_LIBS}
         ${Boost_LIBRARIES}
         ${CMAKE_THREAD_LIBS_INIT}
         ${PYTHON_LIBRARIES}
-#    ${APR_LIBRARIES}
-#    ${APRUTIL_LIBRARIES}
-#    ${PROFILER_LIBRARIES}
+        #    ${APR_LIBRARIES}
+        #    ${APRUTIL_LIBRARIES}
+        #    ${PROFILER_LIBRARIES}
 )
 
 target_link_libraries(
@@ -306,10 +307,16 @@ target_link_libraries(
 target_link_libraries(
         TEST
         RRR
+<<<<<<< HEAD
 #        GTest::main
 #        GTest::gtest
 #        GSL:gsl
+=======
+        #        GTest::main
+        #        GTest::gtest
+        GSL:gsl
+>>>>>>> removed vw related stuff
         ${Boost_LIBRARIES}
-#        ${CONAN_LIBS}
+        #        ${CONAN_LIBS}
         ${CMAKE_THREAD_LIBS_INIT}
 )

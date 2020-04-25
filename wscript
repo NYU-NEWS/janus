@@ -80,9 +80,7 @@ def configure(conf):
     conf.env.append_value("CXXFLAGS", "-Wno-unused-function")
     conf.env.append_value("CXXFLAGS", "-Wno-unused-variable")
     conf.env.append_value("CXXFLAGS", "-Wno-sign-compare")
-    # conf.check_boost(lib='system filesystem context thread coroutine program_options')
     conf.check_boost(lib='system filesystem context thread coroutine')
-    conf.check(compiler='cxx',lib='boost_program_options',uselib_store='BOOST_PROGRAM_OPTIONS')
 
     conf.env.append_value("CXXFLAGS", "-Wno-sign-compare")
     conf.env.append_value('INCLUDES', ['/usr/local/include'])
@@ -95,8 +93,6 @@ def configure(conf):
     #    conf.env.append_value('LIBPATH', [os.path.expanduser('~') + '/.linuxbrew/lib'])
     conf.env.LIB_PTHREAD = 'pthread'
     conf.check_cfg(package='yaml-cpp', uselib_store='YAML-CPP', args=pargs)
-    conf.check_cfg(package='libvw', uselib_store='VW', args=pargs)
-    conf.check_cfg(package='libvw_c_wrapper', uselib_store='VW-C', args=pargs)
 
     if sys.platform != 'darwin':
         conf.env.LIB_RT = 'rt'
@@ -138,7 +134,7 @@ def build(bld):
                                        "src/rrr/reactor/*.cc"),
               target="rrr",
               includes="src src/rrr",
-              uselib="BOOST BOOST_PROGRAM_OPTIONS",
+              uselib="BOOST",
               use="PTHREAD")
 
     #    bld.stlib(source=bld.path.ant_glob("rpc/*.cc"), target="simplerpc",
@@ -153,7 +149,7 @@ def build(bld):
               source=bld.path.ant_glob("src/rrr/pylib/simplerpc/*.cpp"),
               target="_pyrpc",
               includes="src src/rrr src/rrr/rpc",
-              uselib="BOOST BOOST_PROGRAM_OPTIONS",
+              uselib="BOOST",
               use="rrr simplerpc PYTHON")
 
     bld.objects(source=bld.path.ant_glob("src/deptran/*.cc "
@@ -162,26 +158,26 @@ def build(bld):
                                          excl=['src/deptran/s_main.cc', 'src/deptran/paxos_main_helper.cc']),
                 target="deptran_objects",
                 includes="src src/rrr src/deptran ",
-                uselib="YAML-CPP BOOST VW VW-C BOOST_PROGRAM_OPTIONS",
+                uselib="YAML-CPP BOOST",
                 use="externc rrr memdb PTHREAD PROFILER RT")
 
     bld.shlib(source=bld.path.ant_glob("src/deptran/paxos_main_helper.cc "),
               target="txlog",
               includes="src src/rrr src/deptran ",
-              uselib="YAML-CPP BOOST VW VW-C BOOST_PROGRAM_OPTIONS",
+              uselib="YAML-CPP BOOST",
               use="externc rrr memdb deptran_objects PTHREAD PROFILER RT")
 
     bld.program(source=bld.path.ant_glob("src/deptran/s_main.cc"),
                 target="deptran_server",
                 includes="src src/rrr src/deptran ",
-                uselib="YAML-CPP BOOST VW VW-C BOOST_PROGRAM_OPTIONS",
+                uselib="YAML-CPP BOOST",
                 use="externc rrr memdb deptran_objects PTHREAD PROFILER RT")
 
     bld.program(source=bld.path.ant_glob("src/run.cc "
                                          "src/deptran/paxos_main_helper.cc"),
                 target="microbench",
                 includes="src src/rrr src/deptran ",
-                uselib="YAML-CPP BOOST VW VW-C BOOST_PROGRAM_OPTIONS",
+                uselib="YAML-CPP BOOST",
                 use="externc rrr memdb deptran_objects PTHREAD PROFILER RT")
 
     bld.add_post_fun(post)

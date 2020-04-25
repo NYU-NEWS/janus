@@ -8,7 +8,7 @@
 #include "ml_parameters.h"
 #include "predictor.h"
 #include <unordered_map>
-#include <vowpalwabbit/vw.h>  // the VW ML-engine
+//#include <vowpalwabbit/vw.h>  // the VW ML-engine
 
 namespace janus {
     //class Predictor;
@@ -18,7 +18,7 @@ namespace janus {
         Learner() = delete;
         ~Learner() = delete;
         static void gather_training_samples(int32_t key);
-        static double vw_predict(const Features& ft);
+        //static double vw_predict(const Features& ft);
     private:
         static TRAINING_VECTOR training_samples;  // set of feature sets for training and updating the model
         static TRAINING_TIMERS training_timers;  // timer per key
@@ -34,8 +34,8 @@ namespace janus {
         static void get_type(std::string& ft_str, Features* ft);
         // static uint64_t get_arrival_time(Features* ft);
         /* VW engine below */
-        static vw* model;
-        static void vw_train_model();
+        //static vw* model;
+        //static void vw_train_model();
     };
 }
 

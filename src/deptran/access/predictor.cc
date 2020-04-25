@@ -46,8 +46,8 @@ namespace janus {
         Learner::gather_training_samples(key);
         // todo: query the ML model via VW with ft, and get a prediction
         //double prediction = Learner::vw_predict(*ret.first);
-        double prediction = Learner::vw_predict(ft_copy);
-        Log_debug("Get prediction: %f.", prediction);
+        //double prediction = Learner::vw_predict(ft_copy);
+        //Log_debug("Get prediction: %f.", prediction);
         //return prediction > PREDICTION_BAR;  // should block if prediction close to 1
         return false;
     }
