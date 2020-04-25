@@ -414,7 +414,7 @@ void ClassicServiceImpl::AccDispatch(const i64& cmd_id,
                                   rrr::DeferredReply* defer){
     // server-side handler of AccDispatch RPC
     shared_ptr<Marshallable> sp = md.sp_data_;
-    auto* sched = (SchedulerAcc*) dtxn_sched_;ggi
+    auto* sched = (SchedulerAcc*) dtxn_sched_;
     *res = sched->OnDispatch(cmd_id, sp, ssid_spec, is_single_shard_write_only, ssid_low, ssid_high, ssid_new, *output, arrival_time);
     defer->reply();
 }
