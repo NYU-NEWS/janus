@@ -99,6 +99,7 @@ class TxRequest {
   TxWorkspace input_{};    // the inputs for the transactions.
   int n_try_ = 20;
   int spanner_rw_reads = 0;
+  int dynamic_rw_reads = 0;
   function<void(TxReply &)> callback_ = [] (TxReply&)->void {verify(0);};
   function<void()> fail_callback_ = [] () {
     verify(0);

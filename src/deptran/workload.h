@@ -24,6 +24,10 @@ class Workload {
   } spanner_para_t;
 
   typedef struct {
+      int n_rows_;
+  } dynamic_para_t;
+
+    typedef struct {
     int n_branch_;
     int n_teller_;
     int n_customer_;
@@ -44,6 +48,7 @@ class Workload {
   union {
     fb_para_t fb_para_;
     spanner_para_t spanner_para_;
+    dynamic_para_t dynamic_para_;
     tpca_para_t tpca_para_;
     rw_benchmark_para_t rw_benchmark_para_;
     micro_bench_para_t micro_bench_para_;

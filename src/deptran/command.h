@@ -14,6 +14,7 @@ class CmdData : public Marshallable {
   cmdtype_t root_type_ = 0;
   optype_t op_type_ = UNDEFINED;
   int spanner_rw_reads = 0;
+  int dynamic_rw_reads = 0;
   //uint8_t write_only_ = 0;  // whether a tx is a single-shard write, then disable early-abort, default no.
 
   virtual innid_t inn_id() const {

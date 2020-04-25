@@ -1,0 +1,19 @@
+
+bench:
+  workload: dynamic
+  scale: 1
+  population: # intial number of records in the spanner table
+    dynamic:   10000
+
+  # dynamic parameters control
+  dist: zipf
+  coefficient: 0.99 # 0 as uniform, 1 as pure zipf
+  txnsize: 5
+  writefraction: 0.1
+  writeinrw: 1.0  # 1.0: all writes in rw txn, 0.0: 1 write in rw txn
+  valuesize: 128
+
+# schema: [generated in code: config.cc]
+
+sharding:
+  dynamic:   MOD

@@ -479,6 +479,8 @@ void Config::InitBench(std::string &bench_str) {
     benchmark_ = FACEBOOK;
   } else if (bench_str == "spanner") {
     benchmark_ = SPANNER;
+  } else if (bench_str == "dynamic") {
+    benchmark_ = DYNAMIC;
   } else {
     Log_error("No implementation for benchmark: %s", bench_str.c_str());
     verify(0);
@@ -549,6 +551,7 @@ void Config::LoadBenchYML(YAML::Node config) {
   sharding_ = Frame(MODE_NONE).CreateSharding();
   auto populations = config["population"];
   auto &tb_infos = sharding_->tb_infos_;
+  int n_dynamic_rows = 0;
   for (auto it = populations.begin(); it != populations.end(); it++) {
     auto tbl_name = it->first.as<string>();
     auto info_it = tb_infos.find(tbl_name);
@@ -560,6 +563,9 @@ void Config::LoadBenchYML(YAML::Node config) {
     int pop = it->second.as<int>();
     tbl_info.num_records = scale_factor_ * pop;
     verify(tbl_info.num_records > 0);
+    if (bench_str == "dynamic") {
+       n_dynamic_rows = tbl_info.num_records;
+    }
   }
   if (config["dist"])
     dist_ = config["dist"].as<string>();
@@ -568,12 +574,33 @@ void Config::LoadBenchYML(YAML::Node config) {
   if (config["rotate"])
     rotate_ = config["rotate"].as<int32_t>();
 
-  // We hard code Facebook and spanner schema
+  /* Dynamic workload parameters */
+  if (config["txnsize"]) {
+    txn_size_ = config["txnsize"].as<int32_t>();
+    verify(n_dynamic_rows != 0 && txn_size_ > 0 && txn_size_ <= n_dynamic_rows);
+  }
+  if (config["writefraction"]) {
+    write_fraction_ = config["writefraction"].as<float>();
+    verify(write_fraction_ >= 0.0 && write_fraction_ <= 1.0);
+  }
+  if (config["writeinrw"]) {
+    write_in_rw_ = config["writeinrw"].as<float>();
+    verify(write_in_rw_ >= 0.0 && write_in_rw_ <= 1.0);
+  }
+  if (config["valuesize"]) {
+    value_size_ = config["valuesize"].as<int32_t>();
+    verify(value_size_ > 0);
+  }
+
+  // We hard code Facebook, spanner, and Dynamic schema
   if (benchmark_ == FACEBOOK) {
       GenerateFBSchema();
   }
   if (benchmark_ == SPANNER) {
       GenerateSpannerSchema();
+  }
+  if (benchmark_ == DYNAMIC) {
+      GenerateDynamicSchema();
   }
 }
 
@@ -632,6 +659,21 @@ void Config::GenerateSpannerSchema() {
     sharding_->tb_infos_[tbl_name] = tbl_info;
 }
 
+void Config::GenerateDynamicSchema() {
+    verify(sharding_);
+    auto &tb_infos = sharding_->tb_infos_;
+    std::string tbl_name = "dynamic";
+    auto info_it = tb_infos.find(tbl_name);
+    if(info_it == tb_infos.end()) {
+        tb_infos[tbl_name] = Sharding::tb_info_t();
+        info_it = tb_infos.find(tbl_name);
+    }
+    auto &tbl_info = info_it->second;
+    GenerateDynamicTableColumnInfo(tbl_info);
+    tbl_info.tb_name = tbl_name;
+    sharding_->tb_infos_[tbl_name] = tbl_info;
+}
+
 void Config::GenerateFBTableColumnInfo(Sharding::tb_info_t &tbl_info) {
     int max_n_cols = 1025;  // this is max 1024 accessible cols + 1 key col
     for (int i = 0; i < max_n_cols; ++i) {
@@ -669,6 +711,25 @@ void Config::GenerateSpannerTableColumnInfo(Sharding::tb_info_t &tbl_info) {
                                                       ftbl_name,
                                                       fcol_name));
 
+    }
+}
+
+void Config::GenerateDynamicTableColumnInfo(Sharding::tb_info_t &tbl_info) {
+    int max_n_cols = 2;  // For now dynamic table has 2 cols
+    for (int i = 0; i < max_n_cols; ++i) {
+        // note that col 0 is the primary key
+        std::string c_type = i == 0 ? "integer" : "string";
+        Value::kind c_v_type = i == 0 ? Value::I32 : Value::STR;
+        bool c_primary = i == 0 ? true : false;
+        std::string c_name = std::to_string(i);  // we use col_id also for col_name
+        std::string c_foreign, ftbl_name, fcol_name;
+        bool is_foreign = false;
+        tbl_info.columns.push_back(Sharding::column_t(c_v_type,
+                                                      c_name,
+                                                      c_primary,
+                                                      is_foreign,
+                                                      ftbl_name,
+                                                      fcol_name));
     }
 }
 

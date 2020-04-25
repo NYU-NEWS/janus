@@ -149,6 +149,7 @@ namespace janus {
 #define MICRO_BENCH (5)
 #define FACEBOOK (6)
 #define SPANNER (7)
+#define DYNAMIC (8)
 
 
 } // namespace janus

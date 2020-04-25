@@ -62,6 +62,11 @@
 #include "bench/spanner/procedure.h"
 #include "bench/spanner/sharding.h"
 
+// for Dynamic benchmark
+#include "bench/dynamic/workload.h"
+#include "bench/dynamic/procedure.h"
+#include "bench/dynamic/sharding.h"
+
 namespace janus {
 
 Frame* Frame::RegFrame(int mode,
@@ -139,6 +144,9 @@ Sharding* Frame::CreateSharding() {
       break;
     case SPANNER:
       ret = new SpannerSharding();
+      break;
+    case DYNAMIC:
+      ret = new DynamicSharding();
       break;
     default:
       verify(0);
@@ -264,6 +272,10 @@ void Frame::GetTxTypes(std::map<int32_t, std::string>& txn_types) {
       txn_types[SPANNER_ROTXN] = std::string(SPANNER_ROTXN_NAME);
       txn_types[SPANNER_RW] = std::string(SPANNER_RW_NAME);
       break;
+    case DYNAMIC:
+      txn_types[DYNAMIC_ROTXN] = std::string(DYNAMIC_ROTXN_NAME);
+      txn_types[DYNAMIC_RW] = std::string(DYNAMIC_RW_NAME);
+      break;
     default:
       Log_fatal("benchmark not implemented");
       verify(0);
@@ -300,6 +312,10 @@ TxData* Frame::CreateTxnCommand(TxRequest& req, shared_ptr<TxnRegistry> reg) {
     case SPANNER:
       verify(req.tx_type_ == SPANNER_ROTXN || req.tx_type_ == SPANNER_RW);
       cmd = new SpannerChopper();
+      break;
+    case DYNAMIC:
+      verify(req.tx_type_ == DYNAMIC_ROTXN || req.tx_type_ == DYNAMIC_RW);
+      cmd = new DynamicChopper();
       break;
     default:
       verify(0);
@@ -420,6 +436,9 @@ Workload * Frame::CreateTxGenerator() {
       break;
     case SPANNER:
       gen = new SpannerWorkload(Config::GetConfig());
+      break;
+    case DYNAMIC:
+      gen = new DynamicWorkload(Config::GetConfig());
       break;
     case MICRO_BENCH:
     default:

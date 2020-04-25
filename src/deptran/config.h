@@ -68,6 +68,13 @@ class Config {
   int32_t n_parallel_dispatch_{0};
   bool forwarding_enabled_ = false;
   int timestamp_{TimestampType::CLOCK};
+  /* ---- ACC Dynamic workload ---- */
+  uint32_t txn_size_ = 10;         // # of keys of a txn
+  double write_fraction_ = 0.002;  // default as FB
+  double write_in_rw_ = 0.1;       // write fraction inside a r-w txn.
+                                   // 1: all writes, no reads. 0: 1 write
+  uint32_t value_size_ = 8;        // in bytes
+  /* ------------------------------ */
 
   // TODO remove, will cause problems.
   uint32_t num_site_;
@@ -249,6 +256,8 @@ private:
     void GenerateFBTableColumnInfo(Sharding::tb_info_t &tbl_info);
     void GenerateSpannerSchema();
     void GenerateSpannerTableColumnInfo(Sharding::tb_info_t &tbl_info);
+    void GenerateDynamicSchema();
+    void GenerateDynamicTableColumnInfo(Sharding::tb_info_t &tbl_info);
 };
 } // namespace janus
 

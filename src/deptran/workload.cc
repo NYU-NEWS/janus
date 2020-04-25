@@ -34,6 +34,10 @@
 #include "bench/spanner/workload.h"
 #include "bench/spanner/procedure.h"
 
+// Dynamic
+#include "bench/dynamic/workload.h"
+#include "bench/dynamic/procedure.h"
+
 namespace janus {
 
 Workload* Workload::CreateWorkload(Config *config) {
@@ -55,6 +59,8 @@ Workload* Workload::CreateWorkload(Config *config) {
       return new FBWorkload(config);
     case SPANNER:
       return new SpannerWorkload(config);
+    case DYNAMIC:
+      return new DynamicWorkload(config);
     default:
       verify(0);
       return NULL;
@@ -101,6 +107,9 @@ Workload::Workload(Config* config)
     case SPANNER:
       spanner_para_.n_directories_ = table_num_rows[std::string(SPANNER_TABLE)];
       break;
+    case DYNAMIC:
+      dynamic_para_.n_rows_ = table_num_rows[std::string(DYNAMIC_TABLE)];
+      break;
     default:
       Log_fatal("benchmark not implemented");
       verify(0);
@@ -137,6 +146,10 @@ void Workload::GetProcedureTypes(map<int32_t, string> &txn_types) {
     case SPANNER:
       txn_types[SPANNER_ROTXN] = std::string(SPANNER_ROTXN_NAME);
       txn_types[SPANNER_RW] = std::string(SPANNER_RW_NAME);
+      break;
+    case DYNAMIC:
+      txn_types[DYNAMIC_ROTXN] = std::string(DYNAMIC_ROTXN_NAME);
+      txn_types[DYNAMIC_RW] = std::string(DYNAMIC_RW_NAME);
       break;
     default:
       Log_fatal("benchmark not implemented");
