@@ -340,7 +340,7 @@ class TxData: public CmdData {
     int n_abort_sent = 0;
     int n_abort_ack = 0;
     bool _validation_failed = false;
-    bool _single_shard_txn = false;
+
     // ssid predictor related below
     std::unordered_map<innid_t, parid_t> innid_to_server;
     std::unordered_map<innid_t, uint64_t> innid_to_starttime;

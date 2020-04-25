@@ -10,8 +10,7 @@ namespace janus {
     int32_t SchedulerAcc::OnDispatch(cmdid_t cmd_id,
                                      const shared_ptr<Marshallable>& cmd,
                                      uint64_t ssid_spec,
-                                     uint8_t single_shard,
-                                     uint8_t write_only,
+                                     uint8_t is_single_shard_write_only,
                                      uint64_t *ssid_low,
                                      uint64_t *ssid_high,
                                      uint64_t *ssid_new,
@@ -78,7 +77,7 @@ namespace janus {
             keys_to_train.clear();
         }
         // deal with early-abort and single-shard, write-only txn
-        if (single_shard && write_only) {
+        if (is_single_shard_write_only) {
             tx->sg.mark_finalized = true;
             // Log_info("Mark all writes finalized due to the txn is write only and single shard");
         }

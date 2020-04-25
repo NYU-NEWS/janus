@@ -50,9 +50,9 @@ namespace janus {
         auto cmds_by_par = txn->GetReadyPiecesData(pieces_per_hop); // all ready pieces sent in one parallel round
         Log_debug("AccDispatchAsync for tx_id: %" PRIx64, txn->root_id_);
         // check if this txn is a single-shard txn: if so, always consistent and no need to validate
+        bool is_single_shard = false;
         if (txn->AllPiecesDispatchable() && cmds_by_par.size() == 1) {
-            // tx_data()._single_shard_txn = true;
-            // tx_data().n_single_shard++;  // stats
+            is_single_shard = true;
         }
         // get a predicted ssid_spec
         uint64_t current_time = SSIDPredictor::get_current_time();
@@ -85,7 +85,7 @@ namespace janus {
                     write_only = false;  // write-only if all pieces for this parid are write-only pieces
                 }
                 // c->write_only_ = txn_reg_->get_write_only(c->root_type_, c->type_);
-                if (c->op_type_ == WRITE_REQ && !(write_only && tx_data()._single_shard_txn)) {
+                if (c->op_type_ == WRITE_REQ && !(write_only && is_single_shard)) {
                     writing_to_par = true;
                 }
                 //Log_info("try this. optype = %d.", c->op_type_);
@@ -95,14 +95,13 @@ namespace janus {
             if (writing_to_par) {
                 tx_data().pars_to_finalize.insert(par_id);
             }
-            if (tx_data()._single_shard_txn && write_only) {
+            if (is_single_shard && write_only) {
                 tx_data().n_single_shard_write_only++; // stats
             }
             commo()->AccBroadcastDispatch(sp_vec_piece,
                                           this,
                                           tx_data().ssid_spec,
-                                          tx_data()._single_shard_txn,
-                                          write_only,
+                                          is_single_shard && write_only,
                                           std::bind(&CoordinatorAcc::AccDispatchAck,
                                                  this,
                                                     phase_,
@@ -112,7 +111,7 @@ namespace janus {
                                                     std::placeholders::_4,
                                                     std::placeholders::_5,
                                                     std::placeholders::_6),
-					                       tx_data().id_,
+					                      tx_data().id_,
                                           tx_data().n_status_query,
                                           std::bind(&CoordinatorAcc::AccStatusQueryAck,
                                                     this,
@@ -180,7 +179,7 @@ namespace janus {
             txn->lowest_ssid_high = ssid_high;
         }
         // basic ssid check consistency
-        if (txn->highest_ssid_low > txn->lowest_ssid_high && !tx_data()._single_shard_txn) {
+        if (txn->highest_ssid_low > txn->lowest_ssid_high) {
             // inconsistent if no overlapped range
             txn->_is_consistent = false;
         }
@@ -427,6 +426,5 @@ namespace janus {
         tx_data().innid_to_starttime.clear();
         tx_data()._validation_failed = false;
         tx_data().pars_to_finalize.clear();
-        tx_data()._single_shard_txn = false;
     }
 } // namespace janus
