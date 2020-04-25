@@ -28,7 +28,6 @@ class TxReply {
   int32_t n_offset_valid_;
   int32_t n_validation_passed;
   int32_t n_cascading_aborts;
-  int32_t n_early_aborts;
   int32_t n_single_shard;
   int32_t n_single_shard_write_only;
 };
@@ -243,7 +242,6 @@ class TxData: public CmdData {
   int n_offset_valid_ = 0;
   int n_validation_passed = 0;
   int n_cascading_aborts = 0;
-  int n_early_aborts = 0;
   int n_single_shard = 0;
   int n_single_shard_write_only = 0;
 
@@ -325,7 +323,6 @@ class TxData: public CmdData {
     bool _is_consistent = true;
     //bool _validate_abort = false;
     bool _offset_invalid = false;
-    bool _early_abort = false;
     // a consistent snapshot resides between highest_low and lowest_high
     snapshotid_t highest_ssid_low = 0;
     snapshotid_t lowest_ssid_high = UINT64_MAX;

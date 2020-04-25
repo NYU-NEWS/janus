@@ -47,7 +47,6 @@ namespace janus {
             // we make dynamic RW txn multi-hop!
             pieces_per_hop = cmd_->dynamic_rw_reads;
         }
-
         auto cmds_by_par = txn->GetReadyPiecesData(pieces_per_hop); // all ready pieces sent in one parallel round
         Log_debug("AccDispatchAsync for tx_id: %" PRIx64, txn->root_id_);
         // check if this txn is a single-shard txn: if so, always consistent and no need to validate
@@ -158,9 +157,6 @@ namespace janus {
         }
         // store RPC returned information
         switch (res) {
-            case EARLY_ABORT:
-                txn->_early_abort = true;
-                break;
             case BOTH_NEGATIVE:
                 txn->_offset_invalid = true;
                 txn->_decided = false;
@@ -197,7 +193,7 @@ namespace janus {
             Log_debug("receive all start acks, txn_id: %llx; START PREPARE", txn->id_);
             if (txn->_decided) {
                 // all dependent writes are finalized
-                // txn->_status_query_done = true;  // do not need AccQueryStatus acks
+                txn->_status_query_done = true;
 	        }
 	        GotoNextPhase();
         }
@@ -220,7 +216,6 @@ namespace janus {
     }
     */
     void CoordinatorAcc::AccStatusQueryAck(txnid_t tid, int8_t res) {
-        verify(0);
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
         if (tid != tx_data().id_) return;  // the queried txn has early returned
         if (is_frozen()) return;  // this txn has been decided, either committed or aborted
@@ -256,17 +251,13 @@ namespace janus {
         verify(!committed_);
         // ssid check consistency
         // added offset-1 optimization
-        if (tx_data()._early_abort) {
-            aborted_ = true;
-        } else {
-            if (offset_1_check_pass() && !tx_data()._is_consistent) {
-                tx_data().n_offset_valid_++;  // for stats
-            }
-            if (tx_data()._is_consistent || offset_1_check_pass()) {
-                tx_data()._is_consistent = true;
-                committed_ = true;
-                tx_data().n_ssid_consistent_++;   // for stats
-            }
+        if (offset_1_check_pass() && !tx_data()._is_consistent) {
+            tx_data().n_offset_valid_++;  // for stats
+        }
+        if (tx_data()._is_consistent || offset_1_check_pass()) {
+            tx_data()._is_consistent = true;
+            committed_ = true;
+            tx_data().n_ssid_consistent_++;   // for stats
         }
         if (committed_ || aborted_) { // SG checks consistent or cascading aborts, no need to validate
             //Log_info("tx: %lu, safeguard check, commit = %d; aborted = %d", tx_data().id_, committed_, aborted_);
@@ -283,7 +274,6 @@ namespace janus {
     }
 
     void CoordinatorAcc::AccValidate() {
-        verify(0);  // early-abort makes no validtion
         std::lock_guard<std::recursive_mutex> lock(mtx_);
         auto pars = tx_data().GetPartitionIds();
         verify(!pars.empty());
@@ -300,7 +290,6 @@ namespace janus {
     }
 
     void CoordinatorAcc::AccValidateAck(phase_t phase, int8_t res) {
-        verify(0);  // early-abort makes no validtion
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
         if (phase != phase_) return;
         tx_data().n_validate_ack_++;
@@ -333,7 +322,7 @@ namespace janus {
 
     void CoordinatorAcc::AccCommit() {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-        //if (tx_data()._decided || tx_data()._status_query_done) {
+        if (tx_data()._decided || tx_data()._status_query_done) {
             freeze_coordinator();
             //Log_info("tx: %lu, fast commit.", tx_data().id_);
             if (!tx_data().pars_to_finalize.empty()) {
@@ -343,10 +332,10 @@ namespace janus {
                 tx_data().n_decided_++; // stats
             }
             End();  // do not wait for finalize to return, respond to user now
-        //} else {
+        } else {
             //Log_info("tx: %lu, wait for decision.", tx_data().id_);
             // do nothing, waiting in this phase for AccStatusQuery responses
-        //}
+        }
     }
 
     void CoordinatorAcc::AccAbort() {
@@ -356,10 +345,7 @@ namespace janus {
         freeze_coordinator();
         // abort as long as inconsistent or there is at least one statusquery ack is abort (cascading abort)
         // for stats
-        if (tx_data()._early_abort) {
-            tx_data().n_early_aborts++;
-        }
-        if (!tx_data()._early_abort && (tx_data()._is_consistent || !tx_data()._validation_failed)) {
+        if (tx_data()._is_consistent || !tx_data()._validation_failed) {
             // this txn aborts due to cascading aborts, consistency check passed
             tx_data().n_cascading_aborts++;
         }
@@ -440,7 +426,6 @@ namespace janus {
         tx_data().innid_to_server.clear();
         tx_data().innid_to_starttime.clear();
         tx_data()._validation_failed = false;
-        tx_data()._early_abort = false;
         tx_data().pars_to_finalize.clear();
         tx_data()._single_shard_txn = false;
     }

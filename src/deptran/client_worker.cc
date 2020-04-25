@@ -64,7 +64,6 @@ void ClientWorker::RequestDone(Coordinator* coo, TxReply& txn_reply) {
   offset_valid.fetch_add(txn_reply.n_offset_valid_);
   validation_passed.fetch_add(txn_reply.n_validation_passed);
   cascading_aborts.fetch_add(txn_reply.n_cascading_aborts);
-  early_aborts.fetch_add(txn_reply.n_early_aborts);
   single_shard.fetch_add(txn_reply.n_single_shard);
   single_shard_write_only.fetch_add(txn_reply.n_single_shard_write_only);
 
@@ -326,7 +325,7 @@ void ClientWorker::Work() {
 //  finish_mutex.unlock();
 
   Log_info("Finish:\nTotal: %u, Commit: %u, Attempts: %u, SSID_consistent: %u, Decided: %u, Offset_valid: %u, "
-           "Validation_pass: %u, Single_shard: %u, Single_shard_write_only: %u, Early_aborts: %u, "
+           "Validation_pass: %u, Single_shard: %u, Single_shard_write_only: %u, "
            "Cascading_aborts: %u, Running for %u\n",
            num_txn.load(),
            success.load(),
@@ -337,7 +336,6 @@ void ClientWorker::Work() {
            validation_passed.load(),
            single_shard.load(),
            single_shard_write_only.load(),
-           early_aborts.load(),
            cascading_aborts.load(),
            Config::GetConfig()->get_duration());
   fflush(stderr);
@@ -456,7 +454,6 @@ ClientWorker::ClientWorker(
   offset_valid.store(0);
   validation_passed.store(0);
   cascading_aborts.store(0);
-  early_aborts.store(0);
   single_shard.store(0);
   single_shard_write_only.store(0);
   commo_ = frame_->CreateCommo(poll_mgr_);

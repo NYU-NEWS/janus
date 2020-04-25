@@ -139,11 +139,6 @@ void TpccWorkload::RegStockLevel() {
               tpcc_ch->txn_id_, output.size());
     // verify(output_size >= 20 * 5);
     // verify(output_size <= 20 * 15); // TODO fix this verification
-    if (output[TPCC_VAR_OL_AMOUNT].get_kind() == mdb::Value::UNKNOWN) {
-        verify(ch->_early_abort);
-        // output is by early-abort of ACC
-        output[TPCC_VAR_OL_AMOUNT] = mdb::Value((i32)0);
-    }
     verify(output.size() == (output[TPCC_VAR_OL_AMOUNT].get_i32() + 1));
     tpcc_ch->n_pieces_all_ += output[TPCC_VAR_OL_AMOUNT].get_i32();
     tpcc_ch->ws_[TPCC_VAR_N_PIECE_ALL] = Value((int32_t)tpcc_ch->n_pieces_all_);

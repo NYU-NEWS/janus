@@ -37,8 +37,8 @@ namespace janus {
         //Log_info("server:OnDispatch. txid = %lu. ssid_spec = %lu.eturning arrival_time = %lu.", tx->tid_, ssid_spec, *arrival_time);
         bool will_block = false;
         // we always train a new tx even if it will be early-aborted
-        if (ssid_spec != 0) { // client-side ssid_spec logic is on
-        //if (false) {  // for testing purpose, disable server-side ML engine
+        //if (ssid_spec != 0) { // client-side ssid_spec logic is on
+        if (false) {  // for testing purpose, disable server-side ML engine
             uint8_t workload;  // either FB, TPCC, or Spanner for now
             switch (sp_vec_piece->at(0)->root_type_) {
                 case FB_ROTXN:
@@ -78,25 +78,9 @@ namespace janus {
             keys_to_train.clear();
         }
         // deal with early-abort and single-shard, write-only txn
-        if (single_shard) {
-            tx->sg.disable_early_abort = true;
-            // Log_info("Disabled early abort due to single-shard txn");
-        }
         if (single_shard && write_only) {
             tx->sg.mark_finalized = true;
             // Log_info("Mark all writes finalized due to the txn is write only and single shard");
-        }
-        if (tx->sg.abort) { // early abort
-            verify(!tx->sg.disable_early_abort);
-            *ssid_low = 0;
-            *ssid_high = 0;
-            *ssid_new = 0;
-            // *arrival_time = Predictor::get_current_time();
-            for (const auto& sp_piece_data : *sp_vec_piece) {
-                // prepare dummy ret_output
-                ret_output[sp_piece_data->inn_id()] = {};
-            }
-            return EARLY_ABORT;
         }
         // now execute this txn
         // will_block = true; // todo: testing purpose, take this out later
@@ -129,9 +113,6 @@ namespace janus {
         *ssid_high = tx->sg.metadata.lowest_ssid_high;
         *ssid_new = tx->sg.metadata.highest_write_ssid;
         // report offset_invalid and decided. These two things are *incomparable*!
-        if (tx->sg.abort) {
-            return EARLY_ABORT;
-        }
         if (!tx->sg.decided && !tx->sg.offset_safe) {
             return BOTH_NEGATIVE;
         }
@@ -145,7 +126,6 @@ namespace janus {
     }
 
     void SchedulerAcc::OnValidate(cmdid_t cmd_id, snapshotid_t ssid_new, int8_t *res) {
-        verify(0);  // early-abort makes no validtion
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
         if (acc_txn->sg.validate_done) {
             // multiple pieces may share the same scheduler and thus validate on the same indices map
@@ -191,7 +171,6 @@ namespace janus {
             return;
         }
         for (auto& callback : acc_txn->query_callbacks) {
-            verify(0);
             callback(decision);
         }
         // clear metadata after finalizing a txn
@@ -200,7 +179,6 @@ namespace janus {
     }
 
     void SchedulerAcc::OnStatusQuery(cmdid_t cmd_id, int8_t *res, DeferredReply* defer) {
-        verify(0);  // reads waiting on writes then no query rpc needed
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
         // wait until acc_query_start is set 1 by OnAccDispatch
         acc_txn->acc_query_start->Wait(MAX_QUERY_TIMEOUT);

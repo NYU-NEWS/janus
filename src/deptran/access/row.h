@@ -18,9 +18,9 @@ namespace janus {
     class AccRow : public mdb::Row {
     public:
         static AccRow* create(const mdb::Schema *schema, std::vector<mdb::Value>& values);
-        SSID read_column(txnid_t tid, mdb::colid_t col_id, mdb::Value* value, snapshotid_t ssid_spec, bool& offset_safe, unsigned long& index, bool& decided, bool& abort);
+        SSID read_column(mdb::colid_t col_id, mdb::Value* value, snapshotid_t ssid_spec, bool& offset_safe, unsigned long& index, bool& decided);
         SSID write_column(mdb::colid_t col_id, mdb::Value&& value, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index,
-                bool& offset_safe, bool& abort, bool disable_early_abort = false, bool mark_finalized = false);
+                bool& offset_safe, bool mark_finalized = false);
         bool validate(txnid_t tid, mdb::colid_t col_id, unsigned long index, snapshotid_t ssid_new, bool validate_consistent);
         void finalize(txnid_t tid, mdb::colid_t col_id, unsigned long ver_index, int8_t decision);
         int8_t check_status(mdb::colid_t col_id, unsigned long index);

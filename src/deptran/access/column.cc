@@ -20,56 +20,26 @@ namespace janus {
         update_stable_frontier();
     }
 
-    const mdb::Value& AccColumn::read(txnid_t tid, snapshotid_t ssid_spec, SSID& ssid, bool& offset_safe, unsigned long& index, bool& decided, bool& abort) {
-        verify(logical_head_status() != ABORTED);
-        // wait on logical_head to finalize or abort if needed
-        do {
-            snapshotid_t ssid_new = read_get_next_SSID(ssid_spec);
-            if (ssid_new != ssid_spec) {  // read has to enable early abort to avoid deadlock!
-                abort = true;
-                //Log_info("tid = %lu; col_id = %d; EARLY ABORT.", tid, col_id);
-                return txn_queue[_logical_head].value;  // dummy return, todo: fix this later
-            }
-            if (!head_not_resolved()) {
-                break;
-            }
-            // wait
-            //Log_info("tid = %lu; col_id = %d; START WAITING, on index = %lu, tx = %lu.", tid, col_id, _logical_head,
-            //         txn_queue[_logical_head].txn_id);
-            txn_queue[_logical_head].status_resolved.Wait([](int val)->bool {
-                return (val == FINALIZED || val == ABORTED); // val is set in AccFinalize
-            });
-            //Log_info("tid = %lu; col_id = %d; READ out of wait on index = %lu.", tid, col_id, _logical_head);
-            // wait done, event fires
-            update_logical_head();  // might have a new head now after waiting fires
-            //Log_info("tid = %lu; col_id = %d; After update_logical_head, head = %lu.", tid, col_id, _logical_head);
-        } while (head_not_resolved());
-        //Log_info("tid = %lu; col_id = %d; Wait DONE, now head = %lu.", tid, col_id, _logical_head);
-        // now preceding write (logical head) has been resolved
-        verify(logical_head_status() == FINALIZED);
+    const mdb::Value& AccColumn::read(snapshotid_t ssid_spec, SSID& ssid, bool& offset_safe, unsigned long& index, bool& decided) {
         // return logical head
         index = _logical_head;
         snapshotid_t ssid_new = read_get_next_SSID(ssid_spec);
-        // no need to early abort since reading a finalized write even if bumped, use validation later
-        // if reads are processed in ssid order, then no need for validation even.
         // extends head's ssid
         txn_queue[index].extend_ssid(ssid_new);
         ssid = txn_queue[index].ssid;
-	    if (!is_offset_safe(ssid_new)) {
+        if (!is_offset_safe(ssid_new)) {
             offset_safe = false;
+        }
+        if (logical_head_status() != FINALIZED) { // then if this tx turns out consistent and all parts decided, can respond immediately
+            decided = false;
         }
         return txn_queue[_logical_head].value;
     }
 
     SSID AccColumn::write(mdb::Value&& v, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index,
-            bool& offset_safe, bool& abort, bool disable_early_abort, bool mark_finalized) { // ver_index is the new write's
+            bool& offset_safe, bool mark_finalized) { // ver_index is the new write's
         // write returns new ssid
         SSID new_ssid = write_get_next_SSID(ssid_spec);
-        if (new_ssid.ssid_low != ssid_spec && !disable_early_abort) {
-            //Log_info("txnid = %lu; writing to; col_id = %d. Early abort.", tid, col_id);
-            abort = true;
-            return new_ssid;
-        }
         if (mark_finalized) { // single_shard_write, can safely mark it finalized now.
             txn_queue.emplace_back(std::move(v), tid, new_ssid, FINALIZED);
         } else {
@@ -153,7 +123,6 @@ namespace janus {
     // ---------------------------------
     // ----------- finalize ------------
     void AccColumn::finalize(txnid_t tid, unsigned long index, int8_t decision) {
-        txn_queue[index].status_resolved.AccSet(decision);  // mark this write has been finalized.
         //Log_info("txnid = %lu. FINALIZE. col_id = %d; index = %d; decision = %d.", tid, col_id, index, decision);
         switch (decision) {
             case FINALIZED:
@@ -192,10 +161,6 @@ namespace janus {
             }
         }
         _stable_frontier = index - 1;
-    }
-
-    bool AccColumn::head_not_resolved() const {
-        return txn_queue[_logical_head].status != FINALIZED && txn_queue[_logical_head].status != ABORTED;
     }
 
     //----------------------------------------

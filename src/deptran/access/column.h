@@ -31,18 +31,15 @@ namespace janus {
         SSID ssid;              // snapshot id
         acc_status_t status;    // either unchecked, validating, or finalized
         mdb::Value value;       // the value of this write
-        rrr::SharedIntEvent status_resolved;  // fires when status becomes finalized or aborted
 
         AccTxnRec() : txn_id(-1), ssid(), status(UNCHECKED) {}
         explicit AccTxnRec(mdb::Value&& v, txnid_t tid = 0, acc_status_t stat = UNCHECKED)
-                : txn_id(tid), ssid(), status(stat), value(std::move(v))
-                { status_resolved.AccSet(stat); }
+                : txn_id(tid), ssid(), status(stat), value(std::move(v)) {}
         AccTxnRec(AccTxnRec&& that) noexcept
                 : txn_id(that.txn_id),
                   ssid(that.ssid),
                   status(that.status),
-                  value(std::move(that.value)),
-                  status_resolved(std::move(that.status_resolved)) {}
+                  value(std::move(that.value)) {}
         AccTxnRec(const AccTxnRec&) = delete;
         AccTxnRec& operator=(const AccTxnRec&) = delete;
         AccTxnRec(mdb::Value&& v, txnid_t tid, const SSID& ss_id, acc_status_t stat = UNCHECKED)
@@ -70,9 +67,8 @@ namespace janus {
         AccColumn(AccColumn&& that) noexcept;
         AccColumn(const AccColumn&) = delete;   // no copy
         AccColumn& operator=(const AccColumn&) = delete; // no copy
-        const mdb::Value& read(txnid_t tid, snapshotid_t ssid_spec, SSID& ssid, bool& offset_safe, unsigned long& index, bool& decided, bool& abort);
-        SSID write(mdb::Value&& v, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index, bool& offset_safe,
-                bool& abort, bool disable_early_abort = false, bool mark_finalized = false);
+        const mdb::Value& read(snapshotid_t ssid_spec, SSID& ssid, bool& offset_safe, unsigned long& index, bool& decided);
+        SSID write(mdb::Value&& v, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index, bool& offset_safe, bool mark_finalized = false);
     private:
         /* basic column members */
         mdb::colid_t col_id = -1;
@@ -95,7 +91,6 @@ namespace janus {
         snapshotid_t logical_head_ssid_for_reads() const;
         acc_status_t logical_head_status() const;
 	    snapshotid_t next_record_ssid(unsigned long index) const;
-	    bool head_not_resolved() const;
 
         /* stable frontier related */
         unsigned long _stable_frontier = 0;

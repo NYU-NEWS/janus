@@ -26,8 +26,6 @@ namespace janus {
         offset_safe = true;
         ssid_spec = 0;
         decided = true;
-        abort = false;
-        disable_early_abort = false;
         mark_finalized = false;
 //        status_query_done = false;
 //        status_abort = false;
