@@ -15,6 +15,7 @@
 #include "../frame.h"
 #include "../benchmark_control_rpc.h"
 #include "bench/spanner/workload.h"
+#include "bench/dynamic/workload.h"
 
 namespace janus {
 
@@ -181,6 +182,10 @@ void CoordinatorClassic::DispatchAsync() {
     if (cmd_->type_ == SPANNER_RW && tx_data().n_pieces_dispatch_acked_ == 0) {
         // we make spanner RW txn multi-hop!
         pieces_per_hop = cmd_->spanner_rw_reads;
+    }
+    if (cmd_->type_ == DYNAMIC_RW && tx_data().n_pieces_dispatch_acked_ == 0) {
+        // we make dynamic RW txn multi-hop!
+        pieces_per_hop = cmd_->dynamic_rw_reads;
     }
     */
     auto cmds_by_par = txn->GetReadyPiecesData(pieces_per_hop); // all ready pieces sent in one parallel round

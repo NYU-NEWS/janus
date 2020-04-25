@@ -4,6 +4,7 @@
 #include "bench/facebook/workload.h"
 #include "bench/tpcc/workload.h"
 #include "bench/spanner/workload.h"
+#include "bench/dynamic/workload.h"
 
 namespace janus {
     int32_t SchedulerAcc::OnDispatch(cmdid_t cmd_id,
@@ -48,6 +49,9 @@ namespace janus {
                 case SPANNER_RW:
                     workload = SPANNER;
                     break;
+                case DYNAMIC_ROTXN:
+                case DYNAMIC_RW:
+                    workload = DYNAMIC;
                 default:  // TPCC
                     workload = TPCC;
                     break;
@@ -272,6 +276,14 @@ namespace janus {
             case SPANNER: {
                 if (var_id == SPANNER_TXN_SIZE || var_id == SPANNER_RW_W_COUNT) {
                     verify(sp_piece_data->root_type_ == SPANNER_RW);
+                    return NOT_ROW_KEY;
+                } else {
+                    return sp_piece_data->input.at(var_id).get_i32();
+                }
+            }
+            case DYNAMIC: {
+                if (var_id == DYNAMIC_TXN_SIZE || var_id == DYNAMIC_RW_W_COUNT) {
+                    verify(sp_piece_data->root_type_ == DYNAMIC_RW);
                     return NOT_ROW_KEY;
                 } else {
                     return sp_piece_data->input.at(var_id).get_i32();

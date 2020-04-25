@@ -1,6 +1,7 @@
 #include "coordinator.h"
 #include "ssid_predictor.h"
 #include "bench/spanner/workload.h"
+#include "bench/dynamic/workload.h"
 
 namespace janus {
     AccCommo* CoordinatorAcc::commo() {
@@ -42,6 +43,11 @@ namespace janus {
             // we make spanner RW txn multi-hop!
             pieces_per_hop = cmd_->spanner_rw_reads;
         }
+        if (cmd_->type_ == DYNAMIC_RW && tx_data().n_pieces_dispatch_acked_ == 0) {
+            // we make dynamic RW txn multi-hop!
+            pieces_per_hop = cmd_->dynamic_rw_reads;
+        }
+
         auto cmds_by_par = txn->GetReadyPiecesData(pieces_per_hop); // all ready pieces sent in one parallel round
         Log_debug("AccDispatchAsync for tx_id: %" PRIx64, txn->root_id_);
         // check if this txn is a single-shard txn: if so, always consistent and no need to validate
