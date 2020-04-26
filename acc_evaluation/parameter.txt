@@ -1,0 +1,17 @@
+# this file specifies the control parameters of an experiment
+# this should be the only place to modify for each experiment when
+# things get fully automated
+
+# ---- Major ---- #
+benchmark="facebook"  # which benchmark to run, for now supports "facebook", "tpcc", "spanner", and "dynamic"
+system="acc"          # which system to run: "acc", "none", "2pl", and "occ"
+n_servers=8           # number of logical servers
+n_clients=64          # number of logical clients
+n_concurrent=100      # number of concurrent txns on each client thread
+duration=60           # how long an experiment runs in seconds
+
+# ---- One-time ---- #
+src_base="/local/rococo-ml/"    # the top level where executable is stored, could be local to each node
+config_dir="/users/hl0325/acc_configs/"   # on nfs shared by all nodes
+server_nodes="./configs/server_nodes.txt"
+client_nodes="./configs/client_nodes.txt"
