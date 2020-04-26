@@ -3,6 +3,17 @@
 
 source ./parameter.txt    # nodes are specified here
 
+# ---- sanity check ---- #
+n_args=$($#)
+if [[ ${n_args} -ne 2 ]]; then
+    echo "config_nodes.bash requires two arguments: 1. [mode] and 2. [n_concurrent]"
+    exit
+fi
+# ---------------------- #
+
+mode=$1
+n_concurrent=$2
+
 file="./configs/${n_servers}s${n_clients}c.yml"
 rm -f ${file}
 
@@ -19,8 +30,7 @@ echo "  server:" >> ${file}
 servers=""
 for x in $(seq 1 ${n_servers}); do
     svr=$x
-    if [ $x -lt 10 ]
-    then
+    if [[ $x -lt 10 ]]; then
         svr="0$x"
     fi
     server="s${x}01"
@@ -55,14 +65,14 @@ done
 echo " " >> ${file}
 echo "host:" >> ${file}
 svr_count=1
-while [ ${svr_count} -le ${n_servers} ]; do
+while [[ ${svr_count} -le ${n_servers} ]]; do
     for svr in $(cat ${server_nodes}); do
         echo "  svr-${svr_count}: ${svr}" >> ${file}
         svr_count=$((svr_count + 1))
     done
 done
 cli_count=1
-while [ ${cli_count} -le ${n_clients} ]; do
+while [[ ${cli_count} -le ${n_clients} ]]; do
     for cli in $(cat ${client_nodes}); do
         echo "  cli-${cli_count}: ${cli}" >> ${file}
         cli_count=$((cli_count + 1))
@@ -71,7 +81,7 @@ done
 # --- mode ---
 echo " " >> ${file}
 echo "mode:" >> ${file}
-echo "  cc: ${system}" >> ${file}
+echo "  cc: ${mode}" >> ${file}
 echo "  ab: none" >> ${file}
 echo "  read_only: occ" >> ${file}
 echo "  batch: false" >> ${file}

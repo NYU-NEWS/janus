@@ -3,17 +3,20 @@
 # things get fully automated
 
 # ---- Major ---- #
-benchmark="facebook"  # which benchmark to run, for now supports "facebook", "tpcc", "spanner", and "dynamic"
-system="acc"          # which system to run: "acc", "none", "2pl", and "occ"
+benchmarks="facebook spanner tpcc"  # which benchmark to run, for now supports "facebook", "tpcc", "spanner", and "dynamic"
+modes="none occ acc"          # which modes to run: "acc", "none", "2pl", and "occ"
+n_concurrents="1 2 4 8 16 32 64 128"      # number of concurrent txns on each client thread
+
+# ---- Minor ---- #
 n_servers=8           # number of logical servers
 n_clients=64          # number of logical clients
-n_concurrent=100      # number of concurrent txns on each client thread
 duration=60           # how long an experiment runs in seconds
+trials=3              # number of trials for evaluation, then take the median
 
 # ---- One-time ---- #
-src_base="/local/rococo-ml/"    # the top level where executable is stored, could be local to each node
-config_dir="/users/hl0325/acc_configs/"   # on nfs shared by all nodes
+src_base="/local/rococo-ml"    # the top level where executable is stored, could be local to each node
+config_dir="/users/hl0325/acc_configs"   # on nfs shared by all nodes
 server_nodes="./configs/server_nodes.txt"
 client_nodes="./configs/client_nodes.txt"
 launch="${src_base}run.py"      # execution file
-log_dir="/local/acc_experiments/"
+log_dir="/local/acc_experiments"
