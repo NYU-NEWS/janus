@@ -13,8 +13,10 @@ for bench in ${benchmarks}; do  # run all benchmarks
     mkdir -p ${bench_dir}
     for mode in ${modes}; do    # each bench runs all modes
         mode_dir="${bench_dir}/mode"
+        mkdir -p ${mode_dir}
         for n_concurrent in ${n_concurrents}; do   # each mode varies n_concurrent
             n_concurrent_dir="${mode_dir}/n_concurrent_${n_concurrent}"
+            mkdir -p ${n_concurrent_dir}
             ./run-eval.bash ${mode} ${bench} ${n_concurrent} ${n_concurrent_dir}
         done
     done
