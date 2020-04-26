@@ -5,7 +5,7 @@
 source ./parameter.txt
 
 # ---- sanity check ---- #
-n_args=$($#)
+n_args=$#
 if [[ ${n_args} -ne 1 ]]; then
     echo "gather_data.bash requires 1 argument: 1. [trial_dir]"
     exit
@@ -17,6 +17,8 @@ if [[ ! -d "${trial_dir}" ]]; then
     echo "trial_dir [${trial_dir}]  has not been created yet."
     exit
 fi
+
+echo "---- gathering trial data ----"
 
 servers_log="${trial_dir}/servers_log/"
 servers_err="${trial_dir}/servers_err/"
@@ -41,3 +43,5 @@ for cli in $(cat ${client_nodes}); do
     scp ${svr}:${trial_dir}/*.log ${servers_log}
     scp ${svr}:${trial_dir}/*.err ${servers_err}
 done
+
+echo "---- gathering trial data finished ----"

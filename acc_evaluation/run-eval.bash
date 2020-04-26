@@ -4,7 +4,7 @@
 source ./parameter.txt
 
 # ---- sanity check ---- #
-n_args=$($#)
+n_args=$#
 if [[ ${n_args} -ne 4 ]]; then
     echo "run-eval.bash requires four arguments: 1. [mode], 2. [bench], 3. [n_concurrent], and 4. [expt_dir]"
     exit
@@ -35,12 +35,17 @@ expt_name="${mode}-${bench}-${n_servers}s${n_clients}c${n_concurrent}n"
 node_config="${n_servers}s${n_clients}c.yml"
 benchmark_config="${bench}.yml"
 
+echo "#### START NODE CONFIGS ####"
 ./config_nodes.bash ${mode} ${n_concurrent}
+echo "#### NODE CONFIGS FINISHED ####"
+echo ""
 
 sleep 3    # let the bullet fly a while
 
 # run experiment trials
+echo "#### START RUNNING EXPERIMENTS: BENCH (${bench}), MODE (${mode}) ####"
 for trial in $(seq 1 ${trials}); do
+    echo "---- trial ${trial} ----"
     while : ; do
         trial_dir="${expt_dir}/trial${trial}"
         mkdir -p ${trial_dir}
@@ -51,9 +56,12 @@ for trial in $(seq 1 ${trials}); do
         error_count=$(cat ${trial_dir}/servers_err/* | wc -l)
         if [[ ${error_count} -ne 0 ]]; then  # incorrect trial, redo
             sudo rm -r ${trial_dir}
+            echo "---- trial ${trial} FAILED; now REDO ----"
         else    # correct trial, move on
+            echo "---- trial ${trial} SUCCESS ----"
             break
         fi
         # ------------------------------
     done
 done
+echo "#### EXPERIMENTS: BENCH (${bench}), MODE (${mode}) FINISHED ####"

@@ -4,7 +4,7 @@
 source ./parameter.txt    # nodes are specified here
 
 # ---- sanity check ---- #
-n_args=$($#)
+n_args=$#
 if [[ ${n_args} -ne 2 ]]; then
     echo "config_nodes.bash requires two arguments: 1. [mode] and 2. [n_concurrent]"
     exit
