@@ -40,8 +40,8 @@ done
 
 # ---- get logs and errs from clients ---- #
 for cli in $(cat ${client_nodes}); do
-    scp ${svr}:${trial_dir}/*.log ${servers_log}
-    scp ${svr}:${trial_dir}/*.err ${servers_err}
+    scp ${cli}:${trial_dir}/*.log ${clients_log}
+    scp ${cli}:${trial_dir}/*.err ${clients_err}
 done
 
 echo "---- gathering trial data finished ----"
