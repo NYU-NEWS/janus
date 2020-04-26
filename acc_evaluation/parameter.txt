@@ -15,3 +15,5 @@ src_base="/local/rococo-ml/"    # the top level where executable is stored, coul
 config_dir="/users/hl0325/acc_configs/"   # on nfs shared by all nodes
 server_nodes="./configs/server_nodes.txt"
 client_nodes="./configs/client_nodes.txt"
+launch="${src_base}run.py"      # execution file
+log_dir="/local/acc_experiments/"
