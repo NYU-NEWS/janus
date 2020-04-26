@@ -8,6 +8,15 @@ expt_id=$(date +%s)  # a unique experiment id
 expt_dir_base="${log_dir}/${expt_id}"
 mkdir -p ${expt_dir_base}
 
+# ---- sanity check ---- #
+for bench in ${benchmarks}; do
+    if [[ ! -f ${config_dir}/${bench}.yml ]]; then
+        echo "config_dir: [${config_dir} does not have: ${bench}.yml]. Terminates."
+        exit
+    fi
+done
+# ---------------------- #
+
 for bench in ${benchmarks}; do  # run all benchmarks
     bench_dir="${expt_dir_base}/${bench}"
     mkdir -p ${bench_dir}
