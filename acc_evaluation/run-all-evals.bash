@@ -36,10 +36,18 @@ for bench in ${benchmarks}; do  # run all benchmarks
     for mode in ${modes}; do    # each bench runs all modes
         mode_dir="${bench_dir}/${mode}"
         mkdir -p ${mode_dir}
-        for n_concurrent in ${n_concurrents}; do   # each mode varies n_concurrent
-            n_concurrent_dir="${mode_dir}/n_concurrent_${n_concurrent}"
+        client=""
+        for cli in ${n_clients}; do  # first we vary the number of logical clients
+            client=${cli}
+            n_client_dir="${mode_dir}/n_clients_${client}x1"
+            mkdir -p ${n_client_dir}
+            ./run-eval.bash ${mode} ${bench} ${client} 1 ${n_client_dir}
+        done
+        # now we have full # of logical clients, vary n_concurrent, starting with 2
+        for n_concurrent in ${n_concurrents}; do
+            n_concurrent_dir="${mode_dir}/n_clients_${client}x${n_concurrent}"
             mkdir -p ${n_concurrent_dir}
-            ./run-eval.bash ${mode} ${bench} ${n_concurrent} ${n_concurrent_dir}
+            ./run-eval.bash ${mode} ${bench} ${client} ${n_concurrent} ${n_concurrent_dir}
         done
     done
 done

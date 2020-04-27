@@ -5,16 +5,17 @@ source ./parameter.txt    # nodes are specified here
 
 # ---- sanity check ---- #
 n_args=$#
-if [[ ${n_args} -ne 2 ]]; then
-    echo "config_nodes.bash requires two arguments: 1. [mode] and 2. [n_concurrent]"
+if [[ ${n_args} -ne 3 ]]; then
+    echo "config_nodes.bash requires three arguments: 1. [mode], 2. [n_logical_clients], and 3. [n_concurrent]"
     exit
 fi
 # ---------------------- #
 
 mode=$1
-n_concurrent=$2
+n_cli=$2
+n_concurrent=$3
 
-file="./configs/${n_servers}s${n_clients}c.yml"
+file="./configs/${n_servers}s${n_cli}c.yml"
 rm -f ${file}
 
 # --- print header --- #
@@ -42,7 +43,7 @@ done
 # prepare clients
 echo "  client:" >> ${file}
 clients=""
-for x in $(seq 1 ${n_clients}); do
+for x in $(seq 1 ${n_cli}); do
     client="c${x}"
     client_str="- [\"${client}\"]"
     echo "      ${client_str}" >> ${file}
@@ -72,7 +73,7 @@ while [[ ${svr_count} -le ${n_servers} ]]; do
     done
 done
 cli_count=1
-while [[ ${cli_count} -le ${n_clients} ]]; do
+while [[ ${cli_count} -le ${n_cli} ]]; do
     for cli in $(cat ${client_nodes}); do
         echo "  cli-${cli_count}: ${cli}" >> ${file}
         cli_count=$((cli_count + 1))

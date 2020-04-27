@@ -5,8 +5,8 @@ source ./parameter.txt
 
 # ---- sanity check ---- #
 n_args=$#
-if [[ ${n_args} -ne 4 ]]; then
-    echo "run-eval.bash requires four arguments: 1. [mode], 2. [bench], 3. [n_concurrent], and 4. [expt_dir]"
+if [[ ${n_args} -ne 5 ]]; then
+    echo "run-eval.bash requires five arguments: 1. [mode], 2. [bench], 3. [n_cli], 4. [n_concurrent], and 5. [expt_dir]"
     exit
 fi
 
@@ -23,20 +23,21 @@ fi
 
 mode=$1
 bench=$2
-n_concurrent=$3
-expt_dir=$4
+n_cli=$3
+n_concurrent=$4
+expt_dir=$5
 
 if [[ ! -d "${expt_dir}" ]]; then
     echo "expt_dir [${expt_dir}]  has not been created yet."
     exit
 fi
 
-expt_name="${mode}-${bench}-${n_servers}s${n_clients}c${n_concurrent}n"
-node_config="${n_servers}s${n_clients}c.yml"
+expt_name="${mode}-${bench}-${n_servers}s${n_cli}c${n_concurrent}n"
+node_config="${n_servers}s${n_cli}c.yml"
 benchmark_config="${bench}.yml"
 
 echo "#### START NODE CONFIGS ####"
-./config_nodes.bash ${mode} ${n_concurrent}
+./config_nodes.bash ${mode} ${n_cli} ${n_concurrent}
 echo "#### NODE CONFIGS FINISHED ####"
 echo ""
 
@@ -53,8 +54,9 @@ for trial in $(seq 1 ${trials}); do
         ./gather_data.bash ${trial_dir}
         sleep 3
         # --- check trial correctness --
-        error_count=$(cat ${trial_dir}/servers_err/* | wc -l)
-        if [[ ${error_count} -ne 0 ]]; then  # incorrect trial, redo
+        svr_error_count=$(cat ${trial_dir}/servers_err/* | wc -l)
+        cli_error_count=$(cat ${trial_dir}/clients_err/* | wc -l)
+        if [[ ${svr_error_count} -ne 0 ]] || [[ ${cli_error_count} -ne 0 ]]; then  # incorrect trial, redo
             sudo rm -r ${trial_dir}
             echo "---- trial ${trial} FAILED; now REDO ----"
         else    # correct trial, move on

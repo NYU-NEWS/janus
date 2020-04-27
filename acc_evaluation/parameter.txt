@@ -5,11 +5,13 @@
 # ---- Major ---- #
 benchmarks="facebook spanner tpcc"  # which benchmark to run, for now supports "facebook", "tpcc", "spanner", and "dynamic"
 modes="none occ acc"          # which modes to run: "acc", "none", "2pl", and "occ"
-n_concurrents="1 2 4 8 16 32 64 128"      # number of concurrent txns on each client thread
+#n_concurrents="1 2 4 8 16 32 64 128"      # number of concurrent txns on each client thread
+n_concurrents="2 4 8 16 32 64 128"
 
 # ---- Minor ---- #
 n_servers=8           # number of logical servers
-n_clients=64          # number of logical clients
+# n_clients=64
+n_clients="1 2 4 8 16 32 64 128 256"          # number of logical clients, e.g., 1 logical client then only uses 1 physical machine
 duration=60           # how long an experiment runs in seconds
 trials=3              # number of trials for evaluation, then take the median
 
