@@ -32,7 +32,7 @@ extern char SPANNER_TABLE[];
         void GetRotxnRequest(TxRequest* req, uint32_t cid);
         int KeyGenerator();
         int GetTxnSize();
-        int GetNumWrites(int rw_size);
+        static int GetNumWrites(int rw_size);
         void GenerateKeys(std::unordered_set<int>& keys, int size);
         const Value& get_spanner_value();
     };

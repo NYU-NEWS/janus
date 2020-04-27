@@ -83,8 +83,9 @@ namespace janus {
     }
 
     int SpannerWorkload::GetTxnSize() {
-        std::uniform_real_distribution<> dis(0.0, 1.0);
-        double token = dis(rand_gen_);
+        std::uniform_real_distribution<> dis(1.0, 10.0);
+        return std::round(dis(rand_gen_));
+        /*
         // Based on Spanner paper Table 5
         //0 = .99994050354;
         if (token < .99994050354) { return 1; }
@@ -102,9 +103,12 @@ namespace janus {
         if (token < .00000033998) { return 57; }
 
         return 300;
+        */
     }
 
     int SpannerWorkload::GetNumWrites(int rw_size) {
+        return 1;   // based on F1 paper, r-w txn always has exactly 1 write at the end
+        /*
         // get at least 1 write, at most 3 writes
         if (rw_size == 1) {
             return 1;
@@ -119,6 +123,7 @@ namespace janus {
         } else {
             return 3;
         }
+        */
     }
 
     void SpannerWorkload::GenerateKeys(std::unordered_set<int>& keys, int size) {

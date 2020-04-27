@@ -5,9 +5,9 @@
 
 namespace janus {
 // spanner workload characteristics defined below
-#define SPANNER_WRITE_FRACTION 0.001  // 3 orders of magnitude more rotxns, Table 6
+#define SPANNER_WRITE_FRACTION 0.003  // rotxn:w/rtxn = 340:1, Table 6
 //#define SPANNER_WRITE_FRACTION 1
-#define MAX_TXN_SIZE 300    // this is the max size of txns.
+#define MAX_TXN_SIZE 10    // this is the max size of txns.
 #define COL_ID 1  // for now each key has only 1 column, which is col_id = 1, col value sizes vary
 #define N_SPANNER_VALUES 10000 // as used in Eiger (Eiger uses min{50, 10000}, which is too small)
 
