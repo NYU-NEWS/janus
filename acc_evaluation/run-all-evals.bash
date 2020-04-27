@@ -11,12 +11,25 @@ mkdir -p ${expt_dir_base}
 # ---- sanity check ---- #
 for bench in ${benchmarks}; do
     if [[ ! -f ${config_dir}/${bench}.yml ]]; then
-        echo "config_dir: [${config_dir} does not have: ${bench}.yml]. Terminates."
+        echo "config_dir: [${config_dir}] does not have: [${bench}.yml]. Terminates."
+        exit
+    fi
+    if [[ ${bench} != "facebook" ]] && [[ ${bench} != "spanner" ]] && [[ ${bench} != "tpcc" ]]; then
+        echo "This script only allows benchmarks: [facebook], [spanner], and [tpcc]. Terminates."
+        echo "For dynamic workloads, please use [run-dynamic-evals.bash]"
+        exit
+    fi
+done
+
+for mode in ${modes}; do
+    if [[ ${mode} != "none" ]] && [[ ${mode} != "occ" ]] && [[ ${mode} != "2pl" ]] && [[ ${mode} != "acc" ]]; then
+        echo "This script only supports modes: [none], [occ], [2pl], and [acc]. Terminates."
         exit
     fi
 done
 # ---------------------- #
 
+# ----- run eval expts ----- #
 for bench in ${benchmarks}; do  # run all benchmarks
     bench_dir="${expt_dir_base}/${bench}"
     mkdir -p ${bench_dir}
@@ -30,3 +43,16 @@ for bench in ${benchmarks}; do  # run all benchmarks
         done
     done
 done
+echo ""
+echo "========================"
+echo "  ALL EXPERIMENTS DONE"
+echo "========================"
+echo ""
+# -------------------------- #
+
+sleep 10
+
+# -------- process data --------- #
+./process-data.bash ${expt_id}
+
+echo "======== !EVALUATION FINISHED! ========"
