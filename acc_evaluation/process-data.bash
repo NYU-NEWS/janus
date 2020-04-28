@@ -42,9 +42,9 @@ for bench in ${benchmarks}; do
         client=${cli}
         echo "${cli}" >> ${latency_throughput_output}
         echo "${cli}" >> ${commit_rate_output}
-        echo "${cli} >> ${throughput_file}"
-        echo "${cli} >> ${latency_file}"
-        echo "${cli} >> ${commit_rate_file}"
+        echo "${cli}" >> ${throughput_file}
+        echo "${cli}" >> ${latency_file}
+        echo "${cli}" >> ${commit_rate_file}
     done
     for n_concur in ${n_concurrents}; do
         n_cli=$((n_concur * client))
