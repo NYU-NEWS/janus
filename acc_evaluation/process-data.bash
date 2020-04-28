@@ -30,6 +30,10 @@ for bench in ${benchmarks}; do
     mkdir -p ${bench_data_dir}
     latency_throughput_output="${bench_data_dir}/${bench}-latency-throughput.txt"
     commit_rate_output="${bench_data_dir}/${bench}-commit-rate.txt"
+    latency_throughput_file="${bench_data_dir}/${bench}-latency-throughput-graph.txt"
+    throughput_file="${bench_data_dir}/${bench}-throughput-graph.txt"
+    latency_file="${bench_data_dir}/${bench}-latency-graph.txt"
+    commit_rate_file="${bench_data_dir}/${bench}-commit-rate-graph.txt"
     # data_detail="${bench_data_dir}/${bench}-more-details.txt"
     bench_dir="${expt_dir}/${bench}"
 
@@ -38,11 +42,17 @@ for bench in ${benchmarks}; do
         client=${cli}
         echo "${cli}" >> ${latency_throughput_output}
         echo "${cli}" >> ${commit_rate_output}
+        echo "${cli} >> ${throughput_file}"
+        echo "${cli} >> ${latency_file}"
+        echo "${cli} >> ${commit_rate_file}"
     done
     for n_concur in ${n_concurrents}; do
         n_cli=$((n_concur * client))
         echo "${n_cli}" >> ${latency_throughput_output}
         echo "${n_cli}" >> ${commit_rate_output}
+        echo "${n_cli}" >> ${throughput_file}
+        echo "${n_cli}" >> ${latency_file}
+        echo "${n_cli}" >> ${commit_rate_file}
     done
 
     for mode in ${modes}; do
@@ -128,6 +138,40 @@ for bench in ${benchmarks}; do
         paste ${commit_rate_output} ${mode_commit_rate_file} > ${mode_tmp_file2}
         mv ${mode_tmp_file2} ${commit_rate_output}
     done
+    # now we make throughput, latency, and commit-rate data out of output files
+    # -- throughput
+    throughput_tmp="${bench_data_dir}/${bench}-throughput.tmp"
+    client_tmp="${bench_data_dir}/${bench}-client.tmp"
+    col=2
+    for mode in ${modes}; do
+        cat ${latency_throughput_output} | awk -v c="${col}" '{ print $c/$2}' > ${throughput_tmp}
+        paste ${throughput_file} ${throughput_tmp} > ${client_tmp}
+        mv ${client_tmp} ${throughput_file}
+        col=$((col + 2))
+    done
+    # -- latency
+    latency_tmp="${bench_data_dir}/${bench}-latency.tmp"
+    col=3
+    for mode in ${modes}; do
+        cat ${latency_throughput_output} | awk -v c="${col}" '{ print $c/$3}' > ${latency_tmp}
+        paste ${latency_file} ${latency_tmp} > ${client_tmp}
+        mv ${client_tmp} ${latency_file}
+        col=$((col + 2))
+    done
+    # -- commit rate
+    commit_tmp="${bench_data_dir}/${bench}-commit.tmp"
+    col=2
+    for mode in ${modes}; do
+        cat ${commit_rate_output} | awk -v c="${col}" '{ print $c/100}' > ${commit_tmp}
+        paste ${commit_rate_file} ${commit_tmp} > ${client_tmp}
+        mv ${client_tmp} ${commit_rate_file}
+        col=$((col + 1))
+    done
+    # -- clean up
+    cp ${latency_throughput_output} ${latency_throughput_file}
+    rm ${throughput_tmp}
+    rm ${latency_tmp}
+    rm ${commit_tmp}
 done
 
 echo ""
