@@ -10,8 +10,8 @@ namespace janus {
 #define N_KEYS_PER_WRITE 1
 #define MAX_TXN_SIZE 1024    // this is the max size of rotxns, FB writes always access 1 key
 #define OBJ_FRACTION 0.095   // object to assocs ratio
-#define N_TOTAL_KEYS 1000000 // total number of rows
-#define N_DISTINCT_VALUES 50 // as used in Eiger
+#define N_TOTAL_KEYS 100000  // total number of rows
+#define N_DISTINCT_VALUES 50 // as used in Eiger (Eiger uses min{50, 10000})
 
     static std::mt19937 RAND_COL_COUNTS(0);
     static std::mt19937 RAND_FB_VALUES(1);
