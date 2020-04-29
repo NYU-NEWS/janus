@@ -59,10 +59,24 @@ namespace janus {
         auto acc_row = dynamic_cast<AccRow*>(row);
         unsigned long ver_index = 0;
         //Log_info("server:WriteColumn. txid = %lu. ssid_spec = %lu.", this->tid_, sg.ssid_spec);
+        bool is_decided = true;
+        unsigned long prev_index = 0;
         SSID ssid = acc_row->write_column(col_id, std::move(value), sg.ssid_spec, this->tid_, ver_index,
-                sg.offset_safe, sg.mark_finalized); // ver_index is new write
+                sg.offset_safe, is_decided, prev_index, sg.mark_finalized); // ver_index is new write
         row->ref_copy();
         sg.update_metadata(ssid.ssid_low, ssid.ssid_high, false);
+        // for ss
+        if (sg.metadata.indices[row].find(col_id) != sg.metadata.indices[row].end()) {
+            // the same tx has a read on the same col.
+            unsigned long pre_index = sg.metadata.indices[row].at(col_id);
+            verify(acc_row->_row.at(col_id).txn_queue[pre_index].n_pending_reads > 0);
+            acc_row->_row.at(col_id).txn_queue[pre_index].n_pending_reads--;
+        }
+        if (!is_decided) {
+            sg.decided = false;
+            row->ref_copy();
+            sg.metadata.writes_for_query[row][col_id] = prev_index;  // for later AccStatusQuery on write versions
+        }
         sg.metadata.indices[row][col_id] = ver_index; // for validation and finalize
         return true;
     }
@@ -76,10 +90,24 @@ namespace janus {
         int v_counter = 0;
         for (auto col_id : col_ids) {
             unsigned long ver_index = 0;
+            bool is_decided = true;
+            unsigned long prev_index = 0;
             SSID ssid = acc_row->write_column(col_id, std::move(values[v_counter++]), sg.ssid_spec, this->tid_,
-                    ver_index, sg.offset_safe, sg.mark_finalized);
+                    ver_index, sg.offset_safe, is_decided, prev_index, sg.mark_finalized);
             sg.update_metadata(ssid.ssid_low, ssid.ssid_high, false);
             row->ref_copy();
+            // for ss
+            if (sg.metadata.indices[row].find(col_id) != sg.metadata.indices[row].end()) {
+                // the same tx has a read on the same col.
+                unsigned long pre_index = sg.metadata.indices[row].at(col_id);
+                verify(acc_row->_row.at(col_id).txn_queue[pre_index].n_pending_reads > 0);
+                acc_row->_row.at(col_id).txn_queue[pre_index].n_pending_reads--;
+            }
+            if (!is_decided) {
+                sg.decided = false;
+                row->ref_copy();
+                sg.metadata.writes_for_query[row][col_id] = prev_index;  // for later AccStatusQuery on write versions
+            }
             sg.metadata.indices[row][col_id] = ver_index; // for validation and finalize
         }
         return true;

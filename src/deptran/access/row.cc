@@ -59,17 +59,19 @@ namespace janus {
     }
 
     SSID AccRow::write_column(mdb::colid_t col_id, mdb::Value&& value, snapshotid_t ssid_spec, txnid_t tid,
-            unsigned long& ver_index, bool& offset_safe, bool mark_finalized) {
+            unsigned long& ver_index, bool& offset_safe, bool& is_decided, unsigned long& prev_index, bool mark_finalized) {
         if (col_id >= _row.size()) {
             return {};
         }
         // push back to the txn queue
-        return _row.at(col_id).write(std::move(value), ssid_spec, tid, ver_index, offset_safe, mark_finalized);
+        return _row.at(col_id).write(std::move(value), ssid_spec, tid, ver_index, offset_safe, is_decided, prev_index, mark_finalized);
     }
 
     bool AccRow::validate(txnid_t tid, mdb::colid_t col_id, unsigned long index, snapshotid_t ssid_new, bool validate_consistent) {
 	    if (_row[col_id].is_read(tid, index)) {
             // this is validating a read
+            _row[col_id].txn_queue[index].n_pending_reads--;  // for ss
+            check_ss_safe(col_id, index);
             if (!validate_consistent || (!_row[col_id].is_logical_head(index) && _row[col_id].next_record_ssid(index) <= ssid_new)) {
                 // validate fails if there is new logical head && we cannot extend ssid to new
                 return false;
@@ -78,6 +80,8 @@ namespace janus {
             return true;
         } else {
             // validating a write
+            _row[col_id].txn_queue[index].status = VALIDATING;
+            check_ss_safe(col_id, index);
             if (_row[col_id].txn_queue[index].ssid.ssid_low == ssid_new) {
                 // this write is the new snapshot
                 _row[col_id].txn_queue[index].status = VALIDATING;
@@ -90,7 +94,6 @@ namespace janus {
                 return false;
             }
             _row[col_id].txn_queue[index].update_ssid(ssid_new);  // update both low and high to new for writes
-            _row[col_id].txn_queue[index].status = VALIDATING;
             return true;
         }
     }
@@ -101,14 +104,32 @@ namespace janus {
             // deciding a read, nothing to do
             // this hard has some writes to finalize, we skip the reads at this shard
             //Log_info("txnid = %lu; ROW Finalize. col_id = %d; index = %d; decision = %d. A read, returned.", tid, col_id, ver_index, decision);
+            if (_row[col_id].txn_queue[ver_index].n_pending_reads > 0) {
+                // we could have decrement it in validation earlier, so check >0; doing this way is safe
+                _row[col_id].txn_queue[ver_index].n_pending_reads--;  // for ss
+            }
+            check_ss_safe(col_id, ver_index);
             return;
         }
         //Log_info("tid: %lu; finaling a record. decision = %d; index = %lu", tid, decision, ver_index);
         _row[col_id].finalize(tid, ver_index, decision);
+        check_ss_safe(col_id, ver_index);
     }
 
     int8_t AccRow::check_status(mdb::colid_t col_id, unsigned long index) {
         return _row[col_id].txn_queue[index].status;
+    }
+
+    bool AccRow::check_write_status(mdb::colid_t col_id, unsigned long index) {
+        return (_row[col_id].txn_queue[index].status != UNCHECKED
+                && _row[col_id].txn_queue[index].n_pending_reads == 0);
+    }
+
+    void AccRow::check_ss_safe(mdb::colid_t col_id, unsigned long index) {
+        if (check_write_status(col_id, index) && _row[col_id].txn_queue[index].ss_safe != nullptr) {
+            // call acc query callbacks
+            _row[col_id].txn_queue[index].ss_safe();
+        }
     }
 
     txnid_t AccRow::get_ver_tid(mdb::colid_t col_id, unsigned long index) {
@@ -162,6 +183,29 @@ namespace janus {
         b.data = v_data;
         b.len = n_bytes;
         return b;
+    }
+
+    /*
+    void AccRow::read_query_wait(mdb::colid_t col_id, unsigned long index) {
+        _row[col_id].txn_queue[index].status_ready.Wait([](int val)->bool{
+            return (val == FINALIZED || val == ABORTED);
+        });
+    }
+    */
+
+    void AccRow::insert_write_callbacks(mdb::colid_t col_id, unsigned long index, const shared_ptr<AccTxn>& acc_txn, int8_t *res, DeferredReply* defer, int rpc_id) {
+        _row[col_id].txn_queue[index].ss_safe = [=]() -> void {
+            if (acc_txn->subrpc_status[rpc_id] == ABORTED) { // some reads have done the query by early abort
+                return;
+            }
+            acc_txn->subrpc_count[rpc_id]--;
+            if (acc_txn->subrpc_count[rpc_id] == 0 || acc_txn->subrpc_status[rpc_id] == ABORTED) { // all versions decided or early abort
+                // respond to AccStatusQuery RPC
+                *res = acc_txn->query_result();
+                verify(defer != nullptr);
+                defer->reply();
+            }
+        };
     }
 
     AccRow::~AccRow() {

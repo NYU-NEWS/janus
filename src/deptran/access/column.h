@@ -31,15 +31,25 @@ namespace janus {
         SSID ssid;              // snapshot id
         acc_status_t status;    // either unchecked, validating, or finalized
         mdb::Value value;       // the value of this write
+        uint32_t n_pending_reads = 0; // # reads that returning this write
+        // rrr::IntEvent ss_safe;  // fires if status is resolved and n_pending_reads = 0
+        // rrr::SharedIntEvent status_ready;  // for read Accquery
+        std::function<void()> ss_safe = nullptr;
 
         AccTxnRec() : txn_id(-1), ssid(), status(UNCHECKED) {}
         explicit AccTxnRec(mdb::Value&& v, txnid_t tid = 0, acc_status_t stat = UNCHECKED)
-                : txn_id(tid), ssid(), status(stat), value(std::move(v)) {}
+                : txn_id(tid), ssid(), status(stat), value(std::move(v)) {
+                    // ss_safe.Set(status != UNCHECKED && n_pending_reads == 0);
+                    // status_ready.AccSet(stat);
+                }
         AccTxnRec(AccTxnRec&& that) noexcept
                 : txn_id(that.txn_id),
                   ssid(that.ssid),
                   status(that.status),
-                  value(std::move(that.value)) {}
+                  value(std::move(that.value)),
+                  ss_safe(std::move(that.ss_safe)) {}
+                  // ss_safe(std::move(that.ss_safe)),
+                  // status_ready(std::move(that.status_ready)) {}
         AccTxnRec(const AccTxnRec&) = delete;
         AccTxnRec& operator=(const AccTxnRec&) = delete;
         AccTxnRec(mdb::Value&& v, txnid_t tid, const SSID& ss_id, acc_status_t stat = UNCHECKED)
@@ -68,7 +78,8 @@ namespace janus {
         AccColumn(const AccColumn&) = delete;   // no copy
         AccColumn& operator=(const AccColumn&) = delete; // no copy
         const mdb::Value& read(snapshotid_t ssid_spec, SSID& ssid, bool& offset_safe, unsigned long& index, bool& decided);
-        SSID write(mdb::Value&& v, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index, bool& offset_safe, bool mark_finalized = false);
+        SSID write(mdb::Value&& v, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index,
+                bool& offset_safe, bool& decided, unsigned long& prev_index, bool mark_finalized = false);
     private:
         /* basic column members */
         mdb::colid_t col_id = -1;
@@ -91,12 +102,14 @@ namespace janus {
         snapshotid_t logical_head_ssid_for_reads() const;
         acc_status_t logical_head_status() const;
 	    snapshotid_t next_record_ssid(unsigned long index) const;
+	    bool logical_head_ss() const;
 
         /* stable frontier related */
         unsigned long _stable_frontier = 0;
         void update_stable_frontier();
 
         friend class AccRow;
+        friend class AccTxn;
 
         /* ---obsolete----
         SSID ssid_cur;

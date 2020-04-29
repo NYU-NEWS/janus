@@ -344,7 +344,7 @@ class TxData: public CmdData {
     // ssid predictor related below
     std::unordered_map<innid_t, parid_t> innid_to_server;
     std::unordered_map<innid_t, uint64_t> innid_to_starttime;
-    std::unordered_set<parid_t> pars_to_finalize;  // the accessed partitions that this txn writes to
+    std::set<parid_t> pars_to_finalize;  // the accessed partitions that this txn writes to
 };
 
 } // namespace rcc

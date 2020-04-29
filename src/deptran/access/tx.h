@@ -52,16 +52,18 @@ namespace janus {
         bool is_query_done() const;
 	    bool is_status_abort() const;
         void insert_callbacks(const shared_ptr<AccTxn>& acc_txn, int8_t *res, DeferredReply* defer, int rpc_id);
+        // void insert_write_callbacks(const shared_ptr<AccTxn>& acc_txn, int8_t *res, DeferredReply* defer, int rpc_id);
+        std::unordered_map<int, int> subrpc_count;   // tracks the number of sub-callbacks for each query rpc
+        std::unordered_map<int, int8_t> subrpc_status;
 
         ~AccTxn() override;
     private:
         SafeGuard sg;
 	    std::vector<std::function<void(int8_t)>> query_callbacks;  // for AccStatusQuery RPC
-	    std::unordered_map<int, int> subrpc_count;   // tracks the number of sub-callbacks for each query rpc
-        std::unordered_map<int, int8_t> subrpc_status;
+        //std::vector<std::function<void()>> write_callbacks;  // for AccStatusQuery write query RPC
         void load_speculative_ssid(snapshotid_t ssid);
         snapshotid_t get_spec_ssid() const;
-        shared_ptr<IntEvent> acc_query_start = Reactor::CreateSpEvent<IntEvent>();
+        //shared_ptr<IntEvent> acc_query_start = Reactor::CreateSpEvent<IntEvent>();
         friend class SchedulerAcc;
     };
 }   // namespace janus

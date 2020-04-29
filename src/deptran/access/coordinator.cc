@@ -324,7 +324,7 @@ namespace janus {
         if (tx_data()._decided || tx_data()._status_query_done) {
             freeze_coordinator();
             //Log_info("tx: %lu, fast commit.", tx_data().id_);
-            if (!tx_data().pars_to_finalize.empty()) {
+            if (!tx_data().pars_to_finalize.empty() || tx_data()._is_consistent) { // for ss, if didn't do validation, we need to finalize reads
                 AccFinalize(FINALIZED);
             }
             if (tx_data()._decided) {
@@ -348,7 +348,7 @@ namespace janus {
             // this txn aborts due to cascading aborts, consistency check passed
             tx_data().n_cascading_aborts++;
         }
-        if (!tx_data().pars_to_finalize.empty()) {
+        if (!tx_data().pars_to_finalize.empty() || tx_data()._is_consistent) {
             AccFinalize(ABORTED);  // will abort in AccFinalizeAck
         } else {
             // abort here
@@ -360,7 +360,12 @@ namespace janus {
         // TODO: READS NO NEED TO FINALIZE
         std::lock_guard<std::recursive_mutex> lock(mtx_);
         // auto pars = tx_data().GetPartitionIds();
-        auto pars = tx_data().pars_to_finalize;
+        std::set<uint32_t> pars;
+        if (tx_data()._is_consistent) {
+            pars = tx_data().GetPartitionIds();
+        } else {
+            pars = tx_data().pars_to_finalize;
+        }
         verify(!pars.empty());
 	    switch (decision) {
             case FINALIZED:

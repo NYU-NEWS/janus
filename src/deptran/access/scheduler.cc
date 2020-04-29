@@ -92,7 +92,7 @@ namespace janus {
             }
             Reactor::CreateSpEvent<NeverEvent>()->Wait(block_time);
         }
-        tx->acc_query_start->Set(1);  // acc_query RPC can be handled only after we have executed this tx
+        // tx->acc_query_start->Set(1);  // acc_query RPC can be handled only after we have executed this tx
         // Log_debug("Received AccDispatch for txnid = %lu; #pieces = %d.", tx->tid_, sp_vec_piece->size());
         for (const auto& sp_piece_data : *sp_vec_piece) {
             /*
@@ -127,6 +127,7 @@ namespace janus {
     void SchedulerAcc::OnValidate(cmdid_t cmd_id, snapshotid_t ssid_new, int8_t *res) {
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
         if (acc_txn->sg.validate_done) {
+            verify(0);  // should never get here
             // multiple pieces may share the same scheduler and thus validate on the same indices map
             *res = CONSISTENT;  // if there is at least one validation fails, final result will be fail
             return;
@@ -155,6 +156,7 @@ namespace janus {
         if (acc_txn->sg.metadata.indices.empty()) {
             // we've done finalize for this txn already
             //Log_info("txnid = %lu; Finalizing RPC. decision = %d. INDICES EMPTY, returned.", acc_txn->tid_, decision);
+            verify(0); // should not get here
             return;
         }
         // for now, we do not update ssid for offset optimization case.
@@ -180,9 +182,11 @@ namespace janus {
     void SchedulerAcc::OnStatusQuery(cmdid_t cmd_id, int8_t *res, DeferredReply* defer) {
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
         // wait until acc_query_start is set 1 by OnAccDispatch
-        acc_txn->acc_query_start->Wait(MAX_QUERY_TIMEOUT);
-        acc_txn->acc_query_start->Set(0);  // reset
-	    if (acc_txn->sg.metadata.reads_for_query.empty() || acc_txn->is_status_abort()) {
+        // acc_txn->acc_query_start->Wait(MAX_QUERY_TIMEOUT);
+        // acc_txn->acc_query_start->Set(0);  // reset
+	    if ((acc_txn->sg.metadata.reads_for_query.empty()
+	        && acc_txn->sg.metadata.writes_for_query.empty())
+	        || acc_txn->is_status_abort()) {
             *res = FINALIZED;	// some rpc has returned abort if is_status_abort
             verify(defer != nullptr);
             defer->reply();
@@ -193,14 +197,15 @@ namespace janus {
         check_status(cmd_id, is_decided, will_abort);
         if (is_decided) {
             acc_txn->sg.metadata.reads_for_query.clear();
+            acc_txn->sg.metadata.writes_for_query.clear();
             // acc_txn->sg.status_query_done = true;
             *res = will_abort ? ABORTED : FINALIZED;
             defer->reply();
             return;
         }
         // now we check each pending version, and insert a callback func to that version waiting for its status
-	    verify(!acc_txn->sg.metadata.reads_for_query.empty());
-	    int rpc_id = acc_txn->n_query_inc();  // the rpc that needs later reply
+	    verify(!acc_txn->sg.metadata.reads_for_query.empty() || !acc_txn->sg.metadata.writes_for_query.empty());
+        int rpc_id = acc_txn->n_query_inc();  // the rpc that needs later reply
         acc_txn->subrpc_count[rpc_id] = 0;
         acc_txn->subrpc_status[rpc_id] = FINALIZED;
         for (auto& row_col : acc_txn->sg.metadata.reads_for_query) {
@@ -210,14 +215,32 @@ namespace janus {
                     // recently decided
                     continue;
 		        }
-		        // acc_txn->n_query_inc();
+		        acc_txn->n_query_inc();
 		        acc_txn->subrpc_count[rpc_id]++;
 		        txnid_t to_tid = acc_row->get_ver_tid(col_index.first, col_index.second);  // inserting the callback of current txn to txn:tid
 		        auto to_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(to_tid));  // get the target txn
 		        to_txn->insert_callbacks(acc_txn, res, defer, rpc_id);
+		        //int col_id = col_index.first, version = col_index.second;
+                //acc_row->read_query_wait(col_id, version);
+            }
+        }
+        for (auto& row_col : acc_txn->sg.metadata.writes_for_query) {
+            auto acc_row = dynamic_cast<AccRow *>(row_col.first);
+            for (auto &col_index : row_col.second) {
+                if (col_index.second == -1) {
+                    // recently decided
+                    continue;
+                }
+                // acc_txn->n_query_inc();
+                acc_txn->subrpc_count[rpc_id]++;
+                //txnid_t to_tid = acc_row->get_ver_tid(col_index.first, col_index.second);  // inserting the callback of current txn to txn:tid
+                //auto to_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(to_tid));  // get the target txn
+                acc_row->insert_write_callbacks(col_index.first, col_index.second, acc_txn, res, defer, rpc_id);
+                // to_txn->insert_write_callbacks(acc_txn, res, defer, rpc_id);
             }
         }
         acc_txn->sg.metadata.reads_for_query.clear(); // no need those records anymore, might add more by later dispatch
+        acc_txn->sg.metadata.writes_for_query.clear();
     }
 
     void SchedulerAcc::check_status(cmdid_t cmd_id, bool& is_decided, bool& will_abort) {
@@ -240,6 +263,19 @@ namespace janus {
                         //acc_txn->sg.metadata.reads_for_query[row_col.first].erase(col_index.first);
                         will_abort = true;
                         break;
+                    default: verify(0);
+                        break;
+                }
+            }
+        }
+        for (auto& row_col : acc_txn->sg.metadata.writes_for_query) {
+            auto acc_row = dynamic_cast<AccRow *>(row_col.first);
+            for (auto &col_index : row_col.second) {
+                bool write_safe = acc_row->check_write_status(col_index.first, col_index.second);
+                if (!write_safe) {
+                    is_decided = false;
+                } else {
+                    col_index.second = -1;
                 }
             }
         }

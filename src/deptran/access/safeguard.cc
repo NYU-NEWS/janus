@@ -32,5 +32,6 @@ namespace janus {
 //        _n_query = 0;
 //        _n_query_callback = 0;
 	    metadata.reads_for_query.clear();
+	    metadata.writes_for_query.clear();
     }
 }

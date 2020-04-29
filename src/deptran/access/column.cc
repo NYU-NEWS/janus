@@ -33,12 +33,17 @@ namespace janus {
         if (logical_head_status() != FINALIZED) { // then if this tx turns out consistent and all parts decided, can respond immediately
             decided = false;
         }
+        txn_queue[index].n_pending_reads++;  // for strict serializability
         return txn_queue[_logical_head].value;
     }
 
     SSID AccColumn::write(mdb::Value&& v, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index,
-            bool& offset_safe, bool mark_finalized) { // ver_index is the new write's
+            bool& offset_safe, bool& decided, unsigned long& prev_index, bool mark_finalized) { // ver_index is the new write's
         // write returns new ssid
+        prev_index = _logical_head;
+        if (!logical_head_ss()) {
+            decided = false;
+        }
         SSID new_ssid = write_get_next_SSID(ssid_spec);
         if (mark_finalized) { // single_shard_write, can safely mark it finalized now.
             txn_queue.emplace_back(std::move(v), tid, new_ssid, FINALIZED);
@@ -120,6 +125,13 @@ namespace janus {
         }
         return UINT64_MAX;
     }
+
+    bool AccColumn::logical_head_ss() const {
+        // if it is safe for write to proceed ensuring SS
+        return (logical_head_status() != UNCHECKED
+                && txn_queue[_logical_head].n_pending_reads == 0);
+    }
+
     // ---------------------------------
     // ----------- finalize ------------
     void AccColumn::finalize(txnid_t tid, unsigned long index, int8_t decision) {
@@ -138,7 +150,13 @@ namespace janus {
     }
 
     void AccColumn::commit(unsigned long index) {
-        verify(txn_queue[index].status == UNCHECKED || txn_queue[index].status == VALIDATING);
+        /*
+        if (!(txn_queue[index].status == UNCHECKED || txn_queue[index].status == VALIDATING)) {
+            Log_info("HAHAHAH. STAT = %d.", txn_queue[index].status);
+        }
+        */
+        // verify(txn_queue[index].status == UNCHECKED || txn_queue[index].status == VALIDATING);
+        verify(txn_queue[index].status != ABORTED); // could be finalized: single-shard write-only and then finalize it for SS
         txn_queue[index].status = FINALIZED;
         // no need to update logical head, done for this tx in dispatch
         update_stable_frontier();
