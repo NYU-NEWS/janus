@@ -30,6 +30,7 @@ namespace janus {
                 present_cmd->push_back(sp_piece_data);
             }
         }
+        // Log_info("parid = %d; txnid = %lu; OnDispatch.", this->partition_id_, tx->tid_);
         // get all the being-accessed row_keys, feed in predictor, and find decision
         uint64_t now = Predictor::get_current_time();  // the phyiscal arrival time of this tx
         *arrival_time = now;  // return arrival time in response
@@ -107,6 +108,7 @@ namespace janus {
         if (tx->fully_dispatched_->value_ == 0) {
             tx->fully_dispatched_->Set(1);
         }
+        // Log_info("parid = %d; txnid = %lu; indices size = %d.", this->partition_id_, tx->tid_, tx->sg.metadata.indices.size());
         // Step 2: report ssid status
         *ssid_low = tx->sg.metadata.highest_ssid_low;
         *ssid_high = tx->sg.metadata.lowest_ssid_high;
@@ -126,6 +128,7 @@ namespace janus {
 
     void SchedulerAcc::OnValidate(cmdid_t cmd_id, snapshotid_t ssid_new, int8_t *res) {
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
+        Log_info("parid = %d; txnid = %lu; Received validation.", this->partition_id_, acc_txn->tid_);
         if (acc_txn->sg.validate_done) {
             verify(0);  // should never get here
             // multiple pieces may share the same scheduler and thus validate on the same indices map
@@ -152,11 +155,11 @@ namespace janus {
 
     void SchedulerAcc::OnFinalize(cmdid_t cmd_id, int8_t decision) {
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
-        //Log_info("parid = %d; txnid = %lu; Finalizing RPC. decision = %d.", this->partition_id_, acc_txn->tid_, decision);
+        Log_info("parid = %d; txnid = %lu; Finalizing RPC. decision = %d.", this->partition_id_, acc_txn->tid_, decision);
         if (acc_txn->sg.metadata.indices.empty()) {
             // we've done finalize for this txn already
-            //Log_info("txnid = %lu; Finalizing RPC. decision = %d. INDICES EMPTY, returned.", acc_txn->tid_, decision);
-            verify(0); // should not get here
+            Log_info("txnid = %lu; Finalizing RPC. decision = %d. INDICES EMPTY, returned.", acc_txn->tid_, decision);
+            // verify(0); // should not get here
             return;
         }
         // for now, we do not update ssid for offset optimization case.
@@ -181,6 +184,7 @@ namespace janus {
 
     void SchedulerAcc::OnStatusQuery(cmdid_t cmd_id, int8_t *res, DeferredReply* defer) {
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
+        Log_info("txnid = %lu; On statusQuery.", acc_txn->tid_);
         // wait until acc_query_start is set 1 by OnAccDispatch
         // acc_txn->acc_query_start->Wait(MAX_QUERY_TIMEOUT);
         // acc_txn->acc_query_start->Set(0);  // reset
@@ -215,7 +219,7 @@ namespace janus {
                     // recently decided
                     continue;
 		        }
-		        acc_txn->n_query_inc();
+		        //acc_txn->n_query_inc();
 		        acc_txn->subrpc_count[rpc_id]++;
 		        txnid_t to_tid = acc_row->get_ver_tid(col_index.first, col_index.second);  // inserting the callback of current txn to txn:tid
 		        auto to_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(to_tid));  // get the target txn
@@ -271,7 +275,7 @@ namespace janus {
         for (auto& row_col : acc_txn->sg.metadata.writes_for_query) {
             auto acc_row = dynamic_cast<AccRow *>(row_col.first);
             for (auto &col_index : row_col.second) {
-                bool write_safe = acc_row->check_write_status(col_index.first, col_index.second);
+                bool write_safe = acc_row->check_write_status(acc_txn->tid_, col_index.first, col_index.second);
                 if (!write_safe) {
                     is_decided = false;
                 } else {

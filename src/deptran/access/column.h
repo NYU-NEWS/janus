@@ -47,6 +47,7 @@ namespace janus {
                   ssid(that.ssid),
                   status(that.status),
                   value(std::move(that.value)),
+                  n_pending_reads(that.n_pending_reads),
                   ss_safe(std::move(that.ss_safe)) {}
                   // ss_safe(std::move(that.ss_safe)),
                   // status_ready(std::move(that.status_ready)) {}

@@ -11,7 +11,7 @@ namespace janus {
         auto acc_row = dynamic_cast<AccRow*>(row);
         unsigned long index = 0;
 	    bool is_decided = true;
-        //Log_info("server:ReadColumn. txid = %lu. ssid_spec = %lu.", this->tid_, sg.ssid_spec);
+        Log_info("server:ReadColumn. txid = %lu. ssid_spec = %lu.", this->tid_, sg.ssid_spec);
         SSID ssid = acc_row->read_column(col_id, value, sg.ssid_spec, sg.offset_safe, index, is_decided);
         row->ref_copy();
         sg.metadata.indices[row][col_id] = index;  // for later validation, could be overwritten by later writes
@@ -19,9 +19,15 @@ namespace janus {
             sg.decided = false;
             row->ref_copy();
             sg.metadata.reads_for_query[row][col_id] = index;  // for later AccStatusQuery on read versions
+            Log_info("txnid = %lu; read waiting on tx = %lu. col = %d, index = %d.",
+                     this->tid_, acc_row->_row[col_id].txn_queue[index].txn_id, col_id, index);
+        } else {
+            Log_info("txnid = %lu; decided read on tx = %lu. col = %d, index = %d.",
+                     this->tid_, acc_row->_row[col_id].txn_queue[index].txn_id, col_id, index);
         }
         // update metadata
         sg.update_metadata(ssid.ssid_low, ssid.ssid_high, true);
+        Log_info("after read. n_reads = %d", acc_row->_row[col_id].txn_queue[index].n_pending_reads);
         return true;
     }
 
@@ -69,13 +75,19 @@ namespace janus {
         if (sg.metadata.indices[row].find(col_id) != sg.metadata.indices[row].end()) {
             // the same tx has a read on the same col.
             unsigned long pre_index = sg.metadata.indices[row].at(col_id);
+            Log_info("txnid = %lu; write: prev_read colid = %d; index = %d.", this->tid_, col_id, pre_index);
             verify(acc_row->_row.at(col_id).txn_queue[pre_index].n_pending_reads > 0);
             acc_row->_row.at(col_id).txn_queue[pre_index].n_pending_reads--;
         }
         if (!is_decided) {
             sg.decided = false;
             row->ref_copy();
+            Log_info("txnid = %lu; write waiting on tx = %lu. col = %d, index = %d.",
+                    this->tid_, acc_row->_row[col_id].txn_queue[prev_index].txn_id, col_id, prev_index);
             sg.metadata.writes_for_query[row][col_id] = prev_index;  // for later AccStatusQuery on write versions
+        } else {
+            Log_info("txnid = %lu; decided write on tx = %lu. col = %d, index = %d.",
+                     this->tid_, acc_row->_row[col_id].txn_queue[prev_index].txn_id, col_id, prev_index);
         }
         sg.metadata.indices[row][col_id] = ver_index; // for validation and finalize
         return true;

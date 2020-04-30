@@ -70,8 +70,10 @@ namespace janus {
     bool AccRow::validate(txnid_t tid, mdb::colid_t col_id, unsigned long index, snapshotid_t ssid_new, bool validate_consistent) {
 	    if (_row[col_id].is_read(tid, index)) {
             // this is validating a read
-            _row[col_id].txn_queue[index].n_pending_reads--;  // for ss
-            check_ss_safe(col_id, index);
+            if (_row[col_id].txn_queue[index].n_pending_reads > 0) {
+                _row[col_id].txn_queue[index].n_pending_reads--;  // for ss
+                check_ss_safe(tid, col_id, index);
+            }
             if (!validate_consistent || (!_row[col_id].is_logical_head(index) && _row[col_id].next_record_ssid(index) <= ssid_new)) {
                 // validate fails if there is new logical head && we cannot extend ssid to new
                 return false;
@@ -81,7 +83,7 @@ namespace janus {
         } else {
             // validating a write
             _row[col_id].txn_queue[index].status = VALIDATING;
-            check_ss_safe(col_id, index);
+            check_ss_safe(tid, col_id, index);
             if (_row[col_id].txn_queue[index].ssid.ssid_low == ssid_new) {
                 // this write is the new snapshot
                 _row[col_id].txn_queue[index].status = VALIDATING;
@@ -107,28 +109,32 @@ namespace janus {
             if (_row[col_id].txn_queue[ver_index].n_pending_reads > 0) {
                 // we could have decrement it in validation earlier, so check >0; doing this way is safe
                 _row[col_id].txn_queue[ver_index].n_pending_reads--;  // for ss
+                check_ss_safe(tid, col_id, ver_index);
             }
-            check_ss_safe(col_id, ver_index);
             return;
         }
         //Log_info("tid: %lu; finaling a record. decision = %d; index = %lu", tid, decision, ver_index);
         _row[col_id].finalize(tid, ver_index, decision);
-        check_ss_safe(col_id, ver_index);
+        check_ss_safe(tid, col_id, ver_index);
     }
 
     int8_t AccRow::check_status(mdb::colid_t col_id, unsigned long index) {
         return _row[col_id].txn_queue[index].status;
     }
 
-    bool AccRow::check_write_status(mdb::colid_t col_id, unsigned long index) {
+    bool AccRow::check_write_status(txnid_t tid, mdb::colid_t col_id, unsigned long index) {
+        Log_info("txnid = %lu. check_write_status. colid = %d; index = %d, status = %d, n_pending_reads = %d",
+                tid, col_id, index, _row[col_id].txn_queue[index].status, _row[col_id].txn_queue[index].n_pending_reads);
         return (_row[col_id].txn_queue[index].status != UNCHECKED
                 && _row[col_id].txn_queue[index].n_pending_reads == 0);
     }
 
-    void AccRow::check_ss_safe(mdb::colid_t col_id, unsigned long index) {
-        if (check_write_status(col_id, index) && _row[col_id].txn_queue[index].ss_safe != nullptr) {
+    void AccRow::check_ss_safe(txnid_t tid, mdb::colid_t col_id, unsigned long index) {
+        if (check_write_status(tid, col_id, index) && _row[col_id].txn_queue[index].ss_safe != nullptr) {
             // call acc query callbacks
+            Log_info("txnid = %lu; checking ss_safe and CALL callback.", tid);
             _row[col_id].txn_queue[index].ss_safe();
+            _row[col_id].txn_queue[index].ss_safe = nullptr;
         }
     }
 

@@ -24,7 +24,7 @@ namespace janus {
         bool validate(txnid_t tid, mdb::colid_t col_id, unsigned long index, snapshotid_t ssid_new, bool validate_consistent);
         void finalize(txnid_t tid, mdb::colid_t col_id, unsigned long ver_index, int8_t decision);
         int8_t check_status(mdb::colid_t col_id, unsigned long index);
-        bool check_write_status(mdb::colid_t col_id, unsigned long index);
+        bool check_write_status(txnid_t tid, mdb::colid_t col_id, unsigned long index);
         txnid_t get_ver_tid(mdb::colid_t col_id, unsigned long index);
         mdb::MultiBlob get_key() const override;
         mdb::Value get_column(int column_id) const override;  // used by tpcc population
@@ -39,7 +39,7 @@ namespace janus {
         std::vector<AccColumn> _row;
         std::vector<std::pair<char*, int>> keys;
         static int get_key_type(const mdb::Value& value);
-        void check_ss_safe(mdb::colid_t col_id, unsigned long index);
+        void check_ss_safe(txnid_t tid, mdb::colid_t col_id, unsigned long index);
         friend class AccTxn;
     };
 }   // namespace janus
