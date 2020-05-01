@@ -1,3 +1,10 @@
+Branch: ACC-SS-READY
+
+Basic acc protocol without ml, early-aborts, and read-wait.
+ 
+Consistency: strict serializability.
+
+=======================================
 
 ## Janus 
 [![Build Status](https://travis-ci.org/NYU-NEWS/janus.svg?branch=master)](https://travis-ci.org/NYU-NEWS/janus)
@@ -48,4 +55,5 @@ python3 test_run.py -m janus
 
 ## More
 Check out the doc directory to find more about how to build the system on older or newer distros, how to run the system in a distributed setup, and how to generate figures in the paper, etc.
+
 
