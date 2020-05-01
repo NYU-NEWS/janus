@@ -31,7 +31,9 @@ namespace janus {
         SSID ssid;              // snapshot id
         acc_status_t status;    // either unchecked, validating, or finalized
         mdb::Value value;       // the value of this write
-        uint32_t n_pending_reads = 0; // # reads that returning this write
+        // uint32_t n_pending_reads = 0; // # reads that returning this write
+        std::unordered_set<txnid_t> pending_reads = {};
+
         // rrr::IntEvent ss_safe;  // fires if status is resolved and n_pending_reads = 0
         // rrr::SharedIntEvent status_ready;  // for read Accquery
         std::function<void()> ss_safe = nullptr;
@@ -47,7 +49,8 @@ namespace janus {
                   ssid(that.ssid),
                   status(that.status),
                   value(std::move(that.value)),
-                  n_pending_reads(that.n_pending_reads),
+                  //n_pending_reads(that.n_pending_reads),
+                  pending_reads(std::move(that.pending_reads)),
                   ss_safe(std::move(that.ss_safe)) {}
                   // ss_safe(std::move(that.ss_safe)),
                   // status_ready(std::move(that.status_ready)) {}
@@ -78,7 +81,7 @@ namespace janus {
         AccColumn(AccColumn&& that) noexcept;
         AccColumn(const AccColumn&) = delete;   // no copy
         AccColumn& operator=(const AccColumn&) = delete; // no copy
-        const mdb::Value& read(snapshotid_t ssid_spec, SSID& ssid, bool& offset_safe, unsigned long& index, bool& decided);
+        const mdb::Value& read(txnid_t tid, snapshotid_t ssid_spec, SSID& ssid, bool& offset_safe, unsigned long& index, bool& decided);
         SSID write(mdb::Value&& v, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index,
                 bool& offset_safe, bool& decided, unsigned long& prev_index, bool mark_finalized = false);
     private:

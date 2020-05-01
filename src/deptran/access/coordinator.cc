@@ -64,7 +64,7 @@ namespace janus {
             }
             tx_data().ssid_spec = current_time + SSIDPredictor::predict_ssid(servers);
         }
-        Log_info("Client:Dispatch. txid = %lu. current_time = %lu. sending ssid_spec = %lu.", txn->id_, current_time, tx_data().ssid_spec);
+        // Log_info("Client:Dispatch. txid = %lu. current_time = %lu. sending ssid_spec = %lu.", txn->id_, current_time, tx_data().ssid_spec);
         for (auto& pair: cmds_by_par) {
             const parid_t& par_id = pair.first;
             auto& cmds = pair.second;
@@ -149,7 +149,7 @@ namespace janus {
             parid_t server = tx_data().innid_to_server.at(inn_id);
             uint64_t starttime = tx_data().innid_to_starttime.at(inn_id);
             uint64_t time_delta = arrival_time >= starttime ? arrival_time - starttime : 0;  // for clock skew (rare case)
-            Log_info("Client:ACK. txid = %lu. innid = %lu. server = %lu. time_delta = %lu.", txn->id_, inn_id, server, time_delta);
+            // Log_info("Client:ACK. txid = %lu. innid = %lu. server = %lu. time_delta = %lu.", txn->id_, inn_id, server, time_delta);
             SSIDPredictor::update_time_tracker(server, time_delta);
             track_arrival_time = false;
         }
@@ -219,7 +219,7 @@ namespace janus {
         if (is_frozen()) return;  // this txn has been decided, either committed or aborted
         if (tx_data()._status_query_done) return; // no need to wait on query acks, it has been decided
         tx_data().n_status_callback++;
-        Log_info("tx: %lu, received 1 Query ack. res = %d", tx_data().id_, res);
+        // Log_info("tx: %lu, received 1 Query ack. res = %d", tx_data().id_, res);
         switch (res) {
             case FINALIZED:  // do nothing
                 break;
@@ -234,9 +234,9 @@ namespace janus {
                 aborted_ = true;
             }
             committed_ = !aborted_;
-            Log_info("tx: %lu, time as usual. commit = %d", tx_data().id_, committed_);
+            // Log_info("tx: %lu, time as usual. commit = %d", tx_data().id_, committed_);
             if (phase_ % n_phase == Phase::INIT_END) { // this txn is waiting in FINAL phase
-                Log_info("tx: %lu, time goes back. commit = %d", tx_data().id_, committed_);
+                // Log_info("tx: %lu, time goes back. commit = %d", tx_data().id_, committed_);
                 time_flies_back();
             }
             // this txn has not got to FINAL phase yet, either validating or dispatching
@@ -246,7 +246,7 @@ namespace janus {
     // ------------- SAFEGUARD ----------------
     void CoordinatorAcc::SafeGuardCheck() {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-        Log_info("SG txid = %lu.", tx_data().id_);
+        // Log_info("SG txid = %lu.", tx_data().id_);
         verify(!committed_);
         // ssid check consistency
         // added offset-1 optimization
@@ -298,12 +298,12 @@ namespace janus {
         }
         if (tx_data().n_validate_ack_ == tx_data().n_validate_rpc_) {
             // have received all acks
-            Log_info("tx: %lu, all validation ACKs received.", tx_data().id_);
+            // Log_info("tx: %lu, all validation ACKs received.", tx_data().id_);
             committed_ = !aborted_;
             if (!tx_data()._validation_failed) {
                 tx_data().n_validation_passed++;  // stats
             }
-            Log_info("tx: %lu, acc_validate_ack. commit = %d", tx_data().id_, committed_);
+            // Log_info("tx: %lu, acc_validate_ack. commit = %d", tx_data().id_, committed_);
             GotoNextPhase(); // to phase final
         }
     }
@@ -360,7 +360,7 @@ namespace janus {
     void CoordinatorAcc::AccFinalize(int8_t decision) {
         // TODO: READS NO NEED TO FINALIZE
         std::lock_guard<std::recursive_mutex> lock(mtx_);
-        Log_info("tx: %lu, sending finalizeRPC. decision = %d.", tx_data().id_, decision);
+        // Log_info("tx: %lu, sending finalizeRPC. decision = %d.", tx_data().id_, decision);
         // auto pars = tx_data().GetPartitionIds();
         std::set<uint32_t> pars;
         if (tx_data()._is_consistent) {
@@ -399,7 +399,7 @@ namespace janus {
         tx_data().n_abort_ack++;
         if (tx_data().n_abort_ack == tx_data().n_abort_sent) {
             // we only restart after this txn is aborted everywhere
-            Log_info("tx: %lu, all ABORT finalize acks received.", tx_data().id_);
+            // Log_info("tx: %lu, all ABORT finalize acks received.", tx_data().id_);
             Restart();
         }
     }

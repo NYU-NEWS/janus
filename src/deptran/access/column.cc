@@ -20,7 +20,7 @@ namespace janus {
         update_stable_frontier();
     }
 
-    const mdb::Value& AccColumn::read(snapshotid_t ssid_spec, SSID& ssid, bool& offset_safe, unsigned long& index, bool& decided) {
+    const mdb::Value& AccColumn::read(txnid_t tid, snapshotid_t ssid_spec, SSID& ssid, bool& offset_safe, unsigned long& index, bool& decided) {
         // return logical head
         index = _logical_head;
         snapshotid_t ssid_new = read_get_next_SSID(ssid_spec);
@@ -33,7 +33,8 @@ namespace janus {
         if (logical_head_status() != FINALIZED) { // then if this tx turns out consistent and all parts decided, can respond immediately
             decided = false;
         }
-        txn_queue[index].n_pending_reads++;  // for strict serializability
+        txn_queue[index].pending_reads.insert(tid);
+        // txn_queue[index].n_pending_reads++;  // for strict serializability
         return txn_queue[_logical_head].value;
     }
 
@@ -129,7 +130,8 @@ namespace janus {
     bool AccColumn::logical_head_ss() const {
         // if it is safe for write to proceed ensuring SS
         return (logical_head_status() != UNCHECKED
-                && txn_queue[_logical_head].n_pending_reads == 0);
+                && txn_queue[_logical_head].pending_reads.empty());
+                // && txn_queue[_logical_head].n_pending_reads == 0);
     }
 
     // ---------------------------------

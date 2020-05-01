@@ -46,7 +46,7 @@ namespace janus {
         return new_row;
     }
 
-    SSID AccRow::read_column(mdb::colid_t col_id, mdb::Value* value, snapshotid_t ssid_spec, bool& offset_safe, unsigned long& index, bool& decided) {
+    SSID AccRow::read_column(txnid_t tid, mdb::colid_t col_id, mdb::Value* value, snapshotid_t ssid_spec, bool& offset_safe, unsigned long& index, bool& decided) {
         if (col_id >= _row.size()) {
             // col_id is invalid. We're doing a trick here.
             // keys are col_ids
@@ -54,7 +54,7 @@ namespace janus {
             return {};
         }
         SSID ssid;
-        *value = _row.at(col_id).read(ssid_spec, ssid, offset_safe, index, decided);
+        *value = _row.at(col_id).read(tid, ssid_spec, ssid, offset_safe, index, decided);
         return ssid;
     }
 
@@ -70,8 +70,14 @@ namespace janus {
     bool AccRow::validate(txnid_t tid, mdb::colid_t col_id, unsigned long index, snapshotid_t ssid_new, bool validate_consistent) {
 	    if (_row[col_id].is_read(tid, index)) {
             // this is validating a read
+            /*
             if (_row[col_id].txn_queue[index].n_pending_reads > 0) {
                 _row[col_id].txn_queue[index].n_pending_reads--;  // for ss
+                check_ss_safe(tid, col_id, index);
+            }
+            */
+            if (_row[col_id].txn_queue[index].pending_reads.find(tid) != _row[col_id].txn_queue[index].pending_reads.end()) {
+                _row[col_id].txn_queue[index].pending_reads.erase(tid);  // for ss
                 check_ss_safe(tid, col_id, index);
             }
             if (!validate_consistent || (!_row[col_id].is_logical_head(index) && _row[col_id].next_record_ssid(index) <= ssid_new)) {
@@ -106,9 +112,16 @@ namespace janus {
             // deciding a read, nothing to do
             // this hard has some writes to finalize, we skip the reads at this shard
             //Log_info("txnid = %lu; ROW Finalize. col_id = %d; index = %d; decision = %d. A read, returned.", tid, col_id, ver_index, decision);
+            /*
             if (_row[col_id].txn_queue[ver_index].n_pending_reads > 0) {
                 // we could have decrement it in validation earlier, so check >0; doing this way is safe
                 _row[col_id].txn_queue[ver_index].n_pending_reads--;  // for ss
+                check_ss_safe(tid, col_id, ver_index);
+            }
+            */
+            if (_row[col_id].txn_queue[ver_index].pending_reads.find(tid) != _row[col_id].txn_queue[ver_index].pending_reads.end()) {
+                // we could have decrement it in validation earlier, so check >0; doing this way is safe
+                _row[col_id].txn_queue[ver_index].pending_reads.erase(tid);  // for ss
                 check_ss_safe(tid, col_id, ver_index);
             }
             return;
@@ -123,16 +136,17 @@ namespace janus {
     }
 
     bool AccRow::check_write_status(txnid_t tid, mdb::colid_t col_id, unsigned long index) {
-        Log_info("txnid = %lu. check_write_status. colid = %d; index = %d, status = %d, n_pending_reads = %d",
-                tid, col_id, index, _row[col_id].txn_queue[index].status, _row[col_id].txn_queue[index].n_pending_reads);
+        //Log_info("txnid = %lu. check_write_status. colid = %d; index = %d, status = %d, n_pending_reads = %d",
+        //        tid, col_id, index, _row[col_id].txn_queue[index].status, _row[col_id].txn_queue[index].n_pending_reads);
         return (_row[col_id].txn_queue[index].status != UNCHECKED
-                && _row[col_id].txn_queue[index].n_pending_reads == 0);
+                && _row[col_id].txn_queue[index].pending_reads.empty());
+                // && _row[col_id].txn_queue[index].n_pending_reads == 0);
     }
 
     void AccRow::check_ss_safe(txnid_t tid, mdb::colid_t col_id, unsigned long index) {
         if (check_write_status(tid, col_id, index) && _row[col_id].txn_queue[index].ss_safe != nullptr) {
             // call acc query callbacks
-            Log_info("txnid = %lu; checking ss_safe and CALL callback.", tid);
+            // Log_info("txnid = %lu; checking ss_safe and CALL callback.", tid);
             _row[col_id].txn_queue[index].ss_safe();
             _row[col_id].txn_queue[index].ss_safe = nullptr;
         }
