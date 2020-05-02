@@ -10,7 +10,7 @@ if [[ ${n_args} -ne 5 ]]; then
     exit
 fi
 
-if [[ "$1" != "none" ]] && [[ "$1" != "occ" ]] && [[ "$1" != "2pl" ]] && [[ "$1" != "acc" ]]; then
+if [[ "$1" != "none" ]] && [[ "$1" != "occ" ]] && [[ "$1" != "2pl" ]] && [[ "$1" != "acc" ]] && [[ "$1" != "acc_ss" ]]; then
     echo "Invalid [mode] argument: only supports [none], [occ], [2pl], and [occ] for now."
     exit
 fi
@@ -30,6 +30,10 @@ expt_dir=$5
 if [[ ! -d "${expt_dir}" ]]; then
     echo "expt_dir [${expt_dir}]  has not been created yet."
     exit
+fi
+
+if [[ ${mode} == "acc_ss"  ]]; then
+    launch="${src_base}/run_ss.py"
 fi
 
 expt_name="${mode}-${bench}-${n_servers}s${n_cli}c${n_concurrent}n"

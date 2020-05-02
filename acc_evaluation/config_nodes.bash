@@ -82,7 +82,12 @@ done
 # --- mode ---
 echo " " >> ${file}
 echo "mode:" >> ${file}
-echo "  cc: ${mode}" >> ${file}
+if [[ "${mode}" == "acc_ss" ]] || [[ "${mode}" == "acc"  ]]; then
+    echo "  cc: acc" >> ${file}
+else
+    echo "  cc: ${mode}" >> ${file}
+fi
+# echo "  cc: ${mode}" >> ${file}
 echo "  ab: none" >> ${file}
 echo "  read_only: occ" >> ${file}
 echo "  batch: false" >> ${file}

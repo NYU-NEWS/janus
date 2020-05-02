@@ -22,7 +22,7 @@ for bench in ${benchmarks}; do
 done
 
 for mode in ${modes}; do
-    if [[ ${mode} != "none" ]] && [[ ${mode} != "occ" ]] && [[ ${mode} != "2pl" ]] && [[ ${mode} != "acc" ]]; then
+    if [[ ${mode} != "none" ]] && [[ ${mode} != "occ" ]] && [[ ${mode} != "2pl" ]] && [[ ${mode} != "acc" ]] && [[ ${mode} != "acc_ss" ]]; then
         echo "This script only supports modes: [none], [occ], [2pl], and [acc]. Terminates."
         exit
     fi
