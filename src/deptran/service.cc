@@ -101,6 +101,7 @@ void ClassicServiceImpl::Commit(const rrr::i64& tid,
 //  const auto& func = [tid, res, defer, this]() {
     auto sched = (SchedulerClassic*) dtxn_sched_;
     sched->OnCommit(tid, SUCCESS);
+    sched->DestroyTx(tid);   // GC
     *res = SUCCESS;
     defer->reply();
 //  };
@@ -115,6 +116,7 @@ void ClassicServiceImpl::Abort(const rrr::i64& tid,
 //  const auto& func = [tid, res, defer, this]() {
     auto sched = (SchedulerClassic*) dtxn_sched_;
     sched->OnCommit(tid, REJECT);
+    sched->DestroyTx(tid);   // GC
     *res = SUCCESS;
     defer->reply();
 //  };
@@ -435,6 +437,7 @@ void ClassicServiceImpl::AccFinalize(const i64& cmd_id,
     // server-side handler of AccFinalize
     auto* sched = (SchedulerAcc*) dtxn_sched_;
     sched->OnFinalize(cmd_id, decision);
+    sched->DestroyTx(cmd_id);
     defer->reply();
 }
 

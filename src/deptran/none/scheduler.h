@@ -7,6 +7,13 @@ namespace janus {
 class SchedulerNone: public SchedulerClassic {
  using SchedulerClassic::SchedulerClassic;
  public:
+    bool Dispatch(cmdid_t cmd_id,
+                  shared_ptr<Marshallable> cmd,
+                  TxnOutput& ret_output) override {
+        bool res = SchedulerClassic::Dispatch(cmd_id, cmd, ret_output);
+        DestroyTx(cmd_id);
+        return res;
+    }
 
   virtual bool DispatchPiece(Tx& tx,
                              TxPieceData& cmd,
