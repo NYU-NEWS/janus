@@ -178,7 +178,7 @@ namespace janus {
             txn->lowest_ssid_high = ssid_high;
         }
         // basic ssid check consistency
-        if (txn->highest_ssid_low > txn->lowest_ssid_high) {
+        if (txn->highest_ssid_low >= txn->lowest_ssid_high) {
             // inconsistent if no overlapped range
             txn->_is_consistent = false;
         }

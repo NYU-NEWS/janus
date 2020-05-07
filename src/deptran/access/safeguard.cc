@@ -8,12 +8,14 @@ namespace janus {
         if (ssid_high < metadata.lowest_ssid_high) {
             metadata.lowest_ssid_high = ssid_high;
         }
+        /*
         if (is_read) {
             return;
         }
+        */
         // only update highest_write_ssid upon writes, so ssids wont increase too quickly
-        if (ssid_low > metadata.highest_write_ssid) {
-            metadata.highest_write_ssid = ssid_low;
+        if (ssid_high > metadata.highest_write_ssid) {
+            metadata.highest_write_ssid = ssid_high;
         }
     }
 
