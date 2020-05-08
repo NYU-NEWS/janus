@@ -221,7 +221,8 @@ class ClassicServiceImpl : public ClassicService {
                      const uint64_t& timestamp,
                      int32_t* res, DeferredReply* defer) override;
 
-  void AccDispatch(const i64& cmd_id,
+  void AccDispatch(const uint32_t& coo_id,
+                   const i64& cmd_id,
                    const MarshallDeputy& cmd,
                    const uint64_t& ssid_spec,
                    const uint8_t& is_single_shard_write_only,

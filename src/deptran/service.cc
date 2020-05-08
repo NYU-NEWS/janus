@@ -403,7 +403,8 @@ void ClassicServiceImpl::CommitFebruus(const txid_t& tx_id,
   defer->reply();
 }
 
-void ClassicServiceImpl::AccDispatch(const i64& cmd_id,
+void ClassicServiceImpl::AccDispatch(const uint32_t& coo_id,
+                                  const i64& cmd_id,
                                   const MarshallDeputy& md,
                                   const uint64_t& ssid_spec,
                                   const uint8_t& is_single_shard_write_only,
@@ -418,6 +419,8 @@ void ClassicServiceImpl::AccDispatch(const i64& cmd_id,
     shared_ptr<Marshallable> sp = md.sp_data_;
     auto* sched = (SchedulerAcc*) dtxn_sched_;
     *res = sched->OnDispatch(cmd_id, sp, ssid_spec, is_single_shard_write_only, ssid_low, ssid_high, ssid_new, *output, arrival_time);
+    // GC earlier txns by the same coordinator
+    sched->gc_txns(coo_id, cmd_id);
     defer->reply();
 }
 

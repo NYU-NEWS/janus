@@ -1,7 +1,8 @@
 #include "commo.h"
 
 namespace janus {
-    void AccCommo::AccBroadcastDispatch(shared_ptr<vector<shared_ptr<SimpleCommand>>> sp_vec_piece,
+    void AccCommo::AccBroadcastDispatch(uint32_t coo_id,
+                                        shared_ptr<vector<shared_ptr<SimpleCommand>>> sp_vec_piece,
                                         Coordinator *coo,
                                         snapshotid_t ssid_spec,
                                         bool is_single_shard_write_only,
@@ -36,7 +37,7 @@ namespace janus {
         shared_ptr<VecPieceData> sp_vpd(new VecPieceData);
         sp_vpd->sp_vec_piece_data_ = sp_vec_piece;
         MarshallDeputy md(sp_vpd); // ????
-        auto future = proxy->async_AccDispatch(cmd_id, md, ssid_spec, (uint8_t)is_single_shard_write_only, fuattr); // call Acc dispatch RPC
+        auto future = proxy->async_AccDispatch(coo_id, cmd_id, md, ssid_spec, (uint8_t)is_single_shard_write_only, fuattr); // call Acc dispatch RPC
 	    // now insert AccStatusQuery RPC here
         rrr::FutureAttr status_fuattr;
         status_fuattr.callback =
@@ -72,7 +73,7 @@ namespace janus {
                             fu->get_reply() >> ret;
                             // do nothing
                         };
-                Future::safe_release(pair.second->async_AccDispatch(cmd_id, md, ssid_spec, (uint8_t)is_single_shard_write_only, fu2));
+                Future::safe_release(pair.second->async_AccDispatch(coo_id, cmd_id, md, ssid_spec, (uint8_t)is_single_shard_write_only, fu2));
 		        Future::safe_release(pair.second->async_AccStatusQuery(status_cmd_id, fu2_status));
             }
         }

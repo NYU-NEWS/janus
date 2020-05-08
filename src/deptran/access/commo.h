@@ -8,7 +8,8 @@ namespace janus {
     class AccCommo : public Communicator {
     public:
         using Communicator::Communicator;
-        void AccBroadcastDispatch(shared_ptr<vector<shared_ptr<SimpleCommand>>> sp_vec_piece,
+        void AccBroadcastDispatch(uint32_t coo_id,
+                                  shared_ptr<vector<shared_ptr<SimpleCommand>>> sp_vec_piece,
                                   Coordinator *coo,
                                   snapshotid_t ssid_spec,
                                   bool is_single_shard_write_only,

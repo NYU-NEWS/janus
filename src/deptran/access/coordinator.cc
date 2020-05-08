@@ -97,7 +97,8 @@ namespace janus {
             if (is_single_shard && write_only) {
                 tx_data().n_single_shard_write_only++; // stats
             }
-            commo()->AccBroadcastDispatch(sp_vec_piece,
+            commo()->AccBroadcastDispatch(this->coo_id_,
+                                          sp_vec_piece,
                                           this,
                                           tx_data().ssid_spec,
                                           is_single_shard && write_only,

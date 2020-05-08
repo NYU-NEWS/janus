@@ -19,6 +19,7 @@ class TxLogServer {
   locid_t loc_id_ = -1;
   siteid_t site_id_ = -1;
   unordered_map<txid_t, shared_ptr<Tx>> dtxns_{};
+  unordered_map<uint32_t, txid_t> tx_gc_tracker_{};
   unordered_map<txid_t, mdb::Txn *> mdb_txns_{};
   unordered_map<txid_t, Executor *> executors_{};
 
@@ -114,6 +115,7 @@ class TxLogServer {
                                   bool read_only = false);
   virtual shared_ptr<Tx> GetOrCreateTx(txnid_t tid, bool ro = false);
   void DestroyTx(i64 tid);
+  void gc_txns(uint32_t coo_id, i64 cmd_id);
 
   virtual void DestroyExecutor(txnid_t txn_id);
 

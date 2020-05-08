@@ -78,8 +78,19 @@ shared_ptr<Tx> TxLogServer::GetOrCreateTx(txnid_t tid, bool ro) {
 void TxLogServer::DestroyTx(i64 tid) {
   Log_debug("destroy tid %ld", tid);
   auto it = dtxns_.find(tid);
-  verify(it != dtxns_.end());
-  dtxns_.erase(it);
+  // verify(it != dtxns_.end());  // with new aggressive gc, this is possible
+  if (it != dtxns_.end()) {
+      dtxns_.erase(it);
+  }
+}
+
+void TxLogServer::gc_txns(uint32_t coo_id, i64 cmd_id) {
+    if (tx_gc_tracker_.find(coo_id) != tx_gc_tracker_.end()) {
+        // has earlier txns by this coo, GC it
+        i64 tx_to_gc = tx_gc_tracker_.at(coo_id);
+        DestroyTx(tx_to_gc);
+    }
+    tx_gc_tracker_[coo_id] = cmd_id;
 }
 
 shared_ptr<Tx> TxLogServer::GetTx(txnid_t tid) {
