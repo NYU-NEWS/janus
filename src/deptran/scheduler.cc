@@ -88,7 +88,9 @@ void TxLogServer::gc_txns(uint32_t coo_id, i64 cmd_id) {
     if (tx_gc_tracker_.find(coo_id) != tx_gc_tracker_.end()) {
         // has earlier txns by this coo, GC it
         i64 tx_to_gc = tx_gc_tracker_.at(coo_id);
-        DestroyTx(tx_to_gc);
+        if (tx_to_gc != cmd_id) {
+            DestroyTx(tx_to_gc);
+        }
     }
     tx_gc_tracker_[coo_id] = cmd_id;
 }
