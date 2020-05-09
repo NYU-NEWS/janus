@@ -87,7 +87,7 @@ class Communicator {
   void SendStart(SimpleCommand& cmd,
                  int32_t output_size,
                  std::function<void(Future *fu)> &callback);
-  void BroadcastDispatch(shared_ptr<vector<shared_ptr<SimpleCommand>>> vec_piece_data,
+  void BroadcastDispatch(uint32_t coo_id, shared_ptr<vector<shared_ptr<SimpleCommand>>> vec_piece_data,
                          Coordinator *coo,
                          const std::function<void(int res, TxnOutput &)> &) ;
   void SendPrepare(parid_t gid,

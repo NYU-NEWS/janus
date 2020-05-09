@@ -189,7 +189,7 @@ Communicator::NearestProxyForPartition(parid_t par_id) const {
   return partition_proxies[index];
 };
 
-void Communicator::BroadcastDispatch(
+void Communicator::BroadcastDispatch(uint32_t coo_id,
     shared_ptr<vector<shared_ptr<TxPieceData>>> sp_vec_piece,
     Coordinator* coo,
     const function<void(int, TxnOutput&)> & callback) {
@@ -212,7 +212,7 @@ void Communicator::BroadcastDispatch(
   sp_vpd->sp_vec_piece_data_ = sp_vec_piece;
   MarshallDeputy md(sp_vpd); // ????
 
-  auto future = proxy->async_Dispatch(cmd_id, md, fuattr);
+  auto future = proxy->async_Dispatch(coo_id, cmd_id, md, fuattr);
   Future::safe_release(future);
   if (!broadcasting_to_leaders_only_) {
     for (auto& pair : rpc_par_proxies_[par_id]) {
@@ -225,7 +225,7 @@ void Communicator::BroadcastDispatch(
               fu->get_reply() >> ret >> outputs;
               // do nothing
             };
-        Future::safe_release(pair.second->async_Dispatch(cmd_id, md, fu2));
+        Future::safe_release(pair.second->async_Dispatch(coo_id, cmd_id, md, fu2));
       }
     }
   }

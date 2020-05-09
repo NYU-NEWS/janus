@@ -38,7 +38,7 @@ ClassicServiceImpl::ClassicServiceImpl(TxLogServer* sched,
   this->RegisterStats();
 }
 
-void ClassicServiceImpl::Dispatch(const i64& cmd_id,
+void ClassicServiceImpl::Dispatch(const uint32_t& coo_id, const i64& cmd_id,
                                   const MarshallDeputy& md,
                                   int32_t* res,
                                   TxnOutput* output,
@@ -60,6 +60,8 @@ void ClassicServiceImpl::Dispatch(const i64& cmd_id,
   if (!dtxn_sched()->Dispatch(cmd_id, sp, *output)) {
     *res = REJECT;
   }
+    // GC earlier txns by the same coordinator
+    dtxn_sched()->gc_txns(coo_id, cmd_id);
   defer->reply();
 }
 

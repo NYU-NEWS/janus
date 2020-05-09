@@ -28,7 +28,7 @@ abstract service Classic {
 //                 i32 res,
 //                 TxnOutput output);
 
-  defer Dispatch(i64 tid, MarshallDeputy cmd |
+  defer Dispatch(uint32_t coo_id, i64 tid, MarshallDeputy cmd |
                  i32 res, TxnOutput output);
 
   defer Prepare(i64 tid, 

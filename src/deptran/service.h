@@ -37,7 +37,7 @@ class ClassicServiceImpl : public ClassicService {
 
   void rpc_null(DeferredReply* defer) override ;
 
-  void Dispatch(const i64& cmd_id,
+  void Dispatch(const uint32_t& coo_id, const i64& cmd_id,
                 const MarshallDeputy& cmd,
                 int32_t* res,
                 TxnOutput* output,
