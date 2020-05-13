@@ -16,7 +16,7 @@ namespace janus {
                                         int& n_status_query,
                                         const std::function<void(int8_t res)> &callback_status) {
         cmdid_t cmd_id = sp_vec_piece->at(0)->root_id_;
-        verify(sp_vec_piece->size() > 0);
+        // verify(sp_vec_piece->size() > 0);
         auto par_id = sp_vec_piece->at(0)->PartitionId();
         rrr::FutureAttr fuattr;
         fuattr.callback =

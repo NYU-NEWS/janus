@@ -46,7 +46,8 @@ namespace janus {
             // we make dynamic RW txn multi-hop!
             pieces_per_hop = cmd_->dynamic_rw_reads;
         }
-        auto cmds_by_par = txn->GetReadyPiecesData(pieces_per_hop); // all ready pieces sent in one parallel round
+        auto cmds_by_par = txn->GetReadyPiecesData();
+        // auto cmds_by_par = txn->GetReadyPiecesData(pieces_per_hop); // all ready pieces sent in one parallel round
         Log_debug("AccDispatchAsync for tx_id: %" PRIx64, txn->root_id_);
         // check if this txn is a single-shard txn: if so, always consistent and no need to validate
         bool is_single_shard = false;
@@ -136,7 +137,7 @@ namespace janus {
         bool track_arrival_time = true;
         for (auto& pair : outputs) {
             const innid_t& inn_id = pair.first;
-            verify(!dispatch_acks_.at(inn_id));
+            // verify(!dispatch_acks_.at(inn_id));
             dispatch_acks_[inn_id] = true;
             Log_debug("get start ack %ld/%ld for cmd_id: %lx, inn_id: %d",
                       n_dispatch_ack_, n_dispatch_, cmd_->id_, inn_id);
@@ -145,10 +146,10 @@ namespace janus {
             if (!track_arrival_time) {
                 continue;
             }
-            verify(tx_data().innid_to_server.find(inn_id) != tx_data().innid_to_server.end());
-            verify(tx_data().innid_to_starttime.find(inn_id) != tx_data().innid_to_starttime.end());
-            parid_t server = tx_data().innid_to_server.at(inn_id);
-            uint64_t starttime = tx_data().innid_to_starttime.at(inn_id);
+            //(tx_data().innid_to_server.find(inn_id) != tx_data().innid_to_server.end());
+            //verify(tx_data().innid_to_starttime.find(inn_id) != tx_data().innid_to_starttime.end());
+            parid_t server = tx_data().innid_to_server[inn_id];
+            uint64_t starttime = tx_data().innid_to_starttime[inn_id];
             uint64_t time_delta = arrival_time >= starttime ? arrival_time - starttime : 0;  // for clock skew (rare case)
             // Log_info("Client:ACK. txid = %lu. innid = %lu. server = %lu. time_delta = %lu.", txn->id_, inn_id, server, time_delta);
             SSIDPredictor::update_time_tracker(server, time_delta);
@@ -247,8 +248,7 @@ namespace janus {
     // ------------- SAFEGUARD ----------------
     void CoordinatorAcc::SafeGuardCheck() {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
-        // Log_info("SG txid = %lu.", tx_data().id_);
-        verify(!committed_);
+        // verify(!committed_);
         // ssid check consistency
         // added offset-1 optimization
         if (offset_1_check_pass() && !tx_data()._is_consistent) {
@@ -276,7 +276,7 @@ namespace janus {
     void CoordinatorAcc::AccValidate() {
         std::lock_guard<std::recursive_mutex> lock(mtx_);
         auto pars = tx_data().GetPartitionIds();
-        verify(!pars.empty());
+        // verify(!pars.empty());
         for (auto par_id : pars) {
             tx_data().n_validate_rpc_++;
             commo()->AccBroadcastValidate(par_id,
@@ -317,7 +317,7 @@ namespace janus {
         } else if (aborted_) {
             AccAbort();
         } else {
-            verify(0);
+            AccAbort();
         }
     }
 
@@ -342,7 +342,7 @@ namespace janus {
     void CoordinatorAcc::AccAbort() {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
         //Log_info("tx: %lu, abort.", tx_data().id_);
-        verify(aborted_);
+        // (aborted_);
         freeze_coordinator();
         // abort as long as inconsistent or there is at least one statusquery ack is abort (cascading abort)
         // for stats
@@ -369,7 +369,7 @@ namespace janus {
         } else {
             pars = tx_data().pars_to_finalize;
         }
-        verify(!pars.empty());
+        // verify(!pars.empty());
 	    switch (decision) {
             case FINALIZED:
                 for (auto par_id : pars) {

@@ -152,13 +152,6 @@ namespace janus {
     }
 
     void AccColumn::commit(unsigned long index) {
-        /*
-        if (!(txn_queue[index].status == UNCHECKED || txn_queue[index].status == VALIDATING)) {
-            Log_info("HAHAHAH. STAT = %d.", txn_queue[index].status);
-        }
-        */
-        // verify(txn_queue[index].status == UNCHECKED || txn_queue[index].status == VALIDATING);
-        verify(txn_queue[index].status != ABORTED); // could be finalized: single-shard write-only and then finalize it for SS
         txn_queue[index].status = FINALIZED;
         // no need to update logical head, done for this tx in dispatch
         update_stable_frontier();
@@ -166,7 +159,7 @@ namespace janus {
     }
 
     void AccColumn::abort(unsigned long index) {
-        verify(txn_queue[index].status != FINALIZED);  // could have been early aborted
+        // verify(txn_queue[index].status != FINALIZED);  // could have been early aborted
         txn_queue[index].status = ABORTED;
         update_logical_head();
         // no need to update stable frontier, wont change anyway upon aborts

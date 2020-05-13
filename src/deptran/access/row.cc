@@ -14,19 +14,19 @@ namespace janus {
         auto* raw_row = new AccRow();
         auto* new_row = (AccRow*)mdb::Row::create(raw_row, schema, values_ptr);
         */
-        verify(values.size() == schema->columns_count());
+        // verify(values.size() == schema->columns_count());
         auto* new_row = new AccRow();
         new_row->schema_ = schema;
         new_row->_row.reserve(schema->columns_count());
         for (int col_id = 0; col_id < values.size(); ++col_id) {
             const mdb::Schema::column_info* info = schema->get_column_info(col_id);
             if (info->indexed) { // this col is a key
-                int n_bytes = get_key_type(values.at(col_id));
+                int n_bytes = get_key_type(values[col_id]);
                 char* key = new char[n_bytes];
-                values.at(col_id).write_binary(key);
+                values[col_id].write_binary(key);
                 new_row->keys.emplace_back(key, n_bytes);
             }
-            new_row->_row.emplace_back(col_id, std::move(values.at(col_id)));
+            new_row->_row.emplace_back(col_id, std::move(values[col_id]));
             /*
             new_row->_row.emplace(
                     std::piecewise_construct,
@@ -54,7 +54,7 @@ namespace janus {
             return {};
         }
         SSID ssid;
-        *value = _row.at(col_id).read(tid, ssid_spec, ssid, offset_safe, index, decided);
+        *value = _row[col_id].read(tid, ssid_spec, ssid, offset_safe, index, decided);
         return ssid;
     }
 
@@ -64,7 +64,7 @@ namespace janus {
             return {};
         }
         // push back to the txn queue
-        return _row.at(col_id).write(std::move(value), ssid_spec, tid, ver_index, offset_safe, is_decided, prev_index, mark_finalized);
+        return _row[col_id].write(std::move(value), ssid_spec, tid, ver_index, offset_safe, is_decided, prev_index, mark_finalized);
     }
 
     bool AccRow::validate(txnid_t tid, mdb::colid_t col_id, unsigned long index, snapshotid_t ssid_new, bool validate_consistent) {
@@ -176,8 +176,8 @@ namespace janus {
         mdb::MultiBlob mb(keys.size());
         for (int i = 0; i < mb.count(); i++) {
             mdb::blob b;
-            b.data = keys.at(i).first;
-            b.len = keys.at(i).second;
+            b.data = keys[i].first;
+            b.len = keys[i].second;
             mb[i] = b;
         }
         return mb;
@@ -185,18 +185,18 @@ namespace janus {
 
     mdb::Value AccRow::get_column(int column_id) const {
         //verify(_row.find(column_id) != _row.end());
-        verify(_row.size() > column_id);
-        verify(!_row.at(column_id).txn_queue.empty());
-        mdb::Value v = _row.at(column_id).txn_queue.at(0).value;
+        // verify(_row.size() > column_id);
+        // verify(!_row.at(column_id).txn_queue.empty());
+        mdb::Value v = _row[column_id].txn_queue[0].value;
         return v;
     }
 
     mdb::blob AccRow::get_blob(int column_id) const {
         //verify(_row.find(column_id) != _row.end());
-        verify(_row.size() > column_id);
-        verify(!_row.at(column_id).txn_queue.empty());
+        // verify(_row.size() > column_id);
+        // verify(!_row.at(column_id).txn_queue.empty());
         mdb::blob b;
-        Value v = _row.at(column_id).txn_queue.at(0).value;
+        Value v = _row[column_id].txn_queue[0].value;
         int n_bytes = get_key_type(v);
         char* v_data = new char[n_bytes];
         v.write_binary(v_data);

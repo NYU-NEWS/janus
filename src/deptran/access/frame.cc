@@ -12,7 +12,7 @@ namespace janus {
                                              janus::ClientControlServiceImpl *ccsi,
                                              uint32_t id,
                                              shared_ptr<TxnRegistry> txn_reg) {
-        verify(config != nullptr);
+        // verify(config != nullptr);
         auto *coord = new CoordinatorAcc(coo_id,
                                          benchmark,
                                          ccsi,

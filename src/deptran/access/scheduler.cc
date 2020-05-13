@@ -18,7 +18,10 @@ namespace janus {
                                      uint64_t* arrival_time) {
         // Step 1: dispatch and execute pieces
         auto sp_vec_piece = dynamic_pointer_cast<VecPieceData>(cmd)->sp_vec_piece_data_;
-        verify(sp_vec_piece);
+        // verify(sp_vec_piece);
+        if (!sp_vec_piece) {
+            return SUCCESS;
+        }
         //auto tx = GetOrCreateTx(cmd_id);
         auto tx = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));
         tx->load_speculative_ssid(ssid_spec);   // read in the spec ssid provided by the client
@@ -208,7 +211,7 @@ namespace janus {
             return;
         }
         // now we check each pending version, and insert a callback func to that version waiting for its status
-	    verify(!acc_txn->sg.metadata.reads_for_query.empty() || !acc_txn->sg.metadata.writes_for_query.empty());
+	    // verify(!acc_txn->sg.metadata.reads_for_query.empty() || !acc_txn->sg.metadata.writes_for_query.empty());
         int rpc_id = acc_txn->n_query_inc();  // the rpc that needs later reply
         acc_txn->subrpc_count[rpc_id] = 0;
         acc_txn->subrpc_status[rpc_id] = FINALIZED;
@@ -292,7 +295,7 @@ namespace janus {
                 return sp_piece_data->input.at(var_id).get_i32();
             case SPANNER: {
                 if (var_id == SPANNER_TXN_SIZE || var_id == SPANNER_RW_W_COUNT) {
-                    verify(sp_piece_data->root_type_ == SPANNER_RW);
+                    //(sp_piece_data->root_type_ == SPANNER_RW);
                     return NOT_ROW_KEY;
                 } else {
                     return sp_piece_data->input.at(var_id).get_i32();
@@ -300,7 +303,7 @@ namespace janus {
             }
             case DYNAMIC: {
                 if (var_id == DYNAMIC_TXN_SIZE || var_id == DYNAMIC_RW_W_COUNT) {
-                    verify(sp_piece_data->root_type_ == DYNAMIC_RW);
+                    //verify(sp_piece_data->root_type_ == DYNAMIC_RW);
                     return NOT_ROW_KEY;
                 } else {
                     return sp_piece_data->input.at(var_id).get_i32();
