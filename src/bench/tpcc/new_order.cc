@@ -60,7 +60,9 @@ void TpccWorkload::RegNewOrder() {
        DF_NO,
        PROC {
 //          verify(cmd.input.size() >= 2);
-          verify(cmd.input[TPCC_VAR_W_ID].get_i32() >= 0);
+         Value buf(0);
+         output[TPCC_VAR_O_ID] = buf;
+         verify(cmd.input[TPCC_VAR_W_ID].get_i32() >= 0);
           mdb::MultiBlob mb(2);
           mb[0] = cmd.input[TPCC_VAR_D_ID].get_blob();
           mb[1] = cmd.input[TPCC_VAR_W_ID].get_blob();
@@ -71,7 +73,6 @@ void TpccWorkload::RegNewOrder() {
               tx.GetTable(TPCC_TB_DISTRICT),
               mb,
               ROW_DISTRICT);
-              Value buf(0);
           // R district
           tx.ReadColumn(row_district,
                            TPCC_COL_DISTRICT_D_TAX,

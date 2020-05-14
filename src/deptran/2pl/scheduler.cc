@@ -58,7 +58,7 @@ bool Scheduler2pl::Guard(Tx &tx_box, Row *row, int col_idx, bool write) {
       return 1;
     }
   });
-  verify(!sp_tx->aborted_);
+//  verify(!sp_tx->aborted_);
   verify(!sp_tx->committed_);
   if (lock_req_id > 0) {
     sp_tx->locked_locks_.emplace_back(lock, lock_req_id);
