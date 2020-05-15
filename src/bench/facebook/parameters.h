@@ -15,6 +15,7 @@ namespace janus {
 
     static std::mt19937 RAND_COL_COUNTS(0);
     static std::mt19937 RAND_FB_VALUES(1);
+    static std::mt19937 RAND_FB_KEY_SHUFFLE(2);
     static int get_col_count() {
         std::uniform_real_distribution<> dis(0.0, 1.0);
         double token = dis(RAND_COL_COUNTS);
@@ -230,8 +231,16 @@ namespace janus {
         return values;
     }
 
+    static std::vector<int> initialize_fb_shuffled_keys() {
+        std::vector<int> keys(N_TOTAL_KEYS);
+        std::iota( std::begin(keys), std::end(keys), 0 );
+        std::shuffle( keys.begin(), keys.end() , RAND_FB_KEY_SHUFFLE);
+        return keys;
+    }
+
 static const std::vector<int> COL_COUNTS = initialize_col_counts();
 static const std::vector<Value> FB_VALUES = initialize_fb_values();
+static const std::vector<int> SHUFFLED_KEYS = initialize_fb_shuffled_keys();
 }
 
 

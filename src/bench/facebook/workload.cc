@@ -71,7 +71,14 @@ namespace janus {
         } else if (dist == "zipf") { // skewed workloads
             static auto alpha = Config::GetConfig()->coeffcient_;
             static ZipfDist d(alpha, fb_para_.n_friends_);
-            return d(rand_gen_);  // TODO: tpca does "rotate", what is that for?
+            int zipf_key = d(rand_gen_);  // TODO: tpca does "rotate", what is that for?
+            if (zipf_key >= 0 && zipf_key < N_TOTAL_KEYS && !SHUFFLED_KEYS.empty()) {
+                // verify(!SHUFFLED_KEYS.empty());
+                return SHUFFLED_KEYS[zipf_key];
+            } else {
+                // verify(0);
+                return zipf_key;
+            }
         } else { // FIXME: we do not support fixed_dist for now
             verify(0); // do not support other workloads for now
             return 0;
