@@ -66,9 +66,9 @@ void RccCommo::SendFinish(parid_t pid,
 }
 
 
-shared_ptr<pair<map<txid_t, ParentEdge<RccTx>>, set<txid_t>>>
+shared_ptr<map<txid_t, parent_set_t>>
 RccCommo::Inquire(parid_t pid, txnid_t tid) {
-  auto ret = std::make_shared<pair<map<txid_t, ParentEdge<RccTx>>, set<txid_t>>>();
+  auto ret = std::make_shared<map<txid_t, parent_set_t>>();
   auto ev = Reactor::CreateSpEvent<IntEvent>();
   FutureAttr fuattr;
   function<void(Future*)> cb = [ret, &ev] (Future* fu) {
@@ -80,8 +80,8 @@ RccCommo::Inquire(parid_t pid, txnid_t tid) {
   auto proxy = (ClassicProxy*)NearestProxyForPartition(pid).second;
   Future::safe_release(proxy->async_RccInquire(tid, fuattr));
 //  ev->Wait(60*1000*1000);
+//  verify(ev->status_ != Event::TIMEOUT);
   ev->Wait();
-  verify(ev->status_ != Event::TIMEOUT);
   return ret;
 }
 

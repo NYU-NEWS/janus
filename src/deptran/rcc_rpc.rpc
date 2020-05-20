@@ -75,8 +75,9 @@ abstract service Classic {
   // defer RccInquire(epoch_t epoch,
   //                  txnid_t txn_id |
   //                  MarshallDeputy md_res_graph);
+
   defer RccInquire(txnid_t txn_id |
-                   pair<map<uint64_t, ParentEdge<RccTx>>, set<uint64_t>>);
+                   map<uint64_t, parent_set_t>);
 
   defer RccDispatchRo(SimpleCommand cmd |
                       map<i32, Value> output);
@@ -93,7 +94,7 @@ abstract service Classic {
   defer RccCommit(cmdid_t id,
                   rank_t rank,
                   int32_t need_validation,
-                  map<uint64_t,ParentEdge<RccTx>>  parents |
+                  parent_set_t  parents |
                   int32_t res,
                   TxnOutput output);
 
@@ -118,7 +119,7 @@ abstract service Classic {
                      rank_t rank,
                      vector<SimpleCommand> cmd |
                      i32 res,
-                     map<uint64_t, ParentEdge<RccTx>> );
+                     parent_set_t x );
 
   defer JanusPreAccept(cmdid_t txn_id,
                        rank_t rank,
@@ -135,7 +136,7 @@ abstract service Classic {
 
   defer RccAccept(cmdid_t txn_id,
                     ballot_t ballot,
-                    map<uint64_t,ParentEdge<RccTx>>  |
+                    parent_set_t p  |
                     i32 res);
 
   defer JanusAccept(cmdid_t txn_id,

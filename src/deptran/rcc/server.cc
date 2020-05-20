@@ -76,16 +76,22 @@ int RccServer::OnDispatch(const vector<SimpleCommand>& cmd,
   return dtxn->need_validation_;
 }
 
-pair<map<txid_t, ParentEdge<RccTx>>, set<txid_t>>
+map<txid_t, parent_set_t>
 RccServer::OnInquire(txnid_t tx_id) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto sp_tx = dynamic_pointer_cast<RccTx>(GetOrCreateTx(tx_id));
   verify (sp_tx->Involve(TxLogServer::partition_id_));
   //register an event, triggered when the status >= COMMITTING;
   sp_tx->status_.WaitUntilGreaterOrEqualThan(TXN_CMT);
-  pair<map<txid_t, ParentEdge<RccTx>>, set<txid_t>> ret;
-  ret.first = sp_tx->parents_;
-  ret.second = sp_tx->scc_ids_;
+  map<txid_t, parent_set_t> ret;
+  if (sp_tx->IsDecided()) {
+    verify(!sp_tx->scc_->empty());
+    for (auto v : *sp_tx->scc_) {
+      ret[v->id()] = v->parents_;
+    }
+  } else {
+    ret[0] = sp_tx->parents_;
+  }
   return ret;
 }
 
@@ -166,19 +172,39 @@ void RccServer::InquireAboutIfNeeded(RccTx& dtxn) {
     if (!dtxn.during_asking) {
       dtxn.during_asking = true;
       auto result = commo()->Inquire(par_id, dtxn.tid_);
-      dtxn.parents_ = result->first;
-      auto& scc_ids = result->second;
-      if (!scc_ids.empty()) {
-//        dtxn.UpdateStatus(TXN_DCD);
-        dtxn.UpdateStatus(TXN_CMT);
-        if (scc_ids.size() == 1) {
-          dtxn.scc_ids_ = scc_ids;
-          dtxn.scc_ = std::make_shared<vector<RccTx*>>();
-          dtxn.scc_->push_back(&dtxn);
-          dtxn.UpdateStatus(TXN_DCD);
+//      auto s = result->size() > 1 ? TXN_DCD : TXN_CMT;
+      auto scc = std::make_shared<vector<RccTx*>>();
+      verify(!result->empty());
+      if (result->size() == 1) {
+        for (auto& pair: *result) {
+          auto& id = pair.first;
+          ReplaceParentEdges(dtxn.parents_, pair.second);
+          dtxn.UpdateStatus(TXN_CMT);
+          if (id > 0) {
+            dtxn.scc_->push_back(&dtxn);
+            dtxn.UpdateStatus(TXN_DCD);
+          }
         }
       } else {
-        dtxn.UpdateStatus(TXN_CMT);
+        for (auto& pair : *result) {
+          auto id = pair.first;
+          verify(id > 0);
+          auto& parents_map = pair.second;
+          auto tx = FindOrCreateV(id);
+          ReplaceParentEdges(tx->parents_, parents_map);
+          tx->UpdateStatus(TXN_CMT);
+          scc->push_back(tx.get());
+        }
+        for (auto v : *scc) {
+          if(!v->scc_->empty()) {
+#ifdef DEBUG_CHECK
+            verify(*v->scc_ == *scc);
+#endif
+            continue;
+          } else {
+            v->scc_ = scc;
+          }
+        }
       }
       verify(dtxn.status() >= TXN_CMT);
     }
@@ -217,64 +243,307 @@ void RccServer::WaitUntilAllPredecessorsAtLeastCommitting(RccTx* vertex) {
   if (vertex->all_anc_cmt_hint) {
     return;
   }
+  if (vertex->waiting_all_anc_committing_) {
+    vertex->wait_all_anc_commit_done_.WaitUntilGreaterOrEqualThan(1);
+  }
+
+
+//  bool skip_search = true;
+//  for (auto& pair : vertex->parents_) {
+//    auto parent = FindOrCreateParentVPtr(*vertex, pair.first, pair.second);
+//    if (parent->all_anc_cmt_hint) {
+//      continue;
+//    }
+//    if (!parent->Involve(partition_id_)) {
+//      skip_search = false;
+//      continue;
+//    }
+//    parent->status_.WaitUntilGreaterOrEqualThan(TXN_CMT);
+//    if (parent->waiting_all_anc_committing_) {
+//      parent->wait_all_anc_commit_done_.WaitUntilGreaterOrEqualThan(1);
+//    } else {
+//      skip_search = false;
+//    }
+//  }
+//  if (skip_search) {
+//    vertex->all_anc_cmt_hint = true;
+//    vertex->wait_all_anc_commit_done_.Set(1);
+//    return;
+//  }
+
+//
+//  if (skip_search) {
+//    vertex->waiting_all_anc_committing_ = true;
+//    for (auto& pair : vertex->parents_) {
+//      auto parent = FindOrCreateParentVPtr(*vertex, pair.first, pair.second);
+//      parent->wait_all_anc_commit_done_.WaitUntilGreaterOrEqualThan(1);
+//    }
+//    vertex->wait_all_anc_commit_done_.Set(1);
+//    vertex->all_anc_cmt_hint = true;
+//    return;
+//  }
+#ifdef DEBUG_CHECK
+  verify(!vertex->__debug_entered_committing_);
+  auto __debug_id = vertex->id();
+  auto rno = RandomGenerator::rand(1,10000000);
+  vertex->__debug_random_number_ = rno;
+  vertex->__debug_entered_committing_ = true;
+  auto& xxpair = __debug_search_status_[vertex->id()];
+  auto& xxxxx = xxpair.first;
+  auto& xxxxxyyyyy = xxpair.second;
+  verify(xxxxx == 0);
+  verify(xxxxxyyyyy == nullptr);
+  xxxxx = RccTx::TRAVERSING;
+#endif
+//  if (vertex->waiting_all_anc_committing_) {
+//     already on a search path
+//    verify(vertex->waiting_on_ != nullptr);
+//    verify(*vertex->waiting_on_ != nullptr);
+//    vertex->wait_all_anc_commit_done_.WaitUntilGreaterOrEqualThan(1);
+//    return;
+//  }
+//  RccTx** waitingon = new (RccTx*); // TODO memory leak, fix later
+//  *waitingon = nullptr;
+//  vertex->waiting_on_ = waitingon;
   auto searched_set = std::make_shared<set<RccTx*>>();
-  std::function<int(RccTx&, RccTx&)> func =
-      [&](RccTx& self, RccTx& parent) -> int {
+  auto self_searched_set = std::make_shared<set<RccTx*>>();
+  auto func =
+      [&](RccTx& self, RccTx& parent, unordered_set<RccTx*>& walked_set) -> int {
 #ifdef DEBUG_CHECK
         searched_set->insert(&parent);
+        self_searched_set->insert(&self);
+        verify(&self != &parent);
+        verify(vertex->id() == __debug_id);
+        if (self.waiting_all_anc_committing_) {
+//          verify(self.__debug_search_path_init_txid_ > 0);
+          if (!self.all_anc_cmt_hint) {
+            auto yyyy = self.traverse_path_start_->id();
+            auto zzpair = this->__debug_search_status_[yyyy];
+            auto zzfirst = zzpair.first;
+            auto zzsecond = zzpair.second;
+            auto wo = self.traverse_path_start_->traverse_path_waitingon_;
+            verify(zzsecond == wo);
+            if (wo == nullptr) {
+              verify(self.traverse_path_start_->id() == __debug_id);
+//              verify(self.__debug_random_number_2 == vertex->__debug_random_number_init_);
+//              verify(self.__debug_random_number_ == rno);
+            }
+          }
+        }
+        self.__debug_random_number_ = rno;
+        self.__debug_random_number_2 = vertex->__debug_random_number_init_;
+//        self.__debug_search_path_init_txid_ = __debug_id;
+//        verify(self.__debug_search_path_init_txid_ == __debug_id);
+        verify(vertex->id() == __debug_id);
 #endif
+        self.waiting_all_anc_committing_ = true;
+        self.traverse_path_start_ = vertex; // some redundancy here, can be optimized later.
+        if (self.all_anc_cmt_hint) {
+          return RccGraph::SearchHint::Skip;
+        }
         if (parent.all_anc_cmt_hint) {
           return RccGraph::SearchHint::Skip;
         }
         if (parent.HasLogApplyStarted()) {
           verify(parent.status() >= TXN_CMT);
+          verify(parent.all_anc_cmt_hint);
           return RccGraph::SearchHint::Skip;
         }
         if (parent.IsDecided()) {
+//          verify(parent.all_anc_cmt_hint);
           return RccGraph::SearchHint::Skip;
         }
+        auto& self_par_id = TxLogServer::partition_id_;
+        // reduce traverse graph time
+        // event parent is in the same SCC, at least one transaction in the SCC should commit.
+        if (parent.Involve(self_par_id)) {
+//          if (!parent.IsCommitting()) {
+            if (parent.tid_ < vertex->tid_) {
+#ifdef DEBUG_CHECK
+            xxxxx = RccTx::WAITING_NO_DEADLOCK;
+            xxxxxyyyyy = &parent;
+#endif
+            vertex->traverse_path_waitingon_ = &parent;
+            vertex->traverse_path_waiting_status_ = RccTx::WAITING_NO_DEADLOCK;
+            parent.log_apply_finished_.WaitUntilGreaterOrEqualThan(1);
+//            parent.status_.WaitUntilGreaterOrEqualThan(TXN_CMT);
+            self.traverse_path_start_ = vertex;
+            vertex->traverse_path_waitingon_ = nullptr ;
+            vertex->traverse_path_waiting_status_ = RccTx::TRAVERSING;
+#ifdef DEBUG_CHECK
+            xxxxxyyyyy = nullptr;
+            xxxxx = RccTx::TRAVERSING;
+//            self.__debug_search_path_init_txid_ = vertex->id();
+#endif
+            return RccGraph::SearchHint::Skip;
+          }
+        }
+//        if (parent.waiting_all_anc_committing_) {
+//          // already in a search.
+//          verify(!parent.all_anc_cmt_hint);
+//          verify(parent.traverse_path_start_ != nullptr);
+//          if (parent.traverse_path_start_->traverse_path_waitingon_ == nullptr) {
+//            // in my own search
+//#ifdef DEBUG_CHECK
+//            verify(!parent.all_anc_cmt_hint);
+//            verify(parent.traverse_path_start_ == vertex);
+////            verify(parent.__debug_random_number_ == rno);
+//            verify(self_searched_set->count(&parent) > 0);
+//            verify(walked_set.count(&parent) > 0);
+//#endif
+//            return RccGraph::SearchHint::Skip;
+//          } else {
+//            // find ultimate waiting on and do cycle detection
+//            auto& waitstatus = parent.traverse_path_start_->traverse_path_waiting_status_;
+//            if (waitstatus == RccTx::WAITING_NO_DEADLOCK) {
+//              // no possible deadlock and can wait in relax
+//#ifdef DEBUG_CHECK
+//              xxxxx = RccTx::WAITING_POSSIBLE_DEADLOCK;
+//              xxxxxyyyyy = &parent;
+//#endif
+//              vertex->traverse_path_waiting_status_ = RccTx::WAITING_POSSIBLE_DEADLOCK;
+//              vertex->traverse_path_waitingon_ = &parent;
+//              parent.wait_all_anc_commit_done_.WaitUntilGreaterOrEqualThan(1);
+//              self.traverse_path_start_ = vertex;
+//              vertex->traverse_path_waiting_status_ = RccTx::TRAVERSING;
+//              vertex->traverse_path_waitingon_ = nullptr;
+//#ifdef DEBUG_CHECK
+//              xxxxx = RccTx::TRAVERSING;
+////              self.__debug_search_path_init_txid_ = vertex->id();
+//              xxxxxyyyyy = nullptr;
+//#endif
+//              return RccGraph::SearchHint::Skip;
+//            } else if (waitstatus == RccTx::WAITING_POSSIBLE_DEADLOCK) {
+//              // posibble deadlock.
+//              // TODO for future.
+//            } else {
+//              verify(0);
+//            }
+////            bool deadlock = false;
+////            auto xwaitingon = parent.traverse_path_start_->traverse_path_waitingon_;
+////            do {
+////              if (xwaitingon->traverse_path_start_ == vertex) {
+//////                 deadlock? break cycle
+////                deadlock = true;
+////                break;
+////              }
+//////              if (walked_set.count(xwaitingon) > 0) {
+//////                 deadlock? break cycle
+//////                deadlock = true;
+//////                break;
+//////              }
+////              if (xwaitingon->traverse_path_start_) {
+////                xwaitingon = xwaitingon->traverse_path_start_->traverse_path_waitingon_;
+////              } else {
+////                break;
+////              }
+////            } while (xwaitingon != nullptr);
+////            if (!deadlock) {
+////#ifdef DEBUG_CHECK
+////              xxxxx = 2;
+////              xxxxxyyyyy = &parent;
+////#endif
+////              self.traverse_path_start_->traverse_path_waitingon_ = &parent;
+////              parent.wait_all_anc_commit_done_.WaitUntilGreaterOrEqualThan(1);
+////              vertex->traverse_path_waitingon_ = nullptr;
+////              self.traverse_path_start_ = vertex;
+////#ifdef DEBUG_CHECK
+////              xxxxx = 1;
+////              xxxxxyyyyy = nullptr;
+////#endif
+////              return RccGraph::SearchHint::Skip;
+////            } else {
+////              // TODO optimize here.
+//////              find a way to set all_anc_commit_hit quickly for the cycle.
+////            }
+//          }
+//        }
+
         int r = RccGraph::SearchHint::Ok;
         if (parent.status() < TXN_CMT) {
-          auto& edge = self.parents_[parent.id()];
-          auto& x = edge.partitions_;
-          auto& self_par_id = TxLogServer::partition_id_;
-          if (x.count(self_par_id) > 0) {
-            // do nothing
-          } else if (parent.Involve(self_par_id)) {
+//          auto& edge = self.parents_[parent.id()];
+//          auto& x = edge.partitions_;
+//          if (x.count(self_par_id) > 0) {
+//             do nothing
+//          } else
+          if (parent.Involve(self_par_id)) {
             // do nothing;
           } else {
             if (parent.partition_.empty()) {
-              verify(!x.empty());
-              parent.partition_.insert(x.begin(), x.end());
+              // TODO optimize this part?
+              for (auto &pair: self.parents_) {
+                if (pair.first == parent.id()) {
+                  auto &x = pair.second.partitions_;
+                  parent.partition_.insert(x.begin(), x.end());
+                  break;
+                }
+              }
             }
+#ifdef DEBUG_CHECK
+            verify(!parent.partition_.empty());
+            verify(self.traverse_path_start_->traverse_path_waitingon_ == nullptr);
+            xxxxx = RccTx::WAITING_NO_DEADLOCK;
+            xxxxxyyyyy = &parent;
+#endif
+            vertex->traverse_path_waitingon_ = &parent;
+            verify(self.traverse_path_start_->traverse_path_waitingon_ != nullptr);
+            vertex->traverse_path_waiting_status_ = RccTx::WAITING_NO_DEADLOCK;
             InquireAboutIfNeeded(parent);
+            vertex->traverse_path_waitingon_ = nullptr;
+            self.traverse_path_start_ = vertex;
+            vertex->traverse_path_waiting_status_ = RccTx::TRAVERSING;
+#ifdef DEBUG_CHECK
+//            self.__debug_search_path_init_txid_ = vertex->id();
+//            *self.waiting_on_ = nullptr;
+            xxxxx = RccTx::TRAVERSING;
+            xxxxxyyyyy = nullptr;
+#endif
           }
+#ifdef DEBUG_CHECK
+          xxxxx = RccTx::WAITING_NO_DEADLOCK;
+          xxxxxyyyyy = &parent;
+#endif
+          vertex->traverse_path_waitingon_ = &parent;
+          vertex->traverse_path_waiting_status_ = RccTx::WAITING_NO_DEADLOCK;
           parent.status_.WaitUntilGreaterOrEqualThan(TXN_CMT);
+          vertex->traverse_path_waitingon_ = nullptr;
+          vertex->traverse_path_waiting_status_ = RccTx::TRAVERSING;
+          self.traverse_path_start_ = vertex;
+#ifdef DEBUG_CHECK
+          xxxxx = RccTx::TRAVERSING;
+          xxxxxyyyyy = nullptr;
+//          *self.waiting_on_ = nullptr;
           parent.__DebugCheckParents();
           verify(parent.status() >= TXN_CMT);
+//          self.__debug_search_path_init_txid_ = vertex->id();
+#endif
           // XXX debuging
 //        } else if (parent.status() >= TXN_DCD) {
 //          return RccGraph::SearchHint::Skip;
+//        }
         }
         verify(parent.status() >= TXN_CMT);
         return r;
       };
   std::function<void(RccTx&)> func_end = [] (RccTx& v) -> void {
     v.all_anc_cmt_hint = true;
+    v.wait_all_anc_commit_done_.Set(1);
   };
   TraversePredNonRecursive(*vertex, func, func_end);
+  vertex->wait_all_anc_commit_done_.Set(1);
 #ifdef DEBUG_CHECK
-  std::function<int(RccTx&, RccTx&)> func2 =
-      [this, searched_set](RccTx& self, RccTx& parent) -> int {
-        verify(searched_set->count(&parent) > 0);
-        if (parent.HasLogApplyStarted() || parent.IsDecided() || parent.all_ancestors_committing()) {
-          return RccGraph::SearchHint::Skip;
-        }
-        verify(parent.status() >= TXN_CMT);
-        int r = RccGraph::SearchHint::Ok;
-        return r;
-      };
-  TraversePredNonRecursive(*vertex, func2, [] (RccTx& v) -> void {;});
+//  xxxxx = 3;
+//  auto func2 =
+//      [this, searched_set](RccTx& self, RccTx& parent, unordered_set<RccTx*> walked_set) -> int {
+////        verify(searched_set->count(&parent) > 0);
+//        if (parent.HasLogApplyStarted() || parent.IsDecided() || parent.all_ancestors_committing()) {
+//          return RccGraph::SearchHint::Skip;
+//        }
+////        verify(parent.status() >= TXN_CMT);
+//        int r = RccGraph::SearchHint::Ok;
+//        return r;
+//      };
+//  TraversePredNonRecursive(*vertex, func2, [] (RccTx& v) -> void {;});
 #endif
 }
 
@@ -312,6 +581,7 @@ void RccServer::Decide(const RccScc& scc) {
   }
   for (auto v : scc) {
     verify(v->status() >= TXN_CMT);
+    verify(v->all_anc_cmt_hint);
     UpgradeStatus(*v, TXN_DCD);
 //    Log_info("txnid: %llx, parent size: %d", v->id(), v->parents_.size());
   }
@@ -393,13 +663,32 @@ bool RccServer::IsExecuted(const RccScc& scc, rank_t rank) {
                          });
   return ret;
 }
+void RccServer::WaitNonSccParentsExecuted(const janus::RccScc& scc1){
+  verify(scc1.size() > 0);
+  auto scc = scc1;
+  for (auto& v: scc) {
+    if (v->all_nonscc_parents_executed_hint) {
+      continue;
+    }
+    auto parents = v->parents_;
+    for (auto& pair: parents) {
+      auto& parent = *FindOrCreateParentVPtr(*v, pair.first, pair.second);
+      if (parent.Involve(partition_id_)) {
+        if (parent.scc_ != scc[0]->scc_) {
+          parent.log_apply_finished_.WaitUntilGreaterOrEqualThan(1);
+        }
+      }
+    }
+    v->all_nonscc_parents_executed_hint = true;
+  }
+}
 
 void RccServer::WaitUntilAllPredSccExecuted(const RccScc& scc) {
   verify(scc.size() > 0);
   set<RccTx*> scc_set;
   scc_set.insert(scc.begin(), scc.end());
-  std::function<int(RccTx&, RccTx&)> func =
-      [&scc_set, &scc, this](RccTx& self, RccTx& tx) -> int {
+  auto func =
+      [&scc_set, &scc, this](RccTx& self, RccTx& tx, unordered_set<RccTx*>&) -> int {
         if (scc_set.find(&tx) != scc_set.end()) {
           // belong to the scc
           verify (tx.IsDecided());
@@ -457,6 +746,7 @@ void RccServer::Execute(shared_ptr<RccTx> sp_tx) {
     sp_tx->log_apply_finished_.WaitUntilGreaterOrEqualThan(1);
     return;
   }
+  verify(sp_tx->all_anc_cmt_hint);
   sp_tx->log_apply_started_ = true;
   Log_debug("executing dtxn id %" PRIx64, sp_tx->id());
   verify(sp_tx->IsDecided());
@@ -480,7 +770,6 @@ void RccServer::Execute(shared_ptr<RccTx> sp_tx) {
   } else {
     // a tmp solution
     sp_tx->__debug_local_validated_foreign_ = true;
-    sp_tx->log_apply_started_ = true;
     sp_tx->local_validated_->Set(SUCCESS);
   }
   sp_tx->phase_ = PHASE_RCC_COMMIT;
@@ -691,7 +980,7 @@ map<txnid_t, shared_ptr<RccTx>> RccServer::Aggregate(RccGraph &graph) {
 int RccServer::OnPreAccept(txnid_t txn_id,
                            rank_t rank,
                            const vector<SimpleCommand> &cmds,
-                           map<txid_t, ParentEdge<RccTx>>& res_parents) {
+                           parent_set_t& res_parents) {
 //  Log_info("on preaccept: %llx par: %d", txn_id, (int)partition_id_);
 //  if (RandomGenerator::rand(1, 2000) <= 1)
 //    Log_info("on pre-accept graph size: %d", graph.size());
@@ -730,7 +1019,7 @@ int RccServer::OnPreAccept(txnid_t txn_id,
 int RccServer::OnAccept(const txnid_t txn_id,
                         const rank_t rank,
                         const ballot_t &ballot,
-                        const map<txid_t, ParentEdge<RccTx>>& parents) {
+                        const parent_set_t& parents) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto dtxn = dynamic_pointer_cast<RccTx>(GetOrCreateTx(txn_id));
 //  verify(dtxn->current_rank_ == rank);
@@ -741,7 +1030,7 @@ int RccServer::OnAccept(const txnid_t txn_id,
     dtxn->max_seen_ballot_ = ballot;
     dtxn->max_accepted_ballot_ = ballot;
     ReplaceParentEdges<RccTx>(dtxn->parents_,
-        const_cast<map<txid_t, ParentEdge<RccTx>>&>(parents));
+        const_cast<parent_set_t&>(parents));
 //    for (auto p : parents) {
 //      FindOrCreateV(p.first);
 //    }
@@ -753,7 +1042,7 @@ int RccServer::OnAccept(const txnid_t txn_id,
 int RccServer::OnCommit(const txnid_t cmd_id,
                         const rank_t rank,
                         const bool need_validation,
-                        const map<txid_t, ParentEdge<RccTx>>& parents,
+                        const parent_set_t& parents,
                         TxnOutput *output) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   Log_debug("committing dtxn %" PRIx64, cmd_id);
@@ -772,7 +1061,7 @@ int RccServer::OnCommit(const txnid_t cmd_id,
     sp_e->test_ = [sp_tx] (int v) -> bool {
       return sp_tx->local_validated_->is_set_;
     };
-    sp_e->Wait();
+    sp_e->Wait(400 * 1000 * 1000);
     if (sp_e->status_ == Event::TIMEOUT) {
       verify(!weird);
       verify(0);
@@ -801,7 +1090,7 @@ int RccServer::OnCommit(const txnid_t cmd_id,
 //    FindOrCreateV(p.first);
 //  }
   ReplaceParentEdges(sp_tx->parents_,
-      const_cast<map<txid_t, ParentEdge<RccTx>>&>(parents));
+      const_cast<parent_set_t&>(parents));
   verify(sp_tx->commit_received_.value_ == 0);
   verify(!sp_tx->__debug_local_validated_foreign_);
   verify(!sp_tx->local_validated_->is_set_);
@@ -809,14 +1098,15 @@ int RccServer::OnCommit(const txnid_t cmd_id,
   UpgradeStatus(*sp_tx, TXN_CMT);
   sp_tx->__DebugCheckParents();
   WaitUntilAllPredecessorsAtLeastCommitting(sp_tx.get());
-  if (!sp_tx->scc_) {
+  if (sp_tx->scc_->empty()) {
     FindSccPred(*sp_tx);
   }
   sp_tx->__DebugCheckScc();
   RccScc& scc = *sp_tx->scc_;
   verify(sp_tx->Involve(partition_id_));
   Decide(scc);
-  WaitUntilAllPredSccExecuted(scc);
+  WaitNonSccParentsExecuted(scc);
+//  WaitUntilAllPredSccExecuted(scc);
 //  if (FullyDispatched(scc, rank) && !IsExecuted(scc, rank)) {
 //  if (!IsExecuted(scc, rank)) {
   Execute(scc);

@@ -123,19 +123,19 @@ class ClassicServiceImpl : public ClassicService {
                     const rank_t& rank,
                     const vector<SimpleCommand>& cmd,
                     int32_t* res,
-                    map<txid_t, ParentEdge<RccTx>>* parents,
+                    parent_set_t* parents,
                     DeferredReply* defer) override;
 
   void RccAccept(const txid_t& txnid,
                  const ballot_t& ballot,
-                 const map<txid_t, ParentEdge<RccTx>>& parents,
+                 const parent_set_t& parents,
                  int32_t* res,
                  DeferredReply* defer) override;
 
   void RccCommit(const txid_t& cmd_id,
                  const rank_t& rank,
                  const int32_t& need_validation,
-                 const map<txid_t, ParentEdge<RccTx>>& parents,
+                 const parent_set_t& parents,
                  int32_t* res,
                  TxnOutput* output,
                  DeferredReply* defer) override;
@@ -146,7 +146,7 @@ class ClassicServiceImpl : public ClassicService {
                  DeferredReply* defer) override;
 
   void RccInquire(const txid_t& tid,
-                  pair<map<txid_t, ParentEdge<RccTx>>, set<txid_t>>* p_md_graph,
+                  map<txid_t, parent_set_t>*,
                   DeferredReply*) override;
 
   void RccDispatchRo(const SimpleCommand& cmd,

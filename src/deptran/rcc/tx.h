@@ -31,6 +31,11 @@ class RccTx: public Tx, public Vertex<RccTx> {
   ballot_t max_accepted_ballot_{0};
   SharedIntEvent commit_received_{};
   SharedIntEvent log_apply_finished_{};
+//  RccTx** waiting_on_{nullptr}; // prevent deadlock
+  RccTx* traverse_path_start_{nullptr};
+  RccTx* traverse_path_waitingon_{nullptr};
+  enum TraverseStatus {ERROR=0, TRAVERSING=1, WAITING_NO_DEADLOCK=2, WAITING_POSSIBLE_DEADLOCK=3, DONE=4};
+  TraverseStatus traverse_path_waiting_status_{ERROR};
   shared_ptr<IntEvent> sp_ev_commit_{Reactor::CreateSpEvent<IntEvent>()};
   TxnOutput *p_output_reply_ = nullptr;
   TxnOutput output_ = {};
@@ -39,6 +44,13 @@ class RccTx: public Tx, public Vertex<RccTx> {
   // ----above variables get reset whenever current_rank_ is changed
   bool need_validation_{false};
   bool __commit_received_{false};
+  bool waiting_all_anc_committing_{false};
+  SharedIntEvent wait_all_anc_commit_done_{};
+  bool __debug_entered_committing_{false};
+  int __debug_random_number_{0};
+  int __debug_random_number_2{0};
+  int __debug_random_number_init_{RandomGenerator::rand(1, 1000000)};
+//  txid_t __debug_search_path_init_txid_{0}; // some suspicious bug here.
 
   bool all_ancestors_committing() {
     return all_anc_cmt_hint;
@@ -177,6 +189,7 @@ class RccTx: public Tx, public Vertex<RccTx> {
   bool during_asking = false;
   bool inquire_acked_ = false;
   bool all_anc_cmt_hint{false};
+  bool all_nonscc_parents_executed_hint{false};
 
   txnid_t id() override {
     return tid_;
@@ -191,7 +204,8 @@ class RccTx: public Tx, public Vertex<RccTx> {
   }
 
   inline bool IsCommitting() const {
-    return (status_.value_ & TXN_CMT);
+//    return (status_.value_ & TXN_CMT);
+    return (status_.value_ >= TXN_CMT);
   }
 
   inline bool IsDecided() const {
@@ -268,7 +282,14 @@ class RccTx: public Tx, public Vertex<RccTx> {
 
 };
 
-typedef map<txid_t, ParentEdge<RccTx>> parent_set_t;
+typedef vector<pair<txid_t, ParentEdge<RccTx>>> parent_set_t;
+
+static void MergeParents(parent_set_t& s1, parent_set_t& s2) {
+  for (auto& pair : s2) {
+    // TODO reduce size
+    s1.push_back(pair);
+  }
+}
 
 inline rrr::Marshal &operator<<(rrr::Marshal &m, const ParentEdge<RccTx> &e) {
   m << e.partitions_;

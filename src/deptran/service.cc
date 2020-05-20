@@ -187,7 +187,7 @@ void ClassicServiceImpl::RccFinish(const cmdid_t& cmd_id,
 }
 
 void ClassicServiceImpl::RccInquire(const txnid_t& tid,
-                                    pair<map<txid_t, ParentEdge<RccTx>>, set<txid_t>>* ret,
+                                    map<txid_t, parent_set_t>* ret,
                                     rrr::DeferredReply* defer) {
 //  verify(IS_MODE_RCC || IS_MODE_RO6);
 //  std::lock_guard<std::mutex> guard(mtx_);
@@ -253,6 +253,7 @@ void ClassicServiceImpl::JanusCommit(const cmdid_t& cmd_id,
                                      TxnOutput* output,
                                      DeferredReply* defer) {
 //  std::lock_guard<std::mutex> guard(mtx_);
+  verify(0);
   auto sp_graph = dynamic_pointer_cast<RccGraph>(graph.sp_data_);
   auto p_sched = (RccServer*) dtxn_sched_;
   *res = p_sched->OnCommit(cmd_id, rank, need_validation, sp_graph, output);
@@ -262,7 +263,7 @@ void ClassicServiceImpl::JanusCommit(const cmdid_t& cmd_id,
 void ClassicServiceImpl::RccCommit(const cmdid_t& cmd_id,
                                    const rank_t& rank,
                                    const int32_t& need_validation,
-                                   const map<txid_t, ParentEdge<RccTx>>& parents,
+                                   const parent_set_t& parents,
                                    int32_t* res,
                                    TxnOutput* output,
                                    DeferredReply* defer) {
@@ -279,6 +280,7 @@ void ClassicServiceImpl::JanusCommitWoGraph(const cmdid_t& cmd_id,
                                             TxnOutput* output,
                                             DeferredReply* defer) {
 //  std::lock_guard<std::mutex> guard(mtx_);
+  verify(0);
   auto sched = (SchedulerJanus*) dtxn_sched_;
   *res = sched->OnCommit(cmd_id, rank, need_validation, nullptr, output);
   defer->reply();
@@ -302,7 +304,7 @@ void ClassicServiceImpl::RccPreAccept(const cmdid_t& txnid,
                                       const rank_t& rank,
                                       const vector<SimpleCommand>& cmds,
                                       int32_t* res,
-                                      map<txid_t, ParentEdge<RccTx>>* res_parents,
+                                      parent_set_t* res_parents,
                                       DeferredReply* defer) {
 //  std::lock_guard<std::mutex> guard(mtx_);
   auto sched = (RccServer*) dtxn_sched_;
@@ -344,7 +346,7 @@ void ClassicServiceImpl::JanusPreAcceptWoGraph(const cmdid_t& txnid,
 
 void ClassicServiceImpl::RccAccept(const cmdid_t& txnid,
                                    const ballot_t& ballot,
-                                   const map<txid_t, ParentEdge<RccTx>>& parents,
+                                   const parent_set_t& parents,
                                    int32_t* res,
                                    DeferredReply* defer) {
   auto sched = (RccServer*) dtxn_sched_;

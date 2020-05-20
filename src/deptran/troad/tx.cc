@@ -25,7 +25,7 @@ void TxTroad::DispatchExecute(SimpleCommand &cmd,
     }
   }
   dreqs_.push_back(cmd);
-  verify(dreqs_.size() <=3);
+//  verify(dreqs_.size() <=3);
 
   // TODO are these preemptive actions proper?
   int ret_code;

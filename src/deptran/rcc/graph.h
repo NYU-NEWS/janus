@@ -18,14 +18,15 @@ class ParentEdge {
 
 
 template<class T>
-void ReplaceParentEdges(map<txid_t, ParentEdge<T>>& lhs, map<txid_t, ParentEdge<T>>& rhs) {
+void ReplaceParentEdges(vector<pair<txid_t, ParentEdge<T>>>& lhs, vector<pair<txid_t, ParentEdge<T>>>& rhs) {
   for (auto& pair: rhs) {
     auto& id = pair.first;
     auto& edge = pair.second;
-    auto it = lhs.find(id);
-    if (it != lhs.end()) {
-      auto& e2 = it->second;
-      edge.cache_ptr_ = e2.cache_ptr_;
+    for (auto& p2 : lhs) {
+      if (p2.first == id) {
+        edge.cache_ptr_ = p2.second.cache_ptr_;
+        break;
+      }
     }
   }
   lhs = std::move(rhs);
@@ -38,8 +39,8 @@ class Vertex {
 //  std::shared_ptr<T> data_{};
  public:
 //  map<uint64_t, rank_t> parents_{}; // parent vertex ids in the graph.
-  typedef std::map<txid_t, ParentEdge<T>> parent_set_t;
-  map<txid_t, ParentEdge<T>> parents_{};
+  typedef vector<pair<txid_t, ParentEdge<T>>> parent_set_t;
+  parent_set_t parents_{};
 //  map<T *, int8_t> outgoing_{}; // helper data structure, deprecated
 //  map<T *, int8_t> incoming_{}; // helper data structure, deprecated
 //  set<T *> removed_children_{}; // helper data structure, deprecated
@@ -49,7 +50,7 @@ class Vertex {
   uint64_t scc_lowlink_{0};
   bool scc_onstack_{false};
   set<txid_t> scc_ids_{};
-  std::shared_ptr<vector<T*>> scc_{};
+  std::shared_ptr<vector<T*>> scc_{std::make_shared<vector<T*>>()};
 
   T *this_pointer() {
     T *ret = static_cast<T *>(this);
@@ -81,9 +82,11 @@ class Vertex {
     verify(parents_.size() >= 0);
     auto id = rhs_v->id();
 //    parents_[id] |= weight;
-    auto& e = parents_[id];
+//    auto& e = parents_[id];
+    ParentEdge<T> e;
     e.partitions_ = rhs_v->partition_;
     e.cache_ptr_ = rhs_v.get();
+    parents_.push_back(std::make_pair(id, e));
   }
 
   virtual uint64_t id() {
@@ -221,8 +224,9 @@ class Graph : public Marshallable {
 
   // depth first search.
   int TraversePredNonRecursive(V& vertex,
-                               function<int(V& self, V& parent)> &func,
-                               const function<void(V& self)> &func_end = {}) {
+                               const function<int(V& self, V& parent, unordered_set<V*>&)> &func,
+                               const function<void(V& self)> &func_end = {},
+                               bool cycle_detection = true) {
     auto to_walk = make_shared<vector<V *>>();
     auto walked = make_shared<unordered_set<V *>>();
     to_walk->push_back(&vertex);
@@ -233,7 +237,9 @@ class Graph : public Marshallable {
     while (!to_walk->empty()) {
       verify(__debug_depth++ < 100000000);
       auto vvv = to_walk->back();
-      walked->insert(vvv);
+      if (cycle_detection) {
+        walked->insert(vvv);
+      }
       to_walk->pop_back();
       // because this coroutine can be switched out,
       // be careful when using iterator.
@@ -244,15 +250,18 @@ class Graph : public Marshallable {
         vs.push_back(v);
       }
       for (auto& v: vs) {
-        ret = func(*vvv, *v);
+        ret = func(*vvv, *v, *walked);
         if (ret == SearchHint::Exit) {
           return ret;
         } else if (ret == SearchHint::Skip) {
           continue;
         }
-        if (walked->count(v)==0) {
-          to_walk->push_back(v);
+        if (cycle_detection) {
+          if (walked->count(v) > 0) {
+            continue;
+          }
         }
+        to_walk->push_back(v);
         verify(ret == SearchHint::Ok);
       }
     }
@@ -372,7 +381,7 @@ class Graph : public Marshallable {
 
     for (auto &p : v.parents_) {
       auto& w = *FindOrCreateParentVPtr(v, p.first, p.second);
-      if (w.scc_) // opt scc already computed
+      if (!w.scc_->empty()) // opt scc already computed
         continue;
       if (w.scc_index_ == 0) {
 //      if (indexes.find(w) == indexes.end()) {
@@ -398,8 +407,8 @@ class Graph : public Marshallable {
 //    Scc<V>& ret = *p_ret;
 //    if (lowlinks[&v] == indexes[&v]) {
     if (v.scc_lowlink_ == v.scc_index_) {
-      verify(v.scc_ == nullptr);
-      v.scc_ = std::make_shared<vector<V*>>();
+      verify(v.scc_->empty());
+//      v.scc_ = std::make_shared<vector<V*>>();
       V* w;
       do {
         w = scc_S_.back();
@@ -595,7 +604,7 @@ class Graph : public Marshallable {
 //  }
 
   virtual Scc<V> &FindSccPred(V& vertex) {
-    if (vertex.scc_) {
+    if (!vertex.scc_->empty()) {
       // already computed.
       return (Scc<V> &) (*(vertex.scc_));
     }

@@ -15,6 +15,7 @@ class TxnInfo;
 
 class RccServer : public TxLogServer, public RccGraph {
  public:
+  map<txid_t, pair<RccTx::TraverseStatus, RccTx*>> __debug_search_status_{};
   set<shared_ptr<RccTx>> fridge_ = {};
   std::recursive_mutex mtx_{};
   std::time_t last_upgrade_time_{0};
@@ -59,7 +60,7 @@ class RccServer : public TxLogServer, public RccGraph {
                  TxnOutput *output,
                  shared_ptr<RccGraph> graph);
 
-  virtual pair<map<txid_t, ParentEdge<RccTx>>, set<txid_t>> OnInquire(txnid_t cmd_id);
+  virtual map<txid_t, parent_set_t> OnInquire(txnid_t cmd_id);
 
   virtual bool HandleConflicts(Tx &dtxn,
                                innid_t inn_id,
@@ -75,6 +76,7 @@ class RccServer : public TxLogServer, public RccGraph {
   bool AllAncCmt(RccTx* v);
   void WaitUntilAllPredecessorsAtLeastCommitting(RccTx* v);
   void WaitUntilAllPredSccExecuted(const RccScc &);
+  void WaitNonSccParentsExecuted(const RccScc &);
   bool FullyDispatched(const RccScc &scc, rank_t r=RANK_UNDEFINED);
   bool IsExecuted(const RccScc &scc, rank_t r=RANK_UNDEFINED);
   void Decide(const RccScc &);
@@ -99,17 +101,17 @@ class RccServer : public TxLogServer, public RccGraph {
   int OnPreAccept(txnid_t txnid,
                   rank_t rank,
                   const vector<SimpleCommand> &cmds,
-                  map<txid_t, ParentEdge<RccTx>>& parents) ;
+                  parent_set_t& parents) ;
 
   int OnAccept(txnid_t txn_id,
                rank_t rank,
                const ballot_t& ballot,
-               const map<txid_t, ParentEdge<RccTx>>& parents);
+               const parent_set_t& parents);
 
   int OnCommit(txnid_t txn_id,
                rank_t rank,
                bool need_validation,
-               const map<txid_t, ParentEdge<RccTx>>& parents,
+               const parent_set_t& parents,
                TxnOutput *output);
 
   void __DebugExamineFridge();

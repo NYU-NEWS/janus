@@ -47,18 +47,17 @@ void CoordinatorTroad::PreAccept() {
   }
   parents_.clear();
   if (fast_path) {
-//  if (false) {
     fast_path_ = true;
     for (auto ev : events) {
       auto& g = ev->vec_parents_[0];
-      parents_.insert(g->begin(), g->end());
+      MergeParents(parents_, *g);
     }
   } else {
     fast_path_ = false;
     for (auto ev: events) {
       for (auto g : ev->vec_parents_) {
 //        sp_graph_->Aggregate(0, *sp_graph);
-        parents_.insert(g->begin(), g->end());
+        MergeParents(parents_, *g);
       }
     }
   }
@@ -112,7 +111,8 @@ void CoordinatorTroad::Commit() {
   }
   aborted_ = false;
   for (auto ev : events) {
-    ev->Wait();
+    ev->Wait(600 * 1000 * 1000);
+    verify(ev->status_ != Event::TIMEOUT);
     if (ev->No()) {
       verify(0);
     } else if (ev->Yes()) {
@@ -177,6 +177,7 @@ int32_t CoordinatorTroad::GetSlowQuorum(parid_t par_id) {
  * @return true if fast quorum acheived, false if not
  */
 bool CoordinatorTroad::FastQuorumGraphCheck(PreAcceptQuorumEvent& ev) {
+  // TODO optimize for redundant element in parent_set?
   verify(ev.vec_parents_.size() > 0);
   auto& parents = ev.vec_parents_[0];
   for (int i = 1; i < ev.vec_parents_.size(); i++) {

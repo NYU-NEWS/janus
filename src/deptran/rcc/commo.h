@@ -29,7 +29,7 @@ class RccCommo : public Communicator {
                            txnid_t tid,
                            const function<void(RccGraph& graph)>&);
 
-  shared_ptr<pair<map<txid_t, ParentEdge<RccTx>>, set<txid_t>>>
+  shared_ptr<map<txid_t, parent_set_t>>
   Inquire(parid_t pid, txnid_t tid);
 
   virtual void BroadcastCommit(

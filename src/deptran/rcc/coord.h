@@ -14,7 +14,7 @@ class RccCoord : public CoordinatorClassic {
 
  public:
 //  shared_ptr<RccGraph> sp_graph_{new RccGraph};
-  map<txid_t, ParentEdge<RccTx>> parents_{};
+  parent_set_t parents_{};
   rank_t rank_{RANK_UNDEFINED};
   enum RoState { BEGIN, FIRST, SECOND, DONE };
   enum Phase { INIT_END = 0, DISPATCH, COMMIT };

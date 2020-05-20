@@ -42,7 +42,8 @@ namespace janus {
 #define TXN_PAC (0x02)  // pre-accepted
 #define TXN_ACC (0x04)  // accepted
 #define TXN_CMT (0x08)  // committing
-#define TXN_DCD (0x10)  // decided
+#define TXN_ALL_PREDECESORS_COMMITING (0x10)
+#define TXN_DCD (0x20)  // decided
 #define TXN_FNS (0x20)  // finished
 #define TXN_ABT (0x40)  // aborted
 

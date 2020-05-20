@@ -340,21 +340,21 @@ void RccTx::TraceDep(Row* row, colid_t col_id, rank_t hint_flag) {
       this->AddParentEdge(last_commit, EDGE_D);
     }
   }
-  for (auto& x: entry->active_) {
-    auto parent_dtxn = static_pointer_cast<RccTx>(x);
-    if (parent_dtxn.get() != this) {
-      this->AddParentEdge(parent_dtxn, edge_type);
-    }
-  }
+  entry->last_ = shared_from_this();
+//  for (auto& x: entry->active_) {
+//    auto parent_dtxn = static_pointer_cast<RccTx>(x);
+//    if (parent_dtxn.get() != this) {
+//      this->AddParentEdge(parent_dtxn, edge_type);
+//    }
+//  }
   entry->active_.insert(shared_from_this());
 }
 
 void RccTx::CommitDep(Row& row, colid_t col_id) {
   auto& r = dynamic_cast<RccRow&>(row);
   entry_t *entry = r.get_dep_entry(col_id);
-  entry->last_ = shared_from_this();
+//  entry->last_ = shared_from_this();
   entry->active_.erase(shared_from_this());
-
 }
 
 } // namespace janus
