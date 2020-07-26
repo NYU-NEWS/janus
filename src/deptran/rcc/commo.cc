@@ -24,7 +24,7 @@ void RccCommo::SendDispatch(vector<SimpleCommand> &cmd,
           RccGraph rgraph;
           auto v = rgraph.CreateV(tid);
           RccTx& info = *v;
-          info.partition_.insert(par_id);
+//          info.partition_.insert(par_id);
           verify(rgraph.vertex_index().size() > 0);
           callback(res, output, rgraph);
         } else if (md.kind_ == MarshallDeputy::RCC_GRAPH) {
@@ -67,7 +67,7 @@ void RccCommo::SendFinish(parid_t pid,
 
 
 shared_ptr<map<txid_t, parent_set_t>>
-RccCommo::Inquire(parid_t pid, txnid_t tid) {
+RccCommo::Inquire(parid_t pid, txnid_t tid, rank_t rank) {
   auto ret = std::make_shared<map<txid_t, parent_set_t>>();
   auto ev = Reactor::CreateSpEvent<IntEvent>();
   FutureAttr fuattr;
@@ -78,7 +78,7 @@ RccCommo::Inquire(parid_t pid, txnid_t tid) {
   };
   fuattr.callback = cb;
   auto proxy = (ClassicProxy*)NearestProxyForPartition(pid).second;
-  Future::safe_release(proxy->async_RccInquire(tid, fuattr));
+  Future::safe_release(proxy->async_RccInquire(tid, rank, fuattr));
 //  ev->Wait(60*1000*1000);
 //  verify(ev->status_ != Event::TIMEOUT);
   ev->Wait();
@@ -149,7 +149,9 @@ void RccCommo::BroadcastValidation(txid_t id, set<parid_t> pars, int result) {
       FutureAttr fuattr;
       fuattr.callback = [] (Future* fu) {
       };
-      Future::safe_release(proxy->async_RccNotifyGlobalValidation(id, result, fuattr));
+      int rank = RANK_D;
+      verify(0);
+      Future::safe_release(proxy->async_RccNotifyGlobalValidation(id, rank, result, fuattr));
     }
   }
 }

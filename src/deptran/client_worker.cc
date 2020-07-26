@@ -49,7 +49,10 @@ void ClientWorker::ForwardRequestDone(Coordinator* coo,
   defer->reply();
 }
 
+
+
 void ClientWorker::RequestDone(Coordinator* coo, TxReply& txn_reply) {
+  verify(0);
   verify(coo != nullptr);
 
   if (txn_reply.res_ == SUCCESS)
@@ -96,7 +99,7 @@ Coordinator* ClientWorker::FindOrCreateCoordinator() {
 
   Coordinator* coo = nullptr;
 
-  if (free_coordinators_.size() > 0) {
+  if (!free_coordinators_.empty()) {
     coo = dynamic_cast<Coordinator*>(free_coordinators_.back());
     free_coordinators_.pop_back();
   } else {
@@ -107,6 +110,8 @@ Coordinator* ClientWorker::FindOrCreateCoordinator() {
     coo = CreateCoordinator(created_coordinators_.size());
   }
 
+  verify(!coo->_inuse_);
+  coo->_inuse_ = true;
   return coo;
 }
 
@@ -131,6 +136,107 @@ Coordinator* ClientWorker::CreateCoordinator(uint16_t offset_id) {
   return coo;
 }
 
+void ClientWorker::Work() {
+  Log_debug("%s: %d", __FUNCTION__, this->cli_id_);
+  txn_reg_ = std::make_shared<TxnRegistry>();
+  verify(config_ != nullptr);
+  Workload* workload = Workload::CreateWorkload(config_);
+  workload->txn_reg_ = txn_reg_;
+  workload->RegisterPrecedures();
+
+  commo_->WaitConnectClientLeaders();
+  if (ccsi) {
+    ccsi->wait_for_start(id);
+  }
+  Log_debug("after wait for start");
+
+
+  for (uint32_t n_tx = 0; n_tx < n_concurrent_; n_tx++) {
+    auto sp_job = std::make_shared<OneTimeJob>([this] () {
+      auto beg_time = Time::now() ;
+      auto end_time = beg_time + duration * pow(10, 6);
+      while (true) {
+        auto cur_time = Time::now(); // optimize: this call is not scalable.
+        if (cur_time > end_time) {
+          break;
+        }
+        n_tx_issued_++;
+        num_txn++;
+        auto coo = FindOrCreateCoordinator();
+        verify(!coo->sp_ev_commit_);
+        verify(!coo->sp_ev_done_);
+        coo->sp_ev_commit_ = Reactor::CreateSpEvent<IntEvent>();
+        coo->sp_ev_done_ = Reactor::CreateSpEvent<IntEvent>();
+        this->DispatchRequest(coo);
+        if (config_->client_type_ == Config::Closed) {
+          auto ev = coo->sp_ev_commit_;
+          ev->Wait();
+//          ev->Wait(300*1000*1000);
+          verify(ev->status_ != Event::TIMEOUT);
+        } else {
+          auto sp_event = Reactor::CreateSpEvent<NeverEvent>();
+          sp_event->Wait(pow(10, 6));
+        }
+        Coroutine::CreateRun([this, coo](){
+          verify(coo->_inuse_);
+          auto ev = coo->sp_ev_done_;
+          ev->Wait();
+          verify(coo->coo_id_ > 0);
+//          ev->Wait(400*1000*1000);
+          verify(coo->_inuse_);
+          verify(coo->coo_id_ > 0);
+          verify(ev->status_ != Event::TIMEOUT);
+          if (coo->committed_) {
+            success++;
+          }
+          sp_n_tx_done_.Set(sp_n_tx_done_.value_+1);
+          num_try.fetch_add(coo->n_retry_);
+          coo->sp_ev_done_.reset();
+          coo->sp_ev_commit_.reset();
+          free_coordinators_.push_back(coo);
+          coo->_inuse_ = false;
+        });
+      }
+      n_ceased_client_.Set(n_ceased_client_.value_+1);
+    });
+    poll_mgr_->add(dynamic_pointer_cast<Job>(sp_job));
+  }
+  poll_mgr_->add(dynamic_pointer_cast<Job>(std::make_shared<OneTimeJob>([this](){
+    Log_info("wait for all virtual clients to stop issuing new requests.");
+    n_ceased_client_.WaitUntilGreaterOrEqualThan(n_concurrent_);
+    Log_info("wait for all outstanding requests to finish.");
+    // TODO uncomment this, otherwise many requests are still outstanding there.
+//    sp_n_tx_done_.WaitUntilGreaterOrEqualThan(n_tx_issued_);
+    // for debug purpose
+//    Reactor::CreateSpEvent<NeverEvent>()->Wait(5*1000*1000);
+    all_done_ = 1;
+  })));
+
+  while (all_done_ == 0) {
+    Log_debug("wait for finish... n_ceased_cleints: %d,  "
+              "n_issued: %d, n_done: %d, n_created_coordinator: %d",
+              (int) n_ceased_client_.value_, (int) n_tx_issued_,
+              (int) sp_n_tx_done_.value_, (int) created_coordinators_.size());
+    sleep(1);
+  }
+
+  Log_info("Finish:\nTotal: %u, Commit: %u, Attempts: %u, Running for %u\n",
+           num_txn.load(),
+           success.load(),
+           num_try.load(),
+           Config::GetConfig()->get_duration());
+  fflush(stderr);
+  fflush(stdout);
+
+  if (ccsi) {
+    Log_info("%s: wait_for_shutdown at client %d", __FUNCTION__, cli_id_);
+    ccsi->wait_for_shutdown();
+  }
+  delete timer_;
+  return;
+}
+
+/*
 void ClientWorker::Work() {
   Log_debug("%s: %d", __FUNCTION__, this->cli_id_);
   txn_reg_ = std::make_shared<TxnRegistry>();
@@ -215,6 +321,7 @@ void ClientWorker::Work() {
   delete timer_;
   return;
 }
+*/
 
 void ClientWorker::AcceptForwardedRequest(TxRequest& request,
                                           TxReply* txn_reply,
@@ -248,6 +355,35 @@ void ClientWorker::DispatchRequest(Coordinator* coo) {
   const char* f = __FUNCTION__;
   std::function<void()> task = [=]() {
     Log_debug("%s: %d", f, cli_id_);
+    // TODO don't use pointer here.
+    TxRequest *req = new TxRequest;
+    {
+      std::lock_guard<std::mutex> lock(this->request_gen_mutex);
+      tx_generator_->GetTxRequest(req, coo->coo_id_);
+    }
+//     req.callback_ = std::bind(&ClientWorker::RequestDone,
+//                               this,
+//                               coo,
+//                               std::placeholders::_1);
+    req->callback_ = [coo, req] (TxReply&) {
+//      verify(coo->sp_ev_commit_->status_ != Event::WAIT);
+      coo->sp_ev_commit_->Set(1);
+      auto& status = coo->sp_ev_done_->status_;
+      verify(status == Event::WAIT || status == Event::INIT);
+      coo->sp_ev_done_->Set(1);
+      delete req;
+    };
+    coo->DoTxAsync(*req);
+  };
+  task();
+//  dispatch_pool_->run_async(task); // this causes bug
+}
+
+/*
+void ClientWorker::DispatchRequest(Coordinator* coo) {
+  const char* f = __FUNCTION__;
+  std::function<void()> task = [=]() {
+    Log_debug("%s: %d", f, cli_id_);
     TxRequest req;
     {
       std::lock_guard<std::mutex> lock(this->request_gen_mutex);
@@ -262,6 +398,8 @@ void ClientWorker::DispatchRequest(Coordinator* coo) {
   task();
 //  dispatch_pool_->run_async(task); // this causes bug
 }
+
+*/
 
 ClientWorker::ClientWorker(
     uint32_t id,

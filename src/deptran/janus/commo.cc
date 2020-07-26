@@ -23,7 +23,7 @@ void JanusCommo::SendDispatch(vector<TxPieceData>& cmd,
           RccGraph rgraph;
           auto v = rgraph.CreateV(tid);
           RccTx& info = *v;
-          info.partition_.insert(par_id);
+//          info.partition_.insert(par_id);
           verify(rgraph.vertex_index().size() > 0);
           callback(res, output, rgraph);
         } else if (md.kind_ == MarshallDeputy::RCC_GRAPH) {
@@ -57,8 +57,9 @@ void JanusCommo::SendInquire(parid_t pid,
   function<void(Future*)> cb = [callback](Future* fu) {
     MarshallDeputy md;
     fu->get_reply() >> md;
-    auto graph = dynamic_cast<RccGraph&>(*md.sp_data_);
-    callback(graph);
+    verify(0);
+//    auto graph = dynamic_cast<RccGraph&>(*md.sp_data_);
+//    callback(graph);
   };
   fuattr.callback = cb;
   // TODO fix.
@@ -77,7 +78,7 @@ void JanusCommo::BroadcastPreAccept(
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
 
   bool skip_graph = IsGraphOrphan(*sp_graph, txn_id);
-  WAN_WAIT;
+  verify(0);
   for (auto& p : rpc_par_proxies_[par_id]) {
     auto proxy = (p.second);
     verify(proxy != nullptr);
@@ -107,7 +108,7 @@ void JanusCommo::BroadcastAccept(parid_t par_id,
                                  ballot_t ballot,
                                  shared_ptr<RccGraph> graph,
                                  const function<void(int)>& callback) {
-  WAN_WAIT;
+  verify(0);
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
   for (auto& p : rpc_par_proxies_[par_id]) {
     auto proxy = (p.second);
@@ -120,7 +121,10 @@ void JanusCommo::BroadcastAccept(parid_t par_id,
     };
     verify(cmd_id > 0);
     MarshallDeputy md(graph);
+    rank_t rank = RANK_D;
+    verify(0);
     Future::safe_release(proxy->async_JanusAccept(cmd_id,
+                                                  rank,
                                                   ballot,
                                                   md,
                                                   fuattr));
@@ -135,7 +139,7 @@ void JanusCommo::BroadcastCommit(
     shared_ptr<RccGraph> graph,
     const function<void(int32_t, TxnOutput&)>& callback) {
   bool skip_graph = IsGraphOrphan(*graph, cmd_id);
-  WAN_WAIT;
+  verify(0);
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
   for (auto& p : rpc_par_proxies_[par_id]) {
     auto proxy = (p.second);
@@ -175,7 +179,9 @@ shared_ptr<QuorumEvent> JanusCommo::BroadcastInquireValidation(set<parid_t>& par
         verify(0);
       }
     };
-    Future::safe_release(proxy->async_RccInquireValidation(txid, fuattr));
+    verify(0);
+    int rank = RANK_D;
+    Future::safe_release(proxy->async_RccInquireValidation(txid, rank, fuattr));
   }
   return e;
 }
@@ -185,7 +191,9 @@ void JanusCommo::BroadcastNotifyValidation(txid_t txid, set<parid_t>& pars, int3
       auto proxy = pair.second;
       FutureAttr fuattr;
       fuattr.callback = [](Future* fu) {};
-      Future::safe_release(proxy->async_RccNotifyGlobalValidation(txid, result, fuattr));
+      int rank = RANK_D;
+      verify(0);
+      Future::safe_release(proxy->async_RccNotifyGlobalValidation(txid, rank, result, fuattr));
     }
   }
 

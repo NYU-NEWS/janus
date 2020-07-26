@@ -103,6 +103,9 @@ int SchedulerTroad::OnPreAccept(const txid_t txn_id,
                                 const vector<SimpleCommand> &cmds,
                                 shared_ptr<RccGraph> graph,
                                 shared_ptr<RccGraph> res_graph) {
+  verify(0);
+  return 0;
+/**
   std::lock_guard<std::recursive_mutex> lock(mtx_);
 //  Log_info("on preaccept: %llx par: %d", txn_id, (int)partition_id_);
 //  if (RandomGenerator::rand(1, 2000) <= 1)
@@ -141,12 +144,15 @@ int SchedulerTroad::OnPreAccept(const txid_t txn_id,
   dtxn->fully_dispatched_->Set(1);
   MinItfrGraph(*dtxn, res_graph, false, 1);
   return SUCCESS;
+*/
 }
 
 int SchedulerTroad::OnAccept(const txnid_t txn_id,
                              const rank_t rank,
                              const ballot_t &ballot,
                              shared_ptr<RccGraph> graph) {
+  verify(0);
+  /*
   std::lock_guard<std::recursive_mutex> lock(mtx_);
   auto dtxn = dynamic_pointer_cast<TxTroad>(GetOrCreateTx(txn_id));
   verify(dtxn->current_rank_ == rank);
@@ -159,6 +165,7 @@ int SchedulerTroad::OnAccept(const txnid_t txn_id,
     dtxn->max_accepted_ballot_ = ballot;
     return SUCCESS;
   }
+   */
 }
 
 int SchedulerTroad::OnCommit(const txnid_t cmd_id,
@@ -167,6 +174,8 @@ int SchedulerTroad::OnCommit(const txnid_t cmd_id,
                              shared_ptr<RccGraph> sp_graph,
                              TxnOutput *output) {
   std::lock_guard<std::recursive_mutex> lock(mtx_);
+  verify(0);
+  /*
   Log_debug("committing dtxn %" PRIx64, cmd_id);
 //  if (RandomGenerator::rand(1, 2000) <= 1)
 //    Log_info("on commit graph size: %d", graph.size());
@@ -175,7 +184,7 @@ int SchedulerTroad::OnCommit(const txnid_t cmd_id,
   verify(rank == dtxn->current_rank_);
   verify(dtxn->p_output_reply_ == nullptr);
   dtxn->p_output_reply_ = output;
-  dtxn->__commit_received_ = true;
+  dtxn->__debug_commit_received_ = true;
   verify(!dtxn->IsAborted());
   bool weird = dtxn->HasLogApplyStarted();
   Coroutine::CreateRun([sp_tx, weird](){
@@ -216,6 +225,7 @@ int SchedulerTroad::OnCommit(const txnid_t cmd_id,
 //    ret = dtxn->local_validation_result_ > 0 ? SUCCESS : REJECT;
 //  dtxn->CommitRank();
   return SUCCESS;
+*/
 }
 
 TroadCommo *SchedulerTroad::commo() {

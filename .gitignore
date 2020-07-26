@@ -45,3 +45,4 @@ GPATH
 .vscode/
 cpu*
 profile-results/
+*.json

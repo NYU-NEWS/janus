@@ -21,6 +21,8 @@ void RccGraph::RemoveVertex(txnid_t txn_id) {
 
 void RccGraph::SelectGraphCmtUkn(RccTx& dtxn,
                                  shared_ptr<RccGraph> new_graph) {
+  verify(0);
+/*
   auto new_v = new_graph->FindOrCreateV(dtxn.id());
   auto s = dtxn.status();
   if (s >= TXN_DCD) {
@@ -35,7 +37,6 @@ void RccGraph::SelectGraphCmtUkn(RccTx& dtxn,
   for (auto &pair : parents) {
     verify(parents.size() > 0);
     auto parent_v = FindV(pair.first);
-    verify(parent_v != nullptr);
 //    auto weight = pair.second;
     auto new_parent_v = new_graph->FindOrCreateV(parent_v->id());
     new_parent_v->partition_ = parent_v->partition_;
@@ -49,16 +50,16 @@ void RccGraph::SelectGraphCmtUkn(RccTx& dtxn,
     verify(p1 == p2);
   }
 #endif
+*/
 }
 
 void RccGraph::SelectGraph(set<shared_ptr<RccTx>> vertexes,
                            RccGraph *new_graph) {
+/**
   for (auto v : vertexes) {
     auto new_v = new_graph->FindOrCreateV(*v);
     for (auto &kv: v->parents_) {
       auto parent_v = FindV(kv.first);
-      verify(parent_v != nullptr);
-//      auto weight = kv.second;
       auto weight = 0;
       shared_ptr<RccTx> new_parent_v = nullptr;
       if (vertexes.count(parent_v) > 0) {
@@ -93,12 +94,16 @@ void RccGraph::SelectGraph(set<shared_ptr<RccTx>> vertexes,
     }
   }
 #endif
+*/
 }
 
 uint64_t RccGraph::MinItfrGraph(RccTx& tx,
                                 shared_ptr<RccGraph> new_graph,
                                 bool quick,
                                 int depth) {
+  verify(0);
+  return 0;
+/**
   verify(new_graph);
   if (tx.parents_.size() == 0 && quick) {
     new_graph->empty_ = true;
@@ -185,6 +190,7 @@ uint64_t RccGraph::MinItfrGraph(RccTx& tx,
 //  Log_debug("return graph size: %llx", sz);
 //  verify(new_graph->FindV(tid) != nullptr);
   return sz;
+*/
 }
 
 bool RccGraph::operator==(RccGraph &rhs) const {
@@ -236,27 +242,29 @@ void RccGraph::RebuildEdgePointer(map<txnid_t, shared_ptr<RccTx>> &index) {
   }
 }
 
-void RccGraph::UpgradeStatus(RccTx& v, int8_t status) {
-//  if (v.current_rank_ < v.shared_rank_) {
-//    return;
-//  }
-  auto s = v.status();
+void RccGraph::UpgradeStatus(RccTx& v, int rank, int8_t status) {
+  verify(rank == RANK_D || rank == RANK_I);
+  auto s = v.subtx(rank).status();
   if (s >= TXN_CMT) {
-    v.__DebugCheckParents();
+    v.__DebugCheckParents(rank);
 //    RccServer::__DebugCheckParentSetSize(v.id(), v.parents_.size());
   } else if (status >= TXN_CMT) {
 //    RccServer::__DebugCheckParentSetSize(v.id(), v.parents_.size());
 //    v.__DebugCheckParents();
   }
-  v.union_status(status);
-  v.__DebugCheckParents();
+  v.subtx(rank).union_status(status);
+  v.__DebugCheckParents(rank);
 }
 
 shared_ptr<RccTx> RccGraph::AggregateVertex(shared_ptr<RccTx> rhs_dtxn) {
+  return rhs_dtxn;
+  verify(0);
+  /**
   // create the dtxn if not exist.
   auto lhs_dtxn = FindOrCreateV(*rhs_dtxn);
-  auto status1 = lhs_dtxn->status();
-  auto status2 = rhs_dtxn->status();
+  verify(0);
+//  auto status1 = lhs_dtxn->status();
+//  auto status2 = rhs_dtxn->status();
   auto &parent_set1 = lhs_dtxn->parents_;
   auto &parent_set2 = rhs_dtxn->GetParents();
 #ifdef DEBUG_CODE
@@ -277,9 +285,7 @@ shared_ptr<RccTx> RccGraph::AggregateVertex(shared_ptr<RccTx> rhs_dtxn) {
     }
   }
 #endif
-  /**
-   * If local vertex is not yet fully dispatched, pre-setting its dependencies does not hurt
-   */
+//  If local vertex is not yet fully dispatched, pre-setting its dependencies does not hurt
 //  if (lhs_dtxn->shared_rank_ > rhs_dtxn->shared_rank_) {
 //    verify(0);
 //    return lhs_dtxn;
@@ -327,6 +333,7 @@ shared_ptr<RccTx> RccGraph::AggregateVertex(shared_ptr<RccTx> rhs_dtxn) {
   lhs_dtxn->__DebugCheckParents();
   rhs_dtxn->__DebugCheckParents();
   return lhs_dtxn;
+  **/
 }
 
 //RccScc& RccGraph::FindSCC(RccDTxn *vertex) {
@@ -346,6 +353,8 @@ shared_ptr<RccTx> RccGraph::AggregateVertex(shared_ptr<RccTx> rhs_dtxn) {
 //}
 
 bool RccGraph::AllAncCmt(shared_ptr<RccTx> vertex) {
+  verify(0);
+/*
   if (vertex->all_anc_cmt_hint) {
     return true;
   }
@@ -368,6 +377,7 @@ bool RccGraph::AllAncCmt(shared_ptr<RccTx> vertex) {
   TraversePred(*vertex, -1, func);
   vertex->all_anc_cmt_hint = all_anc_cmt;
   return all_anc_cmt;
+*/
 }
 
 map<txnid_t, shared_ptr<RccTx>> RccGraph::Aggregate(epoch_t epoch,

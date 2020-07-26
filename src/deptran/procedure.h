@@ -260,7 +260,7 @@ class TxData: public CmdData {
   virtual bool HasMoreUnsentPiece();
   virtual shared_ptr<TxPieceData> GetNextReadySubCmd();
   virtual ReadyPiecesData GetReadyPiecesData(int32_t max = 0);
-  virtual set<parid_t> GetPartitionIds() override;
+  virtual set<parid_t>& GetPartitionIds() override;
   TxWorkspace& GetWorkspace(innid_t inn_id) {
     verify(inn_id != 0);
     TxWorkspace& ws = inputs_[inn_id];
@@ -275,6 +275,7 @@ class TxData: public CmdData {
   }
   virtual bool IsOneRound();
   vector<SimpleCommand> GetCmdsByPartition(parid_t par_id);
+  vector<SimpleCommand> GetCmdsByPartitionAndRank(parid_t par_id, rank_t rank);
 
   Marshal& ToMarshal(Marshal& m) const override;
   Marshal& FromMarshal(Marshal& m) override;

@@ -132,6 +132,7 @@ class entry_t {
  public:
   shared_ptr<Tx> last_{nullptr}; // last transaction(write) that touches this
   unordered_set<shared_ptr<Tx>> active_{}; // last transaction(write) that touches this
+  rank_t rank_ {RANK_UNDEFINED};
   // item. (arriving order)
 
   const entry_t &operator=(const entry_t &rhs) {

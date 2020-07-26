@@ -218,6 +218,7 @@ int main(int argc, char *argv[]) {
 #endif // ifdef CPU_PROFILE
   fflush(stderr);
   fflush(stdout);
+  exit(0);
   return 0;
   // TODO, FIXME pending_future in rpc cause error.
   client_shutdown();

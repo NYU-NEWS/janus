@@ -61,8 +61,6 @@ shared_ptr<Tx> TroadFrame::CreateTx(epoch_t epoch, txnid_t tid,
 //  return dtxn;
 
   auto p = new TxTroad(epoch, tid, mgr, ro);
-  p->current_rank_ = RANK_I;
-  p->shared_rank_ = RANK_I;
   shared_ptr<Tx> sp_tx(p);
   return sp_tx;
 }
@@ -73,9 +71,7 @@ shared_ptr<Tx> TroadJanusFrame::CreateTx(epoch_t epoch, txnid_t tid,
 //  return dtxn;
 
   auto p = new TxTroad(epoch, tid, mgr, ro);
-  p->current_rank_ = RANK_D;
-  p->shared_rank_ = RANK_D;
-  p->__mocking_janus_ = true;
+  p->mocking_janus_ = true;
   shared_ptr<Tx> sp_tx(p);
   return sp_tx;
 }

@@ -55,6 +55,7 @@ Reactor::CreateRunCoroutine(const std::function<void()> func) {
     sp_coro->func_ = func;
   } else {
     sp_coro = std::make_shared<Coroutine>(func);
+    verify(sp_coro->status_ == Coroutine::INIT);
   }
   coros_.insert(sp_coro);
   ContinueCoro(sp_coro);
@@ -79,50 +80,59 @@ Reactor::CreateRunCoroutine(const std::function<void()> func) {
 //  return sp_coro;
 }
 
+void Reactor::CheckTimeout(std::vector<std::shared_ptr<Event>>& ready_events ) {
+  auto time_now = Time::now();
+  for (auto it = timeout_events_.begin(); it != timeout_events_.end();) {
+    Event& event = **it;
+    auto status = event.status_;
+    switch (status) {
+      case Event::INIT:
+        verify(0);
+      case Event::WAIT: {
+        const auto &wakeup_time = event.wakeup_time_;
+        verify(wakeup_time > 0);
+        if (time_now > wakeup_time) {
+          if (event.IsReady()) {
+            // This is because our event mechanism is not perfect, some events
+            // don't get triggered with arbitrary condition change.
+            event.status_ = Event::READY;
+          } else {
+            event.status_ = Event::TIMEOUT;
+          }
+          ready_events.push_back(*it);
+          it = timeout_events_.erase(it);
+        } else {
+          it++;
+        }
+        break;
+      }
+      case Event::READY:
+      case Event::DONE:
+        it = timeout_events_.erase(it);
+        break;
+      default:
+        verify(0);
+    }
+  }
+
+}
+
 //  be careful this could be called from different coroutines.
-void Reactor::Loop(bool infinite) {
+void Reactor::Loop(bool infinite, bool check_timeout) {
   verify(std::this_thread::get_id() == thread_id_);
   looping_ = infinite;
   do {
     std::vector<shared_ptr<Event>> ready_events = std::move(ready_events_);
     verify(ready_events_.empty());
+#ifdef DEBUG_CHECK
     for (auto ev : ready_events) {
       verify(ev->status_ == Event::READY);
     }
-
-    auto time_now = Time::now();
-    for (auto it = timeout_events_.begin(); it != timeout_events_.end();) {
-      Event& event = **it;
-      auto status = event.status_;
-      switch (status) {
-        case Event::INIT:
-          verify(0);
-        case Event::WAIT: {
-          const auto &wakeup_time = event.wakeup_time_;
-          verify(wakeup_time > 0);
-          if (time_now > wakeup_time) {
-            if (event.IsReady()) {
-              // This is because our event mechanism is not perfect, some events
-              // don't get triggered with arbitrary condition change.
-              event.status_ = Event::READY;
-            } else {
-              event.status_ = Event::TIMEOUT;
-            }
-            ready_events.push_back(*it);
-            it = timeout_events_.erase(it);
-          } else {
-            it++;
-          }
-          break;
-        }
-        case Event::READY:
-        case Event::DONE:
-          it = timeout_events_.erase(it);
-          break;
-        default:
-          verify(0);
-      }
+#endif
+    if (check_timeout) {
+      CheckTimeout(ready_events);
     }
+
     for (auto it = ready_events.begin(); it != ready_events.end(); it++) {
       Event& event = **it;
       verify(event.status_ != Event::DONE);
@@ -275,6 +285,7 @@ PollMgr::~PollMgr() {
 void PollMgr::PollThread::poll_loop() {
   while (!stop_flag_) {
     TriggerJob();
+    Reactor::GetReactor()->Loop(false, true);
     poll_.Wait();
     verify(Reactor::GetReactor()->ready_events_.empty());
     TriggerJob();
@@ -298,6 +309,7 @@ void PollMgr::PollThread::poll_loop() {
     TriggerJob();
     verify(Reactor::GetReactor()->ready_events_.empty());
     Reactor::GetReactor()->Loop();
+    verify(Reactor::GetReactor()->ready_events_.empty());
   }
 }
 

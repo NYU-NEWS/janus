@@ -20,6 +20,9 @@
  */
 
 namespace janus {
+std::mutex Coordinator::_dbg_txid_lock_{};
+std::unordered_set<txid_t> Coordinator::_dbg_txid_set_{};
+
 Coordinator::Coordinator(uint32_t coo_id,
                          int32_t benchmark,
                          ClientControlServiceImpl *ccsi,

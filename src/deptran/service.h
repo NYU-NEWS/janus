@@ -127,6 +127,7 @@ class ClassicServiceImpl : public ClassicService {
                     DeferredReply* defer) override;
 
   void RccAccept(const txid_t& txnid,
+                 const rank_t& rank,
                  const ballot_t& ballot,
                  const parent_set_t& parents,
                  int32_t* res,
@@ -146,6 +147,7 @@ class ClassicServiceImpl : public ClassicService {
                  DeferredReply* defer) override;
 
   void RccInquire(const txid_t& tid,
+                  const int32_t& rank,
                   map<txid_t, parent_set_t>*,
                   DeferredReply*) override;
 
@@ -153,8 +155,8 @@ class ClassicServiceImpl : public ClassicService {
                      map<int32_t, Value>* output,
                      DeferredReply* reply) override;
 
-  void RccInquireValidation(const txid_t& txid, int32_t* ret, DeferredReply* reply) override;
-  void RccNotifyGlobalValidation(const txid_t& txid, const int32_t& res, DeferredReply* reply) override;
+  void RccInquireValidation(const txid_t& txid, const int32_t& rank, int32_t* ret, DeferredReply* reply) override;
+  void RccNotifyGlobalValidation(const txid_t& txid, const int32_t& rank, const int32_t& res, DeferredReply* reply) override;
 
   void JanusDispatch(const vector<SimpleCommand>& cmd,
                      int32_t* p_res,
@@ -198,6 +200,7 @@ class ClassicServiceImpl : public ClassicService {
                              DeferredReply* defer) override;
 
   void JanusAccept(const txid_t& txnid,
+                   const rank_t& rank,
                    const ballot_t& ballot,
                    const MarshallDeputy& md_graph,
                    int32_t* res,

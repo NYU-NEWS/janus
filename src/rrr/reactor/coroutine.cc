@@ -2,9 +2,11 @@
 
 #include <functional>
 #include <iostream>
+#include <boost/coroutine2/protected_fixedsize_stack.hpp>
 #include "../base/all.hpp"
 #include "coroutine.h"
 #include "reactor.h"
+
 
 namespace rrr {
 
@@ -44,10 +46,13 @@ void Coroutine::Run() {
 //  up_boost_coro_task_ = make_shared<boost_coro_task_t>(
 
   boost_coro_task_t* x = new boost_coro_task_t(
-//      std::bind(&Coroutine::BoostRunWrapper, this, std::placeholders::_1)
-    [this] (boost_coro_yield_t& yield) {
-      this->BoostRunWrapper(yield);
-    }
+#ifdef USE_PROTECTED_STACK
+      boost::coroutines2::protected_fixedsize_stack(),
+#endif
+      std::bind(&Coroutine::BoostRunWrapper, this, std::placeholders::_1)
+//    [this] (boost_coro_yield_t& yield) {
+//      this->BoostRunWrapper(yield);
+//    }
       );
   up_boost_coro_task_.reset(x);
 #ifdef USE_BOOST_COROUTINE1
@@ -66,7 +71,9 @@ void Coroutine::Continue() {
   verify(status_ == PAUSED || status_ == RECYCLED);
   verify(up_boost_coro_task_);
   status_ = RESUMED;
-  (*up_boost_coro_task_)();
+  auto& r = *up_boost_coro_task_;
+  verify(r);
+  r();
   // some events might have been triggered from last coroutine,
   // but you have to manually call the scheduler to loop.
 }

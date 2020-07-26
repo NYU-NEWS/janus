@@ -114,10 +114,22 @@ class Time {
 public:
     static const uint64_t RRR_USEC_PER_SEC = 1000000;
 
-    static uint64_t now() {
-	    struct timeval tv;
-	    gettimeofday(&tv, NULL);
-	    return tv.tv_sec * RRR_USEC_PER_SEC + tv.tv_usec;
+    static uint64_t now(bool accurate = false) {
+//	  struct timeval tv;
+//	  gettimeofday(&tv, NULL);
+//      return tv.tv_sec * RRR_USEC_PER_SEC + tv.tv_usec;
+
+      struct timespec spec;
+#ifdef __APPLE__
+      clock_gettime(CLOCK_REALTIME, &spec );
+#else
+      if (accurate) {
+        clock_gettime(CLOCK_REALTIME, &spec );
+      } else {
+        clock_gettime(CLOCK_REALTIME_COARSE, &spec);
+      }
+#endif
+      return spec.tv_sec * RRR_USEC_PER_SEC + spec.tv_nsec/1000;
     }
 
     static void sleep(uint64_t t) {

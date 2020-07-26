@@ -27,6 +27,9 @@ class RccCoord : public CoordinatorClassic {
   map<parid_t, int> n_commit_oks_{};
   bool mocking_janus_{false};
 
+  set<parid_t> par_i_{};
+  set<parid_t> par_d_{};
+
   RccCoord(uint32_t coo_id,
            int benchmark,
            ClientControlServiceImpl* ccsi,
@@ -62,5 +65,26 @@ class RccCoord : public CoordinatorClassic {
   void FinishRo() { verify(0); };
   void Reset() override;
   virtual void GotoNextPhase() override ;
+
+  set<parid_t>& GetTxPartitions(CmdData& cmd, rank_t rank) {
+    verify(rank == RANK_I || rank == RANK_D);
+    if (rank == RANK_I) {
+      verify(!par_i_.empty());
+//      verify(par_i_.size() == 1);
+      return par_i_;
+    } else {
+      return par_d_;
+    }
+  }
+
+  void MergeParents(parent_set_t& s2) {
+    auto& s1 = parents_;
+    for (auto& pair : s2) {
+      // TODO reduce size
+      s1.push_back(pair);
+      verify(pair.first != tx_data().id_);
+    }
+  }
+
 };
 } // namespace janus

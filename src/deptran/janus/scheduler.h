@@ -19,6 +19,7 @@ class SchedulerJanus : public RccServer {
                           shared_ptr<RccGraph> res_graph);
 
   void OnAccept(txnid_t txn_id,
+                int rank,
                 const ballot_t& ballot,
                 shared_ptr<RccGraph> graph,
                 int32_t* res);

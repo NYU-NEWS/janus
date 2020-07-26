@@ -5,7 +5,7 @@ namespace janus {
 
 #define ballot_t int64_t
 #define cooid_t uint32_t
-#define rank_t uint8_t
+#define rank_t int32_t
 #define txid_t uint64_t
 #define txnid_t uint64_t
 #define cmdid_t uint64_t // txnid and cmdid are the same thing

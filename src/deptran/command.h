@@ -22,9 +22,10 @@ class CmdData : public Marshallable {
   virtual void Merge(CmdData&) {
     verify(0);
   }
-  virtual set<parid_t> GetPartitionIds() {
+  virtual set<parid_t>& GetPartitionIds() {
     verify(0);
-    return set<parid_t>();
+    static set<parid_t> l;
+    return l;
   }
   virtual void Reset() {
     verify(0);

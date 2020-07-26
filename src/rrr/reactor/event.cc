@@ -36,6 +36,9 @@ void Event::Wait(uint64_t timeout) {
 #ifdef EVENT_TIMEOUT_CHECK
     if (timeout == 0) {
       timeout = 300 * 1000 * 1000;
+//#ifdef SIMULATE_WAN
+//      timeout = 600 * 1000 * 1000;
+//#endif
     }
 #endif
     if (timeout > 0) {
@@ -120,10 +123,30 @@ bool IntEvent::TestTrigger() {
   return false;
 }
 
+int SharedIntEvent::Set(const int& v) {
+  auto ret = value_;
+  value_ = v;
+  for (auto& sp_ev : events_) {
+    if (sp_ev->status_ <= Event::WAIT) {
+      if (sp_ev->target_ <= v) {
+        sp_ev->Set(v);
+      }
+    }
+  }
+  return ret;
+}
+
 void SharedIntEvent::WaitUntilGreaterOrEqualThan(int x) {
-  Wait([x](int v)->bool{
-    return v>=x;
-  });
+  if (value_ >= x) {
+    return;
+  }
+  auto sp_ev =  Reactor::CreateSpEvent<IntEvent>();
+  sp_ev->value_ = value_;
+  sp_ev->target_ = x;
+  events_.push_back(sp_ev);
+//  sp_ev->Wait(1000*1000*1000);
+//  verify(sp_ev->status_ != Event::TIMEOUT);
+  sp_ev->Wait();
 }
 
 void SharedIntEvent::Wait(function<bool(int v)> f) {

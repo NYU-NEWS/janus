@@ -21,10 +21,10 @@ void TroadCommo::SendDispatch(vector<TxPieceData>& cmd,
         fu->get_reply() >> res >> output >> md;
         if (md.kind_ == MarshallDeputy::EMPTY_GRAPH) {
           RccGraph rgraph;
-          auto v = rgraph.CreateV(tid);
-          RccTx& info = *v;
-          info.partition_.insert(par_id);
-          verify(rgraph.vertex_index().size() > 0);
+//          auto v = rgraph.CreateV(tid);
+//          RccTx& info = *v;
+//          info.partition_.insert(par_id);
+//          verify(rgraph.vertex_index().size() > 0);
           callback(res, output, rgraph);
         } else if (md.kind_ == MarshallDeputy::RCC_GRAPH) {
           RccGraph& graph = dynamic_cast<RccGraph&>(*md.sp_data_);
@@ -57,8 +57,9 @@ void TroadCommo::SendInquire(parid_t pid,
   function<void(Future*)> cb = [callback](Future* fu) {
     MarshallDeputy md;
     fu->get_reply() >> md;
-    auto graph = dynamic_cast<RccGraph&>(*md.sp_data_);
-    callback(graph);
+    verify(0);
+//    auto graph = dynamic_cast<RccGraph&>(*md.sp_data_);
+//    callback(graph);
   };
   fuattr.callback = cb;
   // TODO fix.
@@ -197,7 +198,7 @@ void TroadCommo::BroadcastAccept(parid_t par_id,
                                  ballot_t ballot,
                                  shared_ptr<RccGraph> graph,
                                  const function<void(int)>& callback) {
-  WAN_WAIT;
+  verify(0);
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
   for (auto& p : rpc_par_proxies_[par_id]) {
     auto proxy = (p.second);
@@ -210,7 +211,10 @@ void TroadCommo::BroadcastAccept(parid_t par_id,
     };
     verify(cmd_id > 0);
     MarshallDeputy md(graph);
+    rank_t rank = RANK_D;
+    verify(0);
     Future::safe_release(proxy->async_JanusAccept(cmd_id,
+                                                  rank,
                                                   ballot,
                                                   md,
                                                   fuattr));
@@ -219,9 +223,9 @@ void TroadCommo::BroadcastAccept(parid_t par_id,
 
 shared_ptr<QuorumEvent> TroadCommo::BroadcastAccept(parid_t par_id,
                                                     txnid_t cmd_id,
+                                                    rank_t rank,
                                                     ballot_t ballot,
                                                     parent_set_t& parents) {
-  WAN_WAIT;
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
   auto n = rpc_par_proxies_[par_id].size();
   auto ev = Reactor::CreateSpEvent<QuorumEvent>(n, n/2+1);
@@ -242,10 +246,12 @@ shared_ptr<QuorumEvent> TroadCommo::BroadcastAccept(parid_t par_id,
       }
     };
     verify(cmd_id > 0);
+    verify(rank == RANK_D || rank == RANK_I);
     Future::safe_release(proxy->async_RccAccept(cmd_id,
-                                                  ballot,
-                                                  parents,
-                                                  fuattr));
+                                                rank,
+                                                ballot,
+                                                parents,
+                                                fuattr));
   }
   return ev;
 }
@@ -254,7 +260,7 @@ shared_ptr<QuorumEvent> TroadCommo::BroadcastAccept(parid_t par_id,
                                                     txnid_t cmd_id,
                                                     ballot_t ballot,
                                                     shared_ptr<RccGraph> graph) {
-  WAN_WAIT;
+  verify(0);
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
   auto n = rpc_par_proxies_[par_id].size();
   auto ev = Reactor::CreateSpEvent<QuorumEvent>(n, n/2+1);
@@ -275,7 +281,10 @@ shared_ptr<QuorumEvent> TroadCommo::BroadcastAccept(parid_t par_id,
     };
     verify(cmd_id > 0);
     MarshallDeputy md(graph);
+    rank_t rank = RANK_D;
+    verify(0);
     Future::safe_release(proxy->async_JanusAccept(cmd_id,
+                                                  rank,
                                                   ballot,
                                                   md,
                                                   fuattr));
@@ -299,7 +308,8 @@ shared_ptr<QuorumEvent> TroadCommo::CollectValidation(txid_t txid, set<parid_t> 
         ev->VoteNo();
       }
     };
-    Future::safe_release(proxy->async_RccInquireValidation(txid, fuattr));
+    int rank = RANK_D;
+    Future::safe_release(proxy->async_RccInquireValidation(txid, rank, fuattr));
   }
   return ev;
 }
@@ -315,7 +325,8 @@ shared_ptr<QuorumEvent> TroadCommo::BroadcastValidation(CmdData& cmd_, int resul
       fuattr.callback = [ev] (Future* fu) {
 //        ev->n_voted_yes_++;
       };
-      Future::safe_release(proxy->async_RccNotifyGlobalValidation(cmd_.id_, result, fuattr));
+      int rank = RANK_D;
+      Future::safe_release(proxy->async_RccNotifyGlobalValidation(cmd_.id_, rank, result, fuattr));
     }
   }
   return ev;

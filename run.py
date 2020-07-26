@@ -229,7 +229,9 @@ class TxnInfo(object):
         logger.info("mid_time = {}".format(self.mid_time))
 
         if self.mid_retry_exhausted > 0:
-            m = [max(self.mid_latencies)]
+            m = [0]
+            if len(self.mid_latencies) > 0:
+              m = [max(self.mid_latencies)]
             self.mid_all_latencies.extend(m * self.mid_retry_exhausted)
 
         self.mid_latencies.sort()

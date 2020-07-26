@@ -310,6 +310,8 @@ bool CoordinatorJanus::PreAcceptAllSlowQuorumsReached() {
 // 2: >=(par_size - fast quorum) of different graphs. fast quorum not possible.
 // 3: less than a fast quorum graphs received.
 int CoordinatorJanus::FastQuorumGraphCheck(parid_t par_id) {
+  verify(0);
+  /*
   auto par_size = Config::GetConfig()->GetPartitionSize(par_id);
   auto& vec_graph = n_fast_accept_graphs_[par_id];
   auto fast_quorum = GetFastQuorum(par_id);
@@ -336,6 +338,7 @@ int CoordinatorJanus::FastQuorumGraphCheck(parid_t par_id) {
   }
   fast_accept_graph_check_caches_[par_id] = res;
   return res;
+   */
 }
 
 void CoordinatorJanus::GotoNextPhase() {

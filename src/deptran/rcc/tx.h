@@ -7,55 +7,14 @@
 
 #define PHASE_RCC_DISPATCH (1)
 #define PHASE_RCC_COMMIT (2)
-#define PHASE_RCC_D_DISPATCH (3)
-#define PHASE_RCC_D_COMMIT (3)
+
+#define SKIP_I (false)
+#define SKIP_D (false)
 
 namespace janus {
 
 class RccTx: public Tx, public Vertex<RccTx> {
  public:
-  void __DebugCheckParents();
-  void __DebugCheckScc();
-  static SpinLock __debug_parents_lock_;
-  static SpinLock __debug_scc_lock_;
-  static std::map<txid_t, parent_set_t> __debug_parents_;
-  static std::map<txid_t, vector<txid_t>> __debug_scc_;
-  static thread_local uint64_t timestamp_;
-  bool __mocking_janus_{false};
-  rank_t current_rank_{RANK_UNDEFINED};
-  rank_t shared_rank_{RANK_UNDEFINED}; // this could be greater than current_rank_ as it can be updated during graph propagation
-  rank_t scc_rank_{0};
-  // ----below variables get reset whenever current_rank_ is changed
-  SharedIntEvent status_{};
-  ballot_t max_seen_ballot_{0};
-  ballot_t max_accepted_ballot_{0};
-  SharedIntEvent commit_received_{};
-  SharedIntEvent log_apply_finished_{};
-//  RccTx** waiting_on_{nullptr}; // prevent deadlock
-  RccTx* traverse_path_start_{nullptr};
-  RccTx* traverse_path_waitingon_{nullptr};
-  enum TraverseStatus {ERROR=0, TRAVERSING=1, WAITING_NO_DEADLOCK=2, WAITING_POSSIBLE_DEADLOCK=3, DONE=4};
-  TraverseStatus traverse_path_waiting_status_{ERROR};
-  shared_ptr<IntEvent> sp_ev_commit_{Reactor::CreateSpEvent<IntEvent>()};
-  TxnOutput *p_output_reply_ = nullptr;
-  TxnOutput output_ = {};
-  bool log_apply_started_{false}; // compared to ???
-  // also reset phase_ and fully_dispatched.
-  // ----above variables get reset whenever current_rank_ is changed
-  bool need_validation_{false};
-  bool __commit_received_{false};
-  bool waiting_all_anc_committing_{false};
-  SharedIntEvent wait_all_anc_commit_done_{};
-  bool __debug_entered_committing_{false};
-  int __debug_random_number_{0};
-  int __debug_random_number_2{0};
-  int __debug_random_number_init_{RandomGenerator::rand(1, 1000000)};
-//  txid_t __debug_search_path_init_txid_{0}; // some suspicious bug here.
-
-  bool all_ancestors_committing() {
-    return all_anc_cmt_hint;
-  }
-
   class StatusBox : public BoxEvent<int> {
    public:
     int& Get() {
@@ -67,20 +26,241 @@ class RccTx: public Tx, public Vertex<RccTx> {
       BoxEvent<int>::Set(x);
     }
   };
+  bool mocking_janus_{false};
 
-  bool __debug_local_validated_foreign_{false};
-  shared_ptr<StatusBox> local_validated_{Reactor::CreateSpEvent<StatusBox>()};
-  shared_ptr<StatusBox> global_validated_{Reactor::CreateSpEvent<StatusBox>()};
+  void __DebugCheckParents(rank_t rank);
+  void __DebugCheckScc(rank_t rank);
+  enum TraverseStatus {ERROR=0, TRAVERSING=1, WAITING_NO_DEADLOCK=2, WAITING_POSSIBLE_DEADLOCK=3, DONE=4};
+  static SpinLock __debug_parents_lock_;
+  static SpinLock __debug_scc_lock_;
+  static std::map<txid_t, parent_set_t> __debug_parents_i_;
+  static std::map<txid_t, parent_set_t> __debug_parents_d_;
+  static std::map<txid_t, vector<txid_t>> __debug_scc_i_;
+  static std::map<txid_t, vector<txid_t>> __debug_scc_d_;
+  static thread_local uint64_t timestamp_i_s;
+  static thread_local uint64_t timestamp_d_s;
+  static uint64_t& timestamp(rank_t rank) {
+    verify(rank == RANK_I || rank == RANK_D);
+    if (rank == RANK_I) {
+      return timestamp_i_s;
+    } else {
+      return timestamp_d_s;
+    }
+  };
 
-  vector<SimpleCommand> dreqs_ = {};
+  static std::map<txid_t, parent_set_t>& __debug_parents(rank_t rank) {
+    if (rank == RANK_I) {
+      return __debug_parents_i_;
+    } else {
+      return __debug_parents_d_;
+    }
+  };
+  static std::map<txid_t, vector<txid_t>>& __debug_scc(rank_t rank) {
+    if (rank == RANK_I) {
+      return __debug_scc_i_;
+    } else {
+      return __debug_scc_d_;
+    }
+  };
+
+  // ----below variables get reset whenever current_rank_ is changed
+//  bool __debug_commit_received_{false};
+//  bool __debug_entered_committing_{false};
+//  SharedIntEvent status_{};
+//  ballot_t max_seen_ballot_{0};
+//  ballot_t max_accepted_ballot_{0};
+//  SharedIntEvent commit_received_{};
+//  SharedIntEvent log_apply_finished_{};
+//  RccTx* traverse_path_start_{nullptr};
+//  RccTx* traverse_path_waitingon_{nullptr};
+//  TraverseStatus traverse_path_waiting_status_{ERROR};
+//  shared_ptr<IntEvent> sp_ev_commit_{Reactor::CreateSpEvent<IntEvent>()};
+//  TxnOutput *p_output_reply_ = nullptr;
+//  TxnOutput output_ = {};
+//  bool log_apply_started_{false}; // compared to ???
+//  // also reset phase_ and fully_dispatched.
+//  bool need_validation_{false};
+//  bool waiting_all_anc_committing_{false};
+//  SharedIntEvent wait_all_anc_commit_done_{};
+//  bool __debug_local_validated_foreign_{false};
+//  shared_ptr<StatusBox> local_validated_{Reactor::CreateSpEvent<StatusBox>()};
+//  shared_ptr<StatusBox> global_validated_{Reactor::CreateSpEvent<StatusBox>()};
+//  vector<SimpleCommand> dreqs_ = {};
+//  // ----above variables get reset whenever current_rank_ is changed
+
+
+  class RccTxStatus {
+   public:
+    int value_{};
+//  vector<shared_ptr<IntEvent>> events_{};
+    vector<shared_ptr<IntEvent>> events_{}; // waiting for commits
+    void Set(const int& v) {
+      value_ = v;
+      if (v >= TXN_CMT) {
+        for (auto& sp_ev: events_) {
+          verify(sp_ev->target_ == TXN_CMT);
+          sp_ev->Set(v);
+        }
+        events_.clear();
+      }
+      return;
+    }
+
+    void WaitUntilGreaterOrEqualThan(int x) {
+      verify(x == TXN_CMT);
+      if (value_ >= x) {
+        return;
+      }
+      auto sp_ev =  Reactor::CreateSpEvent<IntEvent>();
+      sp_ev->value_ = value_;
+      sp_ev->target_ = x;
+      events_.push_back(sp_ev);
+//  sp_ev->Wait(1000*1000*1000);
+//  verify(sp_ev->status_ != Event::TIMEOUT);
+      sp_ev->Wait();
+    }
+  };
+
+  class RccSubTx {
+   public:
+    bool __debug_commit_received_{false};
+    bool __debug_entered_committing_{false};
+    RccTxStatus status_{};
+    ballot_t max_seen_ballot_{0};
+    ballot_t max_accepted_ballot_{0};
+    SharedIntEvent commit_received_{};
+    SharedIntEvent log_apply_finished_{};
+    RccTx* traverse_path_start_{nullptr};
+    RccTx* traverse_path_waitingon_{nullptr};
+    TraverseStatus traverse_path_waiting_status_{ERROR};
+    shared_ptr<IntEvent> sp_ev_commit_{Reactor::CreateSpEvent<IntEvent>()};
+    TxnOutput *p_output_reply_ = nullptr;
+    TxnOutput output_ = {};
+    bool log_apply_started_{false}; // compared to ???
+    // also reset phase_ and fully_dispatched.
+    bool need_validation_{false};
+    bool waiting_all_anc_committing_{false};
+    SharedIntEvent wait_all_anc_commit_done_{};
+    bool __debug_local_validated_foreign_{false};
+    shared_ptr<StatusBox> local_validated_{Reactor::CreateSpEvent<StatusBox>()};
+    shared_ptr<StatusBox> global_validated_{Reactor::CreateSpEvent<StatusBox>()};
+    shared_ptr<IntEvent> fully_dispatched_{Reactor::CreateSpEvent<IntEvent>()};
+//  bool fully_dispatched_{false};
+    vector<SimpleCommand> dreqs_ = {};
+    // hopefully this makes involve checks faster
+    enum InvolveEnum {UNKNOWN, INVOLVED, FOREIGN};
+    InvolveEnum involve_flag_{UNKNOWN};
+
+    std::set<uint32_t> partition_;
+    std::vector<uint64_t> pieces_;
+    bool during_commit = false;
+    bool during_asking = false;
+    bool inquire_acked_ = false;
+    bool all_anc_cmt_hint{false};
+    bool all_nonscc_parents_executed_hint{false};
+    bool scc_all_nonscc_parents_executed_hint_{false};
+
+
+    virtual bool UpdateStatus(int s) {
+      if (status_.value_ < s) {
+        status_.Set(status_.value_ | s);
+        if (status_.value_ >= TXN_CMT) {
+//          __DebugCheckParents();
+        }
+        return true;
+      } else {
+        return false;
+      }
+    }
+
+
+    inline int8_t status() const {
+      return status_.value_;
+    }
+
+    inline bool IsAborted() const {
+      return (status_.value_ & TXN_ABT);
+    }
+
+    inline bool IsCommitting() const {
+//    return (status_.value_ & TXN_CMT);
+      return (status_.value_ >= TXN_CMT);
+    }
+
+    inline bool IsDecided() const {
+      return (status_.value_ & TXN_DCD);
+    }
+
+    inline bool HasLogApplyStarted() const {
+//    if (executed_) {
+//      verify(IsDecided());
+//    }
+      return log_apply_started_;
+    }
+
+    inline void union_status(int8_t status,
+                             bool is_trigger = false,
+                             bool is_server = false) {
+
+      if (false) {
+        // TODO
+        // I cannot change the status of this txn.
+      } else {
+#ifdef DEBUG_CODE
+        verify((status_ | status) >= status_);
+#endif
+        status_.Set(status_.value_ |= status);
+
+      }
+    }
+
+    bool Involve(parid_t id) {
+      if (involve_flag_ == INVOLVED)
+        return true;
+      if (involve_flag_ == FOREIGN)
+        return false;
+//    verify(partition_.size() > 0);
+      auto it = partition_.find(id);
+      if (it == partition_.end()) {
+        if (IsCommitting()) {
+          involve_flag_ = FOREIGN;
+        }
+        return false;
+      } else {
+        if (IsCommitting()) {
+          involve_flag_ = INVOLVED;
+        }
+        return true;
+      }
+    }
+
+    uint32_t random_server() {
+      verify(partition_.size() > 0);
+      uint32_t i = RandomGenerator::rand(0, partition_.size() - 1);
+      auto it = partition_.begin();
+      std::advance(it, i);
+      uint32_t id = *(partition_.begin());
+      Log::debug("random a related server, id: %x", id);
+      return id;
+    }
+
+  };
+
+  RccSubTx subtx_i_{};
+  RccSubTx subtx_d_{};
+
+  RccSubTx& subtx(int rank) {
+    verify(rank == RANK_D || rank == RANK_I);
+    if (rank == RANK_D) {
+      return subtx_d_;
+    } else {
+      return subtx_i_;
+    }
+  }
+
   bool read_only_ = false;
-  bool __debug_replied = false;
-  vector<void**> external_refs_{};
   map<Row *, map<colid_t, mdb::version_t>> read_vers_{};
 
-  // hopefully this makes involve checks faster
-  enum InvolveEnum {UNKNOWN, INVOLVED, FOREIGN};
-  InvolveEnum involve_flag_{UNKNOWN};
 
 //  bool InvolveThisShard() {
 //    if (involve_flag_ == UNKNOWN) {
@@ -104,43 +284,13 @@ class RccTx: public Tx, public Vertex<RccTx> {
   RccTx(epoch_t, txnid_t tid, TxLogServer *mgr, bool ro);
 
   virtual ~RccTx() {
-    for (auto& ref : external_refs_) {
-      if (*ref == this) {
-        *ref = nullptr;
-      }
-    }
-  }
-
-  void CommitRank() {
-    verify(0);
-    if (current_rank_ == RANK_D) {
-      current_rank_ = RANK_MAX;
-    } else if (current_rank_ == RANK_I) {
-      current_rank_ = RANK_D;
-      status_.value_ = TXN_UNKNOWN;
-    } else {
-      verify(0);
-    }
-    if (current_rank_ > shared_rank_) {
-      shared_rank_ = current_rank_;
-    }
-
-    max_seen_ballot_ = 0;
-    max_accepted_ballot_ = 0;
-    sp_ev_commit_ = Reactor::CreateSpEvent<IntEvent>();
-    p_output_reply_ = nullptr;
-    // TODO do we need to proper reset this value.
-//    status_.value_ = TXN_UNKNOWN;
-    fully_dispatched_ = Reactor::CreateSpEvent<IntEvent>();
-//    fully_dispatched_ = false;
-    log_apply_started_ = false;
   }
 
   virtual void DispatchExecute(SimpleCommand &cmd,
                                map<int32_t, Value> *output);
 
-  void CommitValidate();
-  virtual void CommitExecute();
+  void CommitValidate(rank_t rank);
+  virtual void CommitExecute(int rank);
 
   virtual void Abort();
 
@@ -157,7 +307,7 @@ class RccTx: public Tx, public Vertex<RccTx> {
   void TraceDep(Row* row, colid_t col_id, rank_t hint_flag);
   void CommitDep(Row& row, colid_t col_id);
 
-  virtual void AddParentEdge(shared_ptr<RccTx> other, int8_t weight) override;
+  virtual void AddParentEdge(shared_ptr<RccTx> other, rank_t rank) override;
 
   virtual void start_ro(const SimpleCommand&,
                         map<int32_t, Value> &output,
@@ -170,84 +320,11 @@ class RccTx: public Tx, public Vertex<RccTx> {
     return RccRow::create(schema, values);
   }
 
-  virtual bool UpdateStatus(int s) {
-    if (status_.value_ < s) {
-      status_.Set(status_.value_ | s);
-      if (status_.value_ >= TXN_CMT) {
-        __DebugCheckParents();
-      }
-      return true;
-    } else {
-      return false;
-    }
-  }
-
  public:
-  std::set<uint32_t> partition_;
-  std::vector<uint64_t> pieces_;
-  bool during_commit = false;
-  bool during_asking = false;
-  bool inquire_acked_ = false;
-  bool all_anc_cmt_hint{false};
-  bool all_nonscc_parents_executed_hint{false};
-
   txnid_t id() override {
     return tid_;
   }
 
-  inline int8_t status() const {
-    return status_.value_;
-  }
-
-  inline bool IsAborted() const {
-    return (status_.value_ & TXN_ABT);
-  }
-
-  inline bool IsCommitting() const {
-//    return (status_.value_ & TXN_CMT);
-    return (status_.value_ >= TXN_CMT);
-  }
-
-  inline bool IsDecided() const {
-    return (status_.value_ & TXN_DCD);
-  }
-
-  inline bool HasLogApplyStarted() const {
-//    if (executed_) {
-//      verify(IsDecided());
-//    }
-    return log_apply_started_;
-  }
-
-  bool Involve(parid_t id) {
-    if (involve_flag_ == INVOLVED)
-      return true;
-    if (involve_flag_ == FOREIGN)
-      return false;
-//    verify(partition_.size() > 0);
-    auto it = partition_.find(id);
-    if (it == partition_.end()) {
-      if (IsCommitting()) {
-        involve_flag_ = FOREIGN;
-      }
-      return false;
-    } else {
-      if (IsCommitting()) {
-        involve_flag_ = INVOLVED;
-      }
-      return true;
-    }
-  }
-
-  uint32_t random_server() {
-    verify(partition_.size() > 0);
-    uint32_t i = RandomGenerator::rand(0, partition_.size() - 1);
-    auto it = partition_.begin();
-    std::advance(it, i);
-    uint32_t id = *(partition_.begin());
-    Log::debug("random a related server, id: %x", id);
-    return id;
-  }
 
   bool operator<(const RccTx &rhs) const {
     return tid_ < rhs.tid_;
@@ -257,39 +334,11 @@ class RccTx: public Tx, public Vertex<RccTx> {
     tid_ = id;
   }
 
-  inline void union_data(const RccTx &ti,
-                         bool trigger = false,
-                         bool server = false) {
-    partition_.insert(ti.partition_.begin(), ti.partition_.end());
-    union_status(ti.status_.value_, trigger, server);
-  }
-
-  inline void union_status(int8_t status,
-                    bool is_trigger = false,
-                    bool is_server = false) {
-
-    if (false) {
-      // TODO
-      // I cannot change the status of this txn.
-    } else {
-#ifdef DEBUG_CODE
-      verify((status_ | status) >= status_);
-#endif
-      status_.Set(status_.value_ |= status);
-
-    }
-  }
 
 };
 
 typedef vector<pair<txid_t, ParentEdge<RccTx>>> parent_set_t;
 
-static void MergeParents(parent_set_t& s1, parent_set_t& s2) {
-  for (auto& pair : s2) {
-    // TODO reduce size
-    s1.push_back(pair);
-  }
-}
 
 inline rrr::Marshal &operator<<(rrr::Marshal &m, const ParentEdge<RccTx> &e) {
   m << e.partitions_;
@@ -302,14 +351,16 @@ inline rrr::Marshal &operator>>(rrr::Marshal &m, ParentEdge<RccTx> &e) {
 }
 
 inline rrr::Marshal &operator<<(rrr::Marshal &m, const RccTx &ti) {
-  m << ti.tid_ << ti.status() << ti.partition_ << ti.parents_;
+//  m << ti.tid_ << ti.status() << ti.partition_ << ti.parents_;
+  verify(0);
   return m;
 }
 
 inline rrr::Marshal &operator>>(rrr::Marshal &m, RccTx &ti) {
   int8_t status;
-  m >> ti.tid_ >> status >> ti.partition_ >> ti.parents_;
-  ti.union_status(status);
+  verify(0);
+//  m >> ti.tid_ >> status >> ti.partition_ >> ti.parents_;
+//  ti.union_status(status);
   return m;
 }
 

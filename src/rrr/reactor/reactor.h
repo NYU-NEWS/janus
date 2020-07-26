@@ -45,7 +45,8 @@ class Reactor {
    * @param ev. is usually allocated on coroutine stack. memory managed by user.
    */
   std::shared_ptr<Coroutine> CreateRunCoroutine(std::function<void()> func);
-  void Loop(bool infinite = false);
+  void Loop(bool infinite = false, bool check_timeout = false);
+  void CheckTimeout(std::vector<std::shared_ptr<Event>>&);
   void ContinueCoro(std::shared_ptr<Coroutine> sp_coro);
 
   ~Reactor() {

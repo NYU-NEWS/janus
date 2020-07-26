@@ -96,7 +96,7 @@ class IntEvent : public Event {
     if (test_) {
       return test_(value_);
     } else {
-      return (value_ == target_);
+      return (value_ >= target_);
     }
   }
 };
@@ -105,16 +105,7 @@ class SharedIntEvent {
  public:
   int value_{};
   vector<shared_ptr<IntEvent>> events_{};
-  int Set(const int& v) {
-    auto ret = value_;
-    value_ = v;
-    for (auto sp_ev : events_) {
-      if (sp_ev->status_ <= Event::WAIT)
-      sp_ev->Set(v);
-    }
-    return ret;
-  }
-
+  int Set(const int& v);
   void Wait(function<bool(int)> f);
   void WaitUntilGreaterOrEqualThan(int x);
 };

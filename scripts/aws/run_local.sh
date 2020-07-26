@@ -1,8 +1,10 @@
 #!/bin/bash
 duration=30
 
+export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libjemalloc.so
+
 # lan
-./waf configure -M
+./waf configure --enable-jemalloc
 ./waf build
 concurrent=100
 prefix="single_dc"
@@ -120,7 +122,7 @@ run_tests
 # wan (requires compile with -W)
 concurrent=400
 prefix="multi_dc"
-./waf configure -M -W
+./waf configure --enable-jemalloc -W
 ./waf build
 
 run_tests

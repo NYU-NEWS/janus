@@ -27,6 +27,9 @@ enum ForwardRequestState { NONE=0, PROCESS_FORWARD_REQUEST, FORWARD_TO_LEADER };
 
 class Coordinator {
  public:
+  static std::mutex _dbg_txid_lock_;
+  static std::unordered_set<txid_t> _dbg_txid_set_;
+  bool _inuse_{false};
   uint32_t n_start_ = 0;
   locid_t loc_id_ = -1;
   uint32_t coo_id_;
@@ -36,6 +39,8 @@ class Coordinator {
   uint32_t thread_id_;
   bool batch_optimal_ = false;
   bool retry_wait_;
+  shared_ptr<IntEvent> sp_ev_commit_{};
+  shared_ptr<IntEvent> sp_ev_done_{};
 
   std::atomic<uint64_t> next_pie_id_;
   std::atomic<uint64_t> next_txn_id_;
@@ -58,6 +63,7 @@ class Coordinator {
   uint32_t n_retry_ = 0;
   // below should be reset on retry.
   bool committed_ = false;
+  bool commit_reported_ = false;
   bool validation_result_{true};
   bool aborted_ = false;
   uint32_t n_dispatch_ = 0;
@@ -123,7 +129,14 @@ class Coordinator {
 
   /** thread unsafe */
   uint64_t next_txn_id() {
-    return this->next_txn_id_++;
+    auto ret = next_txn_id_++;
+#ifdef DEBUG_CHECK
+    _dbg_txid_lock_.lock();
+    verify(_dbg_txid_set_.count(ret) == 0);
+    _dbg_txid_set_.insert(ret);
+    _dbg_txid_lock_.unlock();
+#endif
+    return ret;
   }
 
   virtual void DoTxAsync(TxRequest &) = 0;
@@ -134,6 +147,7 @@ class Coordinator {
   }
   virtual void Reset() {
     committed_ = false;
+    commit_reported_ = false;
     aborted_ = false;
     n_dispatch_ = 0;
     n_dispatch_ack_ = 0;

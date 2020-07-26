@@ -48,7 +48,7 @@ class RccGraph : public Graph<RccTx> {
   void RemoveVertex(txnid_t txn_id);
   void RebuildEdgePointer(map<txnid_t, shared_ptr<RccTx>>& index);
   shared_ptr<RccTx> AggregateVertex(shared_ptr<RccTx> rhs_dtxn);
-  void UpgradeStatus(RccTx& v, int8_t status);
+  void UpgradeStatus(RccTx& v, int rank, int8_t status);
 
   virtual map<txnid_t, shared_ptr<RccTx>> Aggregate(epoch_t epoch, RccGraph& graph);
   void SelectGraphCmtUkn(RccTx& dtxn, shared_ptr<RccGraph> new_graph);

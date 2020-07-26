@@ -40,6 +40,10 @@ class ClientWorker {
 //  rrr::ThreadPool* dispatch_pool_ = new rrr::ThreadPool();
 
   std::atomic<uint32_t> num_txn, success, num_try;
+  int all_done_{0};
+  int64_t n_tx_issued_{0};
+  SharedIntEvent n_ceased_client_{};
+  SharedIntEvent sp_n_tx_done_{}; // TODO refactor: remove sp_
   Workload * tx_generator_{nullptr};
   Timer *timer_{nullptr};
   shared_ptr<TxnRegistry> txn_reg_{nullptr};

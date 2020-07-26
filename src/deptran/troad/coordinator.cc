@@ -22,23 +22,26 @@ void CoordinatorTroad::launch_recovery(cmdid_t cmd_id) {
 }
 
 void CoordinatorTroad::PreAccept() {
-  std::lock_guard<std::recursive_mutex> guard(mtx_);
   WAN_WAIT;
+  std::lock_guard<std::recursive_mutex> guard(mtx_);
 //  auto dtxn = sp_graph_->FindV(cmd_->id_);
 //  verify(tx_data().partition_ids_.size() == dtxn->partition_.size());
   vector<shared_ptr<PreAcceptQuorumEvent>> events;
-  for (auto par_id : cmd_->GetPartitionIds()) {
-    auto cmds = tx_data().GetCmdsByPartition(par_id);
+  auto& partitions = GetTxPartitions(*cmd_, rank_);
+  for (auto par_id : partitions) {
+    auto cmds = tx_data().GetCmdsByPartitionAndRank(par_id, rank_);
+    verify(!cmds.empty());
     verify(rank_ != RANK_UNDEFINED);
+    Log_debug("broadcast pre-accept partition %d", (int) par_id);
     auto ev = commo()->BroadcastPreAccept(par_id,
-                                    cmd_->id_,
-                                    rank_,
+                                          cmd_->id_,
+                                          rank_,
                                     magic_ballot(),
-                                    cmds);
+                                       cmds);
     events.push_back(ev);
   }
   bool fast_path = true;
-  for (auto ev: events) {
+  for (const auto& ev: events) {
     ev->Wait();
     verify(ev->Yes()); // TODO tolerate failure recovery.
     if (!FastQuorumGraphCheck(*ev)) {
@@ -50,14 +53,14 @@ void CoordinatorTroad::PreAccept() {
     fast_path_ = true;
     for (auto ev : events) {
       auto& g = ev->vec_parents_[0];
-      MergeParents(parents_, *g);
+      MergeParents(*g);
     }
   } else {
     fast_path_ = false;
     for (auto ev: events) {
       for (auto g : ev->vec_parents_) {
 //        sp_graph_->Aggregate(0, *sp_graph);
-        MergeParents(parents_, *g);
+        MergeParents(*g);
       }
     }
   }
@@ -72,46 +75,57 @@ void CoordinatorTroad::prepare() {
 }
 
 void CoordinatorTroad::Accept() {
+  WAN_WAIT;
   std::lock_guard<std::recursive_mutex> guard(mtx_);
   verify(!fast_path_);
 //  Log_info("broadcast accept request for txn_id: %llx", cmd_->id_);
-  TxData* txn = (TxData*) cmd_;
+//  TxData* txn = (TxData*) cmd_;
 //  auto dtxn = sp_graph_->FindV(cmd_->id_);
 //  verify(txn->partition_ids_.size() == dtxn->partition_.size());
 //  sp_graph_->UpgradeStatus(*dtxn, TXN_CMT);
   vector<shared_ptr<QuorumEvent>> events;
-  for (auto par_id : cmd_->GetPartitionIds()) {
+  auto& partitions = GetTxPartitions(*cmd_, rank_);
+  for (auto par_id : partitions) {
     auto ev = commo()->BroadcastAccept(par_id,
                              cmd_->id_,
+                             rank_,
                              ballot_,
                              parents_);
     events.push_back(ev);
   }
+
   for (auto ev : events) {
-    ev->Wait();
+    ev->Wait(100*1000*1000);
     verify(ev->Yes()); // TODO handle failure recovery.
   }
   GotoNextPhase();
 }
 
 void CoordinatorTroad::Commit() {
+  if (rank_ == RANK_I) {
+    verify(!mocking_janus_);
+    sp_ev_commit_->Set(1);
+    ReportCommit();
+  }
   std::lock_guard<std::recursive_mutex> guard(mtx_);
-  TxData* txn = (TxData*) cmd_;
+  auto* txn = (TxData*) cmd_;
 //  auto dtxn = sp_graph_->FindV(cmd_->id_);
 //  verify(txn->partition_ids_.size() == dtxn->partition_.size());
 //  sp_graph_->UpgradeStatus(*dtxn, TXN_CMT);
   vector<shared_ptr<QuorumEvent>> events;
-  for (auto par_id : cmd_->GetPartitionIds()) {
+  auto& partitions = GetTxPartitions(*cmd_, rank_);
+  for (auto par_id : partitions) {
     auto ev = commo()->BroadcastCommit(par_id,
-                               cmd_->id_,
-                                  rank_,
+                                       cmd_->id_,
+                                       rank_,
                                        txn->need_validation_,
-                                 parents_);
+                                       parents_);
     events.push_back(ev);
   }
   aborted_ = false;
-  for (auto ev : events) {
-    ev->Wait(600 * 1000 * 1000);
+  for (auto i = 0 ; i < events.size(); i++) {
+    auto &ev = events[i];
+    ev->Wait(100 * 1000 * 1000);
     verify(ev->status_ != Event::TIMEOUT);
     if (ev->No()) {
       verify(0);
@@ -122,9 +136,12 @@ void CoordinatorTroad::Commit() {
       verify(0);
     }
   }
-//  NotifyValidation();
-  committed_ = !aborted_;
-  GotoNextPhase();
+  if (mocking_janus_) {
+    NotifyValidation();
+  } else {
+    committed_ = !aborted_;
+    GotoNextPhase();
+  }
 //  txn().Merge(output);
   // if collect enough results.
   // if there are still more results to collect.
@@ -137,21 +154,23 @@ void CoordinatorTroad::Commit() {
 void CoordinatorTroad::NotifyValidation() {
 //  __debug_notifying_ = true;
   verify(phase_ % 6 == COMMIT);
-  auto ev1 = commo()->CollectValidation(cmd_->id_, cmd_->GetPartitionIds());
-  ev1->Wait();
+  verify(rank_ == RANK_D);
+  auto& partitions = GetTxPartitions(*cmd_, rank_);
+  auto ev1 = commo()->CollectValidation(cmd_->id_, partitions);
+  ev1->Wait(100*1000*1000);
+  verify(ev1->status_ != Event::TIMEOUT);
   int res;
   if (ev1->Yes()) {
     res = SUCCESS;
   } else if (ev1->No()){
-    verify(0);
-    if (mocking_janus_) {
-      aborted_ = true;
-    }
+    verify(mocking_janus_);
+    aborted_ = true;
     res = REJECT;
   } else {
     verify(0);
   }
   committed_ = !aborted_;
+  verify(par_d_ == tx_data().GetPartitionIds());
   auto ev = commo()->BroadcastValidation(*cmd_, res);
 //  ev->Wait();
 //  verify(ev->Yes());
@@ -209,7 +228,7 @@ bool CoordinatorTroad::FastQuorumGraphCheck(PreAcceptQuorumEvent& ev) {
 
 void CoordinatorTroad::GotoNextPhase() {
   int n_phase = 6;
-  int current_phase = phase_ % n_phase; // for debug
+  int last_phase = phase_ % n_phase; // for debug
   phase_++;
   if (rank_ == RANK_UNDEFINED) {
     if (mocking_janus_) {
@@ -218,18 +237,30 @@ void CoordinatorTroad::GotoNextPhase() {
       rank_ = RANK_I;
     }
   }
-  switch (current_phase % n_phase) {
+  switch (last_phase % n_phase) {
     case Phase::INIT_END:
       PreDispatch();
       verify(phase_ % n_phase == Phase::DISPATCH);
       break;
     case Phase::DISPATCH:
       verify(phase_ % n_phase == Phase::PREPARE);
-      phase_++;
+      phase_++; // skip prepare for leader, TODO recovery coord.
       verify(phase_ % n_phase == Phase::PRE_ACCEPT);
+      if (par_i_.empty() && rank_ == RANK_I) {
+        rank_ = RANK_D;
+      }
+//      if (SKIP_I) {
+//        rank_ = RANK_D;
+//      }
       PreAccept();
       break;
     case Phase::PRE_ACCEPT:
+      if (SKIP_I && rank_ == RANK_I) {
+        rank_ = RANK_D;
+        phase_ = Phase::DISPATCH;
+        GotoNextPhase();
+        return;
+      }
       verify(phase_ % n_phase == Phase::ACCEPT);
       if (fast_path_) {
         phase_++;
@@ -252,12 +283,12 @@ void CoordinatorTroad::GotoNextPhase() {
           End();
         } else if (rank_ == RANK_I) {
           rank_ = RANK_D;
-          phase_++;
+          phase_+=1; // skip dispatch prepare
+          verify(phase_ % n_phase == Phase::DISPATCH);
           GotoNextPhase(); // directly to PRE_ACCEPT
         }
       } else if (aborted_) {
-        verify(0);
-//        verify(rank_ == RANK_I);
+        verify(rank_ == RANK_D && mocking_janus_);
         Restart();
       } else {
         verify(0);

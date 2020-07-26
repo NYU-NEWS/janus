@@ -65,11 +65,6 @@ class CoordinatorClassic : public Coordinator {
     return this->next_pie_id_++;
   }
 
-  /** thread safe */
-  uint64_t next_txn_id() {
-    return this->next_txn_id_++;
-  }
-
   /** do it asynchronously, thread safe. */
   virtual void DoTxAsync(TxRequest&) override;
   virtual void Reset() override;
@@ -87,6 +82,7 @@ class CoordinatorClassic : public Coordinator {
     verify(0);
   }
   void End();
+  void ReportCommit();
 
   bool AllDispatchAcked();
   virtual void GotoNextPhase();

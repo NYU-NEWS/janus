@@ -60,6 +60,7 @@ class TroadCommo : public RccCommo {
 
   shared_ptr<QuorumEvent> BroadcastAccept(parid_t par_id,
                                           txnid_t cmd_id,
+                                          rank_t rank,
                                           ballot_t ballot,
                                           parent_set_t& parents);
 

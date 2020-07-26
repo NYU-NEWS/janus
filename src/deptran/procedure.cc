@@ -112,12 +112,23 @@ Marshal& operator >> (Marshal& m, TxReply& reply) {
   return m;
 }
 
-set<parid_t> TxData::GetPartitionIds() {
+set<parid_t>& TxData::GetPartitionIds() {
   return partition_ids_;
 }
 
 bool TxData::IsOneRound() {
   return false;
+}
+
+vector<TxPieceData> TxData::GetCmdsByPartitionAndRank(parid_t par_id, rank_t rank) {
+  vector<TxPieceData> cmds;
+  for (auto& pair: map_piece_data_) {
+    auto d = pair.second;
+    if (d->partition_id_ == par_id && d->rank_ == rank) {
+      cmds.push_back(*d);
+    }
+  }
+  return cmds;
 }
 
 vector<TxPieceData> TxData::GetCmdsByPartition(parid_t par_id) {

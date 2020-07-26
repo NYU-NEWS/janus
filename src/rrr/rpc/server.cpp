@@ -227,6 +227,9 @@ void ServerConnection::handle_read() {
             delete req;
         }
     }
+  // This is a workaround, the Loop call should really happen
+  // between handle_read and handle_write in the epoll loop
+  Reactor::GetReactor()->Loop();
 }
 
 void ServerConnection::handle_write() {

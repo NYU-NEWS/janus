@@ -79,6 +79,7 @@ void CoordinatorClassic::DoTxAsync(TxRequest& req) {
     Log_info("forward to leader: %d; cooid: %d",
              forward_status_,
              this->coo_id_);
+    verify(0); // not supported yet for the new open closed loop.
     ForwardTxnRequest(req);
   } else {
     Log_debug("start txn!!! : %d", forward_status_);
@@ -373,17 +374,28 @@ void CoordinatorClassic::CommitAck(phase_t phase) {
             aborted_ ? "True" : "False");
 }
 
+void CoordinatorClassic::ReportCommit() {
+  auto* tx_data = (TxData*) cmd_;
+  TxReply& tx_reply_buf = tx_data->get_reply();
+  double last_latency = tx_data->last_attempt_latency();
+  tx_data->reply_.res_ = SUCCESS;
+  this->Report(tx_reply_buf, last_latency);
+  commit_reported_ = true;
+}
+
 void CoordinatorClassic::End() {
   TxData* tx_data = (TxData*) cmd_;
   TxReply& tx_reply_buf = tx_data->get_reply();
   double last_latency = tx_data->last_attempt_latency();
   if (committed_) {
-    tx_data->reply_.res_ = SUCCESS;
-    this->Report(tx_reply_buf, last_latency
+    if (!commit_reported_) {
+      tx_data->reply_.res_ = SUCCESS;
+      this->Report(tx_reply_buf, last_latency
 #ifdef TXN_STAT
-        , txn
+          , txn
 #endif // ifdef TXN_STAT
-    );
+      );
+    }
   } else if (aborted_) {
     tx_data->reply_.res_ = REJECT;
   } else {

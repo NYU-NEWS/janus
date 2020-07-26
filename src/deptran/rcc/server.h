@@ -15,7 +15,17 @@ class TxnInfo;
 
 class RccServer : public TxLogServer, public RccGraph {
  public:
-  map<txid_t, pair<RccTx::TraverseStatus, RccTx*>> __debug_search_status_{};
+  map<txid_t, pair<RccTx::TraverseStatus, RccTx*>> __debug_search_status_i_{};
+  map<txid_t, pair<RccTx::TraverseStatus, RccTx*>> __debug_search_status_d_{};
+  map<txid_t, pair<RccTx::TraverseStatus, RccTx*>>& __debug_search_status(rank_t rank) {
+    verify(rank == RANK_I || rank == RANK_D);
+    if (rank == RANK_I) {
+      return __debug_search_status_i_;
+    } else {
+      return __debug_search_status_d_;
+    }
+  };
+
   set<shared_ptr<RccTx>> fridge_ = {};
   std::recursive_mutex mtx_{};
   std::time_t last_upgrade_time_{0};
@@ -41,15 +51,13 @@ class RccServer : public TxLogServer, public RccGraph {
   }
   shared_ptr<RccTx> CreateV(RccTx &rhs) override {
     auto dtxn = dynamic_pointer_cast<RccTx>(CreateTx(rhs.id()));
-    if (rhs.epoch_ > 0) {
-      dtxn->epoch_ = rhs.epoch_;
-    }
-    dtxn->partition_ = rhs.partition_;
-    dtxn->status_ = rhs.status_;
+    verify(0);
+//    dtxn->partition_ = rhs.partition_;
+//    dtxn->status_ = rhs.status_;
     verify(dtxn->id() == rhs.tid_);
     return dtxn;
   }
-  shared_ptr<Tx> GetOrCreateTx(txnid_t tid, bool ro = false) override;
+  shared_ptr<Tx> GetOrCreateTx(txnid_t tid, int rank, bool ro = false);
 
   virtual void SetPartitionId(parid_t par_id) override {
     TxLogServer::partition_id_ = par_id;
@@ -60,7 +68,7 @@ class RccServer : public TxLogServer, public RccGraph {
                  TxnOutput *output,
                  shared_ptr<RccGraph> graph);
 
-  virtual map<txid_t, parent_set_t> OnInquire(txnid_t cmd_id);
+  virtual void OnInquire(txnid_t cmd_id, int rank, map<txid_t, parent_set_t>*);
 
   virtual bool HandleConflicts(Tx &dtxn,
                                innid_t inn_id,
@@ -70,21 +78,21 @@ class RccServer : public TxLogServer, public RccGraph {
 
   void DestroyExecutor(txnid_t tid) override;
 
-  void InquireAboutIfNeeded(RccTx &dtxn);
+  void InquireAboutIfNeeded(RccTx &dtxn, rank_t rank);
   void InquiredGraph(RccTx &dtxn, shared_ptr<RccGraph> graph);
-  void InquireAck(cmdid_t cmd_id, RccGraph &graph);
-  bool AllAncCmt(RccTx* v);
-  void WaitUntilAllPredecessorsAtLeastCommitting(RccTx* v);
+  bool AllAncCmt(RccTx* v, int rank);
+  void WaitUntilAllPredecessorsAtLeastCommitting(RccTx* v, int rank);
   void WaitUntilAllPredSccExecuted(const RccScc &);
-  void WaitNonSccParentsExecuted(const RccScc &);
+  void WaitNonSccParentsExecuted(const RccScc &, int rank);
   bool FullyDispatched(const RccScc &scc, rank_t r=RANK_UNDEFINED);
   bool IsExecuted(const RccScc &scc, rank_t r=RANK_UNDEFINED);
-  void Decide(const RccScc &);
+  void Decide(const RccScc &, int rank);
   bool HasICycle(const RccScc &scc);
   bool HasAbortedAncestor(const RccScc &scc);
-  bool AllAncFns(const RccScc &);
-  void Execute(RccScc &);
-  void Execute(shared_ptr<RccTx> );
+  bool AllAncFns(const RccScc &, int rank);
+  void Execute(RccScc &, int rank);
+  void Execute(shared_ptr<RccTx>& );
+  void Execute(RccTx&, int rank);
   void Abort(const RccScc &);
   virtual int OnCommit(txnid_t txn_id,
                        rank_t rank,
@@ -95,8 +103,8 @@ class RccServer : public TxLogServer, public RccGraph {
    *
    * @return validation result
    */
-  int OnInquireValidation(txid_t tx_id);
-  void OnNotifyGlobalValidation(txid_t tx_id, int validation_result);
+  int OnInquireValidation(txid_t tx_id, int rank);
+  void OnNotifyGlobalValidation(txid_t tx_id, int rank, int validation_result);
 
   int OnPreAccept(txnid_t txnid,
                   rank_t rank,
@@ -115,7 +123,6 @@ class RccServer : public TxLogServer, public RccGraph {
                TxnOutput *output);
 
   void __DebugExamineFridge();
-  RccTx &__DebugFindAnOngoingAncestor(RccTx &vertex);
   void __DebugExamineGraphVerify(RccTx &v);
   RccCommo *commo();
 };

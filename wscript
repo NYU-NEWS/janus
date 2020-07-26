@@ -28,6 +28,8 @@ def options(opt):
                    default=False, action='store_true')
     opt.add_option('-M', '--enable-tcmalloc', dest='tcmalloc',
                    default=False, action='store_true')
+    opt.add_option('-J', '--enable-jemalloc', dest='jemalloc',
+                   default=False, action='store_true')
     opt.add_option('-s', '--enable-rpc-statistics', dest='rpc_s',
                    default=False, action='store_true')
     opt.add_option('-P', '--enable-piece-count', dest='pc',
@@ -242,6 +244,13 @@ def _enable_tcmalloc(conf):
         Logs.pprint("PINK", "tcmalloc enabled")
         conf.env.append_value("LINKFLAGS", "-Wl,--no-as-needed")
         conf.env.append_value("LINKFLAGS", "-ltcmalloc")
+        conf.env.append_value("LINKFLAGS", "-Wl,--as-needed")
+
+def _enable_tcmalloc(conf):
+    if Options.options.jemalloc:
+        Logs.pprint("PINK", "jemalloc enabled")
+        conf.env.append_value("LINKFLAGS", "-Wl,--no-as-needed")
+        conf.env.append_value("LINKFLAGS", "-ljemalloc")
         conf.env.append_value("LINKFLAGS", "-Wl,--as-needed")
 
 def _enable_simulate_wan(conf):

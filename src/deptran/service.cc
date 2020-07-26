@@ -187,6 +187,7 @@ void ClassicServiceImpl::RccFinish(const cmdid_t& cmd_id,
 }
 
 void ClassicServiceImpl::RccInquire(const txnid_t& tid,
+                                    const int32_t& rank,
                                     map<txid_t, parent_set_t>* ret,
                                     rrr::DeferredReply* defer) {
 //  verify(IS_MODE_RCC || IS_MODE_RO6);
@@ -196,7 +197,7 @@ void ClassicServiceImpl::RccInquire(const txnid_t& tid,
 //  p_sched->OnInquire(epoch,
 //                     tid,
 //                     dynamic_pointer_cast<RccGraph>(p_md_graph->sp_data_));
-  *ret = p_sched->OnInquire(tid);
+  p_sched->OnInquire(tid, rank, ret);
   defer->reply();
 }
 
@@ -213,17 +214,18 @@ void ClassicServiceImpl::RccDispatchRo(const SimpleCommand& cmd,
 
 void ClassicServiceImpl::RccInquireValidation(
     const txid_t& txid,
+    const int32_t& rank,
     int32_t* ret,
     DeferredReply* defer) {
   auto* s = (RccServer*) dtxn_sched_;
-  *ret = s->OnInquireValidation(txid);
+  *ret = s->OnInquireValidation(txid, rank);
   defer->reply();
 }
 
 void ClassicServiceImpl::RccNotifyGlobalValidation(
-    const txid_t& txid, const int32_t& res, DeferredReply* defer) {
+    const txid_t& txid, const int32_t& rank, const int32_t& res, DeferredReply* defer) {
   auto* s = (RccServer*) dtxn_sched_;
-  s->OnNotifyGlobalValidation(txid, res);
+  s->OnNotifyGlobalValidation(txid, rank, res);
   defer->reply();
 }
 
@@ -345,16 +347,18 @@ void ClassicServiceImpl::JanusPreAcceptWoGraph(const cmdid_t& txnid,
 }
 
 void ClassicServiceImpl::RccAccept(const cmdid_t& txnid,
+                                   const rank_t& rank,
                                    const ballot_t& ballot,
                                    const parent_set_t& parents,
                                    int32_t* res,
                                    DeferredReply* defer) {
   auto sched = (RccServer*) dtxn_sched_;
-  *res = sched->OnAccept(txnid, 0, ballot, parents);
+  *res = sched->OnAccept(txnid, rank, ballot, parents);
   defer->reply();
 }
 
 void ClassicServiceImpl::JanusAccept(const cmdid_t& txnid,
+                                     const int32_t& rank,
                                      const ballot_t& ballot,
                                      const MarshallDeputy& md_graph,
                                      int32_t* res,
@@ -363,7 +367,7 @@ void ClassicServiceImpl::JanusAccept(const cmdid_t& txnid,
   verify(graph);
   verify(md_graph.kind_ == MarshallDeputy::RCC_GRAPH);
   auto sched = (SchedulerJanus*) dtxn_sched_;
-  sched->OnAccept(txnid, ballot, graph, res);
+  sched->OnAccept(txnid, rank, ballot, graph, res);
   defer->reply();
 }
 
