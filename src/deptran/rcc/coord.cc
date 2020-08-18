@@ -54,8 +54,7 @@ void RccCoord::DispatchAsync() {
         par_d_.insert(c->PartitionId());
       }
       if (c->rank_ == RANK_UNDEFINED) {
-        verify(0);
-        c->rank_ = RANK_I;
+        c->rank_ = RANK_D;
       }
       c->id_ = next_pie_id();
       dispatch_acks_[c->inn_id_] = false;

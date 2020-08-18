@@ -138,17 +138,17 @@ void RccTx::DispatchExecute(SimpleCommand &cmd,
     }
   }
   subtx(rank).dreqs_.push_back(cmd);
-  if (mocking_janus_) {
-    phase_ = PHASE_RCC_DISPATCH;
-    int ret_code;
-    cmd.input.Aggregate(ws_);
-    piece.proc_handler_(nullptr,
-                        *this,
-                        cmd,
-                        &ret_code,
-                        *output);
-    ws_.insert(*output);
-  }
+
+  // FIXME this is temprorary hack for tpcc execution for troad.
+  phase_ = PHASE_RCC_DISPATCH;
+  int ret_code;
+  cmd.input.Aggregate(ws_);
+  piece.proc_handler_(nullptr,
+                      *this,
+                      cmd,
+                      &ret_code,
+                      *output);
+  ws_.insert(*output);
 }
 
 
@@ -229,22 +229,23 @@ bool RccTx::ReadColumn(mdb::Row *row,
   auto r = dynamic_cast<mdb::VersionedRow *>(row);
   if (phase_ == PHASE_RCC_DISPATCH) {
     switch (hint_flag) {
-      case TXN_BYPASS:
-        // TODO starting test for troad?
-        mdb_txn()->read_column(r, col_id, value);
-        break;
-      case TXN_IMMEDIATE: {
-        verify(r->rtti() == symbol_t::ROW_VERSIONED);
-        auto c = r->get_column(col_id);
-        *value = c;
-        if (mocking_janus_) {
-          auto ver_id = r->get_column_ver(col_id);
-          row->ref_copy();
-          read_vers_[row][col_id] = ver_id;
-        }
-      }
+      case TXN_IMMEDIATE:
       case TXN_DEFERRED:
-//        TraceDep(row, col_id, hint_flag);
+        if (mocking_janus_) {
+          mdb_txn()->read_column(r, col_id, value);
+          if (mocking_janus_) {
+            verify(r->rtti() == symbol_t::ROW_VERSIONED);
+            auto c = r->get_column(col_id);
+            *value = c;
+            if (mocking_janus_) {
+              auto ver_id = r->get_column_ver(col_id);
+              row->ref_copy();
+              read_vers_[row][col_id] = ver_id;
+            }
+          }
+        }
+      case TXN_BYPASS:
+        mdb_txn()->read_column(r, col_id, value);
         break;
       default:
         verify(0);
@@ -274,7 +275,7 @@ bool RccTx::WriteColumn(Row *row,
       mdb_txn()->write_column(row, col_id, value);
     }
     if (hint_flag == TXN_IMMEDIATE) {
-//      mdb_txn()->write_column(row, col_id, value);
+      mdb_txn()->write_column(row, col_id, value);
     }
     if (hint_flag == TXN_IMMEDIATE || hint_flag == TXN_DEFERRED) {
 //      TraceDep(row, col_id, hint_flag);
@@ -282,6 +283,7 @@ bool RccTx::WriteColumn(Row *row,
   } else if (phase_ == PHASE_RCC_COMMIT) {
     if (hint_flag == TXN_BYPASS || hint_flag == TXN_DEFERRED || hint_flag == RANK_I) {
       auto v = value;
+      if (hint_flag == TXN_BYPASS) hint_flag = TXN_DEFERRED;
       v.ver_ = timestamp(hint_flag)++;
       mdb_txn()->write_column(row, col_id, v);
       auto r = dynamic_cast<mdb::VersionedRow *>(row);

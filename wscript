@@ -60,6 +60,7 @@ def configure(conf):
     conf.load("boost")
 
     _enable_tcmalloc(conf)
+    _enable_jemalloc(conf)
     _enable_cxx14(conf)
     _enable_debug(conf)
     _enable_profile(conf)
@@ -246,7 +247,7 @@ def _enable_tcmalloc(conf):
         conf.env.append_value("LINKFLAGS", "-ltcmalloc")
         conf.env.append_value("LINKFLAGS", "-Wl,--as-needed")
 
-def _enable_tcmalloc(conf):
+def _enable_jemalloc(conf):
     if Options.options.jemalloc:
         Logs.pprint("PINK", "jemalloc enabled")
         conf.env.append_value("LINKFLAGS", "-Wl,--no-as-needed")

@@ -11,6 +11,7 @@ void TpccProcedure::NewOrderInit(TxRequest &req) {
 
 void TpccProcedure::NewOrderRetry() {
   status_[TPCC_NEW_ORDER_0] = WAITING;
+  ranks_[TPCC_NEW_ORDER_0] = RANK_I;
 //  status_[TPCC_NEW_ORDER_1] = WAITING;
 //  status_[TPCC_NEW_ORDER_2] = WAITING;
 //  status_[TPCC_NEW_ORDER_3] = DISPATCHABLE;

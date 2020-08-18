@@ -20,6 +20,7 @@ sudo apt-get install -y \
     libapr1-dev libaprutil1-dev \
     libboost-all-dev \
     libyaml-cpp-dev \
+    libjemalloc-dev \
     python3-dev \
     python3-pip \
     libgoogle-perftools-dev
@@ -34,7 +35,7 @@ git clone --recursive https://github.com/NYU-NEWS/janus.git
 Build:
 
 ```
-python3 waf configure build -t
+python3 waf configure build 
 
 ```
 

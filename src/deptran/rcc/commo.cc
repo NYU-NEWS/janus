@@ -108,10 +108,9 @@ void RccCommo::BroadcastCommit(parid_t par_id,
                                bool need_validation,
                                shared_ptr<RccGraph> graph,
                                const function<void(int32_t, TxnOutput&)>& callback) {
+  verify(0);
   bool skip_graph = IsGraphOrphan(*graph, cmd_id);
-
   verify(rpc_par_proxies_.find(par_id) != rpc_par_proxies_.end());
-  WAN_WAIT;
   for (auto& p : rpc_par_proxies_[par_id]) {
     auto proxy = (p.second);
     verify(proxy != nullptr);

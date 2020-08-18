@@ -198,10 +198,10 @@ int32_t CoordinatorTroad::GetSlowQuorum(parid_t par_id) {
 bool CoordinatorTroad::FastQuorumGraphCheck(PreAcceptQuorumEvent& ev) {
   // TODO optimize for redundant element in parent_set?
   verify(ev.vec_parents_.size() > 0);
-  auto& parents = ev.vec_parents_[0];
+  auto& sp_parents = ev.vec_parents_[0];
   for (int i = 1; i < ev.vec_parents_.size(); i++) {
-    auto& parents2 = ev.vec_parents_[i];
-    if (parents != parents2) return false;
+    auto& sp_parents2 = ev.vec_parents_[i];
+    if (*sp_parents != *sp_parents2) return false;
   }
   return true;
 //  auto par_id = ev.partition_id_;
