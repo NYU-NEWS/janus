@@ -206,7 +206,7 @@ void ClientWorker::Work() {
     n_ceased_client_.WaitUntilGreaterOrEqualThan(n_concurrent_);
     Log_info("wait for all outstanding requests to finish.");
     // TODO uncomment this, otherwise many requests are still outstanding there.
-//    sp_n_tx_done_.WaitUntilGreaterOrEqualThan(n_tx_issued_);
+    sp_n_tx_done_.WaitUntilGreaterOrEqualThan(n_tx_issued_);
     // for debug purpose
 //    Reactor::CreateSpEvent<NeverEvent>()->Wait(5*1000*1000);
     all_done_ = 1;
