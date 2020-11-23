@@ -1,3 +1,4 @@
+setuptools
 awscli==1.16.273
 boto3==1.10.9
 botocore==1.13.9

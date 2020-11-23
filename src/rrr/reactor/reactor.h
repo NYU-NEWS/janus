@@ -35,6 +35,11 @@ class Reactor {
   std::unordered_map<uint64_t, std::function<void(Event&)>> processors_{};
   bool looping_{false};
   std::thread::id thread_id_{};
+  int64_t n_created_coroutines_{0};
+  int64_t n_busy_coroutines_{0};
+  int64_t n_active_coroutines_{0};
+  int64_t n_active_coroutines_2_{0};
+  int64_t n_idle_coroutines_{0};
 #ifdef REUSE_CORO
 #define REUSING_CORO (true)
 #else
@@ -48,6 +53,7 @@ class Reactor {
   void Loop(bool infinite = false, bool check_timeout = false);
   void CheckTimeout(std::vector<std::shared_ptr<Event>>&);
   void ContinueCoro(std::shared_ptr<Coroutine> sp_coro);
+  void Recycle(std::shared_ptr<Coroutine>& sp_coro);
 
   ~Reactor() {
 //    verify(0);

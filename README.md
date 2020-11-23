@@ -23,6 +23,8 @@ sudo apt-get install -y \
     libjemalloc-dev \
     python3-dev \
     python3-pip \
+    python3-wheel \
+    python3-setuptools \
     libgoogle-perftools-dev
 sudo pip3 install -r requirements.txt
 ```

@@ -49,6 +49,7 @@ Reactor::CreateRunCoroutine(const std::function<void()> func) {
   std::shared_ptr<Coroutine> sp_coro;
   const bool reusing = REUSING_CORO && !available_coros_.empty();
   if (reusing) {
+    n_idle_coroutines_--;
     sp_coro = available_coros_.back();
     available_coros_.pop_back();
     verify(!sp_coro->func_);
@@ -56,10 +57,19 @@ Reactor::CreateRunCoroutine(const std::function<void()> func) {
   } else {
     sp_coro = std::make_shared<Coroutine>(func);
     verify(sp_coro->status_ == Coroutine::INIT);
+    n_created_coroutines_++;
+    if (n_created_coroutines_ % 100 == 0) {
+      Log_debug("created %d, busy %d, idle %d coroutines on this thread",
+               (int)n_created_coroutines_,
+               (int)n_busy_coroutines_,
+               (int)n_idle_coroutines_);
+    }
+
   }
+  n_busy_coroutines_++;
   coros_.insert(sp_coro);
   ContinueCoro(sp_coro);
-  Loop();
+//  Loop();
   return sp_coro;
 //  __debug_set_all_coro_.insert(sp_coro.get());
 //  verify(!curr_coro_); // Create a coroutine from another?
@@ -163,12 +173,26 @@ void Reactor::Loop(bool infinite, bool check_timeout) {
   verify(ready_events_.empty());
 }
 
+void Reactor::Recycle(std::shared_ptr<Coroutine>& sp_coro) {
+
+  // This fixes the bug that coroutines are not recycling if they don't finish immediately.
+  if (REUSING_CORO) {
+    sp_coro->status_ = Coroutine::RECYCLED;
+    sp_coro->func_ = {};
+    n_idle_coroutines_++;
+    available_coros_.push_back(sp_coro);
+  }
+  n_busy_coroutines_--;
+  coros_.erase(sp_coro);
+}
+
 void Reactor::ContinueCoro(std::shared_ptr<Coroutine> sp_coro) {
 //  verify(!sp_running_coro_th_); // disallow nested coros
   verify(sp_running_coro_th_ != sp_coro);
   auto sp_old_coro = sp_running_coro_th_;
   sp_running_coro_th_ = sp_coro;
   verify(!sp_running_coro_th_->Finished());
+  n_active_coroutines_++;
   if (sp_coro->status_ == Coroutine::INIT) {
     sp_coro->Run();
   } else {
@@ -176,13 +200,8 @@ void Reactor::ContinueCoro(std::shared_ptr<Coroutine> sp_coro) {
     sp_coro->Continue();
   }
   verify(sp_running_coro_th_ == sp_coro);
-  if (sp_running_coro_th_->Finished()) {
-    if (REUSING_CORO) {
-      sp_running_coro_th_->status_ = Coroutine::RECYCLED;
-      sp_running_coro_th_->func_ = {};
-      available_coros_.push_back(sp_running_coro_th_);
-    }
-    coros_.erase(sp_running_coro_th_);
+  if (sp_running_coro_th_ -> Finished()) {
+    Recycle(sp_coro);
   }
   sp_running_coro_th_ = sp_old_coro;
 }

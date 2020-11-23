@@ -46,6 +46,7 @@ class Config {
   // common configuration
   ClientType client_type_ = Closed;
   int client_rate_ = -1;
+  int32_t client_max_undone_ = -1;
   int32_t tx_proto_ = 0; // transaction protocol
   int32_t replica_proto_ = 0; // replication protocol
   uint32_t proc_id_;

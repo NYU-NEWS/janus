@@ -31,6 +31,7 @@ void Coroutine::BoostRunWrapper(boost_coro_yield_t& yield) {
     func_();
 //    func_ = nullptr; // Can be swapped out here?
     status_ = FINISHED;
+    Reactor::GetReactor()->n_active_coroutines_--;
     yield();
   }
 }
@@ -45,7 +46,7 @@ void Coroutine::Run() {
   verify(sz > 0);
 //  up_boost_coro_task_ = make_shared<boost_coro_task_t>(
 
-  boost_coro_task_t* x = new boost_coro_task_t(
+  const auto x = new boost_coro_task_t(
 #ifdef USE_PROTECTED_STACK
       boost::coroutines2::protected_fixedsize_stack(),
 #endif
@@ -54,6 +55,7 @@ void Coroutine::Run() {
 //      this->BoostRunWrapper(yield);
 //    }
       );
+  verify(up_boost_coro_task_ == nullptr);
   up_boost_coro_task_.reset(x);
 #ifdef USE_BOOST_COROUTINE1
   (*up_boost_coro_task_)();
@@ -64,6 +66,7 @@ void Coroutine::Yield() {
   verify(boost_coro_yield_);
   verify(status_ == STARTED || status_ == RESUMED);
   status_ = PAUSED;
+  Reactor::GetReactor()->n_active_coroutines_--;
   boost_coro_yield_.value()();
 }
 

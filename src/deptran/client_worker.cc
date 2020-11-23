@@ -153,6 +153,8 @@ void ClientWorker::Work() {
 
   for (uint32_t n_tx = 0; n_tx < n_concurrent_; n_tx++) {
     auto sp_job = std::make_shared<OneTimeJob>([this] () {
+      // this wait tries to avoid launching clients all at once, especially for open-loop clients.
+      Reactor::CreateSpEvent<NeverEvent>()->Wait(RandomGenerator::rand(0, 1000000));
       auto beg_time = Time::now() ;
       auto end_time = beg_time + duration * pow(10, 6);
       while (true) {
@@ -161,6 +163,14 @@ void ClientWorker::Work() {
           break;
         }
         n_tx_issued_++;
+        int n_undone_tx = 0;
+        do {
+          n_undone_tx = n_tx_issued_ - sp_n_tx_done_.value_;
+          if (n_undone_tx % 1000 == 0) {
+            Log_debug("unfinished tx %d", n_undone_tx);
+          }
+          Reactor::CreateSpEvent<NeverEvent>()->Wait(pow(10, 4));
+        } while (n_undone_tx > config_->client_max_undone_);
         num_txn++;
         auto coo = FindOrCreateCoordinator();
         verify(!coo->sp_ev_commit_);

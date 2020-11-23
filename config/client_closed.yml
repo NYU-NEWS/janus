@@ -1,4 +1,5 @@
 client:
     type: closed
+    max_undone: -1
     rate: -1 
     forwarding: false

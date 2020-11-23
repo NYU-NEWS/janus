@@ -665,9 +665,11 @@ void Config::LoadClientYML(YAML::Node client) {
   if (type == "open") {
     client_type_ = Open;
     client_rate_ = client["rate"].as<int>();
+    client_max_undone_ = client["max_undone"].as<int>();
   } else {
     client_type_ = Closed;
     client_rate_ = -1;
+    client_max_undone_ = -1;
   }
   forwarding_enabled_ = client["forwarding"].as<bool>(false);
   Log_info("client forwarding: %d", forwarding_enabled_);
