@@ -114,7 +114,7 @@ class SharedIntEvent {
     }
     return ret;
   }
-
+  int Set(const int& v);
   void Wait(function<bool(int)> f);
   void WaitUntilGreaterOrEqualThan(int x);
 };
