@@ -10,12 +10,14 @@ namespace janus {
 #define N_KEYS_PER_WRITE 1
 #define MAX_TXN_SIZE 1024    // this is the max size of rotxns, FB writes always access 1 key
 #define OBJ_FRACTION 0.095   // object to assocs ratio
-#define N_TOTAL_KEYS 100000  // total number of rows
+#define N_CORE_KEYS 10000    // the keys used for storing parameters, real keys are mod n_core_keys
+                             // number of total keys is n_friends, which should be larger than n_core_keys
 #define N_DISTINCT_VALUES 50 // as used in Eiger (Eiger uses min{50, 10000})
 
     static std::mt19937 RAND_COL_COUNTS(0);
     static std::mt19937 RAND_FB_VALUES(1);
     static std::mt19937 RAND_FB_KEY_SHUFFLE(2);
+    static std::mt19937 RAND_FB_KEY_MAPPING(3);
     static int get_col_count() {
         std::uniform_real_distribution<> dis(0.0, 1.0);
         double token = dis(RAND_COL_COUNTS);
@@ -63,8 +65,8 @@ namespace janus {
 
     static std::vector<int> initialize_col_counts() {
         std::vector<int> counts;
-        counts.reserve(N_TOTAL_KEYS);
-        for (int i = 0; i < N_TOTAL_KEYS; ++i) {
+        counts.reserve(N_CORE_KEYS);
+        for (int i = 0; i < N_CORE_KEYS; ++i) {
             counts.emplace_back(get_col_count());
         }
         return counts;
@@ -232,7 +234,7 @@ namespace janus {
     }
 
     static std::vector<int> initialize_fb_shuffled_keys() {
-        std::vector<int> keys(N_TOTAL_KEYS);
+        std::vector<int> keys(N_CORE_KEYS);
         std::iota( std::begin(keys), std::end(keys), 0 );
         std::shuffle( keys.begin(), keys.end() , RAND_FB_KEY_SHUFFLE);
         return keys;

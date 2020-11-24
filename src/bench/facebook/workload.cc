@@ -44,8 +44,9 @@ namespace janus {
 
     void FBWorkload::GetWriteRequest(TxRequest* req, uint32_t cid) {
         for (int i = 0; i < N_KEYS_PER_WRITE; ++i) { // fb should have 1 key per write
-            int key = KeyGenerator();
-            req->input_[FB_REQ_VAR_ID(i)] = Value(key);
+            int core_key = KeyGenerator();
+            int real_key = CoreKeyMapping(core_key, fb_para_.n_friends_);
+            req->input_[FB_REQ_VAR_ID(i)] = Value(real_key);
         }
         req->input_[FB_OP_COUNT] = Value(N_KEYS_PER_WRITE);
     }
@@ -63,20 +64,30 @@ namespace janus {
         req->input_[FB_OP_COUNT] = Value((i32)keys.size());
     }
 
+    int FBWorkload::CoreKeyMapping(int core_key, int n_total_keys) const {
+        verify(core_key < n_total_keys && core_key < N_CORE_KEYS);
+        int amplifier = n_total_keys / N_CORE_KEYS;
+        std::uniform_int_distribution<> dis(0, amplifier - 1);
+        int multiplier = dis(RAND_FB_KEY_MAPPING);
+        int real_key = core_key + multiplier * N_CORE_KEYS;
+        verify(real_key < n_total_keys);
+        return real_key;
+    }
+
     int FBWorkload::KeyGenerator() {
         const auto& dist = Config::GetConfig()->dist_;
         if (dist == "uniform") { // uniform workloads
-            std::uniform_int_distribution<> d(0, fb_para_.n_friends_ - 1);
+            std::uniform_int_distribution<> d(0, N_CORE_KEYS - 1);
             return d(rand_gen_);
         } else if (dist == "zipf") { // skewed workloads
             static auto alpha = Config::GetConfig()->coeffcient_;
-            static ZipfDist d(alpha, fb_para_.n_friends_);
+            static ZipfDist d(alpha, N_CORE_KEYS);
             int zipf_key = d(rand_gen_);  // TODO: tpca does "rotate", what is that for?
-            if (zipf_key >= 0 && zipf_key < N_TOTAL_KEYS && !SHUFFLED_KEYS.empty()) {
+            if (zipf_key >= 0 && zipf_key < N_CORE_KEYS && !SHUFFLED_KEYS.empty()) {
                 // verify(!SHUFFLED_KEYS.empty());
                 return SHUFFLED_KEYS[zipf_key];
             } else {
-                // verify(0);
+                verify(0);
                 return zipf_key;
             }
         } else { // FIXME: we do not support fixed_dist for now
@@ -135,8 +146,9 @@ namespace janus {
 
     void FBWorkload::GenerateReadKeys(std::unordered_set<int>& keys, int size) {
         do {
-            int k = KeyGenerator();
-            keys.emplace(k);  // k is only inserted to keys if it's unique
+            int core_key = KeyGenerator();
+            int real_key = CoreKeyMapping(core_key, fb_para_.n_friends_);
+            keys.emplace(real_key);  // k is only inserted to keys if it's unique
         } while (keys.size() < size);
         verify(keys.size() == size);
     }
@@ -152,11 +164,12 @@ namespace janus {
                      mdb::MultiBlob mb(1);
                      mb[0] = cmd.input.at(FB_REQ_VAR_ID(i)).get_blob();
                      int key = cmd.input.at(FB_REQ_VAR_ID(i)).get_i32();
+                     int core_key = key % N_CORE_KEYS;  // map real key to core key
                      r = tx.Query(tx.GetTable(FB_TABLE), mb);
                      verify(!COL_COUNTS.empty());
-                     verify(key < COL_COUNTS.size());
+                     verify(core_key < COL_COUNTS.size());
                      //cmd.op_type_ = READ_REQ;  // pieces only contain reads; for acc ML engine
-                     int n_col = COL_COUNTS.at(key);
+                     int n_col = COL_COUNTS.at(core_key);
                      Value result;
                      for (int col_id = 1; col_id <= n_col; ++col_id) { // we don't read/write the key col
                          tx.ReadColumn(r, col_id, &result, TXN_BYPASS);
@@ -186,11 +199,12 @@ namespace janus {
                      mdb::MultiBlob mb(1);
                      mb[0] = cmd.input.at(FB_REQ_VAR_ID(i)).get_blob();
                      int key = cmd.input.at(FB_REQ_VAR_ID(i)).get_i32();
+                     int core_key = key % N_CORE_KEYS;
                      r = tx.Query(tx.GetTable(FB_TABLE), mb);
                      verify(!COL_COUNTS.empty());
-                     verify(key < COL_COUNTS.size());
+                     verify(core_key < COL_COUNTS.size());
                      //cmd.op_type_ = WRITE_REQ;  // pieces contain writes; for ML engine
-                     int n_col = COL_COUNTS.at(key);
+                     int n_col = COL_COUNTS.at(core_key);
                      for (int col_id = 1; col_id <= n_col; ++col_id) { // we don't read/write the key col
                          Value v = get_fb_value();
                          tx.WriteColumn(r, col_id, v, TXN_BYPASS);

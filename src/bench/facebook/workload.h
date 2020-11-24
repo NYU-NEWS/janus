@@ -32,5 +32,6 @@ extern char FB_TABLE[];
         int GetReadBatchSize();
         void GenerateReadKeys(std::unordered_set<int>& keys, int size);
         const Value& get_fb_value();
+        int CoreKeyMapping(int core_key, int n_total_keys) const;
     };
 } // namespace janus

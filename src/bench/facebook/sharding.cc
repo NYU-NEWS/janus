@@ -57,8 +57,9 @@ namespace janus {
     }
 
     int FBSharding::get_n_column(i32 key) const {
-        verify(key < COL_COUNTS.size());
-        return COL_COUNTS.at(key);
+        int core_key = key % N_CORE_KEYS;  // map the real key to core key
+        verify(core_key < COL_COUNTS.size());
+        return COL_COUNTS.at(core_key);
     }
 
     const Value& FBSharding::get_fb_value() const {
