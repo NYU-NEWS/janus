@@ -39,7 +39,15 @@ namespace janus {
     }
 
     SSID AccColumn::write(mdb::Value&& v, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index,
-            bool& offset_safe, bool& decided, unsigned long& prev_index, bool mark_finalized) { // ver_index is the new write's
+            bool& offset_safe, bool& decided, unsigned long& prev_index, bool& same_tx, bool mark_finalized) { // ver_index is the new write's
+        // ---fix after workloads memory efficiency optimization---
+        if (txn_queue[_logical_head].txn_id == tid) {
+            txn_queue[_logical_head].value = std::move(v);
+            same_tx = true;
+            return txn_queue[_logical_head].ssid;
+        }
+        // -----------
+
         // write returns new ssid
         prev_index = _logical_head;
         if (!logical_head_ss()) {

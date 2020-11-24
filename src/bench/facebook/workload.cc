@@ -171,9 +171,14 @@ namespace janus {
                      //cmd.op_type_ = READ_REQ;  // pieces only contain reads; for acc ML engine
                      int n_col = COL_COUNTS.at(core_key);
                      Value result;
+                     for (int itr = 0; itr < n_col; ++itr) {  // read the same col n_col times
+                         tx.ReadColumn(r, 1, &result, TXN_BYPASS);
+                     }
+                     /*
                      for (int col_id = 1; col_id <= n_col; ++col_id) { // we don't read/write the key col
                          tx.ReadColumn(r, col_id, &result, TXN_BYPASS);
                      }
+                     */
                      output[FB_ROTXN_OUTPUT(i)] = result; // we only keep the last col's result for now
                                                           // FIXME: fix this later for real
                      /*
@@ -205,10 +210,16 @@ namespace janus {
                      verify(core_key < COL_COUNTS.size());
                      //cmd.op_type_ = WRITE_REQ;  // pieces contain writes; for ML engine
                      int n_col = COL_COUNTS.at(core_key);
+                     for (int itr = 0; itr < n_col; ++itr) {
+                         Value v = get_fb_value();
+                         tx.WriteColumn(r, 1, v, TXN_BYPASS);
+                     }
+                     /*
                      for (int col_id = 1; col_id <= n_col; ++col_id) { // we don't read/write the key col
                          Value v = get_fb_value();
                          tx.WriteColumn(r, col_id, v, TXN_BYPASS);
                      }
+                     */
                      /*
                      std::vector<int> col_ids;
                      std::vector<Value> values;

@@ -675,7 +675,9 @@ void Config::GenerateDynamicSchema() {
 }
 
 void Config::GenerateFBTableColumnInfo(Sharding::tb_info_t &tbl_info) {
-    int max_n_cols = 1025;  // this is max 1024 accessible cols + 1 key col
+    // int max_n_cols = 1025;  // this is max 1024 accessible cols + 1 key col
+    int max_n_cols = 2;  // a hot optimization for saving memory, fb only populates 2 cols but will read/write
+                         // multiple cols.
     for (int i = 0; i < max_n_cols; ++i) {
         // note that col 0 is the primary key
         std::string c_type = i == 0 ? "integer" : "string";

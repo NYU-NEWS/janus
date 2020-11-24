@@ -83,7 +83,7 @@ namespace janus {
         AccColumn& operator=(const AccColumn&) = delete; // no copy
         const mdb::Value& read(txnid_t tid, snapshotid_t ssid_spec, SSID& ssid, bool& offset_safe, unsigned long& index, bool& decided);
         SSID write(mdb::Value&& v, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index,
-                bool& offset_safe, bool& decided, unsigned long& prev_index, bool mark_finalized = false);
+                bool& offset_safe, bool& decided, unsigned long& prev_index, bool& same_tx, bool mark_finalized = false);
     private:
         /* basic column members */
         mdb::colid_t col_id = -1;

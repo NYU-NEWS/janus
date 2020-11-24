@@ -69,8 +69,12 @@ namespace janus {
         //Log_info("server:WriteColumn. txid = %lu. ssid_spec = %lu.", this->tid_, sg.ssid_spec);
         bool is_decided = true;
         unsigned long prev_index = 0;
+        bool same_tx = false;
         SSID ssid = acc_row->write_column(col_id, std::move(value), sg.ssid_spec, this->tid_, ver_index,
-                sg.offset_safe, is_decided, prev_index, sg.mark_finalized); // ver_index is new write
+                sg.offset_safe, is_decided, prev_index, same_tx, sg.mark_finalized); // ver_index is new write
+        if (same_tx) {
+            return true;
+        }
         row->ref_copy();
         sg.update_metadata(ssid.ssid_low, ssid.ssid_high, false);
         // for ss
