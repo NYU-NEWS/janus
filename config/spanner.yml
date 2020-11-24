@@ -6,7 +6,7 @@ bench:
     f1_load: 0.999
     f1_update: 0.001
   population: # intial number of records in the spanner table
-    f1:   10000
+    f1:   125000
   dist: zipf
   coefficient: 0.99 # 0 as uniform, 1 as pure zipf
 

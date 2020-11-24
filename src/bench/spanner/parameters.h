@@ -10,13 +10,16 @@ namespace janus {
 #define MAX_TXN_SIZE 10    // this is the max size of txns.
 #define COL_ID 1  // for now each key has only 1 column, which is col_id = 1, col value sizes vary
 #define N_SPANNER_VALUES 50
-#define N_TOTAL_KEYS 100000
+#define N_CORE_KEYS 10000  // for memory efficiency
 
     static std::mt19937 RAND_SPANNER_KEY_SHUFFLE(2);
     static std::mt19937 RAND_SPANNER_VALUES(1);
+    static std::mt19937 RAND_SPANNER_KEY_MAPPING(3);
     static std::vector<Value> initialize_spanner_values() {
-        double mean = 1.6 * 1024;  // in bytes
-        double stddev = 119.0 * 1024;  // in bytes
+        // double mean = 1.6 * 1024;  // in bytes
+        // double stddev = 119.0 * 1024;  // in bytes
+        double mean = 1.6;  // in bytes
+        double stddev = 119.0;  // in bytes
         double confidence_95 = 1.96;
         uint64_t min = 1;
         uint64_t max = std::round(mean + stddev * confidence_95);
@@ -37,7 +40,7 @@ namespace janus {
     }
 
     static std::vector<int> initialize_spanner_shuffled_keys() {
-        std::vector<int> keys(N_TOTAL_KEYS);
+        std::vector<int> keys(N_CORE_KEYS);
         std::iota( std::begin(keys), std::end(keys), 0 );
         std::shuffle( keys.begin(), keys.end() , RAND_SPANNER_KEY_SHUFFLE);
         return keys;

@@ -70,14 +70,14 @@ namespace janus {
     int SpannerWorkload::KeyGenerator() {
         const auto& dist = Config::GetConfig()->dist_;
         if (dist == "uniform") { // uniform workloads
-            std::uniform_int_distribution<> d(0, spanner_para_.n_directories_ - 1);
+            std::uniform_int_distribution<> d(0, N_CORE_KEYS - 1);
             return d(rand_gen_);
         } else if (dist == "zipf") { // skewed workloads
             static auto alpha = Config::GetConfig()->coeffcient_;
-            static ZipfDist d(alpha, spanner_para_.n_directories_);
+            static ZipfDist d(alpha, N_CORE_KEYS);
             // return d(rand_gen_);  // TODO: look at tpca "rotate" for making popularity dynamic!
             int zipf_key = d(rand_gen_);  // TODO: tpca does "rotate", what is that for?
-            if (zipf_key >= 0 && zipf_key < N_TOTAL_KEYS && !SHUFFLED_KEYS.empty()) {
+            if (zipf_key >= 0 && zipf_key < N_CORE_KEYS && !SHUFFLED_KEYS.empty()) {
                 // verify(!SHUFFLED_KEYS.empty());
                 return SHUFFLED_KEYS[zipf_key];
             } else {
@@ -136,10 +136,21 @@ namespace janus {
 
     void SpannerWorkload::GenerateKeys(std::unordered_set<int>& keys, int size) {
         do {
-            int k = KeyGenerator();
-            keys.emplace(k);  // k is only inserted to keys if it's unique
+            int core_key = KeyGenerator();
+            int real_key = CoreKeyMapping(core_key, spanner_para_.n_directories_);
+            keys.emplace(real_key);  // k is only inserted to keys if it's unique
         } while (keys.size() < size);
         verify(keys.size() == size);
+    }
+
+    int SpannerWorkload::CoreKeyMapping(int core_key, int n_total_keys) const {
+        verify(core_key < n_total_keys && core_key < N_CORE_KEYS);
+        int amplifier = n_total_keys / N_CORE_KEYS;
+        std::uniform_int_distribution<> dis(0, amplifier - 1);
+        int multiplier = dis(RAND_SPANNER_KEY_MAPPING);
+        int real_key = core_key + multiplier * N_CORE_KEYS;
+        verify(real_key < n_total_keys);
+        return real_key;
     }
 
     void SpannerWorkload::RegisterPrecedures() {

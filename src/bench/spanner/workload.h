@@ -35,5 +35,6 @@ extern char SPANNER_TABLE[];
         static int GetNumWrites(int rw_size);
         void GenerateKeys(std::unordered_set<int>& keys, int size);
         const Value& get_spanner_value();
+        int CoreKeyMapping(int core_key, int n_total_keys) const;
     };
 } // namespace janus
