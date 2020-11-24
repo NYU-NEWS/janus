@@ -191,10 +191,11 @@ namespace janus {
                          output[SPANNER_RW_OUTPUT(i)] = result;
                      } else {
                          // this is a write in RW, we do a read first
-                         Value result;
-                         tx.ReadColumn(r, COL_ID, &result, TXN_BYPASS);
-                         // Value v = get_spanner_value();
-                         tx.WriteColumn(r, COL_ID, result, TXN_DEFERRED);
+                         // Value result;
+                         //tx.ReadColumn(r, COL_ID, &result, TXN_BYPASS);
+                         Value v = get_spanner_value();
+                         tx.WriteColumn(r, COL_ID, v, TXN_BYPASS);
+                         // tx.WriteColumn(r, COL_ID, result, TXN_DEFERRED);
                          // for now, no output for writes
                      }
                      *res = SUCCESS;

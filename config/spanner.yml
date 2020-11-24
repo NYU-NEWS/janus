@@ -3,8 +3,8 @@ bench:
   workload: spanner
   scale: 1
   weight: # these are hard coded, modify here won't have any effects
-    f1_load: 0.999
-    f1_update: 0.001
+    f1_load: 0.997
+    f1_update: 0.003
   population: # intial number of records in the spanner table
     f1:   125000
   dist: zipf
