@@ -170,7 +170,7 @@ void ClientWorker::Work() {
             Log_debug("unfinished tx %d", n_undone_tx);
           }
           Reactor::CreateSpEvent<NeverEvent>()->Wait(pow(10, 4));
-        } while (n_undone_tx > config_->client_max_undone_);
+        } while (config_->client_max_undone_ > 0 && n_undone_tx > config_->client_max_undone_);
         num_txn++;
         auto coo = FindOrCreateCoordinator();
         verify(!coo->sp_ev_commit_);
