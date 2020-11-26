@@ -116,8 +116,12 @@ namespace janus {
             unsigned long ver_index = 0;
             bool is_decided = true;
             unsigned long prev_index = 0;
+            bool same_tx = false;
             SSID ssid = acc_row->write_column(col_id, std::move(values[v_counter++]), sg.ssid_spec, this->tid_,
-                    ver_index, sg.offset_safe, is_decided, prev_index, sg.mark_finalized);
+                    ver_index, sg.offset_safe, is_decided, prev_index, same_tx, sg.mark_finalized);
+            if (same_tx) {
+                continue;
+            }
             sg.update_metadata(ssid.ssid_low, ssid.ssid_high, false);
             row->ref_copy();
             // for ss
