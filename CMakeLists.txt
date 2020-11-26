@@ -8,8 +8,10 @@ include("HunterGate.cmake")
 if(UNIX AND NOT APPLE)
     # Linux
     HunterGate(
-            URL "https://github.com/cpp-pm/hunter/archive/v0.23.242.tar.gz"
-            SHA1 "503b149d0ebdbc598e498f1669ae828a2136b838"
+#            URL "https://github.com/cpp-pm/hunter/archive/v0.23.242.tar.gz"
+#            SHA1 "503b149d0ebdbc598e498f1669ae828a2136b838"
+            URL "https://github.com/cpp-pm/hunter/archive/v0.23.254.tar.gz"
+            SHA1 "017e688b9848c1f695303e8cfe9f35d40e154112"
             #        "${CMAKE_CURRENT_LIST_DIR}/cxx11.cmake"
             #        FILEPATH "/home/shuai/git/janus/config.cmake"
             LOCAL
@@ -34,7 +36,7 @@ set(
 project(janus)
 
 # Hunter disallows using (cmake_)cxx_standard, use toolchain instead.
-#set (CMAKE_CXX_STANDARD 14)
+set (CMAKE_CXX_STANDARD 14)
 
 find_package(Threads)
 find_package(PkgConfig REQUIRED)
@@ -44,7 +46,7 @@ pkg_check_modules(PYTHON REQUIRED python3)
 
 hunter_add_package(Boost COMPONENTS system filesystem coroutine context thread)
 hunter_add_package(GTest)
-hunter_add_package(GSL)
+#hunter_add_package(GSL)
 
 find_package(Boost CONFIG REQUIRED
         system filesystem coroutine context thread)
@@ -52,7 +54,7 @@ find_package(GTest CONFIG REQUIRED)
 #find_package(GSL CONFIG REQUIRED)
 
 include_directories(
-        ${Boost_INCLUDE_DIR}
+        ${Boost_INCLUDE_DIRS}
 #        ${YAML_CPP_INCLUDE_DIRS}
 )
 link_directories(
@@ -120,7 +122,7 @@ add_library(YAMLCPP
 set(CMAKE_VERBOSE_MAKEFILE on)
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -w")
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O0")
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-register -Werror")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-register -Wno-error")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DUSE_IPC")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Weffc++")
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DCHECK_ISO")
@@ -306,7 +308,7 @@ target_link_libraries(
         RRR
 #        GTest::main
 #        GTest::gtest
-        GSL:gsl
+#        GSL:gsl
         ${Boost_LIBRARIES}
 #        ${CONAN_LIBS}
         ${CMAKE_THREAD_LIBS_INIT}
