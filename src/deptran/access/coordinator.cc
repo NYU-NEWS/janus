@@ -37,6 +37,7 @@ namespace janus {
         std::lock_guard<std::recursive_mutex> lock(mtx_);
         auto txn = (TxData*) cmd_;
         int cnt = 0;
+        /*
         int pieces_per_hop = 0;
         if (cmd_->type_ == SPANNER_RW && tx_data().n_pieces_dispatch_acked_ == 0) {
             // we make spanner RW txn multi-hop!
@@ -46,6 +47,7 @@ namespace janus {
             // we make dynamic RW txn multi-hop!
             pieces_per_hop = cmd_->dynamic_rw_reads;
         }
+        */
         auto cmds_by_par = txn->GetReadyPiecesData();
         // auto cmds_by_par = txn->GetReadyPiecesData(pieces_per_hop); // all ready pieces sent in one parallel round
         Log_debug("AccDispatchAsync for tx_id: %" PRIx64, txn->root_id_);
