@@ -903,7 +903,7 @@ def create_parser():
             default=5555, metavar="PORT")
 
     parser.add_argument("-t", "--server-timeout", dest="s_timeout",
-            help="server heart beat timeout in seconds", default=10,
+            help="server heart beat timeout in seconds", default=100,
             action="store", metavar="TIMEOUT", type=int)
 
     parser.add_argument("-i", "--status-time-interval", dest="c_timeout",
