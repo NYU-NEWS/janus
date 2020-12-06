@@ -170,14 +170,17 @@ void ClientWorker::Work() {
           break;
         }
         n_tx_issued_++;
-        int n_undone_tx = 0;
-        do {
-          n_undone_tx = n_tx_issued_ - sp_n_tx_done_.value_;
-          if (n_undone_tx % 1000 == 0) {
-            Log_debug("unfinished tx %d", n_undone_tx);
+          while (true) {
+              auto n_undone_tx = n_tx_issued_ - sp_n_tx_done_.value_;
+              if (n_undone_tx % 1000 == 0) {
+                  Log_debug("unfinished tx %d", n_undone_tx);
+              }
+              if (config_->client_max_undone_ > 0 && n_undone_tx > config_->client_max_undone_) {
+                  Reactor::CreateSpEvent<NeverEvent>()->Wait(pow(10, 4));
+              } else {
+                  break;
+              }
           }
-          Reactor::CreateSpEvent<NeverEvent>()->Wait(pow(10, 4));
-        } while (config_->client_max_undone_ > 0 && n_undone_tx > config_->client_max_undone_);
         num_txn++;
         auto coo = FindOrCreateCoordinator();
         verify(!coo->sp_ev_commit_);
