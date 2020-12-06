@@ -59,6 +59,15 @@ class Coordinator {
   txid_t ongoing_tx_id_{0};
   ForwardRequestState forward_status_ = NONE;
 
+    // ACC stats related
+    int n_ssid_consistent_ = 0;
+    int n_decided_ = 0;
+    // int n_offset_valid_ = 0;
+    int n_validation_passed = 0;
+    int n_cascading_aborts = 0;
+    // int n_single_shard = 0;
+    // int n_single_shard_write_only = 0;
+
   // should be reset on issuing a new request
   uint32_t n_retry_ = 0;
   // below should be reset on retry.
@@ -155,6 +164,14 @@ class Coordinator {
     n_prepare_ack_ = 0;
     n_finish_req_ = 0;
     n_finish_ack_ = 0;
+    // reset LFC related
+    n_ssid_consistent_ = 0;
+    n_decided_ = 0;
+    // int n_offset_valid_ = 0;
+    n_validation_passed = 0;
+    n_cascading_aborts = 0;
+    // int n_single_shard = 0;
+    // int n_single_shard_write_only = 0;
   }
   virtual uint64_t GenerateTimestamp() {
     uint64_t t;

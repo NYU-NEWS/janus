@@ -23,13 +23,13 @@ class TxReply {
   map<int32_t, Value> output_;
   int32_t txn_type_;
   txnid_t tx_id_;
-  int32_t n_ssid_consistent_;
-  int32_t n_decided_;
-  int32_t n_offset_valid_;
-  int32_t n_validation_passed;
-  int32_t n_cascading_aborts;
-  int32_t n_single_shard;
-  int32_t n_single_shard_write_only;
+  // int32_t n_ssid_consistent_;
+  // int32_t n_decided_;
+  // int32_t n_offset_valid_;
+  // int32_t n_validation_passed;
+  // int32_t n_cascading_aborts;
+  // int32_t n_single_shard;
+  // int32_t n_single_shard_write_only;
 };
 
 class TxWorkspace {
@@ -237,13 +237,13 @@ class TxData: public CmdData {
   int max_try_ = 0;
   int n_try_ = 0;
   // ACC stats related
-  int n_ssid_consistent_ = 0;
-  int n_decided_ = 0;
-  int n_offset_valid_ = 0;
-  int n_validation_passed = 0;
-  int n_cascading_aborts = 0;
-  int n_single_shard = 0;
-  int n_single_shard_write_only = 0;
+  // int n_ssid_consistent_ = 0;
+  // int n_decided_ = 0;
+  // int n_offset_valid_ = 0;
+  // int n_validation_passed = 0;
+  // int n_cascading_aborts = 0;
+  // int n_single_shard = 0;
+  // int n_single_shard_write_only = 0;
 
   bool validation_ok_{true};
   bool need_validation_{false};

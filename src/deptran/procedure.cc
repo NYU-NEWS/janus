@@ -99,13 +99,13 @@ Marshal& operator << (Marshal& m, const TxReply& reply) {
   // m << reply.start_time_;
   m << reply.time_;
   m << reply.txn_type_;
-  m << reply.n_ssid_consistent_;
-  m << reply.n_decided_;
-  m << reply.n_offset_valid_;
-  m << reply.n_validation_passed;
-  m << reply.n_cascading_aborts;
-  m << reply.n_single_shard;
-  m << reply.n_single_shard_write_only;
+  // m << reply.n_ssid_consistent_;
+  // m << reply.n_decided_;
+  // m << reply.n_offset_valid_;
+  // m << reply.n_validation_passed;
+  // m << reply.n_cascading_aborts;
+  // m << reply.n_single_shard;
+  // m << reply.n_single_shard_write_only;
   return m;
 }
 
@@ -116,13 +116,13 @@ Marshal& operator >> (Marshal& m, TxReply& reply) {
   memset(&reply.start_time_, 0, sizeof(reply.start_time_));
   m >> reply.time_;
   m >> reply.txn_type_;
-  m >> reply.n_ssid_consistent_;
-  m >> reply.n_decided_;
-  m >> reply.n_offset_valid_;
-  m >> reply.n_validation_passed;
-  m >> reply.n_cascading_aborts;
-  m >> reply.n_single_shard;
-  m >> reply.n_single_shard_write_only;
+  // m >> reply.n_ssid_consistent_;
+  // m >> reply.n_decided_;
+  // m >> reply.n_offset_valid_;
+  // m >> reply.n_validation_passed;
+  // m >> reply.n_cascading_aborts;
+  // m >> reply.n_single_shard;
+  // m >> reply.n_single_shard_write_only;
   return m;
 }
 
@@ -343,13 +343,13 @@ TxReply &TxData::get_reply() {
   clock_gettime(&t_buf);
   reply_.time_ = timespec2ms(t_buf) - timespec2ms(start_time_);
   reply_.txn_type_ = (int32_t) type_;
-  reply_.n_ssid_consistent_ = n_ssid_consistent_;
-  reply_.n_decided_ = n_decided_;
-  reply_.n_offset_valid_ = n_offset_valid_;
-  reply_.n_validation_passed = n_validation_passed;
-  reply_.n_cascading_aborts = n_cascading_aborts;
-  reply_.n_single_shard = n_single_shard;
-  reply_.n_single_shard_write_only = n_single_shard_write_only;
+  // reply_.n_ssid_consistent_ = n_ssid_consistent_;
+  // reply_.n_decided_ = n_decided_;
+  // reply_.n_offset_valid_ = n_offset_valid_;
+  // reply_.n_validation_passed = n_validation_passed;
+  // reply_.n_cascading_aborts = n_cascading_aborts;
+  // reply_.n_single_shard = n_single_shard;
+  // reply_.n_single_shard_write_only = n_single_shard_write_only;
   return reply_;
 }
 

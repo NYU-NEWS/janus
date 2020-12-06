@@ -98,7 +98,7 @@ namespace janus {
                 tx_data().pars_to_finalize.insert(par_id);
  //           }
             if (is_single_shard && write_only) {
-                tx_data().n_single_shard_write_only++; // stats
+                // tx_data().n_single_shard_write_only++; // stats
             }
             commo()->AccBroadcastDispatch(this->coo_id_,
                                           sp_vec_piece,
@@ -254,12 +254,13 @@ namespace janus {
         // ssid check consistency
         // added offset-1 optimization
         if (offset_1_check_pass() && !tx_data()._is_consistent) {
-            tx_data().n_offset_valid_++;  // for stats
+            // tx_data().n_offset_valid_++;  // for stats
         }
         if (tx_data()._is_consistent || offset_1_check_pass()) {
             tx_data()._is_consistent = true;
             committed_ = true;
-            tx_data().n_ssid_consistent_++;   // for stats
+            // tx_data().n_ssid_consistent_++;   // for stats
+            n_ssid_consistent_++;   // for stats
         }
         if (committed_ || aborted_) { // SG checks consistent or cascading aborts, no need to validate
             //Log_info("tx: %lu, safeguard check, commit = %d; aborted = %d", tx_data().id_, committed_, aborted_);
@@ -304,7 +305,8 @@ namespace janus {
             // Log_info("tx: %lu, all validation ACKs received.", tx_data().id_);
             committed_ = !aborted_;
             if (!tx_data()._validation_failed) {
-                tx_data().n_validation_passed++;  // stats
+                // tx_data().n_validation_passed++;  // stats
+                n_validation_passed++;  // stats
             }
             // Log_info("tx: %lu, acc_validate_ack. commit = %d", tx_data().id_, committed_);
             GotoNextPhase(); // to phase final
@@ -332,7 +334,8 @@ namespace janus {
                 AccFinalize(FINALIZED);
             }
             if (tx_data()._decided) {
-                tx_data().n_decided_++; // stats
+                // tx_data().n_decided_++; // stats
+                n_decided_++; // stats
             }
             End();  // do not wait for finalize to return, respond to user now
         } else {
@@ -350,7 +353,8 @@ namespace janus {
         // for stats
         if (tx_data()._is_consistent || !tx_data()._validation_failed) {
             // this txn aborts due to cascading aborts, consistency check passed
-            tx_data().n_cascading_aborts++;
+            // tx_data().n_cascading_aborts++;
+            n_cascading_aborts++;
         }
         if (!tx_data().pars_to_finalize.empty() || tx_data()._is_consistent) {
             AccFinalize(ABORTED);  // will abort in AccFinalizeAck

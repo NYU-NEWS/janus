@@ -59,6 +59,7 @@ void ClientWorker::RequestDone(Coordinator* coo, TxReply& txn_reply) {
     success++;
   num_txn++;
   num_try.fetch_add(txn_reply.n_try_);
+  /*
   ssid_consistent.fetch_add(txn_reply.n_ssid_consistent_);
   decided.fetch_add(txn_reply.n_decided_);
   offset_valid.fetch_add(txn_reply.n_offset_valid_);
@@ -66,7 +67,7 @@ void ClientWorker::RequestDone(Coordinator* coo, TxReply& txn_reply) {
   cascading_aborts.fetch_add(txn_reply.n_cascading_aborts);
   single_shard.fetch_add(txn_reply.n_single_shard);
   single_shard_write_only.fetch_add(txn_reply.n_single_shard_write_only);
-
+  */
   bool have_more_time = timer_->elapsed() < duration;
   Log_debug("received callback from tx_id %" PRIx64, txn_reply.tx_id_);
   Log_debug("elapsed: %2.2f; duration: %d", timer_->elapsed(), duration);
@@ -209,6 +210,13 @@ void ClientWorker::Work() {
           if (coo->committed_) {
             success++;
           }
+
+          // LFC related stats
+          ssid_consistent.fetch_add(coo->n_ssid_consistent_);
+          decided.fetch_add(coo->n_decided_);
+          validation_passed.fetch_add(coo->n_validation_passed);
+          cascading_aborts.fetch_add(coo->n_cascading_aborts);
+
           sp_n_tx_done_.Set(sp_n_tx_done_.value_+1);
           num_try.fetch_add(coo->n_retry_);
           coo->sp_ev_done_.reset();
@@ -240,11 +248,27 @@ void ClientWorker::Work() {
     sleep(1);
   }
 
+  /*
   Log_info("Finish:\nTotal: %u, Commit: %u, Attempts: %u, Running for %u\n",
            num_txn.load(),
            success.load(),
            num_try.load(),
            Config::GetConfig()->get_duration());
+  */
+    Log_info("Finish:\nTotal: %u, Commit: %u, Attempts: %u, SSID_consistent: %u, Decided: %u, "
+             "Validation_pass: %u, "
+             "Cascading_aborts: %u, Running for %u\n",
+             num_txn.load(),
+             success.load(),
+             num_try.load(),
+             ssid_consistent.load(),
+             decided.load(),
+             // offset_valid.load(),
+             validation_passed.load(),
+             // single_shard.load(),
+             // single_shard_write_only.load(),
+             cascading_aborts.load(),
+             Config::GetConfig()->get_duration());
   fflush(stderr);
   fflush(stdout);
 
@@ -454,11 +478,11 @@ ClientWorker::ClientWorker(
   num_try.store(0);
   ssid_consistent.store(0);
   decided.store(0);
-  offset_valid.store(0);
+  // offset_valid.store(0);
   validation_passed.store(0);
   cascading_aborts.store(0);
-  single_shard.store(0);
-  single_shard_write_only.store(0);
+  // single_shard.store(0);
+  // single_shard_write_only.store(0);
   commo_ = frame_->CreateCommo(poll_mgr_);
   commo_->loc_id_ = my_site_.locale_id;
   forward_requests_to_leader_ =
