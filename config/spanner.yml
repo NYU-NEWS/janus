@@ -9,7 +9,7 @@ bench:
     f1:   125000
   dist: zipf
   coefficient: 0.99 # 0 as uniform, 1 as pure zipf
-
+  writefraction: 0.003  # now write fraction is not hard coded.
 # schema: [generated in code: config.cc]
 
 sharding:

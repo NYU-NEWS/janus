@@ -32,7 +32,9 @@ namespace janus {
         // decide this req is rotxn or read-write txn
         std::uniform_real_distribution<> dis(0.0, 1.0);
         double token = dis(rand_gen_); // get a token: a random double between 0 and 1
-        if (token <= SPANNER_WRITE_FRACTION) { // this is a write
+        double write_fraction = Config::GetConfig()->write_fraction_;
+        // if (token <= SPANNER_WRITE_FRACTION) { // this is a write
+        if (token <= write_fraction) {
             req->tx_type_ = SPANNER_RW;
             GetRWRequest(req, cid);
         } else { // this is a rotxn
