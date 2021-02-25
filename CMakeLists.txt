@@ -307,15 +307,9 @@ target_link_libraries(
 target_link_libraries(
         TEST
         RRR
-<<<<<<< HEAD
-#        GTest::main
-#        GTest::gtest
-#        GSL:gsl
-=======
         #        GTest::main
         #        GTest::gtest
-        GSL:gsl
->>>>>>> removed vw related stuff
+        #        GSL:gsl
         ${Boost_LIBRARIES}
         #        ${CONAN_LIBS}
         ${CMAKE_THREAD_LIBS_INIT}

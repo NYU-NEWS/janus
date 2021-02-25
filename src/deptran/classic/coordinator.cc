@@ -68,6 +68,14 @@ void CoordinatorClassic::DoTxAsync(TxRequest& req) {
   cmd->timestamp_ = GenerateTimestamp();
   cmd_ = cmd;
   n_retry_ = 0;
+    // reset LFC related
+    n_ssid_consistent_ = 0;
+    n_decided_ = 0;
+    // int n_offset_valid_ = 0;
+    n_validation_passed = 0;
+    n_cascading_aborts = 0;
+    // int n_single_shard = 0;
+    // int n_single_shard_write_only = 0;
   Reset(); // In case of reuse.
 
   Log_debug("do one request txn_id: %d", cmd_->id_);

@@ -354,7 +354,9 @@ namespace janus {
         if (tx_data()._is_consistent || !tx_data()._validation_failed) {
             // this txn aborts due to cascading aborts, consistency check passed
             // tx_data().n_cascading_aborts++;
-            n_cascading_aborts++;
+            if (tx_data()._status_abort) {
+                n_cascading_aborts++;
+            }
         }
         if (!tx_data().pars_to_finalize.empty() || tx_data()._is_consistent) {
             AccFinalize(ABORTED);  // will abort in AccFinalizeAck
