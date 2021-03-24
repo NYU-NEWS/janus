@@ -12,7 +12,7 @@ namespace janus {
         unsigned long index = 0;
 	    bool is_decided = true;
         //Log_info("server:ReadColumn. txid = %lu. ssid_spec = %lu.", this->tid_, sg.ssid_spec);
-        SSID ssid = acc_row->read_column(this->tid_, col_id, value, sg.ssid_spec, sg.offset_safe, index, is_decided);
+        SSID ssid = acc_row->read_column(this->tid_, col_id, value, sg.ssid_spec, index, is_decided);
         row->ref_copy();
         sg.metadata.indices[row][col_id] = index;  // for later validation, could be overwritten by later writes
         if (!is_decided) {
@@ -41,7 +41,7 @@ namespace janus {
             Value *v = nullptr;
             unsigned long index = 0;
 	        bool is_decided = true;
-            SSID ssid = acc_row->read_column(this->tid_, col_id, v, sg.ssid_spec, sg.offset_safe, index, is_decided);
+            SSID ssid = acc_row->read_column(this->tid_, col_id, v, sg.ssid_spec, index, is_decided);
             verify(v != nullptr);
             values->push_back(std::move(*v));
             row->ref_copy();
@@ -71,7 +71,7 @@ namespace janus {
         unsigned long prev_index = 0;
         bool same_tx = false;
         SSID ssid = acc_row->write_column(col_id, std::move(value), sg.ssid_spec, this->tid_, ver_index,
-                sg.offset_safe, is_decided, prev_index, same_tx, sg.mark_finalized); // ver_index is new write
+                is_decided, prev_index, same_tx, sg.mark_finalized); // ver_index is new write
         if (same_tx) {
             return true;
         }
@@ -118,7 +118,7 @@ namespace janus {
             unsigned long prev_index = 0;
             bool same_tx = false;
             SSID ssid = acc_row->write_column(col_id, std::move(values[v_counter++]), sg.ssid_spec, this->tid_,
-                    ver_index, sg.offset_safe, is_decided, prev_index, same_tx, sg.mark_finalized);
+                    ver_index, is_decided, prev_index, same_tx, sg.mark_finalized);
             if (same_tx) {
                 continue;
             }

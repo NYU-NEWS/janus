@@ -159,6 +159,7 @@ namespace janus {
         }
         // store RPC returned information
         switch (res) {
+            /*
             case BOTH_NEGATIVE:
                 txn->_offset_invalid = true;
                 txn->_decided = false;
@@ -166,6 +167,7 @@ namespace janus {
             case OFFSET_INVALID:
                 txn->_offset_invalid = true;
                 break;
+            */
             case NOT_DECIDED:
                 txn->_decided = false;
                 break;
@@ -253,10 +255,13 @@ namespace janus {
         // verify(!committed_);
         // ssid check consistency
         // added offset-1 optimization
+        /*
         if (offset_1_check_pass() && !tx_data()._is_consistent) {
             // tx_data().n_offset_valid_++;  // for stats
         }
-        if (tx_data()._is_consistent || offset_1_check_pass()) {
+        */
+        // if (tx_data()._is_consistent || offset_1_check_pass()) {
+        if (tx_data()._is_consistent) {
             tx_data()._is_consistent = true;
             committed_ = true;
             // tx_data().n_ssid_consistent_++;   // for stats
@@ -270,11 +275,13 @@ namespace janus {
         }
     }
 
+    /*
     bool CoordinatorAcc::offset_1_check_pass() {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
         return !tx_data()._offset_invalid &&  // write valid
                tx_data().highest_ssid_low - tx_data().lowest_ssid_high <= 1;  // offset within 1
     }
+    */
 
     void CoordinatorAcc::AccValidate() {
         std::lock_guard<std::recursive_mutex> lock(mtx_);
@@ -430,7 +437,7 @@ namespace janus {
         tx_data().ssid_new = 0;
         tx_data().n_validate_rpc_ = 0;
         tx_data().n_validate_ack_ = 0;
-        tx_data()._offset_invalid = false;
+        // tx_data()._offset_invalid = false;
         tx_data().ssid_spec = 0;
         tx_data()._decided = true;
         tx_data()._status_query_done = false;

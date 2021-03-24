@@ -25,7 +25,7 @@ namespace janus {
         metadata.lowest_ssid_high = UINT64_MAX;
         metadata.highest_write_ssid = 0;
         validate_done = false;
-        offset_safe = true;
+        // offset_safe = true;
         ssid_spec = 0;
         decided = true;
         mark_finalized = false;

@@ -30,7 +30,7 @@ namespace janus {
         bool mark_finalized = false;
         snapshotid_t ssid_spec = 0;  // provided by ML on the client for this txn
         bool validate_done = false;
-        bool offset_safe = true;
+        // bool offset_safe = true;
         bool decided = true;         // if the write a read returning is finalized, used in both dispatch and validate
         // AccStatusQuery related
         bool status_query_done = false;  // for AccStatusQuery

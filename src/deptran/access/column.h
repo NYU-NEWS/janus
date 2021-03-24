@@ -81,9 +81,9 @@ namespace janus {
         AccColumn(AccColumn&& that) noexcept;
         AccColumn(const AccColumn&) = delete;   // no copy
         AccColumn& operator=(const AccColumn&) = delete; // no copy
-        const mdb::Value& read(txnid_t tid, snapshotid_t ssid_spec, SSID& ssid, bool& offset_safe, unsigned long& index, bool& decided);
+        const mdb::Value& read(txnid_t tid, snapshotid_t ssid_spec, SSID& ssid, unsigned long& index, bool& decided);
         SSID write(mdb::Value&& v, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index,
-                bool& offset_safe, bool& decided, unsigned long& prev_index, bool& same_tx, bool mark_finalized = false);
+                bool& decided, unsigned long& prev_index, bool& same_tx, bool mark_finalized = false);
     private:
         /* basic column members */
         mdb::colid_t col_id = -1;
@@ -91,7 +91,7 @@ namespace janus {
         std::vector<AccTxnRec> txn_queue;  // a vector of txns as a versioned column --> txn queue
         SSID write_get_next_SSID(snapshotid_t ssid_spec) const;
         snapshotid_t read_get_next_SSID(snapshotid_t ssid_spec) const;
-        bool is_offset_safe(snapshotid_t new_ssid) const;
+        // bool is_offset_safe(snapshotid_t new_ssid) const;
         bool is_read(txnid_t tid, unsigned long index) const;
         void finalize(txnid_t tid, unsigned long index, int8_t decision);
         void commit(unsigned long index);

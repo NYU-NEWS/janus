@@ -30,7 +30,7 @@ namespace janus {
 	    void AccFinalizeAck(phase_t phase);
         void Restart() override;
         void reset_all_members();
-        bool offset_1_check_pass();
+        // bool offset_1_check_pass();
         void AccCommit();
         void AccAbort();
         void StatusQuery();

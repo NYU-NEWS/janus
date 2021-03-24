@@ -20,16 +20,18 @@ namespace janus {
         update_stable_frontier();
     }
 
-    const mdb::Value& AccColumn::read(txnid_t tid, snapshotid_t ssid_spec, SSID& ssid, bool& offset_safe, unsigned long& index, bool& decided) {
+    const mdb::Value& AccColumn::read(txnid_t tid, snapshotid_t ssid_spec, SSID& ssid, unsigned long& index, bool& decided) {
         // return logical head
         index = _logical_head;
         snapshotid_t ssid_new = read_get_next_SSID(ssid_spec);
         // extends head's ssid
         txn_queue[index].extend_ssid(ssid_new);
         ssid = txn_queue[index].ssid;
+        /*
         if (!is_offset_safe(ssid_new)) {
             offset_safe = false;
         }
+        */
         if (logical_head_status() != FINALIZED) { // then if this tx turns out consistent and all parts decided, can respond immediately
             decided = false;
         }
@@ -39,7 +41,7 @@ namespace janus {
     }
 
     SSID AccColumn::write(mdb::Value&& v, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index,
-            bool& offset_safe, bool& decided, unsigned long& prev_index, bool& same_tx, bool mark_finalized) { // ver_index is the new write's
+            bool& decided, unsigned long& prev_index, bool& same_tx, bool mark_finalized) { // ver_index is the new write's
         // ---fix after workloads memory efficiency optimization---
         if (txn_queue[_logical_head].txn_id == tid) {
             txn_queue[_logical_head].value = std::move(v);
@@ -61,9 +63,11 @@ namespace janus {
         }
         ver_index = txn_queue.size() - 1; // record index of this pending write for later validation and finalize
         //Log_info("txnid = %lu; writing to; col_id = %d. index = %d.", tid, col_id, ver_index);
+        /*
 	    if (!is_offset_safe(new_ssid.ssid_low)) {
             offset_safe = false;
         }
+        */
         update_logical_head();
         return new_ssid;  // return the SSID of this new write -- safety
     }
@@ -78,12 +82,14 @@ namespace janus {
         return logical_head_ssid_for_reads() < ssid_spec ? ssid_spec : logical_head_ssid_for_reads() + 1;
     }
 
+    /*
     bool AccColumn::is_offset_safe(snapshotid_t new_ssid) const {
         if (txn_queue[_logical_head].ssid.ssid_low != new_ssid - 1) {
             return true;
         }
         return logical_head_status() != UNCHECKED;
     }
+    */
 
     bool AccColumn::is_read(txnid_t tid, unsigned long index) const {
         if (index == 0) { // against the default value

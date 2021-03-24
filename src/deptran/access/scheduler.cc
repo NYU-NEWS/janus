@@ -117,15 +117,19 @@ namespace janus {
         *ssid_high = tx->sg.metadata.lowest_ssid_high;
         *ssid_new = tx->sg.metadata.highest_write_ssid;
         // report offset_invalid and decided. These two things are *incomparable*!
+        /*
         if (!tx->sg.decided && !tx->sg.offset_safe) {
             return BOTH_NEGATIVE;
         }
+        */
         if (!tx->sg.decided) {
             return NOT_DECIDED;
         }
+        /*
         if (!tx->sg.offset_safe) {
             return OFFSET_INVALID;
         }
+        */
         return SUCCESS;
     }
 
