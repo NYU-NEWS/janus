@@ -12,7 +12,7 @@ pyasn1==0.1.9
 pycrypto==2.6.1
 python-dateutil==2.5.0
 PyYAML==3.11
-rsa==3.3
+rsa==4.1
 s3transfer==0.0.1
 six==1.10.0
 tabulate==0.7.5
