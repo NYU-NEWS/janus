@@ -11,7 +11,7 @@ paramiko==1.16.0
 pyasn1==0.1.9
 pycrypto==2.6.1
 python-dateutil==2.5.0
-PyYAML==3.11
+PyYAML==5.4
 rsa==3.3
 s3transfer==0.0.1
 six==1.10.0
