@@ -56,6 +56,16 @@ namespace janus {
         std::unordered_map<int, int> subrpc_count;   // tracks the number of sub-callbacks for each query rpc
         std::unordered_map<int, int8_t> subrpc_status;
 
+        /* txn status struct for failure handling */
+        struct RECORD {
+            // uncleared -- waiting on preceding txns; cleared -- querystate responses sent;
+            // finalized/aborted -- finalize message received
+            enum class Status { uncleared, cleared, finalized, aborted };
+            snapshotid_t ts_low = 0, ts_high = 0; // returned ssids in the execution
+            parid_t coord = 0;  // the partition id of the backup coordinator
+            std::unordered_set<parid_t> cohorts = {}; // the partition ids of cohorts
+        };
+
         ~AccTxn() override;
     private:
         SafeGuard sg;
