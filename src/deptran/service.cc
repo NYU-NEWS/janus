@@ -410,6 +410,8 @@ void ClassicServiceImpl::AccDispatch(const uint32_t& coo_id,
                                   const MarshallDeputy& md,
                                   const uint64_t& ssid_spec,
                                   const uint8_t& is_single_shard_write_only,
+                                  const uint32_t& coord,
+                                  const std::unordered_set<uint32_t>& cohorts,
                                   int32_t* res,
                                   uint64_t* ssid_low,
                                   uint64_t* ssid_high,
@@ -420,7 +422,7 @@ void ClassicServiceImpl::AccDispatch(const uint32_t& coo_id,
     // server-side handler of AccDispatch RPC
     shared_ptr<Marshallable> sp = md.sp_data_;
     auto* sched = (SchedulerAcc*) dtxn_sched_;
-    *res = sched->OnDispatch(cmd_id, sp, ssid_spec, is_single_shard_write_only, ssid_low, ssid_high, ssid_new, *output, arrival_time);
+    *res = sched->OnDispatch(cmd_id, sp, ssid_spec, is_single_shard_write_only, coord, cohorts, ssid_low, ssid_high, ssid_new, *output, arrival_time);
     // GC earlier txns by the same coordinator
     sched->gc_txns(coo_id, cmd_id);
     defer->reply();

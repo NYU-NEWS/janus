@@ -60,11 +60,13 @@ namespace janus {
         struct RECORD {
             // uncleared -- waiting on preceding txns; cleared -- querystate responses sent;
             // finalized/aborted -- finalize message received
-            enum class Status { uncleared, cleared, finalized, aborted };
+            txn_status_t status = UNCLEARED;
             snapshotid_t ts_low = 0, ts_high = 0; // returned ssids in the execution
             parid_t coord = 0;  // the partition id of the backup coordinator
             std::unordered_set<parid_t> cohorts = {}; // the partition ids of cohorts
         };
+
+        RECORD record;
 
         ~AccTxn() override;
     private:

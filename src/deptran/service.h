@@ -226,6 +226,8 @@ class ClassicServiceImpl : public ClassicService {
                    const MarshallDeputy& cmd,
                    const uint64_t& ssid_spec,
                    const uint8_t& is_single_shard_write_only,
+                   const uint32_t& coord,
+                   const std::unordered_set<uint32_t>& cohorts,
                    int32_t* res,
                    uint64_t* ssid_low,
                    uint64_t* ssid_high,

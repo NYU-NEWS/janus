@@ -13,6 +13,8 @@ namespace janus {
                                   Coordinator *coo,
                                   snapshotid_t ssid_spec,
                                   bool is_single_shard_write_only,
+                                  parid_t coord,
+                                  const std::unordered_set<parid_t>& cohorts,
                                   const std::function<void(int res,
                                                       uint64_t ssid_low,
                                                       uint64_t ssid_high,

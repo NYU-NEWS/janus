@@ -11,6 +11,8 @@ namespace janus {
                                      const shared_ptr<Marshallable>& cmd,
                                      uint64_t ssid_spec,
                                      uint8_t is_single_shard_write_only,
+                                     const uint32_t& coord,
+                                     const std::unordered_set<uint32_t>& cohorts,
                                      uint64_t *ssid_low,
                                      uint64_t *ssid_high,
                                      uint64_t *ssid_new,
@@ -24,6 +26,13 @@ namespace janus {
         }
         //auto tx = GetOrCreateTx(cmd_id);
         auto tx = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));
+        // failure handling
+        tx->record.coord = coord;
+        if (this->partition_id_ == coord) {
+            // this partition is the backup coordinator
+            tx->record.cohorts.insert(cohorts.begin(), cohorts.end());
+        }
+
         tx->load_speculative_ssid(ssid_spec);   // read in the spec ssid provided by the client
         if (!tx->cmd_) {
             tx->cmd_ = cmd;
@@ -33,7 +42,14 @@ namespace janus {
                 present_cmd->push_back(sp_piece_data);
             }
         }
-        // Log_info("parid = %d; txnid = %lu; OnDispatch.", this->partition_id_, tx->tid_);
+        /*
+        string cs = "";
+        for (auto c : cohorts) {
+            cs += to_string(c);
+            cs += " | ";
+        }
+        Log_info("parid = %d; txnid = %lu; OnDispatch. coord = %u. cohorts = %s.", this->partition_id_, tx->tid_, coord, cs.c_str());
+        */
         // get all the being-accessed row_keys, feed in predictor, and find decision
         uint64_t now = Predictor::get_current_time();  // the phyiscal arrival time of this tx
         *arrival_time = now;  // return arrival time in response

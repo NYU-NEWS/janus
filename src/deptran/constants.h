@@ -33,6 +33,12 @@ namespace janus {
 #define VALIDATING (0x1)       // Being validated, e.g., have received validation message
 #define FINALIZED (0x2)        // finalized
 #define ABORTED (0x3)          // txn aborted
+// failure handling status
+#define txn_status_t uint8_t
+#define UNCLEARED (0x0)
+#define CLEARED (0x1)
+// use FINALIZED and ABORTED in record status
+
 // dispatch responses
 #define OFFSET_INVALID (0x1)   // for offset-1 optimization
 #define NOT_DECIDED (0x2)      // some write reads returning has not been decided

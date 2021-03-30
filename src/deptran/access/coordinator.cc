@@ -58,6 +58,19 @@ namespace janus {
         }
         // get a predicted ssid_spec
         uint64_t current_time = SSIDPredictor::get_current_time();
+
+        // failure handling
+        for (auto& pair : cmds_by_par) {
+            if (tx_data().coord == UINT32_MAX) {
+                // set coordinator
+                tx_data().coord = pair.first;
+            } else {
+                // put into cohorts
+                tx_data().cohorts.insert(pair.first);
+            }
+        }
+
+        // TODO: use dispatched == 0 instead of ssid_spec == 0 to start the following block!
         if (tx_data().ssid_spec == 0) {
             // for multi-shot txns, we only do ssid prediction at the first shot and use the same ssid across shots
             std::vector<parid_t> servers;
@@ -105,6 +118,8 @@ namespace janus {
                                           this,
                                           tx_data().ssid_spec,
                                           is_single_shard && write_only,
+                                          tx_data().coord,
+                                          tx_data().cohorts,
                                           std::bind(&CoordinatorAcc::AccDispatchAck,
                                                  this,
                                                     phase_,
@@ -450,5 +465,8 @@ namespace janus {
         tx_data().innid_to_starttime.clear();
         tx_data()._validation_failed = false;
         tx_data().pars_to_finalize.clear();
+        // falure handling
+        tx_data().coord = UINT32_MAX;
+        tx_data().cohorts.clear();
     }
 } // namespace janus

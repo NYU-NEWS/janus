@@ -341,6 +341,10 @@ class TxData: public CmdData {
     int n_abort_ack = 0;
     bool _validation_failed = false;
 
+    // failure handling
+    std::unordered_set<parid_t> cohorts = {};
+    parid_t coord = UINT32_MAX;
+
     // ssid predictor related below
     std::unordered_map<innid_t, parid_t> innid_to_server;
     std::unordered_map<innid_t, uint64_t> innid_to_starttime;
