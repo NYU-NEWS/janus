@@ -393,6 +393,13 @@ namespace janus {
         std::lock_guard<std::recursive_mutex> lock(mtx_);
         // Log_info("tx: %lu, sending finalizeRPC. decision = %d.", tx_data().id_, decision);
         // auto pars = tx_data().GetPartitionIds();
+
+        /* for testing failure mode
+        if (tx_data().id_ % 1000 == 438) {
+            return;
+        }
+        */
+
         std::set<uint32_t> pars;
         if (tx_data()._is_consistent) {
             pars = tx_data().GetPartitionIds();

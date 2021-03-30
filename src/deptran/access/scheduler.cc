@@ -99,6 +99,8 @@ namespace janus {
         // deal with early-abort and single-shard, write-only txn
         if (is_single_shard_write_only) {
             tx->sg.mark_finalized = true;
+            // failure handling
+            tx->record.status = FINALIZED;
             // Log_info("Mark all writes finalized due to the txn is write only and single shard");
         }
         // now execute this txn
@@ -132,6 +134,11 @@ namespace janus {
         *ssid_low = tx->sg.metadata.highest_ssid_low;
         *ssid_high = tx->sg.metadata.lowest_ssid_high;
         *ssid_new = tx->sg.metadata.highest_write_ssid;
+
+        // failure handling
+        tx->record.ts_low = *ssid_low;
+        tx->record.ts_high = *ssid_high;
+
         // report offset_invalid and decided. These two things are *incomparable*!
         /*
         if (!tx->sg.decided && !tx->sg.offset_safe) {
@@ -141,6 +148,8 @@ namespace janus {
         if (!tx->sg.decided) {
             return NOT_DECIDED;
         }
+        // failure handling
+        tx->record.status = CLEARED; // the txn is decided
         /*
         if (!tx->sg.offset_safe) {
             return OFFSET_INVALID;
@@ -152,6 +161,7 @@ namespace janus {
     void SchedulerAcc::OnValidate(cmdid_t cmd_id, snapshotid_t ssid_new, int8_t *res) {
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
         // Log_info("parid = %d; txnid = %lu; Received validation.", this->partition_id_, acc_txn->tid_);
+        /// Log_info("parid = %d; txnid = %lu; Validation. status_before = %d, ssid_low = %lu, ssid_high = %lu.", this->partition_id_, acc_txn->tid_, acc_txn->record.status, acc_txn->record.ts_low, acc_txn->record.ts_high);
         if (acc_txn->sg.validate_done) {
             verify(0);  // should never get here
             // multiple pieces may share the same scheduler and thus validate on the same indices map
@@ -173,11 +183,21 @@ namespace janus {
                 }
             }
         }
+        // failure handling
+        if (!validate_consistent) {
+            // this txn will abort, we set record aborted now
+            acc_txn->record.status = ABORTED;
+        }
+        /// Log_info("parid = %d; txnid = %lu; Validation. status_after = %d, ssid_low = %lu, ssid_high = %lu.", this->partition_id_, acc_txn->tid_, acc_txn->record.status, acc_txn->record.ts_low, acc_txn->record.ts_high);
 	    *res = validate_consistent ? CONSISTENT : INCONSISTENT;
     }
 
     void SchedulerAcc::OnFinalize(cmdid_t cmd_id, int8_t decision) {
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
+        /// Log_info("parid = %d; txnid = %lu; Finalize. status_before = %d, ssid_low = %lu, ssid_high = %lu.", this->partition_id_, acc_txn->tid_, acc_txn->record.status, acc_txn->record.ts_low, acc_txn->record.ts_high);
+        // failure handling
+        acc_txn->record.status = decision; // set status: either FINALIZED OR ABORTED
+        /// Log_info("parid = %d; txnid = %lu; Finalize. status_after = %d, ssid_low = %lu, ssid_high = %lu.", this->partition_id_, acc_txn->tid_, acc_txn->record.status, acc_txn->record.ts_low, acc_txn->record.ts_high);
         // Log_info("parid = %d; txnid = %lu; Finalizing RPC. decision = %d.", this->partition_id_, acc_txn->tid_, decision);
         if (acc_txn->sg.metadata.indices.empty()) {
             // we've done finalize for this txn already
@@ -211,10 +231,15 @@ namespace janus {
         // wait until acc_query_start is set 1 by OnAccDispatch
         // acc_txn->acc_query_start->Wait(MAX_QUERY_TIMEOUT);
         // acc_txn->acc_query_start->Set(0);  // reset
+        /// Log_info("parid = %d; txnid = %lu; StatusQuery. status_before = %d, ssid_low = %lu, ssid_high = %lu.", this->partition_id_, acc_txn->tid_, acc_txn->record.status, acc_txn->record.ts_low, acc_txn->record.ts_high);
 	    if ((acc_txn->sg.metadata.reads_for_query.empty()
 	        && acc_txn->sg.metadata.writes_for_query.empty())
 	        || acc_txn->is_status_abort()) {
             *res = FINALIZED;	// some rpc has returned abort if is_status_abort
+            // failure handling, this txn's querystate rpc has responded
+            if (acc_txn->record.status == UNCLEARED) {
+                acc_txn->record.status = CLEARED;
+            }
             verify(defer != nullptr);
             defer->reply();
             return;
@@ -225,6 +250,14 @@ namespace janus {
         if (is_decided) {
             acc_txn->sg.metadata.reads_for_query.clear();
             acc_txn->sg.metadata.writes_for_query.clear();
+            // failure handling, this txn's querystate rpc has responded
+            if (acc_txn->record.status == UNCLEARED) {
+                acc_txn->record.status = CLEARED;
+            }
+            if (will_abort) {
+                acc_txn->record.status = ABORTED;
+            }
+
             // acc_txn->sg.status_query_done = true;
             *res = will_abort ? ABORTED : FINALIZED;
             defer->reply();

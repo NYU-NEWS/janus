@@ -208,6 +208,14 @@ namespace janus {
                 // respond to AccStatusQuery RPC
                 *res = acc_txn->query_result();
                 verify(defer != nullptr);
+                // failure handling, this txn's querystate rpc has responded
+                if (acc_txn->record.status == UNCLEARED) {
+                    acc_txn->record.status = CLEARED;
+                }
+                if (*res == ABORTED) {
+                    acc_txn->record.status = ABORTED;
+                }
+
                 defer->reply();
             }
         });
