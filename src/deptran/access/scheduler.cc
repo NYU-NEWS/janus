@@ -49,8 +49,8 @@ namespace janus {
                                                     cmd_id,
                                                     std::bind(&SchedulerAcc::AccResolveStatusCoordAck,
                                                               this,
-                                                              std::placeholders::_1,
-                                                              std::placeholders::_2));
+                                                              cmd_id,
+                                                              std::placeholders::_1));
         }
         */
 
@@ -418,10 +418,9 @@ namespace janus {
                 TPCC_VAR_OL_I_ID(0) <= var_id);
     }
 
-    void SchedulerAcc::OnResolveStatusCoord(cmdid_t cmd_id, cmdid_t* tid, uint8_t *status) {
+    void SchedulerAcc::OnResolveStatusCoord(cmdid_t cmd_id, uint8_t *status) {
         // Log_info("OnResolveStatusCoord. cmd_id = %lu.", cmd_id);
         // Log_info("COORD. this svr = %d, receiving cmd_id = %lu.", this->partition_id_, cmd_id);
-        // *tid = cmd_id;
         // *status = FINALIZED;
     }
 

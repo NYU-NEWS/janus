@@ -31,7 +31,7 @@ namespace janus {
         }
         // for failure handling
         AccCommo* commo();
-        void OnResolveStatusCoord(cmdid_t cmd_id, cmdid_t* tid, uint8_t* status);
+        void OnResolveStatusCoord(cmdid_t cmd_id, uint8_t* status);
         void AccResolveStatusCoordAck(cmdid_t tid, uint8_t status);
 
     private:

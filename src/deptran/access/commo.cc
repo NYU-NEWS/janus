@@ -149,14 +149,13 @@ namespace janus {
 
     void AccCommo::AccBroadcastResolveStatusCoord(uint32_t coord,
                                                   uint64_t cmd_id,
-                                                  const std::function<void(cmdid_t tid, uint8_t status)> &callback) {
+                                                  const std::function<void(uint8_t status)> &callback) {
         rrr::FutureAttr fuattr;
         fuattr.callback =
                 [this, callback](Future* fu) {
-                    cmdid_t tid;
                     uint8_t status;
-                    fu->get_reply() >> tid >> status;
-                    callback(tid, status);
+                    fu->get_reply() >> status;
+                    callback(status);
                 };
         auto pair_leader_proxy = LeaderProxyForPartition(coord);
         auto proxy = pair_leader_proxy.second;

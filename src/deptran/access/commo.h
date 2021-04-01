@@ -35,7 +35,7 @@ namespace janus {
         // for failure handling, called between servers
         void AccBroadcastResolveStatusCoord(parid_t coord,
                                             cmdid_t cmd_id,
-                                            const std::function<void(cmdid_t tid, uint8_t status)> &callback);   // cohort sent to coord
+                                            const std::function<void(uint8_t status)> &callback);   // cohort sent to coord
     };
 }
 
