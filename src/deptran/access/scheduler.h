@@ -33,6 +33,8 @@ namespace janus {
         AccCommo* commo();
         void OnResolveStatusCoord(cmdid_t cmd_id, uint8_t* status);
         void AccResolveStatusCoordAck(cmdid_t tid, uint8_t status);
+        void OnGetRecord(cmdid_t cmd_id, uint8_t* status, uint64_t* ssid_low, uint64_t* ssid_high);
+        void AccGetRecordAck(cmdid_t tid, uint8_t status, uint64_t ssid_low, uint64_t ssid_high);
 
     private:
         const i32 NOT_ROW_KEY = -1;

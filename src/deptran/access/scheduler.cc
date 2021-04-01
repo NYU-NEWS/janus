@@ -52,6 +52,20 @@ namespace janus {
                                                               cmd_id,
                                                               std::placeholders::_1));
         }
+
+        if (this->partition_id_ == coord) {
+            for (auto cohort : tx->record.cohorts) {
+                Log_info("this svr = %d, is coord. sending to cohort = %d, with cmd_id = %lu.", this->partition_id_, cohort, cmd_id);
+                commo()->AccBroadcastGetRecord(cohort,
+                                               cmd_id,
+                                               std::bind(&SchedulerAcc::AccGetRecordAck,
+                                                         this,
+                                                         cmd_id,
+                                                         std::placeholders::_1,
+                                                         std::placeholders::_2,
+                                                         std::placeholders::_3));
+            }
+        }
         */
 
         tx->load_speculative_ssid(ssid_spec);   // read in the spec ssid provided by the client
@@ -427,5 +441,17 @@ namespace janus {
     void SchedulerAcc::AccResolveStatusCoordAck(cmdid_t tid, uint8_t status) {
         // Log_info("AccResolveStatusCoordAck returned tid = %lu; status = %d.", tid, status);
         // Log_info("Cohort. this svr = %d, receiving cmd_id = %lu, status = %d.", this->partition_id_, tid, status);
+    }
+
+    void SchedulerAcc::OnGetRecord(uint64_t cmd_id, uint8_t *status, uint64_t *ssid_low, uint64_t *ssid_high) {
+        // Log_info("Cohort. OnGetRecord. this svr = %d, receiving cmd_id = %lu.", this->partition_id_, cmd_id);
+        // *status = ABORTED;
+        // *ssid_low = 3;
+        // *ssid_high = 33;
+    }
+
+    void SchedulerAcc::AccGetRecordAck(uint64_t tid, uint8_t status, uint64_t ssid_low, uint64_t ssid_high) {
+        // Log_info("COORD. AccGetRecordAck. this svr = %d, receiving cmd_id = %lu, status = %d, ssid_low = %lu, ssid_high = %lu.",
+        //         this->partition_id_, tid, status, ssid_low, ssid_high);
     }
 }

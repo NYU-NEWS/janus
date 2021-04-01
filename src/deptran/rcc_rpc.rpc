@@ -168,7 +168,7 @@ abstract service Classic {
   defer AccStatusQuery(i64 tid | int8_t res);
   // failure handler
   defer AccResolveStatusCoord(cmdid_t cmd_id | uint8_t status);
-  // defer AccGetRecord(cmdid_t cmd_id | uint8_t status, uint64_t ssid_low, uint64_t ssid_high);
+  defer AccGetRecord(cmdid_t cmd_id | uint8_t status, uint64_t ssid_low, uint64_t ssid_high);
 }
 
 

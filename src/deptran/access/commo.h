@@ -36,6 +36,9 @@ namespace janus {
         void AccBroadcastResolveStatusCoord(parid_t coord,
                                             cmdid_t cmd_id,
                                             const std::function<void(uint8_t status)> &callback);   // cohort sent to coord
+        void AccBroadcastGetRecord(parid_t cohort,
+                                   cmdid_t cmd_id,
+                                   const std::function<void(uint8_t status, uint64_t ssid_low, uint64_t ssid_high)> &callback);  // coord sent to cohort
     };
 }
 

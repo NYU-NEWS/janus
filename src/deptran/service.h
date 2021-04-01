@@ -244,6 +244,8 @@ class ClassicServiceImpl : public ClassicService {
 
   void AccResolveStatusCoord(const cmdid_t& cmd_id, uint8_t* status, DeferredReply* defer_reply) override;
 
+  void AccGetRecord(const cmdid_t& cmd_id, uint8_t* status, uint64_t* ssid_low, uint64_t* ssid_high, DeferredReply* defer_reply) override;
+
  protected:
   void RegisterStats();
 };

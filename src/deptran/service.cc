@@ -465,6 +465,16 @@ void ClassicServiceImpl::AccResolveStatusCoord(const cmdid_t& cmd_id,
     defer->reply();
 }
 
+void ClassicServiceImpl::AccGetRecord(const cmdid_t& cmd_id,
+                                      uint8_t* status,
+                                      uint64_t* ssid_low,
+                                      uint64_t* ssid_high,
+                                      DeferredReply* defer) {
+    auto* sched = (SchedulerAcc*) dtxn_sched_;
+    sched->OnGetRecord(cmd_id, status, ssid_low, ssid_high);
+    defer->reply();
+}
+
 void ClassicServiceImpl::RegisterStats() {
   if (scsi_) {
     scsi_->set_recorder(recorder_);
