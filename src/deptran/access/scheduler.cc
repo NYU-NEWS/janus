@@ -41,6 +41,13 @@ namespace janus {
             // this partition is the backup coordinator
             tx->record.cohorts.insert(cohorts.begin(), cohorts.end());
         }
+        // register handle_failure
+        if (!tx->handle_failure) {
+            tx->handle_failure = true;
+            Coroutine::CreateRun([this, cmd_id]() {
+                handle_failure(cmd_id, this->partition_id_);
+            });
+        }
 
         /* test code
         if (this->partition_id_ != coord) {
@@ -533,5 +540,24 @@ namespace janus {
                                                      std::placeholders::_3));
         }
         return CLEARED;
+    }
+
+    void SchedulerAcc::handle_failure(uint64_t cmd_id, uint32_t pid) {
+        Reactor::CreateSpEvent<NeverEvent>()->Wait(FAILURE_TIMEOUT);
+        auto tx = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));
+        if (tx->record.status != CLEARED) {
+            return;
+        }
+        if (tx->record.coord == pid) { // this is coord
+            resolve_status(cmd_id);
+        } else { // this is cohort
+            auto coord = tx->record.coord;
+            commo()->AccBroadcastResolveStatusCoord(coord,
+                                                    cmd_id,
+                                                    std::bind(&SchedulerAcc::AccResolveStatusCoordAck,
+                                                              this,
+                                                              cmd_id,
+                                                              std::placeholders::_1));
+        }
     }
 }

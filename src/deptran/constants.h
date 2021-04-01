@@ -38,6 +38,7 @@ namespace janus {
 #define UNCLEARED (0x0)
 #define CLEARED (0x1)
 // use FINALIZED and ABORTED in record status
+#define FAILURE_TIMEOUT (3000000) // failure timeout = 3 seconds
 
 // dispatch responses
 #define OFFSET_INVALID (0x1)   // for offset-1 optimization

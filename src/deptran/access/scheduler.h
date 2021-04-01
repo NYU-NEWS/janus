@@ -37,6 +37,7 @@ namespace janus {
         void AccGetRecordAck(cmdid_t tid, uint8_t status, uint64_t ssid_low, uint64_t ssid_high);
         // for failure handling local call
         txn_status_t resolve_status(cmdid_t cmd_id);
+        void handle_failure(cmdid_t cmd_id, parid_t pid);
 
     private:
         const i32 NOT_ROW_KEY = -1;
