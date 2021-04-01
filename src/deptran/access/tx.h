@@ -65,8 +65,12 @@ namespace janus {
             parid_t coord = 0;  // the partition id of the backup coordinator
             std::unordered_set<parid_t> cohorts = {}; // the partition ids of cohorts
         };
-
         RECORD record;
+        int32_t get_record_rpcs = 0; // count # of RPCs sent
+        int32_t get_record_acks = 0; // count # of acks recved
+        std::unordered_set<txn_status_t> returned_records = {};
+        snapshotid_t highest_low = 0, lowest_high = UINT64_MAX;  // for reconstruct client decision
+        std::vector<std::function<void(txn_status_t)>> resolve_status_cbs;  // for ResolveStatusCoord RPC
 
         ~AccTxn() override;
     private:

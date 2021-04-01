@@ -29,12 +29,14 @@ namespace janus {
             // do nothing, just has to override this pure virtual func.
             return true;
         }
-        // for failure handling
+        // for failure handling RPC calls
         AccCommo* commo();
-        void OnResolveStatusCoord(cmdid_t cmd_id, uint8_t* status);
+        void OnResolveStatusCoord(cmdid_t cmd_id, uint8_t* status, DeferredReply* defer);
         void AccResolveStatusCoordAck(cmdid_t tid, uint8_t status);
         void OnGetRecord(cmdid_t cmd_id, uint8_t* status, uint64_t* ssid_low, uint64_t* ssid_high);
         void AccGetRecordAck(cmdid_t tid, uint8_t status, uint64_t ssid_low, uint64_t ssid_high);
+        // for failure handling local call
+        txn_status_t resolve_status(cmdid_t cmd_id);
 
     private:
         const i32 NOT_ROW_KEY = -1;

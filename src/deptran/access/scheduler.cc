@@ -432,26 +432,106 @@ namespace janus {
                 TPCC_VAR_OL_I_ID(0) <= var_id);
     }
 
-    void SchedulerAcc::OnResolveStatusCoord(cmdid_t cmd_id, uint8_t *status) {
+    void SchedulerAcc::OnResolveStatusCoord(cmdid_t cmd_id, uint8_t *status, DeferredReply* defer) {
         // Log_info("OnResolveStatusCoord. cmd_id = %lu.", cmd_id);
         // Log_info("COORD. this svr = %d, receiving cmd_id = %lu.", this->partition_id_, cmd_id);
-        // *status = FINALIZED;
+        txn_status_t decision = resolve_status(cmd_id);
+        if (decision != CLEARED) {
+            *status = decision;
+            defer->reply();
+            return;
+        }
+        // resolve_status needs to query cohorts to reconstruct status, we delay return
+        auto tx = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));
+        tx->resolve_status_cbs.emplace_back([=](txn_status_t decision) -> void {
+            *status = decision;
+            defer->reply();
+        });
     }
 
     void SchedulerAcc::AccResolveStatusCoordAck(cmdid_t tid, uint8_t status) {
         // Log_info("AccResolveStatusCoordAck returned tid = %lu; status = %d.", tid, status);
         // Log_info("Cohort. this svr = %d, receiving cmd_id = %lu, status = %d.", this->partition_id_, tid, status);
+        auto tx = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(tid));
+        // take action based on status
+        if (status != UNCLEARED) {
+            verify(status == FINALIZED || status == ABORTED);
+            tx->record.status = status;
+            OnFinalize(tid, status);
+        }
     }
 
     void SchedulerAcc::OnGetRecord(uint64_t cmd_id, uint8_t *status, uint64_t *ssid_low, uint64_t *ssid_high) {
         // Log_info("Cohort. OnGetRecord. this svr = %d, receiving cmd_id = %lu.", this->partition_id_, cmd_id);
-        // *status = ABORTED;
-        // *ssid_low = 3;
-        // *ssid_high = 33;
+        auto tx = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));
+        *status = tx->record.status;
+        *ssid_low = tx->record.ts_low;
+        *ssid_high = tx->record.ts_high;
     }
 
     void SchedulerAcc::AccGetRecordAck(uint64_t tid, uint8_t status, uint64_t ssid_low, uint64_t ssid_high) {
         // Log_info("COORD. AccGetRecordAck. this svr = %d, receiving cmd_id = %lu, status = %d, ssid_low = %lu, ssid_high = %lu.",
         //         this->partition_id_, tid, status, ssid_low, ssid_high);
+        auto tx = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(tid));
+        tx->get_record_acks++;
+        tx->returned_records.insert(status);
+        if (tx->highest_low < ssid_low) {
+            tx->highest_low = ssid_low;
+        }
+        if (tx->lowest_high > ssid_high) {
+            tx->lowest_high = ssid_high;
+        }
+        if (tx->get_record_acks == tx->get_record_rpcs) {
+            // we have received all acks
+            txn_status_t decision = CLEARED;
+            if (tx->returned_records.find(FINALIZED) != tx->returned_records.end()) {
+                decision = FINALIZED;
+            } else if (tx->returned_records.find(ABORTED) != tx->returned_records.end()) {
+                decision = ABORTED;
+            } else if (tx->returned_records.find(UNCLEARED) != tx->returned_records.end()) {
+                decision = UNCLEARED;
+            }
+            tx->returned_records.clear();
+            if (decision == CLEARED) {
+                // reconstruct client decision
+                if (tx->highest_low > tx->lowest_high) {
+                    decision = ABORTED; // we omit smart retry for now
+                } else {
+                    decision = FINALIZED;
+                }
+            }
+            // now we answer to cohorts
+            for (auto& callback : tx->resolve_status_cbs) {
+                callback(decision);
+            }
+            tx->resolve_status_cbs.clear();
+            // now we take action on coord
+            if (decision != UNCLEARED) {
+                // decision is either finalized or aborted
+                verify(decision == FINALIZED || decision == ABORTED);
+                tx->record.status = decision;
+                OnFinalize(tid, decision);
+            }
+        }
+    }
+
+    txn_status_t SchedulerAcc::resolve_status(uint64_t cmd_id) {
+        auto tx = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));
+        if (tx->record.status != CLEARED) {
+            return tx->record.status;
+        }
+        // now we need to query cohorts
+        for (auto cohort : tx->record.cohorts) {
+            tx->get_record_rpcs++;
+            commo()->AccBroadcastGetRecord(cohort,
+                                           cmd_id,
+                                           std::bind(&SchedulerAcc::AccGetRecordAck,
+                                                     this,
+                                                     cmd_id,
+                                                     std::placeholders::_1,
+                                                     std::placeholders::_2,
+                                                     std::placeholders::_3));
+        }
+        return CLEARED;
     }
 }

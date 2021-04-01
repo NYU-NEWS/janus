@@ -461,8 +461,7 @@ void ClassicServiceImpl::AccResolveStatusCoord(const cmdid_t& cmd_id,
                                                uint8_t* status,
                                                DeferredReply* defer) {
     auto* sched = (SchedulerAcc*) dtxn_sched_;
-    sched->OnResolveStatusCoord(cmd_id, status);
-    defer->reply();
+    sched->OnResolveStatusCoord(cmd_id, status, defer);
 }
 
 void ClassicServiceImpl::AccGetRecord(const cmdid_t& cmd_id,
