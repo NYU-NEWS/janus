@@ -457,6 +457,15 @@ void ClassicServiceImpl::AccStatusQuery(const i64 &cmd_id,
     sched->OnStatusQuery(cmd_id, res, defer);
 }
 
+void ClassicServiceImpl::AccResolveStatusCoord(const cmdid_t& cmd_id,
+                                               cmdid_t* tid,
+                                               uint8_t* status,
+                                               DeferredReply* defer) {
+    auto* sched = (SchedulerAcc*) dtxn_sched_;
+    sched->OnResolveStatusCoord(cmd_id, tid, status);
+    defer->reply();
+}
+
 void ClassicServiceImpl::RegisterStats() {
   if (scsi_) {
     scsi_->set_recorder(recorder_);

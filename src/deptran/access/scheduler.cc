@@ -7,6 +7,15 @@
 #include "bench/dynamic/workload.h"
 
 namespace janus {
+    AccCommo* SchedulerAcc::commo() {
+        if (commo_ == nullptr) {
+            commo_ = new AccCommo();
+        }
+        auto acc_commo = dynamic_cast<AccCommo*>(commo_);
+        verify(acc_commo != nullptr);
+        return acc_commo;
+    }
+
     int32_t SchedulerAcc::OnDispatch(cmdid_t cmd_id,
                                      const shared_ptr<Marshallable>& cmd,
                                      uint64_t ssid_spec,
@@ -32,6 +41,18 @@ namespace janus {
             // this partition is the backup coordinator
             tx->record.cohorts.insert(cohorts.begin(), cohorts.end());
         }
+
+        /* test code
+        if (this->partition_id_ != coord) {
+            Log_info("this svr = %d, sending to coord = %d, with cmd_id = %lu.", this->partition_id_, coord, cmd_id);
+            commo()->AccBroadcastResolveStatusCoord(coord,
+                                                    cmd_id,
+                                                    std::bind(&SchedulerAcc::AccResolveStatusCoordAck,
+                                                              this,
+                                                              std::placeholders::_1,
+                                                              std::placeholders::_2));
+        }
+        */
 
         tx->load_speculative_ssid(ssid_spec);   // read in the spec ssid provided by the client
         if (!tx->cmd_) {
@@ -395,5 +416,17 @@ namespace janus {
                 (TPCC_VAR_I_ID(0) <= var_id && var_id < TPCC_VAR_I_NAME(0)) ||
                 (TPCC_VAR_S_W_ID(0) <= var_id && var_id < TPCC_VAR_S_D_ID(0)) ||
                 TPCC_VAR_OL_I_ID(0) <= var_id);
+    }
+
+    void SchedulerAcc::OnResolveStatusCoord(cmdid_t cmd_id, cmdid_t* tid, uint8_t *status) {
+        // Log_info("OnResolveStatusCoord. cmd_id = %lu.", cmd_id);
+        // Log_info("COORD. this svr = %d, receiving cmd_id = %lu.", this->partition_id_, cmd_id);
+        // *tid = cmd_id;
+        // *status = FINALIZED;
+    }
+
+    void SchedulerAcc::AccResolveStatusCoordAck(cmdid_t tid, uint8_t status) {
+        // Log_info("AccResolveStatusCoordAck returned tid = %lu; status = %d.", tid, status);
+        // Log_info("Cohort. this svr = %d, receiving cmd_id = %lu, status = %d.", this->partition_id_, tid, status);
     }
 }

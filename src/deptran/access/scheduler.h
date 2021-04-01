@@ -4,6 +4,7 @@
 #pragma once
 
 #include <deptran/classic/scheduler.h>
+#include "commo.h"
 
 namespace janus {
     class SchedulerAcc : public SchedulerClassic {
@@ -28,6 +29,11 @@ namespace janus {
             // do nothing, just has to override this pure virtual func.
             return true;
         }
+        // for failure handling
+        AccCommo* commo();
+        void OnResolveStatusCoord(cmdid_t cmd_id, cmdid_t* tid, uint8_t* status);
+        void AccResolveStatusCoordAck(cmdid_t tid, uint8_t status);
+
     private:
         const i32 NOT_ROW_KEY = -1;
         const uint64_t MAX_QUERY_TIMEOUT = 5000000; // maximum timeout for acc_query rpc is 5 seconds.

@@ -31,6 +31,11 @@ namespace janus {
         void AccBroadcastFinalize(parid_t par_id, cmdid_t cmd_id, int8_t decision);
 	    void AccBroadcastFinalizeAbort(parid_t par_id, cmdid_t cmd_id, int8_t decision, const std::function<void()> &callback);
         void AccBroadcastStatusQuery(parid_t par_id, cmdid_t cmd_id, const std::function<void(int8_t res)> &callback);
+
+        // for failure handling, called between servers
+        void AccBroadcastResolveStatusCoord(parid_t coord,
+                                            cmdid_t cmd_id,
+                                            const std::function<void(cmdid_t tid, uint8_t status)> &callback);   // cohort sent to coord
     };
 }
 

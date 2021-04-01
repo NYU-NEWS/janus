@@ -166,6 +166,8 @@ abstract service Classic {
   defer AccFinalize(i64 tid, int8_t decision |);
 
   defer AccStatusQuery(i64 tid | int8_t res);
+  // failure handler
+  defer AccResolveStatusCoord(cmdid_t cmd_id | cmdid_t tid, uint8_t status);
 }
 
 
