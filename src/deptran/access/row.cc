@@ -216,6 +216,7 @@ namespace janus {
     void AccRow::insert_write_callbacks(mdb::colid_t col_id, unsigned long index, const shared_ptr<AccTxn>& acc_txn, int8_t *res, DeferredReply* defer, int rpc_id) {
         _row[col_id].txn_queue[index].ss_safe = [=]() -> void {
             if (acc_txn->subrpc_status[rpc_id] == ABORTED) { // some reads have done the query by early abort
+                // acc_txn->record.status = ABORTED;
                 return;
             }
             acc_txn->subrpc_count[rpc_id]--;

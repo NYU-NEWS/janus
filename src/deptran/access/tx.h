@@ -72,6 +72,7 @@ namespace janus {
         snapshotid_t highest_low = 0, lowest_high = UINT64_MAX;  // for reconstruct client decision
         std::vector<std::function<void(txn_status_t)>> resolve_status_cbs;  // for ResolveStatusCoord RPC
         bool handle_failure = false;
+        bool resolving = false;
 
         ~AccTxn() override;
     private:

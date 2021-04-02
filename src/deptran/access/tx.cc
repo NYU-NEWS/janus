@@ -192,6 +192,7 @@ namespace janus {
     void AccTxn::insert_callbacks(const shared_ptr<AccTxn>& acc_txn, int8_t *res, DeferredReply* defer, int rpc_id) {
         query_callbacks.emplace_back([=](int8_t status) -> void {
 	        if (acc_txn->subrpc_status[rpc_id] == ABORTED) { // have done the query by early abort
+                acc_txn->record.status = ABORTED;
                 return;
             }
 	        acc_txn->subrpc_count[rpc_id]--;

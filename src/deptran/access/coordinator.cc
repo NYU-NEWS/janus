@@ -396,6 +396,7 @@ namespace janus {
 
         /* for testing failure mode
         if (tx_data().id_ % 1000 == 438) {
+            // Log_info("Client injects failure on tx: %lu. decision = %d.", tx_data().id_, decision);
             return;
         }
         */

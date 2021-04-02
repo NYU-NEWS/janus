@@ -38,6 +38,7 @@ namespace janus {
         // for failure handling local call
         txn_status_t resolve_status(cmdid_t cmd_id);
         void handle_failure(cmdid_t cmd_id, parid_t pid);
+        shared_ptr<Tx> GetAccTxn(txnid_t tid);
 
     private:
         const i32 NOT_ROW_KEY = -1;

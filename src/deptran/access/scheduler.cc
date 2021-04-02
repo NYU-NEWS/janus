@@ -441,7 +441,7 @@ namespace janus {
 
     void SchedulerAcc::OnResolveStatusCoord(cmdid_t cmd_id, uint8_t *status, DeferredReply* defer) {
         // Log_info("OnResolveStatusCoord. cmd_id = %lu.", cmd_id);
-        // Log_info("COORD. this svr = %d, receiving cmd_id = %lu.", this->partition_id_, cmd_id);
+        // Log_info("COORD. OnResolveStatusCoord this svr = %d, receiving cmd_id = %lu.", this->partition_id_, cmd_id);
         txn_status_t decision = resolve_status(cmd_id);
         if (decision != CLEARED) {
             *status = decision;
@@ -458,7 +458,7 @@ namespace janus {
 
     void SchedulerAcc::AccResolveStatusCoordAck(cmdid_t tid, uint8_t status) {
         // Log_info("AccResolveStatusCoordAck returned tid = %lu; status = %d.", tid, status);
-        // Log_info("Cohort. this svr = %d, receiving cmd_id = %lu, status = %d.", this->partition_id_, tid, status);
+        // Log_info("Cohort. AccResolveStatusCoordAck this svr = %d, receiving cmd_id = %lu, status = %d.", this->partition_id_, tid, status);
         auto tx = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(tid));
         // take action based on status
         if (status != UNCLEARED) {
@@ -524,10 +524,17 @@ namespace janus {
 
     txn_status_t SchedulerAcc::resolve_status(uint64_t cmd_id) {
         auto tx = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));
-        if (tx->record.status != CLEARED) {
+        if (tx->record.cohorts.empty()) {
+            // this is a single-key txn that only has coordinator
+            // then it is always consistent
+            tx->record.status = FINALIZED;
+            OnFinalize(cmd_id, FINALIZED);
+        }
+        if (tx->record.status != CLEARED || tx->resolving) {
             return tx->record.status;
         }
         // now we need to query cohorts
+        tx->resolving = true;
         for (auto cohort : tx->record.cohorts) {
             tx->get_record_rpcs++;
             commo()->AccBroadcastGetRecord(cohort,
@@ -544,13 +551,24 @@ namespace janus {
 
     void SchedulerAcc::handle_failure(uint64_t cmd_id, uint32_t pid) {
         Reactor::CreateSpEvent<NeverEvent>()->Wait(FAILURE_TIMEOUT);
-        auto tx = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));
+        auto txn = GetAccTxn(cmd_id);
+        if (txn == nullptr) {
+            // this txn was finalized and GC'ed
+            return;
+        }
+        auto tx = dynamic_pointer_cast<AccTxn>(txn);
+        // auto tx = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));
+        // Log_info("handle_failure triggered. this svr = %d, for cmd_id = %lu.", pid, cmd_id);
         if (tx->record.status != CLEARED) {
+            // Log_info("handle_failure triggered early return. this svr = %d, for cmd_id = %lu. current_status = %d. handle_failure = %d.",
+            //          pid, cmd_id, tx->record.status, tx->handle_failure);
             return;
         }
         if (tx->record.coord == pid) { // this is coord
+            // Log_info("coord. handle_failure. this svr = %d, for cmd_id = %lu.", pid, cmd_id);
             resolve_status(cmd_id);
         } else { // this is cohort
+            // Log_info("cohort. handle_failure. this svr = %d, for cmd_id = %lu.", pid, cmd_id);
             auto coord = tx->record.coord;
             commo()->AccBroadcastResolveStatusCoord(coord,
                                                     cmd_id,
@@ -559,5 +577,15 @@ namespace janus {
                                                               cmd_id,
                                                               std::placeholders::_1));
         }
+    }
+
+    shared_ptr<Tx> SchedulerAcc::GetAccTxn(uint64_t tid) {
+        shared_ptr<Tx> ret = nullptr;
+        auto it = dtxns_.find(tid);
+        if (it != dtxns_.end()) {
+            ret = it->second;
+            verify(ret->tid_ == tid);
+        }
+        return ret;
     }
 }
