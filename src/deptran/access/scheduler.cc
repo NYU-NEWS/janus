@@ -41,6 +41,7 @@ namespace janus {
             // this partition is the backup coordinator
             tx->record.cohorts.insert(cohorts.begin(), cohorts.end());
         }
+        /* Disable HF for now
         // register handle_failure
         if (!tx->handle_failure) {
             tx->handle_failure = true;
@@ -48,6 +49,7 @@ namespace janus {
                 handle_failure(cmd_id, this->partition_id_);
             });
         }
+        */
 
         /* test code
         if (this->partition_id_ != coord) {

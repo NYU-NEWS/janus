@@ -1,5 +1,6 @@
 #include "coordinator.h"
 #include "ssid_predictor.h"
+#include "bench/facebook/workload.h"
 #include "bench/spanner/workload.h"
 #include "bench/dynamic/workload.h"
 
@@ -90,6 +91,11 @@ namespace janus {
             bool writing_to_par = false;
             bool write_only = true;
             for (const auto& c: cmds) {
+                /*
+                Log_info("Workload type = %d, op count = %d, keys_ size = %d. keys_ real size = %d. keys_ = %d. values size = %d. key = %d.",
+                         c->root_type_, c->input.at(FB_OP_COUNT).get_i32(), c->input.size(), c->input.keys_.size(), *(c->input.keys_.begin()),
+                         c->input.values_->size(), c->input.at(*(c->input.keys_.begin())).get_i32());
+                */
                 //Log_info("try this. roottype = %d; type = %d.", c->root_type_, c->type_);
                 tx_data().innid_to_server[c->inn_id_] = par_id;
                 tx_data().innid_to_starttime[c->inn_id_] = current_time;
