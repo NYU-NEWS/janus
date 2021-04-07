@@ -14,6 +14,14 @@ namespace janus {
 	    // Log_info("ReadColumn. txnid = %lu. key = %d. ts = %d.", this->tid_, acc_row->key, this->key_to_ts[acc_row->key]);
         //Log_info("server:ReadColumn. txid = %lu. ssid_spec = %lu.", this->tid_, sg.ssid_spec);
         SSID ssid = acc_row->read_column(this->tid_, col_id, value, sg.ssid_spec, index, is_decided);
+        // for rotxn
+        i32 key = acc_row->key;
+        uint64_t new_ts = ssid.ssid_low;
+        update_return_ts(key, new_ts);
+        if (new_ts != this->key_to_ts[key]) {
+            this->rotxn_okay = false;
+        }
+
         row->ref_copy();
         sg.metadata.indices[row][col_id] = index;  // for later validation, could be overwritten by later writes
         if (!is_decided) {
@@ -38,11 +46,19 @@ namespace janus {
                              int hint_flag) {
         verify(row != nullptr);
         auto acc_row = dynamic_cast<AccRow*>(row);
+        i32 key = acc_row->key;
         for (auto col_id : col_ids) {
             Value *v = nullptr;
             unsigned long index = 0;
 	        bool is_decided = true;
             SSID ssid = acc_row->read_column(this->tid_, col_id, v, sg.ssid_spec, index, is_decided);
+            // for rotxn
+            uint64_t new_ts = ssid.ssid_low;
+            update_return_ts(key, new_ts);
+            if (new_ts != this->key_to_ts[key]) {
+                this->rotxn_okay = false;
+            }
+
             verify(v != nullptr);
             values->push_back(std::move(*v));
             row->ref_copy();
@@ -73,6 +89,11 @@ namespace janus {
         bool same_tx = false;
         SSID ssid = acc_row->write_column(col_id, std::move(value), sg.ssid_spec, this->tid_, ver_index,
                 is_decided, prev_index, same_tx, sg.mark_finalized); // ver_index is new write
+        // for rotxn
+        i32 key = acc_row->key;
+        uint64_t new_ts = ssid.ssid_low;
+        update_return_ts(key, new_ts);
+
         if (same_tx) {
             return true;
         }
@@ -112,6 +133,7 @@ namespace janus {
                               int hint_flag) {
         verify(row != nullptr);
         auto acc_row = dynamic_cast<AccRow*>(row);
+        i32 key = acc_row->key;
         int v_counter = 0;
         for (auto col_id : col_ids) {
             unsigned long ver_index = 0;
@@ -120,6 +142,9 @@ namespace janus {
             bool same_tx = false;
             SSID ssid = acc_row->write_column(col_id, std::move(values[v_counter++]), sg.ssid_spec, this->tid_,
                     ver_index, is_decided, prev_index, same_tx, sg.mark_finalized);
+            // for rotxn
+            uint64_t new_ts = ssid.ssid_low;
+            update_return_ts(key, new_ts);
             if (same_tx) {
                 continue;
             }
@@ -221,5 +246,12 @@ namespace janus {
                 defer->reply();
             }
         });
+    }
+
+    void AccTxn::update_return_ts(i32 key, uint64_t new_ts) {
+        // if (return_key_ts.find(key) == return_key_ts.end() || return_key_ts.at(key) < new_ts) {
+        // new_ts could be smaller if the write was aborted
+            return_key_ts[key] = new_ts;
+        // }
     }
 }

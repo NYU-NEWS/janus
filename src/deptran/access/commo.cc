@@ -13,7 +13,9 @@ namespace janus {
                                                                  uint64_t ssid_high,
                                                                  uint64_t ssid_new,
                                                                  TxnOutput &,
-                                                                 uint64_t arrival_time)> &callback,
+                                                                 uint64_t arrival_time,
+                                                                 uint8_t rotxn_okay,
+                                                                 const std::unordered_map<i32, uint64_t>& returned_ts)> &callback,
 					                    cmdid_t status_cmd_id,
                                         int& n_status_query,
                                         const std::function<void(int8_t res)> &callback_status) {
@@ -29,8 +31,10 @@ namespace janus {
                     uint64_t ssid_new;
                     TxnOutput outputs;
                     uint64_t arrival_time;
-                    fu->get_reply() >> ret >> ssid_low >> ssid_high >> ssid_new >> outputs >> arrival_time;
-                    callback(ret, ssid_low, ssid_high, ssid_new, outputs, arrival_time);
+                    uint8_t rotxn_okay;
+                    std::unordered_map<i32, uint64_t> returned_ts;
+                    fu->get_reply() >> ret >> ssid_low >> ssid_high >> ssid_new >> outputs >> arrival_time >> rotxn_okay >> returned_ts;
+                    callback(ret, ssid_low, ssid_high, ssid_new, outputs, arrival_time, rotxn_okay, returned_ts);
                 };
         auto pair_leader_proxy = LeaderProxyForPartition(par_id);
         Log_debug("send dispatch to site %ld",
@@ -74,7 +78,9 @@ namespace janus {
                             uint64_t ssid_new;
                             TxnOutput outputs;
                             uint64_t arrival_time;
-                            fu->get_reply() >> ret >> ssid_low >> ssid_high >> ssid_new >> outputs >> arrival_time;
+                            uint8_t rotxn_okay;
+                            std::unordered_map<i32, uint64_t> returned_ts;
+                            fu->get_reply() >> ret >> ssid_low >> ssid_high >> ssid_new >> outputs >> arrival_time >> rotxn_okay >> returned_ts;
                             // do nothing
                         };
 		        fu2_status.callback =

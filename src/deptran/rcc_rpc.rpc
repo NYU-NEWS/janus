@@ -159,7 +159,7 @@ abstract service Classic {
 
   // RPCs for ACCESS
   defer AccDispatch(uint32_t coo_id, i64 tid, MarshallDeputy cmd, uint64_t ssid_spec, uint8_t is_single_shard_write_only, uint32_t coord, unordered_set<uint32_t> cohorts |
-                    i32 res, uint64_t ssid_low, uint64_t ssid_high, uint64_t ssid_new, TxnOutput output, uint64_t arrival_time);
+                    i32 res, uint64_t ssid_low, uint64_t ssid_high, uint64_t ssid_new, TxnOutput output, uint64_t arrival_time, uint8_t rotxn_okay, unordered_map<int32_t, uint64_t> returned_ts);
 
   defer AccValidate(i64 tid, uint64_t ssid_new | int8_t res);
 

@@ -145,7 +145,9 @@ namespace janus {
                                                     std::placeholders::_3,
                                                     std::placeholders::_4,
                                                     std::placeholders::_5,
-                                                    std::placeholders::_6),
+                                                    std::placeholders::_6,
+                                                    std::placeholders::_7,
+                                                    std::placeholders::_8),
 					                      tx_data().id_,
                                           tx_data().n_status_query,
                                           std::bind(&CoordinatorAcc::AccStatusQueryAck,
@@ -163,12 +165,15 @@ namespace janus {
                                         uint64_t ssid_high,
                                         uint64_t ssid_new,
                                         map<innid_t, map<int32_t, Value>>& outputs,
-                                        uint64_t arrival_time) {
+                                        uint64_t arrival_time,
+                                        uint8_t rotxn_okay,
+                                        const std::unordered_map<i32, uint64_t>& returned_ts) {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
         if (phase != phase_) return;
         auto* txn = (TxData*) cmd_;
         n_dispatch_ack_ += outputs.size();
         bool track_arrival_time = true;
+        // Log_info("rotxn_okay = %d; returned_ts size = %d, returned_ts[-1] = %lu.", rotxn_okay, returned_ts.size(), returned_ts.at(-1));
         for (auto& pair : outputs) {
             const innid_t& inn_id = pair.first;
             // verify(!dispatch_acks_.at(inn_id));

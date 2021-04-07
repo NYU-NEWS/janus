@@ -75,6 +75,9 @@ namespace janus {
         bool resolving = false;
         // for rotxn
         std::unordered_map<i32, uint64_t> key_to_ts = {};
+        std::unordered_map<i32, uint64_t> return_key_ts = {};
+        void update_return_ts(i32, uint64_t);
+        bool rotxn_okay = true;
 
         ~AccTxn() override;
     private:

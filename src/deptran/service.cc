@@ -418,11 +418,13 @@ void ClassicServiceImpl::AccDispatch(const uint32_t& coo_id,
                                   uint64_t* ssid_new,
                                   TxnOutput* output,
                                   uint64_t* arrival_time,
+                                  uint8_t* rotxn_okay,
+                                  unordered_map<i32, uint64_t>* returned_ts,
                                   rrr::DeferredReply* defer){
     // server-side handler of AccDispatch RPC
     shared_ptr<Marshallable> sp = md.sp_data_;
     auto* sched = (SchedulerAcc*) dtxn_sched_;
-    *res = sched->OnDispatch(cmd_id, sp, ssid_spec, is_single_shard_write_only, coord, cohorts, ssid_low, ssid_high, ssid_new, *output, arrival_time);
+    *res = sched->OnDispatch(cmd_id, sp, ssid_spec, is_single_shard_write_only, coord, cohorts, ssid_low, ssid_high, ssid_new, *output, arrival_time, rotxn_okay, returned_ts);
     // GC earlier txns by the same coordinator
     // sched->gc_txns(coo_id, cmd_id);
     defer->reply();

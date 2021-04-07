@@ -26,7 +26,9 @@ namespace janus {
                                      uint64_t *ssid_high,
                                      uint64_t *ssid_new,
                                      TxnOutput &ret_output,
-                                     uint64_t* arrival_time) {
+                                     uint64_t* arrival_time,
+                                     uint8_t* rotxn_okay,
+                                     unordered_map<i32, uint64_t>* returned_ts) {
         // Step 1: dispatch and execute pieces
         auto sp_vec_piece = dynamic_pointer_cast<VecPieceData>(cmd)->sp_vec_piece_data_;
         // verify(sp_vec_piece);
@@ -187,6 +189,15 @@ namespace janus {
         // failure handling
         tx->record.ts_low = *ssid_low;
         tx->record.ts_high = *ssid_high;
+
+        // rotxn
+        *rotxn_okay = 1;
+        if (sp_vec_piece->at(0)->root_type_ == FB_ROTXN || sp_vec_piece->at(0)->root_type_ == SPANNER_ROTXN) {
+            if (tx->rotxn_okay == false) {
+                *rotxn_okay = 0;
+            }
+        }
+        *returned_ts = tx->return_key_ts;
 
         // report offset_invalid and decided. These two things are *incomparable*!
         /*
