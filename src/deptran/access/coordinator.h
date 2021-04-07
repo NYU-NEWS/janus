@@ -43,6 +43,7 @@ namespace janus {
         static std::unordered_map<i32, uint64_t> key_to_ts;
         static uint64_t get_ts(i32 key) ;
         i32 get_key(const shared_ptr<SimpleCommand>& c);
+        void update_key_ts(i32 key, uint64_t new_ts);
     private:
         static std::recursive_mutex mtx_;
         bool finished = true;

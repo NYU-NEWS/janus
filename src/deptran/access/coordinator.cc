@@ -174,6 +174,15 @@ namespace janus {
         n_dispatch_ack_ += outputs.size();
         bool track_arrival_time = true;
         // Log_info("rotxn_okay = %d; returned_ts size = %d, returned_ts[-1] = %lu.", rotxn_okay, returned_ts.size(), returned_ts.at(-1));
+        // for rotxn update key_ts
+        for (const auto& key_ts : returned_ts) {
+            update_key_ts(key_ts.first, key_ts.second);
+        }
+        if (!rotxn_okay) {
+            aborted_ = true;
+            committed_ = !aborted_;
+        }
+
         for (auto& pair : outputs) {
             const innid_t& inn_id = pair.first;
             // verify(!dispatch_acks_.at(inn_id));
@@ -528,5 +537,10 @@ namespace janus {
             return 0;
         }
         return key_to_ts.at(key);
+    }
+
+    void CoordinatorAcc::update_key_ts(i32 key, uint64_t new_ts) {
+        std::lock_guard<std::recursive_mutex> lock(mtx_);
+        key_to_ts[key] = new_ts;
     }
 } // namespace janus
