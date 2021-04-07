@@ -52,7 +52,6 @@ class Row: public RefCounted {
 
 //protected:
  public:
-
   void update_fixed(const Schema::column_info *col, void *ptr, int len);
 
   bool rdonly_;
@@ -122,6 +121,9 @@ class Row: public RefCounted {
     return get_column(schema_->get_column_id(col_name));
   }
   virtual MultiBlob get_key() const;
+
+        // for rotxn
+        i32 key = -1;
 
   virtual blob get_blob(int column_id) const;
   blob get_blob(const std::string &col_name) const {

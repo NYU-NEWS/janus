@@ -3,8 +3,12 @@
 #include "bench/facebook/workload.h"
 #include "bench/spanner/workload.h"
 #include "bench/dynamic/workload.h"
+#include "bench/tpcc/workload.h"
 
 namespace janus {
+    std::unordered_map<i32, uint64_t> CoordinatorAcc::key_to_ts;
+    std::recursive_mutex CoordinatorAcc::mtx_{};
+
     AccCommo* CoordinatorAcc::commo() {
         if (commo_ == nullptr) {
             commo_ = new AccCommo();
@@ -92,11 +96,18 @@ namespace janus {
             bool write_only = true;
             for (const auto& c: cmds) {
                 /*
-                Log_info("Workload type = %d, op count = %d, keys_ size = %d. keys_ real size = %d. keys_ = %d. values size = %d. key = %d.",
-                         c->root_type_, c->input.at(FB_OP_COUNT).get_i32(), c->input.size(), c->input.keys_.size(), *(c->input.keys_.begin()),
+                Log_info("txid = %lu. Workload type = %d, op count = %d, keys_ size = %d. keys_ real size = %d. keys_ = %d. values size = %d. key = %d.",
+                         txn->id_, c->root_type_, c->input.at(FB_OP_COUNT).get_i32(), c->input.size(), c->input.keys_.size(), *(c->input.keys_.begin()),
                          c->input.values_->size(), c->input.at(*(c->input.keys_.begin())).get_i32());
                 */
                 //Log_info("try this. roottype = %d; type = %d.", c->root_type_, c->type_);
+                // for rotxn
+                if (c->root_type_ == FB_ROTXN || c->root_type_ == SPANNER_ROTXN) {
+                    i32 key = get_key(c);
+                    i64 ts = get_ts(key);
+                    c->input[TS_INDEX] = Value(ts);
+                }
+                // Log_info("workload type = %d. txn_id = %lu. key = %d.", c->root_type_, txn->id_, key);
                 tx_data().innid_to_server[c->inn_id_] = par_id;
                 tx_data().innid_to_starttime[c->inn_id_] = current_time;
                 //Log_info("Client:Dispatch. txid = %lu. recording innid = %u. server = %u.", txn->id_, c->inn_id_, par_id);
@@ -482,5 +493,35 @@ namespace janus {
         // falure handling
         tx_data().coord = UINT32_MAX;
         tx_data().cohorts.clear();
+    }
+
+    i32 CoordinatorAcc::get_key(const shared_ptr<SimpleCommand>& c) {
+        std::lock_guard<std::recursive_mutex> lock(this->mtx_);
+//                Log_info("Workload type = %d, op count = %d, keys_ size = %d. keys_ real size = %d. keys_ = %d. values size = %d. key = %d.",
+//                         c->root_type_, c->input.at(FB_OP_COUNT).get_i32(), c->input.size(), c->input.keys_.size(), *(c->input.keys_.begin()),
+//                         c->input.values_->size(), c->input.at(*(c->input.keys_.begin())).get_i32());
+//
+        int workload = c->root_type_;
+        // TODO: we only implement for facebook and spanner for now. TPCC comes later?
+        switch(workload) {
+            case FB_ROTXN: { //  this is a rotxn in FB, FB input.keys_ only store 1 key per command
+                int key_index = *(c->input.keys_.begin());
+                return c->input.at(key_index).get_i32();
+            }
+            case SPANNER_ROTXN: { // this is a rotxn in Spanner, Spanner keys_ store 1 key, a SPANNER_TXN_SIZE, and a SPANNER_RW_W_COUNT
+                int key_index = *(c->input.keys_.begin());
+                return c->input.at(key_index).get_i32();
+            }
+            default:
+                return -1;
+        }
+    }
+
+    uint64_t CoordinatorAcc::get_ts(i32 key) {
+        std::lock_guard<std::recursive_mutex> lock(mtx_);
+        if (key_to_ts.find(key) == key_to_ts.end()) {
+            return 0;
+        }
+        return key_to_ts.at(key);
     }
 } // namespace janus

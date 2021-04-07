@@ -168,6 +168,11 @@ namespace janus {
                 Log_debug("piece input id = %d; row key = %d.", key, sp_piece_data->input.at(key).get_i32());
             }
             */
+            if (sp_piece_data->root_type_ == FB_ROTXN || sp_piece_data->root_type_ == SPANNER_ROTXN) {
+                i32 key = get_key(sp_piece_data);
+                uint64_t ts = sp_piece_data->input.at(TS_INDEX).get_i64();
+                tx->key_to_ts[key] = ts;
+            }
             SchedulerClassic::ExecutePiece(*tx, *sp_piece_data, ret_output);
         }
         if (tx->fully_dispatched_->value_ == 0) {
@@ -589,5 +594,26 @@ namespace janus {
             verify(ret->tid_ == tid);
         }
         return ret;
+    }
+
+    i32 SchedulerAcc::get_key(const shared_ptr<SimpleCommand>& c) const {
+//                Log_info("Workload type = %d, op count = %d, keys_ size = %d. keys_ real size = %d. keys_ = %d. values size = %d. key = %d.",
+//                         c->root_type_, c->input.at(FB_OP_COUNT).get_i32(), c->input.size(), c->input.keys_.size(), *(c->input.keys_.begin()),
+//                         c->input.values_->size(), c->input.at(*(c->input.keys_.begin())).get_i32());
+//
+        int workload = c->root_type_;
+        // TODO: we only implement for facebook and spanner for now. TPCC comes later?
+        switch(workload) {
+            case FB_ROTXN: { //  this is a rotxn in FB, FB input.keys_ only store 1 key per command
+                int key_index = *(c->input.keys_.begin());
+                return c->input.at(key_index).get_i32();
+            }
+            case SPANNER_ROTXN: { // this is a rotxn in Spanner, Spanner keys_ store 1 key, a SPANNER_TXN_SIZE, and a SPANNER_RW_W_COUNT
+                int key_index = *(c->input.keys_.begin());
+                return c->input.at(key_index).get_i32();
+            }
+            default:
+                return -1;
+        }
     }
 }

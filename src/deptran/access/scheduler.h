@@ -39,6 +39,8 @@ namespace janus {
         txn_status_t resolve_status(cmdid_t cmd_id);
         void handle_failure(cmdid_t cmd_id, parid_t pid);
         shared_ptr<Tx> GetAccTxn(txnid_t tid);
+        // for rotxn
+        i32 get_key(const shared_ptr<SimpleCommand>& c) const;
 
     private:
         const i32 NOT_ROW_KEY = -1;

@@ -73,6 +73,8 @@ namespace janus {
         std::vector<std::function<void(txn_status_t)>> resolve_status_cbs;  // for ResolveStatusCoord RPC
         bool handle_failure = false;
         bool resolving = false;
+        // for rotxn
+        std::unordered_map<i32, uint64_t> key_to_ts = {};
 
         ~AccTxn() override;
     private:

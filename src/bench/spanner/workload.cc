@@ -167,6 +167,7 @@ namespace janus {
                      mb[0] = cmd.input.at(SPANNER_ROTXN_KEY(i)).get_blob();
                      int key = cmd.input.at(SPANNER_ROTXN_KEY(i)).get_i32();
                      r = tx.Query(tx.GetTable(SPANNER_TABLE), mb);
+                     r->key = key;
                      Value result;
                      tx.ReadColumn(r, COL_ID, &result, TXN_BYPASS);
                      output[SPANNER_ROTXN_OUTPUT(i)] = result;
@@ -183,7 +184,9 @@ namespace janus {
                      mdb::Row *r = nullptr;
                      mdb::MultiBlob mb(1);
                      mb[0] = cmd.input.at(SPANNER_RW_KEY(i)).get_blob();
+                     int key = cmd.input.at(SPANNER_RW_KEY(i)).get_i32();
                      r = tx.Query(tx.GetTable(SPANNER_TABLE), mb);
+                     r->key = key;
                      int n_write = cmd.input.at(SPANNER_RW_W_COUNT).get_i32();
                      int rw_size = cmd.input.at(SPANNER_TXN_SIZE).get_i32();
                      if (i + n_write < rw_size) {

@@ -11,6 +11,7 @@ namespace janus {
         auto acc_row = dynamic_cast<AccRow*>(row);
         unsigned long index = 0;
 	    bool is_decided = true;
+	    // Log_info("ReadColumn. txnid = %lu. key = %d. ts = %d.", this->tid_, acc_row->key, this->key_to_ts[acc_row->key]);
         //Log_info("server:ReadColumn. txid = %lu. ssid_spec = %lu.", this->tid_, sg.ssid_spec);
         SSID ssid = acc_row->read_column(this->tid_, col_id, value, sg.ssid_spec, index, is_decided);
         row->ref_copy();

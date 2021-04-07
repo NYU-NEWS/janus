@@ -57,6 +57,8 @@ namespace janus {
 #define WRITE_REQ (0x1)     // if a piece contains any write
 #define UNDEFINED (0x2)     // if not specified by the workload
 
+// for LFC ROTXN
+#define TS_INDEX (30000)
 
 /** read and write type */
 #define OP_WRITE   (0x01)

@@ -171,6 +171,7 @@ namespace janus {
                      r = tx.Query(tx.GetTable(FB_TABLE), mb);
                      verify(!COL_COUNTS.empty());
                      verify(core_key < COL_COUNTS.size());
+                     r->key = key;
                      //cmd.op_type_ = READ_REQ;  // pieces only contain reads; for acc ML engine
                      int n_col = COL_COUNTS.at(core_key);
                      Value result;
@@ -211,6 +212,7 @@ namespace janus {
                      r = tx.Query(tx.GetTable(FB_TABLE), mb);
                      verify(!COL_COUNTS.empty());
                      verify(core_key < COL_COUNTS.size());
+                     r->key = key;
                      //cmd.op_type_ = WRITE_REQ;  // pieces contain writes; for ML engine
                      int n_col = COL_COUNTS.at(core_key);
                      for (int itr = 0; itr < n_col; ++itr) {

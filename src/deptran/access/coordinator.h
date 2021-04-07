@@ -36,7 +36,13 @@ namespace janus {
         void StatusQuery();
         void AccStatusQueryAck(txnid_t tid, int8_t res);
         void SkipDecidePhase();
+
+        // for rotxn
+        static std::unordered_map<i32, uint64_t> key_to_ts;
+        static uint64_t get_ts(i32 key) ;
+        i32 get_key(const shared_ptr<SimpleCommand>& c);
     private:
+        static std::recursive_mutex mtx_;
         bool finished = true;
         void freeze_coordinator() { verify(!finished); finished = true; }
         void unfreeze_coordinator() { verify(finished); finished = false; }
