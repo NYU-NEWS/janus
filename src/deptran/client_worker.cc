@@ -216,6 +216,7 @@ void ClientWorker::Work() {
           decided.fetch_add(coo->n_decided_);
           validation_passed.fetch_add(coo->n_validation_passed);
           cascading_aborts.fetch_add(coo->n_cascading_aborts);
+          rotxn_aborts.fetch_add(coo->n_rotxn_aborts);
 
           sp_n_tx_done_.Set(sp_n_tx_done_.value_+1);
           num_try.fetch_add(coo->n_retry_);
@@ -257,7 +258,7 @@ void ClientWorker::Work() {
   */
     Log_info("Finish:\nTotal: %u, Commit: %u, Attempts: %u, SSID_consistent: %u, Decided: %u, "
              "Validation_pass: %u, "
-             "Cascading_aborts: %u, Running for %u\n",
+             "Cascading_aborts: %u, Rotxn_aborts: %u, Running for %u\n",
              num_txn.load(),
              success.load(),
              num_try.load(),
@@ -268,6 +269,7 @@ void ClientWorker::Work() {
              // single_shard.load(),
              // single_shard_write_only.load(),
              cascading_aborts.load(),
+             rotxn_aborts.load(),
              Config::GetConfig()->get_duration());
   fflush(stderr);
   fflush(stdout);
@@ -481,6 +483,7 @@ ClientWorker::ClientWorker(
   // offset_valid.store(0);
   validation_passed.store(0);
   cascading_aborts.store(0);
+  rotxn_aborts.store(0);
   // single_shard.store(0);
   // single_shard_write_only.store(0);
   commo_ = frame_->CreateCommo(poll_mgr_);

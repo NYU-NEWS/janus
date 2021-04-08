@@ -40,7 +40,7 @@ class ClientWorker {
 //  rrr::ThreadPool* dispatch_pool_ = new rrr::ThreadPool();
 
   std::atomic<uint32_t> num_txn, success, num_try,
-                ssid_consistent, decided, validation_passed, cascading_aborts;
+                ssid_consistent, decided, validation_passed, cascading_aborts, rotxn_aborts;
 //                offset_valid,
 //                cascading_aborts, single_shard, single_shard_write_only;
   int all_done_{0};

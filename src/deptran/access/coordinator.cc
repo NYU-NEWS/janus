@@ -448,6 +448,9 @@ namespace janus {
         */
         if (tx_data().is_rotxn) {
             // now rotxns do not finalize
+            if (tx_data()._is_consistent && !tx_data()._status_abort && decision == ABORTED) {
+                n_rotxn_aborts++;
+            }
             if (decision == ABORTED) {
                 Restart();
             }

@@ -67,6 +67,7 @@ class Coordinator {
     uint32_t n_cascading_aborts = 0;
     // int n_single_shard = 0;
     // int n_single_shard_write_only = 0;
+    uint32_t n_rotxn_aborts = 0;
 
   // should be reset on issuing a new request
   uint32_t n_retry_ = 0;
