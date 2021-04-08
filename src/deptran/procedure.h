@@ -345,6 +345,10 @@ class TxData: public CmdData {
     std::unordered_set<parid_t> cohorts = {};
     parid_t coord = UINT32_MAX;
 
+    // for rotxn
+    bool is_rotxn = false;
+    std::unordered_set<parid_t> par_ids = {};
+
     // ssid predictor related below
     std::unordered_map<innid_t, parid_t> innid_to_server;
     std::unordered_map<innid_t, uint64_t> innid_to_starttime;

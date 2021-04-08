@@ -53,6 +53,7 @@ namespace janus {
         }
         // auto future = proxy->async_AccDispatch(coo_id, cmd_id, md, ssid_spec, (uint8_t)is_single_shard_write_only, fuattr); // call Acc dispatch RPC
 	    // now insert AccStatusQuery RPC here
+	    /* we don't send status query rpc now, we do the optimization that only sending statusquery if it is not decided
         rrr::FutureAttr status_fuattr;
         status_fuattr.callback =
                 [coo, this, callback_status](Future* fu) {
@@ -62,9 +63,10 @@ namespace janus {
                 };
         n_status_query++;
         auto future_status = proxy->async_AccStatusQuery(status_cmd_id, status_fuattr); // call Acc StatusQuery RPC
+        */
         // release both RPCs sequentially
         Future::safe_release(future);
-	    Future::safe_release(future_status);
+	    // Future::safe_release(future_status);
 
         // FIXME fix this, this cause occ and perhaps 2pl to fail
         for (auto& pair : rpc_par_proxies_[par_id]) {
@@ -83,19 +85,21 @@ namespace janus {
                             fu->get_reply() >> ret >> ssid_low >> ssid_high >> ssid_new >> outputs >> arrival_time >> rotxn_okay >> returned_ts;
                             // do nothing
                         };
+                /*
 		        fu2_status.callback =
                         [coo, this, callback_status](Future* fu) {
                             int8_t ret;
                             fu->get_reply() >> ret;
                             // do nothing
                         };
-		        if (par_id == coord) {
+		        */
+                if (par_id == coord) {
                     Future::safe_release(pair.second->async_AccDispatch(coo_id, cmd_id, md, ssid_spec, (uint8_t)is_single_shard_write_only, coord, cohorts, fu2));
 		        } else {
                     Future::safe_release(pair.second->async_AccDispatch(coo_id, cmd_id, md, ssid_spec, (uint8_t)is_single_shard_write_only, coord, {}, fu2));
 		        }
                 // Future::safe_release(pair.second->async_AccDispatch(coo_id, cmd_id, md, ssid_spec, (uint8_t)is_single_shard_write_only, fu2));
-		        Future::safe_release(pair.second->async_AccStatusQuery(status_cmd_id, fu2_status));
+		        // Future::safe_release(pair.second->async_AccStatusQuery(status_cmd_id, fu2_status));
             }
         }
     }

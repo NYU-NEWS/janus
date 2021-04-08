@@ -94,6 +94,7 @@ namespace janus {
             auto sp_vec_piece = std::make_shared<vector<shared_ptr<TxPieceData>>>();
             bool writing_to_par = false;
             bool write_only = true;
+            tx_data().par_ids.insert(par_id);
             for (const auto& c: cmds) {
                 /*
                 Log_info("txid = %lu. Workload type = %d, op count = %d, keys_ size = %d. keys_ real size = %d. keys_ = %d. values size = %d. key = %d.",
@@ -103,6 +104,7 @@ namespace janus {
                 //Log_info("try this. roottype = %d; type = %d.", c->root_type_, c->type_);
                 // for rotxn
                 if (c->root_type_ == FB_ROTXN || c->root_type_ == SPANNER_ROTXN) {
+                    tx_data().is_rotxn = true;
                     i32 key = get_key(c);
                     i64 ts = get_ts(key);
                     c->input[TS_INDEX] = Value(ts);
@@ -242,9 +244,22 @@ namespace janus {
         } else if (AllDispatchAcked()) {
             Log_debug("receive all start acks, txn_id: %llx; START PREPARE", txn->id_);
             if (txn->_decided) {
+                // Log_info("not_send statusquery");
                 // all dependent writes are finalized
                 txn->_status_query_done = true;
-	        }
+	        } else {
+                // now we send statusquery rpc as optimization
+                // Log_info("send statusquery");
+                for (const auto& parid : tx_data().par_ids) {
+                    tx_data().n_status_query++;
+                    commo()->AccBroadcastStatusQuery(parid,
+                                                     tx_data().id_,
+                                                     std::bind(&CoordinatorAcc::AccStatusQueryAck,
+                                                               this,
+                                                               tx_data().id_,
+                                                               std::placeholders::_1));
+                }
+            }
 	        GotoNextPhase();
         }
     }
@@ -507,6 +522,8 @@ namespace janus {
         // falure handling
         tx_data().coord = UINT32_MAX;
         tx_data().cohorts.clear();
+        tx_data().is_rotxn = false;
+        tx_data().par_ids.clear();
     }
 
     i32 CoordinatorAcc::get_key(const shared_ptr<SimpleCommand>& c) {
