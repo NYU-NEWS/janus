@@ -13,7 +13,7 @@ namespace janus {
 	    bool is_decided = true;
 	    // Log_info("ReadColumn. txnid = %lu. key = %d. ts = %d.", this->tid_, acc_row->key, this->key_to_ts[acc_row->key]);
         //Log_info("server:ReadColumn. txid = %lu. ssid_spec = %lu.", this->tid_, sg.ssid_spec);
-        SSID ssid = acc_row->read_column(this->tid_, col_id, value, sg.ssid_spec, index, is_decided);
+        SSID ssid = acc_row->read_column(this->tid_, col_id, value, sg.ssid_spec, index, is_decided, this->is_rotxn);
         // for rotxn
         i32 key = acc_row->key;
         uint64_t new_ts = ssid.ssid_low;
@@ -51,7 +51,7 @@ namespace janus {
             Value *v = nullptr;
             unsigned long index = 0;
 	        bool is_decided = true;
-            SSID ssid = acc_row->read_column(this->tid_, col_id, v, sg.ssid_spec, index, is_decided);
+            SSID ssid = acc_row->read_column(this->tid_, col_id, v, sg.ssid_spec, index, is_decided, this->is_rotxn);
             // for rotxn
             uint64_t new_ts = ssid.ssid_low;
             update_return_ts(key, new_ts);

@@ -171,6 +171,7 @@ namespace janus {
             }
             */
             if (sp_piece_data->root_type_ == FB_ROTXN || sp_piece_data->root_type_ == SPANNER_ROTXN) {
+                tx->is_rotxn = true;
                 i32 key = get_key(sp_piece_data);
                 uint64_t ts = sp_piece_data->input.at(TS_INDEX).get_i64();
                 tx->key_to_ts[key] = ts;
@@ -193,7 +194,7 @@ namespace janus {
         // rotxn
         *rotxn_okay = 1;
         if (sp_vec_piece->at(0)->root_type_ == FB_ROTXN || sp_vec_piece->at(0)->root_type_ == SPANNER_ROTXN) {
-            if (tx->rotxn_okay == false) {
+            if (!tx->rotxn_okay) {
                 *rotxn_okay = 0;
             }
         }

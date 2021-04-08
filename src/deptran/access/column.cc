@@ -20,7 +20,7 @@ namespace janus {
         update_stable_frontier();
     }
 
-    const mdb::Value& AccColumn::read(txnid_t tid, snapshotid_t ssid_spec, SSID& ssid, unsigned long& index, bool& decided) {
+    const mdb::Value& AccColumn::read(txnid_t tid, snapshotid_t ssid_spec, SSID& ssid, unsigned long& index, bool& decided, bool is_rotxn) {
         // return logical head
         index = _logical_head;
         snapshotid_t ssid_new = read_get_next_SSID(ssid_spec);
@@ -35,7 +35,9 @@ namespace janus {
         if (logical_head_status() != FINALIZED) { // then if this tx turns out consistent and all parts decided, can respond immediately
             decided = false;
         }
-        txn_queue[index].pending_reads.insert(tid);
+        if (!is_rotxn) {
+            txn_queue[index].pending_reads.insert(tid);
+        }
         // txn_queue[index].n_pending_reads++;  // for strict serializability
         return txn_queue[_logical_head].value;
     }

@@ -446,6 +446,13 @@ namespace janus {
             return;
         }
         */
+        if (tx_data().is_rotxn) {
+            // now rotxns do not finalize
+            if (decision == ABORTED) {
+                Restart();
+            }
+            return;
+        }
 
         std::set<uint32_t> pars;
         if (tx_data()._is_consistent) {
