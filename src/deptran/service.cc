@@ -426,7 +426,7 @@ void ClassicServiceImpl::AccDispatch(const uint32_t& coo_id,
     auto* sched = (SchedulerAcc*) dtxn_sched_;
     *res = sched->OnDispatch(cmd_id, sp, ssid_spec, is_single_shard_write_only, coord, cohorts, ssid_low, ssid_high, ssid_new, *output, arrival_time, rotxn_okay, returned_ts);
     // GC earlier txns by the same coordinator
-    // sched->gc_txns(coo_id, cmd_id);
+    sched->gc_txns(coo_id, cmd_id);
     defer->reply();
 }
 
