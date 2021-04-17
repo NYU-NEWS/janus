@@ -22,7 +22,7 @@ namespace janus {
                                                       TxnOutput &,
                                                       uint64_t arrival_time,
                                                       uint8_t rotxn_okay,
-                                                      const std::unordered_map<i32, uint64_t>& returned_ts)> &callback,
+                                                      const std::pair<parid_t, uint64_t>& new_svr_ts)> &callback,
                                   cmdid_t cmd_id,
                                   int& n_status_query,
                                   const std::function<void(int8_t res)> &callback_status);
@@ -41,6 +41,21 @@ namespace janus {
         void AccBroadcastGetRecord(parid_t cohort,
                                    cmdid_t cmd_id,
                                    const std::function<void(uint8_t status, uint64_t ssid_low, uint64_t ssid_high)> &callback);  // coord sent to cohort
+
+        // rotxn
+        void AccBroadcastRotxnDispatch(uint32_t coo_id,
+                                       shared_ptr<vector<shared_ptr<SimpleCommand>>> sp_vec_piece,
+                                       Coordinator *coo,
+                                       snapshotid_t ssid_spec,
+                                       uint64_t safe_ts,
+                                       const std::function<void(int res,
+                                                           uint64_t ssid_low,
+                                                           uint64_t ssid_high,
+                                                           uint64_t ssid_new,
+                                                           TxnOutput &,
+                                                           uint64_t arrival_time,
+                                                           uint8_t rotxn_okay,
+                                                           const std::pair<parid_t, uint64_t>& new_svr_ts)> &callback);
     };
 }
 

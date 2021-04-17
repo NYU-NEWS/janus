@@ -32,6 +32,10 @@ namespace janus {
 
         //void read_query_wait(mdb::colid_t col_id, unsigned long index);
         void insert_write_callbacks(mdb::colid_t col_id, unsigned long index, const shared_ptr<AccTxn>& acc_txn, int8_t *res, DeferredReply* defer, int rpc_id);
+
+        // rotxn
+        uint64_t write_ts = 0;
+
 	    ~AccRow() override;
     private:
         // a map of txn_q; keys are cols, values are linkedvectors that holding txns (versions)

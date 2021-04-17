@@ -15,7 +15,7 @@ namespace janus {
                                                                  TxnOutput &,
                                                                  uint64_t arrival_time,
                                                                  uint8_t rotxn_okay,
-                                                                 const std::unordered_map<i32, uint64_t>& returned_ts)> &callback,
+                                                                 const std::pair<parid_t, uint64_t>& new_svr_ts)> &callback,
 					                    cmdid_t status_cmd_id,
                                         int& n_status_query,
                                         const std::function<void(int8_t res)> &callback_status) {
@@ -32,9 +32,9 @@ namespace janus {
                     TxnOutput outputs;
                     uint64_t arrival_time;
                     uint8_t rotxn_okay;
-                    std::unordered_map<i32, uint64_t> returned_ts;
-                    fu->get_reply() >> ret >> ssid_low >> ssid_high >> ssid_new >> outputs >> arrival_time >> rotxn_okay >> returned_ts;
-                    callback(ret, ssid_low, ssid_high, ssid_new, outputs, arrival_time, rotxn_okay, returned_ts);
+                    std::pair<parid_t, uint64_t> new_svr_ts;
+                    fu->get_reply() >> ret >> ssid_low >> ssid_high >> ssid_new >> outputs >> arrival_time >> rotxn_okay >> new_svr_ts;
+                    callback(ret, ssid_low, ssid_high, ssid_new, outputs, arrival_time, rotxn_okay, new_svr_ts);
                 };
         auto pair_leader_proxy = LeaderProxyForPartition(par_id);
         Log_debug("send dispatch to site %ld",
@@ -81,8 +81,8 @@ namespace janus {
                             TxnOutput outputs;
                             uint64_t arrival_time;
                             uint8_t rotxn_okay;
-                            std::unordered_map<i32, uint64_t> returned_ts;
-                            fu->get_reply() >> ret >> ssid_low >> ssid_high >> ssid_new >> outputs >> arrival_time >> rotxn_okay >> returned_ts;
+                            std::pair<parid_t, uint64_t> new_svr_ts;
+                            fu->get_reply() >> ret >> ssid_low >> ssid_high >> ssid_new >> outputs >> arrival_time >> rotxn_okay >> new_svr_ts;
                             // do nothing
                         };
                 /*
@@ -189,5 +189,66 @@ namespace janus {
         auto proxy = pair_leader_proxy.second;
         auto future = proxy->async_AccGetRecord(cmd_id, fuattr);
         Future::safe_release(future);
+    }
+
+    void
+    AccCommo::AccBroadcastRotxnDispatch(uint32_t coo_id,
+                                        shared_ptr<vector<shared_ptr<SimpleCommand>>> sp_vec_piece,
+                                        Coordinator *coo,
+                                        uint64_t ssid_spec,
+                                        uint64_t safe_ts,
+                                        const function<void(int res,
+                                                            uint64_t ssid_low,
+                                                            uint64_t ssid_high,
+                                                            uint64_t ssid_new,
+                                                            TxnOutput &,
+                                                            uint64_t arrival_time,
+                                                            uint8_t rotxn_okay,
+                                                            const std::pair<parid_t, uint64_t>& new_svr_ts)> &callback) {
+        cmdid_t cmd_id = sp_vec_piece->at(0)->root_id_;
+        auto par_id = sp_vec_piece->at(0)->PartitionId();
+        rrr::FutureAttr fuattr;
+        fuattr.callback =
+                [coo, this, callback](Future* fu) {
+                    int32_t ret;
+                    uint64_t ssid_low;
+                    uint64_t ssid_high;
+                    uint64_t ssid_new;
+                    TxnOutput outputs;
+                    uint64_t arrival_time;
+                    uint8_t rotxn_okay;
+                    std::pair<parid_t, uint64_t> new_svr_ts;
+                    fu->get_reply() >> ret >> ssid_low >> ssid_high >> ssid_new >> outputs >> arrival_time >> rotxn_okay >> new_svr_ts;
+                    callback(ret, ssid_low, ssid_high, ssid_new, outputs, arrival_time, rotxn_okay, new_svr_ts);
+                };
+        auto pair_leader_proxy = LeaderProxyForPartition(par_id);
+        auto proxy = pair_leader_proxy.second;
+        shared_ptr<VecPieceData> sp_vpd(new VecPieceData);
+        sp_vpd->sp_vec_piece_data_ = sp_vec_piece;
+        MarshallDeputy md(sp_vpd); // ????
+        rrr::Future* future;
+        future = proxy->async_AccRotxnDispatch(coo_id, cmd_id, md, ssid_spec, safe_ts, fuattr);
+        Future::safe_release(future);
+
+        // FIXME fix this, this cause occ and perhaps 2pl to fail
+        for (auto& pair : rpc_par_proxies_[par_id]) {
+            if (pair.first != pair_leader_proxy.first) {
+                rrr::FutureAttr fu2, fu2_status;
+                fu2.callback =
+                        [coo, this, callback](Future* fu) {
+                            int32_t ret;
+                            uint64_t ssid_low;
+                            uint64_t ssid_high;
+                            uint64_t ssid_new;
+                            TxnOutput outputs;
+                            uint64_t arrival_time;
+                            uint8_t rotxn_okay;
+                            std::pair<parid_t, uint64_t> new_svr_ts;
+                            fu->get_reply() >> ret >> ssid_low >> ssid_high >> ssid_new >> outputs >> arrival_time >> rotxn_okay >> new_svr_ts;
+                            // do nothing
+                        };
+                Future::safe_release(pair.second->async_AccRotxnDispatch(coo_id, cmd_id, md, ssid_spec, safe_ts, fu2));
+            }
+        }
     }
 }

@@ -8,7 +8,7 @@ bench:
   population: # initial number of records in the table table
     friends:   125000
   dist: zipf
-  coefficient: 0.99 # 0 as uniform, 1 as pure zipf
+  coefficient: 0.8 # 0 as uniform, 1 as pure zipf
   writefraction: 0.002  # now write fraction is not hard coded.
 
 # schema: [generated in code: config.cc]

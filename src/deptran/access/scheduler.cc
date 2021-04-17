@@ -7,6 +7,8 @@
 #include "bench/dynamic/workload.h"
 
 namespace janus {
+    uint64_t SchedulerAcc::max_write_ts = 0;
+
     AccCommo* SchedulerAcc::commo() {
         if (commo_ == nullptr) {
             commo_ = new AccCommo();
@@ -19,6 +21,7 @@ namespace janus {
     int32_t SchedulerAcc::OnDispatch(cmdid_t cmd_id,
                                      const shared_ptr<Marshallable>& cmd,
                                      uint64_t ssid_spec,
+                                     uint64_t safe_ts,
                                      uint8_t is_single_shard_write_only,
                                      const uint32_t& coord,
                                      const std::unordered_set<uint32_t>& cohorts,
@@ -28,7 +31,7 @@ namespace janus {
                                      TxnOutput &ret_output,
                                      uint64_t* arrival_time,
                                      uint8_t* rotxn_okay,
-                                     unordered_map<i32, uint64_t>* returned_ts) {
+                                     std::pair<parid_t, uint64_t>* new_svr_ts) {
         // Step 1: dispatch and execute pieces
         auto sp_vec_piece = dynamic_pointer_cast<VecPieceData>(cmd)->sp_vec_piece_data_;
         // verify(sp_vec_piece);
@@ -38,10 +41,13 @@ namespace janus {
         //auto tx = GetOrCreateTx(cmd_id);
         auto tx = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));
         // failure handling
-        tx->record.coord = coord;
-        if (this->partition_id_ == coord) {
-            // this partition is the backup coordinator
-            tx->record.cohorts.insert(cohorts.begin(), cohorts.end());
+        if (safe_ts == UINT64_MAX) {
+            // this is a read-write txn
+            tx->record.coord = coord;
+            if (this->partition_id_ == coord) {
+                // this partition is the backup coordinator
+                tx->record.cohorts.insert(cohorts.begin(), cohorts.end());
+            }
         }
         /* Disable HF for now
         // register handle_failure
@@ -172,9 +178,11 @@ namespace janus {
             */
             if (sp_piece_data->root_type_ == FB_ROTXN || sp_piece_data->root_type_ == SPANNER_ROTXN) {
                 tx->is_rotxn = true;
-                i32 key = get_key(sp_piece_data);
-                uint64_t ts = sp_piece_data->input.at(TS_INDEX).get_i64();
-                tx->key_to_ts[key] = ts;
+                // i32 key = get_key(sp_piece_data);
+                // uint64_t ts = sp_piece_data->input.at(TS_INDEX).get_i64();
+                // tx->key_to_ts[key] = ts;
+                tx->safe_ts = safe_ts;
+                verify(safe_ts < UINT64_MAX);
             }
             SchedulerClassic::ExecutePiece(*tx, *sp_piece_data, ret_output);
         }
@@ -198,7 +206,10 @@ namespace janus {
                 *rotxn_okay = 0;
             }
         }
-        *returned_ts = tx->return_key_ts;
+        if (this->max_write_ts < tx->write_ts) {
+            this->max_write_ts = tx->write_ts;
+        }
+        *new_svr_ts = std::make_pair(this->partition_id_, this->max_write_ts);
 
         // report offset_invalid and decided. These two things are *incomparable*!
         /*

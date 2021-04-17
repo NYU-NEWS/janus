@@ -1,4 +1,5 @@
 #include "tx.h"
+#include "ssid_predictor.h"
 
 namespace janus {
     // TODO: fill in these stubs
@@ -15,10 +16,10 @@ namespace janus {
         //Log_info("server:ReadColumn. txid = %lu. ssid_spec = %lu.", this->tid_, sg.ssid_spec);
         SSID ssid = acc_row->read_column(this->tid_, col_id, value, sg.ssid_spec, index, is_decided, this->is_rotxn);
         // for rotxn
-        i32 key = acc_row->key;
-        uint64_t new_ts = ssid.ssid_low;
-        update_return_ts(key, new_ts);
-        if (new_ts != this->key_to_ts[key]) {
+        // i32 key = acc_row->key;
+        // uint64_t new_ts = ssid.ssid_low;
+        // update_return_ts(key, new_ts);
+        if (this->safe_ts < acc_row->write_ts) {
             this->rotxn_okay = false;
         }
 
@@ -53,9 +54,14 @@ namespace janus {
 	        bool is_decided = true;
             SSID ssid = acc_row->read_column(this->tid_, col_id, v, sg.ssid_spec, index, is_decided, this->is_rotxn);
             // for rotxn
-            uint64_t new_ts = ssid.ssid_low;
-            update_return_ts(key, new_ts);
+            // uint64_t new_ts = ssid.ssid_low;
+            // update_return_ts(key, new_ts);
+            /*
             if (new_ts != this->key_to_ts[key]) {
+                this->rotxn_okay = false;
+            }
+            */
+            if (this->safe_ts < acc_row->write_ts) {
                 this->rotxn_okay = false;
             }
 
@@ -90,9 +96,18 @@ namespace janus {
         SSID ssid = acc_row->write_column(col_id, std::move(value), sg.ssid_spec, this->tid_, ver_index,
                 is_decided, prev_index, same_tx, sg.mark_finalized); // ver_index is new write
         // for rotxn
+        /*
         i32 key = acc_row->key;
         uint64_t new_ts = ssid.ssid_low;
         update_return_ts(key, new_ts);
+        */
+        uint64_t current_time = SSIDPredictor::get_current_time();
+        if (acc_row->write_ts < current_time) {
+            acc_row->write_ts = current_time;
+        }
+        if (this->write_ts < acc_row->write_ts) {
+            this->write_ts = acc_row->write_ts;
+        }
 
         if (same_tx) {
             return true;
@@ -143,8 +158,16 @@ namespace janus {
             SSID ssid = acc_row->write_column(col_id, std::move(values[v_counter++]), sg.ssid_spec, this->tid_,
                     ver_index, is_decided, prev_index, same_tx, sg.mark_finalized);
             // for rotxn
-            uint64_t new_ts = ssid.ssid_low;
-            update_return_ts(key, new_ts);
+            // uint64_t new_ts = ssid.ssid_low;
+            // update_return_ts(key, new_ts);
+            uint64_t current_time = SSIDPredictor::get_current_time();
+            if (acc_row->write_ts < current_time) {
+                acc_row->write_ts = current_time;
+            }
+            if (this->write_ts < acc_row->write_ts) {
+                this->write_ts = acc_row->write_ts;
+            }
+
             if (same_tx) {
                 continue;
             }
@@ -248,10 +271,12 @@ namespace janus {
         });
     }
 
+    /*
     void AccTxn::update_return_ts(i32 key, uint64_t new_ts) {
         // if (return_key_ts.find(key) == return_key_ts.end() || return_key_ts.at(key) < new_ts) {
         // new_ts could be smaller if the write was aborted
             return_key_ts[key] = new_ts;
         // }
     }
+    */
 }

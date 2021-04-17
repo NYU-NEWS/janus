@@ -23,7 +23,7 @@ namespace janus {
                             map<innid_t, map<int32_t, Value>>& outputs,
                             uint64_t arrival_time,
                             uint8_t rotxn_okay,
-                            const std::unordered_map<i32, uint64_t>& returned_ts);
+                            const std::pair<parid_t, uint64_t>& new_svr_ts);
         void SafeGuardCheck();
         void AccValidate();
         void AccValidateAck(phase_t phase, int8_t res);
@@ -40,10 +40,12 @@ namespace janus {
         void SkipDecidePhase();
 
         // for rotxn
-        static std::unordered_map<i32, uint64_t> key_to_ts;
-        static uint64_t get_ts(i32 key) ;
-        i32 get_key(const shared_ptr<SimpleCommand>& c);
-        void update_key_ts(i32 key, uint64_t new_ts);
+        static std::unordered_map<parid_t, uint64_t> svr_to_ts;
+        // static uint64_t get_ts(i32 key);
+        static uint64_t get_ts(parid_t server);
+        // i32 get_key(const shared_ptr<SimpleCommand>& c);
+        // void update_key_ts(i32 key, uint64_t new_ts);
+        static void update_key_ts(parid_t server, uint64_t new_ts);
     private:
         static std::recursive_mutex mtx_;
         bool finished = true;

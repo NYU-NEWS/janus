@@ -405,7 +405,30 @@ void ClassicServiceImpl::CommitFebruus(const txid_t& tx_id,
   defer->reply();
 }
 
-void ClassicServiceImpl::AccDispatch(const uint32_t& coo_id,
+    void ClassicServiceImpl::AccRotxnDispatch(const uint32_t& coo_id,
+                                              const i64& cmd_id,
+                                              const MarshallDeputy& cmd,
+                                              const uint64_t& ssid_spec,
+                                              const uint64_t& safe_ts,
+                                              int32_t* res,
+                                              uint64_t* ssid_low,
+                                              uint64_t* ssid_high,
+                                              uint64_t* ssid_new,
+                                              TxnOutput* output,
+                                              uint64_t* arrival_time,
+                                              uint8_t* rotxn_okay,
+                                              std::pair<parid_t, uint64_t>* new_svr_ts,
+                                              DeferredReply* defer_reply) {
+        // server-side handler of AccDispatch RPC
+        shared_ptr<Marshallable> sp = cmd.sp_data_;
+        auto* sched = (SchedulerAcc*) dtxn_sched_;
+        *res = sched->OnDispatch(cmd_id, sp, ssid_spec, safe_ts, 0, 0, {}, ssid_low, ssid_high, ssid_new, *output, arrival_time, rotxn_okay, new_svr_ts);
+        // GC earlier txns by the same coordinator
+        sched->gc_txns(coo_id, cmd_id);
+        defer_reply->reply();
+    }
+
+    void ClassicServiceImpl::AccDispatch(const uint32_t& coo_id,
                                   const i64& cmd_id,
                                   const MarshallDeputy& md,
                                   const uint64_t& ssid_spec,
@@ -419,12 +442,12 @@ void ClassicServiceImpl::AccDispatch(const uint32_t& coo_id,
                                   TxnOutput* output,
                                   uint64_t* arrival_time,
                                   uint8_t* rotxn_okay,
-                                  unordered_map<i32, uint64_t>* returned_ts,
+                                  std::pair<parid_t, uint64_t>* new_svr_ts,
                                   rrr::DeferredReply* defer){
     // server-side handler of AccDispatch RPC
     shared_ptr<Marshallable> sp = md.sp_data_;
     auto* sched = (SchedulerAcc*) dtxn_sched_;
-    *res = sched->OnDispatch(cmd_id, sp, ssid_spec, is_single_shard_write_only, coord, cohorts, ssid_low, ssid_high, ssid_new, *output, arrival_time, rotxn_okay, returned_ts);
+    *res = sched->OnDispatch(cmd_id, sp, ssid_spec, UINT64_MAX, is_single_shard_write_only, coord, cohorts, ssid_low, ssid_high, ssid_new, *output, arrival_time, rotxn_okay, new_svr_ts);
     // GC earlier txns by the same coordinator
     sched->gc_txns(coo_id, cmd_id);
     defer->reply();

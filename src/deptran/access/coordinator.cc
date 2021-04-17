@@ -6,7 +6,8 @@
 #include "bench/tpcc/workload.h"
 
 namespace janus {
-    std::unordered_map<i32, uint64_t> CoordinatorAcc::key_to_ts;
+    // std::unordered_map<i32, uint64_t> CoordinatorAcc::key_to_ts;
+    std::unordered_map<parid_t, uint64_t> CoordinatorAcc::svr_to_ts;
     std::recursive_mutex CoordinatorAcc::mtx_{};
 
     AccCommo* CoordinatorAcc::commo() {
@@ -42,17 +43,7 @@ namespace janus {
         std::lock_guard<std::recursive_mutex> lock(mtx_);
         auto txn = (TxData*) cmd_;
         int cnt = 0;
-        /*
-        int pieces_per_hop = 0;
-        if (cmd_->type_ == SPANNER_RW && tx_data().n_pieces_dispatch_acked_ == 0) {
-            // we make spanner RW txn multi-hop!
-            pieces_per_hop = cmd_->spanner_rw_reads;
-        }
-        if (cmd_->type_ == DYNAMIC_RW && tx_data().n_pieces_dispatch_acked_ == 0) {
-            // we make dynamic RW txn multi-hop!
-            pieces_per_hop = cmd_->dynamic_rw_reads;
-        }
-        */
+
         auto cmds_by_par = txn->GetReadyPiecesData();
         // auto cmds_by_par = txn->GetReadyPiecesData(pieces_per_hop); // all ready pieces sent in one parallel round
         Log_debug("AccDispatchAsync for tx_id: %" PRIx64, txn->root_id_);
@@ -105,9 +96,9 @@ namespace janus {
                 // for rotxn
                 if (c->root_type_ == FB_ROTXN || c->root_type_ == SPANNER_ROTXN) {
                     tx_data().is_rotxn = true;
-                    i32 key = get_key(c);
-                    i64 ts = get_ts(key);
-                    c->input[TS_INDEX] = Value(ts);
+                    // i32 key = get_key(c);
+                    // i64 ts = get_ts(key);
+                    // c->input[TS_INDEX] = Value(ts);
                 }
                 // Log_info("workload type = %d. txn_id = %lu. key = %d.", c->root_type_, txn->id_, key);
                 tx_data().innid_to_server[c->inn_id_] = par_id;
@@ -129,33 +120,54 @@ namespace janus {
  //           if (writing_to_par) {
                 tx_data().pars_to_finalize.insert(par_id);
  //           }
+            /*
             if (is_single_shard && write_only) {
-                // tx_data().n_single_shard_write_only++; // stats
+                tx_data().n_single_shard_write_only++; // stats
             }
-            commo()->AccBroadcastDispatch(this->coo_id_,
-                                          sp_vec_piece,
-                                          this,
-                                          tx_data().ssid_spec,
-                                          is_single_shard && write_only,
-                                          tx_data().coord,
-                                          tx_data().cohorts,
-                                          std::bind(&CoordinatorAcc::AccDispatchAck,
-                                                 this,
-                                                    phase_,
-                                                    std::placeholders::_1,
-                                                    std::placeholders::_2,
-                                                    std::placeholders::_3,
-                                                    std::placeholders::_4,
-                                                    std::placeholders::_5,
-                                                    std::placeholders::_6,
-                                                    std::placeholders::_7,
-                                                    std::placeholders::_8),
-					                      tx_data().id_,
-                                          tx_data().n_status_query,
-                                          std::bind(&CoordinatorAcc::AccStatusQueryAck,
-                                                    this,
-                                                    tx_data().id_,
-                                                    std::placeholders::_1)); 
+            */
+            if (tx_data().is_rotxn) { // rotxn
+                commo()->AccBroadcastRotxnDispatch(this->coo_id_,
+                                                   sp_vec_piece,
+                                                   this,
+                                                   tx_data().ssid_spec,
+                                                   get_ts(par_id),
+                                                   std::bind(&CoordinatorAcc::AccDispatchAck,
+                                                             this,
+                                                             phase_,
+                                                             std::placeholders::_1,
+                                                             std::placeholders::_2,
+                                                             std::placeholders::_3,
+                                                             std::placeholders::_4,
+                                                             std::placeholders::_5,
+                                                             std::placeholders::_6,
+                                                             std::placeholders::_7,
+                                                             std::placeholders::_8));
+            } else { // read-write txn
+                commo()->AccBroadcastDispatch(this->coo_id_,
+                                              sp_vec_piece,
+                                              this,
+                                              tx_data().ssid_spec,
+                                              is_single_shard && write_only,
+                                              tx_data().coord,
+                                              tx_data().cohorts,
+                                              std::bind(&CoordinatorAcc::AccDispatchAck,
+                                                        this,
+                                                        phase_,
+                                                        std::placeholders::_1,
+                                                        std::placeholders::_2,
+                                                        std::placeholders::_3,
+                                                        std::placeholders::_4,
+                                                        std::placeholders::_5,
+                                                        std::placeholders::_6,
+                                                        std::placeholders::_7,
+                                                        std::placeholders::_8),
+                                              tx_data().id_,
+                                              tx_data().n_status_query,
+                                              std::bind(&CoordinatorAcc::AccStatusQueryAck,
+                                                        this,
+                                                        tx_data().id_,
+                                                        std::placeholders::_1));
+            }
         }
         //Log_info("DISPATCH txid = %lu.", tx_data().id_);
         Log_debug("AccDispatchAsync cnt: %d for tx_id: %" PRIx64, cnt, txn->root_id_);
@@ -169,7 +181,7 @@ namespace janus {
                                         map<innid_t, map<int32_t, Value>>& outputs,
                                         uint64_t arrival_time,
                                         uint8_t rotxn_okay,
-                                        const std::unordered_map<i32, uint64_t>& returned_ts) {
+                                        const std::pair<parid_t, uint64_t>& new_svr_ts) {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
         if (phase != phase_) return;
         auto* txn = (TxData*) cmd_;
@@ -177,9 +189,15 @@ namespace janus {
         bool track_arrival_time = true;
         // Log_info("rotxn_okay = %d; returned_ts size = %d, returned_ts[-1] = %lu.", rotxn_okay, returned_ts.size(), returned_ts.at(-1));
         // for rotxn update key_ts
+        /*
         for (const auto& key_ts : returned_ts) {
             update_key_ts(key_ts.first, key_ts.second);
         }
+        */
+        parid_t server = new_svr_ts.first;
+        uint64_t new_ts = new_svr_ts.second;
+        update_key_ts(server, new_ts);
+
         if (!rotxn_okay) {
             aborted_ = true;
             committed_ = !aborted_;
@@ -536,6 +554,7 @@ namespace janus {
         tx_data().par_ids.clear();
     }
 
+    /*
     i32 CoordinatorAcc::get_key(const shared_ptr<SimpleCommand>& c) {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
 //                Log_info("Workload type = %d, op count = %d, keys_ size = %d. keys_ real size = %d. keys_ = %d. values size = %d. key = %d.",
@@ -557,7 +576,9 @@ namespace janus {
                 return -1;
         }
     }
+    */
 
+    /*
     uint64_t CoordinatorAcc::get_ts(i32 key) {
         std::lock_guard<std::recursive_mutex> lock(mtx_);
         if (key_to_ts.find(key) == key_to_ts.end()) {
@@ -565,9 +586,28 @@ namespace janus {
         }
         return key_to_ts.at(key);
     }
+    */
 
+    /*
     void CoordinatorAcc::update_key_ts(i32 key, uint64_t new_ts) {
         std::lock_guard<std::recursive_mutex> lock(mtx_);
         key_to_ts[key] = new_ts;
+    }
+    */
+
+    uint64_t CoordinatorAcc::get_ts(uint32_t server) {
+        std::lock_guard<std::recursive_mutex> lock(mtx_);
+        if (svr_to_ts.find(server) == svr_to_ts.end()) {
+            return 0;
+        }
+        return svr_to_ts.at(server);
+    }
+
+    void CoordinatorAcc::update_key_ts(uint32_t server, uint64_t new_ts) {
+        std::lock_guard<std::recursive_mutex> lock(mtx_);
+        if (svr_to_ts.find(server) != svr_to_ts.end() && svr_to_ts[server] >= new_ts) {
+            return;
+        }
+        svr_to_ts[server] = new_ts;
     }
 } // namespace janus

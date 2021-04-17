@@ -13,6 +13,7 @@ namespace janus {
         int32_t OnDispatch(cmdid_t cmd_id,
                            const shared_ptr<Marshallable>& cmd,
                            uint64_t ssid_spec,
+                           uint64_t safe_ts,
                            uint8_t is_single_shard_write_only,
                            const uint32_t& coord,
                            const std::unordered_set<uint32_t>& cohorts,
@@ -22,7 +23,7 @@ namespace janus {
                            TxnOutput& ret_output,
                            uint64_t* arrival_time,
                            uint8_t* rotxn_okay,
-                           unordered_map<i32, uint64_t>* returned_ts);     // AccDispatch RPC handler
+                           std::pair<parid_t, uint64_t>* new_svr_ts);     // AccDispatch RPC handler
         void OnValidate(cmdid_t cmd_id, snapshotid_t ssid_new, int8_t* res);
         void OnFinalize(cmdid_t cmd_id, int8_t decision);
         void OnStatusQuery(cmdid_t cmd_id, int8_t* res, DeferredReply* defer);
@@ -50,5 +51,7 @@ namespace janus {
         const uint64_t MAX_BLOCK_TIMEOUT = 3000000; // max time a txn will be blocked
         i32 get_row_key(const shared_ptr<SimpleCommand>& sp_piece_data, int32_t var_id, uint8_t workload) const;
         bool tpcc_row_key(int32_t var_id) const;
+        // rotxn
+        static uint64_t max_write_ts;
     };
 }

@@ -235,7 +235,7 @@ class ClassicServiceImpl : public ClassicService {
                    TxnOutput* output,
                    uint64_t* arrival_time,
                    uint8_t* rotxn_okay,
-                   unordered_map<i32, uint64_t>* returned_ts,
+                   std::pair<parid_t, uint64_t>* new_svr_ts,
                    DeferredReply* defer_reply) override;
 
   void AccValidate(const i64& cmd_id, const uint64_t& ssid_new, int8_t* res, DeferredReply* defer_reply) override;
@@ -247,6 +247,21 @@ class ClassicServiceImpl : public ClassicService {
   void AccResolveStatusCoord(const cmdid_t& cmd_id, uint8_t* status, DeferredReply* defer_reply) override;
 
   void AccGetRecord(const cmdid_t& cmd_id, uint8_t* status, uint64_t* ssid_low, uint64_t* ssid_high, DeferredReply* defer_reply) override;
+
+        void AccRotxnDispatch(const uint32_t& coo_id,
+                              const i64& cmd_id,
+                              const MarshallDeputy& cmd,
+                              const uint64_t& ssid_spec,
+                              const uint64_t& safe_ts,
+                              int32_t* res,
+                              uint64_t* ssid_low,
+                              uint64_t* ssid_high,
+                              uint64_t* ssid_new,
+                              TxnOutput* output,
+                              uint64_t* arrival_time,
+                              uint8_t* rotxn_okay,
+                              std::pair<parid_t, uint64_t>* new_svr_ts,
+                              DeferredReply* defer_reply) override;
 
  protected:
   void RegisterStats();
