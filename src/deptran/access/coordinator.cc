@@ -94,7 +94,7 @@ namespace janus {
                 */
                 //Log_info("try this. roottype = %d; type = %d.", c->root_type_, c->type_);
                 // for rotxn
-                if (c->root_type_ == FB_ROTXN || c->root_type_ == SPANNER_ROTXN) {
+                if (c->root_type_ == FB_ROTXN || c->root_type_ == SPANNER_ROTXN || c->root_type_ == TPCC_STOCK_LEVEL) {
                     tx_data().is_rotxn = true;
                     // i32 key = get_key(c);
                     // i64 ts = get_ts(key);
