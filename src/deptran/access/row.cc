@@ -46,7 +46,7 @@ namespace janus {
         return new_row;
     }
 
-    SSID AccRow::read_column(txnid_t tid, mdb::colid_t col_id, mdb::Value* value, snapshotid_t ssid_spec, unsigned long& index, bool& decided, bool is_rotxn) {
+    SSID AccRow::read_column(txnid_t tid, mdb::colid_t col_id, mdb::Value* value, snapshotid_t ssid_spec, unsigned long& index, bool& decided, bool is_rotxn, bool& rotxn_safe, uint64_t safe_ts) {
         if (col_id >= _row.size()) {
             // col_id is invalid. We're doing a trick here.
             // keys are col_ids
@@ -54,7 +54,7 @@ namespace janus {
             return {};
         }
         SSID ssid;
-        *value = _row[col_id].read(tid, ssid_spec, ssid, index, decided, is_rotxn);
+        *value = _row[col_id].read(tid, ssid_spec, ssid, index, decided, is_rotxn, rotxn_safe, safe_ts);
         return ssid;
     }
 

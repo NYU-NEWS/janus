@@ -33,14 +33,17 @@ namespace janus {
         mdb::Value value;       // the value of this write
         // uint32_t n_pending_reads = 0; // # reads that returning this write
         std::unordered_set<txnid_t> pending_reads = {};
+        rrr::SharedIntEvent status_resolved;  // rotxn waiting
+        uint64_t write_ts = 0;  // for rotxn check
 
         // rrr::IntEvent ss_safe;  // fires if status is resolved and n_pending_reads = 0
         // rrr::SharedIntEvent status_ready;  // for read Accquery
         std::function<void()> ss_safe = nullptr;
 
-        AccTxnRec() : txn_id(-1), ssid(), status(UNCHECKED) {}
+        AccTxnRec() : txn_id(-1), ssid(), status(UNCHECKED), write_ts(0) {}
         explicit AccTxnRec(mdb::Value&& v, txnid_t tid = 0, acc_status_t stat = UNCHECKED)
-                : txn_id(tid), ssid(), status(stat), value(std::move(v)) {
+                : txn_id(tid), ssid(), status(stat), value(std::move(v)), write_ts(0) {
+                    status_resolved.AccSet(stat);
                     // ss_safe.Set(status != UNCHECKED && n_pending_reads == 0);
                     // status_ready.AccSet(stat);
                 }
@@ -51,13 +54,15 @@ namespace janus {
                   value(std::move(that.value)),
                   //n_pending_reads(that.n_pending_reads),
                   pending_reads(std::move(that.pending_reads)),
+                  status_resolved(std::move(that.status_resolved)),
+                  write_ts(that.write_ts),
                   ss_safe(std::move(that.ss_safe)) {}
                   // ss_safe(std::move(that.ss_safe)),
                   // status_ready(std::move(that.status_ready)) {}
         AccTxnRec(const AccTxnRec&) = delete;
         AccTxnRec& operator=(const AccTxnRec&) = delete;
-        AccTxnRec(mdb::Value&& v, txnid_t tid, const SSID& ss_id, acc_status_t stat = UNCHECKED)
-                : txn_id(tid), ssid(ss_id), status(stat), value(std::move(v)) {}
+        AccTxnRec(mdb::Value&& v, txnid_t tid, const SSID& ss_id, acc_status_t stat = UNCHECKED, uint64_t w_ts = 0)
+                : txn_id(tid), ssid(ss_id), status(stat), value(std::move(v)), write_ts (w_ts) {}
         void extend_ssid(snapshotid_t ssid_new) {
             if (ssid.ssid_high < ssid_new) { // extend ssid range for reads upon validation
                 ssid.ssid_high = ssid_new;
@@ -81,7 +86,7 @@ namespace janus {
         AccColumn(AccColumn&& that) noexcept;
         AccColumn(const AccColumn&) = delete;   // no copy
         AccColumn& operator=(const AccColumn&) = delete; // no copy
-        const mdb::Value& read(txnid_t tid, snapshotid_t ssid_spec, SSID& ssid, unsigned long& index, bool& decided, bool is_rotxn);
+        const mdb::Value& read(txnid_t tid, snapshotid_t ssid_spec, SSID& ssid, unsigned long& index, bool& decided, bool is_rotxn, bool& rotxn_safe, uint64_t safe_ts);
         SSID write(mdb::Value&& v, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index,
                 bool& decided, unsigned long& prev_index, bool& same_tx, bool mark_finalized = false);
     private:
@@ -96,6 +101,7 @@ namespace janus {
         void finalize(txnid_t tid, unsigned long index, int8_t decision);
         void commit(unsigned long index);
         void abort(unsigned long index);
+        unsigned long find_prev_version(unsigned long index);
 
         /* logical head related */
         unsigned long _logical_head = 0;   // points to logical head, for reads fast reference

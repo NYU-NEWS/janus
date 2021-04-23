@@ -12,14 +12,20 @@ namespace janus {
         auto acc_row = dynamic_cast<AccRow*>(row);
         unsigned long index = 0;
 	    bool is_decided = true;
+	    bool rotxn_safe = true;
 	    // Log_info("ReadColumn. txnid = %lu. key = %d. ts = %d.", this->tid_, acc_row->key, this->key_to_ts[acc_row->key]);
         //Log_info("server:ReadColumn. txid = %lu. ssid_spec = %lu.", this->tid_, sg.ssid_spec);
-        SSID ssid = acc_row->read_column(this->tid_, col_id, value, sg.ssid_spec, index, is_decided, this->is_rotxn);
+        SSID ssid = acc_row->read_column(this->tid_, col_id, value, sg.ssid_spec, index, is_decided, this->is_rotxn, rotxn_safe, this->safe_ts);
         // for rotxn
         // i32 key = acc_row->key;
         // uint64_t new_ts = ssid.ssid_low;
         // update_return_ts(key, new_ts);
+        /*
         if (this->safe_ts < acc_row->write_ts) {
+            this->rotxn_okay = false;
+        }
+        */
+        if (this->is_rotxn && !rotxn_safe) {
             this->rotxn_okay = false;
         }
 
@@ -52,7 +58,8 @@ namespace janus {
             Value *v = nullptr;
             unsigned long index = 0;
 	        bool is_decided = true;
-            SSID ssid = acc_row->read_column(this->tid_, col_id, v, sg.ssid_spec, index, is_decided, this->is_rotxn);
+            bool rotxn_safe = true;
+            SSID ssid = acc_row->read_column(this->tid_, col_id, v, sg.ssid_spec, index, is_decided, this->is_rotxn, rotxn_safe, this->safe_ts);
             // for rotxn
             // uint64_t new_ts = ssid.ssid_low;
             // update_return_ts(key, new_ts);
@@ -61,7 +68,12 @@ namespace janus {
                 this->rotxn_okay = false;
             }
             */
+            /*
             if (this->safe_ts < acc_row->write_ts) {
+                this->rotxn_okay = false;
+            }
+            */
+            if (this->is_rotxn && !rotxn_safe) {
                 this->rotxn_okay = false;
             }
 
@@ -121,7 +133,7 @@ namespace janus {
             //Log_info("txnid = %lu; write: prev_read colid = %d; index = %d.", this->tid_, col_id, pre_index);
             verify(acc_row->_row.at(col_id).txn_queue[pre_index].pending_reads.find(this->tid_) != acc_row->_row.at(col_id).txn_queue[pre_index].pending_reads.end());
             // verify(!acc_row->_row.at(col_id).txn_queue[pre_index].pending_reads.empty());
-            verify(pre_index == prev_index);
+    // verify(pre_index == prev_index);
             // acc_row->_row.at(col_id).txn_queue[pre_index].n_pending_reads--;
             acc_row->_row.at(col_id).txn_queue[pre_index].pending_reads.erase(this->tid_);
             if (acc_row->check_write_status(this->tid_, col_id, pre_index)) {
@@ -179,7 +191,7 @@ namespace janus {
                 unsigned long pre_index = sg.metadata.indices[row].at(col_id);
                 // verify(acc_row->_row.at(col_id).txn_queue[pre_index].n_pending_reads > 0);
                 verify(acc_row->_row.at(col_id).txn_queue[pre_index].pending_reads.find(this->tid_) != acc_row->_row.at(col_id).txn_queue[pre_index].pending_reads.end());
-                verify(pre_index == prev_index);
+        // verify(pre_index == prev_index);
                 // acc_row->_row.at(col_id).txn_queue[pre_index].n_pending_reads--;
                 acc_row->_row.at(col_id).txn_queue[pre_index].pending_reads.erase(this->tid_);
                 if (acc_row->check_write_status(this->tid_, col_id, pre_index)) {

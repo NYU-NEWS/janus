@@ -1,4 +1,5 @@
 #include "column.h"
+#include "ssid_predictor.h"
 
 namespace janus {
     // ---- basic AccColumn member -----
@@ -20,26 +21,48 @@ namespace janus {
         update_stable_frontier();
     }
 
-    const mdb::Value& AccColumn::read(txnid_t tid, snapshotid_t ssid_spec, SSID& ssid, unsigned long& index, bool& decided, bool is_rotxn) {
+    const mdb::Value& AccColumn::read(txnid_t tid, snapshotid_t ssid_spec, SSID& ssid, unsigned long& index, bool& decided, bool is_rotxn, bool& rotxn_safe, uint64_t safe_ts) {
         // return logical head
         index = _logical_head;
-        snapshotid_t ssid_new = read_get_next_SSID(ssid_spec);
-        // extends head's ssid
-        txn_queue[index].extend_ssid(ssid_new);
-        ssid = txn_queue[index].ssid;
-        /*
-        if (!is_offset_safe(ssid_new)) {
-            offset_safe = false;
-        }
-        */
-        if (logical_head_status() != FINALIZED) { // then if this tx turns out consistent and all parts decided, can respond immediately
-            decided = false;
+        do {
+            snapshotid_t low = txn_queue[index].ssid.ssid_low;
+            snapshotid_t ssid_new = low < ssid_spec ? ssid_spec : low + 1;
+            txn_queue[index].extend_ssid(ssid_new);
+            if (is_rotxn && txn_queue[index].status != FINALIZED && txn_queue[index].status != ABORTED) {
+                // this version has not been finalized, async wait
+                /*
+                Log_info("rotxn id = %lu; waiting on version by write txn id = %lu; colid = %d; index = %lu, status = %d.",
+                         tid, txn_queue[index].txn_id, col_id, index, txn_queue[index].status);
+                */
+                txn_queue[index].status_resolved.Wait([](int val)->bool {
+                    return (val == FINALIZED || val == ABORTED); // val is set in AccFinalize
+                });
+                /*
+                Log_info("rotxn id = %lu; waiting_done on version by write txn id = %lu; colid = %d; index = %lu, status = %d.",
+                         tid, txn_queue[index].txn_id, col_id, index, txn_queue[index].status);
+                */
+            }
+            if (txn_queue[index].status == ABORTED) {
+                index = find_prev_version(index);
+                if (txn_queue[index].status == FINALIZED) {
+                    snapshotid_t low = txn_queue[index].ssid.ssid_low;
+                    snapshotid_t ssid_new = low < ssid_spec ? ssid_spec : low + 1;
+                    txn_queue[index].extend_ssid(ssid_new);
+                }
+            }
+        } while (is_rotxn && txn_queue[index].status != FINALIZED && txn_queue[index].status != ABORTED);
+        verify(!is_rotxn || txn_queue[index].status == FINALIZED);
+        if (is_rotxn && txn_queue[index].write_ts > safe_ts) {
+            rotxn_safe = false;
         }
         if (!is_rotxn) {
+            if (logical_head_status() != FINALIZED) { // then if this tx turns out consistent and all parts decided, can respond immediately
+                decided = false;
+            }
             txn_queue[index].pending_reads.insert(tid);
         }
-        // txn_queue[index].n_pending_reads++;  // for strict serializability
-        return txn_queue[_logical_head].value;
+        ssid = txn_queue[index].ssid;
+        return txn_queue[index].value;
     }
 
     SSID AccColumn::write(mdb::Value&& v, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index,
@@ -58,10 +81,11 @@ namespace janus {
             decided = false;
         }
         SSID new_ssid = write_get_next_SSID(ssid_spec);
+        uint64_t current_time = SSIDPredictor::get_current_time();
         if (mark_finalized) { // single_shard_write, can safely mark it finalized now.
-            txn_queue.emplace_back(std::move(v), tid, new_ssid, FINALIZED);
+            txn_queue.emplace_back(std::move(v), tid, new_ssid, FINALIZED, current_time);
         } else {
-            txn_queue.emplace_back(std::move(v), tid, new_ssid, UNCHECKED);
+            txn_queue.emplace_back(std::move(v), tid, new_ssid, UNCHECKED, current_time);
         }
         ver_index = txn_queue.size() - 1; // record index of this pending write for later validation and finalize
         //Log_info("txnid = %lu; writing to; col_id = %d. index = %d.", tid, col_id, ver_index);
@@ -153,7 +177,8 @@ namespace janus {
     // ---------------------------------
     // ----------- finalize ------------
     void AccColumn::finalize(txnid_t tid, unsigned long index, int8_t decision) {
-        //Log_info("txnid = %lu. FINALIZE. col_id = %d; index = %d; decision = %d.", tid, col_id, index, decision);
+        // Log_info("txnid = %lu. FINALIZE. col_id = %d; index = %d; decision = %d.", tid, col_id, index, decision);
+        txn_queue[index].status_resolved.AccSet(decision);
         switch (decision) {
             case FINALIZED:
                 commit(index);
@@ -190,6 +215,15 @@ namespace janus {
             }
         }
         _stable_frontier = index - 1;
+    }
+
+    unsigned long AccColumn::find_prev_version(unsigned long index) {
+        for (unsigned long i = index - 1; i >= 0; i--) {
+            if (txn_queue[i].status != ABORTED) {
+                return i;
+            }
+        }
+        verify(0);
     }
 
     //----------------------------------------

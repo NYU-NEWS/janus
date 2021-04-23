@@ -201,10 +201,9 @@ namespace janus {
 
         // rotxn
         *rotxn_okay = 1;
-        if (sp_vec_piece->at(0)->root_type_ == FB_ROTXN || sp_vec_piece->at(0)->root_type_ == SPANNER_ROTXN || sp_vec_piece->at(0)->root_type_ == TPCC_STOCK_LEVEL) {
-            if (!tx->rotxn_okay) {
-                *rotxn_okay = 0;
-            }
+        // if (sp_vec_piece->at(0)->root_type_ == FB_ROTXN || sp_vec_piece->at(0)->root_type_ == SPANNER_ROTXN || sp_vec_piece->at(0)->root_type_ == TPCC_STOCK_LEVEL) {
+        if (tx->is_rotxn && !tx->rotxn_okay) {
+            *rotxn_okay = 0;
         }
         if (this->max_write_ts < tx->write_ts) {
             this->max_write_ts = tx->write_ts;
@@ -218,6 +217,7 @@ namespace janus {
         }
         */
         if (!tx->sg.decided) {
+            verify(!tx->is_rotxn);
             return NOT_DECIDED;
         }
         // failure handling
