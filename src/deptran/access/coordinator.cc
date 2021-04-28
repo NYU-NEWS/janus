@@ -199,8 +199,7 @@ namespace janus {
         update_key_ts(server, new_ts);
 
         if (!rotxn_okay) {
-            aborted_ = true;
-            committed_ = !aborted_;
+            tx_data().is_rotxn_okay = false;
         }
 
         for (auto& pair : outputs) {
@@ -345,6 +344,10 @@ namespace janus {
             committed_ = true;
             // tx_data().n_ssid_consistent_++;   // for stats
             n_ssid_consistent_++;   // for stats
+        }
+        if (tx_data().is_rotxn && !tx_data().is_rotxn_okay) {
+            committed_ = false;
+            aborted_ = true;
         }
         if (committed_ || aborted_) { // SG checks consistent or cascading aborts, no need to validate
             //Log_info("tx: %lu, safeguard check, commit = %d; aborted = %d", tx_data().id_, committed_, aborted_);
@@ -552,6 +555,7 @@ namespace janus {
         tx_data().cohorts.clear();
         tx_data().is_rotxn = false;
         tx_data().par_ids.clear();
+        tx_data().is_rotxn_okay = true;
     }
 
     /*

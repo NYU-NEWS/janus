@@ -348,6 +348,7 @@ class TxData: public CmdData {
     // for rotxn
     bool is_rotxn = false;
     std::unordered_set<parid_t> par_ids = {};
+    bool is_rotxn_okay = true;
 
     // ssid predictor related below
     std::unordered_map<innid_t, parid_t> innid_to_server;
