@@ -45,7 +45,7 @@ namespace janus {
         explicit AccTxnRec(mdb::Value&& v, txnid_t tid = 0, acc_status_t stat = UNCHECKED)
                 : txn_id(tid), ssid(), status(stat), value(std::move(v)), write_ts(0) {
                     status_resolved.AccSet(stat);
-                    write_ok.AccSet(FINALIZED);
+                    write_ok.AccSet(ABORTED);
                     // ss_safe.Set(status != UNCHECKED && n_pending_reads == 0);
                     // status_ready.AccSet(stat);
                 }

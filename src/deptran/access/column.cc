@@ -93,6 +93,7 @@ namespace janus {
         }
         if (!is_rotxn) {
             if (logical_head_status() != FINALIZED) { // then if this tx turns out consistent and all parts decided, can respond immediately
+                verify(0);
                 decided = false;
             }
             txn_queue[index].pending_reads.insert(tid);
@@ -124,10 +125,11 @@ namespace janus {
             early_abort = true;
             return txn_queue[prev_index].ssid;  // return any ssid
         }
-
+        /*
         if (!logical_head_ss()) {
             decided = false;
         }
+        */
         SSID new_ssid = write_get_next_SSID(ssid_spec);
         uint64_t current_time = SSIDPredictor::get_current_time();
         if (mark_finalized) { // single_shard_write, can safely mark it finalized now.
@@ -143,7 +145,7 @@ namespace janus {
         }
         */
         update_logical_head();
-        /*
+
         if (wait_for_ss(tid, prev_index)) {
             // Log_info("txnid = %lu; write waiting on tid = %lu; col_id = %d, version = %d, n_r = %d.",
             //        tid, txn_queue[waiting_index].txn_id, this->col_id, waiting_index, txn_queue[waiting_index].pending_reads.size());
@@ -155,7 +157,6 @@ namespace janus {
                 return (val == FINALIZED); // val is set in AccFinalize
             });
         }
-        */
         return new_ssid;  // return the SSID of this new write -- safety
     }
 

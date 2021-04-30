@@ -164,6 +164,7 @@ namespace janus {
         row->ref_copy();
         sg.update_metadata(ssid.ssid_low, ssid.ssid_high, false);
         // for ss
+        /*
         if (sg.metadata.indices[row].find(col_id) != sg.metadata.indices[row].end()) {
             // the same tx has a read on the same col.
             unsigned long pre_index = sg.metadata.indices[row].at(col_id);
@@ -187,6 +188,7 @@ namespace janus {
             //Log_info("txnid = %lu; decided write on tx = %lu. col = %d, index = %d.",
             //         this->tid_, acc_row->_row[col_id].txn_queue[prev_index].txn_id, col_id, prev_index);
         }
+        */
         sg.metadata.indices[row][col_id] = ver_index; // for validation and finalize
         return true;
     }
@@ -230,6 +232,7 @@ namespace janus {
             sg.update_metadata(ssid.ssid_low, ssid.ssid_high, false);
             row->ref_copy();
             // for ss
+            /*
             if (sg.metadata.indices[row].find(col_id) != sg.metadata.indices[row].end()) {
                 // the same tx has a read on the same col.
                 unsigned long pre_index = sg.metadata.indices[row].at(col_id);
@@ -249,6 +252,7 @@ namespace janus {
                 // Log_info("txnid = %lu; write waiting on tx = %lu. col = %d, index = %d.",
                 //          this->tid_, acc_row->_row[col_id].txn_queue[prev_index].txn_id, col_id, prev_index);
             }
+            */
             sg.metadata.indices[row][col_id] = ver_index; // for validation and finalize
         }
         return true;

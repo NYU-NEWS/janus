@@ -22,10 +22,7 @@ namespace janus {
                                                       TxnOutput &,
                                                       uint64_t arrival_time,
                                                       uint8_t rotxn_okay,
-                                                      const std::pair<parid_t, uint64_t>& new_svr_ts)> &callback,
-                                  cmdid_t cmd_id,
-                                  int& n_status_query,
-                                  const std::function<void(int8_t res)> &callback_status);
+                                                      const std::pair<parid_t, uint64_t>& new_svr_ts)> &callback);
         void AccBroadcastValidate(parid_t par_id,
                                   cmdid_t cmd_id,
                                   snapshotid_t ssid_new,

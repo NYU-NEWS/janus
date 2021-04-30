@@ -15,10 +15,7 @@ namespace janus {
                                                                  TxnOutput &,
                                                                  uint64_t arrival_time,
                                                                  uint8_t rotxn_okay,
-                                                                 const std::pair<parid_t, uint64_t>& new_svr_ts)> &callback,
-					                    cmdid_t status_cmd_id,
-                                        int& n_status_query,
-                                        const std::function<void(int8_t res)> &callback_status) {
+                                                                 const std::pair<parid_t, uint64_t>& new_svr_ts)> &callback) {
         cmdid_t cmd_id = sp_vec_piece->at(0)->root_id_;
         // verify(sp_vec_piece->size() > 0);
         auto par_id = sp_vec_piece->at(0)->PartitionId();

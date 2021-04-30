@@ -236,6 +236,7 @@ namespace janus {
                 acc_row->finalize(acc_txn->tid_, col_index.first, col_index.second, decision);
             }
         }
+        /*
         // now we do AccQueryStatus callbacks
         if (acc_txn->query_callbacks.empty()) {
             // no later reads read this write
@@ -244,12 +245,14 @@ namespace janus {
         for (auto& callback : acc_txn->query_callbacks) {
             callback(decision);
         }
+        */
         // clear metadata after finalizing a txn
         acc_txn->sg.reset_safeguard();
         acc_txn->query_callbacks.clear();
     }
 
     void SchedulerAcc::OnStatusQuery(cmdid_t cmd_id, int8_t *res, DeferredReply* defer) {
+        verify(0);
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
         // Log_info("txnid = %lu; On statusQuery.", acc_txn->tid_);
         // wait until acc_query_start is set 1 by OnAccDispatch
@@ -328,6 +331,7 @@ namespace janus {
     }
 
     void SchedulerAcc::check_status(cmdid_t cmd_id, bool& is_decided, bool& will_abort) {
+        verify(0);
         auto acc_txn = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));  // get the txn
         for (auto& row_col : acc_txn->sg.metadata.reads_for_query) {
             auto acc_row = dynamic_cast<AccRow *>(row_col.first);

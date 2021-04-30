@@ -144,12 +144,17 @@ namespace janus {
     }
 
     void AccRow::check_ss_safe(txnid_t tid, mdb::colid_t col_id, unsigned long index) {
+        if (check_write_status(tid, col_id, index)) {
+            _row[col_id].txn_queue[index].write_ok.AccSet(FINALIZED);
+        }
+        /*
         if (check_write_status(tid, col_id, index) && _row[col_id].txn_queue[index].ss_safe != nullptr) {
             // call acc query callbacks
             // Log_info("txnid = %lu; checking ss_safe and CALL callback.", tid);
             _row[col_id].txn_queue[index].ss_safe();
             _row[col_id].txn_queue[index].ss_safe = nullptr;
         }
+        */
     }
 
     txnid_t AccRow::get_ver_tid(mdb::colid_t col_id, unsigned long index) {

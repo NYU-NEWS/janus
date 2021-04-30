@@ -160,13 +160,7 @@ namespace janus {
                                                         std::placeholders::_5,
                                                         std::placeholders::_6,
                                                         std::placeholders::_7,
-                                                        std::placeholders::_8),
-                                              tx_data().id_,
-                                              tx_data().n_status_query,
-                                              std::bind(&CoordinatorAcc::AccStatusQueryAck,
-                                                        this,
-                                                        tx_data().id_,
-                                                        std::placeholders::_1));
+                                                        std::placeholders::_8));
             }
         }
         //Log_info("DISPATCH txid = %lu.", tx_data().id_);
@@ -270,6 +264,7 @@ namespace janus {
 	        } else {
                 // now we send statusquery rpc as optimization
                 // Log_info("send statusquery");
+                /*
                 for (const auto& parid : tx_data().par_ids) {
                     tx_data().n_status_query++;
                     commo()->AccBroadcastStatusQuery(parid,
@@ -279,6 +274,7 @@ namespace janus {
                                                                tx_data().id_,
                                                                std::placeholders::_1));
                 }
+                */
             }
 	        GotoNextPhase();
         }
@@ -300,6 +296,7 @@ namespace janus {
         }
     }
     */
+    /*
     void CoordinatorAcc::AccStatusQueryAck(txnid_t tid, int8_t res) {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
         if (tid != tx_data().id_) return;  // the queried txn has early returned
@@ -329,7 +326,7 @@ namespace janus {
             // this txn has not got to FINAL phase yet, either validating or dispatching
         }
     }
-
+    */
     // ------------- SAFEGUARD ----------------
     void CoordinatorAcc::SafeGuardCheck() {
         std::lock_guard<std::recursive_mutex> lock(this->mtx_);
