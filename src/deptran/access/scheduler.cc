@@ -106,48 +106,6 @@ namespace janus {
         uint64_t now = Predictor::get_current_time();  // the phyiscal arrival time of this tx
         *arrival_time = now;  // return arrival time in response
         //Log_info("server:OnDispatch. txid = %lu. ssid_spec = %lu.eturning arrival_time = %lu.", tx->tid_, ssid_spec, *arrival_time);
-        bool will_block = false;
-        // we always train a new tx even if it will be early-aborted
-        //if (ssid_spec != 0) { // client-side ssid_spec logic is on
-        if (false) {  // for testing purpose, disable server-side ML engine
-            uint8_t workload;  // either FB, TPCC, or Spanner for now
-            switch (sp_vec_piece->at(0)->root_type_) {
-                case FB_ROTXN:
-                case FB_WRITE:
-                    workload = FACEBOOK;
-                    break;
-                case SPANNER_ROTXN:
-                case SPANNER_RW:
-                    workload = SPANNER;
-                    break;
-                case DYNAMIC_ROTXN:
-                case DYNAMIC_RW:
-                    workload = DYNAMIC;
-                default:  // TPCC
-                    workload = TPCC;
-                    break;
-            }
-            std::unordered_map<i32, optype_t> keys_to_train;
-            for (const auto& sp_piece_data : *sp_vec_piece) {
-                //Log_info("piece.op_type_ = %d.", sp_piece_data->op_type_);
-                for (auto var_id : sp_piece_data->input.keys_) {
-                    // in FB workloads, it's guaranteed that each input_ is a row key
-                    i32 row_key = get_row_key(sp_piece_data, var_id, workload);
-                    if (row_key == NOT_ROW_KEY) {
-                        continue;
-                    }
-                    if (keys_to_train.find(row_key) == keys_to_train.end() || sp_piece_data->op_type_ == WRITE_REQ) {
-                        keys_to_train[row_key] = sp_piece_data->op_type_;
-                    }
-                }
-            }
-            for (const auto& key_op : keys_to_train) {
-                if (Predictor::should_block(key_op.first, now, ssid_spec, key_op.second)) {
-                    will_block = true;
-                }
-            }
-            keys_to_train.clear();
-        }
         // deal with early-abort and single-shard, write-only txn
         if (is_single_shard_write_only) {
             tx->sg.mark_finalized = true;
@@ -156,16 +114,6 @@ namespace janus {
             // Log_info("Mark all writes finalized due to the txn is write only and single shard");
         }
         // now execute this txn
-        // will_block = true; // todo: testing purpose, take this out later
-        if (will_block && ssid_spec > now) {
-            // wait until ssid_spec fires
-            // TODO: heuristics or ML tells us how long it should wait
-            uint64_t block_time = ssid_spec - now;
-            if (block_time > MAX_BLOCK_TIMEOUT) {
-                block_time = MAX_BLOCK_TIMEOUT;
-            }
-            Reactor::CreateSpEvent<NeverEvent>()->Wait(block_time);
-        }
         // tx->acc_query_start->Set(1);  // acc_query RPC can be handled only after we have executed this tx
         // Log_debug("Received AccDispatch for txnid = %lu; #pieces = %d.", tx->tid_, sp_vec_piece->size());
         for (const auto& sp_piece_data : *sp_vec_piece) {
@@ -176,7 +124,7 @@ namespace janus {
                 Log_debug("piece input id = %d; row key = %d.", key, sp_piece_data->input.at(key).get_i32());
             }
             */
-            if (sp_piece_data->root_type_ == FB_ROTXN || sp_piece_data->root_type_ == SPANNER_ROTXN || sp_piece_data->root_type_ == TPCC_STOCK_LEVEL) {
+            if (sp_piece_data->root_type_ == FB_ROTXN || sp_piece_data->root_type_ == SPANNER_ROTXN /*|| sp_piece_data->root_type_ == TPCC_STOCK_LEVEL*/) {
                 tx->is_rotxn = true;
                 // i32 key = get_key(sp_piece_data);
                 // uint64_t ts = sp_piece_data->input.at(TS_INDEX).get_i64();
@@ -216,6 +164,10 @@ namespace janus {
             return BOTH_NEGATIVE;
         }
         */
+        if (tx->early_abort) {
+            return EARLY_ABORT;
+        }
+
         if (!tx->sg.decided) {
             verify(!tx->is_rotxn);
             return NOT_DECIDED;

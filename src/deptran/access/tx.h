@@ -82,6 +82,8 @@ namespace janus {
         bool rotxn_okay = true;
         uint64_t write_ts = 0;
 
+        bool early_abort = false;
+
         ~AccTxn() override;
     private:
         SafeGuard sg;
@@ -90,6 +92,11 @@ namespace janus {
         void load_speculative_ssid(snapshotid_t ssid);
         snapshotid_t get_spec_ssid() const;
         //shared_ptr<IntEvent> acc_query_start = Reactor::CreateSpEvent<IntEvent>();
+        static const mdb::Value DUMMY_VALUE_I32;
+        static const mdb::Value DUMMY_VALUE_I64;
+        static const mdb::Value DUMMY_VALUE_DOUBLE;
+        static const mdb::Value DUMMY_VALUE_STR;
+        static void get_dummy_value(mdb::Value* value);
         friend class SchedulerAcc;
     };
 }   // namespace janus

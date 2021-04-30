@@ -340,6 +340,7 @@ class TxData: public CmdData {
     int n_abort_sent = 0;
     int n_abort_ack = 0;
     bool _validation_failed = false;
+    bool _early_abort = false;
 
     // failure handling
     std::unordered_set<parid_t> cohorts = {};

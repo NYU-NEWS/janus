@@ -75,6 +75,7 @@ void CoordinatorClassic::DoTxAsync(TxRequest& req) {
     n_validation_passed = 0;
     n_cascading_aborts = 0;
     n_rotxn_aborts = 0;
+    n_early_aborts = 0;
     // int n_single_shard = 0;
     // int n_single_shard_write_only = 0;
   Reset(); // In case of reuse.

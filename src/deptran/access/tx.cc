@@ -2,20 +2,32 @@
 #include "ssid_predictor.h"
 
 namespace janus {
+    const mdb::Value AccTxn::DUMMY_VALUE_STR{""};
+    const mdb::Value AccTxn::DUMMY_VALUE_I32{(i32)0};
+    const mdb::Value AccTxn::DUMMY_VALUE_I64{(i64)0};
+    const mdb::Value AccTxn::DUMMY_VALUE_DOUBLE{(double)0};
+
     // TODO: fill in these stubs
     bool AccTxn::ReadColumn(Row *row,
                             colid_t col_id,
                             Value* value,
                             int hint_flag) {
         verify(row != nullptr);
+
+        if (this->early_abort) {
+            get_dummy_value(value);
+            return true;
+        }
+
         // class downcasting to get AccRow
         auto acc_row = dynamic_cast<AccRow*>(row);
         unsigned long index = 0;
 	    bool is_decided = true;
 	    bool rotxn_safe = true;
+	    bool abort = false;
 	    // Log_info("ReadColumn. txnid = %lu. key = %d. ts = %d.", this->tid_, acc_row->key, this->key_to_ts[acc_row->key]);
         //Log_info("server:ReadColumn. txid = %lu. ssid_spec = %lu.", this->tid_, sg.ssid_spec);
-        SSID ssid = acc_row->read_column(this->tid_, col_id, value, sg.ssid_spec, index, is_decided, this->is_rotxn, rotxn_safe, this->safe_ts);
+        SSID ssid = acc_row->read_column(this->tid_, col_id, value, sg.ssid_spec, index, is_decided, this->is_rotxn, rotxn_safe, this->safe_ts, abort);
         // for rotxn
         // i32 key = acc_row->key;
         // uint64_t new_ts = ssid.ssid_low;
@@ -25,6 +37,10 @@ namespace janus {
             this->rotxn_okay = false;
         }
         */
+        if (abort) {
+            this->early_abort = true;
+            return true;
+        }
         if (this->is_rotxn && !rotxn_safe) {
             this->rotxn_okay = false;
         }
@@ -56,10 +72,17 @@ namespace janus {
         i32 key = acc_row->key;
         for (auto col_id : col_ids) {
             Value *v = nullptr;
+            if (this->early_abort) {
+                get_dummy_value(v);
+                values->push_back(*v);
+                continue;
+            }
+
             unsigned long index = 0;
 	        bool is_decided = true;
             bool rotxn_safe = true;
-            SSID ssid = acc_row->read_column(this->tid_, col_id, v, sg.ssid_spec, index, is_decided, this->is_rotxn, rotxn_safe, this->safe_ts);
+            bool abort = false;
+            SSID ssid = acc_row->read_column(this->tid_, col_id, v, sg.ssid_spec, index, is_decided, this->is_rotxn, rotxn_safe, this->safe_ts, abort);
             // for rotxn
             // uint64_t new_ts = ssid.ssid_low;
             // update_return_ts(key, new_ts);
@@ -79,6 +102,10 @@ namespace janus {
 
             verify(v != nullptr);
             values->push_back(std::move(*v));
+            if (abort) {
+                this->early_abort = true;
+                continue;
+            }
             row->ref_copy();
             sg.metadata.indices[row][col_id] = index;  // for later validation
             if (!is_decided) {
@@ -99,14 +126,20 @@ namespace janus {
                              Value& value,
                              int hint_flag) {
         verify(row != nullptr);
+
+        if (this->early_abort) {
+            return true;
+        }
+
         auto acc_row = dynamic_cast<AccRow*>(row);
         unsigned long ver_index = 0;
         //Log_info("server:WriteColumn. txid = %lu. ssid_spec = %lu.", this->tid_, sg.ssid_spec);
         bool is_decided = true;
         unsigned long prev_index = 0;
         bool same_tx = false;
+        bool abort = false;
         SSID ssid = acc_row->write_column(col_id, std::move(value), sg.ssid_spec, this->tid_, ver_index,
-                is_decided, prev_index, same_tx, sg.mark_finalized); // ver_index is new write
+                is_decided, prev_index, same_tx, abort,sg.mark_finalized); // ver_index is new write
         // for rotxn
         /*
         i32 key = acc_row->key;
@@ -119,6 +152,10 @@ namespace janus {
         }
         if (this->write_ts < acc_row->write_ts) {
             this->write_ts = acc_row->write_ts;
+        }
+        if (abort) {
+            this->early_abort = true;
+            return true;
         }
 
         if (same_tx) {
@@ -163,12 +200,16 @@ namespace janus {
         i32 key = acc_row->key;
         int v_counter = 0;
         for (auto col_id : col_ids) {
+            if (this->early_abort) {
+                return true;
+            }
             unsigned long ver_index = 0;
             bool is_decided = true;
             unsigned long prev_index = 0;
             bool same_tx = false;
+            bool abort = false;
             SSID ssid = acc_row->write_column(col_id, std::move(values[v_counter++]), sg.ssid_spec, this->tid_,
-                    ver_index, is_decided, prev_index, same_tx, sg.mark_finalized);
+                    ver_index, is_decided, prev_index, same_tx, abort,sg.mark_finalized);
             // for rotxn
             // uint64_t new_ts = ssid.ssid_low;
             // update_return_ts(key, new_ts);
@@ -179,7 +220,10 @@ namespace janus {
             if (this->write_ts < acc_row->write_ts) {
                 this->write_ts = acc_row->write_ts;
             }
-
+            if (abort) {
+                this->early_abort = true;
+                return true;
+            }
             if (same_tx) {
                 continue;
             }
@@ -281,6 +325,27 @@ namespace janus {
                 defer->reply();
             }
         });
+    }
+
+    void AccTxn::get_dummy_value(mdb::Value *value) {
+        verify(value != nullptr);
+        switch (value->get_kind()) {
+            case mdb::Value::STR:
+                *value = DUMMY_VALUE_STR;
+                break;
+            case mdb::Value::I64:
+                *value = DUMMY_VALUE_I64;
+                break;
+            case mdb::Value::DOUBLE:
+                *value = DUMMY_VALUE_DOUBLE;
+                break;
+            case mdb::Value::UNKNOWN:
+            case mdb::Value::I32:
+                *value = DUMMY_VALUE_I32;
+                break;
+            default: verify(0);
+                break;
+        }
     }
 
     /*

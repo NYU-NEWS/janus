@@ -94,7 +94,7 @@ namespace janus {
                 */
                 //Log_info("try this. roottype = %d; type = %d.", c->root_type_, c->type_);
                 // for rotxn
-                if (c->root_type_ == FB_ROTXN || c->root_type_ == SPANNER_ROTXN || c->root_type_ == TPCC_STOCK_LEVEL) {
+                if (c->root_type_ == FB_ROTXN || c->root_type_ == SPANNER_ROTXN /*|| c->root_type_ == TPCC_STOCK_LEVEL*/) {
                     tx_data().is_rotxn = true;
                     // i32 key = get_key(c);
                     // i64 ts = get_ts(key);
@@ -233,6 +233,9 @@ namespace janus {
                 txn->_offset_invalid = true;
                 break;
             */
+            case EARLY_ABORT:
+                txn->_early_abort = true;
+                break;
             case NOT_DECIDED:
                 txn->_decided = false;
                 break;
@@ -339,15 +342,17 @@ namespace janus {
         }
         */
         // if (tx_data()._is_consistent || offset_1_check_pass()) {
+        if (tx_data()._early_abort || (tx_data().is_rotxn && !tx_data().is_rotxn_okay)) {
+            committed_ = false;
+            aborted_ = true;
+            GotoNextPhase();
+            return;
+        }
         if (tx_data()._is_consistent) {
             tx_data()._is_consistent = true;
             committed_ = true;
             // tx_data().n_ssid_consistent_++;   // for stats
             n_ssid_consistent_++;   // for stats
-        }
-        if (tx_data().is_rotxn && !tx_data().is_rotxn_okay) {
-            committed_ = false;
-            aborted_ = true;
         }
         if (committed_ || aborted_) { // SG checks consistent or cascading aborts, no need to validate
             //Log_info("tx: %lu, safeguard check, commit = %d; aborted = %d", tx_data().id_, committed_, aborted_);
@@ -440,7 +445,11 @@ namespace janus {
         freeze_coordinator();
         // abort as long as inconsistent or there is at least one statusquery ack is abort (cascading abort)
         // for stats
-        if (tx_data()._is_consistent || !tx_data()._validation_failed) {
+        if (tx_data()._early_abort) {
+            // tx_data().n_early_aborts++;
+            n_early_aborts++;
+        }
+        if (!tx_data()._early_abort && (tx_data()._is_consistent || !tx_data()._validation_failed)) {
             // this txn aborts due to cascading aborts, consistency check passed
             // tx_data().n_cascading_aborts++;
             if (tx_data()._status_abort) {
@@ -469,6 +478,7 @@ namespace janus {
         */
         if (tx_data().is_rotxn) {
             // now rotxns do not finalize
+            verify(!tx_data()._early_abort);
             if (tx_data()._is_consistent && !tx_data()._status_abort && decision == ABORTED) {
                 n_rotxn_aborts++;
             }
@@ -556,6 +566,7 @@ namespace janus {
         tx_data().is_rotxn = false;
         tx_data().par_ids.clear();
         tx_data().is_rotxn_okay = true;
+        tx_data()._early_abort = false;
     }
 
     /*

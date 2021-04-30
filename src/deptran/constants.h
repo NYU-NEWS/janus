@@ -44,6 +44,8 @@ namespace janus {
 #define OFFSET_INVALID (0x1)   // for offset-1 optimization
 #define NOT_DECIDED (0x2)      // some write reads returning has not been decided
 #define BOTH_NEGATIVE (0x3)    // both offset invalid and not decided
+#define EARLY_ABORT (0x4)            // early abort
+
 //~also returns SUCCESS by default
 // validate responses
 #define CONSISTENT (0x1)       // return vale of is_consistent of AccDispatch RPC -- local ssids same

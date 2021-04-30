@@ -46,7 +46,7 @@ namespace janus {
         return new_row;
     }
 
-    SSID AccRow::read_column(txnid_t tid, mdb::colid_t col_id, mdb::Value* value, snapshotid_t ssid_spec, unsigned long& index, bool& decided, bool is_rotxn, bool& rotxn_safe, uint64_t safe_ts) {
+    SSID AccRow::read_column(txnid_t tid, mdb::colid_t col_id, mdb::Value* value, snapshotid_t ssid_spec, unsigned long& index, bool& decided, bool is_rotxn, bool& rotxn_safe, uint64_t safe_ts, bool& early_abort) {
         if (col_id >= _row.size()) {
             // col_id is invalid. We're doing a trick here.
             // keys are col_ids
@@ -54,17 +54,17 @@ namespace janus {
             return {};
         }
         SSID ssid;
-        *value = _row[col_id].read(tid, ssid_spec, ssid, index, decided, is_rotxn, rotxn_safe, safe_ts);
+        *value = _row[col_id].read(tid, ssid_spec, ssid, index, decided, is_rotxn, rotxn_safe, safe_ts, early_abort);
         return ssid;
     }
 
     SSID AccRow::write_column(mdb::colid_t col_id, mdb::Value&& value, snapshotid_t ssid_spec, txnid_t tid,
-            unsigned long& ver_index, bool& is_decided, unsigned long& prev_index, bool& same_tx, bool mark_finalized) {
+            unsigned long& ver_index, bool& is_decided, unsigned long& prev_index, bool& same_tx, bool& early_abort, bool mark_finalized) {
         if (col_id >= _row.size()) {
             return {};
         }
         // push back to the txn queue
-        return _row[col_id].write(std::move(value), ssid_spec, tid, ver_index, is_decided, prev_index, same_tx, mark_finalized);
+        return _row[col_id].write(std::move(value), ssid_spec, tid, ver_index, is_decided, prev_index, same_tx, early_abort, mark_finalized);
     }
 
     bool AccRow::validate(txnid_t tid, mdb::colid_t col_id, unsigned long index, snapshotid_t ssid_new, bool validate_consistent) {

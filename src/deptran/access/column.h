@@ -35,6 +35,7 @@ namespace janus {
         std::unordered_set<txnid_t> pending_reads = {};
         rrr::SharedIntEvent status_resolved;  // rotxn waiting
         uint64_t write_ts = 0;  // for rotxn check
+        rrr::SharedIntEvent write_ok; // for ss
 
         // rrr::IntEvent ss_safe;  // fires if status is resolved and n_pending_reads = 0
         // rrr::SharedIntEvent status_ready;  // for read Accquery
@@ -44,6 +45,7 @@ namespace janus {
         explicit AccTxnRec(mdb::Value&& v, txnid_t tid = 0, acc_status_t stat = UNCHECKED)
                 : txn_id(tid), ssid(), status(stat), value(std::move(v)), write_ts(0) {
                     status_resolved.AccSet(stat);
+                    write_ok.AccSet(FINALIZED);
                     // ss_safe.Set(status != UNCHECKED && n_pending_reads == 0);
                     // status_ready.AccSet(stat);
                 }
@@ -56,7 +58,8 @@ namespace janus {
                   pending_reads(std::move(that.pending_reads)),
                   status_resolved(std::move(that.status_resolved)),
                   write_ts(that.write_ts),
-                  ss_safe(std::move(that.ss_safe)) {}
+                  ss_safe(std::move(that.ss_safe)),
+                  write_ok(std::move(that.write_ok)){}
                   // ss_safe(std::move(that.ss_safe)),
                   // status_ready(std::move(that.status_ready)) {}
         AccTxnRec(const AccTxnRec&) = delete;
@@ -86,9 +89,9 @@ namespace janus {
         AccColumn(AccColumn&& that) noexcept;
         AccColumn(const AccColumn&) = delete;   // no copy
         AccColumn& operator=(const AccColumn&) = delete; // no copy
-        const mdb::Value& read(txnid_t tid, snapshotid_t ssid_spec, SSID& ssid, unsigned long& index, bool& decided, bool is_rotxn, bool& rotxn_safe, uint64_t safe_ts);
+        const mdb::Value& read(txnid_t tid, snapshotid_t ssid_spec, SSID& ssid, unsigned long& index, bool& decided, bool is_rotxn, bool& rotxn_safe, uint64_t safe_ts, bool& early_abort);
         SSID write(mdb::Value&& v, snapshotid_t ssid_spec, txnid_t tid, unsigned long& ver_index,
-                bool& decided, unsigned long& prev_index, bool& same_tx, bool mark_finalized = false);
+                bool& decided, unsigned long& prev_index, bool& same_tx, bool& early_abort, bool mark_finalized = false);
     private:
         /* basic column members */
         mdb::colid_t col_id = -1;
@@ -117,6 +120,7 @@ namespace janus {
         /* stable frontier related */
         unsigned long _stable_frontier = 0;
         void update_stable_frontier();
+        bool wait_for_ss(txnid_t tid, unsigned long index);
 
         friend class AccRow;
         friend class AccTxn;
