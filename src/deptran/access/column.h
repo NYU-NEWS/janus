@@ -116,6 +116,7 @@ namespace janus {
         acc_status_t logical_head_status() const;
 	    snapshotid_t next_record_ssid(unsigned long index) const;
 	    bool logical_head_ss() const;
+        bool head_not_resolved() const;
 
         /* stable frontier related */
         unsigned long _stable_frontier = 0;

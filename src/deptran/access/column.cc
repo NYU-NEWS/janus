@@ -30,34 +30,60 @@ namespace janus {
             early_abort = true;
             return txn_queue[index].value; // any value, doesnt matter
         }
-
-        do {
-            // snapshotid_t low = txn_queue[index].ssid.ssid_low;
-            // snapshotid_t ssid_new = low < ssid_spec ? ssid_spec : low + 1;
-            // txn_queue[index].extend_ssid(ssid_new);
-            if (/*is_rotxn &&*/ txn_queue[index].status != FINALIZED && txn_queue[index].status != ABORTED) {
-                // this version has not been finalized, async wait
-                /*
-                Log_info("rotxn id = %lu; waiting on version by write txn id = %lu; colid = %d; index = %lu, status = %d.",
-                         tid, txn_queue[index].txn_id, col_id, index, txn_queue[index].status);
-                */
+        if (is_rotxn) {
+            do {
+                // snapshotid_t low = txn_queue[index].ssid.ssid_low;
+                // snapshotid_t ssid_new = low < ssid_spec ? ssid_spec : low + 1;
+                // txn_queue[index].extend_ssid(ssid_new);
+                if (/*is_rotxn &&*/ txn_queue[index].status != FINALIZED && txn_queue[index].status != ABORTED) {
+                    // this version has not been finalized, async wait
+                    /*
+                    Log_info("rotxn id = %lu; waiting on version by write txn id = %lu; colid = %d; index = %lu, status = %d.",
+                             tid, txn_queue[index].txn_id, col_id, index, txn_queue[index].status);
+                    */
+                    txn_queue[index].status_resolved.Wait([](int val)->bool {
+                        return (val == FINALIZED || val == ABORTED); // val is set in AccFinalize
+                    });
+                    /*
+                    Log_info("rotxn id = %lu; waiting_done on version by write txn id = %lu; colid = %d; index = %lu, status = %d.",
+                             tid, txn_queue[index].txn_id, col_id, index, txn_queue[index].status);
+                    */
+                }
+                if (txn_queue[index].status == ABORTED) {
+                    index = find_prev_version(index);
+                    if (txn_queue[index].status == FINALIZED) {
+                        // snapshotid_t low = txn_queue[index].ssid.ssid_low;
+                        // snapshotid_t ssid_new = low < ssid_spec ? ssid_spec : low + 1;
+                        // txn_queue[index].extend_ssid(ssid_new);
+                    }
+                }
+            } while (is_rotxn && txn_queue[index].status != FINALIZED && txn_queue[index].status != ABORTED);
+        } else {
+            do {
+                snapshotid_t ssid_new = read_get_next_SSID(ssid_spec);
+                if (ssid_new != ssid_spec && txn_queue[index].status != FINALIZED && txn_queue[index].txn_id != tid) {
+                // if (ssid_new != ssid_spec) {  // read has to enable early abort to avoid deadlock!
+                    early_abort = true;
+                    //Log_info("tid = %lu; col_id = %d; EARLY ABORT.", tid, col_id);
+                    return txn_queue[_logical_head].value;  // dummy return, todo: fix this later
+                }
+                if (!head_not_resolved()) {
+                    break;
+                }
+                // wait
+                // Log_info("tid = %lu; col_id = %d; START READ_WAITING, on index = %lu, tx = %lu.", tid, col_id, _logical_head,
+                //          txn_queue[_logical_head].txn_id);
                 txn_queue[index].status_resolved.Wait([](int val)->bool {
                     return (val == FINALIZED || val == ABORTED); // val is set in AccFinalize
                 });
-                /*
-                Log_info("rotxn id = %lu; waiting_done on version by write txn id = %lu; colid = %d; index = %lu, status = %d.",
-                         tid, txn_queue[index].txn_id, col_id, index, txn_queue[index].status);
-                */
-            }
-            if (txn_queue[index].status == ABORTED) {
-                index = find_prev_version(index);
-                if (txn_queue[index].status == FINALIZED) {
-                    // snapshotid_t low = txn_queue[index].ssid.ssid_low;
-                    // snapshotid_t ssid_new = low < ssid_spec ? ssid_spec : low + 1;
-                    // txn_queue[index].extend_ssid(ssid_new);
-                }
-            }
-        } while (is_rotxn && txn_queue[index].status != FINALIZED && txn_queue[index].status != ABORTED);
+                index = _logical_head;
+                // Log_info("tid = %lu; col_id = %d; READ out of wait on index = %lu.", tid, col_id, _logical_head);
+                // wait done, event fires
+                // update_logical_head();  // might have a new head now after waiting fires, todo: should not need this, done in write
+                //Log_info("tid = %lu; col_id = %d; After update_logical_head, head = %lu.", tid, col_id, _logical_head);
+            } while (head_not_resolved());
+        }
+
         verify(/*!is_rotxn ||*/ txn_queue[index].status == FINALIZED);
         snapshotid_t low = txn_queue[index].ssid.ssid_low;
         snapshotid_t ssid_new = low < ssid_spec ? ssid_spec : low + 1;
@@ -94,7 +120,7 @@ namespace janus {
                         (ssid_spec < txn_queue[prev_index].ssid.ssid_high &&
                                 (txn_queue[prev_index].pending_reads.size() > 1 ||
                                         (txn_queue[prev_index].pending_reads.size() == 1 &&
-                                txn_queue[prev_index].pending_reads.find(tid) == txn_queue[prev_index].pending_reads.end()))))) {
+                                txn_queue[prev_index].pending_reads.find(tid) != txn_queue[prev_index].pending_reads.end()))))) {
             early_abort = true;
             return txn_queue[prev_index].ssid;  // return any ssid
         }
@@ -264,6 +290,10 @@ namespace janus {
     bool AccColumn::wait_for_ss(txnid_t tid, unsigned long index) {
         txn_queue[index].pending_reads.erase(tid);  // if there was reads from the same txn
         return (txn_queue[index].status == UNCHECKED || !txn_queue[index].pending_reads.empty());
+    }
+
+    bool AccColumn::head_not_resolved() const {
+        return txn_queue[_logical_head].status != FINALIZED && txn_queue[_logical_head].status != ABORTED;
     }
 
     //----------------------------------------
