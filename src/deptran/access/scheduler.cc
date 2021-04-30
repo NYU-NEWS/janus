@@ -23,8 +23,6 @@ namespace janus {
                                      uint64_t ssid_spec,
                                      uint64_t safe_ts,
                                      uint8_t is_single_shard_write_only,
-                                     const uint32_t& coord,
-                                     const std::unordered_set<uint32_t>& cohorts,
                                      uint64_t *ssid_low,
                                      uint64_t *ssid_high,
                                      uint64_t *ssid_new,
@@ -40,6 +38,7 @@ namespace janus {
         }
         //auto tx = GetOrCreateTx(cmd_id);
         auto tx = dynamic_pointer_cast<AccTxn>(GetOrCreateTx(cmd_id));
+        /*
         // failure handling
         if (safe_ts == UINT64_MAX) {
             // this is a read-write txn
@@ -49,6 +48,7 @@ namespace janus {
                 tx->record.cohorts.insert(cohorts.begin(), cohorts.end());
             }
         }
+        */
         /* Disable HF for now
         // register handle_failure
         if (!tx->handle_failure) {

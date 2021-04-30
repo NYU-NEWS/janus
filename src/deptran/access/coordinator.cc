@@ -56,6 +56,7 @@ namespace janus {
         uint64_t current_time = SSIDPredictor::get_current_time();
 
         // failure handling
+        /*
         for (auto& pair : cmds_by_par) {
             if (tx_data().coord == UINT32_MAX) {
                 // set coordinator
@@ -65,6 +66,7 @@ namespace janus {
                 tx_data().cohorts.insert(pair.first);
             }
         }
+        */
 
         // TODO: use dispatched == 0 instead of ssid_spec == 0 to start the following block!
         if (tx_data().ssid_spec == 0) {
@@ -148,8 +150,6 @@ namespace janus {
                                               this,
                                               tx_data().ssid_spec,
                                               is_single_shard && write_only,
-                                              tx_data().coord,
-                                              tx_data().cohorts,
                                               std::bind(&CoordinatorAcc::AccDispatchAck,
                                                         this,
                                                         phase_,

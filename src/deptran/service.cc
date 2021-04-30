@@ -422,7 +422,7 @@ void ClassicServiceImpl::CommitFebruus(const txid_t& tx_id,
         // server-side handler of AccDispatch RPC
         shared_ptr<Marshallable> sp = cmd.sp_data_;
         auto* sched = (SchedulerAcc*) dtxn_sched_;
-        *res = sched->OnDispatch(cmd_id, sp, ssid_spec, safe_ts, 0, 0, {}, ssid_low, ssid_high, ssid_new, *output, arrival_time, rotxn_okay, new_svr_ts);
+        *res = sched->OnDispatch(cmd_id, sp, ssid_spec, safe_ts, 0, ssid_low, ssid_high, ssid_new, *output, arrival_time, rotxn_okay, new_svr_ts);
         // GC earlier txns by the same coordinator
         sched->gc_txns(coo_id, cmd_id);
         defer_reply->reply();
@@ -433,8 +433,6 @@ void ClassicServiceImpl::CommitFebruus(const txid_t& tx_id,
                                   const MarshallDeputy& md,
                                   const uint64_t& ssid_spec,
                                   const uint8_t& is_single_shard_write_only,
-                                  const uint32_t& coord,
-                                  const std::unordered_set<uint32_t>& cohorts,
                                   int32_t* res,
                                   uint64_t* ssid_low,
                                   uint64_t* ssid_high,
@@ -447,7 +445,7 @@ void ClassicServiceImpl::CommitFebruus(const txid_t& tx_id,
     // server-side handler of AccDispatch RPC
     shared_ptr<Marshallable> sp = md.sp_data_;
     auto* sched = (SchedulerAcc*) dtxn_sched_;
-    *res = sched->OnDispatch(cmd_id, sp, ssid_spec, UINT64_MAX, is_single_shard_write_only, coord, cohorts, ssid_low, ssid_high, ssid_new, *output, arrival_time, rotxn_okay, new_svr_ts);
+    *res = sched->OnDispatch(cmd_id, sp, ssid_spec, UINT64_MAX, is_single_shard_write_only, ssid_low, ssid_high, ssid_new, *output, arrival_time, rotxn_okay, new_svr_ts);
     // GC earlier txns by the same coordinator
     sched->gc_txns(coo_id, cmd_id);
     defer->reply();

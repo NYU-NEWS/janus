@@ -15,8 +15,6 @@ namespace janus {
                            uint64_t ssid_spec,
                            uint64_t safe_ts,
                            uint8_t is_single_shard_write_only,
-                           const uint32_t& coord,
-                           const std::unordered_set<uint32_t>& cohorts,
                            uint64_t* ssid_min,
                            uint64_t* ssid_max,
                            uint64_t* ssid_new,

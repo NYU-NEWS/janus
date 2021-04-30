@@ -6,8 +6,6 @@ namespace janus {
                                         Coordinator *coo,
                                         snapshotid_t ssid_spec,
                                         bool is_single_shard_write_only,
-                                        parid_t coord,
-                                        const std::unordered_set<parid_t>& cohorts,
                                         const std::function<void(int res,
                                                                  uint64_t ssid_low,
                                                                  uint64_t ssid_high,
@@ -41,13 +39,13 @@ namespace janus {
         sp_vpd->sp_vec_piece_data_ = sp_vec_piece;
         MarshallDeputy md(sp_vpd); // ????
         rrr::Future* future;
-        if (par_id == coord) {
+        // if (par_id == coord) {
             // this is sending to the backup coordinator
-            future = proxy->async_AccDispatch(coo_id, cmd_id, md, ssid_spec, (uint8_t)is_single_shard_write_only, coord, cohorts, fuattr);
-        } else {
+            future = proxy->async_AccDispatch(coo_id, cmd_id, md, ssid_spec, (uint8_t)is_single_shard_write_only, fuattr);
+        // } else {
             // this is sending to a cohort
-            future = proxy->async_AccDispatch(coo_id, cmd_id, md, ssid_spec, (uint8_t)is_single_shard_write_only, coord, {}, fuattr);
-        }
+        //    future = proxy->async_AccDispatch(coo_id, cmd_id, md, ssid_spec, (uint8_t)is_single_shard_write_only, coord, {}, fuattr);
+        //}
         // auto future = proxy->async_AccDispatch(coo_id, cmd_id, md, ssid_spec, (uint8_t)is_single_shard_write_only, fuattr); // call Acc dispatch RPC
 	    // now insert AccStatusQuery RPC here
 	    /* we don't send status query rpc now, we do the optimization that only sending statusquery if it is not decided
@@ -90,11 +88,11 @@ namespace janus {
                             // do nothing
                         };
 		        */
-                if (par_id == coord) {
-                    Future::safe_release(pair.second->async_AccDispatch(coo_id, cmd_id, md, ssid_spec, (uint8_t)is_single_shard_write_only, coord, cohorts, fu2));
-		        } else {
-                    Future::safe_release(pair.second->async_AccDispatch(coo_id, cmd_id, md, ssid_spec, (uint8_t)is_single_shard_write_only, coord, {}, fu2));
-		        }
+                // if (par_id == coord) {
+                    Future::safe_release(pair.second->async_AccDispatch(coo_id, cmd_id, md, ssid_spec, (uint8_t)is_single_shard_write_only, fu2));
+		        //} else {
+                //    Future::safe_release(pair.second->async_AccDispatch(coo_id, cmd_id, md, ssid_spec, (uint8_t)is_single_shard_write_only, coord, {}, fu2));
+		        //}
                 // Future::safe_release(pair.second->async_AccDispatch(coo_id, cmd_id, md, ssid_spec, (uint8_t)is_single_shard_write_only, fu2));
 		        // Future::safe_release(pair.second->async_AccStatusQuery(status_cmd_id, fu2_status));
             }
